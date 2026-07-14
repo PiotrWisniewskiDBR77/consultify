@@ -466,9 +466,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   ];
 
   const escalationModeOptions: Array<{ value: EscalationMode; label: string }> = [
-    { value: 'notify_only', label: isPolish ? 'Powiadomienie tylko' : 'Notify only' },
-    { value: 'manager_review', label: isPolish ? 'Przegląd managera' : 'Manager review' },
-    { value: 'executive_alert', label: isPolish ? 'Alert executive' : 'Executive alert' },
+    { value: 'notify_only', label: t('myWork.taskDetail.label', 'Notify only') },
+    { value: 'manager_review', label: t('myWork.taskDetail.label2', 'Manager review') },
+    { value: 'executive_alert', label: t('myWork.taskDetail.label3', 'Executive alert') },
   ];
 
   const toggleChannel = <T extends string>(list: T[], key: T, enabled: boolean): T[] => {
@@ -525,14 +525,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   });
 
   const stakeholderRoleLabel = (role: StakeholderRole) => {
-    if (role === 'responsible') return isPolish ? 'Odpowiedzialny' : 'Responsible';
-    if (role === 'accountable') return isPolish ? 'Rozliczany' : 'Accountable';
-    if (role === 'consulted') return isPolish ? 'Konsultowany' : 'Consulted';
-    return isPolish ? 'Informowany' : 'Informed';
+    if (role === 'responsible') return t('myWork.taskDetail.responsible', 'Responsible');
+    if (role === 'accountable') return t('myWork.taskDetail.accountable', 'Accountable');
+    if (role === 'consulted') return t('myWork.taskDetail.consulted', 'Consulted');
+    return t('myWork.taskDetail.informed', 'Informed');
   };
 
   const stakeholderChannelLabels = (settings?: StakeholderNotificationSettings) => {
-    if (!settings?.enabled) return [isPolish ? 'Wyłączone' : 'Disabled'];
+    if (!settings?.enabled) return [t('myWork.taskDetail.disabled', 'Disabled')];
     const labels: string[] = [];
     if (settings.inAppEnabled) labels.push('In-app');
     if (settings.emailEnabled) labels.push('Email');
@@ -579,7 +579,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     {
       id: '1',
       type: 'created',
-      description: isPolish ? 'Zadanie utworzone' : 'Task created',
+      description: t('myWork.taskDetail.description', 'Task created'),
       userName: createdBy || 'System',
       timestamp: createdAt || new Date().toISOString(),
     },
@@ -695,7 +695,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             id: String(e.id),
             edgeId: String(e.id),
             decisionId: String(e.sourceId),
-            decisionTitle: match?.title || (isPolish ? 'Decyzja' : 'Decision'),
+            decisionTitle: match?.title || (t('myWork.taskDetail.decision', 'Decision')),
             decisionStatus: (allowed.includes(status)
               ? status
               : 'pending') as RelatedDecision['decisionStatus'],
@@ -864,7 +864,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       if (status === 404) {
         setNotFound(true);
       } else {
-        toast.error(isPolish ? 'Nie udało się załadować zadania' : 'Failed to load task');
+        toast.error(t('myWork.taskDetail.toastError', 'Failed to load task'));
       }
     } finally {
       setLoading(false);
@@ -899,7 +899,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   const handleSave = async (silent = false) => {
     if (!title.trim()) {
-      if (!silent) toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
+      if (!silent) toast.error(t('myWork.taskDetail.toastError2', 'Title is required'));
       return;
     }
 
@@ -967,7 +967,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
       if (taskId) {
         await Api.updatePersonalTask(taskId, personalPayload);
-        if (!silent) toast.success(isPolish ? 'Zadanie zaktualizowane' : 'Task updated');
+        if (!silent) toast.success(t('myWork.taskDetail.toastSuccess', 'Task updated'));
         emitMyWorkEvent({ type: 'item:updated', entityType: 'task', entityId: taskId });
         if (personalPayload?.dueDate) {
           trackFunnelEvent('personal_task_due_date_set', { source: 'detail', taskId });
@@ -979,7 +979,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         onSaved?.({ ...personalPayload, id: taskId });
       } else {
         const created = await Api.createPersonalTask(personalPayload);
-        if (!silent) toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
+        if (!silent) toast.success(t('myWork.taskDetail.toastSuccess2', 'Task created'));
         trackFunnelEvent('personal_task_created', {
           source: 'detail',
           taskId: created?.id || null,
@@ -1008,7 +1008,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       }
     } catch (error) {
       console.error('Failed to save task', error);
-      if (!silent) toast.error(isPolish ? 'Nie udało się zapisać zadania' : 'Failed to save task');
+      if (!silent) toast.error(t('myWork.taskDetail.toastError3', 'Failed to save task'));
     } finally {
       setSaving(false);
     }
@@ -1094,7 +1094,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       blockedByDecisionId,
     });
 
-    toast.success(isPolish ? 'Zapisano roboczo i otwarto czat' : 'Draft saved and chat opened');
+    toast.success(t('myWork.taskDetail.toastSuccess3', 'Draft saved and chat opened'));
   };
 
   // Section toggle
@@ -1203,7 +1203,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     // Duplicate check — same id + type already present?
     const isDuplicate = linkedItems.some((li) => li.id === item.id && li.type === item.type);
     if (isDuplicate) {
-      toast(isPolish ? 'Ten element jest już powiązany' : 'This item is already linked', {
+      toast(t('myWork.taskDetail.toast', 'This item is already linked'), {
         icon: '⚠️',
       });
       return;
@@ -1446,7 +1446,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                         : null;
       const target = explicitUrl || fallbackPath;
       if (!target) {
-        toast(isPolish ? 'Brak docelowego linku' : 'No target link available', { icon: 'ℹ️' });
+        toast(t('myWork.taskDetail.toast2', 'No target link available'), { icon: 'ℹ️' });
         return;
       }
       window.open(target, '_blank', 'noopener,noreferrer');
@@ -1473,24 +1473,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         value: c,
         label:
           c === 'technical'
-            ? isPolish
-              ? 'Techniczne'
-              : 'Technical'
+            ? t('myWork.taskDetail.technical', 'Technical')
             : c === 'business'
-              ? isPolish
-                ? 'Biznesowe'
-                : 'Business'
+              ? t('myWork.taskDetail.business', 'Business')
               : c === 'financial'
-                ? isPolish
-                  ? 'Finansowe'
-                  : 'Financial'
+                ? t('myWork.taskDetail.financial', 'Financial')
                 : c === 'operational'
-                  ? isPolish
-                    ? 'Operacyjne'
-                    : 'Operational'
-                  : isPolish
-                    ? 'Bezpieczeństwo'
-                    : 'Security',
+                  ? t('myWork.taskDetail.operational', 'Operational')
+                  : t('myWork.taskDetail.security', 'Security'),
       })),
     [isPolish]
   );
@@ -1579,7 +1569,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     const aiRisks: RiskItem[] = [
       {
         id: Math.random().toString(36).substr(2, 9),
-        title: isPolish ? 'Opóźnienie w dostawie' : 'Delivery delay',
+        title: t('myWork.taskDetail.title', 'Delivery delay'),
         probability: 'medium',
         impact: 'high',
         category: 'operational',
@@ -1588,7 +1578,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       },
       {
         id: Math.random().toString(36).substr(2, 9),
-        title: isPolish ? 'Brak zasobów' : 'Resource shortage',
+        title: t('myWork.taskDetail.title2', 'Resource shortage'),
         probability: 'low',
         impact: 'medium',
         category: 'business',
@@ -1598,7 +1588,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     ];
     setRisks([...risks, ...aiRisks]);
     setIsGeneratingRisks(false);
-    toast.success(isPolish ? 'Wygenerowano ryzyka AI' : 'AI risks generated');
+    toast.success(t('myWork.taskDetail.toastSuccess4', 'AI risks generated'));
   };
 
   // Alternative handlers
@@ -1620,24 +1610,24 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     const aiAlts: Alternative[] = [
       {
         id: Math.random().toString(36).substr(2, 9),
-        title: isPolish ? 'Podejście A' : 'Approach A',
+        title: t('myWork.taskDetail.title3', 'Approach A'),
         description: '',
-        pros: [isPolish ? 'Szybkie' : 'Fast'],
-        cons: [isPolish ? 'Kosztowne' : 'Expensive'],
+        pros: [t('myWork.taskDetail.fast', 'Fast')],
+        cons: [t('myWork.taskDetail.expensive', 'Expensive')],
         isRecommended: true,
       },
       {
         id: Math.random().toString(36).substr(2, 9),
-        title: isPolish ? 'Podejście B' : 'Approach B',
+        title: t('myWork.taskDetail.title4', 'Approach B'),
         description: '',
-        pros: [isPolish ? 'Tanie' : 'Cheap'],
-        cons: [isPolish ? 'Wolne' : 'Slow'],
+        pros: [t('myWork.taskDetail.cheap', 'Cheap')],
+        cons: [t('myWork.taskDetail.slow', 'Slow')],
         isRecommended: false,
       },
     ];
     setAlternatives([...alternatives, ...aiAlts]);
     setIsGeneratingAlternatives(false);
-    toast.success(isPolish ? 'Wygenerowano alternatywy AI' : 'AI alternatives generated');
+    toast.success(t('myWork.taskDetail.toastSuccess5', 'AI alternatives generated'));
   };
 
   // Implementation ideas handlers
@@ -1722,16 +1712,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setImplementationIdeas([...implementationIdeas, ...aiIdeas]);
     setIsGeneratingIdeas(false);
     toast.success(
-      isPolish
-        ? 'AI wygenerował 3 propozycje realizacji'
-        : 'AI generated 3 implementation proposals'
+      t('myWork.taskDetail.aIGenerated3Implementation', 'AI generated 3 implementation proposals')
     );
   };
 
   // AI Description handler
   const generateAIDescription = async () => {
     if (!title.trim()) {
-      toast.error(isPolish ? 'Najpierw wprowadź tytuł' : 'Enter title first');
+      toast.error(t('myWork.taskDetail.toastError4', 'Enter title first'));
       return;
     }
     setIsGeneratingDescription(true);
@@ -1748,14 +1736,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
     setDescription(descriptions[Math.floor(Math.random() * descriptions.length)]);
     setIsGeneratingDescription(false);
-    addActivityLogEntry('edit', isPolish ? 'AI wygenerowało opis' : 'AI generated description');
-    toast.success(isPolish ? 'AI wygenerowało opis' : 'AI generated description');
+    addActivityLogEntry('edit', t('myWork.taskDetail.aIGeneratedDescription', 'AI generated description'));
+    toast.success(t('myWork.taskDetail.toastSuccess6', 'AI generated description'));
   };
 
   // AI Expected Outcome handler
   const generateAIOutcome = async () => {
     if (!title.trim()) {
-      toast.error(isPolish ? 'Najpierw wprowadź tytuł' : 'Enter title first');
+      toast.error(t('myWork.taskDetail.toastError5', 'Enter title first'));
       return;
     }
     setIsGeneratingOutcome(true);
@@ -1772,16 +1760,16 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
     setExpectedOutcome(outcomes[Math.floor(Math.random() * outcomes.length)]);
     setIsGeneratingOutcome(false);
-    addActivityLogEntry('edit', isPolish ? 'AI wygenerowało rezultat' : 'AI generated outcome');
+    addActivityLogEntry('edit', t('myWork.taskDetail.aIGeneratedOutcome', 'AI generated outcome'));
     toast.success(
-      isPolish ? 'AI wygenerowało oczekiwany rezultat' : 'AI generated expected outcome'
+      t('myWork.taskDetail.aIGeneratedExpectedOutcome', 'AI generated expected outcome')
     );
   };
 
   // AI Checklist handler
   const generateAIChecklist = async () => {
     if (!title.trim()) {
-      toast.error(isPolish ? 'Najpierw wprowadź tytuł' : 'Enter title first');
+      toast.error(t('myWork.taskDetail.toastError6', 'Enter title first'));
       return;
     }
     setIsGeneratingChecklist(true);
@@ -1815,8 +1803,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
     setChecklist([...checklist, ...newItems]);
     setIsGeneratingChecklist(false);
-    addActivityLogEntry('edit', isPolish ? 'AI wygenerowało checklistę' : 'AI generated checklist');
-    toast.success(isPolish ? 'AI wygenerowało checklistę' : 'AI generated checklist');
+    addActivityLogEntry('edit', t('myWork.taskDetail.aIGeneratedChecklist', 'AI generated checklist'));
+    toast.success(t('myWork.taskDetail.toastSuccess7', 'AI generated checklist'));
   };
 
   // AI Comment handler
@@ -1833,9 +1821,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
           ? isPolish
             ? `${blockedReason || 'Brak jawnej przyczyny blokady'}`
             : `${blockedReason || 'No explicit blocking reason'}`
-          : isPolish
-            ? 'Brak blokerów'
-            : 'No blockers';
+          : t('myWork.taskDetail.noBlockers', 'No blockers');
 
       const prompt = isPolish
         ? `Wygeneruj JEDEN konkretny komentarz do zadania projektowego.
@@ -1892,9 +1878,7 @@ Return ONLY the final comment text.`;
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś praktycznym PMO coachem. Odpowiadasz krótko, konkretnie i bez pustych ogólników.'
-          : 'You are a practical PMO coach. Respond briefly, concretely, and avoid generic filler.',
+        systemInstruction: t('myWork.taskDetail.systemInstruction', 'You are a practical PMO coach. Respond briefly, concretely, and avoid generic filler.'),
         roleName: 'Task Comment Advisor',
       });
 
@@ -1933,9 +1917,9 @@ Return ONLY the final comment text.`;
       setComments((prev) => [...prev, newComment]);
       addActivityLogEntry(
         'comment',
-        isPolish ? 'AI wygenerowało komentarz' : 'AI generated comment'
+        t('myWork.taskDetail.aIGeneratedComment', 'AI generated comment')
       );
-      toast.success(isPolish ? 'AI wygenerowało komentarz' : 'AI comment generated');
+      toast.success(t('myWork.taskDetail.toastSuccess8', 'AI comment generated'));
     } catch (error) {
       const fallback = isPolish
         ? `Proponuję doprecyzować jeden najbliższy krok i właściciela zadania na dziś. Dla priorytetu "${priority}" warto też potwierdzić blocker oraz termin, żeby uniknąć opóźnienia.`
@@ -1948,7 +1932,7 @@ Return ONLY the final comment text.`;
         .toLowerCase();
       const fallbackWithVariant =
         lastAI === fallback.trim().toLowerCase()
-          ? `${fallback} ${isPolish ? 'Skup się na mierzalnym wyniku do końca dnia.' : 'Focus on a measurable outcome by end of day.'}`
+          ? `${fallback} ${t('myWork.taskDetail.focusOnAMeasurable', 'Focus on a measurable outcome by end of day.')}`
           : fallback;
 
       const newComment: Comment = {
@@ -1965,9 +1949,9 @@ Return ONLY the final comment text.`;
       setComments((prev) => [...prev, newComment]);
       addActivityLogEntry(
         'comment',
-        isPolish ? 'AI dodało fallback komentarza' : 'AI added fallback comment'
+        t('myWork.taskDetail.aIAddedFallbackComment', 'AI added fallback comment')
       );
-      toast.success(isPolish ? 'Dodano komentarz pomocniczy AI' : 'Added a fallback AI comment');
+      toast.success(t('myWork.taskDetail.toastSuccess9', 'Added a fallback AI comment'));
     } finally {
       setIsGeneratingAIComment(false);
     }
@@ -2118,16 +2102,10 @@ Return ONLY the final comment text.`;
     p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Normal';
   const getCommentPriorityHint = (p: CommentPriority) =>
     p === 'high'
-      ? isPolish
-        ? 'Wymagana natychmiastowa uwaga'
-        : 'Requires immediate attention'
+      ? t('myWork.taskDetail.requiresImmediateAttention', 'Requires immediate attention')
       : p === 'low'
-        ? isPolish
-          ? 'Informacyjny komentarz'
-          : 'Informational comment'
-        : isPolish
-          ? 'Standardowy komentarz'
-          : 'Standard comment';
+        ? t('myWork.taskDetail.informationalComment', 'Informational comment')
+        : t('myWork.taskDetail.standardComment', 'Standard comment');
 
   const handleNModeSubmitComment = () => {
     if (!nCommentDraft.trim()) return;
@@ -2227,9 +2205,9 @@ Return ONLY the final comment text.`;
       } else if (typeof content === 'object') {
         const parts: string[] = [];
         if (content.description) parts.push(String(content.description));
-        if (content.why) parts.push(`${isPolish ? 'Po co' : 'Why'}: ${content.why}`);
+        if (content.why) parts.push(`${t('myWork.taskDetail.why', 'Why')}: ${content.why}`);
         if (content.expectedOutcome)
-          parts.push(`${isPolish ? 'Oczekiwany efekt' : 'Expected outcome'}: ${content.expectedOutcome}`);
+          parts.push(`${t('myWork.taskDetail.expectedOutcome', 'Expected outcome')}: ${content.expectedOutcome}`);
         if (parts.length) setDescription(parts.join('\n\n'));
       }
     } else if (key === 'checklist') {
@@ -2279,7 +2257,7 @@ Return ONLY the final comment text.`;
     async (key: AICardKey) => {
       if (!taskId) {
         toast.error(
-          isPolish ? 'Zapisz zadanie przed generacją AI' : 'Save the task before generating with AI'
+          t('myWork.taskDetail.saveTheTaskBefore', 'Save the task before generating with AI')
         );
         return;
       }
@@ -2287,7 +2265,7 @@ Return ONLY the final comment text.`;
       try {
         const backendKey = CARD_BACKEND_KEY[key];
         const result: any = await Api.post(`/tasks/${taskId}/sections/${backendKey}/generate`, {
-          language: isPolish ? 'pl' : 'en',
+          language: t('myWork.taskDetail.language', 'en'),
         });
         applyGeneratedCard(key, result?.content);
         setCardAI((p) => ({ ...p, [key]: true }));
@@ -2315,7 +2293,7 @@ Return ONLY the final comment text.`;
             if (initiativeName && initiativeId) {
               relatedTaskItems.push({
                 id: initiativeId,
-                type: isPolish ? 'Inicjatywa' : 'Initiative',
+                type: t('myWork.taskDetail.type', 'Initiative'),
                 title: initiativeName,
               });
             }
@@ -2331,20 +2309,18 @@ Return ONLY the final comment text.`;
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                    {isPolish ? 'Opis i zakres' : 'Description & Scope'}
+                    {t('myWork.taskDetail.descriptionScope', 'Description & Scope')}
                   </h2>
                 </div>
 
                 {/* 1) Related to — initiative, assessment, survey, etc. */}
                 <div className="space-y-2">
                   <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'Wynika z' : 'Related to'}
+                    {t('myWork.taskDetail.relatedTo', 'Related to')}
                   </label>
                   {relatedTaskItems.length === 0 ? (
                     <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
-                      {isPolish
-                        ? 'Brak powiązania — zadanie samodzielne'
-                        : 'No linked source — standalone task'}
+                      {t('myWork.taskDetail.noLinkedSourceStandalone', 'No linked source — standalone task')}
                     </div>
                   ) : (
                     <div className="space-y-1">
@@ -2374,12 +2350,12 @@ Return ONLY the final comment text.`;
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Opis zadania' : 'Task description'}
+                      {t('myWork.taskDetail.taskDescription', 'Task description')}
                     </label>
                     {!readMode && (
                       <AIFieldEnhancer
                         fieldKey="task-description"
-                        sectionLabel={isPolish ? 'Opis zadania' : 'Task Description'}
+                        sectionLabel={t('myWork.taskDetail.sectionLabel', 'Task Description')}
                         currentValue={description}
                         onApply={setDescription}
                         artifactContext={{ title, status, priority, type: 'task' }}
@@ -2393,9 +2369,7 @@ Return ONLY the final comment text.`;
                     rows={10}
                     className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[200px]"
                     placeholder={
-                      isPolish
-                        ? 'Opisz zadanie szczegółowo — co należy zrobić, dlaczego jest to ważne, jakie są ograniczenia...'
-                        : 'Describe what needs to be done, why it matters, any constraints or dependencies...'
+                      t('myWork.taskDetail.describeWhatNeedsTo', 'Describe what needs to be done, why it matters, any constraints or dependencies...')
                     }
                   />
                 </div>
@@ -2599,12 +2573,12 @@ Return ONLY the final comment text.`;
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Oczekiwany rezultat' : 'Expected outcome'}
+                      {t('myWork.taskDetail.expectedOutcome2', 'Expected outcome')}
                     </label>
                     {!readMode && (
                       <AIFieldEnhancer
                         fieldKey="task-expected-outcome"
-                        sectionLabel={isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
+                        sectionLabel={t('myWork.taskDetail.sectionLabel2', 'Expected Outcome')}
                         currentValue={expectedOutcome}
                         onApply={setExpectedOutcome}
                         artifactContext={{ title, status, priority, type: 'task' }}
@@ -2618,9 +2592,7 @@ Return ONLY the final comment text.`;
                     rows={8}
                     className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[160px]"
                     placeholder={
-                      isPolish
-                        ? 'Zdefiniuj mierzalny rezultat — co oznacza sukces, jakie kryteria akceptacji...'
-                        : 'Define the measurable outcome — what does success look like, acceptance criteria...'
+                      t('myWork.taskDetail.defineTheMeasurableOutcome', 'Define the measurable outcome — what does success look like, acceptance criteria...')
                     }
                   />
                 </div>
@@ -2639,7 +2611,7 @@ Return ONLY the final comment text.`;
               {/* Heading row */}
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                  {t('myWork.taskDetail.checklist', 'Checklist')}
                 </h2>
                 {!readMode && (
                   <button
@@ -2647,7 +2619,7 @@ Return ONLY the final comment text.`;
                     className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
                   >
                     <Plus size={13} />
-                    {isPolish ? 'Dodaj element' : 'Add item'}
+                    {t('myWork.taskDetail.addItem', 'Add item')}
                   </button>
                 )}
               </div>
@@ -2669,9 +2641,7 @@ Return ONLY the final comment text.`;
                     className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {isPolish
-                      ? 'Brak elementów — wygeneruj przez AI lub dodaj ręcznie'
-                      : 'No items yet — generate with AI or add manually'}
+                    {t('myWork.taskDetail.noItemsYetGenerate', 'No items yet — generate with AI or add manually')}
                   </p>
                 </div>
               ) : (
@@ -2729,7 +2699,7 @@ Return ONLY the final comment text.`;
                             !readMode && updateChecklistItem(item.id, { text: e.target.value })
                           }
                           readOnly={readMode}
-                          placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
+                          placeholder={t('myWork.taskDetail.placeholder', 'Enter item...')}
                           className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
                             done
                               ? 'line-through text-slate-500 dark:text-slate-400 dark:text-slate-500'
@@ -2759,7 +2729,7 @@ Return ONLY the final comment text.`;
                   className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
                 >
                   <Plus size={13} />
-                  <span>{isPolish ? 'Dodaj kolejny element' : 'Add another item'}</span>
+                  <span>{t('myWork.taskDetail.addAnotherItem', 'Add another item')}</span>
                 </button>
               )}
             </div>
@@ -2781,25 +2751,25 @@ Return ONLY the final comment text.`;
             { label: string; dot: string; text: string; bg: string }
           > = {
             idea: {
-              label: isPolish ? 'Pomysł' : 'Idea',
+              label: t('myWork.taskDetail.label4', 'Idea'),
               dot: 'bg-slate-400',
               text: 'text-slate-500 dark:text-slate-400',
               bg: 'bg-slate-100 dark:bg-slate-500/20',
             },
             considered: {
-              label: isPolish ? 'Rozważany' : 'Considered',
+              label: t('myWork.taskDetail.label5', 'Considered'),
               dot: 'bg-blue-500',
               text: 'text-blue-600 dark:text-blue-400',
               bg: 'bg-blue-100 dark:bg-blue-500/20',
             },
             selected: {
-              label: isPolish ? 'Wybrany' : 'Selected',
+              label: t('myWork.taskDetail.label6', 'Selected'),
               dot: 'bg-emerald-500',
               text: 'text-emerald-600 dark:text-emerald-400',
               bg: 'bg-emerald-100 dark:bg-emerald-500/20',
             },
             rejected: {
-              label: isPolish ? 'Odrzucony' : 'Rejected',
+              label: t('myWork.taskDetail.label7', 'Rejected'),
               dot: 'bg-danger-500',
               text: 'text-danger-600 dark:text-danger-400',
               bg: 'bg-danger-100 dark:bg-danger-500/20',
@@ -2811,7 +2781,7 @@ Return ONLY the final comment text.`;
               {/* Heading */}
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Pomysły realizacji' : 'Implementation Ideas'}
+                  {t('myWork.taskDetail.implementationIdeas', 'Implementation Ideas')}
                 </h2>
                 {!readMode && (
                   <button
@@ -2819,7 +2789,7 @@ Return ONLY the final comment text.`;
                     className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
                   >
                     <Plus size={13} />
-                    {isPolish ? 'Dodaj pomysł' : 'Add idea'}
+                    {t('myWork.taskDetail.addIdea', 'Add idea')}
                   </button>
                 )}
               </div>
@@ -2839,9 +2809,7 @@ Return ONLY the final comment text.`;
                       className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                     />
                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {isPolish
-                        ? 'Brak pomysłów — wygeneruj przez AI lub dodaj ręcznie'
-                        : 'No ideas yet — generate with AI or add manually'}
+                      {t('myWork.taskDetail.noIdeasYetGenerate', 'No ideas yet — generate with AI or add manually')}
                     </p>
                   </div>
                 ) : (
@@ -2881,7 +2849,7 @@ Return ONLY the final comment text.`;
                                       ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10'
                                       : 'text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
                                   }`}
-                                  title={isPolish ? 'Głosuj za' : 'Vote up'}
+                                  title={t('myWork.taskDetail.title5', 'Vote up')}
                                 >
                                   <ThumbsUp size={14} />
                                 </button>
@@ -2905,7 +2873,7 @@ Return ONLY the final comment text.`;
                                   }
                                   disabled={readMode}
                                   className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-500/10 transition-colors disabled:cursor-default"
-                                  title={isPolish ? 'Głosuj przeciw' : 'Vote down'}
+                                  title={t('myWork.taskDetail.title6', 'Vote down')}
                                 >
                                   <ThumbsDown size={14} />
                                 </button>
@@ -2928,12 +2896,8 @@ Return ONLY the final comment text.`;
                                     {isAI
                                       ? 'AI'
                                       : isTeam
-                                        ? isPolish
-                                          ? 'Zespół'
-                                          : 'Team'
-                                        : isPolish
-                                          ? 'Ręcznie'
-                                          : 'Manual'}
+                                        ? t('myWork.taskDetail.team', 'Team')
+                                        : t('myWork.taskDetail.manual', 'Manual')}
                                   </span>
                                   {/* Status */}
                                   <span
@@ -2963,7 +2927,7 @@ Return ONLY the final comment text.`;
                                   }
                                   readOnly={readMode}
                                   className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none"
-                                  placeholder={isPolish ? 'Nazwa podejścia...' : 'Approach name...'}
+                                  placeholder={t('myWork.taskDetail.placeholder2', 'Approach name...')}
                                 />
 
                                 {/* Description — editable */}
@@ -2981,9 +2945,7 @@ Return ONLY the final comment text.`;
                                   rows={3}
                                   className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-400 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y min-h-[48px]"
                                   placeholder={
-                                    isPolish
-                                      ? 'Opisz podejście, kroki, narzędzia...'
-                                      : 'Describe the approach, steps, tools...'
+                                    t('myWork.taskDetail.describeTheApproachSteps', 'Describe the approach, steps, tools...')
                                   }
                                 />
                               </div>
@@ -3027,7 +2989,7 @@ Return ONLY the final comment text.`;
                                 <AIFieldEnhancer
                                   fieldKey={`idea-${idea.id}`}
                                   sectionLabel={
-                                    isPolish ? 'Pomysł realizacji' : 'Implementation Idea'
+                                    t('myWork.taskDetail.implementationIdea', 'Implementation Idea')
                                   }
                                   currentValue={`${idea.title}\n${idea.description}`}
                                   onApply={(val) => {
@@ -3118,7 +3080,7 @@ Return ONLY the final comment text.`;
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Dowody i akceptacja' : 'Evidence & Acceptance'}
+                  {t('myWork.taskDetail.evidenceAcceptance', 'Evidence & Acceptance')}
                 </h2>
               </div>
               <EvidenceSection
@@ -3163,7 +3125,7 @@ Return ONLY the final comment text.`;
                   setSignedOff(true);
                   setSignedOffAt(new Date().toISOString());
                   setSignedOffBy('Current User');
-                  toast.success(isPolish ? 'Zadanie podpisane' : 'Task signed off');
+                  toast.success(t('myWork.taskDetail.toastSuccess10', 'Task signed off'));
                 }}
                 expanded
               />
@@ -3176,16 +3138,14 @@ Return ONLY the final comment text.`;
           component = (
             <div className="space-y-8">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                {isPolish ? 'RACI i eskalacja' : 'RACI & Escalation'}
+                {t('myWork.taskDetail.rACIEscalation', 'RACI & Escalation')}
               </h2>
               <div className="space-y-4">
                 {/* RACI table */}
                 <div className={governanceTableCardClass}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                      {isPolish
-                        ? 'RACI (macierz odpowiedzialności)'
-                        : 'RACI (responsibility matrix)'}
+                      {t('myWork.taskDetail.rACIResponsibilityMatrix', 'RACI (responsibility matrix)')}
                     </h3>
                     {!readMode && (
                     <button
@@ -3212,7 +3172,7 @@ Return ONLY the final comment text.`;
                       }}
                       className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
                     >
-                      + {isPolish ? 'Dodaj osobę' : 'Add person'}
+                      + {t('myWork.taskDetail.addPerson', 'Add person')}
                     </button>
                     )}
                   </div>
@@ -3220,13 +3180,13 @@ Return ONLY the final comment text.`;
                     <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
                       <thead>
                         <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                          <th className="text-left py-2 pr-2">{isPolish ? 'Osoba' : 'Person'}</th>
-                          <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
+                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.person', 'Person')}</th>
+                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.role', 'Role')}</th>
                           <th className="text-left py-2 pr-2">Email</th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Notyfikacje' : 'Notifications'}
+                            {t('myWork.taskDetail.notifications', 'Notifications')}
                           </th>
-                          <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                          <th className="text-right py-2">{t('myWork.taskDetail.actions', 'Actions')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -3236,7 +3196,7 @@ Return ONLY the final comment text.`;
                               colSpan={5}
                               className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                             >
-                              {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
+                              {t('myWork.taskDetail.noStakeholdersYet', 'No stakeholders yet.')}
                             </td>
                           </tr>
                         ) : (
@@ -3272,7 +3232,7 @@ Return ONLY the final comment text.`;
                                       setStakeholderDraft({ ...s });
                                     }}
                                     className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
-                                    title={isPolish ? 'Edytuj' : 'Edit'}
+                                    title={t('myWork.taskDetail.title7', 'Edit')}
                                   >
                                     <Edit3 size={13} />
                                   </button>
@@ -3283,7 +3243,7 @@ Return ONLY the final comment text.`;
                                       )
                                     }
                                     className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
-                                    title={isPolish ? 'Usuń' : 'Delete'}
+                                    title={t('myWork.taskDetail.title8', 'Delete')}
                                   >
                                     <Trash2 size={13} />
                                   </button>
@@ -3302,7 +3262,7 @@ Return ONLY the final comment text.`;
                 <div className={governanceTableCardClass}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                      {isPolish ? 'Przypomnienia' : 'Reminders'}
+                      {t('myWork.taskDetail.reminders', 'Reminders')}
                     </h3>
                     {!readMode && (
                     <button
@@ -3322,7 +3282,7 @@ Return ONLY the final comment text.`;
                       }}
                       className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
                     >
-                      + {isPolish ? 'Dodaj reminder' : 'Add reminder'}
+                      + {t('myWork.taskDetail.addReminder', 'Add reminder')}
                     </button>
                     )}
                   </div>
@@ -3330,15 +3290,15 @@ Return ONLY the final comment text.`;
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                          <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-                          <th className="text-left py-2 pr-2">{isPolish ? 'Dni' : 'Days'}</th>
+                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.type2', 'Type')}</th>
+                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.days', 'Days')}</th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Do kogo' : 'Recipients'}
+                            {t('myWork.taskDetail.recipients', 'Recipients')}
                           </th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Notyfikacje' : 'Notifications'}
+                            {t('myWork.taskDetail.notifications2', 'Notifications')}
                           </th>
-                          <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                          <th className="text-right py-2">{t('myWork.taskDetail.actions2', 'Actions')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -3348,7 +3308,7 @@ Return ONLY the final comment text.`;
                               colSpan={5}
                               className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                             >
-                              {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
+                              {t('myWork.taskDetail.noRemindersYet', 'No reminders yet.')}
                             </td>
                           </tr>
                         ) : (
@@ -3356,12 +3316,8 @@ Return ONLY the final comment text.`;
                             <tr key={r.id}>
                               <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                 {r.type === 'before_due'
-                                  ? isPolish
-                                    ? 'Przed terminem'
-                                    : 'Before due'
-                                  : isPolish
-                                    ? 'Po terminie'
-                                    : 'After due'}
+                                  ? t('myWork.taskDetail.beforeDue', 'Before due')
+                                  : t('myWork.taskDetail.afterDue', 'After due')}
                               </td>
                               <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                 {r.days}
@@ -3373,7 +3329,7 @@ Return ONLY the final comment text.`;
                                 <div className="flex flex-wrap gap-1">
                                   {!r.enabled && (
                                     <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
-                                      {isPolish ? 'Wyłączone' : 'Disabled'}
+                                      {t('myWork.taskDetail.disabled2', 'Disabled')}
                                     </span>
                                   )}
                                   {deliveryBadgeLabels(
@@ -3400,7 +3356,7 @@ Return ONLY the final comment text.`;
                                       );
                                     }}
                                     className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
-                                    title={isPolish ? 'Edytuj' : 'Edit'}
+                                    title={t('myWork.taskDetail.title9', 'Edit')}
                                   >
                                     <Edit3 size={13} />
                                   </button>
@@ -3409,7 +3365,7 @@ Return ONLY the final comment text.`;
                                       setReminders(reminders.filter((item) => item.id !== r.id))
                                     }
                                     className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
-                                    title={isPolish ? 'Usuń' : 'Delete'}
+                                    title={t('myWork.taskDetail.title10', 'Delete')}
                                   >
                                     <Trash2 size={13} />
                                   </button>
@@ -3428,7 +3384,7 @@ Return ONLY the final comment text.`;
                 <div className={governanceTableCardClass}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                      {isPolish ? 'Eskalacja i zasady' : 'Escalation and rules'}
+                      {t('myWork.taskDetail.escalationAndRules', 'Escalation and rules')}
                     </h3>
                     {!readMode && (
                     <button
@@ -3453,7 +3409,7 @@ Return ONLY the final comment text.`;
                       }}
                       className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
                     >
-                      + {isPolish ? 'Dodaj eskalację' : 'Add escalation'}
+                      + {t('myWork.taskDetail.addEscalation', 'Add escalation')}
                     </button>
                     )}
                   </div>
@@ -3463,22 +3419,22 @@ Return ONLY the final comment text.`;
                         <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                           <th className="text-left py-2 pr-2">Status</th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Progi W/C' : 'W/C thresholds'}
+                            {t('myWork.taskDetail.wCThresholds', 'W/C thresholds')}
                           </th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Eskaluj po' : 'Escalate after'}
+                            {t('myWork.taskDetail.escalateAfter', 'Escalate after')}
                           </th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                            {t('myWork.taskDetail.escalateTo', 'Escalate to')}
                           </th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Komunikat' : 'Message'}
+                            {t('myWork.taskDetail.message', 'Message')}
                           </th>
-                          <th className="text-left py-2 pr-2">{isPolish ? 'Tryb' : 'Mode'}</th>
+                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.mode', 'Mode')}</th>
                           <th className="text-left py-2 pr-2">
-                            {isPolish ? 'Kanały' : 'Channels'}
+                            {t('myWork.taskDetail.channels', 'Channels')}
                           </th>
-                          <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                          <th className="text-right py-2">{t('myWork.taskDetail.actions3', 'Actions')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -3488,7 +3444,7 @@ Return ONLY the final comment text.`;
                               colSpan={8}
                               className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                             >
-                              {isPolish ? 'Brak reguł eskalacji.' : 'No escalation rules yet.'}
+                              {t('myWork.taskDetail.noEscalationRulesYet', 'No escalation rules yet.')}
                             </td>
                           </tr>
                         ) : (
@@ -3496,12 +3452,8 @@ Return ONLY the final comment text.`;
                             <tr key={rule.id}>
                               <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                 {rule.enabled
-                                  ? isPolish
-                                    ? 'Aktywna'
-                                    : 'Enabled'
-                                  : isPolish
-                                    ? 'Wyłączona'
-                                    : 'Disabled'}
+                                  ? t('myWork.taskDetail.enabled', 'Enabled')
+                                  : t('myWork.taskDetail.disabled3', 'Disabled')}
                               </td>
                               <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                 {rule.warningDays}/{rule.criticalDays} d
@@ -3517,9 +3469,7 @@ Return ONLY the final comment text.`;
                               </td>
                               <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                 {rule.escalationMode === 'notify_only'
-                                  ? isPolish
-                                    ? 'Powiadomienie'
-                                    : 'Notify'
+                                  ? t('myWork.taskDetail.notify', 'Notify')
                                   : rule.escalationMode === 'manager_review'
                                     ? 'Manager review'
                                     : 'Executive alert'}
@@ -3545,7 +3495,7 @@ Return ONLY the final comment text.`;
                                       setEscalationDraft({ ...rule });
                                     }}
                                     className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
-                                    title={isPolish ? 'Edytuj' : 'Edit'}
+                                    title={t('myWork.taskDetail.title11', 'Edit')}
                                   >
                                     <Edit3 size={13} />
                                   </button>
@@ -3556,7 +3506,7 @@ Return ONLY the final comment text.`;
                                       )
                                     }
                                     className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
-                                    title={isPolish ? 'Usuń' : 'Delete'}
+                                    title={t('myWork.taskDetail.title12', 'Delete')}
                                   >
                                     <Trash2 size={13} />
                                   </button>
@@ -3879,12 +3829,10 @@ Return ONLY the final comment text.`;
         </div>
         <div className="space-y-1">
           <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Nie znaleziono zadania' : 'Task not found'}
+            {t('myWork.taskDetail.taskNotFound', 'Task not found')}
           </h3>
           <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'To zadanie zostało usunięte lub nie jest już dla Ciebie dostępne. Odśwież listę zadań.'
-              : 'This task has been deleted or is no longer available to you. Refresh your task list.'}
+            {t('myWork.taskDetail.thisTaskHasBeen', 'This task has been deleted or is no longer available to you. Refresh your task list.')}
           </p>
         </div>
         {onClose && (
@@ -3893,7 +3841,7 @@ Return ONLY the final comment text.`;
             onClick={onClose}
             className="mt-1 rounded-lg border border-slate-200 dark:border-navy-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
           >
-            {isPolish ? 'Zamknij' : 'Close'}
+            {t('myWork.taskDetail.close', 'Close')}
           </button>
         )}
       </div>
@@ -3912,9 +3860,9 @@ Return ONLY the final comment text.`;
       const u = users.find((usr) => usr.id === ownerId);
       return u ? `${u.firstName} ${u.lastName}`.trim() : '';
     })();
-    const statusLabel = (STATUS_CONFIG[status] || STATUS_CONFIG.todo).label[isPolish ? 'pl' : 'en'];
+    const statusLabel = (STATUS_CONFIG[status] || STATUS_CONFIG.todo).label[t('myWork.taskDetail.en', 'en')];
     const priorityLabel = (PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium).label[
-      isPolish ? 'pl' : 'en'
+      t('myWork.taskDetail.en2', 'en')
     ];
     const dash = '—';
     const fmtDate = (v?: string) => {
@@ -3922,7 +3870,7 @@ Return ONLY the final comment text.`;
       const d = new Date(v);
       return Number.isNaN(d.getTime())
         ? v
-        : d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+        : d.toLocaleDateString(t('myWork.taskDetail.dToLocaleDateString', 'en-US'), {
             day: '2-digit',
             month: 'short',
             year: 'numeric',
@@ -3933,7 +3881,7 @@ Return ONLY the final comment text.`;
       const d = new Date(v);
       return Number.isNaN(d.getTime())
         ? v
-        : d.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+        : d.toLocaleString(t('myWork.taskDetail.dToLocaleString', 'en-US'), {
             day: '2-digit',
             month: 'short',
             hour: '2-digit',
@@ -3955,7 +3903,7 @@ Return ONLY the final comment text.`;
         // header ma wolny slot obok Save/mode-switcher, więc rozpisany
         // przycisk AI w tej sekcji był zbędnym duplikatem (Z29/Z30 go tu
         // zostawiły tylko z braku slotu M3 dla klasy S; teraz jest taniej).
-        label: isPolish ? 'Akcje' : 'Actions',
+        label: t('myWork.taskDetail.label8', 'Actions'),
         icon: Save,
         defaultOpen: true,
         children: (
@@ -3967,14 +3915,14 @@ Return ONLY the final comment text.`;
               className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
             >
               <Save size={14} className="text-c-text-muted" />
-              {isPolish ? 'Zapisz' : 'Save'}
+              {t('myWork.taskDetail.save', 'Save')}
             </button>
           </div>
         ),
       },
       {
         id: 'properties',
-        label: isPolish ? 'Właściwości' : 'Properties',
+        label: t('myWork.taskDetail.label9', 'Properties'),
         icon: Flag,
         defaultOpen: true,
         children: (
@@ -3983,36 +3931,36 @@ Return ONLY the final comment text.`;
               <thead>
                 <tr className="bg-c-surface-raised">
                   <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {isPolish ? 'Właściwość' : 'Property'}
+                    {t('myWork.taskDetail.property', 'Property')}
                   </th>
                   <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {isPolish ? 'Wartość' : 'Value'}
+                    {t('myWork.taskDetail.value', 'Value')}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className={tdKey}>{isPolish ? 'Status' : 'Status'}</td>
+                  <td className={tdKey}>{t('myWork.taskDetail.status', 'Status')}</td>
                   <td className={tdVal}>
                     <span className={pill}>{statusLabel}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className={tdKey}>{isPolish ? 'Priorytet' : 'Priority'}</td>
+                  <td className={tdKey}>{t('myWork.taskDetail.priority', 'Priority')}</td>
                   <td className={tdVal}>
                     <span className={pill}>{priorityLabel}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className={tdKey}>{isPolish ? 'Termin' : 'Due date'}</td>
+                  <td className={tdKey}>{t('myWork.taskDetail.dueDate', 'Due date')}</td>
                   <td className={`${tdVal} tabular-nums`}>{fmtDate(dueDate)}</td>
                 </tr>
                 <tr>
-                  <td className={tdKey}>{isPolish ? 'Właściciel' : 'Owner'}</td>
+                  <td className={tdKey}>{t('myWork.taskDetail.owner', 'Owner')}</td>
                   <td className={tdVal}>{ownerFullName || dash}</td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-c-text-muted">{isPolish ? 'Inicjatywa' : 'Initiative'}</td>
+                  <td className="px-3 py-2 text-c-text-muted">{t('myWork.taskDetail.initiative', 'Initiative')}</td>
                   <td className={tdValLast}>{initiativeName || dash}</td>
                 </tr>
               </tbody>
@@ -4022,16 +3970,16 @@ Return ONLY the final comment text.`;
       },
       {
         id: 'relations',
-        label: isPolish ? 'Powiązania' : 'Relations',
+        label: t('myWork.taskDetail.label10', 'Relations'),
         icon: Link2,
         defaultOpen: true,
         isEmpty: !initiativeName && attachments.length === 0,
-        emptyLabel: isPolish ? 'Brak powiązań' : 'No relations',
+        emptyLabel: t('myWork.taskDetail.emptyLabel', 'No relations'),
         children: (
           <div className="flex flex-col gap-2">
             {initiativeName ? (
               <div className="flex items-center gap-2">
-                <span className={panelKeyClass}>{isPolish ? 'Inicjatywa' : 'Initiative'}</span>
+                <span className={panelKeyClass}>{t('myWork.taskDetail.initiative2', 'Initiative')}</span>
                 <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
                   <Target size={12} className="text-c-text-muted shrink-0" />
                   <span className="truncate">{initiativeName}</span>
@@ -4040,7 +3988,7 @@ Return ONLY the final comment text.`;
             ) : null}
             {attachments.length > 0 ? (
               <div className="flex items-center justify-between gap-3">
-                <span className={panelKeyClass}>{isPolish ? 'Załączniki' : 'Attachments'}</span>
+                <span className={panelKeyClass}>{t('myWork.taskDetail.attachments', 'Attachments')}</span>
                 <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
                   {attachments.length}
                 </span>
@@ -4051,19 +3999,19 @@ Return ONLY the final comment text.`;
       },
       {
         id: 'comments',
-        label: isPolish ? 'Komentarze' : 'Comments',
+        label: t('myWork.taskDetail.label11', 'Comments'),
         icon: MessageSquare,
         defaultOpen: false,
         badge: comments.length,
         isEmpty: comments.length === 0,
-        emptyLabel: isPolish ? 'Brak komentarzy' : 'No comments',
+        emptyLabel: t('myWork.taskDetail.emptyLabel2', 'No comments'),
         children: (
           <ul className="flex flex-col gap-3">
             {comments.slice(0, 6).map((c) => (
               <li key={c.id} className="flex flex-col gap-0.5">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-xs font-semibold text-c-text truncate">
-                    {c.authorName || (isPolish ? 'Użytkownik' : 'User')}
+                    {c.authorName || (t('myWork.taskDetail.user', 'User'))}
                   </span>
                   <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
                     {fmtDateTime(c.createdAt)}
@@ -4077,12 +4025,12 @@ Return ONLY the final comment text.`;
       },
       {
         id: 'history',
-        label: isPolish ? 'Historia / AI' : 'History / AI',
+        label: t('myWork.taskDetail.label12', 'History / AI'),
         icon: History,
         defaultOpen: false,
         badge: activityLog.length,
         isEmpty: activityLog.length === 0,
-        emptyLabel: isPolish ? 'Brak historii' : 'No history',
+        emptyLabel: t('myWork.taskDetail.emptyLabel3', 'No history'),
         children: (
           <ul className="flex flex-col gap-2.5">
             {activityLog.slice(0, 8).map((entry) => (
@@ -4153,9 +4101,7 @@ Return ONLY the final comment text.`;
               {dueDate && dueDateAlertBorderClass && (
                 <div className="mb-3 px-4 py-2 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">
                   <AlertCircle size={14} />
-                  {isPolish
-                    ? 'Uwaga: zbliża się lub minął termin!'
-                    : 'Warning: deadline approaching or overdue!'}
+                  {t('myWork.taskDetail.warningDeadlineApproachingOr', 'Warning: deadline approaching or overdue!')}
                 </div>
               )}
 
@@ -4165,7 +4111,7 @@ Return ONLY the final comment text.`;
                   <div className="flex items-center gap-2 mb-2">
                     <AlertCircle size={14} className="text-danger-500 dark:text-danger-400" />
                     <span className="text-xs font-semibold text-danger-600 dark:text-danger-400 uppercase tracking-wide">
-                      {isPolish ? 'Powód blokady' : 'Blocked Reason'}
+                      {t('myWork.taskDetail.blockedReason', 'Blocked Reason')}
                     </span>
                   </div>
                   <textarea
@@ -4174,7 +4120,7 @@ Return ONLY the final comment text.`;
                     rows={2}
                     className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-navy-800/60 border border-danger-200/40 dark:border-danger-500/20 text-slate-700 dark:text-slate-300 placeholder-danger-300 dark:placeholder-danger-500/50 focus:outline-none focus:border-danger-400 resize-none"
                     placeholder={
-                      isPolish ? 'Opisz powód blokady...' : 'Describe blocking reason...'
+                      t('myWork.taskDetail.describeBlockingReason', 'Describe blocking reason...')
                     }
                   />
                 </div>
@@ -4188,13 +4134,9 @@ Return ONLY the final comment text.`;
                   {sourceType === 'decision' && <Scale size={14} className="text-blue-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
                     {sourceType === 'idea'
-                      ? isPolish
-                        ? 'Utworzone z pomysłu'
-                        : 'Created from Idea'
+                      ? t('myWork.taskDetail.createdFromIdea', 'Created from Idea')
                       : sourceType === 'notebook'
-                        ? isPolish
-                          ? 'Utworzone z notatki'
-                          : 'Created from Note'
+                        ? t('myWork.taskDetail.createdFromNote', 'Created from Note')
                         : `Created from ${sourceType}`}
                   </span>
                   <button
@@ -4213,12 +4155,8 @@ Return ONLY the final comment text.`;
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
                     {sourceType === 'idea'
-                      ? isPolish
-                        ? 'Pokaż źródło w mapie →'
-                        : 'View source in mindmap →'
-                      : isPolish
-                        ? 'Pokaż źródło →'
-                        : 'View source →'}
+                      ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
+                      : t('myWork.taskDetail.viewSource', 'View source →')}
                   </button>
                 </div>
               )}
@@ -4237,14 +4175,14 @@ Return ONLY the final comment text.`;
                         if (status === 'blocked') setBlockedReason('');
                         addActivityLogEntry(
                           'status_change',
-                          isPolish ? 'Rozpoczęto zadanie' : 'Task started',
+                          t('myWork.taskDetail.taskStarted', 'Task started'),
                           old,
                           'in_progress'
                         );
                       }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-400/50 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
                     >
-                      <Play size={13} /> {isPolish ? 'Rozpocznij' : 'Start'}
+                      <Play size={13} /> {t('myWork.taskDetail.start', 'Start')}
                     </button>
                   )}
 
@@ -4255,14 +4193,14 @@ Return ONLY the final comment text.`;
                         setStatus('review');
                         addActivityLogEntry(
                           'status_change',
-                          isPolish ? 'Wysłano do przeglądu' : 'Sent to review',
+                          t('myWork.taskDetail.sentToReview', 'Sent to review'),
                           'in_progress',
                           'review'
                         );
                       }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                     >
-                      <Eye size={13} /> {isPolish ? 'Do przeglądu' : 'Send to Review'}
+                      <Eye size={13} /> {t('myWork.taskDetail.sendToReview', 'Send to Review')}
                     </button>
                   )}
 
@@ -4274,14 +4212,14 @@ Return ONLY the final comment text.`;
                         setStatus('done');
                         addActivityLogEntry(
                           'status_change',
-                          isPolish ? 'Zadanie ukończone' : 'Task completed',
+                          t('myWork.taskDetail.taskCompleted', 'Task completed'),
                           old,
                           'done'
                         );
                       }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
                     >
-                      <CheckCircle2 size={13} /> {isPolish ? 'Ukończ' : 'Complete'}
+                      <CheckCircle2 size={13} /> {t('myWork.taskDetail.complete', 'Complete')}
                     </button>
                   )}
 
@@ -4293,14 +4231,14 @@ Return ONLY the final comment text.`;
                         setStatus('blocked');
                         addActivityLogEntry(
                           'status_change',
-                          isPolish ? 'Zadanie zablokowane' : 'Task blocked',
+                          t('myWork.taskDetail.taskBlocked', 'Task blocked'),
                           old,
                           'blocked'
                         );
                       }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
                     >
-                      <AlertCircle size={13} /> {isPolish ? 'Zablokuj' : 'Block'}
+                      <AlertCircle size={13} /> {t('myWork.taskDetail.block', 'Block')}
                     </button>
                   )}
 
@@ -4311,14 +4249,14 @@ Return ONLY the final comment text.`;
                         setStatus('in_progress');
                         addActivityLogEntry(
                           'status_change',
-                          isPolish ? 'Wznowiono zadanie' : 'Task reopened',
+                          t('myWork.taskDetail.taskReopened', 'Task reopened'),
                           'done',
                           'in_progress'
                         );
                       }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-400/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
                     >
-                      <Play size={13} /> {isPolish ? 'Wznów' : 'Reopen'}
+                      <Play size={13} /> {t('myWork.taskDetail.reopen', 'Reopen')}
                     </button>
                   )}
 
@@ -4327,14 +4265,12 @@ Return ONLY the final comment text.`;
                     onClick={() => {
                       // scroll to assignee field or open a quick picker
                       toast(
-                        isPolish
-                          ? 'Zmień wykonawcę w polu Wykonawca powyżej'
-                          : 'Change assignee in the Assignee field above'
+                        t('myWork.taskDetail.changeAssigneeInThe', 'Change assignee in the Assignee field above')
                       );
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                   >
-                    <Share2 size={13} /> {isPolish ? 'Przydziel' : 'Reassign'}
+                    <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
                   </button>
 
                   {/* ── Section-specific AI actions (right-aligned) ── */}
@@ -4348,9 +4284,7 @@ Return ONLY the final comment text.`;
                           : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                       } disabled:opacity-40 disabled:cursor-not-allowed`}
                       title={
-                        isPolish
-                          ? 'Wygeneruj plan implementacji przez AI'
-                          : 'Generate implementation plan with AI'
+                        t('myWork.taskDetail.generateImplementationPlanWith', 'Generate implementation plan with AI')
                       }
                     >
                       {isGeneratingIdeas ? (
@@ -4358,7 +4292,7 @@ Return ONLY the final comment text.`;
                       ) : (
                         <Sparkles size={13} />
                       )}
-                      {isPolish ? 'Stwórz pomysły' : 'Create Ideas'}
+                      {t('myWork.taskDetail.createIdeas', 'Create Ideas')}
                     </button>
                   )}
 
@@ -4371,14 +4305,14 @@ Return ONLY the final comment text.`;
                           ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
                           : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                       } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={isPolish ? 'Analizuj ryzyka przez AI' : 'Analyze risks with AI'}
+                      title={t('myWork.taskDetail.title13', 'Analyze risks with AI')}
                     >
                       {isGeneratingRisks ? (
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
                         <Sparkles size={13} />
                       )}
-                      {isPolish ? 'Analizuj ryzyka' : 'Analyze risks'}
+                      {t('myWork.taskDetail.analyzeRisks', 'Analyze risks')}
                     </button>
                   )}
 
@@ -4392,7 +4326,7 @@ Return ONLY the final comment text.`;
                           : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                       } disabled:opacity-40 disabled:cursor-not-allowed`}
                       title={
-                        isPolish ? 'Wygeneruj checklistę przez AI' : 'Generate checklist with AI'
+                        t('myWork.taskDetail.generateChecklistWithAI', 'Generate checklist with AI')
                       }
                     >
                       {isGeneratingChecklist ? (
@@ -4400,7 +4334,7 @@ Return ONLY the final comment text.`;
                       ) : (
                         <Sparkles size={13} />
                       )}
-                      {isPolish ? 'Stwórz checklistę' : 'Create Checklist'}
+                      {t('myWork.taskDetail.createChecklist', 'Create Checklist')}
                     </button>
                   )}
 
@@ -4413,14 +4347,14 @@ Return ONLY the final comment text.`;
                           ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
                           : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                       } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={isPolish ? 'Generuj komentarze przez AI' : 'Generate AI comments'}
+                      title={t('myWork.taskDetail.title14', 'Generate AI comments')}
                     >
                       {isGeneratingAIComment ? (
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
                         <Sparkles size={13} />
                       )}
-                      {isPolish ? 'AI komentarze' : 'AI comments'}
+                      {t('myWork.taskDetail.aIComments', 'AI comments')}
                     </button>
                   )}
 
@@ -4438,9 +4372,7 @@ Return ONLY the final comment text.`;
                           const aiRes = await Api.post('/ai/chat', {
                             message: prompt,
                             history: [],
-                            systemInstruction: isPolish
-                              ? 'Jesteś asystentem PMO. Zwróć tylko prawidłowy JSON.'
-                              : 'You are a PMO assistant. Return valid JSON only.',
+                            systemInstruction: t('myWork.taskDetail.systemInstruction2', 'You are a PMO assistant. Return valid JSON only.'),
                             roleName: 'RACI Team Advisor',
                           });
                           const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -4507,9 +4439,7 @@ Return ONLY the final comment text.`;
                             }));
                           setStakeholders(fallbackTeam);
                           toast.success(
-                            isPolish
-                              ? 'Zastosowano domyślny skład RACI.'
-                              : 'Applied fallback RACI team.'
+                            t('myWork.taskDetail.appliedFallbackRACITeam', 'Applied fallback RACI team.')
                           );
                         } finally {
                           setIsSuggestingStakeholders(false);
@@ -4521,14 +4451,14 @@ Return ONLY the final comment text.`;
                           ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
                           : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                       } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={isPolish ? 'Generuj RACI przez AI' : 'Generate RACI with AI'}
+                      title={t('myWork.taskDetail.title15', 'Generate RACI with AI')}
                     >
                       {isSuggestingStakeholders ? (
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
                         <Sparkles size={13} />
                       )}
-                      {isPolish ? 'Generuj RACI' : 'Generate RACI'}
+                      {t('myWork.taskDetail.generateRACI', 'Generate RACI')}
                     </button>
                   )}
                 </div>
@@ -4559,7 +4489,7 @@ Return ONLY the final comment text.`;
               <ArtifactRightPanel
                 sections={rightPanelSections}
                 className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
-                ariaLabel={isPolish ? 'Szczegóły zadania' : 'Task details'}
+                ariaLabel={t('myWork.taskDetail.ariaLabel', 'Task details')}
               />
             </div>
           </div>
@@ -4581,12 +4511,8 @@ Return ONLY the final comment text.`;
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {editingStakeholderId === '__new__'
-                    ? isPolish
-                      ? 'Dodaj osobę do RACI'
-                      : 'Add RACI person'
-                    : isPolish
-                      ? 'Edytuj osobę RACI'
-                      : 'Edit RACI person'}
+                    ? t('myWork.taskDetail.addRACIPerson', 'Add RACI person')
+                    : t('myWork.taskDetail.editRACIPerson', 'Edit RACI person')}
                 </h4>
                 <button
                   className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
@@ -4599,13 +4525,11 @@ Return ONLY the final comment text.`;
                 </button>
               </div>
               <div className={governanceModalHintClass}>
-                {isPolish
-                  ? 'Tutaj opisujemy i konfigurujemy odpowiedzialność osoby w RACI oraz kanały komunikacji.'
-                  : 'Use this window to describe and configure person responsibility in RACI and communication channels.'}
+                {t('myWork.taskDetail.useThisWindowTo', 'Use this window to describe and configure person responsibility in RACI and communication channels.')}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Osoba' : 'Person'}
+                  {t('myWork.taskDetail.person2', 'Person')}
                   <select
                     value={stakeholderDraft.userId}
                     onChange={(e) => {
@@ -4629,7 +4553,7 @@ Return ONLY the final comment text.`;
                   </select>
                 </label>
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Rola' : 'Role'}
+                  {t('myWork.taskDetail.role2', 'Role')}
                   <select
                     value={stakeholderDraft.role}
                     onChange={(e) =>
@@ -4641,28 +4565,28 @@ Return ONLY the final comment text.`;
                     className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                   >
                     <option value="responsible">
-                      {isPolish ? 'Odpowiedzialny' : 'Responsible'}
+                      {t('myWork.taskDetail.responsible2', 'Responsible')}
                     </option>
-                    <option value="accountable">{isPolish ? 'Rozliczalny' : 'Accountable'}</option>
-                    <option value="consulted">{isPolish ? 'Konsultowany' : 'Consulted'}</option>
-                    <option value="informed">{isPolish ? 'Informowany' : 'Informed'}</option>
+                    <option value="accountable">{t('myWork.taskDetail.accountable2', 'Accountable')}</option>
+                    <option value="consulted">{t('myWork.taskDetail.consulted2', 'Consulted')}</option>
+                    <option value="informed">{t('myWork.taskDetail.informed2', 'Informed')}</option>
                   </select>
                 </label>
               </div>
               <div className="space-y-2 flex-1">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Kanały notyfikacji' : 'Notification channels'}
+                  {t('myWork.taskDetail.notificationChannels', 'Notification channels')}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                      {t('myWork.taskDetail.coreChannels', 'Core channels')}
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
                       {[
                         {
                           key: 'enabled',
-                          label: isPolish ? 'Aktywne' : 'Enabled',
+                          label: t('myWork.taskDetail.label13', 'Enabled'),
                           active: stakeholderDraft.notificationSettings.enabled,
                           toggle: () =>
                             setStakeholderDraft({
@@ -4713,7 +4637,7 @@ Return ONLY the final comment text.`;
                   </div>
                   <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                      {t('myWork.taskDetail.integrationChannels', 'Integration channels')}
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
                       {integrationChannelCatalog.map((channel) => {
@@ -4749,7 +4673,7 @@ Return ONLY the final comment text.`;
                   </div>
                 </div>
                 <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                  {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                  {t('myWork.taskDetail.syncTargets', 'Sync targets')}
                   <input
                     value={(stakeholderDraft.notificationSettings.syncTargets || []).join(', ')}
                     onChange={(e) =>
@@ -4777,7 +4701,7 @@ Return ONLY the final comment text.`;
                   }}
                   className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('myWork.taskDetail.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -4801,7 +4725,7 @@ Return ONLY the final comment text.`;
                   }}
                   className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                 >
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('myWork.taskDetail.save2', 'Save')}
                 </button>
               </div>
             </div>
@@ -4822,18 +4746,14 @@ Return ONLY the final comment text.`;
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {editingReminderId === '__new__'
-                    ? isPolish
-                      ? 'Dodaj reminder'
-                      : 'Add reminder'
-                    : isPolish
-                      ? 'Edytuj reminder'
-                      : 'Edit reminder'}
+                    ? t('myWork.taskDetail.addReminder2', 'Add reminder')
+                    : t('myWork.taskDetail.editReminder', 'Edit reminder')}
                 </h4>
                 <div className="inline-flex items-center gap-2">
                   <button
                     disabled={isSuggestingStakeholders}
                     onClick={() =>
-                      toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...')
+                      toast(t('myWork.taskDetail.toast3', 'AI will fill the form...'))
                     }
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
@@ -4851,13 +4771,11 @@ Return ONLY the final comment text.`;
                 </div>
               </div>
               <div className={governanceModalHintClass}>
-                {isPolish
-                  ? 'Tutaj opisujemy cel remindera: kiedy ma się uruchamiać, do kogo trafić i jaką wiadomość wysłać.'
-                  : 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.'}
+                {t('myWork.taskDetail.useThisWindowTo2', 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.')}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Typ' : 'Type'}
+                  {t('myWork.taskDetail.type3', 'Type')}
                   <select
                     value={reminderDraft.type}
                     onChange={(e) =>
@@ -4868,12 +4786,12 @@ Return ONLY the final comment text.`;
                     }
                     className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                   >
-                    <option value="before_due">{isPolish ? 'Przed terminem' : 'Before due'}</option>
-                    <option value="after_due">{isPolish ? 'Po terminie' : 'After due'}</option>
+                    <option value="before_due">{t('myWork.taskDetail.beforeDue2', 'Before due')}</option>
+                    <option value="after_due">{t('myWork.taskDetail.afterDue2', 'After due')}</option>
                   </select>
                 </label>
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Dni' : 'Days'}
+                  {t('myWork.taskDetail.days2', 'Days')}
                   <input
                     type="number"
                     min={0}
@@ -4886,7 +4804,7 @@ Return ONLY the final comment text.`;
                 </label>
               </div>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                {isPolish ? 'Odbiorcy' : 'Recipients'}
+                {t('myWork.taskDetail.recipients2', 'Recipients')}
                 <select
                   value={reminderDraft.recipients}
                   onChange={(e) =>
@@ -4894,9 +4812,9 @@ Return ONLY the final comment text.`;
                   }
                   className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                 >
-                  <option value="both">{isPolish ? 'Obaj' : 'Both'}</option>
+                  <option value="both">{t('myWork.taskDetail.both', 'Both')}</option>
                   <option value="stakeholders">
-                    {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                    {t('myWork.taskDetail.stakeholders', 'Stakeholders')}
                   </option>
                   <option value="owner">Owner</option>
                 </select>
@@ -4910,12 +4828,12 @@ Return ONLY the final comment text.`;
                       setReminderDraft({ ...reminderDraft, enabled: e.target.checked })
                     }
                   />
-                  {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                  {t('myWork.taskDetail.ruleEnabled', 'Rule enabled')}
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                      {t('myWork.taskDetail.coreChannels2', 'Core channels')}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {(
@@ -4963,7 +4881,7 @@ Return ONLY the final comment text.`;
                   </div>
                   <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                      {t('myWork.taskDetail.integrationChannels2', 'Integration channels')}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {integrationChannelCatalog.map((channel) => {
@@ -5003,7 +4921,7 @@ Return ONLY the final comment text.`;
                   </div>
                 </div>
                 <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                  {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                  {t('myWork.taskDetail.syncTargets2', 'Sync targets')}
                   <input
                     value={ensureDeliveryConfig(
                       reminderDraft.delivery,
@@ -5027,7 +4945,7 @@ Return ONLY the final comment text.`;
                 </label>
               </div>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                {isPolish ? 'Wiadomość' : 'Message'}
+                {t('myWork.taskDetail.message2', 'Message')}
                 <textarea
                   value={reminderDraft.message || ''}
                   onChange={(e) => setReminderDraft({ ...reminderDraft, message: e.target.value })}
@@ -5043,7 +4961,7 @@ Return ONLY the final comment text.`;
                   }}
                   className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('myWork.taskDetail.cancel2', 'Cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -5066,7 +4984,7 @@ Return ONLY the final comment text.`;
                   }}
                   className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                 >
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('myWork.taskDetail.save3', 'Save')}
                 </button>
               </div>
             </div>
@@ -5087,18 +5005,14 @@ Return ONLY the final comment text.`;
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {editingEscalationId === '__new__'
-                    ? isPolish
-                      ? 'Dodaj regułę eskalacji'
-                      : 'Add escalation rule'
-                    : isPolish
-                      ? 'Edytuj regułę eskalacji'
-                      : 'Edit escalation rule'}
+                    ? t('myWork.taskDetail.addEscalationRule', 'Add escalation rule')
+                    : t('myWork.taskDetail.editEscalationRule', 'Edit escalation rule')}
                 </h4>
                 <div className="inline-flex items-center gap-2">
                   <button
                     disabled={isSuggestingStakeholders}
                     onClick={() =>
-                      toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...')
+                      toast(t('myWork.taskDetail.toast4', 'AI will fill the form...'))
                     }
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
@@ -5116,13 +5030,11 @@ Return ONLY the final comment text.`;
                 </div>
               </div>
               <div className={governanceModalHintClass}>
-                {isPolish
-                  ? 'Tutaj opisujemy regułę eskalacji: progi, czas eskalacji, osobę docelową i komunikat.'
-                  : 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.'}
+                {t('myWork.taskDetail.useThisWindowTo3', 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.')}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Próg ostrzeżenia (dni)' : 'Warning threshold (days)'}
+                  {t('myWork.taskDetail.warningThresholdDays', 'Warning threshold (days)')}
                   <input
                     type="number"
                     min={0}
@@ -5137,7 +5049,7 @@ Return ONLY the final comment text.`;
                   />
                 </label>
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Próg krytyczny (dni)' : 'Critical threshold (days)'}
+                  {t('myWork.taskDetail.criticalThresholdDays', 'Critical threshold (days)')}
                   <input
                     type="number"
                     min={0}
@@ -5152,7 +5064,7 @@ Return ONLY the final comment text.`;
                   />
                 </label>
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Eskaluj po (dni)' : 'Escalate after (days)'}
+                  {t('myWork.taskDetail.escalateAfterDays', 'Escalate after (days)')}
                   <input
                     type="number"
                     min={1}
@@ -5167,7 +5079,7 @@ Return ONLY the final comment text.`;
                   />
                 </label>
                 <label className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                  {t('myWork.taskDetail.escalateTo2', 'Escalate to')}
                   <select
                     value={escalationDraft.escalateTo}
                     onChange={(e) => {
@@ -5182,7 +5094,7 @@ Return ONLY the final comment text.`;
                     }}
                     className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                   >
-                    <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                    <option value="">{t('myWork.taskDetail.select', 'Select')}</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.firstName} {u.lastName}
@@ -5192,7 +5104,7 @@ Return ONLY the final comment text.`;
                 </label>
               </div>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                {isPolish ? 'Tryb eskalacji' : 'Escalation mode'}
+                {t('myWork.taskDetail.escalationMode', 'Escalation mode')}
                 <select
                   value={escalationDraft.escalationMode}
                   onChange={(e) =>
@@ -5218,12 +5130,12 @@ Return ONLY the final comment text.`;
                     setEscalationDraft({ ...escalationDraft, enabled: e.target.checked })
                   }
                 />
-                {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                {t('myWork.taskDetail.ruleEnabled2', 'Rule enabled')}
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                    {t('myWork.taskDetail.coreChannels3', 'Core channels')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(
@@ -5260,7 +5172,7 @@ Return ONLY the final comment text.`;
                 </div>
                 <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                    {t('myWork.taskDetail.integrationChannels3', 'Integration channels')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {integrationChannelCatalog.map((channel) => {
@@ -5297,7 +5209,7 @@ Return ONLY the final comment text.`;
                 </div>
               </div>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                {t('myWork.taskDetail.syncTargets3', 'Sync targets')}
                 <input
                   value={ensureDeliveryConfig(escalationDraft.delivery).syncTargets.join(', ')}
                   onChange={(e) =>
@@ -5317,7 +5229,7 @@ Return ONLY the final comment text.`;
                 />
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                {isPolish ? 'Komunikat eskalacji' : 'Escalation message'}
+                {t('myWork.taskDetail.escalationMessage', 'Escalation message')}
                 <textarea
                   value={escalationDraft.message || ''}
                   onChange={(e) =>
@@ -5335,7 +5247,7 @@ Return ONLY the final comment text.`;
                   }}
                   className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('myWork.taskDetail.cancel3', 'Cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -5358,7 +5270,7 @@ Return ONLY the final comment text.`;
                   }}
                   className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                 >
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('myWork.taskDetail.save4', 'Save')}
                 </button>
               </div>
             </div>
@@ -5408,7 +5320,7 @@ Return ONLY the final comment text.`;
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
-                  placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
+                  placeholder={t('myWork.taskDetail.placeholder3', 'Task title...')}
                   autoFocus={!taskId}
                 />
                 {taskId && (
@@ -5430,10 +5342,10 @@ Return ONLY the final comment text.`;
                   onClick={() => void handleSave()}
                   disabled={saving}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                  title={isPolish ? 'Zapisz' : 'Save'}
+                  title={t('myWork.taskDetail.title16', 'Save')}
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+                  <span>{t('myWork.taskDetail.save5', 'Save')}</span>
                 </motion.button>
 
                 <motion.button
@@ -5441,10 +5353,10 @@ Return ONLY the final comment text.`;
                   whileTap={{ scale: 0.98 }}
                   onClick={handleOpenChat}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-primary-500/40 dark:border-primary-400/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 dark:hover:bg-primary-500/10 text-sm font-semibold transition shadow-sm"
-                  title={isPolish ? 'Otwórz czat do tego zadania' : 'Open task chat'}
+                  title={t('myWork.taskDetail.title17', 'Open task chat')}
                 >
                   <MessageSquare size={16} />
-                  <span>{isPolish ? 'Czat' : 'Chat'}</span>
+                  <span>{t('myWork.taskDetail.chat', 'Chat')}</span>
                 </motion.button>
               </div>
             </div>
@@ -5466,7 +5378,7 @@ Return ONLY the final comment text.`;
                     <FileText size={18} className="text-blue-500 dark:text-blue-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Opis zadania' : 'Task description'}
+                    {t('myWork.taskDetail.taskDescription2', 'Task description')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -5490,7 +5402,7 @@ Return ONLY the final comment text.`;
                         }}
                         disabled={isGeneratingDescription}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
-                        title={isPolish ? 'Wygeneruj opis AI' : 'Generate AI description'}
+                        title={t('myWork.taskDetail.title18', 'Generate AI description')}
                       >
                         {isGeneratingDescription ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -5525,7 +5437,7 @@ Return ONLY the final comment text.`;
                         rows={4}
                         className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition"
                         placeholder={
-                          isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'
+                          t('myWork.taskDetail.describeTaskDetails', 'Describe task details...')
                         }
                       />
                     </div>
@@ -5550,7 +5462,7 @@ Return ONLY the final comment text.`;
                     <Target size={18} className="text-emerald-500 dark:text-emerald-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
+                    {t('myWork.taskDetail.expectedOutcome3', 'Expected Outcome')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -5574,7 +5486,7 @@ Return ONLY the final comment text.`;
                         }}
                         disabled={isGeneratingOutcome}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
-                        title={isPolish ? 'Wygeneruj rezultat AI' : 'Generate AI outcome'}
+                        title={t('myWork.taskDetail.title19', 'Generate AI outcome')}
                       >
                         {isGeneratingOutcome ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -5609,9 +5521,7 @@ Return ONLY the final comment text.`;
                         rows={3}
                         className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition"
                         placeholder={
-                          isPolish
-                            ? 'Co ma być efektem tego zadania?'
-                            : 'What should be the outcome of this task?'
+                          t('myWork.taskDetail.whatShouldBeThe', 'What should be the outcome of this task?')
                         }
                       />
                     </div>
@@ -5679,7 +5589,7 @@ Return ONLY the final comment text.`;
                     <Scale size={18} className="text-amber-500 dark:text-amber-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Powiązane decyzje' : 'Related Decisions'}
+                    {t('myWork.taskDetail.relatedDecisions', 'Related Decisions')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -5721,12 +5631,10 @@ Return ONLY the final comment text.`;
                             className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Brak powiązanych decyzji' : 'No related decisions'}
+                            {t('myWork.taskDetail.noRelatedDecisions', 'No related decisions')}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-                            {isPolish
-                              ? 'Powiąż istniejącą lub utwórz nową decyzję'
-                              : 'Link existing or create new decision'}
+                            {t('myWork.taskDetail.linkExistingOrCreate', 'Link existing or create new decision')}
                           </p>
                         </div>
                       ) : (
@@ -5794,7 +5702,7 @@ Return ONLY the final comment text.`;
                                         </span>
                                         {isBlocking && (
                                           <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                                            ⚠️ {isPolish ? 'Blokuje' : 'Blocking'}
+                                            ⚠️ {t('myWork.taskDetail.blocking', 'Blocking')}
                                           </span>
                                         )}
                                       </div>
@@ -5805,7 +5713,7 @@ Return ONLY the final comment text.`;
                                       <button
                                         onClick={() => onOpenDecision(rel.decisionId)}
                                         className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition"
-                                        title={isPolish ? 'Otwórz decyzję' : 'Open decision'}
+                                        title={t('myWork.taskDetail.title20', 'Open decision')}
                                       >
                                         <ExternalLink size={14} />
                                       </button>
@@ -5827,9 +5735,7 @@ Return ONLY the final comment text.`;
                                           );
                                           setRelatedDecisions(prev); // rollback
                                           toast.error(
-                                            isPolish
-                                              ? 'Nie udało się usunąć powiązania'
-                                              : 'Failed to remove link'
+                                            t('myWork.taskDetail.failedToRemoveLink', 'Failed to remove link')
                                           );
                                         }
                                       }}
@@ -5855,23 +5761,21 @@ Return ONLY the final comment text.`;
                           <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
                             <Plus size={16} />
                             <span className="text-sm font-semibold">
-                              {isPolish ? 'Nowa decyzja' : 'New Decision'}
+                              {t('myWork.taskDetail.newDecision', 'New Decision')}
                             </span>
                           </div>
 
                           {/* Decision title */}
                           <div>
                             <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                              {isPolish ? 'Tytuł decyzji *' : 'Decision title *'}
+                              {t('myWork.taskDetail.decisionTitle', 'Decision title *')}
                             </label>
                             <input
                               type="text"
                               value={newDecisionTitle}
                               onChange={(e) => setNewDecisionTitle(e.target.value)}
                               placeholder={
-                                isPolish
-                                  ? 'Np. Zatwierdzenie budżetu projektu'
-                                  : 'E.g. Project budget approval'
+                                t('myWork.taskDetail.eGProjectBudget', 'E.g. Project budget approval')
                               }
                               className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
                               autoFocus
@@ -5881,17 +5785,13 @@ Return ONLY the final comment text.`;
                           {/* Decision description */}
                           <div>
                             <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                              {isPolish
-                                ? 'Opis problemu / kontekst'
-                                : 'Problem description / context'}
+                              {t('myWork.taskDetail.problemDescriptionContext', 'Problem description / context')}
                             </label>
                             <textarea
                               value={newDecisionDescription}
                               onChange={(e) => setNewDecisionDescription(e.target.value)}
                               placeholder={
-                                isPolish
-                                  ? 'Opisz problem wymagający decyzji...'
-                                  : 'Describe the problem requiring decision...'
+                                t('myWork.taskDetail.describeTheProblemRequiring', 'Describe the problem requiring decision...')
                               }
                               rows={2}
                               className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400 resize-none"
@@ -5901,7 +5801,7 @@ Return ONLY the final comment text.`;
                           {/* Relationship type */}
                           <div>
                             <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                              {isPolish ? 'Typ relacji z zadaniem' : 'Relationship with task'}
+                              {t('myWork.taskDetail.relationshipWithTask', 'Relationship with task')}
                             </label>
                             <div className="flex flex-wrap gap-2">
                               {[
@@ -5961,24 +5861,20 @@ Return ONLY the final comment text.`;
                               onClick={async () => {
                                 if (!newDecisionTitle.trim()) {
                                   toast.error(
-                                    isPolish ? 'Podaj tytuł decyzji' : 'Enter decision title'
+                                    t('myWork.taskDetail.enterDecisionTitle', 'Enter decision title')
                                   );
                                   return;
                                 }
                                 if (!taskId) {
                                   toast.error(
-                                    isPolish
-                                      ? 'Najpierw zapisz zadanie, aby utworzyć decyzję'
-                                      : 'Save the task first to create a decision'
+                                    t('myWork.taskDetail.saveTheTaskFirst', 'Save the task first to create a decision')
                                   );
                                   return;
                                 }
                                 const decisionMakerId = currentUser?.id || ownerId || assigneeId;
                                 if (!decisionMakerId) {
                                   toast.error(
-                                    isPolish
-                                      ? 'Brak osoby decydującej — nie można utworzyć decyzji'
-                                      : 'No decision maker available — cannot create decision'
+                                    t('myWork.taskDetail.noDecisionMakerAvailable', 'No decision maker available — cannot create decision')
                                   );
                                   return;
                                 }
@@ -6032,16 +5928,12 @@ Return ONLY the final comment text.`;
                                       : `Created decision: ${newDecisionTitle}`
                                   );
                                   toast.success(
-                                    isPolish
-                                      ? 'Decyzja utworzona i powiązana'
-                                      : 'Decision created and linked'
+                                    t('myWork.taskDetail.decisionCreatedAndLinked', 'Decision created and linked')
                                   );
                                 } catch (err) {
                                   console.error('[TaskDetailView] Failed to create decision', err);
                                   toast.error(
-                                    isPolish
-                                      ? 'Nie udało się utworzyć decyzji'
-                                      : 'Failed to create decision'
+                                    t('myWork.taskDetail.failedToCreateDecision', 'Failed to create decision')
                                   );
                                 } finally {
                                   setCreatingDecision(false);
@@ -6051,7 +5943,7 @@ Return ONLY the final comment text.`;
                             >
                               <Plus size={16} />
                               <span className="text-sm">
-                                {isPolish ? 'Utwórz decyzję' : 'Create Decision'}
+                                {t('myWork.taskDetail.createDecision', 'Create Decision')}
                               </span>
                             </button>
                             <button
@@ -6062,15 +5954,13 @@ Return ONLY the final comment text.`;
                               }}
                               className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 transition"
                             >
-                              <span className="text-sm">{isPolish ? 'Anuluj' : 'Cancel'}</span>
+                              <span className="text-sm">{t('myWork.taskDetail.cancel4', 'Cancel')}</span>
                             </button>
                           </div>
 
                           {/* Info about full editor */}
                           <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 text-center">
-                            {isPolish
-                              ? 'Decyzja zostanie utworzona w trybie szkicu. Możesz ją uzupełnić w pełnym edytorze.'
-                              : 'Decision will be created as draft. You can complete it in full editor.'}
+                            {t('myWork.taskDetail.decisionWillBeCreated', 'Decision will be created as draft. You can complete it in full editor.')}
                           </p>
                         </motion.div>
                       )}
@@ -6092,9 +5982,7 @@ Return ONLY the final comment text.`;
                               value={decisionSearchQuery}
                               onChange={(e) => setDecisionSearchQuery(e.target.value)}
                               placeholder={
-                                isPolish
-                                  ? 'Szukaj istniejących decyzji...'
-                                  : 'Search existing decisions...'
+                                t('myWork.taskDetail.searchExistingDecisions', 'Search existing decisions...')
                               }
                               className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
                               autoFocus
@@ -6117,9 +6005,7 @@ Return ONLY the final comment text.`;
                                   onClick={async () => {
                                     if (!taskId) {
                                       toast.error(
-                                        isPolish
-                                          ? 'Najpierw zapisz zadanie, aby powiązać decyzję'
-                                          : 'Save the task first to link a decision'
+                                        t('myWork.taskDetail.saveTheTaskFirst2', 'Save the task first to link a decision')
                                       );
                                       return;
                                     }
@@ -6143,10 +6029,10 @@ Return ONLY the final comment text.`;
                                       setDecisionSearchQuery('');
                                       addActivityLogEntry(
                                         'edit',
-                                        isPolish ? 'Powiązano decyzję' : 'Linked decision'
+                                        t('myWork.taskDetail.linkedDecision', 'Linked decision')
                                       );
                                       toast.success(
-                                        isPolish ? 'Powiązano decyzję' : 'Decision linked'
+                                        t('myWork.taskDetail.decisionLinked', 'Decision linked')
                                       );
                                     } catch (err) {
                                       console.error(
@@ -6154,9 +6040,7 @@ Return ONLY the final comment text.`;
                                         err
                                       );
                                       toast.error(
-                                        isPolish
-                                          ? 'Nie udało się powiązać decyzji'
-                                          : 'Failed to link decision'
+                                        t('myWork.taskDetail.failedToLinkDecision', 'Failed to link decision')
                                       );
                                     } finally {
                                       setLinkingDecisionId(null);
@@ -6184,7 +6068,7 @@ Return ONLY the final comment text.`;
                                 !relatedDecisions.some((r) => r.decisionId === d.id)
                             ).length === 0 && (
                               <p className="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 py-4">
-                                {isPolish ? 'Brak pasujących decyzji' : 'No matching decisions'}
+                                {t('myWork.taskDetail.noMatchingDecisions', 'No matching decisions')}
                               </p>
                             )}
                           </div>
@@ -6196,7 +6080,7 @@ Return ONLY the final comment text.`;
                             }}
                             className="w-full text-center text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
                           >
-                            {isPolish ? 'Anuluj' : 'Cancel'}
+                            {t('myWork.taskDetail.cancel5', 'Cancel')}
                           </button>
                         </motion.div>
                       )}
@@ -6210,7 +6094,7 @@ Return ONLY the final comment text.`;
                           >
                             <Plus size={16} />
                             <span className="text-sm font-medium">
-                              {isPolish ? 'Nowa decyzja' : 'New Decision'}
+                              {t('myWork.taskDetail.newDecision2', 'New Decision')}
                             </span>
                           </button>
                           <button
@@ -6219,7 +6103,7 @@ Return ONLY the final comment text.`;
                           >
                             <Link2 size={16} />
                             <span className="text-sm font-medium">
-                              {isPolish ? 'Powiąż istniejącą' : 'Link Existing'}
+                              {t('myWork.taskDetail.linkExisting', 'Link Existing')}
                             </span>
                           </button>
                         </div>
@@ -6279,7 +6163,7 @@ Return ONLY the final comment text.`;
                     <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                    {t('myWork.taskDetail.checklist2', 'Checklist')}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -6311,7 +6195,7 @@ Return ONLY the final comment text.`;
                         }}
                         disabled={isGeneratingChecklist}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
-                        title={isPolish ? 'Wygeneruj checklistę AI' : 'Generate AI checklist'}
+                        title={t('myWork.taskDetail.title21', 'Generate AI checklist')}
                       >
                         {isGeneratingChecklist ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -6347,14 +6231,14 @@ Return ONLY the final comment text.`;
                             className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Brak elementów' : 'No items'}
+                            {t('myWork.taskDetail.noItems', 'No items')}
                           </p>
                           <button
                             onClick={addChecklistItem}
                             className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 transition-colors"
                           >
                             <Plus size={14} />
-                            {isPolish ? 'Dodaj element' : 'Add item'}
+                            {t('myWork.taskDetail.addItem2', 'Add item')}
                           </button>
                         </div>
                       ) : (
@@ -6375,7 +6259,7 @@ Return ONLY the final comment text.`;
                                 onChange={(e) =>
                                   updateChecklistItem(item.id, { text: e.target.value })
                                 }
-                                placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
+                                placeholder={t('myWork.taskDetail.placeholder4', 'Enter item...')}
                                 className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${
                                   item.completed
                                     ? 'line-through text-slate-500 dark:text-slate-400 dark:text-slate-500'
@@ -6395,7 +6279,7 @@ Return ONLY the final comment text.`;
                             className="flex items-center gap-2 text-sm text-emerald-500 hover:text-emerald-600 py-2 px-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
                           >
                             <Plus size={14} />
-                            <span>{isPolish ? 'Dodaj element' : 'Add item'}</span>
+                            <span>{t('myWork.taskDetail.addItem3', 'Add item')}</span>
                           </button>
                         </>
                       )}
@@ -6422,7 +6306,7 @@ Return ONLY the final comment text.`;
                     <History size={18} className="text-slate-500 dark:text-slate-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Historia zmian' : 'Activity Log'}
+                    {t('myWork.taskDetail.activityLog', 'Activity Log')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -6456,7 +6340,7 @@ Return ONLY the final comment text.`;
                             className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Brak historii' : 'No activity yet'}
+                            {t('myWork.taskDetail.noActivityYet', 'No activity yet')}
                           </p>
                         </div>
                       ) : (
@@ -6543,7 +6427,7 @@ Return ONLY the final comment text.`;
                                       )}
                                       <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                         {new Date(entry.timestamp).toLocaleString(
-                                          isPolish ? 'pl-PL' : 'en-US',
+                                          t('myWork.taskDetail.enUS', 'en-US'),
                                           {
                                             month: 'short',
                                             day: 'numeric',
@@ -6590,7 +6474,7 @@ Return ONLY the final comment text.`;
                     <Flag size={18} className="text-blue-500 dark:text-blue-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Sterowanie' : 'Control'}
+                    {t('myWork.taskDetail.control', 'Control')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -6620,7 +6504,7 @@ Return ONLY the final comment text.`;
                       {/* Initiative */}
                       <div className="relative">
                         <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                          {isPolish ? 'Inicjatywa' : 'Initiative'}
+                          {t('myWork.taskDetail.initiative3', 'Initiative')}
                         </label>
                         <button
                           onClick={() => setShowInitiativeDropdown(!showInitiativeDropdown)}
@@ -6643,7 +6527,7 @@ Return ONLY the final comment text.`;
                                   <Minus size={12} className="text-slate-500 dark:text-slate-400" />
                                 </div>
                                 <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                  {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
+                                  {t('myWork.taskDetail.standaloneTask', 'Standalone task')}
                                 </span>
                               </>
                             )}
@@ -6672,7 +6556,7 @@ Return ONLY the final comment text.`;
                                   <Minus size={12} className="text-slate-500 dark:text-slate-400" />
                                 </div>
                                 <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
+                                  {t('myWork.taskDetail.standaloneTask2', 'Standalone task')}
                                 </span>
                               </button>
                               <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
@@ -6751,7 +6635,7 @@ Return ONLY the final comment text.`;
                       {/* Priority */}
                       <div className="relative">
                         <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                          {isPolish ? 'Priorytet' : 'Priority'}
+                          {t('myWork.taskDetail.priority2', 'Priority')}
                         </label>
                         <button
                           onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
@@ -6798,7 +6682,7 @@ Return ONLY the final comment text.`;
                       {/* Due Date */}
                       <div>
                         <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                          {isPolish ? 'Termin' : 'Due Date'}
+                          {t('myWork.taskDetail.dueDate2', 'Due Date')}
                         </label>
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                           <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
@@ -6815,14 +6699,14 @@ Return ONLY the final comment text.`;
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                            {isPolish ? 'Właściciel' : 'Owner'}
+                            {t('myWork.taskDetail.owner2', 'Owner')}
                           </label>
                           <select
                             value={ownerId}
                             onChange={(e) => setOwnerId(e.target.value)}
                             className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
                           >
-                            <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                            <option value="">{t('myWork.taskDetail.select2', 'Select')}</option>
                             {users.map((user) => (
                               <option key={user.id} value={user.id}>
                                 {user.firstName} {user.lastName}
@@ -6832,14 +6716,14 @@ Return ONLY the final comment text.`;
                         </div>
                         <div>
                           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                            {isPolish ? 'Wykonawca' : 'Assignee'}
+                            {t('myWork.taskDetail.assignee', 'Assignee')}
                           </label>
                           <select
                             value={assigneeId}
                             onChange={(e) => setAssigneeId(e.target.value)}
                             className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
                           >
-                            <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                            <option value="">{t('myWork.taskDetail.select3', 'Select')}</option>
                             {users.map((user) => (
                               <option key={user.id} value={user.id}>
                                 {user.firstName} {user.lastName}
@@ -6853,7 +6737,7 @@ Return ONLY the final comment text.`;
                       {status === 'blocked' && (
                         <div>
                           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                            {isPolish ? 'Powód blokady' : 'Blocked Reason'}
+                            {t('myWork.taskDetail.blockedReason2', 'Blocked Reason')}
                           </label>
                           <textarea
                             value={blockedReason}
@@ -6861,7 +6745,7 @@ Return ONLY the final comment text.`;
                             rows={2}
                             className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-danger-200 dark:border-danger-500/30 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-danger-400 resize-none"
                             placeholder={
-                              isPolish ? 'Opisz powód blokady...' : 'Describe blocking reason...'
+                              t('myWork.taskDetail.describeBlockingReason2', 'Describe blocking reason...')
                             }
                           />
                         </div>
@@ -6921,14 +6805,14 @@ Return ONLY the final comment text.`;
                   notificationSettings,
                 };
                 setStakeholders([...stakeholders, newStakeholder]);
-                toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
+                toast.success(t('myWork.taskDetail.toastSuccess11', 'Stakeholder added'));
               }}
               onUpdate={(id: string, updates: Partial<Stakeholder>) => {
                 setStakeholders(stakeholders.map((s) => (s.id === id ? { ...s, ...updates } : s)));
               }}
               onRemove={(id: string) => {
                 setStakeholders(stakeholders.filter((s) => s.id !== id));
-                toast.success(isPolish ? 'Usunięto interesariusza' : 'Stakeholder removed');
+                toast.success(t('myWork.taskDetail.toastSuccess12', 'Stakeholder removed'));
               }}
             />
 
@@ -6965,7 +6849,7 @@ Return ONLY the final comment text.`;
                     <Tag size={18} className="text-pink-500 dark:text-pink-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Tagi' : 'Tags'}
+                    {t('myWork.taskDetail.tags', 'Tags')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -7014,7 +6898,7 @@ Return ONLY the final comment text.`;
                           value={newTag}
                           onChange={(e) => setNewTag(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && addTag()}
-                          placeholder={isPolish ? 'Nowy tag...' : 'New tag...'}
+                          placeholder={t('myWork.taskDetail.placeholder5', 'New tag...')}
                           className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-pink-400"
                         />
                         <button
@@ -7082,7 +6966,7 @@ Return ONLY the final comment text.`;
                 setSignedOff(true);
                 setSignedOffAt(new Date().toISOString());
                 setSignedOffBy('Current User');
-                toast.success(isPolish ? 'Zadanie podpisane' : 'Task signed off');
+                toast.success(t('myWork.taskDetail.toastSuccess13', 'Task signed off'));
               }}
               expanded={expandedSections.has('evidence')}
               onToggleExpand={() => toggleSection('evidence')}
@@ -7105,7 +6989,7 @@ Return ONLY the final comment text.`;
                       <BookOpen size={18} className="text-primary-500 dark:text-primary-400" />
                     </div>
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      {isPolish ? 'Powiązane notatki' : 'Related Notes'}
+                      {t('myWork.taskDetail.relatedNotes', 'Related Notes')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -7145,28 +7029,28 @@ Return ONLY the final comment text.`;
                               bg: 'bg-slate-500/10',
                               text: 'text-slate-500',
                               border: 'border-slate-400/30',
-                              label: isPolish ? 'Ziarno' : 'Seed',
+                              label: t('myWork.taskDetail.label14', 'Seed'),
                             },
                             growing: {
                               dot: 'bg-emerald-500',
                               bg: 'bg-emerald-500/10',
                               text: 'text-emerald-600 dark:text-emerald-400',
                               border: 'border-emerald-500/30',
-                              label: isPolish ? 'Rośnie' : 'Growing',
+                              label: t('myWork.taskDetail.label15', 'Growing'),
                             },
                             mature: {
                               dot: 'bg-blue-500',
                               bg: 'bg-blue-500/10',
                               text: 'text-blue-600 dark:text-blue-400',
                               border: 'border-blue-500/30',
-                              label: isPolish ? 'Dojrzała' : 'Mature',
+                              label: t('myWork.taskDetail.label16', 'Mature'),
                             },
                             actionable: {
                               dot: 'bg-amber-500',
                               bg: 'bg-amber-500/10',
                               text: 'text-amber-600 dark:text-amber-400',
                               border: 'border-amber-500/30',
-                              label: isPolish ? 'Do działania' : 'Actionable',
+                              label: t('myWork.taskDetail.label17', 'Actionable'),
                             },
                           };
                           const cfg = maturityStyles[mat] || maturityStyles.seed;
