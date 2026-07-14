@@ -3729,6 +3729,36 @@
         "whyItMatters": "Dlaczego to ma znaczenie",
         "howToThinkAboutIt": "Jak o tym myśleć"
       }
+    },
+    "shortcuts": {
+      "moveUp": "Przesuń zaznaczenie w górę",
+      "moveDown": "Przesuń zaznaczenie w dół",
+      "goFirst": "Przejdź do pierwszego elementu",
+      "goLast": "Przejdź do ostatniego elementu",
+      "openSelected": "Otwórz zaznaczony element",
+      "closeCancel": "Zamknij / Anuluj",
+      "newTaskDecision": "Nowe zadanie/decyzja",
+      "editSelected": "Edytuj zaznaczone",
+      "duplicateSelected": "Duplikuj zaznaczone",
+      "deleteSelected": "Usuń zaznaczone",
+      "saveChanges": "Zapisz zmiany",
+      "focusSearch": "Ustaw fokus na wyszukiwanie",
+      "priorityLow": "Ustaw priorytet: Niski",
+      "priorityMedium": "Ustaw priorytet: Średni",
+      "priorityHigh": "Ustaw priorytet: Wysoki",
+      "priorityCritical": "Ustaw priorytet: Krytyczny",
+      "toggleComplete": "Przełącz ukończenie",
+      "groupNodes": "Grupuj zaznaczone węzły",
+      "aiExpandSelected": "AI: rozwiń zaznaczone",
+      "addChildNode": "Dodaj węzeł podrzędny",
+      "addSiblingNode": "Dodaj węzeł równorzędny",
+      "toggleCollapseExpand": "Przełącz zwiń/rozwiń (mapa myśli)",
+      "focusSelectedNode": "Ustaw fokus na zaznaczony węzeł",
+      "promoteNode": "Podnieś węzeł o poziom",
+      "demoteNode": "Obniż węzeł pod poprzedni element równorzędny",
+      "selectAll": "Zaznacz wszystko",
+      "clearSelection": "Wyczyść zaznaczenie",
+      "showHideHelp": "Pokaż / ukryj pomoc klawiaturową"
     }
   },
   "step1": {

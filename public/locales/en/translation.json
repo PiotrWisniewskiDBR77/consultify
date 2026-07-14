@@ -4494,6 +4494,36 @@
         "whyItMatters": "Why it matters",
         "howToThinkAboutIt": "How to think about it"
       }
+    },
+    "shortcuts": {
+      "moveUp": "Move selection up",
+      "moveDown": "Move selection down",
+      "goFirst": "Go to first item",
+      "goLast": "Go to last item",
+      "openSelected": "Open selected item",
+      "closeCancel": "Close / Cancel",
+      "newTaskDecision": "New task/decision",
+      "editSelected": "Edit selected",
+      "duplicateSelected": "Duplicate selected",
+      "deleteSelected": "Delete selected",
+      "saveChanges": "Save changes",
+      "focusSearch": "Focus search",
+      "priorityLow": "Set priority: Low",
+      "priorityMedium": "Set priority: Medium",
+      "priorityHigh": "Set priority: High",
+      "priorityCritical": "Set priority: Critical",
+      "toggleComplete": "Toggle complete",
+      "groupNodes": "Group selected nodes",
+      "aiExpandSelected": "AI expand selected",
+      "addChildNode": "Add child node",
+      "addSiblingNode": "Add sibling node",
+      "toggleCollapseExpand": "Toggle collapse/expand (mindmap)",
+      "focusSelectedNode": "Focus selected node",
+      "promoteNode": "Promote node one level",
+      "demoteNode": "Demote node under previous sibling",
+      "selectAll": "Select all",
+      "clearSelection": "Clear selection",
+      "showHideHelp": "Show / hide keyboard help"
     }
   },
   "step1": {
