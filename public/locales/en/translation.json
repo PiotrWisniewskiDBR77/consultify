@@ -3375,7 +3375,52 @@
       "muted": "Muted",
       "mutedTypesSession": "Muted types (session)",
       "unmute": "Unmute",
-      "clearAll": "Clear all"
+      "clearAll": "Clear all",
+      "type": {
+        "task": "Task",
+        "decision": "Decision",
+        "aiInsight": "AI Insight",
+        "approval": "Approval",
+        "system": "System",
+        "billing": "Billing",
+        "dbr77": "DBR77",
+        "alert": "Alert"
+      },
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning",
+        "info": "Info"
+      },
+      "source": {
+        "task": "Task",
+        "decision": "Decision",
+        "project": "Project",
+        "user": "User"
+      },
+      "columns": {
+        "severity": "Severity",
+        "type": "Type",
+        "notification": "Notification",
+        "source": "Source",
+        "time": "Time",
+        "actions": "Actions"
+      },
+      "toast": {
+        "loadFailed": "Failed to load notifications",
+        "markReadFailed": "Failed to mark notification as read",
+        "deleted": "Notification deleted",
+        "deleteFailed": "Failed to delete notification",
+        "bulkMarkedRead": "{{count}} notifications marked as read",
+        "bulkMarkReadFailed": "Failed to mark notifications as read",
+        "bulkDeleted": "{{count}} notifications deleted",
+        "bulkDeleteFailed": "Failed to delete notifications",
+        "bulkArchived": "{{count}} notifications archived",
+        "bulkArchiveFailed": "Failed to archive notifications"
+      },
+      "emptyState": {
+        "title": "No notifications",
+        "description": "You're all caught up!"
+      }
     },
     "decisionDetail": {
       "language": "en",
@@ -4380,6 +4425,75 @@
       "chat": "Chat",
       "snoozed": "Snoozed",
       "title": "Snooze"
+    },
+    "homeView": {
+      "quadrant": {
+        "myDevelopment": {
+          "title": "My Development",
+          "subtitle": "what I should learn"
+        },
+        "myProjects": {
+          "title": "My Projects",
+          "subtitle": "what helps current work"
+        },
+        "myIndustry": {
+          "title": "My Industry",
+          "subtitle": "what matters around company"
+        },
+        "myRole": {
+          "title": "My Role",
+          "subtitle": "what affects responsibility"
+        }
+      },
+      "ring": {
+        "observe": {
+          "label": "OBSERVE",
+          "helper": "keep on radar"
+        },
+        "learn": {
+          "label": "LEARN",
+          "helper": "build understanding"
+        },
+        "prepare": {
+          "label": "PREPARE",
+          "helper": "get ready"
+        },
+        "now": {
+          "label": "NOW",
+          "helper": "act or discuss now"
+        }
+      },
+      "signalType": {
+        "technology": "Technology",
+        "skill": "Skill",
+        "business": "Business",
+        "risk": "Risk",
+        "process": "Process",
+        "tool": "Tool",
+        "trend": "Trend",
+        "idea": "Idea"
+      },
+      "signalStatus": {
+        "new": "New",
+        "updated": "Updated",
+        "saved": "Saved",
+        "watching": "Watching",
+        "ignored": "Ignored"
+      },
+      "radarCanvasAriaLabel": "Radar canvas",
+      "howToReadLabel": "How to read:",
+      "howToReadBody": "closer to centre = more urgent · ring = time horizon · quadrant = life area · size = business impact",
+      "horizonLabel": "Horizon:",
+      "horizonBody": "Now · Prepare · Learn · Observe",
+      "briefing": {
+        "whatItReallyIs": "What it really is",
+        "whyItMattersForYou": "Why it matters for you",
+        "goodFirstQuestion": "Good first question",
+        "suggestedNextStep": "Suggested next step",
+        "whatItIs": "What it is",
+        "whyItMatters": "Why it matters",
+        "howToThinkAboutIt": "How to think about it"
+      }
     }
   },
   "step1": {

@@ -161,19 +161,39 @@ const getTypeConfig = (type: string) => {
   const typeUpper = type?.toUpperCase() || '';
 
   if (typeUpper.includes('TASK')) {
-    return { label: 'Task', icon: CheckSquare, ...NEUTRAL_TYPE_STYLE };
+    return {
+      label: i18n.t('myWork.notificationsContent.type.task', 'Task'),
+      icon: CheckSquare,
+      ...NEUTRAL_TYPE_STYLE,
+    };
   }
   if (typeUpper.includes('DECISION')) {
-    return { label: 'Decision', icon: AlertCircle, ...NEUTRAL_TYPE_STYLE };
+    return {
+      label: i18n.t('myWork.notificationsContent.type.decision', 'Decision'),
+      icon: AlertCircle,
+      ...NEUTRAL_TYPE_STYLE,
+    };
   }
   if (typeUpper.includes('AI') || typeUpper.includes('RECOMMENDATION')) {
-    return { label: 'AI Insight', icon: Sparkles, ...NEUTRAL_TYPE_STYLE };
+    return {
+      label: i18n.t('myWork.notificationsContent.type.aiInsight', 'AI Insight'),
+      icon: Sparkles,
+      ...NEUTRAL_TYPE_STYLE,
+    };
   }
   if (typeUpper.includes('GATE') || typeUpper.includes('APPROVAL')) {
-    return { label: 'Approval', icon: Target, ...NEUTRAL_TYPE_STYLE };
+    return {
+      label: i18n.t('myWork.notificationsContent.type.approval', 'Approval'),
+      icon: Target,
+      ...NEUTRAL_TYPE_STYLE,
+    };
   }
   if (typeUpper.includes('SYSTEM') || typeUpper.includes('SECURITY')) {
-    return { label: 'System', icon: Bot, ...NEUTRAL_TYPE_STYLE };
+    return {
+      label: i18n.t('myWork.notificationsContent.type.system', 'System'),
+      icon: Bot,
+      ...NEUTRAL_TYPE_STYLE,
+    };
   }
   if (
     typeUpper.includes('BILLING') ||
@@ -183,14 +203,26 @@ const getTypeConfig = (type: string) => {
     typeUpper.includes('INVOICE') ||
     typeUpper.includes('LIMIT')
   ) {
-    return { label: 'Billing', icon: CreditCard, ...NEUTRAL_TYPE_STYLE };
+    return {
+      label: i18n.t('myWork.notificationsContent.type.billing', 'Billing'),
+      icon: CreditCard,
+      ...NEUTRAL_TYPE_STYLE,
+    };
   }
   if (typeUpper.startsWith('DBR77_') || typeUpper.includes('DBR77')) {
     const icon =
       typeUpper.includes('KB') || typeUpper.includes('INSTRUCTION') ? BookOpen : Megaphone;
-    return { label: 'DBR77', icon, ...NEUTRAL_TYPE_STYLE };
+    return {
+      label: i18n.t('myWork.notificationsContent.type.dbr77', 'DBR77'),
+      icon,
+      ...NEUTRAL_TYPE_STYLE,
+    };
   }
-  return { label: 'Alert', icon: Bell, ...NEUTRAL_TYPE_STYLE };
+  return {
+    label: i18n.t('myWork.notificationsContent.type.alert', 'Alert'),
+    icon: Bell,
+    ...NEUTRAL_TYPE_STYLE,
+  };
 };
 
 // Get severity config — alarm for CRITICAL/WARNING, neutral for INFO
@@ -198,7 +230,7 @@ const getSeverityConfig = (severity: string) => {
   switch (severity) {
     case 'CRITICAL':
       return {
-        label: 'Critical',
+        label: i18n.t('myWork.notificationsContent.severity.critical', 'Critical'),
         color: 'text-rose-700 dark:text-rose-400',
         bg: 'bg-rose-100 dark:bg-rose-500/20',
         dot: 'bg-rose-500',
@@ -206,7 +238,7 @@ const getSeverityConfig = (severity: string) => {
       };
     case 'WARNING':
       return {
-        label: 'Warning',
+        label: i18n.t('myWork.notificationsContent.severity.warning', 'Warning'),
         color: 'text-amber-700 dark:text-amber-400',
         bg: 'bg-amber-100 dark:bg-amber-500/20',
         dot: 'bg-amber-500',
@@ -214,7 +246,7 @@ const getSeverityConfig = (severity: string) => {
       };
     default:
       return {
-        label: 'Info',
+        label: i18n.t('myWork.notificationsContent.severity.info', 'Info'),
         color: 'text-c-text-secondary',
         bg: 'bg-c-surface-raised',
         dot: 'bg-slate-400 dark:bg-slate-500',
@@ -227,13 +259,22 @@ const getSeverityConfig = (severity: string) => {
 const getSourceConfig = (relatedType?: string) => {
   switch (relatedType?.toUpperCase()) {
     case 'TASK':
-      return { label: 'Task', icon: CheckSquare };
+      return {
+        label: i18n.t('myWork.notificationsContent.source.task', 'Task'),
+        icon: CheckSquare,
+      };
     case 'DECISION':
-      return { label: 'Decision', icon: AlertCircle };
+      return {
+        label: i18n.t('myWork.notificationsContent.source.decision', 'Decision'),
+        icon: AlertCircle,
+      };
     case 'PROJECT':
-      return { label: 'Project', icon: FolderOpen };
+      return {
+        label: i18n.t('myWork.notificationsContent.source.project', 'Project'),
+        icon: FolderOpen,
+      };
     case 'USER':
-      return { label: 'User', icon: Bell };
+      return { label: i18n.t('myWork.notificationsContent.source.user', 'User'), icon: Bell };
     default:
       return null;
   }
@@ -241,9 +282,9 @@ const getSourceConfig = (relatedType?: string) => {
 
 // Severity filter options
 const SEVERITY_FILTER_OPTIONS = [
-  { value: 'critical', label: 'Critical' },
-  { value: 'warning', label: 'Warning' },
-  { value: 'info', label: 'Info' },
+  { value: 'critical', label: i18n.t('myWork.notificationsContent.severity.critical', 'Critical') },
+  { value: 'warning', label: i18n.t('myWork.notificationsContent.severity.warning', 'Warning') },
+  { value: 'info', label: i18n.t('myWork.notificationsContent.severity.info', 'Info') },
 ];
 
 // Notification table column definitions
@@ -259,7 +300,7 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'severity',
-    label: 'Severity',
+    label: i18n.t('myWork.notificationsContent.columns.severity', 'Severity'),
     width: 80,
     minWidth: 70,
     maxWidth: 100,
@@ -270,7 +311,7 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'type',
-    label: 'Type',
+    label: i18n.t('myWork.notificationsContent.columns.type', 'Type'),
     width: 130,
     minWidth: 100,
     maxWidth: 170,
@@ -281,7 +322,7 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'content',
-    label: 'Notification',
+    label: i18n.t('myWork.notificationsContent.columns.notification', 'Notification'),
     width: 999, // flex — will stretch to fill remaining space
     minWidth: 300,
     resizable: false,
@@ -289,7 +330,7 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'source',
-    label: 'Source',
+    label: i18n.t('myWork.notificationsContent.columns.source', 'Source'),
     width: 140,
     minWidth: 100,
     maxWidth: 200,
@@ -298,7 +339,7 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'time',
-    label: 'Time',
+    label: i18n.t('myWork.notificationsContent.columns.time', 'Time'),
     width: 120,
     minWidth: 90,
     maxWidth: 160,
@@ -307,7 +348,7 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'actions',
-    label: 'Actions',
+    label: i18n.t('myWork.notificationsContent.columns.actions', 'Actions'),
     width: 80,
     minWidth: 60,
     maxWidth: 100,
@@ -737,7 +778,9 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
       setNotifications(mapped.filter((n: any) => !isNotificationTypeMuted(n.type)));
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
-      toast.error('Failed to load notifications');
+      toast.error(
+        t('myWork.notificationsContent.toast.loadFailed', 'Failed to load notifications')
+      );
     } finally {
       setLoading(false);
     }
@@ -817,7 +860,9 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
         prev.map((n) => (n.id === id ? { ...n, read: true, isRead: true } : n))
       );
     } catch (error) {
-      toast.error('Failed to mark notification as read');
+      toast.error(
+        t('myWork.notificationsContent.toast.markReadFailed', 'Failed to mark notification as read')
+      );
     }
   };
 
@@ -825,9 +870,11 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     try {
       await Api.deleteNotification(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-      toast.success('Notification deleted');
+      toast.success(t('myWork.notificationsContent.toast.deleted', 'Notification deleted'));
     } catch (error) {
-      toast.error('Failed to delete notification');
+      toast.error(
+        t('myWork.notificationsContent.toast.deleteFailed', 'Failed to delete notification')
+      );
     }
   };
 
@@ -964,10 +1011,23 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
       setNotifications((prev) =>
         prev.map((n) => (selectedIds.has(n.id) ? { ...n, read: true, isRead: true } : n))
       );
-      toast.success(`${selectedIds.size} notifications marked as read`);
+      toast.success(
+        t(
+          'myWork.notificationsContent.toast.bulkMarkedRead',
+          '{{count}} notifications marked as read',
+          {
+            count: selectedIds.size,
+          }
+        )
+      );
       setSelectedIds(new Set());
     } catch (error) {
-      toast.error('Failed to mark notifications as read');
+      toast.error(
+        t(
+          'myWork.notificationsContent.toast.bulkMarkReadFailed',
+          'Failed to mark notifications as read'
+        )
+      );
     }
   };
 
@@ -975,10 +1035,16 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     try {
       await Promise.all(Array.from(selectedIds).map((id) => Api.deleteNotification(id)));
       setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
-      toast.success(`${selectedIds.size} notifications deleted`);
+      toast.success(
+        t('myWork.notificationsContent.toast.bulkDeleted', '{{count}} notifications deleted', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch (error) {
-      toast.error('Failed to delete notifications');
+      toast.error(
+        t('myWork.notificationsContent.toast.bulkDeleteFailed', 'Failed to delete notifications')
+      );
     }
   };
 
@@ -989,10 +1055,16 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
         Array.from(selectedIds).map((id) => Api.patch(`/notifications/${id}`, { archived: true }))
       );
       setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
-      toast.success(`${selectedIds.size} notifications archived`);
+      toast.success(
+        t('myWork.notificationsContent.toast.bulkArchived', '{{count}} notifications archived', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch {
-      toast.error('Failed to archive notifications');
+      toast.error(
+        t('myWork.notificationsContent.toast.bulkArchiveFailed', 'Failed to archive notifications')
+      );
     }
   };
 
@@ -1062,8 +1134,11 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     return (
       <EmptyState
         icon={<Bell />}
-        title="No notifications"
-        description="You're all caught up!"
+        title={t('myWork.notificationsContent.emptyState.title', 'No notifications')}
+        description={t(
+          'myWork.notificationsContent.emptyState.description',
+          "You're all caught up!"
+        )}
         className="h-full"
       />
     );
@@ -1240,7 +1315,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.source }}
                 >
-                  <span>Source</span>
+                  <span>{t('myWork.notificationsContent.columns.source', 'Source')}</span>
                   <ColumnResizer
                     columnId="source"
                     currentWidth={columnWidths.source}
@@ -1253,7 +1328,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.time }}
                 >
-                  <span>Time</span>
+                  <span>{t('myWork.notificationsContent.columns.time', 'Time')}</span>
                   <ColumnResizer
                     columnId="time"
                     currentWidth={columnWidths.time}

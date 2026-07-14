@@ -2610,7 +2610,52 @@
       "muted": "Wyciszone",
       "mutedTypesSession": "Wyciszone typy (sesja)",
       "unmute": "Odblokuj",
-      "clearAll": "Wyczyść wszystko"
+      "clearAll": "Wyczyść wszystko",
+      "type": {
+        "task": "Zadanie",
+        "decision": "Decyzja",
+        "aiInsight": "Wgląd AI",
+        "approval": "Akceptacja",
+        "system": "System",
+        "billing": "Rozliczenia",
+        "dbr77": "DBR77",
+        "alert": "Alert"
+      },
+      "severity": {
+        "critical": "Krytyczny",
+        "warning": "Ostrzeżenie",
+        "info": "Informacja"
+      },
+      "source": {
+        "task": "Zadanie",
+        "decision": "Decyzja",
+        "project": "Projekt",
+        "user": "Użytkownik"
+      },
+      "columns": {
+        "severity": "Waga",
+        "type": "Typ",
+        "notification": "Powiadomienie",
+        "source": "Źródło",
+        "time": "Czas",
+        "actions": "Akcje"
+      },
+      "toast": {
+        "loadFailed": "Nie udało się wczytać powiadomień",
+        "markReadFailed": "Nie udało się oznaczyć powiadomienia jako przeczytane",
+        "deleted": "Powiadomienie usunięte",
+        "deleteFailed": "Nie udało się usunąć powiadomienia",
+        "bulkMarkedRead": "Oznaczono {{count}} powiadomień jako przeczytane",
+        "bulkMarkReadFailed": "Nie udało się oznaczyć powiadomień jako przeczytane",
+        "bulkDeleted": "Usunięto {{count}} powiadomień",
+        "bulkDeleteFailed": "Nie udało się usunąć powiadomień",
+        "bulkArchived": "Zarchiwizowano {{count}} powiadomień",
+        "bulkArchiveFailed": "Nie udało się zarchiwizować powiadomień"
+      },
+      "emptyState": {
+        "title": "Brak powiadomień",
+        "description": "Wszystko na bieżąco!"
+      }
     },
     "decisionDetail": {
       "language": "pl",
@@ -3615,6 +3660,75 @@
       "chat": "Czat",
       "snoozed": "Odłożone",
       "title": "Odłóż"
+    },
+    "homeView": {
+      "quadrant": {
+        "myDevelopment": {
+          "title": "Mój rozwój",
+          "subtitle": "czego powinienem się nauczyć"
+        },
+        "myProjects": {
+          "title": "Moje projekty",
+          "subtitle": "co pomaga w bieżącej pracy"
+        },
+        "myIndustry": {
+          "title": "Moja branża",
+          "subtitle": "co dzieje się wokół firmy"
+        },
+        "myRole": {
+          "title": "Moja rola",
+          "subtitle": "co wpływa na moją odpowiedzialność"
+        }
+      },
+      "ring": {
+        "observe": {
+          "label": "OBSERWUJ",
+          "helper": "trzymaj na radarze"
+        },
+        "learn": {
+          "label": "UCZ SIĘ",
+          "helper": "buduj zrozumienie"
+        },
+        "prepare": {
+          "label": "PRZYGOTUJ",
+          "helper": "przygotuj się"
+        },
+        "now": {
+          "label": "TERAZ",
+          "helper": "działaj lub omów teraz"
+        }
+      },
+      "signalType": {
+        "technology": "Technologia",
+        "skill": "Umiejętność",
+        "business": "Biznes",
+        "risk": "Ryzyko",
+        "process": "Proces",
+        "tool": "Narzędzie",
+        "trend": "Trend",
+        "idea": "Pomysł"
+      },
+      "signalStatus": {
+        "new": "Nowe",
+        "updated": "Zaktualizowane",
+        "saved": "Zapisane",
+        "watching": "Obserwowane",
+        "ignored": "Zignorowane"
+      },
+      "radarCanvasAriaLabel": "Płótno radaru",
+      "howToReadLabel": "Jak czytać:",
+      "howToReadBody": "bliżej środka = pilniejsze · pierścień = horyzont czasowy · ćwiartka = obszar życia · rozmiar = wpływ na biznes",
+      "horizonLabel": "Horyzont:",
+      "horizonBody": "Teraz · Przygotuj · Ucz się · Obserwuj",
+      "briefing": {
+        "whatItReallyIs": "Czym to naprawdę jest",
+        "whyItMattersForYou": "Dlaczego to ma dla Ciebie znaczenie",
+        "goodFirstQuestion": "Dobre pierwsze pytanie",
+        "suggestedNextStep": "Sugerowany kolejny krok",
+        "whatItIs": "Czym to jest",
+        "whyItMatters": "Dlaczego to ma znaczenie",
+        "howToThinkAboutIt": "Jak o tym myśleć"
+      }
     }
   },
   "step1": {
