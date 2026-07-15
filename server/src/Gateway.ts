@@ -214,6 +214,7 @@ import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
 import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
 import pmoDomainsRoutes from './routes/pmo/pmoDomains.routes.js';
 import pmoRolesRoutes from './routes/pmo/pmoRoles.routes.js';
+import pmoStandardsRoutes from './routes/pmo/pmo-standards.routes.js';
 import projectMembersRoutes from './routes/pmo/project-members.routes.js';
 import projectRoutes from './routes/pmo/projects.routes.js';
 import roadmapRoutes from './routes/pmo/roadmap.routes.js';
@@ -913,6 +914,12 @@ export class ApiGateway {
       app.use('/api/pmo-analysis', pmoAnalysisRoutes);
       app.use('/api/pmo-context', pmoContextRoutes);
       app.use('/api/pmo', pmoRoutes);
+      // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
+      // Own auth (verifyToken) is applied inside the router. Paths (/standards,
+      // /standards/:id, /standards/:id/roles, /my-project-permissions/:projectId,
+      // /check-permission/:projectId/:permission) don't overlap with pmoRoutes
+      // above (only /health/:projectId) or any other /api/pmo/* mount below.
+      app.use('/api/pmo', pmoStandardsRoutes);
       // Compatibility mounts (some clients expect PMO-scoped prefixes)
       app.use('/api/pmo/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
       app.use('/api/pmo/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
