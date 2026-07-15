@@ -26222,5 +26222,55 @@
       "taskWordSingular": "zadanie",
       "taskWordPlural": "zadań"
     }
+  },
+  "ssoSelfService": {
+    "loading": "Wczytywanie konfiguracji SSO…",
+    "title": "Konfiguracja SSO (SAML / OIDC)",
+    "description": "Podłącz własnego dostawcę tożsamości. Tu zapisujesz metadane, które faktycznie czyta logowanie SSO — osobno od przełącznika powyżej.",
+    "status": {
+      "configured": "Skonfigurowane",
+      "notConfigured": "Nieskonfigurowane"
+    },
+    "fields": {
+      "protocol": "Protokół",
+      "providerName": "Nazwa dostawcy",
+      "domains": "Przypisane domeny (oddzielone przecinkami)",
+      "isEnabled": "Włącz tę konfigurację"
+    },
+    "saml": {
+      "heading": "Dostawca tożsamości (SAML)",
+      "entityId": "Entity ID dostawcy (IdP)",
+      "ssoUrl": "Adres URL SSO",
+      "certificate": "Certyfikat X.509",
+      "certificatePlaceholderSet": "Certyfikat zapisany — wklej nowy, aby go zastąpić"
+    },
+    "oidc": {
+      "heading": "Dostawca tożsamości (OIDC)",
+      "issuer": "Adres URL wystawcy (issuer)",
+      "clientId": "Identyfikator klienta",
+      "clientSecret": "Sekret klienta",
+      "clientSecretPlaceholder": "Wpisz sekret klienta",
+      "clientSecretPlaceholderSet": "Sekret zapisany — wpisz nowy, aby go zastąpić",
+      "authorizationUrl": "Adres URL autoryzacji (opcjonalnie)",
+      "tokenUrl": "Adres URL tokenu (opcjonalnie)"
+    },
+    "test": {
+      "valid": "Konfiguracja jest kompletna i gotowa do włączenia."
+    },
+    "toasts": {
+      "validConfig": "Konfiguracja wygląda na kompletną",
+      "saved": "Konfiguracja SSO zapisana"
+    },
+    "errors": {
+      "load": "Nie udało się wczytać konfiguracji SSO",
+      "loadTitle": "Konfiguracja SSO niedostępna",
+      "test": "Nie udało się zwalidować konfiguracji SSO",
+      "save": "Nie udało się zapisać konfiguracji SSO"
+    },
+    "actions": {
+      "retry": "Ponów",
+      "testConnection": "Testuj połączenie",
+      "save": "Zapisz konfigurację SSO"
+    }
   }
 }

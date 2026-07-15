@@ -738,6 +738,485 @@ async function writeSecuritySettings(
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// HP-24: SSO self-service (org-admin configures own org's SAML/OIDC metadata)
+//
+// readSecuritySettings()/writeSecuritySettings() above already let a tenant
+// admin flip is_enabled + name a provider, but never touch the actual IdP
+// metadata (entity ID, SSO URL, certificate, OIDC issuer/client). Without
+// those fields the SSO login flow (routes/integrations/sso.routes.ts →
+// loadOIDCConfig/loadSAMLConfig) has nothing to read — SSO stays dead for
+// self-service orgs, only superadmin (views/superadmin/SSOConfigurationView)
+// could actually populate it. This block is the missing write path, scoped
+// hard to the caller's own organization_id (never accepted from the body).
+// ══════════════════════════════════════════════════════════════════════════
+
+type SsoSelfConfigShape = {
+  organizationId: string;
+  configured: boolean;
+  isEnabled: boolean;
+  protocol: 'saml' | 'oidc';
+  providerName: string;
+  providerType: string;
+  domains: string[];
+  saml: {
+    entityId: string;
+    ssoUrl: string;
+    sloUrl: string;
+    nameIdFormat: string;
+    certificateSet: boolean;
+  };
+  oidc: {
+    issuer: string;
+    clientId: string;
+    clientSecretSet: boolean;
+    authorizationUrl: string;
+    tokenUrl: string;
+    userinfoUrl: string;
+    scopes: string;
+  };
+  updatedAt: string | null;
+};
+
+type SsoSelfConfigWrite = {
+  protocol: 'saml' | 'oidc';
+  providerName: string;
+  providerType: string;
+  domains: string[];
+  isEnabled: boolean;
+  saml: {
+    entityId: string;
+    ssoUrl: string;
+    sloUrl: string;
+    nameIdFormat: string;
+    certificate: string | null; // null = not supplied this request, leave column untouched
+  };
+  oidc: {
+    issuer: string;
+    clientId: string;
+    clientSecret: string | null; // null = not supplied this request, leave column untouched
+    authorizationUrl: string;
+    tokenUrl: string;
+    userinfoUrl: string;
+    scopes: string;
+  };
+};
+
+async function ensureSsoConfigurationsTable() {
+  await dbRun(`CREATE TABLE IF NOT EXISTS sso_configurations (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL,
+    protocol TEXT NOT NULL,
+    provider_name TEXT NOT NULL,
+    provider_type TEXT NOT NULL,
+    saml_entity_id TEXT,
+    saml_sso_url TEXT,
+    saml_slo_url TEXT,
+    saml_certificate TEXT,
+    saml_signature_algorithm TEXT DEFAULT 'SHA256',
+    saml_name_id_format TEXT DEFAULT 'emailAddress',
+    oidc_issuer TEXT,
+    oidc_client_id TEXT,
+    oidc_client_secret TEXT,
+    oidc_authorization_url TEXT,
+    oidc_token_url TEXT,
+    oidc_userinfo_url TEXT,
+    oidc_scopes TEXT DEFAULT 'openid profile email',
+    attribute_mappings TEXT DEFAULT '{"email":"email","firstName":"given_name","lastName":"family_name"}',
+    jit_provisioning INTEGER DEFAULT 1,
+    default_role TEXT DEFAULT 'user',
+    group_mappings TEXT DEFAULT '[]',
+    allowed_domains TEXT,
+    is_enabled INTEGER DEFAULT 0,
+    is_default INTEGER DEFAULT 0,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMP
+  )`);
+}
+
+async function readSsoSelfConfig(orgId: string): Promise<SsoSelfConfigShape> {
+  await ensureSsoConfigurationsTable();
+  // Hard org-scope: this is the ONLY predicate on the lookup — an org admin
+  // can never pass a different organization_id in because we never read one
+  // from the request body/query here, only from the authenticated actor.
+  const row = await dbGet<Record<string, unknown>>(
+    `SELECT * FROM sso_configurations WHERE organization_id = ? LIMIT 1`,
+    [orgId],
+    { fallback: true }
+  );
+
+  let domains: string[] = [];
+  try {
+    const parsed = JSON.parse(String(row?.allowed_domains || '[]'));
+    domains = Array.isArray(parsed) ? parsed.map((d) => String(d)) : [];
+  } catch {
+    domains = [];
+  }
+
+  return {
+    organizationId: orgId,
+    configured: Boolean(row?.id),
+    isEnabled: toBoolean(row?.is_enabled, false),
+    protocol: (String(row?.protocol || 'saml').toLowerCase() === 'oidc' ? 'oidc' : 'saml') as
+      | 'saml'
+      | 'oidc',
+    providerName: String(row?.provider_name || ''),
+    providerType: String(row?.provider_type || 'custom'),
+    domains,
+    saml: {
+      entityId: String(row?.saml_entity_id || ''),
+      ssoUrl: String(row?.saml_sso_url || ''),
+      sloUrl: String(row?.saml_slo_url || ''),
+      nameIdFormat: String(row?.saml_name_id_format || 'emailAddress'),
+      certificateSet: Boolean(row?.saml_certificate),
+    },
+    oidc: {
+      issuer: String(row?.oidc_issuer || ''),
+      clientId: String(row?.oidc_client_id || ''),
+      clientSecretSet: Boolean(row?.oidc_client_secret),
+      authorizationUrl: String(row?.oidc_authorization_url || ''),
+      tokenUrl: String(row?.oidc_token_url || ''),
+      userinfoUrl: String(row?.oidc_userinfo_url || ''),
+      scopes: String(row?.oidc_scopes || 'openid profile email'),
+    },
+    updatedAt: row?.updated_at ? String(row.updated_at) : null,
+  };
+}
+
+function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isPemCertificate(value: string): boolean {
+  return value.includes('BEGIN CERTIFICATE') && value.includes('END CERTIFICATE');
+}
+
+function isValidSsoDomain(value: string): boolean {
+  return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(value);
+}
+
+function parseOptionalPlainString(
+  value: unknown,
+  field: string,
+  errors: string[],
+  fallback: string,
+  maxLength = 500
+): string {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'string') {
+    errors.push(`${field} must be a string`);
+    return fallback;
+  }
+  const trimmed = value.trim();
+  if (trimmed.length > maxLength) {
+    errors.push(`${field} must be ${maxLength} characters or less`);
+    return fallback;
+  }
+  return trimmed;
+}
+
+function parseOptionalHttpsUrl(
+  value: unknown,
+  field: string,
+  errors: string[],
+  fallback: string,
+  maxLength = 500
+): string {
+  const trimmed = parseOptionalPlainString(value, field, errors, fallback, maxLength);
+  if (trimmed && !isHttpsUrl(trimmed)) {
+    errors.push(`${field} must be a valid https:// URL`);
+    return fallback;
+  }
+  return trimmed;
+}
+
+function validateSsoSelfConfigUpdate(
+  body: unknown,
+  current: SsoSelfConfigShape
+): { errors: string[]; next: SsoSelfConfigWrite | null } {
+  const errors: string[] = [];
+  if (!isPlainObject(body)) {
+    return { errors: ['Request body must be a JSON object'], next: null };
+  }
+
+  const protocol = parseNonEmptyString(
+    body.protocol,
+    'protocol',
+    errors,
+    current.protocol,
+    10
+  ).toLowerCase();
+  if (body.protocol !== undefined && !SECURITY_SSO_PROTOCOLS.has(protocol)) {
+    errors.push('protocol must be saml or oidc');
+  }
+
+  const providerName = parseNonEmptyString(
+    body.providerName,
+    'providerName',
+    errors,
+    current.providerName || 'Custom SSO',
+    120
+  );
+  const providerType = parseOptionalPlainString(
+    body.providerType,
+    'providerType',
+    errors,
+    current.providerType || 'custom',
+    80
+  );
+
+  let domains = current.domains;
+  if (body.domains !== undefined) {
+    if (!Array.isArray(body.domains)) {
+      errors.push('domains must be an array of domain strings');
+    } else {
+      domains = body.domains.map((item) => String(item).trim().toLowerCase()).filter(Boolean);
+      if (domains.length > 20) {
+        errors.push('domains can contain up to 20 entries');
+      }
+      const invalidDomain = domains.find((domain) => !isValidSsoDomain(domain));
+      if (invalidDomain) {
+        errors.push(`"${invalidDomain}" is not a valid domain`);
+      }
+    }
+  }
+
+  const isEnabled = parseOptionalBoolean(body.isEnabled, 'isEnabled', errors, current.isEnabled);
+
+  const samlBody = isPlainObject(body.saml) ? body.saml : {};
+  const samlEntityId = parseOptionalPlainString(
+    samlBody.entityId,
+    'saml.entityId',
+    errors,
+    current.saml.entityId,
+    500
+  );
+  const samlSsoUrl = parseOptionalHttpsUrl(
+    samlBody.ssoUrl,
+    'saml.ssoUrl',
+    errors,
+    current.saml.ssoUrl,
+    500
+  );
+  const samlSloUrl = samlBody.sloUrl
+    ? parseOptionalHttpsUrl(samlBody.sloUrl, 'saml.sloUrl', errors, current.saml.sloUrl, 500)
+    : current.saml.sloUrl;
+  const samlNameIdFormat = parseOptionalPlainString(
+    samlBody.nameIdFormat,
+    'saml.nameIdFormat',
+    errors,
+    current.saml.nameIdFormat || 'emailAddress',
+    200
+  );
+  let samlCertificate: string | null = null;
+  if (typeof samlBody.certificate === 'string' && samlBody.certificate.trim()) {
+    const trimmed = samlBody.certificate.trim();
+    if (!isPemCertificate(trimmed)) {
+      errors.push('saml.certificate must be a PEM-encoded X.509 certificate');
+    } else {
+      samlCertificate = trimmed;
+    }
+  }
+
+  const oidcBody = isPlainObject(body.oidc) ? body.oidc : {};
+  const oidcIssuer = parseOptionalHttpsUrl(
+    oidcBody.issuer,
+    'oidc.issuer',
+    errors,
+    current.oidc.issuer,
+    500
+  );
+  const oidcClientId = parseOptionalPlainString(
+    oidcBody.clientId,
+    'oidc.clientId',
+    errors,
+    current.oidc.clientId,
+    200
+  );
+  const oidcAuthorizationUrl = oidcBody.authorizationUrl
+    ? parseOptionalHttpsUrl(
+        oidcBody.authorizationUrl,
+        'oidc.authorizationUrl',
+        errors,
+        current.oidc.authorizationUrl,
+        500
+      )
+    : current.oidc.authorizationUrl;
+  const oidcTokenUrl = oidcBody.tokenUrl
+    ? parseOptionalHttpsUrl(oidcBody.tokenUrl, 'oidc.tokenUrl', errors, current.oidc.tokenUrl, 500)
+    : current.oidc.tokenUrl;
+  const oidcUserinfoUrl = oidcBody.userinfoUrl
+    ? parseOptionalHttpsUrl(
+        oidcBody.userinfoUrl,
+        'oidc.userinfoUrl',
+        errors,
+        current.oidc.userinfoUrl,
+        500
+      )
+    : current.oidc.userinfoUrl;
+  const oidcScopes = parseOptionalPlainString(
+    oidcBody.scopes,
+    'oidc.scopes',
+    errors,
+    current.oidc.scopes || 'openid profile email',
+    300
+  );
+  let oidcClientSecret: string | null = null;
+  if (typeof oidcBody.clientSecret === 'string' && oidcBody.clientSecret.trim()) {
+    oidcClientSecret = oidcBody.clientSecret.trim();
+  }
+
+  if (isEnabled) {
+    if (protocol === 'saml') {
+      if (!samlEntityId) errors.push('saml.entityId is required to enable SAML SSO');
+      if (!samlSsoUrl) errors.push('saml.ssoUrl is required to enable SAML SSO');
+      if (!samlCertificate && !current.saml.certificateSet) {
+        errors.push('saml.certificate is required to enable SAML SSO');
+      }
+    } else {
+      if (!oidcIssuer) errors.push('oidc.issuer is required to enable OIDC SSO');
+      if (!oidcClientId) errors.push('oidc.clientId is required to enable OIDC SSO');
+      if (!oidcClientSecret && !current.oidc.clientSecretSet) {
+        errors.push('oidc.clientSecret is required to enable OIDC SSO');
+      }
+    }
+  }
+
+  if (errors.length) return { errors, next: null };
+
+  return {
+    errors: [],
+    next: {
+      protocol: SECURITY_SSO_PROTOCOLS.has(protocol) ? (protocol as 'saml' | 'oidc') : current.protocol,
+      providerName,
+      providerType,
+      domains,
+      isEnabled,
+      saml: {
+        entityId: samlEntityId,
+        ssoUrl: samlSsoUrl,
+        sloUrl: samlSloUrl,
+        nameIdFormat: samlNameIdFormat,
+        certificate: samlCertificate,
+      },
+      oidc: {
+        issuer: oidcIssuer,
+        clientId: oidcClientId,
+        clientSecret: oidcClientSecret,
+        authorizationUrl: oidcAuthorizationUrl,
+        tokenUrl: oidcTokenUrl,
+        userinfoUrl: oidcUserinfoUrl,
+        scopes: oidcScopes,
+      },
+    },
+  };
+}
+
+/** Readiness check independent of the requested isEnabled flag — used by the
+ * "test connection" action so an admin can validate before flipping the
+ * switch. Format/completeness only: we deliberately do NOT make an outbound
+ * network call to an admin-supplied URL (SSRF risk); this checks shape only. */
+function checkSsoSelfReadiness(next: SsoSelfConfigWrite, current: SsoSelfConfigShape): string[] {
+  const errors: string[] = [];
+  if (next.protocol === 'saml') {
+    if (!next.saml.entityId) errors.push('SAML entity ID is required');
+    if (!next.saml.ssoUrl) errors.push('SAML SSO URL is required');
+    if (!next.saml.certificate && !current.saml.certificateSet) {
+      errors.push('X.509 certificate is required');
+    }
+  } else {
+    if (!next.oidc.issuer) errors.push('OIDC issuer is required');
+    if (!next.oidc.clientId) errors.push('OIDC client ID is required');
+    if (!next.oidc.clientSecret && !current.oidc.clientSecretSet) {
+      errors.push('OIDC client secret is required');
+    }
+  }
+  return errors;
+}
+
+async function writeSsoSelfConfig(orgId: string, actorId: string, next: SsoSelfConfigWrite) {
+  await ensureSsoConfigurationsTable();
+  const existing = await dbGet<{ id?: string }>(
+    `SELECT id FROM sso_configurations WHERE organization_id = ? LIMIT 1`,
+    [orgId],
+    { fallback: true }
+  );
+
+  const domainsJson = JSON.stringify(next.domains);
+
+  if (existing?.id) {
+    // organization_id stays in the WHERE clause — the row this admin can
+    // touch is pinned to their own org no matter what the row's PK is.
+    await dbRun(
+      `UPDATE sso_configurations SET
+        protocol = ?, provider_name = ?, provider_type = ?,
+        saml_entity_id = ?, saml_sso_url = ?, saml_slo_url = ?, saml_name_id_format = ?,
+        saml_certificate = COALESCE(?, saml_certificate),
+        oidc_issuer = ?, oidc_client_id = ?, oidc_authorization_url = ?, oidc_token_url = ?, oidc_userinfo_url = ?, oidc_scopes = ?,
+        oidc_client_secret = COALESCE(?, oidc_client_secret),
+        allowed_domains = ?, is_enabled = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE organization_id = ?`,
+      [
+        next.protocol,
+        next.providerName,
+        next.providerType,
+        next.saml.entityId,
+        next.saml.ssoUrl,
+        next.saml.sloUrl,
+        next.saml.nameIdFormat,
+        next.saml.certificate,
+        next.oidc.issuer,
+        next.oidc.clientId,
+        next.oidc.authorizationUrl,
+        next.oidc.tokenUrl,
+        next.oidc.userinfoUrl,
+        next.oidc.scopes,
+        next.oidc.clientSecret,
+        domainsJson,
+        next.isEnabled ? 1 : 0,
+        orgId,
+      ]
+    );
+  } else {
+    await dbRun(
+      `INSERT INTO sso_configurations (
+        id, organization_id, protocol, provider_name, provider_type,
+        saml_entity_id, saml_sso_url, saml_slo_url, saml_name_id_format, saml_certificate,
+        oidc_issuer, oidc_client_id, oidc_client_secret, oidc_authorization_url, oidc_token_url, oidc_userinfo_url, oidc_scopes,
+        allowed_domains, is_enabled, jit_provisioning, default_role, created_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'member', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [
+        `sso-${uuidv4()}`,
+        orgId,
+        next.protocol,
+        next.providerName,
+        next.providerType,
+        next.saml.entityId,
+        next.saml.ssoUrl,
+        next.saml.sloUrl,
+        next.saml.nameIdFormat,
+        next.saml.certificate,
+        next.oidc.issuer,
+        next.oidc.clientId,
+        next.oidc.clientSecret,
+        next.oidc.authorizationUrl,
+        next.oidc.tokenUrl,
+        next.oidc.userinfoUrl,
+        next.oidc.scopes,
+        domainsJson,
+        next.isEnabled ? 1 : 0,
+        actorId,
+      ]
+    );
+  }
+}
+
 async function readCollaborationControls(orgId: string) {
   const rows = await dbAll<{ key: string; value: string }>(
     `SELECT key, value FROM settings WHERE key IN (?, ?, ?)`,
@@ -2227,6 +2706,64 @@ router.get(
 router.get(['/security', '/security/policy'], asyncHandler(handleGetSecurityPolicy));
 
 router.put(['/security', '/security/policy'], asyncHandler(handleUpdateSecurityPolicy));
+
+// ── HP-24: SSO self-service (org-scoped, never superadmin-only) ──
+// Mounted at /api/admin/sso-self by Gateway.ts (adminP32Routes → '/api/admin').
+
+router.get(
+  '/sso-self',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:read']);
+    if (!actor) return;
+    const config = await readSsoSelfConfig(actor.orgId);
+    return res.json({ organizationId: actor.orgId, config });
+  })
+);
+
+router.put(
+  '/sso-self',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:write']);
+    if (!actor) return;
+    const current = await readSsoSelfConfig(actor.orgId);
+    const { errors, next } = validateSsoSelfConfigUpdate(req.body, current);
+    if (errors.length || !next) return sendValidationError(res, errors);
+
+    await writeSsoSelfConfig(actor.orgId, actor.actorId, next);
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'update_sso_self_config',
+      details: {
+        orgId: actor.orgId,
+        isSensitive: true,
+        protocol: next.protocol,
+        isEnabled: next.isEnabled,
+      },
+    });
+
+    const updated = await readSsoSelfConfig(actor.orgId);
+    return res.json({ success: true, config: updated });
+  })
+);
+
+router.post(
+  '/sso-self/validate',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:read']);
+    if (!actor) return;
+    const current = await readSsoSelfConfig(actor.orgId);
+    // Force isEnabled=true for this pass so the readiness check runs
+    // regardless of the switch's current requested state (a "test
+    // connection" preview should tell you what's missing before you flip it).
+    const bodyForValidation = isPlainObject(req.body)
+      ? { ...req.body, isEnabled: true }
+      : { isEnabled: true };
+    const { errors, next } = validateSsoSelfConfigUpdate(bodyForValidation, current);
+    if (!next) return res.json({ valid: false, errors });
+    const readinessErrors = checkSsoSelfReadiness(next, current);
+    return res.json({ valid: readinessErrors.length === 0, errors: readinessErrors });
+  })
+);
 
 router.get(
   '/collaboration',
