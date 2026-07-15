@@ -189,6 +189,7 @@ function CreateModelWizard({
   onCreated: () => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<WizardStep>(1);
   const [saving, setSaving] = useState(false);
   const [wiz, setWiz] = useState<WizardState>({
@@ -240,18 +241,22 @@ function CreateModelWizard({
         await Api.updateGovernedModel(modelId, { status: wiz.trustLevel });
       }
 
-      toast.success(isPl ? 'Model utworzony' : 'Model created');
+      toast.success(t('myWorkTable.governedModels.modelCreated'));
       onCreated();
     } catch (err) {
-      toast.error(isPl ? 'Błąd tworzenia modelu' : 'Failed to create model');
+      toast.error(t('myWorkTable.governedModels.failedToCreateModel'));
     } finally {
       setSaving(false);
     }
   }, [baseId, wiz, isPl, onCreated]);
 
-  const stepLabels = isPl
-    ? ['Nazwa', 'Źródła', 'KPI', 'Wymiary', 'Zaufanie']
-    : ['Name', 'Sources', 'KPIs', 'Dimensions', 'Trust'];
+  const stepLabels = [
+    t('myWorkTable.governedModels.stepName'),
+    t('myWorkTable.governedModels.stepSources'),
+    t('myWorkTable.governedModels.stepKpis'),
+    t('myWorkTable.governedModels.stepDimensions'),
+    t('myWorkTable.governedModels.stepTrust'),
+  ];
 
   const inputCls =
     'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
@@ -268,7 +273,7 @@ function CreateModelWizard({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Nowy model danych' : 'New Data Model'}
+            {t('myWorkTable.governedModels.newDataModel')}
           </h3>
           <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
             <X size={16} className="text-c-text-secondary" />
@@ -300,23 +305,23 @@ function CreateModelWizard({
           {step === 1 && (
             <>
               <label className="block text-xs font-medium text-c-text-muted">
-                {isPl ? 'Nazwa modelu' : 'Model name'}
+                {t('myWorkTable.governedModels.modelName')}
               </label>
               <input
                 className={inputCls}
                 value={wiz.name}
                 onChange={(e) => setWiz((p) => ({ ...p, name: e.target.value }))}
-                placeholder={isPl ? 'np. Revenue Model' : 'e.g. Revenue Model'}
+                placeholder={t('myWorkTable.governedModels.eGRevenueModel')}
                 autoFocus
               />
               <label className="block text-xs font-medium text-c-text-muted mt-3">
-                {isPl ? 'Opis' : 'Description'}
+                {t('myWorkTable.governedModels.description')}
               </label>
               <textarea
                 className={inputCls + ' min-h-[80px]'}
                 value={wiz.description}
                 onChange={(e) => setWiz((p) => ({ ...p, description: e.target.value }))}
-                placeholder={isPl ? 'Opcjonalny opis...' : 'Optional description...'}
+                placeholder={t('myWorkTable.governedModels.optionalDescription')}
               />
             </>
           )}
@@ -324,11 +329,11 @@ function CreateModelWizard({
           {step === 2 && (
             <>
               <p className="text-xs text-c-text-muted">
-                {isPl ? 'Wybierz tabele źródłowe:' : 'Select source tables:'}
+                {t('myWorkTable.governedModels.selectSourceTables')}
               </p>
               {tables.length === 0 && (
                 <p className="text-xs text-c-text-secondary italic">
-                  {isPl ? 'Brak tabel' : 'No tables available'}
+                  {t('myWorkTable.governedModels.noTablesAvailable')}
                 </p>
               )}
               <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
@@ -361,7 +366,7 @@ function CreateModelWizard({
           {step === 3 && (
             <>
               <p className="text-xs text-c-text-muted mb-2">
-                {isPl ? 'Zdefiniuj KPI:' : 'Define KPIs:'}
+                {t('myWorkTable.governedModels.defineKpis')}
               </p>
               {wiz.kpis.map((k, idx) => (
                 <div
@@ -371,7 +376,7 @@ function CreateModelWizard({
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       className={inputCls}
-                      placeholder={isPl ? 'Kod (np. revenue)' : 'Code (e.g. revenue)'}
+                      placeholder={t('myWorkTable.governedModels.codeEGRevenue')}
                       value={k.code}
                       onChange={(e) => {
                         const kpis = [...wiz.kpis];
@@ -381,7 +386,7 @@ function CreateModelWizard({
                     />
                     <input
                       className={inputCls}
-                      placeholder={isPl ? 'Etykieta EN' : 'Label EN'}
+                      placeholder={t('myWorkTable.governedModels.labelEn')}
                       value={k.labelEn}
                       onChange={(e) => {
                         const kpis = [...wiz.kpis];
@@ -407,7 +412,7 @@ function CreateModelWizard({
                     </select>
                     <input
                       className={inputCls}
-                      placeholder={isPl ? 'Jednostka' : 'Unit'}
+                      placeholder={t('myWorkTable.governedModels.unit')}
                       value={k.unit}
                       onChange={(e) => {
                         const kpis = [...wiz.kpis];
@@ -417,7 +422,7 @@ function CreateModelWizard({
                     />
                     <input
                       className={inputCls}
-                      placeholder={isPl ? 'Cel' : 'Target'}
+                      placeholder={t('myWorkTable.governedModels.target')}
                       type="number"
                       value={k.targetValue}
                       onChange={(e) => {
@@ -434,7 +439,7 @@ function CreateModelWizard({
                       }
                       className="text-[11px] text-c-danger hover:underline"
                     >
-                      {isPl ? 'Usuń' : 'Remove'}
+                      {t('myWorkTable.governedModels.remove')}
                     </button>
                   )}
                 </div>
@@ -443,7 +448,7 @@ function CreateModelWizard({
                 onClick={() => setWiz((p) => ({ ...p, kpis: [...p.kpis, { ...EMPTY_KPI }] }))}
                 className="inline-flex items-center gap-1 text-xs text-c-tag-2 hover:underline"
               >
-                <Plus size={12} /> {isPl ? 'Dodaj KPI' : 'Add KPI'}
+                <Plus size={12} /> {t('myWorkTable.governedModels.addKpi')}
               </button>
             </>
           )}
@@ -451,7 +456,7 @@ function CreateModelWizard({
           {step === 4 && (
             <>
               <p className="text-xs text-c-text-muted mb-2">
-                {isPl ? 'Zdefiniuj wymiary:' : 'Define dimensions:'}
+                {t('myWorkTable.governedModels.defineDimensions')}
               </p>
               {wiz.dimensions.map((d, idx) => (
                 <div
@@ -461,7 +466,7 @@ function CreateModelWizard({
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       className={inputCls}
-                      placeholder={isPl ? 'Nazwa wymiaru' : 'Dimension name'}
+                      placeholder={t('myWorkTable.governedModels.dimensionName')}
                       value={d.name}
                       onChange={(e) => {
                         const dims = [...wiz.dimensions];
@@ -478,9 +483,9 @@ function CreateModelWizard({
                         setWiz((p) => ({ ...p, dimensions: dims }));
                       }}
                     >
-                      <option value="categorical">{isPl ? 'Kategoryczny' : 'Categorical'}</option>
-                      <option value="temporal">{isPl ? 'Czasowy' : 'Temporal'}</option>
-                      <option value="hierarchical">{isPl ? 'Geograficzny' : 'Geographic'}</option>
+                      <option value="categorical">{t('myWorkTable.governedModels.categorical')}</option>
+                      <option value="temporal">{t('myWorkTable.governedModels.temporal')}</option>
+                      <option value="hierarchical">{t('myWorkTable.governedModels.geographic')}</option>
                     </select>
                   </div>
                   {wiz.dimensions.length > 1 && (
@@ -493,7 +498,7 @@ function CreateModelWizard({
                       }
                       className="text-[11px] text-c-danger hover:underline"
                     >
-                      {isPl ? 'Usuń' : 'Remove'}
+                      {t('myWorkTable.governedModels.remove')}
                     </button>
                   )}
                 </div>
@@ -504,7 +509,7 @@ function CreateModelWizard({
                 }
                 className="inline-flex items-center gap-1 text-xs text-c-tag-2 hover:underline"
               >
-                <Plus size={12} /> {isPl ? 'Dodaj wymiar' : 'Add dimension'}
+                <Plus size={12} /> {t('myWorkTable.governedModels.addDimension')}
               </button>
             </>
           )}
@@ -512,7 +517,7 @@ function CreateModelWizard({
           {step === 5 && (
             <>
               <p className="text-xs text-c-text-muted mb-3">
-                {isPl ? 'Ustaw poziom zaufania:' : 'Set trust level:'}
+                {t('myWorkTable.governedModels.setTrustLevel')}
               </p>
               {(['draft', 'certified', 'deprecated'] as const).map((lvl) => {
                 const cfg = TRUST_CONFIG[lvl];
@@ -546,7 +551,7 @@ function CreateModelWizard({
             onClick={() => (step === 1 ? onClose() : setStep((s) => (s - 1) as WizardStep))}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-muted hover:bg-c-surface-raised"
           >
-            {step === 1 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
+            {step === 1 ? (t('myWorkTable.governedModels.cancel')) : t('myWorkTable.governedModels.back')}
           </button>
           {step < 5 ? (
             <button
@@ -554,7 +559,7 @@ function CreateModelWizard({
               onClick={() => setStep((s) => (s + 1) as WizardStep)}
               className="px-4 py-1.5 rounded-lg text-xs font-medium bg-c-tag-2 text-c-text hover:bg-c-tag-2 disabled:opacity-40"
             >
-              {isPl ? 'Dalej' : 'Next'}
+              {t('myWorkTable.governedModels.next')}
             </button>
           ) : (
             <button
@@ -563,7 +568,7 @@ function CreateModelWizard({
               className="px-4 py-1.5 rounded-lg text-xs font-medium bg-c-tag-2 text-c-text hover:bg-c-tag-2 disabled:opacity-40 inline-flex items-center gap-1"
             >
               {saving && <Loader2 size={12} className="animate-spin" />}
-              {isPl ? 'Utwórz model' : 'Create Model'}
+              {t('myWorkTable.governedModels.createModel')}
             </button>
           )}
         </div>
@@ -591,6 +596,7 @@ function ModelCard({
   onDelete: () => void;
   onSelect: () => void;
 }) {
+  const { t } = useTranslation();
   const kpiCount = model.kpis?.length ?? 0;
   const dimCount = model.dimensions?.length ?? 0;
   const sourceCount = model.sources?.length ?? 0;
@@ -616,10 +622,10 @@ function ModelCard({
           <BarChart3 size={12} /> {kpiCount} KPI{kpiCount !== 1 ? 's' : ''}
         </span>
         <span className="inline-flex items-center gap-1 text-[11px] text-c-text-muted">
-          <Layers size={12} /> {dimCount} {isPl ? 'wym.' : 'dim.'}
+          <Layers size={12} /> {dimCount} {t('myWorkTable.governedModels.dim')}
         </span>
         <span className="inline-flex items-center gap-1 text-[11px] text-c-text-muted">
-          <Database size={12} /> {sourceCount} {isPl ? 'źr.' : 'src.'}
+          <Database size={12} /> {sourceCount} {t('myWorkTable.governedModels.src')}
         </span>
       </div>
 
@@ -663,7 +669,7 @@ function ModelCard({
       <div className="flex items-center justify-between pt-2 border-t border-c-border-subtle">
         <span className="text-[10px] text-c-text-secondary">
           {model.updated_at
-            ? `${isPl ? 'Ost. zmiana' : 'Updated'}: ${new Date(model.updated_at).toLocaleDateString()}`
+            ? `${t('myWorkTable.governedModels.updated')}: ${new Date(model.updated_at).toLocaleDateString()}`
             : ''}
         </span>
         <div className="flex items-center gap-1">
@@ -673,7 +679,7 @@ function ModelCard({
               onEdit();
             }}
             className="p-1 rounded hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary"
-            title={isPl ? 'Edytuj' : 'Edit'}
+            title={t('myWorkTable.governedModels.edit')}
           >
             <Pencil size={12} />
           </button>
@@ -683,7 +689,7 @@ function ModelCard({
               onDelete();
             }}
             className="p-1 rounded hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] hover:bg-c-danger text-c-text-secondary hover:text-c-danger"
-            title={isPl ? 'Usuń' : 'Delete'}
+            title={t('myWorkTable.governedModels.delete')}
           >
             <Trash2 size={12} />
           </button>
@@ -710,6 +716,7 @@ function EditModelModal({
   onSaved: () => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(model.name ?? '');
   const [description, setDescription] = useState(model.description ?? '');
   const [status, setStatus] = useState(model.status ?? 'draft');
@@ -725,7 +732,7 @@ function EditModelModal({
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
-      toast.error(isPl ? 'Nazwa jest wymagana' : 'Name is required');
+      toast.error(t('myWorkTable.governedModels.nameIsRequired'));
       return;
     }
     setSaving(true);
@@ -735,10 +742,10 @@ function EditModelModal({
         description: description.trim() || undefined,
         status,
       });
-      toast.success(isPl ? 'Model zaktualizowany' : 'Model updated');
+      toast.success(t('myWorkTable.governedModels.modelUpdated'));
       onSaved();
     } catch {
-      toast.error(isPl ? 'Nie udało się zapisać' : 'Failed to save changes');
+      toast.error(t('myWorkTable.governedModels.failedToSaveChanges'));
     } finally {
       setSaving(false);
     }
@@ -758,12 +765,12 @@ function EditModelModal({
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Edytuj model' : 'Edit model'}
+            {t('myWorkTable.governedModels.editModel')}
           </h3>
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-c-surface-raised"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkTable.governedModels.close')}
           >
             <X size={16} className="text-c-text-secondary" />
           </button>
@@ -772,7 +779,7 @@ function EditModelModal({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div>
             <label className="block text-xs font-medium text-c-text-muted mb-1">
-              {isPl ? 'Nazwa modelu' : 'Model name'}
+              {t('myWorkTable.governedModels.modelName')}
             </label>
             <input
               className={inputCls}
@@ -783,7 +790,7 @@ function EditModelModal({
           </div>
           <div>
             <label className="block text-xs font-medium text-c-text-muted mb-1">
-              {isPl ? 'Opis' : 'Description'}
+              {t('myWorkTable.governedModels.description')}
             </label>
             <textarea
               className={inputCls + ' min-h-[80px]'}
@@ -793,7 +800,7 @@ function EditModelModal({
           </div>
           <div>
             <label className="block text-xs font-medium text-c-text-muted mb-1">
-              {isPl ? 'Poziom zaufania' : 'Trust level'}
+              {t('myWorkTable.governedModels.trustLevel')}
             </label>
             <div className="flex flex-wrap gap-2">
               {TRUST_OPTIONS.map((opt) => (
@@ -817,7 +824,7 @@ function EditModelModal({
 
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkTable.governedModels.cancel')}
           </Button>
           <Button
             variant="brand"
@@ -826,7 +833,7 @@ function EditModelModal({
             disabled={saving || !dirty}
             loading={saving}
           >
-            {isPl ? 'Zapisz zmiany' : 'Save changes'}
+            {t('myWorkTable.governedModels.saveChanges')}
           </Button>
         </div>
       </div>
@@ -851,7 +858,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
   locked,
   onOpenTable,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [models, setModels] = useState<GovernedModel[]>([]);
@@ -891,7 +898,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
       );
       setKpiValues(values);
     } catch {
-      toast.error(isPl ? 'Nie udało się załadować modeli' : 'Failed to load models');
+      toast.error(t('myWorkTable.governedModels.failedToLoadModels'));
     } finally {
       setLoading(false);
     }
@@ -903,13 +910,13 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
 
   const handleDelete = useCallback(
     async (modelId: string) => {
-      if (!confirm(isPl ? 'Usunąć model?' : 'Delete this model?')) return;
+      if (!confirm(t('myWorkTable.governedModels.deleteThisModel'))) return;
       try {
         await Api.deleteGovernedModel(modelId);
-        toast.success(isPl ? 'Model usunięty' : 'Model deleted');
+        toast.success(t('myWorkTable.governedModels.modelDeleted'));
         loadModels();
       } catch {
-        toast.error(isPl ? 'Błąd usuwania' : 'Failed to delete');
+        toast.error(t('myWorkTable.governedModels.failedToDelete'));
       }
     },
     [isPl, loadModels]
@@ -925,12 +932,10 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-c-text">
-            {isPl ? 'Modele danych' : 'Data Models'}
+            {t('myWorkTable.governedModels.dataModels')}
           </h2>
           <p className="text-xs text-c-text-muted mt-0.5">
-            {isPl
-              ? 'Zarządzaj modelami KPI, wymiarami i źródłami danych'
-              : 'Manage KPI models, dimensions, and data sources'}
+            {t('myWorkTable.governedModels.manageKpiModelsDimensionsAnd')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -943,7 +948,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             }`}
           >
             <Activity size={14} />
-            {isPl ? 'Przepływ' : 'Lineage'}
+            {t('myWorkTable.governedModels.lineage')}
           </button>
           {!locked && (
             <button
@@ -951,7 +956,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-tag-2 text-c-text hover:bg-c-tag-2 transition-colors"
             >
               <Plus size={14} />
-              {isPl ? 'Nowy model' : 'New Model'}
+              {t('myWorkTable.governedModels.newModel')}
             </button>
           )}
         </div>
@@ -967,14 +972,14 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
         <div className="text-center py-12">
           <Layers size={40} className="mx-auto text-c-text-secondary mb-3" />
           <p className="text-sm text-c-text-muted">
-            {isPl ? 'Brak modeli danych' : 'No data models yet'}
+            {t('myWorkTable.governedModels.noDataModelsYet')}
           </p>
           {!locked && (
             <button
               onClick={() => setShowWizard(true)}
               className="mt-3 inline-flex items-center gap-1 text-xs text-c-tag-2 hover:underline"
             >
-              <Plus size={12} /> {isPl ? 'Utwórz pierwszy model' : 'Create your first model'}
+              <Plus size={12} /> {t('myWorkTable.governedModels.createYourFirstModel')}
             </button>
           )}
         </div>
@@ -1030,7 +1035,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
               </h4>
               {(selectedModel.kpis ?? []).length === 0 && (
                 <p className="text-xs text-c-text-secondary italic">
-                  {isPl ? 'Brak KPI' : 'No KPIs defined'}
+                  {t('myWorkTable.governedModels.noKpisDefined')}
                 </p>
               )}
               <div className="space-y-2">
@@ -1056,11 +1061,11 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             {/* Dimensions */}
             <div className="mt-6">
               <h4 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-2">
-                {isPl ? 'Wymiary' : 'Dimensions'}
+                {t('myWorkTable.governedModels.dimensions')}
               </h4>
               {(selectedModel.dimensions ?? []).length === 0 && (
                 <p className="text-xs text-c-text-secondary italic">
-                  {isPl ? 'Brak wymiarów' : 'No dimensions'}
+                  {t('myWorkTable.governedModels.noDimensions')}
                 </p>
               )}
               <div className="flex flex-wrap gap-1.5">
@@ -1078,11 +1083,11 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             {/* Sources */}
             <div className="mt-6">
               <h4 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-2">
-                {isPl ? 'Źródła' : 'Sources'}
+                {t('myWorkTable.governedModels.sources')}
               </h4>
               {(selectedModel.sources ?? []).length === 0 && (
                 <p className="text-xs text-c-text-secondary italic">
-                  {isPl ? 'Brak źródeł' : 'No sources'}
+                  {t('myWorkTable.governedModels.noSources')}
                 </p>
               )}
               <div className="space-y-1.5">

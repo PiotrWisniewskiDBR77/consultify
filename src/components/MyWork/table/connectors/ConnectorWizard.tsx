@@ -91,7 +91,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
   create,
   isCreating,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const steps = isPl ? STEPS_PL : STEPS_EN;
 
@@ -210,15 +210,15 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             }))
           );
         }
-        toast.success(isPl ? 'Połączenie OK' : 'Connection successful');
+        toast.success(t('myWorkTable.connectorWizard.connectionSuccessful'));
       } else {
         setTestStatus('failed');
         setTestError(res.error ?? '');
-        toast.error(res.error ?? (isPl ? 'Połączenie nieudane' : 'Connection failed'));
+        toast.error(res.error ?? (t('myWorkTable.connectorWizard.connectionFailed')));
       }
     } catch {
       setTestStatus('failed');
-      setTestError(isPl ? 'Nieoczekiwany błąd' : 'Unexpected error');
+      setTestError(t('myWorkTable.connectorWizard.unexpectedError'));
     }
   }, [connectorType, configPayload, testConnection, isPl]);
 
@@ -229,10 +229,10 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       const res = await autoMap({ id: '__preview__', sourceFields });
       if (res.mappings?.length) {
         setMappings(res.mappings);
-        toast.success(isPl ? 'Pola zmapowane automatycznie' : 'Fields auto-mapped');
+        toast.success(t('myWorkTable.connectorWizard.fieldsAutoMapped'));
       }
     } catch {
-      toast.error(isPl ? 'Auto-mapowanie nieudane' : 'Auto-mapping failed');
+      toast.error(t('myWorkTable.connectorWizard.autoMappingFailed'));
     } finally {
       setIsAutoMapping(false);
     }
@@ -262,11 +262,11 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         schedule: scheduleEnabled ? { interval } : null,
         runNow,
       });
-      toast.success(isPl ? 'Konektor utworzony' : 'Connector created');
+      toast.success(t('myWorkTable.connectorWizard.connectorCreated'));
       onCreated?.();
       onClose();
     } catch {
-      toast.error(isPl ? 'Nie udało się utworzyć konektora' : 'Failed to create connector');
+      toast.error(t('myWorkTable.connectorWizard.failedToCreateConnector'));
     }
   }, [
     connectorType,
@@ -337,19 +337,19 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
     <div className="space-y-4">
       {/* Name */}
       <div>
-        <label className={labelCls}>{isPl ? 'Nazwa konektora' : 'Connector name'}</label>
+        <label className={labelCls}>{t('myWorkTable.connectorWizard.connectorName')}</label>
         <input
           className={inputCls}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={isPl ? 'np. Import klientów' : 'e.g. Customer import'}
+          placeholder={t('myWorkTable.connectorWizard.eGCustomerImport')}
         />
       </div>
 
       {/* Type-specific fields */}
       {connectorType === 'csv' && (
         <div>
-          <label className={labelCls}>{isPl ? 'Plik CSV / XLSX' : 'CSV / XLSX file'}</label>
+          <label className={labelCls}>{t('myWorkTable.connectorWizard.csvXlsxFile')}</label>
           <input
             ref={fileInputRef}
             type="file"
@@ -363,7 +363,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           >
             <Upload size={14} className="text-c-text-secondary" />
             <span className={fileName ? 'text-c-text' : 'text-c-text-secondary'}>
-              {fileName || (isPl ? 'Wybierz plik...' : 'Choose file...')}
+              {fileName || (t('myWorkTable.connectorWizard.chooseFile'))}
             </span>
           </button>
         </div>
@@ -391,7 +391,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             />
           </div>
           <div>
-            <label className={labelCls}>{isPl ? 'Nazwa arkusza' : 'Sheet name'}</label>
+            <label className={labelCls}>{t('myWorkTable.connectorWizard.sheetName')}</label>
             <input
               className={inputCls}
               value={config.sheetName ?? ''}
@@ -424,7 +424,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             />
           </div>
           <div>
-            <label className={labelCls}>{isPl ? 'Nazwa tabeli' : 'Table name'}</label>
+            <label className={labelCls}>{t('myWorkTable.connectorWizard.tableName')}</label>
             <input
               className={inputCls}
               value={config.tableName ?? ''}
@@ -477,7 +477,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>{isPl ? 'Użytkownik' : 'User'}</label>
+              <label className={labelCls}>{t('myWorkTable.connectorWizard.user')}</label>
               <input
                 className={inputCls}
                 value={config.user ?? ''}
@@ -485,7 +485,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               />
             </div>
             <div>
-              <label className={labelCls}>{isPl ? 'Hasło' : 'Password'}</label>
+              <label className={labelCls}>{t('myWorkTable.connectorWizard.password')}</label>
               <input
                 className={inputCls}
                 type="password"
@@ -496,7 +496,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           </div>
           <div>
             <label className={labelCls}>
-              {isPl ? 'Tabela lub zapytanie SQL' : 'Table or SQL query'}
+              {t('myWorkTable.connectorWizard.tableOrSqlQuery')}
             </label>
             <input
               className={inputCls}
@@ -511,7 +511,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       {connectorType === 'jira' && (
         <>
           <div>
-            <label className={labelCls}>{isPl ? 'Domena Jira' : 'Jira domain'}</label>
+            <label className={labelCls}>{t('myWorkTable.connectorWizard.jiraDomain')}</label>
             <input
               className={inputCls}
               value={config.domain ?? ''}
@@ -542,7 +542,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           </div>
           <div>
             <label className={labelCls}>
-              {isPl ? 'Projekt (opcjonalnie)' : 'Project (optional)'}
+              {t('myWorkTable.connectorWizard.projectOptional')}
             </label>
             <input
               className={inputCls}
@@ -552,7 +552,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             />
           </div>
           <div>
-            <label className={labelCls}>JQL ({isPl ? 'opcjonalnie' : 'optional'})</label>
+            <label className={labelCls}>JQL ({t('myWorkTable.connectorWizard.optional')})</label>
             <input
               className={inputCls}
               value={config.jql ?? ''}
@@ -566,7 +566,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       {connectorType === 'webhook' && (
         <div>
           <label className={labelCls}>
-            {isPl ? 'Sekret webhooka (opcjonalnie)' : 'Webhook secret (optional)'}
+            {t('myWorkTable.connectorWizard.webhookSecretOptional')}
           </label>
           <input
             className={inputCls}
@@ -574,13 +574,11 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             value={config.webhookSecret ?? ''}
             onChange={(e) => setConfig((p) => ({ ...p, webhookSecret: e.target.value }))}
             placeholder={
-              isPl ? 'Współdzielony sekret do walidacji' : 'Shared secret for validation'
+              t('myWorkTable.connectorWizard.sharedSecretForValidation')
             }
           />
           <p className="mt-1 text-xs text-c-text-muted">
-            {isPl
-              ? 'Po utworzeniu konektora otrzymasz URL webhooka do wysyłania danych.'
-              : 'After creating the connector you will receive a webhook URL to send data to.'}
+            {t('myWorkTable.connectorWizard.afterCreatingTheConnectorYou')}
           </p>
         </div>
       )}
@@ -597,12 +595,12 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           ) : (
             <Zap size={14} />
           )}
-          {isPl ? 'Testuj połączenie' : 'Test connection'}
+          {t('myWorkTable.connectorWizard.testConnection')}
         </button>
         {testStatus === 'success' && (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-c-success">
-            <Check size={14} /> {isPl ? 'Połączono' : 'Connected'}
-            {sourceFields.length > 0 && ` (${sourceFields.length} ${isPl ? 'pól' : 'fields'})`}
+            <Check size={14} /> {t('myWorkTable.connectorWizard.connected')}
+            {sourceFields.length > 0 && ` (${sourceFields.length} ${t('myWorkTable.connectorWizard.fields')})`}
           </span>
         )}
         {testStatus === 'failed' && <span className="text-xs text-danger-500">{testError}</span>}
@@ -622,7 +620,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       {/* Auto-map button */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-c-text-muted">
-          {sourceFields.length} {isPl ? 'pól źródłowych' : 'source fields'}
+          {sourceFields.length} {t('myWorkTable.connectorWizard.sourceFields')}
         </span>
         <button
           onClick={handleAutoMap}
@@ -630,7 +628,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent-soft px-3 py-1.5 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
         >
           {isAutoMapping ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-          {isPl ? 'Auto-mapowanie' : 'Auto-map'}
+          {t('myWorkTable.connectorWizard.autoMap')}
         </button>
       </div>
 
@@ -638,11 +636,11 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       <div className="rounded-xl border border-c-border-subtle overflow-hidden">
         {/* Header */}
         <div className="grid grid-cols-12 gap-2 bg-c-surface-raised px-3 py-2 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
-          <div className="col-span-3">{isPl ? 'Źródło' : 'Source'}</div>
-          <div className="col-span-1 text-center">{isPl ? 'Typ' : 'Type'}</div>
+          <div className="col-span-3">{t('myWorkTable.connectorWizard.source')}</div>
+          <div className="col-span-1 text-center">{t('myWorkTable.connectorWizard.type')}</div>
           <div className="col-span-1 text-center">→</div>
-          <div className="col-span-4">{isPl ? 'Cel' : 'Target'}</div>
-          <div className="col-span-3">{isPl ? 'Transformacja' : 'Transform'}</div>
+          <div className="col-span-4">{t('myWorkTable.connectorWizard.target')}</div>
+          <div className="col-span-3">{t('myWorkTable.connectorWizard.transform')}</div>
         </div>
 
         {/* Rows */}
@@ -676,14 +674,14 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
                     }
                   }}
                 >
-                  <option value="">{isPl ? '— Pomiń —' : '— Skip —'}</option>
+                  <option value="">{t('myWorkTable.connectorWizard.skip')}</option>
                   {targetFields.map((tf) => (
                     <option key={tf} value={tf}>
                       {tf}
                     </option>
                   ))}
                   <option value="__new__">
-                    + {isPl ? 'Utwórz nowe pole' : 'Create new field'}
+                    + {t('myWorkTable.connectorWizard.createNewField')}
                   </option>
                 </select>
               </div>
@@ -711,9 +709,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
 
       {mappings.length === 0 && (
         <p className="text-center text-sm text-c-text-muted py-6">
-          {isPl
-            ? 'Przetestuj połączenie w poprzednim kroku, aby pobrać pola.'
-            : 'Test the connection in the previous step to fetch fields.'}
+          {t('myWorkTable.connectorWizard.testTheConnectionInThe')}
         </p>
       )}
     </div>
@@ -734,12 +730,10 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-c-text">
-            {isPl ? 'Automatyczna synchronizacja' : 'Automatic sync'}
+            {t('myWorkTable.connectorWizard.automaticSync')}
           </p>
           <p className="text-xs text-c-text-muted">
-            {isPl
-              ? 'Uruchamiaj import automatycznie wg harmonogramu'
-              : 'Run imports automatically on a schedule'}
+            {t('myWorkTable.connectorWizard.runImportsAutomaticallyOnA')}
           </p>
         </div>
         <button
@@ -759,7 +753,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       {scheduleEnabled && (
         <>
           <div>
-            <label className={labelCls}>{isPl ? 'Interwał' : 'Interval'}</label>
+            <label className={labelCls}>{t('myWorkTable.connectorWizard.interval')}</label>
             <div className="relative">
               <select
                 className={`${inputCls} appearance-none pr-8`}
@@ -782,7 +776,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           <div className="flex items-center gap-2 rounded-lg bg-c-accent-soft px-3 py-2">
             <Clock size={14} className="text-c-accent" />
             <span className="text-xs text-c-accent">
-              {isPl ? 'Następne uruchomienie: ' : 'Next run: '}
+              {t('myWorkTable.connectorWizard.nextRun')}
               {nextRunLabel}
             </span>
           </div>
@@ -801,7 +795,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard
-          label={isPl ? 'Typ' : 'Type'}
+          label={t('myWorkTable.connectorWizard.type')}
           value={
             connectorType
               ? isPl
@@ -811,20 +805,18 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           }
           icon={connectorType ? <ConnectorIcon type={connectorType} size={16} /> : undefined}
         />
-        <SummaryCard label={isPl ? 'Nazwa' : 'Name'} value={name || '—'} />
+        <SummaryCard label={t('myWorkTable.connectorWizard.name')} value={name || '—'} />
         <SummaryCard
-          label={isPl ? 'Zmapowane pola' : 'Mapped fields'}
+          label={t('myWorkTable.connectorWizard.mappedFields')}
           value={`${mappedCount} / ${sourceFields.length}`}
         />
         <SummaryCard
-          label={isPl ? 'Harmonogram' : 'Schedule'}
+          label={t('myWorkTable.connectorWizard.schedule')}
           value={
             scheduleEnabled
               ? (INTERVALS.find((i) => i.value === interval)?.[isPl ? 'labelPl' : 'labelEn'] ??
                 interval)
-              : isPl
-                ? 'Wyłączony'
-                : 'Disabled'
+              : t('myWorkTable.connectorWizard.disabled')
           }
         />
       </div>
@@ -838,11 +830,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           className="h-4 w-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
         />
         <div>
-          <p className="text-sm font-medium text-c-text">{isPl ? 'Uruchom teraz' : 'Run now'}</p>
+          <p className="text-sm font-medium text-c-text">{t('myWorkTable.connectorWizard.runNow')}</p>
           <p className="text-xs text-c-text-muted">
-            {isPl
-              ? 'Rozpocznij import natychmiast po utworzeniu'
-              : 'Start importing immediately after creation'}
+            {t('myWorkTable.connectorWizard.startImportingImmediatelyAfterCreation')}
           </p>
         </div>
       </label>
@@ -911,11 +901,11 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       >
         {step === 1 ? (
           <>
-            <X size={14} /> {isPl ? 'Anuluj' : 'Cancel'}
+            <X size={14} /> {t('myWorkTable.connectorWizard.cancel')}
           </>
         ) : (
           <>
-            <ArrowLeft size={14} /> {isPl ? 'Wstecz' : 'Back'}
+            <ArrowLeft size={14} /> {t('myWorkTable.connectorWizard.back')}
           </>
         )}
       </button>
@@ -926,7 +916,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           disabled={!canProceed}
           className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-surface hover:opacity-90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isPl ? 'Dalej' : 'Next'} <ArrowRight size={14} />
+          {t('myWorkTable.connectorWizard.next')} <ArrowRight size={14} />
         </button>
       ) : (
         <button
@@ -935,7 +925,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-surface hover:opacity-90 transition-colors disabled:opacity-40"
         >
           {isCreating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-          {isPl ? 'Utwórz konektor' : 'Create connector'}
+          {t('myWorkTable.connectorWizard.createConnector')}
         </button>
       )}
     </div>
@@ -945,9 +935,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={isPl ? 'Nowy konektor danych' : 'New Data Connector'}
+      title={t('myWorkTable.connectorWizard.newDataConnector')}
       description={
-        isPl ? 'Importuj dane z zewnętrznego źródła' : 'Import data from an external source'
+        t('myWorkTable.connectorWizard.importDataFromAnExternal')
       }
       size="xl"
       footer={footer}
