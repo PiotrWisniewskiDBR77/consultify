@@ -1,0 +1,573 @@
+/**
+ * V8 Finance — Value Tracking cluster (M16 "ŚLEDZENIE WARTOŚCI" wiring).
+ *
+ * Wires 7 previously-orphaned M16 services (0 importers before this file) into
+ * org-scoped REST endpoints:
+ *   - valueLedgerService.ts               — frozen KPI baselines + append-only
+ *                                            correction ledger (DB, org-scoped)
+ *   - valueAttributionRollupService.ts    — anti-double-count portfolio value
+ *                                            rollup (pure)
+ *   - valueCapturePipelineService.ts      — G0..G5 value-capture stage-gates
+ *                                            (DB, org-scoped)
+ *   - realizedValueReconciliationService.ts — declared-vs-statement reconciliation
+ *                                            (pure + optional DB loader)
+ *   - kpiLineageService.ts                — leading/lagging KPI early-warning
+ *                                            divergence (pure)
+ *   - bankingValueService.ts              — "banking the value" into next-period
+ *                                            budget lines (pure)
+ *   - extendedRatiosService.ts            — ROE/ROA/ROIC/DSCR/DuPont/benchmark
+ *                                            ratios (pure)
+ *
+ * NOTE: intentionally NOT mounted in Gateway/v8/index.ts here — wiring the
+ * mount point is a separate step so this file can be reviewed/tested in
+ * isolation first.
+ *
+ * MOUNT: v8Router.use('/finance/value-tracking', financeValueTrackingRoutes);
+ *        (NOT '/finance-value' — that prefix is already taken by
+ *        financeValueRoutes.ts, mounted at both '/finance/value' and
+ *        '/finance-value' in server/src/routes/v8/index.ts.)
+ *
+ * @module routes/v8/finance-value.routes
+ */
+
+import type { Response } from 'express';
+import { Router } from 'express';
+
+import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import {
+  type Benefit,
+  bankBenefit,
+  bankingStatus,
+  portfolioBanked,
+} from '../../services/bankingValueService.js';
+import {
+  type ExtendedFinancials,
+  type IndustryBenchmark,
+  benchmarkStatus,
+  computeExtendedRatios,
+  dupontDecomposition,
+} from '../../services/extendedRatiosService.js';
+import { type KpiLineagePair, detectEarlyWarnings } from '../../services/kpiLineageService.js';
+import {
+  type ReconcileRow,
+  reconcile,
+  reconcileOrganization,
+  reconcilePortfolio,
+} from '../../services/realizedValueReconciliationService.js';
+import {
+  type ValueCaptureGate,
+  advanceGate,
+  createGate,
+  listGates,
+  pipelineFunnel,
+} from '../../services/valueCapturePipelineService.js';
+import {
+  type ValueContribution,
+  rollupPortfolioValue,
+  valueByInitiative,
+} from '../../services/valueAttributionRollupService.js';
+import {
+  appendLedgerEntry,
+  currentValueFromLedger,
+  freezeBaseline,
+  getActiveBaseline,
+  getLedger,
+} from '../../services/valueLedgerService.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
+
+const router = Router();
+
+/** Stable contract id for the Value Tracking cluster's responses. */
+export const V8_FINANCE_VALUE_TRACKING_CONTRACT = 'finance_value_tracking_v1';
+
+function meta() {
+  return { version: 'v8' as const, contract: V8_FINANCE_VALUE_TRACKING_CONTRACT };
+}
+
+function queryString(req: AuthRequest, key: string): string | undefined {
+  const v = req.query?.[key];
+  return typeof v === 'string' && v.trim() ? v.trim() : undefined;
+}
+
+// ---------------------------------------------------------------------------
+// 1. valueLedgerService — frozen baseline + append-only correction ledger
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /ledger/baselines
+ * Body: { initiativeId, kpiId, value, frozenBy?, sourceSnapshot? }
+ * Freezes a new active baseline (deactivating any prior active one).
+ */
+router.post(
+  '/ledger/baselines',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const initiativeId = String(req.body?.initiativeId || '').trim();
+    const kpiId = String(req.body?.kpiId || '').trim();
+    if (!initiativeId || !kpiId) {
+      return res
+        .status(400)
+        .json({ error: 'initiativeId and kpiId are required', code: 'VALUE_LEDGER_BAD_INPUT' });
+    }
+    try {
+      const baseline = await freezeBaseline(organizationId, {
+        initiativeId,
+        kpiId,
+        value: Number(req.body?.value) || 0,
+        frozenBy: req.body?.frozenBy ?? userId,
+        sourceSnapshot: req.body?.sourceSnapshot,
+      });
+      return res.status(201).json({ data: baseline, meta: meta() });
+    } catch (err) {
+      logger.error(`[V8:FinanceValue] freezeBaseline failed: ${String(err)}`);
+      return res
+        .status(500)
+        .json({ error: 'Failed to freeze baseline', code: 'VALUE_LEDGER_BASELINE_WRITE_FAILED' });
+    }
+  })
+);
+
+/**
+ * GET /ledger/baselines/active?initiativeId=&kpiId=
+ * The single active (frozen) baseline for a KPI, or null.
+ */
+router.get(
+  '/ledger/baselines/active',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId = queryString(req, 'initiativeId');
+    const kpiId = queryString(req, 'kpiId');
+    if (!initiativeId || !kpiId) {
+      return res
+        .status(400)
+        .json({ error: 'initiativeId and kpiId are required', code: 'VALUE_LEDGER_BAD_INPUT' });
+    }
+    const baseline = await getActiveBaseline(organizationId, initiativeId, kpiId);
+    return res.json({ data: baseline, meta: meta() });
+  })
+);
+
+/**
+ * POST /ledger/entries
+ * Body: { initiativeId, entryType, valueDelta, reason?, provenance?, createdBy? }
+ * Appends an auditable correction entry to the ledger.
+ */
+router.post(
+  '/ledger/entries',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const initiativeId = String(req.body?.initiativeId || '').trim();
+    const entryType = String(req.body?.entryType || '').trim();
+    if (!initiativeId || !entryType) {
+      return res.status(400).json({
+        error: 'initiativeId and entryType are required',
+        code: 'VALUE_LEDGER_BAD_INPUT',
+      });
+    }
+    try {
+      const entry = await appendLedgerEntry(organizationId, {
+        initiativeId,
+        entryType,
+        valueDelta: Number(req.body?.valueDelta) || 0,
+        reason: req.body?.reason ?? null,
+        provenance: req.body?.provenance,
+        createdBy: req.body?.createdBy ?? userId,
+      });
+      return res.status(201).json({ data: entry, meta: meta() });
+    } catch (err) {
+      logger.error(`[V8:FinanceValue] appendLedgerEntry failed: ${String(err)}`);
+      return res
+        .status(500)
+        .json({ error: 'Failed to append ledger entry', code: 'VALUE_LEDGER_ENTRY_WRITE_FAILED' });
+    }
+  })
+);
+
+/**
+ * GET /ledger/entries?initiativeId=
+ * All ledger entries for an initiative, oldest first.
+ */
+router.get(
+  '/ledger/entries',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId = queryString(req, 'initiativeId');
+    if (!initiativeId) {
+      return res
+        .status(400)
+        .json({ error: 'initiativeId is required', code: 'VALUE_LEDGER_BAD_INPUT' });
+    }
+    const entries = await getLedger(organizationId, initiativeId);
+    return res.json({ data: entries, meta: meta() });
+  })
+);
+
+/**
+ * GET /ledger/current-value?initiativeId=&kpiId=
+ * Composed read: active baseline + ledger entries -> current value + audit trail.
+ * current = baseline.frozen_value + Σ ledger.value_delta (see currentValueFromLedger).
+ */
+router.get(
+  '/ledger/current-value',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId = queryString(req, 'initiativeId');
+    const kpiId = queryString(req, 'kpiId');
+    if (!initiativeId || !kpiId) {
+      return res
+        .status(400)
+        .json({ error: 'initiativeId and kpiId are required', code: 'VALUE_LEDGER_BAD_INPUT' });
+    }
+    const [baseline, entries] = await Promise.all([
+      getActiveBaseline(organizationId, initiativeId, kpiId),
+      getLedger(organizationId, initiativeId),
+    ]);
+    const result = currentValueFromLedger(
+      baseline ? { frozen_value: baseline.frozen_value, id: baseline.id, frozen_at: baseline.frozen_at } : null,
+      entries.map((e) => ({
+        id: e.id,
+        entry_type: e.entry_type,
+        value_delta: e.value_delta,
+        reason: e.reason,
+        provenance: e.provenance,
+        created_at: e.created_at,
+      }))
+    );
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// 2. valueAttributionRollupService — anti-double-count portfolio rollup (pure)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /attribution/rollup
+ * Body: { contributions: ValueContribution[] }
+ */
+router.post(
+  '/attribution/rollup',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const contributions: ValueContribution[] = Array.isArray(req.body?.contributions)
+      ? req.body.contributions
+      : [];
+    const result = rollupPortfolioValue(contributions);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+/**
+ * POST /attribution/by-initiative
+ * Body: { contributions: ValueContribution[] }
+ */
+router.post(
+  '/attribution/by-initiative',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const contributions: ValueContribution[] = Array.isArray(req.body?.contributions)
+      ? req.body.contributions
+      : [];
+    const result = valueByInitiative(contributions);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// 3. valueCapturePipelineService — G0..G5 stage-gates (DB, org-scoped)
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /capture/gates?initiativeId=
+ * List value-capture gates for the org, optionally filtered to one initiative.
+ */
+router.get(
+  '/capture/gates',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId = queryString(req, 'initiativeId');
+    const gates = await listGates(organizationId, initiativeId);
+    return res.json({ data: gates, meta: meta() });
+  })
+);
+
+/**
+ * POST /capture/gates
+ * Body: { initiativeId, gate, status?, criteria?, valueEvidence? }
+ */
+router.post(
+  '/capture/gates',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId = String(req.body?.initiativeId || '').trim();
+    const gate = req.body?.gate;
+    if (!initiativeId || !gate) {
+      return res
+        .status(400)
+        .json({ error: 'initiativeId and gate are required', code: 'VALUE_CAPTURE_BAD_INPUT' });
+    }
+    try {
+      const created = await createGate(organizationId, {
+        initiativeId,
+        gate,
+        status: req.body?.status,
+        criteria: req.body?.criteria ?? null,
+        valueEvidence:
+          req.body?.valueEvidence === undefined || req.body?.valueEvidence === null
+            ? null
+            : Number(req.body.valueEvidence),
+      });
+      return res.status(201).json({ data: created, meta: meta() });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn(`[V8:FinanceValue] createGate rejected: ${message}`);
+      return res.status(400).json({ error: message, code: 'VALUE_CAPTURE_GATE_CREATE_FAILED' });
+    }
+  })
+);
+
+/**
+ * POST /capture/gates/:id/advance
+ * Body: { signedOffBy }
+ * Advances a gate to 'passed' when exit criteria are met AND sign-off is given.
+ */
+router.post(
+  '/capture/gates/:id/advance',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+    const signedOffBy = String(req.body?.signedOffBy || userId || '').trim();
+    if (!signedOffBy) {
+      return res
+        .status(400)
+        .json({ error: 'signedOffBy is required', code: 'VALUE_CAPTURE_BAD_INPUT' });
+    }
+    try {
+      const updated: ValueCaptureGate = await advanceGate(organizationId, id, { signedOffBy });
+      return res.json({ data: updated, meta: meta() });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const notFound = message === 'Gate not found';
+      logger.warn(`[V8:FinanceValue] advanceGate rejected for ${id}: ${message}`);
+      return res.status(notFound ? 404 : 400).json({
+        error: message,
+        code: notFound ? 'VALUE_CAPTURE_GATE_NOT_FOUND' : 'VALUE_CAPTURE_GATE_ADVANCE_REJECTED',
+      });
+    }
+  })
+);
+
+/**
+ * GET /capture/funnel?initiativeId=
+ * Pipeline funnel (count + value + conversion) per canonical gate, org-scoped.
+ */
+router.get(
+  '/capture/funnel',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId = queryString(req, 'initiativeId');
+    const gates = await listGates(organizationId, initiativeId);
+    const funnel = pipelineFunnel(gates);
+    return res.json({ data: funnel, meta: meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// 4. realizedValueReconciliationService — declared vs statement (pure + DB)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /reconciliation/check
+ * Body: { declared: number, statementValue?: number|null, tolerancePct?: number }
+ */
+router.post(
+  '/reconciliation/check',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const declared = Number(req.body?.declared) || 0;
+    const statementValue =
+      req.body?.statementValue === undefined || req.body?.statementValue === null
+        ? undefined
+        : Number(req.body.statementValue);
+    const tolerancePct = req.body?.tolerancePct === undefined ? 5 : Number(req.body.tolerancePct);
+    const result = reconcile(declared, statementValue, tolerancePct);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+/**
+ * POST /reconciliation/portfolio
+ * Body: { rows: ReconcileRow[], tolerancePct?: number }
+ */
+router.post(
+  '/reconciliation/portfolio',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const rows: ReconcileRow[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    const tolerancePct = req.body?.tolerancePct === undefined ? 5 : Number(req.body.tolerancePct);
+    const result = reconcilePortfolio(rows, tolerancePct);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+/**
+ * GET /reconciliation/organization?tolerancePct=
+ * Org-scoped DB assembler: roi_realized_values -> kpi_financial_mappings ->
+ * financial_statement_lines/values, reconciled against declared realized value.
+ */
+router.get(
+  '/reconciliation/organization',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const tolerancePctRaw = queryString(req, 'tolerancePct');
+    const tolerancePct = tolerancePctRaw === undefined ? 5 : Number(tolerancePctRaw) || 5;
+    const result = await reconcileOrganization(organizationId, tolerancePct);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// 5. kpiLineageService — leading/lagging early-warning divergence (pure)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /lineage/early-warnings
+ * Body: { pairs: KpiLineagePair[], threshold?: number }
+ */
+router.post(
+  '/lineage/early-warnings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const pairs: KpiLineagePair[] = Array.isArray(req.body?.pairs) ? req.body.pairs : [];
+    const threshold = req.body?.threshold === undefined ? undefined : Number(req.body.threshold);
+    const result =
+      threshold === undefined ? detectEarlyWarnings(pairs) : detectEarlyWarnings(pairs, threshold);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// 6. bankingValueService — banking the value into next-period budget (pure)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /banking/bank
+ * Body: { benefit: Benefit, targetBudgetPeriod: string }
+ */
+router.post(
+  '/banking/bank',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const benefit = req.body?.benefit as Benefit;
+    const targetBudgetPeriod = String(req.body?.targetBudgetPeriod || '').trim();
+    if (!benefit || !targetBudgetPeriod) {
+      return res
+        .status(400)
+        .json({ error: 'benefit and targetBudgetPeriod are required', code: 'VALUE_BANKING_BAD_INPUT' });
+    }
+    const result = bankBenefit(benefit, targetBudgetPeriod);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+/**
+ * POST /banking/status
+ * Body: { benefit: Benefit, actual?: number }
+ */
+router.post(
+  '/banking/status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const benefit = req.body?.benefit as Benefit;
+    if (!benefit) {
+      return res.status(400).json({ error: 'benefit is required', code: 'VALUE_BANKING_BAD_INPUT' });
+    }
+    const actual =
+      req.body?.actual === undefined || req.body?.actual === null
+        ? undefined
+        : Number(req.body.actual);
+    const result = bankingStatus(benefit, actual);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+/**
+ * POST /banking/portfolio
+ * Body: { items: PortfolioItem[] }
+ */
+router.post(
+  '/banking/portfolio',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    const result = portfolioBanked(items);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// 7. extendedRatiosService — ROE/ROA/ROIC/DSCR/DuPont/benchmark (pure)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /ratios/extended
+ * Body: ExtendedFinancials
+ */
+router.post(
+  '/ratios/extended',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const fin = req.body as ExtendedFinancials;
+    const result = computeExtendedRatios(fin);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+/**
+ * POST /ratios/dupont
+ * Body: ExtendedFinancials
+ */
+router.post(
+  '/ratios/dupont',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const fin = req.body as ExtendedFinancials;
+    const result = dupontDecomposition(fin);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+/**
+ * POST /ratios/benchmark
+ * Body: { value: number, benchmark: IndustryBenchmark }
+ */
+router.post(
+  '/ratios/benchmark',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const value = Number(req.body?.value);
+    const benchmark = req.body?.benchmark as IndustryBenchmark;
+    if (!benchmark) {
+      return res
+        .status(400)
+        .json({ error: 'benchmark is required', code: 'VALUE_RATIOS_BAD_INPUT' });
+    }
+    const result = benchmarkStatus(value, benchmark);
+    return res.json({ data: result, meta: meta() });
+  })
+);
+
+export default router;
