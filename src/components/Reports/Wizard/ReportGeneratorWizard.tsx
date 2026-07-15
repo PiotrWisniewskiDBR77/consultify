@@ -152,9 +152,8 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 export const ReportGeneratorWizard: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const tr = useCallback((en: string, pl: string) => (isPolish ? pl : en), [isPolish]);
 
   const [open, setOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -329,7 +328,9 @@ export const ReportGeneratorWizard: React.FC = () => {
 
   const typeBody = (
     <div className="space-y-3">
-      <SectionLabel>{tr('Report type', 'Typ raportu')}</SectionLabel>
+      <SectionLabel>
+        {t('reports.reportGeneratorWizard.reportTypeSectionLabel', 'Report type')}
+      </SectionLabel>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {REPORT_TYPES.map((def) => {
           const Icon = ICON_MAP[def.icon];
@@ -377,7 +378,9 @@ export const ReportGeneratorWizard: React.FC = () => {
 
   const cadenceBody = (
     <div className="space-y-4">
-      <SectionLabel>{tr('How should this report run?', 'Jak ma działać raport?')}</SectionLabel>
+      <SectionLabel>
+        {t('reports.reportGeneratorWizard.cadenceQuestionLabel', 'How should this report run?')}
+      </SectionLabel>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {(
           [
@@ -436,7 +439,7 @@ export const ReportGeneratorWizard: React.FC = () => {
       </div>
       {selectedType && (
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          {tr('Default for this report:', 'Domyślnie dla tego raportu:')}{' '}
+          {t('reports.reportGeneratorWizard.defaultForReportPrefix', 'Default for this report:')}{' '}
           <span className="font-medium text-slate-500 dark:text-slate-400">
             {selectedType.defaultCadence}
           </span>
@@ -447,7 +450,9 @@ export const ReportGeneratorWizard: React.FC = () => {
 
   const repeatBody = (
     <div className="space-y-4">
-      <SectionLabel>{tr('Repeat interval', 'Interwał powtarzania')}</SectionLabel>
+      <SectionLabel>
+        {t('reports.reportGeneratorWizard.repeatIntervalLabel', 'Repeat interval')}
+      </SectionLabel>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {RECURRENCE_UNITS.map((unit) => {
           const active = recurrenceUnit === unit.id;
@@ -483,14 +488,14 @@ export const ReportGeneratorWizard: React.FC = () => {
     <div className="space-y-5">
       {/* Goal */}
       <div className="space-y-1.5">
-        <SectionLabel>{tr('Goal', 'Cel')}</SectionLabel>
+        <SectionLabel>{t('reports.reportGeneratorWizard.goalLabel', 'Goal')}</SectionLabel>
         <textarea
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
           rows={2}
-          placeholder={tr(
-            'What should this report achieve for its audience?',
-            'Co ten raport ma osiągnąć dla odbiorców?'
+          placeholder={t(
+            'reports.reportGeneratorWizard.goalPlaceholder',
+            'What should this report achieve for its audience?'
           )}
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
@@ -498,7 +503,9 @@ export const ReportGeneratorWizard: React.FC = () => {
 
       {/* Optional title override */}
       <div className="space-y-1.5">
-        <SectionLabel>{tr('Report name (optional)', 'Nazwa raportu (opcjonalnie)')}</SectionLabel>
+        <SectionLabel>
+          {t('reports.reportGeneratorWizard.reportNameOptionalLabel', 'Report name (optional)')}
+        </SectionLabel>
         <input
           type="text"
           value={titleOverride}
@@ -510,11 +517,13 @@ export const ReportGeneratorWizard: React.FC = () => {
 
       {/* Period / scope */}
       <div className="space-y-1.5">
-        <SectionLabel>{tr('Period & scope', 'Okres i zakres')}</SectionLabel>
+        <SectionLabel>
+          {t('reports.reportGeneratorWizard.periodScopeLabel', 'Period & scope')}
+        </SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="mb-1 block text-xs text-slate-500 dark:text-slate-400">
-              {tr('From', 'Od')}
+              {t('reports.reportGeneratorWizard.fromLabel', 'From')}
             </span>
             <input
               type="date"
@@ -525,7 +534,7 @@ export const ReportGeneratorWizard: React.FC = () => {
           </label>
           <label className="block">
             <span className="mb-1 block text-xs text-slate-500 dark:text-slate-400">
-              {tr('To', 'Do')}
+              {t('reports.reportGeneratorWizard.toLabel', 'To')}
             </span>
             <input
               type="date"
@@ -539,9 +548,9 @@ export const ReportGeneratorWizard: React.FC = () => {
           type="text"
           value={scopeNote}
           onChange={(e) => setScopeNote(e.target.value)}
-          placeholder={tr(
-            'Scope note (e.g. only active initiatives, specific portfolio)',
-            'Notatka o zakresie (np. tylko aktywne inicjatywy, wybrany portfel)'
+          placeholder={t(
+            'reports.reportGeneratorWizard.scopeNotePlaceholder',
+            'Scope note (e.g. only active initiatives, specific portfolio)'
           )}
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
@@ -549,7 +558,7 @@ export const ReportGeneratorWizard: React.FC = () => {
 
       {/* Presentation: density */}
       <div className="space-y-1.5">
-        <SectionLabel>{tr('Density', 'Gęstość')}</SectionLabel>
+        <SectionLabel>{t('reports.reportGeneratorWizard.densityLabel', 'Density')}</SectionLabel>
         <div className="grid grid-cols-3 gap-2">
           {DENSITY_OPTIONS.map((opt) => {
             const active = density === opt.id;
@@ -579,7 +588,7 @@ export const ReportGeneratorWizard: React.FC = () => {
       {/* Presentation: sections */}
       {selectedType && (
         <div className="space-y-1.5">
-          <SectionLabel>{tr('Sections', 'Sekcje')}</SectionLabel>
+          <SectionLabel>{t('reports.reportGeneratorWizard.sectionsLabel', 'Sections')}</SectionLabel>
           <div className="flex flex-wrap gap-2">
             {selectedType.defaultSections.map((section) => {
               const active = sections.includes(section);
@@ -606,7 +615,7 @@ export const ReportGeneratorWizard: React.FC = () => {
       {/* Audience read-out (presentation context) */}
       {selectedType && (
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          {tr('Audience:', 'Odbiorcy:')}{' '}
+          {t('reports.reportGeneratorWizard.audiencePrefix', 'Audience:')}{' '}
           <span className="font-medium text-slate-500 dark:text-slate-400">
             {isPolish ? selectedType.audiencePl : selectedType.audience}
           </span>

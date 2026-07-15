@@ -155,7 +155,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
   benchmarkData,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const benchmark =
@@ -200,10 +200,10 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-            {isPolish ? 'Benchmarki Branżowe' : 'Industry Benchmarks'}
+            {t('reports.industryBenchmark.title', 'Industry Benchmarks')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Porównanie z' : 'Compared to'}{' '}
+            {t('reports.industryBenchmark.comparedToPrefix', 'Compared to')}{' '}
             {isPolish ? benchmark.industryPl : benchmark.industry}
           </p>
         </div>
@@ -221,7 +221,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
           <div className="flex items-center gap-2 mb-2 opacity-90">
             <Target className="w-4 h-4" />
             <span className="text-xs font-medium uppercase tracking-wider">
-              {isPolish ? 'Twój wynik' : 'Your Score'}
+              {t('reports.industryBenchmark.yourScoreLabel', 'Your Score')}
             </span>
           </div>
           <div className="text-3xl font-bold">{stats.avgActual.toFixed(1)}</div>
@@ -232,7 +232,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
           <div className="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
             <Building2 className="w-4 h-4" />
             <span className="text-xs font-medium uppercase tracking-wider">
-              {isPolish ? 'Średnia branży' : 'Industry Avg'}
+              {t('reports.industryBenchmark.industryAvgLabel', 'Industry Avg')}
             </span>
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white">
@@ -251,7 +251,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
               <Minus className="w-4 h-4" />
             )}
             <span className="text-xs font-medium uppercase tracking-wider">
-              {isPolish ? 'Różnica' : 'Difference'}
+              {t('reports.industryBenchmark.differenceLabel', 'Difference')}
             </span>
           </div>
           <div
@@ -267,7 +267,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
             {(stats.avgActual - stats.avgIndustry).toFixed(1)}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {isPolish ? 'poziomów' : 'levels'}
+            {t('reports.industryBenchmark.levelsSuffix', 'levels')}
           </div>
         </div>
 
@@ -275,22 +275,16 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
           <div className="flex items-center gap-2 mb-2 opacity-90">
             <Award className="w-4 h-4" />
             <span className="text-xs font-medium uppercase tracking-wider">
-              {isPolish ? 'Percentyl' : 'Percentile'}
+              {t('reports.industryBenchmark.percentileLabel', 'Percentile')}
             </span>
           </div>
           <div className="text-3xl font-bold">{Math.round(stats.avgPercentile)}</div>
           <div className="text-xs opacity-75 mt-1">
             {stats.avgPercentile >= 75
-              ? isPolish
-                ? 'Top 25%'
-                : 'Top 25%'
+              ? 'Top 25%'
               : stats.avgPercentile >= 50
-                ? isPolish
-                  ? 'Top 50%'
-                  : 'Top 50%'
-                : isPolish
-                  ? 'Poniżej średniej'
-                  : 'Below Average'}
+                ? 'Top 50%'
+                : t('reports.industryBenchmark.belowAverageLabel', 'Below Average')}
           </div>
         </div>
       </div>
@@ -318,19 +312,19 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
             <Legend wrapperStyle={{ paddingTop: '20px' }} />
             <Bar
               dataKey="organization"
-              name={isPolish ? 'Twoja organizacja' : 'Your Organization'}
+              name={t('reports.industryBenchmark.yourOrganizationSeries', 'Your Organization')}
               fill="#3b82f6"
               radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey="industryAverage"
-              name={isPolish ? 'Średnia branży' : 'Industry Average'}
+              name={t('reports.industryBenchmark.industryAverageSeries', 'Industry Average')}
               fill="#94a3b8"
               radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey="topPerformers"
-              name={isPolish ? 'Top Performerzy' : 'Top Performers'}
+              name={t('reports.industryBenchmark.topPerformersSeries', 'Top Performers')}
               fill="#10b981"
               radius={[4, 4, 0, 0]}
               opacity={0.5}
@@ -381,13 +375,14 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-blue-500" />
                   <span className="text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Ty' : 'You'}: <strong>{axis.organization.toFixed(1)}</strong>
+                    {t('reports.industryBenchmark.youLabel', 'You')}:{' '}
+                    <strong>{axis.organization.toFixed(1)}</strong>
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-slate-400" />
                   <span className="text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Branża' : 'Industry'}:{' '}
+                    {t('reports.industryBenchmark.industryLabel', 'Industry')}:{' '}
                     <strong>{axis.industryAverage.toFixed(1)}</strong>
                   </span>
                 </div>

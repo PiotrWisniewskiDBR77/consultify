@@ -174,7 +174,9 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
               </div>
               <div className="text-3xl font-bold text-navy-900 dark:text-white">{count}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {count === 1 ? (isPolish ? 'oś' : 'axis') : isPolish ? 'osi' : 'axes'}
+                {count === 1
+                  ? t('reports.heatmapMatrix.axisSingular', 'axis')
+                  : t('reports.heatmapMatrix.axisPlural', 'axes')}
               </div>
             </div>
           );
@@ -186,22 +188,22 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
         {/* Header */}
         <div className="grid grid-cols-[200px_1fr_80px_80px_80px_100px] gap-px bg-slate-200 dark:bg-white/10">
           <div className="bg-slate-100 dark:bg-navy-800 px-4 py-3 font-semibold text-sm text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Oś Transformacji' : 'Transformation Axis'}
+            {t('reports.heatmapMatrix.transformationAxisHeader', 'Transformation Axis')}
           </div>
           <div className="bg-slate-100 dark:bg-navy-800 px-4 py-3 font-semibold text-sm text-slate-700 dark:text-slate-300 text-center">
-            {isPolish ? 'Wizualizacja' : 'Visualization'}
+            {t('reports.heatmapMatrix.visualizationHeader', 'Visualization')}
           </div>
           <div className="bg-slate-100 dark:bg-navy-800 px-4 py-3 font-semibold text-sm text-slate-700 dark:text-slate-300 text-center">
-            {isPolish ? 'Aktualny' : 'Actual'}
+            {t('reports.heatmapMatrix.actualHeader', 'Actual')}
           </div>
           <div className="bg-slate-100 dark:bg-navy-800 px-4 py-3 font-semibold text-sm text-slate-700 dark:text-slate-300 text-center">
-            {isPolish ? 'Docelowy' : 'Target'}
+            {t('reports.heatmapMatrix.targetHeader', 'Target')}
           </div>
           <div className="bg-slate-100 dark:bg-navy-800 px-4 py-3 font-semibold text-sm text-slate-700 dark:text-slate-300 text-center">
-            {isPolish ? 'Luka' : 'Gap'}
+            {t('reports.heatmapMatrix.gapHeader', 'Gap')}
           </div>
           <div className="bg-slate-100 dark:bg-navy-800 px-4 py-3 font-semibold text-sm text-slate-700 dark:text-slate-300 text-center">
-            {isPolish ? 'Priorytet' : 'Priority'}
+            {t('reports.heatmapMatrix.priorityHeader', 'Priority')}
           </div>
         </div>
 
@@ -360,7 +362,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                           {axis.actual.toFixed(1)}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Aktualny' : 'Actual'}
+                          {t('reports.heatmapMatrix.actualHeader', 'Actual')}
                         </div>
                       </div>
                       <div className="text-center p-4 bg-green-50 dark:bg-green-500/10 rounded-xl">
@@ -368,7 +370,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                           {axis.target.toFixed(1)}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Docelowy' : 'Target'}
+                          {t('reports.heatmapMatrix.targetHeader', 'Target')}
                         </div>
                       </div>
                       <div
@@ -379,7 +381,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                           +{axis.gap.toFixed(1)}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Luka' : 'Gap'}
+                          {t('reports.heatmapMatrix.gapHeader', 'Gap')}
                         </div>
                       </div>
                     </div>
@@ -397,7 +399,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                           style: { color: axis.priority.color },
                         })}
                         <span className="font-semibold" style={{ color: axis.priority.color }}>
-                          {isPolish ? 'Priorytet' : 'Priority'}:{' '}
+                          {t('reports.heatmapMatrix.priorityHeader', 'Priority')}:{' '}
                           {isPolish ? axis.priority.labelPl : axis.priority.labelEn}
                         </span>
                       </div>
@@ -409,7 +411,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                     {axis.justification && (
                       <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
                         <h4 className="font-medium text-navy-900 dark:text-white mb-2">
-                          {isPolish ? 'Uzasadnienie' : 'Justification'}
+                          {t('reports.heatmapMatrix.justificationTitle', 'Justification')}
                         </h4>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           {axis.justification}

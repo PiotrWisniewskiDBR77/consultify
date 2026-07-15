@@ -330,7 +330,9 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           className="enterprise-report prose prose-slate dark:prose-invert max-w-none prose-headings:font-semibold prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-table:text-sm prose-p:my-3 prose-li:my-1"
           onClick={!readOnly ? onStartEdit : undefined}
           dangerouslySetInnerHTML={{
-            __html: contentToHtml(section.content || (isPolish ? '*Brak treści*' : '*No content*')),
+            __html: contentToHtml(
+              section.content || t('reports.reportSection.noContentPlaceholder', '*No content*')
+            ),
           }}
         />
 
