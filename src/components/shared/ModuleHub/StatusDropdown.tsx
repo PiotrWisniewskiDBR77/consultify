@@ -14,6 +14,7 @@
 
 import { Check, ChevronDown, Filter } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // ============================================
 // TYPES
@@ -55,6 +56,8 @@ export interface StatusOption {
   id: string;
   label: string;
   labelPL: string;
+  /** i18n key (public/locales/*\/translation.json) — canonical source of truth for the label. */
+  labelKey: string;
   color: string;
   bgColor: string;
   order: number;
@@ -81,6 +84,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'DRAFT',
     label: 'Draft',
     labelPL: 'Szkic',
+    labelKey: 'common.initiativeStatus.draft',
     color: 'text-slate-600',
     bgColor: 'bg-slate-400',
     order: 1,
@@ -89,6 +93,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'PENDING_REVIEW',
     label: 'Pending Review',
     labelPL: 'Oczekuje na przegląd',
+    labelKey: 'common.initiativeStatus.pendingReview',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 2,
@@ -97,6 +102,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'REVIEW',
     label: 'In Review',
     labelPL: 'W przeglądzie',
+    labelKey: 'common.initiativeStatus.review',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 3,
@@ -105,6 +111,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'PROMOTED',
     label: 'Promoted',
     labelPL: 'Promowana',
+    labelKey: 'common.initiativeStatus.promoted',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500',
     order: 4,
@@ -113,6 +120,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'PLANNING',
     label: 'Planning',
     labelPL: 'Planowanie',
+    labelKey: 'common.initiativeStatus.planning',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 5,
@@ -121,6 +129,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'APPROVED',
     label: 'Approved',
     labelPL: 'Zatwierdzona',
+    labelKey: 'common.initiativeStatus.approved',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 6,
@@ -129,6 +138,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'SCHEDULED',
     label: 'Scheduled',
     labelPL: 'Zaplanowana',
+    labelKey: 'common.initiativeStatus.scheduled',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500',
     order: 7,
@@ -137,6 +147,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'EXECUTING',
     label: 'Executing',
     labelPL: 'W realizacji',
+    labelKey: 'common.initiativeStatus.executing',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500',
     order: 8,
@@ -145,6 +156,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'BLOCKED',
     label: 'Blocked',
     labelPL: 'Zablokowana',
+    labelKey: 'common.initiativeStatus.blocked',
     color: 'text-danger-500',
     bgColor: 'bg-danger-500',
     order: 9,
@@ -153,6 +165,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'DONE',
     label: 'Done',
     labelPL: 'Ukończona',
+    labelKey: 'common.initiativeStatus.done',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 10,
@@ -161,6 +174,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'TRACKING',
     label: 'Tracking',
     labelPL: 'Śledzenie',
+    labelKey: 'common.initiativeStatus.tracking',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 11,
@@ -169,6 +183,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'CANCELLED',
     label: 'Cancelled',
     labelPL: 'Anulowana',
+    labelKey: 'common.initiativeStatus.cancelled',
     color: 'text-slate-600',
     bgColor: 'bg-slate-400',
     order: 12,
@@ -177,6 +192,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'ARCHIVED',
     label: 'Archived',
     labelPL: 'Zarchiwizowana',
+    labelKey: 'common.initiativeStatus.archived',
     color: 'text-slate-600',
     bgColor: 'bg-slate-400',
     order: 13,
@@ -189,6 +205,7 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'DRAFT',
     label: 'Draft',
     labelPL: 'Szkic',
+    labelKey: 'common.assessmentStatus.draft',
     color: 'text-slate-600',
     bgColor: 'bg-slate-400',
     order: 1,
@@ -197,6 +214,7 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'IN_REVIEW',
     label: 'In Review',
     labelPL: 'W przeglądzie',
+    labelKey: 'common.assessmentStatus.inReview',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 2,
@@ -205,6 +223,7 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'AWAITING_APPROVAL',
     label: 'Awaiting Approval',
     labelPL: 'Oczekuje na zatwierdzenie',
+    labelKey: 'common.assessmentStatus.awaitingApproval',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 3,
@@ -213,6 +232,7 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'APPROVED',
     label: 'Approved',
     labelPL: 'Zatwierdzony',
+    labelKey: 'common.assessmentStatus.approved',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 4,
@@ -221,6 +241,7 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'REJECTED',
     label: 'Rejected',
     labelPL: 'Odrzucony',
+    labelKey: 'common.assessmentStatus.rejected',
     color: 'text-danger-500',
     bgColor: 'bg-danger-500',
     order: 5,
@@ -229,6 +250,7 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'ARCHIVED',
     label: 'Archived',
     labelPL: 'Zarchiwizowany',
+    labelKey: 'common.assessmentStatus.archived',
     color: 'text-slate-600',
     bgColor: 'bg-slate-400',
     order: 6,
@@ -241,6 +263,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'DRAFT',
     label: 'Draft',
     labelPL: 'Szkic',
+    labelKey: 'common.reportStatus.draft',
     color: 'text-slate-600',
     bgColor: 'bg-slate-400',
     order: 1,
@@ -249,6 +272,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'GENERATING',
     label: 'Generating',
     labelPL: 'Generowanie',
+    labelKey: 'common.reportStatus.generating',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500',
     order: 2,
@@ -257,6 +281,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'FINAL',
     label: 'Final',
     labelPL: 'Finalny',
+    labelKey: 'common.reportStatus.final',
     color: 'text-slate-500',
     bgColor: 'bg-slate-500',
     order: 3,
@@ -265,6 +290,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'PENDING_APPROVAL',
     label: 'Pending Approval',
     labelPL: 'Oczekuje na zatwierdzenie',
+    labelKey: 'common.reportStatus.pendingApproval',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 4,
@@ -273,6 +299,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'APPROVED',
     label: 'Approved',
     labelPL: 'Zatwierdzony',
+    labelKey: 'common.reportStatus.approved',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 5,
@@ -281,6 +308,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'REJECTED',
     label: 'Rejected',
     labelPL: 'Odrzucony',
+    labelKey: 'common.reportStatus.rejected',
     color: 'text-danger-500',
     bgColor: 'bg-danger-500',
     order: 6,
@@ -289,6 +317,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'UTILIZED',
     label: 'Utilized',
     labelPL: 'Wykorzystany',
+    labelKey: 'common.reportStatus.utilized',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 7,
@@ -300,6 +329,7 @@ const ALL_OPTION: StatusOption = {
   id: 'all',
   label: 'All',
   labelPL: 'Wszystkie',
+  labelKey: 'common.all',
   color: 'text-slate-600',
   bgColor: 'bg-slate-500',
   order: 0,
@@ -385,6 +415,7 @@ interface StatusDropdownProps {
   className?: string;
   showIcon?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  /** Optional override — when omitted, falls back to the active i18n language. */
   language?: 'en' | 'pl';
 }
 
@@ -396,10 +427,13 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
   className = '',
   showIcon = true,
   size = 'md',
-  language = 'en',
+  language,
 }) => {
+  const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // Real active app language, unless the caller explicitly overrides it.
+  const effectiveLanguage: 'en' | 'pl' = language ?? (i18n.language?.startsWith('pl') ? 'pl' : 'en');
 
   // Get status options based on context
   const rawOptions = getStatusesForModule(context);
@@ -452,8 +486,13 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   const iconSize = size === 'sm' ? 14 : size === 'md' ? 16 : 18;
 
-  // Get label based on language
-  const getLabel = (option: StatusOption) => (language === 'pl' ? option.labelPL : option.label);
+  // Get label via i18n (labelKey), falling back to the baked-in EN/PL text
+  // if the key is missing from the locale bundle for any reason.
+  const getLabel = (option: StatusOption) =>
+    t(option.labelKey, {
+      lng: effectiveLanguage,
+      defaultValue: effectiveLanguage === 'pl' ? option.labelPL : option.label,
+    });
 
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>

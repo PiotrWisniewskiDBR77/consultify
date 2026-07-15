@@ -1663,7 +1663,39 @@
     "resetColumns": "Reset columns",
     "viewSettings": "View settings",
     "visibleColumns": "Visible columns",
-    "showRowDescription": "Show row description"
+    "showRowDescription": "Show row description",
+    "initiativeStatus": {
+      "draft": "Draft",
+      "pendingReview": "Pending Review",
+      "review": "In Review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "approved": "Approved",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
+    },
+    "assessmentStatus": {
+      "draft": "Draft",
+      "inReview": "In Review",
+      "awaitingApproval": "Awaiting Approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "archived": "Archived"
+    },
+    "reportStatus": {
+      "draft": "Draft",
+      "generating": "Generating",
+      "final": "Final",
+      "pendingApproval": "Pending Approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "utilized": "Utilized"
+    }
   },
   "superadmin": {
     "confirm": {
@@ -9387,7 +9419,9 @@
       "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
       "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
       "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
-      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}"
+      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}",
+      "linkCopied": "Link copied",
+      "linkCopyError": "Copy failed"
     },
     "decisions": {
       "decision": "Decision",
@@ -9718,7 +9752,19 @@
       "core": "core",
       "proposedHeading": "Proposed cards (AI)",
       "coreHeading": "Core cards (always)"
-    }
+    },
+    "noDescription": "No description.",
+    "aiPrompt": {
+      "summarize": "Summarize this initiative in 5 bullets and propose 3 next steps.",
+      "makeDocument": "Write a document based on this initiative: goals, status, risks and recommendations."
+    },
+    "aiHint": {
+      "summarize": "Summarize",
+      "makeDocument": "Make document"
+    },
+    "financeShortcut": "Finance",
+    "copyLinkAction": "Copy link",
+    "newButton": "New"
   },
   "execution": {
     "title": "Execution Center",
@@ -11295,6 +11341,13 @@
       },
       "thisStep": {
         "next": "next"
+      },
+      "overview": {
+        "intro": "Start with the system map or jump straight into the work that matters on this screen.",
+        "openIntro": "Open app intro",
+        "openIntroDesc": "A short map of Consultify work: 5 steps and supporting modules.",
+        "showThisScreen": "Show this screen",
+        "showThisScreenDesc": "The shortest version: why this screen exists and what to do next."
       }
     },
     "chatbot": {
@@ -11367,6 +11420,19 @@
       "admin": {
         "recent": "Recent"
       }
+    },
+    "documentationRenderer": {
+      "contentNotFound": "Content not found",
+      "overview": "Overview",
+      "targetAudience": "Target Audience",
+      "keyFeatures": "Key Features",
+      "workflowSteps": "Workflow Steps",
+      "tips": "Tips",
+      "relatedModules": "Related Modules",
+      "documentation": "Documentation",
+      "features": "Features",
+      "howToUse": "How to Use",
+      "video": "Video"
     }
   },
   "settings": {
@@ -13563,6 +13629,30 @@
       "noTimelineEntries": "No entries in the context timeline.",
       "sourceProvenance": "Source Provenance",
       "provenanceHelp": "Every Context OS write keeps source, channel, and explicitness so AI can work on durable context instead of a single prompt snapshot."
+    },
+    "approvalPatterns": {
+      "confirmDelete": "Are you sure you want to delete this pattern? AI will no longer remember this decision.",
+      "title": "AI Approval Patterns",
+      "subtitle": "Manage learned decision patterns",
+      "statPatterns": "Patterns",
+      "statAutoEnabled": "Auto-enabled",
+      "statApprovals": "Approvals",
+      "statRejections": "Rejections",
+      "howItWorksTitle": "How do patterns work?",
+      "howItWorksBody": "The system learns from your decisions. After 3 similar approvals/rejections, it can automatically make the same decisions (if you enable auto-approve).",
+      "learnedPatterns": "Learned Patterns",
+      "emptyState": "No learned patterns yet. Approve or reject AI proposals to teach the system.",
+      "decisionApprove": "Approve",
+      "decisionReject": "Reject",
+      "modeAuto": "Auto",
+      "modeManual": "Manual",
+      "decisionCount": "Decision count",
+      "lastDecision": "Last decision",
+      "created": "Created",
+      "riskLevel": "Risk level",
+      "autoApproveEnabled": "Auto-approve enabled",
+      "autoApproveHintApproved": "Similar actions will be automatically approved.",
+      "autoApproveHintRejected": "Similar actions will be automatically rejected."
     }
   },
   "showcase": {
@@ -17026,14 +17116,20 @@
         "done": "Done",
         "ready": "Ready",
         "cannotFinalize": "Cannot finalize yet",
-        "button": "Finalize Session"
+        "button": "Finalize Session",
+        "doneHint": "Session is locked. Go to the Outputs step to create reports, presentations, initiatives, and ideas.",
+        "cannotFinalizeHint": "{{count}} required items are missing. Go back to Review.",
+        "readyHint": "Finalizing will lock the session for editing. You will be able to create outputs (reports, initiatives, presentations, and ideas)."
       },
       "next": "next",
       "step": "Step",
       "define": {
         "intent": "Intent / Goal",
         "scope": "Scope",
-        "audience": "Target Audience"
+        "audience": "Target Audience",
+        "intentPlaceholder": "What do you want to achieve with this analysis?",
+        "scopePlaceholder": "What is the scope of this analysis?",
+        "audiencePlaceholder": "Who is the target audience for the results?"
       },
       "review": {
         "missingRequired": "Missing required items",
@@ -17041,7 +17137,8 @@
         "reprocess": "Re-process missing items",
         "allComplete": "All required items are complete",
         "aiSuggestions": "AI Suggestions",
-        "summaries": "Key Findings"
+        "summaries": "Key Findings",
+        "allCompleteHint": "You can proceed to finalize the session."
       },
       "outputs": {
         "notFinalized": "Finalize first",
@@ -17049,9 +17146,25 @@
         "createReport": "Create Report",
         "createPresentation": "Create Presentation",
         "createIdea": "Create Idea",
-        "created": "Created Outputs"
+        "created": "Created Outputs",
+        "notFinalizedHint": "Finalize the session to create outputs.",
+        "hint": "Create artifacts based on session results. Each output will be linked to this session. The standard output layer includes initiative, report, presentation, and idea."
       },
-      "prev": "Previous"
+      "prev": "Previous",
+      "inputs": {
+        "noFieldsTitle": "No input fields defined",
+        "noFieldsHint": "This tool does not require additional input data"
+      },
+      "assumptionsEmptyTitle": "No assumptions yet",
+      "assumptionsEmptyHint": "AI will propose assumptions during work",
+      "work": {
+        "placeholderTitle": "Work surface",
+        "placeholderHint": "Work surface configuration depends on the tool type"
+      },
+      "aiSuggestion": {
+        "accept": "Accept",
+        "reject": "Reject"
+      }
     },
     "session": {
       "notLoadedYet": "Session is still loading — try again in a moment"
@@ -21741,7 +21854,18 @@
   },
   "pmo": {
     "version": "version",
-    "name": "Name"
+    "name": "Name",
+    "roles": {
+      "other": "Other / legacy roles",
+      "SPONSOR": "Sponsor (Business Owner)",
+      "PROJECT_LEADER": "Project Leader",
+      "INITIATIVE_OWNER": "Initiative Owner",
+      "TEAM_MEMBER": "Team Member",
+      "PMO": "Project Office (PMO)",
+      "PORTFOLIO_OWNER": "Portfolio Owner",
+      "BUSINESS_OWNER": "Business Owner (Benefits)",
+      "STEERING_COMMITTEE": "Steering Committee"
+    }
   },
   "branch": {
     "delete": "Delete"
@@ -26646,6 +26770,30 @@
       "createTasksButton": "Create {{value}} {{word}}",
       "taskWordSingular": "task",
       "taskWordPlural": "tasks"
+    },
+    "workSurface": {
+      "processSteps": "Process Steps",
+      "addStep": "Add step",
+      "stepName": "Step Name",
+      "actor": "Actor/Role",
+      "system": "System/Tool",
+      "minutes": "Min",
+      "cost": "Cost",
+      "automation": "Automation",
+      "notes": "Notes",
+      "emptyTable": "No steps yet. Click \"Add step\" to start.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "namePlaceholder": "Name",
+      "rolePlaceholder": "Role",
+      "systemPlaceholder": "System",
+      "notesPlaceholder": "Notes",
+      "remove": "Remove",
+      "flowTitle": "Process Flow",
+      "emptyFlow": "Add steps in the table to see the flow",
+      "start": "Start",
+      "unnamed": "(Unnamed)",
+      "end": "End"
     }
   },
   "ssoSelfService": {

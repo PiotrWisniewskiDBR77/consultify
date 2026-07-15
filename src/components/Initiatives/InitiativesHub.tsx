@@ -1730,9 +1730,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       try {
         const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=drawer`;
         await navigator.clipboard.writeText(url);
-        toast.success(i18n.language === 'pl' ? 'Skopiowano link' : 'Link copied');
+        toast.success(t('initiatives.toast.linkCopied', 'Link copied'));
       } catch {
-        toast.error(i18n.language === 'pl' ? 'Nie udało się skopiować' : 'Copy failed');
+        toast.error(t('initiatives.toast.linkCopyError', 'Copy failed'));
       }
     };
 
@@ -1742,9 +1742,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onSummarize={() =>
           openAiChat(
             item,
-            i18n.language === 'pl'
-              ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
-              : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
+            t(
+              'initiatives.aiPrompt.summarize',
+              'Summarize this initiative in 5 bullets and propose 3 next steps.'
+            )
           )
         }
         // B1 (deliverables): document intent captured by the chat intercept;
@@ -1752,9 +1753,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onMakeDocument={() =>
           openAiChat(
             item,
-            i18n.language === 'pl'
-              ? `Napisz dokument na podstawie tej inicjatywy: cele, status, ryzyka i rekomendacje.`
-              : `Write a document based on this initiative: goals, status, risks and recommendations.`
+            t(
+              'initiatives.aiPrompt.makeDocument',
+              'Write a document based on this initiative: goals, status, risks and recommendations.'
+            )
           )
         }
       />
@@ -1780,7 +1782,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             }
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition"
           >
-            {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
+            {t('initiatives.financeShortcut', 'Finance')}
           </button>
         }
       />
@@ -1954,7 +1956,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             {
               id: 'copy-link',
               variant: 'neutral',
-              label: i18n.language?.startsWith('pl') ? 'Kopiuj link' : 'Copy link',
+              label: t('initiatives.copyLinkAction', 'Copy link'),
               icon: Copy,
               onClick: () => void copyInitiativeLink(selectedTableRow.id),
             },
@@ -2073,7 +2075,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     text:
                       selectedTableRow.summary ||
                       selectedTableRow.description ||
-                      (i18n.language?.startsWith('pl') ? 'Brak opisu.' : 'No description.'),
+                      t('initiatives.noDescription', 'No description.'),
                     onCopy: () => {
                       void navigator.clipboard?.writeText(
                         `${selectedTableRow.name} — ${selectedTableRow.status}`
@@ -2082,20 +2084,23 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   }}
                   ai={{
                     hints:
-                      i18n.language === 'pl'
-                        ? ['Podsumuj', 'Napisz dokument']
-                        : ['Summarize', 'Make document'],
+                      [
+                        t('initiatives.aiHint.summarize', 'Summarize'),
+                        t('initiatives.aiHint.makeDocument', 'Make document'),
+                      ],
                     onRunHint: (hint) => {
                       const isSummarize = hint === 'Podsumuj' || hint === 'Summarize';
                       void openAiChat(
                         selectedTableRow,
                         isSummarize
-                          ? i18n.language === 'pl'
-                            ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
-                            : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                          : i18n.language === 'pl'
-                            ? 'Napisz dokument na podstawie tej inicjatywy: cele, status, ryzyka i rekomendacje.'
-                            : 'Write a document based on this initiative: goals, status, risks and recommendations.'
+                          ? t(
+                              'initiatives.aiPrompt.summarize',
+                              'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                            )
+                          : t(
+                              'initiatives.aiPrompt.makeDocument',
+                              'Write a document based on this initiative: goals, status, risks and recommendations.'
+                            )
                       );
                     },
                   }}
@@ -2552,7 +2557,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             className={MENU_3_ACTION_NEUTRAL}
           >
             <Plus className="h-3.5 w-3.5" />
-            {i18n.language?.startsWith('pl') ? 'Nowy' : 'New'}
+            {t('initiatives.newButton', 'New')}
           </button>
         )}
       </div>

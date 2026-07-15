@@ -79,7 +79,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center">
         <AlertCircle size={48} className="mx-auto text-slate-600 dark:text-slate-500 mb-4" />
         <p className="text-slate-500 dark:text-slate-400">
-          {lang === 'pl' ? 'Treść nie znaleziona' : 'Content not found'}
+          {t('help.documentationRenderer.contentNotFound', 'Content not found')}
         </p>
       </div>
     );
@@ -123,7 +123,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <section>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                 <Book size={20} className="text-primary-600 dark:text-primary-400" />
-                {lang === 'pl' ? 'Przegląd' : 'Overview'}
+                {t('help.documentationRenderer.overview', 'Overview')}
               </h2>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                 {module.content}
@@ -136,7 +136,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <section>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                 <Users size={20} className="text-blue-500" />
-                {lang === 'pl' ? 'Dla kogo' : 'Target Audience'}
+                {t('help.documentationRenderer.targetAudience', 'Target Audience')}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {module.targetAudience.map((audience: string, i: number) => (
@@ -156,7 +156,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <section>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <CheckCircle size={20} className="text-green-500" />
-                {lang === 'pl' ? 'Kluczowe funkcje' : 'Key Features'}
+                {t('help.documentationRenderer.keyFeatures', 'Key Features')}
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {module.keyFeatures.map((feature: any, i: number) => (
@@ -190,7 +190,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <section>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <ChevronRight size={20} className="text-indigo-500" />
-                {lang === 'pl' ? 'Kroki pracy' : 'Workflow Steps'}
+                {t('help.documentationRenderer.workflowSteps', 'Workflow Steps')}
               </h2>
               <div className="relative">
                 {/* Timeline line */}
@@ -223,7 +223,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <section className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-3 flex items-center gap-2">
                 <Lightbulb size={20} />
-                {lang === 'pl' ? 'Wskazówki' : 'Tips'}
+                {t('help.documentationRenderer.tips', 'Tips')}
               </h2>
               <ul className="space-y-2">
                 {(Array.isArray(module.tips)
@@ -248,7 +248,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
           {module.relatedModules && module.relatedModules.length > 0 && (
             <section>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
-                {lang === 'pl' ? 'Powiązane moduły' : 'Related Modules'}
+                {t('help.documentationRenderer.relatedModules', 'Related Modules')}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {module.relatedModules.map((relatedId: any) => {
@@ -296,7 +296,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
         <div className="px-8 py-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 text-sm mb-2">
             <FileText size={16} />
-            <span>{lang === 'pl' ? 'Dokumentacja' : 'Documentation'}</span>
+            <span>{t('help.documentationRenderer.documentation', 'Documentation')}</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{card.title}</h1>
         </div>
@@ -310,7 +310,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
           {/* Features */}
           <section>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
-              {lang === 'pl' ? 'Funkcje' : 'Features'}
+              {t('help.documentationRenderer.features', 'Features')}
             </h2>
             <ul className="space-y-2">
               {card.features.map((feature: string, i: number) => (
@@ -325,7 +325,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
           {/* How to Use */}
           <section>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
-              {lang === 'pl' ? 'Jak używać' : 'How to Use'}
+              {t('help.documentationRenderer.howToUse', 'How to Use')}
             </h2>
             <ol className="space-y-3">
               {card.howToUse.map((step: string, i: number) => (
@@ -343,7 +343,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
           <section className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
             <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
               <Lightbulb size={18} />
-              {lang === 'pl' ? 'Wskazówki' : 'Tips'}
+              {t('help.documentationRenderer.tips', 'Tips')}
             </h3>
             <ul className="space-y-1">
               {card.tips.map((tip: string, i: number) => (
@@ -440,7 +440,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
         <div className="p-6">
           <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 text-sm mb-2">
             <Video size={16} />
-            <span>{lang === 'pl' ? 'Wideo' : 'Video'}</span>
+            <span>{t('help.documentationRenderer.video', 'Video')}</span>
             <span className="text-slate-600 dark:text-slate-500">•</span>
             <Clock size={14} className="text-slate-600 dark:text-slate-500" />
             <span className="text-slate-500 dark:text-slate-400">{video.duration}</span>

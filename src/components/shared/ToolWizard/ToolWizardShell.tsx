@@ -135,11 +135,10 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
             onChange={(e) =>
               onSessionUpdate({ define: { ...sessionData.define, intent: e.target.value } })
             }
-            placeholder={
-              lang === 'pl'
-                ? 'Co chcesz osiągnąć tą analizą?'
-                : 'What do you want to achieve with this analysis?'
-            }
+            placeholder={t(
+              'tools.wizard.define.intentPlaceholder',
+              'What do you want to achieve with this analysis?'
+            )}
             className="w-full h-24 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors resize-none"
             disabled={locked}
           />
@@ -154,11 +153,10 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
             onChange={(e) =>
               onSessionUpdate({ define: { ...sessionData.define, scope: e.target.value } })
             }
-            placeholder={
-              lang === 'pl'
-                ? 'Jaki zakres obejmuje analiza?'
-                : 'What is the scope of this analysis?'
-            }
+            placeholder={t(
+              'tools.wizard.define.scopePlaceholder',
+              'What is the scope of this analysis?'
+            )}
             className="w-full h-20 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors resize-none"
             disabled={locked}
           />
@@ -174,11 +172,10 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
             onChange={(e) =>
               onSessionUpdate({ define: { ...sessionData.define, audience: e.target.value } })
             }
-            placeholder={
-              lang === 'pl'
-                ? 'Kto jest odbiorcą wyników?'
-                : 'Who is the target audience for the results?'
-            }
+            placeholder={t(
+              'tools.wizard.define.audiencePlaceholder',
+              'Who is the target audience for the results?'
+            )}
             className="w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
             disabled={locked}
           />
@@ -197,14 +194,11 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
       <div className="space-y-6">
         {fields.length === 0 && (
           <EmptyStateInline
-            message={
-              lang === 'pl' ? 'Brak zdefiniowanych pól wejściowych' : 'No input fields defined'
-            }
-            hint={
-              lang === 'pl'
-                ? 'To narzędzie nie wymaga dodatkowych danych wejściowych'
-                : 'This tool does not require additional input data'
-            }
+            message={t('tools.wizard.inputs.noFieldsTitle', 'No input fields defined')}
+            hint={t(
+              'tools.wizard.inputs.noFieldsHint',
+              'This tool does not require additional input data'
+            )}
           />
         )}
 
@@ -249,12 +243,11 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
           </h3>
           {sessionData.assumptions.length === 0 ? (
             <EmptyStateInline
-              message={lang === 'pl' ? 'Brak założeń' : 'No assumptions yet'}
-              hint={
-                lang === 'pl'
-                  ? 'AI zaproponuje założenia w trakcie pracy'
-                  : 'AI will propose assumptions during work'
-              }
+              message={t('tools.wizard.assumptionsEmptyTitle', 'No assumptions yet')}
+              hint={t(
+                'tools.wizard.assumptionsEmptyHint',
+                'AI will propose assumptions during work'
+              )}
             />
           ) : (
             <div className="space-y-2">
@@ -306,12 +299,11 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
 
     return (
       <EmptyStateInline
-        message={lang === 'pl' ? 'Powierzchnia robocza' : 'Work surface'}
-        hint={
-          lang === 'pl'
-            ? 'Konfiguracja powierzchni roboczej zależy od typu narzędzia'
-            : 'Work surface configuration depends on the tool type'
-        }
+        message={t('tools.wizard.work.placeholderTitle', 'Work surface')}
+        hint={t(
+          'tools.wizard.work.placeholderHint',
+          'Work surface configuration depends on the tool type'
+        )}
       />
     );
   };
@@ -361,9 +353,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
             title={t('tools.wizard.review.allComplete', 'All required items are complete')}
           >
             <p className="text-sm mt-1">
-              {lang === 'pl'
-                ? 'Możesz przejść do finalizacji sesji.'
-                : 'You can proceed to finalize the session.'}
+              {t('tools.wizard.review.allCompleteHint', 'You can proceed to finalize the session.')}
             </p>
           </Callout>
         )}
@@ -397,7 +387,6 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                     });
                   }}
                   locked={locked}
-                  lang={lang}
                 />
               ))}
             </div>
@@ -437,9 +426,10 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
         {isFinalized ? (
           <Callout variant="success" title={t('tools.wizard.finalize.done', 'Session finalized')}>
             <p className="text-sm mt-1">
-              {lang === 'pl'
-                ? 'Sesja jest zablokowana. Przejdź do zakładki Outputs aby tworzyć raporty, prezentacje, inicjatywy i pomysły.'
-                : 'Session is locked. Go to the Outputs step to create reports, presentations, initiatives, and ideas.'}
+              {t(
+                'tools.wizard.finalize.doneHint',
+                'Session is locked. Go to the Outputs step to create reports, presentations, initiatives, and ideas.'
+              )}
             </p>
           </Callout>
         ) : (
@@ -450,17 +440,19 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                 title={t('tools.wizard.finalize.cannotFinalize', 'Cannot finalize yet')}
               >
                 <p className="text-sm mt-1">
-                  {lang === 'pl'
-                    ? `Brakuje ${unresolvedRequired.length} wymaganych elementów. Wróć do Review.`
-                    : `${unresolvedRequired.length} required items are missing. Go back to Review.`}
+                  {t('tools.wizard.finalize.cannotFinalizeHint', {
+                    count: unresolvedRequired.length,
+                    defaultValue: `${unresolvedRequired.length} required items are missing. Go back to Review.`,
+                  })}
                 </p>
               </Callout>
             ) : (
               <Callout variant="info" title={t('tools.wizard.finalize.ready', 'Ready to finalize')}>
                 <p className="text-sm mt-1">
-                  {lang === 'pl'
-                    ? 'Finalizacja zablokuje sesję do edycji. Będziesz mógł tworzyć outputy (raporty, inicjatywy, prezentacje i pomysły).'
-                    : 'Finalizing will lock the session for editing. You will be able to create outputs (reports, initiatives, presentations, and ideas).'}
+                  {t(
+                    'tools.wizard.finalize.readyHint',
+                    'Finalizing will lock the session for editing. You will be able to create outputs (reports, initiatives, presentations, and ideas).'
+                  )}
                 </p>
               </Callout>
             )}
@@ -489,9 +481,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
       return (
         <Callout variant="info" title={t('tools.wizard.outputs.notFinalized', 'Finalize first')}>
           <p className="text-sm mt-1">
-            {lang === 'pl'
-              ? 'Finalizuj sesję aby móc tworzyć outputy.'
-              : 'Finalize the session to create outputs.'}
+            {t('tools.wizard.outputs.notFinalizedHint', 'Finalize the session to create outputs.')}
           </p>
         </Callout>
       );
@@ -534,9 +524,10 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
     return (
       <div className="space-y-6">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {lang === 'pl'
-            ? 'Twórz artefakty na podstawie wyników sesji. Każdy output będzie powiązany z tą sesją. Docelowy standard obejmuje inicjatywę, raport, prezentację i pomysł.'
-            : 'Create artifacts based on session results. Each output will be linked to this session. The standard output layer includes initiative, report, presentation, and idea.'}
+          {t(
+            'tools.wizard.outputs.hint',
+            'Create artifacts based on session results. Each output will be linked to this session. The standard output layer includes initiative, report, presentation, and idea.'
+          )}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -709,7 +700,8 @@ interface AISuggestionCardProps {
   onAccept: () => void;
   onReject: () => void;
   locked: boolean;
-  lang: string;
+  /** @deprecated no longer used — labels are resolved via useTranslation() internally. */
+  lang?: string;
 }
 
 const AISuggestionCard: React.FC<AISuggestionCardProps> = ({
@@ -717,8 +709,8 @@ const AISuggestionCard: React.FC<AISuggestionCardProps> = ({
   onAccept,
   onReject,
   locked,
-  lang,
 }) => {
+  const { t } = useTranslation();
   const statusColors = {
     pending: 'border-slate-200 dark:border-navy-700',
     accepted: 'border-emerald-500/30 bg-emerald-500/5',
@@ -734,13 +726,13 @@ const AISuggestionCard: React.FC<AISuggestionCardProps> = ({
             onClick={onAccept}
             className="px-2.5 py-1 text-xs font-medium rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
           >
-            {lang === 'pl' ? 'Akceptuj' : 'Accept'}
+            {t('tools.wizard.aiSuggestion.accept', 'Accept')}
           </button>
           <button
             onClick={onReject}
             className="px-2.5 py-1 text-xs font-medium rounded bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors"
           >
-            {lang === 'pl' ? 'Odrzuć' : 'Reject'}
+            {t('tools.wizard.aiSuggestion.reject', 'Reject')}
           </button>
         </div>
       )}

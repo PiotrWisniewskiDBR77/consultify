@@ -241,7 +241,39 @@
     "resetColumns": "Przywróć domyślne",
     "viewSettings": "Ustawienia widoku",
     "visibleColumns": "Widoczne kolumny",
-    "showRowDescription": "Pokaż opis / uzasadnienie"
+    "showRowDescription": "Pokaż opis / uzasadnienie",
+    "initiativeStatus": {
+      "draft": "Szkic",
+      "pendingReview": "Oczekuje na przegląd",
+      "review": "W przeglądzie",
+      "promoted": "Promowana",
+      "planning": "Planowanie",
+      "approved": "Zatwierdzona",
+      "scheduled": "Zaplanowana",
+      "executing": "W realizacji",
+      "blocked": "Zablokowana",
+      "done": "Ukończona",
+      "tracking": "Śledzenie",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana"
+    },
+    "assessmentStatus": {
+      "draft": "Szkic",
+      "inReview": "W przeglądzie",
+      "awaitingApproval": "Oczekuje na zatwierdzenie",
+      "approved": "Zatwierdzony",
+      "rejected": "Odrzucony",
+      "archived": "Zarchiwizowany"
+    },
+    "reportStatus": {
+      "draft": "Szkic",
+      "generating": "Generowanie",
+      "final": "Finalny",
+      "pendingApproval": "Oczekuje na zatwierdzenie",
+      "approved": "Zatwierdzony",
+      "rejected": "Odrzucony",
+      "utilized": "Wykorzystany"
+    }
   },
   "superadmin": {
     "confirm": {
@@ -8533,7 +8565,9 @@
       "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
       "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
       "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
-      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}"
+      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}",
+      "linkCopied": "Skopiowano link",
+      "linkCopyError": "Nie udało się skopiować"
     },
     "decisions": {
       "decision": "Decyzja",
@@ -8864,7 +8898,19 @@
       "core": "rdzeń",
       "proposedHeading": "Proponowane karty (AI)",
       "coreHeading": "Karty rdzenia (zawsze)"
-    }
+    },
+    "noDescription": "Brak opisu.",
+    "aiPrompt": {
+      "summarize": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.",
+      "makeDocument": "Napisz dokument na podstawie tej inicjatywy: cele, status, ryzyka i rekomendacje."
+    },
+    "aiHint": {
+      "summarize": "Podsumuj",
+      "makeDocument": "Napisz dokument"
+    },
+    "financeShortcut": "Finanse",
+    "copyLinkAction": "Kopiuj link",
+    "newButton": "Nowy"
   },
   "execution": {
     "title": "Centrum Realizacji",
@@ -10441,6 +10487,13 @@
       },
       "thisStep": {
         "next": "następne"
+      },
+      "overview": {
+        "intro": "Najpierw zobacz logikę systemu albo przejdź od razu do bieżącego kroku pracy.",
+        "openIntro": "Otwórz intro aplikacji",
+        "openIntroDesc": "Krótka mapa pracy w Consultify: 5 etapów i moduły wspierające.",
+        "showThisScreen": "Pokaż ten ekran",
+        "showThisScreenDesc": "Najkrótsza wersja: po co ten ekran istnieje i co teraz zrobić."
       }
     },
     "chatbot": {
@@ -10513,6 +10566,19 @@
       "admin": {
         "recent": "Ostatnie"
       }
+    },
+    "documentationRenderer": {
+      "contentNotFound": "Treść nie znaleziona",
+      "overview": "Przegląd",
+      "targetAudience": "Dla kogo",
+      "keyFeatures": "Kluczowe funkcje",
+      "workflowSteps": "Kroki pracy",
+      "tips": "Wskazówki",
+      "relatedModules": "Powiązane moduły",
+      "documentation": "Dokumentacja",
+      "features": "Funkcje",
+      "howToUse": "Jak używać",
+      "video": "Wideo"
     }
   },
   "settings": {
@@ -12766,6 +12832,30 @@
       "noTimelineEntries": "Brak wpisów w timeline kontekstu.",
       "sourceProvenance": "Source Provenance",
       "provenanceHelp": "Każdy zapis do Context OS zachowuje źródło, kanał i explicitness, dzięki czemu AI może pracować na trwałym kontekście zamiast na pojedynczym prompt snapshot."
+    },
+    "approvalPatterns": {
+      "confirmDelete": "Czy na pewno chcesz usunąć ten wzorzec? AI nie będzie już pamiętać tej decyzji.",
+      "title": "Wzorce Zatwierdzania AI",
+      "subtitle": "Zarządzaj nauczonymi wzorcami decyzji",
+      "statPatterns": "Wzorców",
+      "statAutoEnabled": "Automatycznych",
+      "statApprovals": "Akceptacji",
+      "statRejections": "Odrzuceń",
+      "howItWorksTitle": "Jak działają wzorce?",
+      "howItWorksBody": "System uczy się Twoich decyzji. Po 3 podobnych akceptacjach/odrzuceniach, może automatycznie podejmować takie same decyzje (jeśli włączysz auto-zatwierdzanie).",
+      "learnedPatterns": "Nauczone Wzorce",
+      "emptyState": "Brak nauczonych wzorców. Zatwierdzaj lub odrzucaj propozycje AI, aby system się uczył.",
+      "decisionApprove": "Akceptuj",
+      "decisionReject": "Odrzuć",
+      "modeAuto": "Auto",
+      "modeManual": "Ręcznie",
+      "decisionCount": "Liczba decyzji",
+      "lastDecision": "Ostatnia decyzja",
+      "created": "Utworzono",
+      "riskLevel": "Poziom ryzyka",
+      "autoApproveEnabled": "Auto-zatwierdzanie włączone",
+      "autoApproveHintApproved": "Podobne akcje będą automatycznie akceptowane.",
+      "autoApproveHintRejected": "Podobne akcje będą automatycznie odrzucane."
     }
   },
   "showcase": {
@@ -17695,14 +17785,20 @@
         "done": "Zrobione",
         "ready": "Gotowy",
         "cannotFinalize": "Nie można jeszcze finalizować",
-        "button": "Finalizuj sesję"
+        "button": "Finalizuj sesję",
+        "doneHint": "Sesja jest zablokowana. Przejdź do zakładki Outputs aby tworzyć raporty, prezentacje, inicjatywy i pomysły.",
+        "cannotFinalizeHint": "Brakuje {{count}} wymaganych elementów. Wróć do Review.",
+        "readyHint": "Finalizacja zablokuje sesję do edycji. Będziesz mógł tworzyć outputy (raporty, inicjatywy, prezentacje i pomysły)."
       },
       "next": "następne",
       "step": "Krok",
       "define": {
         "intent": "Cel / Zamiar",
         "scope": "Zakres",
-        "audience": "Grupa docelowa"
+        "audience": "Grupa docelowa",
+        "intentPlaceholder": "Co chcesz osiągnąć tą analizą?",
+        "scopePlaceholder": "Jaki zakres obejmuje analiza?",
+        "audiencePlaceholder": "Kto jest odbiorcą wyników?"
       },
       "review": {
         "missingRequired": "Brakujące wymagane elementy",
@@ -17710,7 +17806,8 @@
         "reprocess": "Przetwórz ponownie brakujące elementy",
         "allComplete": "Wszystkie wymagane elementy są kompletne",
         "aiSuggestions": "Sugestie AI",
-        "summaries": "Kluczowe wnioski"
+        "summaries": "Kluczowe wnioski",
+        "allCompleteHint": "Możesz przejść do finalizacji sesji."
       },
       "outputs": {
         "notFinalized": "Najpierw finalizuj",
@@ -17718,9 +17815,25 @@
         "createReport": "Utwórz raport",
         "createPresentation": "Utwórz prezentację",
         "createIdea": "Utwórz pomysł",
-        "created": "Utworzone wyniki"
+        "created": "Utworzone wyniki",
+        "notFinalizedHint": "Finalizuj sesję aby móc tworzyć outputy.",
+        "hint": "Twórz artefakty na podstawie wyników sesji. Każdy output będzie powiązany z tą sesją. Docelowy standard obejmuje inicjatywę, raport, prezentację i pomysł."
       },
-      "prev": "Wstecz"
+      "prev": "Wstecz",
+      "inputs": {
+        "noFieldsTitle": "Brak zdefiniowanych pól wejściowych",
+        "noFieldsHint": "To narzędzie nie wymaga dodatkowych danych wejściowych"
+      },
+      "assumptionsEmptyTitle": "Brak założeń",
+      "assumptionsEmptyHint": "AI zaproponuje założenia w trakcie pracy",
+      "work": {
+        "placeholderTitle": "Powierzchnia robocza",
+        "placeholderHint": "Konfiguracja powierzchni roboczej zależy od typu narzędzia"
+      },
+      "aiSuggestion": {
+        "accept": "Akceptuj",
+        "reject": "Odrzuć"
+      }
     },
     "session": {
       "notLoadedYet": "Sesja wciąż się ładuje — spróbuj ponownie za chwilę"
@@ -22759,7 +22872,18 @@
   },
   "pmo": {
     "version": "wersja",
-    "name": "Nazwa"
+    "name": "Nazwa",
+    "roles": {
+      "other": "Inne / role historyczne",
+      "SPONSOR": "Sponsor (Właściciel biznesowy)",
+      "PROJECT_LEADER": "Project Leader",
+      "INITIATIVE_OWNER": "Właściciel inicjatywy",
+      "TEAM_MEMBER": "Członek zespołu",
+      "PMO": "Project Office (PMO)",
+      "PORTFOLIO_OWNER": "Właściciel portfela",
+      "BUSINESS_OWNER": "Business Owner (Korzyści)",
+      "STEERING_COMMITTEE": "Komitet sterujący"
+    }
   },
   "branch": {
     "delete": "Usuń"
@@ -27690,6 +27814,30 @@
       "createTasksButton": "Utwórz {{value}} {{word}}",
       "taskWordSingular": "zadanie",
       "taskWordPlural": "zadań"
+    },
+    "workSurface": {
+      "processSteps": "Kroki procesu",
+      "addStep": "Dodaj krok",
+      "stepName": "Nazwa kroku",
+      "actor": "Aktor",
+      "system": "System",
+      "minutes": "Min",
+      "cost": "Koszt",
+      "automation": "Automatyzacja",
+      "notes": "Uwagi",
+      "emptyTable": "Brak kroków. Kliknij „Dodaj krok” aby rozpocząć.",
+      "moveUp": "Przesuń w górę",
+      "moveDown": "Przesuń w dół",
+      "namePlaceholder": "Nazwa",
+      "rolePlaceholder": "Rola",
+      "systemPlaceholder": "System",
+      "notesPlaceholder": "Uwagi",
+      "remove": "Usuń",
+      "flowTitle": "Przepływ procesu",
+      "emptyFlow": "Dodaj kroki w tabeli, aby zobaczyć przepływ",
+      "start": "Start",
+      "unnamed": "(Bez nazwy)",
+      "end": "Koniec"
     }
   },
   "ssoSelfService": {
