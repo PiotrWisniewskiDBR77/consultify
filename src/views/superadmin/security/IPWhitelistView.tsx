@@ -4,10 +4,11 @@
  */
 
 import { Plus, Trash2 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -73,6 +74,58 @@ const getCreatedIPWhitelistId = (result: unknown) => {
       ''
   );
 };
+
+// canon TRIADA §27 — StandardTable columns. Kebab (actions) is auto-appended
+// by StandardTable itself; it is intentionally NOT declared here.
+const buildColumns = (): TableColumn[] => [
+  {
+    id: 'ip_address',
+    label: 'IP Address',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as IPWhitelistRow).ip_address || ''),
+    render: (row: TableRow) => (
+      <span className="text-slate-900 dark:text-white">
+        {(row as unknown as IPWhitelistRow).ip_address}
+      </span>
+    ),
+  },
+  {
+    id: 'ip_range',
+    label: 'IP Range',
+    render: (row: TableRow) => (
+      <span className="text-slate-700 dark:text-slate-300">
+        {(row as unknown as IPWhitelistRow).ip_range || '-'}
+      </span>
+    ),
+  },
+  {
+    id: 'description',
+    label: 'Description',
+    render: (row: TableRow) => (
+      <span className="text-slate-700 dark:text-slate-300">
+        {(row as unknown as IPWhitelistRow).description || '-'}
+      </span>
+    ),
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    render: (row: TableRow) => {
+      const isActive = (row as unknown as IPWhitelistRow).is_active;
+      return (
+        <span
+          className={`px-2 py-1 rounded text-xs ${
+            isActive
+              ? 'bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+              : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+          }`}
+        >
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+      );
+    },
+  },
+];
 
 export const IPWhitelistView: React.FC = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
@@ -202,6 +255,8 @@ export const IPWhitelistView: React.FC = () => {
     }
   };
 
+  const columns = useMemo(() => buildColumns(), []);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -246,77 +301,23 @@ export const IPWhitelistView: React.FC = () => {
         </div>
       )}
 
-      {loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : loadError ? null : (
+      {loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-          >
-            <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  IP Address
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  IP Range
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Description
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {whitelist.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    No IP addresses whitelisted
-                  </td>
-                </tr>
-              ) : (
-                whitelist.map((ip) => (
-                  <tr key={ip.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
-                    <td className="px-6 py-4 text-slate-900 dark:text-white">{ip.ip_address}</td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {ip.ip_range || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {ip.description || '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          ip.is_active
-                            ? 'bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400'
-                            : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
-                        }`}
-                      >
-                        {ip.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleRemoveIP(ip.id)}
-                        aria-label={`Remove IP ${ip.ip_address}`}
-                        className="text-danger-700 hover:text-danger-800 dark:text-danger-400 dark:hover:text-danger-300"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={columns}
+            data={whitelist as unknown as TableRow[]}
+            loading={loading}
+            empty={{ title: 'No IP addresses whitelisted' }}
+            rowMenu={(row) => {
+              const ip = row as unknown as IPWhitelistRow;
+              return {
+                destructive: {
+                  icon: Trash2,
+                  onClick: () => void handleRemoveIP(ip.id),
+                },
+              };
+            }}
+          />
         </div>
       )}
 
