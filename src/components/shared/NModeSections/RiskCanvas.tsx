@@ -112,21 +112,13 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
   artifactContext,
   fieldKeyPrefix,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   // i18n labels for levels
   const getRiskLevelLabel = (level: string): string => {
-    if (isPolish) {
-      if (level === 'critical') return 'Krytyczny';
-      if (level === 'high') return 'Wysoki';
-      if (level === 'medium') return 'Średni';
-      return 'Niski';
-    }
-    if (level === 'critical') return 'Critical';
-    if (level === 'high') return 'High';
-    if (level === 'medium') return 'Medium';
-    return 'Low';
+    const known = ['critical', 'high', 'medium', 'low'];
+    const key = known.includes(level) ? level : 'low';
+    return t(`sharedComponents.riskCanvas.levelLabel.${key}`);
   };
 
   // i18n labels for categories
@@ -134,44 +126,19 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
     () =>
       ['technical', 'business', 'financial', 'operational', 'security'].map((c) => ({
         value: c,
-        label:
-          c === 'technical'
-            ? isPolish
-              ? 'Techniczne'
-              : 'Technical'
-            : c === 'business'
-              ? isPolish
-                ? 'Biznesowe'
-                : 'Business'
-              : c === 'financial'
-                ? isPolish
-                  ? 'Finansowe'
-                  : 'Financial'
-                : c === 'operational'
-                  ? isPolish
-                    ? 'Operacyjne'
-                    : 'Operational'
-                  : isPolish
-                    ? 'Bezpieczeństwo'
-                    : 'Security',
+        label: t(`sharedComponents.riskCanvas.categoryLabel.${c}`),
       })),
-    [isPolish]
+    [t]
   );
 
   const quickContingencyArguments = useMemo(
-    () =>
-      isPolish
-        ? ['Tryb ręczny fallback', 'Eskalacja do PMO', 'Przesunięcie terminu + komunikat']
-        : ['Manual fallback mode', 'Escalate to PMO', 'Timeline shift with stakeholder notice'],
-    [isPolish]
+    () => t('sharedComponents.riskCanvas.quickContingencyArgs', { returnObjects: true }) as string[],
+    [t]
   );
 
   const quickMitigationArguments = useMemo(
-    () =>
-      isPolish
-        ? ['POC przed wdrożeniem', 'Przegląd tygodniowy', 'Plan kontroli jakości']
-        : ['POC before rollout', 'Weekly review checkpoint', 'Quality control plan'],
-    [isPolish]
+    () => t('sharedComponents.riskCanvas.quickMitigationArgs', { returnObjects: true }) as string[],
+    [t]
   );
 
   const sortedRisks = useMemo(
@@ -189,7 +156,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-          {isPolish ? 'Ryzyko i wpływ' : 'Risk & Impact'}
+          {t('sharedComponents.riskCanvas.riskImpact')}
         </h2>
         <div className="flex items-center gap-2">
           <button
@@ -198,7 +165,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-navy-500 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus size={13} />
-            {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
+            {t('sharedComponents.riskCanvas.addRisk')}
           </button>
           {onAIGenerate && (
             <button
@@ -211,7 +178,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
               ) : (
                 <Sparkles size={13} />
               )}
-              {isPolish ? 'Analizuj ryzyka' : 'Analyze risks'}
+              {t('sharedComponents.riskCanvas.analyzeRisks')}
             </button>
           )}
         </div>
@@ -222,24 +189,22 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
         <div className="py-8 text-center">
           <AlertTriangle size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
-            {isPolish ? 'Brak zidentyfikowanych ryzyk.' : 'No risks identified.'}
+            {t('sharedComponents.riskCanvas.noRisksIdentified')}
           </p>
           <button
             onClick={onAddRisk}
             disabled={locked}
             className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
           >
-            + {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
+            + {t('sharedComponents.riskCanvas.addRisk')}
           </button>
         </div>
       ) : (
         <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
           <span>
-            {isPolish
-              ? 'Posortowane wg najwyższego risk score (P×I)'
-              : 'Sorted by highest risk score (P×I)'}
+            {t('sharedComponents.riskCanvas.sortedByHighestRiskScorePI')}
           </span>
-          <span>{isPolish ? `${risks.length} ryzyk` : `${risks.length} risks`}</span>
+          <span>{t('sharedComponents.riskCanvas.riskCount', { count: risks.length })}</span>
         </div>
       )}
 
@@ -248,7 +213,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
         <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
           {/* Level legend */}
           <div className="py-2 text-[10px] flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-500">
-            <span>{isPolish ? 'Legenda poziomów:' : 'Level legend:'}</span>
+            <span>{t('sharedComponents.riskCanvas.levelLegend')}</span>
             {RISK_LEVEL_OPTIONS.map((level) => (
               <span
                 key={`legend-${level}`}
@@ -271,7 +236,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       onChange={(e) => onUpdateRisk(risk.id, { title: e.target.value })}
                       readOnly={locked}
                       className="flex-1 text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
-                      placeholder={isPolish ? 'Nazwa ryzyka...' : 'Risk name...'}
+                      placeholder={t('sharedComponents.riskCanvas.riskName')}
                     />
                     <div className="flex items-center gap-2">
                       <span
@@ -293,7 +258,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                     {/* Probability */}
                     <div className="space-y-1">
                       <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                        {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
+                        {t('sharedComponents.riskCanvas.probability')}
                       </span>
                       <select
                         value={risk.probability}
@@ -313,7 +278,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                     {/* Impact */}
                     <div className="space-y-1">
                       <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                        {isPolish ? 'Wpływ' : 'Impact'}
+                        {t('sharedComponents.riskCanvas.impact')}
                       </span>
                       <select
                         value={risk.impact}
@@ -333,7 +298,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                     {/* Category */}
                     <div className="space-y-1">
                       <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                        {isPolish ? 'Kategoria' : 'Category'}
+                        {t('sharedComponents.riskCanvas.category')}
                       </span>
                       <select
                         value={risk.category || 'business'}
@@ -357,7 +322,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                        {isPolish ? 'Ryzyko (materializacja)' : 'Risk (materialized)'}
+                        {t('sharedComponents.riskCanvas.riskMaterialized')}
                       </span>
                       <AIFieldEnhancer
                         fieldKey={`${fieldKeyPrefix}-risk-con-${risk.id}`}
@@ -375,9 +340,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       readOnly={locked}
                       className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
                       placeholder={
-                        isPolish
-                          ? 'Co robimy, gdy ryzyko się zmaterializuje?'
-                          : 'What is the fallback if risk materializes?'
+                        t('sharedComponents.riskCanvas.whatIsTheFallbackIfRiskMaterializes')
                       }
                     />
                     <div className="flex flex-wrap gap-1">
@@ -404,7 +367,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                        {isPolish ? 'Mitigacja' : 'Mitigation'}
+                        {t('sharedComponents.riskCanvas.mitigation')}
                       </span>
                       <AIFieldEnhancer
                         fieldKey={`${fieldKeyPrefix}-risk-mit-${risk.id}`}
@@ -422,7 +385,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       readOnly={locked}
                       className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
                       placeholder={
-                        isPolish ? 'Jak ograniczamy to ryzyko?' : 'How do we mitigate this risk?'
+                        t('sharedComponents.riskCanvas.howDoWeMitigateThisRisk')
                       }
                     />
                     <div className="flex flex-wrap gap-1">
@@ -457,7 +420,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
         disabled={locked}
         className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
       >
-        + {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
+        + {t('sharedComponents.riskCanvas.addRisk')}
       </button>
     </div>
   );

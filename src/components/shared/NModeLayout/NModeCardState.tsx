@@ -75,8 +75,8 @@ export const NModeCardBadge: React.FC<{ status: NModeCardStatus; isPolish?: bool
   status,
   isPolish: isPolishProp,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = isPolishProp ?? i18n.language === 'pl';
+  const { t: tHook, i18n } = useTranslation();
+  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
 
   // Wspólna baza pastylki badge.
   const base =
@@ -88,10 +88,10 @@ export const NModeCardBadge: React.FC<{ status: NModeCardStatus; isPolish?: bool
       return (
         <span
           className={`${base} bg-c-info/10 text-c-info border-c-info/30`}
-          title={isPolish ? 'Wersja robocza AI — do weryfikacji' : 'AI draft — needs review'}
+          title={t('sharedComponents.nModeCardState.aiDraftTooltip')}
         >
           <Sparkles size={10} />
-          {isPolish ? 'AI-draft' : 'AI draft'}
+          {t('sharedComponents.nModeCardState.aiDraftBadge')}
         </span>
       );
     case 'edited':
@@ -99,10 +99,10 @@ export const NModeCardBadge: React.FC<{ status: NModeCardStatus; isPolish?: bool
       return (
         <span
           className={`${base} bg-c-surface-raised text-c-text-secondary border-c-border`}
-          title={isPolish ? 'Zmienione ręcznie' : 'Edited manually'}
+          title={t('sharedComponents.nModeCardState.editedTooltip')}
         >
           <Pencil size={10} />
-          {isPolish ? 'Edytowane' : 'Edited'}
+          {t('sharedComponents.nModeCardState.editedBadge')}
         </span>
       );
     case 'done':
@@ -110,30 +110,30 @@ export const NModeCardBadge: React.FC<{ status: NModeCardStatus; isPolish?: bool
       return (
         <span
           className={`${base} bg-c-success/10 text-c-success border-c-success/30`}
-          title={isPolish ? 'Zaakceptowane' : 'Accepted'}
+          title={t('sharedComponents.nModeCardState.doneTooltip')}
         >
           <Check size={10} />
-          {isPolish ? 'Gotowe' : 'Done'}
+          {t('sharedComponents.nModeCardState.doneBadge')}
         </span>
       );
     case 'error':
       return (
         <span
           className={`${base} bg-c-danger/10 text-c-danger border-c-danger/30`}
-          title={isPolish ? 'Błąd generacji' : 'Generation error'}
+          title={t('sharedComponents.nModeCardState.errorTooltip')}
         >
           <AlertTriangle size={10} />
-          {isPolish ? 'Błąd' : 'Error'}
+          {t('sharedComponents.nModeCardState.errorBadge')}
         </span>
       );
     case 'generating':
       return (
         <span
           className={`${base} bg-c-info/10 text-c-info border-c-info/30`}
-          title={isPolish ? 'AI generuje…' : 'AI generating…'}
+          title={t('sharedComponents.nModeCardState.generatingTooltip')}
         >
           <Loader2 size={10} className="animate-spin" />
-          {isPolish ? 'Generowanie' : 'Generating'}
+          {t('sharedComponents.nModeCardState.generatingBadge')}
         </span>
       );
     case 'empty':
@@ -148,11 +148,11 @@ interface CardKebabProps {
   onClear?: () => void;
   onHistory?: () => void;
   onHide?: () => void;
-  isPolish: boolean;
+  t: (key: string) => string;
 }
 
 /** Kebab karty: Wyczyść · Historia karty · Ukryj sekcję (kolejność stała §3.3). */
-const CardKebab: React.FC<CardKebabProps> = ({ onClear, onHistory, onHide, isPolish }) => {
+const CardKebab: React.FC<CardKebabProps> = ({ onClear, onHistory, onHide, t }) => {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -181,19 +181,19 @@ const CardKebab: React.FC<CardKebabProps> = ({ onClear, onHistory, onHide, isPol
     {
       key: 'clear',
       icon: <Trash2 size={13} />,
-      label: isPolish ? 'Wyczyść' : 'Clear',
+      label: t('sharedComponents.nModeCardState.clearAction'),
       onClick: onClear,
     },
     {
       key: 'history',
       icon: <History size={13} />,
-      label: isPolish ? 'Historia karty' : 'Card history',
+      label: t('sharedComponents.nModeCardState.cardHistoryAction'),
       onClick: onHistory,
     },
     {
       key: 'hide',
       icon: <Eye size={13} />,
-      label: isPolish ? 'Ukryj sekcję' : 'Hide section',
+      label: t('sharedComponents.nModeCardState.hideSectionAction'),
       onClick: onHide,
     },
   ].filter((i) => typeof i.onClick === 'function');
@@ -207,8 +207,8 @@ const CardKebab: React.FC<CardKebabProps> = ({ onClear, onHistory, onHide, isPol
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        title={isPolish ? 'Więcej' : 'More'}
-        aria-label={isPolish ? 'Więcej akcji karty' : 'More card actions'}
+        title={t('sharedComponents.nModeCardState.moreTooltip')}
+        aria-label={t('sharedComponents.nModeCardState.moreCardActionsLabel')}
         className="inline-flex items-center justify-center p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <MoreHorizontal size={15} />
@@ -324,7 +324,8 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
   hideActions = false,
   children,
 }) => {
-  const { i18n } = useTranslation();
+  const { t: tHook, i18n } = useTranslation();
+  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
   const isPolish = isPolishProp ?? i18n.language === 'pl';
 
   const [regenerating, setRegenerating] = useState(false);
@@ -336,11 +337,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
   const handleRegenerate = async () => {
     if (!onRegenerate) return;
     if (state === 'edited' && confirmOverwrite) {
-      const ok = window.confirm(
-        isPolish
-          ? 'Regeneracja zastąpi Twoje ręczne zmiany. Kontynuować?'
-          : 'Regenerating will overwrite your manual edits. Continue?'
-      );
+      const ok = window.confirm(t('sharedComponents.nModeCardState.confirmOverwritePrompt'));
       if (!ok) return;
     }
     try {
@@ -360,7 +357,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
           <Sparkles
             size={14}
             className="shrink-0 text-teal-500 dark:text-teal-400"
-            aria-label={isPolish ? 'Treść AI' : 'AI-generated'}
+            aria-label={t('sharedComponents.nModeCardState.aiGeneratedLabel')}
           />
         )}
         <NModeCardBadge status={state} isPolish={isPolish} />
@@ -378,22 +375,22 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
             type="button"
             onClick={handleRegenerate}
             disabled={regenerating}
-            title={isPolish ? 'Napisz kartę od nowa z AI' : 'Regenerate this card with AI'}
+            title={t('sharedComponents.nModeCardState.regenerateTooltip')}
             className={`${CARD_ACTION_BASE} text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/25`}
           >
             {regenerating ? <Loader2 size={13} className="animate-spin" /> : <RotateCw size={13} />}
-            {isPolish ? 'Regeneruj' : 'Regenerate'}
+            {t('sharedComponents.nModeCardState.regenerateAction')}
           </button>
         )}
         {onEdit && (
           <button
             type="button"
             onClick={onEdit}
-            title={isPolish ? 'Edytuj ręcznie' : 'Edit manually'}
+            title={t('sharedComponents.nModeCardState.editManuallyTooltip')}
             className={`${CARD_ACTION_BASE} text-c-text-secondary hover:bg-c-surface-raised`}
           >
             <Pencil size={13} />
-            {isPolish ? 'Edytuj' : 'Edit'}
+            {t('sharedComponents.nModeCardState.editAction')}
           </button>
         )}
         {onAccept && (
@@ -401,7 +398,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
             type="button"
             onClick={onAccept}
             disabled={isAccepted}
-            title={isPolish ? 'Zaakceptuj kartę' : 'Accept card'}
+            title={t('sharedComponents.nModeCardState.acceptCardTooltip')}
             className={`${CARD_ACTION_BASE} ${
               isAccepted
                 ? 'text-c-success'
@@ -409,11 +406,11 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
             }`}
           >
             {isAccepted ? <CheckCircle2 size={13} /> : <Check size={13} />}
-            {isPolish ? 'Zaakceptuj' : 'Accept'}
+            {t('sharedComponents.nModeCardState.acceptAction')}
           </button>
         )}
         <div className="flex-1" />
-        <CardKebab onClear={onClear} onHistory={onHistory} onHide={onHide} isPolish={isPolish} />
+        <CardKebab onClear={onClear} onHistory={onHistory} onHide={onHide} t={t} />
       </div>
     );
 
@@ -426,7 +423,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
       <div className="py-2" aria-busy="true" aria-live="polite">
         <div className="flex items-center gap-2 text-xs font-medium text-c-info mb-3">
           <Loader2 size={13} className="animate-spin" />
-          {isPolish ? 'Teresa pisze…' : 'Teresa is writing…'}
+          {t('sharedComponents.nModeCardState.teresaWriting')}
         </div>
         <div className="space-y-2.5">
           <div className="h-3.5 rounded bg-c-border-subtle animate-pulse w-[92%]" />
@@ -442,7 +439,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
       <div className="text-center py-10">
         <Sparkles size={26} className="mx-auto text-c-text-muted mb-3" />
         <p className="text-sm text-c-text-secondary mb-4">
-          {isPolish ? 'Ta sekcja jest jeszcze pusta.' : 'This section is still empty.'}
+          {t('sharedComponents.nModeCardState.sectionEmptyHint')}
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {onGenerate && (
@@ -452,7 +449,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
               className={`${CARD_ACTION_BASE} bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40`}
             >
               <Sparkles size={13} />
-              {isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}
+              {t('sharedComponents.nModeCardState.generateWithAiAction')}
             </button>
           )}
           {onFillManually && (
@@ -462,7 +459,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
               className={`${CARD_ACTION_BASE} border border-c-border text-c-text-secondary hover:bg-c-surface-raised`}
             >
               <Pencil size={13} />
-              {isPolish ? 'Wypełnij ręcznie' : 'Fill manually'}
+              {t('sharedComponents.nModeCardState.fillManuallyAction')}
             </button>
           )}
         </div>
@@ -474,15 +471,10 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
       <div className="text-center py-8">
         <AlertTriangle size={24} className="mx-auto text-c-danger mb-3" />
         <p className="text-sm text-c-text mb-1">
-          {errorMessage ||
-            (isPolish
-              ? 'Nie udało się wygenerować tej karty.'
-              : "This card couldn't be generated.")}
+          {errorMessage || t('sharedComponents.nModeCardState.generationFailedMessage')}
         </p>
         <p className="text-xs text-c-text-muted mb-4">
-          {isPolish
-            ? 'To był błąd po naszej stronie — nie Twoja wina.'
-            : 'That was an error on our side — not your fault.'}
+          {t('sharedComponents.nModeCardState.errorNotYourFaultHint')}
         </p>
         {onRetry && (
           <button
@@ -491,7 +483,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
             className={`${CARD_ACTION_BASE} border border-c-border text-c-text-secondary hover:bg-c-surface-raised`}
           >
             <RotateCw size={13} />
-            {isPolish ? 'Spróbuj ponownie' : 'Try again'}
+            {t('sharedComponents.nModeCardState.tryAgainAction')}
           </button>
         )}
       </div>

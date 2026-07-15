@@ -434,7 +434,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
   searchLinkedItems,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // ── Attachment state ──────────────────────────────────────────────────────
@@ -580,7 +580,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
 
   const saveAttachmentFromModal = async () => {
     if (attachmentDiskFiles.length === 0) {
-      toast.error(isPolish ? 'Wybierz co najmniej jeden plik' : 'Choose at least one file');
+      toast.error(t('sharedComponents.attachmentsLinksCanvas.noFileSelected'));
       return;
     }
     const dt = new DataTransfer();
@@ -595,9 +595,11 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
       const downloaded = await selectFile(file, activeProvider);
       if (downloaded) {
         setAttachmentDiskFiles((prev) => [...prev, downloaded]);
-        toast.success(isPolish ? `Dodano: ${downloaded.name}` : `Added: ${downloaded.name}`);
+        toast.success(
+          t('sharedComponents.attachmentsLinksCanvas.fileAdded', { name: downloaded.name })
+        );
       } else {
-        toast.error(isPolish ? 'Nie udało się pobrać pliku' : 'Failed to download file');
+        toast.error(t('sharedComponents.attachmentsLinksCanvas.downloadFailed'));
       }
       closeFilePicker();
     },
@@ -606,19 +608,11 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
 
   const openCloudPicker = useCallback(() => {
     if (!connectedProviderIds.includes(selectedCloudProvider)) {
-      toast(
-        isPolish
-          ? 'Podłącz tę chmurę w Ustawieniach → Integracje'
-          : 'Connect this provider in Settings → Integrations',
-        { icon: '🔗' }
-      );
+      toast(t('sharedComponents.attachmentsLinksCanvas.connectProviderHint'), { icon: '🔗' });
       return;
     }
     if (!isCloudImplemented) {
-      toast(
-        isPolish ? 'Integracje chmurowe będą dostępne wkrótce.' : 'Cloud integrations coming soon.',
-        { icon: '⏳' }
-      );
+      toast(t('sharedComponents.attachmentsLinksCanvas.cloudComingSoon'), { icon: '⏳' });
       return;
     }
     openFilePicker(selectedCloudProvider);
@@ -627,14 +621,14 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
   const handleSaveExternalLink = async () => {
     const url = externalLinkUrl.trim();
     if (!url) {
-      toast.error(isPolish ? 'Podaj URL' : 'Provide a URL');
+      toast.error(t('sharedComponents.attachmentsLinksCanvas.provideUrl'));
       return;
     }
     await onAddLinkedItem({
       id: `external-${Date.now()}`,
       type: 'external',
       title: externalLinkTitle.trim() || url,
-      status: isPolish ? 'Zewnętrzny' : 'External',
+      status: t('sharedComponents.attachmentsLinksCanvas.externalStatusLabel'),
       externalUrl: url,
       url,
       comment: externalLinkComment.trim() || undefined,
@@ -686,7 +680,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
           : 'Incoming (Target → This item)';
       const targetName =
         stagedInternalItem?.title ||
-        (isPolish ? '(element jeszcze nie wybrany)' : '(item not yet selected)');
+        t('sharedComponents.attachmentsLinksCanvas.targetNotSelected');
       const targetType = stagedInternalItem?.type || '';
 
       const prompt = isPolish
@@ -704,9 +698,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś analitykiem projektowym. Piszesz zwięźle i profesjonalnie po polsku.'
-          : 'You are a project analyst. Write concisely and professionally.',
+        systemInstruction: t('sharedComponents.attachmentsLinksCanvas.aiLinkCommentSystemInstruction'),
         roleName: 'Link Comment Advisor',
       });
 
@@ -715,7 +707,7 @@ Write a clear, professional comment explaining why this link exists and its sign
         setInternalLinkComment(raw);
       }
     } catch {
-      toast.error(isPolish ? 'Nie udało się wygenerować komentarza' : 'Failed to generate comment');
+      toast.error(t('sharedComponents.attachmentsLinksCanvas.generateCommentFailed'));
     } finally {
       setIsGeneratingLinkComment(false);
     }
@@ -747,15 +739,13 @@ Write a clear, professional comment explaining why this link exists and its sign
     <div className="space-y-6">
       {/* ── Page heading ───────────────────────────────────────────────────── */}
       <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-        {isPolish
-          ? 'Załączniki, linki wewnętrzne i zewnętrzne'
-          : 'Attachments, Internal Links & External Links'}
+        {t('sharedComponents.attachmentsLinksCanvas.heading')}
       </h2>
 
       {/* ━━ ATTACHMENTS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SectionCard
         icon={<Paperclip size={15} className="text-slate-600" />}
-        title={isPolish ? 'Załączniki' : 'Attachments'}
+        title={t('sharedComponents.attachmentsLinksCanvas.attachmentsSectionTitle')}
         count={filteredAttachments.length}
         actions={
           <>
@@ -765,12 +755,8 @@ Write a clear, professional comment explaining why this link exists and its sign
               className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:border-primary-400/40 transition-colors"
               title={
                 attachmentSortOrder === 'asc'
-                  ? isPolish
-                    ? 'Najstarsze'
-                    : 'Oldest first'
-                  : isPolish
-                    ? 'Najnowsze'
-                    : 'Newest first'
+                  ? t('sharedComponents.attachmentsLinksCanvas.sortOldestFirst')
+                  : t('sharedComponents.attachmentsLinksCanvas.sortNewestFirst')
               }
             >
               <ArrowDownUp size={11} />
@@ -781,7 +767,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 <Plus size={12} />
-                {isPolish ? 'Dodaj' : 'Add file'}
+                {t('sharedComponents.attachmentsLinksCanvas.addFileButton')}
               </button>
             )}
           </>
@@ -790,7 +776,7 @@ Write a clear, professional comment explaining why this link exists and its sign
         {filteredAttachments.length === 0 ? (
           <EmptyState
             icon={<Paperclip size={20} className="text-slate-600 dark:text-slate-400" />}
-            message={isPolish ? 'Brak załączników.' : 'No attachments yet.'}
+            message={t('sharedComponents.attachmentsLinksCanvas.emptyAttachments')}
           />
         ) : (
           <div className="space-y-0.5">
@@ -816,10 +802,10 @@ Write a clear, professional comment explaining why this link exists and its sign
                     onToggle={() =>
                       setOpenMenuKey((p) => (p === `att:${a.id}` ? null : `att:${a.id}`))
                     }
-                    triggerTitle={isPolish ? 'Opcje' : 'Options'}
+                    triggerTitle={t('sharedComponents.attachmentsLinksCanvas.optionsLabel')}
                     items={[
                       {
-                        label: isPolish ? 'Podgląd' : 'Preview',
+                        label: t('sharedComponents.attachmentsLinksCanvas.previewAction'),
                         icon: <Eye size={13} />,
                         onClick: () => {
                           setOpenMenuKey(null);
@@ -829,7 +815,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       ...(onEditAttachment
                         ? [
                             {
-                              label: isPolish ? 'Edytuj' : 'Edit',
+                              label: t('sharedComponents.attachmentsLinksCanvas.editAction'),
                               icon: <Edit3 size={13} />,
                               onClick: () => {
                                 setOpenMenuKey(null);
@@ -839,7 +825,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                           ]
                         : []),
                       {
-                        label: isPolish ? 'Usuń' : 'Delete',
+                        label: t('sharedComponents.attachmentsLinksCanvas.deleteAction'),
                         icon: <X size={13} />,
                         danger: true,
                         onClick: () => {
@@ -859,7 +845,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       {/* ━━ EXTERNAL LINKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SectionCard
         icon={<Globe size={15} className="text-slate-600" />}
-        title={isPolish ? 'Linki zewnętrzne' : 'External Links'}
+        title={t('sharedComponents.attachmentsLinksCanvas.externalLinksSectionTitle')}
         count={externalItems.length}
         actions={
           <>
@@ -882,7 +868,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 <Plus size={12} />
-                {isPolish ? 'Dodaj' : 'Add link'}
+                {t('sharedComponents.attachmentsLinksCanvas.addLinkButton')}
               </button>
             )}
           </>
@@ -891,7 +877,7 @@ Write a clear, professional comment explaining why this link exists and its sign
         {externalItems.length === 0 ? (
           <EmptyState
             icon={<Globe size={20} className="text-slate-600 dark:text-slate-400" />}
-            message={isPolish ? 'Brak linków zewnętrznych.' : 'No external links yet.'}
+            message={t('sharedComponents.attachmentsLinksCanvas.emptyExternalLinks')}
           />
         ) : (
           <div className="space-y-0.5">
@@ -928,10 +914,10 @@ Write a clear, professional comment explaining why this link exists and its sign
                     onToggle={() =>
                       setOpenMenuKey((p) => (p === `ext:${item.id}` ? null : `ext:${item.id}`))
                     }
-                    triggerTitle={isPolish ? 'Opcje' : 'Options'}
+                    triggerTitle={t('sharedComponents.attachmentsLinksCanvas.optionsLabel')}
                     items={[
                       {
-                        label: isPolish ? 'Otwórz' : 'Open',
+                        label: t('sharedComponents.attachmentsLinksCanvas.openAction'),
                         icon: <Eye size={13} />,
                         onClick: () => {
                           setOpenMenuKey(null);
@@ -941,7 +927,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       ...(onEditLinkedItem
                         ? [
                             {
-                              label: isPolish ? 'Edytuj' : 'Edit',
+                              label: t('sharedComponents.attachmentsLinksCanvas.editAction'),
                               icon: <Edit3 size={13} />,
                               onClick: () => {
                                 setOpenMenuKey(null);
@@ -951,7 +937,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                           ]
                         : []),
                       {
-                        label: isPolish ? 'Usuń' : 'Remove',
+                        label: t('sharedComponents.attachmentsLinksCanvas.removeAction'),
                         icon: <X size={13} />,
                         danger: true,
                         onClick: () => {
@@ -971,7 +957,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       {/* ━━ INTERNAL LINKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SectionCard
         icon={<LinkIcon size={15} className="text-slate-600" />}
-        title={isPolish ? 'Linki wewnętrzne' : 'Internal Links'}
+        title={t('sharedComponents.attachmentsLinksCanvas.internalLinksSectionTitle')}
         count={internalItems.length}
         actions={
           <>
@@ -997,7 +983,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 <Plus size={12} />
-                {isPolish ? 'Dodaj' : 'Add link'}
+                {t('sharedComponents.attachmentsLinksCanvas.addLinkButton')}
               </button>
             )}
           </>
@@ -1006,7 +992,7 @@ Write a clear, professional comment explaining why this link exists and its sign
         {internalItems.length === 0 ? (
           <EmptyState
             icon={<LinkIcon size={20} className="text-slate-600 dark:text-slate-400" />}
-            message={isPolish ? 'Brak powiązań wewnętrznych.' : 'No internal links yet.'}
+            message={t('sharedComponents.attachmentsLinksCanvas.emptyInternalLinks')}
           />
         ) : (
           <div className="space-y-0.5">
@@ -1060,10 +1046,10 @@ Write a clear, professional comment explaining why this link exists and its sign
                           p === `int:${item.type}:${item.id}` ? null : `int:${item.type}:${item.id}`
                         )
                       }
-                      triggerTitle={isPolish ? 'Opcje' : 'Options'}
+                      triggerTitle={t('sharedComponents.attachmentsLinksCanvas.optionsLabel')}
                       items={[
                         {
-                          label: isPolish ? 'Otwórz' : 'Open',
+                          label: t('sharedComponents.attachmentsLinksCanvas.openAction'),
                           icon: <Eye size={13} />,
                           onClick: () => {
                             setOpenMenuKey(null);
@@ -1073,7 +1059,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         ...(onEditLinkedItem
                           ? [
                               {
-                                label: isPolish ? 'Edytuj' : 'Edit',
+                                label: t('sharedComponents.attachmentsLinksCanvas.editAction'),
                                 icon: <Edit3 size={13} />,
                                 onClick: () => {
                                   setOpenMenuKey(null);
@@ -1083,7 +1069,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                             ]
                           : []),
                         {
-                          label: isPolish ? 'Usuń' : 'Remove',
+                          label: t('sharedComponents.attachmentsLinksCanvas.removeAction'),
                           icon: <X size={13} />,
                           danger: true,
                           onClick: () => {
@@ -1107,7 +1093,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       <ModalShell
         isOpen={isAttachmentModalOpen}
         onClose={closeAttachmentModal}
-        title={isPolish ? 'Dodaj załącznik' : 'Add attachment'}
+        title={t('sharedComponents.attachmentsLinksCanvas.addAttachmentModalTitle')}
       >
         {/* Source tabs */}
         <div className="grid grid-cols-2 gap-1 rounded-lg bg-slate-100 dark:bg-navy-800/60 p-1">
@@ -1120,7 +1106,7 @@ Write a clear, professional comment explaining why this link exists and its sign
             }`}
           >
             <HardDrive size={14} />
-            {isPolish ? 'Z komputera' : 'From computer'}
+            {t('sharedComponents.attachmentsLinksCanvas.fromComputerTab')}
           </button>
           <button
             onClick={() => setAttachmentSource('cloud')}
@@ -1131,7 +1117,7 @@ Write a clear, professional comment explaining why this link exists and its sign
             }`}
           >
             <Cloud size={14} />
-            {isPolish ? 'Z chmury' : 'From cloud'}
+            {t('sharedComponents.attachmentsLinksCanvas.fromCloudTab')}
           </button>
         </div>
 
@@ -1152,12 +1138,10 @@ Write a clear, professional comment explaining why this link exists and its sign
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Kliknij, aby wybrać pliki' : 'Click to choose files'}
+                    {t('sharedComponents.attachmentsLinksCanvas.clickToChooseFiles')}
                   </p>
                   <p className="text-[11px] text-slate-600 dark:text-slate-500 mt-0.5">
-                    {isPolish
-                      ? 'Możesz wybrać wiele plików jednocześnie'
-                      : 'You can select multiple files at once'}
+                    {t('sharedComponents.attachmentsLinksCanvas.multipleFilesHint')}
                   </p>
                 </div>
               </div>
@@ -1167,7 +1151,7 @@ Write a clear, professional comment explaining why this link exists and its sign
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Dostawca chmury' : 'Cloud provider'}
+                {t('sharedComponents.attachmentsLinksCanvas.cloudProviderLabel')}
               </span>
               {connectedProviderIds.length === 0 && (
                 <button
@@ -1175,7 +1159,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   className="inline-flex items-center gap-1 text-[10px] font-medium text-primary-400 hover:text-primary-300 transition-colors"
                 >
                   <Settings size={11} />
-                  {isPolish ? 'Ustawienia' : 'Settings'}
+                  {t('sharedComponents.attachmentsLinksCanvas.settingsLink')}
                 </button>
               )}
             </div>
@@ -1205,12 +1189,8 @@ Write a clear, professional comment explaining why this link exists and its sign
                       }`}
                     >
                       {connected
-                        ? isPolish
-                          ? 'Połączono'
-                          : 'Connected'
-                        : isPolish
-                          ? 'Niepołączono'
-                          : 'Not connected'}
+                        ? t('sharedComponents.attachmentsLinksCanvas.connectedLabel')
+                        : t('sharedComponents.attachmentsLinksCanvas.notConnectedLabel')}
                     </span>
                   </button>
                 );
@@ -1220,13 +1200,13 @@ Write a clear, professional comment explaining why this link exists and its sign
             {!connectedProviderIds.includes(selectedCloudProvider) ? (
               <div className="rounded-lg bg-amber-500/10 border border-amber-400/20 px-3 py-2.5 flex items-center justify-between">
                 <span className="text-xs text-amber-400">
-                  {isPolish ? 'Chmura niepołączona.' : 'Cloud not connected.'}
+                  {t('sharedComponents.attachmentsLinksCanvas.cloudNotConnected')}
                 </span>
                 <button
                   onClick={() => window.location.assign(ROUTES.SETTINGS.INTEGRATIONS)}
                   className="text-[11px] font-medium text-amber-300 hover:text-amber-200 transition-colors"
                 >
-                  {isPolish ? 'Podłącz' : 'Connect'}
+                  {t('sharedComponents.attachmentsLinksCanvas.connectAction')}
                 </button>
               </div>
             ) : (
@@ -1234,7 +1214,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 onClick={openCloudPicker}
                 className="w-full rounded-lg border border-primary-500/30 bg-primary-500/5 px-3 py-2.5 text-xs font-medium text-primary-400 hover:bg-primary-500/10 transition-colors"
               >
-                {isPolish ? 'Wybierz plik z chmury' : 'Choose file from cloud'}
+                {t('sharedComponents.attachmentsLinksCanvas.chooseFileFromCloud')}
               </button>
             )}
           </div>
@@ -1244,9 +1224,9 @@ Write a clear, professional comment explaining why this link exists and its sign
         {attachmentDiskFiles.length > 0 && (
           <div className="max-h-44 overflow-y-auto space-y-1.5">
             <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 px-1">
-              {isPolish
-                ? `Wybrane pliki (${attachmentDiskFiles.length})`
-                : `Selected files (${attachmentDiskFiles.length})`}
+              {t('sharedComponents.attachmentsLinksCanvas.selectedFilesCount', {
+                count: attachmentDiskFiles.length,
+              })}
             </p>
             {attachmentDiskFiles.map((file) => (
               <div
@@ -1285,8 +1265,8 @@ Write a clear, professional comment explaining why this link exists and its sign
         )}
 
         <ModalActions
-          cancelLabel={isPolish ? 'Anuluj' : 'Cancel'}
-          confirmLabel={isPolish ? 'Dodaj' : 'Add'}
+          cancelLabel={t('sharedComponents.attachmentsLinksCanvas.cancelAction')}
+          confirmLabel={t('sharedComponents.attachmentsLinksCanvas.addAction')}
           onCancel={closeAttachmentModal}
           onConfirm={() => void saveAttachmentFromModal()}
           disabled={attachmentDiskFiles.length === 0}
@@ -1297,11 +1277,11 @@ Write a clear, professional comment explaining why this link exists and its sign
       <ModalShell
         isOpen={!!editingAttachment}
         onClose={() => setEditingAttachment(null)}
-        title={isPolish ? 'Edytuj załącznik' : 'Edit attachment'}
+        title={t('sharedComponents.attachmentsLinksCanvas.editAttachmentModalTitle')}
       >
         {editingAttachment && (
           <>
-            <FormField label={isPolish ? 'Nazwa' : 'Name'}>
+            <FormField label={t('sharedComponents.attachmentsLinksCanvas.nameLabel')}>
               <input
                 value={editingAttachment.name}
                 onChange={(e) =>
@@ -1320,8 +1300,8 @@ Write a clear, professional comment explaining why this link exists and its sign
               />
             </FormField>
             <ModalActions
-              cancelLabel={isPolish ? 'Anuluj' : 'Cancel'}
-              confirmLabel={isPolish ? 'Zapisz' : 'Save'}
+              cancelLabel={t('sharedComponents.attachmentsLinksCanvas.cancelAction')}
+              confirmLabel={t('sharedComponents.attachmentsLinksCanvas.saveAction')}
               onCancel={() => setEditingAttachment(null)}
               onConfirm={saveEditedAttachment}
             />
@@ -1355,12 +1335,10 @@ Write a clear, professional comment explaining why this link exists and its sign
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-secondary-900 dark:text-white">
-                      {isPolish ? 'Nowe połączenie wewnętrzne' : 'New Internal Link'}
+                      {t('sharedComponents.attachmentsLinksCanvas.newInternalLinkModalTitle')}
                     </h3>
                     <p className="text-[11px] text-secondary-600 dark:text-slate-500 mt-0.5">
-                      {isPolish
-                        ? 'Skonfiguruj relację i wybierz element do powiązania'
-                        : 'Configure relationship and select an item to link'}
+                      {t('sharedComponents.attachmentsLinksCanvas.newInternalLinkModalSubtitle')}
                     </p>
                   </div>
                 </div>
@@ -1377,7 +1355,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 {/* ── Section: Direction ────────────────── */}
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2.5 block">
-                    {isPolish ? 'Kierunek' : 'Direction'}
+                    {t('sharedComponents.attachmentsLinksCanvas.directionLabel')}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -1399,12 +1377,12 @@ Write a clear, professional comment explaining why this link exists and its sign
                       <span
                         className={`text-xs font-semibold ${selectedLinkDirection === 'outgoing' ? 'text-primary-700 dark:text-primary-300' : 'text-secondary-700 dark:text-slate-400'}`}
                       >
-                        {isPolish ? 'Wychodzące' : 'Outgoing'}
+                        {t('sharedComponents.attachmentsLinksCanvas.outgoingLabel')}
                       </span>
                       <span
                         className={`text-[10px] leading-tight ${selectedLinkDirection === 'outgoing' ? 'text-primary-500/70 dark:text-primary-400/60' : 'text-secondary-500 dark:text-slate-500'}`}
                       >
-                        {isPolish ? 'Ten element → Docelowy' : 'This item → Target'}
+                        {t('sharedComponents.attachmentsLinksCanvas.outgoingDesc')}
                       </span>
                     </button>
                     <button
@@ -1424,12 +1402,12 @@ Write a clear, professional comment explaining why this link exists and its sign
                       <span
                         className={`text-xs font-semibold ${selectedLinkDirection === 'incoming' ? 'text-blue-700 dark:text-blue-300' : 'text-secondary-700 dark:text-slate-400'}`}
                       >
-                        {isPolish ? 'Przychodzące' : 'Incoming'}
+                        {t('sharedComponents.attachmentsLinksCanvas.incomingLabel')}
                       </span>
                       <span
                         className={`text-[10px] leading-tight ${selectedLinkDirection === 'incoming' ? 'text-blue-500/70 dark:text-blue-400/60' : 'text-secondary-500 dark:text-slate-500'}`}
                       >
-                        {isPolish ? 'Docelowy → Ten element' : 'Target → This item'}
+                        {t('sharedComponents.attachmentsLinksCanvas.incomingDesc')}
                       </span>
                     </button>
                   </div>
@@ -1438,7 +1416,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 {/* ── Section: Relationship Type ───────── */}
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2.5 block">
-                    {isPolish ? 'Typ relacji' : 'Relationship Type'}
+                    {t('sharedComponents.attachmentsLinksCanvas.relationshipTypeLabel')}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {ALL_LINK_RELATIONS.map((rel) => (
@@ -1461,16 +1439,16 @@ Write a clear, professional comment explaining why this link exists and its sign
                               : 'text-secondary-500 dark:text-slate-500'
                           }`}
                         >
-                          {isPolish ? LINK_RELATION_LABELS[rel].pl : LINK_RELATION_LABELS[rel].en}
+                          {t(`sharedComponents.attachmentsLinksCanvas.linkRelations.${rel}.label`)}
                         </span>
                       </button>
                     ))}
                   </div>
                   {/* Type description */}
                   <p className="mt-2.5 text-[11px] text-secondary-600 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 rounded-lg px-3 py-2 border border-slate-200 dark:border-navy-700/30">
-                    {isPolish
-                      ? LINK_RELATION_LABELS[selectedLinkRelation].desc_pl
-                      : LINK_RELATION_LABELS[selectedLinkRelation].desc_en}
+                    {t(
+                      `sharedComponents.attachmentsLinksCanvas.linkRelations.${selectedLinkRelation}.desc`
+                    )}
                   </p>
                 </div>
 
@@ -1479,37 +1457,29 @@ Write a clear, professional comment explaining why this link exists and its sign
                   <div className="flex items-center justify-between mb-2.5">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-500 flex items-center gap-1.5">
                       <MessageSquare size={11} />
-                      {isPolish ? 'Komentarz' : 'Comment'}
+                      {t('sharedComponents.attachmentsLinksCanvas.commentLabel')}
                       <span className="text-[9px] font-normal text-slate-600 dark:text-slate-400 ml-1">
-                        ({isPolish ? 'opcjonalny' : 'optional'})
+                        ({t('sharedComponents.attachmentsLinksCanvas.optionalLabel')})
                       </span>
                     </label>
                     <button
                       onClick={handleAIGenerateLinkComment}
                       disabled={isGeneratingLinkComment}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gradient-to-r from-primary-500/10 to-crimson-700/10 text-primary-600 dark:text-primary-400 border border-primary-300/40 dark:border-primary-500/30 hover:from-primary-500/20 hover:to-crimson-700/20 hover:border-primary-400/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={
-                        isPolish
-                          ? 'AI wygeneruje komentarz na podstawie wybranej relacji'
-                          : 'AI will generate a comment based on the selected relationship'
-                      }
+                      title={t('sharedComponents.attachmentsLinksCanvas.aiGenerateTooltip')}
                     >
                       {isGeneratingLinkComment ? (
                         <Loader2 size={12} className="animate-spin" />
                       ) : (
                         <Sparkles size={12} />
                       )}
-                      {isPolish ? 'AI Opisz' : 'AI Describe'}
+                      {t('sharedComponents.attachmentsLinksCanvas.aiDescribeButton')}
                     </button>
                   </div>
                   <textarea
                     value={internalLinkComment}
                     onChange={(e) => setInternalLinkComment(e.target.value)}
-                    placeholder={
-                      isPolish
-                        ? 'Dodaj kontekst, powód lub uwagi do tego połączenia...'
-                        : 'Add context, reason, or notes about this link...'
-                    }
+                    placeholder={t('sharedComponents.attachmentsLinksCanvas.commentPlaceholder')}
                     rows={2}
                     className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all resize-none"
                   />
@@ -1519,7 +1489,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 {stagedInternalItem && (
                   <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2 block">
-                      {isPolish ? 'Wybrany element' : 'Selected Item'}
+                      {t('sharedComponents.attachmentsLinksCanvas.selectedItemLabel')}
                     </label>
                     <div className="flex items-center gap-3 rounded-xl border-2 border-primary-300 dark:border-primary-500/40 bg-primary-50/50 dark:bg-primary-500/5 px-3.5 py-2.5">
                       <span
@@ -1542,7 +1512,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       <button
                         onClick={() => setStagedInternalItem(null)}
                         className="p-1.5 rounded-lg text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
-                        title={isPolish ? 'Usuń wybór' : 'Remove selection'}
+                        title={t('sharedComponents.attachmentsLinksCanvas.removeSelectionTooltip')}
                       >
                         <X size={14} />
                       </button>
@@ -1554,14 +1524,12 @@ Write a clear, professional comment explaining why this link exists and its sign
                 {!stagedInternalItem && (
                   <div className="px-6 py-4">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2.5 block">
-                      {isPolish ? 'Wybierz element' : 'Select Item'}
+                      {t('sharedComponents.attachmentsLinksCanvas.selectItemLabel')}
                     </label>
 
                     {/* Info banner */}
                     <div className="rounded-lg bg-slate-50/80 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/50 px-3 py-2 text-[11px] text-secondary-600 dark:text-slate-500 mb-3">
-                      {isPolish
-                        ? 'Po podlinkowaniu metadane (status, priorytet) zostaną pobrane automatycznie.'
-                        : 'After linking, record metadata (status, priority) will sync automatically.'}
+                      {t('sharedComponents.attachmentsLinksCanvas.autoSyncInfo')}
                     </div>
 
                     <div className="relative">
@@ -1573,11 +1541,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         type="text"
                         value={linkSearchQuery}
                         onChange={(e) => setLinkSearchQuery(e.target.value)}
-                        placeholder={
-                          isPolish
-                            ? 'Szukaj task, decision, initiative...'
-                            : 'Search tasks, decisions, initiatives...'
-                        }
+                        placeholder={t('sharedComponents.attachmentsLinksCanvas.searchPlaceholder')}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all"
                         autoFocus
                       />
@@ -1633,10 +1597,10 @@ Write a clear, professional comment explaining why this link exists and its sign
                             className="mx-auto text-secondary-400 dark:text-slate-400 mb-2"
                           />
                           <p className="text-sm text-secondary-500">
-                            {isPolish ? 'Brak wyników.' : 'No results found.'}
+                            {t('sharedComponents.attachmentsLinksCanvas.noResultsFound')}
                           </p>
                           <p className="text-[11px] text-secondary-400 dark:text-slate-400 mt-0.5">
-                            {isPolish ? 'Spróbuj innej frazy' : 'Try a different search term'}
+                            {t('sharedComponents.attachmentsLinksCanvas.tryDifferentSearch')}
                           </p>
                         </div>
                       )}
@@ -1644,9 +1608,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     {/* Empty state */}
                     {linkSearchQuery.trim().length < 2 && !isLinkSearching && (
                       <p className="mt-3 text-center text-xs text-secondary-500 dark:text-slate-500 py-2">
-                        {isPolish
-                          ? 'Wpisz min. 2 znaki, aby wyszukać element do powiązania'
-                          : 'Type at least 2 characters to search for an item to link'}
+                        {t('sharedComponents.attachmentsLinksCanvas.typeMinCharsHint')}
                       </p>
                     )}
                   </div>
@@ -1657,26 +1619,22 @@ Write a clear, professional comment explaining why this link exists and its sign
               <div className="px-6 py-3.5 border-t border-slate-200 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
                 <p className="text-[11px] text-secondary-600 dark:text-slate-500">
                   {stagedInternalItem
-                    ? isPolish
-                      ? 'Gotowe do dodania — kliknij Dodaj'
-                      : 'Ready to add — click Add Link'
-                    : isPolish
-                      ? 'Wybierz element, aby kontynuować'
-                      : 'Select an item to continue'}
+                    ? t('sharedComponents.attachmentsLinksCanvas.readyToAdd')
+                    : t('sharedComponents.attachmentsLinksCanvas.selectItemToContinue')}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={closeInternalLinkModal}
                     className="px-4 py-2 rounded-lg text-xs font-medium text-secondary-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                   >
-                    {isPolish ? 'Anuluj' : 'Cancel'}
+                    {t('sharedComponents.attachmentsLinksCanvas.cancelAction')}
                   </button>
                   <button
                     onClick={() => void handleConfirmInternalLink()}
                     disabled={!stagedInternalItem}
                     className="px-5 py-2 rounded-lg text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-black/10 transition-all hover:shadow-md hover:shadow-black/10"
                   >
-                    {isPolish ? 'Dodaj połączenie' : 'Add Link'}
+                    {t('sharedComponents.attachmentsLinksCanvas.addLinkConfirmButton')}
                   </button>
                 </div>
               </div>
@@ -1694,13 +1652,13 @@ Write a clear, professional comment explaining why this link exists and its sign
           setExternalLinkUrl('');
           setExternalLinkComment('');
         }}
-        title={isPolish ? 'Dodaj link zewnętrzny' : 'Add external link'}
+        title={t('sharedComponents.attachmentsLinksCanvas.addExternalLinkModalTitle')}
       >
-        <FormField label={isPolish ? 'Tytuł linku' : 'Link title'}>
+        <FormField label={t('sharedComponents.attachmentsLinksCanvas.linkTitleLabel')}>
           <input
             value={externalLinkTitle}
             onChange={(e) => setExternalLinkTitle(e.target.value)}
-            placeholder={isPolish ? 'Np. Dokumentacja API' : 'e.g. API Documentation'}
+            placeholder={t('sharedComponents.attachmentsLinksCanvas.linkTitlePlaceholder')}
             className={inputClass}
           />
         </FormField>
@@ -1712,22 +1670,18 @@ Write a clear, professional comment explaining why this link exists and its sign
             className={inputClass}
           />
         </FormField>
-        <FormField label={isPolish ? 'Komentarz (opcjonalnie)' : 'Comment (optional)'}>
+        <FormField label={t('sharedComponents.attachmentsLinksCanvas.commentOptionalLabel')}>
           <textarea
             rows={4}
             value={externalLinkComment}
             onChange={(e) => setExternalLinkComment(e.target.value)}
-            placeholder={
-              isPolish
-                ? 'Np. Finalna wersja dokumentu dla zespołu.'
-                : 'e.g. Final document version for the team.'
-            }
+            placeholder={t('sharedComponents.attachmentsLinksCanvas.externalCommentPlaceholder')}
             className={`${inputClass} resize-none`}
           />
         </FormField>
         <ModalActions
-          cancelLabel={isPolish ? 'Anuluj' : 'Cancel'}
-          confirmLabel={isPolish ? 'Dodaj link' : 'Add link'}
+          cancelLabel={t('sharedComponents.attachmentsLinksCanvas.cancelAction')}
+          confirmLabel={t('sharedComponents.attachmentsLinksCanvas.addLinkButton')}
           onCancel={() => {
             setIsExternalLinkModalOpen(false);
             setExternalLinkTitle('');
@@ -1744,17 +1698,13 @@ Write a clear, professional comment explaining why this link exists and its sign
         onClose={() => setEditingLinkedItem(null)}
         title={
           editingLinkedItem?.type === 'external'
-            ? isPolish
-              ? 'Edytuj link zewnętrzny'
-              : 'Edit external link'
-            : isPolish
-              ? 'Edytuj link wewnętrzny'
-              : 'Edit internal link'
+            ? t('sharedComponents.attachmentsLinksCanvas.editExternalLinkModalTitle')
+            : t('sharedComponents.attachmentsLinksCanvas.editInternalLinkModalTitle')
         }
       >
         {editingLinkedItem && (
           <>
-            <FormField label={isPolish ? 'Tytuł' : 'Title'}>
+            <FormField label={t('sharedComponents.attachmentsLinksCanvas.titleLabel')}>
               <input
                 value={editingLinkedItem.title}
                 onChange={(e) =>
@@ -1789,7 +1739,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     className={inputClass}
                   />
                 </FormField>
-                <FormField label={isPolish ? 'Komentarz' : 'Comment'}>
+                <FormField label={t('sharedComponents.attachmentsLinksCanvas.commentLabel')}>
                   <textarea
                     rows={3}
                     value={editingLinkedItem.comment || ''}
@@ -1802,8 +1752,8 @@ Write a clear, professional comment explaining why this link exists and its sign
               </>
             )}
             <ModalActions
-              cancelLabel={isPolish ? 'Anuluj' : 'Cancel'}
-              confirmLabel={isPolish ? 'Zapisz' : 'Save'}
+              cancelLabel={t('sharedComponents.attachmentsLinksCanvas.cancelAction')}
+              confirmLabel={t('sharedComponents.attachmentsLinksCanvas.saveAction')}
               onCancel={() => setEditingLinkedItem(null)}
               onConfirm={saveEditedLinkedItem}
             />

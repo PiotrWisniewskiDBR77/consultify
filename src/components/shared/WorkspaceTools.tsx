@@ -22,6 +22,7 @@ import {
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import i18n from '@/i18n';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -147,6 +148,7 @@ export const AIQuickActions: React.FC<AIQuickActionsProps> = ({
   onFocusAICommand,
   onOpenAIChat,
 }) => {
+  const t = i18n.getFixedT(isPl ? 'pl' : 'en');
   if (!onFocusAICommand && !onOpenAIChat) return null;
 
   return (
@@ -161,7 +163,7 @@ export const AIQuickActions: React.FC<AIQuickActionsProps> = ({
             <div className="flex flex-col items-center gap-1">
               <Sparkles size={16} className="text-primary-500 dark:text-primary-400" />
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                {isPl ? 'Polecenie' : 'Command'}
+                {t('sharedComponents.workspaceTools.commandLabel')}
               </span>
               <span className="text-[8px] text-slate-600 dark:text-slate-500 font-medium">⌘⇧A</span>
             </div>
@@ -187,7 +189,7 @@ export const AIQuickActions: React.FC<AIQuickActionsProps> = ({
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                {isPl ? 'Czat AI' : 'AI Chat'}
+                {t('sharedComponents.workspaceTools.aiChatLabel')}
               </span>
             </div>
           </button>
@@ -207,6 +209,7 @@ interface TransformTextSectionProps {
 }
 
 export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl, context }) => {
+  const t = i18n.getFixedT(isPl ? 'pl' : 'en');
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const [styleMenuOpen, setStyleMenuOpen] = useState(false);
 
@@ -218,79 +221,79 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
     [setChatKickoffMessage, isChatCollapsed, toggleChatCollapse]
   );
 
-  const entityLabel = isPl
-    ? context.entityType === 'notebook'
-      ? 'notatkę'
-      : context.entityType === 'idea'
-        ? 'opis wyzwania'
-        : 'treść'
-    : context.entityType === 'notebook'
-      ? 'note'
-      : context.entityType === 'idea'
-        ? 'challenge description'
-        : 'content';
+  const entityLabel = t(
+    `sharedComponents.workspaceTools.entityLabel.${context.entityType}`,
+    { defaultValue: t('sharedComponents.workspaceTools.entityLabel.default') }
+  );
 
   const handleTranslate = () => {
-    const targetLang = isPl ? 'English' : 'Polish';
+    const targetLang = t('sharedComponents.workspaceTools.otherLanguageName');
     const excerpt = (context.content || '').trim().slice(0, 2000);
     sendToChat(
-      isPl
-        ? `Przetłumacz poniższą ${entityLabel} na język ${targetLang}. Zachowaj formatowanie i styl.\n\nTytuł: "${context.title}"\n\nTreść:\n${excerpt}`
-        : `Translate the following ${entityLabel} into ${targetLang}. Preserve formatting and style.\n\nTitle: "${context.title}"\n\nContent:\n${excerpt}`
+      t('sharedComponents.workspaceTools.translatePrompt', {
+        entityLabel,
+        targetLang,
+        title: context.title,
+        excerpt,
+      })
     );
     trackFunnelEvent('notebook_transform_used', {});
-    toast.success(isPl ? `Wysłano do czata → ${targetLang}` : `Sent to chat → ${targetLang}`);
+    toast.success(t('sharedComponents.workspaceTools.sentToChatWithTarget', { targetLang }));
   };
 
   const handleChangeStyle = (style: string) => {
     const excerpt = (context.content || '').trim().slice(0, 2000);
-    const styleMap: Record<string, { pl: string; en: string }> = {
-      formal: { pl: 'formalny, profesjonalny', en: 'formal, professional' },
-      casual: { pl: 'swobodny, konwersacyjny', en: 'casual, conversational' },
-      concise: { pl: 'zwięzły, skrócony do esencji', en: 'concise, distilled to essentials' },
-      creative: { pl: 'kreatywny, barwny, inspirujący', en: 'creative, colorful, inspiring' },
-    };
-    const s = styleMap[style] || styleMap.formal;
+    const knownStyles = ['formal', 'casual', 'concise', 'creative'];
+    const styleKey = knownStyles.includes(style) ? style : 'formal';
+    const styleDescription = t(`sharedComponents.workspaceTools.styleDescription.${styleKey}`);
     sendToChat(
-      isPl
-        ? `Przepisz poniższą ${entityLabel} w stylu: ${s.pl}. Zachowaj treść, zmień formę.\n\nTytuł: "${context.title}"\nTagi: ${context.tags.join(', ') || 'brak'}\n\nTreść:\n${excerpt}`
-        : `Rewrite the following ${entityLabel} in ${s.en} style. Keep the content, change the form.\n\nTitle: "${context.title}"\nTags: ${context.tags.join(', ') || 'none'}\n\nContent:\n${excerpt}`
+      t('sharedComponents.workspaceTools.changeStylePrompt', {
+        entityLabel,
+        styleDescription,
+        title: context.title,
+        tags: context.tags.join(', ') || t('sharedComponents.workspaceTools.noTags'),
+        excerpt,
+      })
     );
     trackFunnelEvent('notebook_transform_used', {});
-    toast.success(isPl ? 'Wysłano do czata' : 'Sent to chat');
+    toast.success(t('sharedComponents.workspaceTools.sentToChat'));
   };
 
   const handleChangeLength = (direction: 'shorter' | 'longer') => {
     const excerpt = (context.content || '').trim().slice(0, 2000);
     sendToChat(
-      isPl
-        ? `${direction === 'shorter' ? 'Skróć' : 'Rozwiń'} poniższą ${entityLabel}. ${direction === 'shorter' ? 'Zachowaj kluczowe punkty, usuń powtórzenia.' : 'Dodaj szczegóły, przykłady i kontekst.'}\n\nTytuł: "${context.title}"\n\nTreść:\n${excerpt}`
-        : `${direction === 'shorter' ? 'Shorten' : 'Expand'} the following ${entityLabel}. ${direction === 'shorter' ? 'Keep key points, remove repetition.' : 'Add details, examples and context.'}\n\nTitle: "${context.title}"\n\nContent:\n${excerpt}`
+      t(`sharedComponents.workspaceTools.changeLengthPrompt.${direction}`, {
+        entityLabel,
+        title: context.title,
+        excerpt,
+      })
     );
     trackFunnelEvent('notebook_transform_used', {});
-    toast.success(isPl ? 'Wysłano do czata' : 'Sent to chat');
+    toast.success(t('sharedComponents.workspaceTools.sentToChat'));
   };
 
   const handlePolish = () => {
     const excerpt = (context.content || '').trim().slice(0, 2000);
     sendToChat(
-      isPl
-        ? `Popraw i ulepsz poniższą ${entityLabel}. Popraw styl, gramatykę, strukturę. Zasugeruj lepsze nagłówki i formatowanie.\n\nTytuł: "${context.title}"\n\nTreść:\n${excerpt}`
-        : `Improve and polish the following ${entityLabel}. Fix style, grammar, structure. Suggest better headings and formatting.\n\nTitle: "${context.title}"\n\nContent:\n${excerpt}`
+      t('sharedComponents.workspaceTools.polishPrompt', {
+        entityLabel,
+        title: context.title,
+        excerpt,
+      })
     );
-    toast.success(isPl ? 'Wysłano do czata' : 'Sent to chat');
+    toast.success(t('sharedComponents.workspaceTools.sentToChat'));
   };
 
   const styleOptions = [
-    { id: 'formal', labelPl: 'Formalny', labelEn: 'Formal', icon: '📋' },
-    { id: 'casual', labelPl: 'Swobodny', labelEn: 'Casual', icon: '💬' },
-    { id: 'concise', labelPl: 'Zwięzły', labelEn: 'Concise', icon: '✂️' },
-    { id: 'creative', labelPl: 'Kreatywny', labelEn: 'Creative', icon: '🎨' },
+    { id: 'formal', icon: '📋' },
+    { id: 'casual', icon: '💬' },
+    { id: 'concise', icon: '✂️' },
+    { id: 'creative', icon: '🎨' },
   ];
 
   return (
     <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-      <SectionLabel>{isPl ? 'Transformuj tekst' : 'Transform text'}</SectionLabel>
+      <SectionLabel>{t('sharedComponents.workspaceTools.transformTextLabel')}</SectionLabel>
       <div className="space-y-1.5">
         <button
           onClick={handleTranslate}
@@ -301,10 +304,10 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
           </div>
           <div className="relative flex-1 min-w-0 text-left">
             <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-              {isPl ? 'Przetłumacz' : 'Translate'}
+              {t('sharedComponents.workspaceTools.translateAction')}
             </div>
             <div className="text-[9px] text-slate-600 dark:text-slate-500">
-              {isPl ? '→ English' : '→ Polski'}
+              {t('sharedComponents.workspaceTools.translateTargetHint')}
             </div>
           </div>
         </button>
@@ -319,10 +322,10 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             </div>
             <div className="relative flex-1 min-w-0 text-left">
               <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                {isPl ? 'Zmień styl' : 'Change style'}
+                {t('sharedComponents.workspaceTools.changeStyleAction')}
               </div>
               <div className="text-[9px] text-slate-600 dark:text-slate-500">
-                {isPl ? 'Formalny, swobodny, zwięzły…' : 'Formal, casual, concise…'}
+                {t('sharedComponents.workspaceTools.changeStyleHint')}
               </div>
             </div>
             <ChevronDown
@@ -342,7 +345,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
                   className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50/80 dark:bg-white/[0.04] border border-slate-200/30 dark:border-white/[0.06] hover:bg-primary-500/10 hover:border-primary-500/15 text-[10px] font-medium text-slate-600 dark:text-slate-400 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
                 >
                   <span>{s.icon}</span>
-                  {isPl ? s.labelPl : s.labelEn}
+                  {t(`sharedComponents.workspaceTools.styleOptionLabel.${s.id}`)}
                 </button>
               ))}
             </div>
@@ -359,7 +362,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             </div>
             <div className="relative text-left">
               <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                {isPl ? 'Skróć' : 'Shorter'}
+                {t('sharedComponents.workspaceTools.shorterAction')}
               </div>
             </div>
           </button>
@@ -372,7 +375,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             </div>
             <div className="relative text-left">
               <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                {isPl ? 'Rozwiń' : 'Expand'}
+                {t('sharedComponents.workspaceTools.longerAction')}
               </div>
             </div>
           </button>
@@ -387,10 +390,10 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
           </div>
           <div className="relative flex-1 min-w-0 text-left">
             <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-              {isPl ? 'Popraw całość' : 'Polish & improve'}
+              {t('sharedComponents.workspaceTools.polishAction')}
             </div>
             <div className="text-[9px] text-slate-600 dark:text-slate-500">
-              {isPl ? 'Styl, gramatyka, struktura' : 'Style, grammar, structure'}
+              {t('sharedComponents.workspaceTools.polishHint')}
             </div>
           </div>
         </button>
@@ -409,19 +412,22 @@ interface ShareSectionProps {
 }
 
 export const ShareSection: React.FC<ShareSectionProps> = ({ isPl, context }) => {
+  const t = i18n.getFixedT(isPl ? 'pl' : 'en');
   const handleEmail = () => {
-    const subject = encodeURIComponent(context.title || (isPl ? 'Notatka' : 'Note'));
+    const subject = encodeURIComponent(
+      context.title || t('sharedComponents.workspaceTools.noteDefaultSubject')
+    );
     const body = encodeURIComponent(
-      `${context.title}\n${'—'.repeat(30)}\n\n${(context.content || '').trim().slice(0, 5000)}\n\n—\n${isPl ? 'Wysłano z Consultify' : 'Sent from Consultify'}`
+      `${context.title}\n${'—'.repeat(30)}\n\n${(context.content || '').trim().slice(0, 5000)}\n\n—\n${t('sharedComponents.workspaceTools.sentFromConsultify')}`
     );
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
     trackFunnelEvent('notebook_share_email', {});
-    toast.success(isPl ? 'Otwarto klienta email' : 'Email client opened');
+    toast.success(t('sharedComponents.workspaceTools.emailClientOpened'));
   };
 
   return (
     <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-      <SectionLabel>{isPl ? 'Udostępnij' : 'Share'}</SectionLabel>
+      <SectionLabel>{t('sharedComponents.workspaceTools.shareLabel')}</SectionLabel>
       <button
         onClick={handleEmail}
         className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] hover:shadow-sm"
@@ -431,10 +437,10 @@ export const ShareSection: React.FC<ShareSectionProps> = ({ isPl, context }) => 
         </div>
         <div className="relative flex-1 min-w-0 text-left">
           <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-            {isPl ? 'Wyślij mailem' : 'Send via email'}
+            {t('sharedComponents.workspaceTools.sendViaEmailLabel')}
           </div>
           <div className="text-[9px] text-slate-600 dark:text-slate-500">
-            {isPl ? 'Otwiera klienta email z treścią' : 'Opens email client with content'}
+            {t('sharedComponents.workspaceTools.opensEmailClientHint')}
           </div>
         </div>
       </button>

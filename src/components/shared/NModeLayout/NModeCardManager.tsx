@@ -146,7 +146,8 @@ export const AddCardMenu: React.FC<AddCardMenuProps> = ({
   isPolish: isPolishProp,
   className,
 }) => {
-  const { i18n } = useTranslation();
+  const { t: tHook, i18n } = useTranslation();
+  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
   const isPolish = isPolishProp ?? i18n.language === 'pl';
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, () => setOpen(false));
@@ -175,7 +176,7 @@ export const AddCardMenu: React.FC<AddCardMenuProps> = ({
         className={TOOLBAR_BTN}
       >
         <Plus size={14} />
-        {isPolish ? 'Nowa karta' : 'New card'}
+        {t('sharedComponents.nModeCardManager.newCardLabel')}
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
@@ -185,7 +186,7 @@ export const AddCardMenu: React.FC<AddCardMenuProps> = ({
         >
           {availableToAdd.length === 0 ? (
             <div className="px-3 py-3 text-xs text-c-text-muted">
-              {isPolish ? 'Wszystkie karty są już dodane.' : 'All cards are already added.'}
+              {t('sharedComponents.nModeCardManager.allCardsAdded')}
             </div>
           ) : (
             groups.map((bucket) => (
@@ -243,7 +244,8 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
   isPolish: isPolishProp,
   className,
 }) => {
-  const { i18n } = useTranslation();
+  const { t: tHook, i18n } = useTranslation();
+  const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
   const isPolish = isPolishProp ?? i18n.language === 'pl';
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, () => setOpen(false));
@@ -272,7 +274,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
         className={TOOLBAR_BTN}
       >
         <Layers size={14} />
-        {isPolish ? 'Sekcje' : 'Sections'}
+        {t('sharedComponents.nModeCardManager.sectionsLabel')}
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
@@ -284,7 +286,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
           {spec.sets.length > 1 && (
             <div className="px-2 py-2 border-b border-c-border-subtle">
               <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPolish ? 'Zestaw domyślny' : 'Default set'}
+                {t('sharedComponents.nModeCardManager.defaultSetLabel')}
               </div>
               <div className="flex flex-wrap gap-1">
                 {spec.sets.map((set) => (
@@ -320,12 +322,8 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
                     onClick={() => (item.visible ? hideCard(item.id) : showCard(item.id))}
                     title={
                       item.visible
-                        ? isPolish
-                          ? 'Ukryj sekcję'
-                          : 'Hide section'
-                        : isPolish
-                          ? 'Pokaż sekcję'
-                          : 'Show section'
+                        ? t('sharedComponents.nModeCardManager.hideSectionTooltip')
+                        : t('sharedComponents.nModeCardManager.showSectionTooltip')
                     }
                     className="shrink-0 text-c-text-muted hover:text-c-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
                   >
@@ -347,7 +345,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
                     type="button"
                     disabled={index === 0}
                     onClick={() => reorderCards(index, index - 1)}
-                    title={isPolish ? 'W górę' : 'Move up'}
+                    title={t('sharedComponents.nModeCardManager.moveUpTooltip')}
                     className="shrink-0 p-0.5 rounded text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     <ArrowUp size={13} />
@@ -356,7 +354,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
                     type="button"
                     disabled={index === items.length - 1}
                     onClick={() => reorderCards(index, index + 1)}
-                    title={isPolish ? 'W dół' : 'Move down'}
+                    title={t('sharedComponents.nModeCardManager.moveDownTooltip')}
                     className="shrink-0 p-0.5 rounded text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     <ArrowDown size={13} />
@@ -367,7 +365,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
                     <button
                       type="button"
                       onClick={() => removeCard(item.id)}
-                      title={isPolish ? 'Usuń kartę' : 'Remove card'}
+                      title={t('sharedComponents.nModeCardManager.removeCardTooltip')}
                       className="shrink-0 p-0.5 rounded text-c-text-muted hover:text-c-danger hover:bg-c-danger/10 opacity-0 group-hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       <X size={13} />
@@ -389,7 +387,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-c-text-secondary hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:bg-c-surface"
             >
               <RefreshCw size={14} />
-              {isPolish ? 'Przywróć domyślne' : 'Restore defaults'}
+              {t('sharedComponents.nModeCardManager.restoreDefaultsLabel')}
             </button>
           </div>
         </div>

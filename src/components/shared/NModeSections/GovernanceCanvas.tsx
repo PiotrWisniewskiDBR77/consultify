@@ -212,7 +212,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
   isSuggestingEscalations = false,
   onAISuggestStakeholderDraft,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // ── Internal editing state ──
@@ -229,20 +229,15 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
   // ── Label helpers ──
 
   const stakeholderRoleLabel = (role: StakeholderRole): string => {
-    const map: Record<StakeholderRole, { en: string; pl: string }> = {
-      responsible: { en: 'Responsible', pl: 'Odpowiedzialny' },
-      accountable: { en: 'Accountable', pl: 'Rozliczający' },
-      consulted: { en: 'Consulted', pl: 'Konsultowany' },
-      informed: { en: 'Informed', pl: 'Informowany' },
-    };
-    const item = map[role] || map.consulted;
-    return isPolish ? item.pl : item.en;
+    const known: StakeholderRole[] = ['responsible', 'accountable', 'consulted', 'informed'];
+    const key = known.includes(role) ? role : 'consulted';
+    return t(`sharedComponents.governanceCanvas.stakeholderRole.${key}`);
   };
 
   const stakeholderChannelLabels = (ns: Stakeholder['notificationSettings']): string[] => {
     const labels: string[] = [];
     if (!ns.enabled) {
-      labels.push(isPolish ? 'Wyłączone' : 'Disabled');
+      labels.push(t('sharedComponents.governanceCanvas.disabled'));
       return labels;
     }
     if (ns.inAppEnabled) labels.push('In-app');
@@ -250,13 +245,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
     (ns.integrationChannels || []).forEach((ch) =>
       labels.push(ch.charAt(0).toUpperCase() + ch.slice(1))
     );
-    return labels.length > 0 ? labels : [isPolish ? 'Brak' : 'None'];
+    return labels.length > 0 ? labels : [t('sharedComponents.governanceCanvas.none')];
   };
 
   const escalationModeOptions: Array<{ value: EscalationMode; label: string }> = [
-    { value: 'notify_only', label: isPolish ? 'Powiadomienie tylko' : 'Notify only' },
-    { value: 'manager_review', label: isPolish ? 'Przegląd managera' : 'Manager review' },
-    { value: 'executive_alert', label: isPolish ? 'Alert zarządu' : 'Executive alert' },
+    { value: 'notify_only', label: t('sharedComponents.governanceCanvas.notifyOnly') },
+    { value: 'manager_review', label: t('sharedComponents.governanceCanvas.managerReview') },
+    { value: 'executive_alert', label: t('sharedComponents.governanceCanvas.executiveAlert') },
   ];
 
   const escalationModeLabel = (mode: EscalationMode): string => {
@@ -426,7 +421,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
   return (
     <div className="space-y-8">
       <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-        {isPolish ? 'RACI i eskalacja' : 'RACI & Escalation'}
+        {t('sharedComponents.governanceCanvas.raciEscalation')}
       </h2>
 
       <div className="space-y-4">
@@ -434,7 +429,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
         <div className={TABLE_CARD}>
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-              {isPolish ? 'RACI (macierz odpowiedzialności)' : 'RACI (responsibility matrix)'}
+              {t('sharedComponents.governanceCanvas.raciResponsibilityMatrix')}
             </h3>
             <div className="inline-flex items-center gap-2">
               {onAISuggestStakeholders && (
@@ -448,11 +443,11 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   ) : (
                     <Sparkles size={12} />
                   )}
-                  {isPolish ? 'Generuj RACI' : 'Generate RACI'}
+                  {t('sharedComponents.governanceCanvas.generateRaci')}
                 </button>
               )}
               <button disabled={locked} onClick={createStakeholder} className={ADD_BTN}>
-                + {isPolish ? 'Dodaj osobę' : 'Add person'}
+                + {t('sharedComponents.governanceCanvas.addPerson')}
               </button>
             </div>
           </div>
@@ -462,20 +457,20 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             >
               <thead>
                 <tr className={TH}>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Osoba' : 'Person'}</th>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.person')}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.role')}</th>
                   <th className="text-left py-2 pr-2">Email</th>
                   <th className="text-left py-2 pr-2">
-                    {isPolish ? 'Notyfikacje' : 'Notifications'}
+                    {t('sharedComponents.governanceCanvas.notifications')}
                   </th>
-                  <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                  <th className="text-right py-2">{t('sharedComponents.governanceCanvas.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                 {stakeholders.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-6 text-center text-xs text-slate-600">
-                      {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
+                      {t('sharedComponents.governanceCanvas.noStakeholdersYet')}
                     </td>
                   </tr>
                 ) : (
@@ -508,7 +503,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setStakeholderDraft({ ...s });
                             }}
                             className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
-                            title={isPolish ? 'Edytuj' : 'Edit'}
+                            title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
                           </button>
@@ -518,7 +513,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setStakeholders((prev) => prev.filter((item) => item.id !== s.id))
                             }
                             className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
-                            title={isPolish ? 'Usuń' : 'Delete'}
+                            title={t('sharedComponents.governanceCanvas.delete')}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -536,7 +531,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
         <div className={TABLE_CARD}>
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-              {isPolish ? 'Przypomnienia' : 'Reminders'}
+              {t('sharedComponents.governanceCanvas.reminders')}
             </h3>
             <div className="inline-flex items-center gap-2">
               {onAISuggestReminders && (
@@ -554,7 +549,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 </button>
               )}
               <button disabled={locked} onClick={createReminder} className={ADD_BTN}>
-                + {isPolish ? 'Dodaj reminder' : 'Add reminder'}
+                + {t('sharedComponents.governanceCanvas.addReminder')}
               </button>
             </div>
           </div>
@@ -562,20 +557,20 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             <table className="w-full text-sm">
               <thead>
                 <tr className={TH}>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Dni' : 'Days'}</th>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Do kogo' : 'Recipients'}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.type')}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.days')}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.recipients')}</th>
                   <th className="text-left py-2 pr-2">
-                    {isPolish ? 'Notyfikacje' : 'Notifications'}
+                    {t('sharedComponents.governanceCanvas.notifications')}
                   </th>
-                  <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                  <th className="text-right py-2">{t('sharedComponents.governanceCanvas.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                 {reminders.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-6 text-center text-xs text-slate-600">
-                      {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
+                      {t('sharedComponents.governanceCanvas.noRemindersYet')}
                     </td>
                   </tr>
                 ) : (
@@ -583,12 +578,8 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                     <tr key={r.id}>
                       <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                         {r.type === 'before_due'
-                          ? isPolish
-                            ? 'Przed terminem'
-                            : 'Before due'
-                          : isPolish
-                            ? 'Po terminie'
-                            : 'After due'}
+                          ? t('sharedComponents.governanceCanvas.beforeDue')
+                          : t('sharedComponents.governanceCanvas.afterDue')}
                       </td>
                       <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                         {r.days}
@@ -599,7 +590,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       <td className="py-2 pr-2 text-xs">
                         <div className="flex flex-wrap gap-1">
                           {!r.enabled && (
-                            <span className={BADGE}>{isPolish ? 'Wyłączone' : 'Disabled'}</span>
+                            <span className={BADGE}>{t('sharedComponents.governanceCanvas.disabled')}</span>
                           )}
                           {deliveryBadgeLabels(r.delivery, r).map((label) => (
                             <span key={`${r.id}-${label}`} className={BADGE}>
@@ -617,7 +608,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setReminderDraft(normalizeReminderRule({ ...r }));
                             }}
                             className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
-                            title={isPolish ? 'Edytuj' : 'Edit'}
+                            title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
                           </button>
@@ -627,7 +618,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setReminders((prev) => prev.filter((item) => item.id !== r.id))
                             }
                             className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
-                            title={isPolish ? 'Usuń' : 'Delete'}
+                            title={t('sharedComponents.governanceCanvas.delete')}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -645,7 +636,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
         <div className={TABLE_CARD}>
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-              {isPolish ? 'Eskalacja i zasady' : 'Escalation and rules'}
+              {t('sharedComponents.governanceCanvas.escalationAndRules')}
             </h3>
             <div className="inline-flex items-center gap-2">
               {onAISuggestEscalations && (
@@ -663,7 +654,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 </button>
               )}
               <button disabled={locked} onClick={createEscalation} className={ADD_BTN}>
-                + {isPolish ? 'Dodaj eskalację' : 'Add escalation'}
+                + {t('sharedComponents.governanceCanvas.addEscalation')}
               </button>
             </div>
           </div>
@@ -673,23 +664,23 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 <tr className={TH}>
                   <th className="text-left py-2 pr-2">Status</th>
                   <th className="text-left py-2 pr-2">
-                    {isPolish ? 'Progi W/C' : 'W/C thresholds'}
+                    {t('sharedComponents.governanceCanvas.wCThresholds')}
                   </th>
                   <th className="text-left py-2 pr-2">
-                    {isPolish ? 'Eskaluj po' : 'Escalate after'}
+                    {t('sharedComponents.governanceCanvas.escalateAfter')}
                   </th>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Eskaluj do' : 'Escalate to'}</th>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Komunikat' : 'Message'}</th>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Tryb' : 'Mode'}</th>
-                  <th className="text-left py-2 pr-2">{isPolish ? 'Kanały' : 'Channels'}</th>
-                  <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.escalateTo')}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.message')}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.mode')}</th>
+                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.channels')}</th>
+                  <th className="text-right py-2">{t('sharedComponents.governanceCanvas.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                 {escalationRules.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-6 text-center text-xs text-slate-600">
-                      {isPolish ? 'Brak reguł eskalacji.' : 'No escalation rules yet.'}
+                      {t('sharedComponents.governanceCanvas.noEscalationRulesYet')}
                     </td>
                   </tr>
                 ) : (
@@ -697,12 +688,8 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                     <tr key={rule.id}>
                       <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                         {rule.enabled
-                          ? isPolish
-                            ? 'Aktywna'
-                            : 'Enabled'
-                          : isPolish
-                            ? 'Wyłączona'
-                            : 'Disabled'}
+                          ? t('sharedComponents.governanceCanvas.enabled')
+                          : t('sharedComponents.governanceCanvas.escalationDisabledState')}
                       </td>
                       <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                         {rule.warningDays}/{rule.criticalDays} d
@@ -737,7 +724,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEscalationDraft({ ...rule });
                             }}
                             className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
-                            title={isPolish ? 'Edytuj' : 'Edit'}
+                            title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
                           </button>
@@ -749,7 +736,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               )
                             }
                             className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
-                            title={isPolish ? 'Usuń' : 'Delete'}
+                            title={t('sharedComponents.governanceCanvas.delete')}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -782,12 +769,8 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {editingStakeholderId === '__new__'
-                  ? isPolish
-                    ? 'Dodaj osobę do RACI'
-                    : 'Add RACI person'
-                  : isPolish
-                    ? 'Edytuj osobę RACI'
-                    : 'Edit RACI person'}
+                  ? t('sharedComponents.governanceCanvas.addRaciPerson')
+                  : t('sharedComponents.governanceCanvas.editRaciPerson')}
               </h4>
               <div className="inline-flex items-center gap-2">
                 {onAISuggestStakeholderDraft && (
@@ -816,13 +799,11 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </div>
             </div>
             <div className={MODAL_HINT}>
-              {isPolish
-                ? 'Tutaj opisujemy i konfigurujemy odpowiedzialność osoby w RACI oraz kanały komunikacji.'
-                : 'Use this window to describe and configure person responsibility in RACI and communication channels.'}
+              {t('sharedComponents.governanceCanvas.stakeholderModalHint')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Osoba' : 'Person'}
+                {t('sharedComponents.governanceCanvas.person')}
                 <select
                   value={stakeholderDraft.userId}
                   onChange={(e) => {
@@ -846,7 +827,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 </select>
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Rola' : 'Role'}
+                {t('sharedComponents.governanceCanvas.role')}
                 <select
                   value={stakeholderDraft.role}
                   onChange={(e) =>
@@ -866,13 +847,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             </div>
             <div className="space-y-2 flex-1">
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Kanały notyfikacji' : 'Notification channels'}
+                {t('sharedComponents.governanceCanvas.notificationChannels')}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <ChannelChips
-                  label={isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                  label={t('sharedComponents.governanceCanvas.coreChannels')}
                   channels={[
-                    { key: 'enabled', label: isPolish ? 'Aktywne' : 'Enabled' },
+                    { key: 'enabled', label: t('sharedComponents.governanceCanvas.channelEnabledChip') },
                     { key: 'in_app', label: 'In-app' },
                     { key: 'email', label: 'Email' },
                   ]}
@@ -890,7 +871,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   }}
                 />
                 <ChannelChips
-                  label={isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                  label={t('sharedComponents.governanceCanvas.integrationChannels')}
                   channels={INTEGRATION_CHANNEL_CATALOG.map((ch) => ({
                     key: ch.key,
                     label: ch.label,
@@ -913,7 +894,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 />
               </div>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                {t('sharedComponents.governanceCanvas.syncTargets')}
                 <input
                   value={(stakeholderDraft.notificationSettings.syncTargets || []).join(', ')}
                   onChange={(e) =>
@@ -941,13 +922,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 }}
                 className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('sharedComponents.governanceCanvas.cancel')}
               </button>
               <button
                 onClick={saveStakeholder}
                 className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
               >
-                {isPolish ? 'Zapisz' : 'Save'}
+                {t('sharedComponents.governanceCanvas.save')}
               </button>
             </div>
           </div>
@@ -968,12 +949,8 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {editingReminderId === '__new__'
-                  ? isPolish
-                    ? 'Dodaj reminder'
-                    : 'Add reminder'
-                  : isPolish
-                    ? 'Edytuj reminder'
-                    : 'Edit reminder'}
+                  ? t('sharedComponents.governanceCanvas.addReminder')
+                  : t('sharedComponents.governanceCanvas.editReminder')}
               </h4>
               <div className="inline-flex items-center gap-2">
                 {onAISuggestReminders && (
@@ -1002,13 +979,11 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </div>
             </div>
             <div className={MODAL_HINT}>
-              {isPolish
-                ? 'Tutaj opisujemy cel remindera: kiedy ma się uruchamiać, do kogo trafić i jaką wiadomość wysłać.'
-                : 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.'}
+              {t('sharedComponents.governanceCanvas.reminderModalHint')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Typ' : 'Type'}
+                {t('sharedComponents.governanceCanvas.type')}
                 <select
                   value={reminderDraft.type}
                   onChange={(e) =>
@@ -1019,12 +994,12 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   }
                   className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                 >
-                  <option value="before_due">{isPolish ? 'Przed terminem' : 'Before due'}</option>
-                  <option value="after_due">{isPolish ? 'Po terminie' : 'After due'}</option>
+                  <option value="before_due">{t('sharedComponents.governanceCanvas.beforeDue')}</option>
+                  <option value="after_due">{t('sharedComponents.governanceCanvas.afterDue')}</option>
                 </select>
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Dni' : 'Days'}
+                {t('sharedComponents.governanceCanvas.days')}
                 <input
                   type="number"
                   min={0}
@@ -1037,7 +1012,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </label>
             </div>
             <label className="text-xs text-slate-500 dark:text-slate-400 block">
-              {isPolish ? 'Odbiorcy' : 'Recipients'}
+              {t('sharedComponents.governanceCanvas.recipientsLabel')}
               <select
                 value={reminderDraft.recipients}
                 onChange={(e) =>
@@ -1045,8 +1020,8 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 }
                 className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
               >
-                <option value="both">{isPolish ? 'Obaj' : 'Both'}</option>
-                <option value="stakeholders">{isPolish ? 'Interesariusze' : 'Stakeholders'}</option>
+                <option value="both">{t('sharedComponents.governanceCanvas.both')}</option>
+                <option value="stakeholders">{t('sharedComponents.governanceCanvas.stakeholders')}</option>
                 <option value="owner">Owner</option>
               </select>
             </label>
@@ -1059,11 +1034,11 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                     setReminderDraft({ ...reminderDraft, enabled: e.target.checked })
                   }
                 />
-                {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                {t('sharedComponents.governanceCanvas.ruleEnabled')}
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <ChannelChips
-                  label={isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                  label={t('sharedComponents.governanceCanvas.coreChannels')}
                   channels={[
                     { key: 'in_app', label: 'In-app' },
                     { key: 'email', label: 'Email' },
@@ -1087,7 +1062,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   }}
                 />
                 <ChannelChips
-                  label={isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                  label={t('sharedComponents.governanceCanvas.integrationChannels')}
                   channels={INTEGRATION_CHANNEL_CATALOG}
                   selected={
                     ensureDeliveryConfig(reminderDraft.delivery, reminderDraft).integrationChannels
@@ -1109,7 +1084,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 />
               </div>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                {t('sharedComponents.governanceCanvas.syncTargets')}
                 <input
                   value={ensureDeliveryConfig(
                     reminderDraft.delivery,
@@ -1134,7 +1109,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </label>
             </div>
             <label className="text-xs text-slate-500 dark:text-slate-400 block">
-              {isPolish ? 'Wiadomość' : 'Message'}
+              {t('sharedComponents.governanceCanvas.messageLabel')}
               <textarea
                 value={reminderDraft.message || ''}
                 onChange={(e) => setReminderDraft({ ...reminderDraft, message: e.target.value })}
@@ -1150,13 +1125,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 }}
                 className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('sharedComponents.governanceCanvas.cancel')}
               </button>
               <button
                 onClick={saveReminder}
                 className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
               >
-                {isPolish ? 'Zapisz' : 'Save'}
+                {t('sharedComponents.governanceCanvas.save')}
               </button>
             </div>
           </div>
@@ -1177,12 +1152,8 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {editingEscalationId === '__new__'
-                  ? isPolish
-                    ? 'Dodaj regułę eskalacji'
-                    : 'Add escalation rule'
-                  : isPolish
-                    ? 'Edytuj regułę eskalacji'
-                    : 'Edit escalation rule'}
+                  ? t('sharedComponents.governanceCanvas.addEscalationRule')
+                  : t('sharedComponents.governanceCanvas.editEscalationRule')}
               </h4>
               <div className="inline-flex items-center gap-2">
                 {onAISuggestEscalations && (
@@ -1211,13 +1182,11 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </div>
             </div>
             <div className={MODAL_HINT}>
-              {isPolish
-                ? 'Tutaj opisujemy regułę eskalacji: progi, czas eskalacji, osobę docelową i komunikat.'
-                : 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.'}
+              {t('sharedComponents.governanceCanvas.escalationModalHint')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Próg ostrzeżenia (dni)' : 'Warning threshold (days)'}
+                {t('sharedComponents.governanceCanvas.warningThresholdDays')}
                 <input
                   type="number"
                   min={0}
@@ -1232,7 +1201,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 />
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Próg krytyczny (dni)' : 'Critical threshold (days)'}
+                {t('sharedComponents.governanceCanvas.criticalThresholdDays')}
                 <input
                   type="number"
                   min={0}
@@ -1247,7 +1216,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 />
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Eskaluj po (dni)' : 'Escalate after (days)'}
+                {t('sharedComponents.governanceCanvas.escalateAfterDays')}
                 <input
                   type="number"
                   min={1}
@@ -1262,7 +1231,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 />
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                {t('sharedComponents.governanceCanvas.escalateTo')}
                 <select
                   value={escalationDraft.escalateTo}
                   onChange={(e) => {
@@ -1277,7 +1246,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   }}
                   className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                 >
-                  <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                  <option value="">{t('sharedComponents.governanceCanvas.select')}</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.firstName} {u.lastName}
@@ -1287,7 +1256,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </label>
             </div>
             <label className="text-xs text-slate-500 dark:text-slate-400 block">
-              {isPolish ? 'Tryb eskalacji' : 'Escalation mode'}
+              {t('sharedComponents.governanceCanvas.escalationMode')}
               <select
                 value={escalationDraft.escalationMode}
                 onChange={(e) =>
@@ -1313,11 +1282,11 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   setEscalationDraft({ ...escalationDraft, enabled: e.target.checked })
                 }
               />
-              {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+              {t('sharedComponents.governanceCanvas.ruleEnabled')}
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <ChannelChips
-                label={isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                label={t('sharedComponents.governanceCanvas.coreChannels')}
                 channels={[
                   { key: 'in_app', label: 'In-app' },
                   { key: 'email', label: 'Email' },
@@ -1339,7 +1308,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 }}
               />
               <ChannelChips
-                label={isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                label={t('sharedComponents.governanceCanvas.integrationChannels')}
                 channels={INTEGRATION_CHANNEL_CATALOG}
                 selected={ensureDeliveryConfig(escalationDraft.delivery).integrationChannels}
                 onToggle={(key, next) => {
@@ -1359,7 +1328,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               />
             </div>
             <label className="text-xs text-slate-500 dark:text-slate-400 block">
-              {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+              {t('sharedComponents.governanceCanvas.syncTargets')}
               <input
                 value={ensureDeliveryConfig(escalationDraft.delivery).syncTargets.join(', ')}
                 onChange={(e) => {
@@ -1380,7 +1349,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               />
             </label>
             <label className="text-xs text-slate-500 dark:text-slate-400 block">
-              {isPolish ? 'Komunikat' : 'Message'}
+              {t('sharedComponents.governanceCanvas.message')}
               <textarea
                 value={escalationDraft.message || ''}
                 onChange={(e) =>
@@ -1398,13 +1367,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 }}
                 className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('sharedComponents.governanceCanvas.cancel')}
               </button>
               <button
                 onClick={saveEscalation}
                 className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
               >
-                {isPolish ? 'Zapisz' : 'Save'}
+                {t('sharedComponents.governanceCanvas.save')}
               </button>
             </div>
           </div>
