@@ -26004,6 +26004,44 @@
       "recalculate": "Recalculate",
       "cycleDetectedCount": "Cycle detected: {{value}} records affected",
       "recordsUpdated": "{{value}} records updated"
+    },
+    "dataLineageView": {
+      "csvSheetsImport": "CSV/Sheets Import",
+      "forms": "Forms",
+      "manualEntry": "Manual Entry",
+      "results": "Results",
+      "finance": "Finance",
+      "execution": "Execution",
+      "initiatives": "Initiatives",
+      "dataLineage": "Data Lineage",
+      "visualizeDataFlowFromSources": "Visualize data flow from sources to Consultify modules",
+      "sources": "Sources",
+      "tables": "Tables",
+      "models": "Models",
+      "modules": "Modules",
+      "type": "Type",
+      "connections": "Connections",
+      "edges": "edges"
+    },
+    "calendarView": {
+      "month": "Month",
+      "week": "Week",
+      "day": "Day",
+      "calendarView": "Calendar View",
+      "addADateColumnTo": "Add a Date column to see items on the calendar",
+      "addEvent": "Add event"
+    },
+    "timelineView": {
+      "timelineView": "Timeline View",
+      "configureStartAndEndDate": "Configure start and end date fields in view settings",
+      "timeline": "Timeline",
+      "records": "records",
+      "zoomIn": "Zoom in",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "zoomOut": "Zoom out",
+      "record": "Record"
     }
   }
 }

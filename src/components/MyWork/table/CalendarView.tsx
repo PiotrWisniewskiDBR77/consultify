@@ -77,7 +77,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onFieldChange,
   onAddEventAtDate,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const weekdays = isPl ? WEEKDAYS_PL : WEEKDAYS_EN;
 
@@ -216,16 +216,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             }`}
           >
             {mode === 'month'
-              ? isPl
-                ? 'Miesiąc'
-                : 'Month'
+              ? t('myWorkTable.calendarView.month')
               : mode === 'week'
-                ? isPl
-                  ? 'Tydzień'
-                  : 'Week'
-                : isPl
-                  ? 'Dzień'
-                  : 'Day'}
+                ? t('myWorkTable.calendarView.week')
+                : t('myWorkTable.calendarView.day')}
           </button>
         ))}
       </div>
@@ -237,11 +231,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
         <Calendar size={32} />
-        <span className="text-sm font-medium">{isPl ? 'Widok kalendarza' : 'Calendar View'}</span>
+        <span className="text-sm font-medium">{t('myWorkTable.calendarView.calendarView')}</span>
         <span className="text-xs text-c-text-muted">
-          {isPl
-            ? 'Dodaj kolumnę typu Data, aby zobaczyć elementy na kalendarzu'
-            : 'Add a Date column to see items on the calendar'}
+          {t('myWorkTable.calendarView.addADateColumnTo')}
         </span>
       </div>
     );
@@ -342,7 +334,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           className="mt-1 flex items-center gap-1 text-[8px] text-c-info hover:brightness-110 font-medium"
                         >
                           <Plus size={10} />
-                          {isPl ? 'Dodaj zdarzenie' : 'Add event'}
+                          {t('myWorkTable.calendarView.addEvent')}
                         </button>
                       )}
                     </>
@@ -424,7 +416,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           className="flex items-center gap-1 text-[8px] text-c-info hover:brightness-110 font-medium p-1"
                         >
                           <Plus size={10} />
-                          {isPl ? 'Dodaj zdarzenie' : 'Add event'}
+                          {t('myWorkTable.calendarView.addEvent')}
                         </button>
                       )}
                       {canAdd && hour !== 8 && isHovered && (
@@ -433,7 +425,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           className="flex items-center gap-1 text-[8px] text-c-info hover:brightness-110 font-medium p-1"
                         >
                           <Plus size={10} />
-                          {isPl ? 'Dodaj zdarzenie' : 'Add event'}
+                          {t('myWorkTable.calendarView.addEvent')}
                         </button>
                       )}
                     </div>
@@ -508,7 +500,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         className="flex items-center gap-1 text-[9px] text-c-info hover:brightness-110 font-medium p-1.5"
                       >
                         <Plus size={12} />
-                        {isPl ? 'Dodaj zdarzenie' : 'Add event'}
+                        {t('myWorkTable.calendarView.addEvent')}
                       </button>
                     )}
                   </div>

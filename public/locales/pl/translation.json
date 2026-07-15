@@ -27080,6 +27080,44 @@
       "recalculate": "Przelicz daty",
       "cycleDetectedCount": "Wykryto cykl w zależnościach: {{value}} rekordów",
       "recordsUpdated": "Zaktualizowano {{value}} rekordów"
+    },
+    "dataLineageView": {
+      "csvSheetsImport": "Import CSV/Sheets",
+      "forms": "Formularze",
+      "manualEntry": "Wpis ręczny",
+      "results": "Wyniki",
+      "finance": "Finanse",
+      "execution": "Egzekucja",
+      "initiatives": "Inicjatywy",
+      "dataLineage": "Przepływ danych",
+      "visualizeDataFlowFromSources": "Wizualizacja przepływu danych od źródeł do modułów Consultify",
+      "sources": "Źródła",
+      "tables": "Tabele",
+      "models": "Modele",
+      "modules": "Moduły",
+      "type": "Typ",
+      "connections": "Połączenia",
+      "edges": "krawędzi"
+    },
+    "calendarView": {
+      "month": "Miesiąc",
+      "week": "Tydzień",
+      "day": "Dzień",
+      "calendarView": "Widok kalendarza",
+      "addADateColumnTo": "Dodaj kolumnę typu Data, aby zobaczyć elementy na kalendarzu",
+      "addEvent": "Dodaj zdarzenie"
+    },
+    "timelineView": {
+      "timelineView": "Widok osi czasu",
+      "configureStartAndEndDate": "Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku",
+      "timeline": "Oś czasu",
+      "records": "rekordów",
+      "zoomIn": "Przybliż",
+      "day": "Dzień",
+      "week": "Tydzień",
+      "month": "Miesiąc",
+      "zoomOut": "Oddal",
+      "record": "Rekord"
     }
   }
 }
