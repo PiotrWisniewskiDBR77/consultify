@@ -3,11 +3,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 describe('PMOStandardsMapping', () => {
     let PMOStandardsMapping;
     let PMODomainRegistry;
+    // PMO_DOMAIN_IDS is a separate named export in pmoDomainRegistry.ts, not a
+    // static property of the PMODomainRegistry class default export.
+    let PMO_DOMAIN_IDS;
 
     beforeEach(async () => {
         vi.clearAllMocks();
         PMOStandardsMapping = (await import('../../../server/src/services/pmoStandardsMapping.js')).default;
-        PMODomainRegistry = (await import('../../../server/src/services/pmoDomainRegistry.js')).default;
+        const domainRegistryModule = await import('../../../server/src/services/pmoDomainRegistry.js');
+        PMODomainRegistry = domainRegistryModule.default;
+        PMO_DOMAIN_IDS = domainRegistryModule.PMO_DOMAIN_IDS;
     });
 
     describe('getMapping', () => {
@@ -15,7 +20,7 @@ describe('PMOStandardsMapping', () => {
             const mapping = PMOStandardsMapping.getMapping('Decision');
             expect(mapping).toBeDefined();
             expect(mapping.scmsTerm).toBe('Decision');
-            expect(mapping.domainId).toBe(PMODomainRegistry.PMO_DOMAIN_IDS.GOVERNANCE_DECISION_MAKING);
+            expect(mapping.domainId).toBe(PMO_DOMAIN_IDS.GOVERNANCE_DECISION_MAKING);
         });
 
         it('should return null for unknown concept', () => {
@@ -49,7 +54,7 @@ describe('PMOStandardsMapping', () => {
 
     describe('getConceptsByDomain', () => {
         it('should return all concepts for a given domain', () => {
-            const concepts = PMOStandardsMapping.getConceptsByDomain(PMODomainRegistry.PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL);
+            const concepts = PMOStandardsMapping.getConceptsByDomain(PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL);
             expect(concepts.length).toBeGreaterThan(0);
         });
     });
