@@ -2653,7 +2653,14 @@
         "bulkPriorityPrompt": "Ustaw priorytet dla zaznaczonych decyzji (LOW / MEDIUM / HIGH / CRITICAL):",
         "bulkPrioritySet": "Ustawiono priorytet {{priority}} dla {{count}} decyzji",
         "bulkPriorityFailed": "Nie udało się zaktualizować priorytetu"
-      }
+      },
+      "daysWaiting": "{{days}}d oczekiwania",
+      "delayDays_one": "+{{count}} dzień",
+      "delayDays_few": "+{{count}} dni",
+      "delayDays_many": "+{{count}} dni",
+      "delayDays_other": "+{{count}} dni",
+      "escalateUrgent": "Eskaluj",
+      "escalate": "Eskaluj"
     },
     "decisionPreview": {
       "en": "pl",
@@ -2711,7 +2718,11 @@
       "decision": "Decyzja",
       "title2": "Otwórz pełny widok",
       "open": "Otwórz",
-      "loading": "Ładowanie…"
+      "loading": "Ładowanie…",
+      "priorityCritical": "Krytyczne",
+      "priorityHigh": "Wysoki",
+      "priorityMedium": "Średni",
+      "priorityLow": "Niski"
     },
     "tasksList": {
       "you": "Ty",
