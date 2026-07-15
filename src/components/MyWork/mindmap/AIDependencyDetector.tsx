@@ -36,32 +36,32 @@ interface AIDependencyDetectorProps {
 
 const TYPE_CONFIG: Record<
   string,
-  { color: string; colorBg: string; label: string; labelPl: string; dash?: string }
+  { color: string; colorBg: string; tkey: string; label: string; dash?: string }
 > = {
   depends_on: {
+    tkey: 'myWorkMindmap.dependency.dependsOn',
     color: 'var(--c-danger)',
     colorBg: 'color-mix(in srgb, var(--c-danger) 8%, transparent)',
     label: 'Depends on',
-    labelPl: 'Zależy od',
   },
   enables: {
+    tkey: 'myWorkMindmap.dependency.enables',
     color: 'var(--c-success)',
     colorBg: 'color-mix(in srgb, var(--c-success) 8%, transparent)',
     label: 'Enables',
-    labelPl: 'Umożliwia',
   },
   conflicts_with: {
+    tkey: 'myWorkMindmap.dependency.conflictsWith',
     color: 'var(--c-warning)',
     colorBg: 'color-mix(in srgb, var(--c-warning) 8%, transparent)',
     label: 'Conflicts with',
-    labelPl: 'Konflikt z',
     dash: '5 5',
   },
   related_to: {
+    tkey: 'myWorkMindmap.dependency.relatedTo',
     color: 'var(--c-info)',
     colorBg: 'color-mix(in srgb, var(--c-info) 8%, transparent)',
     label: 'Related to',
-    labelPl: 'Powiązane z',
     dash: '3 6',
   },
 };
@@ -77,8 +77,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
   onAddDependency,
   onAddAll,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [dependencies, setDependencies] = useState<DetectedDependency[]>([]);
   const [loading, setLoading] = useState(false);
@@ -245,7 +244,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                         className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                         style={{ backgroundColor: cfg.colorBg, color: cfg.color }}
                       >
-                        {isPl ? cfg.labelPl : cfg.label}
+                        {t(cfg.tkey, cfg.label)}
                       </span>
                       <span className="text-[9px] text-c-text-secondary">
                         {Math.round(dep.confidence * 100)}%

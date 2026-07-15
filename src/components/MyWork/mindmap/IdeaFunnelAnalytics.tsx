@@ -15,35 +15,30 @@ interface IdeaFunnelAnalyticsProps {
 const FUNNEL_STAGES = [
   {
     key: 'idea',
-    labelPl: 'Pomysł',
     labelEn: 'Idea',
     color: 'var(--c-tag-8)',
     bg: 'bg-c-surface-raised dark:bg-c-surface',
   },
   {
     key: 'exploring',
-    labelPl: 'Eksploracja',
     labelEn: 'Exploring',
     color: 'var(--c-info)',
     bg: 'bg-c-info dark:bg-c-info',
   },
   {
     key: 'validated',
-    labelPl: 'Zwalidowany',
     labelEn: 'Validated',
     color: 'var(--c-success)',
     bg: 'bg-c-success dark:bg-c-success',
   },
   {
     key: 'ready_to_convert',
-    labelPl: 'Gotowy',
     labelEn: 'Ready',
     color: 'var(--c-warning)',
     bg: 'bg-c-warning dark:bg-c-warning',
   },
   {
     key: 'converted',
-    labelPl: 'Skonwertowany',
     labelEn: 'Converted',
     color: 'var(--c-tag-2)',
     bg: 'bg-c-accent dark:bg-c-accent',
@@ -55,8 +50,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
   onClose,
   nodes,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const ideaNodes = useMemo(() => {
     return nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
@@ -145,7 +139,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-[12px] font-bold text-c-text-secondary dark:text-c-text">
-                            {isPl ? stage.labelPl : stage.labelEn}
+                            {t(`myWorkMindmap.funnel.${stage.key}`, stage.labelEn)}
                           </div>
                           <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted mt-0.5">
                             {count} {t('ideas.mindmap.ideas', 'ideas')} ({pct}%)
