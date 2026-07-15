@@ -60,8 +60,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
   expanded = false,
   onToggleExpand,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
@@ -90,7 +89,9 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
       // Validate
       if (attachments.length + files.length > maxFiles) {
         toast.error(
-          isPolish ? `Maksymalnie ${maxFiles} plików` : `Maximum ${maxFiles} files allowed`
+          t('myWork.attachments.maxFilesExceeded', 'Maximum {{maxFiles}} files allowed', {
+            maxFiles,
+          })
         );
         return;
       }
@@ -98,9 +99,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
       for (const file of Array.from(files)) {
         if (file.size > maxSizeMB * 1024 * 1024) {
           toast.error(
-            isPolish
-              ? `Plik ${file.name} jest za duży (max ${maxSizeMB}MB)`
-              : `File ${file.name} is too large (max ${maxSizeMB}MB)`
+            t('myWork.attachments.fileTooLarge', 'File {{fileName}} is too large (max {{maxSizeMB}}MB)', {
+              fileName: file.name,
+              maxSizeMB,
+            })
           );
           return;
         }
@@ -110,7 +112,9 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         setUploading(true);
         await onUpload(files);
         toast.success(
-          isPolish ? `Przesłano ${files.length} plik(ów)` : `Uploaded ${files.length} file(s)`
+          t('myWork.attachments.uploadedCount', 'Uploaded {{count}} file(s)', {
+            count: files.length,
+          })
         );
       } catch (error) {
         console.error('Upload failed', error);
@@ -122,7 +126,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         }
       }
     },
-    [attachments.length, isPolish, maxFiles, maxSizeMB, onUpload]
+    [attachments.length, maxFiles, maxSizeMB, onUpload, t]
   );
 
   const handleDrop = useCallback(
@@ -137,9 +141,9 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
   const handleDeleteClick = async (attachment: Attachment) => {
     if (
       !confirm(
-        isPolish
-          ? `Czy na pewno chcesz usunąć "${attachment.name}"?`
-          : `Are you sure you want to delete "${attachment.name}"?`
+        t('myWork.attachments.confirmDelete', 'Are you sure you want to delete "{{name}}"?', {
+          name: attachment.name,
+        })
       )
     ) {
       return;

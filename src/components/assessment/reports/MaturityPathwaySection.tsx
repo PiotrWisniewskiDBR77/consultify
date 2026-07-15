@@ -18,6 +18,8 @@
 import { ArrowRight, CheckCircle2, Compass, Flag, Lightbulb, TriangleAlert } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import i18n from '@/i18n';
+
 import {
   getMaturityPathway,
   type MaturityPathwayFramework,
@@ -47,8 +49,8 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
   language = 'pl',
   maxCards = 6,
 }) => {
-  const isPL = language === 'pl';
-  const label = (pl: string, en: string) => (isPL ? pl : en);
+  const label = (key: string, pl: string, en: string) =>
+    i18n.t(`assessment.maturityPathway.${key}`, { lng: language, defaultValue: language === 'pl' ? pl : en });
 
   // Only dimensions genuinely below target, largest gap first, capped.
   const recommendations = useMemo(() => {
@@ -73,10 +75,11 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
     <section className="mb-8">
       <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
         <Compass size={20} className="text-teal-600 dark:text-teal-400" />
-        {label('Ścieżka dojrzałości (N → N+1)', 'Maturity pathway (N → N+1)')}
+        {label('heading', 'Ścieżka dojrzałości (N → N+1)', 'Maturity pathway (N → N+1)')}
       </h2>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
         {label(
+          'subheading',
           'Co konkretnie zrobić, aby przejść z obecnego poziomu na następny — dla wymiarów poniżej celu.',
           'What concretely to do to move from the current level to the next — for dimensions below target.'
         )}
@@ -108,7 +111,7 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
               {/* K1 — co jest */}
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
-                  {label('Co jest', 'Current state')}
+                  {label('currentState', 'Co jest', 'Current state')}
                 </div>
                 <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
                   {rec.currentState}
@@ -118,7 +121,7 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
               {/* K2 — co to znaczy */}
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
-                  {label('Co to znaczy', 'What it means')}
+                  {label('gapMeaning', 'Co to znaczy', 'What it means')}
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {rec.gapMeaning}
@@ -129,7 +132,7 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
               <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 p-4">
                 <div className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-1.5">
                   <Lightbulb size={13} />
-                  {label('Co zrobić, by przejść wyżej', 'What to do to move up')}
+                  {label('actionsHeading', 'Co zrobić, by przejść wyżej', 'What to do to move up')}
                 </div>
                 <ul className="space-y-1.5">
                   {rec.actions.map((action, i) => (
@@ -151,7 +154,11 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
               <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 p-4">
                 <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
                   <Flag size={13} />
-                  {label('Jaki efekt potwierdzi poziom', 'Evidence that confirms the level')}
+                  {label(
+                    'evidenceHeading',
+                    'Jaki efekt potwierdzi poziom',
+                    'Evidence that confirms the level'
+                  )}
                 </div>
                 <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed">
                   {rec.targetEvidence}
@@ -170,7 +177,7 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1.5">
                     <TriangleAlert size={13} />
-                    {label('Typowe przeszkody', 'Typical obstacles')}
+                    {label('obstaclesHeading', 'Typowe przeszkody', 'Typical obstacles')}
                   </div>
                   <ul className="space-y-1">
                     {rec.typicalObstacles.map((obstacle, i) => (

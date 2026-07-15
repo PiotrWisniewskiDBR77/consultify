@@ -27,8 +27,7 @@ export const RelatedContext: React.FC<RelatedContextProps> = ({
   entityId,
   entityTitle,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [items, setItems] = useState<RelatedItem[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);

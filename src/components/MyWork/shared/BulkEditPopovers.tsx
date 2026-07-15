@@ -83,9 +83,9 @@ export const BulkPriorityPicker: React.FC<BulkPriorityPickerProps> = ({
           >
             <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? `Ustaw priorytet (${selectedCount} zad.)`
-                  : `Set priority (${selectedCount} tasks)`}
+                {t('myWork.bulkEdit.setPriorityCount', 'Set priority ({{count}} tasks)', {
+                  count: selectedCount,
+                })}
               </p>
             </div>
             <div className="p-1.5">
@@ -118,7 +118,7 @@ export const BulkPriorityPicker: React.FC<BulkPriorityPickerProps> = ({
 
 // ── Date Picker ──
 
-const getDatePresets = (isPolish: boolean) => {
+const getDatePresets = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -151,7 +151,7 @@ const formatISODate = (d: Date): string => {
   return `${y}-${m}-${dd}`;
 };
 
-const formatShortDate = (d: Date, isPolish: boolean): string =>
+const formatShortDate = (d: Date): string =>
   d.toLocaleDateString(i18n.t('myWork.bulkEdit.dToLocaleDateString', 'en-US'), {
     weekday: 'short',
     month: 'short',
@@ -171,11 +171,10 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
   onSelect,
   selectedCount,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const [customDate, setCustomDate] = useState('');
-  const presets = getDatePresets(isPolish);
+  const presets = getDatePresets();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -215,9 +214,9 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
           >
             <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? `Ustaw termin (${selectedCount} zad.)`
-                  : `Set due date (${selectedCount} tasks)`}
+                {t('myWork.bulkEdit.setDueDateCount', 'Set due date ({{count}} tasks)', {
+                  count: selectedCount,
+                })}
               </p>
             </div>
 
@@ -234,7 +233,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
                 >
                   <span className="text-slate-700 dark:text-slate-200">{preset.label}</span>
                   <span className="text-xs text-slate-600 dark:text-slate-500">
-                    {formatShortDate(preset.date, isPolish)}
+                    {formatShortDate(preset.date)}
                   </span>
                 </button>
               ))}

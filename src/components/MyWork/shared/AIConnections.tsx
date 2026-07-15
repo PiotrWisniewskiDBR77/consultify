@@ -38,8 +38,7 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
 };
 
 export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entityId }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [items, setItems] = useState<Relationship[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);

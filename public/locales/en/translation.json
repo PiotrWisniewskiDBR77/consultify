@@ -4167,7 +4167,13 @@
       "cancel": "Cancel",
       "saveChanges": "Save Changes",
       "lagDays_one": "{{count}} day",
-      "lagDays_other": "{{count}} days"
+      "lagDays_other": "{{count}} days",
+      "lagDaysPositive": "+{{count}} days",
+      "lagDaysNegative": "{{count}} days",
+      "delayAfterCompletion_one": "⏳ {{count}} day delay after completion",
+      "delayAfterCompletion_other": "⏳ {{count}} days delay after completion",
+      "leadOverlap_one": "⚡ {{count}} day lead (overlap)",
+      "leadOverlap_other": "⚡ {{count}} days lead (overlap)"
     },
     "taskTemplates": {
       "toastError": "Template name is required",
@@ -4259,7 +4265,9 @@
       "messageOptional2": "Message (optional)",
       "placeholder": "Escalation reason...",
       "selectPerson2": "(select person)",
-      "escalationDisabled": "Escalation disabled"
+      "escalationDisabled": "Escalation disabled",
+      "reminderNumber": "Reminder {{number}}",
+      "escalationPreview": "If decision is not made {{days}} days after due, it will be escalated to: "
     },
     "comments": {
       "justNow": "Just now",
@@ -4309,7 +4317,8 @@
       "durationHoursMinutes": "{{hrs}}h {{mins}}m",
       "durationMinutes": "{{mins}}m",
       "durationUnderOneMinute": "<1m",
-      "loggedDuration": "⏱️ Logged {{duration}}"
+      "loggedDuration": "⏱️ Logged {{duration}}",
+      "durationLessThanMinute": "<1m"
     },
     "linkedItems": {
       "toastSuccess": "Link added",
@@ -4435,7 +4444,11 @@
       "title5": "Copy link",
       "title6": "Delete",
       "previewNotAvailable": "Preview not available",
-      "downloadFile": "Download file"
+      "downloadFile": "Download file",
+      "maxFilesExceeded": "Maximum {{maxFiles}} files allowed",
+      "fileTooLarge": "File {{fileName}} is too large (max {{maxSizeMB}}MB)",
+      "uploadedCount": "Uploaded {{count}} file(s)",
+      "confirmDelete": "Are you sure you want to delete \"{{name}}\"?"
     },
     "riskAssessment": {
       "riskAnalysis": "Risk Analysis",
@@ -4458,7 +4471,9 @@
       "label4": "Next Friday",
       "label5": "In 1 week",
       "dToLocaleDateString": "en-US",
-      "removeDueDate": "Remove due date"
+      "removeDueDate": "Remove due date",
+      "setPriorityCount": "Set priority ({{count}} tasks)",
+      "setDueDateCount": "Set due date ({{count}} tasks)"
     },
     "quickActions": {
       "unassigned": "Unassigned",
@@ -4469,7 +4484,9 @@
       "title3": "More actions",
       "edit": "Edit",
       "duplicate": "Duplicate",
-      "delete": "Delete"
+      "delete": "Delete",
+      "markIncomplete": "Mark incomplete",
+      "markComplete": "Mark complete"
     },
     "implementationIdeas": {
       "implementationIdeas": "Implementation Ideas",
@@ -4479,7 +4496,9 @@
       "placeholder": "Idea name...",
       "description": "Description",
       "describeTheIdeaDetails": "Describe the idea details...",
-      "addIdea": "Add idea"
+      "addIdea": "Add idea",
+      "selectedForImplementation_one": "{{count}} idea selected for implementation",
+      "selectedForImplementation_other": "{{count}} ideas selected for implementation"
     },
     "aiInsight": {
       "aIInsights": "AI Insights",
@@ -4496,7 +4515,11 @@
       "dueTomorrow": "Due tomorrow!",
       "thisDecisionRequiresImmediate": "This decision requires immediate attention",
       "overdue": "overdue",
-      "today": "Today"
+      "today": "Today",
+      "overdueByDays_one": "Overdue by {{count}} day!",
+      "overdueByDays_other": "Overdue by {{count}} days!",
+      "daysRemaining": "{{count}} days remaining",
+      "daysUntilDeadline": "{{count}} days until deadline"
     },
     "keyboardShortcuts": {
       "label": "Navigation",
@@ -4514,7 +4537,8 @@
     "convertToMenu": {
       "conversionFailed": "Conversion failed",
       "toastSuccess": "Initiative created",
-      "failedToCreateInitiative": "Failed to create initiative"
+      "failedToCreateInitiative": "Failed to create initiative",
+      "convertedTo": "Converted to {{target}}"
     },
     "relatedContext": {
       "relatedContext": "Related Context",
@@ -4963,6 +4987,13 @@
     },
     "empty": {
       "aiSuggest": "AI Suggest"
+    },
+    "delegationModal": {
+      "inputRequestedFromCount": "Input requested from {{count}} people",
+      "toastDelegated": "Decision delegated",
+      "toastReviewRequested": "Review requested",
+      "toastInputRequested": "Input requested",
+      "toastCoDecisionRequested": "Co-decision requested"
     }
   },
   "step1": {
@@ -7513,6 +7544,20 @@
     },
     "itemPreview": {
       "defaultLabel": "Assessment"
+    },
+    "maturityPathway": {
+      "heading": "Maturity pathway (N → N+1)",
+      "subheading": "What concretely to do to move from the current level to the next — for dimensions below target.",
+      "currentState": "Current state",
+      "gapMeaning": "What it means",
+      "actionsHeading": "What to do to move up",
+      "evidenceHeading": "Evidence that confirms the level",
+      "obstaclesHeading": "Typical obstacles"
+    },
+    "fofRoadBar": {
+      "gapValue": "−{{value}}",
+      "currentLevel": "Current level",
+      "fofThreshold": "FoF threshold ({{benchmark}})"
     }
   },
   "initiatives": {
@@ -21935,7 +21980,10 @@
       "PORTFOLIO_OWNER": "Portfolio Owner",
       "BUSINESS_OWNER": "Business Owner (Benefits)",
       "STEERING_COMMITTEE": "Steering Committee"
-    }
+    },
+    "memberTypeChair": "Chair",
+    "memberTypeBoardMember": "Board member",
+    "memberTypeObserver": "Observer"
   },
   "branch": {
     "delete": "Delete"
@@ -23812,6 +23860,9 @@
       "tierError": "Couldn't select the plan",
       "termsAccepted": "Terms accepted",
       "tierSelected": "Pricing plan selected"
+    },
+    "featureSpotlight": {
+      "gotIt": "Got it"
     }
   },
   "editor": {

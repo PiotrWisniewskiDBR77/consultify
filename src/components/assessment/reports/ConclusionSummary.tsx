@@ -12,6 +12,8 @@
 
 import React from 'react';
 
+import i18n from '@/i18n';
+
 export interface ConclusionExecutiveSummaryVM {
   headline: string;
   k1_state: string;
@@ -119,7 +121,11 @@ export const FoFRoadBar: React.FC<{
   summary: string;
   language?: 'pl' | 'en';
 }> = ({ benchmark, items, summary, language = 'pl' }) => {
-  const isPL = language === 'pl';
+  const label = (key: string, pl: string, en: string) =>
+    i18n.t(`assessment.fofRoadBar.${key}`, {
+      lng: language,
+      defaultValue: language === 'pl' ? pl : en,
+    });
   const scaleMax = 5;
   return (
     <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
@@ -133,12 +139,12 @@ export const FoFRoadBar: React.FC<{
             it.gapToFoF === null
               ? '—'
               : it.gapToFoF <= 0
-                ? isPL
-                  ? '✓ FoF'
-                  : '✓ FoF'
-                : isPL
-                  ? `brak ${Math.round(it.gapToFoF * 10) / 10}`
-                  : `−${Math.round(it.gapToFoF * 10) / 10}`;
+                ? '✓ FoF'
+                : i18n.t('assessment.fofRoadBar.gapValue', {
+                    lng: language,
+                    defaultValue: language === 'pl' ? 'brak {{value}}' : '−{{value}}',
+                    value: Math.round(it.gapToFoF * 10) / 10,
+                  });
           return (
             <div key={idx}>
               <div className="flex items-center justify-between text-xs mb-1">
@@ -173,11 +179,15 @@ export const FoFRoadBar: React.FC<{
       <div className="mt-3 flex items-center gap-4 text-xs text-c-text-muted">
         <span className="inline-flex items-center gap-1">
           <span className="inline-block h-2 w-3 rounded-sm bg-c-warning" />
-          {isPL ? 'Poziom obecny' : 'Current level'}
+          {label('currentLevel', 'Poziom obecny', 'Current level')}
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="inline-block h-3 w-0.5 bg-c-text" />
-          {isPL ? `Próg FoF (${benchmark})` : `FoF threshold (${benchmark})`}
+          {i18n.t('assessment.fofRoadBar.fofThreshold', {
+            lng: language,
+            defaultValue: language === 'pl' ? 'Próg FoF ({{benchmark}})' : 'FoF threshold ({{benchmark}})',
+            benchmark,
+          })}
         </span>
       </div>
     </div>

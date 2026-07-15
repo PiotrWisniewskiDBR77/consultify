@@ -126,7 +126,7 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
         entityId: sourceId,
         meta: { target },
       });
-      toast.success(isPolish ? `Przekonwertowano na ${target}` : `Converted to ${target}`);
+      toast.success(t('myWork.convertToMenu.convertedTo', 'Converted to {{target}}', { target }));
       onConverted?.(target, createdId);
     } catch (err: any) {
       toast.error(err?.message || t('myWork.convertToMenu.conversionFailed', 'Conversion failed'));

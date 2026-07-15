@@ -241,7 +241,9 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                               {reminder.enabled && <span className="text-xs">✓</span>}
                             </button>
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {isPolish ? `Przypomnienie ${index + 1}` : `Reminder ${index + 1}`}
+                              {t('myWork.escalationRules.reminderNumber', 'Reminder {{number}}', {
+                                number: index + 1,
+                              })}
                             </span>
                           </div>
                           {!readOnly && (
@@ -540,9 +542,11 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                     <div className="flex items-start gap-2 mt-3 pt-3 border-t border-amber-200/50 dark:border-amber-500/20">
                       <AlertCircle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-amber-600 dark:text-amber-400">
-                        {isPolish
-                          ? `Jeśli decyzja nie zostanie podjęta ${escalation.afterDays} dni po terminie, zostanie eskalowana do: `
-                          : `If decision is not made ${escalation.afterDays} days after due, it will be escalated to: `}
+                        {t(
+                          'myWork.escalationRules.escalationPreview',
+                          'If decision is not made {{days}} days after due, it will be escalated to: ',
+                          { days: escalation.afterDays }
+                        )}
                         <span className="font-medium">
                           {escalation.escalateToName ||
                             t('myWork.escalationRules.selectPerson2', '(select person)')}

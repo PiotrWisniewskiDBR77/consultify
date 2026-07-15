@@ -3315,7 +3315,17 @@
       "lagDays_one": "{{count}} dzień",
       "lagDays_few": "{{count}} dni",
       "lagDays_many": "{{count}} dni",
-      "lagDays_other": "{{count}} dni"
+      "lagDays_other": "{{count}} dni",
+      "lagDaysPositive": "+{{count}} dni",
+      "lagDaysNegative": "{{count}} dni",
+      "delayAfterCompletion_one": "⏳ {{count}} dzień opóźnienia po zakończeniu",
+      "delayAfterCompletion_few": "⏳ {{count}} dni opóźnienia po zakończeniu",
+      "delayAfterCompletion_many": "⏳ {{count}} dni opóźnienia po zakończeniu",
+      "delayAfterCompletion_other": "⏳ {{count}} dni opóźnienia po zakończeniu",
+      "leadOverlap_one": "⚡ {{count}} dzień wyprzedzenia (overlap)",
+      "leadOverlap_few": "⚡ {{count}} dni wyprzedzenia (overlap)",
+      "leadOverlap_many": "⚡ {{count}} dni wyprzedzenia (overlap)",
+      "leadOverlap_other": "⚡ {{count}} dni wyprzedzenia (overlap)"
     },
     "taskTemplates": {
       "toastError": "Nazwa szablonu jest wymagana",
@@ -3407,7 +3417,9 @@
       "messageOptional2": "Wiadomość (opcjonalnie)",
       "placeholder": "Powód eskalacji...",
       "selectPerson2": "(wybierz osobę)",
-      "escalationDisabled": "Eskalacja wyłączona"
+      "escalationDisabled": "Eskalacja wyłączona",
+      "reminderNumber": "Przypomnienie {{number}}",
+      "escalationPreview": "Jeśli decyzja nie zostanie podjęta {{days}} dni po terminie, zostanie eskalowana do: "
     },
     "comments": {
       "justNow": "Przed chwilą",
@@ -3459,7 +3471,8 @@
       "durationHoursMinutes": "{{hrs}}h {{mins}}min",
       "durationMinutes": "{{mins}}min",
       "durationUnderOneMinute": "<1min",
-      "loggedDuration": "⏱️ Zapisano {{duration}}"
+      "loggedDuration": "⏱️ Zapisano {{duration}}",
+      "durationLessThanMinute": "<1min"
     },
     "linkedItems": {
       "toastSuccess": "Powiązanie dodane",
@@ -3585,7 +3598,11 @@
       "title5": "Kopiuj link",
       "title6": "Usuń",
       "previewNotAvailable": "Podgląd niedostępny",
-      "downloadFile": "Pobierz plik"
+      "downloadFile": "Pobierz plik",
+      "maxFilesExceeded": "Maksymalnie {{maxFiles}} plików",
+      "fileTooLarge": "Plik {{fileName}} jest za duży (max {{maxSizeMB}}MB)",
+      "uploadedCount": "Przesłano {{count}} plik(ów)",
+      "confirmDelete": "Czy na pewno chcesz usunąć \"{{name}}\"?"
     },
     "riskAssessment": {
       "riskAnalysis": "Analiza ryzyka",
@@ -3608,7 +3625,9 @@
       "label4": "Następny piątek",
       "label5": "Za tydzień",
       "dToLocaleDateString": "pl-PL",
-      "removeDueDate": "Usuń termin"
+      "removeDueDate": "Usuń termin",
+      "setPriorityCount": "Ustaw priorytet ({{count}} zad.)",
+      "setDueDateCount": "Ustaw termin ({{count}} zad.)"
     },
     "quickActions": {
       "unassigned": "Nieprzypisane",
@@ -3619,7 +3638,9 @@
       "title3": "Więcej akcji",
       "edit": "Edytuj",
       "duplicate": "Duplikuj",
-      "delete": "Usuń"
+      "delete": "Usuń",
+      "markIncomplete": "Oznacz jako nieukończone",
+      "markComplete": "Oznacz jako ukończone"
     },
     "implementationIdeas": {
       "implementationIdeas": "Pomysły realizacji",
@@ -3629,7 +3650,11 @@
       "placeholder": "Nazwa pomysłu...",
       "description": "Opis",
       "describeTheIdeaDetails": "Opisz szczegóły pomysłu...",
-      "addIdea": "Dodaj pomysł"
+      "addIdea": "Dodaj pomysł",
+      "selectedForImplementation_one": "{{count}} pomysł wybrany do realizacji",
+      "selectedForImplementation_few": "{{count}} pomysły wybrane do realizacji",
+      "selectedForImplementation_many": "{{count}} pomysłów wybranych do realizacji",
+      "selectedForImplementation_other": "{{count}} pomysłów wybranych do realizacji"
     },
     "aiInsight": {
       "aIInsights": "Wskazówki AI",
@@ -3646,7 +3671,13 @@
       "dueTomorrow": "Termin upływa jutro!",
       "thisDecisionRequiresImmediate": "Ta decyzja wymaga natychmiastowej uwagi",
       "overdue": "po terminie",
-      "today": "Dziś"
+      "today": "Dziś",
+      "overdueByDays_one": "Termin minął {{count}} dzień temu!",
+      "overdueByDays_few": "Termin minął {{count}} dni temu!",
+      "overdueByDays_many": "Termin minął {{count}} dni temu!",
+      "overdueByDays_other": "Termin minął {{count}} dni temu!",
+      "daysRemaining": "Pozostały {{count}} dni do terminu",
+      "daysUntilDeadline": "Pozostało {{count}} dni do terminu"
     },
     "keyboardShortcuts": {
       "label": "Nawigacja",
@@ -3664,7 +3695,8 @@
     "convertToMenu": {
       "conversionFailed": "Konwersja nieudana",
       "toastSuccess": "Utworzono inicjatywę",
-      "failedToCreateInitiative": "Nie udało się utworzyć inicjatywy"
+      "failedToCreateInitiative": "Nie udało się utworzyć inicjatywy",
+      "convertedTo": "Przekonwertowano na {{target}}"
     },
     "relatedContext": {
       "relatedContext": "Powiązany kontekst",
@@ -4117,6 +4149,13 @@
     },
     "empty": {
       "aiSuggest": "Sugestia AI"
+    },
+    "delegationModal": {
+      "inputRequestedFromCount": "Wysłano prośbę o opinię do {{count}} osób",
+      "toastDelegated": "Decyzja przekazana",
+      "toastReviewRequested": "Prośba o przegląd wysłana",
+      "toastInputRequested": "Prośba o opinię wysłana",
+      "toastCoDecisionRequested": "Prośba o współdecyzję wysłana"
     }
   },
   "step1": {
@@ -6667,6 +6706,20 @@
     },
     "itemPreview": {
       "defaultLabel": "Ocena"
+    },
+    "maturityPathway": {
+      "heading": "Ścieżka dojrzałości (N → N+1)",
+      "subheading": "Co konkretnie zrobić, aby przejść z obecnego poziomu na następny — dla wymiarów poniżej celu.",
+      "currentState": "Co jest",
+      "gapMeaning": "Co to znaczy",
+      "actionsHeading": "Co zrobić, by przejść wyżej",
+      "evidenceHeading": "Jaki efekt potwierdzi poziom",
+      "obstaclesHeading": "Typowe przeszkody"
+    },
+    "fofRoadBar": {
+      "gapValue": "brak {{value}}",
+      "currentLevel": "Poziom obecny",
+      "fofThreshold": "Próg FoF ({{benchmark}})"
     }
   },
   "initiatives": {
@@ -22961,7 +23014,10 @@
       "PORTFOLIO_OWNER": "Właściciel portfela",
       "BUSINESS_OWNER": "Business Owner (Korzyści)",
       "STEERING_COMMITTEE": "Komitet sterujący"
-    }
+    },
+    "memberTypeChair": "Przewodniczący",
+    "memberTypeBoardMember": "Członek",
+    "memberTypeObserver": "Obserwator"
   },
   "branch": {
     "delete": "Usuń"
@@ -24866,6 +24922,9 @@
       "tierError": "Nie udało się wybrać planu",
       "termsAccepted": "Regulamin zaakceptowany",
       "tierSelected": "Plan cenowy wybrany"
+    },
+    "featureSpotlight": {
+      "gotIt": "Rozumiem"
     }
   },
   "editor": {

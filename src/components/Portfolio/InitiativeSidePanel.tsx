@@ -117,7 +117,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
 
   // Tasks state
   const [tasks, setTasks] = useState<Task[]>([]);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [tasksLoading, setTasksLoading] = useState(false);
   const [taskFilter, setTaskFilter] = useState<'all' | 'todo' | 'in_progress' | 'completed'>('all');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -400,7 +400,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
               <div className="flex items-center justify-between py-2 border-t border-slate-200 dark:border-navy-700">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Source</span>
                 <span className="text-sm font-medium text-navy-900 dark:text-white">
-                  {getSourceDisplayLabel((initiative as any).sourceType, i18n.language === 'pl')}
+                  {getSourceDisplayLabel((initiative as any).sourceType)}
                 </span>
               </div>
             )}

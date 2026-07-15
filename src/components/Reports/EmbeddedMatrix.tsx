@@ -236,8 +236,7 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
 
 // Axis Detail Matrix
 const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId, data }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   // Parse area scores if available
   const areaScores = useMemo(() => {
