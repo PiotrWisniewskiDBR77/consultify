@@ -28570,6 +28570,13 @@
       "generatedInitiatives": "Wygenerowane inicjatywy",
       "noInitiativesHint": "Brak inicjatyw. Użyj AI do wygenerowania rekomendacji, a następnie utwórz inicjatywy w module Initiatives.",
       "toolType": "Tool type: {{toolType}}"
+    },
+    "toolPhaseAiActions": {
+      "aiCopilot": "AI Copilot",
+      "reviewWaitingTitle": "{{count}} kart AI czeka na review",
+      "reviewAiCount": "Review AI ({{count}})",
+      "stopGenerationTitle": "Zatrzymaj bieżące generowanie AI",
+      "stopAi": "Zatrzymaj AI"
     }
   }
 }

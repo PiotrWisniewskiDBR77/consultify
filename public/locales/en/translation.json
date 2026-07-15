@@ -27494,6 +27494,13 @@
       "generatedInitiatives": "Generated initiatives",
       "noInitiativesHint": "No initiatives yet. Use AI to generate recommendations, then create initiatives in the Initiatives module.",
       "toolType": "Tool type: {{toolType}}"
+    },
+    "toolPhaseAiActions": {
+      "aiCopilot": "AI Copilot",
+      "reviewWaitingTitle": "{{count}} AI cards waiting for review",
+      "reviewAiCount": "Review AI ({{count}})",
+      "stopGenerationTitle": "Stop the current AI generation",
+      "stopAi": "Stop AI"
     }
   }
 }
