@@ -9,6 +9,7 @@
 
 import { motion } from 'framer-motion';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // ============================================================================
 // CONSTANTS
@@ -72,6 +73,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
   language = 'pl',
   showAnimation = true,
 }) => {
+  const { t } = useTranslation();
   const isPolish = language === 'pl';
 
   // Calculate summary statistics
@@ -107,10 +109,10 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
 
   // Get priority label
   const getPriorityLabel = (gap: number): string => {
-    if (gap >= 3) return isPolish ? 'Krytyczny' : 'Critical';
-    if (gap >= 2) return isPolish ? 'Wysoki' : 'High';
-    if (gap >= 1) return isPolish ? 'Średni' : 'Medium';
-    return isPolish ? 'Niski' : 'Low';
+    if (gap >= 3) return t('reports.areaMatrixTable.priorityCritical', 'Critical');
+    if (gap >= 2) return t('reports.areaMatrixTable.priorityHigh', 'High');
+    if (gap >= 1) return t('reports.areaMatrixTable.priorityMedium', 'Medium');
+    return t('reports.areaMatrixTable.priorityLow', 'Low');
   };
 
   const containerVariants = {
@@ -140,7 +142,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
         <div className="matrix-title">
           <span className="axis-icon">{axisIcon}</span>
           <h3>
-            {isPolish ? 'Macierz Dojrzałości Obszarów' : 'Area Maturity Matrix'}: {axisName}
+            {t('reports.areaMatrixTable.matrixTitle', 'Area Maturity Matrix')}: {axisName}
           </h3>
         </div>
         <div className="matrix-summary">
@@ -148,23 +150,31 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             <span className="summary-value" style={{ color: '#3b82f6' }}>
               {stats.avgCurrent}
             </span>
-            <span className="summary-label">{isPolish ? 'Śr. Aktualny' : 'Avg Current'}</span>
+            <span className="summary-label">
+              {t('reports.areaMatrixTable.avgCurrentLabel', 'Avg Current')}
+            </span>
           </div>
           <div className="summary-card">
             <span className="summary-value" style={{ color: '#10b981' }}>
               {stats.avgTarget}
             </span>
-            <span className="summary-label">{isPolish ? 'Śr. Docelowy' : 'Avg Target'}</span>
+            <span className="summary-label">
+              {t('reports.areaMatrixTable.avgTargetLabel', 'Avg Target')}
+            </span>
           </div>
           <div className="summary-card">
             <span className="summary-value" style={{ color: getGapColor(Number(stats.avgGap)) }}>
               +{stats.avgGap}
             </span>
-            <span className="summary-label">{isPolish ? 'Śr. Luka' : 'Avg Gap'}</span>
+            <span className="summary-label">
+              {t('reports.areaMatrixTable.avgGapLabel', 'Avg Gap')}
+            </span>
           </div>
           <div className="summary-card">
             <span className="summary-value">{stats.assessed}/9</span>
-            <span className="summary-label">{isPolish ? 'Ocenionych' : 'Assessed'}</span>
+            <span className="summary-label">
+              {t('reports.areaMatrixTable.assessedLabel', 'Assessed')}
+            </span>
           </div>
         </div>
       </div>
@@ -176,7 +186,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
         >
           <thead>
             <tr>
-              <th className="level-header">{isPolish ? 'Poziom' : 'Level'}</th>
+              <th className="level-header">
+                {t('reports.areaMatrixTable.levelLabel', 'Level')}
+              </th>
               {BUSINESS_AREAS.map((area) => (
                 <th
                   key={area.id}
@@ -233,7 +245,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
 
             {/* Summary rows */}
             <tr className="summary-row current-row">
-              <td className="summary-label-cell">{isPolish ? 'Aktualny' : 'Current'}</td>
+              <td className="summary-label-cell">
+                {t('reports.areaMatrixTable.currentLabel', 'Current')}
+              </td>
               {BUSINESS_AREAS.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 return (
@@ -244,7 +258,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               })}
             </tr>
             <tr className="summary-row target-row">
-              <td className="summary-label-cell">{isPolish ? 'Docelowy' : 'Target'}</td>
+              <td className="summary-label-cell">
+                {t('reports.areaMatrixTable.targetLabel', 'Target')}
+              </td>
               {BUSINESS_AREAS.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 return (
@@ -255,7 +271,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               })}
             </tr>
             <tr className="summary-row gap-row">
-              <td className="summary-label-cell">{isPolish ? 'Luka' : 'Gap'}</td>
+              <td className="summary-label-cell">
+                {t('reports.areaMatrixTable.gapLabel', 'Gap')}
+              </td>
               {BUSINESS_AREAS.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
@@ -271,7 +289,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               })}
             </tr>
             <tr className="summary-row priority-row">
-              <td className="summary-label-cell">{isPolish ? 'Priorytet' : 'Priority'}</td>
+              <td className="summary-label-cell">
+                {t('reports.areaMatrixTable.priorityLabel', 'Priority')}
+              </td>
               {BUSINESS_AREAS.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
@@ -297,28 +317,28 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
       <div className="matrix-legend">
         <div className="legend-item">
           <span className="legend-marker current">●</span>
-          <span>{isPolish ? 'Stan aktualny' : 'Current state'}</span>
+          <span>{t('reports.areaMatrixTable.currentStateLegend', 'Current state')}</span>
         </div>
         <div className="legend-item">
           <span className="legend-marker target">○</span>
-          <span>{isPolish ? 'Cel docelowy' : 'Target state'}</span>
+          <span>{t('reports.areaMatrixTable.targetStateLegend', 'Target state')}</span>
         </div>
         <div className="legend-separator">|</div>
         <div className="legend-item">
           <span className="priority-dot" style={{ background: '#f43f5e' }}></span>
-          <span>{isPolish ? 'Krytyczny (≥3)' : 'Critical (≥3)'}</span>
+          <span>{t('reports.areaMatrixTable.criticalLegend', 'Critical (≥3)')}</span>
         </div>
         <div className="legend-item">
           <span className="priority-dot" style={{ background: '#f59e0b' }}></span>
-          <span>{isPolish ? 'Wysoki (2)' : 'High (2)'}</span>
+          <span>{t('reports.areaMatrixTable.highLegend', 'High (2)')}</span>
         </div>
         <div className="legend-item">
           <span className="priority-dot" style={{ background: '#eab308' }}></span>
-          <span>{isPolish ? 'Średni (1)' : 'Medium (1)'}</span>
+          <span>{t('reports.areaMatrixTable.mediumLegend', 'Medium (1)')}</span>
         </div>
         <div className="legend-item">
           <span className="priority-dot" style={{ background: '#22c55e' }}></span>
-          <span>{isPolish ? 'Niski (0)' : 'Low (0)'}</span>
+          <span>{t('reports.areaMatrixTable.lowLegend', 'Low (0)')}</span>
         </div>
       </div>
 

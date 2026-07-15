@@ -10415,6 +10415,28 @@
       "detailedAnalysisTitle": "Detailed Area Analysis",
       "sectionIntroText": "Below is a detailed analysis of each of the 9 business areas in the context of this digital transformation axis. Click on an area header to expand details.",
       "priorityOrderNote": "Areas sorted by priority (largest gap first)"
+    },
+    "areaMatrixTable": {
+      "priorityCritical": "Critical",
+      "priorityHigh": "High",
+      "priorityMedium": "Medium",
+      "priorityLow": "Low",
+      "matrixTitle": "Area Maturity Matrix",
+      "avgCurrentLabel": "Avg Current",
+      "avgTargetLabel": "Avg Target",
+      "avgGapLabel": "Avg Gap",
+      "assessedLabel": "Assessed",
+      "levelLabel": "Level",
+      "currentLabel": "Current",
+      "targetLabel": "Target",
+      "gapLabel": "Gap",
+      "priorityLabel": "Priority",
+      "currentStateLegend": "Current state",
+      "targetStateLegend": "Target state",
+      "criticalLegend": "Critical (≥3)",
+      "highLegend": "High (2)",
+      "mediumLegend": "Medium (1)",
+      "lowLegend": "Low (0)"
     }
   },
   "auth": {

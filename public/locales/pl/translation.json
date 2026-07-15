@@ -9650,6 +9650,28 @@
       "detailedAnalysisTitle": "Szczegółowa analiza obszarów",
       "sectionIntroText": "Poniżej znajduje się szczegółowa analiza każdego z 9 obszarów biznesowych w kontekście tej osi transformacji cyfrowej. Kliknij na nagłówek obszaru, aby rozwinąć szczegóły.",
       "priorityOrderNote": "Obszary posortowane według priorytetu (największa luka najpierw)"
+    },
+    "areaMatrixTable": {
+      "priorityCritical": "Krytyczny",
+      "priorityHigh": "Wysoki",
+      "priorityMedium": "Średni",
+      "priorityLow": "Niski",
+      "matrixTitle": "Macierz Dojrzałości Obszarów",
+      "avgCurrentLabel": "Śr. Aktualny",
+      "avgTargetLabel": "Śr. Docelowy",
+      "avgGapLabel": "Śr. Luka",
+      "assessedLabel": "Ocenionych",
+      "levelLabel": "Poziom",
+      "currentLabel": "Aktualny",
+      "targetLabel": "Docelowy",
+      "gapLabel": "Luka",
+      "priorityLabel": "Priorytet",
+      "currentStateLegend": "Stan aktualny",
+      "targetStateLegend": "Cel docelowy",
+      "criticalLegend": "Krytyczny (≥3)",
+      "highLegend": "Wysoki (2)",
+      "mediumLegend": "Średni (1)",
+      "lowLegend": "Niski (0)"
     }
   },
   "auth": {
