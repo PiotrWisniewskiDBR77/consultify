@@ -27539,6 +27539,17 @@
       "dataMayBeStaleClickTo": "Data may be stale. Click to refresh.",
       "staleData": "Stale data",
       "upToDate": "Up to date"
+    },
+    "sourceTraceabilityPanel": {
+      "noLinkedDataSources": "No linked data sources.",
+      "dataSources": "Data Sources",
+      "used": "Used: ",
+      "refreshFromSource": "Refresh from source",
+      "nArtifactsLinked": "{{count}} artifacts linked to report",
+      "nSections": "{{count}} section(s)"
+    },
+    "scheduleReportModal": {
+      "eGWeeklyStatusReport": "e.g. Weekly Status Report"
     }
   }
 }

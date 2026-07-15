@@ -28615,6 +28615,17 @@
       "dataMayBeStaleClickTo": "Dane mogą być nieaktualne. Kliknij aby odświeżyć.",
       "staleData": "Nieaktualne dane",
       "upToDate": "Aktualne"
+    },
+    "sourceTraceabilityPanel": {
+      "noLinkedDataSources": "Brak powiązanych źródeł danych.",
+      "dataSources": "Źródła danych",
+      "used": "Użyto: ",
+      "refreshFromSource": "Odśwież ze źródła",
+      "nArtifactsLinked": "{{count}} artefaktów powiązanych z raportem",
+      "nSections": "{{count}} sekcji"
+    },
+    "scheduleReportModal": {
+      "eGWeeklyStatusReport": "np. Tygodniowy raport statusu"
     }
   }
 }
