@@ -6930,6 +6930,73 @@
       "confirmDeleteTitle": "Delete selected items?",
       "confirmDeleteDesc": "You will permanently delete {{count}} item(s). This cannot be undone.",
       "deletedNoun": "deleted"
+    },
+    "reportsTable": {
+      "toastApproved": "Report approved",
+      "toastApproveFailed": "Failed to approve report",
+      "toastSentInternal": "Marked as sent internally",
+      "toastSentInternalFailed": "Failed to mark as sent internally",
+      "toastSentExternal": "Marked as sent externally",
+      "toastSentExternalFailed": "Failed to mark as sent externally",
+      "toastSentBack": "Report sent back for editing",
+      "toastSendBackFailed": "Failed to send report back",
+      "toastExportCompleted": "{{format}} export completed",
+      "toastExportFailed": "Failed to export",
+      "toastExportError": "Export error",
+      "toastLinkCopied": "Link copied",
+      "toastLinkCreated": "Link created",
+      "toastLinkFailed": "Failed to create link",
+      "toastImported": "Report imported successfully",
+      "columns": {
+        "report": "Report",
+        "author": "Author",
+        "context": "Context",
+        "updated": "Updated"
+      },
+      "menu": {
+        "view": "View Report",
+        "exportPdf": "Export PDF",
+        "exportPptx": "Export PPTX",
+        "exportWord": "Export Word",
+        "shareLink": "Share link",
+        "generateInitiatives": "Generate Initiatives",
+        "approve": "Approve",
+        "sendBack": "Send Back",
+        "sendInternal": "Send Internal",
+        "sendExternal": "Send External"
+      },
+      "header": {
+        "creatorTitle": "Report creator",
+        "title": "Reports",
+        "creatorSubtitle": "All reports (all sources and statuses) with quick access to the editor.",
+        "subtitle": "Assessment reports in review status and above",
+        "settingsTitle": "Creator settings (blocks/templates/profiles)",
+        "settings": "Settings",
+        "importTitle": "Import external report",
+        "import": "Import",
+        "newTemplateTitle": "Create new report template",
+        "newTemplate": "New Template",
+        "newReportTitle": "Create AI-powered report",
+        "newReport": "New Report"
+      },
+      "stats": {
+        "all": "All",
+        "drafts": "Drafts",
+        "generated": "Generated",
+        "inReview": "In Review",
+        "approved": "Approved",
+        "sent": "Sent"
+      },
+      "search": {
+        "placeholder": "Search reports..."
+      },
+      "empty": {
+        "noMatchTitle": "No reports match your search",
+        "noneInReviewTitle": "No reports in review yet",
+        "noneTitle": "No reports yet",
+        "creatorDesc": "Create a new report or open an existing one from the list.",
+        "reviewDesc": "Reports will appear here after being submitted for review"
+      }
     }
   },
   "initiatives": {
