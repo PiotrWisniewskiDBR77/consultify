@@ -5,10 +5,17 @@ import {
   INVENTORY_LADDER_RUNG_ORDER,
   INVENTORY_LEVERS,
   INVENTORY_PROPOSAL_BANK,
+  INVENTORY_QUESTION_BANK,
+  INVENTORY_QUESTION_ROOT_ID,
   buildInventoryConclusionPrompt,
   buildInventoryDeepenPrompt,
+  buildInventoryQuestionBankPromptRules,
   buildW2MoveSequence,
   computeBaseline,
+  detectInventoryGaps,
+  getInventoryQuestion,
+  getNextInventoryQuestionId,
+  isForcedLoopInventoryQuestion,
   localizeLadder,
   localizeMove,
   rankLevers,
@@ -268,5 +275,83 @@ describe('Inventory Autopilot engine — bridges', () => {
     expect(baseline.deadStockValue).toBe(400);
     expect(ranking.ordered[0]).toBe('deadstock');
     expect(sequence.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Inventory Autopilot engine — coverage gap detection (OXFORD O3)', () => {
+  it('flags an empty book', () => {
+    const gaps = detectInventoryGaps(session({}));
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0].kind).toBe('no-segments');
+  });
+
+  it('flags below-service segments with zero service moves', () => {
+    const gaps = detectInventoryGaps(
+      session({ segments: [seg('s1', { belowService: true })] })
+    );
+    expect(gaps.some((g) => g.kind === 'below-service-unaddressed')).toBe(true);
+  });
+
+  it('flags trapped cash in dead/tail stock with zero deadstock moves', () => {
+    const gaps = detectInventoryGaps(
+      session({ segments: [seg('s1', { valueClass: 'C', stockValue: 300, dead: true })] })
+    );
+    expect(gaps.some((g) => g.kind === 'trapped-cash-unaddressed')).toBe(true);
+  });
+
+  it('flags a majority-unmeasured book', () => {
+    const gaps = detectInventoryGaps(
+      session({
+        segments: [seg('s1', { measured: false }), seg('s2', { measured: false }), seg('s3')],
+      })
+    );
+    expect(gaps.some((g) => g.kind === 'unmeasured-segments')).toBe(true);
+  });
+
+  it('reports no gaps for a measured, fully addressed book', () => {
+    const gaps = detectInventoryGaps(
+      session({
+        segments: [seg('s1', { measured: true, belowService: false, dead: false })],
+        moves: [move('m1', { lever: 'service' }), move('m2', { lever: 'deadstock' })],
+      })
+    );
+    expect(gaps).toHaveLength(0);
+  });
+});
+
+describe('Inventory Autopilot branching question bank (OXFORD O3)', () => {
+  it('starts at the surface question and has 4 laddered levels', () => {
+    const root = getInventoryQuestion(INVENTORY_QUESTION_ROOT_ID);
+    expect(root).toBeTruthy();
+    expect(root!.level).toBe(1);
+    const levels = new Set(INVENTORY_QUESTION_BANK.map((q) => q.level));
+    expect(levels).toEqual(new Set([1, 2, 3, 4]));
+  });
+
+  it('forces the classification loop until ABC/XYZ buckets exist', () => {
+    expect(isForcedLoopInventoryQuestion('inv-classify-force')).toBe(true);
+    expect(getNextInventoryQuestionId('inv-classify-force', 'still-one-pile')).toBe(
+      'inv-classify-force'
+    );
+    expect(getNextInventoryQuestionId('inv-classify-force', 'classified-now')).toBe(
+      'inv-quant-check'
+    );
+  });
+
+  it('every node has at least two answer options', () => {
+    INVENTORY_QUESTION_BANK.forEach((node) => {
+      expect(node.answerOptions.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('unknown answer keys fall back to defaultNextId', () => {
+    expect(getNextInventoryQuestionId('inv-surface', 'unknown-key')).toBe(
+      getInventoryQuestion('inv-surface')!.defaultNextId
+    );
+  });
+
+  it('buildInventoryQuestionBankPromptRules mentions the forced-loop discipline in both languages', () => {
+    expect(buildInventoryQuestionBankPromptRules('en')).toContain('inv-classify-force');
+    expect(buildInventoryQuestionBankPromptRules('pl')).toContain('inv-classify-force');
   });
 });

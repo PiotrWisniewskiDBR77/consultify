@@ -19,9 +19,11 @@ import { localizeLadder } from './index';
 import {
   buildW2MoveSequence,
   computeBaseline,
+  detectInventoryGaps,
   type InventorySession,
   rankLevers,
 } from './inventoryEngine';
+import { buildInventoryQuestionBankPromptRules } from './inventoryQuestionBank';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -66,6 +68,11 @@ export function buildInventoryConclusionPrompt(
     )
     .join('\n');
 
+  const gaps = detectInventoryGaps(session);
+  const gapLines = gaps
+    .map((g) => `- ${localize(g.message.pl, g.message.en, isPolish)}`)
+    .join('\n');
+
   const header = isPolish
     ? 'Działaj jako partner ds. operacji i kapitału obrotowego (zarządzanie zapasami, ABC/XYZ). Poniżej masz ugruntowaną na danych bazę zapasu, ranking dźwigni i sekwencję ruchów W2. Dopracuj sformułowania i uzupełnij luki, ale NIE wymyślaj kwot ani segmentów SKU niepopartych danymi sesji.'
     : 'Act as an operations and working-capital partner (inventory management, ABC/XYZ). Below is a data-grounded inventory baseline, a lever ranking and a W2 move sequence. Refine the wording and fill gaps, but do NOT invent amounts or SKU segments the session facts do not support.';
@@ -94,6 +101,8 @@ ${scoreLines}
 
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
+${gapLines ? `\n=== COVERAGE GAPS ===\n${gapLines}\n` : ''}
+${buildInventoryQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}

@@ -3,9 +3,12 @@
  *
  * SSOT for the inventory-optimization methodology content and its deterministic
  * synthesis engine. Cloned from the SMED config pattern (src/config/smedplanner):
- *   - deepeningLadder.ts   : per-lever depth staircase + partner-grade proposal bank (PL/EN)
- *   - inventoryEngine.ts   : baseline + scoring + W2 move sequencing (rationale/trade-off/rejected variant)
- *   - conclusionPrompts.ts : AI prompt builders grounded in the engine output
+ *   - deepeningLadder.ts     : per-lever depth staircase + partner-grade proposal bank (PL/EN)
+ *   - inventoryQuestionBank.ts: laddered, branching q-bank — segment claim -> forced
+ *                              classification -> quantification -> policy (OXFORD O3)
+ *   - inventoryEngine.ts     : baseline + scoring + coverage-gap detection + W2 move
+ *                              sequencing (rationale/trade-off/rejected variant)
+ *   - conclusionPrompts.ts   : AI prompt builders grounded in the engine output
  *
  * Self-contained: the engine reads a minimal InventorySession, and this barrel
  * offers a defensive adapter from the store's OperationalToolData sections so
@@ -29,6 +32,7 @@ import type {
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './inventoryEngine';
+export * from './inventoryQuestionBank';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
