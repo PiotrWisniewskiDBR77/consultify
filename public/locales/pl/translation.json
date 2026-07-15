@@ -28310,6 +28310,117 @@
         "recommendedInitiatives": "Rekomendowane inicjatywy",
         "generateInitiativesHint": "Kliknij \"Generuj analizę\" aby otrzymać rekomendacje inicjatyw."
       }
+    },
+    "strategicCanvasVisuals": {
+      "swotMatrix": {
+        "strengths": "Mocne strony",
+        "weaknesses": "Słabe strony",
+        "opportunities": "Szanse",
+        "threats": "Zagrożenia",
+        "tensionsHint": "Napięcia powstają z przecięć: S/O, W/O, S/T, W/T."
+      },
+      "porterPentagon": {
+        "rivalry": "Rywalizacja",
+        "newEntrants": "Nowi gracze",
+        "substitutes": "Substytuty",
+        "buyerPower": "Nabywcy",
+        "supplierPower": "Dostawcy",
+        "title": "Radar sił Portera"
+      },
+      "ansoffMatrix": {
+        "hint": "Każda opcja dostaje chipy: impact, effort i risk."
+      },
+      "portfolioBcg": {
+        "hint": "Pozycja = wzrost i udział, wielkość bąbla = inwestycje."
+      },
+      "riskMatrix": {
+        "title": "Macierz prawdopodobieństwo x wpływ",
+        "hint": "Scenariusze tworzą pas reakcji dla ryzyk w prawym górnym rogu."
+      },
+      "valueChain": {
+        "contributionHigh": "wys.",
+        "contributionMedium": "śr.",
+        "contributionLow": "nis.",
+        "cost": "koszt",
+        "value": "wartość",
+        "title": "Łańcuch wartości Portera",
+        "supportActivities": "Aktywności wspierające",
+        "primaryActivities": "Aktywności pierwotne",
+        "margin": "Marża",
+        "createsMargin": "Tworzy marżę",
+        "neutral": "Neutralna",
+        "drainsMargin": "Drenuje marżę",
+        "costAdvantage": "Przewaga kosztowa",
+        "differentiation": "Różnicowanie",
+        "stuckInTheMiddle": "Utknięcie w środku",
+        "legendHint": "Kolor aktywności = rola w marży, adnotacje = wkład w koszt i wartość."
+      },
+      "capabilityMaturity": {
+        "importanceHigh": "wysoka",
+        "importanceMedium": "średnia",
+        "importanceLow": "niska",
+        "title": "Drabina dojrzałości zdolności",
+        "scale": "Skala 1-5",
+        "empty": "Brak zdolności do pokazania. Dodaj zdolności, aby zobaczyć dojrzałość obecną vs docelową.",
+        "weight": "waga",
+        "current": "Obecna",
+        "target": "Docelowa",
+        "criticalGap": "Krytyczna luka",
+        "moderateGap": "Umiarkowana luka",
+        "minorGap": "Drobna luka",
+        "hint": "Sortowanie wg wagi strategicznej, kolor wypełnienia = rozmiar luki, znaczniki = dojrzałość obecna i docelowa."
+      },
+      "ambitionDecomposition": {
+        "horizonShort": "Krótki",
+        "horizonMedium": "Średni",
+        "horizonLong": "Długi",
+        "importanceHigh": "Wysoka",
+        "importanceMedium": "Średnia",
+        "importanceLow": "Niska",
+        "title": "Kaskada ambicji",
+        "subtitle": "Motywy wg horyzontu",
+        "ambitionLabel": "Ambicja",
+        "nameAmbition": "Nazwij ambicję jednym zdaniem",
+        "empty": "Brak motywów do pokazania. Rozłóż ambicję na motywy strategiczne z celem i horyzontem.",
+        "importanceLabel": "Istotność",
+        "highImportance": "Wysoka istotność",
+        "mediumImportance": "Średnia istotność",
+        "lowImportance": "Niska istotność",
+        "hint": "Motywy pogrupowane wg horyzontu (krótki → długi), kolor chipa = istotność, podpis = cel i metryka."
+      },
+      "focusTradeoff": {
+        "pursue": "Realizuj",
+        "defer": "Odłóż",
+        "drop": "Odpuść",
+        "quadrants": {
+          "quickWins": "Wys. wartość, niski wysiłek",
+          "bigBets": "Wys. wartość, wysoki wysiłek",
+          "fillIns": "Nis. wartość, niski wysiłek",
+          "moneyPit": "Nis. wartość, wysoki wysiłek"
+        },
+        "title": "Macierz wartość x wysiłek",
+        "scale": "Skala 1-5",
+        "empty": "Brak priorytetów do pokazania. Dodaj priorytety z oceną wartości i wysiłku, aby zobaczyć macierz.",
+        "value": "wartość",
+        "effort": "wysiłek",
+        "hint": "Pozycja = wartość (oś Y) i wysiłek (oś X), kolor bąbla = rekomendacja pursue/defer/drop."
+      },
+      "narrativeArc": {
+        "resonanceHigh": "Wysoki",
+        "resonanceMedium": "Średni",
+        "resonanceLow": "Niski",
+        "title": "Dom komunikatu",
+        "subtitle": "Dach + filary",
+        "coreMessageLabel": "Myśl przewodnia",
+        "nameCoreMessage": "Nazwij jedną myśl przewodnią",
+        "empty": "Brak filarów do pokazania. Dodaj filary z twierdzeniem i dowodami, aby zbudować dom komunikatu.",
+        "resonanceLabel": "Rezonans",
+        "proof": "dowody",
+        "highResonance": "Wysoki rezonans",
+        "mediumResonance": "Średni rezonans",
+        "lowResonance": "Niski rezonans",
+        "hint": "Dach = myśl przewodnia, kolumny = filary (twierdzenie + liczba dowodów), kolor = rezonans u odbiorcy."
+      }
     }
   }
 }

@@ -27234,6 +27234,117 @@
         "recommendedInitiatives": "Recommended Initiatives",
         "generateInitiativesHint": "Click \"Generate Analysis\" to get initiative recommendations."
       }
+    },
+    "strategicCanvasVisuals": {
+      "swotMatrix": {
+        "strengths": "Strengths",
+        "weaknesses": "Weaknesses",
+        "opportunities": "Opportunities",
+        "threats": "Threats",
+        "tensionsHint": "Tensions emerge from S/O, W/O, S/T, and W/T intersections."
+      },
+      "porterPentagon": {
+        "rivalry": "Rivalry",
+        "newEntrants": "Entrants",
+        "substitutes": "Substitutes",
+        "buyerPower": "Buyers",
+        "supplierPower": "Suppliers",
+        "title": "Porter force radar"
+      },
+      "ansoffMatrix": {
+        "hint": "Each option carries impact, effort, and risk chips."
+      },
+      "portfolioBcg": {
+        "hint": "Position = growth and share, bubble size = investment."
+      },
+      "riskMatrix": {
+        "title": "Probability x impact matrix",
+        "hint": "Scenarios create a response lane for upper-right risks."
+      },
+      "valueChain": {
+        "contributionHigh": "hi",
+        "contributionMedium": "mid",
+        "contributionLow": "lo",
+        "cost": "cost",
+        "value": "value",
+        "title": "Porter value chain",
+        "supportActivities": "Support activities",
+        "primaryActivities": "Primary activities",
+        "margin": "Margin",
+        "createsMargin": "Creates margin",
+        "neutral": "Neutral",
+        "drainsMargin": "Drains margin",
+        "costAdvantage": "Cost advantage",
+        "differentiation": "Differentiation",
+        "stuckInTheMiddle": "Stuck in the middle",
+        "legendHint": "Activity color = margin role, annotations = cost and value contribution."
+      },
+      "capabilityMaturity": {
+        "importanceHigh": "high",
+        "importanceMedium": "medium",
+        "importanceLow": "low",
+        "title": "Capability maturity ladder",
+        "scale": "Scale 1-5",
+        "empty": "No capabilities to show yet. Add capabilities to see current vs target maturity.",
+        "weight": "importance",
+        "current": "Current",
+        "target": "Target",
+        "criticalGap": "Critical gap",
+        "moderateGap": "Moderate gap",
+        "minorGap": "Minor gap",
+        "hint": "Sorted by strategic importance, fill color = gap size, markers = current and target maturity."
+      },
+      "ambitionDecomposition": {
+        "horizonShort": "Short",
+        "horizonMedium": "Medium",
+        "horizonLong": "Long",
+        "importanceHigh": "High",
+        "importanceMedium": "Medium",
+        "importanceLow": "Low",
+        "title": "Ambition cascade",
+        "subtitle": "Themes by horizon",
+        "ambitionLabel": "Ambition",
+        "nameAmbition": "Name the ambition in one sentence",
+        "empty": "No themes to show yet. Decompose the ambition into strategic themes with a target and horizon.",
+        "importanceLabel": "Importance",
+        "highImportance": "High importance",
+        "mediumImportance": "Medium importance",
+        "lowImportance": "Low importance",
+        "hint": "Themes grouped by horizon (short → long), chip color = importance, caption = target and metric."
+      },
+      "focusTradeoff": {
+        "pursue": "Pursue",
+        "defer": "Defer",
+        "drop": "Drop",
+        "quadrants": {
+          "quickWins": "High value, low effort",
+          "bigBets": "High value, high effort",
+          "fillIns": "Low value, low effort",
+          "moneyPit": "Low value, high effort"
+        },
+        "title": "Value x effort matrix",
+        "scale": "Scale 1-5",
+        "empty": "No priorities to show yet. Add priorities with value and effort scores to see the matrix.",
+        "value": "value",
+        "effort": "effort",
+        "hint": "Position = value (y) and effort (x), bubble color = pursue/defer/drop recommendation."
+      },
+      "narrativeArc": {
+        "resonanceHigh": "High",
+        "resonanceMedium": "Medium",
+        "resonanceLow": "Low",
+        "title": "Message house",
+        "subtitle": "Roof + pillars",
+        "coreMessageLabel": "Core message",
+        "nameCoreMessage": "Name one core message",
+        "empty": "No pillars to show yet. Add pillars with a claim and proof points to build the message house.",
+        "resonanceLabel": "Resonance",
+        "proof": "proof",
+        "highResonance": "High resonance",
+        "mediumResonance": "Medium resonance",
+        "lowResonance": "Low resonance",
+        "hint": "Roof = core message, columns = pillars (claim + proof count), color = audience resonance."
+      }
     }
   }
 }
