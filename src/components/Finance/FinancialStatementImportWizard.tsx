@@ -530,7 +530,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
   };
 
   const stepLabels = smartAnalysis
-    ? [isPl ? 'Wgraj' : 'Upload', isPl ? 'Analiza AI' : 'AI Analysis', isPl ? 'Gotowe' : 'Done']
+    ? [
+        t('finance.importWizard.smartStepUpload', 'Upload'),
+        t('finance.importWizard.smartStepAnalysis', 'AI Analysis'),
+        t('finance.importWizard.smartStepDone', 'Done'),
+      ]
     : [
         t('finance.importWizard.stepUpload', 'Upload'),
         t('finance.importWizard.stepDetect', 'Detect'),
@@ -608,7 +612,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         {onClose && (
           <button
             onClick={handleDismiss}
-            aria-label={isPl ? 'Zamknij import' : 'Close import'}
+            aria-label={t('finance.importWizard.ariaCloseImport', 'Close import')}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <X size={20} className="text-slate-500" />
@@ -620,7 +624,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       <div
         className="flex items-center mb-8"
         role="navigation"
-        aria-label={isPl ? 'Kroki importu' : 'Import steps'}
+        aria-label={t('finance.importWizard.ariaImportSteps', 'Import steps')}
       >
         {displaySteps.map((s, i) => {
           const displayStepIdx = displaySteps.indexOf(step);
@@ -696,7 +700,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
             }}
-            aria-label={isPl ? 'Upuść plik lub kliknij aby wybrać' : 'Drop file or click to browse'}
+            aria-label={t('finance.importWizard.ariaDropZone', 'Drop file or click to browse')}
           >
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100/80 transition-colors group-hover:bg-blue-100/60 dark:bg-white/[0.05] dark:group-hover:bg-blue-500/10">
               <Upload
@@ -754,7 +758,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   setFile(null);
                 }}
                 className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-                aria-label={isPl ? 'Usuń plik' : 'Remove file'}
+                aria-label={t('finance.importWizard.ariaRemoveFile', 'Remove file')}
               >
                 <X size={14} className="text-slate-600" />
               </button>
@@ -768,12 +772,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
             {loading
-              ? isPl
-                ? 'AI analizuje dokument...'
-                : 'AI is analyzing document...'
-              : isPl
-                ? 'Wgraj i analizuj'
-                : 'Upload & Analyze'}
+              ? t('finance.importWizard.analyzing', 'AI is analyzing document...')
+              : t('finance.importWizard.uploadAndAnalyze', 'Upload & Analyze')}
           </button>
         </div>
       )}
@@ -1052,11 +1052,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                    {isPl ? 'Dokument przeanalizowany przez AI' : 'Document analyzed by AI'}
+                    {t('finance.importWizard.aiAnalyzedTitle', 'Document analyzed by AI')}
                   </h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {smartAnalysis.documentDescription ||
-                      (isPl ? 'Analiza zakończona pomyślnie' : 'Analysis completed successfully')}
+                      t('finance.importWizard.analysisCompletedDefault', 'Analysis completed successfully')}
                   </p>
                 </div>
               </div>
@@ -1064,7 +1064,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               {/* Sections found */}
               <div className="mb-4 space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Znalezione sekcje' : 'Sections found'}
+                  {t('finance.importWizard.sectionsFound', 'Sections found')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {(smartAnalysis.statements || []).map((stmt) => (
@@ -1076,7 +1076,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                         {stmt.statementType}
                       </span>
                       <span className="text-slate-700 dark:text-slate-300">
-                        {stmt.lineCount} {isPl ? 'pozycji' : 'lines'}
+                        {stmt.lineCount} {t('finance.importWizard.linesUnit', 'lines')}
                       </span>
                     </div>
                   ))}
@@ -1088,37 +1088,43 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           {/* Summary grid */}
           <div className="bg-slate-50 dark:bg-navy-900 rounded-xl p-5 grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-slate-500">{isPl ? 'Podmiot' : 'Entity'}</span>
+              <span className="text-slate-500">{t('finance.importWizard.entity', 'Entity')}</span>
               <p className="font-medium text-slate-900 dark:text-white">
                 {smartAnalysis.entityName || '—'}
               </p>
             </div>
             <div>
-              <span className="text-slate-500">{isPl ? 'Okres' : 'Period'}</span>
+              <span className="text-slate-500">{t('finance.importWizard.period', 'Period')}</span>
               <p className="font-medium text-slate-900 dark:text-white">
                 {smartAnalysis.periodLabel || '—'}
               </p>
             </div>
             <div>
-              <span className="text-slate-500">{isPl ? 'Waluta' : 'Currency'}</span>
+              <span className="text-slate-500">
+                {t('finance.importWizard.currency', 'Currency')}
+              </span>
               <p className="font-medium text-slate-900 dark:text-white">
                 {smartAnalysis.currency || 'PLN'}
               </p>
             </div>
             <div>
-              <span className="text-slate-500">{isPl ? 'Skala' : 'Scaling'}</span>
+              <span className="text-slate-500">{t('finance.importWizard.scaling', 'Scaling')}</span>
               <p className="font-medium text-slate-900 dark:text-white">
                 {smartAnalysis.scaling || 'units'}
               </p>
             </div>
             <div>
-              <span className="text-slate-500">{isPl ? 'Łącznie pozycji' : 'Total lines'}</span>
+              <span className="text-slate-500">
+                {t('finance.importWizard.totalLines', 'Total lines')}
+              </span>
               <p className="font-medium text-slate-900 dark:text-white">
                 {smartAnalysis.totalLines || 0}
               </p>
             </div>
             <div>
-              <span className="text-slate-500">{isPl ? 'Plik źródłowy' : 'Source file'}</span>
+              <span className="text-slate-500">
+                {t('finance.importWizard.sourceFile', 'Source file')}
+              </span>
               <p className="font-medium text-slate-900 dark:text-white truncate">{file?.name}</p>
             </div>
           </div>
@@ -1131,7 +1137,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500"
             >
               <CheckCircle2 size={16} />
-              {isPl ? 'Gotowe — przejdź do przeglądu' : 'Done — go to review'}
+              {t('finance.importWizard.doneGoToReview', 'Done — go to review')}
             </button>
           </div>
         </div>
@@ -1207,9 +1213,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                     <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                     <span>
                       {validation.messages.filter((m) => m.type === 'error').length}{' '}
-                      {isPl ? 'błędów' : 'errors'}
+                      {t('finance.importWizard.errorsLabel', 'errors')}
                       {validation.messages.filter((m) => m.type === 'warning').length > 0 &&
-                        `, ${validation.messages.filter((m) => m.type === 'warning').length} ${isPl ? 'ostrzeżeń' : 'warnings'}`}
+                        `, ${validation.messages.filter((m) => m.type === 'warning').length} ${t('finance.importWizard.warningsLabel', 'warnings')}`}
                     </span>
                   </div>
                 </div>

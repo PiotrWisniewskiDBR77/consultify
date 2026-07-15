@@ -49,14 +49,15 @@ function ConfidenceDot({ confidence }: { confidence: number }) {
   );
 }
 
-function TierBadge({ tier, isPl }: { tier?: string; isPl: boolean }) {
+function TierBadge({ tier }: { tier?: string }) {
+  const { t } = useTranslation();
   if (!tier || tier === 'auto') return null;
 
   if (tier === 'review_required') {
     return (
       <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
         <AlertTriangle size={9} />
-        {isPl ? 'do weryfikacji' : 'review'}
+        {t('finance.mappingEditor.tierReview', 'review')}
       </span>
     );
   }
@@ -72,7 +73,7 @@ function TierBadge({ tier, isPl }: { tier?: string; isPl: boolean }) {
   if (tier === 'excluded') {
     return (
       <span className="ml-1.5 rounded bg-slate-100 px-1 py-0.5 text-[9px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-500">
-        {isPl ? 'wykluczone' : 'excluded'}
+        {t('finance.mappingEditor.tierExcluded', 'excluded')}
       </span>
     );
   }
@@ -85,14 +86,14 @@ function SearchableSelect({
   options,
   onChange,
   placeholder,
-  isPl,
 }: {
   value: string;
   options: FinancialStatementCanonicalLineOption[];
   onChange: (id: string) => void;
   placeholder: string;
-  isPl: boolean;
 }) {
+  const { t, i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -146,7 +147,7 @@ function SearchableSelect({
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={isPl ? 'Szukaj pozycji...' : 'Search lines...'}
+                placeholder={t('finance.mappingEditor.searchLines', 'Search lines...')}
                 className="flex-1 bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none dark:text-slate-200"
               />
               {search && (
@@ -189,7 +190,7 @@ function SearchableSelect({
               ))}
               {filtered.length === 0 && (
                 <div className="px-3 py-4 text-center text-xs text-slate-600">
-                  {isPl ? 'Brak wyników' : 'No results'}
+                  {t('finance.mappingEditor.noResults', 'No results')}
                 </div>
               )}
             </div>
@@ -232,17 +233,17 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
       {mappedValues.length > 0 && (
         <div className="flex items-center gap-3 border-b border-slate-200/60 px-4 py-2 dark:border-white/[0.06]">
           <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            {mappedCount}/{mappedValues.length} {isPl ? 'zmapowane' : 'mapped'}
+            {mappedCount}/{mappedValues.length} {t('finance.mappingEditor.mapped', 'mapped')}
           </span>
           {unmappedCount > 0 && (
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-              {unmappedCount} {isPl ? 'do uzupełnienia' : 'unmapped'}
+              {unmappedCount} {t('finance.mappingEditor.unmappedCount', 'unmapped')}
             </span>
           )}
           {reviewCount > 0 && (
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
               <AlertTriangle size={10} />
-              {reviewCount} {isPl ? 'do weryfikacji' : 'to review'}
+              {reviewCount} {t('finance.mappingEditor.toReview', 'to review')}
             </span>
           )}
           <div className="ml-auto h-1.5 w-24 overflow-hidden rounded-full bg-slate-200/60 dark:bg-white/[0.06]">
@@ -298,7 +299,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                       non-fin
                     </span>
                   )}
-                  <TierBadge tier={value.mappingTier} isPl={!!isPl} />
+                  <TierBadge tier={value.mappingTier} />
                 </td>
                 <td className="px-4 py-2 text-right">
                   {editingIdx === idx ? (
@@ -340,7 +341,6 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                     options={canonicalLines}
                     onChange={(id) => onCanonicalChange(idx, id)}
                     placeholder={t('finance.importWizard.unmapped', 'Unmapped')}
-                    isPl={!!isPl}
                   />
                 </td>
                 <td className="px-2 py-2">

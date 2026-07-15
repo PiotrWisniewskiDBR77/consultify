@@ -17867,7 +17867,27 @@
       "completed": "Zakończony",
       "confidence": "pewność",
       "rejected": "Import zakończony, ale plik został odrzucony i wymaga ponownego podejścia.",
-      "requiresReview": "Import zakończony. Sprawozdanie trafiło do kolejki odzyskiwania i wymaga domknięcia jakości."
+      "requiresReview": "Import zakończony. Sprawozdanie trafiło do kolejki odzyskiwania i wymaga domknięcia jakości.",
+      "smartStepUpload": "Wgraj",
+      "smartStepAnalysis": "Analiza AI",
+      "smartStepDone": "Gotowe",
+      "ariaCloseImport": "Zamknij import",
+      "ariaImportSteps": "Kroki importu",
+      "ariaDropZone": "Upuść plik lub kliknij aby wybrać",
+      "ariaRemoveFile": "Usuń plik",
+      "analyzing": "AI analizuje dokument...",
+      "uploadAndAnalyze": "Wgraj i analizuj",
+      "aiAnalyzedTitle": "Dokument przeanalizowany przez AI",
+      "analysisCompletedDefault": "Analiza zakończona pomyślnie",
+      "sectionsFound": "Znalezione sekcje",
+      "linesUnit": "pozycji",
+      "entity": "Podmiot",
+      "scaling": "Skala",
+      "totalLines": "Łącznie pozycji",
+      "sourceFile": "Plik źródłowy",
+      "doneGoToReview": "Gotowe — przejdź do przeglądu",
+      "errorsLabel": "błędów",
+      "warningsLabel": "ostrzeżeń"
     },
     "lane": {
       "kpi": {
@@ -17999,6 +18019,38 @@
       "clickRowHint": "Kliknij wiersz w tabeli, aby zobaczyć szczegóły pozycji.",
       "noDocumentSelected": "Brak wybranego dokumentu dla tej tabeli.",
       "notFound": "Nie znaleziono pakietu sprawozdań"
+    },
+    "mappingEditor": {
+      "tierReview": "do weryfikacji",
+      "tierExcluded": "wykluczone",
+      "searchLines": "Szukaj pozycji...",
+      "noResults": "Brak wyników",
+      "mapped": "zmapowane",
+      "unmappedCount": "do uzupełnienia",
+      "toReview": "do weryfikacji"
+    },
+    "explainPanel": {
+      "evidenceType": {
+        "direct": "Bezpośrednie dopasowanie",
+        "aggregated": "Zagregowane",
+        "split": "Rozdzielone/Scalone",
+        "derived": "Obliczone",
+        "manualNote": "Notatka ręczna"
+      },
+      "mappingStatus": {
+        "auto": "Auto",
+        "manual": "Ręczne",
+        "computed": "Obliczone",
+        "unmapped": "Brak",
+        "mapped": "Zmapowane"
+      },
+      "contribution": "Wkład",
+      "priorPeriod": "Poprzedni",
+      "currentPeriod": "Bieżący",
+      "addAnalystComment": "Kliknij, aby dodać komentarz analityka...",
+      "technicalDetails": "Szczegóły techniczne",
+      "lineCode": "Kod linii",
+      "selectedCandidate": "Wybrany kandydat"
     }
   },
   "portfolio": {

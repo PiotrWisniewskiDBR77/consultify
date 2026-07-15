@@ -496,55 +496,49 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
       {
         id: 'statement-source-documents',
         icon: FileText,
-        label: t(
-          'finance.statements.sourceDocuments',
-          isPl ? 'Dokumenty źródłowe' : 'Source documents'
-        ),
+        label: t('finance.statements.sourceDocuments', 'Source documents'),
         helper: t(
           'finance.statements.sourceDocumentsHelper',
-          isPl
-            ? '3 dokumenty do porównania z tym, czego użytkownik szukał.'
-            : '3 documents to compare with what the user expected.'
+          '3 documents to compare with what the user expected.'
         ),
       },
       {
         id: 'statement-lines-table',
         icon: Database,
-        label: t('finance.statements.loadedDataTable', isPl ? 'Tabela danych' : 'Data table'),
+        label: t('finance.statements.loadedDataTable', 'Data table'),
         helper: `${isWorkable ? mappedValues.length : editableValues.length} ${t(
           'finance.statements.rows',
-          isPl ? 'wierszy' : 'rows'
+          'rows'
         )}`,
       },
       {
         id: 'statement-ratios-table',
         icon: BarChart3,
-        label: t('finance.statements.ratiosSection', isPl ? 'Tabela ratios' : 'Ratios table'),
+        label: t('finance.statements.ratiosSection', 'Ratios table'),
         helper: `${Number(ratios?.coverageSummary?.coveragePct || 0).toFixed(0)}%`,
       },
       {
         id: 'statement-validation-table',
         icon: AlertTriangle,
-        label: t('finance.statements.validationSection', isPl ? 'Walidacja' : 'Validation'),
+        label: t('finance.statements.validationSection', 'Validation'),
         helper: `${(detail?.validationMessages || []).length}`,
       },
       {
         id: 'statement-quality-runs-table',
         icon: Link2,
-        label: t('finance.statements.qualityRunsSection', isPl ? 'Quality runs' : 'Quality runs'),
+        label: t('finance.statements.qualityRunsSection', 'Quality runs'),
         helper: `${(detail?.qualityRuns || []).length}`,
       },
       {
         id: 'statement-ingest-runs-table',
         icon: ExternalLink,
-        label: t('finance.statements.ingestRunsSection', isPl ? 'Import audit' : 'Import audit'),
+        label: t('finance.statements.ingestRunsSection', 'Import audit'),
         helper: `${(detail?.ingestRuns || []).length}`,
       },
     ],
     [
       detail,
       editableValues.length,
-      isPl,
       isWorkable,
       mappedValues.length,
       ratios?.coverageSummary?.coveragePct,
@@ -847,18 +841,13 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               <div className="flex items-center gap-2">
                 <Database size={16} className="text-blue-500" />
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {t(
-                    'finance.statements.systemTables',
-                    isPl ? 'Tabele danych w systemie' : 'System data tables'
-                  )}
+                  {t('finance.statements.systemTables', 'System data tables')}
                 </h4>
               </div>
               <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {t(
                   'finance.statements.systemTablesHint',
-                  isPl
-                    ? 'Tutaj użytkownik może szybko otworzyć sekcje z danymi i porównać, czy system ma dokładnie to, czego szukał.'
-                    : 'Use these quick links to open loaded data sections and compare what the system already contains.'
+                  'Use these quick links to open loaded data sections and compare what the system already contains.'
                 )}
               </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -892,10 +881,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   <FileText size={16} className="text-blue-500" />
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {t(
-                      'finance.statements.documentsLoaded',
-                      isPl ? 'Dokumenty załadowane do systemu' : 'Documents loaded into the system'
-                    )}
+                    {t('finance.statements.documentsLoaded', 'Documents loaded into the system')}
                   </h4>
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -905,9 +891,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {t(
                   'finance.statements.documentsLoadedHint',
-                  isPl
-                    ? 'To jest miejsce ładowania danych, ale też szybka kontrola, czy w systemie są właściwe sprawozdania i właściwe tabele.'
-                    : 'This is both the loading area and a quick check that the expected statements and tables are present in the system.'
+                  'This is both the loading area and a quick check that the expected statements and tables are present in the system.'
                 )}
               </div>
               <div className="mt-4 space-y-2">
@@ -948,8 +932,8 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                         </div>
                         <span className="text-xs font-medium text-blue-600 dark:text-blue-300">
                           {isCurrent
-                            ? t('finance.statements.currentDocument', isPl ? 'Aktualny' : 'Current')
-                            : t('finance.statements.openDocument', isPl ? 'Otwórz' : 'Open')}
+                            ? t('finance.statements.currentDocument', 'Current')
+                            : t('finance.statements.openDocument', 'Open')}
                         </span>
                       </div>
                     </button>
@@ -959,9 +943,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   <div className="text-sm text-slate-600">
                     {t(
                       'finance.statements.noRelatedDocuments',
-                      isPl
-                        ? 'Brak załadowanych dokumentów do porównania'
-                        : 'No loaded documents to compare yet'
+                      'No loaded documents to compare yet'
                     )}
                   </div>
                 )}
