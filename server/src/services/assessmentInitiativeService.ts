@@ -259,7 +259,8 @@ export function buildInitiativeEvidenceContract(
   initiative: GeneratedInitiative
 ): EvidenceContract {
   const axisRef = (initiative.relatedAxis || initiative.relatedDimension || '').trim();
-  const axisKnown = axisRef.length > 0 && Object.prototype.hasOwnProperty.call(scoreSummary, axisRef);
+  const axisKnown =
+    axisRef.length > 0 && Object.prototype.hasOwnProperty.call(scoreSummary, axisRef);
 
   const sources: EvidenceContractSource[] = [
     {
@@ -307,7 +308,9 @@ export function buildInitiativeEvidenceContract(
   const confidence = deriveConfidence({
     sourceCount: sources.length,
     unresolvedGaps:
-      (axisRef ? 0 : 1) + (confidenceAvg > 0 && confidenceAvg < 3 ? 1 : 0) + (axisRef && !axisKnown ? 1 : 0),
+      (axisRef ? 0 : 1) +
+      (confidenceAvg > 0 && confidenceAvg < 3 ? 1 : 0) +
+      (axisRef && !axisKnown ? 1 : 0),
     qualityScore: completion > 0 ? completion : undefined,
   });
 

@@ -12,9 +12,9 @@ import logger from '../utils/Logger.js';
 import { materializePlannedVisual } from './ai/deckVisualsService.js';
 import {
   buildContextPack,
+  type ContextPack,
   getContextPackSnapshot,
   saveContextPackSnapshot,
-  type ContextPack,
 } from './contextPackBuilder.js';
 import {
   contentLeaksTemplateInventory,
@@ -203,7 +203,11 @@ export function buildDeckEvidenceContract(
     .map((r) => ({ type: r.artifact_type, ref: r.artifact_id, title: r.artifact_name }));
 
   const risks: string[] = [];
-  const degradedReadiness = new Set(['insufficient_evidence', 'missing_sales_data', 'policy_blocked']);
+  const degradedReadiness = new Set([
+    'insufficient_evidence',
+    'missing_sales_data',
+    'policy_blocked',
+  ]);
   const degradedSources = sourceRefs.filter((r) => degradedReadiness.has(r.readiness));
   degradedSources.forEach((r) =>
     risks.push(`Źródło "${r.artifact_name}" ma status ${r.readiness} — dane niepełne/zablokowane.`)

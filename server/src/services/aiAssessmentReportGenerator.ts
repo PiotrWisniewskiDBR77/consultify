@@ -339,7 +339,9 @@ export const aiAssessmentReportGenerator = {
         mode: commentary.mode,
         extraRisks:
           axesWithoutBenchmark > 0
-            ? [`${axesWithoutBenchmark}/${scores.length} osi bez danych benchmarkowych — porównanie częściowe.`]
+            ? [
+                `${axesWithoutBenchmark}/${scores.length} osi bez danych benchmarkowych — porównanie częściowe.`,
+              ]
             : [],
         extraUnresolvedGaps: axesWithoutBenchmark,
       });
@@ -415,7 +417,13 @@ export const aiAssessmentReportGenerator = {
       // (nie wszystkie ocenione osie — plan opiera się wyłącznie na lukach).
       const evidence = buildScoreBasedEvidenceContract(
         assessment,
-        gapAnalysis.map((g) => ({ axis: g.axis, name: g.axisName, actual: g.currentScore, target: g.targetScore, gap: g.gap })),
+        gapAnalysis.map((g) => ({
+          axis: g.axis,
+          name: g.axisName,
+          actual: g.currentScore,
+          target: g.targetScore,
+          gap: g.gap,
+        })),
         {
           mode: initiativeResult.mode,
           extraToVerify:

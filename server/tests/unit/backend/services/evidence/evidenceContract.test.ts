@@ -17,16 +17,16 @@ import {
 } from '../../../../../src/services/ai/runtimeCitationVerification.js';
 import { buildScoreBasedEvidenceContract } from '../../../../../src/services/aiAssessmentReportGenerator.js';
 import {
-  buildInitiativeEvidenceContract,
   type AssessmentRow,
+  buildInitiativeEvidenceContract,
   type GeneratedInitiative,
 } from '../../../../../src/services/assessmentInitiativeService.js';
+import type { ContextPack } from '../../../../../src/services/contextPackBuilder.js';
 import { buildDocumentEvidenceContract } from '../../../../../src/services/documentStudio/documentContentGenerator.js';
 import type {
   DocumentSection,
   DocumentSourceRef,
 } from '../../../../../src/services/documentStudio/documentStudioTypes.js';
-import type { ContextPack } from '../../../../../src/services/contextPackBuilder.js';
 import {
   deriveConfidence,
   emptyEvidenceContract,
@@ -413,9 +413,7 @@ describe('HP-16 serwis #3 (AssessmentInitiativeService) zwraca wypełniony Evide
 
   it('relatedAxis wskazuje na klucz NIEobecny w score_summary → toVerify sygnalizuje rozbieżność', () => {
     const contract = buildInitiativeEvidenceContract(baseAssessment, { otherAxis: {} }, initiative);
-    expect(
-      contract.toVerify.some((v) => v.includes('nie występuje w wynikach oceny'))
-    ).toBe(true);
+    expect(contract.toVerify.some((v) => v.includes('nie występuje w wynikach oceny'))).toBe(true);
   });
 
   it('ocena niekompletna (completion_percent < 40) → confidence low (sufit jakości, bramka dowodowa)', () => {
@@ -493,9 +491,30 @@ describe('HP-16 serwis #5 (presentationGeneratorService / Deck) zwraca wypełnio
 
   it('3 źródła ready + confidence_score wysoki + brak braków → high', () => {
     const sourceRefs = [
-      { artifact_id: 'a1', artifact_type: 'kpi_roi', artifact_name: 'KPI', confidence: 1, readiness: 'ready', lineage: null },
-      { artifact_id: 'a2', artifact_type: 'raid', artifact_name: 'RAID', confidence: 1, readiness: 'ready', lineage: null },
-      { artifact_id: 'a3', artifact_type: 'assessment', artifact_name: 'Assessment', confidence: 1, readiness: 'ready', lineage: null },
+      {
+        artifact_id: 'a1',
+        artifact_type: 'kpi_roi',
+        artifact_name: 'KPI',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a2',
+        artifact_type: 'raid',
+        artifact_name: 'RAID',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a3',
+        artifact_type: 'assessment',
+        artifact_name: 'Assessment',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
     ];
     const contract = buildDeckEvidenceContract(sourceRefs, contextPack(1.0), {
       missingInputs: [],
@@ -508,9 +527,30 @@ describe('HP-16 serwis #5 (presentationGeneratorService / Deck) zwraca wypełnio
 
   it('źródło insufficient_evidence → ryzyko jawne + luka blokuje high', () => {
     const sourceRefs = [
-      { artifact_id: 'a1', artifact_type: 'kpi_roi', artifact_name: 'KPI', confidence: 1, readiness: 'ready', lineage: null },
-      { artifact_id: 'a2', artifact_type: 'raid', artifact_name: 'RAID', confidence: 0, readiness: 'insufficient_evidence', lineage: null },
-      { artifact_id: 'a3', artifact_type: 'assessment', artifact_name: 'Assessment', confidence: 1, readiness: 'ready', lineage: null },
+      {
+        artifact_id: 'a1',
+        artifact_type: 'kpi_roi',
+        artifact_name: 'KPI',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a2',
+        artifact_type: 'raid',
+        artifact_name: 'RAID',
+        confidence: 0,
+        readiness: 'insufficient_evidence',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a3',
+        artifact_type: 'assessment',
+        artifact_name: 'Assessment',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
     ];
     const contract = buildDeckEvidenceContract(sourceRefs, contextPack(0.8), {
       missingInputs: [],
@@ -522,7 +562,16 @@ describe('HP-16 serwis #5 (presentationGeneratorService / Deck) zwraca wypełnio
 
   it('sourcePackPreflight.missingInputs → toVerify jawny', () => {
     const contract = buildDeckEvidenceContract(
-      [{ artifact_id: 'a1', artifact_type: 'kpi_roi', artifact_name: 'KPI', confidence: 1, readiness: 'ready', lineage: null }],
+      [
+        {
+          artifact_id: 'a1',
+          artifact_type: 'kpi_roi',
+          artifact_name: 'KPI',
+          confidence: 1,
+          readiness: 'ready',
+          lineage: null,
+        },
+      ],
       contextPack(0.9),
       { missingInputs: ['financial_analysis'], warnings: [] }
     );
@@ -551,7 +600,12 @@ describe('HP-16 serwis #6 (documentContentGenerator / Word) zwraca wypełniony E
       level: 1,
       title: 'Executive Summary',
       blocks: [
-        { blockId: 'b1', type: 'paragraph', content: { text: 'Real content' }, isAssumption: false },
+        {
+          blockId: 'b1',
+          type: 'paragraph',
+          content: { text: 'Real content' },
+          isAssumption: false,
+        },
       ],
     },
   ];
@@ -562,9 +616,7 @@ describe('HP-16 serwis #6 (documentContentGenerator / Word) zwraca wypełniony E
       orderIndex: 0,
       level: 1,
       title: 'Risks',
-      blocks: [
-        { blockId: 'b1', type: 'risk_table', content: {}, isAssumption: true },
-      ],
+      blocks: [{ blockId: 'b1', type: 'risk_table', content: {}, isAssumption: true }],
     },
   ];
 
