@@ -27460,6 +27460,50 @@
           "description": "Generate content, review, and submit"
         }
       }
+    },
+    "outlineProposalStep": {
+      "failedToFetchOutlineProposal": "Failed to fetch outline proposal.",
+      "analyzingYourReportDefinition": "Analyzing your report definition...",
+      "retry": "Retry",
+      "aiOutlineProposal": "AI Outline Proposal",
+      "reviewAndCustomizeTheProposedReport": "Review and customize the proposed report sections",
+      "required": "Required",
+      "requiredSection": "Required section",
+      "removeSection": "Remove section",
+      "sectionTitle": "Section title",
+      "briefDescriptionOptional": "Brief description (optional)",
+      "add": "Add",
+      "cancel": "Cancel",
+      "addSection": "Add section",
+      "acceptOutline": "Accept Outline"
+    },
+    "reportsComposer": {
+      "invocationProfiles": "Invocation Profiles",
+      "profilesDefineAvailableBlocksTemplatesAnd": "Profiles define available blocks, templates, and settings for different contexts",
+      "matrix": "Matrix",
+      "customSections": "Custom sections",
+      "sharing": "Sharing",
+      "noProfilesDefined": "No profiles defined",
+      "systemProfiles": "System Profiles",
+      "profilesAreCurrentlyDefinedInSystem": "Profiles are currently defined in system configuration. Custom profile creation will be available in a future version.",
+      "reportsComposer": "Reports Composer",
+      "manageReportBlocksAndTemplates": "Manage report blocks and templates",
+      "tab": {
+        "blocks": "Block Types",
+        "templates": "Templates"
+      }
+    },
+    "generateStep": {
+      "generatingReport": "Generating report...",
+      "complete": "complete",
+      "reportGenerated": "Report Generated!",
+      "youCanNowProceedToReview": "You can now proceed to review and edit the content",
+      "readyToGenerate": "Ready to Generate",
+      "generateReport": "Generate Report",
+      "reportSections": "Report Sections",
+      "regenerate": "Regenerate",
+      "youCanRegenerateIndividualSectionsAfter": "You can regenerate individual sections after the report is generated. In the next step, you'll be able to edit content and add additional AI guidance.",
+      "aiWillGenerateForNSections": "AI will generate content for {{count}} report sections"
     }
   }
 }

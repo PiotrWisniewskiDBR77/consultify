@@ -35,7 +35,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
   onGenerate,
   onRegenerateSection,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [regeneratingKey, setRegeneratingKey] = useState<string | null>(null);
@@ -129,10 +129,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
 
             <div>
               <div className="text-xl font-semibold text-c-text">
-                {isPl ? 'Generowanie raportu...' : 'Generating report...'}
+                {t('reportBuilder.generateStep.generatingReport', 'Generating report...')}
               </div>
               <div className="text-sm text-c-text-secondary mt-1">
-                {Math.round(progress)}% {isPl ? 'ukończone' : 'complete'}
+                {Math.round(progress)}% {t('reportBuilder.generateStep.complete', 'complete')}
               </div>
             </div>
           </div>
@@ -143,12 +143,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
             </div>
             <div>
               <div className="text-xl font-semibold text-c-text">
-                {isPl ? 'Raport wygenerowany!' : 'Report Generated!'}
+                {t('reportBuilder.generateStep.reportGenerated', 'Report Generated!')}
               </div>
               <div className="text-sm text-c-text-secondary mt-1">
-                {isPl
-                  ? 'Możesz teraz przejść do edycji i przeglądu treści'
-                  : 'You can now proceed to review and edit the content'}
+                {t('reportBuilder.generateStep.youCanNowProceedToReview', 'You can now proceed to review and edit the content')}
               </div>
             </div>
           </div>
@@ -159,12 +157,13 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
             </div>
             <div>
               <div className="text-xl font-semibold text-c-text">
-                {isPl ? 'Gotowy do generowania' : 'Ready to Generate'}
+                {t('reportBuilder.generateStep.readyToGenerate', 'Ready to Generate')}
               </div>
               <div className="text-sm text-c-text-secondary mt-1">
-                {isPl
-                  ? `AI wygeneruje treść dla ${stats.total} sekcji raportu`
-                  : `AI will generate content for ${stats.total} report sections`}
+                {t('reportBuilder.generateStep.aiWillGenerateForNSections', {
+                  defaultValue: `AI will generate content for ${stats.total} report sections`,
+                  count: stats.total,
+                })}
               </div>
             </div>
 
@@ -173,7 +172,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
               className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-c-text rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25"
             >
               <Sparkles className="w-5 h-5" />
-              {isPl ? 'Generuj Raport' : 'Generate Report'}
+              {t('reportBuilder.generateStep.generateReport', 'Generate Report')}
             </button>
           </div>
         )}
@@ -182,7 +181,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
       {/* Sections Status List */}
       <div className="border-t border-c-border-subtle pt-6">
         <h3 className="font-medium text-c-text mb-4">
-          {isPl ? 'Sekcje Raportu' : 'Report Sections'}
+          {t('reportBuilder.generateStep.reportSections', 'Report Sections')}
         </h3>
 
         <div className="space-y-2">
@@ -212,7 +211,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
                   className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  {isPl ? 'Regeneruj' : 'Regenerate'}
+                  {t('reportBuilder.generateStep.regenerate', 'Regenerate')}
                 </button>
               )}
             </div>
@@ -224,9 +223,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
       <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
         <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
         <div className="text-sm text-amber-800 dark:text-amber-200">
-          {isPl
-            ? 'Możesz regenerować pojedyncze sekcje po wygenerowaniu raportu. W następnym kroku będziesz mógł edytować treść i dodać dodatkowe wskazówki dla AI.'
-            : "You can regenerate individual sections after the report is generated. In the next step, you'll be able to edit content and add additional AI guidance."}
+          {t('reportBuilder.generateStep.youCanRegenerateIndividualSectionsAfter', 'You can regenerate individual sections after the report is generated. In the next step, you\'ll be able to edit content and add additional AI guidance.')}
         </div>
       </div>
     </div>

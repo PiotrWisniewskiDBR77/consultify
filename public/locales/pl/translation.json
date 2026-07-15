@@ -28536,6 +28536,50 @@
           "description": "Wygeneruj treść, przejrzyj i wyślij"
         }
       }
+    },
+    "outlineProposalStep": {
+      "failedToFetchOutlineProposal": "Nie udało się pobrać propozycji struktury.",
+      "analyzingYourReportDefinition": "Analizuję definicję raportu...",
+      "retry": "Spróbuj ponownie",
+      "aiOutlineProposal": "Propozycja struktury AI",
+      "reviewAndCustomizeTheProposedReport": "Przejrzyj i dostosuj proponowane sekcje raportu",
+      "required": "Wymagana",
+      "requiredSection": "Sekcja wymagana",
+      "removeSection": "Usuń sekcję",
+      "sectionTitle": "Tytuł sekcji",
+      "briefDescriptionOptional": "Krótki opis (opcjonalnie)",
+      "add": "Dodaj",
+      "cancel": "Anuluj",
+      "addSection": "Dodaj sekcję",
+      "acceptOutline": "Zaakceptuj strukturę"
+    },
+    "reportsComposer": {
+      "invocationProfiles": "Profile Wywołania",
+      "profilesDefineAvailableBlocksTemplatesAnd": "Profile definiują dostępne bloki, szablony i ustawienia dla różnych kontekstów",
+      "matrix": "Macierz",
+      "customSections": "Własne sekcje",
+      "sharing": "Udostępnianie",
+      "noProfilesDefined": "Brak zdefiniowanych profili",
+      "systemProfiles": "Profile systemowe",
+      "profilesAreCurrentlyDefinedInSystem": "Profile są obecnie zdefiniowane w konfiguracji systemu. W przyszłej wersji będzie możliwe tworzenie własnych profili.",
+      "reportsComposer": "Kompozytor Raportów",
+      "manageReportBlocksAndTemplates": "Zarządzaj blokami i szablonami raportów",
+      "tab": {
+        "blocks": "Typy Bloków",
+        "templates": "Szablony"
+      }
+    },
+    "generateStep": {
+      "generatingReport": "Generowanie raportu...",
+      "complete": "ukończone",
+      "reportGenerated": "Raport wygenerowany!",
+      "youCanNowProceedToReview": "Możesz teraz przejść do edycji i przeglądu treści",
+      "readyToGenerate": "Gotowy do generowania",
+      "generateReport": "Generuj Raport",
+      "reportSections": "Sekcje Raportu",
+      "regenerate": "Regeneruj",
+      "youCanRegenerateIndividualSectionsAfter": "Możesz regenerować pojedyncze sekcje po wygenerowaniu raportu. W następnym kroku będziesz mógł edytować treść i dodać dodatkowe wskazówki dla AI.",
+      "aiWillGenerateForNSections": "AI wygeneruje treść dla {{count}} sekcji raportu"
     }
   }
 }
