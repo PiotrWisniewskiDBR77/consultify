@@ -1,7 +1,7 @@
 /**
  * M03 Inbox (flat mode) → StandardTable grouped-rows (kanon TRIADA §27).
  *
- * `InboxContent`'s `flat` view mode renders a bespoke `<table>` with
+ * `InboxContent`'s `flat` view mode renders a bespoke HTML table with
  * dedup-group expand/collapse (see `renderRow`/`renderFlatView`, `groupItems`,
  * `expandedGroups`) — a mechanic `StandardTable`/`FilterableTable` never had
  * to support before this migration. The new render flattens each dedup group
@@ -12,7 +12,7 @@
  * Wizualnie NOWY (natywny Settings2 popover, natywne lejki filtrów per
  * kolumna, StandardTable's own kebab/selection chrome) → domyślnie OFF
  * (reguła #7/#9: nic wizualnie nowego nie idzie na żywo bez zrzutu i akceptu
- * Piotra). Legacy bespoke `<table>` (renderFlatView) remains the default
+ * Piotra). Legacy bespoke table markup (renderFlatView) remains the default
  * render — zero change to data/grouping/keyboard-nav logic underneath;
  * flipping this flag ON only swaps the flat-mode render target. Sections
  * (card grid) view is UNTOUCHED regardless of this flag.
