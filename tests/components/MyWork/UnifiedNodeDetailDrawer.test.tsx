@@ -7,7 +7,7 @@
  * plus the shared core (status, notes/depth fields, tags, evidence) and the
  * flag-OFF contract (each consumer keeps rendering its legacy drawer).
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -18,6 +18,10 @@ const getIdeaAISuggestions = vi.fn().mockResolvedValue({ suggestions: [] });
 const getObjectArtifacts = vi.fn().mockResolvedValue({ artifactLinks: [] });
 const expandMyIdeaMap = vi.fn().mockResolvedValue({ proposal: { add: { nodes: [] } } });
 const detachArtifactFromObject = vi.fn().mockResolvedValue({});
+const addNodeComment = vi.fn().mockResolvedValue({
+  comment: { id: 'cmt-1', author: 'Test User', text: 'nice', createdAt: '2026-07-15T00:00:00.000Z' },
+});
+const getOrganizationMembers = vi.fn().mockResolvedValue([]);
 
 vi.mock('@/services/api', () => ({
   Api: {
@@ -26,8 +30,22 @@ vi.mock('@/services/api', () => ({
     getObjectArtifacts: (...a: any[]) => getObjectArtifacts(...a),
     expandMyIdeaMap: (...a: any[]) => expandMyIdeaMap(...a),
     detachArtifactFromObject: (...a: any[]) => detachArtifactFromObject(...a),
+    addNodeComment: (...a: any[]) => addNodeComment(...a),
   },
   getMapVersionFromPayload: () => null,
+}));
+
+vi.mock('@/services/api/organizations.api', () => ({
+  OrganizationApi: {
+    getOrganizationMembers: (...a: any[]) => getOrganizationMembers(...a),
+  },
+}));
+
+vi.mock('@/store/useAppStore', () => ({
+  useAppStore: (selector?: any) => {
+    const state = { currentOrganization: { id: 'org-1', name: 'Acme' } };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock('@/services/ideaAIGenerator', () => ({
@@ -225,16 +243,25 @@ describe('UnifiedNodeDetailDrawer — idea variant capabilities', () => {
     expect(getMyIdeaAISuggestions).not.toHaveBeenCalled();
   });
 
-  it('adding a comment calls onUpdateNode with comments patch', () => {
+  it('adding a comment calls the real Api.addNodeComment (mention-notify endpoint) and patches with the server comment', async () => {
     const onUpdateNode = vi.fn();
     render(<UnifiedNodeDetailDrawer {...ideaProps({ onUpdateNode })} />);
-    const box = screen.getByPlaceholderText('ideas.mindmap.addComment') as HTMLTextAreaElement;
+    const box = screen.getByPlaceholderText(
+      'ideas.mindmap.addComment'
+    ) as HTMLTextAreaElement;
     fireEvent.change(box, { target: { value: 'nice' } });
     fireEvent.keyDown(box, { key: 'Enter', shiftKey: false });
-    expect(onUpdateNode).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(addNodeComment).toHaveBeenCalledWith('idea-1', 'n1', 'nice', []));
+    await waitFor(() => expect(onUpdateNode).toHaveBeenCalledTimes(1));
     const [, patch] = onUpdateNode.mock.calls[0];
     expect(patch.comments).toHaveLength(1);
-    expect(patch.comments[0].text).toBe('nice');
+    expect(patch.comments[0]).toEqual({
+      id: 'cmt-1',
+      userName: 'Test User',
+      text: 'nice',
+      createdAt: '2026-07-15T00:00:00.000Z',
+    });
   });
 
   it('changing priority slider fires onUpdateNode', () => {

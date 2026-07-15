@@ -24,6 +24,7 @@
 import {
   AlertTriangle,
   ArrowRight,
+  AtSign,
   Bot,
   ChevronRight,
   ExternalLink,
@@ -60,6 +61,11 @@ import { getArtifactLabel } from '@/utils/artifactLinks';
 
 import TeresaMark from '../../shared/TeresaMark';
 import type { AIProposalBatch, CanvasToolType } from '../ideaSelectionTypes';
+import {
+  insertMentionIntoText,
+  renderMentionText,
+  useMentionAutocomplete,
+} from '../mentionAutocomplete';
 import { AddEvidenceModal } from './AddEvidenceModal';
 
 // ── Types (superset) ───────────────────────────────────────────────────────────
@@ -243,6 +249,7 @@ const MINDMAP_STATUS_ORDER: UnifiedNodeStatus[] = [
 ];
 const IDEA_STATUS_ORDER: UnifiedNodeStatus[] = ['idea', 'exploring', 'ready', 'rejected'];
 
+// mindmap variant (NodeDetailDrawer parity) — 10 options, myWorkMindmap.semanticOption.* keys.
 const SEMANTIC_TYPE_OPTIONS = [
   { value: '', labelEn: '— none —' },
   { value: 'topic', labelEn: 'Topic' },
@@ -255,6 +262,23 @@ const SEMANTIC_TYPE_OPTIONS = [
   { value: 'insight', labelEn: 'Insight' },
   { value: 'question', labelEn: 'Question' },
   { value: 'evidence', labelEn: 'Evidence' },
+] as const;
+
+// idea variant (IdeaNodeDetailDrawer parity) — distinct 9-option set,
+// myWorkMindmap.ideaSemanticOption.* keys. NOT interchangeable with the
+// mindmap set above — the two legacy drawers used genuinely different
+// vocabularies, so re-using SEMANTIC_TYPE_OPTIONS here would silently drop
+// 'decision' / 'opportunity' / 'customer' / 'blocker' node data.
+const IDEA_SEMANTIC_TYPE_OPTIONS = [
+  { value: 'hypothesis', labelEn: 'Hypothesis' },
+  { value: 'decision', labelEn: 'Decision' },
+  { value: 'risk', labelEn: 'Risk' },
+  { value: 'opportunity', labelEn: 'Opportunity' },
+  { value: 'action', labelEn: 'Action' },
+  { value: 'evidence', labelEn: 'Evidence' },
+  { value: 'insight', labelEn: 'Insight' },
+  { value: 'customer', labelEn: 'Customer' },
+  { value: 'blocker', labelEn: 'Blocker' },
 ] as const;
 
 // Categorical tag chips — c-tag-* identity ramp (neutral surface + hue border/icon).
@@ -338,11 +362,25 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
   const [editingDesc, setEditingDesc] = useState(false);
   const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
   const [aiContext, setAiContext] = useState<AIContextResult | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [artifactLinksState, setArtifactLinksState] = useState<any[]>([]);
   const [artifactLoading, setArtifactLoading] = useState(false);
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
+
+  // idea: @mention org-member autocomplete (parity with IdeaNodeDetailDrawer /
+  // NodeCommentThread — B2b). Inactive (no member fetch) outside the idea
+  // variant since mindmap comments don't exist.
+  const {
+    mentionPool,
+    mentionQuery,
+    mentionSuggestions,
+    resolveMentionIds,
+    handleMentionInput,
+    closeMentionMenu,
+  } = useMentionAutocomplete(isIdea && open);
   const [newEvidenceTitle, setNewEvidenceTitle] = useState('');
   const [newEvidenceUrl, setNewEvidenceUrl] = useState('');
 
@@ -692,17 +730,49 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
     }
   }, []);
 
-  const handleAddComment = useCallback(() => {
-    if (!nodeData || !newComment.trim()) return;
-    const comment: UnifiedNodeComment = {
-      id: `cmt-${Date.now()}`,
-      text: newComment.trim(),
-      createdAt: new Date().toISOString(),
-      userName: t('ideas.mindmap.me', 'Me'),
-    };
-    onUpdateNode(nodeData.nodeId, { comments: [...(nodeData.comments || []), comment] });
-    setNewComment('');
-  }, [isPl, newComment, nodeData, onUpdateNode]);
+  // idea: server-persisted comment (parity with IdeaNodeDetailDrawer). Resolves
+  // @mentions to org-member user ids and calls the real node-comments endpoint
+  // so authorship/mentions/notifications match the legacy drawer — a purely
+  // local onUpdateNode patch (no Api.addNodeComment call) would silently drop
+  // mention notifications and stamp a fake "Me" author instead of the server's.
+  const handleAddComment = useCallback(async () => {
+    if (!nodeData) return;
+    const trimmed = newComment.trim();
+    if (!trimmed || commentSubmitting) return;
+
+    const mentions = resolveMentionIds(trimmed);
+    closeMentionMenu();
+    setCommentSubmitting(true);
+
+    try {
+      const res = await Api.addNodeComment(ideaId, nodeData.nodeId, trimmed, mentions);
+      if (res?.comment) {
+        const comment: UnifiedNodeComment = {
+          id: res.comment.id,
+          userName: res.comment.author,
+          text: res.comment.text,
+          createdAt: res.comment.createdAt,
+        };
+        onUpdateNode(nodeData.nodeId, { comments: [...(nodeData.comments || []), comment] });
+        setNewComment('');
+        commentInputRef.current?.focus();
+        return;
+      }
+    } catch {
+      toast.error(t('myWorkIdeas.nodeDetailDrawer.failedAddComment', 'Failed to add comment'));
+    } finally {
+      setCommentSubmitting(false);
+    }
+  }, [
+    closeMentionMenu,
+    commentSubmitting,
+    ideaId,
+    newComment,
+    nodeData,
+    onUpdateNode,
+    resolveMentionIds,
+    t,
+  ]);
 
   const handleAIExpandIdea = useCallback(async () => {
     if (!onGenerateProposal || !nodeData) return;
@@ -784,6 +854,16 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
             )}
           </div>
           <div className="flex items-center gap-2 text-[10px] text-c-text-secondary dark:text-c-text-muted">
+            {/* idea: current-status pill in the header (NodeDetailDrawer parity —
+                mindmap shows status only via the Basic Info flow below; idea
+                additionally surfaces it here as a quick-glance chip). */}
+            {isIdea && (
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_CONFIG[status].color}`}
+              >
+                {t(STATUS_CONFIG[status].tkey, STATUS_CONFIG[status].labelEn)}
+              </span>
+            )}
             {nodeData.branchKey && (
               <span className="inline-flex items-center gap-1">
                 <GitBranch size={10} />
@@ -926,11 +1006,22 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   disabled={locked || (!isIdea && isProtected)}
                   className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus transition-all disabled:opacity-50"
                 >
-                  {SEMANTIC_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {t(`myWorkMindmap.semanticOption.${opt.value || 'none'}`, opt.labelEn)}
-                    </option>
-                  ))}
+                  {isIdea ? (
+                    <>
+                      <option value="">{t('myWorkIdeas.nodeDetailDrawer.none', 'None')}</option>
+                      {IDEA_SEMANTIC_TYPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {t(`myWorkMindmap.ideaSemanticOption.${opt.value}`, opt.labelEn)}
+                        </option>
+                      ))}
+                    </>
+                  ) : (
+                    SEMANTIC_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {t(`myWorkMindmap.semanticOption.${opt.value || 'none'}`, opt.labelEn)}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
             </div>
@@ -984,6 +1075,22 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
           <ToggleBlock
             title={t('ideas.mindmap.notesContext', 'Notes & Context')}
             icon={<StickyNote size={14} />}
+            // mindmap-only badge (NodeDetailDrawer parity) — idea variant never
+            // had a combined-section counter for these depth fields.
+            badge={
+              !isIdea
+                ? (() => {
+                    const filled = [
+                      notes,
+                      nodeData.context,
+                      nodeData.goal,
+                      nodeData.rationale,
+                      nodeData.riskNote,
+                    ].filter(Boolean).length;
+                    return filled > 0 ? String(filled) : undefined;
+                  })()
+                : undefined
+            }
             defaultOpen
           >
             <div className="space-y-2 mt-2">
@@ -1222,6 +1329,12 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     {isClickable && (
                       <ExternalLink size={11} className="text-c-text-secondary shrink-0" />
                     )}
+                    {/* idea: per-item type tag (IdeaNodeDetailDrawer parity) */}
+                    {isIdea && (
+                      <span className="text-[8px] font-bold uppercase text-c-text-secondary shrink-0">
+                        {item.type}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -1288,6 +1401,12 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       {t('ideas.mindmap.cancel', 'Cancel')}
                     </button>
                   </div>
+                </div>
+              )}
+              {/* idea: empty-state hint (IdeaNodeDetailDrawer parity) */}
+              {isIdea && (nodeData.evidenceLinks || []).length === 0 && !showEvidenceForm && (
+                <div className="text-[10px] text-c-text-secondary py-1">
+                  {t('ideas.mindmap.noEvidenceYet', 'No evidence yet')}
                 </div>
               )}
             </div>
@@ -1529,28 +1648,87 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                         {new Date(cmt.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="text-[11px] text-c-text-secondary dark:text-c-text leading-relaxed">
-                      {cmt.text}
+                    <div className="text-[11px] text-c-text-secondary dark:text-c-text leading-relaxed whitespace-pre-wrap">
+                      {renderMentionText(cmt.text, mentionPool)}
                     </div>
                   </div>
                 ))}
                 <div className="flex items-start gap-1.5">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAddComment();
-                      }
-                    }}
-                    placeholder={t('ideas.mindmap.addComment', 'Add comment...')}
-                    className="flex-1 text-[11px] bg-c-surface-raised dark:bg-c-surface rounded-lg px-2.5 py-2 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted resize-none"
-                    rows={2}
-                  />
+                  <div className="flex-1 relative">
+                    {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                      <div
+                        role="listbox"
+                        aria-label={t(
+                          'myWorkIdeas.nodeDetailDrawer.mentionTeammate',
+                          'Mention a teammate'
+                        )}
+                        className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
+                      >
+                        {mentionSuggestions.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            role="option"
+                            className="w-full text-left px-3 py-2 text-[11px] hover:bg-c-surface dark:hover:bg-c-surface-raised flex items-center gap-2"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              const ta = commentInputRef.current;
+                              const body = newComment || '';
+                              const caretPos = ta?.selectionStart ?? body.length;
+                              const result = insertMentionIntoText(body, caretPos, user);
+                              if (!result) return;
+                              setNewComment(result.text);
+                              closeMentionMenu();
+                              requestAnimationFrame(() => {
+                                if (ta) {
+                                  ta.focus();
+                                  ta.setSelectionRange(result.caret, result.caret);
+                                }
+                              });
+                            }}
+                          >
+                            <div className="h-6 w-6 rounded-full bg-c-surface dark:bg-c-surface-raised text-c-text-secondary flex items-center justify-center text-[9px] font-bold">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-c-text-secondary dark:text-c-text truncate">
+                              {user.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <textarea
+                      ref={commentInputRef}
+                      value={newComment}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewComment(val);
+                        const caret = e.target.selectionStart ?? val.length;
+                        handleMentionInput(val, caret);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape' && mentionQuery !== null) {
+                          e.preventDefault();
+                          closeMentionMenu();
+                          return;
+                        }
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAddComment();
+                        }
+                      }}
+                      placeholder={t('ideas.mindmap.addComment', 'Add comment... (@mention)')}
+                      className="w-full text-[11px] bg-c-surface-raised dark:bg-c-surface rounded-lg pl-2.5 pr-6 py-2 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted resize-none"
+                      rows={2}
+                    />
+                    <AtSign
+                      size={10}
+                      className="absolute right-2 bottom-2.5 text-c-text-secondary"
+                    />
+                  </div>
                   <button
                     onClick={handleAddComment}
-                    disabled={!newComment.trim()}
+                    disabled={!newComment.trim() || commentSubmitting}
                     className="p-2 rounded-lg text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-30"
                   >
                     <ArrowRight size={14} />
