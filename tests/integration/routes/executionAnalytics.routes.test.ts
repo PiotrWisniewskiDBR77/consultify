@@ -208,4 +208,109 @@ describe('executionAnalytics routes', () => {
     expect(cap.status).toBe(200);
     expect(cap.body.utilization).toHaveLength(0);
   });
+
+  // M14-wire (2026-07-15): capacitySignalService — severity-graded signals
+  it('POST /capacity/signals returns {signals, portfolio} and grades overload severity', async () => {
+    authed();
+    const app = createApp();
+
+    const res = await request(app)
+      .post('/api/execution-analytics/capacity/signals')
+      .send({
+        allocations: [
+          { resourceId: 'r1', initiativeId: 'i1', allocatedFte: 2.0, periodStart: '2026-01-01', periodEnd: '2026-03-31' },
+          { resourceId: 'r2', initiativeId: 'i1', allocatedFte: 0.1, periodStart: '2026-01-01', periodEnd: '2026-03-31' },
+        ],
+        capacities: [
+          { resourceId: 'r1', availableFte: 1.0 },
+          { resourceId: 'r2', availableFte: 1.0 },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.signals)).toBe(true);
+    // r1: 200% util → CRITICAL overload; r2: 10% util → underutilized (LOW)
+    const overload = res.body.signals.find((s: any) => s.resourceId === 'r1');
+    expect(overload.type).toBe('CAPACITY_OVERLOAD');
+    expect(overload.severity).toBe('CRITICAL');
+    const under = res.body.signals.find((s: any) => s.resourceId === 'r2');
+    expect(under.type).toBe('CAPACITY_UNDERUTILIZED');
+    expect(res.body.portfolio.balance).toBe('critical');
+    expect(res.body.portfolio.overloadedCount).toBe(1);
+  });
+
+  it('POST /capacity/signals returns healthy portfolio + no signals on empty input', async () => {
+    authed();
+    const app = createApp();
+
+    const res = await request(app).post('/api/execution-analytics/capacity/signals').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.signals).toHaveLength(0);
+    expect(res.body.portfolio.balance).toBe('healthy');
+  });
+
+  it('returns 401 for /capacity/signals without an organization', async () => {
+    authState.userId = 'u-1';
+    authState.organizationId = null;
+    const app = createApp();
+
+    const res = await request(app).post('/api/execution-analytics/capacity/signals').send({});
+    expect(res.status).toBe(401);
+  });
+
+  // M14-wire (2026-07-15): peopleChangeReadinessService — ADKAR roll-up
+  it('POST /readiness/analyze rolls up adoption signals into an ADKAR result', async () => {
+    authed();
+    const app = createApp();
+
+    const res = await request(app).post('/api/execution-analytics/readiness/analyze').send({
+      communicationCoveragePct: 90,
+      sentimentTrend: 'improving',
+      sentimentAvg: 0.8,
+      capabilityGapPct: 10,
+      reinforcementFollowups: 3,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.readiness).toHaveProperty('overall');
+    expect(res.body.readiness.overall).toBeGreaterThan(3);
+    expect(res.body.readiness.readiness).toBe('READY');
+    expect(res.body.laneProblem).toBeNull();
+  });
+
+  it('POST /readiness/analyze surfaces an AT_RISK lane problem on poor signals', async () => {
+    authed();
+    const app = createApp();
+
+    const res = await request(app).post('/api/execution-analytics/readiness/analyze').send({
+      communicationCoveragePct: 5,
+      sentimentTrend: 'declining',
+      sentimentAvg: 0.1,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.readiness.readiness).toBe('AT_RISK');
+    expect(res.body.laneProblem).not.toBeNull();
+    expect(res.body.laneProblem.severity).toBe('critical');
+  });
+
+  it('POST /readiness/analyze returns UNKNOWN + null problem for an empty body', async () => {
+    authed();
+    const app = createApp();
+
+    const res = await request(app).post('/api/execution-analytics/readiness/analyze').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.readiness.overall).toBeNull();
+    expect(res.body.readiness.readiness).toBe('UNKNOWN');
+    expect(res.body.laneProblem).toBeNull();
+  });
+
+  it('returns 401 for /readiness/analyze without an organization', async () => {
+    authState.userId = 'u-1';
+    authState.organizationId = null;
+    const app = createApp();
+
+    const res = await request(app).post('/api/execution-analytics/readiness/analyze').send({});
+    expect(res.status).toBe(401);
+  });
 });
