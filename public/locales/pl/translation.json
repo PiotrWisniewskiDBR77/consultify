@@ -9751,6 +9751,12 @@
     },
     "embeddedMatrix": {
       "moSuffix": "mies."
+    },
+    "reportHeader": {
+      "fullscreenEnterLabel": "Pełny ekran",
+      "fullscreenExitTooltip": "Zamknij pełny ekran",
+      "fullscreenExitShort": "Zamknij",
+      "approveButton": "Zatwierdź"
     }
   },
   "auth": {

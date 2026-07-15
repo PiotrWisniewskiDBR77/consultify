@@ -263,13 +263,9 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                 onClick={onFullscreen}
                 className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                 title={
-                  isPolish
-                    ? isFullscreen
-                      ? 'Zamknij pełny ekran'
-                      : 'Pełny ekran'
-                    : isFullscreen
-                      ? 'Exit fullscreen'
-                      : 'Fullscreen'
+                  isFullscreen
+                    ? t('reports.reportHeader.fullscreenExitTooltip', 'Exit fullscreen')
+                    : t('reports.reportHeader.fullscreenEnterLabel', 'Fullscreen')
                 }
               >
                 {isFullscreen ? (
@@ -278,13 +274,9 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                   <Maximize2 className="w-4 h-4" />
                 )}
                 <span className="hidden sm:inline">
-                  {isPolish
-                    ? isFullscreen
-                      ? 'Zamknij'
-                      : 'Pełny ekran'
-                    : isFullscreen
-                      ? 'Exit'
-                      : 'Fullscreen'}
+                  {isFullscreen
+                    ? t('reports.reportHeader.fullscreenExitShort', 'Exit')
+                    : t('reports.reportHeader.fullscreenEnterLabel', 'Fullscreen')}
                 </span>
               </button>
             )}
@@ -375,7 +367,9 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Lock className="w-4 h-4" />
-                <span className="hidden sm:inline">{isPolish ? 'Zatwierdź' : 'Approve'}</span>
+                <span className="hidden sm:inline">
+                  {t('reports.reportHeader.approveButton', 'Approve')}
+                </span>
               </button>
             )}
 

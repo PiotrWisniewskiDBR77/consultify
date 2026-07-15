@@ -10516,6 +10516,12 @@
     },
     "embeddedMatrix": {
       "moSuffix": "mo."
+    },
+    "reportHeader": {
+      "fullscreenEnterLabel": "Fullscreen",
+      "fullscreenExitTooltip": "Exit fullscreen",
+      "fullscreenExitShort": "Exit",
+      "approveButton": "Approve"
     }
   },
   "auth": {
