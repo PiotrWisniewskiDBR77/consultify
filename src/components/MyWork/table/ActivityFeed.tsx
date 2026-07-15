@@ -4,7 +4,7 @@
  * Groups events by time window (Today, Yesterday, This week, Earlier),
  * supports compact/expanded modes, and polls for real-time updates.
  */
-import { Activity, ChevronRight, Clock, Edit3, Plus, Trash2, X } from 'lucide-react';
+import { Activity, ChevronRight, Clock, Edit3, Lock, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -33,10 +33,13 @@ interface ActivityFeedProps {
   compact?: boolean;
   onEventClick?: (entityId: string) => void;
   /**
-   * When false (default), a legacy idea-table has no `tp_tables` row, so audit
-   * endpoints always 403 → the feed hides itself. The real gating body lives on
-   * `feat/tp-fe-fix-broken-buttons`; this optional prop is declared here so
-   * IdeaTableTool can pass it without a type error before that branch merges.
+   * Whether `tableId` is a real `tp_tables.id` row (table-platform mode).
+   *
+   * Legacy idea-tables (map/blob persistence, no table-platform row) have no
+   * `tp_tables` row, so the audit endpoint (`requireTableAccess` →
+   * `canAccessTable`) always rejects with 403. When `false`, we skip fetching
+   * entirely and show an explicit "not available" message instead of a silent
+   * empty/error state.
    */
   isPlatformTable?: boolean;
 }
@@ -141,8 +144,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   tableId,
   compact = false,
   onEventClick,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isPlatformTable: _isPlatformTable = false, // gating body merges in feat/tp-fe-fix-broken-buttons
+  isPlatformTable = false,
 }) => {
   const { i18n } = useTranslation();
   const isPl = !!i18n.language?.startsWith('pl');
@@ -153,7 +155,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const fetchEvents = useCallback(
     async (since?: string) => {
-      if (!tableId) return;
+      if (!tableId || !isPlatformTable) return;
       setLoading(true);
       try {
         let path = `/table-platform/tables/${tableId}/audit?limit=50`;
@@ -186,20 +188,20 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         setLoading(false);
       }
     },
-    [tableId]
+    [tableId, isPlatformTable]
   );
 
   useEffect(() => {
-    if (open && tableId) {
+    if (open && tableId && isPlatformTable) {
       fetchEvents();
     }
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [open, tableId]);
+  }, [open, tableId, isPlatformTable]);
 
   useEffect(() => {
-    if (!open || !tableId) return;
+    if (!open || !tableId || !isPlatformTable) return;
     pollRef.current = setInterval(() => {
       const latest = events[0]?.timestamp;
       fetchEvents(latest);
@@ -207,9 +209,43 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [open, tableId, events]);
+  }, [open, tableId, isPlatformTable, events]);
 
   if (!open) return null;
+
+  if (!isPlatformTable) {
+    return (
+      <div
+        className={`${compact ? 'w-64' : 'w-80'} border-l border-c-border-subtle bg-c-surface flex flex-col h-full overflow-hidden flex-shrink-0`}
+      >
+        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
+          <Activity size={14} className="text-c-text-muted" />
+          <span className="text-xs font-bold text-c-text flex-1">
+            {isPl ? 'Aktywność' : 'Activity'}
+          </span>
+          <button
+            onClick={onClose}
+            className="p-1 rounded text-c-text-secondary hover:text-c-text-secondary transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <EmptyState
+            variant="forbidden"
+            icon={Lock}
+            compact
+            title={isPl ? 'Niedostępne dla tej tabeli' : 'Not available for this table'}
+            description={
+              isPl
+                ? 'Historia aktywności jest dostępna tylko dla tabel platformowych.'
+                : 'Activity history is only available for platform tables.'
+            }
+          />
+        </div>
+      </div>
+    );
+  }
 
   const grouped = new Map<string, AuditEvent[]>();
   for (const ev of events) {

@@ -1221,7 +1221,7 @@ describe('P15 App Integration', () => {
   describe('ActivityFeed API path', () => {
     it('fetches from /api/table-platform/tables/:id/audit', async () => {
       apiGetMock.mockResolvedValueOnce({ events: [] });
-      render(<ActivityFeed open onClose={vi.fn()} tableId="tbl-audit" />);
+      render(<ActivityFeed open onClose={vi.fn()} tableId="tbl-audit" isPlatformTable />);
       await waitFor(() => expect(apiGetMock).toHaveBeenCalled());
       const path = String(apiGetMock.mock.calls[0]?.[0] ?? '');
       expect(path).toContain('/table-platform/tables/tbl-audit/audit');
