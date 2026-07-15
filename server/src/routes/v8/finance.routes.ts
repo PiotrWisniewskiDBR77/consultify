@@ -300,7 +300,7 @@ router.post(
         sourceStatementId: body.sourceStatementId,
         sourceStatementPackId: body.sourceStatementPackId,
       });
-      const model = await getModel(modelId);
+      const model = await getModel(modelId, organizationId);
       return res.status(201).json({
         data: { model: model ?? { id: modelId, name, start_date: startDate } },
         meta: financeMeta(),
@@ -324,7 +324,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -380,7 +380,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -405,7 +405,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -443,7 +443,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -474,7 +474,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -501,7 +501,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -527,7 +527,7 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -545,7 +545,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -616,7 +616,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -679,7 +679,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -710,7 +710,7 @@ router.post(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const sourceModel = await getModel(modelId);
+    const sourceModel = await getModel(modelId, organizationId);
     if (!sourceModel || String(sourceModel.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -759,7 +759,7 @@ router.post(
       }
     }
 
-    const newModel = await getModel(newModelId);
+    const newModel = await getModel(newModelId, organizationId);
     return res.status(201).json({
       data: { model: newModel ?? { id: newModelId } },
       meta: { version: 'v8' as const, contract: 'finance_runtime_write_v1' },
@@ -773,7 +773,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -798,7 +798,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -824,7 +824,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, organizationId);
     if (!model || String(model.organization_id || '') !== organizationId) {
       return res.status(404).json({ error: 'Model not found' });
     }
