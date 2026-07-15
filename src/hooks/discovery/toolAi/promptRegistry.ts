@@ -54,6 +54,7 @@ import {
   toAutomationSession,
 } from '@/config/processautomation';
 import { buildRiskConclusionPrompt } from '@/config/riskuncertainty';
+import { buildRiskLadderPromptBlock } from '@/config/riskuncertainty/riskQuestionBank';
 import {
   buildRpaConclusionPrompt,
   buildRpaDeepenPrompt,
@@ -775,9 +776,22 @@ Return JSON:
       const signalsSummary = (riskData?.signals || [])
         .map((signal: any) => `- ${signal.content}`)
         .join('\n');
+      // OXFORD O3: layer the dedicated risk q-bank (riskQuestionBank.ts) on top
+      // of the legacy signal→assumptions/risks/scenarios contract, so the AI
+      // mentor interviews EACH candidate risk through the same laddered,
+      // forced-loop questions the wizard/tests use as single source of truth
+      // (mirrors the A3 wiring above: additive context, JSON contract unchanged).
+      const ladderBlock = buildRiskLadderPromptBlock('en');
       return `Act as an AI risk mentor. Turn these signals into assumptions, strategic risks, and scenarios.
 
 ${signalsSummary || '- no explicit signals provided yet'}
+
+Laddered intake questions — walk this per candidate risk during the interview, one item at a time (the answer to one drives the next; L2 and L3 are FORCED loops that hold until a real, non-generic answer lands):
+${ladderBlock}
+
+Rules:
+- Never persist a risk's probability/impact from a bare adjective ("high"/"wysokie") — the L2 loop above exists to catch that; ask again for the number.
+- A response strategy ("mitigation") must name mitigate/transfer/accept/avoid, not a generic "we'll keep watching" — the L3 loop above exists to catch that.
 
 Return JSON:
 {
