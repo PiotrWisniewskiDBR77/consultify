@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { DigitizationAnalysis } from './types';
@@ -64,6 +65,7 @@ const TEMPLATES: Array<{
 ];
 
 export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClose }) => {
+  const { t } = useTranslation();
   const [template, setTemplate] = useState<PDFTemplate>('executive');
   const [language, setLanguage] = useState<ExportLanguage>('pl');
   const [includeRecommendations, setIncludeRecommendations] = useState(true);
@@ -101,7 +103,9 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
     }
   };
 
-  const isPl = language === 'pl';
+  // Language of the EXPORTED PDF template content (user-selectable, independent
+  // of the app's own UI language) — used only to pick namePl/nameEn etc. below.
+  const isTemplatePl = language === 'pl';
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-overlay p-4">
@@ -114,7 +118,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
             </div>
             <div>
               <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                {isPl ? 'Eksport do PDF' : 'Export to PDF'}
+                {t('economics.pdfExport.title', 'Export to PDF')}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">{analysis.name}</p>
             </div>
@@ -133,7 +137,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
               <Globe size={14} className="inline mr-2" />
-              {isPl ? 'Report Language' : 'Report Language'}
+              {t('economics.pdfExport.reportLanguage', 'Report Language')}
             </label>
             <div className="flex gap-2">
               <button
@@ -163,17 +167,17 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
               <Layout size={14} className="inline mr-2" />
-              {isPl ? 'Szablon raportu' : 'Report Template'}
+              {t('economics.pdfExport.reportTemplate', 'Report Template')}
             </label>
             <div className="space-y-2">
-              {TEMPLATES.map((t) => {
-                const Icon = t.icon;
+              {TEMPLATES.map((tpl) => {
+                const Icon = tpl.icon;
                 return (
                   <button
-                    key={t.id}
-                    onClick={() => setTemplate(t.id)}
+                    key={tpl.id}
+                    onClick={() => setTemplate(tpl.id)}
                     className={`w-full p-3 rounded-xl text-left transition-all flex items-start gap-3 ${
-                      template === t.id
+                      template === tpl.id
                         ? 'bg-emerald-500/10 border-2 border-emerald-500'
                         : 'bg-slate-50 dark:bg-navy-800 border-2 border-transparent hover:border-slate-200 dark:border-navy-700'
                     }`}
@@ -181,7 +185,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                     <Icon
                       size={20}
                       className={
-                        template === t.id
+                        template === tpl.id
                           ? 'text-emerald-500'
                           : 'text-slate-600 dark:text-slate-500'
                       }
@@ -189,16 +193,16 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                     <div>
                       <p
                         className={`font-medium ${
-                          template === t.id ? 'text-emerald-600' : 'text-navy-900 dark:text-white'
+                          template === tpl.id ? 'text-emerald-600' : 'text-navy-900 dark:text-white'
                         }`}
                       >
-                        {isPl ? t.namePl : t.nameEn}
+                        {isTemplatePl ? tpl.namePl : tpl.nameEn}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {isPl ? t.descriptionPl : t.descriptionEn}
+                        {isTemplatePl ? tpl.descriptionPl : tpl.descriptionEn}
                       </p>
                     </div>
-                    {template === t.id && (
+                    {template === tpl.id && (
                       <CheckCircle size={18} className="text-emerald-500 ml-auto" />
                     )}
                   </button>
@@ -217,7 +221,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                 className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-emerald-500 focus:ring-emerald-500"
               />
               <span className="text-sm text-navy-900 dark:text-white">
-                {isPl ? 'Include recommendations' : 'Include recommendations'}
+                {t('economics.pdfExport.includeRecommendations', 'Include recommendations')}
               </span>
             </label>
           </div>
@@ -229,7 +233,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                 <CheckCircle className="text-emerald-500" size={20} />
                 <div className="flex-1">
                   <p className="font-medium text-emerald-700 dark:text-emerald-400">
-                    {isPl ? 'PDF gotowy do pobrania!' : 'PDF ready for download!'}
+                    {t('economics.pdfExport.ready', 'PDF ready for download!')}
                   </p>
                 </div>
                 <button
@@ -237,7 +241,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors"
                 >
                   <Download size={16} />
-                  {isPl ? 'Pobierz' : 'Download'}
+                  {t('economics.pdfExport.download', 'Download')}
                 </button>
               </div>
             </div>
@@ -250,7 +254,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
             onClick={onClose}
             className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl font-medium transition-colors"
           >
-            {isPl ? 'Cancel' : 'Cancel'}
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleExport}
@@ -260,12 +264,12 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
             {isExporting ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                {isPl ? 'Generating...' : 'Generating...'}
+                {t('economics.pdfExport.generating', 'Generating...')}
               </>
             ) : (
               <>
                 <FileText size={16} />
-                {isPl ? 'Generuj PDF' : 'Generate PDF'}
+                {t('economics.pdfExport.generate', 'Generate PDF')}
               </>
             )}
           </button>

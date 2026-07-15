@@ -9486,6 +9486,16 @@
     "toast": {
       "excelGenerated": "Excel wygenerowany",
       "exportFailed": "Nie udało się wyeksportować"
+    },
+    "pdfExport": {
+      "title": "Eksport do PDF",
+      "reportLanguage": "Język raportu",
+      "reportTemplate": "Szablon raportu",
+      "includeRecommendations": "Uwzględnij rekomendacje",
+      "ready": "PDF gotowy do pobrania!",
+      "download": "Pobierz",
+      "generating": "Generowanie...",
+      "generate": "Generuj PDF"
     }
   },
   "reports": {

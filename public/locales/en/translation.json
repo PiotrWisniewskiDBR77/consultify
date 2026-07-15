@@ -10327,6 +10327,16 @@
     "toast": {
       "excelGenerated": "Excel generated",
       "exportFailed": "Failed to export"
+    },
+    "pdfExport": {
+      "title": "Export to PDF",
+      "reportLanguage": "Report Language",
+      "reportTemplate": "Report Template",
+      "includeRecommendations": "Include recommendations",
+      "ready": "PDF ready for download!",
+      "download": "Download",
+      "generating": "Generating...",
+      "generate": "Generate PDF"
     }
   },
   "reports": {
