@@ -203,12 +203,18 @@ type IdeaMapWorkspaceProps = {
 
 // IdeaConvertTarget union is owned by the SSOT registry (ideaConvertTargets.ts).
 
-function safeTitleFromSeed(seedText: string, isPolish: boolean): string {
+function safeTitleFromSeed(
+  seedText: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility
+  isPolish: boolean
+): string {
   const firstLine = String(seedText || '')
     .trim()
     .split('\n')[0]
     ?.trim();
-  return firstLine ? firstLine.slice(0, 120) : isPolish ? 'Nowe wyzwanie' : 'New challenge';
+  return firstLine
+    ? firstLine.slice(0, 120)
+    : i18n.t('myWorkMindmap.workspace.newChallenge', 'New challenge');
 }
 
 function buildStartupExtensions(
@@ -1576,7 +1582,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       icon: React.ReactNode
     ): CommandItem => ({
       id: `ws-tool-${id}`,
-      title: isPolish ? `Przełącz: ${labelPl}` : `Switch to ${labelEn}`,
+      title: t('myWorkMindmap.workspace.switchTo', 'Switch to {{tool}}', {
+        tool: t(`myWorkMindmap.workspace.tool.${id}`, labelEn),
+      }),
       subtitle: t('mindmap.workspaceTool'),
       icon,
       category: 'workspace',
@@ -2495,7 +2503,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           projectId: currentProjectId,
           title: detail.taskTitle,
           description: t('mindmap.taskCreatedFromMindmapNode', {
-            nodeId: detail.nodeId || (isPolish ? 'nieznany' : 'unknown'),
+            nodeId: detail.nodeId || t('myWorkMindmap.workspace.unknownNode', 'unknown'),
           }),
           status: 'todo',
         });
