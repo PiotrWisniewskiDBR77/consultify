@@ -517,7 +517,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             </div>
             <div className="overflow-x-auto">
               <table
-                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+                /* §27-exempt: macierz porównawcza plan×feature (wiersze=stałe cechy, kolumny=wybrane plany, pivot nie lista encji) — kanon §2 def.1 nie spełniona, formularz/matryca w modalu Compare */ className="w-full"
               >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10">
