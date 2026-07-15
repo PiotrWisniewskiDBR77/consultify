@@ -17,7 +17,11 @@ import chatRoutes from './chat.routes.js';
 import executionRoutes from './execution.routes.js';
 import executionControlRoutes from './execution-control.routes.js';
 import financeRoutes from './finance.routes.js';
+import financeIntelligenceRoutes from './finance-intelligence.routes.js';
+import financePlanningRoutes from './finance-planning.routes.js';
+import financeValuationRoutes from './finance-valuation.routes.js';
 import financeValueRoutes from './financeValueRoutes.js';
+import financeValueTrackingRoutes from './finance-value.routes.js';
 import healthRoutes from './health.routes.js';
 import helpRoutes from './help.routes.js';
 import interviewRoutes from './interview.routes.js';
@@ -71,8 +75,14 @@ v8Router.use('/execution-control', executionControlRoutes);
 // Aliasy specyficzne PRZED catch-all '/finance' (Express dopasowuje prefiks w kolejności).
 // BUG-02/05: FE woła /api/v8/finance/value/* — alias na financeValueRoutes (zgubiony w rebase 2026-06-25, przywrócony).
 v8Router.use('/finance/value', financeValueRoutes);
+// Fala 4 (2026-07-15): wiring 27 osieroconych silników M16 — 4 klastry endpointów.
+// Specyficzne prefiksy PRZED catch-all '/finance'.
+v8Router.use('/finance/value-tracking', financeValueTrackingRoutes);
 v8Router.use('/finance', financeRoutes);
 v8Router.use('/finance-value', financeValueRoutes);
+v8Router.use('/finance-valuation', financeValuationRoutes);
+v8Router.use('/finance-planning', financePlanningRoutes);
+v8Router.use('/finance-intelligence', financeIntelligenceRoutes);
 v8Router.use('/retrieval', retrievalRoutes);
 v8Router.use('/my-work', myWorkRoutes);
 v8Router.use('/notebook', notebookRoutes);
