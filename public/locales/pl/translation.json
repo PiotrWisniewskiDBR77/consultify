@@ -32125,6 +32125,97 @@
             }
           ]
         }
+      },
+      "growthPaths": {
+        "goal": {
+          "positioningHeadline": "Growth Paths nie jest listą pomysłów wzrostowych. To narzędzie do wyboru ścieżki: co skalować, co testować, gdzie wejść i czego nie robić teraz.",
+          "positioningBody": "AI bierze kontekst organizacji, wywiad i sygnały rynku, proponuje opcje w czterech polach Ansoffa, a użytkownik zatwierdza albo odrzuca karty. Dopiero zaakceptowane opcje przechodzą do porównania, ruchów, outputów i inicjatyw."
+        },
+        "process": {
+          "steps": [
+            {
+              "title": "Mission",
+              "text": "Ambicja wzrostu, zakres, success signal i ograniczenia"
+            },
+            {
+              "title": "Input",
+              "text": "Sygnały z wywiadu, rynku, klientów i organizacji"
+            },
+            {
+              "title": "Options",
+              "text": "Opcje w macierzy Ansoffa: core, rynek, produkt, dywersyfikacja"
+            },
+            {
+              "title": "Insights",
+              "text": "Porównanie trade-offów i rekomendowana sekwencja ruchów"
+            },
+            {
+              "title": "Outputs",
+              "text": "Final source summary, output candidates i drafty inicjatyw"
+            }
+          ]
+        },
+        "outcomes": {
+          "blocks": [
+            {
+              "title": "Macierz opcji",
+              "text": "Opcje wzrostu z impact, effort, risk, evidence i confidence."
+            },
+            {
+              "title": "Porównanie strategiczne",
+              "text": "Trade-offy między skalowaniem core, wejściem w rynek, produktem i dywersyfikacją."
+            },
+            {
+              "title": "Rekomendowane ruchy",
+              "text": "Sekwencja: co robić teraz, co testować, co odłożyć."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Materiał do inicjatywy, raportu, decka lub dalszej eksploracji."
+            }
+          ]
+        },
+        "example": {
+          "intro": "Firma premium chce rosnąć bez erozji marży. Growth Paths porównuje skalowanie obecnego segmentu, wejście do nowej geografii, nowy produkt i dywersyfikację, a potem układa sekwencję działań.",
+          "cases": [
+            {
+              "title": "Premium firma szuka wzrostu bez erozji marży",
+              "context": "Core segment jest rentowny, ale tempo wzrostu spada.",
+              "question": "Czy skalować obecny rynek, wejść do nowej geografii, czy budować nowy produkt?",
+              "evidence": [
+                "Sprzedaż pokazuje stabilną marżę w obecnym segmencie, ale malejącą liczbę nowych leadów.",
+                "Wywiady wskazują zapytania z sąsiednich segmentów, lecz bez jasnego dopasowania oferty i kanałów."
+              ],
+              "aiDraft": "AI proponuje opcje w czterech polach: mocniejsza penetracja core, test nowej geografii, lekka wersja produktu i ostrożna dywersyfikacja.",
+              "approvedUse": "Użytkownik akceptuje opcje z jasnym pierwszym krokiem i odrzuca pomysły, które są tylko życzeniową ekspansją.",
+              "outcome": "Powstaje sekwencja: najpierw zwiększyć udział w core, równolegle przetestować jeden segment, a większy bet uruchomić dopiero po walidacji."
+            },
+            {
+              "title": "SaaS po nasyceniu obecnego ICP",
+              "context": "Produkt ma dobrą retencję, ale nowy pipeline w obecnym segmencie słabnie.",
+              "question": "Czy rosnąć przez nowy segment, dodatki produktowe, czy pricing?",
+              "evidence": [
+                "Retencja i expansion revenue są dobre, ale win-rate na nowych logo spada trzeci kwartał z rzędu.",
+                "Feedback klientów pokazuje popyt na funkcje raportowe, a sprzedaż słyszy zapytania z większych firm."
+              ],
+              "aiDraft": "AI tworzy opcje: pricing packaging w core, wejście w mid-market, moduł analityczny i ryzykowną platformę dla enterprise.",
+              "approvedUse": "Zaakceptowane karty trafiają do porównania impact/effort/risk, a AI wskazuje, które opcje wymagają walidacji przed roadmapą.",
+              "outcome": "Rekomendacja: przetestować nowy pakiet cenowy i moduł analityczny na obecnych klientach przed kosztownym ruchem enterprise."
+            },
+            {
+              "title": "Firma usługowa z silną relacją klienta",
+              "context": "Klienci proszą o dodatkowe usługi, ale zespół boi się rozmycia specjalizacji.",
+              "question": "Czy rozwijać produkt/usługę dla obecnych klientów, czy chronić focus?",
+              "evidence": [
+                "Najlepsi klienci proszą o usługi komplementarne, ale rentowność projektów spada, gdy zakres jest zbyt szeroki.",
+                "Zespół wskazuje przeciążenie ekspertów i brak powtarzalnych standardów delivery dla nowych usług."
+              ],
+              "aiDraft": "AI proponuje opcje rozwoju produktu dla obecnych klientów, selektywną penetrację key accounts i odrzuca szeroką dywersyfikację bez proofu.",
+              "approvedUse": "Akceptowane są tylko opcje z wyraźnym ICP, zakresem delivery i pierwszym eksperymentem komercyjnym.",
+              "outcome": "Powstaje plan: stworzyć jedną productized service dla obecnych klientów, przetestować cenę i dopiero potem rozwijać kolejne dodatki."
+            }
+          ]
+        }
       }
     }
   },

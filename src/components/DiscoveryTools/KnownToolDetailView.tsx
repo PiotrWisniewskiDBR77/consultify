@@ -956,14 +956,10 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
-            {isPolish
-              ? 'Growth Paths nie jest listą pomysłów wzrostowych. To narzędzie do wyboru ścieżki: co skalować, co testować, gdzie wejść i czego nie robić teraz.'
-              : 'Growth Paths is not a list of growth ideas. It is a path-selection tool: what to scale, what to test, where to enter, and what not to do now.'}
+            {t('discoveryToolsMain.knownToolDetail.growthPaths.goal.positioningHeadline')}
           </div>
           <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {isPolish
-              ? 'AI bierze kontekst organizacji, wywiad i sygnały rynku, proponuje opcje w czterech polach Ansoffa, a użytkownik zatwierdza albo odrzuca karty. Dopiero zaakceptowane opcje przechodzą do porównania, ruchów, outputów i inicjatyw.'
-              : 'AI uses organization context, interview notes, and market signals to propose options across the four Ansoff fields. The user accepts or rejects cards, and only approved options feed comparison, moves, outputs, and initiatives.'}
+            {t('discoveryToolsMain.knownToolDetail.growthPaths.goal.positioningBody')}
           </div>
         </div>
         <GrowthPathsLibraryGraphic isPolish={isPolish} variant="process" />
@@ -976,22 +972,11 @@ export function KnownToolDetailView(props: {
           {t('discoveryToolsMain.knownToolDetailView.workLogic')}
         </h2>
         <div className="grid gap-3">
-          {(isPolish
-            ? [
-                ['Mission', 'Ambicja wzrostu, zakres, success signal i ograniczenia'],
-                ['Input', 'Sygnały z wywiadu, rynku, klientów i organizacji'],
-                ['Options', 'Opcje w macierzy Ansoffa: core, rynek, produkt, dywersyfikacja'],
-                ['Insights', 'Porównanie trade-offów i rekomendowana sekwencja ruchów'],
-                ['Outputs', 'Final source summary, output candidates i drafty inicjatyw'],
-              ]
-            : [
-                ['Mission', 'Growth ambition, scope, success signal, and constraints'],
-                ['Input', 'Signals from interviews, market, customers, and organization context'],
-                ['Options', 'Ansoff options: core, market, product, and diversification'],
-                ['Insights', 'Trade-off comparison and recommended move sequence'],
-                ['Outputs', 'Final source summary, output candidates, and initiative drafts'],
-              ]
-          ).map(([title, text], index) => (
+          {(
+            t('discoveryToolsMain.knownToolDetail.growthPaths.process.steps', {
+              returnObjects: true,
+            }) as Array<{ title: string; text: string }>
+          ).map(({ title, text }, index) => (
             <div
               key={title}
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
@@ -1019,35 +1004,11 @@ export function KnownToolDetailView(props: {
           {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {(isPolish
-            ? [
-                ['Macierz opcji', 'Opcje wzrostu z impact, effort, risk, evidence i confidence.'],
-                [
-                  'Porównanie strategiczne',
-                  'Trade-offy między skalowaniem core, wejściem w rynek, produktem i dywersyfikacją.',
-                ],
-                ['Rekomendowane ruchy', 'Sekwencja: co robić teraz, co testować, co odłożyć.'],
-                [
-                  'Output candidates',
-                  'Materiał do inicjatywy, raportu, decka lub dalszej eksploracji.',
-                ],
-              ]
-            : [
-                [
-                  'Option matrix',
-                  'Growth options with impact, effort, risk, evidence, and confidence.',
-                ],
-                [
-                  'Strategic comparison',
-                  'Trade-offs between scaling core, entering markets, product development, and diversification.',
-                ],
-                ['Recommended moves', 'A sequence: what to do now, what to test, what to defer.'],
-                [
-                  'Output candidates',
-                  'Material for an initiative, report, deck, or follow-on exploration.',
-                ],
-              ]
-          ).map(([title, text]) => (
+          {(
+            t('discoveryToolsMain.knownToolDetail.growthPaths.outcomes.blocks', {
+              returnObjects: true,
+            }) as Array<{ title: string; text: string }>
+          ).map(({ title, text }) => (
             <div
               key={title}
               className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40"
@@ -1071,112 +1032,21 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {isPolish
-              ? 'Firma premium chce rosnąć bez erozji marży. Growth Paths porównuje skalowanie obecnego segmentu, wejście do nowej geografii, nowy produkt i dywersyfikację, a potem układa sekwencję działań.'
-              : 'A premium company wants to grow without margin erosion. Growth Paths compares scaling the current segment, entering a new geography, building a new product, and diversification, then sequences the moves.'}
+            {t('discoveryToolsMain.knownToolDetail.growthPaths.example.intro')}
           </div>
         </div>
         {caseGrid(
-          isPolish
-            ? [
-                {
-                  title: 'Premium firma szuka wzrostu bez erozji marży',
-                  context: 'Core segment jest rentowny, ale tempo wzrostu spada.',
-                  question:
-                    'Czy skalować obecny rynek, wejść do nowej geografii, czy budować nowy produkt?',
-                  evidence: [
-                    'Sprzedaż pokazuje stabilną marżę w obecnym segmencie, ale malejącą liczbę nowych leadów.',
-                    'Wywiady wskazują zapytania z sąsiednich segmentów, lecz bez jasnego dopasowania oferty i kanałów.',
-                  ],
-                  aiDraft:
-                    'AI proponuje opcje w czterech polach: mocniejsza penetracja core, test nowej geografii, lekka wersja produktu i ostrożna dywersyfikacja.',
-                  approvedUse:
-                    'Użytkownik akceptuje opcje z jasnym pierwszym krokiem i odrzuca pomysły, które są tylko życzeniową ekspansją.',
-                  outcome:
-                    'Powstaje sekwencja: najpierw zwiększyć udział w core, równolegle przetestować jeden segment, a większy bet uruchomić dopiero po walidacji.',
-                },
-                {
-                  title: 'SaaS po nasyceniu obecnego ICP',
-                  context:
-                    'Produkt ma dobrą retencję, ale nowy pipeline w obecnym segmencie słabnie.',
-                  question: 'Czy rosnąć przez nowy segment, dodatki produktowe, czy pricing?',
-                  evidence: [
-                    'Retencja i expansion revenue są dobre, ale win-rate na nowych logo spada trzeci kwartał z rzędu.',
-                    'Feedback klientów pokazuje popyt na funkcje raportowe, a sprzedaż słyszy zapytania z większych firm.',
-                  ],
-                  aiDraft:
-                    'AI tworzy opcje: pricing packaging w core, wejście w mid-market, moduł analityczny i ryzykowną platformę dla enterprise.',
-                  approvedUse:
-                    'Zaakceptowane karty trafiają do porównania impact/effort/risk, a AI wskazuje, które opcje wymagają walidacji przed roadmapą.',
-                  outcome:
-                    'Rekomendacja: przetestować nowy pakiet cenowy i moduł analityczny na obecnych klientach przed kosztownym ruchem enterprise.',
-                },
-                {
-                  title: 'Firma usługowa z silną relacją klienta',
-                  context:
-                    'Klienci proszą o dodatkowe usługi, ale zespół boi się rozmycia specjalizacji.',
-                  question: 'Czy rozwijać produkt/usługę dla obecnych klientów, czy chronić focus?',
-                  evidence: [
-                    'Najlepsi klienci proszą o usługi komplementarne, ale rentowność projektów spada, gdy zakres jest zbyt szeroki.',
-                    'Zespół wskazuje przeciążenie ekspertów i brak powtarzalnych standardów delivery dla nowych usług.',
-                  ],
-                  aiDraft:
-                    'AI proponuje opcje rozwoju produktu dla obecnych klientów, selektywną penetrację key accounts i odrzuca szeroką dywersyfikację bez proofu.',
-                  approvedUse:
-                    'Akceptowane są tylko opcje z wyraźnym ICP, zakresem delivery i pierwszym eksperymentem komercyjnym.',
-                  outcome:
-                    'Powstaje plan: stworzyć jedną productized service dla obecnych klientów, przetestować cenę i dopiero potem rozwijać kolejne dodatki.',
-                },
-              ]
-            : [
-                {
-                  title: 'Premium company seeking growth without margin erosion',
-                  context: 'The core segment is profitable, but growth is slowing.',
-                  question:
-                    'Should it scale the current market, enter a new geography, or build a new product?',
-                  evidence: [
-                    'Sales data shows stable margin in the current segment but a declining number of new leads.',
-                    'Interviews surface demand from adjacent segments, but offer and channel fit are still unclear.',
-                  ],
-                  aiDraft:
-                    'AI proposes options across all four fields: deeper core penetration, a geography test, a lighter product version, and cautious diversification.',
-                  approvedUse:
-                    'The user approves options with a clear first step and rejects ideas that are just wishful expansion.',
-                  outcome:
-                    'The sequence becomes: grow share in core, test one adjacent segment in parallel, and only then commit to a bigger bet.',
-                },
-                {
-                  title: 'SaaS after current ICP saturation',
-                  context: 'Retention is strong, but pipeline in the current segment is weakening.',
-                  question: 'Should growth come from a new segment, product add-ons, or pricing?',
-                  evidence: [
-                    'Retention and expansion revenue are healthy, but new-logo win rate has declined for three quarters.',
-                    'Customer feedback shows demand for reporting features, while sales hears requests from larger companies.',
-                  ],
-                  aiDraft:
-                    'AI creates options around core pricing packaging, mid-market entry, an analytics module, and a riskier enterprise platform move.',
-                  approvedUse:
-                    'Approved cards move into impact/effort/risk comparison, and AI identifies what must be validated before roadmap commitment.',
-                  outcome:
-                    'The recommendation is to test a new pricing package and analytics module with current customers before an expensive enterprise move.',
-                },
-                {
-                  title: 'Services firm with strong client relationships',
-                  context:
-                    'Clients ask for adjacent services, but the team fears diluting specialization.',
-                  question: 'Should it develop new offers for current clients or protect focus?',
-                  evidence: [
-                    'Top clients request complementary services, but project profitability drops when scope becomes too broad.',
-                    'The team reports expert overload and no repeatable delivery standard for new service lines.',
-                  ],
-                  aiDraft:
-                    'AI proposes product-development options for current clients, selective key-account penetration, and rejects broad diversification without proof.',
-                  approvedUse:
-                    'Only options with a clear ICP, delivery scope, and first commercial experiment are accepted.',
-                  outcome:
-                    'The plan is to create one productized service for current clients, test pricing, and then decide whether to add more offers.',
-                },
-              ]
+          t('discoveryToolsMain.knownToolDetail.growthPaths.example.cases', {
+            returnObjects: true,
+          }) as Array<{
+            title: string;
+            context: string;
+            question: string;
+            evidence: string[];
+            aiDraft: string;
+            approvedUse: string;
+            outcome: string;
+          }>
         )}
         <GrowthPathsLibraryGraphic isPolish={isPolish} variant="example" />
       </div>

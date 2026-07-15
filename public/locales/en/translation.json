@@ -31065,6 +31065,97 @@
             }
           ]
         }
+      },
+      "growthPaths": {
+        "goal": {
+          "positioningHeadline": "Growth Paths is not a list of growth ideas. It is a path-selection tool: what to scale, what to test, where to enter, and what not to do now.",
+          "positioningBody": "AI uses organization context, interview notes, and market signals to propose options across the four Ansoff fields. The user accepts or rejects cards, and only approved options feed comparison, moves, outputs, and initiatives."
+        },
+        "process": {
+          "steps": [
+            {
+              "title": "Mission",
+              "text": "Growth ambition, scope, success signal, and constraints"
+            },
+            {
+              "title": "Input",
+              "text": "Signals from interviews, market, customers, and organization context"
+            },
+            {
+              "title": "Options",
+              "text": "Ansoff options: core, market, product, and diversification"
+            },
+            {
+              "title": "Insights",
+              "text": "Trade-off comparison and recommended move sequence"
+            },
+            {
+              "title": "Outputs",
+              "text": "Final source summary, output candidates, and initiative drafts"
+            }
+          ]
+        },
+        "outcomes": {
+          "blocks": [
+            {
+              "title": "Option matrix",
+              "text": "Growth options with impact, effort, risk, evidence, and confidence."
+            },
+            {
+              "title": "Strategic comparison",
+              "text": "Trade-offs between scaling core, entering markets, product development, and diversification."
+            },
+            {
+              "title": "Recommended moves",
+              "text": "A sequence: what to do now, what to test, what to defer."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Material for an initiative, report, deck, or follow-on exploration."
+            }
+          ]
+        },
+        "example": {
+          "intro": "A premium company wants to grow without margin erosion. Growth Paths compares scaling the current segment, entering a new geography, building a new product, and diversification, then sequences the moves.",
+          "cases": [
+            {
+              "title": "Premium company seeking growth without margin erosion",
+              "context": "The core segment is profitable, but growth is slowing.",
+              "question": "Should it scale the current market, enter a new geography, or build a new product?",
+              "evidence": [
+                "Sales data shows stable margin in the current segment but a declining number of new leads.",
+                "Interviews surface demand from adjacent segments, but offer and channel fit are still unclear."
+              ],
+              "aiDraft": "AI proposes options across all four fields: deeper core penetration, a geography test, a lighter product version, and cautious diversification.",
+              "approvedUse": "The user approves options with a clear first step and rejects ideas that are just wishful expansion.",
+              "outcome": "The sequence becomes: grow share in core, test one adjacent segment in parallel, and only then commit to a bigger bet."
+            },
+            {
+              "title": "SaaS after current ICP saturation",
+              "context": "Retention is strong, but pipeline in the current segment is weakening.",
+              "question": "Should growth come from a new segment, product add-ons, or pricing?",
+              "evidence": [
+                "Retention and expansion revenue are healthy, but new-logo win rate has declined for three quarters.",
+                "Customer feedback shows demand for reporting features, while sales hears requests from larger companies."
+              ],
+              "aiDraft": "AI creates options around core pricing packaging, mid-market entry, an analytics module, and a riskier enterprise platform move.",
+              "approvedUse": "Approved cards move into impact/effort/risk comparison, and AI identifies what must be validated before roadmap commitment.",
+              "outcome": "The recommendation is to test a new pricing package and analytics module with current customers before an expensive enterprise move."
+            },
+            {
+              "title": "Services firm with strong client relationships",
+              "context": "Clients ask for adjacent services, but the team fears diluting specialization.",
+              "question": "Should it develop new offers for current clients or protect focus?",
+              "evidence": [
+                "Top clients request complementary services, but project profitability drops when scope becomes too broad.",
+                "The team reports expert overload and no repeatable delivery standard for new service lines."
+              ],
+              "aiDraft": "AI proposes product-development options for current clients, selective key-account penetration, and rejects broad diversification without proof.",
+              "approvedUse": "Only options with a clear ICP, delivery scope, and first commercial experiment are accepted.",
+              "outcome": "The plan is to create one productized service for current clients, test pricing, and then decide whether to add more offers."
+            }
+          ]
+        }
       }
     }
   },
