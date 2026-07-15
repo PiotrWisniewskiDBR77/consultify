@@ -5,6 +5,7 @@
  * "typing…" indicators, and a presence bar at the top.
  * Uses SSE/polling to sync presence state.
  */
+import type { TFunction } from 'i18next';
 import { Lock, Users, WifiOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -114,21 +115,21 @@ function isLockActive(lock: V8MultiplayerLockRecord): boolean {
   return acquiredAt + lock.ttl > Date.now();
 }
 
-function formatLockTypeLabel(lockType: V8MultiplayerLockRecord['lockType'], isPl: boolean): string {
+function formatLockTypeLabel(lockType: V8MultiplayerLockRecord['lockType'], t: TFunction): string {
   switch (lockType) {
     case 'optimistic_row':
-      return isPl ? 'Wiersz' : 'Row';
+      return t('myWorkTable.collaborationPresence.lockTypeRow');
     case 'optimistic_section':
-      return isPl ? 'Sekcja' : 'Section';
+      return t('myWorkTable.collaborationPresence.lockTypeSection');
     case 'exclusive_schema':
-      return isPl ? 'Schema' : 'Schema';
+      return t('myWorkTable.collaborationPresence.lockTypeSchema');
     case 'exclusive_document':
-      return isPl ? 'Document' : 'Document';
+      return t('myWorkTable.collaborationPresence.lockTypeDocument');
     case 'phase_lock':
-      return isPl ? 'Phase' : 'Phase';
+      return t('myWorkTable.collaborationPresence.lockTypePhase');
     case 'advisory_object':
     default:
-      return isPl ? 'Object' : 'Object';
+      return t('myWorkTable.collaborationPresence.lockTypeObject');
   }
 }
 
@@ -155,8 +156,7 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
   currentUserId,
   enabled = true,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [activeUsers, setActiveUsers] = useState<PresenceUser[]>([]);
   const [presenceStatus, setPresenceStatus] = useState<'healthy' | 'degraded'>('healthy');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -197,13 +197,13 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
   return (
     <div
       className="flex items-center gap-1 px-2"
-      aria-label={isPl ? 'Obecni we workspace' : 'Workspace presence'}
+      aria-label={t('myWorkTable.collaborationPresence.workspacePresence')}
     >
       {presenceStatus === 'degraded' ? (
         <>
           <WifiOff size={11} className="text-amber-500" />
           <span className="text-[9px] text-amber-700 dark:text-amber-300">
-            {isPl ? 'Obecność workspace niedostępna' : 'Workspace presence unavailable'}
+            {t('myWorkTable.collaborationPresence.workspacePresenceUnavailable')}
           </span>
         </>
       ) : (
@@ -214,7 +214,7 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
               <div
                 key={user.id}
                 className="relative"
-                title={`${user.id}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
+                title={`${user.id}${user.isTyping ? ` (${t('myWorkTable.collaborationPresence.typing')})` : ''}`}
               >
                 <div
                   className="w-5 h-5 rounded-full border-2 border-c-border-subtle flex items-center justify-center text-[7px] font-black text-white"
@@ -234,7 +234,7 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
             )}
           </div>
           <span className="text-[9px] text-sky-600 dark:text-sky-300 ml-1">
-            {activeUsers.length} {isPl ? 'online' : 'online'}
+            {activeUsers.length} {t('myWorkTable.collaborationPresence.online')}
           </span>
         </>
       )}
@@ -247,8 +247,7 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
   currentUserId,
   enabled = true,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [activeLocks, setActiveLocks] = useState<V8MultiplayerLockRecord[]>([]);
   const [lockStatus, setLockStatus] = useState<'healthy' | 'degraded'>('healthy');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -289,29 +288,29 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
   return (
     <div
       className="flex items-center gap-1 px-2"
-      aria-label={isPl ? 'Blokady we workspace' : 'Workspace locks'}
+      aria-label={t('myWorkTable.collaborationPresence.workspaceLocks')}
     >
       {lockStatus === 'degraded' ? (
         <>
           <WifiOff size={11} className="text-amber-500" />
           <span className="text-[9px] text-amber-700 dark:text-amber-300">
-            {isPl ? 'Blokady workspace niedostępne' : 'Workspace locks unavailable'}
+            {t('myWorkTable.collaborationPresence.workspaceLocksUnavailable')}
           </span>
         </>
       ) : (
         <>
           <Lock size={11} className="text-amber-500" />
           <span className="text-[9px] text-amber-700 dark:text-amber-300">
-            {activeLocks.length} {isPl ? 'blocked' : 'locked'}
+            {activeLocks.length} {t('myWorkTable.collaborationPresence.locked')}
           </span>
           <div className="hidden md:flex items-center gap-1">
             {activeLocks.slice(0, 2).map((lock) => (
               <span
                 key={lock.lockId}
                 className="inline-flex items-center rounded-full border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
-                title={`${lock.holderId} • ${formatLockTypeLabel(lock.lockType, isPl)} • ${lock.lockScope}`}
+                title={`${lock.holderId} • ${formatLockTypeLabel(lock.lockType, t)} • ${lock.lockScope}`}
               >
-                {formatLockTypeLabel(lock.lockType, isPl)}: {summarizeLockScope(lock.lockScope)}
+                {formatLockTypeLabel(lock.lockType, t)}: {summarizeLockScope(lock.lockScope)}
               </span>
             ))}
             {activeLocks.length > 2 && (
@@ -334,8 +333,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
   renderIndicator = true,
   onPresenceUpdate,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [remoteUsers, setRemoteUsers] = useState<PresenceUser[]>([]);
   const [presenceStatus, setPresenceStatus] = useState<'healthy' | 'degraded'>('healthy');
   const [presenceDegradedMessage, setPresenceDegradedMessage] = useState<string>('');
@@ -364,13 +362,11 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
         setPresenceStatus('degraded');
         setRemoteUsers([]);
         onPresenceUpdate?.([]);
-        const fallback = isPl
-          ? 'Nie mozna opublikowac kursora wspolpracy. Sprobuj ponownie za chwile.'
-          : 'Could not publish your cursor to collaborators. Retry in a moment.';
+        const fallback = t('myWorkTable.collaborationPresence.cursorPublishFailed');
         setPresenceDegradedMessage(ideaTablePresenceErrorMessage(error, fallback));
       }
     },
-    [currentUserId, currentUserName, enabled, ideaId, isPl, myColor, onPresenceUpdate]
+    [currentUserId, currentUserName, enabled, ideaId, myColor, onPresenceUpdate, t]
   );
 
   const fetchPresence = useCallback(async () => {
@@ -396,12 +392,10 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
       setRemoteUsers([]);
       onPresenceUpdate?.([]);
       setPresenceStatus('degraded');
-      const fallback = isPl
-        ? 'Obecnosc tabeli pomyslow jest niedostepna. Odswiez My Work i sprobuj ponownie.'
-        : 'Idea table presence is unavailable. Refresh My Work and retry.';
+      const fallback = t('myWorkTable.collaborationPresence.ideaTablePresenceUnavailable');
       setPresenceDegradedMessage(ideaTablePresenceErrorMessage(error, fallback));
     }
-  }, [currentUserId, enabled, ideaId, isPl, onPresenceUpdate]);
+  }, [currentUserId, enabled, ideaId, onPresenceUpdate, t]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -429,9 +423,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
           <WifiOff size={11} className="text-amber-500" />
           <span className="text-[9px] text-amber-700 dark:text-amber-300">
             {presenceDegradedMessage ||
-              (isPl
-                ? 'Obecnosc tabeli pomyslow jest niedostepna. Odswiez My Work i sprobuj ponownie.'
-                : 'Idea table presence is unavailable. Refresh My Work and retry.')}
+              t('myWorkTable.collaborationPresence.ideaTablePresenceUnavailable')}
           </span>
         </>
       )}
@@ -443,7 +435,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
               <div
                 key={user.id}
                 className="relative group"
-                title={`${user.name}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
+                title={`${user.name}${user.isTyping ? ` (${t('myWorkTable.collaborationPresence.typing')})` : ''}`}
               >
                 {user.avatar ? (
                   <img
@@ -472,7 +464,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
             )}
           </div>
           <span className="text-[9px] text-c-text-secondary ml-1">
-            {activeUsers.length} {isPl ? 'online' : 'online'}
+            {activeUsers.length} {t('myWorkTable.collaborationPresence.online')}
           </span>
         </>
       )}

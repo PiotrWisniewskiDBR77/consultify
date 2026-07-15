@@ -118,6 +118,7 @@ function ModuleLinkSection({
   modelId: string | null;
   onSyncComplete: () => void;
 }) {
+  const { t } = useTranslation();
   const cfg = MODULE_CONFIG[moduleKey];
   const Icon = cfg.icon;
   const [expanded, setExpanded] = useState(false);
@@ -144,7 +145,7 @@ function ModuleLinkSection({
 
   const handleSync = useCallback(async () => {
     if (!modelId) {
-      toast.error(isPl ? 'Wybierz model' : 'Select a model first');
+      toast.error(t('myWorkTable.consultifyLinkPanel.selectAModelFirst'));
       return;
     }
     setSyncing(true);
@@ -158,10 +159,10 @@ function ModuleLinkSection({
       } else if (moduleKey === 'initiatives') {
         await Api.syncToInitiatives(modelId, { fieldMappings, tableId: selectedTableId });
       }
-      toast.success(isPl ? 'Synchronizacja zakończona' : 'Sync completed');
+      toast.success(t('myWorkTable.consultifyLinkPanel.syncCompleted'));
       onSyncComplete();
     } catch {
-      toast.error(isPl ? 'Błąd synchronizacji' : 'Sync failed');
+      toast.error(t('myWorkTable.consultifyLinkPanel.syncFailed'));
     } finally {
       setSyncing(false);
     }
@@ -183,7 +184,7 @@ function ModuleLinkSection({
         </span>
         {status?.linked && (
           <span className="inline-flex items-center gap-1 text-[10px] text-c-success">
-            <CheckCircle2 size={10} /> {isPl ? 'Połączono' : 'Linked'}
+            <CheckCircle2 size={10} /> {t('myWorkTable.consultifyLinkPanel.linked')}
           </span>
         )}
         {expanded ? (
@@ -199,25 +200,25 @@ function ModuleLinkSection({
           <span className="text-[10px] text-c-text-muted">
             {status.linked ? (
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-success border border-c-success text-c-success">
-                {isPl ? 'Aktywne' : 'Active'}
+                {t('myWorkTable.consultifyLinkPanel.active')}
               </span>
             ) : (
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised border border-c-border-subtle text-c-text-muted">
-                {isPl ? 'Nieaktywne' : 'Inactive'}
+                {t('myWorkTable.consultifyLinkPanel.inactive')}
               </span>
             )}
           </span>
           {status.lastSync && (
             <span className="text-[10px] text-c-text-secondary">
-              {isPl ? 'Ost. sync' : 'Last sync'}: {formatTimeAgo(status.lastSync)}
+              {t('myWorkTable.consultifyLinkPanel.lastSync')}: {formatTimeAgo(status.lastSync)}
             </span>
           )}
           <span className="text-[10px] text-c-text-secondary">
-            {status.recordCount} {isPl ? 'rek.' : 'rec.'}
+            {status.recordCount} {t('myWorkTable.consultifyLinkPanel.rec')}
           </span>
           {status.errors.length > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px] text-c-danger">
-              <XCircle size={10} /> {status.errors.length} {isPl ? 'błędów' : 'errors'}
+              <XCircle size={10} /> {status.errors.length} {t('myWorkTable.consultifyLinkPanel.errors')}
             </span>
           )}
         </div>
@@ -229,7 +230,7 @@ function ModuleLinkSection({
           {/* Select table */}
           <div>
             <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-              {isPl ? 'Tabela źródłowa' : 'Source table'}
+              {t('myWorkTable.consultifyLinkPanel.sourceTable')}
             </label>
             <select
               className={inputCls}
@@ -239,7 +240,7 @@ function ModuleLinkSection({
                 setFieldMappings({});
               }}
             >
-              <option value="">{isPl ? '— Wybierz tabelę —' : '— Select table —'}</option>
+              <option value="">{t('myWorkTable.consultifyLinkPanel.selectTable')}</option>
               {tables.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -252,7 +253,7 @@ function ModuleLinkSection({
           {selectedTable && (
             <div>
               <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                {isPl ? 'Mapowanie pól' : 'Field mapping'}
+                {t('myWorkTable.consultifyLinkPanel.fieldMapping')}
               </label>
               <div className="space-y-1.5">
                 {targetFields.map((tf) => (
@@ -287,18 +288,14 @@ function ModuleLinkSection({
             disabled
             onClick={handleSync}
             title={
-              isPl
-                ? 'Synchronizacja danych do modułu docelowego będzie dostępna wkrótce'
-                : 'Data sync to the target module is coming soon'
+              t('myWorkTable.consultifyLinkPanel.dataSyncToTheTarget')
             }
             className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed transition-colors"
           >
-            {isPl ? 'Wkrótce' : 'Coming soon'}
+            {t('myWorkTable.consultifyLinkPanel.comingSoon')}
           </button>
           <p className="text-[10px] text-c-text-muted text-center">
-            {isPl
-              ? 'Mapowanie pól możesz przygotować już teraz — przesył danych włączymy w kolejnym wydaniu.'
-              : 'You can prepare the field mapping now — data transfer ships in an upcoming release.'}
+            {t('myWorkTable.consultifyLinkPanel.youCanPrepareTheField')}
           </p>
         </div>
       )}
@@ -325,7 +322,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
   models: _externalModels,
   onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [models, setModels] = useState<{ model_id: string; name: string }[]>([]);
@@ -374,12 +371,10 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
       <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
         <div>
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
+            {t('myWorkTable.consultifyLinkPanel.consultifyLink')}
           </h3>
           <p className="text-[11px] text-c-text-muted mt-0.5">
-            {isPl
-              ? 'Połącz dane tabeli z modułami Consultify'
-              : 'Connect table data to Consultify modules'}
+            {t('myWorkTable.consultifyLinkPanel.connectTableDataToConsultify')}
           </p>
         </div>
         <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
@@ -390,14 +385,14 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
       {/* Model selector */}
       <div className="px-5 py-3 border-b border-c-border-subtle">
         <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-          {isPl ? 'Model danych' : 'Data Model'}
+          {t('myWorkTable.consultifyLinkPanel.dataModel')}
         </label>
         <select
           className={inputCls}
           value={selectedModelId}
           onChange={(e) => setSelectedModelId(e.target.value)}
         >
-          <option value="">{isPl ? '— Wybierz model —' : '— Select model —'}</option>
+          <option value="">{t('myWorkTable.consultifyLinkPanel.selectModel')}</option>
           {models.map((m) => (
             <option key={m.model_id} value={m.model_id}>
               {m.name}
@@ -406,9 +401,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
         </select>
         {models.length === 0 && !loading && (
           <p className="text-[11px] text-c-text-secondary mt-1 italic">
-            {isPl
-              ? 'Utwórz model danych w zakładce Modele'
-              : 'Create a data model in the Models tab first'}
+            {t('myWorkTable.consultifyLinkPanel.createADataModelIn')}
           </p>
         )}
       </div>
