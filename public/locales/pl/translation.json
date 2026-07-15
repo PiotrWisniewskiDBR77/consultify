@@ -6038,7 +6038,30 @@
       "assessment": "Ocena",
       "status": "Status",
       "updated": "Data",
-      "actions": "Akcje"
+      "actions": "Akcje",
+      "loadError": "Nie udało się wczytać",
+      "editInMap": "Edytuj w mapie",
+      "viewInMap": "Otwórz w mapie",
+      "openInMap": "Otwórz w mapie",
+      "progress": "Postęp",
+      "createReport": "Utwórz raport",
+      "title": "Assessmenty",
+      "new": "Nowy assessment",
+      "selectedCount": "Zaznaczono: {{count}}",
+      "selectAll": "Zaznacz wszystko",
+      "clearSelection": "Wyczyść",
+      "axesCompleted": "{{completed}}/{{total}} osi ukończonych",
+      "projectLabel": "Projekt",
+      "createdLabel": "Utworzono",
+      "aiHintSummarize": "Podsumuj assessment",
+      "aiHintNextSteps": "Zaproponuj następne kroki",
+      "comingSoon": "Wkrótce",
+      "confirmDeleteTitle": "Potwierdź usunięcie",
+      "confirmDeleteMessage": "Usunąć {{target}}? Tej operacji nie można cofnąć.",
+      "deleteTargetPlural": "{{count}} assessmenty",
+      "deleteTargetSingular": "ten assessment",
+      "cancel": "Anuluj",
+      "deleting": "Usuwanie…"
     },
     "aiSuggestions": {
       "title": "Sugestie AI",
@@ -6315,6 +6338,11 @@
     },
     "reports": {
       "source": "Assessment źródłowy"
+    },
+    "emptyState": {
+      "title": "Brak assessmentów",
+      "createFirst": "Utwórz pierwszy assessment",
+      "description": "Utwórz pierwszy assessment, aby rozpocząć diagnozę."
     }
   },
   "initiatives": {
@@ -16750,7 +16778,8 @@
       "noFramework": "Nie udało się wykryć frameworka. Wybierz ręcznie.",
       "lowConfidence": "Niska pewność — przejrzyj i popraw wyodrębnione wartości.",
       "supportedFrameworks": "Obsługiwane frameworki"
-    }
+    },
+    "breadcrumb": "Licencjonowane"
   },
   "tools": {
     "hub": {
@@ -17960,7 +17989,8 @@
     "pricing": "Cennik",
     "partners": "Partnerzy",
     "vector": "Vector AI",
-    "security": "Bezpieczeństwo"
+    "security": "Bezpieczeństwo",
+    "tools": "Narzędzia"
   },
   "navigation": {
     "sidebar": {

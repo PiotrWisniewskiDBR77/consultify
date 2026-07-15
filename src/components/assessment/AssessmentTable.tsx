@@ -71,8 +71,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
   onNewAssessment,
   onCreateReport,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = !!i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   // ── Dane ─────────────────────────────────────────────────────────────────
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -97,15 +96,12 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
     } catch (err: any) {
       console.error('[AssessmentTable] Error:', err);
       setError(
-        String(
-          err?.message ||
-            t('assessment.table.loadError', isPolish ? 'Nie udało się wczytać' : 'Failed to load')
-        )
+        String(err?.message || t('assessment.table.loadError', 'Failed to load'))
       );
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, t, isPolish]);
+  }, [projectId, t]);
 
   useEffect(() => {
     fetchAssessments();
@@ -235,8 +231,8 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
             id: 'open-map',
             label:
               assessment.status === 'DRAFT'
-                ? t('assessment.table.editInMap', isPolish ? 'Edytuj w mapie' : 'Edit in Map')
-                : t('assessment.table.viewInMap', isPolish ? 'Otwórz w mapie' : 'View in Map'),
+                ? t('assessment.table.editInMap', 'Edit in Map')
+                : t('assessment.table.viewInMap', 'View in Map'),
             icon: Map,
             onClick: () => onOpenInMap(assessment.id),
           },
@@ -261,7 +257,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         },
       };
     },
-    [t, isPolish, onOpenInMap, onCreateReport]
+    [t, onOpenInMap, onCreateReport]
   );
 
   // ── Preview — 6 bloków (StandardPreview) ────────────────────────────────
@@ -280,7 +276,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           {
             id: 'delete',
             variant: 'destructive',
-            label: t('common.delete', isPolish ? 'Usuń' : 'Delete'),
+            label: t('common.delete', 'Delete'),
             icon: Trash2,
             onClick: () => setDeleteConfirmIds([previewAssessment.id]),
           },
@@ -289,7 +285,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           {
             id: 'open-map',
             variant: 'neutral',
-            label: t('assessment.table.openInMap', isPolish ? 'Otwórz w mapie' : 'Open in Map'),
+            label: t('assessment.table.openInMap', 'Open in Map'),
             icon: Map,
             shortcut: 'O',
             onClick: () => onOpenInMap(previewAssessment.id),
@@ -297,7 +293,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           {
             id: 'refresh',
             variant: 'neutral',
-            label: t('common.refresh', isPolish ? 'Odśwież' : 'Refresh'),
+            label: t('common.refresh', 'Refresh'),
             icon: RefreshCw,
             onClick: () => void fetchAssessments(),
           },
@@ -336,18 +332,18 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           selectedIds.size > 0
             ? {
                 count: selectedIds.size,
-                selectedLabel: isPolish
-                  ? `Zaznaczono: ${selectedIds.size}`
-                  : `${selectedIds.size} selected`,
+                selectedLabel: t('assessment.table.selectedCount', '{{count}} selected', {
+                  count: selectedIds.size,
+                }),
                 onSelectAll: () =>
                   setSelectedIds(new Set(filteredAssessments.map((a) => String(a.id)))),
-                selectAllLabel: isPolish ? 'Zaznacz wszystko' : 'Select all',
+                selectAllLabel: t('assessment.table.selectAll', 'Select all'),
                 onClear: () => setSelectedIds(new Set()),
-                clearLabel: isPolish ? 'Wyczyść' : 'Clear',
+                clearLabel: t('assessment.table.clearSelection', 'Clear'),
                 actions: [
                   {
                     id: 'bulk-delete',
-                    label: t('common.delete', isPolish ? 'Usuń' : 'Delete'),
+                    label: t('common.delete', 'Delete'),
                     icon: Trash2,
                     variant: 'danger',
                     onClick: () => setDeleteConfirmIds(Array.from(selectedIds)),
@@ -372,9 +368,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
               title: t('assessment.emptyState.title', 'No assessments yet'),
               description: t(
                 'assessment.emptyState.description',
-                isPolish
-                  ? 'Utwórz pierwszy assessment, aby rozpocząć diagnozę.'
-                  : 'Create your first assessment to start the diagnosis.'
+                'Create your first assessment to start the diagnosis.'
               ),
               actionLabel: t('assessment.emptyState.createFirst', 'Create First Assessment'),
               onAction: onNewAssessment,
@@ -431,11 +425,14 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
               }}
               details={{
                 text: [
-                  `${previewAssessment.completedAxes ?? 0}/${previewAssessment.totalAxes ?? 0} ${isPolish ? 'osi ukończonych' : 'axes completed'}`,
+                  t('assessment.table.axesCompleted', '{{completed}}/{{total}} axes completed', {
+                    completed: previewAssessment.completedAxes ?? 0,
+                    total: previewAssessment.totalAxes ?? 0,
+                  }),
                   previewAssessment.projectName
-                    ? `${isPolish ? 'Projekt' : 'Project'}: ${previewAssessment.projectName}`
+                    ? `${t('assessment.table.projectLabel', 'Project')}: ${previewAssessment.projectName}`
                     : '',
-                  `${isPolish ? 'Utworzono' : 'Created'}: ${formatDate(previewAssessment.createdAt)}`,
+                  `${t('assessment.table.createdLabel', 'Created')}: ${formatDate(previewAssessment.createdAt)}`,
                 ]
                   .filter(Boolean)
                   .join('\n\n'),
@@ -447,11 +444,11 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
               }}
               ai={{
                 hints: [
-                  isPolish ? 'Podsumuj assessment' : 'Summarize assessment',
-                  isPolish ? 'Zaproponuj następne kroki' : 'Suggest next steps',
+                  t('assessment.table.aiHintSummarize', 'Summarize assessment'),
+                  t('assessment.table.aiHintNextSteps', 'Suggest next steps'),
                 ],
                 disabled: true,
-                disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
+                disabledTooltip: t('assessment.table.comingSoon', 'Coming soon'),
               }}
               relations={
                 previewAssessment.projectName
@@ -473,13 +470,22 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                 <AlertCircle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
               </div>
               <h3 className="text-lg font-bold text-c-text">
-                {isPolish ? 'Potwierdź usunięcie' : 'Confirm Deletion'}
+                {t('assessment.table.confirmDeleteTitle', 'Confirm Deletion')}
               </h3>
             </div>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
-              {isPolish
-                ? `Usunąć ${deleteConfirmIds.length > 1 ? `${deleteConfirmIds.length} assessmenty` : 'ten assessment'}? Tej operacji nie można cofnąć.`
-                : `Delete ${deleteConfirmIds.length > 1 ? `${deleteConfirmIds.length} assessments` : 'this assessment'}? This action cannot be undone.`}
+              {t(
+                'assessment.table.confirmDeleteMessage',
+                'Delete {{target}}? This action cannot be undone.',
+                {
+                  target:
+                    deleteConfirmIds.length > 1
+                      ? t('assessment.table.deleteTargetPlural', '{{count}} assessments', {
+                          count: deleteConfirmIds.length,
+                        })
+                      : t('assessment.table.deleteTargetSingular', 'this assessment'),
+                }
+              )}
             </p>
             <div className="flex gap-3">
               <button
@@ -488,7 +494,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                 disabled={isDeleting}
                 className="flex-1 py-2.5 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('assessment.table.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -496,7 +502,9 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                 disabled={isDeleting}
                 className="flex-1 py-2.5 bg-danger-600 hover:bg-danger-500 text-white font-medium rounded-lg transition-colors disabled:opacity-60"
               >
-                {isDeleting ? (isPolish ? 'Usuwanie…' : 'Deleting…') : isPolish ? 'Usuń' : 'Delete'}
+                {isDeleting
+                  ? t('assessment.table.deleting', 'Deleting…')
+                  : t('common.delete', 'Delete')}
               </button>
             </div>
           </div>

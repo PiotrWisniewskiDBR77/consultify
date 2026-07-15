@@ -6803,7 +6803,30 @@
       "assessment": "Assessment",
       "status": "Status",
       "updated": "Updated",
-      "actions": "Actions"
+      "actions": "Actions",
+      "loadError": "Failed to load",
+      "editInMap": "Edit in Map",
+      "viewInMap": "View in Map",
+      "openInMap": "Open in Map",
+      "progress": "Progress",
+      "createReport": "Create Report",
+      "title": "Assessments",
+      "new": "New Assessment",
+      "selectedCount": "{{count}} selected",
+      "selectAll": "Select all",
+      "clearSelection": "Clear",
+      "axesCompleted": "{{completed}}/{{total}} axes completed",
+      "projectLabel": "Project",
+      "createdLabel": "Created",
+      "aiHintSummarize": "Summarize assessment",
+      "aiHintNextSteps": "Suggest next steps",
+      "comingSoon": "Coming soon",
+      "confirmDeleteTitle": "Confirm Deletion",
+      "confirmDeleteMessage": "Delete {{target}}? This action cannot be undone.",
+      "deleteTargetPlural": "{{count}} assessments",
+      "deleteTargetSingular": "this assessment",
+      "cancel": "Cancel",
+      "deleting": "Deleting…"
     },
     "aiSuggestions": {
       "title": "AI Suggestions",
@@ -7080,6 +7103,11 @@
     },
     "reports": {
       "source": "Source assessment"
+    },
+    "emptyState": {
+      "title": "No assessments yet",
+      "createFirst": "Create First Assessment",
+      "description": "Create your first assessment to start the diagnosis."
     }
   },
   "initiatives": {
@@ -16099,7 +16127,8 @@
       "noFramework": "Could not detect framework. Please select manually.",
       "lowConfidence": "Low confidence — please review and correct extracted values.",
       "supportedFrameworks": "Supported Frameworks"
-    }
+    },
+    "breadcrumb": "Licensed"
   },
   "tools": {
     "hub": {
@@ -19975,7 +20004,8 @@
     "pricing": "Pricing",
     "partners": "Partners",
     "vector": "Vector AI",
-    "security": "Security"
+    "security": "Security",
+    "tools": "Tools"
   },
   "trial": {
     "modal": {
