@@ -4,10 +4,19 @@
  * Guards the S1-U1 / row-anatomy parity brought to the Decisions LIST surface:
  *  1. Row anatomy: title = L2 (text-sm font-semibold text-c-text), neutral status
  *     shell via EntityStatusChip, priority via PriorityChip (color only in dot).
- *  2. Selection / preview highlight uses the neutral+blue canon
- *     (PREVIEW_SELECTED_ROW_CLASS / --c-info accent bar) — NEVER crimson/primary.
+ *  2. Selection / preview highlight uses the neutral+blue canon — NEVER
+ *     crimson/primary.
  *  3. Clicking a decision row opens its preview AND applies the preview highlight
- *     to that row (the isPreviewed → PREVIEW_SELECTED_ROW_CLASS wiring).
+ *     to that row.
+ *
+ * kanon TRIADA §27 (harvard/m03m04-canon): this screen now renders via
+ * StandardTable/FilterableTable (was a bespoke `<table>`). The row highlight
+ * is FilterableTable's own canonical selected-row class
+ * (`bg-slate-50 dark:bg-white/[0.06]`, src/components/shared/ModuleHub/
+ * FilterableTable.tsx) — a shared, neutral style, not this screen's old
+ * bespoke `PREVIEW_SELECTED_ROW_CLASS` (`--c-info` inset bar). Still neutral,
+ * still never crimson/primary — just the shared kanon token instead of a
+ * per-screen one.
  */
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import React from 'react';
@@ -140,14 +149,14 @@ describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
     const title = await screen.findByText('Approve Q1 Budget Increase');
     const row = rowFor(title);
 
-    // Before click: no selection/preview surface.
-    expect(row.className).not.toContain('shadow-[inset_4px_0_0_var(--c-info)]');
+    // Before click: no selection/preview surface (FilterableTable's neutral
+    // selected-row class — kanon TRIADA §27).
+    expect(row.className).not.toContain('bg-slate-50 dark:bg-white/[0.06]');
 
     fireEvent.click(row);
 
     await waitFor(() => {
-      // Preview highlight carries the neutral slate surface + --c-info accent bar.
-      expect(row.className).toContain('shadow-[inset_4px_0_0_var(--c-info)]');
+      expect(row.className).toContain('bg-slate-50 dark:bg-white/[0.06]');
     });
   });
 
@@ -159,9 +168,9 @@ describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
     fireEvent.click(first);
 
     await waitFor(() => {
-      expect(first.className).toContain('var(--c-info)');
+      expect(first.className).toContain('bg-slate-50 dark:bg-white/[0.06]');
     });
-    expect(second.className).not.toContain('shadow-[inset_4px_0_0_var(--c-info)]');
+    expect(second.className).not.toContain('bg-slate-50 dark:bg-white/[0.06]');
   });
 
   it('renders a neutral-shell status chip (dot carries the only color)', async () => {
