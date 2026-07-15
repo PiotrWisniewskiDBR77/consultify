@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   RiskAssumption,
@@ -20,7 +21,8 @@ interface AssumptionsStepProps {
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPolish }) => {
+export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as RiskUncertaintyData;
   const assumptions = data.assumptions || [];
@@ -54,12 +56,10 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Założenia krytyczne' : 'Critical assumptions'}
+          {t('discoveryToolsTools.riskUncertainty.assumptionsStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Wypisz kluczowe założenia i oceń pewność (1–5).'
-            : 'List key assumptions and rate confidence (1–5).'}
+          {t('discoveryToolsTools.riskUncertainty.assumptionsStep.subtitle')}
         </p>
       </div>
 
@@ -67,13 +67,13 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={isPolish ? 'Treść założenia...' : 'Assumption text...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.assumptionsStep.textPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <div className="flex flex-wrap gap-3 items-center">
           <label className="text-xs text-slate-500">
-            {isPolish ? 'Pewność' : 'Confidence'}
+            {t('discoveryToolsTools.common.confidence')}
             <select
               value={confidence}
               onChange={(e) => setConfidence(Number(e.target.value))}
@@ -92,22 +92,16 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Zapisz założenia tak, aby dało się je zweryfikować (dane/warunki).'
-              : 'Write assumptions so they can be verified (data/conditions).'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.riskUncertainty.assumptionsStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {assumptions.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak założeń' : 'No assumptions yet'}
+            {t('discoveryToolsTools.riskUncertainty.assumptionsStep.empty')}
           </div>
         ) : (
           assumptions.map((a) => (
@@ -119,7 +113,7 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
                 <div className="min-w-0">
                   <div className="text-slate-800 dark:text-slate-200">{a.text}</div>
                   <div className="text-xs text-slate-500 mt-1">
-                    {isPolish ? 'Pewność' : 'Confidence'}: {a.confidence}/5
+                    {t('discoveryToolsTools.common.confidence')}: {a.confidence}/5
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

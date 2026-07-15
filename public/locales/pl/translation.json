@@ -27952,7 +27952,11 @@
       "notNowDefer": "Nie teraz / odłóż",
       "close": "Zamknij",
       "remove": "Usuń",
-      "apply": "Zastosuj"
+      "apply": "Zastosuj",
+      "confidence": "Pewność",
+      "firstStepColonSpace": "Pierwszy krok: ",
+      "add": "Dodaj",
+      "probability": "Prawdopodobieństwo"
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -28015,6 +28019,57 @@
         "introSubtitle": "Każda propozycja składa się z tytułu i rozwinięcia. Możesz ją zaakceptować, odrzucić przez przejście do kolejnej propozycji, albo przepisać przez komentarz i pogłębienie.",
         "refineAcceptedPlaceholder": "Wpisz komentarz, który ma dopracować ten zaakceptowany punkt.",
         "rewriteProposalPlaceholder": "Wpisz komentarz, który ma przepisać tę propozycję."
+      }
+    },
+    "riskUncertainty": {
+      "badge": {
+        "aiProposal": "Propozycja AI",
+        "rejected": "Odrzucone",
+        "rethinking": "Przemyślenie",
+        "accepted": "Zaakceptowane"
+      },
+      "userInput": "Wpis użytkownika",
+      "manualEntry": "Wpis ręczny",
+      "signalsTitle": "Sygnały ryzyka i niepewności",
+      "signalsSubtitle": "Zbierz sygnały z wywiadu, rynku, danych i organizacji zanim AI zbuduje mapę ryzyka.",
+      "addSignalPlaceholder": "Dodaj sygnał ryzyka...",
+      "mapTitle": "Mapa założeń, ryzyk i scenariuszy",
+      "mapSubtitle": "Karty AI są propozycjami. Akceptowane elementy przechodzą dalej do syntezy.",
+      "assumptions": "Założenia",
+      "addAssumptionPlaceholder": "Dodaj założenie...",
+      "risks": "Ryzyka",
+      "addRiskPlaceholder": "Dodaj ryzyko...",
+      "scenarios": "Scenariusze",
+      "addScenarioPlaceholder": "Dodaj scenariusz...",
+      "likelihood": "Prawdopodobieństwo",
+      "insightsTitle": "Synteza ryzyka i rekomendowane ruchy",
+      "insightsSubtitle": "AI zamienia zaakceptowaną mapę w ruchy walidacji, mitygacji, monitoringu i eskalacji.",
+      "outputsTitle": "Outputy i inicjatywy odporności",
+      "outputsSubtitle": "Final source summary i output candidates bazują na zaakceptowanych ryzykach i scenariuszach.",
+      "initiativeDrafts": "Drafty inicjatyw",
+      "noInitiatives": "Brak inicjatyw.",
+      "risksStep": {
+        "title": "Ryzyka strategiczne",
+        "subtitle": "Zidentyfikuj ryzyka i dodaj działania mitygujące.",
+        "descPlaceholder": "Opis ryzyka...",
+        "mitigationPlaceholder": "Mitigacja / plan reakcji...",
+        "hint": "Opisz konkretne ryzyko i plan reakcji.",
+        "empty": "Brak ryzyk"
+      },
+      "scenariosStep": {
+        "title": "Scenariusze",
+        "subtitle": "Opisz możliwe scenariusze i oceń prawdopodobieństwo (1–5).",
+        "titlePlaceholder": "Tytuł scenariusza...",
+        "notesPlaceholder": "Notatki / implikacje...",
+        "hint": "Scenariusze powinny być rozłączne i obejmować istotne niepewności (np. popyt, koszty, regulacje).",
+        "empty": "Brak scenariuszy"
+      },
+      "assumptionsStep": {
+        "title": "Założenia krytyczne",
+        "subtitle": "Wypisz kluczowe założenia i oceń pewność (1–5).",
+        "textPlaceholder": "Treść założenia...",
+        "hint": "Zapisz założenia tak, aby dało się je zweryfikować (dane/warunki).",
+        "empty": "Brak założeń"
       }
     }
   }

@@ -26876,7 +26876,11 @@
       "notNowDefer": "Not now / defer",
       "close": "Close",
       "remove": "Remove",
-      "apply": "Apply"
+      "apply": "Apply",
+      "confidence": "Confidence",
+      "firstStepColonSpace": "First step: ",
+      "add": "Add",
+      "probability": "Probability"
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -26939,6 +26943,57 @@
         "introSubtitle": "Each proposal is made of a title and an explanation. You can accept it, skip to another proposal, or rewrite it through comment and a deeper framing.",
         "refineAcceptedPlaceholder": "Write the comment that should refine this accepted point.",
         "rewriteProposalPlaceholder": "Write the comment that should rewrite this proposal."
+      }
+    },
+    "riskUncertainty": {
+      "badge": {
+        "aiProposal": "AI proposal",
+        "rejected": "Rejected",
+        "rethinking": "Rethinking",
+        "accepted": "Accepted"
+      },
+      "userInput": "User input",
+      "manualEntry": "Manual entry",
+      "signalsTitle": "Risk & Uncertainty Signals",
+      "signalsSubtitle": "Capture interview, market, data, and organization signals before AI builds the risk map.",
+      "addSignalPlaceholder": "Add a risk signal...",
+      "mapTitle": "Assumption, Risk & Scenario Map",
+      "mapSubtitle": "AI cards are proposals. Accepted elements feed the synthesis.",
+      "assumptions": "Assumptions",
+      "addAssumptionPlaceholder": "Add assumption...",
+      "risks": "Risks",
+      "addRiskPlaceholder": "Add risk...",
+      "scenarios": "Scenarios",
+      "addScenarioPlaceholder": "Add scenario...",
+      "likelihood": "Likelihood",
+      "insightsTitle": "Risk Synthesis & Recommended Moves",
+      "insightsSubtitle": "AI turns the approved map into validation, mitigation, monitoring, and escalation moves.",
+      "outputsTitle": "Outputs & Resilience Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on approved risks and scenarios.",
+      "initiativeDrafts": "Initiative drafts",
+      "noInitiatives": "No initiatives yet.",
+      "risksStep": {
+        "title": "Strategic risks",
+        "subtitle": "Identify risks and mitigation actions.",
+        "descPlaceholder": "Risk description...",
+        "mitigationPlaceholder": "Mitigation / response plan...",
+        "hint": "Describe a concrete risk and mitigation plan.",
+        "empty": "No risks yet"
+      },
+      "scenariosStep": {
+        "title": "Scenarios",
+        "subtitle": "Describe plausible scenarios and rate likelihood (1–5).",
+        "titlePlaceholder": "Scenario title...",
+        "notesPlaceholder": "Notes / implications...",
+        "hint": "Scenarios should be distinct and cover key uncertainties (e.g. demand, costs, regulation).",
+        "empty": "No scenarios yet"
+      },
+      "assumptionsStep": {
+        "title": "Critical assumptions",
+        "subtitle": "List key assumptions and rate confidence (1–5).",
+        "textPlaceholder": "Assumption text...",
+        "hint": "Write assumptions so they can be verified (data/conditions).",
+        "empty": "No assumptions yet"
       }
     }
   }
