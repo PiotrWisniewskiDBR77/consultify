@@ -9698,6 +9698,22 @@
       "gapHeader": "Luka",
       "priorityHeader": "Priorytet",
       "justificationTitle": "Uzasadnienie"
+    },
+    "reportGeneratorWizard": {
+      "reportTypeSectionLabel": "Typ raportu",
+      "cadenceQuestionLabel": "Jak ma działać raport?",
+      "defaultForReportPrefix": "Domyślnie dla tego raportu:",
+      "repeatIntervalLabel": "Interwał powtarzania",
+      "goalLabel": "Cel",
+      "goalPlaceholder": "Co ten raport ma osiągnąć dla odbiorców?",
+      "reportNameOptionalLabel": "Nazwa raportu (opcjonalnie)",
+      "periodScopeLabel": "Okres i zakres",
+      "fromLabel": "Od",
+      "toLabel": "Do",
+      "scopeNotePlaceholder": "Notatka o zakresie (np. tylko aktywne inicjatywy, wybrany portfel)",
+      "densityLabel": "Gęstość",
+      "sectionsLabel": "Sekcje",
+      "audiencePrefix": "Odbiorcy:"
     }
   },
   "auth": {

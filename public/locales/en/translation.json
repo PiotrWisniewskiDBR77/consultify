@@ -10463,6 +10463,22 @@
       "gapHeader": "Gap",
       "priorityHeader": "Priority",
       "justificationTitle": "Justification"
+    },
+    "reportGeneratorWizard": {
+      "reportTypeSectionLabel": "Report type",
+      "cadenceQuestionLabel": "How should this report run?",
+      "defaultForReportPrefix": "Default for this report:",
+      "repeatIntervalLabel": "Repeat interval",
+      "goalLabel": "Goal",
+      "goalPlaceholder": "What should this report achieve for its audience?",
+      "reportNameOptionalLabel": "Report name (optional)",
+      "periodScopeLabel": "Period & scope",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "scopeNotePlaceholder": "Scope note (e.g. only active initiatives, specific portfolio)",
+      "densityLabel": "Density",
+      "sectionsLabel": "Sections",
+      "audiencePrefix": "Audience:"
     }
   },
   "auth": {
