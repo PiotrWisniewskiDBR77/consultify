@@ -24,10 +24,6 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import {
-  buildCapacitySignals,
-  capacityPortfolioSignal,
-} from '../services/capacitySignalService.js';
-import {
   capacityVsDemand,
   computeUtilization,
   overloadAlerts,
@@ -35,6 +31,10 @@ import {
   type ResourceCapacity,
   resourceHeatmap,
 } from '../services/capacityModelService.js';
+import {
+  buildCapacitySignals,
+  capacityPortfolioSignal,
+} from '../services/capacitySignalService.js';
 import {
   buildExecutionIntelligence,
   type IntelligenceInitiative,
@@ -44,15 +44,15 @@ import {
   type PredictionInputs,
 } from '../services/executionPredictionService.js';
 import {
-  computeReadiness,
-  readinessToLaneProblem,
-  type ReadinessInputs,
-} from '../services/peopleChangeReadinessService.js';
-import {
   groupByInitiative,
   type Signal,
   triageSignals,
 } from '../services/executionTriageService.js';
+import {
+  computeReadiness,
+  type ReadinessInputs,
+  readinessToLaneProblem,
+} from '../services/peopleChangeReadinessService.js';
 import {
   cascadeImpact,
   criticalDependencyChain,
