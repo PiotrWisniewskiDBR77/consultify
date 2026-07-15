@@ -6648,6 +6648,20 @@
     },
     "itemPreview": {
       "defaultLabel": "Ocena"
+    },
+    "maturityPathway": {
+      "heading": "Ścieżka dojrzałości (N → N+1)",
+      "subheading": "Co konkretnie zrobić, aby przejść z obecnego poziomu na następny — dla wymiarów poniżej celu.",
+      "currentState": "Co jest",
+      "gapMeaning": "Co to znaczy",
+      "actionsHeading": "Co zrobić, by przejść wyżej",
+      "evidenceHeading": "Jaki efekt potwierdzi poziom",
+      "obstaclesHeading": "Typowe przeszkody"
+    },
+    "fofRoadBar": {
+      "gapValue": "brak {{value}}",
+      "currentLevel": "Poziom obecny",
+      "fofThreshold": "Próg FoF ({{benchmark}})"
     }
   },
   "initiatives": {

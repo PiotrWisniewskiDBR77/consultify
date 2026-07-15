@@ -7492,6 +7492,20 @@
     },
     "itemPreview": {
       "defaultLabel": "Assessment"
+    },
+    "maturityPathway": {
+      "heading": "Maturity pathway (N → N+1)",
+      "subheading": "What concretely to do to move from the current level to the next — for dimensions below target.",
+      "currentState": "Current state",
+      "gapMeaning": "What it means",
+      "actionsHeading": "What to do to move up",
+      "evidenceHeading": "Evidence that confirms the level",
+      "obstaclesHeading": "Typical obstacles"
+    },
+    "fofRoadBar": {
+      "gapValue": "−{{value}}",
+      "currentLevel": "Current level",
+      "fofThreshold": "FoF threshold ({{benchmark}})"
     }
   },
   "initiatives": {
