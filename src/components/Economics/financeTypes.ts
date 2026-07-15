@@ -314,15 +314,18 @@ export function getTypeCode(kind: FinanceKind): string {
   return KIND_LABELS[kind].code;
 }
 
-export function formatAge(dateStr: string, isPl: boolean): string {
+export function formatAge(
+  dateStr: string,
+  t: (key: string, defaultValue: string, options?: Record<string, unknown>) => string
+): string {
   const d = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
   const days = Math.floor(hours / 24);
-  if (hours < 1) return isPl ? 'Przed chwilą' : 'Just now';
-  if (hours < 24) return isPl ? `${hours} h temu` : `${hours}h ago`;
-  if (days < 7) return isPl ? `${days} dni temu` : `${days}d ago`;
+  if (hours < 1) return t('finance.preview.ageJustNow', 'Just now');
+  if (hours < 24) return t('finance.preview.ageHours', '{{hours}}h ago', { hours });
+  if (days < 7) return t('finance.preview.ageDays', '{{days}}d ago', { days });
   return d.toLocaleDateString();
 }
 

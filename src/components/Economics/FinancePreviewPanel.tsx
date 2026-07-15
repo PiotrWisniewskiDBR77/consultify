@@ -193,7 +193,7 @@ export function useFinancePreview({
   versionSnapshots,
 }: FinancePreviewPanelProps) {
   const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const numberLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
 
   const ModelStatementPreview: React.FC<{
     detail: NonNullable<PreviewDataState['modelPreviewDetail']>;
@@ -207,14 +207,14 @@ export function useFinancePreview({
 
     const rows = detail.scenarioTables[selectedVariant]?.[selectedStatement] || [];
     const variantLabels = {
-      base: isPl ? 'Base' : 'Base',
-      optimistic: isPl ? 'Optymistyczny' : 'Optimistic',
-      conservative: isPl ? 'Konserwatywny' : 'Conservative',
+      base: 'Base',
+      optimistic: t('finance.preview.variantOptimistic', 'Optimistic'),
+      conservative: t('finance.preview.variantConservative', 'Conservative'),
     };
     const statementLabels = {
       'P&L': 'P&L',
-      BS: isPl ? 'Bilans' : 'Balance Sheet',
-      CF: isPl ? 'Cash Flow' : 'Cash Flow',
+      BS: t('finance.preview.statementBS', 'Balance Sheet'),
+      CF: 'Cash Flow',
     };
 
     return (
@@ -222,18 +222,18 @@ export function useFinancePreview({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-              {isPl ? 'Dokument bazowy' : 'Source document'}
+              {t('finance.preview.sourceDocument', 'Source document')}
             </div>
             <div className="text-sm font-medium text-slate-900 dark:text-white">
               {detail.sourceDocumentTitle}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {detail.sourcePeriodLabel} • {detail.sourceStatementCount}{' '}
-              {isPl ? 'dokumenty składowe' : 'source statements'}
+              {t('finance.preview.sourceStatementsSuffix', 'source statements')}
             </div>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            {isPl ? 'Poziomy analityczne' : 'Analytical levels'}: {detail.analyticalDepthLabel}
+            {t('finance.preview.analyticalLevels', 'Analytical levels')}: {detail.analyticalDepthLabel}
           </div>
         </div>
 
@@ -275,7 +275,7 @@ export function useFinancePreview({
             <thead>
               <tr className="bg-slate-100/80 dark:bg-white/[0.04]">
                 <th className="min-w-[220px] px-3 py-2 text-left font-semibold text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Linia' : 'Line'}
+                  {t('finance.preview.lineColumn', 'Line')}
                 </th>
                 {detail.forecastYears.map((year) => (
                   <th
@@ -318,7 +318,7 @@ export function useFinancePreview({
                             : 'text-slate-900 dark:text-white'
                         }`}
                       >
-                        {new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+                        {new Intl.NumberFormat(numberLocale, {
                           maximumFractionDigits: 0,
                         }).format(value)}
                       </td>
@@ -340,7 +340,7 @@ export function useFinancePreview({
       if (row.kind === 'statements') {
         const sRow = row as FinanceStatementRow;
         metaPills.push(
-          { label: t('finance.columns.type', 'Type'), value: isPl ? 'Pack' : 'Pack' },
+          { label: t('finance.columns.type', 'Type'), value: 'Pack' },
           {
             label: t('finance.columns.period', 'Period'),
             value: sRow.periodLabel || sRow.periodEnd,
@@ -373,7 +373,10 @@ export function useFinancePreview({
         const pRow = row as FinanceModelRow;
         if (pRow.predictionType === 'budget') {
           metaPills.push(
-            { label: t('finance.prediction.subtype', 'Type'), value: isPl ? 'Budżet' : 'Budget' },
+            {
+              label: t('finance.prediction.subtype', 'Type'),
+              value: t('finance.prediction.budget', 'Budget'),
+            },
             { label: t('common.currency', 'Currency'), value: pRow.currency }
           );
           if (pRow.periodStart && pRow.periodEnd)
@@ -432,37 +435,59 @@ export function useFinancePreview({
       if (row.kind === 'statements') {
         const sRow = row as FinanceStatementRow;
         const detail = statementPreviewDetail;
-        detailsText = isPl
-          ? `Pakiet sprawozdań\nFirma: ${detail?.entityName || sRow.entityName || '—'}\nOkres: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nWaluta: ${detail?.currency || sRow.currency}\nDokumenty: ${detail?.sourceStatementCount || sRow.sourceStatementCount || 0}`
-          : `Statement pack\nEntity: ${detail?.entityName || sRow.entityName || '—'}\nPeriod: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nCurrency: ${detail?.currency || sRow.currency}\nDocuments: ${detail?.sourceStatementCount || sRow.sourceStatementCount || 0}`;
+        detailsText = t('finance.preview.statementsDetails', 'Statement pack…', {
+          entity: detail?.entityName || sRow.entityName || '—',
+          period: detail?.periodLabel || sRow.periodLabel || '—',
+          status: detail?.rawStatus || sRow.rawStatus,
+          currency: detail?.currency || sRow.currency,
+          documents: detail?.sourceStatementCount || sRow.sourceStatementCount || 0,
+        });
         if (detail?.mappedLineCount || sRow.mappedLineCount) {
-          detailsText += isPl
-            ? `\nZmapowane linie: ${detail?.mappedLineCount || sRow.mappedLineCount} • Kompletność: ${sRow.completenessLabel || '—'}`
-            : `\nMapped lines: ${detail?.mappedLineCount || sRow.mappedLineCount} • Completeness: ${sRow.completenessLabel || '—'}`;
+          detailsText += t('finance.preview.statementsMappedLinesSuffix', '\nMapped lines: {{mapped}}', {
+            mapped: detail?.mappedLineCount || sRow.mappedLineCount,
+            completeness: sRow.completenessLabel || '—',
+          });
         }
       } else if (row.kind === 'models') {
-        detailsText = isPl
-          ? `Model prognostyczny w układzie P&L / Bilans / CF.\nDokument bazowy: ${modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—'}\nOkno prognozy: ${row.forecastWindowLabel || '3Y'}\nWarianty: ${row.variantLabel || 'base / optimistic / conservative'}\nPoziomy analityczne: ${modelPreviewDetail?.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}`
-          : `Forecast model in P&L / BS / CF format.\nSource document: ${modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—'}\nForecast window: ${row.forecastWindowLabel || '3Y'}\nVariants: ${row.variantLabel || 'base / optimistic / conservative'}\nAnalytical depth: ${modelPreviewDetail?.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}`;
+        detailsText = t('finance.preview.modelsDetails', 'Forecast model…', {
+          sourceDoc: modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—',
+          window: row.forecastWindowLabel || '3Y',
+          variants: row.variantLabel || 'base / optimistic / conservative',
+          depth: modelPreviewDetail?.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3',
+        });
       } else if (row.kind === 'analysis' || row.kind === 'investment') {
-        detailsText = isPl
-          ? `${row.kind === 'investment' ? 'Case inwestycyjny' : 'Analiza finansowa'}: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
-          : `${row.kind === 'investment' ? 'Investment case' : 'Financial analysis'}: ${row.analysisType}\nCurrency: ${row.currency}\nPeriods: ${row.periodCount}`;
+        const kindLabel =
+          row.kind === 'investment'
+            ? t('finance.preview.investmentCaseLabel', 'Investment case')
+            : t('finance.preview.financialAnalysisLabel', 'Financial analysis');
+        detailsText = t('finance.preview.analysisDetails', '{{kindLabel}}: {{analysisType}}', {
+          kindLabel,
+          analysisType: row.analysisType,
+          currency: row.currency,
+          periods: row.periodCount,
+        });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;
         detailsText =
           pRow.predictionType === 'budget'
-            ? isPl
-              ? `Budżet / Prognoza\nOkres: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nWaluta: ${pRow.currency}\nScenarze: base / optimistic / conservative`
-              : `Budget / Forecast\nPeriod: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nCurrency: ${pRow.currency}\nScenarios: base / optimistic / conservative`
-            : isPl
-              ? `Predykcja / scenariusz: ${pRow.scenario}\nWaluta: ${pRow.currency}\nHoryzont: ${pRow.horizonMonths} miesięcy`
-              : `Forecast / scenario: ${pRow.scenario}\nCurrency: ${pRow.currency}\nHorizon: ${pRow.horizonMonths} months`;
+            ? t('finance.preview.predictionBudgetDetails', 'Budget / Forecast…', {
+                start: pRow.periodStart || '—',
+                end: pRow.periodEnd || '—',
+                currency: pRow.currency,
+              })
+            : t('finance.preview.predictionModelDetails', 'Forecast / scenario…', {
+                scenario: pRow.scenario,
+                currency: pRow.currency,
+                horizon: pRow.horizonMonths,
+              });
       } else if (row.kind === 'valuation') {
         const vRow = row as FinanceValuationRow;
-        detailsText = isPl
-          ? `Wycena przedsiębiorstwa\nMetoda: ${vRow.method}\nŹródło: ${vRow.sourceType}\nWaluta: ${row.currency}\nHoryzont: ${vRow.horizonYears} lat`
-          : `Enterprise valuation\nMethod: ${vRow.method}\nSource: ${vRow.sourceType}\nCurrency: ${row.currency}\nHorizon: ${vRow.horizonYears} years`;
+        detailsText = t('finance.preview.valuationDetails', 'Enterprise valuation…', {
+          method: vRow.method,
+          source: vRow.sourceType,
+          currency: row.currency,
+          horizon: vRow.horizonYears,
+        });
       }
 
       return (
@@ -472,7 +497,7 @@ export function useFinancePreview({
             trailing={
               <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 inline-flex items-center gap-1.5">
                 <Clock size={14} className="text-slate-600" />
-                {formatAge(row.updatedAt, isPl)}
+                {formatAge(row.updatedAt, t)}
               </span>
             }
           />
@@ -515,7 +540,7 @@ export function useFinancePreview({
                     </div>
                     <div className="rounded-md bg-c-surface p-2">
                       <div className="text-slate-500 dark:text-slate-400">
-                        {isPl ? 'Nieprzypisane' : 'Unmapped'}
+                        {t('finance.preview.unmapped', 'Unmapped')}
                       </div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white">
                         {statementPreviewDetail.unmappedLineCount || 0}
@@ -523,7 +548,7 @@ export function useFinancePreview({
                     </div>
                     <div className="rounded-md bg-c-surface p-2">
                       <div className="text-slate-500 dark:text-slate-400">
-                        {isPl ? 'Wszystkie linie' : 'Total lines'}
+                        {t('finance.preview.totalLines', 'Total lines')}
                       </div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white">
                         {statementPreviewDetail.totalLineCount || 0}
@@ -547,7 +572,7 @@ export function useFinancePreview({
                     {Array.isArray(statementPreviewDetail.missingStatementTypes) &&
                       statementPreviewDetail.missingStatementTypes.length > 0 && (
                         <div className="text-xs text-amber-600 dark:text-amber-400">
-                          {isPl ? 'Braki:' : 'Missing:'}{' '}
+                          {t('finance.preview.missingPrefix', 'Missing:')}{' '}
                           {statementPreviewDetail.missingStatementTypes.join(', ')}
                         </div>
                       )}
@@ -561,7 +586,7 @@ export function useFinancePreview({
                 </>
               ) : (
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Ładowanie podglądu pakietu…' : 'Loading pack preview…'}
+                  {t('finance.preview.loadingPackPreview', 'Loading pack preview…')}
                 </div>
               )}
             </div>
@@ -572,9 +597,7 @@ export function useFinancePreview({
               <ModelStatementPreview detail={modelPreviewDetail} />
             ) : (
               <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPl
-                  ? 'Ładowanie prognozowanego układu sprawozdania…'
-                  : 'Loading forecast statement layout…'}
+                {t('finance.preview.loadingForecastLayout', 'Loading forecast statement layout…')}
               </div>
             ))}
 
@@ -627,7 +650,7 @@ export function useFinancePreview({
                           </span>
                           {sc.isActive && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                              {isPl ? 'aktywny' : 'active'}
+                              {t('finance.preview.scenarioActive', 'active')}
                             </span>
                           )}
                         </div>
@@ -643,33 +666,31 @@ export function useFinancePreview({
             analysisPreviewRatios &&
             analysisPreviewRatios.length > 0 &&
             (() => {
-              const categoryLabels: Record<string, { en: string; pl: string; color: string }> = {
+              const categoryLabels: Record<string, { label: string; color: string }> = {
                 liquidity: {
-                  en: 'Liquidity',
-                  pl: 'Płynność',
+                  label: t('finance.preview.ratioCategories.liquidity', 'Liquidity'),
                   color: 'text-blue-600 dark:text-blue-400',
                 },
                 profitability: {
-                  en: 'Profitability',
-                  pl: 'Rentowność',
+                  label: t('finance.preview.ratioCategories.profitability', 'Profitability'),
                   color: 'text-emerald-600 dark:text-emerald-400',
                 },
                 leverage: {
-                  en: 'Leverage',
-                  pl: 'Zadłużenie',
+                  label: t('finance.preview.ratioCategories.leverage', 'Leverage'),
                   color: 'text-amber-600 dark:text-amber-400',
                 },
                 efficiency: {
-                  en: 'Efficiency',
-                  pl: 'Efektywność',
+                  label: t('finance.preview.ratioCategories.efficiency', 'Efficiency'),
                   color: 'text-violet-600 dark:text-violet-400',
                 },
                 investment: {
-                  en: 'Investment',
-                  pl: 'Inwestycja',
+                  label: t('finance.preview.ratioCategories.investment', 'Investment'),
                   color: 'text-fuchsia-600 dark:text-fuchsia-400',
                 },
-                growth: { en: 'Growth', pl: 'Wzrost', color: 'text-blue-600 dark:text-blue-400' },
+                growth: {
+                  label: t('finance.preview.ratioCategories.growth', 'Growth'),
+                  color: 'text-blue-600 dark:text-blue-400',
+                },
               };
               const grouped: Record<string, typeof analysisPreviewRatios> = {};
               for (const r of analysisPreviewRatios) {
@@ -683,20 +704,17 @@ export function useFinancePreview({
                   </div>
                   {Object.entries(grouped).map(([cat, items]) => {
                     const meta = categoryLabels[cat] || {
-                      en: cat,
-                      pl: cat,
+                      label: cat,
                       color: 'text-slate-600',
                     };
                     const topRatio = items?.find((r) => r.value != null);
                     return (
                       <div key={cat} className="flex items-center justify-between text-xs">
-                        <span className={`font-medium ${meta.color}`}>
-                          {isPl ? meta.pl : meta.en}
-                        </span>
+                        <span className={`font-medium ${meta.color}`}>{meta.label}</span>
                         <span className="text-slate-600 dark:text-slate-300 font-mono">
                           {topRatio
                             ? `${topRatio.ratio_name}: ${topRatio.value?.toFixed(2)}`
-                            : `${items?.length || 0} ${isPl ? 'wsk.' : 'ratios'}`}
+                            : `${items?.length || 0} ${t('finance.preview.ratioCountSuffix', 'ratios')}`}
                         </span>
                       </div>
                     );
@@ -745,9 +763,7 @@ export function useFinancePreview({
                   </div>
                 ) : (
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {isPl
-                      ? 'Nie obliczono jeszcze — kliknij "Oblicz DCF"'
-                      : 'Not computed yet — click "Compute DCF"'}
+                    {t('finance.preview.notComputedDcf', 'Not computed yet — click "Compute DCF"')}
                   </div>
                 )}
                 <div className="flex items-center gap-1.5 mt-1">
@@ -761,16 +777,10 @@ export function useFinancePreview({
                     }`}
                   >
                     {(row as FinanceValuationRow).sourceType === 'financial_model'
-                      ? isPl
-                        ? 'Model'
-                        : 'Model'
+                      ? 'Model'
                       : (row as FinanceValuationRow).sourceType === 'budget'
-                        ? isPl
-                          ? 'Budżet'
-                          : 'Budget'
-                        : isPl
-                          ? 'Ręczne'
-                          : 'Manual'}
+                        ? t('finance.prediction.budget', 'Budget')
+                        : t('finance.preview.sourceTypeManual', 'Manual')}
                   </span>
                 </div>
               </div>
@@ -857,7 +867,7 @@ export function useFinancePreview({
                           className="text-[10px] text-c-info hover:underline"
                           onClick={() => handleOpenFull(row)}
                         >
-                          {isPl ? 'Zobacz wszystkie' : 'View all'}
+                          {t('finance.preview.viewAll', 'View all')}
                         </button>
                       </div>
                       {topTwo.map((rec: any, i: number) => (
@@ -886,7 +896,7 @@ export function useFinancePreview({
               {valuationPreviewDetail?.negotiationPack && (
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/30">
-                    ✓ {isPl ? 'Negotiation Pack gotowy' : 'Negotiation Pack ready'}
+                    ✓ {t('finance.preview.negotiationPackReady', 'Negotiation Pack ready')}
                   </span>
                 </div>
               )}
@@ -897,7 +907,7 @@ export function useFinancePreview({
     },
     [
       t,
-      isPl,
+      numberLocale,
       statementPreviewDetail,
       statementPreviewRatios,
       modelPreviewDetail,
@@ -916,39 +926,39 @@ export function useFinancePreview({
         switch (row.kind) {
           case 'statements':
             return [
-              isPl ? 'Sprawdź mapowanie' : 'Review mapping',
-              isPl ? 'Zbuduj model' : 'Create model',
-              isPl ? 'Porównaj okresy' : 'Compare periods',
+              t('finance.preview.aiHints.reviewMapping', 'Review mapping'),
+              t('finance.preview.aiHints.createModel', 'Create model'),
+              t('finance.preview.aiHints.comparePeriods', 'Compare periods'),
             ];
           case 'models':
             return [
-              isPl ? 'Sprawdź spójność' : 'Check consistency',
-              isPl ? 'Zaproponuj scenariusz' : 'Suggest scenario',
-              isPl ? 'Porównaj z baseline' : 'Compare to baseline',
+              t('finance.preview.aiHints.checkConsistency', 'Check consistency'),
+              t('finance.preview.aiHints.suggestScenario', 'Suggest scenario'),
+              t('finance.preview.aiHints.compareBaseline', 'Compare to baseline'),
             ];
           case 'analysis':
             return [
-              isPl ? 'Podsumuj wyniki' : 'Summarize results',
-              isPl ? 'Znajdź anomalie' : 'Find anomalies',
-              isPl ? 'Zaproponuj działania' : 'Suggest actions',
+              t('finance.preview.aiHints.summarizeResults', 'Summarize results'),
+              t('finance.preview.aiHints.findAnomalies', 'Find anomalies'),
+              t('finance.preview.aiHints.suggestActions', 'Suggest actions'),
             ];
           case 'investment':
             return [
-              isPl ? 'Oceń NPV i IRR' : 'Evaluate NPV and IRR',
-              isPl ? 'Sprawdź payback' : 'Check payback',
-              isPl ? 'Rekomendacja go/no-go' : 'Go/no-go recommendation',
+              t('finance.preview.aiHints.evaluateNpvIrr', 'Evaluate NPV and IRR'),
+              t('finance.preview.aiHints.checkPayback', 'Check payback'),
+              t('finance.preview.aiHints.goNoGoRecommendation', 'Go/no-go recommendation'),
             ];
           case 'prediction':
             return [
-              isPl ? 'Oceń założenia' : 'Evaluate assumptions',
-              isPl ? 'Analiza wrażliwości' : 'Sensitivity analysis',
-              isPl ? 'Porównaj scenariusze' : 'Compare scenarios',
+              t('finance.preview.aiHints.evaluateAssumptions', 'Evaluate assumptions'),
+              t('finance.preview.aiHints.sensitivityAnalysis', 'Sensitivity analysis'),
+              t('finance.preview.aiHints.compareScenarios', 'Compare scenarios'),
             ];
           case 'valuation':
             return [
-              isPl ? 'Zweryfikuj WACC' : 'Verify WACC',
-              isPl ? 'Porównaj z rynkiem' : 'Compare to market',
-              isPl ? 'Jak poprawić wycenę?' : 'How to improve?',
+              t('finance.preview.aiHints.verifyWacc', 'Verify WACC'),
+              t('finance.preview.aiHints.compareMarket', 'Compare to market'),
+              t('finance.preview.aiHints.howToImprove', 'How to improve?'),
             ];
         }
       })();
@@ -961,23 +971,17 @@ export function useFinancePreview({
         const statementRow = row as FinanceStatementRow;
         relationItems.push(
           {
-            label: `${isPl ? 'Źródła' : 'Sources'}: ${
+            label: `${t('finance.preview.relationsSources', 'Sources')}: ${
               statementPreviewDetail?.sourceFileName || statementRow.sourceFileName || '—'
             }`,
           },
           {
-            label: `${isPl ? 'Gotowość do modelu' : 'Model readiness'}: ${
+            label: `${t('finance.preview.relationsModelReadiness', 'Model readiness')}: ${
               statementRow.isWorkable
-                ? isPl
-                  ? 'Gotowy do seedowania'
-                  : 'Ready for seeding'
+                ? t('finance.preview.readyForSeeding', 'Ready for seeding')
                 : String(statementRow.readinessStatus || '').toLowerCase() === 'rejected'
-                  ? isPl
-                    ? 'Import odrzucony'
-                    : 'Rejected import'
-                  : isPl
-                    ? 'Recovery queue'
-                    : 'Recovery queue'
+                  ? t('finance.preview.rejectedImport', 'Rejected import')
+                  : 'Recovery queue'
             }`,
           }
         );
@@ -1156,7 +1160,7 @@ export function useFinancePreview({
             } catch (e: any) {
               toast.error(
                 e?.response?.data?.error ||
-                  t('finance.toast.computeFailed', 'Nie udało się obliczyć')
+                  t('finance.toast.computeDcfFailed', 'Nie udało się obliczyć DCF')
               );
             }
           },
@@ -1185,7 +1189,7 @@ export function useFinancePreview({
           onClick: async () => {
             try {
               const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, {
-                language: isPl ? 'pl' : 'en',
+                language: i18n.language?.startsWith('pl') ? 'pl' : 'en',
                 theme: 'corporate',
                 confidentiality: 'confidential',
               });
@@ -1249,7 +1253,7 @@ export function useFinancePreview({
     },
     [
       t,
-      isPl,
+      i18n,
       statementPreviewDetail,
       handleOpenFull,
       handleExport,

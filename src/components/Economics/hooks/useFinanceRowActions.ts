@@ -107,7 +107,6 @@ export function useFinanceRowActions({
   getBudgetRawId,
 }: UseFinanceRowActionsParams) {
   const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
 
   const deleteModelWithFallback = useCallback(async (modelId: string) => {
     try {
@@ -122,9 +121,11 @@ export function useFinanceRowActions({
 
   const handleDelete = useCallback(
     async (row: FinanceRow) => {
-      const confirmMsg = isPl
-        ? `Czy na pewno chcesz usunąć "${row.title}"?`
-        : `Are you sure you want to delete "${row.title}"?`;
+      const confirmMsg = t(
+        'finance.preview.confirmDelete',
+        'Are you sure you want to delete "{{title}}"?',
+        { title: row.title }
+      );
       if (!window.confirm(confirmMsg)) return;
 
       try {
@@ -167,21 +168,20 @@ export function useFinanceRowActions({
     },
     [
       deleteModelWithFallback,
-      isPl,
+      t,
       loadStatements,
       loadModels,
       loadAnalyses,
       loadBudgets,
       loadValuations,
       getBudgetRawId,
-      t,
     ]
   );
 
   const handleDuplicate = useCallback(
     async (row: FinanceRow) => {
       try {
-        const copyTitle = `${row.title} (${isPl ? 'kopia' : 'copy'})`;
+        const copyTitle = `${row.title} (${t('finance.preview.copySuffix', 'copy')})`;
         if (row.kind === 'statements') {
           toast.error(
             t(
@@ -254,7 +254,7 @@ export function useFinanceRowActions({
         );
       }
     },
-    [isPl, loadModels, loadAnalyses, loadBudgets, loadValuations, getBudgetRawId, t]
+    [t, loadModels, loadAnalyses, loadBudgets, loadValuations, getBudgetRawId]
   );
 
   const getRowActions = useCallback(
@@ -547,7 +547,7 @@ export function useFinanceRowActions({
             } catch (e: any) {
               toast.error(
                 e?.response?.data?.error ||
-                  t('finance.toast.computeFailed', 'Nie udało się obliczyć')
+                  t('finance.toast.computeDcfFailed', 'Nie udało się obliczyć DCF')
               );
             }
           },
@@ -578,7 +578,7 @@ export function useFinanceRowActions({
           onClick: async () => {
             try {
               const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, {
-                language: isPl ? 'pl' : 'en',
+                language: i18n.language?.startsWith('pl') ? 'pl' : 'en',
                 theme: 'corporate',
                 confidentiality: 'confidential',
               });
@@ -608,7 +608,7 @@ export function useFinanceRowActions({
     },
     [
       t,
-      isPl,
+      i18n,
       handleOpenFull,
       handleCreateModelFromStatement,
       handleCreateAnalysisFromStatements,
