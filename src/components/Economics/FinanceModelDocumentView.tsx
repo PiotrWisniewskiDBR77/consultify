@@ -27,7 +27,7 @@ type Props = {
 
 export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
   const { i18n, t } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const numberLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
   const [selectedVariant, setSelectedVariant] = useState<'base' | 'optimistic' | 'conservative'>(
     'base'
   );
@@ -106,18 +106,18 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
 
   const variantLabels = {
     base: 'Base',
-    optimistic: isPl ? 'Optymistyczny' : 'Optimistic',
-    conservative: isPl ? 'Konserwatywny' : 'Conservative',
+    optimistic: t('finance.preview.variantOptimistic', 'Optimistic'),
+    conservative: t('finance.preview.variantConservative', 'Conservative'),
   };
 
   const statementLabels = {
     'P&L': 'P&L',
-    BS: isPl ? 'Bilans' : 'Balance Sheet',
+    BS: t('finance.preview.statementBS', 'Balance Sheet'),
     CF: 'Cash Flow',
   };
 
   const formatValue = (value: number) =>
-    new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+    new Intl.NumberFormat(numberLocale, {
       maximumFractionDigits: 0,
     }).format(value);
 
@@ -127,9 +127,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
         <div className="text-center">
           <div className="text-sm font-medium text-slate-200">{row.title}</div>
           <div className="mt-2 text-xs text-slate-600">
-            {isPl
-              ? 'Ładowanie układu modelu 3-letniej prognozy...'
-              : 'Loading 3-year forecast model layout...'}
+            {t('finance.preview.loadingDocumentLayout', 'Loading 3-year forecast model layout...')}
           </div>
         </div>
       </div>
@@ -142,31 +140,33 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
-              {isPl ? 'Model finansowy' : 'Financial model'}
+              {t('finance.preview.financialModelLabel', 'Financial model')}
             </div>
             <h2 className="mt-2 text-xl font-semibold text-slate-100">{row.title}</h2>
             <p className="mt-2 text-sm text-slate-600">
-              {isPl
-                ? `Prognoza 3-letnia w układzie P&L / Bilans / Cash Flow. Dokument bazowy: ${detail.sourceDocumentTitle}.`
-                : `3-year forecast in P&L / Balance Sheet / Cash Flow layout. Source document: ${detail.sourceDocumentTitle}.`}
+              {t(
+                'finance.preview.documentIntro',
+                '3-year forecast in P&L / Balance Sheet / Cash Flow layout. Source document: {{sourceDoc}}.',
+                { sourceDoc: detail.sourceDocumentTitle }
+              )}
             </p>
           </div>
           <div className="grid min-w-[280px] grid-cols-2 gap-3 text-xs text-slate-600">
             <div className="rounded-xl bg-white/[0.03] px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                {isPl ? 'Dokument' : 'Document'}
+                {t('finance.columns.document', 'Document')}
               </div>
               <div className="mt-1 text-sm text-slate-100">{detail.sourceDocumentTitle}</div>
             </div>
             <div className="rounded-xl bg-white/[0.03] px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                {isPl ? 'Okno prognozy' : 'Forecast window'}
+                {t('finance.columns.forecastWindow', 'Forecast')}
               </div>
               <div className="mt-1 text-sm text-slate-100">{row.forecastWindowLabel || '3Y'}</div>
             </div>
             <div className="rounded-xl bg-white/[0.03] px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                {isPl ? 'Warianty' : 'Variants'}
+                {t('finance.columns.variants', 'Variants')}
               </div>
               <div className="mt-1 text-sm text-slate-100">
                 {row.variantLabel || 'base / optimistic / conservative'}
@@ -174,7 +174,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
             </div>
             <div className="rounded-xl bg-white/[0.03] px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                {isPl ? 'Poziomy' : 'Levels'}
+                {t('finance.preview.levelsLabel', 'Levels')}
               </div>
               <div className="mt-1 text-sm text-slate-100">
                 {detail.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}
@@ -228,7 +228,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-white/[0.06] text-left text-[11px] uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-3">{isPl ? 'Linia' : 'Line'}</th>
+                <th className="px-4 py-3">{t('finance.preview.lineColumn', 'Line')}</th>
                 {forecastYears.map((year) => (
                   <th key={year} className="px-4 py-3 text-right">
                     {year}

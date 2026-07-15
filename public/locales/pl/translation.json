@@ -16977,7 +16977,9 @@
       "reanalyzed": "Analiza przeliczona",
       "valuationApproved": "Wycena zatwierdzona",
       "valuationComputed": "Wycena obliczona",
-      "statementConfirmed": "Statement potwierdzony"
+      "statementConfirmed": "Statement potwierdzony",
+      "valuationCreated": "Wycena utworzona",
+      "createFailed": "Nie udało się utworzyć"
     },
     "prediction": {
       "budget": "Budżet",
@@ -17171,7 +17173,16 @@
         "efficiency": "Efektywność",
         "investment": "Inwestycja",
         "growth": "Wzrost"
-      }
+      },
+      "financialModelLabel": "Model finansowy",
+      "documentIntro": "Prognoza 3-letnia w układzie P&L / Bilans / Cash Flow. Dokument bazowy: {{sourceDoc}}.",
+      "levelsLabel": "Poziomy",
+      "loadingDocumentLayout": "Ładowanie układu modelu 3-letniej prognozy...",
+      "sourceManualData": "Ręczne dane",
+      "selectModel": "Wybierz model",
+      "selectAnalysis": "Wybierz analizę",
+      "selectBudget": "Wybierz budżet",
+      "selectPlaceholder": "— wybierz —"
     }
   },
   "portfolio": {

@@ -16515,7 +16515,9 @@
       "reanalyzed": "Analysis recalculated",
       "valuationApproved": "Valuation approved",
       "valuationComputed": "Valuation computed",
-      "statementConfirmed": "Statement confirmed"
+      "statementConfirmed": "Statement confirmed",
+      "valuationCreated": "Valuation created",
+      "createFailed": "Failed to create"
     },
     "prediction": {
       "budget": "Budget",
@@ -16709,7 +16711,16 @@
         "efficiency": "Efficiency",
         "investment": "Investment",
         "growth": "Growth"
-      }
+      },
+      "financialModelLabel": "Financial model",
+      "documentIntro": "3-year forecast in P&L / Balance Sheet / Cash Flow layout. Source document: {{sourceDoc}}.",
+      "levelsLabel": "Levels",
+      "loadingDocumentLayout": "Loading 3-year forecast model layout...",
+      "sourceManualData": "Manual data",
+      "selectModel": "Select model",
+      "selectAnalysis": "Select analysis",
+      "selectBudget": "Select budget",
+      "selectPlaceholder": "— select —"
     }
   },
   "portfolio": {
