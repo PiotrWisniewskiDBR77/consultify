@@ -27056,6 +27056,14 @@
       "noDuplicatesFound": "No duplicates found",
       "similar": "similar",
       "merge": "Merge"
+    },
+    "calendarViewV2": {
+      "title": "Calendar View",
+      "configureDateField": "Configure a date field in view settings",
+      "today": "Today",
+      "month": "Month",
+      "week": "Week",
+      "more": "more"
     }
   },
   "myWorkNotebook": {

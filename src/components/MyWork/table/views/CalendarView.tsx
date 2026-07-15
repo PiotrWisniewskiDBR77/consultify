@@ -124,7 +124,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onRecordClick,
   onAddRecord,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const weekdays = isPl ? WEEKDAYS_PL : WEEKDAYS_EN;
 
@@ -238,11 +238,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
         <Calendar size={32} />
-        <span className="text-sm font-medium">{isPl ? 'Widok kalendarza' : 'Calendar View'}</span>
+        <span className="text-sm font-medium">{t('myWorkTable.calendarViewV2.title')}</span>
         <span className="text-xs text-c-text-secondary">
-          {isPl
-            ? 'Skonfiguruj pole daty w ustawieniach widoku'
-            : 'Configure a date field in view settings'}
+          {t('myWorkTable.calendarViewV2.configureDateField')}
         </span>
       </div>
     );
@@ -272,7 +270,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             onClick={goToday}
             className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
           >
-            {isPl ? 'Dziś' : 'Today'}
+            {t('myWorkTable.calendarViewV2.today')}
           </button>
         </div>
 
@@ -288,7 +286,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   : 'text-c-text-muted hover:bg-c-surface-raised'
               }`}
             >
-              {m === 'month' ? (isPl ? 'Miesiąc' : 'Month') : isPl ? 'Tydzień' : 'Week'}
+              {m === 'month' ? t('myWorkTable.calendarViewV2.month') : t('myWorkTable.calendarViewV2.week')}
             </button>
           ))}
         </div>
@@ -351,7 +349,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 ))}
                 {dayRecords.length > MAX_VISIBLE_PER_DAY && (
                   <div className="text-[7px] text-c-text-muted px-1 font-medium">
-                    +{dayRecords.length - MAX_VISIBLE_PER_DAY} {isPl ? 'więcej' : 'more'}
+                    +{dayRecords.length - MAX_VISIBLE_PER_DAY} {t('myWorkTable.calendarViewV2.more')}
                   </div>
                 )}
 

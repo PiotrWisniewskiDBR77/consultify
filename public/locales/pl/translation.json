@@ -28116,6 +28116,14 @@
       "noDuplicatesFound": "Nie znaleziono duplikatów",
       "similar": "podobieństwo",
       "merge": "Scal"
+    },
+    "calendarViewV2": {
+      "title": "Widok kalendarza",
+      "configureDateField": "Skonfiguruj pole daty w ustawieniach widoku",
+      "today": "Dziś",
+      "month": "Miesiąc",
+      "week": "Tydzień",
+      "more": "więcej"
     }
   },
   "myWorkNotebook": {
