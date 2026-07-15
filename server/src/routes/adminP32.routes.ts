@@ -7,6 +7,11 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { getRequestAccessRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import adminAuditService from '../services/adminAuditService.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
+import {
+  insertScimGroupMapping,
+  ScimGroupMappingError,
+  scimMappingsHasProjectId,
+} from '../services/scimGroupMappingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { flagOn } from '../utils/pgFlags.js';
@@ -1914,6 +1919,7 @@ async function readScimSummary(orgId: string) {
     external_group_name TEXT,
     internal_role TEXT,
     custom_role_id TEXT,
+    project_id TEXT,
     is_active INTEGER DEFAULT 1,
     auto_sync INTEGER DEFAULT 1,
     member_count INTEGER DEFAULT 0,
@@ -1942,6 +1948,21 @@ async function readScimSummary(orgId: string) {
     resolved_at TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`);
+  // HP-25 B2: read group mappings with an optional per-project dimension.
+  // `project_id` ships via a manual (non-auto-run) migration; when it is not
+  // yet applied the read degrades to the legacy org-wide shape rather than
+  // returning zero rows (a bare `SELECT project_id` would be swallowed to []).
+  const hasProjectDim = await scimMappingsHasProjectId();
+  const groupMappingsSql = hasProjectDim
+    ? `SELECT m.id, m.external_group_id, m.external_group_name, m.internal_role,
+              m.is_active, m.member_count, m.project_id, p.name AS project_name
+       FROM scim_group_mappings m
+       LEFT JOIN projects p
+         ON p.id = m.project_id AND p.organization_id = m.organization_id
+       WHERE m.organization_id = ? ORDER BY m.created_at DESC`
+    : `SELECT id, external_group_id, external_group_name, internal_role, is_active, member_count
+       FROM scim_group_mappings WHERE organization_id = ? ORDER BY created_at DESC`;
+
   const [tokens, mappings, syncLogs, conflicts] = await Promise.all([
     dbAll<any>(
       `SELECT id, name, token_prefix, scopes, last_used_at, usage_count, is_active
@@ -1949,12 +1970,7 @@ async function readScimSummary(orgId: string) {
       [orgId],
       { fallback: true }
     ),
-    dbAll<any>(
-      `SELECT id, external_group_name, internal_role, is_active, member_count
-       FROM scim_group_mappings WHERE organization_id = ? ORDER BY created_at DESC`,
-      [orgId],
-      { fallback: true }
-    ),
+    dbAll<any>(groupMappingsSql, [orgId], { fallback: true }),
     dbAll<any>(
       `SELECT id, operation, resource_type, status, error_message, created_at
        FROM scim_sync_logs WHERE organization_id = ? ORDER BY created_at DESC LIMIT 20`,
@@ -1993,27 +2009,6 @@ async function createScimToken(orgId: string, name: string, description: string,
 async function deleteScimToken(orgId: string, id: string) {
   await readScimSummary(orgId);
   await dbRun(`DELETE FROM scim_tokens WHERE id = ? AND organization_id = ?`, [id, orgId]);
-}
-
-async function createScimGroupMapping(
-  orgId: string,
-  externalGroupName: string,
-  externalGroupId: string,
-  internalRole: string
-) {
-  const id = uuidv4();
-  await dbRun(
-    `INSERT INTO scim_group_mappings (id, organization_id, external_group_id, external_group_name, internal_role)
-     VALUES (?, ?, ?, ?, ?)`,
-    [id, orgId, externalGroupId, externalGroupName, internalRole || 'member']
-  );
-  return {
-    id,
-    externalGroupId,
-    externalGroupName,
-    internalRole: internalRole || 'member',
-    isActive: true,
-  };
 }
 
 async function deleteScimGroupMapping(orgId: string, id: string) {
@@ -2665,18 +2660,37 @@ router.post(
   asyncHandler(async (req: AuthRequest, res) => {
     const actor = await getAdminActor(req, res, ['security:write']);
     if (!actor) return;
-    const mapping = await createScimGroupMapping(
-      actor.orgId,
-      String(req.body?.externalGroupName || ''),
-      String(req.body?.externalGroupId || ''),
-      String(req.body?.internalRole || 'member')
-    );
-    await adminAuditService.logAction({
-      adminId: actor.actorId,
-      actionType: 'create_scim_group_mapping',
-      details: { orgId: actor.orgId, isSensitive: true, mappingId: mapping.id },
-    });
-    return res.status(201).json({ success: true, mapping });
+    // ★ Org-scope: orgId comes from the authenticated actor, never the body.
+    // projectId is optional and is validated inside the service to belong to
+    // this org before any write (cross-org / IDOR guard on the P1 table).
+    const rawProjectId = req.body?.projectId;
+    try {
+      const mapping = await insertScimGroupMapping({
+        orgId: actor.orgId,
+        externalGroupName: String(req.body?.externalGroupName || ''),
+        externalGroupId: String(req.body?.externalGroupId || ''),
+        internalRole: String(req.body?.internalRole || 'member'),
+        projectId: rawProjectId ? String(rawProjectId) : null,
+      });
+      await adminAuditService.logAction({
+        adminId: actor.actorId,
+        actionType: 'create_scim_group_mapping',
+        details: {
+          orgId: actor.orgId,
+          isSensitive: true,
+          mappingId: mapping.id,
+          projectId: mapping.projectId,
+          projectScoped: mapping.projectIdApplied,
+        },
+      });
+      return res.status(201).json({ success: true, mapping });
+    } catch (error) {
+      if (error instanceof ScimGroupMappingError) {
+        const status = error.code === 'PROJECT_NOT_IN_ORG' ? 404 : 400;
+        return res.status(status).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
   })
 );
 
