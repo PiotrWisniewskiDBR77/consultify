@@ -556,7 +556,10 @@ const OnboardingChecklistSection: React.FC = () => {
     ][i],
     bonus:
       i === 1 && status.pricingTier
-        ? t('partner.onboarding.pricingBonus', `Aktualny poziom: ${status.pricingTier}`)
+        ? t('partner.onboarding.pricingBonus', {
+            tier: status.pricingTier,
+            defaultValue: 'Current tier: {{tier}}',
+          })
         : undefined,
     secure: i === 3,
   }));
