@@ -24300,12 +24300,213 @@
         },
         "dlp": {
           "label": "DLP rules",
-          "comingSoon": "Wired in a follow-up step (F-CC3)."
+          "activeCount": "{{active}} active / {{total}} total",
+          "empty": "No DLP rules configured",
+          "error": "Failed to load DLP rules"
         },
         "retention": {
           "label": "Retention",
-          "comingSoon": "Wired in a follow-up step (F-CC4)."
+          "scheduleCount": "{{count}} schedule(s)",
+          "nextCleanup": "Next cleanup {{date}}",
+          "empty": "No retention schedules configured",
+          "error": "Failed to load retention schedules"
+        },
+        "auditExport": {
+          "label": "Last SOC2 export",
+          "entries": "{{count}} entries (30d)",
+          "generatedAt": "as of {{time}}",
+          "error": "Failed to load audit export"
         }
+      }
+    },
+    "audit": {
+      "title": "SOC2 audit trail",
+      "description": "Export request/response hashes, cost, and policy decisions for a date range. Data is org-scoped by token.",
+      "filters": {
+        "from": "From",
+        "to": "To",
+        "userId": "User ID",
+        "eventType": "Event type",
+        "apply": "Apply filters"
+      },
+      "actions": {
+        "download": "Download JSON",
+        "refresh": "Refresh"
+      },
+      "columns": {
+        "createdAt": "Date",
+        "eventType": "Event",
+        "model": "Model",
+        "tokens": "Tokens (in/out)",
+        "cost": "Cost",
+        "latency": "Latency",
+        "policy": "Policy decisions"
+      },
+      "summary": "{{count}} entries — generated {{time}}",
+      "empty": {
+        "title": "No audit entries in this range",
+        "description": "Widen the date range or clear the filters."
+      },
+      "toasts": {
+        "downloaded": "Audit export downloaded",
+        "loadError": "Failed to load SOC2 audit export"
+      }
+    },
+    "dlp": {
+      "title": "Data loss prevention rules",
+      "description": "Regex, keyword, and entity rules applied to model input/output.",
+      "actions": {
+        "addRule": "Add rule",
+        "cancel": "Cancel",
+        "create": "Create rule",
+        "scan": "Run scan",
+        "toggleEnable": "Enable",
+        "toggleDisable": "Disable",
+        "delete": "Delete"
+      },
+      "form": {
+        "ruleName": "Rule name",
+        "ruleType": "Type",
+        "pattern": "Pattern",
+        "action": "Action",
+        "appliesTo": "Applies to",
+        "severity": "Severity",
+        "ruleTypeOptions": { "regex": "Regex", "keyword": "Keyword", "entity": "Entity" },
+        "actionOptions": { "block": "Block", "redact": "Redact", "warn": "Warn", "log": "Log" },
+        "appliesToOptions": { "input": "Input", "output": "Output", "both": "Both" },
+        "severityOptions": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        }
+      },
+      "scan": {
+        "title": "Test scan",
+        "description": "Run the active rule set against sample content without saving it.",
+        "contentPlaceholder": "Paste content to scan…",
+        "direction": "Direction",
+        "clean": "Clean — no violations",
+        "blocked": "Blocked by {{count}} rule(s)",
+        "violations": "{{count}} violation(s) found"
+      },
+      "columns": {
+        "ruleName": "Rule",
+        "ruleType": "Type",
+        "pattern": "Pattern",
+        "action": "Action",
+        "appliesTo": "Applies to",
+        "severity": "Severity",
+        "status": "Status"
+      },
+      "status": { "active": "Active", "inactive": "Inactive" },
+      "confirmDelete": {
+        "title": "Delete DLP rule?",
+        "description": "This rule will stop applying to new messages immediately. This cannot be undone."
+      },
+      "empty": {
+        "title": "No DLP rules configured",
+        "description": "Add a rule to start scanning input and output content."
+      },
+      "toasts": {
+        "created": "DLP rule created",
+        "toggledOn": "Rule enabled",
+        "toggledOff": "Rule disabled",
+        "deleted": "DLP rule deleted",
+        "loadError": "Failed to load DLP rules",
+        "createError": "Failed to create DLP rule",
+        "toggleError": "Failed to update DLP rule",
+        "deleteError": "Failed to delete DLP rule",
+        "scanError": "Failed to run DLP scan"
+      }
+    },
+    "residency": {
+      "title": "Data residency",
+      "description": "Region where organization data is processed and stored, and whether EU-only processing is enforced.",
+      "fields": {
+        "region": "Data residency region",
+        "regionPlaceholder": "e.g. eu, us, uk",
+        "enforceEuOnly": "Enforce EU-only processing",
+        "allowedRegions": "Allowed regions (comma-separated)",
+        "deniedRegions": "Denied regions (comma-separated)"
+      },
+      "actions": { "save": "Save policy" },
+      "toasts": {
+        "saved": "Data residency policy updated",
+        "loadError": "Failed to load data residency policy",
+        "saveError": "Failed to update data residency policy"
+      }
+    },
+    "retention": {
+      "title": "Retention automation",
+      "description": "Per-data-type retention schedules with automated cleanup.",
+      "actions": {
+        "initialize": "Initialize schedules",
+        "execute": "Execute retention now",
+        "save": "Save"
+      },
+      "confirmExecute": {
+        "title": "Execute retention now?",
+        "description": "This permanently deletes data past its retention window for every active schedule in this organization. This cannot be undone."
+      },
+      "columns": {
+        "dataType": "Data type",
+        "retentionDays": "Retention (days)",
+        "nextCleanup": "Next cleanup",
+        "lastCleanup": "Last cleanup",
+        "itemsDeleted": "Items deleted (total)",
+        "status": "Status"
+      },
+      "status": { "active": "Active", "inactive": "Inactive" },
+      "results": {
+        "title": "Last execution result",
+        "summary": "{{dataType}}: {{deleted}} deleted, {{preserved}} preserved"
+      },
+      "empty": {
+        "title": "No retention schedules configured",
+        "description": "Initialize the default schedules to start automated cleanup."
+      },
+      "toasts": {
+        "initialized": "Retention schedules initialized",
+        "updated": "Retention schedule updated",
+        "executed": "Retention executed",
+        "loadError": "Failed to load retention schedules",
+        "initializeError": "Failed to initialize retention schedules",
+        "updateError": "Failed to update retention schedule",
+        "executeError": "Failed to execute retention"
+      }
+    },
+    "aiPolicy": {
+      "title": "Organization AI policy",
+      "description": "Citation requirements, token limits, and safety controls applied to every conversation in this organization.",
+      "fields": {
+        "citationMode": "Required citation mode",
+        "maxTokensPerMessage": "Max tokens per message",
+        "maxTokensPerConversation": "Max tokens per conversation",
+        "allowedTopics": "Allowed topics (comma-separated)",
+        "blockedTopics": "Blocked topics (comma-separated)",
+        "mandatoryDisclaimers": "Mandatory disclaimers (one per line)",
+        "blockedTools": "Blocked tools (comma-separated)",
+        "allowedModels": "Allowed models (comma-separated)",
+        "dataResidencyRegion": "Data residency region",
+        "enforceEuOnly": "Enforce EU-only processing",
+        "citationModeOptions": {
+          "none": "None",
+          "recommended": "Recommended",
+          "required": "Required",
+          "strict": "Strict"
+        }
+      },
+      "customSafetyRules": {
+        "title": "Custom safety rules",
+        "description": "Read-only in this view — {{count}} rule(s) configured.",
+        "empty": "No custom safety rules configured."
+      },
+      "actions": { "save": "Save policy" },
+      "toasts": {
+        "saved": "AI policy updated",
+        "loadError": "Failed to load AI policy",
+        "saveError": "Failed to update AI policy"
       }
     },
     "placeholder": {
