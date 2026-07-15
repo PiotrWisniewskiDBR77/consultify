@@ -251,7 +251,7 @@ describe('M16 — GET/DELETE /api/v8/finance/models/:modelId org-scope wiring', 
     expect(res.status).toBe(200);
   });
 
-  it('GET /models/:modelId — org-scoped getModel returning null (cross-org row filtered by SQL) -> 404, never leaks another org\'s model', async () => {
+  it("GET /models/:modelId — org-scoped getModel returning null (cross-org row filtered by SQL) -> 404, never leaks another org's model", async () => {
     // A real org-scoped SQL WHERE clause returns nothing for a model owned by
     // a different org — mock the service accordingly instead of returning
     // org-B's row and relying on the post-fetch check alone.
