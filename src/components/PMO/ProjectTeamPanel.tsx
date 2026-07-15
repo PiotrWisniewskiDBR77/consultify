@@ -381,9 +381,12 @@ const MemberRow: React.FC<MemberRowProps> = ({
   const roleLabel =
     roleKey === 'OTHER'
       ? normalizeUpper((member as any).projectRole) || t('pmo.roles.other', 'Other')
-      : i18n.language === 'pl'
-        ? CANONICAL_ROLE_DEFS[roleKey].labelPl
-        : CANONICAL_ROLE_DEFS[roleKey].labelEn;
+      : t(`pmo.roles.${roleKey}`, {
+          defaultValue:
+            (i18n.language === 'pl'
+              ? CANONICAL_ROLE_DEFS[roleKey].labelPl
+              : CANONICAL_ROLE_DEFS[roleKey].labelEn) || roleKey,
+        });
   const isInvokable = roleKey !== 'OTHER' && !!CANONICAL_ROLE_DEFS[roleKey].invokable;
   const invoked = !!(member as any).isInvoked;
   const consultantProfile = normalizeUpper((member as any).consultantProfile);
@@ -490,9 +493,12 @@ const MemberRow: React.FC<MemberRowProps> = ({
                     {normalizeUpper((member as any).projectRole) === role && (
                       <Check className="w-3.5 h-3.5" />
                     )}
-                    {i18n.language === 'pl'
-                      ? CANONICAL_ROLE_DEFS[role].labelPl
-                      : CANONICAL_ROLE_DEFS[role].labelEn}
+                    {t(`pmo.roles.${role}`, {
+                      defaultValue:
+                        i18n.language === 'pl'
+                          ? CANONICAL_ROLE_DEFS[role].labelPl
+                          : CANONICAL_ROLE_DEFS[role].labelEn,
+                    })}
                   </button>
                 ))}
               </div>
@@ -866,9 +872,12 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
             >
               {(Object.keys(CANONICAL_ROLE_DEFS) as CanonicalProjectRole[]).map((r) => (
                 <option key={r} value={r}>
-                  {i18n.language === 'pl'
-                    ? CANONICAL_ROLE_DEFS[r].labelPl
-                    : CANONICAL_ROLE_DEFS[r].labelEn}
+                  {t(`pmo.roles.${r}`, {
+                    defaultValue:
+                      i18n.language === 'pl'
+                        ? CANONICAL_ROLE_DEFS[r].labelPl
+                        : CANONICAL_ROLE_DEFS[r].labelEn,
+                  })}
                 </option>
               ))}
             </select>

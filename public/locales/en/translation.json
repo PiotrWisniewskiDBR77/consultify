@@ -21854,7 +21854,18 @@
   },
   "pmo": {
     "version": "version",
-    "name": "Name"
+    "name": "Name",
+    "roles": {
+      "other": "Other / legacy roles",
+      "SPONSOR": "Sponsor (Business Owner)",
+      "PROJECT_LEADER": "Project Leader",
+      "INITIATIVE_OWNER": "Initiative Owner",
+      "TEAM_MEMBER": "Team Member",
+      "PMO": "Project Office (PMO)",
+      "PORTFOLIO_OWNER": "Portfolio Owner",
+      "BUSINESS_OWNER": "Business Owner (Benefits)",
+      "STEERING_COMMITTEE": "Steering Committee"
+    }
   },
   "branch": {
     "delete": "Delete"

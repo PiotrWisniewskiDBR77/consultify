@@ -22872,7 +22872,18 @@
   },
   "pmo": {
     "version": "wersja",
-    "name": "Nazwa"
+    "name": "Nazwa",
+    "roles": {
+      "other": "Inne / role historyczne",
+      "SPONSOR": "Sponsor (Właściciel biznesowy)",
+      "PROJECT_LEADER": "Project Leader",
+      "INITIATIVE_OWNER": "Właściciel inicjatywy",
+      "TEAM_MEMBER": "Członek zespołu",
+      "PMO": "Project Office (PMO)",
+      "PORTFOLIO_OWNER": "Właściciel portfela",
+      "BUSINESS_OWNER": "Business Owner (Korzyści)",
+      "STEERING_COMMITTEE": "Komitet sterujący"
+    }
   },
   "branch": {
     "delete": "Usuń"
