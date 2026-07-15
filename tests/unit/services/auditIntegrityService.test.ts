@@ -4,8 +4,8 @@
  * Tests for immutable audit log integrity verification
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
-const crypto = require('crypto');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import crypto from 'crypto';
 
 // Mock database
 vi.mock('../../../server/database', () => ({
@@ -34,7 +34,7 @@ vi.mock('../../../server/database', () => ({
     }
 }));
 
-const auditIntegrityService = require('../../../server/services/auditIntegrityService');
+import auditIntegrityService from '../../../server/src/services/auditIntegrityService.js';
 
 describe('Audit Integrity Service', () => {
     beforeEach(() => {
