@@ -71,7 +71,7 @@ const MAPPING_STATUS_CONFIG: Record<
     i18nKey: 'finance.explainPanel.mappingStatus.auto',
     fallback: 'Auto',
     icon: <Zap size={10} />,
-    dotColor: 'bg-slate-400',
+    dotColor: 'bg-c-text-muted',
   },
   manual: {
     i18nKey: 'finance.explainPanel.mappingStatus.manual',
