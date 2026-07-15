@@ -106,9 +106,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
 }) => {
   const { t } = useTranslation();
   const commandCenterEnabled = isCommandCenterEnabled();
-  const visibleNavItems = NAV_ITEMS.filter(
-    (item) => item.id !== 'command' || commandCenterEnabled
-  );
+  const visibleNavItems = NAV_ITEMS.filter((item) => item.id !== 'command' || commandCenterEnabled);
 
   return (
     <aside

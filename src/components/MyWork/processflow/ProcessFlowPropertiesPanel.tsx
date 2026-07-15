@@ -1,7 +1,7 @@
 import { ChevronDown, Clock, DollarSign, Layers, Server, Tag, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import type { Edge, Node } from 'reactflow';
 import { useTranslation } from 'react-i18next';
+import type { Edge, Node } from 'reactflow';
 
 import { CONDITION_TYPES, EDGE_KINDS, type EdgeKind } from './FlowEdgeComponent';
 

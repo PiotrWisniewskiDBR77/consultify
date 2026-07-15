@@ -81,7 +81,15 @@ export const getTemplateAreaTagLabel = (tag: string, t: (key: string) => string)
 // żyją pod interview.templateBuilder.answerTypeLabel.* (już istniały z wcześniejszego
 // sweepu inline w tym samym pliku; ta funkcja tylko centralizuje wywołania, które
 // wcześniej robiły ręczny wybór isPolish ? labelPl : labelEn).
-const ANSWER_TYPE_ID_SET = new Set(['open', 'select', 'scale', 'boolean', 'number', 'date', 'dropdown']);
+const ANSWER_TYPE_ID_SET = new Set([
+  'open',
+  'select',
+  'scale',
+  'boolean',
+  'number',
+  'date',
+  'dropdown',
+]);
 
 export const getAnswerTypeLabel = (
   answerTypeId: string,

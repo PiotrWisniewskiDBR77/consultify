@@ -13,8 +13,8 @@
  */
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Ban } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import type { Edge } from 'reactflow';
 import { type TFunction, useTranslation } from 'react-i18next';
+import type { Edge } from 'reactflow';
 
 export type EdgeArrowDirection = 'none' | 'start' | 'end' | 'both';
 export type EdgeStrokeStyle = 'solid' | 'dashed';

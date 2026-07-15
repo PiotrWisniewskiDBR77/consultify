@@ -87,10 +87,10 @@ const LINK_TILES: LinkTile[] = [
   },
 ];
 
-const LinkTileCard: React.FC<{ tile: LinkTile; onOpen?: (section: AdminSettingsSection) => void }> = ({
-  tile,
-  onOpen,
-}) => {
+const LinkTileCard: React.FC<{
+  tile: LinkTile;
+  onOpen?: (section: AdminSettingsSection) => void;
+}> = ({ tile, onOpen }) => {
   const { t } = useTranslation();
   const Icon = tile.icon;
   return (
@@ -195,7 +195,8 @@ const CommandCenterOverviewTab: React.FC<{
       setAiPolicy({
         loading: false,
         error:
-          error?.message || t('commandCenter.overview.tiles.aiPolicy.error', 'Failed to load AI policy'),
+          error?.message ||
+          t('commandCenter.overview.tiles.aiPolicy.error', 'Failed to load AI policy'),
         value: null,
       });
     }
@@ -251,7 +252,10 @@ const CommandCenterOverviewTab: React.FC<{
                 <p className="mt-1 text-xs text-c-text-secondary">
                   {residency.value.enforceEuOnly
                     ? t('commandCenter.overview.tiles.residency.euEnforced', 'EU-only enforced')
-                    : t('commandCenter.overview.tiles.residency.euNotEnforced', 'EU-only not enforced')}
+                    : t(
+                        'commandCenter.overview.tiles.residency.euNotEnforced',
+                        'EU-only not enforced'
+                      )}
                 </p>
               </div>
             )}
@@ -301,7 +305,10 @@ const CommandCenterOverviewTab: React.FC<{
           error={null}
         >
           <p className="text-sm text-c-text-secondary">
-            {t('commandCenter.overview.tiles.retention.comingSoon', 'Wired in a follow-up step (F-CC4).')}
+            {t(
+              'commandCenter.overview.tiles.retention.comingSoon',
+              'Wired in a follow-up step (F-CC4).'
+            )}
           </p>
         </DataTileShell>
       </div>
@@ -424,7 +431,9 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
       {activeTab === 'audit' && (
         <PlaceholderTab titleKey="commandCenter.tabs.audit" titleDefault="SOC2 audit" />
       )}
-      {activeTab === 'dlp' && <PlaceholderTab titleKey="commandCenter.tabs.dlp" titleDefault="DLP" />}
+      {activeTab === 'dlp' && (
+        <PlaceholderTab titleKey="commandCenter.tabs.dlp" titleDefault="DLP" />
+      )}
       {activeTab === 'residency' && (
         <PlaceholderTab titleKey="commandCenter.tabs.residency" titleDefault="Data residency" />
       )}
