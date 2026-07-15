@@ -27927,5 +27927,13 @@
       "2": "Opisz problem lub pomysł",
       "3": "Kliknij „Akceptuj\" w panelu Tools"
     }
+  },
+  "discoveryToolsMain": {
+    "toolActionBar": {
+      "previous": "Poprzedni",
+      "stepOf": "Krok {{current}}/{{total}}",
+      "finish": "Zakończ",
+      "next": "Następny"
+    }
   }
 }

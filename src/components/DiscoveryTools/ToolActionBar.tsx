@@ -6,6 +6,7 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
 import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
@@ -45,6 +46,7 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
   aiReviewCount = 0,
   onReviewAiCards,
 }) => {
+  const { t } = useTranslation();
   const isFirstStep = currentStep === 1;
   const isLastStep = currentStep === totalSteps;
   const showAiCluster = phaseAiActions.length > 0 || isStreaming || aiReviewCount > 0;
@@ -66,10 +68,10 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
           `}
         >
           <ChevronLeft className="w-4 h-4" />
-          {isPolish ? 'Poprzedni' : 'Previous'}
+          {t('discoveryToolsMain.toolActionBar.previous')}
         </button>
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Krok' : 'Step'} {currentStep}/{totalSteps}
+          {t('discoveryToolsMain.toolActionBar.stepOf', { current: currentStep, total: totalSteps })}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -99,7 +101,9 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
               }
             `}
           >
-            {isLastStep ? (isPolish ? 'Zakończ' : 'Finish') : isPolish ? 'Następny' : 'Next'}
+            {isLastStep
+              ? t('discoveryToolsMain.toolActionBar.finish')
+              : t('discoveryToolsMain.toolActionBar.next')}
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

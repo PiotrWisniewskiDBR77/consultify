@@ -26851,5 +26851,13 @@
       "2": "Describe the problem or idea",
       "3": "Click \"Accept\" in the Tools panel"
     }
+  },
+  "discoveryToolsMain": {
+    "toolActionBar": {
+      "previous": "Previous",
+      "stepOf": "Step {{current}}/{{total}}",
+      "finish": "Finish",
+      "next": "Next"
+    }
   }
 }
