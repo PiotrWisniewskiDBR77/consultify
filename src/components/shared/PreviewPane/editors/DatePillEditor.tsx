@@ -15,8 +15,7 @@ export const DatePillEditor: React.FC<DatePillEditorProps> = ({
   onClose,
   min,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = useCallback(
@@ -30,7 +29,7 @@ export const DatePillEditor: React.FC<DatePillEditorProps> = ({
   return (
     <div className="min-w-[200px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-3 space-y-2">
       <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-        {isPolish ? 'Wybierz datę' : 'Select date'}
+        {t('sharedComponents.datePillEditor.selectDate')}
       </div>
       <input
         ref={inputRef}

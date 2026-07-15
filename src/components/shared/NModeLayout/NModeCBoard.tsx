@@ -78,7 +78,7 @@ interface NModeCBoardProps {
  * compact section panels.
  */
 export const NModeCBoard: React.FC<NModeCBoardProps> = ({ sections }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const visible = useMemo(() => sections.filter(isVisible), [sections]);
@@ -115,7 +115,7 @@ export const NModeCBoard: React.FC<NModeCBoardProps> = ({ sections }) => {
       {groups.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-1">
           <GroupTab
-            label={isPolish ? 'Wszystko' : 'All'}
+            label={t('sharedComponents.nModeCBoard.all')}
             count={visible.length}
             active={activeGroup === ALL}
             onClick={() => setActiveGroup(ALL)}
@@ -169,7 +169,7 @@ export const NModeCBoard: React.FC<NModeCBoardProps> = ({ sections }) => {
 
       {shown.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-200/60 px-6 py-10 text-center text-sm text-slate-400 dark:border-navy-700/40">
-          {isPolish ? 'Brak sekcji w tej grupie.' : 'No sections in this group.'}
+          {t('sharedComponents.nModeCBoard.noSectionsInGroup')}
         </div>
       )}
     </div>

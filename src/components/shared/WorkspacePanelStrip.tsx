@@ -19,8 +19,7 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
   size = 16,
   variant = 'chrome',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const styles = useMemo(() => {
     // 'chrome' matches ModuleHub topbar controls; 'subtle' is for embedding inside a panel header
@@ -35,12 +34,10 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
   const Btn: React.FC<{
     id: Exclude<WorkspacePanelKey, null>;
     icon: React.ComponentType<{ size?: number }>;
-    titlePl: string;
-    titleEn: string;
+    title: string;
     activeClass: string;
-  }> = ({ id, icon: Icon, titlePl, titleEn, activeClass }) => {
+  }> = ({ id, icon: Icon, title, activeClass }) => {
     const active = value === id;
-    const title = isPl ? titlePl : titleEn;
     return (
       <button
         type="button"
@@ -62,27 +59,24 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
     <div
       className={`inline-flex items-center ${styles} ${className || ''}`}
       role="group"
-      aria-label={isPl ? 'Pasek narzędzi workspace' : 'Workspace tool strip'}
+      aria-label={t('sharedComponents.workspacePanelStrip.ariaLabel')}
     >
       <Btn
         id="tools"
         icon={SlidersHorizontal}
-        titlePl="Narzędzia"
-        titleEn="Tools"
+        title={t('sharedComponents.workspacePanelStrip.tools')}
         activeClass="text-primary-600 dark:text-primary-300"
       />
       <Btn
         id="context"
         icon={Lightbulb}
-        titlePl="Kontekst / powiązania"
-        titleEn="Context / links"
+        title={t('sharedComponents.workspacePanelStrip.contextLinks')}
         activeClass="text-amber-600 dark:text-amber-300"
       />
       <Btn
         id="ai_suggestions"
         icon={MessageSquareWarning}
-        titlePl="Sugestie AI (do rozważenia)"
-        titleEn="AI suggestions (consider)"
+        title={t('sharedComponents.workspacePanelStrip.aiSuggestions')}
         activeClass="text-primary-600 dark:text-primary-300"
       />
     </div>

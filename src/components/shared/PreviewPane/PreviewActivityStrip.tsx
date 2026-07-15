@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { Clock } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,10 +16,10 @@ export interface PreviewActivityStripProps {
   initialCount?: number;
 }
 
-function formatRelative(ts: string, isPolish: boolean): string {
+function formatRelative(ts: string, t: TFunction): string {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return isPolish ? 'teraz' : 'just now';
+  if (mins < 1) return t('sharedComponents.previewActivityStrip.justNow');
   if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h`;
@@ -30,8 +31,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
   events,
   initialCount = 3,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   if (!events.length) return null;
@@ -44,7 +44,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
       <div className="flex items-center gap-1.5 mb-2 text-slate-600 dark:text-slate-500">
         <Clock size={12} />
         <span className="text-[10px] font-medium uppercase tracking-wider">
-          {isPolish ? 'Aktywność' : 'Activity'}
+          {t('sharedComponents.previewActivityStrip.activity')}
         </span>
       </div>
 
@@ -60,7 +60,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
                 {event.description}
               </div>
               <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                {formatRelative(event.timestamp, isPolish)}
+                {formatRelative(event.timestamp, t)}
               </div>
             </div>
           </div>
@@ -73,12 +73,10 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
           className="mt-1 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
         >
           {expanded
-            ? isPolish
-              ? 'Pokaż mniej'
-              : 'Show less'
-            : isPolish
-              ? `Pokaż więcej (${events.length - initialCount})`
-              : `Show more (${events.length - initialCount})`}
+            ? t('sharedComponents.previewActivityStrip.showLess')
+            : t('sharedComponents.previewActivityStrip.showMore', {
+                count: events.length - initialCount,
+              })}
         </button>
       ) : null}
     </div>

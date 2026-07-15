@@ -237,7 +237,11 @@
     "notAvailable": "Niedostępne",
     "months": "miesięcy",
     "count": "Liczba",
-    "thisPanel": "Ten panel"
+    "thisPanel": "Ten panel",
+    "resetColumns": "Przywróć domyślne",
+    "viewSettings": "Ustawienia widoku",
+    "visibleColumns": "Widoczne kolumny",
+    "showRowDescription": "Pokaż opis / uzasadnienie"
   },
   "superadmin": {
     "confirm": {
@@ -17739,7 +17743,10 @@
     "draftGenerated": "Szkic wygenerowany przez AI",
     "draftFailed": "Nie udało się wygenerować szkicu",
     "auditLogTitle": "Historia autorstwa AI",
-    "undoAi": "Cofnij AI"
+    "undoAi": "Cofnij AI",
+    "briefTooShort": "Opis musi mieć min. 10 znaków",
+    "selectFieldsToApply": "Zaznacz pola do zastosowania",
+    "close": "Zamknij"
   },
   "kpi": {
     "attribution": {
@@ -29704,6 +29711,220 @@
       "moveDownTooltip": "W dół",
       "removeCardTooltip": "Usuń kartę",
       "restoreDefaultsLabel": "Przywróć domyślne"
+    },
+    "commentsCanvas": {
+      "title": "Komentarze",
+      "addComment": "Dodaj komentarz",
+      "filterAll": "Wszystkie",
+      "filterToday": "Dziś",
+      "filter7d": "7 dni",
+      "filter30d": "30 dni",
+      "sortAsc": "Sortowanie: od najstarszych do najnowszych",
+      "sortDesc": "Sortowanie: od najnowszych do najstarszych",
+      "filterButtonTitle": "Filtr daty komentarzy (klikaj, aby zmienić zakres)",
+      "noComments": "Brak komentarzy dla wybranego zakresu dat.",
+      "priorityTitle": "Priorytet: {{priority}}",
+      "less": "Mniej",
+      "more": "Więcej",
+      "commentPriorityTitle": "Priorytet komentarza: {{label}}",
+      "priorityWord": "Priorytet",
+      "placeholder": "Napisz komentarz...",
+      "sendTitle": "Wyślij komentarz",
+      "send": "Wyślij",
+      "aiEnhanceTitle": "AI pomoże dopracować komentarz"
+    },
+    "aiFieldEnhancer": {
+      "triggerTitle": "Akcje AI dla tego pola",
+      "menuGenerate": "Wygeneruj",
+      "menuImprove": "Popraw",
+      "menuShorten": "Skróć",
+      "menuExpand": "Rozwiń",
+      "menuFormal": "Formalny ton",
+      "generateSuccess": "Treść wygenerowana przez AI",
+      "generateError": "Nie udało się wygenerować treści przez AI",
+      "fallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
+      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Undo AI aby cofnąć.",
+      "enhanceError": "Nie udało się poprawić treści przez AI",
+      "undoSuccess": "Przywrócono poprzednią wersję tekstu"
+    },
+    "nModeHeader": {
+      "savedLabel": "Zapisano",
+      "savedTitle": "Zmiany zapisane",
+      "savingLabel": "Zapisywanie...",
+      "savingTitle": "Trwa zapis do backendu",
+      "saveLabel": "Zapisz",
+      "dirtyTitle": "Masz niezapisane zmiany",
+      "saveFailedLabel": "Błąd zapisu",
+      "saveFailedTitle": "Zapis nie powiódł się. Kliknij, aby spróbować ponownie.",
+      "copyArtifactId": "Kopiuj ID artefaktu",
+      "aiAssistantTitle": "AI — otwórz asystenta"
+    },
+    "nModeSectionWrapper": {
+      "missingEvidence": "Brak dowodów",
+      "aiLabel": "AI",
+      "aiTitle": "Popraw sekcję z AI",
+      "sectionCompleteAria": "AI: sekcja gotowa",
+      "completeLabel": "Ukończono"
+    },
+    "artifactAttachPopover": {
+      "invalidRef": "Nieprawidłowy ref artefaktu. Użyj formatu typ:id.",
+      "title": "Dołącz artefakt",
+      "searchPlaceholder": "Szukaj lub wklej ref (np. task:abc123)...",
+      "filterAll": "Wszystkie",
+      "roleLabel": "Rola:",
+      "roleRelated": "Powiązany",
+      "roleContext": "Kontekst",
+      "roleSource": "Źródło",
+      "roleEvidence": "Dowód",
+      "roleOutput": "Wynik",
+      "noResults": "Brak wyników",
+      "emptyHint": "Wpisz nazwę, indeks lub wklej ref artefaktu"
+    },
+    "gridView": {
+      "justNow": "Przed chwilą",
+      "hoursAgo": "{{count}} h temu",
+      "daysAgo": "{{count}} dni temu",
+      "open": "Otwórz",
+      "duplicate": "Duplikuj",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "newItemDefault": "Nowy element",
+      "emptyDefault": "Brak elementów"
+    },
+    "filterableTable": {
+      "justNow": "Przed chwilą",
+      "hoursAgo": "{{count}} h temu",
+      "daysAgo": "{{count}} dni temu"
+    },
+    "nModeLeftNav": {
+      "dragSection": "Przeciąganie zakładki",
+      "sectionComplete": "Sekcja ukończona",
+      "hideEmptySections": "Ukryj puste sekcje",
+      "showAllSections": "Pokaż wszystkie sekcje ({{count}})",
+      "sectionsComplete": "Sekcje gotowe"
+    },
+    "artifactPreviewCard": {
+      "metaStatus": "Status",
+      "metaOwner": "Właściciel",
+      "metaUpdated": "Zmieniono",
+      "metaDue": "Termin",
+      "metaProgress": "Postęp",
+      "metaValue": "Wartość",
+      "metaStage": "Etap",
+      "openArtifact": "Otwórz artefakt",
+      "removeLink": "Usuń link"
+    },
+    "unifiedCreateLauncher": {
+      "decisionCreated": "Utworzono wniosek decyzyjny",
+      "decisionCreateFailed": "Nie udało się utworzyć decyzji",
+      "title": "Nowy",
+      "close": "Zamknij"
+    },
+    "previewDetailsSection": {
+      "expand": "Rozwiń",
+      "summarize": "Podsumuj",
+      "copy": "Kopiuj",
+      "details": "Szczegóły",
+      "words": "słów",
+      "detailsOptions": "Opcje szczegółów",
+      "options": "Opcje",
+      "noDescription": "Brak opisu."
+    },
+    "datePicker": {
+      "today": "Dziś",
+      "tomorrow": "Jutro",
+      "nextWeek": "Za tydzień",
+      "previousMonth": "Poprzedni miesiąc",
+      "nextMonth": "Następny miesiąc"
+    },
+    "previewActivityStrip": {
+      "justNow": "teraz",
+      "activity": "Aktywność",
+      "showLess": "Pokaż mniej",
+      "showMore": "Pokaż więcej ({{count}})"
+    },
+    "previewAIHintStrip": {
+      "copied": "Skopiowano",
+      "copyFailed": "Nie udało się skopiować",
+      "regenerate": "Regeneruj",
+      "copy": "Kopiuj",
+      "clear": "Wyczyść",
+      "askPlaceholder": "Zapytaj o to..."
+    },
+    "activityLogCanvas": {
+      "title": "Logi aktywności",
+      "entries": "Wpisy",
+      "changes": "Zmiany",
+      "escalations": "Eskalacje",
+      "collaboration": "Współpraca",
+      "noEntries": "Brak wpisów w logu.",
+      "from": "Było",
+      "to": "Jest"
+    },
+    "checklistBlock": {
+      "noItems": "Brak elementów na liście.",
+      "addItem": "Dodaj element",
+      "itemPlaceholder": "Element listy...",
+      "aiGenerate": "Generuj AI"
+    },
+    "artifactLinkIndicator": {
+      "linkedCount": "{{count}} powiązanych artefaktów",
+      "open": "Otwórz",
+      "remove": "Usuń",
+      "attachArtifact": "Dołącz artefakt"
+    },
+    "artifactPermalinkButton": {
+      "copied": "Permalink skopiowany",
+      "copyFailed": "Nie udało się skopiować linku",
+      "copyPermalink": "Kopiuj permalink"
+    },
+    "wizardStepper": {
+      "optional": "(opcjonalnie)"
+    },
+    "previewBatchPanel": {
+      "selected": "zaznaczonych",
+      "deselectAll": "Odznacz",
+      "commonFields": "Wspólne pola",
+      "batchActions": "Akcje grupowe"
+    },
+    "sectionErrorBoundary": {
+      "failedNamed": "Nie udało się wyświetlić sekcji „{{label}}\".",
+      "failed": "Nie udało się wyświetlić sekcji.",
+      "restFine": "Reszta dokumentu działa. Możesz spróbować ponownie albo przejść do innej sekcji.",
+      "tryAgain": "Spróbuj ponownie"
+    },
+    "nModeCBoard": {
+      "all": "Wszystko",
+      "noSectionsInGroup": "Brak sekcji w tej grupie."
+    },
+    "embeddedView": {
+      "add": "Dodaj",
+      "link": "Połącz",
+      "openFullView": "Otwórz pełny widok",
+      "searchPlaceholder": "Szukaj..."
+    },
+    "nModeToolbar": {
+      "fork": "Forkuj",
+      "present": "Prezentuj"
+    },
+    "workspacePanelStrip": {
+      "ariaLabel": "Pasek narzędzi workspace",
+      "tools": "Narzędzia",
+      "contextLinks": "Kontekst / powiązania",
+      "aiSuggestions": "Sugestie AI (do rozważenia)"
+    },
+    "ownerPillEditor": {
+      "searchPlaceholder": "Szukaj...",
+      "noResults": "Brak wyników"
+    },
+    "datePillEditor": {
+      "selectDate": "Wybierz datę"
+    },
+    "previewRelations": {
+      "noLinkedDocuments": "Brak powiązań"
+    },
+    "previewCompletenessRing": {
+      "missingFields": "Brakujące pola"
     }
   },
   "reportBuilder": {

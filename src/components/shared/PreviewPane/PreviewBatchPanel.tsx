@@ -34,15 +34,14 @@ export const PreviewBatchPanel: React.FC<PreviewBatchPanelProps> = ({
   actions,
   onDeselectAll,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
         <CheckSquare2 size={16} className="text-c-info" />
         <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+          {selectedCount} {t('sharedComponents.previewBatchPanel.selected')}
           {totalCount ? <span className="text-slate-600 font-normal"> / {totalCount}</span> : null}
         </span>
         {onDeselectAll ? (
@@ -50,7 +49,7 @@ export const PreviewBatchPanel: React.FC<PreviewBatchPanelProps> = ({
             onClick={onDeselectAll}
             className="ml-auto text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
           >
-            {isPolish ? 'Odznacz' : 'Deselect all'}
+            {t('sharedComponents.previewBatchPanel.deselectAll')}
           </button>
         ) : null}
       </div>
@@ -58,7 +57,7 @@ export const PreviewBatchPanel: React.FC<PreviewBatchPanelProps> = ({
       {commonFields && commonFields.length > 0 ? (
         <div className="mb-4 space-y-1.5">
           <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {isPolish ? 'Wspólne pola' : 'Common fields'}
+            {t('sharedComponents.previewBatchPanel.commonFields')}
           </div>
           {commonFields.map((field) => (
             <div key={field.label} className="flex items-center justify-between text-xs">
@@ -78,7 +77,7 @@ export const PreviewBatchPanel: React.FC<PreviewBatchPanelProps> = ({
 
       <div className="mt-auto space-y-2">
         <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-          {isPolish ? 'Akcje grupowe' : 'Batch actions'}
+          {t('sharedComponents.previewBatchPanel.batchActions')}
         </div>
         {actions.map((action, idx) => {
           const Icon = action.icon;

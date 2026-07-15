@@ -63,6 +63,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
   isPolish,
   onSectionChange,
 }) => {
+  const { t } = useTranslation();
   const Icon = section.icon;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
@@ -90,7 +91,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
             onClick={(e) => e.stopPropagation()}
             {...attributes}
             {...listeners}
-            aria-label={isPolish ? 'Przeciaganie zakladki' : 'Drag section'}
+            aria-label={t('sharedComponents.nModeLeftNav.dragSection')}
           >
             <GripVertical size={12} />
           </span>
@@ -110,7 +111,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
             <CheckCircle2
               size={13}
               className="shrink-0 text-success-500 dark:text-success-400"
-              aria-label={isPolish ? 'Sekcja ukończona' : 'Section complete'}
+              aria-label={t('sharedComponents.nModeLeftNav.sectionComplete')}
             />
           )}
           {section.badge !== undefined && section.badge > 0 && !section.completed && (
@@ -130,7 +131,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   onSectionChange,
   onSectionReorder,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [showAll, setShowAll] = useState(false);
 
@@ -214,7 +215,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
             <CheckCircle2
               size={13}
               className="shrink-0 text-success-500 dark:text-success-400"
-              aria-label={isPolish ? 'Sekcja ukończona' : 'Section complete'}
+              aria-label={t('sharedComponents.nModeLeftNav.sectionComplete')}
             />
           )}
           {section.badge !== undefined && section.badge > 0 && !section.completed && (
@@ -323,12 +324,8 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
             className="mt-1 w-full px-3 py-1.5 text-left text-[11px] text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
           >
             {showAll
-              ? isPolish
-                ? 'Ukryj puste sekcje'
-                : 'Hide empty sections'
-              : isPolish
-                ? `Pokaż wszystkie sekcje (${hiddenCount})`
-                : `Show all sections (${hiddenCount})`}
+              ? t('sharedComponents.nModeLeftNav.hideEmptySections')
+              : t('sharedComponents.nModeLeftNav.showAllSections', { count: hiddenCount })}
           </button>
         )}
 
@@ -337,7 +334,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
           <div className="mt-3 px-3 pb-1 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                {isPolish ? 'Sekcje gotowe' : 'Sections complete'}
+                {t('sharedComponents.nModeLeftNav.sectionsComplete')}
               </span>
               <span className="text-[10px] font-medium text-success-600 dark:text-success-400">
                 {completedCount}&thinsp;/&thinsp;{completableSections.length}

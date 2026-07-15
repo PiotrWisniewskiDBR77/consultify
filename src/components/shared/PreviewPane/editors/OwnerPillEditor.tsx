@@ -21,8 +21,7 @@ export const OwnerPillEditor: React.FC<OwnerPillEditorProps> = ({
   onChange,
   onClose,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(
@@ -38,7 +37,7 @@ export const OwnerPillEditor: React.FC<OwnerPillEditorProps> = ({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={isPolish ? 'Szukaj...' : 'Search...'}
+          placeholder={t('sharedComponents.ownerPillEditor.searchPlaceholder')}
           className="flex-1 bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
           autoFocus
         />
@@ -46,7 +45,7 @@ export const OwnerPillEditor: React.FC<OwnerPillEditorProps> = ({
       <div className="flex-1 overflow-y-auto py-1">
         {filtered.length === 0 ? (
           <div className="px-3 py-2 text-xs text-slate-600 italic">
-            {isPolish ? 'Brak wyników' : 'No results'}
+            {t('sharedComponents.ownerPillEditor.noResults')}
           </div>
         ) : (
           filtered.map((opt) => (

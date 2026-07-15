@@ -50,8 +50,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
   chatAnswer,
   chatLoading,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
 
@@ -68,8 +67,8 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
     if (!result) return;
     navigator.clipboard
       .writeText(result)
-      .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'))
-      .catch(() => toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed'));
+      .then(() => toast.success(t('sharedComponents.previewAIHintStrip.copied')))
+      .catch(() => toast.error(t('sharedComponents.previewAIHintStrip.copyFailed')));
   };
 
   return (
@@ -112,7 +111,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
                         className={KEBAB_ITEM}
                       >
                         <Sparkles size={12} className="text-c-info" />
-                        {isPolish ? 'Regeneruj' : 'Regenerate'}
+                        {t('sharedComponents.previewAIHintStrip.regenerate')}
                       </button>
                     ) : null}
                     {onCopy ? (
@@ -125,7 +124,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
                         className={`${KEBAB_ITEM}${!result ? ' opacity-40' : ''}`}
                       >
                         <Copy size={12} />
-                        {isPolish ? 'Kopiuj' : 'Copy'}
+                        {t('sharedComponents.previewAIHintStrip.copy')}
                       </button>
                     ) : null}
                     {onClear ? (
@@ -138,7 +137,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
                         className={`${KEBAB_ITEM}${!result ? ' opacity-40' : ''}`}
                       >
                         <X size={12} />
-                        {isPolish ? 'Wyczyść' : 'Clear'}
+                        {t('sharedComponents.previewAIHintStrip.clear')}
                       </button>
                     ) : null}
                   </div>
@@ -212,7 +211,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
                 handleChatSubmit();
               }
             }}
-            placeholder={isPolish ? 'Zapytaj o to...' : 'Ask about this...'}
+            placeholder={t('sharedComponents.previewAIHintStrip.askPlaceholder')}
             disabled={chatLoading}
             className="flex-1 h-7 px-2.5 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-c-focus/40"
           />

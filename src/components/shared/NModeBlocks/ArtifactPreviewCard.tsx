@@ -29,6 +29,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ArtifactType } from '../../../utils/artifactLinks';
 import { ARTIFACT_IDENTITY, buildArtifactCode } from '../../../utils/artifactLinks';
@@ -178,6 +179,8 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
   compact = false,
   isPl = false,
 }) => {
+  const { i18n } = useTranslation();
+  const t = i18n.getFixedT(isPl ? 'pl' : 'en');
   const identity = ARTIFACT_IDENTITY[artifactType];
   const accent = ACCENT_CLASSES[identity?.accent || 'slate'] || ACCENT_CLASSES.slate;
   const IconComponent = ICON_MAP[identity?.icon || 'FileText'] || FileText;
@@ -230,37 +233,37 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
               {meta.status && (
                 <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Status' : 'Status'}: {meta.status}
+                  {t('sharedComponents.artifactPreviewCard.metaStatus')}: {meta.status}
                 </span>
               )}
               {meta.owner && (
                 <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Właściciel' : 'Owner'}: {meta.owner}
+                  {t('sharedComponents.artifactPreviewCard.metaOwner')}: {meta.owner}
                 </span>
               )}
               {meta.updatedAt && (
                 <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Zmieniono' : 'Updated'}: {meta.updatedAt}
+                  {t('sharedComponents.artifactPreviewCard.metaUpdated')}: {meta.updatedAt}
                 </span>
               )}
               {meta.due && (
                 <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Termin' : 'Due'}: {meta.due}
+                  {t('sharedComponents.artifactPreviewCard.metaDue')}: {meta.due}
                 </span>
               )}
               {meta.progress != null && (
                 <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Postęp' : 'Progress'}: {meta.progress}%
+                  {t('sharedComponents.artifactPreviewCard.metaProgress')}: {meta.progress}%
                 </span>
               )}
               {meta.value && (
                 <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Wartość' : 'Value'}: {meta.value}
+                  {t('sharedComponents.artifactPreviewCard.metaValue')}: {meta.value}
                 </span>
               )}
               {meta.stage && (
                 <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Etap' : 'Stage'}: {meta.stage}
+                  {t('sharedComponents.artifactPreviewCard.metaStage')}: {meta.stage}
                 </span>
               )}
             </div>
@@ -272,7 +275,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
               type="button"
               onClick={onOpen}
               className="p-1 rounded hover:bg-white/20 dark:hover:bg-white/5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
-              title={isPl ? 'Otwórz artefakt' : 'Open artifact'}
+              title={t('sharedComponents.artifactPreviewCard.openArtifact')}
             >
               <ExternalLink size={10} />
             </button>
@@ -282,7 +285,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
               type="button"
               onClick={onRemove}
               className="p-1 rounded hover:bg-danger-500/10 text-slate-600 hover:text-danger-500"
-              title={isPl ? 'Usuń link' : 'Remove link'}
+              title={t('sharedComponents.artifactPreviewCard.removeLink')}
             >
               <X size={10} />
             </button>

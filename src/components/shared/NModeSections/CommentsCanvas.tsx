@@ -98,8 +98,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
   getCommentPriorityLabel,
   getCommentPriorityHint,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [hoveredPriority, setHoveredPriority] = React.useState<CommentPriority | null>(null);
   const [showMoreComments, setShowMoreComments] = React.useState(false);
@@ -125,7 +124,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-          {isPolish ? 'Komentarze' : 'Comments'}
+          {t('sharedComponents.commentsCanvas.title')}
         </h2>
         <button
           onClick={scrollToInput}
@@ -133,7 +132,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
           className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
         >
           <Plus size={13} />
-          {isPolish ? 'Dodaj komentarz' : 'Add comment'}
+          {t('sharedComponents.commentsCanvas.addComment')}
         </button>
       </div>
 
@@ -142,35 +141,25 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
         <div className="flex items-center justify-end">
           <DateFilterSortControl
             options={[
-              { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
-              { id: 'today', label: isPolish ? 'Dziś' : 'Today' },
-              { id: '7d', label: isPolish ? '7 dni' : '7 days' },
-              { id: '30d', label: isPolish ? '30 dni' : '30 days' },
+              { id: 'all', label: t('sharedComponents.commentsCanvas.filterAll') },
+              { id: 'today', label: t('sharedComponents.commentsCanvas.filterToday') },
+              { id: '7d', label: t('sharedComponents.commentsCanvas.filter7d') },
+              { id: '30d', label: t('sharedComponents.commentsCanvas.filter30d') },
             ]}
             value={dateFilter}
             onChange={(next) => onDateFilterChange(next as DateFilter)}
             sortOrder={sortOrder}
             onToggleSort={onToggleSort}
-            sortAscLabel={
-              isPolish ? 'Sortowanie: od najstarszych do najnowszych' : 'Sort: oldest to newest'
-            }
-            sortDescLabel={
-              isPolish ? 'Sortowanie: od najnowszych do najstarszych' : 'Sort: newest to oldest'
-            }
-            filterButtonTitle={
-              isPolish
-                ? 'Filtr daty komentarzy (klikaj, aby zmienić zakres)'
-                : 'Comment date filter (click to switch range)'
-            }
+            sortAscLabel={t('sharedComponents.commentsCanvas.sortAsc')}
+            sortDescLabel={t('sharedComponents.commentsCanvas.sortDesc')}
+            filterButtonTitle={t('sharedComponents.commentsCanvas.filterButtonTitle')}
           />
         </div>
 
         {/* Comment list */}
         {comments.length === 0 ? (
           <p className="text-xs text-slate-600 dark:text-slate-500 py-4 text-center">
-            {isPolish
-              ? 'Brak komentarzy dla wybranego zakresu dat.'
-              : 'No comments for selected date range.'}
+            {t('sharedComponents.commentsCanvas.noComments')}
           </p>
         ) : (
           <div className="space-y-4">
@@ -187,11 +176,9 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                       </span>
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${getPriorityDotClass(getCommentPriority(c))}`}
-                        title={
-                          isPolish
-                            ? `Priorytet: ${getCommentPriority(c)}`
-                            : `Priority: ${getCommentPriority(c)}`
-                        }
+                        title={t('sharedComponents.commentsCanvas.priorityTitle', {
+                          priority: getCommentPriority(c),
+                        })}
                       />
                       <span className="text-[10px] text-slate-600">
                         {new Date(c.createdAt).toLocaleDateString()}
@@ -224,7 +211,9 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
               onClick={() => setShowMoreComments((prev) => !prev)}
               className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
             >
-              {isExpandedComments ? (isPolish ? 'Mniej' : 'Less') : isPolish ? 'Więcej' : 'More'}
+              {isExpandedComments
+                ? t('sharedComponents.commentsCanvas.less')
+                : t('sharedComponents.commentsCanvas.more')}
             </button>
           </div>
         )}
@@ -244,11 +233,9 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                 onFocus={() => setHoveredPriority(prio.id)}
                 onBlur={() => setHoveredPriority(null)}
                 className={`w-6 h-6 rounded-full border text-[10px] font-bold transition-all ${getPriorityButtonClass(prio.id, draftPriority === prio.id)}`}
-                title={
-                  isPolish
-                    ? `Priorytet komentarza: ${getCommentPriorityLabel(prio.id)}`
-                    : `Comment priority: ${getCommentPriorityLabel(prio.id)}`
-                }
+                title={t('sharedComponents.commentsCanvas.commentPriorityTitle', {
+                  label: getCommentPriorityLabel(prio.id),
+                })}
               >
                 {prio.label}
               </button>
@@ -256,7 +243,8 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             {hoveredPriority && (
               <div className="absolute left-0 -top-12 z-20 min-w-[190px] rounded-lg border border-slate-300/60 dark:border-navy-600/70 bg-white/95 dark:bg-navy-900/95 px-2.5 py-1.5 shadow-lg">
                 <div className="text-[10px] font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Priorytet' : 'Priority'}: {getCommentPriorityLabel(hoveredPriority)}
+                  {t('sharedComponents.commentsCanvas.priorityWord')}:{' '}
+                  {getCommentPriorityLabel(hoveredPriority)}
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">
                   {getCommentPriorityHint(hoveredPriority)}
@@ -272,7 +260,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             value={commentDraft}
             onChange={(e) => onCommentDraftChange(e.target.value)}
             disabled={locked}
-            placeholder={isPolish ? 'Napisz komentarz...' : 'Write a comment...'}
+            placeholder={t('sharedComponents.commentsCanvas.placeholder')}
             className="flex-1 text-sm bg-transparent text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
             onKeyDown={(e) => {
               if (!locked && e.key === 'Enter' && commentDraft.trim()) {
@@ -286,9 +274,9 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             onClick={onSubmitComment}
             disabled={locked || !commentDraft.trim()}
             className="text-xs font-medium text-slate-700 dark:text-white hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-40 disabled:text-slate-400 dark:disabled:text-slate-500"
-            title={isPolish ? 'Wyślij komentarz' : 'Send comment'}
+            title={t('sharedComponents.commentsCanvas.sendTitle')}
           >
-            {isPolish ? 'Wyślij' : 'Send'}
+            {t('sharedComponents.commentsCanvas.send')}
           </button>
 
           {/* AI enhance */}
@@ -297,7 +285,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
               onClick={onAIEnhance}
               disabled={locked || isAIEnhancing}
               className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
-              title={isPolish ? 'AI pomoże dopracować komentarz' : 'AI helps refine comment'}
+              title={t('sharedComponents.commentsCanvas.aiEnhanceTitle')}
             >
               {isAIEnhancing ? (
                 <Loader2 size={12} className="animate-spin" />

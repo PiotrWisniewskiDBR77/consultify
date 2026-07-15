@@ -24,8 +24,7 @@ export const PreviewCompletenessRing: React.FC<PreviewCompletenessRingProps> = (
   onClick,
   size = 22,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [showTooltip, setShowTooltip] = useState(false);
 
   const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
@@ -66,7 +65,7 @@ export const PreviewCompletenessRing: React.FC<PreviewCompletenessRingProps> = (
       {showTooltip && missingFields && missingFields.length > 0 ? (
         <div className="absolute right-0 top-full mt-1 z-50 min-w-[160px] max-w-[220px] rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-2">
           <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-            {isPolish ? 'Brakujące pola' : 'Missing fields'}
+            {t('sharedComponents.previewCompletenessRing.missingFields')}
           </div>
           <ul className="space-y-0.5">
             {missingFields.map((field) => (
