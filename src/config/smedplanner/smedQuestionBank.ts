@@ -77,15 +77,18 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
         key: 'classified-with-reason',
         labelEn: 'Classified, with a stated reason',
         labelPl: 'Sklasyfikowana, z podanym powodem',
-        consultantSignalEn: 'A real classification exists — check whether the reason is a constraint or habit.',
-        consultantSignalPl: 'Klasyfikacja jest realna — sprawdź, czy powód to ograniczenie czy nawyk.',
+        consultantSignalEn:
+          'A real classification exists — check whether the reason is a constraint or habit.',
+        consultantSignalPl:
+          'Klasyfikacja jest realna — sprawdź, czy powód to ograniczenie czy nawyk.',
       },
       {
         key: 'unclassified-or-assumed',
         labelEn: 'Not classified yet, or assumed internal by default',
         labelPl: 'Jeszcze nie sklasyfikowana, albo domyślnie założona jako wewnętrzna',
         consultantSignalEn: 'Cannot be quantified or improved yet — force classification first.',
-        consultantSignalPl: 'Nie da się jeszcze skwantyfikować ani usprawnić — najpierw wymuś klasyfikację.',
+        consultantSignalPl:
+          'Nie da się jeszcze skwantyfikować ani usprawnić — najpierw wymuś klasyfikację.',
       },
     ],
     branches: {
@@ -108,7 +111,8 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
     textPl:
       'Ta czynność nie jest jeszcze sklasyfikowana — nie da się skwantyfikować ani usprawnić czynności przezbrojenia o nieznanym statusie wewnętrzna/zewnętrzna. Sklasyfikuj ją teraz, z podanym powodem.',
     probeEn: 'Watch a real changeover and note the exact moment the machine stops and restarts.',
-    probePl: 'Obejrzyj realne przezbrojenie i zanotuj dokładny moment zatrzymania i ponownego startu maszyny.',
+    probePl:
+      'Obejrzyj realne przezbrojenie i zanotuj dokładny moment zatrzymania i ponownego startu maszyny.',
     answerOptions: [
       {
         key: 'classified',
@@ -121,8 +125,10 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
         key: 'still-unclassified',
         labelEn: 'Still not classified',
         labelPl: 'Wciąż niesklasyfikowana',
-        consultantSignalEn: 'Not classified — loop back, the ladder cannot advance on an unknown step.',
-        consultantSignalPl: 'Brak klasyfikacji — wracamy, drabinka nie może iść dalej na nieznanej czynności.',
+        consultantSignalEn:
+          'Not classified — loop back, the ladder cannot advance on an unknown step.',
+        consultantSignalPl:
+          'Brak klasyfikacji — wracamy, drabinka nie może iść dalej na nieznanej czynności.',
       },
     ],
     // Deliberately loops back to itself: an unclassified step blocks the ladder,
@@ -136,14 +142,18 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
   {
     id: 'smed-evidence-check',
     level: 2,
-    intentEn: 'Most "forced downtime" is habit, not physics — without evidence the classification is wishful.',
-    intentPl: 'Większość „wymuszonego postoju" to nawyk, nie fizyka — bez dowodu klasyfikacja jest życzeniowa.',
+    intentEn:
+      'Most "forced downtime" is habit, not physics — without evidence the classification is wishful.',
+    intentPl:
+      'Większość „wymuszonego postoju" to nawyk, nie fizyka — bez dowodu klasyfikacja jest życzeniowa.',
     textEn:
       'Is the internal classification backed by a physical/quality constraint you can point to (or a documented pilot), or could it also be team habit dressed up as a constraint?',
     textPl:
       'Czy klasyfikacja wewnętrzna jest poparta ograniczeniem fizycznym/jakościowym, które potrafisz wskazać (albo udokumentowanym pilotażem), czy to może nawyk zespołu przebrany za ograniczenie?',
-    probeEn: 'Would the classification survive a skeptical engineer asking "why not while it runs?"',
-    probePl: 'Czy klasyfikacja przetrwałaby sceptycznego inżyniera pytającego „dlaczego nie w trakcie pracy?"',
+    probeEn:
+      'Would the classification survive a skeptical engineer asking "why not while it runs?"',
+    probePl:
+      'Czy klasyfikacja przetrwałaby sceptycznego inżyniera pytającego „dlaczego nie w trakcie pracy?"',
     answerOptions: [
       {
         key: 'constraint-confirmed',
@@ -156,8 +166,10 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
         key: 'possibly-habit',
         labelEn: 'Not sure — might be habit, not tested',
         labelPl: 'Nie jestem pewien — może to nawyk, nietestowany',
-        consultantSignalEn: 'Flag as a conversion candidate to challenge before locking the classification.',
-        consultantSignalPl: 'Oznacz jako kandydata do konwersji do zakwestionowania przed utrwaleniem klasyfikacji.',
+        consultantSignalEn:
+          'Flag as a conversion candidate to challenge before locking the classification.',
+        consultantSignalPl:
+          'Oznacz jako kandydata do konwersji do zakwestionowania przed utrwaleniem klasyfikacji.',
       },
     ],
     branches: {
@@ -173,14 +185,17 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
   {
     id: 'smed-quant-entry',
     level: 3,
-    intentEn: 'Minutes × frequency turn "it takes a while" into a counted loss of production capacity.',
-    intentPl: 'Minuty × częstotliwość zamieniają „długo trwa" w policzoną utratę zdolności produkcyjnej.',
+    intentEn:
+      'Minutes × frequency turn "it takes a while" into a counted loss of production capacity.',
+    intentPl:
+      'Minuty × częstotliwość zamieniają „długo trwa" w policzoną utratę zdolności produkcyjnej.',
     textEn:
       'How many minutes does this step take, and at what changeover frequency — what does it really cost across a year?',
     textPl:
       'Ile minut zajmuje ta czynność i przy jakiej częstotliwości przezbrojeń — ile realnie kosztuje w skali roku?',
     probeEn: 'If you do not know the frequency, who owns the changeover log that would tell you?',
-    probePl: 'Jeśli nie znasz częstotliwości, kto jest właścicielem dziennika przezbrojeń, który by to pokazał?',
+    probePl:
+      'Jeśli nie znasz częstotliwości, kto jest właścicielem dziennika przezbrojeń, który by to pokazał?',
     answerOptions: [
       {
         key: 'quantified',
@@ -193,8 +208,10 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
         key: 'not-quantified',
         labelEn: 'Not yet — only a rough sense of duration',
         labelPl: 'Jeszcze nie — mam tylko przybliżone wyczucie czasu',
-        consultantSignalEn: 'Keep this step as "estimated, unmeasured" until a real duration lands.',
-        consultantSignalPl: 'Trzymaj tę czynność jako „szacowana, niemierzona", dopóki nie ma realnego czasu.',
+        consultantSignalEn:
+          'Keep this step as "estimated, unmeasured" until a real duration lands.',
+        consultantSignalPl:
+          'Trzymaj tę czynność jako „szacowana, niemierzona", dopóki nie ma realnego czasu.',
       },
     ],
     branches: {
@@ -207,27 +224,33 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
     id: 'smed-quant-source',
     level: 3,
     intentEn: 'A minute figure must come from measurement, not memory, or be labelled an estimate.',
-    intentPl: 'Liczba minut musi pochodzić z pomiaru, nie z pamięci, albo być oznaczona jako szacunek.',
+    intentPl:
+      'Liczba minut musi pochodzić z pomiaru, nie z pamięci, albo być oznaczona jako szacunek.',
     textEn:
       'Where does that minute figure come from — a stopwatch/video measurement, or an estimate from memory? If it is an estimate, mark it explicitly, do not present it as measured.',
     textPl:
       'Skąd bierze się ta liczba minut — pomiar stoperem/wideo, czy szacunek z pamięci? Jeśli to szacunek, oznacz to jawnie, nie przedstawiaj jako zmierzone.',
-    probeEn: 'Would this number survive being challenged by the operator who actually runs the step?',
-    probePl: 'Czy ta liczba przetrwałaby wyzwanie ze strony operatora, który faktycznie wykonuje tę czynność?',
+    probeEn:
+      'Would this number survive being challenged by the operator who actually runs the step?',
+    probePl:
+      'Czy ta liczba przetrwałaby wyzwanie ze strony operatora, który faktycznie wykonuje tę czynność?',
     answerOptions: [
       {
         key: 'measured',
         labelEn: 'Measured — stopwatch, video, or system log',
         labelPl: 'Zmierzona — stoper, wideo albo log systemowy',
         consultantSignalEn: 'Measured — safe to treat as a fact in the ranking and W2 sequence.',
-        consultantSignalPl: 'Zmierzona — bezpiecznie traktować jako fakt w rankingu i sekwencji W2.',
+        consultantSignalPl:
+          'Zmierzona — bezpiecznie traktować jako fakt w rankingu i sekwencji W2.',
       },
       {
         key: 'estimated',
         labelEn: 'Estimated — from memory or a rough guess',
         labelPl: 'Szacowana — z pamięci albo z grubsza',
-        consultantSignalEn: 'Flag as estimated/unconfirmed — the invented-number guard must catch this if unlabeled.',
-        consultantSignalPl: 'Oznacz jako szacowana/niepotwierdzona — strażnik zmyślonych liczb musi to złapać, jeśli nieoznaczone.',
+        consultantSignalEn:
+          'Flag as estimated/unconfirmed — the invented-number guard must catch this if unlabeled.',
+        consultantSignalPl:
+          'Oznacz jako szacowana/niepotwierdzona — strażnik zmyślonych liczb musi to złapać, jeśli nieoznaczone.',
       },
     ],
     branches: {
@@ -243,8 +266,10 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
   {
     id: 'smed-risk-entry',
     level: 4,
-    intentEn: 'Separating or shortening without a quality safeguard shifts risk instead of removing it.',
-    intentPl: 'Rozdzielenie lub skrócenie bez zabezpieczenia jakości przenosi ryzyko, zamiast je usunąć.',
+    intentEn:
+      'Separating or shortening without a quality safeguard shifts risk instead of removing it.',
+    intentPl:
+      'Rozdzielenie lub skrócenie bez zabezpieczenia jakości przenosi ryzyko, zamiast je usunąć.',
     textEn:
       'If you convert or shorten this step, what capability is missing (tooling, training, a buffer) to do it without raising defect or safety risk?',
     textPl:
@@ -257,14 +282,17 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
         labelEn: 'Named — the specific missing capability is clear',
         labelPl: 'Nazwana — konkretna brakująca zdolność jest jasna',
         consultantSignalEn: 'Path to a safe conversion exists — now check who holds the gain.',
-        consultantSignalPl: 'Ścieżka do bezpiecznej konwersji istnieje — teraz sprawdź, kto utrzyma zysk.',
+        consultantSignalPl:
+          'Ścieżka do bezpiecznej konwersji istnieje — teraz sprawdź, kto utrzyma zysk.',
       },
       {
         key: 'no-capability-named',
         labelEn: 'Not yet named',
         labelPl: 'Jeszcze nie nazwana',
-        consultantSignalEn: 'Gap: a risky conversion — the engine should hold this step behind measurement first.',
-        consultantSignalPl: 'Luka: ryzykowna konwersja — silnik powinien zatrzymać tę czynność za pomiarem.',
+        consultantSignalEn:
+          'Gap: a risky conversion — the engine should hold this step behind measurement first.',
+        consultantSignalPl:
+          'Luka: ryzykowna konwersja — silnik powinien zatrzymać tę czynność za pomiarem.',
       },
     ],
     branches: {
@@ -276,8 +304,10 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
   {
     id: 'smed-risk-owner',
     level: 4,
-    intentEn: 'Holding a SMED gain is a managerial capability — without an owner it erodes within months.',
-    intentPl: 'Utrzymanie zysku SMED to zdolność zarządcza — bez właściciela eroduje w kilka miesięcy.',
+    intentEn:
+      'Holding a SMED gain is a managerial capability — without an owner it erodes within months.',
+    intentPl:
+      'Utrzymanie zysku SMED to zdolność zarządcza — bez właściciela eroduje w kilka miesięcy.',
     textEn:
       'Once implemented, who owns holding this gain (the standard, the training matrix), and how will drift be caught before the changeover time creeps back up?',
     textPl:
@@ -290,14 +320,16 @@ const SMED_QUESTIONS: SmedQuestionNode[] = [
         labelEn: 'Yes — an owner and a drift-check loop are named',
         labelPl: 'Tak — właściciel i pętla kontroli odchylenia są nazwane',
         consultantSignalEn: 'The gain is protected — the sequence can safely reach standardize.',
-        consultantSignalPl: 'Zysk jest chroniony — sekwencja może bezpiecznie dojść do standaryzacji.',
+        consultantSignalPl:
+          'Zysk jest chroniony — sekwencja może bezpiecznie dojść do standaryzacji.',
       },
       {
         key: 'no-owner-yet',
         labelEn: 'No owner or check loop yet',
         labelPl: 'Brak właściciela lub pętli kontroli',
         consultantSignalEn: 'Gap: standardizing now would freeze a gain nobody is accountable for.',
-        consultantSignalPl: 'Luka: standaryzacja teraz zamroziłaby zysk, za który nikt nie odpowiada.',
+        consultantSignalPl:
+          'Luka: standaryzacja teraz zamroziłaby zysk, za który nikt nie odpowiada.',
       },
     ],
     branches: {
@@ -326,7 +358,10 @@ export const SMED_QUESTION_ROOT_ID = 'smed-surface';
  * the user (or AI) picked. Falls back to `defaultNextId` for unknown/omitted
  * answer keys, and returns `undefined` if `fromId` is not in the bank.
  */
-export function getNextSmedQuestionId(fromId: string, answerKey: string): string | null | undefined {
+export function getNextSmedQuestionId(
+  fromId: string,
+  answerKey: string
+): string | null | undefined {
   const node = getSmedQuestion(fromId);
   if (!node) return undefined;
   if (answerKey in node.branches) return node.branches[answerKey];

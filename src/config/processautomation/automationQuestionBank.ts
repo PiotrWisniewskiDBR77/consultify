@@ -22,7 +22,10 @@
 
 export type AutomationQuestionLevel = 1 | 2 | 3 | 4;
 
-export const AUTOMATION_QUESTION_LEVEL_LABEL: Record<AutomationQuestionLevel, { pl: string; en: string }> = {
+export const AUTOMATION_QUESTION_LEVEL_LABEL: Record<
+  AutomationQuestionLevel,
+  { pl: string; en: string }
+> = {
   1: { pl: 'Mapowanie', en: 'Mapping' },
   2: { pl: 'Standaryzacja', en: 'Standardization' },
   3: { pl: 'Kwantyfikacja', en: 'Quantification' },
@@ -59,27 +62,32 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
     id: 'pa-surface',
     level: 1,
     intentEn: 'You cannot automate or measure a process you have not mapped step by step.',
-    intentPl: 'Nie da się zautomatyzować ani zmierzyć procesu, którego nie zmapowano krok po kroku.',
+    intentPl:
+      'Nie da się zautomatyzować ani zmierzyć procesu, którego nie zmapowano krok po kroku.',
     textEn:
       'Is the process mapped end-to-end (every step named, in order, with who does what), or are you automating from memory of "roughly what happens"?',
     textPl:
       'Czy proces jest zmapowany od początku do końca (każdy krok nazwany, po kolei, z tym kto co robi), czy automatyzujesz z pamięci „mniej więcej co się dzieje"?',
-    probeEn: 'If you asked three different people to draw the flow, would you get the same diagram?',
-    probePl: 'Gdybyś poprosił trzy różne osoby o narysowanie przepływu, czy dostałbyś ten sam diagram?',
+    probeEn:
+      'If you asked three different people to draw the flow, would you get the same diagram?',
+    probePl:
+      'Gdybyś poprosił trzy różne osoby o narysowanie przepływu, czy dostałbyś ten sam diagram?',
     answerOptions: [
       {
         key: 'mapped',
         labelEn: 'Mapped — every step is named and ordered',
         labelPl: 'Zmapowany — każdy krok jest nazwany i uporządkowany',
         consultantSignalEn: 'A real map exists — check next whether it is standardized.',
-        consultantSignalPl: 'Realna mapa istnieje — sprawdź teraz, czy proces jest ustandaryzowany.',
+        consultantSignalPl:
+          'Realna mapa istnieje — sprawdź teraz, czy proces jest ustandaryzowany.',
       },
       {
         key: 'not-mapped',
         labelEn: 'Not mapped — running on institutional memory',
         labelPl: 'Niezmapowany — działa na pamięci instytucjonalnej',
         consultantSignalEn: 'Cannot be automated yet — force a step-by-step map first.',
-        consultantSignalPl: 'Nie da się jeszcze zautomatyzować — wymuś mapę krok po kroku najpierw.',
+        consultantSignalPl:
+          'Nie da się jeszcze zautomatyzować — wymuś mapę krok po kroku najpierw.',
       },
     ],
     branches: {
@@ -95,14 +103,18 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
   {
     id: 'pa-map-force',
     level: 2,
-    intentEn: 'Automating an unmapped process usually automates the wrong step, or misses one entirely.',
-    intentPl: 'Automatyzacja niezmapowanego procesu zwykle automatyzuje zły krok albo pomija jakiś całkiem.',
+    intentEn:
+      'Automating an unmapped process usually automates the wrong step, or misses one entirely.',
+    intentPl:
+      'Automatyzacja niezmapowanego procesu zwykle automatyzuje zły krok albo pomija jakiś całkiem.',
     textEn:
       'This process has not been mapped yet — go map it first (who does what, in what order, with what exceptions) before continuing.',
     textPl:
       'Ten proces nie jest jeszcze zmapowany — najpierw go zmapuj (kto co robi, w jakiej kolejności, z jakimi wyjątkami), zanim pójdziesz dalej.',
-    probeEn: 'Who actually runs this today, and could they walk you through it step by step this week?',
-    probePl: 'Kto faktycznie wykonuje to dziś i czy mógłby przeprowadzić cię przez to krok po kroku w tym tygodniu?',
+    probeEn:
+      'Who actually runs this today, and could they walk you through it step by step this week?',
+    probePl:
+      'Kto faktycznie wykonuje to dziś i czy mógłby przeprowadzić cię przez to krok po kroku w tym tygodniu?',
     answerOptions: [
       {
         key: 'mapped-now',
@@ -115,8 +127,10 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
         key: 'still-not-mapped',
         labelEn: 'Still not mapped',
         labelPl: 'Wciąż niezmapowany',
-        consultantSignalEn: 'Not mapped — loop back, the ladder cannot advance on an unmapped process.',
-        consultantSignalPl: 'Brak mapy — wracamy, drabinka nie może iść dalej na niezmapowanym procesie.',
+        consultantSignalEn:
+          'Not mapped — loop back, the ladder cannot advance on an unmapped process.',
+        consultantSignalPl:
+          'Brak mapy — wracamy, drabinka nie może iść dalej na niezmapowanym procesie.',
       },
     ],
     // Deliberately loops back to itself, mirroring SMED's forced-classification
@@ -131,9 +145,12 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
     id: 'pa-standardize-check',
     level: 2,
     intentEn: 'Automating a scattered process cements variation and waste at machine speed.',
-    intentPl: 'Automatyzacja rozjechanego procesu betonuje wariancję i marnotrawstwo w tempie maszyny.',
-    textEn: 'Is there ONE agreed way this process runs today, or does it vary by person, shift, or site?',
-    textPl: 'Czy istnieje JEDEN uzgodniony sposób wykonania tego procesu dziś, czy różni się w zależności od osoby, zmiany albo lokalizacji?',
+    intentPl:
+      'Automatyzacja rozjechanego procesu betonuje wariancję i marnotrawstwo w tempie maszyny.',
+    textEn:
+      'Is there ONE agreed way this process runs today, or does it vary by person, shift, or site?',
+    textPl:
+      'Czy istnieje JEDEN uzgodniony sposób wykonania tego procesu dziś, czy różni się w zależności od osoby, zmiany albo lokalizacji?',
     probeEn: 'If it varies, which variant would you standardize on, and why that one?',
     probePl: 'Jeśli się różni, na który wariant byś ustandaryzował i dlaczego akurat na ten?',
     answerOptions: [
@@ -149,7 +166,8 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
         labelEn: 'Varies by person, shift, or site',
         labelPl: 'Różni się w zależności od osoby, zmiany lub lokalizacji',
         consultantSignalEn: 'Cannot be automated yet — force one agreed path before continuing.',
-        consultantSignalPl: 'Nie da się jeszcze zautomatyzować — wymuś jedną uzgodnioną ścieżkę, zanim pójdziesz dalej.',
+        consultantSignalPl:
+          'Nie da się jeszcze zautomatyzować — wymuś jedną uzgodnioną ścieżkę, zanim pójdziesz dalej.',
       },
     ],
     branches: {
@@ -162,7 +180,8 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
     id: 'pa-standardize-force',
     level: 2,
     intentEn: 'Automating each variant separately multiplies the run cost and locks in the mess.',
-    intentPl: 'Automatyzacja każdego wariantu z osobna zwielokrotnia koszt utrzymania i utrwala bałagan.',
+    intentPl:
+      'Automatyzacja każdego wariantu z osobna zwielokrotnia koszt utrzymania i utrwala bałagan.',
     textEn:
       'Automating a process that still varies by person locks in the variance at machine speed — standardize to one agreed path before automating.',
     textPl:
@@ -181,8 +200,10 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
         key: 'still-varies',
         labelEn: 'Still varies',
         labelPl: 'Wciąż się różni',
-        consultantSignalEn: 'Not standardized — loop back, automating now would cement the variance.',
-        consultantSignalPl: 'Brak standaryzacji — wracamy, automatyzacja teraz utrwaliłaby wariancję.',
+        consultantSignalEn:
+          'Not standardized — loop back, automating now would cement the variance.',
+        consultantSignalPl:
+          'Brak standaryzacji — wracamy, automatyzacja teraz utrwaliłaby wariancję.',
       },
     ],
     branches: {
@@ -198,8 +219,10 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
   {
     id: 'pa-quant-entry',
     level: 3,
-    intentEn: 'Runs/week × minutes/cycle turns "it takes a while" into an annual-hours payback figure.',
-    intentPl: 'Uruchomienia/tydzień × minuty/cykl zamienia „długo trwa" w roczną liczbę godzin zwrotu.',
+    intentEn:
+      'Runs/week × minutes/cycle turns "it takes a while" into an annual-hours payback figure.',
+    intentPl:
+      'Uruchomienia/tydzień × minuty/cykl zamienia „długo trwa" w roczną liczbę godzin zwrotu.',
     textEn:
       'What is the baseline: runs per week, minutes per cycle, and the current error rate — do you have these numbers, or are you estimating the payback?',
     textPl:
@@ -218,8 +241,10 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
         key: 'baseline-unknown',
         labelEn: 'Unknown — the payback is being estimated',
         labelPl: 'Nieznana — zwrot jest szacowany',
-        consultantSignalEn: 'Keep this baseline as "unquantified" — the invented-number guard must catch any stated payback.',
-        consultantSignalPl: 'Trzymaj tę bazę jako „niepoliczoną" — strażnik zmyślonych liczb musi złapać każdy podany zwrot.',
+        consultantSignalEn:
+          'Keep this baseline as "unquantified" — the invented-number guard must catch any stated payback.',
+        consultantSignalPl:
+          'Trzymaj tę bazę jako „niepoliczoną" — strażnik zmyślonych liczb musi złapać każdy podany zwrot.',
       },
     ],
     branches: {
@@ -232,7 +257,8 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
     id: 'pa-target-entry',
     level: 3,
     intentEn: 'A target with no source is a hope, not a commitment the automation can be held to.',
-    intentPl: 'Cel bez źródła to nadzieja, nie zobowiązanie, z którego można rozliczyć automatyzację.',
+    intentPl:
+      'Cel bez źródła to nadzieja, nie zobowiązanie, z którego można rozliczyć automatyzację.',
     textEn:
       'What target cycle time / error rate are you committing to, and where does that target come from (a benchmark, an engineering estimate, a vendor claim)?',
     textPl:
@@ -251,8 +277,10 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
         key: 'target-unsourced',
         labelEn: "Unsourced — a vendor's claim or a round number",
         labelPl: 'Bez źródła — deklaracja dostawcy albo okrągła liczba',
-        consultantSignalEn: 'Flag as declared/unconfirmed — the invented-number guard must catch this if unlabeled.',
-        consultantSignalPl: 'Oznacz jako deklaracja/niepotwierdzone — strażnik zmyślonych liczb musi to złapać, jeśli nieoznaczone.',
+        consultantSignalEn:
+          'Flag as declared/unconfirmed — the invented-number guard must catch this if unlabeled.',
+        consultantSignalPl:
+          'Oznacz jako deklaracja/niepotwierdzone — strażnik zmyślonych liczb musi to złapać, jeśli nieoznaczone.',
       },
     ],
     branches: {
@@ -282,14 +310,16 @@ const AUTOMATION_QUESTIONS: AutomationQuestionNode[] = [
         labelEn: 'Yes — an owner and a fallback process are named',
         labelPl: 'Tak — właściciel i proces awaryjny są nazwani',
         consultantSignalEn: 'The gain is protected — safe to sequence into the automate phase.',
-        consultantSignalPl: 'Zysk jest chroniony — bezpiecznie zsekwencjonować do fazy automatyzacji.',
+        consultantSignalPl:
+          'Zysk jest chroniony — bezpiecznie zsekwencjonować do fazy automatyzacji.',
       },
       {
         key: 'no-owner-yet',
         labelEn: 'No owner or fallback named yet',
         labelPl: 'Brak nazwanego właściciela lub procesu awaryjnego',
         consultantSignalEn: 'Gap: shipping now risks a silent failure with nobody accountable.',
-        consultantSignalPl: 'Luka: wdrożenie teraz ryzykuje cichą awarię, za którą nikt nie odpowiada.',
+        consultantSignalPl:
+          'Luka: wdrożenie teraz ryzykuje cichą awarię, za którą nikt nie odpowiada.',
       },
     ],
     branches: {
@@ -306,14 +336,19 @@ export function getAutomationQuestion(id: string): AutomationQuestionNode | unde
   return AUTOMATION_QUESTION_BANK.find((q) => q.id === id);
 }
 
-export function getAutomationQuestionsByLevel(level: AutomationQuestionLevel): AutomationQuestionNode[] {
+export function getAutomationQuestionsByLevel(
+  level: AutomationQuestionLevel
+): AutomationQuestionNode[] {
   return AUTOMATION_QUESTION_BANK.filter((q) => q.level === level);
 }
 
 /** The first question of the ladder — always the end-to-end mapping question. */
 export const AUTOMATION_QUESTION_ROOT_ID = 'pa-surface';
 
-export function getNextAutomationQuestionId(fromId: string, answerKey: string): string | null | undefined {
+export function getNextAutomationQuestionId(
+  fromId: string,
+  answerKey: string
+): string | null | undefined {
   const node = getAutomationQuestion(fromId);
   if (!node) return undefined;
   if (answerKey in node.branches) return node.branches[answerKey];

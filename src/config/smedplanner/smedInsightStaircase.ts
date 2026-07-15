@@ -60,7 +60,9 @@ interface ImprovementStaircaseInput {
 }
 
 /** Validates the fact->interpretation->implication structure of one improvement. */
-export function validateSmedInsightStaircase(item: ImprovementStaircaseInput): SmedStaircaseIssue[] {
+export function validateSmedInsightStaircase(
+  item: ImprovementStaircaseInput
+): SmedStaircaseIssue[] {
   const issues: SmedStaircaseIssue[] = [];
   const s = item.staircase;
 
@@ -76,8 +78,10 @@ export function validateSmedInsightStaircase(item: ImprovementStaircaseInput): S
     issues.push({
       code: 'missing-interpretation',
       itemId: item.id,
-      messageEn: 'Improvement has no interpretation (K2) — what does the fact mean for THIS changeover?',
-      messagePl: 'Usprawnienie nie ma interpretacji (K2) — co ten fakt znaczy dla TEGO przezbrojenia?',
+      messageEn:
+        'Improvement has no interpretation (K2) — what does the fact mean for THIS changeover?',
+      messagePl:
+        'Usprawnienie nie ma interpretacji (K2) — co ten fakt znaczy dla TEGO przezbrojenia?',
     });
   }
   if (!s || !s.implication?.trim()) {
@@ -85,7 +89,8 @@ export function validateSmedInsightStaircase(item: ImprovementStaircaseInput): S
       code: 'missing-implication',
       itemId: item.id,
       messageEn: 'Improvement has no implication (K3 seed) — what follows for the move sequence?',
-      messagePl: 'Usprawnienie nie ma implikacji (zalążek K3) — co z tego wynika dla sekwencji ruchów?',
+      messagePl:
+        'Usprawnienie nie ma implikacji (zalążek K3) — co z tego wynika dla sekwencji ruchów?',
     });
   }
   if (s && s.fact?.trim() && (!s.factRefs || s.factRefs.length === 0)) {
@@ -107,7 +112,8 @@ export function validateSmedInsightStaircase(item: ImprovementStaircaseInput): S
         itemId: item.id,
         messageEn:
           'Interpretation restates the fact instead of explaining what it means for this changeover.',
-        messagePl: 'Interpretacja powtarza fakt zamiast wyjaśnić, co znaczy dla tego przezbrojenia.',
+        messagePl:
+          'Interpretacja powtarza fakt zamiast wyjaśnić, co znaczy dla tego przezbrojenia.',
       });
     }
   }
@@ -178,7 +184,10 @@ export function detectSmedGaps(session: SmedSession): SmedGap[] {
   const improvements: ImprovementItem[] = session.improvements || [];
 
   steps
-    .filter((s) => s.kind === 'internal' && (s.potential === 'convertible' || s.potential === 'shortenable'))
+    .filter(
+      (s) =>
+        s.kind === 'internal' && (s.potential === 'convertible' || s.potential === 'shortenable')
+    )
     .filter((s) => !s.measured)
     .forEach((s) => {
       gaps.push({
@@ -192,7 +201,11 @@ export function detectSmedGaps(session: SmedSession): SmedGap[] {
   const hasImprovementsInPhase = (phase: 'convert' | 'streamline') =>
     improvements.some((i) => i.phase === phase);
   const hasStandardizeImprovement = improvements.some((i) => i.phase === 'standardize');
-  if (hasStandardizeImprovement && !hasImprovementsInPhase('convert') && !hasImprovementsInPhase('streamline')) {
+  if (
+    hasStandardizeImprovement &&
+    !hasImprovementsInPhase('convert') &&
+    !hasImprovementsInPhase('streamline')
+  ) {
     gaps.push({
       code: 'standardize-before-gain',
       messageEn:
@@ -202,7 +215,9 @@ export function detectSmedGaps(session: SmedSession): SmedGap[] {
     });
   }
 
-  const convertibleSteps = steps.filter((s) => s.kind === 'internal' && s.potential === 'convertible');
+  const convertibleSteps = steps.filter(
+    (s) => s.kind === 'internal' && s.potential === 'convertible'
+  );
   if (convertibleSteps.length > 0 && !hasImprovementsInPhase('convert')) {
     gaps.push({
       code: 'convert-identified-not-logged',

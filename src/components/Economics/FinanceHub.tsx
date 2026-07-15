@@ -1467,7 +1467,10 @@ export const FinanceHub: React.FC = () => {
           onSelect: () =>
             openValuationFlow({
               title: modelContext
-                ? buildAnalyzeTitle(modelContext.title, t('finance.preview.suffixValuation', 'valuation'))
+                ? buildAnalyzeTitle(
+                    modelContext.title,
+                    t('finance.preview.suffixValuation', 'valuation')
+                  )
                 : '',
               sourceType: 'financial_model',
               sourceId: modelContext?.id,
@@ -1538,7 +1541,10 @@ export const FinanceHub: React.FC = () => {
           onSelect: () =>
             openValuationFlow({
               title: analysisContext
-                ? buildAnalyzeTitle(analysisContext.title, t('finance.preview.suffixValuation', 'valuation'))
+                ? buildAnalyzeTitle(
+                    analysisContext.title,
+                    t('finance.preview.suffixValuation', 'valuation')
+                  )
                 : '',
               sourceType: 'financial_analysis',
               sourceId: analysisContext?.id,

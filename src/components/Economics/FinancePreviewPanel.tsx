@@ -233,7 +233,8 @@ export function useFinancePreview({
             </div>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            {t('finance.preview.analyticalLevels', 'Analytical levels')}: {detail.analyticalDepthLabel}
+            {t('finance.preview.analyticalLevels', 'Analytical levels')}:{' '}
+            {detail.analyticalDepthLabel}
           </div>
         </div>
 
@@ -443,10 +444,14 @@ export function useFinancePreview({
           documents: detail?.sourceStatementCount || sRow.sourceStatementCount || 0,
         });
         if (detail?.mappedLineCount || sRow.mappedLineCount) {
-          detailsText += t('finance.preview.statementsMappedLinesSuffix', '\nMapped lines: {{mapped}}', {
-            mapped: detail?.mappedLineCount || sRow.mappedLineCount,
-            completeness: sRow.completenessLabel || '—',
-          });
+          detailsText += t(
+            'finance.preview.statementsMappedLinesSuffix',
+            '\nMapped lines: {{mapped}}',
+            {
+              mapped: detail?.mappedLineCount || sRow.mappedLineCount,
+              completeness: sRow.completenessLabel || '—',
+            }
+          );
         }
       } else if (row.kind === 'models') {
         detailsText = t('finance.preview.modelsDetails', 'Forecast model…', {

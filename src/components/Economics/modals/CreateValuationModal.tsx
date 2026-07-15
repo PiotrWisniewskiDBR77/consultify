@@ -82,9 +82,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         updatedAt: String(created.updated_at || new Date().toISOString()),
       });
     } catch (e: any) {
-      toast.error(
-        e?.response?.data?.error || t('finance.toast.createFailed', 'Failed to create')
-      );
+      toast.error(e?.response?.data?.error || t('finance.toast.createFailed', 'Failed to create'));
     } finally {
       setCreating(false);
     }
@@ -120,7 +118,9 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           >
             <option value="manual">{t('finance.preview.sourceManualData', 'Manual data')}</option>
-            <option value="financial_model">{t('finance.preview.financialModelLabel', 'Financial model')}</option>
+            <option value="financial_model">
+              {t('finance.preview.financialModelLabel', 'Financial model')}
+            </option>
             <option value="financial_analysis">
               {t('finance.preview.financialAnalysisLabel', 'Financial analysis')}
             </option>

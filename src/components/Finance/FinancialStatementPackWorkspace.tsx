@@ -678,7 +678,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
               >
                 <BarChart3 size={12} />
-                <span className="hidden sm:inline">{t('finance.pack.analysisLabel', 'Analysis')}</span>
+                <span className="hidden sm:inline">
+                  {t('finance.pack.analysisLabel', 'Analysis')}
+                </span>
               </button>
             )}
           </div>

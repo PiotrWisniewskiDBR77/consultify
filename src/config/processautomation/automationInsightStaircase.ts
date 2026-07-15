@@ -20,7 +20,11 @@
  *      baseline, and an error-rate target with no baseline to measure it against.
  */
 
-import type { AutomationBaselineInput, AutomationCandidate, AutomationSession } from './automationEngine';
+import type {
+  AutomationBaselineInput,
+  AutomationCandidate,
+  AutomationSession,
+} from './automationEngine';
 
 // ---------------------------------------------------------------------------
 // K1 -> K2 -> K3 staircase per candidate
@@ -107,7 +111,8 @@ export function validateAutomationInsightStaircase(
       issues.push({
         code: 'interpretation-is-restatement',
         itemId: item.id,
-        messageEn: 'Interpretation restates the fact instead of explaining what it means for this process.',
+        messageEn:
+          'Interpretation restates the fact instead of explaining what it means for this process.',
         messagePl: 'Interpretacja powtarza fakt zamiast wyjaśnić, co znaczy dla tego procesu.',
       });
     }
@@ -155,7 +160,10 @@ function validateInventedNumberGuard(item: CandidateStaircaseInput): AutomationS
 // ---------------------------------------------------------------------------
 
 export interface AutomationGap {
-  code: 'automate-before-standardize' | 'unquantified-baseline-with-candidates' | 'error-target-without-baseline';
+  code:
+    | 'automate-before-standardize'
+    | 'unquantified-baseline-with-candidates'
+    | 'error-target-without-baseline';
   candidateId?: string;
   messageEn: string;
   messagePl: string;

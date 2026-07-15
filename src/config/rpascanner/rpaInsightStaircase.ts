@@ -105,7 +105,8 @@ export function validateRpaInsightStaircase(item: IdeaStaircaseInput): RpaStairc
       issues.push({
         code: 'interpretation-is-restatement',
         itemId: item.id,
-        messageEn: 'Interpretation restates the fact instead of explaining what it means for this process.',
+        messageEn:
+          'Interpretation restates the fact instead of explaining what it means for this process.',
         messagePl: 'Interpretacja powtarza fakt zamiast wyjaśnić, co znaczy dla tego procesu.',
       });
     }
@@ -120,7 +121,8 @@ export function validateRpaInsightStaircase(item: IdeaStaircaseInput): RpaStairc
 // Invented-number guard
 // ---------------------------------------------------------------------------
 
-const QUANTIFIED_CLAIM = /(\d[\d.,]*\s?%)|(\d[\d.,]*\s?(min|h|godz|x|×|k|m)\b)|(\bpln\b|\beur\b|\busd\b|€|\$|zł)/i;
+const QUANTIFIED_CLAIM =
+  /(\d[\d.,]*\s?%)|(\d[\d.,]*\s?(min|h|godz|x|×|k|m)\b)|(\bpln\b|\beur\b|\busd\b|€|\$|zł)/i;
 
 export function textMakesQuantifiedClaim(text: string): boolean {
   return QUANTIFIED_CLAIM.test(text);
