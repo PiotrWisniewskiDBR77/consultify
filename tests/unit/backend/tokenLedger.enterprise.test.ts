@@ -73,7 +73,7 @@ describe('Token Ledger Enterprise Tests', () => {
         };
 
         // Setup default mocks for DbPromise (dbGet/dbAll/dbRun)
-        mockDb.get.mockImplementation((sql, params, callback) => {
+        mocks.db.get.mockImplementation((sql, params, callback) => {
             const cb = typeof params === 'function' ? params : callback;
 
             if (sql.includes('organizations')) {
@@ -170,7 +170,7 @@ describe('Token Ledger Enterprise Tests', () => {
         it('getOrgBalance uses async pattern (via DbPromise)', async () => {
             const result = await TokenBillingService.getOrgBalance('org-123');
 
-            expect(mockDb.get).toHaveBeenCalled(); // Updated expectation from mockSqliteAsync.getAsync to mockDb.get
+            expect(mocks.db.get).toHaveBeenCalled(); // Updated expectation from mockSqliteAsync.getAsync to mocks.db.get
             expect(result.balance).toBe(10000);
         });
 
