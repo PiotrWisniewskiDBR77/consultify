@@ -52,23 +52,12 @@ describe('UsageService', () => {
     });
 
     describe('recordTokenUsage()', () => {
-        // TODO(bug, found 2026-07-15 reviving orphaned test): usageService.ts's
-        // exported `setDependencies(newDeps: { db?: IDatabase } = {}): void` only
-        // reads `newDeps.db` — it silently discards uuidv4/billingService/
-        // payAsYouGoService/budgetManagementService, even though this test (and
-        // presumably the original author's intent) passes all of them:
-        // `UsageService.setDependencies({ db, uuidv4, billingService,
-        // payAsYouGoService, budgetManagementService })`. Those other services stay
-        // as module-level `let` vars that `initDeps()` lazily fills with REAL
-        // dynamically-imported modules the first time they're needed
-        // (`if (!billingService) { billingService = (await import(...)).default }`).
-        // So every test below that expects a deterministic uuid ('usage-1') or a
-        // mocked billing/budget response instead gets a real random UUID and/or
-        // real service calls against a schema-less test DB (limits/usage read back
-        // as 0). Not fixed here (usageService.ts is product code, out of scope) —
-        // affects: recordTokenUsage() x2, recordStorageUsage() x1, getCurrentUsage()
-        // x2, checkQuota() x3, calculateOverage() x1 (9 tests total).
-        it.skip('should record token usage', async () => {
+        // FIXED 2026-07-15: usageService.ts's setDependencies() now also accepts
+        // uuidv4/billingService/payAsYouGoService/budgetManagementService and
+        // assigns them to the module-level `let` vars that initDeps() otherwise
+        // lazily fills via dynamic import() — pre-filling them here makes
+        // initDeps()'s `if (!x)` guard skip the real import.
+        it('should record token usage', async () => {
             const orgId = testOrganizations.org1.id;
             const userId = testUsers.admin.id;
             const tokens = 1000;
@@ -92,8 +81,7 @@ describe('UsageService', () => {
             expect(result.tokens).toBe(tokens);
         });
 
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should handle database errors', async () => {
+        it('should handle database errors', async () => {
             const orgId = testOrganizations.org1.id;
             const dbError = new Error('Database error');
 
@@ -108,8 +96,7 @@ describe('UsageService', () => {
     });
 
     describe('recordStorageUsage()', () => {
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should record storage usage', async () => {
+        it('should record storage usage', async () => {
             const orgId = testOrganizations.org1.id;
             const bytes = 1024 * 1024; // 1MB
             const action = 'upload';
@@ -119,8 +106,11 @@ describe('UsageService', () => {
                 expect(query).toContain("'storage'"); // Type is hardcoded in SQL
                 expect(params[0]).toBe('usage-1'); // UUID
                 expect(params[1]).toBe(orgId);
-                expect(params[2]).toBe(null); // user_id is NULL for storage
-                expect(params[3]).toBe(bytes);
+                // user_id is a literal NULL embedded in the SQL text (not a bound
+                // parameter — see the `?, ?, NULL, 'storage', ?, ?, ?` placeholder
+                // list in usageService.ts), so it does not appear in params at all;
+                // params[2] is the next placeholder (bytes).
+                expect(params[2]).toBe(bytes);
                 callback.call({ changes: 1 }, null);
             });
 
@@ -132,8 +122,7 @@ describe('UsageService', () => {
     });
 
     describe('getCurrentUsage()', () => {
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should return current usage with token and storage limits', async () => {
+        it('should return current usage with token and storage limits', async () => {
             const orgId = testOrganizations.org1.id;
             const mockBilling = {
                 subscription_plan_id: 'plan-123',
@@ -186,8 +175,7 @@ describe('UsageService', () => {
             expect(result.plan).toBe('Free');
         });
 
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should calculate storage percentage correctly', async () => {
+        it('should calculate storage percentage correctly', async () => {
             const orgId = testOrganizations.org1.id;
             const mockPlan = {
                 token_limit: 10000,
@@ -238,8 +226,7 @@ describe('UsageService', () => {
     });
 
     describe('checkQuota()', () => {
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should allow when quota available', async () => {
+        it('should allow when quota available', async () => {
             const orgId = testOrganizations.org1.id;
             const mockPlan = {
                 token_limit: 10000,
@@ -264,8 +251,7 @@ describe('UsageService', () => {
             expect(result.remaining).toBe(5000);
         });
 
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should deny when quota exceeded and overage disabled', async () => {
+        it('should deny when quota exceeded and overage disabled', async () => {
             const orgId = testOrganizations.org1.id;
             const mockPlan = {
                 token_limit: 10000,
@@ -290,8 +276,7 @@ describe('UsageService', () => {
             expect(result.remaining).toBe(0);
         });
 
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should allow when overage enabled even if quota exceeded', async () => {
+        it('should allow when overage enabled even if quota exceeded', async () => {
             const orgId = testOrganizations.org1.id;
             const mockPlan = {
                 token_limit: 10000,
@@ -342,8 +327,7 @@ describe('UsageService', () => {
     });
 
     describe('calculateOverage()', () => {
-        // See setDependencies TODO above (recordTokenUsage describe block).
-        it.skip('should calculate overage charges correctly', async () => {
+        it('should calculate overage charges correctly', async () => {
             const orgId = testOrganizations.org1.id;
             const periodStart = new Date('2024-01-01');
             const periodEnd = new Date('2024-01-31');
