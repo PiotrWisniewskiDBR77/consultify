@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 interface CommandItem {
   id: string;
-  labelPl: string;
+  tkey: string;
   labelEn: string;
   shortcut?: string;
   category: string;
@@ -26,7 +26,7 @@ const COMMANDS: CommandItem[] = [
   // Nodes
   {
     id: 'add_child',
-    labelPl: 'Dodaj gałąź',
+    tkey: 'myWorkMindmap.command.add_child',
     labelEn: 'Add child',
     shortcut: 'Tab',
     category: 'nodes',
@@ -34,7 +34,7 @@ const COMMANDS: CommandItem[] = [
   },
   {
     id: 'add_sibling',
-    labelPl: 'Dodaj sąsiada',
+    tkey: 'myWorkMindmap.command.add_sibling',
     labelEn: 'Add sibling',
     shortcut: 'Enter',
     category: 'nodes',
@@ -42,14 +42,14 @@ const COMMANDS: CommandItem[] = [
   },
   {
     id: 'add_root',
-    labelPl: 'Dodaj temat główny',
+    tkey: 'myWorkMindmap.command.add_root',
     labelEn: 'Add root topic',
     category: 'nodes',
     action: 'mm_add_root',
   },
   {
     id: 'delete',
-    labelPl: 'Usuń zaznaczony',
+    tkey: 'myWorkMindmap.command.delete',
     labelEn: 'Delete selected',
     shortcut: 'Del',
     category: 'nodes',
@@ -57,7 +57,7 @@ const COMMANDS: CommandItem[] = [
   },
   {
     id: 'duplicate',
-    labelPl: 'Duplikuj',
+    tkey: 'myWorkMindmap.command.duplicate',
     labelEn: 'Duplicate',
     shortcut: '⌘D',
     category: 'nodes',
@@ -67,7 +67,7 @@ const COMMANDS: CommandItem[] = [
     // M06 product gap — BatchConvertModal exists + dispatcher handles mm_batch_convert,
     // but nothing offered it. Lets the user convert many selected nodes at once.
     id: 'batch_convert',
-    labelPl: 'Konwersja zbiorcza',
+    tkey: 'myWorkMindmap.command.batch_convert',
     labelEn: 'Batch convert',
     category: 'nodes',
     action: 'mm_batch_convert',
@@ -76,28 +76,28 @@ const COMMANDS: CommandItem[] = [
   // AI
   {
     id: 'ai_expand',
-    labelPl: 'AI Rozwiń',
+    tkey: 'myWorkMindmap.command.ai_expand',
     labelEn: 'AI Expand',
     category: 'ai',
     action: 'mm_ai_expand',
   },
   {
     id: 'ai_summarize',
-    labelPl: 'AI Podsumuj',
+    tkey: 'myWorkMindmap.command.ai_summarize',
     labelEn: 'AI Summarize',
     category: 'ai',
     action: 'mm_ai_summarize',
   },
   {
     id: 'ai_gap',
-    labelPl: 'AI Analiza luk',
+    tkey: 'myWorkMindmap.command.ai_gap',
     labelEn: 'AI Gap Analysis',
     category: 'ai',
     action: 'mm_ai_gap_analysis',
   },
   {
     id: 'ai_suggest',
-    labelPl: 'AI Sugestie',
+    tkey: 'myWorkMindmap.command.ai_suggest',
     labelEn: 'AI Suggest',
     category: 'ai',
     action: 'mm_ai_suggest',
@@ -106,56 +106,56 @@ const COMMANDS: CommandItem[] = [
   // Layout
   {
     id: 'auto_cluster',
-    labelPl: 'Auto-grupowanie',
+    tkey: 'myWorkMindmap.command.auto_cluster',
     labelEn: 'Auto-cluster',
     category: 'layout',
     action: 'mm_auto_cluster',
   },
   {
     id: 'auto_layout',
-    labelPl: 'Auto-układ',
+    tkey: 'myWorkMindmap.command.auto_layout',
     labelEn: 'Auto-layout',
     category: 'layout',
     action: 'mm_auto_layout',
   },
   {
     id: 'struct_mindmap',
-    labelPl: 'Struktura: Mapa myśli',
+    tkey: 'myWorkMindmap.command.struct_mindmap',
     labelEn: 'Structure: Mind Map',
     category: 'layout',
     action: 'mm_set_structure:mindmap',
   },
   {
     id: 'struct_org',
-    labelPl: 'Struktura: Schemat org.',
+    tkey: 'myWorkMindmap.command.struct_org',
     labelEn: 'Structure: Org Chart',
     category: 'layout',
     action: 'mm_set_structure:org_chart',
   },
   {
     id: 'struct_tree',
-    labelPl: 'Struktura: Drzewo (prawo)',
+    tkey: 'myWorkMindmap.command.struct_tree',
     labelEn: 'Structure: Tree (Right)',
     category: 'layout',
     action: 'mm_set_structure:tree_right',
   },
   {
     id: 'struct_fishbone',
-    labelPl: 'Struktura: Ishikawa',
+    tkey: 'myWorkMindmap.command.struct_fishbone',
     labelEn: 'Structure: Fishbone',
     category: 'layout',
     action: 'mm_set_structure:fishbone',
   },
   {
     id: 'struct_timeline',
-    labelPl: 'Struktura: Oś czasu',
+    tkey: 'myWorkMindmap.command.struct_timeline',
     labelEn: 'Structure: Timeline',
     category: 'layout',
     action: 'mm_set_structure:timeline',
   },
   {
     id: 'struct_semantic',
-    labelPl: 'Struktura: Semantyczny',
+    tkey: 'myWorkMindmap.command.struct_semantic',
     labelEn: 'Structure: Semantic',
     category: 'layout',
     action: 'mm_set_structure:semantic',
@@ -164,28 +164,28 @@ const COMMANDS: CommandItem[] = [
   // View
   {
     id: 'toggle_health',
-    labelPl: 'Pokaż/ukryj Health Score',
+    tkey: 'myWorkMindmap.command.toggle_health',
     labelEn: 'Toggle health score',
     category: 'view',
     action: 'mm_toggle_health',
   },
   {
     id: 'presentation',
-    labelPl: 'Tryb prezentacji',
+    tkey: 'myWorkMindmap.command.presentation',
     labelEn: 'Toggle presentation',
     category: 'view',
     action: 'mm_presentation',
   },
   {
     id: 'fit_view',
-    labelPl: 'Dopasuj widok',
+    tkey: 'myWorkMindmap.command.fit_view',
     labelEn: 'Zoom to fit',
     category: 'view',
     action: 'mm_fit_view',
   },
   {
     id: 'toggle_minimap',
-    labelPl: 'Pokaż/ukryj minimapę',
+    tkey: 'myWorkMindmap.command.toggle_minimap',
     labelEn: 'Toggle minimap',
     category: 'view',
     action: 'mm_toggle_minimap',
@@ -196,21 +196,21 @@ const COMMANDS: CommandItem[] = [
   // needs to offer them.
   {
     id: 'timeline_view',
-    labelPl: 'Widok osi czasu',
+    tkey: 'myWorkMindmap.command.timeline_view',
     labelEn: 'Timeline view',
     category: 'view',
     action: 'mm_timeline',
   },
   {
     id: 'view_3d',
-    labelPl: 'Widok 3D',
+    tkey: 'myWorkMindmap.command.view_3d',
     labelEn: '3D view',
     category: 'view',
     action: 'mm_3d_view',
   },
   {
     id: 'time_heatmap',
-    labelPl: 'Mapa cieplna czasu',
+    tkey: 'myWorkMindmap.command.time_heatmap',
     labelEn: 'Time heatmap',
     category: 'view',
     action: 'mm_time_heatmap',
@@ -219,28 +219,28 @@ const COMMANDS: CommandItem[] = [
   // Export
   {
     id: 'export_md',
-    labelPl: 'Eksport: Markdown',
+    tkey: 'myWorkMindmap.command.export_md',
     labelEn: 'Export: Markdown',
     category: 'export',
     action: 'mm_export_markdown',
   },
   {
     id: 'export_png',
-    labelPl: 'Eksport: PNG',
+    tkey: 'myWorkMindmap.command.export_png',
     labelEn: 'Export: PNG',
     category: 'export',
     action: 'mm_export_png',
   },
   {
     id: 'export_svg',
-    labelPl: 'Eksport: SVG',
+    tkey: 'myWorkMindmap.command.export_svg',
     labelEn: 'Export: SVG',
     category: 'export',
     action: 'mm_export_svg',
   },
   {
     id: 'export_pptx',
-    labelPl: 'Eksport: Prezentacja HTML',
+    tkey: 'myWorkMindmap.command.export_pptx',
     labelEn: 'Export: HTML Presentation',
     category: 'export',
     action: 'mm_export_pptx',
@@ -249,7 +249,7 @@ const COMMANDS: CommandItem[] = [
   // Edit
   {
     id: 'undo',
-    labelPl: 'Cofnij',
+    tkey: 'myWorkMindmap.command.undo',
     labelEn: 'Undo',
     shortcut: '⌘Z',
     category: 'edit',
@@ -257,7 +257,7 @@ const COMMANDS: CommandItem[] = [
   },
   {
     id: 'redo',
-    labelPl: 'Ponów',
+    tkey: 'myWorkMindmap.command.redo',
     labelEn: 'Redo',
     shortcut: '⌘⇧Z',
     category: 'edit',
@@ -265,13 +265,13 @@ const COMMANDS: CommandItem[] = [
   },
 ];
 
-const CATEGORY_LABELS: Record<string, { pl: string; en: string }> = {
-  nodes: { pl: 'Węzły', en: 'Nodes' },
-  ai: { pl: 'AI', en: 'AI' },
-  layout: { pl: 'Układ', en: 'Layout' },
-  view: { pl: 'Widok', en: 'View' },
-  export: { pl: 'Eksport', en: 'Export' },
-  edit: { pl: 'Edycja', en: 'Edit' },
+const CATEGORY_LABELS: Record<string, string> = {
+  nodes: 'Nodes',
+  ai: 'AI',
+  layout: 'Layout',
+  view: 'View',
+  export: 'Export',
+  edit: 'Edit',
 };
 
 function fuzzyMatch(query: string, text: string): boolean {
@@ -291,8 +291,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
   onClose,
   onAction,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -309,10 +308,10 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
   const filtered = useMemo(() => {
     if (!query.trim()) return COMMANDS;
     return COMMANDS.filter((cmd) => {
-      const text = `${cmd.labelPl} ${cmd.labelEn} ${cmd.shortcut || ''} ${cmd.category}`;
+      const text = `${t(cmd.tkey, cmd.labelEn)} ${cmd.shortcut || ''} ${cmd.category}`;
       return fuzzyMatch(query, text);
     });
-  }, [query]);
+  }, [query, t]);
 
   useEffect(() => {
     setSelectedIdx(0);
@@ -398,7 +397,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
               Array.from(grouped.entries()).map(([cat, { items, startIdx }]) => (
                 <div key={cat} className="mb-1">
                   <div className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-                    {isPl ? CATEGORY_LABELS[cat]?.pl : CATEGORY_LABELS[cat]?.en || cat}
+                    {t(`myWorkMindmap.commandCategory.${cat}`, CATEGORY_LABELS[cat] || cat)}
                   </div>
                   {items.map((cmd, i) => {
                     const globalIdx = startIdx + i;
@@ -416,7 +415,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
                         }`}
                       >
                         <span className="flex-1 font-medium truncate">
-                          {isPl ? cmd.labelPl : cmd.labelEn}
+                          {t(cmd.tkey, cmd.labelEn)}
                         </span>
                         {cmd.shortcut && (
                           <kbd
