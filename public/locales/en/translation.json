@@ -27365,6 +27365,29 @@
       "add": "Add",
       "remove": "Remove",
       "noItems": "No items."
+    },
+    "processAutomationEconomicsStep": {
+      "title": "Economics",
+      "subtitle": "Build a fast business case: savings, costs, payback.",
+      "fullyLoadedCostPerHour": "Fully loaded cost / hour",
+      "fullyLoadedCostPlaceholder": "e.g. 45",
+      "oneTimeCost": "One-time cost",
+      "oneTimeCostPlaceholder": "e.g. 20000",
+      "monthlyCost": "Monthly run cost",
+      "monthlyCostPlaceholder": "e.g. 800",
+      "currencyInfo": "Currency (info)",
+      "baselineHoursPerWeek": "Baseline hours/week (optional)",
+      "baselineHoursPlaceholder": "e.g. 120",
+      "fromMeasurement": "from measurement",
+      "targetHoursPerWeek": "Target hours/week (optional)",
+      "targetHoursPlaceholder": "e.g. 60",
+      "fromReEstimation": "from re-estimation",
+      "output": "Output",
+      "hoursSavedPerWeek": "Hours saved / week",
+      "grossSavingsPerWeek": "Gross savings / week",
+      "netSavingsPerMonth": "Net savings / month",
+      "paybackMonths": "Payback (months)",
+      "disclaimer": "Note: quick model (52 weeks/year, no discounting). Refine assumptions before approval."
     }
   }
 }

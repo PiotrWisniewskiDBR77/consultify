@@ -28441,6 +28441,29 @@
       "add": "Dodaj",
       "remove": "Usuń",
       "noItems": "Brak elementów."
+    },
+    "processAutomationEconomicsStep": {
+      "title": "Ekonomia",
+      "subtitle": "Zbuduj szybki business case: oszczędności, koszty, payback.",
+      "fullyLoadedCostPerHour": "Fully loaded cost / godzina",
+      "fullyLoadedCostPlaceholder": "np. 45",
+      "oneTimeCost": "Koszt jednorazowy",
+      "oneTimeCostPlaceholder": "np. 20000",
+      "monthlyCost": "Koszt miesięczny (run)",
+      "monthlyCostPlaceholder": "np. 800",
+      "currencyInfo": "Waluta (info)",
+      "baselineHoursPerWeek": "Baseline hours/week (opcjonalnie)",
+      "baselineHoursPlaceholder": "np. 120",
+      "fromMeasurement": "z pomiaru",
+      "targetHoursPerWeek": "Target hours/week (opcjonalnie)",
+      "targetHoursPlaceholder": "np. 60",
+      "fromReEstimation": "z re-estymacji",
+      "output": "Wynik",
+      "hoursSavedPerWeek": "Godziny oszczędzone / tydzień",
+      "grossSavingsPerWeek": "Oszczędność brutto / tydzień",
+      "netSavingsPerMonth": "Oszczędność netto / miesiąc",
+      "paybackMonths": "Payback (mies.)",
+      "disclaimer": "Uwaga: to szybki model (52 tygodnie/rok, bez dyskonta). Doprecyzuj założenia przed zatwierdzeniem."
     }
   }
 }
