@@ -30,6 +30,7 @@ import aiAsyncRoutes from './aiAsync.routes.js';
 import aiCoachRoutes from './aiCoach.routes.js';
 import aiExplainRoutes from './aiExplain.routes.js';
 import aiLearningRoutes from './aiLearning.routes.js';
+import agentPlanRoutes from './agent-plan.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
 import deepThinkingRoutes from './deep-thinking.routes.js';
 import pinnedInsightsRoutes from './pinned-insights.routes.js';
@@ -76,6 +77,8 @@ router.use('/agent-manifests', agentManifestsRoutes);
 // Fala 5 (2026-07-15): wiring osieroconych silników AI — endpointy opt-in,
 // świadomie NIE hookowane w pipeline czatu (osobna decyzja projektowa).
 router.use('/pinned-insights', pinnedInsightsRoutes);
+// Fala 11 (HP-4 fundament): tryb Plan agenta — cienki router deleguje do agentPlannerService.
+router.use('/agent-plan', agentPlanRoutes);
 router.use('/smart-followup', smartFollowupRoutes);
 router.use('/trust', aiTrustRoutes);
 
