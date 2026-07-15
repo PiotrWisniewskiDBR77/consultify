@@ -79,8 +79,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
   readOnly = false,
   showProgress = true,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [activeAxisId, setActiveAxisId] = useState<number>(1);
   const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
@@ -487,12 +486,8 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors"
         >
           {activeAxisId === 7
-            ? isPolish
-              ? 'Zakończ ocenę'
-              : 'Complete Assessment'
-            : isPolish
-              ? 'Następna oś'
-              : 'Next Axis'}
+            ? t('assessment.form.completeAssessment', 'Complete Assessment')
+            : t('assessment.form.nextAxis', 'Next Axis')}
           <ArrowRight size={20} />
         </button>
       </div>

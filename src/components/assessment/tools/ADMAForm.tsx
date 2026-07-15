@@ -421,11 +421,10 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                 <textarea
                   value={dimScore.notes || ''}
                   onChange={(e) => handleDimensionMetaChange(dimension.id, 'notes', e.target.value)}
-                  placeholder={
-                    isPolish
-                      ? 'Kluczowe obserwacje, kontekst, uzasadnienie oceny...'
-                      : 'Key observations, context, rationale for the score...'
-                  }
+                  placeholder={t(
+                    'assessment.notesPlaceholder',
+                    'Key observations, context, rationale for the score...'
+                  )}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
                   rows={2}
                   disabled={readOnly}
@@ -440,11 +439,10 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                   onChange={(e) =>
                     handleDimensionMetaChange(dimension.id, 'evidence', e.target.value)
                   }
-                  placeholder={
-                    isPolish
-                      ? 'Systemy, dokumenty, metryki, procesy potwierdzające ocenę...'
-                      : 'Systems, documents, metrics, processes that support this score...'
-                  }
+                  placeholder={t(
+                    'assessment.evidencePlaceholder',
+                    'Systems, documents, metrics, processes that support this score...'
+                  )}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
                   rows={2}
                   disabled={readOnly}

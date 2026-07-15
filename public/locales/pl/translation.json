@@ -6190,7 +6190,8 @@
       "dimensions": "Wymiary",
       "previousBlock": "Poprzedni blok",
       "completeAssessment": "Zakończ ocenę",
-      "nextBlock": "Następny blok"
+      "nextBlock": "Następny blok",
+      "nextAxis": "Następna oś"
     },
     "initiatives": {
       "submitted": "Inicjatywa przesłana do przeglądu",

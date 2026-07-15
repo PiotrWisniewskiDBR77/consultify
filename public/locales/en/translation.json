@@ -6955,7 +6955,8 @@
       "dimensions": "Dimensions",
       "previousBlock": "Previous Block",
       "completeAssessment": "Complete Assessment",
-      "nextBlock": "Next Block"
+      "nextBlock": "Next Block",
+      "nextAxis": "Next Axis"
     },
     "initiatives": {
       "submitted": "Initiative submitted for review",
