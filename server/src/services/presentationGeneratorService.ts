@@ -27,6 +27,7 @@ import {
   type EvidenceContract,
   type EvidenceContractSource,
 } from './evidence/evidenceContract.js';
+import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
@@ -1841,6 +1842,27 @@ export async function generateDeck(
       logger.warn('[PresentationGen] Failed to record to style profile', { profileErr });
     }
 
+    const deckEvidence = buildDeckEvidenceContract(
+      sourceRefs,
+      contextPack,
+      sourcePackPreflight,
+      narrativePlan.warnings
+    );
+
+    // HP-17 bridge — persist the inline EvidenceContract as an EvidenceEnvelope
+    // (`artifact_evidence`) so the evidence panel (fala 9, ArtifactRightPanel)
+    // has something to render for decks. Previously: contract computed (HP-16)
+    // but never persisted → panel showed empty state despite the engine having
+    // real data. Fire-and-forget + fail-safe (mirrors threeAxisReportService/
+    // financeReportSectionService/drdReportEvidenceBridge): a write failure
+    // NEVER blocks deck generation.
+    void safePersistEvidenceContract(deckEvidence, {
+      organizationId,
+      artifactType: 'deck',
+      artifactId: deckId,
+      service: 'presentationGeneratorService',
+    }).catch(() => {});
+
     return {
       deckId,
       slideCount: result.slideCount,
@@ -1851,12 +1873,7 @@ export async function generateDeck(
         ...narrativePlan.warnings,
       ],
       exportPath,
-      evidence: buildDeckEvidenceContract(
-        sourceRefs,
-        contextPack,
-        sourcePackPreflight,
-        narrativePlan.warnings
-      ),
+      evidence: deckEvidence,
     };
   } catch (err: any) {
     logger.error(`[PresentationGen] Generation failed for ${deckId}: ${err.message}`);

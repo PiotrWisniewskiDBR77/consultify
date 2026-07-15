@@ -20,6 +20,7 @@
  */
 
 import logger from '../../utils/Logger.js';
+import { safePersistEvidenceContract } from '../evidence/evidenceContractBridge.js';
 import {
   buildWave5ExportManifest,
   createWave5Artifact,
@@ -677,6 +678,23 @@ export async function materializeDocumentArtifact(
 
   const artifactId = String(artifact?.artifactId ?? artifact?.artifact_id ?? provisionalArtifactId);
   const finalSchema: DocumentSchema = { ...provisionalSchema, artifactId };
+
+  // HP-17 bridge — persist the inline EvidenceContract (`buildDocumentEvidenceContract`,
+  // HP-16) as an EvidenceEnvelope (`artifact_evidence`, artifactType='document') so
+  // the evidence panel (fala 9, ArtifactRightPanel) has something to render.
+  // Previously: `finalSchema.evidence` was computed and returned to the caller
+  // but never persisted — panel showed empty state for documents despite the
+  // engine having real data. Fire-and-forget + fail-safe: a write failure NEVER
+  // blocks document materialization.
+  if (finalSchema.evidence) {
+    void safePersistEvidenceContract(finalSchema.evidence, {
+      organizationId: params.organizationId,
+      artifactType: 'document',
+      artifactId,
+      service: 'documentContentGenerator',
+      createdBy: params.userId,
+    }).catch(() => {});
+  }
 
   // Slice E14.recordUsage.wiring — when a template was actually
   // consumed by this materialization, increment `usageCount` and
