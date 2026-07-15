@@ -118,8 +118,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { isM03InboxStandardTableEnabled } from '@/utils/m03InboxStandardTableFlag';
 
-type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
-type InboxItemType =
+export type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
+export type InboxItemType =
   | 'new_assignment'
   | 'mention'
   | 'escalation'
@@ -130,7 +130,7 @@ type InboxItemType =
   | 'billing_alert'
   | 'project_update';
 
-type InboxSection =
+export type InboxSection =
   | 'decisions_required'
   | 'approvals_gates'
   | 'assigned_tasks'
@@ -230,7 +230,7 @@ const getEntityKind = (item: InboxItem): InboxEntityKind => {
   }
 };
 
-interface InboxItem {
+export interface InboxItem {
   id: string;
   type: InboxItemType;
   section: InboxSection;
@@ -512,7 +512,11 @@ interface InboxContentProps {
 }
 
 // ── Deduplication: group items by _key ──
-interface InboxGroup {
+// Exported (kanon TRIADA §27, flag ff_m03InboxStandardTable) so the
+// grouped-rows flatten/mirror invariant (`flattenInboxDisplayGroups` below)
+// is unit-testable without rendering the component — see
+// tests/inboxStandardTableGrouping.test.ts.
+export interface InboxGroup {
   key: string;
   representative: InboxItem;
   items: InboxItem[];
@@ -526,7 +530,7 @@ interface InboxGroup {
 // `urgency`/`type`/`section`/`source`/`title`/`received` are the
 // group-representative-MIRRORED sort/filter keys (see `inboxStandardRows`
 // comment) — cell rendering never reads them, only `__item`.
-interface InboxStandardRow extends StandardTableRow {
+export interface InboxStandardRow extends StandardTableRow {
   __item: InboxItem;
   __groupKey: string;
   __groupCount: number;
@@ -542,7 +546,7 @@ interface InboxStandardRow extends StandardTableRow {
   received: string;
 }
 
-const groupItems = (items: InboxItem[]): InboxGroup[] => {
+export const groupItems = (items: InboxItem[]): InboxGroup[] => {
   const map = new Map<string, InboxItem[]>();
   for (const item of items) {
     const existing = map.get(item._key);
@@ -555,6 +559,67 @@ const groupItems = (items: InboxItem[]): InboxGroup[] => {
     items: groupItems,
     count: groupItems.length,
   }));
+};
+
+// ── Flatten dedup-groups into StandardTable rows (kanon TRIADA §27, flag
+// ff_m03InboxStandardTable) — pure, exported for unit testing (see
+// tests/inboxStandardTableGrouping.test.ts). Each group becomes a
+// representative row + (when `isExpanded`) its child rows, all independent
+// `InboxStandardRow`s. `status`/`urgency`/`type`/`section`/`source`/`title`/
+// `received` are MIRRORED from the group's representative onto EVERY row of
+// the group (parent + children): StandardTable/FilterableTable's native
+// per-column sort/filter operate directly on this flat array, and would
+// otherwise split a group apart (e.g. sorting by "Received" could scatter
+// children away from their parent). Because every row in a group carries the
+// SAME sort/filter key, and `Array.prototype.sort` is spec-stable (rows with
+// equal keys keep their original relative order), the child rows stay glued
+// immediately after their representative regardless of which column is
+// sorted/filtered. Cell rendering never reads these mirrored fields — it
+// always reads `__item` (the row's OWN real item) so children still display
+// their OWN actual status/urgency/etc, exactly like legacy
+// `renderRow(group.items[i], …)`.
+export const flattenInboxDisplayGroups = (
+  displayGroups: (InboxGroup & { isExpanded: boolean })[]
+): InboxStandardRow[] => {
+  const rows: InboxStandardRow[] = [];
+  let visibleIndex = 0;
+  for (const group of displayGroups) {
+    const rep = group.representative;
+    const mirrored = {
+      status: rep.itemStatus || (rep.triaged ? 'done' : 'open'),
+      urgency: rep.urgency,
+      type: rep.type,
+      section: rep.section,
+      source: rep.source?.type || 'system',
+      title: rep.title,
+      received: rep.receivedAt,
+    };
+    rows.push({
+      id: rep.id,
+      __item: rep,
+      __groupKey: group.key,
+      __groupCount: group.count,
+      __isGroupHeader: true,
+      __groupExpanded: group.isExpanded,
+      __visibleIndex: visibleIndex++,
+      ...mirrored,
+    } as unknown as InboxStandardRow);
+    if (group.count > 1 && group.isExpanded) {
+      for (let i = 1; i < group.items.length; i++) {
+        rows.push({
+          id: group.items[i].id,
+          __item: group.items[i],
+          __groupKey: group.key,
+          __groupCount: group.count,
+          __isGroupHeader: false,
+          __groupExpanded: group.isExpanded,
+          __visibleIndex: visibleIndex++,
+          ...mirrored, // MIRRORED to representative — group cohesion, see comment above
+        } as unknown as InboxStandardRow);
+      }
+    }
+  }
+  return rows;
 };
 
 // ── Urgency config ──
@@ -2212,62 +2277,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   }, [groups, viewMode]);
 
   // ── StandardTable rows (kanon TRIADA §27, flag ff_m03InboxStandardTable) ──
-  // Flatten each dedup-group into a representative row + (when expanded) its
-  // child rows — plain independent `TableRow`s fed to `<StandardTable>`.
-  // `status`/`urgency`/`type`/`section`/`source`/`title`/`received` are
-  // MIRRORED from the group's representative onto EVERY row of the group
-  // (parent + children): StandardTable/FilterableTable's native per-column
-  // sort/filter operate directly on the flat row array, and would otherwise
-  // split a group apart (e.g. sorting by "Received" would scatter children
-  // away from their parent). Because every row in a group carries the SAME
-  // sort/filter key, and `Array.prototype.sort` is spec-stable (rows with
-  // equal keys keep their original relative order), the child rows stay
-  // glued immediately after their representative regardless of which column
-  // is sorted/filtered. Cell rendering never reads these mirrored fields —
-  // it always reads `__item` (the row's OWN real item) so children still
-  // display their OWN actual status/urgency/etc, exactly like legacy
-  // `renderRow(group.items[i], …)`.
+  // Delegates to the pure, unit-tested `flattenInboxDisplayGroups` (see its
+  // doc comment above for the group-cohesion/mirroring rationale, and
+  // tests/inboxStandardTableGrouping.test.ts for the regression coverage).
   const inboxStandardRows = useMemo<StandardTableRow[]>(() => {
     if (!useInboxStandardTable) return [];
-    const rows: StandardTableRow[] = [];
-    let visibleIndex = 0;
-    for (const group of displayItems) {
-      const rep = group.representative;
-      const mirrored = {
-        status: rep.itemStatus || (rep.triaged ? 'done' : 'open'),
-        urgency: rep.urgency,
-        type: rep.type,
-        section: rep.section,
-        source: rep.source?.type || 'system',
-        title: rep.title,
-        received: rep.receivedAt,
-      };
-      rows.push({
-        id: rep.id,
-        __item: rep,
-        __groupKey: group.key,
-        __groupCount: group.count,
-        __isGroupHeader: true,
-        __groupExpanded: group.isExpanded,
-        __visibleIndex: visibleIndex++,
-        ...mirrored,
-      } as unknown as InboxStandardRow);
-      if (group.count > 1 && group.isExpanded) {
-        for (let i = 1; i < group.items.length; i++) {
-          rows.push({
-            id: group.items[i].id,
-            __item: group.items[i],
-            __groupKey: group.key,
-            __groupCount: group.count,
-            __isGroupHeader: false,
-            __groupExpanded: group.isExpanded,
-            __visibleIndex: visibleIndex++,
-            ...mirrored, // MIRRORED to representative — group cohesion, see comment above
-          } as unknown as InboxStandardRow);
-        }
-      }
-    }
-    return rows;
+    return flattenInboxDisplayGroups(displayItems);
   }, [displayItems, useInboxStandardTable]);
 
   // ── StandardTable columns (kanon TRIADA §27) — cell markup 1:1 z legacy
