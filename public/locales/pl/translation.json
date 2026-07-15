@@ -9687,6 +9687,17 @@
       "topPerformersSeries": "Top Performerzy",
       "youLabel": "Ty",
       "industryLabel": "Branża"
+    },
+    "heatmapMatrix": {
+      "axisSingular": "oś",
+      "axisPlural": "osi",
+      "transformationAxisHeader": "Oś Transformacji",
+      "visualizationHeader": "Wizualizacja",
+      "actualHeader": "Aktualny",
+      "targetHeader": "Docelowy",
+      "gapHeader": "Luka",
+      "priorityHeader": "Priorytet",
+      "justificationTitle": "Uzasadnienie"
     }
   },
   "auth": {

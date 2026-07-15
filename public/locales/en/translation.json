@@ -10452,6 +10452,17 @@
       "topPerformersSeries": "Top Performers",
       "youLabel": "You",
       "industryLabel": "Industry"
+    },
+    "heatmapMatrix": {
+      "axisSingular": "axis",
+      "axisPlural": "axes",
+      "transformationAxisHeader": "Transformation Axis",
+      "visualizationHeader": "Visualization",
+      "actualHeader": "Actual",
+      "targetHeader": "Target",
+      "gapHeader": "Gap",
+      "priorityHeader": "Priority",
+      "justificationTitle": "Justification"
     }
   },
   "auth": {
