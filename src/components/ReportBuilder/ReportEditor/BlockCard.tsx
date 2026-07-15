@@ -57,6 +57,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { BlockSettingsPanel } from './BlockSettingsPanel';
@@ -1195,6 +1196,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   onDismissComment,
   onBulkResolve,
 }) => {
+  const { t } = useTranslation();
   const hasContent = Boolean(block.content);
   const [mode, setMode] = useState<BlockMode>(hasContent ? 'preview' : 'configure');
   const [isExpanded, setIsExpanded] = useState(true);
@@ -1301,7 +1303,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
     onUpdate({ content: editContent });
     onSaveContent?.(editContent);
     setIsEditing(false);
-    toast.success(isPl ? 'Zapisano' : 'Saved');
+    toast.success(t('reportBuilder.blockCard.saved', 'Saved'));
   };
 
   // Keyboard shortcuts in edit mode
@@ -1329,7 +1331,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       if (comment) {
         setBlockComments((prev) => [comment, ...prev]);
         setNewComment('');
-        toast.success(isPl ? 'Komentarz dodany' : 'Comment added');
+        toast.success(t('reportBuilder.blockCard.commentAdded', 'Comment added'));
       }
     } else {
       // Fallback local-only
@@ -1373,12 +1375,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         setMode('preview');
       });
       toast.success(
-        isPl
-          ? 'Komentarz rozwiązany — AI aktualizuje treść'
-          : 'Comment resolved — AI updating content'
+        t('reportBuilder.blockCard.commentResolvedAiUpdatingContent', 'Comment resolved — AI updating content')
       );
     } else {
-      toast.success(isPl ? 'Komentarz rozwiązany' : 'Comment resolved');
+      toast.success(t('reportBuilder.blockCard.commentResolved', 'Comment resolved'));
     }
   };
 
@@ -1401,7 +1401,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       prev.map((c) => (openIds.includes(c.id) ? { ...c, status: 'RESOLVED' as const } : c))
     );
     toast.success(
-      isPl ? `${openIds.length} komentarzy rozwiązanych` : `${openIds.length} comments resolved`
+      t('reportBuilder.blockCard.nCommentsResolved', {
+        defaultValue: `${openIds.length} comments resolved`,
+        count: openIds.length,
+      })
     );
   };
 
@@ -1445,7 +1448,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             value={block.title}
             onChange={(e) => onUpdate({ title: e.target.value })}
             className="w-full font-semibold text-sm text-c-text bg-transparent border-none outline-none focus:ring-0"
-            placeholder={isPl ? 'Tytuł bloku...' : 'Block title...'}
+            placeholder={t('reportBuilder.blockCard.blockTitle', 'Block title...')}
             onClick={(e) => e.stopPropagation()}
           />
           <div className="flex items-center gap-1.5 mt-0.5">
@@ -1455,23 +1458,23 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             {block.isGenerating && (
               <span className="text-[9px] px-1 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded flex items-center gap-1 font-medium">
                 <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                {isPl ? 'Generowanie...' : 'Generating...'}
+                {t('reportBuilder.blockCard.generating', 'Generating...')}
               </span>
             )}
             {!block.isGenerating && block.isGenerated && !block.needsRegeneration && (
               <span className="text-[9px] px-1 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded font-medium">
-                {isPl ? 'Wygenerowano' : 'Generated'}
+                {t('reportBuilder.blockCard.generated', 'Generated')}
               </span>
             )}
             {!block.isGenerating && block.needsRegeneration && (
               <span className="text-[9px] px-1 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded flex items-center gap-1 font-medium">
                 <RefreshCw className="w-2.5 h-2.5" />
-                {isPl ? 'Wymaga regeneracji' : 'Modified'}
+                {t('reportBuilder.blockCard.modified', 'Modified')}
               </span>
             )}
             {!block.isGenerating && !block.isGenerated && !block.needsRegeneration && (
               <span className="text-[9px] px-1 py-0.5 bg-c-surface-raised text-c-text-secondary rounded font-medium">
-                {isPl ? 'Nowy' : 'New'}
+                {t('reportBuilder.blockCard.new', 'New')}
               </span>
             )}
           </div>
@@ -1496,20 +1499,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             }`}
             title={
               block.isGenerating
-                ? isPl
-                  ? 'Generowanie...'
-                  : 'Generating...'
+                ? t('reportBuilder.blockCard.generating', 'Generating...')
                 : !block.isGenerated
-                  ? isPl
-                    ? 'Generuj ten blok'
-                    : 'Generate this block'
+                  ? t('reportBuilder.blockCard.generateThisBlock', 'Generate this block')
                   : block.needsRegeneration
-                    ? isPl
-                      ? 'Regeneruj (ustawienia zmienione)'
-                      : 'Regenerate (settings changed)'
-                    : isPl
-                      ? 'Regeneruj'
-                      : 'Regenerate'
+                    ? t('reportBuilder.blockCard.regenerateSettingsChanged', 'Regenerate (settings changed)')
+                    : t('reportBuilder.blockCard.regenerate', 'Regenerate')
             }
           >
             {block.isGenerating ? (
@@ -1520,20 +1515,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               <RefreshCw className="w-3 h-3" />
             )}
             {block.isGenerating
-              ? isPl
-                ? 'Generowanie...'
-                : 'Generating...'
+              ? t('reportBuilder.blockCard.generating', 'Generating...')
               : !block.isGenerated
-                ? isPl
-                  ? 'Generuj'
-                  : 'Generate'
+                ? t('reportBuilder.blockCard.generate', 'Generate')
                 : block.needsRegeneration
-                  ? isPl
-                    ? 'Regeneruj'
-                    : 'Regenerate'
-                  : isPl
-                    ? 'Regeneruj'
-                    : 'Regenerate'}
+                  ? t('reportBuilder.blockCard.regenerate', 'Regenerate')
+                  : t('reportBuilder.blockCard.regenerate', 'Regenerate')}
           </button>
         )}
 
@@ -1582,7 +1569,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"
               >
-                <Plus className="w-3.5 h-3.5" /> {isPl ? 'Dodaj poniżej' : 'Add below'}
+                <Plus className="w-3.5 h-3.5" /> {t('reportBuilder.blockCard.addBelow', 'Add below')}
               </button>
               <button
                 onClick={(e) => {
@@ -1592,7 +1579,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"
               >
-                {block.enabled ? (isPl ? 'Wyłącz' : 'Disable') : isPl ? 'Włącz' : 'Enable'}
+                {block.enabled ? (t('reportBuilder.blockCard.disable', 'Disable')) : t('reportBuilder.blockCard.enable', 'Enable')}
               </button>
               {block.content && (
                 <button
@@ -1604,7 +1591,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"
                 >
-                  <ClipboardCopy className="w-3.5 h-3.5" /> {isPl ? 'Kopiuj' : 'Copy'}
+                  <ClipboardCopy className="w-3.5 h-3.5" /> {t('reportBuilder.blockCard.copy', 'Copy')}
                 </button>
               )}
               <hr className="my-1 border-c-border-subtle" />
@@ -1616,7 +1603,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
               >
-                <Trash2 className="w-3.5 h-3.5" /> {isPl ? 'Usuń' : 'Remove'}
+                <Trash2 className="w-3.5 h-3.5" /> {t('reportBuilder.blockCard.remove', 'Remove')}
               </button>
             </div>
           )}
@@ -1641,19 +1628,19 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             {
               key: 'configure' as BlockMode,
               icon: <Sliders className="w-3 h-3" />,
-              label: isPl ? 'Konfiguruj' : 'Configure',
+              label: t('reportBuilder.blockCard.configure', 'Configure'),
             },
             { key: 'ai' as BlockMode, icon: <Sparkles className="w-3 h-3" />, label: 'AI' },
             {
               key: 'preview' as BlockMode,
               icon: <Eye className="w-3 h-3" />,
-              label: isPl ? 'Podgląd' : 'Preview',
-              badge: hasContent ? undefined : isPl ? 'brak' : 'empty',
+              label: t('reportBuilder.blockCard.preview', 'Preview'),
+              badge: hasContent ? undefined : t('reportBuilder.blockCard.empty', 'empty'),
             },
             {
               key: 'comments' as BlockMode,
               icon: <MessageCircle className="w-3 h-3" />,
-              label: isPl ? 'Komentarze' : 'Comments',
+              label: t('reportBuilder.blockCard.comments', 'Comments'),
               badge: blockComments.filter((c) => c.status === 'OPEN').length || undefined,
             },
           ].map((tab) => (
@@ -1698,7 +1685,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider mb-1.5">
-                    {isPl ? 'Długość' : 'Length'}
+                    {t('reportBuilder.blockCard.length', 'Length')}
                   </label>
                   <div className="flex gap-1">
                     {(['short', 'medium', 'long'] as const).map((len) => (
@@ -1712,23 +1699,17 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                         }`}
                       >
                         {len === 'short'
-                          ? isPl
-                            ? 'Krótki'
-                            : 'Short'
+                          ? t('reportBuilder.blockCard.short', 'Short')
                           : len === 'medium'
-                            ? isPl
-                              ? 'Średni'
-                              : 'Medium'
-                            : isPl
-                              ? 'Długi'
-                              : 'Long'}
+                            ? t('reportBuilder.blockCard.medium', 'Medium')
+                            : t('reportBuilder.blockCard.long', 'Long')}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider mb-1.5">
-                    {isPl ? 'Grafiki' : 'Visuals'}
+                    {t('reportBuilder.blockCard.visuals', 'Visuals')}
                   </label>
                   <button
                     onClick={() => onUpdate({ includeVisuals: !block.includeVisuals })}
@@ -1740,12 +1721,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   >
                     <Image className="w-3 h-3" />
                     {block.includeVisuals
-                      ? isPl
-                        ? 'Włączone'
-                        : 'Enabled'
-                      : isPl
-                        ? 'Wyłączone'
-                        : 'Disabled'}
+                      ? t('reportBuilder.blockCard.enabled', 'Enabled')
+                      : t('reportBuilder.blockCard.disabled', 'Disabled')}
                   </button>
                 </div>
               </div>
@@ -1772,7 +1749,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               <div>
                 <label className="flex items-center gap-1.5 text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider mb-1">
                   <Wand2 className="w-3 h-3 text-c-accent" />
-                  {isPl ? 'Główny prompt' : 'Main prompt'}
+                  {t('reportBuilder.blockCard.mainPrompt', 'Main prompt')}
                 </label>
                 <textarea
                   value={block.customPrompt || ''}
@@ -1790,15 +1767,13 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               <div>
                 <label className="flex items-center gap-1.5 text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider mb-1">
                   <MessageSquarePlus className="w-3 h-3 text-blue-500" />
-                  {isPl ? 'Dodatkowe instrukcje' : 'Additional instructions'}
+                  {t('reportBuilder.blockCard.additionalInstructions', 'Additional instructions')}
                 </label>
                 <textarea
                   value={additionalPrompt}
                   onChange={(e) => setAdditionalPrompt(e.target.value)}
                   placeholder={
-                    isPl
-                      ? 'Np. "Skróć do 3 akapitów, dodaj metryki, ton formalny..."'
-                      : 'E.g., "Shorten to 3 paragraphs, add metrics, formal tone..."'
+                    t('reportBuilder.blockCard.eGShortenTo3Paragraphs', 'E.g., "Shorten to 3 paragraphs, add metrics, formal tone..."')
                   }
                   className="w-full px-3 py-2 text-[11px] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200/60 dark:border-blue-800/40 rounded-lg resize-none h-12 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 leading-relaxed placeholder:text-c-text-muted"
                 />
@@ -1810,9 +1785,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 {contextActions.length > 0 && (
                   <div className="mb-2">
                     <div className="text-[9px] font-semibold text-c-accent uppercase tracking-wider mb-1">
-                      {isPl
-                        ? `Dla ${block.type.replace(/_/g, ' ')}`
-                        : `For ${block.type.replace(/_/g, ' ')}`}
+                      {t('reportBuilder.blockCard.forBlockType', {
+                        defaultValue: `For ${block.type.replace(/_/g, ' ')}`,
+                        type: block.type.replace(/_/g, ' '),
+                      })}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {contextActions.map((action) => {
@@ -1847,7 +1823,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 <div>
                   {contextActions.length > 0 && (
                     <div className="text-[9px] font-semibold text-c-text-secondary uppercase tracking-wider mb-1">
-                      {isPl ? 'Modyfikatory' : 'Modifiers'}
+                      {t('reportBuilder.blockCard.modifiers', 'Modifiers')}
                     </div>
                   )}
                   <div className="flex flex-wrap gap-1">
@@ -1885,7 +1861,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 <summary className="flex items-center gap-1.5 cursor-pointer select-none py-1 text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider hover:text-c-text transition-colors">
                   <ChevronRight className="w-3 h-3 transition-transform group-open:rotate-90" />
                   <FileText className="w-3 h-3 text-emerald-500" />
-                  {isPl ? 'Źródło / Kontekst' : 'Source / Context'}
+                  {t('reportBuilder.blockCard.sourceContext', 'Source / Context')}
                   {block.sourceContext && (
                     <span className="text-[8px] text-emerald-500 ml-1 normal-case">●</span>
                   )}
@@ -1895,9 +1871,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                     value={block.sourceContext || ''}
                     onChange={(e) => onUpdate({ sourceContext: e.target.value })}
                     placeholder={
-                      isPl
-                        ? 'Wklej dane źródłowe, kontekst, wymagania biznesowe...'
-                        : 'Paste source data, context, business requirements...'
+                      t('reportBuilder.blockCard.pasteSourceDataContextBusinessRequirements', 'Paste source data, context, business requirements...')
                     }
                     className="w-full px-3 py-2 text-[11px] bg-c-surface-raised border border-c-border-subtle rounded-lg resize-none h-14 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 leading-relaxed placeholder:text-c-text-muted"
                   />
@@ -1910,7 +1884,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 {(selectedActions.size > 0 || additionalPrompt.trim()) && (
                   <div className="mb-2 p-2 bg-blue-50/80 dark:bg-blue-900/15 border border-blue-200/50 dark:border-blue-800/30 rounded-lg">
                     <div className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 mb-1">
-                      {isPl ? 'Zaplanowane zmiany:' : 'Pending changes:'}
+                      {t('reportBuilder.blockCard.pendingChanges', 'Pending changes:')}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {Array.from(selectedActions).map((id) => {
@@ -1941,7 +1915,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                       })}
                       {additionalPrompt.trim() && (
                         <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
-                          + {isPl ? 'instrukcje' : 'instructions'}
+                          + {t('reportBuilder.blockCard.instructions', 'instructions')}
                         </span>
                       )}
                     </div>
@@ -2015,20 +1989,15 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                         <Sparkles className="w-3.5 h-3.5" />
                       )}
                       {block.isGenerating || isProcessing
-                        ? isPl
-                          ? 'Generowanie...'
-                          : 'Generating...'
+                        ? t('reportBuilder.blockCard.generating', 'Generating...')
                         : selectedActions.size > 0 || additionalPrompt.trim()
-                          ? isPl
-                            ? `Regeneruj (${selectedActions.size + (additionalPrompt.trim() ? 1 : 0)})`
-                            : `Regenerate (${selectedActions.size + (additionalPrompt.trim() ? 1 : 0)})`
+                          ? t('reportBuilder.blockCard.regenerateWithCount', {
+                              defaultValue: `Regenerate (${selectedActions.size + (additionalPrompt.trim() ? 1 : 0)})`,
+                              count: selectedActions.size + (additionalPrompt.trim() ? 1 : 0),
+                            })
                           : block.isGenerated
-                            ? isPl
-                              ? 'Regeneruj'
-                              : 'Regenerate'
-                            : isPl
-                              ? 'Generuj'
-                              : 'Generate'}
+                            ? t('reportBuilder.blockCard.regenerate', 'Regenerate')
+                            : t('reportBuilder.blockCard.generate', 'Generate')}
                     </button>
                   )}
 
@@ -2040,7 +2009,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                         setAdditionalPrompt('');
                       }}
                       className="p-2 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded-lg transition-colors"
-                      title={isPl ? 'Wyczyść' : 'Clear'}
+                      title={t('reportBuilder.blockCard.clear', 'Clear')}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -2060,7 +2029,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-medium text-blue-700 dark:text-blue-300 flex items-center gap-1">
                         <Pencil className="w-2.5 h-2.5" />
-                        {isPl ? 'Edycja' : 'Editing'}
+                        {t('reportBuilder.blockCard.editing', 'Editing')}
                       </span>
                       <span className="text-[9px] text-blue-500">
                         {
@@ -2069,7 +2038,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             .split(/\s+/)
                             .filter(Boolean).length
                         }{' '}
-                        {isPl ? 'słów' : 'words'}
+                        {t('reportBuilder.blockCard.words', 'words')}
                       </span>
                     </div>
                     <div className="flex items-center gap-0.5">
@@ -2106,7 +2075,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
                         }`}
                       >
-                        <Check className="w-2.5 h-2.5" /> {isPl ? 'Zapisz' : 'Save'}
+                        <Check className="w-2.5 h-2.5" /> {t('reportBuilder.blockCard.save', 'Save')}
                       </button>
                     </div>
                   </div>
@@ -2121,15 +2090,15 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   <div className="flex items-center gap-3 px-3 py-1 bg-c-surface-raised border-t border-c-border-subtle">
                     <span className="text-[9px] text-c-text-secondary">
                       <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">⌘S</kbd>{' '}
-                      {isPl ? 'zapisz' : 'save'}
+                      {t('reportBuilder.blockCard.save2', 'save')}
                     </span>
                     <span className="text-[9px] text-c-text-secondary">
                       <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">⌘Z</kbd>{' '}
-                      {isPl ? 'cofnij' : 'undo'}
+                      {t('reportBuilder.blockCard.undo', 'undo')}
                     </span>
                     <span className="text-[9px] text-c-text-secondary">
                       <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">Esc</kbd>{' '}
-                      {isPl ? 'zamknij' : 'close'}
+                      {t('reportBuilder.blockCard.close', 'close')}
                     </span>
                   </div>
                 </div>
@@ -2152,7 +2121,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                                 <Sparkles className="w-3 h-3" />
-                                {isPl ? 'Treść zaktualizowana przez AI' : 'Content updated by AI'}
+                                {t('reportBuilder.blockCard.contentUpdatedByAi', 'Content updated by AI')}
                               </span>
                               <div className="flex items-center gap-1">
                                 <button
@@ -2166,7 +2135,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                   className="flex items-center gap-1 px-2 py-0.5 text-[9px] text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded font-medium"
                                 >
                                   <RotateCcw className="w-2.5 h-2.5" />
-                                  {isPl ? 'Cofnij' : 'Revert'}
+                                  {t('reportBuilder.blockCard.revert', 'Revert')}
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -2177,7 +2146,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                   className="flex items-center gap-1 px-2 py-0.5 text-[9px] text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded font-medium"
                                 >
                                   <Check className="w-2.5 h-2.5" />
-                                  {isPl ? 'Akceptuj' : 'Accept'}
+                                  {t('reportBuilder.blockCard.accept', 'Accept')}
                                 </button>
                               </div>
                             </div>
@@ -2220,12 +2189,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                   {contentExpanded ? (
                                     <>
                                       <ChevronsUp className="w-3 h-3" />
-                                      {isPl ? 'Pokaż mniej' : 'Show less'}
+                                      {t('reportBuilder.blockCard.showLess', 'Show less')}
                                     </>
                                   ) : (
                                     <>
                                       <ChevronsDown className="w-3 h-3" />
-                                      {isPl ? 'Pokaż więcej' : 'Show more'}
+                                      {t('reportBuilder.blockCard.showMore', 'Show more')}
                                     </>
                                   )}
                                 </button>
@@ -2242,9 +2211,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                           <Sparkles className="w-7 h-7 text-blue-500 opacity-70" />
                         </div>
                         <p className="text-sm text-c-text-secondary">
-                          {isPl
-                            ? 'Treść zostanie wygenerowana przez AI'
-                            : 'Content will be generated by AI'}
+                          {t('reportBuilder.blockCard.contentWillBeGeneratedByAi', 'Content will be generated by AI')}
                         </p>
                         <div className="flex items-center gap-2 justify-center">
                           {onGenerateBlock && !block.id.startsWith('tmp_') && (
@@ -2259,11 +2226,11 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               {block.isGenerating ? (
                                 <>
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />{' '}
-                                  {isPl ? 'Generowanie...' : 'Generating...'}
+                                  {t('reportBuilder.blockCard.generating', 'Generating...')}
                                 </>
                               ) : (
                                 <>
-                                  <Play className="w-3.5 h-3.5" /> {isPl ? 'Generuj' : 'Generate'}
+                                  <Play className="w-3.5 h-3.5" /> {t('reportBuilder.blockCard.generate', 'Generate')}
                                 </>
                               )}
                             </button>
@@ -2276,7 +2243,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             className="flex items-center gap-1 px-3 py-2 text-xs text-c-text-secondary hover:text-c-accent hover:bg-c-accent-soft rounded-lg transition-colors"
                           >
                             <Settings className="w-3 h-3" />{' '}
-                            {isPl ? 'Ustawienia AI' : 'AI Settings'}
+                            {t('reportBuilder.blockCard.aiSettings', 'AI Settings')}
                           </button>
                         </div>
                       </div>
@@ -2303,17 +2270,17 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               }}
                               className="flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors font-medium"
                             >
-                              <Pencil className="w-3 h-3" /> {isPl ? 'Edytuj' : 'Edit'}
+                              <Pencil className="w-3 h-3" /> {t('reportBuilder.blockCard.edit', 'Edit')}
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigator.clipboard.writeText(block.content || '');
-                                toast.success(isPl ? 'Skopiowano' : 'Copied');
+                                toast.success(t('reportBuilder.blockCard.copied', 'Copied'));
                               }}
                               className="flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded transition-colors font-medium"
                             >
-                              <ClipboardCopy className="w-3 h-3" /> {isPl ? 'Kopiuj' : 'Copy'}
+                              <ClipboardCopy className="w-3 h-3" /> {t('reportBuilder.blockCard.copy', 'Copy')}
                             </button>
                             {onGenerateBlock && (
                               <button
@@ -2329,7 +2296,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                 }`}
                               >
                                 <RefreshCw className="w-3 h-3" />{' '}
-                                {isPl ? 'Regeneruj' : 'Regenerate'}
+                                {t('reportBuilder.blockCard.regenerate', 'Regenerate')}
                               </button>
                             )}
                           </div>
@@ -2345,18 +2312,18 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               {isAiGenerated ? (
                                 <>
                                   <Sparkles className="w-2.5 h-2.5" />
-                                  {isPl ? 'AI' : 'AI'}
+                                  {t('reportBuilder.blockCard.ai', 'AI')}
                                 </>
                               ) : (
                                 <>
                                   <Pencil className="w-2.5 h-2.5" />
-                                  {isPl ? 'Ręczny' : 'Manual'}
+                                  {t('reportBuilder.blockCard.manual', 'Manual')}
                                 </>
                               )}
                             </span>
                             {/* Reading time + word count */}
                             <span className="text-[9px] text-c-text-secondary">
-                              {wordCount} {isPl ? 'słów' : 'words'} · ~{readingMinutes} min
+                              {wordCount} {t('reportBuilder.blockCard.words', 'words')} · ~{readingMinutes} min
                             </span>
                           </div>
                         </div>
@@ -2374,29 +2341,29 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               <div>
                 <label className="block text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <MessageSquarePlus className="w-3 h-3 text-amber-500" />
-                  {isPl ? 'Nowy komentarz' : 'New comment'}
+                  {t('reportBuilder.blockCard.newComment', 'New comment')}
                 </label>
                 {/* Quick type buttons */}
                 <div className="flex gap-1 mb-2">
                   {[
                     {
                       type: 'FEEDBACK' as CommentType,
-                      label: isPl ? 'Feedback' : 'Feedback',
+                      label: t('reportBuilder.blockCard.feedback', 'Feedback'),
                       color: 'orange',
                     },
                     {
                       type: 'SUGGESTION' as CommentType,
-                      label: isPl ? 'Sugestia' : 'Suggestion',
+                      label: t('reportBuilder.blockCard.suggestion', 'Suggestion'),
                       color: 'blue',
                     },
                     {
                       type: 'CHANGE_REQUEST' as CommentType,
-                      label: isPl ? 'Zmiana' : 'Change',
+                      label: t('reportBuilder.blockCard.change', 'Change'),
                       color: 'purple',
                     },
                     {
                       type: 'QUESTION' as CommentType,
-                      label: isPl ? 'Pytanie' : 'Question',
+                      label: t('reportBuilder.blockCard.question', 'Question'),
                       color: 'emerald',
                     },
                   ].map((ct) => (
@@ -2416,18 +2383,18 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 {/* Quick templates */}
                 <div className="flex flex-wrap gap-1 mb-2">
                   {[
-                    { en: 'Too long, shorten', pl: 'Za długie, skróć' },
-                    { en: 'Add more data', pl: 'Dodaj więcej danych' },
-                    { en: 'Change tone to formal', pl: 'Zmień ton na formalny' },
-                    { en: 'Needs evidence', pl: 'Potrzebne dowody' },
-                    { en: 'Missing conclusions', pl: 'Brak wniosków' },
-                  ].map((tmpl, i) => (
+                    'reportBuilder.blockCard.quickTemplateTooLongShorten',
+                    'reportBuilder.blockCard.quickTemplateAddMoreData',
+                    'reportBuilder.blockCard.quickTemplateChangeToneFormal',
+                    'reportBuilder.blockCard.quickTemplateNeedsEvidence',
+                    'reportBuilder.blockCard.quickTemplateMissingConclusions',
+                  ].map((tmplKey, i) => (
                     <button
                       key={i}
-                      onClick={() => setNewComment(isPl ? tmpl.pl : tmpl.en)}
+                      onClick={() => setNewComment(t(tmplKey))}
                       className="px-2 py-0.5 text-[9px] text-c-text-secondary bg-c-surface-raised hover:bg-c-border-subtle rounded-full transition-colors"
                     >
-                      {isPl ? tmpl.pl : tmpl.en}
+                      {t(tmplKey)}
                     </button>
                   ))}
                 </div>
@@ -2439,7 +2406,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddComment();
                     }}
                     placeholder={
-                      isPl ? 'Opisz co należy zmienić...' : 'Describe what should be changed...'
+                      t('reportBuilder.blockCard.describeWhatShouldBeChanged', 'Describe what should be changed...')
                     }
                     className="flex-1 px-3 py-2 text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-14 focus:ring-1 focus:ring-amber-500 leading-relaxed"
                   />
@@ -2452,9 +2419,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   </button>
                 </div>
                 <p className="text-[9px] text-c-text-secondary mt-1">
-                  {isPl
-                    ? '⌘+Enter aby dodać. Rozwiązanie sugestii/zmiany zleci AI aktualizację treści.'
-                    : '⌘+Enter to add. Resolving suggestions/changes will instruct AI to update content.'}
+                  {t('reportBuilder.blockCard.enterToAddResolvingSuggestionsChanges', '⌘+Enter to add. Resolving suggestions/changes will instruct AI to update content.')}
                 </p>
               </div>
 
@@ -2466,11 +2431,9 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               ) : blockComments.length === 0 ? (
                 <div className="text-center py-6 text-c-text-secondary">
                   <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-[11px]">{isPl ? 'Brak komentarzy' : 'No comments yet'}</p>
+                  <p className="text-[11px]">{t('reportBuilder.blockCard.noCommentsYet', 'No comments yet')}</p>
                   <p className="text-[9px] mt-0.5">
-                    {isPl
-                      ? 'Dodaj komentarz aby zasugerować zmiany'
-                      : 'Add a comment to suggest changes'}
+                    {t('reportBuilder.blockCard.addACommentToSuggestChanges', 'Add a comment to suggest changes')}
                   </p>
                 </div>
               ) : (
@@ -2478,11 +2441,11 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   {/* Header with count + batch actions */}
                   <div className="flex items-center justify-between">
                     <div className="text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
-                      {isPl ? 'Komentarze' : 'Comments'} ({blockComments.length})
+                      {t('reportBuilder.blockCard.comments', 'Comments')} ({blockComments.length})
                       {blockComments.filter((c) => c.status === 'OPEN').length > 0 && (
                         <span className="ml-1.5 text-[9px] font-normal text-amber-500">
                           {blockComments.filter((c) => c.status === 'OPEN').length}{' '}
-                          {isPl ? 'otwartych' : 'open'}
+                          {t('reportBuilder.blockCard.open', 'open')}
                         </span>
                       )}
                     </div>
@@ -2492,7 +2455,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                           onClick={handleBulkResolve}
                           className="text-[9px] px-1.5 py-0.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded font-medium transition-colors"
                         >
-                          {isPl ? 'Rozwiąż wszystkie' : 'Resolve all'}
+                          {t('reportBuilder.blockCard.resolveAll', 'Resolve all')}
                         </button>
                       </div>
                     )}
@@ -2531,15 +2494,13 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                 {(comment.userName || 'U')[0].toUpperCase()}
                               </div>
                               <span className="text-[10px] font-semibold text-c-text">
-                                {comment.userName || (isPl ? 'Użytkownik' : 'User')}
+                                {comment.userName || (t('reportBuilder.blockCard.user', 'User'))}
                               </span>
                               <span
                                 className={`text-[8px] px-1 py-0.5 rounded font-medium ${typeColors[comment.commentType] || typeColors.FEEDBACK}`}
                               >
                                 {comment.commentType === 'CHANGE_REQUEST'
-                                  ? isPl
-                                    ? 'Zmiana'
-                                    : 'Change'
+                                  ? t('reportBuilder.blockCard.change', 'Change')
                                   : comment.commentType}
                               </span>
                               <span className="text-[8px] text-c-text-secondary">
@@ -2557,12 +2518,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                   }`}
                                 >
                                   {isResolved
-                                    ? isPl
-                                      ? 'Rozwiązany'
-                                      : 'Resolved'
-                                    : isPl
-                                      ? 'Odrzucony'
-                                      : 'Dismissed'}
+                                    ? t('reportBuilder.blockCard.resolved', 'Resolved')
+                                    : t('reportBuilder.blockCard.dismissed', 'Dismissed')}
                                 </span>
                               )}
                             </div>
@@ -2577,15 +2534,13 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               <button
                                 onClick={() => handleResolveComment(comment.id)}
                                 title={
-                                  isPl
-                                    ? comment.commentType === 'SUGGESTION' ||
-                                      comment.commentType === 'CHANGE_REQUEST'
-                                      ? 'Rozwiąż — AI zaktualizuje treść'
-                                      : 'Rozwiąż'
-                                    : comment.commentType === 'SUGGESTION' ||
-                                        comment.commentType === 'CHANGE_REQUEST'
-                                      ? 'Resolve — AI will update content'
-                                      : 'Resolve'
+                                  comment.commentType === 'SUGGESTION' ||
+                                  comment.commentType === 'CHANGE_REQUEST'
+                                    ? t(
+                                        'reportBuilder.blockCard.resolveAiWillUpdate',
+                                        'Resolve — AI will update content'
+                                      )
+                                    : t('reportBuilder.blockCard.resolveAction', 'Resolve')
                                 }
                                 className="p-1 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded transition-colors"
                               >
@@ -2593,7 +2548,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               </button>
                               <button
                                 onClick={() => handleDismissComment(comment.id)}
-                                title={isPl ? 'Odrzuć' : 'Dismiss'}
+                                title={t('reportBuilder.blockCard.dismiss', 'Dismiss')}
                                 className="p-1 text-c-text-secondary hover:bg-c-surface-raised rounded transition-colors"
                               >
                                 <X className="w-3.5 h-3.5" />

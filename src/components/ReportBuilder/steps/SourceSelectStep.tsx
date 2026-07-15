@@ -108,7 +108,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
   fetchSources,
   isLoading,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [sources, setSources] = useState<SourceOption[]>([]);
@@ -149,7 +149,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
       {/* Source Type Selection */}
       <div>
         <label className="block text-sm font-medium text-c-text mb-3">
-          {isPl ? 'Typ Źródła' : 'Source Type'}
+          {t('reportBuilder.sourceSelectStep.sourceType', 'Source Type')}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {SOURCE_TYPES.map((st) => {
@@ -193,14 +193,16 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
                   <Icon className="w-5 h-5" />
                 </div>
 
-                <div className="font-medium text-c-text">{isPl ? st.labelPl : st.label}</div>
+                <div className="font-medium text-c-text">
+                  {t(`reportBuilder.sourceSelectStep.type.${st.type}.label`, st.label)}
+                </div>
                 <div className="text-xs text-c-text-secondary mt-1">
-                  {isPl ? st.descriptionPl : st.description}
+                  {t(`reportBuilder.sourceSelectStep.type.${st.type}.description`, st.description)}
                 </div>
 
                 {isDisabled && (
                   <span className="absolute top-2 right-2 text-xs text-c-text-secondary">
-                    {isPl ? 'Niedostępne' : 'Not available'}
+                    {t('reportBuilder.sourceSelectStep.notAvailable', 'Not available')}
                   </span>
                 )}
               </button>
@@ -213,7 +215,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
       {sourceType && (
         <div className="animate-fade-in">
           <label className="block text-sm font-medium text-c-text mb-3">
-            {isPl ? 'Wybierz Źródło' : 'Select Source'}
+            {t('reportBuilder.sourceSelectStep.selectSource', 'Select Source')}
           </label>
 
           {/* Search */}
@@ -223,7 +225,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isPl ? 'Szukaj...' : 'Search...'}
+              placeholder={t('reportBuilder.sourceSelectStep.search', 'Search...')}
               className="w-full pl-10 pr-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -235,7 +237,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
             </div>
           ) : filteredSources.length === 0 ? (
             <div className="text-center py-12 text-c-text-secondary">
-              {isPl ? 'Brak zatwierdzonych źródeł do wyboru' : 'No approved sources available'}
+              {t('reportBuilder.sourceSelectStep.noApprovedSourcesAvailable', 'No approved sources available')}
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -250,16 +252,10 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
                 const dateText = rawDate ? new Date(String(rawDate)).toLocaleDateString() : '—';
                 const dateLabel =
                   sourceType === 'ASSESSMENT'
-                    ? isPl
-                      ? 'Zatwierdzono'
-                      : 'Approved'
+                    ? t('reportBuilder.sourceSelectStep.approved', 'Approved')
                     : (source as any).completedAt
-                      ? isPl
-                        ? 'Zakończono'
-                        : 'Completed'
-                      : isPl
-                        ? 'Zaktualizowano'
-                        : 'Updated';
+                      ? t('reportBuilder.sourceSelectStep.completed', 'Completed')
+                      : t('reportBuilder.sourceSelectStep.updated', 'Updated');
 
                 return (
                   <button
@@ -298,19 +294,19 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
       {selectedSource && (
         <div className="animate-fade-in space-y-4 pt-4 border-t border-c-border-subtle">
           <h3 className="font-medium text-c-text">
-            {isPl ? 'Szczegóły Raportu' : 'Report Details'}
+            {t('reportBuilder.sourceSelectStep.reportDetails', 'Report Details')}
           </h3>
 
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Tytuł Raportu' : 'Report Title'} *
+              {t('reportBuilder.sourceSelectStep.reportTitle', 'Report Title')} *
             </label>
             <input
               type="text"
               value={reportTitle}
               onChange={(e) => onTitleChange(e.target.value)}
-              placeholder={isPl ? 'Wprowadź tytuł raportu...' : 'Enter report title...'}
+              placeholder={t('reportBuilder.sourceSelectStep.enterReportTitle', 'Enter report title...')}
               className="w-full px-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -318,23 +314,19 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Opis / Cel Raportu' : 'Description / Report Purpose'}
+              {t('reportBuilder.sourceSelectStep.descriptionReportPurpose', 'Description / Report Purpose')}
             </label>
             <textarea
               value={reportDescription}
               onChange={(e) => onDescriptionChange(e.target.value)}
               placeholder={
-                isPl
-                  ? 'Opisz cel raportu, dla kogo jest przeznaczony, jakie decyzje ma wspierać...'
-                  : 'Describe the report purpose, target audience, decisions it should support...'
+                t('reportBuilder.sourceSelectStep.describeTheReportPurposeTargetAudience', 'Describe the report purpose, target audience, decisions it should support...')
               }
               rows={3}
               className="w-full px-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
             <p className="text-xs text-c-text-secondary mt-1">
-              {isPl
-                ? 'Ten opis zostanie wykorzystany przez AI do lepszego dopasowania treści raportu'
-                : 'This description will be used by AI to better tailor the report content'}
+              {t('reportBuilder.sourceSelectStep.thisDescriptionWillBeUsedBy', 'This description will be used by AI to better tailor the report content')}
             </p>
           </div>
         </div>

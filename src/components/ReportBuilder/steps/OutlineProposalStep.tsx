@@ -40,7 +40,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
   onAcceptOutline,
   isLoading: externalLoading,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [sections, setSections] = useState<ProposedSection[]>([]);
@@ -62,7 +62,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
       })
       .catch(() => {
         setError(
-          isPl ? 'Nie udało się pobrać propozycji struktury.' : 'Failed to fetch outline proposal.'
+          t('reportBuilder.outlineProposalStep.failedToFetchOutlineProposal', 'Failed to fetch outline proposal.')
         );
       })
       .finally(() => setFetching(false));
@@ -105,7 +105,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
           <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
         </div>
         <p className="text-sm text-c-text-secondary">
-          {isPl ? 'Analizuję definicję raportu...' : 'Analyzing your report definition...'}
+          {t('reportBuilder.outlineProposalStep.analyzingYourReportDefinition', 'Analyzing your report definition...')}
         </p>
       </div>
     );
@@ -125,16 +125,14 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               )
               .catch(() =>
                 setError(
-                  isPl
-                    ? 'Nie udało się pobrać propozycji struktury.'
-                    : 'Failed to fetch outline proposal.'
+                  t('reportBuilder.outlineProposalStep.failedToFetchOutlineProposal', 'Failed to fetch outline proposal.')
                 )
               )
               .finally(() => setFetching(false));
           }}
           className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-c-text hover:bg-blue-700 transition-colors"
         >
-          {isPl ? 'Spróbuj ponownie' : 'Retry'}
+          {t('reportBuilder.outlineProposalStep.retry', 'Retry')}
         </button>
       </div>
     );
@@ -149,12 +147,10 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
         </div>
         <div>
           <h3 className="text-lg font-semibold text-c-text">
-            {isPl ? 'Propozycja struktury AI' : 'AI Outline Proposal'}
+            {t('reportBuilder.outlineProposalStep.aiOutlineProposal', 'AI Outline Proposal')}
           </h3>
           <p className="text-sm text-c-text-secondary">
-            {isPl
-              ? 'Przejrzyj i dostosuj proponowane sekcje raportu'
-              : 'Review and customize the proposed report sections'}
+            {t('reportBuilder.outlineProposalStep.reviewAndCustomizeTheProposedReport', 'Review and customize the proposed report sections')}
           </p>
         </div>
       </div>
@@ -188,7 +184,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               <div className="flex items-center gap-2 pt-1">
                 {section.required && (
                   <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium">
-                    {isPl ? 'Wymagana' : 'Required'}
+                    {t('reportBuilder.outlineProposalStep.required', 'Required')}
                   </span>
                 )}
                 <span
@@ -210,12 +206,8 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               }`}
               title={
                 section.required
-                  ? isPl
-                    ? 'Sekcja wymagana'
-                    : 'Required section'
-                  : isPl
-                    ? 'Usuń sekcję'
-                    : 'Remove section'
+                  ? t('reportBuilder.outlineProposalStep.requiredSection', 'Required section')
+                  : t('reportBuilder.outlineProposalStep.removeSection', 'Remove section')
               }
             >
               <X className="w-4 h-4" />
@@ -229,7 +221,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
         <div className="p-4 rounded-lg border border-dashed border-blue-300 dark:border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 space-y-3">
           <input
             type="text"
-            placeholder={isPl ? 'Tytuł sekcji' : 'Section title'}
+            placeholder={t('reportBuilder.outlineProposalStep.sectionTitle', 'Section title')}
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             autoFocus
@@ -237,7 +229,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
           />
           <input
             type="text"
-            placeholder={isPl ? 'Krótki opis (opcjonalnie)' : 'Brief description (optional)'}
+            placeholder={t('reportBuilder.outlineProposalStep.briefDescriptionOptional', 'Brief description (optional)')}
             value={newSummary}
             onChange={(e) => setNewSummary(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -248,7 +240,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               disabled={!newTitle.trim()}
               className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-c-text hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isPl ? 'Dodaj' : 'Add'}
+              {t('reportBuilder.outlineProposalStep.add', 'Add')}
             </button>
             <button
               onClick={() => {
@@ -258,7 +250,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               }}
               className="px-4 py-2 text-sm rounded-lg text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
-              {isPl ? 'Anuluj' : 'Cancel'}
+              {t('reportBuilder.outlineProposalStep.cancel', 'Cancel')}
             </button>
           </div>
         </div>
@@ -268,7 +260,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
           className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-c-border-subtle text-sm text-c-text-secondary hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          {isPl ? 'Dodaj sekcję' : 'Add section'}
+          {t('reportBuilder.outlineProposalStep.addSection', 'Add section')}
         </button>
       )}
 
@@ -280,7 +272,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
           className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-c-text font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Check className="w-5 h-5" />
-          {isPl ? 'Zaakceptuj strukturę' : 'Accept Outline'}
+          {t('reportBuilder.outlineProposalStep.acceptOutline', 'Accept Outline')}
         </button>
       </div>
     </div>

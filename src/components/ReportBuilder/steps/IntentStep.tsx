@@ -167,7 +167,7 @@ const selectClasses =
   'w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 text-sm';
 
 export const IntentStep: React.FC<IntentStepProps> = (props) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const { sourceType, intent, onIntentChange } = props;
@@ -200,9 +200,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
     () =>
       Array.from({ length: 7 }, (_, i) => ({
         id: String(i + 1),
-        label: isPl ? `Oś ${i + 1}` : `Axis ${i + 1}`,
+        label: t('reportBuilder.intentStep.axisN', {
+          defaultValue: `Axis ${i + 1}`,
+          number: i + 1,
+        }),
       })),
-    [isPl]
+    [t]
   );
 
   const toggleAxis = (axisId: string) => {
@@ -231,12 +234,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       <div className="border-t border-c-border-subtle pt-8 space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-c-text">
-            {isPl ? 'Typ raportu' : 'Report Type'}
+            {t('reportBuilder.intentStep.reportType', 'Report Type')}
           </h3>
           <p className="text-sm text-c-text-secondary mt-1">
-            {isPl
-              ? 'Wybierz kanoniczny typ raportowy (R1-R4) lub stwórz własny raport'
-              : 'Choose a canonical report type (R1-R4) or create a custom report'}
+            {t('reportBuilder.intentStep.chooseACanonicalReportTypeR1', 'Choose a canonical report type (R1-R4) or create a custom report')}
           </p>
         </div>
 
@@ -292,12 +293,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
         <div className="border-t border-c-border-subtle pt-8 space-y-4">
           <div>
             <h3 className="text-lg font-semibold text-c-text">
-              {isPl ? 'Profil inwokacji' : 'Invocation Profile'}
+              {t('reportBuilder.intentStep.invocationProfile', 'Invocation Profile')}
             </h3>
             <p className="text-sm text-c-text-secondary mt-1">
-              {isPl
-                ? 'Opcjonalnie wybierz szablon generowania dopasowany do źródła'
-                : 'Optionally select a generation template tailored to your source'}
+              {t('reportBuilder.intentStep.optionallySelectAGenerationTemplateTailored', 'Optionally select a generation template tailored to your source')}
             </p>
           </div>
 
@@ -339,12 +338,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                       <div className="flex flex-wrap gap-1 mt-2">
                         {profile.features.allowMatrixVisualization && (
                           <span className="text-xs px-2 py-0.5 bg-c-accent-soft text-c-accent rounded">
-                            {isPl ? 'Macierz' : 'Matrix'}
+                            {t('reportBuilder.intentStep.matrix', 'Matrix')}
                           </span>
                         )}
                         {profile.features.allowCustomSections && (
                           <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded">
-                            {isPl ? 'Własne sekcje' : 'Custom sections'}
+                            {t('reportBuilder.intentStep.customSections', 'Custom sections')}
                           </span>
                         )}
                       </div>
@@ -361,12 +360,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       <div className="border-t border-c-border-subtle pt-8 space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-c-text">
-            {isPl ? 'Definicja raportu' : 'Report Definition'}
+            {t('reportBuilder.intentStep.reportDefinition', 'Report Definition')}
           </h3>
           <p className="text-sm text-c-text-secondary mt-1">
-            {isPl
-              ? 'Te parametry sterują strukturą, stylem i treścią raportu'
-              : 'These parameters control the structure, style, and content of the report'}
+            {t('reportBuilder.intentStep.theseParametersControlTheStructureStyle', 'These parameters control the structure, style, and content of the report')}
           </p>
         </div>
 
@@ -374,24 +371,24 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           {/* Goal V3 */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Cel raportu' : 'Report Goal'}
+              {t('reportBuilder.intentStep.reportGoal', 'Report Goal')}
             </label>
             <select
               value={intent.goalV3 || 'inform'}
               onChange={(e) => onIntentChange({ goalV3: e.target.value as GoalV3 })}
               className={selectClasses}
             >
-              <option value="inform">{isPl ? 'Informować' : 'Inform'}</option>
-              <option value="decide">{isPl ? 'Wspierać decyzję' : 'Support Decision'}</option>
-              <option value="sell">{isPl ? 'Sprzedać / przekonać' : 'Sell / Convince'}</option>
-              <option value="align">{isPl ? 'Zgrać zespół' : 'Align Stakeholders'}</option>
+              <option value="inform">{t('reportBuilder.intentStep.inform', 'Inform')}</option>
+              <option value="decide">{t('reportBuilder.intentStep.supportDecision', 'Support Decision')}</option>
+              <option value="sell">{t('reportBuilder.intentStep.sellConvince', 'Sell / Convince')}</option>
+              <option value="align">{t('reportBuilder.intentStep.alignStakeholders', 'Align Stakeholders')}</option>
             </select>
           </div>
 
           {/* Communication Register */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Rejestr komunikacji' : 'Communication Register'}
+              {t('reportBuilder.intentStep.communicationRegister', 'Communication Register')}
             </label>
             <select
               value={intent.communicationRegister || 'professional'}
@@ -400,17 +397,17 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               }
               className={selectClasses}
             >
-              <option value="executive">{isPl ? 'Executive' : 'Executive'}</option>
-              <option value="professional">{isPl ? 'Profesjonalny' : 'Professional'}</option>
-              <option value="technical">{isPl ? 'Techniczny' : 'Technical'}</option>
-              <option value="narrative">{isPl ? 'Narracyjny' : 'Narrative'}</option>
+              <option value="executive">{t('reportBuilder.intentStep.executive', 'Executive')}</option>
+              <option value="professional">{t('reportBuilder.intentStep.professional', 'Professional')}</option>
+              <option value="technical">{t('reportBuilder.intentStep.technical', 'Technical')}</option>
+              <option value="narrative">{t('reportBuilder.intentStep.narrative', 'Narrative')}</option>
             </select>
           </div>
 
           {/* Language */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Język raportu' : 'Report Language'}
+              {t('reportBuilder.intentStep.reportLanguage', 'Report Language')}
             </label>
             <select
               value={intent.language}
@@ -425,50 +422,50 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           {/* Density */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Gęstość treści' : 'Content Density'}
+              {t('reportBuilder.intentStep.contentDensity', 'Content Density')}
             </label>
             <select
               value={intent.density || 'standard'}
               onChange={(e) => onIntentChange({ density: e.target.value as ReportDensity })}
               className={selectClasses}
             >
-              <option value="concise">{isPl ? 'Zwięzły' : 'Concise'}</option>
-              <option value="standard">{isPl ? 'Standardowy' : 'Standard'}</option>
-              <option value="detailed">{isPl ? 'Szczegółowy' : 'Detailed'}</option>
-              <option value="comprehensive">{isPl ? 'Wyczerpujący' : 'Comprehensive'}</option>
+              <option value="concise">{t('reportBuilder.intentStep.concise', 'Concise')}</option>
+              <option value="standard">{t('reportBuilder.intentStep.standard', 'Standard')}</option>
+              <option value="detailed">{t('reportBuilder.intentStep.detailed', 'Detailed')}</option>
+              <option value="comprehensive">{t('reportBuilder.intentStep.comprehensive', 'Comprehensive')}</option>
             </select>
           </div>
 
           {/* Form */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Forma raportu' : 'Report Form'}
+              {t('reportBuilder.intentStep.reportForm', 'Report Form')}
             </label>
             <select
               value={intent.form || 'strategic'}
               onChange={(e) => onIntentChange({ form: e.target.value as ReportForm })}
               className={selectClasses}
             >
-              <option value="strategic">{isPl ? 'Strategiczny' : 'Strategic'}</option>
-              <option value="operational">{isPl ? 'Operacyjny' : 'Operational'}</option>
-              <option value="technical">{isPl ? 'Techniczny' : 'Technical'}</option>
-              <option value="investment">{isPl ? 'Inwestorski' : 'Investment'}</option>
+              <option value="strategic">{t('reportBuilder.intentStep.strategic', 'Strategic')}</option>
+              <option value="operational">{t('reportBuilder.intentStep.operational', 'Operational')}</option>
+              <option value="technical">{t('reportBuilder.intentStep.technical', 'Technical')}</option>
+              <option value="investment">{t('reportBuilder.intentStep.investment', 'Investment')}</option>
             </select>
           </div>
 
           {/* Data Level */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Poziom danych' : 'Data Level'}
+              {t('reportBuilder.intentStep.dataLevel', 'Data Level')}
             </label>
             <select
               value={intent.dataLevel || 'balanced'}
               onChange={(e) => onIntentChange({ dataLevel: e.target.value as DataLevel })}
               className={selectClasses}
             >
-              <option value="data-heavy">{isPl ? 'Dużo danych' : 'Data-heavy'}</option>
-              <option value="balanced">{isPl ? 'Zbalansowany' : 'Balanced'}</option>
-              <option value="narrative-heavy">{isPl ? 'Narracyjny' : 'Narrative-heavy'}</option>
+              <option value="data-heavy">{t('reportBuilder.intentStep.dataHeavy', 'Data-heavy')}</option>
+              <option value="balanced">{t('reportBuilder.intentStep.balanced', 'Balanced')}</option>
+              <option value="narrative-heavy">{t('reportBuilder.intentStep.narrativeHeavy', 'Narrative-heavy')}</option>
             </select>
           </div>
 
@@ -476,7 +473,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
               <CalendarRange className="inline w-4 h-4 mr-1 -mt-0.5" />
-              {isPl ? 'Okres od' : 'Period From'}
+              {t('reportBuilder.intentStep.periodFrom', 'Period From')}
             </label>
             <input
               type="date"
@@ -488,7 +485,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
               <CalendarRange className="inline w-4 h-4 mr-1 -mt-0.5" />
-              {isPl ? 'Okres do' : 'Period To'}
+              {t('reportBuilder.intentStep.periodTo', 'Period To')}
             </label>
             <input
               type="date"
@@ -502,7 +499,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
               <Shield className="inline w-4 h-4 mr-1 -mt-0.5" />
-              {isPl ? 'Poufność' : 'Confidentiality'}
+              {t('reportBuilder.intentStep.confidentiality', 'Confidentiality')}
             </label>
             <select
               value={intent.confidentiality || 'internal'}
@@ -512,10 +509,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               className={selectClasses}
             >
               <option value="confidential">
-                {isPl ? 'Poufny (Confidential)' : 'Confidential'}
+                {t('reportBuilder.intentStep.confidential', 'Confidential')}
               </option>
-              <option value="internal">{isPl ? 'Wewnętrzny (Internal)' : 'Internal'}</option>
-              <option value="public">{isPl ? 'Publiczny (Public)' : 'Public'}</option>
+              <option value="internal">{t('reportBuilder.intentStep.internal', 'Internal')}</option>
+              <option value="public">{t('reportBuilder.intentStep.public', 'Public')}</option>
             </select>
           </div>
         </div>
@@ -525,12 +522,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       <div className="border-t border-c-border-subtle pt-8 space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-c-text">
-            {isPl ? 'Zaawansowane parametry' : 'Advanced Parameters'}
+            {t('reportBuilder.intentStep.advancedParameters', 'Advanced Parameters')}
           </h3>
           <p className="text-sm text-c-text-secondary mt-1">
-            {isPl
-              ? 'Dodatkowe ustawienia sterujące generowaniem treści'
-              : 'Additional settings controlling content generation'}
+            {t('reportBuilder.intentStep.additionalSettingsControllingContentGeneration', 'Additional settings controlling content generation')}
           </p>
         </div>
 
@@ -538,46 +533,46 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           {/* Audience */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Odbiorca' : 'Audience'}
+              {t('reportBuilder.intentStep.audience', 'Audience')}
             </label>
             <select
               value={intent.audience}
               onChange={(e) => onIntentChange({ audience: e.target.value as any })}
               className={selectClasses}
             >
-              <option value="executive">{isPl ? 'Zarząd / C-level' : 'Executive / C-level'}</option>
-              <option value="it">{isPl ? 'IT / Engineering' : 'IT / Engineering'}</option>
-              <option value="operations">{isPl ? 'Operacje' : 'Operations'}</option>
-              <option value="mixed">{isPl ? 'Mieszany' : 'Mixed'}</option>
+              <option value="executive">{t('reportBuilder.intentStep.executiveCLevel', 'Executive / C-level')}</option>
+              <option value="it">{t('reportBuilder.intentStep.itEngineering', 'IT / Engineering')}</option>
+              <option value="operations">{t('reportBuilder.intentStep.operations', 'Operations')}</option>
+              <option value="mixed">{t('reportBuilder.intentStep.mixed', 'Mixed')}</option>
             </select>
           </div>
 
           {/* Tone */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Ton' : 'Tone'}
+              {t('reportBuilder.intentStep.tone', 'Tone')}
             </label>
             <select
               value={intent.tone}
               onChange={(e) => onIntentChange({ tone: e.target.value as any })}
               className={selectClasses}
             >
-              <option value="consulting">{isPl ? 'Konsultingowy' : 'Consulting'}</option>
-              <option value="neutral">{isPl ? 'Neutralny' : 'Neutral'}</option>
-              <option value="decisive">{isPl ? 'Decyzyjny' : 'Decisive'}</option>
+              <option value="consulting">{t('reportBuilder.intentStep.consulting', 'Consulting')}</option>
+              <option value="neutral">{t('reportBuilder.intentStep.neutral', 'Neutral')}</option>
+              <option value="decisive">{t('reportBuilder.intentStep.decisive', 'Decisive')}</option>
             </select>
           </div>
 
           {/* Scope */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-c-text mb-2">
-              {isPl ? 'Zakres' : 'Scope'}
+              {t('reportBuilder.intentStep.scope', 'Scope')}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'full', label: isPl ? 'Pełny' : 'Full' },
-                { id: 'executive', label: isPl ? 'Executive' : 'Executive' },
-                { id: 'focused', label: isPl ? 'Wybrany' : 'Focused' },
+                { id: 'full', label: t('reportBuilder.intentStep.full', 'Full') },
+                { id: 'executive', label: t('reportBuilder.intentStep.executive', 'Executive') },
+                { id: 'focused', label: t('reportBuilder.intentStep.focused', 'Focused') },
               ].map((opt) => (
                 <button
                   key={opt.id}
@@ -597,7 +592,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           {intent.scope === 'focused' && (
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-c-text mb-2">
-                {isPl ? 'Wybierz osie' : 'Select axes'}
+                {t('reportBuilder.intentStep.selectAxes', 'Select axes')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {axisOptions.map((ax) => {
@@ -623,7 +618,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           {/* Visuals */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-c-text mb-2">
-              {isPl ? 'Wizualizacje' : 'Visuals'}
+              {t('reportBuilder.intentStep.visuals', 'Visuals')}
             </label>
             <label className="inline-flex items-center gap-2 text-sm text-c-text">
               <input
@@ -635,7 +630,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                   })
                 }
               />
-              {isPl ? 'Dodaj macierz oceny (DRD)' : 'Include assessment matrix (DRD)'}
+              {t('reportBuilder.intentStep.includeAssessmentMatrixDrd', 'Include assessment matrix (DRD)')}
             </label>
           </div>
         </div>
@@ -645,30 +640,30 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       <div className="border-t border-c-border-subtle pt-8 space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-c-text">
-            {isPl ? 'Styl generowania treści' : 'Content Generation Style'}
+            {t('reportBuilder.intentStep.contentGenerationStyle', 'Content Generation Style')}
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div>
             <label className="block text-sm font-medium text-c-text mb-2">
-              {isPl ? 'Styl pisania' : 'Writing Style'}
+              {t('reportBuilder.intentStep.writingStyle', 'Writing Style')}
             </label>
             <select
               value={intent.writingStyle || 'professional'}
               onChange={(e) => onIntentChange({ writingStyle: e.target.value as WritingStyle })}
               className={selectClasses}
             >
-              <option value="formal">{isPl ? 'Formalny' : 'Formal'}</option>
-              <option value="professional">{isPl ? 'Profesjonalny' : 'Professional'}</option>
-              <option value="consultative">{isPl ? 'Doradczy' : 'Consultative'}</option>
-              <option value="persuasive">{isPl ? 'Perswazyjny' : 'Persuasive'}</option>
+              <option value="formal">{t('reportBuilder.intentStep.formal', 'Formal')}</option>
+              <option value="professional">{t('reportBuilder.intentStep.professional', 'Professional')}</option>
+              <option value="consultative">{t('reportBuilder.intentStep.consultative', 'Consultative')}</option>
+              <option value="persuasive">{t('reportBuilder.intentStep.persuasive', 'Persuasive')}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-c-text mb-2">
-              {isPl ? 'Przykłady' : 'Examples'}
+              {t('reportBuilder.intentStep.examples', 'Examples')}
             </label>
             <select
               value={intent.illustrationLevel || 'moderate'}
@@ -677,9 +672,9 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               }
               className={selectClasses}
             >
-              <option value="minimal">{isPl ? 'Minimalne' : 'Minimal'}</option>
-              <option value="moderate">{isPl ? 'Umiarkowane' : 'Moderate'}</option>
-              <option value="extensive">{isPl ? 'Rozbudowane' : 'Extensive'}</option>
+              <option value="minimal">{t('reportBuilder.intentStep.minimal', 'Minimal')}</option>
+              <option value="moderate">{t('reportBuilder.intentStep.moderate', 'Moderate')}</option>
+              <option value="extensive">{t('reportBuilder.intentStep.extensive', 'Extensive')}</option>
             </select>
           </div>
 
@@ -691,7 +686,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                 onChange={(e) => onIntentChange({ useMetrics: e.target.checked })}
                 className="rounded border-c-border-subtle"
               />
-              {isPl ? 'Metryki liczbowe' : 'Use metrics'}
+              {t('reportBuilder.intentStep.useMetrics', 'Use metrics')}
             </label>
             <label className="inline-flex items-center gap-2 text-sm text-c-text">
               <input
@@ -700,7 +695,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                 onChange={(e) => onIntentChange({ includeReferences: e.target.checked })}
                 className="rounded border-c-border-subtle"
               />
-              {isPl ? 'Standardy branżowe' : 'Industry references'}
+              {t('reportBuilder.intentStep.industryReferences', 'Industry references')}
             </label>
           </div>
         </div>

@@ -129,7 +129,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   onStatusChange,
   isPl = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = isPl || i18n.language?.startsWith('pl');
 
   const [comments, setComments] = useState<Comment[]>([]);
@@ -252,7 +252,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       setShowReviewerPicker(false);
       setSelectedReviewers([]);
       setReviewMessage('');
-      toast.success(isPolish ? 'Wysłano do recenzji' : 'Sent for review');
+      toast.success(t('reportBuilder.reviewPanel.sentForReview', 'Sent for review'));
     } catch (e: any) {
       toast.error(e?.error || e?.message || 'Error');
     } finally {
@@ -265,7 +265,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
     try {
       await Api.post(`/report-builder/${reportId}/approve`, {});
       onStatusChange('APPROVED');
-      toast.success(isPolish ? 'Zatwierdzono' : 'Approved');
+      toast.success(t('reportBuilder.reviewPanel.approved', 'Approved'));
     } catch (e: any) {
       toast.error(e?.error || e?.message || 'Error');
     } finally {
@@ -277,7 +277,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
     try {
       await Api.post(`/report-builder/${reportId}/send-back`, {});
       onStatusChange('DRAFT');
-      toast.success(isPolish ? 'Odesłano' : 'Sent back');
+      toast.success(t('reportBuilder.reviewPanel.sentBack', 'Sent back'));
     } catch (e: any) {
       toast.error(e?.error || e?.message || 'Error');
     } finally {
@@ -285,13 +285,13 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
     }
   };
   const doReject = async () => {
-    const r = prompt(isPolish ? 'Powód:' : 'Reason:');
+    const r = prompt(t('reportBuilder.reviewPanel.reason', 'Reason:'));
     if (r === null) return;
     setIsSubmitting(true);
     try {
       await Api.post(`/report-builder/${reportId}/reject`, { reason: r });
       onStatusChange('DRAFT');
-      toast.success(isPolish ? 'Odrzucono' : 'Rejected');
+      toast.success(t('reportBuilder.reviewPanel.rejected', 'Rejected'));
     } catch (e: any) {
       toast.error(e?.error || e?.message || 'Error');
     } finally {
@@ -402,7 +402,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               onClick={() => setShowReviewerPicker(true)}
               className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-blue-600 text-c-text rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
             >
-              <Send className="w-2.5 h-2.5" /> {isPolish ? 'Do recenzji' : 'Review'}
+              <Send className="w-2.5 h-2.5" /> {t('reportBuilder.reviewPanel.review', 'Review')}
             </button>
           );
         }
@@ -418,7 +418,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               ) : (
                 <ThumbsUp className="w-2.5 h-2.5" />
               )}{' '}
-              {isPolish ? 'Zatwierdź' : 'Approve'}
+              {t('reportBuilder.reviewPanel.approve', 'Approve')}
             </button>
           );
         }
@@ -435,7 +435,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               ) : (
                 <Building2 className="w-2.5 h-2.5" />
               )}{' '}
-              {isPolish ? 'Wyślij' : 'Send'}
+              {t('reportBuilder.reviewPanel.send', 'Send')}
             </button>
           );
         }
@@ -451,7 +451,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               ) : (
                 <Globe className="w-2.5 h-2.5" />
               )}{' '}
-              {isPolish ? 'Klient' : 'Client'}
+              {t('reportBuilder.reviewPanel.client', 'Client')}
             </button>
           );
         }
@@ -467,7 +467,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               ) : (
                 <CheckCircle className="w-2.5 h-2.5" />
               )}{' '}
-              {isPolish ? 'Zamknij' : 'Close'}
+              {t('reportBuilder.reviewPanel.close', 'Close')}
             </button>
           );
         }
@@ -487,7 +487,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                         : 'text-c-text-secondary'
                 }`}
               >
-                {isPolish ? step.pl : step.en}
+                {t(`reportBuilder.reviewPanel.status.${step.key}`, step.en)}
               </span>
               {st === 'blocked' && step.key === 'APPROVED' && (
                 <span className="text-[8px] text-danger-400/70 flex items-center gap-0.5">
@@ -513,7 +513,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       {/* ===== WORKFLOW ===== */}
       <div className="p-3 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03]">
         <div className="text-[8px] font-bold text-c-text-secondary uppercase tracking-[0.15em] mb-2.5">
-          {isPolish ? 'Workflow' : 'Workflow'}
+          {t('reportBuilder.reviewPanel.workflow', 'Workflow')}
         </div>
         {renderSteps(STEPS, isPost)}
 
@@ -521,7 +521,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         {(reportStatus === 'APPROVED' || isPost) && (
           <div className="mt-3 pt-2.5 border-t border-c-border-subtle">
             <div className="text-[8px] font-bold text-c-text-secondary uppercase tracking-[0.15em] mb-2">
-              {isPolish ? 'Dystrybucja' : 'Distribution'}
+              {t('reportBuilder.reviewPanel.distribution', 'Distribution')}
             </div>
             {renderSteps(DIST_STEPS)}
           </div>
@@ -536,14 +536,14 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             disabled={isSubmitting}
             className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-c-text-secondary border border-c-border-subtle rounded-md hover:bg-c-surface hover:text-c-text transition-all"
           >
-            <ArrowLeft className="w-3 h-3" /> {isPolish ? 'Popraw' : 'Revise'}
+            <ArrowLeft className="w-3 h-3" /> {t('reportBuilder.reviewPanel.revise', 'Revise')}
           </button>
           <button
             onClick={doReject}
             disabled={isSubmitting}
             className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-danger-400/80 border border-danger-800/40 rounded-md hover:bg-danger-900/30 hover:text-danger-300 transition-all"
           >
-            <XCircle className="w-3 h-3" /> {isPolish ? 'Odrzuć' : 'Reject'}
+            <XCircle className="w-3 h-3" /> {t('reportBuilder.reviewPanel.reject', 'Reject')}
           </button>
         </div>
       )}
@@ -554,7 +554,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           disabled={isSubmitting}
           className="w-full py-1.5 text-[10px] font-medium text-danger-400/70 border border-danger-800/30 rounded-md hover:bg-danger-900/20 hover:text-danger-300 transition-all flex items-center justify-center gap-1"
         >
-          <XCircle className="w-3 h-3" /> {isPolish ? 'Cofnij' : 'Revoke'}
+          <XCircle className="w-3 h-3" /> {t('reportBuilder.reviewPanel.revoke', 'Revoke')}
         </button>
       )}
 
@@ -562,7 +562,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         <div className="py-2 text-center">
           <CheckCircle className="w-5 h-5 text-emerald-500/70 mx-auto mb-1" />
           <p className="text-[10px] text-emerald-400/60 font-medium">
-            {isPolish ? 'Cykl zakończony' : 'Complete'}
+            {t('reportBuilder.reviewPanel.complete', 'Complete')}
           </p>
         </div>
       )}
@@ -572,7 +572,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         <div className="p-2.5 bg-blue-950/30 rounded-lg border border-blue-800/40 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
-              <Send className="w-3 h-3" /> {isPolish ? 'Wyślij do recenzji' : 'Send for Review'}
+              <Send className="w-3 h-3" /> {t('reportBuilder.reviewPanel.sendForReview', 'Send for Review')}
             </span>
             <button
               onClick={() => {
@@ -589,7 +589,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             type="text"
             value={reviewerSearch}
             onChange={(e) => setReviewerSearch(e.target.value)}
-            placeholder={isPolish ? 'Szukaj...' : 'Search...'}
+            placeholder={t('reportBuilder.reviewPanel.search', 'Search...')}
             className="w-full px-2 py-1 text-[11px] border border-blue-800/40 rounded bg-c-bg text-c-text outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-c-text-muted"
           />
 
@@ -634,7 +634,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           <textarea
             value={reviewMessage}
             onChange={(e) => setReviewMessage(e.target.value)}
-            placeholder={isPolish ? 'Wiadomość...' : 'Message...'}
+            placeholder={t('reportBuilder.reviewPanel.message', 'Message...')}
             rows={2}
             className="w-full px-2 py-1 text-[10px] border border-blue-800/40 rounded bg-c-bg text-c-text outline-none resize-none placeholder:text-c-text-muted"
           />
@@ -650,10 +650,8 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               <Send className="w-3 h-3" />
             )}
             {selectedReviewers.length > 0
-              ? `${isPolish ? 'Wyślij do' : 'Send to'} ${selectedReviewers.length}`
-              : isPolish
-                ? 'Wyślij'
-                : 'Send'}
+              ? `${t('reportBuilder.reviewPanel.sendTo', 'Send to')} ${selectedReviewers.length}`
+              : t('reportBuilder.reviewPanel.send', 'Send')}
           </button>
         </div>
       )}
@@ -666,7 +664,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         >
           <span className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-1.5">
             <MessageSquare className="w-3 h-3" />
-            {isPolish ? 'Komentarze' : 'Comments'}
+            {t('reportBuilder.reviewPanel.comments', 'Comments')}
             {summary && (
               <span
                 className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
@@ -701,10 +699,10 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               <div className="p-2 bg-c-surface rounded border border-c-border-subtle space-y-1.5">
                 <div className="flex gap-1">
                   {[
-                    { v: 'GENERAL' as const, l: isPolish ? 'Ogólny' : 'General' },
-                    { v: 'ISSUE' as const, l: isPolish ? 'Problem' : 'Issue' },
-                    { v: 'QUESTION' as const, l: isPolish ? 'Pytanie' : 'Q' },
-                    { v: 'SUGGESTION' as const, l: isPolish ? 'Sugestia' : 'Suggest' },
+                    { v: 'GENERAL' as const, l: t('reportBuilder.reviewPanel.general', 'General') },
+                    { v: 'ISSUE' as const, l: t('reportBuilder.reviewPanel.issue', 'Issue') },
+                    { v: 'QUESTION' as const, l: t('reportBuilder.reviewPanel.q', 'Q') },
+                    { v: 'SUGGESTION' as const, l: t('reportBuilder.reviewPanel.suggest', 'Suggest') },
                   ].map((t) => (
                     <button
                       key={t.v}
@@ -718,7 +716,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                 <textarea
                   value={newCommentContent}
                   onChange={(e) => setNewCommentContent(e.target.value)}
-                  placeholder={isPolish ? 'Komentarz...' : 'Comment...'}
+                  placeholder={t('reportBuilder.reviewPanel.comment', 'Comment...')}
                   rows={2}
                   className="w-full px-2 py-1 text-[10px] border border-c-border-subtle rounded bg-c-bg text-c-text resize-none outline-none placeholder:text-c-text-muted"
                   onKeyDown={(e) => {
@@ -730,7 +728,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   disabled={isSubmitting || !newCommentContent.trim()}
                   className="w-full py-1 bg-blue-600 text-c-text rounded text-[9px] font-semibold disabled:opacity-40 hover:bg-blue-700"
                 >
-                  {isPolish ? 'Dodaj' : 'Add'}
+                  {t('reportBuilder.reviewPanel.add', 'Add')}
                 </button>
               </div>
             )}
@@ -743,7 +741,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               <div className="text-center py-3">
                 <MessageSquare className="w-5 h-5 text-c-text mx-auto mb-0.5" />
                 <p className="text-[9px] text-c-text-secondary">
-                  {isPolish ? 'Brak komentarzy' : 'No comments yet'}
+                  {t('reportBuilder.reviewPanel.noCommentsYet', 'No comments yet')}
                 </p>
               </div>
             ) : (

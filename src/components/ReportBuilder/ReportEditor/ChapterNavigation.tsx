@@ -45,6 +45,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { BlockConfig } from './ReportEditor';
 
@@ -277,6 +278,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
   onToggle,
   sectionRagMap,
 }) => {
+  const { t } = useTranslation();
   const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(new Set());
   const [editingChapter, setEditingChapter] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -376,7 +378,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
       <div
         className="w-10 bg-c-surface border-r border-c-border-subtle flex flex-col items-center py-3 flex-shrink-0 cursor-pointer hover:bg-c-surface-raised transition-colors group"
         onClick={onToggle}
-        title={isPl ? 'Pokaż spis treści' : 'Show table of contents'}
+        title={t('reportBuilder.chapterNavigation.showTableOfContents', 'Show table of contents')}
       >
         <BookOpen className="w-4 h-4 text-c-text-secondary group-hover:text-blue-500 transition-colors mb-2" />
         <ChevronRight className="w-3 h-3 text-c-text-secondary group-hover:text-blue-400 mb-3" />
@@ -385,7 +387,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
           className="text-[9px] font-semibold text-c-text-secondary group-hover:text-blue-500 uppercase tracking-[0.15em] transition-colors"
           style={{ writingMode: 'vertical-lr', textOrientation: 'mixed' }}
         >
-          {isPl ? 'Spis treści' : 'Contents'}
+          {t('reportBuilder.chapterNavigation.contents', 'Contents')}
         </span>
       </div>
     );
@@ -401,20 +403,20 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
       <div className="p-3 border-b border-c-border-subtle flex items-center justify-between">
         <h3 className="text-xs font-semibold text-c-text-secondary uppercase tracking-wider flex items-center gap-1.5">
           <BookOpen className="w-3.5 h-3.5" />
-          {isPl ? 'Spis Treści' : 'Table of Contents'}
+          {t('reportBuilder.chapterNavigation.tableOfContents', 'Table of Contents')}
         </h3>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsAddingChapter(true)}
             className="p-1 text-c-text-secondary hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-            title={isPl ? 'Dodaj rozdział' : 'Add chapter'}
+            title={t('reportBuilder.chapterNavigation.addChapter', 'Add chapter')}
           >
             <FolderPlus className="w-4 h-4" />
           </button>
           <button
             onClick={onToggle}
             className="p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded"
-            title={isPl ? 'Zwiń panel' : 'Collapse panel'}
+            title={t('reportBuilder.chapterNavigation.collapsePanel', 'Collapse panel')}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -427,13 +429,13 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
         <div className="flex items-center gap-3 px-2 py-1.5 mb-2 text-[10px] text-c-text-secondary">
           <span className="flex items-center gap-1">
             <Layers className="w-3 h-3" />
-            {blocks.length} {isPl ? 'bloków' : 'blocks'}
+            {blocks.length} {t('reportBuilder.chapterNavigation.blocks', 'blocks')}
           </span>
           {hasAnyChapters && (
             <span className="flex items-center gap-1">
               <Hash className="w-3 h-3" />
               {chapters.filter((c) => c.key !== UNGROUPED_KEY).length}{' '}
-              {isPl ? 'rozdziałów' : 'chapters'}
+              {t('reportBuilder.chapterNavigation.chapters', 'chapters')}
             </span>
           )}
         </div>
@@ -515,7 +517,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                             if (!isUngrouped) startRename(chapter.key, chapter.title);
                           }}
                         >
-                          {isUngrouped ? (isPl ? 'Bez rozdziału' : 'Ungrouped') : chapter.title}
+                          {isUngrouped ? (t('reportBuilder.chapterNavigation.ungrouped', 'Ungrouped')) : chapter.title}
                         </span>
                       )}
 
@@ -532,7 +534,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                               startRename(chapter.key, chapter.title);
                             }}
                             className="p-0.5 text-c-text-secondary hover:text-blue-500 rounded"
-                            title={isPl ? 'Zmień nazwę' : 'Rename'}
+                            title={t('reportBuilder.chapterNavigation.rename', 'Rename')}
                           >
                             <Pencil className="w-3 h-3" />
                           </button>
@@ -544,7 +546,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                               <button
                                 onClick={() => handleDeleteChapter(chapter.key)}
                                 className="p-0.5 text-danger-500 hover:text-danger-700 rounded"
-                                title={isPl ? 'Potwierdź' : 'Confirm'}
+                                title={t('reportBuilder.chapterNavigation.confirm', 'Confirm')}
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
@@ -562,7 +564,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                                 setConfirmDeleteChapter(chapter.key);
                               }}
                               className="p-0.5 text-c-text-secondary hover:text-danger-500 rounded"
-                              title={isPl ? 'Usuń rozdział' : 'Delete chapter'}
+                              title={t('reportBuilder.chapterNavigation.deleteChapter', 'Delete chapter')}
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
@@ -602,16 +604,14 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
         {!hasAnyChapters && blocks.length > 5 && !isAddingChapter && (
           <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
             <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
-              {isPl
-                ? 'Masz więcej niż 5 bloków. Rozważ organizację w rozdziały.'
-                : 'You have more than 5 blocks. Consider organizing them into chapters.'}
+              {t('reportBuilder.chapterNavigation.youHaveMoreThan5Blocks', 'You have more than 5 blocks. Consider organizing them into chapters.')}
             </p>
             <button
               onClick={() => setIsAddingChapter(true)}
               className="text-xs font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 flex items-center gap-1"
             >
               <Plus className="w-3 h-3" />
-              {isPl ? 'Dodaj rozdziały' : 'Add chapters'}
+              {t('reportBuilder.chapterNavigation.addChapters', 'Add chapters')}
             </button>
           </div>
         )}
@@ -620,7 +620,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
         {isAddingChapter && (
           <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <label className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1 block">
-              {isPl ? 'Nowy rozdział' : 'New chapter'}
+              {t('reportBuilder.chapterNavigation.newChapter', 'New chapter')}
             </label>
             <input
               type="text"
@@ -634,7 +634,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                 }
               }}
               autoFocus
-              placeholder={isPl ? 'Nazwa rozdziału...' : 'Chapter name...'}
+              placeholder={t('reportBuilder.chapterNavigation.chapterName', 'Chapter name...')}
               className="w-full text-xs bg-c-surface border border-blue-300 dark:border-blue-700 rounded px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-400 text-c-text placeholder:text-c-text-muted"
             />
             <div className="flex items-center gap-2 mt-2">
@@ -642,7 +642,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                 onClick={handleAddChapterSubmit}
                 className="flex-1 text-[11px] font-medium bg-blue-600 text-c-text px-3 py-1 rounded hover:bg-blue-700 transition-colors"
               >
-                {isPl ? 'Dodaj' : 'Add'}
+                {t('reportBuilder.chapterNavigation.add', 'Add')}
               </button>
               <button
                 onClick={() => {
@@ -651,7 +651,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                 }}
                 className="text-[11px] text-c-text-secondary hover:text-c-text px-2 py-1"
               >
-                {isPl ? 'Anuluj' : 'Cancel'}
+                {t('reportBuilder.chapterNavigation.cancel', 'Cancel')}
               </button>
             </div>
           </div>
@@ -664,7 +664,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
             className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] text-c-text-secondary hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg border border-dashed border-c-border-subtle hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
           >
             <Plus className="w-3 h-3" />
-            {isPl ? 'Dodaj rozdział' : 'Add chapter'}
+            {t('reportBuilder.chapterNavigation.addChapter', 'Add chapter')}
           </button>
         )}
       </div>

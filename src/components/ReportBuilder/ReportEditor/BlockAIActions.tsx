@@ -28,6 +28,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { BlockConfig } from './ReportEditor';
 
@@ -198,6 +199,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
   previousBlockSummary,
   nextBlockSummary,
 }) => {
+  const { t } = useTranslation();
   const [customInstruction, setCustomInstruction] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -262,7 +264,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
         <div className="flex items-center gap-2">
           <Wand2 className="w-4 h-4 text-c-accent" />
           <span className="text-sm font-semibold text-c-text">
-            {isPl ? 'Akcje AI' : 'AI Actions'}
+            {t('reportBuilder.blockAIActions.aiActions', 'AI Actions')}
           </span>
         </div>
         <button
@@ -339,7 +341,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
           >
             <RefreshCw className="w-4 h-4 text-c-text-secondary" />
             <span className="text-xs font-medium">
-              {isPl ? 'Wygeneruj od nowa' : 'Regenerate Completely'}
+              {t('reportBuilder.blockAIActions.regenerateCompletely', 'Regenerate Completely')}
             </span>
           </button>
         </div>
@@ -353,7 +355,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
-            placeholder={isPl ? 'Własna instrukcja...' : 'Custom instruction...'}
+            placeholder={t('reportBuilder.blockAIActions.customInstruction', 'Custom instruction...')}
             className="flex-1 px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg focus:ring-1 focus:ring-c-focus focus:border-c-accent"
             disabled={isProcessing}
           />

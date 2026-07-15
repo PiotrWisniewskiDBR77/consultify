@@ -141,7 +141,7 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <Database className="h-10 w-10 text-c-text mb-3" />
         <p className="text-sm text-c-text">
-          {isPl ? 'Brak powiązanych źródeł danych.' : 'No linked data sources.'}
+          {t('reportBuilder.sourceTraceabilityPanel.noLinkedDataSources', 'No linked data sources.')}
         </p>
       </div>
     );
@@ -151,12 +151,13 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
     <div className="flex flex-col gap-1 py-2">
       <div className="px-4 pb-2 mb-1 border-b border-c-border-subtle">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-c-text">
-          {isPl ? 'Źródła danych' : 'Data Sources'}
+          {t('reportBuilder.sourceTraceabilityPanel.dataSources', 'Data Sources')}
         </h3>
         <p className="text-[11px] text-c-text mt-0.5">
-          {isPl
-            ? `${sortedRefs.length} artefaktów powiązanych z raportem`
-            : `${sortedRefs.length} artifacts linked to report`}
+          {t('reportBuilder.sourceTraceabilityPanel.nArtifactsLinked', {
+            defaultValue: `${sortedRefs.length} artifacts linked to report`,
+            count: sortedRefs.length,
+          })}
         </p>
       </div>
 
@@ -192,16 +193,17 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
                   {sectionCount > 0 && (
                     <span className="text-[11px] text-c-text">
                       ·{' '}
-                      {isPl
-                        ? `${sectionCount} sekcji`
-                        : `${sectionCount} section${sectionCount !== 1 ? 's' : ''}`}
+                      {t('reportBuilder.sourceTraceabilityPanel.nSections', {
+                        defaultValue: `${sectionCount} section${sectionCount !== 1 ? 's' : ''}`,
+                        count: sectionCount,
+                      })}
                     </span>
                   )}
                 </div>
 
                 {ref.lastUsed && (
                   <div className="text-[10px] text-c-text mt-0.5">
-                    {isPl ? 'Użyto: ' : 'Used: '}
+                    {t('reportBuilder.sourceTraceabilityPanel.used', 'Used: ')}
                     {formatDate(ref.lastUsed)}
                   </div>
                 )}
@@ -232,7 +234,7 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
                 className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md
                            text-c-text hover:text-c-text hover:bg-c-surface/[0.06]
                            opacity-0 group-hover:opacity-100 transition-all"
-                title={isPl ? 'Odśwież ze źródła' : 'Refresh from source'}
+                title={t('reportBuilder.sourceTraceabilityPanel.refreshFromSource', 'Refresh from source')}
                 onClick={() => {
                   /* Phase 8: wire to actual refresh */
                 }}

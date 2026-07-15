@@ -10,6 +10,7 @@
 
 import { ChevronDown, ChevronRight, Settings2, Sparkles, Zap } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   type BlockSettingsDefinition,
@@ -342,6 +343,7 @@ export const BlockSettingsPanel: React.FC<BlockSettingsPanelProps> = ({
   includeGroups,
   excludeGroups,
 }) => {
+  const { t } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const definition = getBlockSettings(blockType, blockTypeId);
@@ -389,7 +391,7 @@ export const BlockSettingsPanel: React.FC<BlockSettingsPanelProps> = ({
           <div className="flex items-center gap-1.5 mb-1.5">
             <Zap className="w-3 h-3 text-amber-500" />
             <span className="text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
-              {isPl ? 'Presety' : 'Presets'}
+              {t('reportBuilder.blockSettingsPanel.presets', 'Presets')}
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -449,7 +451,7 @@ export const BlockSettingsPanel: React.FC<BlockSettingsPanelProps> = ({
           >
             <span className="flex items-center gap-1.5 text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider group-hover:text-c-text-secondary transition-colors">
               <Settings2 className="w-3 h-3" />
-              {isPl ? 'Zaawansowane' : 'Fine-tune'}
+              {t('reportBuilder.blockSettingsPanel.fineTune', 'Fine-tune')}
               {advancedNonDefault > 0 && (
                 <span className="ml-0.5 min-w-[16px] h-4 px-1 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[9px] font-bold rounded-full inline-flex items-center justify-center">
                   {advancedNonDefault}

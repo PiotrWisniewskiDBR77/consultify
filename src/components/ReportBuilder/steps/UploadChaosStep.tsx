@@ -113,9 +113,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
       if (newFiles.length === 0) {
         setError(
-          isPl
-            ? 'Nieobsługiwane pliki. Dozwolone: PDF, DOCX, XLSX, CSV.'
-            : 'Unsupported file types. Allowed: PDF, DOCX, XLSX, CSV.'
+          t('reportBuilder.uploadChaosStep.unsupportedFileTypesAllowedPdfDocx', 'Unsupported file types. Allowed: PDF, DOCX, XLSX, CSV.')
         );
         return;
       }
@@ -163,7 +161,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
         setIsBuildingMap(false);
       }
     },
-    [files, isPl, onKnowledgeMapReady]
+    [files, t, onKnowledgeMapReady]
   );
 
   const handleDrop = useCallback(
@@ -247,12 +245,10 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
         </div>
 
         <p className="text-sm font-semibold text-c-text">
-          {isPl ? 'Przeciągnij pliki tutaj' : 'Drag & drop files here'}
+          {t('reportBuilder.uploadChaosStep.dragDropFilesHere', 'Drag & drop files here')}
         </p>
         <p className="text-xs text-c-text-secondary mt-1">
-          {isPl
-            ? 'lub kliknij, aby wybrać • PDF, DOCX, XLSX, CSV • do 20 MB'
-            : 'or click to browse • PDF, DOCX, XLSX, CSV • up to 20 MB'}
+          {t('reportBuilder.uploadChaosStep.orClickToBrowsePdfDocx', 'or click to browse • PDF, DOCX, XLSX, CSV • up to 20 MB')}
         </p>
       </div>
 
@@ -271,7 +267,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
       {files.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Przesłane pliki' : 'Uploaded files'} ({files.length})
+            {t('reportBuilder.uploadChaosStep.uploadedFiles', 'Uploaded files')} ({files.length})
           </h3>
           <div className="space-y-1.5">
             {files.map((f, idx) => (
@@ -288,13 +284,13 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                   {f.status === 'uploading' && (
                     <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                       <Loader2 className="w-3 h-3 animate-spin" />
-                      {isPl ? 'Przesyłanie...' : 'Uploading...'}
+                      {t('reportBuilder.uploadChaosStep.uploading', 'Uploading...')}
                     </span>
                   )}
                   {f.status === 'processing' && (
                     <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
                       <Loader2 className="w-3 h-3 animate-spin" />
-                      {isPl ? 'Przetwarzanie...' : 'Processing...'}
+                      {t('reportBuilder.uploadChaosStep.processing', 'Processing...')}
                     </span>
                   )}
                   {f.status === 'done' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
@@ -320,7 +316,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
         <div className="flex items-center justify-center gap-3 py-6">
           <Loader2 className="w-5 h-5 text-c-accent animate-spin" />
           <span className="text-sm text-c-text-secondary">
-            {isPl ? 'Budowanie mapy wiedzy...' : 'Building knowledge map...'}
+            {t('reportBuilder.uploadChaosStep.buildingKnowledgeMap', 'Building knowledge map...')}
           </span>
         </div>
       )}
@@ -331,7 +327,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-c-accent" />
             <h3 className="text-base font-bold text-c-text">
-              {isPl ? 'Mapa wiedzy' : 'Knowledge Map'}
+              {t('reportBuilder.uploadChaosStep.knowledgeMap', 'Knowledge Map')}
             </h3>
           </div>
 
@@ -339,24 +335,24 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-lg font-bold text-c-accent">{knowledgeMap.sourceCount}</div>
-              <div className="text-xs text-c-text-secondary">{isPl ? 'Pliki' : 'Files'}</div>
+              <div className="text-xs text-c-text-secondary">{t('reportBuilder.uploadChaosStep.files', 'Files')}</div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-lg font-bold text-c-accent">{knowledgeMap.keyTopics.length}</div>
-              <div className="text-xs text-c-text-secondary">{isPl ? 'Tematy' : 'Topics'}</div>
+              <div className="text-xs text-c-text-secondary">{t('reportBuilder.uploadChaosStep.topics', 'Topics')}</div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-lg font-bold text-c-accent">
                 {knowledgeMap.extractedEntities.length}
               </div>
-              <div className="text-xs text-c-text-secondary">{isPl ? 'Encje' : 'Entities'}</div>
+              <div className="text-xs text-c-text-secondary">{t('reportBuilder.uploadChaosStep.entities', 'Entities')}</div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-xs font-semibold text-c-accent truncate">
                 {knowledgeMap.suggestedReportType.replace(/_/g, ' ')}
               </div>
               <div className="text-xs text-c-text-secondary">
-                {isPl ? 'Typ raportu' : 'Report type'}
+                {t('reportBuilder.uploadChaosStep.reportType', 'Report type')}
               </div>
             </div>
           </div>
@@ -365,7 +361,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           {knowledgeMap.keyTopics.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-c-text-secondary mb-1.5">
-                {isPl ? 'Kluczowe tematy' : 'Key topics'}
+                {t('reportBuilder.uploadChaosStep.keyTopics', 'Key topics')}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {knowledgeMap.keyTopics.map((topic) => (
@@ -395,7 +391,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FileText className="w-4 h-4 text-c-accent" />
-              {isPl ? 'Użyj szablonu (Ścieżka A)' : 'Use Template (Path A)'}
+              {t('reportBuilder.uploadChaosStep.useTemplatePathA', 'Use Template (Path A)')}
               <ArrowRight className="w-4 h-4 text-c-text-secondary" />
             </button>
 
@@ -408,7 +404,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-4 h-4" />
-              {isPl ? 'Wolna inteligencja (Ścieżka B)' : 'Free Intelligence (Path B)'}
+              {t('reportBuilder.uploadChaosStep.freeIntelligencePathB', 'Free Intelligence (Path B)')}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

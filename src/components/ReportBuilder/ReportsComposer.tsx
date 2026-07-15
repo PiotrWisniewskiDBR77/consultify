@@ -48,7 +48,7 @@ interface ReportsComposerProps {
 // ==========================================
 
 const ProfilesList: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [profiles, setProfiles] = useState<InvocationProfile[]>([]);
@@ -74,12 +74,10 @@ const ProfilesList: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-c-text">
-            {isPl ? 'Profile Wywołania' : 'Invocation Profiles'}
+            {t('reportBuilder.reportsComposer.invocationProfiles', 'Invocation Profiles')}
           </h2>
           <p className="text-sm text-c-text-secondary mt-1">
-            {isPl
-              ? 'Profile definiują dostępne bloki, szablony i ustawienia dla różnych kontekstów'
-              : 'Profiles define available blocks, templates, and settings for different contexts'}
+            {t('reportBuilder.reportsComposer.profilesDefineAvailableBlocksTemplatesAnd', 'Profiles define available blocks, templates, and settings for different contexts')}
           </p>
         </div>
       </div>
@@ -118,12 +116,12 @@ const ProfilesList: React.FC = () => {
                 <div className="flex flex-wrap gap-2 mt-3">
                   {profile.features.allowMatrixVisualization && (
                     <span className="text-xs px-2 py-1 bg-c-accent-soft text-c-accent rounded-full">
-                      {isPl ? 'Macierz' : 'Matrix'}
+                      {t('reportBuilder.reportsComposer.matrix', 'Matrix')}
                     </span>
                   )}
                   {profile.features.allowCustomSections && (
                     <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
-                      {isPl ? 'Własne sekcje' : 'Custom sections'}
+                      {t('reportBuilder.reportsComposer.customSections', 'Custom sections')}
                     </span>
                   )}
                   {profile.features.allowPdfExport && (
@@ -133,7 +131,7 @@ const ProfilesList: React.FC = () => {
                   )}
                   {profile.features.allowPublicSharing && (
                     <span className="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
-                      {isPl ? 'Udostępnianie' : 'Sharing'}
+                      {t('reportBuilder.reportsComposer.sharing', 'Sharing')}
                     </span>
                   )}
                 </div>
@@ -145,7 +143,7 @@ const ProfilesList: React.FC = () => {
 
       {profiles.length === 0 && (
         <div className="text-center py-12 text-c-text-secondary">
-          {isPl ? 'Brak zdefiniowanych profili' : 'No profiles defined'}
+          {t('reportBuilder.reportsComposer.noProfilesDefined', 'No profiles defined')}
         </div>
       )}
 
@@ -154,11 +152,9 @@ const ProfilesList: React.FC = () => {
         <div className="flex items-start gap-3">
           <Settings className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-700 dark:text-blue-300">
-            <p className="font-medium">{isPl ? 'Profile systemowe' : 'System Profiles'}</p>
+            <p className="font-medium">{t('reportBuilder.reportsComposer.systemProfiles', 'System Profiles')}</p>
             <p className="mt-1 text-blue-600 dark:text-blue-400">
-              {isPl
-                ? 'Profile są obecnie zdefiniowane w konfiguracji systemu. W przyszłej wersji będzie możliwe tworzenie własnych profili.'
-                : 'Profiles are currently defined in system configuration. Custom profile creation will be available in a future version.'}
+              {t('reportBuilder.reportsComposer.profilesAreCurrentlyDefinedInSystem', 'Profiles are currently defined in system configuration. Custom profile creation will be available in a future version.')}
             </p>
           </div>
         </div>
@@ -175,7 +171,7 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
   onBack,
   initialTab = 'blocks',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
 
@@ -188,17 +184,17 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
 
   const [activeTab, setActiveTab] = useState<ComposerTab>(initialTab);
 
-  const tabs: Array<{ id: ComposerTab; label: string; labelPl: string; icon: React.ReactNode }> = [
+  const tabs: Array<{ id: ComposerTab; label: string; labelKey: string; icon: React.ReactNode }> = [
     {
       id: 'blocks',
       label: 'Block Types',
-      labelPl: 'Typy Bloków',
+      labelKey: 'reportBuilder.reportsComposer.tab.blocks',
       icon: <Blocks className="w-4 h-4" />,
     },
     {
       id: 'templates',
       label: 'Templates',
-      labelPl: 'Szablony',
+      labelKey: 'reportBuilder.reportsComposer.tab.templates',
       icon: <FileText className="w-4 h-4" />,
     },
     // Profiles tab hidden – profiles are system-defined presets with no user-facing value currently
@@ -218,12 +214,10 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
           </button>
           <div>
             <h1 className="text-2xl font-bold text-c-text">
-              {isPl ? 'Kompozytor Raportów' : 'Reports Composer'}
+              {t('reportBuilder.reportsComposer.reportsComposer', 'Reports Composer')}
             </h1>
             <p className="text-c-text-secondary mt-1">
-              {isPl
-                ? 'Zarządzaj blokami i szablonami raportów'
-                : 'Manage report blocks and templates'}
+              {t('reportBuilder.reportsComposer.manageReportBlocksAndTemplates', 'Manage report blocks and templates')}
             </p>
           </div>
         </div>
@@ -245,7 +239,7 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
             `}
           >
             {tab.icon}
-            {isPl ? tab.labelPl : tab.label}
+            {t(tab.labelKey, tab.label)}
           </button>
         ))}
       </div>

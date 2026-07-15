@@ -83,6 +83,7 @@ interface SectionEditorProps {
 }
 
 const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegenerate, isPl }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [editContent, setEditContent] = useState('');
@@ -168,7 +169,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               {section.editedContent && (
                 <span className="text-blue-500 flex items-center gap-1">
                   <Edit3 className="w-3 h-3" />
-                  {isPl ? 'Edytowane' : 'Edited'}
+                  {t('reportBuilder.reviewEditStep.edited', 'Edited')}
                 </span>
               )}
             </div>
@@ -181,7 +182,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               <button
                 onClick={handleCopy}
                 className="p-2 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface rounded"
-                title={isPl ? 'Kopiuj' : 'Copy'}
+                title={t('reportBuilder.reviewEditStep.copy', 'Copy')}
               >
                 <Copy className="w-4 h-4" />
               </button>
@@ -195,14 +196,14 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
-                {isPl ? 'Regeneruj' : 'Regenerate'}
+                {t('reportBuilder.reviewEditStep.regenerate', 'Regenerate')}
               </button>
               <button
                 onClick={handleStartEdit}
                 className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-c-text rounded hover:bg-blue-700"
               >
                 <Edit3 className="w-4 h-4" />
-                {isPl ? 'Edytuj' : 'Edit'}
+                {t('reportBuilder.reviewEditStep.edit', 'Edit')}
               </button>
             </>
           )}
@@ -225,7 +226,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
                   disabled={isSaving}
                   className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
                 >
-                  {isPl ? 'Anuluj' : 'Cancel'}
+                  {t('reportBuilder.reviewEditStep.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={handleSave}
@@ -237,7 +238,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  {isPl ? 'Zapisz' : 'Save'}
+                  {t('reportBuilder.reviewEditStep.save', 'Save')}
                 </button>
               </div>
             </div>
@@ -262,7 +263,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h3 className="font-semibold text-c-text flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-500" />
-                {isPl ? 'Regeneruj Sekcję' : 'Regenerate Section'}
+                {t('reportBuilder.reviewEditStep.regenerateSection', 'Regenerate Section')}
               </h3>
               <button
                 onClick={() => setShowRegeneratePrompt(false)}
@@ -275,15 +276,13 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
             <div className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-c-text mb-1">
-                  {isPl ? 'Dodatkowe Wskazówki (opcjonalnie)' : 'Additional Guidance (optional)'}
+                  {t('reportBuilder.reviewEditStep.additionalGuidanceOptional', 'Additional Guidance (optional)')}
                 </label>
                 <textarea
                   value={regeneratePrompt}
                   onChange={(e) => setRegeneratePrompt(e.target.value)}
                   placeholder={
-                    isPl
-                      ? 'Np. "Użyj bardziej formalnego języka", "Dodaj więcej szczegółów technicznych"...'
-                      : 'E.g., "Use more formal language", "Add more technical details"...'
+                    t('reportBuilder.reviewEditStep.eGUseMoreFormalLanguage', 'E.g., "Use more formal language", "Add more technical details"...')
                   }
                   rows={3}
                   className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
@@ -296,7 +295,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
                 onClick={() => setShowRegeneratePrompt(false)}
                 className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
               >
-                {isPl ? 'Anuluj' : 'Cancel'}
+                {t('reportBuilder.reviewEditStep.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleRegenerate}
@@ -308,7 +307,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
-                {isPl ? 'Regeneruj' : 'Regenerate'}
+                {t('reportBuilder.reviewEditStep.regenerate', 'Regenerate')}
               </button>
             </div>
           </div>
@@ -338,7 +337,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   onRevokeShareLink,
   isLoading,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
@@ -386,7 +385,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             `}
           >
             <Edit3 className="w-4 h-4" />
-            {isPl ? 'Edycja' : 'Edit'}
+            {t('reportBuilder.reviewEditStep.edit2', 'Edit')}
           </button>
           <button
             onClick={() => setViewMode('preview')}
@@ -400,7 +399,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             `}
           >
             <Eye className="w-4 h-4" />
-            {isPl ? 'Podgląd' : 'Preview'}
+            {t('reportBuilder.reviewEditStep.preview', 'Preview')}
           </button>
         </div>
 
@@ -472,19 +471,15 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-green-900 dark:text-green-100">
-                {isPl ? 'Gotowy do finalizacji?' : 'Ready to Finalize?'}
+                {t('reportBuilder.reviewEditStep.readyToFinalize', 'Ready to Finalize?')}
               </h3>
               <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                {isPl
-                  ? 'Po finalizacji raport przejdzie do statusu "W przeglądzie". Nadal będziesz mógł go edytować.'
-                  : 'After finalizing, the report will move to "In Review" status. You can still edit it.'}
+                {t('reportBuilder.reviewEditStep.afterFinalizingTheReportWillMove', 'After finalizing, the report will move to "In Review" status. You can still edit it.')}
               </p>
 
               {!allSectionsReady && (
                 <div className="mt-3 p-2 bg-amber-100 dark:bg-amber-900/30 rounded text-sm text-amber-700 dark:text-amber-300">
-                  {isPl
-                    ? 'Uwaga: Niektóre sekcje nie mają jeszcze treści.'
-                    : 'Warning: Some sections do not have content yet.'}
+                  {t('reportBuilder.reviewEditStep.warningSomeSectionsDoNotHave', 'Warning: Some sections do not have content yet.')}
                 </div>
               )}
 
@@ -498,7 +493,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 ) : (
                   <CheckCircle2 className="w-4 h-4" />
                 )}
-                {isPl ? 'Finalizuj Raport' : 'Finalize Report'}
+                {t('reportBuilder.reviewEditStep.finalizeReport', 'Finalize Report')}
               </button>
             </div>
           </div>
@@ -514,12 +509,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                {isPl ? 'Weryfikacja' : 'In Review'}
+                {t('reportBuilder.reviewEditStep.inReview', 'In Review')}
               </h3>
               <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                {isPl
-                  ? 'Raport jest w weryfikacji. Możesz go zatwierdzić lub odesłać do poprawek.'
-                  : 'This report is in review. You can approve it or send it back for changes.'}
+                {t('reportBuilder.reviewEditStep.thisReportIsInReviewYou', 'This report is in review. You can approve it or send it back for changes.')}
               </p>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -529,7 +522,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                     disabled={isLoading}
                     className="px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text hover:bg-c-surface-raised disabled:opacity-50"
                   >
-                    {isPl ? 'Odeślij do poprawek' : 'Send back'}
+                    {t('reportBuilder.reviewEditStep.sendBack', 'Send back')}
                   </button>
                 )}
                 {onApprove && (
@@ -539,7 +532,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                     className="flex items-center gap-2 px-5 py-2 rounded-lg bg-green-600 text-c-text hover:bg-green-700 disabled:opacity-50"
                   >
                     <Check className="w-4 h-4" />
-                    {isPl ? 'Zatwierdź' : 'Approve'}
+                    {t('reportBuilder.reviewEditStep.approve', 'Approve')}
                   </button>
                 )}
               </div>
@@ -557,12 +550,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">
-                {isPl ? 'Raport zatwierdzony' : 'Report Approved'}
+                {t('reportBuilder.reviewEditStep.reportApproved', 'Report Approved')}
               </h3>
               <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-                {isPl
-                  ? 'Raport został zatwierdzony. Oznacz jako wysłany wewnętrznie, gdy przekażesz go do zespołu.'
-                  : 'Report has been approved. Mark as sent internally when you share it with the team.'}
+                {t('reportBuilder.reviewEditStep.reportHasBeenApprovedMarkAs', 'Report has been approved. Mark as sent internally when you share it with the team.')}
               </p>
 
               <button
@@ -575,7 +566,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                {isPl ? 'Oznacz jako wysłany wewnętrznie' : 'Mark as Sent Internally'}
+                {t('reportBuilder.reviewEditStep.markAsSentInternally', 'Mark as Sent Internally')}
               </button>
             </div>
           </div>
@@ -591,12 +582,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                {isPl ? 'Wysłany wewnętrznie' : 'Sent Internally'}
+                {t('reportBuilder.reviewEditStep.sentInternally', 'Sent Internally')}
               </h3>
               <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                {isPl
-                  ? 'Raport został wysłany wewnętrznie. Oznacz jako wysłany zewnętrznie, gdy przekażesz go do klienta.'
-                  : 'Report has been sent internally. Mark as sent externally when you share it with the client.'}
+                {t('reportBuilder.reviewEditStep.reportHasBeenSentInternallyMark', 'Report has been sent internally. Mark as sent externally when you share it with the client.')}
               </p>
 
               <button
@@ -609,7 +598,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 ) : (
                   <ArrowRight className="w-4 h-4" />
                 )}
-                {isPl ? 'Oznacz jako wysłany zewnętrznie' : 'Mark as Sent Externally'}
+                {t('reportBuilder.reviewEditStep.markAsSentExternally', 'Mark as Sent Externally')}
               </button>
             </div>
           </div>
@@ -625,12 +614,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                {isPl ? 'Wysłany zewnętrznie' : 'Sent Externally'}
+                {t('reportBuilder.reviewEditStep.sentExternally', 'Sent Externally')}
               </h3>
               <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                {isPl
-                  ? 'Raport został wysłany do klienta. Cykl życia raportu został zakończony.'
-                  : 'Report has been sent to the client. The report lifecycle is complete.'}
+                {t('reportBuilder.reviewEditStep.reportHasBeenSentToThe', 'Report has been sent to the client. The report lifecycle is complete.')}
               </p>
             </div>
           </div>

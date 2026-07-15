@@ -195,6 +195,7 @@ interface QuickPreviewBarProps {
 }
 
 const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl }) => {
+  const { t } = useTranslation();
   const audienceLabels: Record<string, string> = {
     executive: '👔 Executive',
     board: '🏛️ Board',
@@ -222,7 +223,7 @@ const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl
         <span
           className="w-3.5 h-3.5 rounded-full border border-c-border-strong"
           style={{ backgroundColor: styling.primaryColor }}
-          title={isPl ? 'Kolor główny' : 'Primary color'}
+          title={t('reportBuilder.settingsPanel.primaryColor', 'Primary color')}
         />
       </div>
     </div>
@@ -297,6 +298,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
   currentVersion,
   isPl,
 }) => {
+  const { t } = useTranslation();
   const [saveSummary, setSaveSummary] = useState('');
   const [showSaveForm, setShowSaveForm] = useState(false);
 
@@ -313,12 +315,12 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
   const formatRelativeTime = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const min = Math.floor(diff / 60000);
-    if (min < 1) return isPl ? 'Przed chwilą' : 'Just now';
-    if (min < 60) return `${min}m ${isPl ? 'temu' : 'ago'}`;
+    if (min < 1) return t('reportBuilder.settingsPanel.justNow', 'Just now');
+    if (min < 60) return `${min}m ${t('reportBuilder.settingsPanel.ago', 'ago')}`;
     const hr = Math.floor(min / 60);
-    if (hr < 24) return `${hr}h ${isPl ? 'temu' : 'ago'}`;
+    if (hr < 24) return `${hr}h ${t('reportBuilder.settingsPanel.ago', 'ago')}`;
     const d = Math.floor(hr / 24);
-    return `${d}d ${isPl ? 'temu' : 'ago'}`;
+    return `${d}d ${t('reportBuilder.settingsPanel.ago', 'ago')}`;
   };
 
   return (
@@ -357,18 +359,18 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
               className="w-full flex items-center justify-center gap-2 py-2.5 text-[11px] font-semibold text-indigo-300 hover:bg-indigo-900/20 transition-colors"
             >
               <ArrowDownToLine className="w-3.5 h-3.5" />
-              {isPl ? 'Zapisz wersję' : 'Save version'}
+              {t('reportBuilder.settingsPanel.saveVersion', 'Save version')}
             </button>
           ) : (
             <div className="p-3 space-y-2">
               <label className="block text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
-                {isPl ? 'Opis zmian (opcjonalnie)' : 'Change summary (optional)'}
+                {t('reportBuilder.settingsPanel.changeSummaryOptional', 'Change summary (optional)')}
               </label>
               <textarea
                 value={saveSummary}
                 onChange={(e) => setSaveSummary(e.target.value)}
                 placeholder={
-                  isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'
+                  t('reportBuilder.settingsPanel.whatChangedInThisVersion', 'What changed in this version...')
                 }
                 className="w-full px-2.5 py-2 text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-c-text-secondary placeholder:text-c-text-secondary leading-relaxed"
                 autoFocus
@@ -382,7 +384,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                   className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-c-text rounded-lg text-[10px] font-semibold transition-colors"
                 >
                   <Save className="w-3 h-3" />
-                  {isPl ? 'Zapisz' : 'Save'}
+                  {t('reportBuilder.settingsPanel.save', 'Save')}
                 </button>
                 <button
                   onClick={() => {
@@ -391,7 +393,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                   }}
                   className="px-3 py-1.5 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface rounded-lg text-[10px] font-medium transition-colors"
                 >
-                  {isPl ? 'Anuluj' : 'Cancel'}
+                  {t('reportBuilder.settingsPanel.cancel', 'Cancel')}
                 </button>
               </div>
             </div>
@@ -405,7 +407,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
           <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border-subtle">
             <div className="text-[13px] font-bold text-blue-400 font-mono">{manualCount}</div>
             <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
-              {isPl ? 'Ręcznych' : 'Manual'}
+              {t('reportBuilder.settingsPanel.manual', 'Manual')}
             </div>
           </div>
           <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border-subtle">
@@ -417,7 +419,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
           <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border-subtle">
             <div className="text-[13px] font-bold text-amber-400 font-mono">{rollbackCount}</div>
             <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
-              {isPl ? 'Cofnięć' : 'Rollback'}
+              {t('reportBuilder.settingsPanel.rollback', 'Rollback')}
             </div>
           </div>
         </div>
@@ -432,16 +434,16 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
         <div className="text-center py-8">
           <Shield className="w-7 h-7 text-c-text-secondary mx-auto mb-2" />
           <p className="text-[11px] text-c-text-secondary leading-relaxed">
-            {isPl ? 'Brak zapisanych wersji' : 'No saved versions'}
+            {t('reportBuilder.settingsPanel.noSavedVersions', 'No saved versions')}
           </p>
           <p className="text-[9px] text-c-text-secondary mt-0.5">
-            {isPl ? 'Zapisz pierwszą wersję raportu' : 'Save the first version of your report'}
+            {t('reportBuilder.settingsPanel.saveTheFirstVersionOfYour', 'Save the first version of your report')}
           </p>
         </div>
       ) : (
         <div className="space-y-0">
           <div className="text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider mb-2">
-            {isPl ? 'Historia' : 'History'} ({versions.length})
+            {t('reportBuilder.settingsPanel.history', 'History')} ({versions.length})
           </div>
           {versions.map((v, idx) => {
             const isLatest = idx === 0;
@@ -482,7 +484,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                         </span>
                         {isLatest && (
                           <span className="text-[7px] px-1 py-0.5 rounded bg-indigo-500/30 text-indigo-300 font-bold uppercase tracking-wider">
-                            {isPl ? 'Aktualna' : 'Current'}
+                            {t('reportBuilder.settingsPanel.current', 'Current')}
                           </span>
                         )}
                         <span
@@ -495,13 +497,9 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                           }`}
                         >
                           {v.changeType === 'manual'
-                            ? isPl
-                              ? 'Ręczny'
-                              : 'Manual'
+                            ? t('reportBuilder.settingsPanel.manual2', 'Manual')
                             : v.changeType === 'rollback'
-                              ? isPl
-                                ? 'Cofnięcie'
-                                : 'Rollback'
+                              ? t('reportBuilder.settingsPanel.rollback2', 'Rollback')
                               : 'Auto'}
                         </span>
                       </div>
@@ -511,9 +509,10 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                           onClick={() => {
                             if (
                               window.confirm(
-                                isPl
-                                  ? `Przywrócić wersję v${v.versionNumber}?`
-                                  : `Restore version v${v.versionNumber}?`
+                                t('reportBuilder.settingsPanel.confirmRestoreVersion', {
+                                  defaultValue: `Restore version v${v.versionNumber}?`,
+                                  version: v.versionNumber,
+                                })
                               )
                             ) {
                               onRollbackVersion(v.id);
@@ -522,7 +521,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                           className="opacity-0 group-hover/ver:opacity-100 flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-medium text-indigo-400 hover:bg-indigo-900/30 rounded transition-all"
                         >
                           <RotateCcw className="w-2.5 h-2.5" />
-                          {isPl ? 'Przywróć' : 'Restore'}
+                          {t('reportBuilder.settingsPanel.restore', 'Restore')}
                         </button>
                       )}
                     </div>
@@ -601,7 +600,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   reportId,
   lastSavedAt,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -612,11 +611,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert(isPl ? 'Proszę wybrać plik obrazu' : 'Please select an image file');
+      alert(t('reportBuilder.settingsPanel.pleaseSelectAnImageFile', 'Please select an image file'));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      alert(isPl ? 'Plik jest za duży (max 2MB)' : 'File is too large (max 2MB)');
+      alert(t('reportBuilder.settingsPanel.fileIsTooLargeMax2mb', 'File is too large (max 2MB)'));
       return;
     }
     const reader = new FileReader();
@@ -681,7 +680,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <SideIcon
               icon={<History className="w-4 h-4" />}
               active={activeSection === 'versions'}
-              label={isPl ? 'Wersje' : 'Versions'}
+              label={t('reportBuilder.settingsPanel.versions', 'Versions')}
               onClick={() => {
                 onToggleCollapse?.();
                 onSectionChange('versions');
@@ -698,7 +697,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <SideIcon
             icon={<Target className="w-4 h-4" />}
             active={activeSection === 'intent'}
-            label={isPl ? 'Treść' : 'Content'}
+            label={t('reportBuilder.settingsPanel.content', 'Content')}
             onClick={() => {
               onToggleCollapse?.();
               onSectionChange('intent');
@@ -709,7 +708,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <SideIcon
             icon={<Palette className="w-4 h-4" />}
             active={activeSection === 'styling'}
-            label={isPl ? 'Wygląd' : 'Design'}
+            label={t('reportBuilder.settingsPanel.design', 'Design')}
             onClick={() => {
               onToggleCollapse?.();
               onSectionChange('styling');
@@ -721,7 +720,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <SideIcon
               icon={<ClipboardCheck className="w-4 h-4" />}
               active={activeSection === 'review'}
-              label={isPl ? 'Recenzja' : 'Review'}
+              label={t('reportBuilder.settingsPanel.review', 'Review')}
               onClick={() => {
                 onToggleCollapse?.();
                 onSectionChange('review');
@@ -751,7 +750,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             }`}
           >
             <Layers className="w-3 h-3" />
-            {isPl ? 'Ustawienia' : 'Settings'}
+            {t('reportBuilder.settingsPanel.settings', 'Settings')}
           </button>
 
           {/* Versions pill */}
@@ -768,7 +767,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               }`}
             >
               <History className="w-3 h-3" />
-              {isPl ? 'Wersje' : 'Versions'}
+              {t('reportBuilder.settingsPanel.versions', 'Versions')}
             </button>
           )}
         </div>
@@ -791,9 +790,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       {activeSection !== 'versions' && (
         <div className="flex border-b border-c-border-subtle bg-c-surface">
           {[
-            { key: 'intent' as const, en: 'Content', pl: 'Treść' },
-            { key: 'styling' as const, en: 'Design', pl: 'Wygląd' },
-            ...(!isTemplateMode ? [{ key: 'review' as const, en: 'Review', pl: 'Recenzja' }] : []),
+            { key: 'intent' as const, labelKey: 'reportBuilder.settingsPanel.content' },
+            { key: 'styling' as const, labelKey: 'reportBuilder.settingsPanel.design' },
+            ...(!isTemplateMode
+              ? [{ key: 'review' as const, labelKey: 'reportBuilder.settingsPanel.review' }]
+              : []),
           ].map((tab) => (
             <button
               key={tab.key}
@@ -804,7 +805,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface border-b-2 border-transparent'
               }`}
             >
-              {isPl ? tab.pl : tab.en}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
@@ -818,14 +819,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             {/* Template Info (only in template mode) */}
             {isTemplateMode && templateMeta && onTemplateMetaChange && (
               <SectionCard
-                title={isPl ? 'Szablon' : 'Template'}
+                title={t('reportBuilder.settingsPanel.template', 'Template')}
                 icon={<FileText className="w-4 h-4" />}
               >
                 <div className="space-y-3">
                   {/* Module selection */}
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Moduł' : 'Module'}
+                      {t('reportBuilder.settingsPanel.module', 'Module')}
                     </label>
                     <select
                       value={templateMeta.sourceType || 'ASSESSMENT'}
@@ -849,14 +850,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   {/* Tool/Framework selection - dynamic based on module */}
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Narzędzie / Framework' : 'Tool / Framework'}
+                      {t('reportBuilder.settingsPanel.toolFramework', 'Tool / Framework')}
                     </label>
                     <select
                       value={templateMeta.reportType || ''}
                       onChange={(e) => onTemplateMetaChange?.({ reportType: e.target.value })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="">— {isPl ? 'Wybierz' : 'Select'} —</option>
+                      <option value="">— {t('reportBuilder.settingsPanel.select', 'Select')} —</option>
                       {MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.map((tool) => (
                         <option key={tool.value} value={tool.value}>
                           {tool.label}
@@ -878,12 +879,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   {/* Author */}
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Autor' : 'Author'}
+                      {t('reportBuilder.settingsPanel.author', 'Author')}
                     </label>
                     <input
                       value={templateMeta.author || ''}
                       onChange={(e) => onTemplateMetaChange?.({ author: e.target.value })}
-                      placeholder={isPl ? 'Imię i nazwisko...' : 'Name...'}
+                      placeholder={t('reportBuilder.settingsPanel.name', 'Name...')}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     />
                   </div>
@@ -892,7 +893,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <textarea
                     value={templateMeta.description || ''}
                     onChange={(e) => onTemplateMetaChange?.({ description: e.target.value })}
-                    placeholder={isPl ? 'Opis szablonu...' : 'Template description...'}
+                    placeholder={t('reportBuilder.settingsPanel.templateDescription', 'Template description...')}
                     rows={2}
                     className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none"
                   />
@@ -903,7 +904,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             {/* Quick Preset (template mode) */}
             {isTemplateMode && onApplyPreset && (
               <SectionCard
-                title={isPl ? 'Szybki preset' : 'Quick Preset'}
+                title={t('reportBuilder.settingsPanel.quickPreset', 'Quick Preset')}
                 icon={<Zap className="w-4 h-4" />}
               >
                 <div className="flex gap-2">
@@ -927,55 +928,55 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Audience & Goal */}
             <SectionCard
-              title={isPl ? 'Cel i odbiorcy' : 'Goal & Audience'}
+              title={t('reportBuilder.settingsPanel.goalAudience', 'Goal & Audience')}
               icon={<Target className="w-4 h-4" />}
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Odbiorca' : 'Audience'}
+                      {t('reportBuilder.settingsPanel.audience', 'Audience')}
                     </label>
                     <select
                       value={intent.audience}
                       onChange={(e) => onIntentChange({ audience: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="executive">{isPl ? 'Zarząd' : 'Executive'}</option>
-                      <option value="board">{isPl ? 'Rada' : 'Board'}</option>
-                      <option value="technical">{isPl ? 'Techniczny' : 'Technical'}</option>
-                      <option value="operational">{isPl ? 'Operacyjny' : 'Operational'}</option>
-                      <option value="mixed">{isPl ? 'Mieszany' : 'Mixed'}</option>
+                      <option value="executive">{t('reportBuilder.settingsPanel.executive', 'Executive')}</option>
+                      <option value="board">{t('reportBuilder.settingsPanel.board', 'Board')}</option>
+                      <option value="technical">{t('reportBuilder.settingsPanel.technical', 'Technical')}</option>
+                      <option value="operational">{t('reportBuilder.settingsPanel.operational', 'Operational')}</option>
+                      <option value="mixed">{t('reportBuilder.settingsPanel.mixed', 'Mixed')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Cel' : 'Goal'}
+                      {t('reportBuilder.settingsPanel.goal', 'Goal')}
                     </label>
                     <select
                       value={intent.goal}
                       onChange={(e) => onIntentChange({ goal: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="diagnosis">{isPl ? 'Diagnoza' : 'Diagnosis'}</option>
-                      <option value="roadmap">{isPl ? 'Roadmap' : 'Roadmap'}</option>
+                      <option value="diagnosis">{t('reportBuilder.settingsPanel.diagnosis', 'Diagnosis')}</option>
+                      <option value="roadmap">{t('reportBuilder.settingsPanel.roadmap', 'Roadmap')}</option>
                       <option value="investment_decision">
-                        {isPl ? 'Decyzja inwest.' : 'Investment'}
+                        {t('reportBuilder.settingsPanel.investment', 'Investment')}
                       </option>
-                      <option value="stakeholder_update">{isPl ? 'Update' : 'Update'}</option>
-                      <option value="summary">{isPl ? 'Podsumowanie' : 'Summary'}</option>
+                      <option value="stakeholder_update">{t('reportBuilder.settingsPanel.update', 'Update')}</option>
+                      <option value="summary">{t('reportBuilder.settingsPanel.summary', 'Summary')}</option>
                     </select>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs text-c-text-secondary mb-1">
-                    {isPl ? 'Ton' : 'Tone'}
+                    {t('reportBuilder.settingsPanel.tone', 'Tone')}
                   </label>
                   <div className="flex gap-1">
                     {[
-                      { value: 'consulting', label: isPl ? 'Konsultingowy' : 'Consulting' },
-                      { value: 'neutral', label: isPl ? 'Neutralny' : 'Neutral' },
-                      { value: 'decisive', label: isPl ? 'Decyzyjny' : 'Decisive' },
+                      { value: 'consulting', label: t('reportBuilder.settingsPanel.consulting', 'Consulting') },
+                      { value: 'neutral', label: t('reportBuilder.settingsPanel.neutral', 'Neutral') },
+                      { value: 'decisive', label: t('reportBuilder.settingsPanel.decisive', 'Decisive') },
                     ].map((t) => (
                       <button
                         key={t.value}
@@ -996,16 +997,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Scope */}
             <SectionCard
-              title={isPl ? 'Zakres' : 'Scope'}
+              title={t('reportBuilder.settingsPanel.scope', 'Scope')}
               icon={<Layers className="w-4 h-4" />}
               defaultOpen={false}
             >
               <div className="space-y-3">
                 <div className="flex gap-1">
                   {[
-                    { value: 'full', label: isPl ? 'Pełny' : 'Full' },
+                    { value: 'full', label: t('reportBuilder.settingsPanel.full', 'Full') },
                     { value: 'executive', label: 'Executive' },
-                    { value: 'focused', label: isPl ? 'Wybrany' : 'Focused' },
+                    { value: 'focused', label: t('reportBuilder.settingsPanel.focused', 'Focused') },
                   ].map((s) => (
                     <button
                       key={s.value}
@@ -1023,21 +1024,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Długość' : 'Length'}
+                      {t('reportBuilder.settingsPanel.length', 'Length')}
                     </label>
                     <select
                       value={intent.targetLength || 'standard'}
                       onChange={(e) => onIntentChange({ targetLength: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="short">{isPl ? 'Krótki' : 'Short'}</option>
+                      <option value="short">{t('reportBuilder.settingsPanel.short', 'Short')}</option>
                       <option value="standard">Standard</option>
-                      <option value="long">{isPl ? 'Długi' : 'Long'}</option>
+                      <option value="long">{t('reportBuilder.settingsPanel.long', 'Long')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Preset' : 'Preset'}
+                      {t('reportBuilder.settingsPanel.preset', 'Preset')}
                     </label>
                     <select
                       value={intent.requiredSectionsPreset || 'standard'}
@@ -1058,49 +1059,41 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Content Coherence (REQ-5) */}
             <SectionCard
-              title={isPl ? 'Spójność treści' : 'Content Coherence'}
+              title={t('reportBuilder.settingsPanel.contentCoherence', 'Content Coherence')}
               icon={<Target className="w-4 h-4" />}
               defaultOpen={false}
             >
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-c-text-secondary mb-1">
-                    {isPl ? 'Główna teza raportu' : 'Narrative Thread'}
+                    {t('reportBuilder.settingsPanel.narrativeThread', 'Narrative Thread')}
                   </label>
                   <textarea
                     value={(intent as any).narrativeThread || ''}
                     onChange={(e) => onIntentChange({ narrativeThread: e.target.value } as any)}
                     placeholder={
-                      isPl
-                        ? 'Np. "Organizacja potrzebuje fundamentalnej zmiany w podejściu do danych..."'
-                        : 'E.g., "The organization needs a fundamental shift in data strategy..."'
+                      t('reportBuilder.settingsPanel.eGTheOrganizationNeedsA', 'E.g., "The organization needs a fundamental shift in data strategy..."')
                     }
                     className="w-full px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-16"
                   />
                   <p className="text-[10px] text-c-text-secondary mt-1">
-                    {isPl
-                      ? 'Ten wątek będzie podkreślany w każdej sekcji raportu'
-                      : 'This thread will be emphasized across all report sections'}
+                    {t('reportBuilder.settingsPanel.thisThreadWillBeEmphasizedAcross', 'This thread will be emphasized across all report sections')}
                   </p>
                 </div>
                 <div>
                   <label className="block text-xs text-c-text-secondary mb-1">
-                    {isPl ? 'Kluczowe terminy / Słownik' : 'Key Terms / Glossary'}
+                    {t('reportBuilder.settingsPanel.keyTermsGlossary', 'Key Terms / Glossary')}
                   </label>
                   <textarea
                     value={(intent as any).glossaryTerms || ''}
                     onChange={(e) => onIntentChange({ glossaryTerms: e.target.value } as any)}
                     placeholder={
-                      isPl
-                        ? 'Np. "DRD = Digital Readiness Diagnosis; transformacja cyfrowa; Industry 4.0"'
-                        : 'E.g., "DRD = Digital Readiness Diagnosis; digital transformation; Industry 4.0"'
+                      t('reportBuilder.settingsPanel.eGDrdDigitalReadinessDiagnosis', 'E.g., "DRD = Digital Readiness Diagnosis; digital transformation; Industry 4.0"')
                     }
                     className="w-full px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-16"
                   />
                   <p className="text-[10px] text-c-text-secondary mt-1">
-                    {isPl
-                      ? 'AI będzie konsekwentnie używać tych terminów'
-                      : 'AI will consistently use these terms throughout'}
+                    {t('reportBuilder.settingsPanel.aiWillConsistentlyUseTheseTerms', 'AI will consistently use these terms throughout')}
                   </p>
                 </div>
               </div>
@@ -1108,7 +1101,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Language - 6 languages */}
             <SectionCard
-              title={isPl ? 'Język raportu' : 'Report Language'}
+              title={t('reportBuilder.settingsPanel.reportLanguage', 'Report Language')}
               icon={<Globe className="w-4 h-4" />}
               defaultOpen={false}
             >
@@ -1132,15 +1125,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Visuals */}
             <SectionCard
-              title={isPl ? 'Wizualizacje' : 'Visuals'}
+              title={t('reportBuilder.settingsPanel.visuals', 'Visuals')}
               icon={<Image className="w-4 h-4" />}
               defaultOpen={false}
             >
               <div className="space-y-2">
                 {[
-                  { key: 'assessmentMatrix', label: isPl ? 'Macierz oceny' : 'Assessment Matrix' },
-                  { key: 'charts', label: isPl ? 'Wykresy' : 'Charts' },
-                  { key: 'icons', label: isPl ? 'Ikony' : 'Icons' },
+                  { key: 'assessmentMatrix', label: t('reportBuilder.settingsPanel.assessmentMatrix', 'Assessment Matrix') },
+                  { key: 'charts', label: t('reportBuilder.settingsPanel.charts', 'Charts') },
+                  { key: 'icons', label: t('reportBuilder.settingsPanel.icons', 'Icons') },
                 ].map((v) => (
                   <label key={v.key} className="flex items-center justify-between cursor-pointer">
                     <span className="text-sm text-c-text-secondary">{v.label}</span>
@@ -1175,7 +1168,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="divide-y divide-c-border-subtle">
             {/* Layout */}
             <SectionCard
-              title={isPl ? 'Układ' : 'Layout'}
+              title={t('reportBuilder.settingsPanel.layout', 'Layout')}
               icon={<LayoutGrid className="w-4 h-4" />}
             >
               <div className="space-y-4">
@@ -1190,7 +1183,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   >
                     <Smartphone className="w-8 h-8 text-c-text-secondary" />
                     <div className="text-center">
-                      <div className="text-sm font-medium">{isPl ? 'Pionowy' : 'Portrait'}</div>
+                      <div className="text-sm font-medium">{t('reportBuilder.settingsPanel.portrait', 'Portrait')}</div>
                       <div className="text-[10px] text-c-text-secondary">A4 / Letter</div>
                     </div>
                   </button>
@@ -1204,23 +1197,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   >
                     <Monitor className="w-8 h-8 text-c-text-secondary" />
                     <div className="text-center">
-                      <div className="text-sm font-medium">{isPl ? 'Poziomy' : 'Landscape'}</div>
+                      <div className="text-sm font-medium">{t('reportBuilder.settingsPanel.landscape', 'Landscape')}</div>
                       <div className="text-[10px] text-c-text-secondary">16:9 / Slides</div>
                     </div>
                   </button>
                 </div>
                 <div>
                   <label className="block text-xs text-c-text-secondary mb-1">
-                    {isPl ? 'Stopka' : 'Footer'}
+                    {t('reportBuilder.settingsPanel.footer', 'Footer')}
                   </label>
                   <select
                     value={styling.footerMode || 'minimal'}
                     onChange={(e) => onStylingChange({ footerMode: e.target.value as any })}
                     className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                   >
-                    <option value="none">{isPl ? 'Brak' : 'None'}</option>
-                    <option value="minimal">{isPl ? 'Minimalna' : 'Minimal'}</option>
-                    <option value="full">{isPl ? 'Pełna' : 'Full'}</option>
+                    <option value="none">{t('reportBuilder.settingsPanel.none', 'None')}</option>
+                    <option value="minimal">{t('reportBuilder.settingsPanel.minimal', 'Minimal')}</option>
+                    <option value="full">{t('reportBuilder.settingsPanel.full2', 'Full')}</option>
                   </select>
                 </div>
               </div>
@@ -1228,17 +1221,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Theme & Font */}
             <SectionCard
-              title={isPl ? 'Styl' : 'Style'}
+              title={t('reportBuilder.settingsPanel.style', 'Style')}
               icon={<Palette className="w-4 h-4" />}
               defaultOpen={false}
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { value: 'professional', label: isPl ? 'Profesjonalny' : 'Professional' },
-                    { value: 'modern', label: isPl ? 'Nowoczesny' : 'Modern' },
-                    { value: 'minimal', label: isPl ? 'Minimalistyczny' : 'Minimal' },
-                    { value: 'corporate', label: isPl ? 'Korporacyjny' : 'Corporate' },
+                    { value: 'professional', label: t('reportBuilder.settingsPanel.professional', 'Professional') },
+                    { value: 'modern', label: t('reportBuilder.settingsPanel.modern', 'Modern') },
+                    { value: 'minimal', label: t('reportBuilder.settingsPanel.minimal2', 'Minimal') },
+                    { value: 'corporate', label: t('reportBuilder.settingsPanel.corporate', 'Corporate') },
                   ].map((theme) => (
                     <button
                       key={theme.value}
@@ -1256,7 +1249,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Font' : 'Font'}
+                      {t('reportBuilder.settingsPanel.font', 'Font')}
                     </label>
                     <select
                       value={styling.fontFamily || 'inter'}
@@ -1271,16 +1264,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </div>
                   <div>
                     <label className="block text-xs text-c-text-secondary mb-1">
-                      {isPl ? 'Rozmiar' : 'Size'}
+                      {t('reportBuilder.settingsPanel.size', 'Size')}
                     </label>
                     <select
                       value={styling.fontSize || 'medium'}
                       onChange={(e) => onStylingChange({ fontSize: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="small">{isPl ? 'Mały' : 'Small'}</option>
-                      <option value="medium">{isPl ? 'Średni' : 'Medium'}</option>
-                      <option value="large">{isPl ? 'Duży' : 'Large'}</option>
+                      <option value="small">{t('reportBuilder.settingsPanel.small', 'Small')}</option>
+                      <option value="medium">{t('reportBuilder.settingsPanel.medium', 'Medium')}</option>
+                      <option value="large">{t('reportBuilder.settingsPanel.large', 'Large')}</option>
                     </select>
                   </div>
                 </div>
@@ -1301,7 +1294,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Colors */}
             <SectionCard
-              title={isPl ? 'Kolory' : 'Colors'}
+              title={t('reportBuilder.settingsPanel.colors', 'Colors')}
               icon={<Palette className="w-4 h-4" />}
               defaultOpen={false}
             >
@@ -1317,7 +1310,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     />
                     <div>
                       <div className="text-xs text-c-text-secondary">
-                        {isPl ? 'Główny' : 'Primary'}
+                        {t('reportBuilder.settingsPanel.primary', 'Primary')}
                       </div>
                       <div className="text-[10px] font-mono text-c-text-secondary">
                         {styling.primaryColor}
@@ -1333,7 +1326,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     />
                     <div>
                       <div className="text-xs text-c-text-secondary">
-                        {isPl ? 'Akcent' : 'Accent'}
+                        {t('reportBuilder.settingsPanel.accent', 'Accent')}
                       </div>
                       <div className="text-[10px] font-mono text-c-text-secondary">
                         {styling.accentColor}
@@ -1345,7 +1338,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 {/* Custom palette */}
                 <div className="pt-2 border-t border-c-border-subtle">
                   <div className="text-xs text-c-text-secondary mb-2">
-                    {isPl ? 'Paleta' : 'Palette'}
+                    {t('reportBuilder.settingsPanel.palette', 'Palette')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(styling.customColors || []).map((color) => (
@@ -1389,7 +1382,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 {/* Logo upload */}
                 <div>
                   <div className="text-xs text-c-text-secondary mb-2">
-                    {isPl ? 'Logo klienta' : 'Client Logo'}
+                    {t('reportBuilder.settingsPanel.clientLogo', 'Client Logo')}
                   </div>
                   {styling.clientLogoUrl ? (
                     <div className="relative inline-block">
@@ -1413,7 +1406,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-c-border-subtle rounded-lg text-c-text-secondary hover:border-blue-400 hover:text-blue-500 transition-all text-sm"
                     >
                       <Upload className="w-4 h-4" />
-                      {isPl ? 'Wgraj logo' : 'Upload logo'}
+                      {t('reportBuilder.settingsPanel.uploadLogo', 'Upload logo')}
                     </button>
                   )}
                   <input
@@ -1430,10 +1423,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <label className="flex items-center justify-between cursor-pointer">
                     <div>
                       <div className="text-sm text-c-text">
-                        {isPl ? '"Stworzono w Consultify"' : '"Created in Consultify"'}
+                        {t('reportBuilder.settingsPanel.createdInConsultify', '"Created in Consultify"')}
                       </div>
                       <div className="text-xs text-c-text-secondary">
-                        {isPl ? 'Automatyczny napis w stopce' : 'Auto footer text'}
+                        {t('reportBuilder.settingsPanel.autoFooterText', 'Auto footer text')}
                       </div>
                     </div>
                     <div

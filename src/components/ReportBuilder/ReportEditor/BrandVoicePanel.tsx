@@ -63,8 +63,10 @@ const LABELS = {
     },
     preferredWords: 'Preferred Words & Phrases',
     preferredDesc: 'Comma-separated list of terms to favor in reports',
+    preferredPlaceholder: 'e.g. transformation, optimization, strategy',
     forbiddenWords: 'Forbidden Words & Phrases',
     forbiddenDesc: 'Comma-separated list of terms to never use',
+    forbiddenPlaceholder: 'e.g. synergy, holistic, game-changer',
     hedgingTitle: 'Hedging & Evidence Rules',
     requireEvidence: 'Require evidence for recommendations',
     requireEvidenceDesc: 'Recommendations must cite supporting data',
@@ -98,8 +100,10 @@ const LABELS = {
     },
     preferredWords: 'Preferowane słowa i frazy',
     preferredDesc: 'Lista rozdzielona przecinkami — terminy preferowane w raportach',
+    preferredPlaceholder: 'np. transformacja, optymalizacja, strategia',
     forbiddenWords: 'Zakazane słowa i frazy',
     forbiddenDesc: 'Lista rozdzielona przecinkami — terminy do wykluczenia',
+    forbiddenPlaceholder: 'np. synergia, holistyczny, game-changer',
     hedgingTitle: 'Reguły ostrożności i dowodów',
     requireEvidence: 'Wymagaj dowodów dla rekomendacji',
     requireEvidenceDesc: 'Rekomendacje muszą cytować dane źródłowe',
@@ -296,11 +300,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               onChange={(e) => setPreferredWords(e.target.value)}
               rows={3}
               className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
-              placeholder={
-                isPl
-                  ? 'np. transformacja, optymalizacja, strategia'
-                  : 'e.g. transformation, optimization, strategy'
-              }
+              placeholder={t.preferredPlaceholder}
             />
           </div>
           <div>
@@ -311,11 +311,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               onChange={(e) => setForbiddenWords(e.target.value)}
               rows={3}
               className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
-              placeholder={
-                isPl
-                  ? 'np. synergia, holistyczny, game-changer'
-                  : 'e.g. synergy, holistic, game-changer'
-              }
+              placeholder={t.forbiddenPlaceholder}
             />
           </div>
         </div>

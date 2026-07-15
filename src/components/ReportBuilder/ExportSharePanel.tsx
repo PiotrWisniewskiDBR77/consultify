@@ -95,7 +95,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
   isLoading = false,
   blocks = [],
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [showShareModal, setShowShareModal] = useState(false);
@@ -216,25 +216,28 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
     if (enabledBlocks.length === 0) {
       warnings.push({
         type: 'error',
-        message: isPl ? 'Brak włączonych bloków w raporcie' : 'No enabled blocks in the report',
+        message: t('reportBuilder.exportSharePanel.noEnabledBlocksInTheReport', 'No enabled blocks in the report'),
       });
     }
 
     if (emptyBlocks.length > 0) {
       warnings.push({
         type: 'warning',
-        message: isPl
-          ? `${emptyBlocks.length} blok(ów) bez treści: ${emptyBlocks.map((b) => b.title).join(', ')}`
-          : `${emptyBlocks.length} block(s) without content: ${emptyBlocks.map((b) => b.title).join(', ')}`,
+        message: t('reportBuilder.exportSharePanel.nBlocksWithoutContent', {
+          defaultValue: `${emptyBlocks.length} block(s) without content: ${emptyBlocks.map((b) => b.title).join(', ')}`,
+          count: emptyBlocks.length,
+          titles: emptyBlocks.map((b) => b.title).join(', '),
+        }),
       });
     }
 
     if (notGeneratedBlocks.length > 0 && emptyBlocks.length === 0) {
       warnings.push({
         type: 'warning',
-        message: isPl
-          ? `${notGeneratedBlocks.length} blok(ów) nie wygenerowanych`
-          : `${notGeneratedBlocks.length} block(s) not generated`,
+        message: t('reportBuilder.exportSharePanel.nBlocksNotGenerated', {
+          defaultValue: `${notGeneratedBlocks.length} block(s) not generated`,
+          count: notGeneratedBlocks.length,
+        }),
       });
     }
 
@@ -242,9 +245,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
     if (!['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(reportStatus)) {
       warnings.push({
         type: 'error',
-        message: isPl
-          ? 'Raport nie został jeszcze wygenerowany'
-          : 'Report has not been generated yet',
+        message: t('reportBuilder.exportSharePanel.reportHasNotBeenGeneratedYet', 'Report has not been generated yet'),
       });
     }
 
@@ -257,7 +258,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
     }
 
     return warnings;
-  }, [blocks, reportStatus, isPl, qualityReport]);
+  }, [blocks, reportStatus, t, qualityReport]);
 
   const hasErrors =
     readinessWarnings.some((w) => w.type === 'error') || qualityReport?.canExport === false;
@@ -329,7 +330,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
             ) : (
               <FileText className="w-4 h-4" />
             )}
-            <span>{isPl ? 'DOCX' : 'DOCX'}</span>
+            <span>{t('reportBuilder.exportSharePanel.docx', 'DOCX')}</span>
           </button>
         )}
 
@@ -339,11 +340,11 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
           disabled={!canShare}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           title={
-            !canShare ? (isPl ? 'Raport musi być wygenerowany' : 'Report must be generated') : ''
+            !canShare ? (t('reportBuilder.exportSharePanel.reportMustBeGenerated', 'Report must be generated')) : ''
           }
         >
           <Share2 className="w-4 h-4" />
-          <span>{isPl ? 'Udostępnij' : 'Share'}</span>
+          <span>{t('reportBuilder.exportSharePanel.share', 'Share')}</span>
         </button>
       </div>
 
@@ -355,7 +356,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h3 className="font-semibold text-c-text flex items-center gap-2">
                 <Share2 className="w-5 h-5 text-blue-500" />
-                {isPl ? 'Udostępnij Raport' : 'Share Report'}
+                {t('reportBuilder.exportSharePanel.shareReport', 'Share Report')}
               </h3>
               <button
                 onClick={() => setShowShareModal(false)}
@@ -369,23 +370,21 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
               {/* Create New Link Section */}
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-c-text">
-                  {isPl ? 'Utwórz nowy link' : 'Create New Link'}
+                  {t('reportBuilder.exportSharePanel.createNewLink', 'Create New Link')}
                 </h4>
 
                 {/* Password */}
                 <div>
                   <label className="block text-sm text-c-text-secondary mb-1">
                     <Lock className="w-3 h-3 inline mr-1" />
-                    {isPl ? 'Hasło (opcjonalne)' : 'Password (optional)'}
+                    {t('reportBuilder.exportSharePanel.passwordOptional', 'Password (optional)')}
                   </label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={
-                      isPl
-                        ? 'Pozostaw puste dla publicznego dostępu'
-                        : 'Leave empty for public access'
+                      t('reportBuilder.exportSharePanel.leaveEmptyForPublicAccess', 'Leave empty for public access')
                     }
                     className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
@@ -395,16 +394,14 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                 <div>
                   <label className="block text-sm text-c-text-secondary mb-1">
                     <Calendar className="w-3 h-3 inline mr-1" />
-                    {isPl ? 'Wygasa po (dni)' : 'Expires after (days)'}
+                    {t('reportBuilder.exportSharePanel.expiresAfterDays', 'Expires after (days)')}
                   </label>
                   <input
                     type="number"
                     value={expiresInDays}
                     onChange={(e) => setExpiresInDays(e.target.value ? Number(e.target.value) : '')}
                     placeholder={
-                      isPl
-                        ? 'Pozostaw puste dla linku bez wygaśnięcia'
-                        : 'Leave empty for no expiration'
+                      t('reportBuilder.exportSharePanel.leaveEmptyForNoExpiration', 'Leave empty for no expiration')
                     }
                     min={1}
                     className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
@@ -415,14 +412,14 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                 <div>
                   <label className="block text-sm text-c-text-secondary mb-1">
                     <FileText className="w-3 h-3 inline mr-1" />
-                    {isPl ? 'Wiadomość (opcjonalna)' : 'Message (optional)'}
+                    {t('reportBuilder.exportSharePanel.messageOptional', 'Message (optional)')}
                   </label>
                   <input
                     type="text"
                     value={customMessage}
                     onChange={(e) => setCustomMessage(e.target.value)}
                     placeholder={
-                      isPl ? 'Np. "Raport dla zarządu"' : 'E.g., "Report for management"'
+                      t('reportBuilder.exportSharePanel.eGReportForManagement', 'E.g., "Report for management"')
                     }
                     className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
@@ -436,7 +433,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     onChange={(e) => setShowBranding(e.target.checked)}
                     className="rounded border-c-border-subtle"
                   />
-                  {isPl ? 'Pokaż branding Consultify' : 'Show Consultify branding'}
+                  {t('reportBuilder.exportSharePanel.showConsultifyBranding', 'Show Consultify branding')}
                 </label>
 
                 <button
@@ -449,14 +446,14 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                   ) : (
                     <Link2 className="w-4 h-4" />
                   )}
-                  {isPl ? 'Utwórz Link' : 'Create Link'}
+                  {t('reportBuilder.exportSharePanel.createLink', 'Create Link')}
                 </button>
               </div>
 
               {/* Existing Links Section */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-c-text">
-                  {isPl ? 'Aktywne linki' : 'Active Links'}
+                  {t('reportBuilder.exportSharePanel.activeLinks', 'Active Links')}
                 </h4>
 
                 {isLoadingLinks ? (
@@ -465,7 +462,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                   </div>
                 ) : shareLinks.length === 0 ? (
                   <div className="text-center py-8 text-c-text-secondary">
-                    {isPl ? 'Brak aktywnych linków' : 'No active links'}
+                    {t('reportBuilder.exportSharePanel.noActiveLinks', 'No active links')}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -485,12 +482,12 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                           <div className="flex items-center gap-3 mt-1 text-xs text-c-text-secondary">
                             <span className="flex items-center gap-1">
                               <Eye className="w-3 h-3" />
-                              {link.viewCount} {isPl ? 'wyświetleń' : 'views'}
+                              {link.viewCount} {t('reportBuilder.exportSharePanel.views', 'views')}
                             </span>
                             {link.expiresAt && (
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                {isPl ? 'Wygasa' : 'Expires'}:{' '}
+                                {t('reportBuilder.exportSharePanel.expires', 'Expires')}:{' '}
                                 {new Date(link.expiresAt).toLocaleDateString()}
                               </span>
                             )}
@@ -501,7 +498,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                           <button
                             onClick={() => handleCopyLink(link)}
                             className="p-2 text-c-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
-                            title={isPl ? 'Kopiuj link' : 'Copy link'}
+                            title={t('reportBuilder.exportSharePanel.copyLink', 'Copy link')}
                           >
                             {copiedLinkId === link.id ? (
                               <Check className="w-4 h-4 text-green-500" />
@@ -512,7 +509,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                           <button
                             onClick={() => handleRevokeLink(link.id)}
                             className="p-2 text-c-text-secondary hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
-                            title={isPl ? 'Usuń link' : 'Revoke link'}
+                            title={t('reportBuilder.exportSharePanel.revokeLink', 'Revoke link')}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -530,7 +527,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                 onClick={() => setShowShareModal(false)}
                 className="w-full px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
               >
-                {isPl ? 'Zamknij' : 'Close'}
+                {t('reportBuilder.exportSharePanel.close', 'Close')}
               </button>
             </div>
           </div>

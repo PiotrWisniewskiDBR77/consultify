@@ -15,6 +15,7 @@ import {
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 
@@ -74,6 +75,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
   isPl,
   onNavigateToEntity,
 }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState<EntityLinksData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,11 +92,11 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
       const res = await Api.get(`/report-builder/${reportId}/entity-links`);
       setData(res as EntityLinksData);
     } catch {
-      setError(isPl ? 'Nie udało się pobrać powiązań' : 'Failed to load entity links');
+      setError(t('reportBuilder.entityLinksPanel.failedToLoadEntityLinks', 'Failed to load entity links'));
     } finally {
       setLoading(false);
     }
-  }, [reportId, isPl]);
+  }, [reportId, t]);
 
   useEffect(() => {
     fetchLinks();
@@ -111,7 +113,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
     return (
       <div className="flex items-center justify-center py-8 text-c-text-secondary">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
-        <span className="text-sm">{isPl ? 'Ładowanie…' : 'Loading…'}</span>
+        <span className="text-sm">{t('reportBuilder.entityLinksPanel.loading', 'Loading…')}</span>
       </div>
     );
   }
@@ -124,7 +126,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
           onClick={fetchLinks}
           className="mt-2 text-xs text-c-accent hover:text-c-accent underline"
         >
-          {isPl ? 'Spróbuj ponownie' : 'Try again'}
+          {t('reportBuilder.entityLinksPanel.tryAgain', 'Try again')}
         </button>
       </div>
     );
@@ -134,11 +136,9 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
     return (
       <div className="px-4 py-8 text-center text-sm text-c-text-secondary">
         <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-40" />
-        <p>{isPl ? 'Brak powiązanych elementów' : 'No linked entities'}</p>
+        <p>{t('reportBuilder.entityLinksPanel.noLinkedEntities', 'No linked entities')}</p>
         <p className="mt-1 text-xs text-c-text-secondary">
-          {isPl
-            ? 'Utwórz inicjatywę z sekcji raportu, aby zobaczyć powiązania'
-            : 'Create an initiative from a report section to see links here'}
+          {t('reportBuilder.entityLinksPanel.createAnInitiativeFromAReport', 'Create an initiative from a report section to see links here')}
         </p>
       </div>
     );
@@ -153,21 +153,21 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
   }> = [
     {
       key: 'initiatives',
-      label: isPl ? 'Inicjatywy' : 'Initiatives',
+      label: t('reportBuilder.entityLinksPanel.initiatives', 'Initiatives'),
       icon: Target,
       iconColor: 'text-c-accent',
       items: data.initiatives,
     },
     {
       key: 'tasks',
-      label: isPl ? 'Zadania' : 'Tasks',
+      label: t('reportBuilder.entityLinksPanel.tasks', 'Tasks'),
       icon: CheckSquare,
       iconColor: 'text-blue-400',
       items: data.tasks,
     },
     {
       key: 'decisions',
-      label: isPl ? 'Decyzje' : 'Decisions',
+      label: t('reportBuilder.entityLinksPanel.decisions', 'Decisions'),
       icon: GitBranch,
       iconColor: 'text-amber-400',
       items: data.decisions,
@@ -224,7 +224,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
             )}
 
             {isExpanded && count === 0 && (
-              <p className="ml-10 text-xs text-c-text-secondary py-1">{isPl ? 'Brak' : 'None'}</p>
+              <p className="ml-10 text-xs text-c-text-secondary py-1">{t('reportBuilder.entityLinksPanel.none', 'None')}</p>
             )}
           </div>
         );

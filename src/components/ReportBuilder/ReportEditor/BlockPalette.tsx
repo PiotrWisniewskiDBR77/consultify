@@ -21,6 +21,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -366,6 +367,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
   isPl,
   sourceType,
 }) => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<'all' | 'content' | 'data' | 'visual'>(
     'all'
@@ -493,10 +495,10 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
   }, [allBlocks, search, activeCategory, isPl]);
 
   const categories = [
-    { id: 'all', label: isPl ? 'Wszystkie' : 'All' },
-    { id: 'content', label: isPl ? 'Treść' : 'Content' },
-    { id: 'data', label: isPl ? 'Dane' : 'Data' },
-    { id: 'visual', label: isPl ? 'Wizualne' : 'Visual' },
+    { id: 'all', label: t('reportBuilder.blockPalette.all', 'All') },
+    { id: 'content', label: t('reportBuilder.blockPalette.content', 'Content') },
+    { id: 'data', label: t('reportBuilder.blockPalette.data', 'Data') },
+    { id: 'visual', label: t('reportBuilder.blockPalette.visual', 'Visual') },
   ];
 
   return (
@@ -505,7 +507,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-c-border-subtle">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-c-text">{isPl ? 'Dodaj blok' : 'Add Block'}</h2>
+            <h2 className="text-xl font-bold text-c-text">{t('reportBuilder.blockPalette.addBlock', 'Add Block')}</h2>
             <button
               onClick={onClose}
               className="p-2 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
@@ -521,7 +523,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={isPl ? 'Szukaj bloków...' : 'Search blocks...'}
+              placeholder={t('reportBuilder.blockPalette.searchBlocks', 'Search blocks...')}
               className="w-full pl-10 pr-4 py-3 bg-c-surface-raised border-none rounded-xl text-c-text placeholder:text-c-text-muted focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
@@ -585,9 +587,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                       </h3>
                       {!isCompatible && (
                         <div className="mt-1 text-[11px] text-c-text-secondary">
-                          {isPl
-                            ? 'Niedostępny dla tego kontekstu'
-                            : 'Not available for this context'}
+                          {t('reportBuilder.blockPalette.notAvailableForThisContext', 'Not available for this context')}
                         </div>
                       )}
                       <p className="text-sm text-c-text-secondary mt-1 line-clamp-2">
@@ -602,13 +602,13 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
 
           {filteredBlocks.length === 0 && (
             <div className="text-center py-12 text-c-text-secondary">
-              {isPl ? 'Nie znaleziono bloków' : 'No blocks found'}
+              {t('reportBuilder.blockPalette.noBlocksFound', 'No blocks found')}
             </div>
           )}
 
           {!libraryLoaded && (
             <div className="text-center pt-6 text-xs text-c-text-secondary">
-              {isPl ? 'Ładowanie biblioteki bloków…' : 'Loading block library…'}
+              {t('reportBuilder.blockPalette.loadingBlockLibrary', 'Loading block library…')}
             </div>
           )}
         </div>
