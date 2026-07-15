@@ -143,7 +143,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
   onRecordUpdate,
   onRecordClick,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const scrollRef = useRef<HTMLDivElement>(null);
   const labelScrollRef = useRef<HTMLDivElement>(null);
@@ -253,11 +253,9 @@ export const GanttView: React.FC<GanttViewProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
         <Calendar size={32} />
-        <span className="text-sm font-medium">{isPl ? 'Wykres Gantta' : 'Gantt Chart'}</span>
+        <span className="text-sm font-medium">{t('myWorkTable.ganttView.title')}</span>
         <span className="text-xs text-c-text-muted/70">
-          {isPl
-            ? 'Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku'
-            : 'Configure start and end date fields in view settings'}
+          {t('myWorkTable.ganttView.configureFields')}
         </span>
       </div>
     );
@@ -268,9 +266,9 @@ export const GanttView: React.FC<GanttViewProps> = ({
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-c-border-subtle">
         <span className="text-xs font-bold text-c-text-secondary">
-          {isPl ? 'Wykres Gantta' : 'Gantt Chart'}
+          {t('myWorkTable.ganttView.title')}
           <span className="ml-2 text-[10px] font-normal text-c-text-muted">
-            {ganttRecords.length} {isPl ? 'zadań' : 'tasks'}
+            {ganttRecords.length} {t('myWorkTable.ganttView.tasks')}
           </span>
         </span>
         <div className="flex items-center gap-1">
@@ -282,16 +280,10 @@ export const GanttView: React.FC<GanttViewProps> = ({
           </button>
           <span className="text-[10px] font-medium text-c-text-muted min-w-[50px] text-center capitalize">
             {zoom === 'day'
-              ? isPl
-                ? 'Dzień'
-                : 'Day'
+              ? t('myWorkTable.ganttView.zoomDay')
               : zoom === 'week'
-                ? isPl
-                  ? 'Tydzień'
-                  : 'Week'
-                : isPl
-                  ? 'Miesiąc'
-                  : 'Month'}
+                ? t('myWorkTable.ganttView.zoomWeek')
+                : t('myWorkTable.ganttView.zoomMonth')}
           </span>
           <button
             onClick={() => cycleZoom('out')}
@@ -315,7 +307,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
             style={{ height: HEADER_HEIGHT }}
           >
             <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider flex-1">
-              {isPl ? 'Zadanie' : 'Task'}
+              {t('myWorkTable.ganttView.task')}
             </span>
             {config.progressFieldId && (
               <span className="text-[9px] font-bold text-c-text-muted uppercase tracking-wider w-12 text-right">

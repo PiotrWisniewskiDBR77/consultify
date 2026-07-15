@@ -80,7 +80,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
   disabled = false,
   testId = 'provenance-validation-badge',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -129,12 +129,8 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
         }}
         aria-haspopup={showCaret ? 'menu' : undefined}
         aria-expanded={showCaret ? open : undefined}
-        aria-label={`${isPl ? 'Status walidacji' : 'Validation status'}: ${label}`}
-        title={
-          isPl
-            ? 'Status walidacji rekordu (zmieniany ręcznie przez recenzenta).'
-            : 'Validation status — set manually by a human reviewer.'
-        }
+        aria-label={`${t('myWorkTable.validationBadge.validationStatus')}: ${label}`}
+        title={t('myWorkTable.validationBadge.validationStatusTitle')}
       >
         <span aria-hidden style={{ color: palette.fg }}>
           {palette.icon}
@@ -168,7 +164,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
                   className="ml-auto text-[9px] uppercase tracking-wider text-c-text-secondary"
                   aria-hidden
                 >
-                  {isPl ? 'admin' : 'admin'}
+                  admin
                 </span>
               )}
             </button>

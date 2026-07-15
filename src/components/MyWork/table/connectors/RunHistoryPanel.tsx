@@ -38,7 +38,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
   onBack,
   runHistoryQueryOpts,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const { data: runs = [], isLoading } = useQuery<ConnectorRun[]>(runHistoryQueryOpts);
@@ -89,13 +89,16 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
   };
 
   const statusLabel = (status: ConnectorRun['status']) => {
-    const labels: Record<string, [string, string]> = {
-      success: ['Sukces', 'Success'],
-      failed: ['Błąd', 'Failed'],
-      running: ['W toku', 'Running'],
-    };
-    const [pl, en] = labels[status] ?? ['—', '—'];
-    return isPl ? pl : en;
+    switch (status) {
+      case 'success':
+        return t('myWorkTable.runHistoryPanel.statusSuccess');
+      case 'failed':
+        return t('myWorkTable.runHistoryPanel.statusFailed');
+      case 'running':
+        return t('myWorkTable.runHistoryPanel.statusRunning');
+      default:
+        return '—';
+    }
   };
 
   return (
@@ -110,7 +113,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
         </button>
         <div>
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Historia uruchomień' : 'Run History'}
+            {t('myWorkTable.runHistoryPanel.title')}
           </h3>
           <p className="text-xs text-c-text-muted">{connector.name}</p>
         </div>
@@ -118,17 +121,20 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
 
       {/* Stats strip */}
       <div className="grid grid-cols-4 gap-2">
-        <StatCard label={isPl ? 'Uruchomienia' : 'Total runs'} value={String(stats.total)} />
+        <StatCard label={t('myWorkTable.runHistoryPanel.totalRuns')} value={String(stats.total)} />
         <StatCard
-          label={isPl ? 'Sukces' : 'Success rate'}
+          label={t('myWorkTable.runHistoryPanel.successRate')}
           value={`${stats.successRate}%`}
           accent={stats.successRate >= 80 ? 'green' : stats.successRate >= 50 ? 'yellow' : 'red'}
         />
         <StatCard
-          label={isPl ? 'Zaimportowane' : 'Imported'}
+          label={t('myWorkTable.runHistoryPanel.imported')}
           value={stats.totalImported.toLocaleString()}
         />
-        <StatCard label={isPl ? 'Udane' : 'Successes'} value={String(stats.successes)} />
+        <StatCard
+          label={t('myWorkTable.runHistoryPanel.successes')}
+          value={String(stats.successes)}
+        />
       </div>
 
       {/* Run list */}
@@ -138,7 +144,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
         </div>
       ) : runs.length === 0 ? (
         <p className="text-center text-sm text-c-text-muted py-8">
-          {isPl ? 'Brak uruchomień' : 'No runs yet'}
+          {t('myWorkTable.runHistoryPanel.noRunsYet')}
         </p>
       ) : (
         <div className="rounded-xl border border-c-border-subtle overflow-hidden divide-y divide-c-border-subtle">
@@ -168,16 +174,16 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                       </span>
                       <span>
                         {run.recordsImported}/{run.recordsFetched}{' '}
-                        {isPl ? 'zaimportowanych' : 'imported'}
+                        {t('myWorkTable.runHistoryPanel.importedSuffix')}
                       </span>
                       {run.recordsSkipped > 0 && (
                         <span className="text-c-warning">
-                          {run.recordsSkipped} {isPl ? 'pominiętych' : 'skipped'}
+                          {run.recordsSkipped} {t('myWorkTable.runHistoryPanel.skippedSuffix')}
                         </span>
                       )}
                       {run.recordsFailed > 0 && (
                         <span className="text-danger-500">
-                          {run.recordsFailed} {isPl ? 'błędnych' : 'failed'}
+                          {run.recordsFailed} {t('myWorkTable.runHistoryPanel.failedSuffix')}
                         </span>
                       )}
                     </div>
@@ -212,7 +218,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                   <div className="px-4 pb-3">
                     <div className="rounded-lg bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/20 p-3">
                       <p className="text-xs font-medium text-danger-700 dark:text-danger-400 mb-1">
-                        {isPl ? 'Szczegóły błędu' : 'Error details'}
+                        {t('myWorkTable.runHistoryPanel.errorDetails')}
                       </p>
                       <pre className="text-[11px] text-danger-600 dark:text-danger-300 whitespace-pre-wrap font-mono leading-relaxed">
                         {run.error}

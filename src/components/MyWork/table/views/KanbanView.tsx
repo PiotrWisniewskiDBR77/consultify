@@ -89,8 +89,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   onRecordClick,
   onAddRecord,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [dragRecordId, setDragRecordId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
@@ -113,7 +112,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     const options = groupCol?.options || [];
     const groups: Record<string, TableNode[]> = {};
     for (const opt of options) groups[opt] = [];
-    const uncategorizedKey = isPl ? 'Bez kategorii' : 'Uncategorized';
+    const uncategorizedKey = t('myWorkTable.kanbanView.uncategorized');
     groups[uncategorizedKey] = [];
 
     for (const record of records) {
@@ -127,18 +126,18 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
 
     if (groups[uncategorizedKey].length === 0) delete groups[uncategorizedKey];
     return groups;
-  }, [groupCol, groupByFieldId, records, isPl]);
+  }, [groupCol, groupByFieldId, records, t]);
 
   const handleDrop = useCallback(
     (laneKey: string) => {
       if (!dragRecordId) return;
-      const uncategorizedKey = isPl ? 'Bez kategorii' : 'Uncategorized';
+      const uncategorizedKey = t('myWorkTable.kanbanView.uncategorized');
       const newValue = laneKey === uncategorizedKey ? null : laneKey;
       onRecordUpdate(dragRecordId, groupByFieldId, newValue);
       setDragRecordId(null);
       setDropTarget(null);
     },
-    [dragRecordId, groupByFieldId, isPl, onRecordUpdate]
+    [dragRecordId, groupByFieldId, t, onRecordUpdate]
   );
 
   const colors = groupCol?.optionColors || {};
@@ -183,7 +182,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             <div className="flex-1 overflow-auto p-2 space-y-1.5">
               {laneRecords.length === 0 && (
                 <div className="text-center py-6 text-[10px] text-c-text-muted">
-                  {isPl ? 'Brak elementów' : 'No items'}
+                  {t('myWorkTable.kanbanView.noItems')}
                 </div>
               )}
               {laneRecords.map((record) => (
@@ -202,7 +201,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
               {/* Add card button */}
               <button
                 onClick={() => {
-                  const uncategorizedKey = isPl ? 'Bez kategorii' : 'Uncategorized';
+                  const uncategorizedKey = t('myWorkTable.kanbanView.uncategorized');
                   const defaultVal =
                     laneKey === uncategorizedKey ? undefined : { [groupByFieldId]: laneKey };
                   onAddRecord(defaultVal);
@@ -210,7 +209,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                 className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-c-border-subtle text-[10px] text-c-text-muted hover:text-c-text-secondary hover:border-c-border-strong transition-colors"
               >
                 <Plus size={12} />
-                {isPl ? 'Dodaj' : 'Add'}
+                {t('myWorkTable.kanbanView.add')}
               </button>
             </div>
           </div>

@@ -172,7 +172,6 @@ interface DataGridProps {
   visibleColumns: ColumnDef[];
   platformFieldById: Map<string, PlatformFieldMeta>;
   locked: boolean;
-  isPl: boolean;
   selectedRowIds: Set<string>;
   setSelectedRowIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   toggleRowSelection: (id: string) => void;
@@ -193,7 +192,6 @@ const DataGrid: React.FC<DataGridProps> = ({
   visibleColumns,
   platformFieldById,
   locked,
-  isPl,
   selectedRowIds,
   setSelectedRowIds,
   toggleRowSelection,
@@ -206,6 +204,7 @@ const DataGrid: React.FC<DataGridProps> = ({
   onRemoveMissingField,
   formatRules,
 }) => {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const footerScrollRef = useRef<HTMLDivElement>(null);
   const lastAnchorIndex = useRef<number | null>(null);
@@ -462,7 +461,7 @@ const DataGrid: React.FC<DataGridProps> = ({
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-c-text-muted">
         <Image size={32} />
-        <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No items'}</span>
+        <span className="text-sm font-medium">{t('myWorkTable.gridView.noItems')}</span>
       </div>
     );
   }
@@ -494,7 +493,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                   checked={allSelected}
                   disabled={locked}
                   onChange={toggleSelectAll}
-                  aria-label={isPl ? 'Zaznacz wszystkie' : 'Select all'}
+                  aria-label={t('myWorkTable.gridView.selectAll')}
                 />
               </th>
               {visibleColumns.map((col, colIdx) => {
@@ -527,15 +526,15 @@ const DataGrid: React.FC<DataGridProps> = ({
                           type="button"
                           onClick={() => onRemoveMissingField?.(col.key)}
                           className="ml-auto shrink-0 text-c-warning hover:brightness-110"
-                          title={isPl ? 'Usuń z widoku' : 'Remove from view'}
-                          aria-label={isPl ? 'Usuń z widoku' : 'Remove from view'}
+                          title={t('myWorkTable.gridView.removeFromView')}
+                          aria-label={t('myWorkTable.gridView.removeFromView')}
                         >
                           <X className="h-3 w-3" />
                         </button>
                       </div>
                       <button
                         type="button"
-                        aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
+                        aria-label={t('myWorkTable.gridView.resizeColumn')}
                         className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-[color-mix(in_srgb,var(--c-focus-solid)_50%,transparent)]"
                         onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                       />
@@ -561,7 +560,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     <span className="block truncate pr-2">{col.header}</span>
                     <button
                       type="button"
-                      aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
+                      aria-label={t('myWorkTable.gridView.resizeColumn')}
                       className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-[color-mix(in_srgb,var(--c-focus-solid)_50%,transparent)]"
                       onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                     />
@@ -634,7 +633,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                         e.preventDefault();
                         onCheckboxChange(row.id, i, e.shiftKey);
                       }}
-                      aria-label={isPl ? 'Wybierz wiersz' : 'Select row'}
+                      aria-label={t('myWorkTable.gridView.selectRow')}
                     />
                   </td>
                   {visibleColumns.map((col, colIdx) => {
@@ -708,7 +707,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                 style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
                 className="sticky left-0 z-[8] border-r border-c-border-subtle bg-c-surface-raised px-3 py-2 font-semibold uppercase tracking-wider text-c-text-muted"
               >
-                {isPl ? 'Podsum.' : 'Totals'}
+                {t('myWorkTable.gridView.totals')}
               </td>
               {visibleColumns.map((col, colIdx) => {
                 const w = widthByKey[col.key] ?? col.width ?? DEFAULT_COLUMN_WIDTH;
@@ -761,7 +760,6 @@ const GridViewConnected: React.FC = () => {
     visibleColumns,
     platformFields,
     locked,
-    isPl,
     selectedRowIds,
     setSelectedRowIds,
     toggleRowSelection,
@@ -814,7 +812,6 @@ const GridViewConnected: React.FC = () => {
       visibleColumns={visibleColumns}
       platformFieldById={platformFieldById}
       locked={locked}
-      isPl={isPl}
       selectedRowIds={selectedRowIds}
       setSelectedRowIds={setSelectedRowIds}
       toggleRowSelection={toggleRowSelection}
@@ -843,8 +840,6 @@ export interface GridViewProps {
 const GridViewStandalone: React.FC<
   Required<Pick<GridViewProps, 'rows' | 'columns'>> & GridViewProps
 > = ({ rows, columns, onNodeClick, onFieldChange, locked = false }) => {
-  const { i18n } = useTranslation();
-  const isPl = Boolean(i18n.language?.startsWith('pl'));
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(() => new Set());
   const [editingCellId, setEditingCellId] = useState<string | null>(null);
 
@@ -875,7 +870,6 @@ const GridViewStandalone: React.FC<
       visibleColumns={visibleColumns}
       platformFieldById={platformFieldById}
       locked={locked}
-      isPl={isPl}
       selectedRowIds={selectedRowIds}
       setSelectedRowIds={setSelectedRowIds}
       toggleRowSelection={toggleRowSelection}
@@ -891,18 +885,15 @@ const GridViewStandalone: React.FC<
 // ── Public entry ────────────────────────────────────────────────────────────
 
 export const GridView: React.FC<GridViewProps> = (props) => {
-  const { i18n } = useTranslation();
+  const { t } = useTranslation();
   const ctx = useContext(TableDataContext);
   if (ctx) {
     return <GridViewConnected />;
   }
   if (!props.rows || !props.columns) {
-    const msg = i18n.language?.startsWith('pl')
-      ? 'GridView wymaga TableDataProvider lub właściwości rows i columns.'
-      : 'GridView requires TableDataProvider or rows and columns props.';
     return (
       <div className="flex flex-1 items-center justify-center p-6 text-sm text-c-text-muted">
-        {msg}
+        {t('myWorkTable.gridView.requiresProvider')}
       </div>
     );
   }

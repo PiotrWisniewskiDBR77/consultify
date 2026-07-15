@@ -71,8 +71,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
     onCreateNew,
     locked = false,
   }) => {
-    const { i18n } = useTranslation();
-    const isPl = i18n.language?.startsWith('pl');
+    const { t } = useTranslation();
 
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebounce(search, 300);
@@ -315,7 +314,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <Link2 className="h-4 w-4 text-blue-500" />
-              {isPl ? 'Powiązane rekordy' : 'Linked Records'}
+              {t('myWorkTable.linkedRecordPicker.title')}
             </div>
             <button
               onClick={onClose}
@@ -329,7 +328,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           {selectedList.length > 0 && (
             <div className="border-b border-c-border-subtle px-5 py-2.5">
               <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary">
-                {isPl ? 'Wybrane' : 'Selected'} ({selectedList.length})
+                {t('myWorkTable.linkedRecordPicker.selected')} ({selectedList.length})
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {selectedList.map((link) => (
@@ -338,7 +337,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                       <button
                         onClick={() => handleExpandChip(link.id)}
                         className="flex items-center gap-1 truncate"
-                        title={isPl ? 'Kliknij aby rozwinąć' : 'Click to expand'}
+                        title={t('myWorkTable.linkedRecordPicker.clickToExpand')}
                       >
                         <span className="max-w-[120px] truncate">{link.displayValue}</span>
                         <ChevronRight className="h-3 w-3 opacity-40" />
@@ -383,7 +382,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                             className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400"
                           >
                             <ExternalLink className="h-3 w-3" />
-                            {isPl ? 'Otwórz pełny rekord' : 'Open full record'}
+                            {t('myWorkTable.linkedRecordPicker.openFullRecord')}
                           </button>
                         )}
                       </div>
@@ -406,7 +405,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                   setHighlightIdx(-1);
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder={isPl ? 'Szukaj rekordów...' : 'Search records...'}
+                placeholder={t('myWorkTable.linkedRecordPicker.searchPlaceholder')}
                 className="flex-1 bg-transparent text-sm text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-c-text-muted"
               />
               {loading && <Loader2 className="h-4 w-4 animate-spin text-c-text-secondary" />}
@@ -421,7 +420,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
               </div>
             ) : filteredCandidates.length === 0 && !loading ? (
               <div className="py-8 text-center text-sm text-c-text-secondary">
-                {isPl ? 'Brak rekordów' : 'No records found'}
+                {t('myWorkTable.linkedRecordPicker.noRecordsFound')}
               </div>
             ) : (
               filteredCandidates.map((c, idx) => {
@@ -468,7 +467,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                     </div>
                     {linkedIds.has(c.id) && (
                       <span className="mt-0.5 flex-shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                        {isPl ? 'powiązany' : 'linked'}
+                        {t('myWorkTable.linkedRecordPicker.linked')}
                       </span>
                     )}
                   </button>
@@ -491,7 +490,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                   <Plus className="h-3 w-3 text-c-accent" />
                 </div>
                 <span className="font-medium text-c-accent">
-                  {isPl ? 'Utwórz nowy rekord' : 'Create new record'}
+                  {t('myWorkTable.linkedRecordPicker.createNewRecord')}
                 </span>
               </button>
             )}
@@ -501,20 +500,20 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           {!locked && (
             <div className="flex items-center justify-between border-t border-c-border-subtle px-5 py-3">
               <span className="text-[10px] text-c-text-secondary">
-                {selected.size} {isPl ? 'zaznaczonych' : 'selected'}
+                {selected.size} {t('myWorkTable.linkedRecordPicker.selectedCount')}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={onClose}
                   className="rounded-xl border border-c-border-subtle px-4 py-2 text-xs font-semibold transition-colors hover:bg-c-surface-raised"
                 >
-                  {isPl ? 'Anuluj' : 'Cancel'}
+                  {t('myWorkTable.linkedRecordPicker.cancel')}
                 </button>
                 <button
                   onClick={handleConfirm}
                   className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
                 >
-                  {isPl ? 'Potwierdź' : 'Confirm'}
+                  {t('myWorkTable.linkedRecordPicker.confirm')}
                 </button>
               </div>
             </div>

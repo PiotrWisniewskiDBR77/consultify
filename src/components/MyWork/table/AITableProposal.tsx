@@ -30,8 +30,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
   onAccept,
   onReject,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [acceptedColumns, setAcceptedColumns] = useState<Set<string>>(
     new Set(proposal.columns.map((c) => c.key))
@@ -147,7 +146,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
         <Sparkles size={16} className="text-c-accent" />
         <div className="flex-1">
           <div className="text-xs font-bold text-c-text">
-            {proposal.title || (isPl ? 'Propozycja struktury tabeli' : 'Table Structure Proposal')}
+            {proposal.title || t('myWorkTable.aiTableProposal.defaultTitle')}
           </div>
           {proposal.description && (
             <div className="text-[10px] text-c-text-muted mt-0.5">{proposal.description}</div>
@@ -161,7 +160,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
       {proposal.sourceArtifacts && proposal.sourceArtifacts.length > 0 && (
         <div className="px-4 py-2 bg-blue-50/50 dark:bg-blue-500/5 border-b border-blue-200/30 dark:border-blue-500/10 flex-shrink-0">
           <div className="text-[9px] font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400/70 mb-1">
-            {isPl ? 'Źródła kontekstu' : 'Context sources'}
+            {t('myWorkTable.aiTableProposal.contextSources')}
           </div>
           <div className="flex flex-wrap gap-1">
             {proposal.sourceArtifacts.map((a) => (
@@ -191,7 +190,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               )}
               <span className="text-c-text-muted">{sectionIcons.columns}</span>
               <span className="text-[11px] font-bold text-c-text flex-1 text-left">
-                {isPl ? 'Kolumny' : 'Columns'}
+                {t('myWorkTable.aiTableProposal.columns')}
               </span>
               <span className="text-[9px] text-c-text-secondary">
                 {acceptedColumns.size}/{proposal.columns.length}
@@ -233,7 +232,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               )}
               <span className="text-c-text-muted">{sectionIcons.views}</span>
               <span className="text-[11px] font-bold text-c-text flex-1 text-left">
-                {isPl ? 'Widoki' : 'Views'}
+                {t('myWorkTable.aiTableProposal.views')}
               </span>
               <span className="text-[9px] text-c-text-secondary">
                 {acceptedViews.size}/{proposal.views.length}
@@ -277,7 +276,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               )}
               <span className="text-c-text-muted">{sectionIcons.rows}</span>
               <span className="text-[11px] font-bold text-c-text flex-1 text-left">
-                {isPl ? 'Wiersze startowe' : 'Starter rows'}
+                {t('myWorkTable.aiTableProposal.starterRows')}
               </span>
               <span className="text-[9px] text-c-text-secondary">
                 {acceptedRows.size}/{proposal.rows.length}
@@ -307,7 +306,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
         {proposal.contextHints && proposal.contextHints.length > 0 && (
           <div className="pt-2 border-t border-c-border-subtle">
             <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
-              {isPl ? 'Kontekst AI' : 'AI Context'}
+              {t('myWorkTable.aiTableProposal.aiContext')}
             </div>
             <div className="space-y-0.5">
               {proposal.contextHints.map((hint, i) => (
@@ -322,21 +321,21 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
 
       <div className="flex items-center justify-between px-4 py-3 border-t border-c-border-subtle flex-shrink-0">
         <span className="text-[9px] text-c-text-secondary">
-          {totalAccepted} {isPl ? 'elementów zaznaczonych' : 'items selected'}
+          {totalAccepted} {t('myWorkTable.aiTableProposal.itemsSelected')}
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={onReject}
             className="px-3 py-1.5 rounded-xl text-[11px] font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
-            {isPl ? 'Odrzuć' : 'Reject'}
+            {t('myWorkTable.aiTableProposal.reject')}
           </button>
           <button
             onClick={handleApply}
             disabled={totalAccepted === 0}
             className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-c-text text-c-surface hover:opacity-90 transition-colors disabled:opacity-40"
           >
-            {isPl ? 'Zastosuj wybrane' : 'Apply selected'}
+            {t('myWorkTable.aiTableProposal.applySelected')}
           </button>
         </div>
       </div>

@@ -74,7 +74,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
   usePlatform,
   workspaceId,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [command, setCommand] = useState('');
   const [loading, setLoading] = useState(false);
@@ -120,7 +120,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
           };
           onProposal(mapped);
           toast.success(
-            isPl ? 'Propozycja wygenerowana (nowy backend)' : 'Proposal generated (new backend)'
+            t('myWorkTable.aiTableAssistant.proposalGenerated')
           );
         }
         setCommand('');
@@ -128,7 +128,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
       } catch (err: any) {
         toast.error(
           err?.message ||
-            (isPl ? 'Nie udało się wygenerować propozycji schematu' : 'Schema proposal failed')
+            t('myWorkTable.aiTableAssistant.schemaProposalFailed')
         );
       } finally {
         setLoading(false);
@@ -155,14 +155,14 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
 
       const action = result?.action;
       if (!action) {
-        toast.error(isPl ? 'Nie rozpoznano polecenia' : 'Command not recognized');
+        toast.error(t('myWorkTable.aiTableAssistant.commandNotRecognized'));
         return;
       }
 
       switch (action.type) {
         case 'sort':
           onSort({ key: action.column, direction: action.direction || 'asc' });
-          toast.success(isPl ? 'Posortowano' : 'Sorted');
+          toast.success(t('myWorkTable.aiTableAssistant.sorted'));
           break;
         case 'filter':
           onFilter({
@@ -176,11 +176,11 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
               },
             ],
           });
-          toast.success(isPl ? 'Filtr zastosowany' : 'Filter applied');
+          toast.success(t('myWorkTable.aiTableAssistant.filterApplied'));
           break;
         case 'group':
           onGroup(action.column || null);
-          toast.success(isPl ? 'Grupowanie zastosowane' : 'Grouping applied');
+          toast.success(t('myWorkTable.aiTableAssistant.groupingApplied'));
           break;
         case 'add_column':
           onAddColumn({
@@ -191,7 +191,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             width: 160,
             options: action.options,
           });
-          toast.success(isPl ? 'Kolumna dodana' : 'Column added');
+          toast.success(t('myWorkTable.aiTableAssistant.columnAdded'));
           break;
         case 'add_rows':
           if (Array.isArray(action.rows)) {
@@ -203,7 +203,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             }));
             onAddRows(newRows);
             toast.success(
-              isPl ? `Dodano ${newRows.length} wierszy` : `Added ${newRows.length} rows`
+              t('myWorkTable.aiTableAssistant.rowsAdded', { count: newRows.length })
             );
           }
           break;
@@ -211,15 +211,15 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
           setLastResult(action.summary || action.message || '');
           break;
         case 'error':
-          toast.error(action.message || (isPl ? 'Błąd' : 'Error'));
+          toast.error(action.message || t('myWorkTable.aiTableAssistant.error'));
           break;
         default:
-          toast(isPl ? 'Akcja nieobsługiwana' : 'Action not supported');
+          toast(t('myWorkTable.aiTableAssistant.actionNotSupported'));
       }
 
       setCommand('');
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Błąd AI' : 'AI error'));
+      toast.error(err?.message || t('myWorkTable.aiTableAssistant.aiError'));
     } finally {
       setLoading(false);
     }
@@ -228,7 +228,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
     columns,
     i18n.language,
     ideaId,
-    isPl,
+    t,
     loading,
     onAddColumn,
     onAddRows,
@@ -257,7 +257,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
               if (e.key === 'Enter') handleSubmit();
               if (e.key === 'Escape') onClose();
             }}
-            placeholder={isPl ? 'Wpisz polecenie dla tabeli…' : 'Type a table command…'}
+            placeholder={t('myWorkTable.aiTableAssistant.commandPlaceholder')}
             className="flex-1 bg-transparent border-0 outline-none text-sm text-c-text placeholder-c-text-muted"
           />
           {loading && <Loader2 size={16} className="animate-spin text-c-accent" />}
@@ -275,7 +275,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
         {!command && (
           <div className="px-4 py-2 border-t border-c-border-subtle">
             <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1.5">
-              {isPl ? 'Przykłady' : 'Examples'}
+              {t('myWorkTable.aiTableAssistant.examples')}
             </div>
             <div className="flex flex-wrap gap-1">
               {examples.map((ex) => (

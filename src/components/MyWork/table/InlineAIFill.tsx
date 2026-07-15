@@ -17,7 +17,7 @@ interface InlineAIFillProps {
 }
 
 export const InlineAIFill: React.FC<InlineAIFillProps> = ({ node, column, ideaId, onFill }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const handleFill = useCallback(
@@ -40,17 +40,15 @@ export const InlineAIFill: React.FC<InlineAIFillProps> = ({ node, column, ideaId
           onFill(node.id, column.key, filled);
         } else {
           // AI returned nothing — surface it instead of leaving the cell silently empty (Z-06).
-          const isPl = i18n.language?.startsWith('pl');
-          toast(isPl ? 'AI nie zwróciło wartości' : 'AI returned no value', { icon: '🤔' });
+          toast(t('myWorkTable.inlineAIFill.returnedNoValue'), { icon: '🤔' });
         }
       } catch {
-        const isPl = i18n.language?.startsWith('pl');
-        toast.error(isPl ? 'Nie udało się wypełnić komórki' : 'Failed to fill cell');
+        toast.error(t('myWorkTable.inlineAIFill.failedToFillCell'));
       } finally {
         setLoading(false);
       }
     },
-    [column, i18n.language, ideaId, loading, node, onFill]
+    [column, i18n.language, ideaId, loading, node, onFill, t]
   );
 
   return (
@@ -58,7 +56,7 @@ export const InlineAIFill: React.FC<InlineAIFillProps> = ({ node, column, ideaId
       onClick={handleFill}
       disabled={loading}
       className="opacity-0 group-hover/cell:opacity-70 hover:!opacity-100 p-0.5 rounded transition-all flex-shrink-0 text-c-accent hover:text-c-accent hover:bg-c-accent-soft"
-      title={i18n.language?.startsWith('pl') ? 'AI wypełnij' : 'AI fill'}
+      title={t('myWorkTable.inlineAIFill.aiFillTitle')}
     >
       {loading ? <Loader2 size={9} className="animate-spin" /> : <Wand2 size={9} />}
     </button>
@@ -80,8 +78,7 @@ export const BatchAIFillButton: React.FC<BatchAIFillButtonProps> = ({
   onFill,
   selectedIds,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const emptyCount = React.useMemo(() => {
@@ -129,20 +126,20 @@ export const BatchAIFillButton: React.FC<BatchAIFillButtonProps> = ({
       }
       // Summarise the batch instead of failing silently (Z-06).
       if (filledCount > 0) {
-        toast.success(isPl ? `Wypełniono ${filledCount} komórek` : `Filled ${filledCount} cells`);
+        toast.success(t('myWorkTable.inlineAIFill.filledCells', { count: filledCount }));
       } else {
-        toast(isPl ? 'AI nie zwróciło żadnych wartości' : 'AI returned no values', { icon: '🤔' });
+        toast(t('myWorkTable.inlineAIFill.returnedNoValues'), { icon: '🤔' });
       }
     } catch {
       toast.error(
-        isPl
-          ? `Wypełnianie nie powiodło się${filledCount > 0 ? ` (wypełniono ${filledCount})` : ''}`
-          : `AI fill failed${filledCount > 0 ? ` (filled ${filledCount})` : ''}`
+        filledCount > 0
+          ? t('myWorkTable.inlineAIFill.fillFailedWithCount', { count: filledCount })
+          : t('myWorkTable.inlineAIFill.fillFailed')
       );
     } finally {
       setLoading(false);
     }
-  }, [columns, emptyCount, i18n.language, ideaId, isPl, loading, nodes, onFill, selectedIds]);
+  }, [columns, emptyCount, i18n.language, ideaId, t, loading, nodes, onFill, selectedIds]);
 
   if (emptyCount === 0) return null;
 
@@ -151,12 +148,10 @@ export const BatchAIFillButton: React.FC<BatchAIFillButtonProps> = ({
       onClick={handleBatchFill}
       disabled={loading}
       className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
-      title={
-        isPl ? `AI wypełnij ${emptyCount} pustych komórek` : `AI fill ${emptyCount} empty cells`
-      }
+      title={t('myWorkTable.inlineAIFill.batchTitle', { count: emptyCount })}
     >
       {loading ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
-      {isPl ? `AI Fill (${emptyCount})` : `AI Fill (${emptyCount})`}
+      {t('myWorkTable.inlineAIFill.aiFillButton', { count: emptyCount })}
     </button>
   );
 };

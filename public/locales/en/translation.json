@@ -27324,6 +27324,197 @@
       "columnHeaderAction": "Action",
       "columnHeaderOwner": "Owner",
       "frameworkApplied": "Framework \"{{name}}\" applied"
+    },
+    "formView": {
+      "enterValuePlaceholder": "Enter value...",
+      "yes": "Yes",
+      "no": "No",
+      "selectPlaceholder": "— Select —",
+      "noRecords": "No records",
+      "createFirstRecord": "Create first record",
+      "newRecord": "New record",
+      "cancel": "Cancel",
+      "save": "Save",
+      "new": "New"
+    },
+    "ganttView": {
+      "title": "Gantt Chart",
+      "configureFields": "Configure start and end date fields in view settings",
+      "tasks": "tasks",
+      "zoomDay": "Day",
+      "zoomWeek": "Week",
+      "zoomMonth": "Month",
+      "task": "Task"
+    },
+    "gridView": {
+      "noItems": "No items",
+      "selectAll": "Select all",
+      "removeFromView": "Remove from view",
+      "resizeColumn": "Resize column",
+      "selectRow": "Select row",
+      "totals": "Totals",
+      "requiresProvider": "GridView requires TableDataProvider or rows and columns props."
+    },
+    "cellExpandPopover": {
+      "markdownSupportedPlaceholder": "Markdown supported...",
+      "markdownHint": "Supports **bold**, *italic*, - lists",
+      "newOptionPlaceholder": "New option...",
+      "aiPrompt": "AI Prompt",
+      "aiPromptPlaceholder": "Describe what AI should generate...",
+      "result": "Result",
+      "noResult": "No result",
+      "generating": "Generating...",
+      "regenerate": "Regenerate",
+      "currency": "Currency",
+      "openLink": "Open link",
+      "cellNote": "Cell note",
+      "addNotePlaceholder": "Add a note..."
+    },
+    "aiCopilotMode": {
+      "couldNotGenerate": "Could not generate a response.",
+      "connectionError": "AI connection error. Please try again.",
+      "ideas": "ideas",
+      "quickActions": "Quick actions",
+      "add": "Add",
+      "askPlaceholder": "Ask AI about ideas…"
+    },
+    "addSourceDialog": {
+      "uriTooLong": "URI must be ≤ 2048 characters.",
+      "confidenceMustBeNumber": "Confidence contribution must be a number between 0 and 1.",
+      "failedToSave": "Failed to save the source.",
+      "title": "Add source",
+      "close": "Close",
+      "sourceType": "Source type",
+      "uriLabel": "URI / link (optional)",
+      "confidenceLabel": "Confidence contribution (0–1, optional)",
+      "noteLabel": "Note (optional)",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "runHistoryPanel": {
+      "statusSuccess": "Success",
+      "statusFailed": "Failed",
+      "statusRunning": "Running",
+      "title": "Run History",
+      "totalRuns": "Total runs",
+      "successRate": "Success rate",
+      "imported": "Imported",
+      "successes": "Successes",
+      "noRunsYet": "No runs yet",
+      "importedSuffix": "imported",
+      "skippedSuffix": "skipped",
+      "failedSuffix": "failed",
+      "errorDetails": "Error details"
+    },
+    "linkedRecordPicker": {
+      "title": "Linked Records",
+      "selected": "Selected",
+      "clickToExpand": "Click to expand",
+      "openFullRecord": "Open full record",
+      "searchPlaceholder": "Search records...",
+      "noRecordsFound": "No records found",
+      "linked": "linked",
+      "createNewRecord": "Create new record",
+      "selectedCount": "selected",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "ideaScoringModel": {
+      "title": "Idea Scoring Model",
+      "criteriaWeights": "Criteria Weights",
+      "aiCalibrate": "AI calibrate",
+      "noNumericColumns": "No numeric columns for scoring",
+      "invertHint": "Invert (lower = better)",
+      "rankings": "Rankings",
+      "noDataToScore": "No data to score",
+      "cancel": "Cancel",
+      "applyRanking": "Apply ranking"
+    },
+    "conditionalFormatting": {
+      "title": "Conditional formatting",
+      "addRule": "Add rule",
+      "noRules": "No formatting rules",
+      "valuePlaceholder": "Value...",
+      "toPlaceholder": "To...",
+      "bg": "BG",
+      "text": "Text",
+      "preview": "Formatting preview"
+    },
+    "aiTableProposal": {
+      "defaultTitle": "Table Structure Proposal",
+      "contextSources": "Context sources",
+      "columns": "Columns",
+      "views": "Views",
+      "starterRows": "Starter rows",
+      "aiContext": "AI Context",
+      "itemsSelected": "items selected",
+      "reject": "Reject",
+      "applySelected": "Apply selected"
+    },
+    "aiTableAssistant": {
+      "proposalGenerated": "Proposal generated (new backend)",
+      "schemaProposalFailed": "Schema proposal failed",
+      "commandNotRecognized": "Command not recognized",
+      "sorted": "Sorted",
+      "filterApplied": "Filter applied",
+      "groupingApplied": "Grouping applied",
+      "columnAdded": "Column added",
+      "rowsAdded": "Added {{count}} rows",
+      "error": "Error",
+      "actionNotSupported": "Action not supported",
+      "aiError": "AI error",
+      "commandPlaceholder": "Type a table command…",
+      "examples": "Examples"
+    },
+    "kanbanView": {
+      "uncategorized": "Uncategorized",
+      "noItems": "No items",
+      "add": "Add"
+    },
+    "validationBadge": {
+      "validationStatus": "Validation status",
+      "validationStatusTitle": "Validation status — set manually by a human reviewer."
+    },
+    "aiCategorizeTool": {
+      "title": "AI Categorize & Cluster",
+      "analyzing": "Analyzing...",
+      "analyzeIdeas": "Analyze {{count}} ideas",
+      "applyAll": "Apply all",
+      "clusters": "Clusters",
+      "duplicates": "Duplicates",
+      "clickAnalyzeHint": "Click \"Analyze\" to let AI group your ideas",
+      "items": "items",
+      "noDuplicatesFound": "No duplicates found",
+      "similar": "similar",
+      "merge": "Merge"
+    },
+    "calendarViewV2": {
+      "title": "Calendar View",
+      "configureDateField": "Configure a date field in view settings",
+      "today": "Today",
+      "month": "Month",
+      "week": "Week",
+      "more": "more"
+    },
+    "inlineAIFill": {
+      "returnedNoValue": "AI returned no value",
+      "failedToFillCell": "Failed to fill cell",
+      "aiFillTitle": "AI fill",
+      "filledCells": "Filled {{count}} cells",
+      "returnedNoValues": "AI returned no values",
+      "fillFailed": "AI fill failed",
+      "fillFailedWithCount": "AI fill failed (filled {{count}})",
+      "batchTitle": "AI fill {{count}} empty cells",
+      "aiFillButton": "AI Fill ({{count}})"
+    },
+    "ideaPipeline": {
+      "title": "Pipeline: Idea → Initiative",
+      "conversion": "conversion",
+      "stageGateCriteria": "Stage gate criteria",
+      "noIdeasAtStage": "No ideas at this stage",
+      "promoteTo": "Promote to: {{stage}}",
+      "meetCriteriaFirst": "Meet all criteria first",
+      "clickStageHint": "Click a stage to see ideas and criteria"
     }
   },
   "myWorkNotebook": {

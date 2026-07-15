@@ -28368,6 +28368,197 @@
       "columnHeaderAction": "Działanie",
       "columnHeaderOwner": "Właściciel",
       "frameworkApplied": "Framework \"{{name}}\" zastosowany"
+    },
+    "formView": {
+      "enterValuePlaceholder": "Wpisz wartość...",
+      "yes": "Tak",
+      "no": "Nie",
+      "selectPlaceholder": "— Wybierz —",
+      "noRecords": "Brak rekordów",
+      "createFirstRecord": "Utwórz pierwszy rekord",
+      "newRecord": "Nowy rekord",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "new": "Nowy"
+    },
+    "ganttView": {
+      "title": "Wykres Gantta",
+      "configureFields": "Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku",
+      "tasks": "zadań",
+      "zoomDay": "Dzień",
+      "zoomWeek": "Tydzień",
+      "zoomMonth": "Miesiąc",
+      "task": "Zadanie"
+    },
+    "gridView": {
+      "noItems": "Brak elementów",
+      "selectAll": "Zaznacz wszystkie",
+      "removeFromView": "Usuń z widoku",
+      "resizeColumn": "Zmień szerokość",
+      "selectRow": "Wybierz wiersz",
+      "totals": "Podsum.",
+      "requiresProvider": "GridView wymaga TableDataProvider lub właściwości rows i columns."
+    },
+    "cellExpandPopover": {
+      "markdownSupportedPlaceholder": "Markdown obsługiwany...",
+      "markdownHint": "Obsługuje **pogrubienie**, *kursywę*, - listy",
+      "newOptionPlaceholder": "Nowa opcja...",
+      "aiPrompt": "Prompt AI",
+      "aiPromptPlaceholder": "Opisz co AI ma wygenerować...",
+      "result": "Wynik",
+      "noResult": "Brak wyniku",
+      "generating": "Generuję...",
+      "regenerate": "Regeneruj",
+      "currency": "Waluta",
+      "openLink": "Otwórz link",
+      "cellNote": "Notatka do komórki",
+      "addNotePlaceholder": "Dodaj notatkę..."
+    },
+    "aiCopilotMode": {
+      "couldNotGenerate": "Nie udało się wygenerować odpowiedzi.",
+      "connectionError": "Błąd połączenia z AI. Spróbuj ponownie.",
+      "ideas": "pomysłów",
+      "quickActions": "Szybkie akcje",
+      "add": "Dodaj",
+      "askPlaceholder": "Zapytaj AI o pomysły…"
+    },
+    "addSourceDialog": {
+      "uriTooLong": "Adres URL nie może przekraczać 2048 znaków.",
+      "confidenceMustBeNumber": "Wkład w pewność musi być liczbą między 0 a 1.",
+      "failedToSave": "Nie udało się zapisać źródła.",
+      "title": "Dodaj źródło",
+      "close": "Zamknij",
+      "sourceType": "Typ źródła",
+      "uriLabel": "URI / link (opcjonalnie)",
+      "confidenceLabel": "Wkład w pewność (0–1, opcjonalnie)",
+      "noteLabel": "Notatka (opcjonalnie)",
+      "cancel": "Anuluj",
+      "save": "Zapisz"
+    },
+    "runHistoryPanel": {
+      "statusSuccess": "Sukces",
+      "statusFailed": "Błąd",
+      "statusRunning": "W toku",
+      "title": "Historia uruchomień",
+      "totalRuns": "Uruchomienia",
+      "successRate": "Sukces",
+      "imported": "Zaimportowane",
+      "successes": "Udane",
+      "noRunsYet": "Brak uruchomień",
+      "importedSuffix": "zaimportowanych",
+      "skippedSuffix": "pominiętych",
+      "failedSuffix": "błędnych",
+      "errorDetails": "Szczegóły błędu"
+    },
+    "linkedRecordPicker": {
+      "title": "Powiązane rekordy",
+      "selected": "Wybrane",
+      "clickToExpand": "Kliknij aby rozwinąć",
+      "openFullRecord": "Otwórz pełny rekord",
+      "searchPlaceholder": "Szukaj rekordów...",
+      "noRecordsFound": "Brak rekordów",
+      "linked": "powiązany",
+      "createNewRecord": "Utwórz nowy rekord",
+      "selectedCount": "zaznaczonych",
+      "cancel": "Anuluj",
+      "confirm": "Potwierdź"
+    },
+    "ideaScoringModel": {
+      "title": "Model scoringowy pomysłów",
+      "criteriaWeights": "Wagi kryteriów",
+      "aiCalibrate": "AI kalibracja",
+      "noNumericColumns": "Brak kolumn numerycznych do scoringu",
+      "invertHint": "Odwróć (niższe = lepsze)",
+      "rankings": "Ranking",
+      "noDataToScore": "Brak danych do scoringu",
+      "cancel": "Anuluj",
+      "applyRanking": "Zastosuj ranking"
+    },
+    "conditionalFormatting": {
+      "title": "Formatowanie warunkowe",
+      "addRule": "Dodaj regułę",
+      "noRules": "Brak reguł formatowania",
+      "valuePlaceholder": "Wartość...",
+      "toPlaceholder": "Do...",
+      "bg": "Tło",
+      "text": "Tekst",
+      "preview": "Podgląd formatowania"
+    },
+    "aiTableProposal": {
+      "defaultTitle": "Propozycja struktury tabeli",
+      "contextSources": "Źródła kontekstu",
+      "columns": "Kolumny",
+      "views": "Widoki",
+      "starterRows": "Wiersze startowe",
+      "aiContext": "Kontekst AI",
+      "itemsSelected": "elementów zaznaczonych",
+      "reject": "Odrzuć",
+      "applySelected": "Zastosuj wybrane"
+    },
+    "aiTableAssistant": {
+      "proposalGenerated": "Propozycja wygenerowana (nowy backend)",
+      "schemaProposalFailed": "Nie udało się wygenerować propozycji schematu",
+      "commandNotRecognized": "Nie rozpoznano polecenia",
+      "sorted": "Posortowano",
+      "filterApplied": "Filtr zastosowany",
+      "groupingApplied": "Grupowanie zastosowane",
+      "columnAdded": "Kolumna dodana",
+      "rowsAdded": "Dodano {{count}} wierszy",
+      "error": "Błąd",
+      "actionNotSupported": "Akcja nieobsługiwana",
+      "aiError": "Błąd AI",
+      "commandPlaceholder": "Wpisz polecenie dla tabeli…",
+      "examples": "Przykłady"
+    },
+    "kanbanView": {
+      "uncategorized": "Bez kategorii",
+      "noItems": "Brak elementów",
+      "add": "Dodaj"
+    },
+    "validationBadge": {
+      "validationStatus": "Status walidacji",
+      "validationStatusTitle": "Status walidacji rekordu (zmieniany ręcznie przez recenzenta)."
+    },
+    "aiCategorizeTool": {
+      "title": "AI Kategoryzacja & Klastry",
+      "analyzing": "Analizuję...",
+      "analyzeIdeas": "Analizuj {{count}} pomysłów",
+      "applyAll": "Zastosuj wszystko",
+      "clusters": "Klastry",
+      "duplicates": "Duplikaty",
+      "clickAnalyzeHint": "Kliknij \"Analizuj\" aby AI pogrupowało pomysły",
+      "items": "elementów",
+      "noDuplicatesFound": "Nie znaleziono duplikatów",
+      "similar": "podobieństwo",
+      "merge": "Scal"
+    },
+    "calendarViewV2": {
+      "title": "Widok kalendarza",
+      "configureDateField": "Skonfiguruj pole daty w ustawieniach widoku",
+      "today": "Dziś",
+      "month": "Miesiąc",
+      "week": "Tydzień",
+      "more": "więcej"
+    },
+    "inlineAIFill": {
+      "returnedNoValue": "AI nie zwróciło wartości",
+      "failedToFillCell": "Nie udało się wypełnić komórki",
+      "aiFillTitle": "AI wypełnij",
+      "filledCells": "Wypełniono {{count}} komórek",
+      "returnedNoValues": "AI nie zwróciło żadnych wartości",
+      "fillFailed": "Wypełnianie nie powiodło się",
+      "fillFailedWithCount": "Wypełnianie nie powiodło się (wypełniono {{count}})",
+      "batchTitle": "AI wypełnij {{count}} pustych komórek",
+      "aiFillButton": "AI Fill ({{count}})"
+    },
+    "ideaPipeline": {
+      "title": "Pipeline: Pomysł → Inicjatywa",
+      "conversion": "konwersja",
+      "stageGateCriteria": "Kryteria przejścia",
+      "noIdeasAtStage": "Brak pomysłów na tym etapie",
+      "promoteTo": "Promuj do: {{stage}}",
+      "meetCriteriaFirst": "Spełnij wszystkie kryteria",
+      "clickStageHint": "Kliknij etap aby zobaczyć pomysły i kryteria"
     }
   },
   "myWorkNotebook": {
