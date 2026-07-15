@@ -241,7 +241,7 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
       'OFF = today’s Development tab list (no Prompt Registry sub-tab). Ships plain/kanoniczny ' +
       '(StandardTable/StandardModuleBar) per rule #7 — Vegas polishes visuals after screenshot ' +
       'acceptance.',
-    defaultValue: false,
+    defaultValue: true, // AKCEPT Piotra 2026-07-15 (zrzuty light+dark, fala 3)
     category: 'ui',
     allowLocalOverride: true,
   },
