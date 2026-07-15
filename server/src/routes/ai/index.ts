@@ -6,6 +6,7 @@
 import { Router } from 'express';
 
 import agentAuditRoutes from './agent-audit.routes.js';
+import agentManifestsRoutes from './agent-manifests.routes.js';
 import aiAbTestingRoutes from './ai-ab-testing.routes.js';
 import aiAnalyticsRoutesV1 from './ai-analytics.routes.js';
 import aiBudgetsRoutes from './ai-budgets.routes.js';
@@ -66,5 +67,8 @@ router.use('/learning', aiLearningRoutes);
 router.use('/playbooks', aiPlaybooksRoutes);
 router.use('/deep-thinking', deepThinkingRoutes);
 router.use('/agent-audit', agentAuditRoutes);
+// M01 wiring (HP-2/HP-3): read-only Discovery Tool agent manifest catalog.
+// Not wired into chat/stream function-calling — see wiring report for rationale.
+router.use('/agent-manifests', agentManifestsRoutes);
 
 export default router;
