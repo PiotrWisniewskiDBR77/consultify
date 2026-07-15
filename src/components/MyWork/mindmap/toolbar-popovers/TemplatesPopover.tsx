@@ -15,41 +15,40 @@ interface TemplatesPopoverProps {
 }
 
 const MIND_MAP_TEMPLATES = [
-  { id: 'mm-blank', labelPl: 'Pusta mapa myśli', labelEn: 'Blank mind map' },
-  { id: 'mm-swot', labelPl: 'Analiza SWOT', labelEn: 'SWOT analysis' },
-  { id: 'mm-5whys', labelPl: '5 Dlaczego', labelEn: '5 Whys' },
-  { id: 'mm-fishbone', labelPl: 'Diagram Ishikawy', labelEn: 'Fishbone / Ishikawa' },
-  { id: 'mm-stakeholder', labelPl: 'Mapa interesariuszy', labelEn: 'Stakeholder map' },
-  { id: 'mm-okr', labelPl: 'Kaskada OKR', labelEn: 'OKR cascade' },
+  { id: 'mm-blank', labelEn: 'Blank mind map' },
+  { id: 'mm-swot', labelEn: 'SWOT analysis' },
+  { id: 'mm-5whys', labelEn: '5 Whys' },
+  { id: 'mm-fishbone', labelEn: 'Fishbone / Ishikawa' },
+  { id: 'mm-stakeholder', labelEn: 'Stakeholder map' },
+  { id: 'mm-okr', labelEn: 'OKR cascade' },
 ];
 
 const PROCESS_TEMPLATES = [
-  { id: 'pf-blank', labelPl: 'Pusty proces', labelEn: 'Blank process' },
+  { id: 'pf-blank', labelEn: 'Blank process' },
   {
     id: 'pf-process-improvement',
-    labelPl: 'Warsztat usprawnienia procesu',
     labelEn: 'Process improvement workshop',
   },
-  { id: 'pf-basic', labelPl: 'Podstawowy proces', labelEn: 'Basic process' },
-  { id: 'pf-approval', labelPl: 'Proces akceptacji', labelEn: 'Approval workflow' },
-  { id: 'pf-pdca', labelPl: 'Cykl PDCA', labelEn: 'PDCA cycle' },
-  { id: 'pf-o2c', labelPl: 'Order to Cash', labelEn: 'Order to Cash' },
+  { id: 'pf-basic', labelEn: 'Basic process' },
+  { id: 'pf-approval', labelEn: 'Approval workflow' },
+  { id: 'pf-pdca', labelEn: 'PDCA cycle' },
+  { id: 'pf-o2c', labelEn: 'Order to Cash' },
 ];
 
 const WHITEBOARD_TEMPLATES = [
-  { id: 'wb-blank', labelPl: 'Pusta tablica', labelEn: 'Blank whiteboard' },
-  { id: 'wb-bmc', labelPl: 'Business Model Canvas', labelEn: 'Business Model Canvas' },
-  { id: 'wb-impact-effort', labelPl: 'Macierz Wpływ / Wysiłek', labelEn: 'Impact / Effort matrix' },
-  { id: 'wb-retro', labelPl: 'Retrospektywa', labelEn: 'Retrospective' },
-  { id: 'wb-lean-canvas', labelPl: 'Lean Canvas', labelEn: 'Lean Canvas' },
-  { id: 'wb-cjm', labelPl: 'Mapa podróży klienta', labelEn: 'Customer journey map' },
+  { id: 'wb-blank', labelEn: 'Blank whiteboard' },
+  { id: 'wb-bmc', labelEn: 'Business Model Canvas' },
+  { id: 'wb-impact-effort', labelEn: 'Impact / Effort matrix' },
+  { id: 'wb-retro', labelEn: 'Retrospective' },
+  { id: 'wb-lean-canvas', labelEn: 'Lean Canvas' },
+  { id: 'wb-cjm', labelEn: 'Customer journey map' },
 ];
 
 const TABLE_TEMPLATES = [
-  { id: 'tbl-decision-matrix', labelPl: 'Macierz decyzyjna', labelEn: 'Decision matrix' },
-  { id: 'tbl-assumptions-log', labelPl: 'Rejestr założeń', labelEn: 'Assumptions log' },
-  { id: 'tbl-action-plan', labelPl: 'Plan działania', labelEn: 'Action plan' },
-  { id: 'tbl-risk-register', labelPl: 'Rejestr ryzyk', labelEn: 'Risk register' },
+  { id: 'tbl-decision-matrix', labelEn: 'Decision matrix' },
+  { id: 'tbl-assumptions-log', labelEn: 'Assumptions log' },
+  { id: 'tbl-action-plan', labelEn: 'Action plan' },
+  { id: 'tbl-risk-register', labelEn: 'Risk register' },
 ];
 
 const TEMPLATES_BY_TOOL: Record<string, typeof MIND_MAP_TEMPLATES> = {
@@ -73,10 +72,10 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
     const list = TEMPLATES_BY_TOOL[activeTool] || MIND_MAP_TEMPLATES;
     if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return list.filter(
-      (t) => t.labelPl.toLowerCase().includes(q) || t.labelEn.toLowerCase().includes(q)
+    return list.filter((tpl) =>
+      t(`myWorkMindmap.template.${tpl.id}`, tpl.labelEn).toLowerCase().includes(q)
     );
-  }, [activeTool, search]);
+  }, [activeTool, search, t]);
 
   const filteredStarts = useMemo(() => {
     if (!search.trim()) return IDEA_STARTING_POINTS;
@@ -149,17 +148,17 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           {t('ideas.mindmap.templates', 'Templates')}
         </div>
-        {templates.map((t) => (
+        {templates.map((tpl) => (
           <button
-            key={t.id}
+            key={tpl.id}
             onClick={() => {
-              onApplyTemplate(t.id);
+              onApplyTemplate(tpl.id);
               onClose();
             }}
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
           >
             <Layers size={12} className="text-c-text-secondary shrink-0" />
-            {isPl ? t.labelPl : t.labelEn}
+            {t(`myWorkMindmap.template.${tpl.id}`, tpl.labelEn)}
           </button>
         ))}
         {templates.length === 0 && filteredStarts.length === 0 && (

@@ -59,7 +59,7 @@ export interface NodeContextMenuProps {
 }
 
 interface MenuGroup {
-  titlePl: string;
+  titleKey: string;
   titleEn: string;
   items: MenuItemBase[];
 }
@@ -70,7 +70,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   nodeId,
   nodeType,
   isLocked,
-  isPl,
+  isPl: _isPl,
   canPasteStyle = false,
   canPasteNodes = false,
   hasChildren = false,
@@ -118,12 +118,11 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   const groups: MenuGroup[] = useMemo(
     () => [
       {
-        titlePl: 'Edycja',
+        titleKey: 'myWorkMindmap.ctxMenu.group.edit',
         titleEn: 'Edit',
         items: [
           {
             id: 'ctx_edit',
-            labelPl: 'Edytuj',
             labelEn: 'Edit',
             icon: Edit3,
             shortcut: 'F2',
@@ -131,14 +130,12 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
           {
             id: 'ctx_open_detail',
-            labelPl: 'Otwórz szczegóły',
             labelEn: 'Open details',
             icon: ExternalLink,
             disabled: isProtected,
           },
           {
             id: 'ctx_add_child',
-            labelPl: 'Dodaj gałąź',
             labelEn: 'Add child',
             icon: Plus,
             shortcut: 'Tab',
@@ -146,7 +143,6 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
           {
             id: 'ctx_add_sibling',
-            labelPl: 'Dodaj sąsiada',
             labelEn: 'Add sibling',
             icon: GitBranch,
             shortcut: 'Enter',
@@ -154,7 +150,6 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
           {
             id: 'ctx_duplicate',
-            labelPl: 'Duplikuj',
             labelEn: 'Duplicate',
             icon: Copy,
             shortcut: '⌘D',
@@ -162,7 +157,6 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
           {
             id: 'ctx_copy_nodes',
-            labelPl: 'Kopiuj',
             labelEn: 'Copy',
             icon: ClipboardCopy,
             shortcut: '⌘C',
@@ -170,7 +164,6 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
           {
             id: 'ctx_cut_nodes',
-            labelPl: 'Wytnij',
             labelEn: 'Cut',
             icon: Scissors,
             shortcut: '⌘X',
@@ -178,7 +171,6 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
           {
             id: 'ctx_paste_nodes',
-            labelPl: 'Wklej',
             labelEn: 'Paste',
             icon: Clipboard,
             shortcut: '⌘V',
@@ -187,12 +179,11 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         ],
       },
       {
-        titlePl: 'Struktura',
+        titleKey: 'myWorkMindmap.ctxMenu.group.structure',
         titleEn: 'Structure',
         items: [
           {
             id: 'ctx_toggle_collapse',
-            labelPl: 'Zwiń / rozwiń',
             labelEn: 'Fold / unfold',
             icon: FoldVertical,
             shortcut: 'Space',
@@ -200,35 +191,30 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
           {
             id: 'ctx_focus_subtree',
-            labelPl: 'Skup poddrzewo',
             labelEn: 'Focus subtree',
             icon: ScanSearch,
             disabled: isProtected,
           },
           {
             id: 'ctx_drill_down',
-            labelPl: 'Drill down',
             labelEn: 'Drill down',
             icon: ChevronRight,
             disabled: isProtected,
           },
           {
             id: 'ctx_connect_to_selected',
-            labelPl: 'Połącz z zaznaczonym',
             labelEn: 'Connect to selected',
             icon: Link2,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_detach_branch',
-            labelPl: 'Odłącz gałąź',
             labelEn: 'Detach branch',
             icon: Scissors,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_duplicate_branch',
-            labelPl: 'Duplikuj gałąź',
             labelEn: 'Duplicate branch',
             icon: Copy,
             disabled: isLocked || isProtected,
@@ -236,61 +222,53 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         ],
       },
       {
-        titlePl: 'AI',
+        titleKey: 'myWorkMindmap.ctxMenu.group.ai',
         titleEn: 'AI',
         items: [
           {
             id: 'ctx_ai_expand',
-            labelPl: 'Rozbuduj temat',
             labelEn: 'Expand topic',
             icon: Sparkles,
             disabled: isLocked,
           },
           {
             id: 'ctx_ai_deepen',
-            labelPl: 'Pogłęb',
             labelEn: 'Deepen',
             icon: Sparkles,
             disabled: isLocked,
           },
           {
             id: 'ctx_what_if',
-            labelPl: 'Co jeśli...?',
             labelEn: 'What if...?',
             icon: GitBranch,
             disabled: isLocked,
           },
           {
             id: 'ctx_summarize_branch',
-            labelPl: 'Podsumuj gałąź',
             labelEn: 'Summarize branch',
             icon: FileText,
             disabled: isLocked,
           },
           {
             id: 'ctx_dependencies',
-            labelPl: 'Wykryj zależności',
             labelEn: 'Detect dependencies',
             icon: Network,
             disabled: isLocked,
           },
           {
             id: 'ctx_priority',
-            labelPl: 'Priorytetyzacja',
             labelEn: 'Prioritize',
             icon: Target,
             disabled: isLocked,
           },
           {
             id: 'ctx_competitive',
-            labelPl: 'Konkurencja',
             labelEn: 'Competitors',
             icon: Globe,
             disabled: isLocked,
           },
           {
             id: 'ai_suggest_links',
-            labelPl: 'AI: Zasugeruj powiązania',
             labelEn: 'AI: Suggest links',
             icon: Sparkles,
             disabled: isLocked,
@@ -298,26 +276,23 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         ],
       },
       {
-        titlePl: 'Konwersja',
+        titleKey: 'myWorkMindmap.ctxMenu.group.convert',
         titleEn: 'Convert',
         items: [
           {
             id: 'ctx_convert_initiative',
-            labelPl: '→ Inicjatywa',
             labelEn: '→ Initiative',
             icon: Rocket,
             disabled: isLocked,
           },
           {
             id: 'ctx_convert_decision',
-            labelPl: '→ Decyzja',
             labelEn: '→ Decision',
             icon: Star,
             disabled: isLocked,
           },
           {
             id: 'ctx_convert_tasks',
-            labelPl: '→ Zadania',
             labelEn: '→ Tasks',
             icon: ListChecks,
             disabled: isLocked,
@@ -327,40 +302,35 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       ...(hasChildren
         ? ([
             {
-              titlePl: 'Konwertuj gałąź na...',
-              titleEn: 'Convert branch to...',
+              titleKey: 'myWorkMindmap.ctxMenu.group.convertBranch',
+        titleEn: 'Convert branch to...',
               items: [
                 {
                   id: 'ctx_subtree_convert_decision',
-                  labelPl: '→ Decyzja (gałąź)',
                   labelEn: '→ Decision (branch)',
                   icon: Star,
                   disabled: isLocked,
                 },
                 {
                   id: 'ctx_subtree_convert_tasks',
-                  labelPl: '→ Zadania (gałąź)',
                   labelEn: '→ Tasks (branch)',
                   icon: ListChecks,
                   disabled: isLocked,
                 },
                 {
                   id: 'ctx_subtree_convert_task_set',
-                  labelPl: '→ Zestaw zadań (gałąź)',
                   labelEn: '→ Task set (branch)',
                   icon: ListChecks,
                   disabled: isLocked,
                 },
                 {
                   id: 'ctx_subtree_convert_initiative',
-                  labelPl: '→ Inicjatywa (gałąź)',
                   labelEn: '→ Initiative (branch)',
                   icon: Rocket,
                   disabled: isLocked,
                 },
                 {
                   id: 'ctx_subtree_convert_process_flow',
-                  labelPl: '→ Przepływ procesu (gałąź)',
                   labelEn: '→ Process Flow (branch)',
                   icon: Workflow,
                   disabled: isLocked,
@@ -370,96 +340,83 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           ] as MenuGroup[])
         : []),
       {
-        titlePl: 'Wygląd i dane',
+        titleKey: 'myWorkMindmap.ctxMenu.group.styleData',
         titleEn: 'Style & data',
         items: [
           {
             id: 'ctx_change_shape',
-            labelPl: 'Zmień kształt',
             labelEn: 'Change shape',
             icon: Diamond,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_add_image',
-            labelPl: 'Dodaj obraz',
             labelEn: 'Add image',
             icon: Image,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_copy_style',
-            labelPl: 'Kopiuj styl',
             labelEn: 'Copy style',
             icon: Paintbrush,
             disabled: isProtected,
           },
           {
             id: 'ctx_paste_style',
-            labelPl: 'Wklej styl',
             labelEn: 'Paste style',
             icon: Paintbrush,
             disabled: isLocked || isProtected || !canPasteStyle,
           },
           {
             id: 'ctx_vote_up',
-            labelPl: 'Głosuj ↑',
             labelEn: 'Vote up',
             icon: Star,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_assign',
-            labelPl: 'Przypisz osobę',
             labelEn: 'Assign person',
             icon: UserPlus,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_comments',
-            labelPl: 'Komentarze',
             labelEn: 'Comments',
             icon: MessageSquare,
             disabled: isProtected,
           },
           {
             id: 'ctx_quick_notes',
-            labelPl: 'Notatki',
             labelEn: 'Notes',
             icon: StickyNote,
             disabled: isProtected,
           },
           {
             id: 'ctx_quick_tags',
-            labelPl: 'Tagi',
             labelEn: 'Tags',
             icon: Tag,
             disabled: isProtected,
           },
           {
             id: 'ctx_attach_knowledge',
-            labelPl: 'Dołącz wiedzę',
             labelEn: 'Attach knowledge',
             icon: BookOpen,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_attach_artifact',
-            labelPl: 'Dołącz artefakt',
             labelEn: 'Attach artifact',
             icon: BookOpen,
             disabled: isLocked || isProtected,
           },
           {
             id: 'ctx_open_linked_artifacts',
-            labelPl: 'Powiązane artefakty',
             labelEn: 'Linked artifacts',
             icon: ExternalLink,
             disabled: isProtected,
           },
           {
             id: 'ctx_share_branch',
-            labelPl: 'Kopiuj link',
             labelEn: 'Copy link',
             icon: Share2,
             disabled: isProtected,
@@ -467,12 +424,11 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         ],
       },
       {
-        titlePl: '',
+        titleKey: '',
         titleEn: '',
         items: [
           {
             id: 'ctx_delete',
-            labelPl: 'Usuń',
             labelEn: 'Delete',
             icon: Trash2,
             shortcut: 'Del',
@@ -501,7 +457,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           size={13}
           className={`shrink-0 ${item.danger ? 'text-c-danger' : 'text-c-text-secondary dark:text-c-text-secondary'}`}
         />
-        <span className="flex-1 truncate">{isPl ? item.labelPl : item.labelEn}</span>
+        <span className="flex-1 truncate">{t(`myWorkMindmap.ctxMenu.${item.id}`, item.labelEn)}</span>
         {comingSoon && (
           <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary ml-2 shrink-0 italic">
             {t('ideas.mindmap.comingSoon', 'Coming soon')}
@@ -528,9 +484,9 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         >
           {groups.map((group, gi) => (
             <React.Fragment key={gi}>
-              {group.titlePl && (
+              {group.titleKey && (
                 <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-                  {isPl ? group.titlePl : group.titleEn}
+                  {t(group.titleKey, group.titleEn)}
                 </div>
               )}
               {group.items.map(renderItem)}
@@ -558,7 +514,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         {mainItems.map((group, gi) => (
           <React.Fragment key={gi}>
             <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-              {isPl ? group.titlePl : group.titleEn}
+              {t(group.titleKey, group.titleEn)}
             </div>
             {group.items.map(renderItem)}
             <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
@@ -581,7 +537,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
               type="button"
               className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-md"
             >
-              <span className="flex-1">{isPl ? group.titlePl : group.titleEn}</span>
+              <span className="flex-1">{t(group.titleKey, group.titleEn)}</span>
               <ChevronRight size={11} className="text-c-text-secondary" />
             </button>
 
@@ -596,7 +552,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 }}
               >
                 <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-                  {isPl ? group.titlePl : group.titleEn}
+                  {t(group.titleKey, group.titleEn)}
                 </div>
                 {group.items.map(renderItem)}
               </div>

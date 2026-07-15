@@ -27445,5 +27445,487 @@
       "sourceType_report": "Raport",
       "sourceType_presentation": "Prezentacja"
     }
+  },
+  "myWorkMindmap": {
+    "semanticType": {
+      "topic": "Temat",
+      "hypothesis": "Hipoteza",
+      "risk": "Ryzyko",
+      "action": "Akcja",
+      "decision": "Punkt decyzyjny",
+      "option": "Opcja",
+      "subtopic": "Podtemat"
+    },
+    "lineStyle": {
+      "curved": "Łuk (domyślny)",
+      "orthogonal": "Kątowy",
+      "straight": "Prosty",
+      "step": "Schodkowy"
+    },
+    "aiAction": {
+      "expandNode": "Rozwiń ten węzeł",
+      "deepenTopic": "Pogłęb temat",
+      "summarizeBranch": "Podsumuj gałąź",
+      "whatIfAnalysis": "What-if analiza",
+      "suggestLinks": "Zasugeruj powiązania"
+    },
+    "align": {
+      "align-left": "Wyrównaj do lewej",
+      "align-center-h": "Wyśrodkuj w poziomie",
+      "align-right": "Wyrównaj do prawej",
+      "align-top": "Wyrównaj do góry",
+      "align-middle-v": "Wyśrodkuj w pionie",
+      "align-bottom": "Wyrównaj do dołu",
+      "distribute-h": "Rozłóż poziomo",
+      "distribute-v": "Rozłóż pionowo"
+    },
+    "expandSpace": "Rozwiń (Space)",
+    "collapseSpace": "Zwiń (Space)",
+    "addNode": {
+      "addChildTab": "Gałąź dziecko (Tab)",
+      "addSiblingEnter": "Gałąź sąsiad (Enter)",
+      "newRootTopic": "Nowy root topic"
+    },
+    "aiGen": {
+      "expandMap": "Rozwiń mapę (AI)",
+      "suggestBranches": "Zasugeruj gałęzie",
+      "gapAnalysis": "Analiza luk",
+      "autoClustering": "Auto-klasteryzacja",
+      "mapSummary": "Podsumowanie mapy",
+      "autoCrossLinks": "Auto-linki między gałęziami"
+    },
+    "importExport": {
+      "jsonMap": "Mapa JSON",
+      "xmindFreemindOpml": "XMind / FreeMind / OPML",
+      "documentToMap": "Dokument → Mapa",
+      "voiceToNode": "Mów pomysły (Voice)",
+      "interviewsToMap": "Wywiady → Mapa",
+      "exportPdf": "Eksport PDF",
+      "png": "PNG",
+      "svg": "SVG",
+      "json": "JSON",
+      "mermaidPlantuml": "Mermaid / PlantUML",
+      "csvExcel": "CSV (Excel)",
+      "markdownOutline": "Markdown (konspekt)",
+      "htmlPresentation": "Prezentacja HTML",
+      "embedInReport": "Osadź w raporcie"
+    },
+    "knowledge": {
+      "knowledgeCard": "Karta wiedzy",
+      "noteCard": "Notatka",
+      "evidenceCard": "Dowód / Evidence",
+      "insertFromNotebook": "Wstaw z Notebook",
+      "insertFromInterview": "Wstaw z Interview"
+    },
+    "moreTools": {
+      "changeLayout": "Zmień układ",
+      "structureType": "Typ struktury",
+      "minimap": "Minimap",
+      "fitView": "Dopasuj widok",
+      "presentationMode": "Tryb prezentacji",
+      "collapseToRoot": "Zwiń do korzenia (Alt+0)",
+      "showLevel1": "Pokaż poziom 1 (Alt+1)",
+      "showLevel2": "Pokaż poziom 2 (Alt+2)",
+      "showLevel3": "Pokaż poziom 3 (Alt+3)",
+      "expandAll": "Rozwiń wszystko (Alt+9)",
+      "snapshotsVersions": "Wersje / Snapshoty",
+      "activityHistory": "Historia aktywności",
+      "share": "Udostępnij",
+      "embedExternally": "Osadź zewnętrznie",
+      "branchAnalysis": "Analiza gałęzi"
+    },
+    "category": {
+      "visual": "Tryby widoku",
+      "workflow": "Workflow",
+      "collab": "Współpraca",
+      "analytics": "Analityka",
+      "formatting": "Formatowanie"
+    },
+    "structure": {
+      "mindmap": {
+        "label": "Mapa myśli",
+        "desc": "Radialna lub drzewo — klasyczny układ"
+      },
+      "orgChart": {
+        "label": "Schemat organizacyjny",
+        "desc": "Hierarchia z góry na dół"
+      },
+      "treeRight": {
+        "label": "Drzewo (w prawo)",
+        "desc": "Korzeń po lewej, gałęzie w prawo"
+      },
+      "fishbone": {
+        "label": "Ishikawa (rybka)",
+        "desc": "Diagram przyczynowo-skutkowy"
+      },
+      "timeline": {
+        "label": "Oś czasu",
+        "desc": "Węzły wzdłuż osi poziomej"
+      },
+      "semantic": {
+        "label": "Semantyczny",
+        "desc": "Grupuje węzły wg znaczenia i typu"
+      }
+    },
+    "template": {
+      "mm-blank": "Pusta mapa myśli",
+      "mm-swot": "Analiza SWOT",
+      "mm-5whys": "5 Dlaczego",
+      "mm-fishbone": "Diagram Ishikawy",
+      "mm-stakeholder": "Mapa interesariuszy",
+      "mm-okr": "Kaskada OKR",
+      "pf-blank": "Pusty proces",
+      "pf-process-improvement": "Warsztat usprawnienia procesu",
+      "pf-basic": "Podstawowy proces",
+      "pf-approval": "Proces akceptacji",
+      "pf-pdca": "Cykl PDCA",
+      "pf-o2c": "Order to Cash",
+      "wb-blank": "Pusta tablica",
+      "wb-bmc": "Business Model Canvas",
+      "wb-impact-effort": "Macierz Wpływ / Wysiłek",
+      "wb-retro": "Retrospektywa",
+      "wb-lean-canvas": "Lean Canvas",
+      "wb-cjm": "Mapa podróży klienta",
+      "tbl-decision-matrix": "Macierz decyzyjna",
+      "tbl-assumptions-log": "Rejestr założeń",
+      "tbl-action-plan": "Plan działania",
+      "tbl-risk-register": "Rejestr ryzyk"
+    },
+    "toolbar": {
+      "cursorMode": "Tryb kursora",
+      "ai": "AI",
+      "templates": "Szablony",
+      "mm": {
+        "frame": "Ramka",
+        "addNode": "Dodaj węzeł",
+        "knowledge": "Wiedza",
+        "comments": "Komentarze",
+        "connect": "Połącz — przeciągnij z uchwytu jednego węzła do drugiego",
+        "present": "Prezentacja"
+      },
+      "wb": {
+        "sticky": "Karteczka",
+        "text": "Tekst",
+        "shape": "Kształt",
+        "draw": "Rysuj",
+        "frame": "Ramka"
+      },
+      "pf": {
+        "startEnd": "Start/End",
+        "task": "Task",
+        "decision": "Decyzja",
+        "lane": "Lane"
+      },
+      "tbl": {
+        "addRow": "Nowy wiersz",
+        "columns": "Kolumny",
+        "view": "Widok",
+        "filter": "Filtruj",
+        "dashboard": "Dashboard"
+      },
+      "importExport": "Import / Eksport",
+      "moreTools": "Więcej narzędzi",
+      "undo": "Cofnij",
+      "redo": "Ponów"
+    },
+    "documentToMap": {
+      "addedIdeas": "Dodano {{count}} pomysłów z dokumentu",
+      "addIdeas": "Dodaj {{count}} pomysłów"
+    },
+    "governance": {
+      "status": {
+        "draft": "Szkic",
+        "inReview": "W przeglądzie",
+        "approved": "Zatwierdzony",
+        "changesRequested": "Zmiany wymagane"
+      },
+      "generator": {
+        "expandBranch": "Rozbudowa gałęzi",
+        "autoCluster": "Auto-klastrowanie",
+        "blindSpots": "Wykrywanie luk",
+        "competitive": "Analiza konkurencji",
+        "dependency": "Wykrywanie zależności",
+        "sentiment": "Analiza sentymentu",
+        "priority": "Rekomendacja priorytetów",
+        "whatIf": "Scenariusze what-if",
+        "aiSuggestionsPanel": "Panel sugestii AI",
+        "unknown": "Akcja AI"
+      },
+      "badgeTitle": "Governance AI: {{status}}",
+      "unreviewedSuffix": " — niesprawdzone zmiany"
+    },
+    "ctxMenu": {
+      "ctx_edit": "Edytuj",
+      "ctx_open_detail": "Otwórz szczegóły",
+      "ctx_add_child": "Dodaj gałąź",
+      "ctx_add_sibling": "Dodaj sąsiada",
+      "ctx_duplicate": "Duplikuj",
+      "ctx_copy_nodes": "Kopiuj",
+      "ctx_cut_nodes": "Wytnij",
+      "ctx_paste_nodes": "Wklej",
+      "ctx_toggle_collapse": "Zwiń / rozwiń",
+      "ctx_focus_subtree": "Skup poddrzewo",
+      "ctx_drill_down": "Drill down",
+      "ctx_connect_to_selected": "Połącz z zaznaczonym",
+      "ctx_detach_branch": "Odłącz gałąź",
+      "ctx_duplicate_branch": "Duplikuj gałąź",
+      "ctx_ai_expand": "Rozbuduj temat",
+      "ctx_ai_deepen": "Pogłęb",
+      "ctx_what_if": "Co jeśli...?",
+      "ctx_summarize_branch": "Podsumuj gałąź",
+      "ctx_dependencies": "Wykryj zależności",
+      "ctx_priority": "Priorytetyzacja",
+      "ctx_competitive": "Konkurencja",
+      "ai_suggest_links": "AI: Zasugeruj powiązania",
+      "ctx_convert_initiative": "→ Inicjatywa",
+      "ctx_convert_decision": "→ Decyzja",
+      "ctx_convert_tasks": "→ Zadania",
+      "ctx_subtree_convert_decision": "→ Decyzja (gałąź)",
+      "ctx_subtree_convert_tasks": "→ Zadania (gałąź)",
+      "ctx_subtree_convert_task_set": "→ Zestaw zadań (gałąź)",
+      "ctx_subtree_convert_initiative": "→ Inicjatywa (gałąź)",
+      "ctx_subtree_convert_process_flow": "→ Przepływ procesu (gałąź)",
+      "ctx_change_shape": "Zmień kształt",
+      "ctx_add_image": "Dodaj obraz",
+      "ctx_copy_style": "Kopiuj styl",
+      "ctx_paste_style": "Wklej styl",
+      "ctx_vote_up": "Głosuj ↑",
+      "ctx_assign": "Przypisz osobę",
+      "ctx_comments": "Komentarze",
+      "ctx_quick_notes": "Notatki",
+      "ctx_quick_tags": "Tagi",
+      "ctx_attach_knowledge": "Dołącz wiedzę",
+      "ctx_attach_artifact": "Dołącz artefakt",
+      "ctx_open_linked_artifacts": "Powiązane artefakty",
+      "ctx_share_branch": "Kopiuj link",
+      "ctx_delete": "Usuń",
+      "group": {
+        "edit": "Edycja",
+        "structure": "Struktura",
+        "ai": "AI",
+        "convert": "Konwersja",
+        "convertBranch": "Konwertuj gałąź na...",
+        "styleData": "Wygląd i dane"
+      }
+    },
+    "health": {
+      "balance": "Balans",
+      "depth": "Głębokość",
+      "coverage": "Pokrycie",
+      "maturity": "Dojrzałość",
+      "connectivity": "Połączenia",
+      "avgDepth": "Śr. głębokość: {{value}}",
+      "coverageBranches": "{{covered}}/{{total}} gałęzi",
+      "matureCount": "{{mature}}/{{total}} dojrzałych",
+      "crossBranch": "{{count}} cross-branch"
+    },
+    "inspector": {
+      "tab": {
+        "style": "Styl",
+        "layout": "Układ",
+        "theme": "Motyw"
+      },
+      "structure": {
+        "mindmap": "Mapa myśli",
+        "org_chart": "Schemat org.",
+        "tree_right": "Drzewo prawe",
+        "fishbone": "Ishikawa",
+        "timeline": "Oś czasu",
+        "semantic": "Semantyczna"
+      },
+      "layout": {
+        "tree": "Drzewo",
+        "radial": "Promienisty",
+        "force": "Siłowy"
+      },
+      "theme": {
+        "default": "Domyślny",
+        "ocean": "Ocean",
+        "forest": "Las",
+        "sunset": "Zachód",
+        "midnight": "Północ",
+        "minimal": "Minimalistyczny"
+      }
+    },
+    "edgeMenu": {
+      "edge_add_label": "Dodaj / edytuj etykietę",
+      "edge_insert_node": "Wstaw węzeł na połączeniu",
+      "edge_reverse": "Odwróć kierunek",
+      "edge_change_style": "Zmień styl linii",
+      "edge_edit_relation": "Edytuj relację",
+      "edge_delete": "Usuń połączenie"
+    },
+    "paneMenu": {
+      "pane_add_node": "Dodaj temat (do korzenia)",
+      "pane_copy": "Kopiuj węzły",
+      "pane_cut": "Wytnij węzły",
+      "pane_paste": "Wklej węzły",
+      "pane_select_all": "Zaznacz wszystko",
+      "pane_fit_view": "Dopasuj widok",
+      "pane_auto_layout": "Automatyczny układ",
+      "pane_auto_cluster": "Auto-grupowanie",
+      "pane_collapse_all": "Zwiń wszystko",
+      "pane_fold_1": "Pokaż poziom 1",
+      "pane_fold_2": "Pokaż poziom 2",
+      "pane_expand_all": "Rozwiń wszystko",
+      "pane_ai_suggest": "AI: Zasugeruj węzły"
+    },
+    "funnel": {
+      "idea": "Pomysł",
+      "exploring": "Eksploracja",
+      "validated": "Zwalidowany",
+      "ready_to_convert": "Gotowy",
+      "converted": "Skonwertowany"
+    },
+    "artifactType": {
+      "initiative": "Inicjatywa",
+      "decision": "Decyzja",
+      "task": "Zadanie",
+      "report": "Raport",
+      "assessment": "Ocena",
+      "notebook": "Strona notatnika"
+    },
+    "dependency": {
+      "dependsOn": "Zależy od",
+      "enables": "Umożliwia",
+      "conflictsWith": "Konflikt z",
+      "relatedTo": "Powiązane z"
+    },
+    "quickActions": {
+      "appliedTemplate": "Zastosowano szablon: {{label}}",
+      "noReadyTemplate": "Brak gotowego szablonu dla \"{{label}}\" — dodano pusty węzeł startowy (funkcja tymczasowa).",
+      "semanticLabel": {
+        "mm_insert_topic": "Temat",
+        "mm_insert_hypothesis": "Hipoteza",
+        "mm_insert_risk": "Ryzyko",
+        "mm_insert_action": "Akcja",
+        "mm_insert_decision": "Punkt decyzyjny",
+        "mm_insert_option": "Opcja"
+      },
+      "cluster": {
+        "risks": "Ryzyka",
+        "hypotheses": "Hipotezy",
+        "actions": "Działania",
+        "evidence": "Dowody",
+        "questions": "Pytania",
+        "uncategorized": "Inne"
+      },
+      "structureLabel": {
+        "mindmap": "Mapa myśli",
+        "org_chart": "Schemat organizacyjny",
+        "tree_right": "Drzewo (w prawo)",
+        "fishbone": "Ishikawa (rybka)",
+        "timeline": "Oś czasu",
+        "semantic": "Semantyczny"
+      }
+    },
+    "nodeStatus": {
+      "idea": "Pomysł",
+      "exploring": "Eksploracja",
+      "validated": "Zwalidowany",
+      "readyToConvert": "Gotowy do konwersji",
+      "converted": "Skonwertowany",
+      "ready": "Gotowe",
+      "rejected": "Odrzucone"
+    },
+    "semanticOption": {
+      "none": "— brak —",
+      "topic": "Temat",
+      "subtopic": "Podtemat",
+      "hypothesis": "Hipoteza",
+      "option": "Opcja",
+      "risk": "Ryzyko",
+      "action": "Akcja",
+      "decision_point": "Punkt decyzyjny",
+      "insight": "Insight",
+      "question": "Pytanie",
+      "evidence": "Dowód"
+    },
+    "ideaSemanticOption": {
+      "hypothesis": "Hipoteza",
+      "decision": "Decyzja",
+      "risk": "Ryzyko",
+      "opportunity": "Szansa",
+      "action": "Akcja",
+      "evidence": "Dowód",
+      "insight": "Wniosek",
+      "customer": "Klient",
+      "blocker": "Blocker"
+    },
+    "command": {
+      "add_child": "Dodaj gałąź",
+      "add_sibling": "Dodaj sąsiada",
+      "add_root": "Dodaj temat główny",
+      "delete": "Usuń zaznaczony",
+      "duplicate": "Duplikuj",
+      "batch_convert": "Konwersja zbiorcza",
+      "ai_expand": "AI Rozwiń",
+      "ai_summarize": "AI Podsumuj",
+      "ai_gap": "AI Analiza luk",
+      "ai_suggest": "AI Sugestie",
+      "auto_cluster": "Auto-grupowanie",
+      "auto_layout": "Auto-układ",
+      "struct_mindmap": "Struktura: Mapa myśli",
+      "struct_org": "Struktura: Schemat org.",
+      "struct_tree": "Struktura: Drzewo (prawo)",
+      "struct_fishbone": "Struktura: Ishikawa",
+      "struct_timeline": "Struktura: Oś czasu",
+      "struct_semantic": "Struktura: Semantyczny",
+      "toggle_health": "Pokaż/ukryj Health Score",
+      "presentation": "Tryb prezentacji",
+      "fit_view": "Dopasuj widok",
+      "toggle_minimap": "Pokaż/ukryj minimapę",
+      "timeline_view": "Widok osi czasu",
+      "view_3d": "Widok 3D",
+      "time_heatmap": "Mapa cieplna czasu",
+      "export_md": "Eksport: Markdown",
+      "export_png": "Eksport: PNG",
+      "export_svg": "Eksport: SVG",
+      "export_pptx": "Eksport: Prezentacja HTML",
+      "undo": "Cofnij",
+      "redo": "Ponów"
+    },
+    "commandCategory": {
+      "nodes": "Węzły",
+      "ai": "AI",
+      "layout": "Układ",
+      "view": "Widok",
+      "export": "Eksport",
+      "edit": "Edycja"
+    },
+    "whatIf": {
+      "scenariosFor": "Scenariusze dla: \"{{label}}\""
+    },
+    "heatmap": {
+      "mon": "Pn",
+      "tue": "Wt",
+      "wed": "Śr",
+      "thu": "Cz",
+      "fri": "Pt",
+      "sat": "So",
+      "sun": "Nd"
+    },
+    "presentation": {
+      "branchesIdeas": "{{branches}} gałęzi · {{ideas}} pomysłów"
+    },
+    "branchSummary": {
+      "prompt": "Podsumuj tę gałąź mapy myśli. Gałąź: {{branch}}. Węzły: {{nodes}}. Zwróć podsumowanie narracyjne, kluczowe punkty i rekomendacje."
+    },
+    "workspace": {
+      "newChallenge": "Nowe wyzwanie",
+      "switchTo": "Przełącz: {{tool}}",
+      "tool": {
+        "mindmap": "Mapa rekomendacji",
+        "whiteboard": "Tablica",
+        "process_flow": "Przepływ",
+        "table": "Tabela"
+      },
+      "unknownNode": "nieznany"
+    },
+    "emptyStep": {
+      "1": "Nadaj tytuł wyzwaniu",
+      "2": "Opisz problem lub pomysł",
+      "3": "Kliknij „Akceptuj\" w panelu Tools"
+    }
   }
 }

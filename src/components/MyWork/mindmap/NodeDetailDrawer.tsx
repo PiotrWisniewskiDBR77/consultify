@@ -123,34 +123,34 @@ interface NodeDetailDrawerProps {
 
 const STATUS_CONFIG: Record<
   NodeStatus,
-  { labelPl: string; labelEn: string; color: string; icon: React.ComponentType<any> }
+  { tkey: string; labelEn: string; color: string; icon: React.ComponentType<any> }
 > = {
   idea: {
-    labelPl: 'Pomysł',
+    tkey: 'myWorkMindmap.nodeStatus.idea',
     labelEn: 'Idea',
     color: 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface dark:text-c-text-muted',
     icon: Lightbulb,
   },
   exploring: {
-    labelPl: 'Eksploracja',
+    tkey: 'myWorkMindmap.nodeStatus.exploring',
     labelEn: 'Exploring',
     color: 'bg-c-surface-raised text-c-info dark:bg-c-surface dark:text-c-info',
     icon: Target,
   },
   validated: {
-    labelPl: 'Zwalidowany',
+    tkey: 'myWorkMindmap.nodeStatus.validated',
     labelEn: 'Validated',
     color: 'bg-c-surface-raised text-c-success dark:bg-c-surface dark:text-c-success',
     icon: Star,
   },
   ready_to_convert: {
-    labelPl: 'Gotowy do konwersji',
+    tkey: 'myWorkMindmap.nodeStatus.readyToConvert',
     labelEn: 'Ready to Convert',
     color: 'bg-c-surface-raised text-c-warning dark:bg-c-surface dark:text-c-warning',
     icon: Rocket,
   },
   converted: {
-    labelPl: 'Skonwertowany',
+    tkey: 'myWorkMindmap.nodeStatus.converted',
     labelEn: 'Converted',
     color: 'bg-c-surface-raised text-c-accent dark:bg-c-surface dark:text-c-accent',
     icon: ArrowRight,
@@ -166,17 +166,17 @@ const STATUS_ORDER: NodeStatus[] = [
 ];
 
 const SEMANTIC_TYPE_OPTIONS = [
-  { value: '', labelPl: '— brak —', labelEn: '— none —' },
-  { value: 'topic', labelPl: 'Temat', labelEn: 'Topic' },
-  { value: 'subtopic', labelPl: 'Podtemat', labelEn: 'Subtopic' },
-  { value: 'hypothesis', labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
-  { value: 'option', labelPl: 'Opcja', labelEn: 'Option' },
-  { value: 'risk', labelPl: 'Ryzyko', labelEn: 'Risk' },
-  { value: 'action', labelPl: 'Akcja', labelEn: 'Action' },
-  { value: 'decision_point', labelPl: 'Punkt decyzyjny', labelEn: 'Decision Point' },
-  { value: 'insight', labelPl: 'Insight', labelEn: 'Insight' },
-  { value: 'question', labelPl: 'Pytanie', labelEn: 'Question' },
-  { value: 'evidence', labelPl: 'Dowód', labelEn: 'Evidence' },
+  { value: '', labelEn: '— none —' },
+  { value: 'topic', labelEn: 'Topic' },
+  { value: 'subtopic', labelEn: 'Subtopic' },
+  { value: 'hypothesis', labelEn: 'Hypothesis' },
+  { value: 'option', labelEn: 'Option' },
+  { value: 'risk', labelEn: 'Risk' },
+  { value: 'action', labelEn: 'Action' },
+  { value: 'decision_point', labelEn: 'Decision Point' },
+  { value: 'insight', labelEn: 'Insight' },
+  { value: 'question', labelEn: 'Question' },
+  { value: 'evidence', labelEn: 'Evidence' },
 ] as const;
 
 export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
@@ -446,9 +446,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                                 ? 'bg-c-surface-raised text-c-success dark:bg-c-surface dark:text-c-success'
                                 : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface'
                           } disabled:opacity-40`}
-                          title={isPl ? cfg.labelPl : cfg.labelEn}
+                          title={t(cfg.tkey, cfg.labelEn)}
                         >
-                          {isPl ? cfg.labelPl : cfg.labelEn}
+                          {t(cfg.tkey, cfg.labelEn)}
                         </button>
                       </React.Fragment>
                     );
@@ -471,7 +471,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 >
                   {SEMANTIC_TYPE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
-                      {isPl ? opt.labelPl : opt.labelEn}
+                      {t(`myWorkMindmap.semanticOption.${opt.value || 'none'}`, opt.labelEn)}
                     </option>
                   ))}
                 </select>

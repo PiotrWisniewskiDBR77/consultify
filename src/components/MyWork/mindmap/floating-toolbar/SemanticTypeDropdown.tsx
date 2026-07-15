@@ -18,41 +18,37 @@ interface SemanticTypeDropdownProps {
 }
 
 export const SEMANTIC_TYPE_OPTIONS = [
-  { id: 'topic', iconEl: CircleDot, labelPl: 'Temat', labelEn: 'Topic', color: 'text-c-info' },
+  { id: 'topic', iconEl: CircleDot, labelEn: 'Topic', color: 'text-c-info' },
   {
     id: 'hypothesis',
     iconEl: Lightbulb,
-    labelPl: 'Hipoteza',
     labelEn: 'Hypothesis',
     color: 'text-c-warning',
   },
-  { id: 'risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk', color: 'text-c-danger' },
+  { id: 'risk', iconEl: AlertTriangle, labelEn: 'Risk', color: 'text-c-danger' },
   {
     id: 'action',
     iconEl: CheckSquare,
-    labelPl: 'Akcja',
     labelEn: 'Action',
     color: 'text-c-success',
   },
   {
     id: 'decision',
     iconEl: Diamond,
-    labelPl: 'Punkt decyzyjny',
     labelEn: 'Decision point',
     color: 'text-c-accent',
   },
-  { id: 'option', iconEl: Star, labelPl: 'Opcja', labelEn: 'Option', color: 'text-c-info' },
+  { id: 'option', iconEl: Star, labelEn: 'Option', color: 'text-c-info' },
   {
     id: 'subtopic',
     iconEl: GitBranch,
-    labelPl: 'Podtemat',
     labelEn: 'Subtopic',
     color: 'text-c-text-secondary',
   },
 ];
 
 export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
-  isPl,
+  isPl: _isPl,
   current,
   onSelect,
   onClose,
@@ -63,14 +59,14 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
       <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
         {t('ideas.mindmap.nodeType', 'Node type')}
       </div>
-      {SEMANTIC_TYPE_OPTIONS.map((t) => {
-        const Icon = t.iconEl;
-        const isActive = current === t.id;
+      {SEMANTIC_TYPE_OPTIONS.map((opt) => {
+        const Icon = opt.iconEl;
+        const isActive = current === opt.id;
         return (
           <button
-            key={t.id}
+            key={opt.id}
             onClick={() => {
-              onSelect(t.id);
+              onSelect(opt.id);
               onClose();
             }}
             className={`w-full flex items-center gap-2 px-2 py-1.5 text-[11px] transition-colors ${
@@ -81,9 +77,9 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
           >
             <Icon
               size={12}
-              className={`shrink-0 ${isActive ? t.color : 'text-c-text-secondary'}`}
+              className={`shrink-0 ${isActive ? opt.color : 'text-c-text-secondary'}`}
             />
-            {isPl ? t.labelPl : t.labelEn}
+            {t(`myWorkMindmap.semanticType.${opt.id}`, opt.labelEn)}
           </button>
         );
       })}

@@ -8,13 +8,13 @@ import { useTranslation } from 'react-i18next';
 
 import type { ArtifactType } from '@/utils/artifactLinks';
 
-const ARTIFACT_TYPES: { value: ArtifactType; label: string; labelPl: string }[] = [
-  { value: 'initiative', label: 'Initiative', labelPl: 'Inicjatywa' },
-  { value: 'decision', label: 'Decision', labelPl: 'Decyzja' },
-  { value: 'task', label: 'Task', labelPl: 'Zadanie' },
-  { value: 'report', label: 'Report', labelPl: 'Raport' },
-  { value: 'assessment', label: 'Assessment', labelPl: 'Ocena' },
-  { value: 'notebook', label: 'Notebook page', labelPl: 'Strona notatnika' },
+const ARTIFACT_TYPES: { value: ArtifactType; label: string }[] = [
+  { value: 'initiative', label: 'Initiative' },
+  { value: 'decision', label: 'Decision' },
+  { value: 'task', label: 'Task' },
+  { value: 'report', label: 'Report' },
+  { value: 'assessment', label: 'Assessment' },
+  { value: 'notebook', label: 'Notebook page' },
 ];
 
 interface AttachArtifactModalProps {
@@ -28,8 +28,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
   onClose,
   onAttach,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [type, setType] = useState<ArtifactType>('initiative');
   const [artifactId, setArtifactId] = useState('');
   const [label, setLabel] = useState('');
@@ -78,7 +77,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
           >
             {ARTIFACT_TYPES.map((at) => (
               <option key={at.value} value={at.value}>
-                {isPl ? at.labelPl : at.label}
+                {t(`myWorkMindmap.artifactType.${at.value}`, at.label)}
               </option>
             ))}
           </select>

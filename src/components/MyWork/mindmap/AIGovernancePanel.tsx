@@ -121,45 +121,45 @@ function formatTimestamp(iso: string, isPl: boolean): string {
 
 const STATUS_CONFIG: Record<
   CanvasGovernanceStatus,
-  { labelPl: string; labelEn: string; color: string; icon: React.ElementType }
+  { tkey: string; labelEn: string; color: string; icon: React.ElementType }
 > = {
   draft: {
-    labelPl: 'Szkic',
+    tkey: 'myWorkMindmap.governance.status.draft',
     labelEn: 'Draft',
     color: 'text-c-text-secondary bg-c-surface-raised dark:bg-c-surface',
     icon: FileCheck,
   },
   in_review: {
-    labelPl: 'W przeglądzie',
+    tkey: 'myWorkMindmap.governance.status.inReview',
     labelEn: 'In Review',
     color: 'text-c-warning bg-c-surface-raised dark:bg-c-surface',
     icon: Eye,
   },
   approved: {
-    labelPl: 'Zatwierdzony',
+    tkey: 'myWorkMindmap.governance.status.approved',
     labelEn: 'Approved',
     color: 'text-c-success bg-c-surface-raised dark:bg-c-surface',
     icon: ShieldCheck,
   },
   changes_requested: {
-    labelPl: 'Zmiany wymagane',
+    tkey: 'myWorkMindmap.governance.status.changesRequested',
     labelEn: 'Changes Requested',
     color: 'text-c-danger bg-c-surface-raised dark:bg-c-surface',
     icon: AlertCircle,
   },
 };
 
-const GENERATOR_LABELS: Record<string, { pl: string; en: string }> = {
-  expand_branch: { pl: 'Rozbudowa gałęzi', en: 'Branch expansion' },
-  auto_cluster: { pl: 'Auto-klastrowanie', en: 'Auto-clustering' },
-  blind_spots: { pl: 'Wykrywanie luk', en: 'Blind spots detection' },
-  competitive: { pl: 'Analiza konkurencji', en: 'Competitive analysis' },
-  dependency: { pl: 'Wykrywanie zależności', en: 'Dependency detection' },
-  sentiment: { pl: 'Analiza sentymentu', en: 'Sentiment analysis' },
-  priority: { pl: 'Rekomendacja priorytetów', en: 'Priority recommendation' },
-  what_if: { pl: 'Scenariusze what-if', en: 'What-if scenarios' },
-  ai_suggestions_panel: { pl: 'Panel sugestii AI', en: 'AI suggestions panel' },
-  unknown: { pl: 'Akcja AI', en: 'AI action' },
+const GENERATOR_LABELS: Record<string, { tkey: string; en: string }> = {
+  expand_branch: { tkey: 'myWorkMindmap.governance.generator.expandBranch', en: 'Branch expansion' },
+  auto_cluster: { tkey: 'myWorkMindmap.governance.generator.autoCluster', en: 'Auto-clustering' },
+  blind_spots: { tkey: 'myWorkMindmap.governance.generator.blindSpots', en: 'Blind spots detection' },
+  competitive: { tkey: 'myWorkMindmap.governance.generator.competitive', en: 'Competitive analysis' },
+  dependency: { tkey: 'myWorkMindmap.governance.generator.dependency', en: 'Dependency detection' },
+  sentiment: { tkey: 'myWorkMindmap.governance.generator.sentiment', en: 'Sentiment analysis' },
+  priority: { tkey: 'myWorkMindmap.governance.generator.priority', en: 'Priority recommendation' },
+  what_if: { tkey: 'myWorkMindmap.governance.generator.whatIf', en: 'What-if scenarios' },
+  ai_suggestions_panel: { tkey: 'myWorkMindmap.governance.generator.aiSuggestionsPanel', en: 'AI suggestions panel' },
+  unknown: { tkey: 'myWorkMindmap.governance.generator.unknown', en: 'AI action' },
 };
 
 /* ------------------------------------------------------------------ */
@@ -300,7 +300,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold ${statusCfg.color}`}
           >
             <StatusIcon size={12} />
-            {isPl ? statusCfg.labelPl : statusCfg.labelEn}
+            {t(statusCfg.tkey, statusCfg.labelEn)}
           </div>
           {governance.reviewedBy && (
             <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary">
@@ -357,7 +357,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                         <TeresaMark size={12} className="text-c-text-secondary shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted truncate">
-                            {isPl ? genLabel.pl : genLabel.en}
+                            {t(genLabel.tkey, genLabel.en)}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[9px] text-c-text-secondary">
@@ -507,7 +507,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                       }`}
                     >
                       <Icon size={11} />
-                      <span className="truncate">{isPl ? cfg.labelPl : cfg.labelEn}</span>
+                      <span className="truncate">{t(cfg.tkey, cfg.labelEn)}</span>
                     </button>
                   );
                 })}
@@ -617,11 +617,13 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     {t('ideas.mindmap.mostUsedGenerator', 'Most used generator')}
                   </div>
                   <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted">
-                    {isPl
-                      ? (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
-                          .pl
-                      : (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
-                          .en}
+                    {t(
+                      (
+                        GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown
+                      ).tkey,
+                      (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
+                        .en
+                    )}
                   </div>
                   <div className="text-[9px] text-c-text-secondary mt-0.5">
                     {stats.mostUsedGenerator.count}× {t('ideas.mindmap.uses', 'uses')}
@@ -681,9 +683,9 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensi
           : 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted border border-c-border-subtle dark:border-c-border-subtle'
       }`}
       title={
-        isPl
-          ? `Governance AI: ${statusCfg.labelPl}${unreviewed ? ' — niesprawdzone zmiany' : ''}`
-          : `AI Governance: ${statusCfg.labelEn}${unreviewed ? ' — unreviewed changes' : ''}`
+        t('myWorkMindmap.governance.badgeTitle', 'AI Governance: {{status}}', {
+          status: t(statusCfg.tkey, statusCfg.labelEn),
+        }) + (unreviewed ? t('myWorkMindmap.governance.unreviewedSuffix', ' — unreviewed changes') : '')
       }
     >
       <Shield size={11} className={unreviewed ? 'text-c-warning' : 'text-c-text-secondary'} />

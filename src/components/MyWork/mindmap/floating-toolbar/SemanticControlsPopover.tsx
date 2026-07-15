@@ -11,7 +11,7 @@ type SemanticNodeData = {
 };
 
 interface SemanticControlsPopoverProps {
-  isPl: boolean;
+  isPl?: boolean;
   disabled?: boolean;
   nodeData?: SemanticNodeData;
   onUpdate: (patch: { semanticType?: string; notes?: string; tags?: string[] }) => void;
@@ -19,7 +19,7 @@ interface SemanticControlsPopoverProps {
 }
 
 export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = ({
-  isPl,
+  isPl: _isPl,
   disabled = false,
   nodeData,
   onUpdate,
@@ -70,7 +70,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
           <option value="">{t('ideas.mindmap.selectSemanticType', 'Select semantic type')}</option>
           {SEMANTIC_TYPE_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>
-              {isPl ? option.labelPl : option.labelEn}
+              {t(`myWorkMindmap.semanticType.${option.id}`, option.labelEn)}
             </option>
           ))}
         </select>

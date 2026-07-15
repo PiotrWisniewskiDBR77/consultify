@@ -347,7 +347,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       })();
       toast.success(
         i18n.t('mindmap.quickActions.creatingMapFor', {
-          defaultValue: isPolish ? `Tworzę mapę: "${topic}"…` : `Creating map: "${topic}"…`,
+          defaultValue: `Creating map: "${topic}"…`,
           topic,
         }),
         { duration: 1500 }
@@ -403,7 +403,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         setters.setEdges((prev) => [...prev, ...newEdges]);
         const templateLabel = isPolish ? template.namePl : template.nameEn;
         toast.success(
-          isPolish ? `Zastosowano szablon: ${templateLabel}` : `Applied template: ${templateLabel}`,
+          i18n.t('myWorkMindmap.quickActions.appliedTemplate', {
+            defaultValue: 'Applied template: {{label}}',
+            label: templateLabel,
+          }),
           { duration: 1500 }
         );
         setTimeout(() => {
@@ -443,9 +446,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         { id: `e-root-${newId}`, source: rootNode?.id ?? 'root', target: newId } as Edge,
       ]);
       toast(
-        isPolish
-          ? `Brak gotowego szablonu dla "${fallbackLabel}" — dodano pusty węzeł startowy (funkcja tymczasowa).`
-          : `No ready-made template for "${fallbackLabel}" yet — added an empty starter node (temporary fallback).`,
+        i18n.t('myWorkMindmap.quickActions.noReadyTemplate', {
+          defaultValue:
+            'No ready-made template for "{{label}}" yet — added an empty starter node (temporary fallback).',
+          label: fallbackLabel,
+        }),
         { icon: '⚠️', duration: 3000 }
       );
       return;
@@ -639,7 +644,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           type: 'idea',
           position: { x: baseX, y: baseY },
           data: {
-            label: isPolish ? spec.labelPl : spec.labelEn,
+            label: i18n.t(`myWorkMindmap.quickActions.semanticLabel.${action}`, {
+              defaultValue: spec.labelEn,
+            }),
             semanticType: spec.kind,
             _startEditing: true,
             onLabelChange: (next: string) => {
@@ -815,13 +822,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
       handlers.pushUndo();
 
-      const CLUSTER_LABELS: Record<string, { en: string; pl: string }> = {
-        risks: { en: 'Risks', pl: 'Ryzyka' },
-        hypotheses: { en: 'Hypotheses', pl: 'Hipotezy' },
-        actions: { en: 'Actions', pl: 'Działania' },
-        evidence: { en: 'Evidence', pl: 'Dowody' },
-        questions: { en: 'Questions', pl: 'Pytania' },
-        uncategorized: { en: 'Other', pl: 'Inne' },
+      const CLUSTER_LABELS: Record<string, string> = {
+        risks: 'Risks',
+        hypotheses: 'Hypotheses',
+        actions: 'Actions',
+        evidence: 'Evidence',
+        questions: 'Questions',
+        uncategorized: 'Other',
       };
 
       const newNodes: Node[] = [];
@@ -836,7 +843,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         const by = Math.sin(angle) * radius;
 
         const branchId = `branch-auto-${key}-${Date.now()}`;
-        const branchLabel = CLUSTER_LABELS[key]?.[isPolish ? 'pl' : 'en'] || key;
+        const branchLabel = CLUSTER_LABELS[key]
+          ? i18n.t(`myWorkMindmap.quickActions.cluster.${key}`, { defaultValue: CLUSTER_LABELS[key] })
+          : key;
 
         newNodes.push({
           id: branchId,
@@ -1144,15 +1153,19 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
             /* */
           }
         }, 50);
-        const LABELS: Record<string, { pl: string; en: string }> = {
-          mindmap: { pl: 'Mapa myśli', en: 'Mind Map' },
-          org_chart: { pl: 'Schemat organizacyjny', en: 'Org Chart' },
-          tree_right: { pl: 'Drzewo (w prawo)', en: 'Tree (Right)' },
-          fishbone: { pl: 'Ishikawa (rybka)', en: 'Fishbone' },
-          timeline: { pl: 'Oś czasu', en: 'Timeline' },
-          semantic: { pl: 'Semantyczny', en: 'Semantic' },
+        const LABELS: Record<string, string> = {
+          mindmap: 'Mind Map',
+          org_chart: 'Org Chart',
+          tree_right: 'Tree (Right)',
+          fishbone: 'Fishbone',
+          timeline: 'Timeline',
+          semantic: 'Semantic',
         };
-        const label = isPolish ? LABELS[newType]?.pl : LABELS[newType]?.en;
+        const label = LABELS[newType]
+          ? i18n.t(`myWorkMindmap.quickActions.structureLabel.${newType}`, {
+              defaultValue: LABELS[newType],
+            })
+          : undefined;
         toast.success(i18n.t('mindmap.quickActions.structureChanged', { label }), {
           duration: 1200,
         });

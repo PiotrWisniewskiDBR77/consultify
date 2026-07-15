@@ -34,30 +34,30 @@ interface AIActionsPopoverProps {
 const HEURISTIC_ACTIONS = new Set(['mm_ai_cluster']);
 
 const GENERAL_GENERATORS = [
-  { action: 'mm_ai_expand', iconEl: Zap, labelPl: 'Rozwiń mapę (AI)', labelEn: 'Expand map (AI)' },
+  { action: 'mm_ai_expand', iconEl: Zap, tkey: 'myWorkMindmap.aiGen.expandMap', labelEn: 'Expand map (AI)' },
   {
     action: 'mm_ai_suggest',
     iconEl: Lightbulb,
-    labelPl: 'Zasugeruj gałęzie',
+    tkey: 'myWorkMindmap.aiGen.suggestBranches',
     labelEn: 'Suggest branches',
   },
-  { action: 'mm_ai_gap_analysis', iconEl: Search, labelPl: 'Analiza luk', labelEn: 'Gap analysis' },
+  { action: 'mm_ai_gap_analysis', iconEl: Search, tkey: 'myWorkMindmap.aiGen.gapAnalysis', labelEn: 'Gap analysis' },
   {
     action: 'mm_ai_cluster',
     iconEl: GitMerge,
-    labelPl: 'Auto-klasteryzacja',
+    tkey: 'myWorkMindmap.aiGen.autoClustering',
     labelEn: 'Auto-clustering',
   },
   {
     action: 'mm_ai_summarize',
     iconEl: Brain,
-    labelPl: 'Podsumowanie mapy',
+    tkey: 'myWorkMindmap.aiGen.mapSummary',
     labelEn: 'Map summary',
   },
   {
     action: 'mm_ai_auto_connect',
     iconEl: Target,
-    labelPl: 'Auto-linki między gałęziami',
+    tkey: 'myWorkMindmap.aiGen.autoCrossLinks',
     labelEn: 'Auto cross-links',
   },
 ];
@@ -66,20 +66,20 @@ const NODE_SPECIFIC_GENERATORS = [
   {
     action: 'mm_ai_expand_node',
     iconEl: Zap,
-    labelPl: 'Rozwiń ten węzeł',
+    tkey: 'myWorkMindmap.aiAction.expandNode',
     labelEn: 'Expand this node',
   },
-  { action: 'mm_ai_deepen', iconEl: Wand2, labelPl: 'Pogłęb temat', labelEn: 'Deepen topic' },
+  { action: 'mm_ai_deepen', iconEl: Wand2, tkey: 'myWorkMindmap.aiAction.deepenTopic', labelEn: 'Deepen topic' },
   {
     action: 'mm_ai_summarize_branch',
     iconEl: Brain,
-    labelPl: 'Podsumuj gałąź',
+    tkey: 'myWorkMindmap.aiAction.summarizeBranch',
     labelEn: 'Summarize branch',
   },
   {
     action: 'mm_ai_what_if',
     iconEl: Lightbulb,
-    labelPl: 'What-if analiza',
+    tkey: 'myWorkMindmap.aiAction.whatIfAnalysis',
     labelEn: 'What-if analysis',
   },
 ];
@@ -154,7 +154,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
               >
                 <Icon size={12} className="text-c-text-secondary shrink-0" />
-                {isPl ? a.labelPl : a.labelEn}
+                {t(a.tkey, a.labelEn)}
               </button>
             );
           })}
@@ -181,7 +181,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
               }`}
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              <span className="flex-1 text-left">{isPl ? a.labelPl : a.labelEn}</span>
+              <span className="flex-1 text-left">{t(a.tkey, a.labelEn)}</span>
               {comingSoon && (
                 <span className="text-[9px] italic text-c-text-secondary dark:text-c-text-secondary shrink-0">
                   {t('ideas.mindmap.comingSoon', 'Coming soon')}

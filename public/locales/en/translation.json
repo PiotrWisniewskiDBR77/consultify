@@ -26369,5 +26369,487 @@
       "sourceType_report": "Report",
       "sourceType_presentation": "Presentation"
     }
+  },
+  "myWorkMindmap": {
+    "semanticType": {
+      "topic": "Topic",
+      "hypothesis": "Hypothesis",
+      "risk": "Risk",
+      "action": "Action",
+      "decision": "Decision point",
+      "option": "Option",
+      "subtopic": "Subtopic"
+    },
+    "lineStyle": {
+      "curved": "Curved (default)",
+      "orthogonal": "Orthogonal",
+      "straight": "Straight",
+      "step": "Step"
+    },
+    "aiAction": {
+      "expandNode": "Expand this node",
+      "deepenTopic": "Deepen topic",
+      "summarizeBranch": "Summarize branch",
+      "whatIfAnalysis": "What-if analysis",
+      "suggestLinks": "Suggest links"
+    },
+    "align": {
+      "align-left": "Align left",
+      "align-center-h": "Align center",
+      "align-right": "Align right",
+      "align-top": "Align top",
+      "align-middle-v": "Align middle",
+      "align-bottom": "Align bottom",
+      "distribute-h": "Distribute horizontally",
+      "distribute-v": "Distribute vertically"
+    },
+    "expandSpace": "Expand (Space)",
+    "collapseSpace": "Collapse (Space)",
+    "addNode": {
+      "addChildTab": "Add child (Tab)",
+      "addSiblingEnter": "Add sibling (Enter)",
+      "newRootTopic": "New root topic"
+    },
+    "aiGen": {
+      "expandMap": "Expand map (AI)",
+      "suggestBranches": "Suggest branches",
+      "gapAnalysis": "Gap analysis",
+      "autoClustering": "Auto-clustering",
+      "mapSummary": "Map summary",
+      "autoCrossLinks": "Auto cross-links"
+    },
+    "importExport": {
+      "jsonMap": "JSON map",
+      "xmindFreemindOpml": "XMind / FreeMind / OPML",
+      "documentToMap": "Document → Map",
+      "voiceToNode": "Voice to Node",
+      "interviewsToMap": "Interviews → Map",
+      "exportPdf": "Export PDF",
+      "png": "PNG",
+      "svg": "SVG",
+      "json": "JSON",
+      "mermaidPlantuml": "Mermaid / PlantUML",
+      "csvExcel": "CSV (Excel)",
+      "markdownOutline": "Markdown outline",
+      "htmlPresentation": "HTML Presentation",
+      "embedInReport": "Embed in report"
+    },
+    "knowledge": {
+      "knowledgeCard": "Knowledge card",
+      "noteCard": "Note card",
+      "evidenceCard": "Evidence card",
+      "insertFromNotebook": "Insert from Notebook",
+      "insertFromInterview": "Insert from Interview"
+    },
+    "moreTools": {
+      "changeLayout": "Change layout",
+      "structureType": "Structure type",
+      "minimap": "Minimap",
+      "fitView": "Fit view",
+      "presentationMode": "Presentation mode",
+      "collapseToRoot": "Collapse to root (Alt+0)",
+      "showLevel1": "Show level 1 (Alt+1)",
+      "showLevel2": "Show level 2 (Alt+2)",
+      "showLevel3": "Show level 3 (Alt+3)",
+      "expandAll": "Expand all (Alt+9)",
+      "snapshotsVersions": "Snapshots / Versions",
+      "activityHistory": "Activity history",
+      "share": "Share",
+      "embedExternally": "Embed externally",
+      "branchAnalysis": "Branch analysis"
+    },
+    "category": {
+      "visual": "Visual Modes",
+      "workflow": "Workflow",
+      "collab": "Collaboration",
+      "analytics": "Analytics",
+      "formatting": "Formatting"
+    },
+    "structure": {
+      "mindmap": {
+        "label": "Mind Map",
+        "desc": "Radial or tree — classic layout"
+      },
+      "orgChart": {
+        "label": "Org Chart",
+        "desc": "Top-down hierarchy"
+      },
+      "treeRight": {
+        "label": "Tree (Right)",
+        "desc": "Root on left, branches to the right"
+      },
+      "fishbone": {
+        "label": "Fishbone (Ishikawa)",
+        "desc": "Cause-and-effect diagram"
+      },
+      "timeline": {
+        "label": "Timeline",
+        "desc": "Nodes along a horizontal axis"
+      },
+      "semantic": {
+        "label": "Semantic",
+        "desc": "Groups nodes by meaning and type"
+      }
+    },
+    "template": {
+      "mm-blank": "Blank mind map",
+      "mm-swot": "SWOT analysis",
+      "mm-5whys": "5 Whys",
+      "mm-fishbone": "Fishbone / Ishikawa",
+      "mm-stakeholder": "Stakeholder map",
+      "mm-okr": "OKR cascade",
+      "pf-blank": "Blank process",
+      "pf-process-improvement": "Process improvement workshop",
+      "pf-basic": "Basic process",
+      "pf-approval": "Approval workflow",
+      "pf-pdca": "PDCA cycle",
+      "pf-o2c": "Order to Cash",
+      "wb-blank": "Blank whiteboard",
+      "wb-bmc": "Business Model Canvas",
+      "wb-impact-effort": "Impact / Effort matrix",
+      "wb-retro": "Retrospective",
+      "wb-lean-canvas": "Lean Canvas",
+      "wb-cjm": "Customer journey map",
+      "tbl-decision-matrix": "Decision matrix",
+      "tbl-assumptions-log": "Assumptions log",
+      "tbl-action-plan": "Action plan",
+      "tbl-risk-register": "Risk register"
+    },
+    "toolbar": {
+      "cursorMode": "Cursor mode",
+      "ai": "AI",
+      "templates": "Templates",
+      "mm": {
+        "frame": "Frame",
+        "addNode": "Add node",
+        "knowledge": "Knowledge",
+        "comments": "Comments",
+        "connect": "Connect — drag from one node handle to another",
+        "present": "Present"
+      },
+      "wb": {
+        "sticky": "Sticky",
+        "text": "Text",
+        "shape": "Shape",
+        "draw": "Draw",
+        "frame": "Frame"
+      },
+      "pf": {
+        "startEnd": "Start/End",
+        "task": "Task",
+        "decision": "Decision",
+        "lane": "Lane"
+      },
+      "tbl": {
+        "addRow": "Add row",
+        "columns": "Columns",
+        "view": "View",
+        "filter": "Filter",
+        "dashboard": "Dashboard"
+      },
+      "importExport": "Import / Export",
+      "moreTools": "More tools",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
+    "documentToMap": {
+      "addedIdeas": "Added {{count}} ideas from document",
+      "addIdeas": "Add {{count}} ideas"
+    },
+    "governance": {
+      "status": {
+        "draft": "Draft",
+        "inReview": "In Review",
+        "approved": "Approved",
+        "changesRequested": "Changes Requested"
+      },
+      "generator": {
+        "expandBranch": "Branch expansion",
+        "autoCluster": "Auto-clustering",
+        "blindSpots": "Blind spots detection",
+        "competitive": "Competitive analysis",
+        "dependency": "Dependency detection",
+        "sentiment": "Sentiment analysis",
+        "priority": "Priority recommendation",
+        "whatIf": "What-if scenarios",
+        "aiSuggestionsPanel": "AI suggestions panel",
+        "unknown": "AI action"
+      },
+      "badgeTitle": "AI Governance: {{status}}",
+      "unreviewedSuffix": " — unreviewed changes"
+    },
+    "ctxMenu": {
+      "ctx_edit": "Edit",
+      "ctx_open_detail": "Open details",
+      "ctx_add_child": "Add child",
+      "ctx_add_sibling": "Add sibling",
+      "ctx_duplicate": "Duplicate",
+      "ctx_copy_nodes": "Copy",
+      "ctx_cut_nodes": "Cut",
+      "ctx_paste_nodes": "Paste",
+      "ctx_toggle_collapse": "Fold / unfold",
+      "ctx_focus_subtree": "Focus subtree",
+      "ctx_drill_down": "Drill down",
+      "ctx_connect_to_selected": "Connect to selected",
+      "ctx_detach_branch": "Detach branch",
+      "ctx_duplicate_branch": "Duplicate branch",
+      "ctx_ai_expand": "Expand topic",
+      "ctx_ai_deepen": "Deepen",
+      "ctx_what_if": "What if...?",
+      "ctx_summarize_branch": "Summarize branch",
+      "ctx_dependencies": "Detect dependencies",
+      "ctx_priority": "Prioritize",
+      "ctx_competitive": "Competitors",
+      "ai_suggest_links": "AI: Suggest links",
+      "ctx_convert_initiative": "→ Initiative",
+      "ctx_convert_decision": "→ Decision",
+      "ctx_convert_tasks": "→ Tasks",
+      "ctx_subtree_convert_decision": "→ Decision (branch)",
+      "ctx_subtree_convert_tasks": "→ Tasks (branch)",
+      "ctx_subtree_convert_task_set": "→ Task set (branch)",
+      "ctx_subtree_convert_initiative": "→ Initiative (branch)",
+      "ctx_subtree_convert_process_flow": "→ Process Flow (branch)",
+      "ctx_change_shape": "Change shape",
+      "ctx_add_image": "Add image",
+      "ctx_copy_style": "Copy style",
+      "ctx_paste_style": "Paste style",
+      "ctx_vote_up": "Vote up",
+      "ctx_assign": "Assign person",
+      "ctx_comments": "Comments",
+      "ctx_quick_notes": "Notes",
+      "ctx_quick_tags": "Tags",
+      "ctx_attach_knowledge": "Attach knowledge",
+      "ctx_attach_artifact": "Attach artifact",
+      "ctx_open_linked_artifacts": "Linked artifacts",
+      "ctx_share_branch": "Copy link",
+      "ctx_delete": "Delete",
+      "group": {
+        "edit": "Edit",
+        "structure": "Structure",
+        "ai": "AI",
+        "convert": "Convert",
+        "convertBranch": "Convert branch to...",
+        "styleData": "Style & data"
+      }
+    },
+    "health": {
+      "balance": "Balance",
+      "depth": "Depth",
+      "coverage": "Coverage",
+      "maturity": "Maturity",
+      "connectivity": "Connectivity",
+      "avgDepth": "Avg depth: {{value}}",
+      "coverageBranches": "{{covered}}/{{total}} branches",
+      "matureCount": "{{mature}}/{{total}} mature",
+      "crossBranch": "{{count}} cross-branch"
+    },
+    "inspector": {
+      "tab": {
+        "style": "Style",
+        "layout": "Layout",
+        "theme": "Theme"
+      },
+      "structure": {
+        "mindmap": "Mindmap",
+        "org_chart": "Org chart",
+        "tree_right": "Tree right",
+        "fishbone": "Fishbone",
+        "timeline": "Timeline",
+        "semantic": "Semantic"
+      },
+      "layout": {
+        "tree": "Tree",
+        "radial": "Radial",
+        "force": "Force"
+      },
+      "theme": {
+        "default": "Default",
+        "ocean": "Ocean",
+        "forest": "Forest",
+        "sunset": "Sunset",
+        "midnight": "Midnight",
+        "minimal": "Minimal"
+      }
+    },
+    "edgeMenu": {
+      "edge_add_label": "Add / edit label",
+      "edge_insert_node": "Insert node on edge",
+      "edge_reverse": "Reverse direction",
+      "edge_change_style": "Change line style",
+      "edge_edit_relation": "Edit relation",
+      "edge_delete": "Delete connection"
+    },
+    "paneMenu": {
+      "pane_add_node": "Add topic (to root)",
+      "pane_copy": "Copy nodes",
+      "pane_cut": "Cut nodes",
+      "pane_paste": "Paste nodes",
+      "pane_select_all": "Select all",
+      "pane_fit_view": "Fit view",
+      "pane_auto_layout": "Auto layout",
+      "pane_auto_cluster": "Auto-cluster",
+      "pane_collapse_all": "Collapse all",
+      "pane_fold_1": "Show level 1",
+      "pane_fold_2": "Show level 2",
+      "pane_expand_all": "Expand all",
+      "pane_ai_suggest": "AI: Suggest nodes"
+    },
+    "funnel": {
+      "idea": "Idea",
+      "exploring": "Exploring",
+      "validated": "Validated",
+      "ready_to_convert": "Ready",
+      "converted": "Converted"
+    },
+    "artifactType": {
+      "initiative": "Initiative",
+      "decision": "Decision",
+      "task": "Task",
+      "report": "Report",
+      "assessment": "Assessment",
+      "notebook": "Notebook page"
+    },
+    "dependency": {
+      "dependsOn": "Depends on",
+      "enables": "Enables",
+      "conflictsWith": "Conflicts with",
+      "relatedTo": "Related to"
+    },
+    "quickActions": {
+      "appliedTemplate": "Applied template: {{label}}",
+      "noReadyTemplate": "No ready-made template for \"{{label}}\" yet — added an empty starter node (temporary fallback).",
+      "semanticLabel": {
+        "mm_insert_topic": "Topic",
+        "mm_insert_hypothesis": "Hypothesis",
+        "mm_insert_risk": "Risk",
+        "mm_insert_action": "Action",
+        "mm_insert_decision": "Decision point",
+        "mm_insert_option": "Option"
+      },
+      "cluster": {
+        "risks": "Risks",
+        "hypotheses": "Hypotheses",
+        "actions": "Actions",
+        "evidence": "Evidence",
+        "questions": "Questions",
+        "uncategorized": "Other"
+      },
+      "structureLabel": {
+        "mindmap": "Mind Map",
+        "org_chart": "Org Chart",
+        "tree_right": "Tree (Right)",
+        "fishbone": "Fishbone",
+        "timeline": "Timeline",
+        "semantic": "Semantic"
+      }
+    },
+    "nodeStatus": {
+      "idea": "Idea",
+      "exploring": "Exploring",
+      "validated": "Validated",
+      "readyToConvert": "Ready to Convert",
+      "converted": "Converted",
+      "ready": "Ready",
+      "rejected": "Rejected"
+    },
+    "semanticOption": {
+      "none": "— none —",
+      "topic": "Topic",
+      "subtopic": "Subtopic",
+      "hypothesis": "Hypothesis",
+      "option": "Option",
+      "risk": "Risk",
+      "action": "Action",
+      "decision_point": "Decision Point",
+      "insight": "Insight",
+      "question": "Question",
+      "evidence": "Evidence"
+    },
+    "ideaSemanticOption": {
+      "hypothesis": "Hypothesis",
+      "decision": "Decision",
+      "risk": "Risk",
+      "opportunity": "Opportunity",
+      "action": "Action",
+      "evidence": "Evidence",
+      "insight": "Insight",
+      "customer": "Customer",
+      "blocker": "Blocker"
+    },
+    "command": {
+      "add_child": "Add child",
+      "add_sibling": "Add sibling",
+      "add_root": "Add root topic",
+      "delete": "Delete selected",
+      "duplicate": "Duplicate",
+      "batch_convert": "Batch convert",
+      "ai_expand": "AI Expand",
+      "ai_summarize": "AI Summarize",
+      "ai_gap": "AI Gap Analysis",
+      "ai_suggest": "AI Suggest",
+      "auto_cluster": "Auto-cluster",
+      "auto_layout": "Auto-layout",
+      "struct_mindmap": "Structure: Mind Map",
+      "struct_org": "Structure: Org Chart",
+      "struct_tree": "Structure: Tree (Right)",
+      "struct_fishbone": "Structure: Fishbone",
+      "struct_timeline": "Structure: Timeline",
+      "struct_semantic": "Structure: Semantic",
+      "toggle_health": "Toggle health score",
+      "presentation": "Toggle presentation",
+      "fit_view": "Zoom to fit",
+      "toggle_minimap": "Toggle minimap",
+      "timeline_view": "Timeline view",
+      "view_3d": "3D view",
+      "time_heatmap": "Time heatmap",
+      "export_md": "Export: Markdown",
+      "export_png": "Export: PNG",
+      "export_svg": "Export: SVG",
+      "export_pptx": "Export: HTML Presentation",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
+    "commandCategory": {
+      "nodes": "Nodes",
+      "ai": "AI",
+      "layout": "Layout",
+      "view": "View",
+      "export": "Export",
+      "edit": "Edit"
+    },
+    "whatIf": {
+      "scenariosFor": "Scenarios for: \"{{label}}\""
+    },
+    "heatmap": {
+      "mon": "Mo",
+      "tue": "Tu",
+      "wed": "We",
+      "thu": "Th",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "Su"
+    },
+    "presentation": {
+      "branchesIdeas": "{{branches}} branches · {{ideas}} ideas"
+    },
+    "branchSummary": {
+      "prompt": "Summarize this branch of a mind map. Branch: {{branch}}. Nodes: {{nodes}}. Return a narrative summary, key points, and recommendations."
+    },
+    "workspace": {
+      "newChallenge": "New challenge",
+      "switchTo": "Switch to {{tool}}",
+      "tool": {
+        "mindmap": "Mind Map",
+        "whiteboard": "Whiteboard",
+        "process_flow": "Process Flow",
+        "table": "Table"
+      },
+      "unknownNode": "unknown"
+    },
+    "emptyStep": {
+      "1": "Name your challenge",
+      "2": "Describe the problem or idea",
+      "3": "Click \"Accept\" in the Tools panel"
+    }
   }
 }

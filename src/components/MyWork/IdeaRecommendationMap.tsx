@@ -5549,24 +5549,16 @@ function MindMapInner({
                         </p>
                         <div className="space-y-2 text-left mb-6">
                           {[
-                            { n: '1', pl: 'Nadaj tytuł wyzwaniu', en: 'Name your challenge' },
-                            {
-                              n: '2',
-                              pl: 'Opisz problem lub pomysł',
-                              en: 'Describe the problem or idea',
-                            },
-                            {
-                              n: '3',
-                              pl: 'Kliknij „Akceptuj" w panelu Tools',
-                              en: 'Click "Accept" in the Tools panel',
-                            },
+                            { n: '1', en: 'Name your challenge' },
+                            { n: '2', en: 'Describe the problem or idea' },
+                            { n: '3', en: 'Click "Accept" in the Tools panel' },
                           ].map((step) => (
                             <div key={step.n} className="flex items-center gap-3">
                               <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center shrink-0">
                                 {step.n}
                               </span>
                               <span className="text-sm text-slate-600 dark:text-slate-300">
-                                {isPolish ? step.pl : step.en}
+                                {t(`myWorkMindmap.emptyStep.${step.n}`, step.en)}
                               </span>
                             </div>
                           ))}

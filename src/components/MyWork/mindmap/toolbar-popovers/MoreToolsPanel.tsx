@@ -24,7 +24,7 @@ interface MoreToolsPanelProps {
 interface ToolItem {
   action: string;
   iconEl: React.ComponentType<{ size?: number; className?: string }>;
-  labelPl: string;
+  tkey: string;
   labelEn: string;
   category: 'visual' | 'workflow' | 'collab' | 'analytics' | 'formatting';
 }
@@ -33,71 +33,71 @@ const ALL_TOOLS: ToolItem[] = [
   // Visual Modes
   {
     action: 'mm_change_layout',
+    tkey: 'myWorkMindmap.moreTools.changeLayout',
     iconEl: Layout,
-    labelPl: 'Zmień układ',
     labelEn: 'Change layout',
     category: 'visual',
   },
   {
     action: 'mm_structure_picker',
+    tkey: 'myWorkMindmap.moreTools.structureType',
     iconEl: LayoutGrid,
-    labelPl: 'Typ struktury',
     labelEn: 'Structure type',
     category: 'visual',
   },
   {
     action: 'mm_toggle_minimap',
+    tkey: 'myWorkMindmap.moreTools.minimap',
     iconEl: LayoutGrid,
-    labelPl: 'Minimap',
     labelEn: 'Minimap',
     category: 'visual',
   },
   {
     action: 'mm_fit_view',
+    tkey: 'myWorkMindmap.moreTools.fitView',
     iconEl: Maximize,
-    labelPl: 'Dopasuj widok',
     labelEn: 'Fit view',
     category: 'visual',
   },
   {
     action: 'mm_presentation',
+    tkey: 'myWorkMindmap.moreTools.presentationMode',
     iconEl: Eye,
-    labelPl: 'Tryb prezentacji',
     labelEn: 'Presentation mode',
     category: 'visual',
   },
   {
     action: 'mm_fold_0',
+    tkey: 'myWorkMindmap.moreTools.collapseToRoot',
     iconEl: ChevronsDownUp,
-    labelPl: 'Zwiń do korzenia (Alt+0)',
     labelEn: 'Collapse to root (Alt+0)',
     category: 'visual',
   },
   {
     action: 'mm_fold_1',
+    tkey: 'myWorkMindmap.moreTools.showLevel1',
     iconEl: ChevronsDownUp,
-    labelPl: 'Pokaż poziom 1 (Alt+1)',
     labelEn: 'Show level 1 (Alt+1)',
     category: 'visual',
   },
   {
     action: 'mm_fold_2',
+    tkey: 'myWorkMindmap.moreTools.showLevel2',
     iconEl: ChevronsDownUp,
-    labelPl: 'Pokaż poziom 2 (Alt+2)',
     labelEn: 'Show level 2 (Alt+2)',
     category: 'visual',
   },
   {
     action: 'mm_fold_3',
+    tkey: 'myWorkMindmap.moreTools.showLevel3',
     iconEl: ChevronsDownUp,
-    labelPl: 'Pokaż poziom 3 (Alt+3)',
     labelEn: 'Show level 3 (Alt+3)',
     category: 'visual',
   },
   {
     action: 'mm_expand_all',
+    tkey: 'myWorkMindmap.moreTools.expandAll',
     iconEl: ChevronsUpDown,
-    labelPl: 'Rozwiń wszystko (Alt+9)',
     labelEn: 'Expand all (Alt+9)',
     category: 'visual',
   },
@@ -105,15 +105,15 @@ const ALL_TOOLS: ToolItem[] = [
   // Workflow
   {
     action: 'mm_snapshots',
+    tkey: 'myWorkMindmap.moreTools.snapshotsVersions',
     iconEl: Camera,
-    labelPl: 'Wersje / Snapshoty',
     labelEn: 'Snapshots / Versions',
     category: 'workflow',
   },
   {
     action: 'mm_activity',
+    tkey: 'myWorkMindmap.moreTools.activityHistory',
     iconEl: History,
-    labelPl: 'Historia aktywności',
     labelEn: 'Activity history',
     category: 'workflow',
   },
@@ -121,15 +121,15 @@ const ALL_TOOLS: ToolItem[] = [
   // Collaboration
   {
     action: 'mm_share',
+    tkey: 'myWorkMindmap.moreTools.share',
     iconEl: Share2,
-    labelPl: 'Udostępnij',
     labelEn: 'Share',
     category: 'collab',
   },
   {
     action: 'mm_embed',
+    tkey: 'myWorkMindmap.moreTools.embedExternally',
     iconEl: Globe,
-    labelPl: 'Osadź zewnętrznie',
     labelEn: 'Embed externally',
     category: 'collab',
   },
@@ -137,32 +137,32 @@ const ALL_TOOLS: ToolItem[] = [
   // Analytics
   {
     action: 'mm_branch_analysis',
+    tkey: 'myWorkMindmap.moreTools.branchAnalysis',
     iconEl: BarChart3,
-    labelPl: 'Analiza gałęzi',
     labelEn: 'Branch analysis',
     category: 'analytics',
   },
 ];
 
-const CATEGORY_LABELS: Record<string, { pl: string; en: string }> = {
-  visual: { pl: 'Tryby widoku', en: 'Visual Modes' },
-  workflow: { pl: 'Workflow', en: 'Workflow' },
-  collab: { pl: 'Współpraca', en: 'Collaboration' },
-  analytics: { pl: 'Analityka', en: 'Analytics' },
-  formatting: { pl: 'Formatowanie', en: 'Formatting' },
+const CATEGORY_LABELS: Record<string, string> = {
+  visual: 'Visual Modes',
+  workflow: 'Workflow',
+  collab: 'Collaboration',
+  analytics: 'Analytics',
+  formatting: 'Formatting',
 };
 
-export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, onClose }) => {
+export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl: _isPl, onAction, onClose }) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
     if (!search.trim()) return ALL_TOOLS;
     const q = search.toLowerCase();
-    return ALL_TOOLS.filter(
-      (t) => t.labelPl.toLowerCase().includes(q) || t.labelEn.toLowerCase().includes(q)
+    return ALL_TOOLS.filter((tool) =>
+      t(tool.tkey, tool.labelEn).toLowerCase().includes(q)
     );
-  }, [search]);
+  }, [search, t]);
 
   const grouped = useMemo(() => {
     const groups: Record<string, ToolItem[]> = {};
@@ -199,7 +199,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
         {Object.entries(grouped).map(([cat, items]) => (
           <div key={cat}>
             <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-              {isPl ? CATEGORY_LABELS[cat]?.pl : CATEGORY_LABELS[cat]?.en}
+              {t(`myWorkMindmap.category.${cat}`, CATEGORY_LABELS[cat])}
             </div>
             {items.map((tool) => {
               const Icon = tool.iconEl;
@@ -210,7 +210,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                 >
                   <Icon size={12} className="text-c-text-secondary shrink-0" />
-                  {isPl ? tool.labelPl : tool.labelEn}
+                  {t(tool.tkey, tool.labelEn)}
                 </button>
               );
             })}

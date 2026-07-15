@@ -26,7 +26,6 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
   onAddNodes,
 }) => {
   const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
 
   const [text, setText] = useState('');
   const [extractedIdeas, setExtractedIdeas] = useState<string[]>([]);
@@ -47,7 +46,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
         toast.error(t('ideas.mindmap.supportedFormatsTxtMd', 'Supported formats: .txt, .md'));
       }
     },
-    [isPl]
+    [t]
   );
 
   const extractIdeas = useCallback(async () => {
@@ -75,15 +74,15 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
     if (extractedIdeas.length === 0) return;
     onAddNodes(extractedIdeas);
     toast.success(
-      isPl
-        ? `Dodano ${extractedIdeas.length} pomysłów z dokumentu`
-        : `Added ${extractedIdeas.length} ideas from document`,
+      t('myWorkMindmap.documentToMap.addedIdeas', 'Added {{count}} ideas from document', {
+        count: extractedIdeas.length,
+      }),
       { duration: 1500 }
     );
     setText('');
     setExtractedIdeas([]);
     onClose();
-  }, [extractedIdeas, isPl, onAddNodes, onClose]);
+  }, [extractedIdeas, t, onAddNodes, onClose]);
 
   if (!open) return null;
 
@@ -172,9 +171,9 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-info dark:text-c-info border border-c-info transition-all disabled:opacity-40"
           >
             <FileText size={12} />
-            {isPl
-              ? `Dodaj ${extractedIdeas.length} pomysłów`
-              : `Add ${extractedIdeas.length} ideas`}
+            {t('myWorkMindmap.documentToMap.addIdeas', 'Add {{count}} ideas', {
+              count: extractedIdeas.length,
+            })}
           </button>
         </div>
       </div>

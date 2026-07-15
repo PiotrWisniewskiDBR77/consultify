@@ -170,28 +170,28 @@ function simpleMarkdown(text: string): string {
 
 const STATUS_CONFIG: Record<
   NodeStatus,
-  { labelPl: string; labelEn: string; color: string; bg: string }
+  { tkey: string; labelEn: string; color: string; bg: string }
 > = {
   idea: {
-    labelPl: 'Pomysł',
+    tkey: 'myWorkMindmap.nodeStatus.idea',
     labelEn: 'Idea',
     color: 'text-slate-600',
     bg: 'bg-slate-100 dark:bg-slate-800',
   },
   exploring: {
-    labelPl: 'Eksploracja',
+    tkey: 'myWorkMindmap.nodeStatus.exploring',
     labelEn: 'Exploring',
     color: 'text-amber-600',
     bg: 'bg-amber-50 dark:bg-amber-900/20',
   },
   ready: {
-    labelPl: 'Gotowe',
+    tkey: 'myWorkMindmap.nodeStatus.ready',
     labelEn: 'Ready',
     color: 'text-emerald-600',
     bg: 'bg-emerald-50 dark:bg-emerald-900/20',
   },
   rejected: {
-    labelPl: 'Odrzucone',
+    tkey: 'myWorkMindmap.nodeStatus.rejected',
     labelEn: 'Rejected',
     color: 'text-danger-600',
     bg: 'bg-danger-50 dark:bg-danger-900/20',
@@ -622,7 +622,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}
                 >
-                  {isPl ? statusCfg.labelPl : statusCfg.labelEn}
+                  {t(statusCfg.tkey, statusCfg.labelEn)}
                 </span>
                 {nodeData.branchKey && (
                   <span className="text-[10px] text-slate-600 dark:text-slate-500 uppercase tracking-wider">
@@ -683,7 +683,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                           : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                       } disabled:opacity-40`}
                     >
-                      {isPl ? cfg.labelPl : cfg.labelEn}
+                      {t(cfg.tkey, cfg.labelEn)}
                     </button>
                   );
                 })}
@@ -851,18 +851,18 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             >
               <option value="">{t('myWorkIdeas.nodeDetailDrawer.none')}</option>
               {[
-                { value: 'hypothesis', pl: 'Hipoteza', en: 'Hypothesis' },
-                { value: 'decision', pl: 'Decyzja', en: 'Decision' },
-                { value: 'risk', pl: 'Ryzyko', en: 'Risk' },
-                { value: 'opportunity', pl: 'Szansa', en: 'Opportunity' },
-                { value: 'action', pl: 'Akcja', en: 'Action' },
-                { value: 'evidence', pl: 'Dowód', en: 'Evidence' },
-                { value: 'insight', pl: 'Wniosek', en: 'Insight' },
-                { value: 'customer', pl: 'Klient', en: 'Customer' },
-                { value: 'blocker', pl: 'Blocker', en: 'Blocker' },
+                { value: 'hypothesis', en: 'Hypothesis' },
+                { value: 'decision', en: 'Decision' },
+                { value: 'risk', en: 'Risk' },
+                { value: 'opportunity', en: 'Opportunity' },
+                { value: 'action', en: 'Action' },
+                { value: 'evidence', en: 'Evidence' },
+                { value: 'insight', en: 'Insight' },
+                { value: 'customer', en: 'Customer' },
+                { value: 'blocker', en: 'Blocker' },
               ].map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {isPl ? opt.pl : opt.en}
+                  {t(`myWorkMindmap.ideaSemanticOption.${opt.value}`, opt.en)}
                 </option>
               ))}
             </select>

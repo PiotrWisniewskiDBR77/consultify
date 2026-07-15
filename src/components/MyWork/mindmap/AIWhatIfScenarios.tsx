@@ -43,7 +43,6 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
   onApplyScenario,
 }) => {
   const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
 
   const [scenarios, setScenarios] = useState<WhatIfScenario[]>([]);
   const [loading, setLoading] = useState(false);
@@ -133,9 +132,9 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
               </h3>
             </div>
             <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
-              {isPl
-                ? `Scenariusze dla: "${selectedNodeLabel}"`
-                : `Scenarios for: "${selectedNodeLabel}"`}
+              {t('myWorkMindmap.whatIf.scenariosFor', 'Scenarios for: "{{label}}"', {
+                label: selectedNodeLabel,
+              })}
             </p>
           </div>
           <button

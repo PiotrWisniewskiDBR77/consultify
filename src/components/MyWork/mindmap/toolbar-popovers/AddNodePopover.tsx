@@ -22,39 +22,39 @@ const STRUCTURE_ACTIONS = [
   {
     action: 'mm_add_child',
     iconEl: Plus,
-    labelPl: 'Gałąź dziecko (Tab)',
+    tkey: 'myWorkMindmap.addNode.addChildTab',
     labelEn: 'Add child (Tab)',
   },
   {
     action: 'mm_add_sibling',
     iconEl: Plus,
-    labelPl: 'Gałąź sąsiad (Enter)',
+    tkey: 'myWorkMindmap.addNode.addSiblingEnter',
     labelEn: 'Add sibling (Enter)',
   },
   {
     action: 'mm_add_root',
     iconEl: GitBranch,
-    labelPl: 'Nowy root topic',
+    tkey: 'myWorkMindmap.addNode.newRootTopic',
     labelEn: 'New root topic',
   },
 ];
 
 const SEMANTIC_TYPES = [
-  { action: 'mm_insert_topic', iconEl: CircleDot, labelPl: 'Temat', labelEn: 'Topic' },
-  { action: 'mm_insert_hypothesis', iconEl: Lightbulb, labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
-  { action: 'mm_insert_risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk' },
-  { action: 'mm_insert_action', iconEl: CheckSquare, labelPl: 'Akcja', labelEn: 'Action' },
+  { action: 'mm_insert_topic', iconEl: CircleDot, tkey: 'myWorkMindmap.semanticType.topic', labelEn: 'Topic' },
+  { action: 'mm_insert_hypothesis', iconEl: Lightbulb, tkey: 'myWorkMindmap.semanticType.hypothesis', labelEn: 'Hypothesis' },
+  { action: 'mm_insert_risk', iconEl: AlertTriangle, tkey: 'myWorkMindmap.semanticType.risk', labelEn: 'Risk' },
+  { action: 'mm_insert_action', iconEl: CheckSquare, tkey: 'myWorkMindmap.semanticType.action', labelEn: 'Action' },
   {
     action: 'mm_insert_decision',
     iconEl: Diamond,
-    labelPl: 'Punkt decyzyjny',
+    tkey: 'myWorkMindmap.semanticType.decision',
     labelEn: 'Decision point',
   },
-  { action: 'mm_insert_option', iconEl: Star, labelPl: 'Opcja', labelEn: 'Option' },
+  { action: 'mm_insert_option', iconEl: Star, tkey: 'myWorkMindmap.semanticType.option', labelEn: 'Option' },
 ];
 
 export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
-  isPl,
+  isPl: _isPl,
   hasSelection,
   onAction,
   onClose,
@@ -83,7 +83,7 @@ export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors disabled:opacity-40"
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              {t(a.tkey, a.labelEn)}
             </button>
           );
         })}
@@ -101,7 +101,7 @@ export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              {t(a.tkey, a.labelEn)}
             </button>
           );
         })}

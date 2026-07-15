@@ -9,6 +9,14 @@ export interface WhiteboardModeCopy {
   exitHint: string;
 }
 
+// NOTE (i18n sweep): this module is intentionally NOT routed through i18next's
+// `t()`. It is a pure helper that takes `isPolish` as an explicit, caller-supplied
+// selector (not the ambient i18n language), and `tests/unit/mywork/
+// whiteboardInteractionGrammar.test.ts` asserts on the exact PL/EN copy returned
+// for a given `isPolish` value. Importing the real `@/i18n` singleton here (which
+// calls `.use(initReactI18next)` at module load) would crash the narrow-mock
+// component tests and break these literal-string assertions. Mirrors the sibling
+// exception in `../mindmap/mindmapInteractionGrammar.ts`.
 export function getWhiteboardModeCopy(
   mode: WhiteboardMode,
   isPolish: boolean,

@@ -1,4 +1,5 @@
 import { ArrowLeftRight, Edit3, Paintbrush, Plus, Trash2, Type } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { ContextMenuPortal } from './ContextMenuPortal';
@@ -18,12 +19,13 @@ export interface EdgeContextMenuProps {
 export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
   x,
   y,
-  isPl,
+  isPl: _isPl,
   isLocked,
   isUserCreated,
   onClose,
   onAction,
 }) => {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,35 +54,30 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
   const items: MenuItemBase[] = [
     {
       id: 'edge_add_label',
-      labelPl: 'Dodaj / edytuj etykietę',
       labelEn: 'Add / edit label',
       icon: Type,
       disabled: isLocked,
     },
     {
       id: 'edge_insert_node',
-      labelPl: 'Wstaw węzeł na połączeniu',
       labelEn: 'Insert node on edge',
       icon: Plus,
       disabled: isLocked,
     },
     {
       id: 'edge_reverse',
-      labelPl: 'Odwróć kierunek',
       labelEn: 'Reverse direction',
       icon: ArrowLeftRight,
       disabled: isLocked,
     },
     {
       id: 'edge_change_style',
-      labelPl: 'Zmień styl linii',
       labelEn: 'Change line style',
       icon: Paintbrush,
       disabled: isLocked,
     },
     {
       id: 'edge_edit_relation',
-      labelPl: 'Edytuj relację',
       labelEn: 'Edit relation',
       icon: Edit3,
       disabled: isLocked,
@@ -88,7 +85,6 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
     },
     {
       id: 'edge_delete',
-      labelPl: 'Usuń połączenie',
       labelEn: 'Delete connection',
       icon: Trash2,
       danger: true,
@@ -116,7 +112,7 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
                   size={13}
                   className={`shrink-0 ${item.danger ? 'text-c-danger' : 'text-c-text-secondary dark:text-c-text-secondary'}`}
                 />
-                <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
+                <span className="flex-1">{t(`myWorkMindmap.edgeMenu.${item.id}`, item.labelEn)}</span>
               </button>
               {item.dividerAfter && (
                 <div className="my-1 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { SidekickContext } from '../aiSidekickContext';
 
 interface FloatingAIPopoverProps {
-  isPl: boolean;
+  isPl?: boolean;
   nodeId: string;
   onAction: (action: string) => void;
   onOpenChatAboutNode: () => void;
@@ -16,26 +16,26 @@ const AI_ACTIONS = [
   {
     action: 'mm_ai_expand_node',
     iconEl: Zap,
-    labelPl: 'Rozwiń ten węzeł',
+    key: 'expandNode',
     labelEn: 'Expand this node',
   },
-  { action: 'mm_ai_deepen', iconEl: Wand2, labelPl: 'Pogłęb temat', labelEn: 'Deepen topic' },
+  { action: 'mm_ai_deepen', iconEl: Wand2, key: 'deepenTopic', labelEn: 'Deepen topic' },
   {
     action: 'mm_ai_summarize_branch',
     iconEl: Brain,
-    labelPl: 'Podsumuj gałąź',
+    key: 'summarizeBranch',
     labelEn: 'Summarize branch',
   },
   {
     action: 'mm_ai_what_if',
     iconEl: Lightbulb,
-    labelPl: 'What-if analiza',
+    key: 'whatIfAnalysis',
     labelEn: 'What-if analysis',
   },
   {
     action: 'ai_suggest_links',
     iconEl: Link2,
-    labelPl: 'Zasugeruj powiązania',
+    key: 'suggestLinks',
     labelEn: 'Suggest links',
   },
 ];
@@ -94,7 +94,7 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
             className="w-full flex items-center gap-2 px-2 py-1.5 text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
           >
             <Icon size={12} className="text-c-text-secondary shrink-0" />
-            {isPl ? a.labelPl : a.labelEn}
+            {t(`myWorkMindmap.aiAction.${a.key}`, a.labelEn)}
           </button>
         );
       })}
