@@ -164,6 +164,7 @@ export enum AppView {
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
   PROJECT_INTELLIGENCE = 'PROJECT_INTELLIGENCE', // AI-powered project knowledge capture
   PROJECTS = 'PROJECTS', // Zwornik (#78): project stakeholder registry + finance rollup
+  CLIENT_VAULT = 'CLIENT_VAULT', // HP-22 Harvey-Parity: org-scoped client document vault (gated, ff.client_vault)
 
   // Initiative Lifecycle Management
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP

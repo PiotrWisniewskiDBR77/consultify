@@ -54,6 +54,9 @@ export const ROUTES = {
 
   MY_WORK: '/my-work',
   PROJECTS: '/projects', // Zwornik (#78): project stakeholder registry + finance rollup
+  // HP-22 Harvey-Parity: org-scoped client document vault. Gated by
+  // clientVaultFlag (default OFF) — see AppRoutes.tsx registration.
+  CLIENT_VAULT: '/vault',
   DASHBOARD: '/chat', // DEPRECATED: Dashboard removed, redirects to Chat
 
   // Assessment Module
@@ -287,6 +290,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.APP_INTRO]: ROUTES.APP_INTRO,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
   [AppView.PROJECTS]: ROUTES.PROJECTS,
+  [AppView.CLIENT_VAULT]: ROUTES.CLIENT_VAULT,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.USER_DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.DASHBOARD_OVERVIEW]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -664,6 +668,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
   if (normalized.startsWith(ROUTES.PROJECTS)) return AppView.PROJECTS;
+  if (normalized.startsWith(ROUTES.CLIENT_VAULT)) return AppView.CLIENT_VAULT;
   if (normalized.startsWith(ROUTES.INITIATIVES)) return AppView.FULL_STEP2_INITIATIVES;
   if (normalized.startsWith(ROUTES.PORTFOLIO) || normalized.startsWith(ROUTES.ROADMAP)) {
     return AppView.PORTFOLIO_ROADMAP;
