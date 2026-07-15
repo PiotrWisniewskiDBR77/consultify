@@ -187,8 +187,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   initialAssessmentId,
   onNavigate,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const { currentProjectId, setCurrentView } = useAppStore();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
   const isCompact = isTablet || isMobile;
@@ -531,9 +530,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : isPolish
-            ? 'Błąd połączenia'
-            : 'Connection error';
+          : t('assessment.hub.connectionError', 'Connection error');
       setSaveError(message);
       toast.error(message);
     } finally {
@@ -546,7 +543,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     framework,
     calculateProgress,
     selectedAxis,
-    isPolish,
+    t,
   ]);
 
   // Handle assessment name change

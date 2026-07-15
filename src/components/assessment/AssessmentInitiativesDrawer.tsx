@@ -29,8 +29,7 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
 }) => {
   const { setCurrentView } = useAppStore();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [activeInitiativeId, setActiveInitiativeId] = useState<string | null>(null);
   const [activeInitiativeStatus, setActiveInitiativeStatus] = useState<string | null>(null);
   const [showListView, setShowListView] = useState(true);

@@ -6691,7 +6691,8 @@
       "resumeLatestLabel": "Resume latest assessment",
       "resumeLatestTooltip": "Opens the editor for your most recently updated assessment, back where you left off.",
       "aiTriageTooltip": "Opens AI chat with a ready-made prompt: what in this list needs attention first.",
-      "chatTooltip": "Opens a blank AI chat for this hub."
+      "chatTooltip": "Opens a blank AI chat for this hub.",
+      "connectionError": "Connection error"
     },
     "notes": "Notes",
     "notesPlaceholder": "Key observations, context, rationale for the score...",
@@ -6930,7 +6931,12 @@
       "openSessionHint": "Open assessment session to continue.",
       "execBrief": "Executive brief",
       "title": "Assessment session",
-      "aiHints": "AI hints"
+      "aiHints": "AI hints",
+      "frameworkLabel": "Framework",
+      "assessmentLabel": "Assessment",
+      "descriptionLabel": "Description",
+      "whatYouGet": "What you get",
+      "startAssessment": "Start assessment"
     },
     "form": {
       "current": "Current",
@@ -6976,10 +6982,21 @@
       },
       "glossary": {
         "button": "Glossary"
+      },
+      "matrix": {
+        "overviewTitle": "Matrix overview",
+        "overviewSubtitle": "Cell color = achieved maturity level. Click an axis to open it.",
+        "levelRamp": "Level ramp",
+        "areasAssessed": "Areas assessed"
       }
     },
     "glossary": {
-      "title": "Consulting Glossary"
+      "title": "Consulting Glossary",
+      "heading": "Consulting Terms Glossary",
+      "subtitle": "Plain language, no jargon left unexplained",
+      "searchPlaceholder": "Search a term (e.g. SWOT, WACC)...",
+      "all": "All",
+      "noResults": "No results."
     },
     "bulk": {
       "confirmDeleteTitle": "Delete selected items?",
@@ -7175,6 +7192,9 @@
       "verdictModerate": "moderate",
       "verdictBasic": "basic",
       "verdictInitial": "initial"
+    },
+    "itemPreview": {
+      "defaultLabel": "Assessment"
     }
   },
   "initiatives": {

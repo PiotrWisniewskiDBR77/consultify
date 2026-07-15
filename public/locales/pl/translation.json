@@ -5926,7 +5926,8 @@
       "resumeLatestLabel": "Wznów ostatni assessment",
       "resumeLatestTooltip": "Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.",
       "aiTriageTooltip": "Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.",
-      "chatTooltip": "Otwiera pusty czat AI dla tego huba."
+      "chatTooltip": "Otwiera pusty czat AI dla tego huba.",
+      "connectionError": "Błąd połączenia"
     },
     "notes": "Notatki",
     "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
@@ -6165,7 +6166,12 @@
       "openSessionHint": "Otwórz sesję assessment aby kontynuować.",
       "execBrief": "Executive brief",
       "title": "Sesja assessmentu",
-      "aiHints": "Podpowiedzi AI"
+      "aiHints": "Podpowiedzi AI",
+      "frameworkLabel": "Framework",
+      "assessmentLabel": "Assessment",
+      "descriptionLabel": "Opis",
+      "whatYouGet": "Co dostajesz",
+      "startAssessment": "Start assessment"
     },
     "form": {
       "current": "Aktualny",
@@ -6211,10 +6217,21 @@
       },
       "glossary": {
         "button": "Słownik"
+      },
+      "matrix": {
+        "overviewTitle": "Podgląd macierzy",
+        "overviewSubtitle": "Kolor komórki = osiągnięty poziom dojrzałości. Kliknij oś, aby ją otworzyć.",
+        "levelRamp": "Skala poziomów",
+        "areasAssessed": "Ocenione obszary"
       }
     },
     "glossary": {
-      "title": "Słownik konsultingowy"
+      "title": "Słownik konsultingowy",
+      "heading": "Słownik terminów konsultingowych",
+      "subtitle": "Zrozumiały język zamiast żargonu",
+      "searchPlaceholder": "Szukaj terminu (np. SWOT, WACC)...",
+      "all": "Wszystkie",
+      "noResults": "Brak wyników."
     },
     "bulk": {
       "confirmDeleteTitle": "Usunąć zaznaczone pozycje?",
@@ -6410,6 +6427,9 @@
       "verdictModerate": "średnia",
       "verdictBasic": "podstawowa",
       "verdictInitial": "początkowa"
+    },
+    "itemPreview": {
+      "defaultLabel": "Ocena"
     }
   },
   "initiatives": {

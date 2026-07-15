@@ -72,12 +72,10 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
             </div>
             <div>
               <div className="text-sm font-bold text-slate-900 dark:text-white">
-                {isPl ? 'Słownik terminów konsultingowych' : 'Consulting Terms Glossary'}
+                {t('assessment.glossary.heading', 'Consulting Terms Glossary')}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPl
-                  ? 'Zrozumiały język zamiast żargonu'
-                  : 'Plain language, no jargon left unexplained'}
+                {t('assessment.glossary.subtitle', 'Plain language, no jargon left unexplained')}
               </div>
             </div>
           </div>
@@ -98,9 +96,10 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={
-                isPl ? 'Szukaj terminu (np. SWOT, WACC)...' : 'Search a term (e.g. SWOT, WACC)...'
-              }
+              placeholder={t(
+                'assessment.glossary.searchPlaceholder',
+                'Search a term (e.g. SWOT, WACC)...'
+              )}
               className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
@@ -114,7 +113,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
                   : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10'
               }`}
             >
-              {isPl ? 'Wszystkie' : 'All'}
+              {t('assessment.glossary.all', 'All')}
             </button>
             {GLOSSARY_CATEGORIES.map((cat) => (
               <button
@@ -137,7 +136,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {filtered.length === 0 && (
             <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
-              {isPl ? 'Brak wyników.' : 'No results.'}
+              {t('assessment.glossary.noResults', 'No results.')}
             </div>
           )}
           {filtered.map((term) => (

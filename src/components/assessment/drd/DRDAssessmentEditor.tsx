@@ -1413,7 +1413,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors shrink-0"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                {t('assessment.drd.glossary.button', isPl ? 'Słownik' : 'Glossary')}
+                {t('assessment.drd.glossary.button', 'Glossary')}
               </button>
             </div>
 
