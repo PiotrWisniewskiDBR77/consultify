@@ -4,8 +4,8 @@
  * Tests for Azure AD/Entra ID SSO integration
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
-const crypto = require('crypto');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import crypto from 'crypto';
 
 // Mock database
 vi.mock('../../../server/database', () => ({
@@ -33,8 +33,6 @@ vi.mock('../../../server/database', () => ({
         }),
     }
 }));
-
-const ssoService = require('../../../server/services/ssoService');
 
 describe('Azure AD SSO Service', () => {
     beforeEach(() => {

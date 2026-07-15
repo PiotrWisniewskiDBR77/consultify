@@ -3,14 +3,14 @@
  * Tests template structure and mappings
  */
 
-const { 
+import {
     RAPID_LEAN_OBSERVATION_TEMPLATES,
     OBSERVATION_TO_SCORE_MAPPING,
     OBSERVATION_TO_DRD_MAPPING,
     getTemplateById,
     getTemplatesByDimension,
     getAllTemplates
-} = require('../../../server/data/rapidLeanObservationTemplates');
+} from '../../../server/src/data/rapidLeanObservationTemplates';
 
 describe('RapidLean Observation Templates Data', () => {
     describe('Template Structure', () => {
