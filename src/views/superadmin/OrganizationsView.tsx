@@ -16,11 +16,13 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { StandardTable } from '../../components/standard/StandardTable';
+import type { TableColumn, TableRow } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -490,6 +492,440 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     }
   };
 
+  // ── Organizations tab: kanon §27 — StandardTable (rows/columns) ──────────
+  const organizationRows = useMemo<TableRow[]>(
+    () => filteredOrgs.map((org) => ({ ...org, id: org.id })),
+    [filteredOrgs]
+  );
+
+  const organizationColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'organization',
+        label: 'Organization',
+        sortable: true,
+        sortAccessor: (row: TableRow) => getOrgName(row as unknown as Organization),
+        render: (row: TableRow) => {
+          const org = row as unknown as Organization;
+          return (
+            <div>
+              <div className="font-medium text-slate-900 dark:text-white">{getOrgName(org)}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                {org.id.slice(0, 8)}...
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'users',
+        label: 'Users',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as Organization).user_count,
+        render: (row: TableRow) => (
+          <span className="text-slate-700 dark:text-slate-300">
+            {(row as unknown as Organization).user_count}
+          </span>
+        ),
+      },
+      {
+        id: 'plan',
+        label: 'Plan',
+        filterable: true,
+        filterOptions: [
+          { value: 'free', label: 'Free' },
+          { value: 'trial', label: 'Trial' },
+          { value: 'pro', label: 'Pro' },
+          { value: 'enterprise', label: 'Enterprise' },
+        ],
+        render: (row: TableRow) => {
+          const org = row as unknown as Organization;
+          const isEditing = editingOrgId === org.id;
+          return isEditing ? (
+            <select
+              value={editForm.plan}
+              onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })}
+              className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
+            >
+              <option value="free">Free</option>
+              <option value="trial">Trial</option>
+              <option value="pro">Pro</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          ) : (
+            <span
+              className={`px-2 py-1 rounded text-xs font-bold uppercase border ${getPlanColor(org.plan)}`}
+            >
+              {org.plan}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        filterable: true,
+        filterOptions: [
+          { value: 'active', label: 'Active' },
+          { value: 'pending', label: 'Pending' },
+          { value: 'blocked', label: 'Blocked' },
+        ],
+        render: (row: TableRow) => {
+          const org = row as unknown as Organization;
+          const isEditing = editingOrgId === org.id;
+          return isEditing ? (
+            <select
+              value={editForm.status}
+              onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+              className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
+            >
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          ) : (
+            <span className={`flex items-center gap-1.5 ${getStatusColor(org.status)}`}>
+              {org.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+              {org.status}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'discount',
+        label: 'Discount',
+        render: (row: TableRow) => {
+          const org = row as unknown as Organization;
+          const isEditing = editingOrgId === org.id;
+          if (isEditing) {
+            return (
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editForm.discount_percent}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      discount_percent: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="w-16 bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
+                />
+                <span className="text-slate-500 dark:text-slate-400 text-xs">%</span>
+              </div>
+            );
+          }
+          return org.discount_percent ? (
+            <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+              -{org.discount_percent}%
+            </span>
+          ) : (
+            <span className="text-slate-600 dark:text-slate-400">-</span>
+          );
+        },
+      },
+      {
+        id: 'created',
+        label: 'Created',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as Organization).created_at,
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 text-xs">
+            {formatDate((row as unknown as Organization).created_at)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => {
+          const org = row as unknown as Organization;
+          const isEditing = editingOrgId === org.id;
+          if (isEditing) {
+            return (
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => saveInlineEdit(org.id)}
+                  disabled={processingId === org.id}
+                  className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors disabled:opacity-60"
+                  title="Save"
+                >
+                  {processingId === org.id ? (
+                    <RefreshCw size={16} className="animate-spin" />
+                  ) : (
+                    <Check size={16} />
+                  )}
+                </button>
+                <button
+                  onClick={cancelInlineEdit}
+                  disabled={processingId === org.id}
+                  className="p-1.5 bg-danger-500/20 text-danger-400 hover:bg-danger-500/30 rounded transition-colors disabled:opacity-60"
+                  title="Cancel"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            );
+          }
+          return (
+            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              {onViewUsers && (
+                <button
+                  onClick={() => onViewUsers(org.id)}
+                  className="p-1.5 hover:bg-indigo-500/20 text-slate-600 dark:text-slate-500 hover:text-indigo-400 rounded transition-colors"
+                  title="View Users"
+                >
+                  <Users size={16} />
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedOrg(org)}
+                className="p-1.5 hover:bg-blue-500/20 text-slate-600 dark:text-slate-500 hover:text-blue-400 rounded transition-colors"
+                title="View Details"
+              >
+                <Eye size={16} />
+              </button>
+              <button
+                onClick={() => startInlineEdit(org)}
+                className="p-1.5 hover:bg-yellow-500/20 text-slate-600 dark:text-slate-500 hover:text-yellow-400 rounded transition-colors"
+                title="Quick Edit"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button
+                onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
+                disabled={processingId === org.id}
+                className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors disabled:opacity-60"
+                title="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [editingOrgId, editForm, processingId, onViewUsers]
+  );
+
+  // ── Pending requests tab: kanon §27 — StandardTable ──────────────────────
+  const requestRows = useMemo<TableRow[]>(() => requests.map((r) => ({ ...r, id: r.id })), [
+    requests,
+  ]);
+
+  const requestColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'requested_at',
+        label: 'Date',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as AccessRequest).requested_at,
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 text-xs">
+            {formatDateTime((row as unknown as AccessRequest).requested_at)}
+          </span>
+        ),
+      },
+      {
+        id: 'organization_name',
+        label: 'Organization',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-slate-900 dark:text-white font-medium">
+            {(row as unknown as AccessRequest).organization_name}
+          </span>
+        ),
+      },
+      {
+        id: 'contact',
+        label: 'Contact',
+        render: (row: TableRow) => {
+          const req = row as unknown as AccessRequest;
+          return (
+            <div>
+              <div className="text-slate-900 dark:text-white">
+                {req.first_name} {req.last_name}
+              </div>
+              <div className="text-slate-500 dark:text-slate-400 text-xs">{req.email}</div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        filterable: true,
+        filterOptions: [
+          { value: 'pending', label: 'Pending' },
+          { value: 'approved', label: 'Approved' },
+          { value: 'rejected', label: 'Rejected' },
+        ],
+        render: (row: TableRow) => {
+          const req = row as unknown as AccessRequest;
+          return (
+            <span
+              className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                req.status === 'approved'
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : req.status === 'rejected'
+                    ? 'bg-danger-500/20 text-danger-400'
+                    : 'bg-yellow-500/20 text-yellow-400'
+              }`}
+            >
+              {req.status}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => {
+          const req = row as unknown as AccessRequest;
+          return (
+            <>
+              {req.status === 'pending' && (
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => handleApprove(req.id)}
+                    disabled={processingId === req.id}
+                    className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded transition-colors disabled:opacity-50"
+                    title="Approve"
+                  >
+                    <CheckCircle size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleReject(req.id)}
+                    disabled={processingId === req.id}
+                    className="p-1.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 rounded transition-colors disabled:opacity-50"
+                    title="Reject"
+                  >
+                    <XCircle size={18} />
+                  </button>
+                </div>
+              )}
+              {req.status === 'rejected' && req.rejection_reason && (
+                <span className="text-xs text-danger-400 italic">
+                  Reason: {req.rejection_reason}
+                </span>
+              )}
+            </>
+          );
+        },
+      },
+    ],
+    [processingId]
+  );
+
+  // ── Access codes tab: kanon §27 — StandardTable ──────────────────────────
+  const codeRows = useMemo<TableRow[]>(() => codes.map((c) => ({ ...c, id: c.id })), [codes]);
+
+  const codeColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'code',
+        label: 'Code',
+        render: (row: TableRow) => {
+          const code = row as unknown as AccessCode;
+          return (
+            <div className="flex items-center gap-2">
+              <code className="bg-slate-50 dark:bg-navy-950 px-2 py-1 rounded text-blue-700 dark:text-blue-400 font-mono text-xs border border-slate-200 dark:border-blue-500/20">
+                {code.code}
+              </code>
+              <button
+                onClick={() => copyCode(code.code)}
+                className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <Copy size={12} />
+              </button>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'role',
+        label: 'Role',
+        filterable: true,
+        filterOptions: [
+          { value: 'USER', label: 'User' },
+          { value: 'ADMIN', label: 'Admin' },
+          { value: 'CEO', label: 'CEO' },
+        ],
+        render: (row: TableRow) => (
+          <span className="text-slate-700 dark:text-slate-300 font-medium text-xs">
+            {(row as unknown as AccessCode).role}
+          </span>
+        ),
+      },
+      {
+        id: 'usage',
+        label: 'Usage',
+        render: (row: TableRow) => {
+          const code = row as unknown as AccessCode;
+          return (
+            <div className="flex items-center gap-2">
+              <div className="w-20 h-1.5 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500"
+                  style={{
+                    width: `${Math.min(100, (code.current_uses / code.max_uses) * 100)}%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-slate-600 dark:text-slate-500">
+                {code.current_uses}/{code.max_uses}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'expires_at',
+        label: 'Expires',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as AccessCode).expires_at || '',
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 text-xs">
+            {formatDate((row as unknown as AccessCode).expires_at, 'Never')}
+          </span>
+        ),
+      },
+      {
+        id: 'created_by_email',
+        label: 'Created By',
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 text-xs">
+            {(row as unknown as AccessCode).created_by_email || 'Super Admin'}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        label: 'Action',
+        align: 'right',
+        render: (row: TableRow) => {
+          const code = row as unknown as AccessCode;
+          return (
+            <button
+              onClick={() => handleDeactivateCode(code.id)}
+              disabled={processingId === code.id}
+              className="text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors disabled:opacity-50"
+              title="Deactivate code"
+            >
+              <XCircle size={16} />
+            </button>
+          );
+        },
+      },
+    ],
+    [processingId]
+  );
+
   return (
     <div className="p-8 overflow-y-auto h-full relative">
       {/* Header */}
@@ -607,199 +1043,22 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
 
           {/* Organizations Table */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left"
-            >
-              <thead>
-                <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
-                  <th className="p-4 font-medium">Organization</th>
-                  <th className="p-4 font-medium">Users</th>
-                  <th className="p-4 font-medium">Plan</th>
-                  <th className="p-4 font-medium">Status</th>
-                  <th className="p-4 font-medium">Discount</th>
-                  <th className="p-4 font-medium">Created</th>
-                  <th className="p-4 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                      Loading...
-                    </td>
-                  </tr>
-                ) : loadErrors.organizations ? (
-                  <tr>
-                    <td colSpan={7} className="p-6">
-                      <DegradedState
-                        title="Organizations unavailable"
-                        description={loadErrors.organizations}
-                      />
-                    </td>
-                  </tr>
-                ) : filteredOrgs.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                      No organizations found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOrgs.map((org) => {
-                    const isEditing = editingOrgId === org.id;
-
-                    return (
-                      <tr
-                        key={org.id}
-                        className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors group"
-                      >
-                        <td className="p-4">
-                          <div className="font-medium text-slate-900 dark:text-white">
-                            {getOrgName(org)}
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                            {org.id.slice(0, 8)}...
-                          </div>
-                        </td>
-                        <td className="p-4 text-slate-700 dark:text-slate-300">{org.user_count}</td>
-                        <td className="p-4">
-                          {isEditing ? (
-                            <select
-                              value={editForm.plan}
-                              onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })}
-                              className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
-                            >
-                              <option value="free">Free</option>
-                              <option value="trial">Trial</option>
-                              <option value="pro">Pro</option>
-                              <option value="enterprise">Enterprise</option>
-                            </select>
-                          ) : (
-                            <span
-                              className={`px-2 py-1 rounded text-xs font-bold uppercase border ${getPlanColor(org.plan)}`}
-                            >
-                              {org.plan}
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          {isEditing ? (
-                            <select
-                              value={editForm.status}
-                              onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                              className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
-                            >
-                              <option value="active">Active</option>
-                              <option value="pending">Pending</option>
-                              <option value="blocked">Blocked</option>
-                            </select>
-                          ) : (
-                            <span
-                              className={`flex items-center gap-1.5 ${getStatusColor(org.status)}`}
-                            >
-                              {org.status === 'active' ? (
-                                <CheckCircle size={14} />
-                              ) : (
-                                <AlertCircle size={14} />
-                              )}
-                              {org.status}
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          {isEditing ? (
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={editForm.discount_percent}
-                                onChange={(e) =>
-                                  setEditForm({
-                                    ...editForm,
-                                    discount_percent: parseInt(e.target.value) || 0,
-                                  })
-                                }
-                                className="w-16 bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
-                              />
-                              <span className="text-slate-500 dark:text-slate-400 text-xs">%</span>
-                            </div>
-                          ) : org.discount_percent ? (
-                            <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                              -{org.discount_percent}%
-                            </span>
-                          ) : (
-                            <span className="text-slate-600 dark:text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                          {formatDate(org.created_at)}
-                        </td>
-                        <td className="p-4 text-right">
-                          {isEditing ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => saveInlineEdit(org.id)}
-                                disabled={processingId === org.id}
-                                className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors disabled:opacity-60"
-                                title="Save"
-                              >
-                                {processingId === org.id ? (
-                                  <RefreshCw size={16} className="animate-spin" />
-                                ) : (
-                                  <Check size={16} />
-                                )}
-                              </button>
-                              <button
-                                onClick={cancelInlineEdit}
-                                disabled={processingId === org.id}
-                                className="p-1.5 bg-danger-500/20 text-danger-400 hover:bg-danger-500/30 rounded transition-colors disabled:opacity-60"
-                                title="Cancel"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {onViewUsers && (
-                                <button
-                                  onClick={() => onViewUsers(org.id)}
-                                  className="p-1.5 hover:bg-indigo-500/20 text-slate-600 dark:text-slate-500 hover:text-indigo-400 rounded transition-colors"
-                                  title="View Users"
-                                >
-                                  <Users size={16} />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => setSelectedOrg(org)}
-                                className="p-1.5 hover:bg-blue-500/20 text-slate-600 dark:text-slate-500 hover:text-blue-400 rounded transition-colors"
-                                title="View Details"
-                              >
-                                <Eye size={16} />
-                              </button>
-                              <button
-                                onClick={() => startInlineEdit(org)}
-                                className="p-1.5 hover:bg-yellow-500/20 text-slate-600 dark:text-slate-500 hover:text-yellow-400 rounded transition-colors"
-                                title="Quick Edit"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
-                                disabled={processingId === org.id}
-                                className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors disabled:opacity-60"
-                                title="Delete"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+            {loadErrors.organizations ? (
+              <div className="p-6">
+                <DegradedState
+                  title="Organizations unavailable"
+                  description={loadErrors.organizations}
+                />
+              </div>
+            ) : (
+              <StandardTable
+                columns={organizationColumns}
+                data={organizationRows}
+                loading={loading}
+                empty={{ title: 'No organizations found' }}
+                persistKey="superadmin.organizations.list"
+              />
+            )}
           </div>
         </>
       )}
@@ -812,101 +1071,22 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               Pending Organization Requests
             </h3>
           </div>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
-                <th className="p-4 font-medium">Date</th>
-                <th className="p-4 font-medium">Organization</th>
-                <th className="p-4 font-medium">Contact</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                    Loading...
-                  </td>
-                </tr>
-              ) : loadErrors.requests ? (
-                <tr>
-                  <td colSpan={5} className="p-6">
-                    <DegradedState
-                      title="Access requests unavailable"
-                      description={loadErrors.requests}
-                    />
-                  </td>
-                </tr>
-              ) : requests.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                    No access requests found.
-                  </td>
-                </tr>
-              ) : (
-                requests.map((req) => (
-                  <tr
-                    key={req.id}
-                    className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                  >
-                    <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                      {formatDateTime(req.requested_at)}
-                    </td>
-                    <td className="p-4 text-slate-900 dark:text-white font-medium">
-                      {req.organization_name}
-                    </td>
-                    <td className="p-4">
-                      <div className="text-slate-900 dark:text-white">
-                        {req.first_name} {req.last_name}
-                      </div>
-                      <div className="text-slate-500 dark:text-slate-400 text-xs">{req.email}</div>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                          req.status === 'approved'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : req.status === 'rejected'
-                              ? 'bg-danger-500/20 text-danger-400'
-                              : 'bg-yellow-500/20 text-yellow-400'
-                        }`}
-                      >
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      {req.status === 'pending' && (
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleApprove(req.id)}
-                            disabled={processingId === req.id}
-                            className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded transition-colors disabled:opacity-50"
-                            title="Approve"
-                          >
-                            <CheckCircle size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleReject(req.id)}
-                            disabled={processingId === req.id}
-                            className="p-1.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 rounded transition-colors disabled:opacity-50"
-                            title="Reject"
-                          >
-                            <XCircle size={18} />
-                          </button>
-                        </div>
-                      )}
-                      {req.status === 'rejected' && req.rejection_reason && (
-                        <span className="text-xs text-danger-400 italic">
-                          Reason: {req.rejection_reason}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          {loadErrors.requests ? (
+            <div className="p-6">
+              <DegradedState
+                title="Access requests unavailable"
+                description={loadErrors.requests}
+              />
+            </div>
+          ) : (
+            <StandardTable
+              columns={requestColumns}
+              data={requestRows}
+              loading={loading}
+              empty={{ title: 'No access requests found.' }}
+              persistKey="superadmin.accessRequests.list"
+            />
+          )}
         </div>
       )}
 
@@ -924,97 +1104,19 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           </div>
 
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
-                  <th className="p-4 font-medium">Code</th>
-                  <th className="p-4 font-medium">Role</th>
-                  <th className="p-4 font-medium">Usage</th>
-                  <th className="p-4 font-medium">Expires</th>
-                  <th className="p-4 font-medium">Created By</th>
-                  <th className="p-4 font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                      Loading...
-                    </td>
-                  </tr>
-                ) : loadErrors.codes ? (
-                  <tr>
-                    <td colSpan={6} className="p-6">
-                      <DegradedState
-                        title="Access codes unavailable"
-                        description={loadErrors.codes}
-                      />
-                    </td>
-                  </tr>
-                ) : codes.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                      No access codes generated yet.
-                    </td>
-                  </tr>
-                ) : (
-                  codes.map((code) => (
-                    <tr
-                      key={code.id}
-                      className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <code className="bg-slate-50 dark:bg-navy-950 px-2 py-1 rounded text-blue-700 dark:text-blue-400 font-mono text-xs border border-slate-200 dark:border-blue-500/20">
-                            {code.code}
-                          </code>
-                          <button
-                            onClick={() => copyCode(code.code)}
-                            className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                          >
-                            <Copy size={12} />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="p-4 text-slate-700 dark:text-slate-300 font-medium text-xs">
-                        {code.role}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 h-1.5 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-500"
-                              style={{
-                                width: `${Math.min(100, (code.current_uses / code.max_uses) * 100)}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs text-slate-600 dark:text-slate-500">
-                            {code.current_uses}/{code.max_uses}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                        {formatDate(code.expires_at, 'Never')}
-                      </td>
-                      <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                        {code.created_by_email || 'Super Admin'}
-                      </td>
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => handleDeactivateCode(code.id)}
-                          disabled={processingId === code.id}
-                          className="text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors disabled:opacity-50"
-                          title="Deactivate code"
-                        >
-                          <XCircle size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            {loadErrors.codes ? (
+              <div className="p-6">
+                <DegradedState title="Access codes unavailable" description={loadErrors.codes} />
+              </div>
+            ) : (
+              <StandardTable
+                columns={codeColumns}
+                data={codeRows}
+                loading={loading}
+                empty={{ title: 'No access codes generated yet.' }}
+                persistKey="superadmin.accessCodes.list"
+              />
+            )}
           </div>
         </div>
       )}
