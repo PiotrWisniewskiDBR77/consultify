@@ -51,7 +51,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
   noteTitle,
   onConverted,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
 
   const taskItems = useMemo(() => extractTaskItems(contentJson), [contentJson]);
@@ -86,7 +86,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
       for (const item of toCreate) {
         const result = await Api.createPersonalTask({
           title: item.text,
-          description: `${isPl ? 'Z notatki' : 'From note'}: ${noteTitle}`,
+          description: `${t('myWorkNotebook.convertChecklistModal.fromNote')}: ${noteTitle}`,
           status: 'todo',
           priority: 'medium',
           tags: ['from-notebook'],
@@ -100,18 +100,22 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
       });
 
       toast.success(
-        isPl
-          ? `Utworzono ${createdIds.length} ${createdIds.length === 1 ? 'task' : 'tasków'}`
-          : `Created ${createdIds.length} task${createdIds.length === 1 ? '' : 's'}`
+        t('myWorkNotebook.convertChecklistModal.tasksCreated', {
+          count: createdIds.length,
+          noun:
+            createdIds.length === 1
+              ? t('myWorkNotebook.convertChecklistModal.taskSingular')
+              : t('myWorkNotebook.convertChecklistModal.taskPlural'),
+        })
       );
       onConverted?.(createdIds);
       onClose();
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to create tasks');
+      toast.error(err?.message || t('myWorkNotebook.convertChecklistModal.createFailed'));
     } finally {
       setCreating(false);
     }
-  }, [taskItems, selected, noteId, noteTitle, isPl, onConverted, onClose]);
+  }, [taskItems, selected, noteId, noteTitle, isPl, onConverted, onClose, t]);
 
   if (!open) return null;
 
@@ -123,13 +127,13 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
           <div className="flex items-center gap-2">
             <CheckSquare size={16} className="text-c-success" />
             <h3 className="text-sm font-semibold text-c-text">
-              {isPl ? 'Konwertuj checklistę na taski' : 'Convert checklist to tasks'}
+              {t('myWorkNotebook.convertChecklistModal.title')}
             </h3>
           </div>
           <button
             onClick={onClose}
             className="p-1 rounded-md text-c-text-secondary hover:text-c-text-secondary transition-colors"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkNotebook.convertChecklistModal.close')}
           >
             <X size={16} />
           </button>
@@ -139,27 +143,22 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
         <div className="px-5 py-4 max-h-80 overflow-y-auto">
           {taskItems.length === 0 ? (
             <p className="text-sm text-c-text-muted text-center py-6">
-              {isPl
-                ? 'Nie znaleziono elementów checklisty w notatce.'
-                : 'No checklist items found in note.'}
+              {t('myWorkNotebook.convertChecklistModal.noItems')}
             </p>
           ) : (
             <>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs text-c-text-muted">
-                  {selected.size} / {taskItems.length} {isPl ? 'zaznaczonych' : 'selected'}
+                  {selected.size} / {taskItems.length}{' '}
+                  {t('myWorkNotebook.convertChecklistModal.selected')}
                 </span>
                 <button
                   onClick={toggleAll}
                   className="text-xs text-c-accent hover:brightness-110 font-medium"
                 >
                   {selected.size === taskItems.length
-                    ? isPl
-                      ? 'Odznacz wszystko'
-                      : 'Deselect all'
-                    : isPl
-                      ? 'Zaznacz wszystko'
-                      : 'Select all'}
+                    ? t('myWorkNotebook.convertChecklistModal.deselectAll')
+                    : t('myWorkNotebook.convertChecklistModal.selectAll')}
                 </button>
               </div>
               <div className="space-y-1.5">
@@ -192,7 +191,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkNotebook.convertChecklistModal.cancel')}
           </button>
           <button
             onClick={handleCreate}
@@ -200,9 +199,13 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-c-success text-white text-xs font-semibold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {creating && <Loader2 size={12} className="animate-spin" />}
-            {isPl
-              ? `Utwórz ${selected.size} tasków`
-              : `Create ${selected.size} task${selected.size === 1 ? '' : 's'}`}
+            {t('myWorkNotebook.convertChecklistModal.createButton', {
+              count: selected.size,
+              noun:
+                selected.size === 1
+                  ? t('myWorkNotebook.convertChecklistModal.taskSingular')
+                  : t('myWorkNotebook.convertChecklistModal.taskPlural'),
+            })}
           </button>
         </div>
       </div>
