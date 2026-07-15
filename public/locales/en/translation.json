@@ -27168,6 +27168,84 @@
       ],
       "footer": "Value Chain = brief -> activities -> contribution -> levers -> moves -> outputs",
       "legendHint": "each activity's color shows whether it creates, is neutral to, or drains margin. Size and annotations follow cost and value contribution."
+    },
+    "dynamicSwotLibraryGraphic": {
+      "titleProcess": "How Dynamic SWOT moves from question to decision",
+      "titleExample": "Example: from a leadership question to a logical move sequence",
+      "subtitleProcess": "This is not a standard 2x2 table. First we frame the decision and structure evidence, then build the matrix, interpret the tensions, and only then move into actions and outputs.",
+      "subtitleExample": "This case shows that a strong SWOT session does not stop at naming four quadrants. It frames the decision first, structures the evidence next, and only then builds tension, moves, and board-ready material.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "Dynamic SWOT starts with the strategic question, scope, success signal, and constraints. Without that, the next steps collapse into disconnected opinions.",
+      "scenarioValueExample": "After a margin decline, Ateliertoy is considering automation. The real question is whether to buy technology now or first understand where value is leaking and which processes block scale.",
+      "flow": "Work spine",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "A shared diagnosis, strategic tensions, recommended moves, and material ready for reports, decks, and initiatives.",
+      "decisionValueExample": "Where should the transformation start: CAPEX first or diagnosis first?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stagesSubtitle": "Each step moves the user to a different level of decision quality.",
+      "signals": "Factor matrix",
+      "matrixLead": "The matrix organizes the signals, but it is not the finish line. Each card should be short, concrete, sourced, and relevant to the strategic choice.",
+      "matrixNote": "A strong matrix does not collect everything. It keeps only the factors that truly move the strategic choice.",
+      "tensionPanel": "Strategic tension",
+      "tensionLead": "The key point where advantage collides with a constraint or a risk.",
+      "moves": "Recommended move",
+      "movesLead": "A move must emerge from the tension, not from analyst instinct.",
+      "outputsPanelTitle": "Bridge to outputs",
+      "outputsLead": "The result of the session must be usable by management and by downstream execution.",
+      "stage1": "Mission brief",
+      "stage1Value": "Goal, scope, success signal, constraints",
+      "stage2": "Evidence map",
+      "stage2Value": "Facts, observations, and hypotheses from inside the company and the market",
+      "stage3": "SWOT build",
+      "stage3Value": "S/W/O/T cards with confidence and source",
+      "stage4": "Strategic tensions",
+      "stage4Value": "Where advantage collides with constraint or risk",
+      "stage5": "Recommended moves",
+      "stage5Value": "What to do now, what to delay, what to validate next",
+      "stage4Badge": "Insight",
+      "stage5Badge": "Decision",
+      "strengths": "Strengths",
+      "weaknesses": "Weaknesses",
+      "opportunities": "Opportunities",
+      "threats": "Threats",
+      "strengthsHint": "Internal advantage",
+      "weaknessesHint": "Internal gap",
+      "opportunitiesHint": "External upside",
+      "threatsHint": "External risk",
+      "strengthItemsExample": ["Strong brand and trusted B2B position", "In-house manufacturing and IP control"],
+      "strengthItemsProcess": [
+        "internal factors that strengthen the company position and support the decision objective",
+        "what the organization already has, knows, or controls and can deliberately build on"
+      ],
+      "weaknessItemsExample": ["Intuition-driven decisions", "No shared view of losses and priorities"],
+      "weaknessItemsProcess": [
+        "internal factors that reduce execution quality, business performance, or decision strength",
+        "gaps, inconsistencies, or constraints that make the objective harder to achieve"
+      ],
+      "opportunityItemsExample": ["Digital diagnosis before investments", "Data and software layer as a new lever"],
+      "opportunityItemsProcess": [
+        "external factors that may create room for growth, stronger positioning, or new advantage",
+        "changes in the market or environment that should be captured before competitors do"
+      ],
+      "threatItemsExample": ["Price pressure and rising costs", "Risk of burning CAPEX on the wrong problem"],
+      "threatItemsProcess": [
+        "external factors that may weaken the result, narrow the choice, or undermine the plan",
+        "pressures and risks in the environment that require protection, response, or a change of pace"
+      ],
+      "tensionItems": [
+        "The company has real assets, but no shared diagnosis of where money is leaking today.",
+        "Automation looks attractive, but without process truth it may only accelerate chaos."
+      ],
+      "moveItems": [
+        "First map value leakage, bottlenecks, and data blind spots.",
+        "Only then sequence the roadmap: data -> automation -> investment governance.",
+        "Close the result in board-ready material, not in a long list of observations."
+      ],
+      "outputItems": ["Executive summary of the situation", "90-day priorities", "Report / deck / initiative"],
+      "legend": "Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output"
     }
   }
 }

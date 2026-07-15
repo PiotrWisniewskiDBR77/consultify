@@ -28244,6 +28244,84 @@
       ],
       "footer": "Value Chain = brief -> aktywności -> wkład -> dźwignie -> ruchy -> outputy",
       "legendHint": "kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość."
+    },
+    "dynamicSwotLibraryGraphic": {
+      "titleProcess": "Jak Dynamic SWOT prowadzi od pytania do decyzji",
+      "titleExample": "Przykład: od pytania zarządu do logicznej sekwencji ruchów",
+      "subtitleProcess": "To nie jest zwykła tabela 2x2. Najpierw ustawiamy decyzję i porządkujemy evidence, potem budujemy macierz, interpretujemy napięcia i dopiero wtedy przechodzimy do ruchów oraz outputów.",
+      "subtitleExample": "Ten case pokazuje, że dobra sesja SWOT nie kończy się na nazwaniu czterech ćwiartek. Najpierw ustawia decyzję, potem porządkuje evidence, a dopiero później buduje napięcie, ruch i materiał dla zarządu.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Dynamic SWOT startuje od pytania strategicznego, zakresu, success signal i ograniczeń. Bez tego kolejne kroki zamieniają się w zbiór luźnych opinii.",
+      "scenarioValueExample": "Ateliertoy po spadku marży rozważa automatyzację. Prawdziwe pytanie brzmi: czy kupować technologię już teraz, czy najpierw zrozumieć, gdzie naprawdę wycieka wartość i które procesy blokują skalę.",
+      "flow": "Oś pracy",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Wspólna diagnoza, logiczne napięcia, rekomendowane ruchy i materiał gotowy do raportu, decka oraz inicjatyw.",
+      "decisionValueExample": "Od czego zacząć transformację: od CAPEX-u czy od diagnozy?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stagesSubtitle": "Każdy krok ma inny poziom decyzji: od ustawienia pytania po ruch i output.",
+      "signals": "Macierz czynników",
+      "matrixLead": "Macierz porządkuje sygnały, ale nie jest finałem. Każda karta powinna być krótka, konkretna, mieć źródło i wpływać na logikę decyzji.",
+      "matrixNote": "Dobra macierz nie zbiera wszystkiego. Zostawia tylko te czynniki, które naprawdę przesuwają wybór strategiczny.",
+      "tensionPanel": "Napięcie strategiczne",
+      "tensionLead": "Najważniejsze miejsce, w którym przewaga zderza się z ograniczeniem albo ryzykiem.",
+      "moves": "Rekomendowany ruch",
+      "movesLead": "Ruch musi wynikać z napięcia, a nie z intuicji autora.",
+      "outputsPanelTitle": "Most do outputów",
+      "outputsLead": "Wynik sesji musi nadawać się do dalszego użycia przez management i execution.",
+      "stage1": "Mission brief",
+      "stage1Value": "Cel, zakres, success signal, constraints",
+      "stage2": "Evidence map",
+      "stage2Value": "Fakty, obserwacje, hipotezy z wnętrza firmy i rynku",
+      "stage3": "SWOT build",
+      "stage3Value": "Karty S/W/O/T z confidence i source",
+      "stage4": "Strategic tensions",
+      "stage4Value": "Gdzie przewaga zderza się z ograniczeniem lub ryzykiem",
+      "stage5": "Recommended moves",
+      "stage5Value": "Co zrobić teraz, co odłożyć, co jeszcze sprawdzić",
+      "stage4Badge": "Insight",
+      "stage5Badge": "Decision",
+      "strengths": "Mocne strony",
+      "weaknesses": "Słabe strony",
+      "opportunities": "Szanse",
+      "threats": "Zagrożenia",
+      "strengthsHint": "Przewagi wewnętrzne",
+      "weaknessesHint": "Luki wewnętrzne",
+      "opportunitiesHint": "Upside zewnętrzny",
+      "threatsHint": "Ryzyko zewnętrzne",
+      "strengthItemsExample": ["Silna marka i zaufanie rynku B2B", "Własna produkcja i kontrola IP"],
+      "strengthItemsProcess": [
+        "czynniki wewnętrzne, które wzmacniają pozycję firmy i pomagają osiągnąć cel decyzji",
+        "to, co organizacja już posiada, potrafi albo kontroluje i na czym można świadomie budować ruch"
+      ],
+      "weaknessItemsExample": ["Decyzje oparte na intuicji", "Brak wspólnego obrazu strat i priorytetów"],
+      "weaknessItemsProcess": [
+        "czynniki wewnętrzne, które obniżają sprawność, jakość wyniku albo siłę wykonania",
+        "braki, niespójności lub ograniczenia, które utrudniają realizację celu i osłabiają decyzję"
+      ],
+      "opportunityItemsExample": ["Diagnoza cyfrowa przed inwestycjami", "Warstwa danych i software jako nowa dźwignia"],
+      "opportunityItemsProcess": [
+        "czynniki zewnętrzne, które mogą otworzyć przestrzeń wzrostu, poprawy pozycji albo nowej przewagi",
+        "zmiany w rynku i otoczeniu, które warto wykorzystać zanim zrobi to konkurencja"
+      ],
+      "threatItemsExample": ["Presja cenowa i wzrost kosztów", "Ryzyko przepalenia CAPEX-u na zły problem"],
+      "threatItemsProcess": [
+        "czynniki zewnętrzne, które mogą pogorszyć wynik, ograniczyć wybór albo podważyć plan działania",
+        "presje i ryzyka z otoczenia, wobec których firma musi się zabezpieczyć, zareagować albo zmienić tempo"
+      ],
+      "tensionItems": [
+        "Firma ma realne aktywa, ale nie ma wspólnej diagnozy, gdzie dziś traci pieniądze.",
+        "Automatyzacja wydaje się atrakcyjna, ale bez prawdy o procesie może tylko przyspieszyć chaos."
+      ],
+      "moveItems": [
+        "Najpierw zmapować wycieki wartości, bottlenecks i luki danych.",
+        "Dopiero potem układać kolejność: dane -> automatyzacja -> governance inwestycji.",
+        "Zamknąć wynik w materiale dla zarządu, a nie w długiej liście obserwacji."
+      ],
+      "outputItems": ["Executive summary sytuacji", "Priorytety na 90 dni", "Raport / deck / inicjatywa"],
+      "legend": "Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output"
     }
   }
 }
