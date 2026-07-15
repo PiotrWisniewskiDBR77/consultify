@@ -28193,6 +28193,147 @@
       "readBackText": "Potwierdzam utworzenie artefaktu \"{{targetLabel}}\" z insightu \"{{title}}\". Widziałem/am ograniczenia, liczbę dowodów ({{evidenceCount}}) oraz poziom pewności ({{confidence}}).",
       "confidenceNone": "brak",
       "targetColumnLabel": "Cel"
+    },
+    "raidCanvas": {
+      "raidLog": "RAID Log",
+      "analyzeRaid": "Analizuj RAID",
+      "health": "Zdrowie",
+      "open": "Otwarte",
+      "critical": "Krytyczne",
+      "overdue": "Po terminie",
+      "unowned": "Bez właściciela",
+      "hideRiskMatrix": "▾ Ukryj macierz ryzyk",
+      "showPIMatrixPmbok": "▸ Pokaż macierz P×I (PMBOK)",
+      "probabilityImpactMatrix": "Macierz Prawdopodobieństwo × Wpływ",
+      "impact": "Wpływ",
+      "probability": "Prawdopodobieństwo",
+      "sortedByHighestImpactScore": "Posortowane wg najwyższego wpływu / score",
+      "items": "elementów",
+      "levelLegend": "Legenda poziomów:",
+      "addItem": "Dodaj element",
+      "noRaidItemsYet": "Brak elementów RAID.",
+      "emptyStateHint": "Kliknij „Analizuj RAID\" aby AI wygenerował pełną analizę RAID (Ryzyka, Założenia, Problemy, Zależności).",
+      "riskMaterializedConvertToIssue": "Ryzyko zmaterializowane — przekonwertuj na Issue",
+      "assumptionInvalidatedConvertToIssue": "Założenie obalone — przekonwertuj na Issue",
+      "convertToIssue": "Konwertuj na Issue",
+      "type": "Typ",
+      "category": "Kategoria",
+      "responsePmbok": "Strategia (PMBOK)",
+      "owner": "Właściciel",
+      "required": "wymagany",
+      "select": "— Wybierz —",
+      "name": "Imię i nazwisko...",
+      "dueDate": "Termin",
+      "overdueSuffix": "po terminie!",
+      "source": "Źródło",
+      "eGMeetingAuditAiWorkshop": "np. spotkanie, audyt, AI, warsztat",
+      "contingencyPlan": "Plan awaryjny (contingency)",
+      "whatIsTheFallbackIfRiskMaterializes": "Co robimy, gdy ryzyko się zmaterializuje?",
+      "mitigationPlan": "Plan mitigacji",
+      "howDoWeReduceTheProbabilityOfThisRisk": "Jak ograniczamy prawdopodobieństwo tego ryzyka?",
+      "levelLabel": {
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski"
+      },
+      "typeLabel": {
+        "risk": "Ryzyko",
+        "assumption": "Założenie",
+        "issue": "Problem",
+        "dependency": "Zależność"
+      },
+      "statusLabel": {
+        "open": "Otwarty",
+        "mitigated": "Zmitigowany",
+        "accepted": "Zaakceptowany",
+        "closed": "Zamknięty",
+        "resolved": "Rozwiązany",
+        "transferred": "Przekazany",
+        "materialized": "Zmaterializowany",
+        "validated": "Zwalidowany",
+        "invalidated": "Obalony",
+        "in_progress": "W toku",
+        "escalated": "Eskalowany",
+        "on_track": "Na dobrej drodze",
+        "at_risk": "Zagrożony",
+        "met": "Spełniony",
+        "not_met": "Niespełniony"
+      },
+      "responseStrategyLabel": {
+        "avoid": "Unikaj",
+        "transfer": "Transferuj",
+        "mitigate": "Mitiguj",
+        "accept": "Akceptuj",
+        "escalate": "Eskaluj"
+      },
+      "actionLabel": {
+        "risk": "Proponowana akcja",
+        "assumption": "Plan walidacji",
+        "issue": "Plan rozwiązania",
+        "dependency": "Plan zarządzania"
+      },
+      "actionPlaceholder": {
+        "risk": "Jaką akcję proponujemy w odpowiedzi na to ryzyko?",
+        "assumption": "Jak zwalidujemy to założenie? Jakich dowodów potrzebujemy?",
+        "issue": "Jaki jest plan rozwiązania? Kto musi być zaangażowany?",
+        "dependency": "Jak zarządzamy tą zależnością? Jaki jest plan awaryjny?"
+      },
+      "categoryLabel": {
+        "technical": "Techniczne",
+        "business": "Biznesowe",
+        "financial": "Finansowe",
+        "operational": "Operacyjne",
+        "security": "Bezpieczeństwo",
+        "legal": "Prawne",
+        "regulatory": "Regulacyjne"
+      },
+      "filterTabs": {
+        "all": "Wszystkie",
+        "risk": "Ryzyka",
+        "assumption": "Założenia",
+        "issue": "Problemy",
+        "dependency": "Zależności"
+      },
+      "quickActions": {
+        "risk": [
+          "Przegląd tygodniowy",
+          "Eskalacja do PMO",
+          "POC przed wdrożeniem",
+          "Transfer na dostawcę"
+        ],
+        "assumption": [
+          "Walidacja z interesariuszem",
+          "Analiza danych",
+          "Prototyp / POC",
+          "Wywiad z ekspertem"
+        ],
+        "issue": [
+          "Hotfix natychmiast",
+          "Eskalacja do sponsora",
+          "Rollback",
+          "War room"
+        ],
+        "dependency": [
+          "Spotkanie synchronizacyjne",
+          "Mock API / stub",
+          "Eskalacja do managera",
+          "Plan alternatywny"
+        ]
+      },
+      "quickContingencyArgs": [
+        "Tryb ręczny fallback",
+        "Eskalacja do PMO",
+        "Przesunięcie terminu + komunikat"
+      ],
+      "quickMitigationArgs": [
+        "POC przed wdrożeniem",
+        "Przegląd tygodniowy",
+        "Plan kontroli jakości"
+      ],
+      "convertedFromSource": "Konwersja z {{typeLabel}}: {{title}}",
+      "overdueDate": "Po terminie: {{date}}",
+      "itemTitlePlaceholder": "Nazwa {{typeLabelLower}}..."
     }
   }
 }

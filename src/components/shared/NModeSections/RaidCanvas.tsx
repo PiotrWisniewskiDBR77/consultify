@@ -280,8 +280,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   fieldKeyPrefix,
   users,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [typeFilter, setTypeFilter] = useState<RaidTypeFilter>('all');
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -289,91 +288,25 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   // ── i18n helpers ─────────────────────────────────────────────────────────
 
   const getLevelLabel = (level: string): string => {
-    if (isPolish) {
-      if (level === 'critical') return 'Krytyczny';
-      if (level === 'high') return 'Wysoki';
-      if (level === 'medium') return 'Średni';
-      return 'Niski';
-    }
-    if (level === 'critical') return 'Critical';
-    if (level === 'high') return 'High';
-    if (level === 'medium') return 'Medium';
-    return 'Low';
+    const known = ['critical', 'high', 'medium', 'low'];
+    const key = known.includes(level) ? level : 'low';
+    return t(`sharedComponents.raidCanvas.levelLabel.${key}`);
   };
 
-  const getTypeLabel = (type: RaidType): string => {
-    const map: Record<RaidType, { en: string; pl: string }> = {
-      risk: { en: 'Risk', pl: 'Ryzyko' },
-      assumption: { en: 'Assumption', pl: 'Założenie' },
-      issue: { en: 'Issue', pl: 'Problem' },
-      dependency: { en: 'Dependency', pl: 'Zależność' },
-    };
-    return isPolish ? map[type].pl : map[type].en;
-  };
+  const getTypeLabel = (type: RaidType): string =>
+    t(`sharedComponents.raidCanvas.typeLabel.${type}`);
 
-  const getStatusLabel = (status: RaidStatus): string => {
-    const map: Record<RaidStatus, { en: string; pl: string }> = {
-      open: { en: 'Open', pl: 'Otwarty' },
-      mitigated: { en: 'Mitigated', pl: 'Zmitigowany' },
-      accepted: { en: 'Accepted', pl: 'Zaakceptowany' },
-      closed: { en: 'Closed', pl: 'Zamknięty' },
-      resolved: { en: 'Resolved', pl: 'Rozwiązany' },
-      transferred: { en: 'Transferred', pl: 'Przekazany' },
-      materialized: { en: 'Materialized', pl: 'Zmaterializowany' },
-      validated: { en: 'Validated', pl: 'Zwalidowany' },
-      invalidated: { en: 'Invalidated', pl: 'Obalony' },
-      in_progress: { en: 'In Progress', pl: 'W toku' },
-      escalated: { en: 'Escalated', pl: 'Eskalowany' },
-      on_track: { en: 'On Track', pl: 'Na dobrej drodze' },
-      at_risk: { en: 'At Risk', pl: 'Zagrożony' },
-      met: { en: 'Met', pl: 'Spełniony' },
-      not_met: { en: 'Not Met', pl: 'Niespełniony' },
-    };
-    return isPolish ? map[status]?.pl || status : map[status]?.en || status;
-  };
+  const getStatusLabel = (status: RaidStatus): string =>
+    t(`sharedComponents.raidCanvas.statusLabel.${status}`, { defaultValue: status });
 
-  const getResponseStrategyLabel = (strategy: RiskResponseStrategy): string => {
-    const map: Record<RiskResponseStrategy, { en: string; pl: string }> = {
-      avoid: { en: 'Avoid', pl: 'Unikaj' },
-      transfer: { en: 'Transfer', pl: 'Transferuj' },
-      mitigate: { en: 'Mitigate', pl: 'Mitiguj' },
-      accept: { en: 'Accept', pl: 'Akceptuj' },
-      escalate: { en: 'Escalate', pl: 'Eskaluj' },
-    };
-    return isPolish ? map[strategy].pl : map[strategy].en;
-  };
+  const getResponseStrategyLabel = (strategy: RiskResponseStrategy): string =>
+    t(`sharedComponents.raidCanvas.responseStrategyLabel.${strategy}`);
 
-  const getActionLabel = (type: RaidType): string => {
-    const map: Record<RaidType, { en: string; pl: string }> = {
-      risk: { en: 'Proposed Action', pl: 'Proponowana akcja' },
-      assumption: { en: 'Validation Plan', pl: 'Plan walidacji' },
-      issue: { en: 'Resolution Plan', pl: 'Plan rozwiązania' },
-      dependency: { en: 'Management Plan', pl: 'Plan zarządzania' },
-    };
-    return isPolish ? map[type].pl : map[type].en;
-  };
+  const getActionLabel = (type: RaidType): string =>
+    t(`sharedComponents.raidCanvas.actionLabel.${type}`);
 
-  const getActionPlaceholder = (type: RaidType): string => {
-    const map: Record<RaidType, { en: string; pl: string }> = {
-      risk: {
-        en: 'What action do we propose to address this risk?',
-        pl: 'Jaką akcję proponujemy w odpowiedzi na to ryzyko?',
-      },
-      assumption: {
-        en: 'How will we validate this assumption? What evidence do we need?',
-        pl: 'Jak zwalidujemy to założenie? Jakich dowodów potrzebujemy?',
-      },
-      issue: {
-        en: 'What is the resolution plan? Who needs to be involved?',
-        pl: 'Jaki jest plan rozwiązania? Kto musi być zaangażowany?',
-      },
-      dependency: {
-        en: 'How will we manage this dependency? What is the fallback?',
-        pl: 'Jak zarządzamy tą zależnością? Jaki jest plan awaryjny?',
-      },
-    };
-    return isPolish ? map[type].pl : map[type].en;
-  };
+  const getActionPlaceholder = (type: RaidType): string =>
+    t(`sharedComponents.raidCanvas.actionPlaceholder.${type}`);
 
   // ── Category options ─────────────────────────────────────────────────────
 
@@ -382,70 +315,25 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       ['technical', 'business', 'financial', 'operational', 'security', 'legal', 'regulatory'].map(
         (c) => ({
           value: c,
-          label:
-            (
-              {
-                technical: isPolish ? 'Techniczne' : 'Technical',
-                business: isPolish ? 'Biznesowe' : 'Business',
-                financial: isPolish ? 'Finansowe' : 'Financial',
-                operational: isPolish ? 'Operacyjne' : 'Operational',
-                security: isPolish ? 'Bezpieczeństwo' : 'Security',
-                legal: isPolish ? 'Prawne' : 'Legal',
-                regulatory: isPolish ? 'Regulacyjne' : 'Regulatory',
-              } as Record<string, string>
-            )[c] || c,
+          label: t(`sharedComponents.raidCanvas.categoryLabel.${c}`, { defaultValue: c }),
         })
       ),
-    [isPolish]
+    [t]
   );
 
   // ── Quick action buttons per type ────────────────────────────────────────
 
-  const getQuickActions = (type: RaidType): string[] => {
-    if (type === 'risk') {
-      return isPolish
-        ? [
-            'Przegląd tygodniowy',
-            'Eskalacja do PMO',
-            'POC przed wdrożeniem',
-            'Transfer na dostawcę',
-          ]
-        : ['Weekly review', 'Escalate to PMO', 'POC before rollout', 'Transfer to vendor'];
-    }
-    if (type === 'assumption') {
-      return isPolish
-        ? ['Walidacja z interesariuszem', 'Analiza danych', 'Prototyp / POC', 'Wywiad z ekspertem']
-        : ['Validate with stakeholder', 'Data analysis', 'Prototype / POC', 'Expert interview'];
-    }
-    if (type === 'issue') {
-      return isPolish
-        ? ['Hotfix natychmiast', 'Eskalacja do sponsora', 'Rollback', 'War room']
-        : ['Hotfix immediately', 'Escalate to sponsor', 'Rollback', 'War room'];
-    }
-    return isPolish
-      ? [
-          'Spotkanie synchronizacyjne',
-          'Mock API / stub',
-          'Eskalacja do managera',
-          'Plan alternatywny',
-        ]
-      : ['Sync meeting', 'Mock API / stub', 'Escalate to manager', 'Alternative plan'];
-  };
+  const getQuickActions = (type: RaidType): string[] =>
+    t(`sharedComponents.raidCanvas.quickActions.${type}`, { returnObjects: true }) as string[];
 
   const quickContingencyArgs = useMemo(
-    () =>
-      isPolish
-        ? ['Tryb ręczny fallback', 'Eskalacja do PMO', 'Przesunięcie terminu + komunikat']
-        : ['Manual fallback mode', 'Escalate to PMO', 'Timeline shift with stakeholder notice'],
-    [isPolish]
+    () => t('sharedComponents.raidCanvas.quickContingencyArgs', { returnObjects: true }) as string[],
+    [t]
   );
 
   const quickMitigationArgs = useMemo(
-    () =>
-      isPolish
-        ? ['POC przed wdrożeniem', 'Przegląd tygodniowy', 'Plan kontroli jakości']
-        : ['POC before rollout', 'Weekly review checkpoint', 'Quality control plan'],
-    [isPolish]
+    () => t('sharedComponents.raidCanvas.quickMitigationArgs', { returnObjects: true }) as string[],
+    [t]
   );
 
   // ── Computed metrics ─────────────────────────────────────────────────────
@@ -533,21 +421,25 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
   const filterTabs: { key: RaidTypeFilter; label: string; count: number }[] = useMemo(
     () => [
-      { key: 'all', label: isPolish ? 'Wszystkie' : 'All', count: items.length },
-      { key: 'risk', label: isPolish ? 'Ryzyka' : 'Risks', count: typeCounts.risk },
+      { key: 'all', label: t('sharedComponents.raidCanvas.filterTabs.all'), count: items.length },
+      { key: 'risk', label: t('sharedComponents.raidCanvas.filterTabs.risk'), count: typeCounts.risk },
       {
         key: 'assumption',
-        label: isPolish ? 'Założenia' : 'Assumptions',
+        label: t('sharedComponents.raidCanvas.filterTabs.assumption'),
         count: typeCounts.assumption,
       },
-      { key: 'issue', label: isPolish ? 'Problemy' : 'Issues', count: typeCounts.issue },
+      {
+        key: 'issue',
+        label: t('sharedComponents.raidCanvas.filterTabs.issue'),
+        count: typeCounts.issue,
+      },
       {
         key: 'dependency',
-        label: isPolish ? 'Zależności' : 'Dependencies',
+        label: t('sharedComponents.raidCanvas.filterTabs.dependency'),
         count: typeCounts.dependency,
       },
     ],
-    [isPolish, items.length, typeCounts]
+    [t, items.length, typeCounts]
   );
 
   // ── Convert to Issue handler ─────────────────────────────────────────────
@@ -561,11 +453,14 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         onUpdateItem(item.id, {
           type: 'issue',
           status: 'open',
-          source: `${isPolish ? 'Konwersja z' : 'Converted from'} ${getTypeLabel(item.type)}: ${item.title}`,
+          source: t('sharedComponents.raidCanvas.convertedFromSource', {
+            typeLabel: getTypeLabel(item.type),
+            title: item.title,
+          }),
         });
       }
     },
-    [onConvertToIssue, onUpdateItem, isPolish]
+    [onConvertToIssue, onUpdateItem, t]
   );
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -575,7 +470,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-          {isPolish ? 'RAID Log' : 'RAID Log'}
+          {t('sharedComponents.raidCanvas.raidLog')}
           <span className="ml-2 text-xs font-normal text-slate-600 dark:text-slate-500">
             PMBOK / PRINCE2
           </span>
@@ -591,7 +486,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             ) : (
               <Sparkles size={13} />
             )}
-            {isPolish ? 'Analizuj RAID' : 'Analyze RAID'}
+            {t('sharedComponents.raidCanvas.analyzeRaid')}
           </button>
         )}
       </div>
@@ -602,7 +497,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         <div className={`p-2.5 rounded-xl text-center border ${healthBg}`}>
           <div className={`text-xl font-bold ${healthColor}`}>{healthScore}</div>
           <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Zdrowie' : 'Health'}
+            {t('sharedComponents.raidCanvas.health')}
           </div>
         </div>
         {/* Open */}
@@ -611,7 +506,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             {openItems.length}
           </div>
           <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Otwarte' : 'Open'}
+            {t('sharedComponents.raidCanvas.open')}
           </div>
         </div>
         {/* Critical/High */}
@@ -624,7 +519,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             {criticalItems.length}
           </div>
           <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Krytyczne' : 'Critical'}
+            {t('sharedComponents.raidCanvas.critical')}
           </div>
         </div>
         {/* Overdue */}
@@ -637,7 +532,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             {overdueItems.length}
           </div>
           <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Po terminie' : 'Overdue'}
+            {t('sharedComponents.raidCanvas.overdue')}
           </div>
         </div>
         {/* Unowned */}
@@ -650,7 +545,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             {unownedItems.length}
           </div>
           <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Bez właściciela' : 'Unowned'}
+            {t('sharedComponents.raidCanvas.unowned')}
           </div>
         </div>
       </div>
@@ -698,17 +593,13 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             className="text-[11px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mb-2"
           >
             {showHeatmap
-              ? isPolish
-                ? '▾ Ukryj macierz ryzyk'
-                : '▾ Hide risk matrix'
-              : isPolish
-                ? '▸ Pokaż macierz P×I (PMBOK)'
-                : '▸ Show P×I matrix (PMBOK)'}
+              ? t('sharedComponents.raidCanvas.hideRiskMatrix')
+              : t('sharedComponents.raidCanvas.showPIMatrixPmbok')}
           </button>
           {showHeatmap && (
             <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 p-3 bg-slate-50/20 dark:bg-navy-900/15">
               <div className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-2 text-center">
-                {isPolish ? 'Macierz Prawdopodobieństwo × Wpływ' : 'Probability × Impact Matrix'}
+                {t('sharedComponents.raidCanvas.probabilityImpactMatrix')}
               </div>
               <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr] gap-px">
                 {/* Header row */}
@@ -756,8 +647,8 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                 ))}
               </div>
               <div className="flex items-center justify-between mt-2 text-[9px] text-slate-600 dark:text-slate-500">
-                <span>← {isPolish ? 'Wpływ' : 'Impact'} →</span>
-                <span>↑ {isPolish ? 'Prawdopodobieństwo' : 'Probability'}</span>
+                <span>← {t('sharedComponents.raidCanvas.impact')} →</span>
+                <span>↑ {t('sharedComponents.raidCanvas.probability')}</span>
               </div>
             </div>
           )}
@@ -786,12 +677,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       {filteredItems.length > 0 && (
         <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
           <span>
-            {isPolish
-              ? 'Posortowane wg najwyższego wpływu / score'
-              : 'Sorted by highest impact / score'}
+            {t('sharedComponents.raidCanvas.sortedByHighestImpactScore')}
           </span>
           <span>
-            {filteredItems.length} / {items.length} {isPolish ? 'elementów' : 'items'}
+            {filteredItems.length} / {items.length} {t('sharedComponents.raidCanvas.items')}
           </span>
         </div>
       )}
@@ -799,7 +688,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       {/* ── Level legend + Add item ─────────────────────────────────────── */}
       <div className="py-2 flex items-center justify-between">
         <div className="text-[10px] flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-500">
-          <span>{isPolish ? 'Legenda poziomów:' : 'Level legend:'}</span>
+          <span>{t('sharedComponents.raidCanvas.levelLegend')}</span>
           {RAID_LEVEL_OPTIONS.map((level) => (
             <span
               key={`legend-${level}`}
@@ -815,7 +704,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-navy-500 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
           >
             <Plus size={13} />
-            {isPolish ? 'Dodaj element' : 'Add item'}
+            {t('sharedComponents.raidCanvas.addItem')}
           </button>
         )}
       </div>
@@ -825,12 +714,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         <div className="py-6 text-center rounded-xl border border-dashed border-slate-300/50 dark:border-navy-600/50 bg-slate-50/10 dark:bg-navy-900/10">
           <AlertTriangle size={20} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-1">
-            {isPolish ? 'Brak elementów RAID.' : 'No RAID items yet.'}
+            {t('sharedComponents.raidCanvas.noRaidItemsYet')}
           </p>
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            {isPolish
-              ? 'Kliknij „Analizuj RAID" aby AI wygenerował pełną analizę RAID (Ryzyka, Założenia, Problemy, Zależności).'
-              : 'Click "Analyze RAID" to let AI generate a full RAID analysis (Risks, Assumptions, Issues, Dependencies).'}
+            {t('sharedComponents.raidCanvas.emptyStateHint')}
           </p>
         </div>
       )}
@@ -872,25 +759,21 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         <>
                           <AlertCircle size={12} />
                           {item.type === 'risk'
-                            ? isPolish
-                              ? 'Ryzyko zmaterializowane — przekonwertuj na Issue'
-                              : 'Risk materialized — convert to Issue'
-                            : isPolish
-                              ? 'Założenie obalone — przekonwertuj na Issue'
-                              : 'Assumption invalidated — convert to Issue'}
+                            ? t('sharedComponents.raidCanvas.riskMaterializedConvertToIssue')
+                            : t('sharedComponents.raidCanvas.assumptionInvalidatedConvertToIssue')}
                           <button
                             onClick={() => handleConvertToIssue(item)}
                             disabled={locked}
                             className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-danger-500/20 hover:bg-danger-500/30 text-danger-600 dark:text-danger-400 text-[10px] font-semibold transition-colors disabled:opacity-40"
                           >
                             <ArrowRight size={10} />
-                            {isPolish ? 'Konwertuj na Issue' : 'Convert to Issue'}
+                            {t('sharedComponents.raidCanvas.convertToIssue')}
                           </button>
                         </>
                       ) : (
                         <>
                           <Clock size={12} />
-                          {isPolish ? `Po terminie: ${item.dueDate}` : `Overdue: ${item.dueDate}`}
+                          {t('sharedComponents.raidCanvas.overdueDate', { date: item.dueDate })}
                         </>
                       )}
                     </div>
@@ -911,11 +794,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           onChange={(e) => onUpdateItem(item.id, { title: e.target.value })}
                           readOnly={locked}
                           className="flex-1 text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
-                          placeholder={
-                            isPolish
-                              ? `Nazwa ${getTypeLabel(item.type).toLowerCase()}...`
-                              : `${getTypeLabel(item.type)} name...`
-                          }
+                          placeholder={t('sharedComponents.raidCanvas.itemTitlePlaceholder', {
+                            typeLabel: getTypeLabel(item.type),
+                            typeLabelLower: getTypeLabel(item.type).toLowerCase(),
+                          })}
                         />
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -925,7 +807,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         >
                           {isRisk
                             ? `Score ${score}`
-                            : `${isPolish ? 'Wpływ' : 'Impact'}: ${getLevelLabel(item.impact)}`}
+                            : `${t('sharedComponents.raidCanvas.impact')}: ${getLevelLabel(item.impact)}`}
                         </span>
                         {/* Status badge */}
                         <span
@@ -954,7 +836,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Type */}
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                          {isPolish ? 'Typ' : 'Type'}
+                          {t('sharedComponents.raidCanvas.type')}
                         </span>
                         <select
                           value={item.type}
@@ -979,7 +861,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {isRisk && (
                         <div className="space-y-1">
                           <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                            {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
+                            {t('sharedComponents.raidCanvas.probability')}
                           </span>
                           <select
                             value={item.probability || 'medium'}
@@ -1001,7 +883,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Impact */}
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                          {isPolish ? 'Wpływ' : 'Impact'}
+                          {t('sharedComponents.raidCanvas.impact')}
                         </span>
                         <select
                           value={item.impact}
@@ -1022,7 +904,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Category */}
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                          {isPolish ? 'Kategoria' : 'Category'}
+                          {t('sharedComponents.raidCanvas.category')}
                         </span>
                         <select
                           value={item.category || 'business'}
@@ -1063,7 +945,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {isRisk && (
                         <div className="space-y-1">
                           <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                            {isPolish ? 'Strategia (PMBOK)' : 'Response (PMBOK)'}
+                            {t('sharedComponents.raidCanvas.responsePmbok')}
                           </span>
                           <select
                             value={item.responseStrategy || 'mitigate'}
@@ -1093,10 +975,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemUnowned ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
                         >
                           <User size={9} />
-                          {isPolish ? 'Właściciel' : 'Owner'}
+                          {t('sharedComponents.raidCanvas.owner')}
                           {itemUnowned && (
                             <span className="text-[8px] normal-case">
-                              ({isPolish ? 'wymagany' : 'required'})
+                              ({t('sharedComponents.raidCanvas.required')})
                             </span>
                           )}
                         </span>
@@ -1107,7 +989,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             disabled={locked}
                             className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
                           >
-                            <option value="">{isPolish ? '— Wybierz —' : '— Select —'}</option>
+                            <option value="">{t('sharedComponents.raidCanvas.select')}</option>
                             {users.map((u) => (
                               <option key={u.id} value={u.name}>
                                 {u.name}
@@ -1120,7 +1002,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             onChange={(e) => onUpdateItem(item.id, { owner: e.target.value })}
                             readOnly={locked}
                             className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
-                            placeholder={isPolish ? 'Imię i nazwisko...' : 'Name...'}
+                            placeholder={t('sharedComponents.raidCanvas.name')}
                           />
                         )}
                       </div>
@@ -1131,10 +1013,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
                         >
                           <Calendar size={9} />
-                          {isPolish ? 'Termin' : 'Due Date'}
+                          {t('sharedComponents.raidCanvas.dueDate')}
                           {itemOverdue && (
                             <span className="text-[8px] normal-case">
-                              ({isPolish ? 'po terminie!' : 'overdue!'})
+                              ({t('sharedComponents.raidCanvas.overdueSuffix')})
                             </span>
                           )}
                         </span>
@@ -1155,7 +1037,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500 flex items-center gap-1">
                           <Shield size={9} />
-                          {isPolish ? 'Źródło' : 'Source'}
+                          {t('sharedComponents.raidCanvas.source')}
                         </span>
                         <input
                           value={item.source || ''}
@@ -1163,9 +1045,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           readOnly={locked}
                           className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                           placeholder={
-                            isPolish
-                              ? 'np. spotkanie, audyt, AI, warsztat'
-                              : 'e.g. meeting, audit, AI, workshop'
+                            t('sharedComponents.raidCanvas.eGMeetingAuditAiWorkshop')
                           }
                         />
                       </div>
@@ -1179,7 +1059,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                            {isPolish ? 'Plan awaryjny (contingency)' : 'Contingency Plan'}
+                            {t('sharedComponents.raidCanvas.contingencyPlan')}
                           </span>
                           <AIFieldEnhancer
                             fieldKey={`${fieldKeyPrefix}-raid-con-${item.id}`}
@@ -1197,9 +1077,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           readOnly={locked}
                           className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
                           placeholder={
-                            isPolish
-                              ? 'Co robimy, gdy ryzyko się zmaterializuje?'
-                              : 'What is the fallback if risk materializes?'
+                            t('sharedComponents.raidCanvas.whatIsTheFallbackIfRiskMaterializes')
                           }
                         />
                         <div className="flex flex-wrap gap-1">
@@ -1226,7 +1104,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                            {isPolish ? 'Plan mitigacji' : 'Mitigation Plan'}
+                            {t('sharedComponents.raidCanvas.mitigationPlan')}
                           </span>
                           <AIFieldEnhancer
                             fieldKey={`${fieldKeyPrefix}-raid-mit-${item.id}`}
@@ -1244,9 +1122,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           readOnly={locked}
                           className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
                           placeholder={
-                            isPolish
-                              ? 'Jak ograniczamy prawdopodobieństwo tego ryzyka?'
-                              : 'How do we reduce the probability of this risk?'
+                            t('sharedComponents.raidCanvas.howDoWeReduceTheProbabilityOfThisRisk')
                           }
                         />
                         <div className="flex flex-wrap gap-1">

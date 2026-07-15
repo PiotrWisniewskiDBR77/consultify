@@ -27117,6 +27117,147 @@
       "readBackText": "I confirm creating \"{{targetLabel}}\" from insight \"{{title}}\". I reviewed the limits, evidence count ({{evidenceCount}}), and confidence ({{confidence}}).",
       "confidenceNone": "none",
       "targetColumnLabel": "Target"
+    },
+    "raidCanvas": {
+      "raidLog": "RAID Log",
+      "analyzeRaid": "Analyze RAID",
+      "health": "Health",
+      "open": "Open",
+      "critical": "Critical",
+      "overdue": "Overdue",
+      "unowned": "Unowned",
+      "hideRiskMatrix": "▾ Hide risk matrix",
+      "showPIMatrixPmbok": "▸ Show P×I matrix (PMBOK)",
+      "probabilityImpactMatrix": "Probability × Impact Matrix",
+      "impact": "Impact",
+      "probability": "Probability",
+      "sortedByHighestImpactScore": "Sorted by highest impact / score",
+      "items": "items",
+      "levelLegend": "Level legend:",
+      "addItem": "Add item",
+      "noRaidItemsYet": "No RAID items yet.",
+      "emptyStateHint": "Click \"Analyze RAID\" to let AI generate a full RAID analysis (Risks, Assumptions, Issues, Dependencies).",
+      "riskMaterializedConvertToIssue": "Risk materialized — convert to Issue",
+      "assumptionInvalidatedConvertToIssue": "Assumption invalidated — convert to Issue",
+      "convertToIssue": "Convert to Issue",
+      "type": "Type",
+      "category": "Category",
+      "responsePmbok": "Response (PMBOK)",
+      "owner": "Owner",
+      "required": "required",
+      "select": "— Select —",
+      "name": "Name...",
+      "dueDate": "Due Date",
+      "overdueSuffix": "overdue!",
+      "source": "Source",
+      "eGMeetingAuditAiWorkshop": "e.g. meeting, audit, AI, workshop",
+      "contingencyPlan": "Contingency Plan",
+      "whatIsTheFallbackIfRiskMaterializes": "What is the fallback if risk materializes?",
+      "mitigationPlan": "Mitigation Plan",
+      "howDoWeReduceTheProbabilityOfThisRisk": "How do we reduce the probability of this risk?",
+      "levelLabel": {
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "typeLabel": {
+        "risk": "Risk",
+        "assumption": "Assumption",
+        "issue": "Issue",
+        "dependency": "Dependency"
+      },
+      "statusLabel": {
+        "open": "Open",
+        "mitigated": "Mitigated",
+        "accepted": "Accepted",
+        "closed": "Closed",
+        "resolved": "Resolved",
+        "transferred": "Transferred",
+        "materialized": "Materialized",
+        "validated": "Validated",
+        "invalidated": "Invalidated",
+        "in_progress": "In Progress",
+        "escalated": "Escalated",
+        "on_track": "On Track",
+        "at_risk": "At Risk",
+        "met": "Met",
+        "not_met": "Not Met"
+      },
+      "responseStrategyLabel": {
+        "avoid": "Avoid",
+        "transfer": "Transfer",
+        "mitigate": "Mitigate",
+        "accept": "Accept",
+        "escalate": "Escalate"
+      },
+      "actionLabel": {
+        "risk": "Proposed Action",
+        "assumption": "Validation Plan",
+        "issue": "Resolution Plan",
+        "dependency": "Management Plan"
+      },
+      "actionPlaceholder": {
+        "risk": "What action do we propose to address this risk?",
+        "assumption": "How will we validate this assumption? What evidence do we need?",
+        "issue": "What is the resolution plan? Who needs to be involved?",
+        "dependency": "How will we manage this dependency? What is the fallback?"
+      },
+      "categoryLabel": {
+        "technical": "Technical",
+        "business": "Business",
+        "financial": "Financial",
+        "operational": "Operational",
+        "security": "Security",
+        "legal": "Legal",
+        "regulatory": "Regulatory"
+      },
+      "filterTabs": {
+        "all": "All",
+        "risk": "Risks",
+        "assumption": "Assumptions",
+        "issue": "Issues",
+        "dependency": "Dependencies"
+      },
+      "quickActions": {
+        "risk": [
+          "Weekly review",
+          "Escalate to PMO",
+          "POC before rollout",
+          "Transfer to vendor"
+        ],
+        "assumption": [
+          "Validate with stakeholder",
+          "Data analysis",
+          "Prototype / POC",
+          "Expert interview"
+        ],
+        "issue": [
+          "Hotfix immediately",
+          "Escalate to sponsor",
+          "Rollback",
+          "War room"
+        ],
+        "dependency": [
+          "Sync meeting",
+          "Mock API / stub",
+          "Escalate to manager",
+          "Alternative plan"
+        ]
+      },
+      "quickContingencyArgs": [
+        "Manual fallback mode",
+        "Escalate to PMO",
+        "Timeline shift with stakeholder notice"
+      ],
+      "quickMitigationArgs": [
+        "POC before rollout",
+        "Weekly review checkpoint",
+        "Quality control plan"
+      ],
+      "convertedFromSource": "Converted from {{typeLabel}}: {{title}}",
+      "overdueDate": "Overdue: {{date}}",
+      "itemTitlePlaceholder": "{{typeLabel}} name..."
     }
   }
 }
