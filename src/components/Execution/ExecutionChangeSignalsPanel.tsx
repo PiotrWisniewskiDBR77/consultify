@@ -155,16 +155,16 @@ const defaultFetchers: Required<ChangeSignalsFetchers> = {
 };
 
 const BALANCE_STYLE: Record<PortfolioBalance, string> = {
-  critical: 'bg-red-100 text-red-700 border-red-200',
-  strained: 'bg-amber-100 text-amber-700 border-amber-200',
-  healthy: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  critical: 'bg-danger-100 text-danger-700 border-danger-200',
+  strained: 'bg-warning-100 text-warning-700 border-warning-200',
+  healthy: 'bg-success-100 text-success-700 border-success-200',
 };
 
 const READINESS_STYLE: Record<ReadinessLevel, string> = {
-  AT_RISK: 'bg-red-100 text-red-700 border-red-200',
-  DEVELOPING: 'bg-amber-100 text-amber-700 border-amber-200',
-  READY: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  UNKNOWN: 'bg-gray-100 text-gray-500 border-gray-200',
+  AT_RISK: 'bg-danger-100 text-danger-700 border-danger-200',
+  DEVELOPING: 'bg-warning-100 text-warning-700 border-warning-200',
+  READY: 'bg-success-100 text-success-700 border-success-200',
+  UNKNOWN: 'bg-c-surface-raised text-c-text-muted border-c-border-subtle',
 };
 
 const ADKAR_DIMENSIONS: Array<{ key: keyof ReadinessResult; label: string }> = [
@@ -296,11 +296,11 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3" data-testid="change-signals-panel">
       {/* Capacity signals */}
       <div
-        className="rounded-xl border border-gray-200 bg-white p-4"
+        className="rounded-xl border border-c-border-subtle bg-white p-4"
         data-testid="capacity-signals-card"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('execution.changeSignals.capacity', 'Sygnały wydolności zespołu')}
           </h3>
           {capacity?.portfolio && (
@@ -313,12 +313,12 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
           )}
         </div>
         {capacityLoading && (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-c-text-muted">
             {t('execution.changeSignals.loading', 'Ładowanie…')}
           </p>
         )}
         {!capacityLoading && capacityFailed && (
-          <p className="text-sm text-gray-500" data-testid="capacity-failed">
+          <p className="text-sm text-c-text-muted" data-testid="capacity-failed">
             {t(
               'execution.changeSignals.capacityFailed',
               'Sygnały wydolności niedostępne chwilowo — kokpit działa normalnie.'
@@ -326,7 +326,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
           </p>
         )}
         {!capacityLoading && !capacityFailed && topSignals.length === 0 && (
-          <p className="text-sm text-gray-500" data-testid="capacity-empty">
+          <p className="text-sm text-c-text-muted" data-testid="capacity-empty">
             {t('execution.changeSignals.capacityEmpty', 'Brak przeciążeń — obłożenie w normie.')}
           </p>
         )}
@@ -334,7 +334,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
           <ul className="space-y-1.5" data-testid="capacity-signals-list">
             {topSignals.map((s) => (
               <li key={s.id} className="flex items-center justify-between gap-2 text-xs">
-                <span className="truncate text-gray-700">{s.title}</span>
+                <span className="truncate text-c-text-secondary">{s.title}</span>
                 <span
                   className={`shrink-0 rounded-full border px-1.5 py-0.5 font-medium ${
                     s.severity === 'CRITICAL' || s.severity === 'HIGH'
@@ -353,9 +353,12 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
       </div>
 
       {/* People-change readiness (ADKAR) */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4" data-testid="readiness-card">
+      <div
+        className="rounded-xl border border-c-border-subtle bg-white p-4"
+        data-testid="readiness-card"
+      >
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('execution.changeSignals.readiness', 'Gotowość ludzi na zmianę')}
           </h3>
           {readiness?.readiness && (
@@ -368,12 +371,12 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
           )}
         </div>
         {readinessLoading && (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-c-text-muted">
             {t('execution.changeSignals.loading', 'Ładowanie…')}
           </p>
         )}
         {!readinessLoading && readinessFailed && (
-          <p className="text-sm text-gray-500" data-testid="readiness-failed">
+          <p className="text-sm text-c-text-muted" data-testid="readiness-failed">
             {t(
               'execution.changeSignals.readinessFailed',
               'Gotowość na zmianę niedostępna chwilowo — kokpit działa normalnie.'
@@ -381,7 +384,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
           </p>
         )}
         {!readinessLoading && !readinessFailed && readiness?.readiness.overall == null && (
-          <p className="text-sm text-gray-500" data-testid="readiness-empty">
+          <p className="text-sm text-c-text-muted" data-testid="readiness-empty">
             {t(
               'execution.changeSignals.readinessEmpty',
               'Brak jeszcze sygnałów adopcji (pulse/capability) do oceny.'
@@ -394,18 +397,18 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
               const score = readiness.readiness[d.key] as number | null;
               return (
                 <div key={String(d.key)} className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">{d.label}</span>
-                  <span className={score == null ? 'text-gray-300' : 'font-medium text-gray-800'}>
+                  <span className="text-c-text-secondary">{d.label}</span>
+                  <span className={score == null ? 'text-c-text-muted' : 'font-medium text-c-text'}>
                     {score == null ? '–' : `${score}/5`}
                   </span>
                 </div>
               );
             })}
-            <div className="mt-2 border-t border-gray-100 pt-2 text-xs font-semibold text-gray-900">
+            <div className="mt-2 border-t border-c-border-subtle pt-2 text-xs font-semibold text-c-text">
               {t('execution.changeSignals.overall', 'Ogółem')}: {readiness.readiness.overall}/5
             </div>
             {readiness.laneProblem && (
-              <p className="mt-1 text-xs text-amber-600" data-testid="readiness-lane-problem">
+              <p className="mt-1 text-xs text-warning-600" data-testid="readiness-lane-problem">
                 {readiness.laneProblem.title}
               </p>
             )}
@@ -414,9 +417,12 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
       </div>
 
       {/* Change champions coalition */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4" data-testid="champions-card">
+      <div
+        className="rounded-xl border border-c-border-subtle bg-white p-4"
+        data-testid="champions-card"
+      >
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('execution.changeSignals.champions', 'Koalicja championów zmiany')}
           </h3>
           {coverage && (
@@ -431,12 +437,12 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
           )}
         </div>
         {championsLoading && (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-c-text-muted">
             {t('execution.changeSignals.loading', 'Ładowanie…')}
           </p>
         )}
         {!championsLoading && championsFailed && (
-          <p className="text-sm text-gray-500" data-testid="champions-failed">
+          <p className="text-sm text-c-text-muted" data-testid="champions-failed">
             {t(
               'execution.changeSignals.championsFailed',
               'Koalicja championów niedostępna chwilowo — kokpit działa normalnie.'
@@ -444,7 +450,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
           </p>
         )}
         {!championsLoading && !championsFailed && champions.length === 0 && (
-          <p className="text-sm text-gray-500" data-testid="champions-empty">
+          <p className="text-sm text-c-text-muted" data-testid="champions-empty">
             {t(
               'execution.changeSignals.championsEmpty',
               'Brak jeszcze zgłoszonych championów zmiany.'
@@ -453,15 +459,15 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
         )}
         {!championsLoading && !championsFailed && champions.length > 0 && (
           <>
-            <p className="mb-2 text-xs text-gray-500">
+            <p className="mb-2 text-xs text-c-text-muted">
               {coverage?.championCount ?? champions.length} / {coverage?.affectedPopulation ?? '–'}{' '}
               {t('execution.changeSignals.affected', 'osób objętych zmianą')}
             </p>
             <ul className="space-y-1.5" data-testid="champions-list">
               {champions.slice(0, 6).map((c) => (
                 <li key={c.id} className="flex items-center justify-between text-xs">
-                  <span className="text-gray-700">{c.role}</span>
-                  <span className="text-gray-400">{c.status}</span>
+                  <span className="text-c-text-secondary">{c.role}</span>
+                  <span className="text-c-text-muted">{c.status}</span>
                 </li>
               ))}
             </ul>

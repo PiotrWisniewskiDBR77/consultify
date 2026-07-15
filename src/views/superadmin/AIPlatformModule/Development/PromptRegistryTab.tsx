@@ -91,7 +91,7 @@ const normalizeRegistry = (value: unknown): { prompts: PromptRegistryRow[]; drif
 };
 
 const CHECKSUM_TONE: Record<PromptChecksumStatus, string> = {
-  ok: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  ok: 'bg-success-500/15 text-success-600 dark:text-success-400',
   drifted: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
   unverifiable: 'bg-c-surface-raised text-c-text-secondary',
 };
@@ -276,7 +276,7 @@ export const PromptRegistryTab: React.FC = () => {
         searchValue={search}
         chips={[
           { id: 'all', label: 'All', count: chipCounts.all },
-          { id: 'ok', label: 'OK', count: chipCounts.ok, dot: 'bg-emerald-500' },
+          { id: 'ok', label: 'OK', count: chipCounts.ok, dot: 'bg-success-500' },
           { id: 'drifted', label: 'Drifted', count: chipCounts.drifted, dot: 'bg-danger-500' },
           {
             id: 'unverifiable',
@@ -311,7 +311,7 @@ export const PromptRegistryTab: React.FC = () => {
           </div>
 
           {previewRow ? (
-            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <aside className="w-[380px] shrink-0 bg-c-surface-raised p-3 overflow-hidden">
               <StandardPreview
                 title={previewRow.id}
                 onClose={() => setPreviewId(null)}
