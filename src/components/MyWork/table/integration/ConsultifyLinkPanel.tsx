@@ -218,7 +218,8 @@ function ModuleLinkSection({
           </span>
           {status.errors.length > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px] text-c-danger">
-              <XCircle size={10} /> {status.errors.length} {t('myWorkTable.consultifyLinkPanel.errors')}
+              <XCircle size={10} /> {status.errors.length}{' '}
+              {t('myWorkTable.consultifyLinkPanel.errors')}
             </span>
           )}
         </div>
@@ -287,9 +288,7 @@ function ModuleLinkSection({
           <button
             disabled
             onClick={handleSync}
-            title={
-              t('myWorkTable.consultifyLinkPanel.dataSyncToTheTarget')
-            }
+            title={t('myWorkTable.consultifyLinkPanel.dataSyncToTheTarget')}
             className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed transition-colors"
           >
             {t('myWorkTable.consultifyLinkPanel.comingSoon')}

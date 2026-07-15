@@ -306,7 +306,11 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
       { id: 'out-results', label: t('myWorkTable.dataLineageView.results'), meta: 'module' },
       { id: 'out-finance', label: t('myWorkTable.dataLineageView.finance'), meta: 'module' },
       { id: 'out-execution', label: t('myWorkTable.dataLineageView.execution'), meta: 'module' },
-      { id: 'out-initiatives', label: t('myWorkTable.dataLineageView.initiatives'), meta: 'module' },
+      {
+        id: 'out-initiatives',
+        label: t('myWorkTable.dataLineageView.initiatives'),
+        meta: 'module',
+      },
     ];
     outputModules.forEach((o, i) => {
       ns.push({ id: o.id, label: o.label, type: 'output', meta: o.meta, column: 3, row: i });

@@ -331,12 +331,8 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
 
       <div className="px-3 py-2 border-t border-c-border-subtle">
         <div className="text-[10px] text-c-text-muted space-y-1">
-          <p>
-            {t('myWorkNotebook.aiTopicsPanel.footerGoal')}
-          </p>
-          <p>
-            {t('myWorkNotebook.aiTopicsPanel.footerTip')}
-          </p>
+          <p>{t('myWorkNotebook.aiTopicsPanel.footerGoal')}</p>
+          <p>{t('myWorkNotebook.aiTopicsPanel.footerTip')}</p>
         </div>
       </div>
     </div>

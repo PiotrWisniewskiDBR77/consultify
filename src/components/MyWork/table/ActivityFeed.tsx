@@ -4,9 +4,9 @@
  * Groups events by time window (Today, Yesterday, This week, Earlier),
  * supports compact/expanded modes, and polls for real-time updates.
  */
+import type { TFunction } from 'i18next';
 import { Activity, ChevronRight, Clock, Edit3, Lock, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';

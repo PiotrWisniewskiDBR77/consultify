@@ -303,7 +303,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         ? ([
             {
               titleKey: 'myWorkMindmap.ctxMenu.group.convertBranch',
-        titleEn: 'Convert branch to...',
+              titleEn: 'Convert branch to...',
               items: [
                 {
                   id: 'ctx_subtree_convert_decision',
@@ -457,7 +457,9 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           size={13}
           className={`shrink-0 ${item.danger ? 'text-c-danger' : 'text-c-text-secondary dark:text-c-text-secondary'}`}
         />
-        <span className="flex-1 truncate">{t(`myWorkMindmap.ctxMenu.${item.id}`, item.labelEn)}</span>
+        <span className="flex-1 truncate">
+          {t(`myWorkMindmap.ctxMenu.${item.id}`, item.labelEn)}
+        </span>
         {comingSoon && (
           <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary ml-2 shrink-0 italic">
             {t('ideas.mindmap.comingSoon', 'Coming soon')}

@@ -483,9 +483,13 @@ function CreateModelWizard({
                         setWiz((p) => ({ ...p, dimensions: dims }));
                       }}
                     >
-                      <option value="categorical">{t('myWorkTable.governedModels.categorical')}</option>
+                      <option value="categorical">
+                        {t('myWorkTable.governedModels.categorical')}
+                      </option>
                       <option value="temporal">{t('myWorkTable.governedModels.temporal')}</option>
-                      <option value="hierarchical">{t('myWorkTable.governedModels.geographic')}</option>
+                      <option value="hierarchical">
+                        {t('myWorkTable.governedModels.geographic')}
+                      </option>
                     </select>
                   </div>
                   {wiz.dimensions.length > 1 && (
@@ -551,7 +555,9 @@ function CreateModelWizard({
             onClick={() => (step === 1 ? onClose() : setStep((s) => (s - 1) as WizardStep))}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-muted hover:bg-c-surface-raised"
           >
-            {step === 1 ? (t('myWorkTable.governedModels.cancel')) : t('myWorkTable.governedModels.back')}
+            {step === 1
+              ? t('myWorkTable.governedModels.cancel')
+              : t('myWorkTable.governedModels.back')}
           </button>
           {step < 5 ? (
             <button

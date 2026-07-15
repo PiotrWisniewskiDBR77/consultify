@@ -90,9 +90,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
       <EmptyState
         icon={<RefreshCw />}
         title={t('myWorkTable.connectorList.noConnectorsConfigured')}
-        description={
-          t('myWorkTable.connectorList.connectExternalDataSourcesTo')
-        }
+        description={t('myWorkTable.connectorList.connectExternalDataSourcesTo')}
         action={{
           label: t('myWorkTable.connectorList.addConnector'),
           onClick: onAdd,

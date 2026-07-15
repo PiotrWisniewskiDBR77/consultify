@@ -222,8 +222,9 @@ const SchemaContextSummary: React.FC<{
     <div className="flex items-center gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface-raised">
       <Database size={12} className="text-c-text-secondary" />
       <span className="text-[10px] text-c-text-secondary">
-        {t('myWorkTable.chatToSchemaPanel.currentSchema')}: {schema.length} {t('myWorkTable.chatToSchemaPanel.tables')},{' '}
-        {totalFields} {t('myWorkTable.chatToSchemaPanel.fields')}
+        {t('myWorkTable.chatToSchemaPanel.currentSchema')}: {schema.length}{' '}
+        {t('myWorkTable.chatToSchemaPanel.tables')}, {totalFields}{' '}
+        {t('myWorkTable.chatToSchemaPanel.fields')}
       </span>
       <div className="flex items-center gap-1 ml-auto">
         {schema.slice(0, 3).map((t) => (
@@ -367,7 +368,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
         {
           id: `ai-${Date.now()}`,
           role: 'ai' as const,
-          content: summary || (t('myWorkTable.chatToSchemaPanel.hereIsMyProposal')),
+          content: summary || t('myWorkTable.chatToSchemaPanel.hereIsMyProposal'),
           timestamp: new Date(),
         },
       ]);

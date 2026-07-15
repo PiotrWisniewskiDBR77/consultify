@@ -3,6 +3,7 @@
  * Enhanced with intent badge, confidence indicator, impact summary,
  * expandable operations, warnings, and approve/reject/refine/undo actions.
  */
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   Check,
@@ -21,7 +22,6 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import type { TFunction } from 'i18next';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -200,9 +200,7 @@ function formatOperationDescription(op: SchemaProposalOperation, t: TFunction): 
 
   const options = payload?.options;
   if (Array.isArray(options) && options.length > 0) {
-    parts.push(
-      `[${options.length} ${t('myWorkTable.schemaProposalCard.optionsWord')}]`
-    );
+    parts.push(`[${options.length} ${t('myWorkTable.schemaProposalCard.optionsWord')}]`);
   }
 
   return parts.join(' ');

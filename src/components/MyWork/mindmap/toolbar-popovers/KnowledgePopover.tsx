@@ -15,7 +15,12 @@ const KNOWLEDGE_CARDS = [
     iconEl: FileText,
     labelEn: 'Knowledge card',
   },
-  { action: 'mm_add_note', tkey: 'myWorkMindmap.knowledge.noteCard', iconEl: Star, labelEn: 'Note card' },
+  {
+    action: 'mm_add_note',
+    tkey: 'myWorkMindmap.knowledge.noteCard',
+    iconEl: Star,
+    labelEn: 'Note card',
+  },
   {
     action: 'mm_add_evidence',
     tkey: 'myWorkMindmap.knowledge.evidenceCard',
@@ -39,7 +44,11 @@ const FROM_PLATFORM = [
   },
 ];
 
-export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl: _isPl, onAction, onClose }) => {
+export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({
+  isPl: _isPl,
+  onAction,
+  onClose,
+}) => {
   const { t } = useTranslation();
   const dispatch = (action: string) => {
     onAction(action);

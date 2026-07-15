@@ -150,15 +150,27 @@ const STATUS_CONFIG: Record<
 };
 
 const GENERATOR_LABELS: Record<string, { tkey: string; en: string }> = {
-  expand_branch: { tkey: 'myWorkMindmap.governance.generator.expandBranch', en: 'Branch expansion' },
+  expand_branch: {
+    tkey: 'myWorkMindmap.governance.generator.expandBranch',
+    en: 'Branch expansion',
+  },
   auto_cluster: { tkey: 'myWorkMindmap.governance.generator.autoCluster', en: 'Auto-clustering' },
-  blind_spots: { tkey: 'myWorkMindmap.governance.generator.blindSpots', en: 'Blind spots detection' },
-  competitive: { tkey: 'myWorkMindmap.governance.generator.competitive', en: 'Competitive analysis' },
+  blind_spots: {
+    tkey: 'myWorkMindmap.governance.generator.blindSpots',
+    en: 'Blind spots detection',
+  },
+  competitive: {
+    tkey: 'myWorkMindmap.governance.generator.competitive',
+    en: 'Competitive analysis',
+  },
   dependency: { tkey: 'myWorkMindmap.governance.generator.dependency', en: 'Dependency detection' },
   sentiment: { tkey: 'myWorkMindmap.governance.generator.sentiment', en: 'Sentiment analysis' },
   priority: { tkey: 'myWorkMindmap.governance.generator.priority', en: 'Priority recommendation' },
   what_if: { tkey: 'myWorkMindmap.governance.generator.whatIf', en: 'What-if scenarios' },
-  ai_suggestions_panel: { tkey: 'myWorkMindmap.governance.generator.aiSuggestionsPanel', en: 'AI suggestions panel' },
+  ai_suggestions_panel: {
+    tkey: 'myWorkMindmap.governance.generator.aiSuggestionsPanel',
+    en: 'AI suggestions panel',
+  },
   unknown: { tkey: 'myWorkMindmap.governance.generator.unknown', en: 'AI action' },
 };
 
@@ -618,9 +630,8 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                   </div>
                   <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted">
                     {t(
-                      (
-                        GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown
-                      ).tkey,
+                      (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
+                        .tkey,
                       (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
                         .en
                     )}
@@ -685,7 +696,8 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensi
       title={
         t('myWorkMindmap.governance.badgeTitle', 'AI Governance: {{status}}', {
           status: t(statusCfg.tkey, statusCfg.labelEn),
-        }) + (unreviewed ? t('myWorkMindmap.governance.unreviewedSuffix', ' — unreviewed changes') : '')
+        }) +
+        (unreviewed ? t('myWorkMindmap.governance.unreviewedSuffix', ' — unreviewed changes') : '')
       }
     >
       <Shield size={11} className={unreviewed ? 'text-c-warning' : 'text-c-text-secondary'} />

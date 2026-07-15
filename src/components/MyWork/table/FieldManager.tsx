@@ -347,9 +347,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                         onFieldsChanged();
                         toast.success(t('myWorkTable.fieldManager.fieldUpdated'));
                       } catch {
-                        toast.error(
-                          t('myWorkTable.fieldManager.failedToUpdateField')
-                        );
+                        toast.error(t('myWorkTable.fieldManager.failedToUpdateField'));
                       }
                     }}
                     onDelete={async () => {
@@ -548,7 +546,11 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           disabled={!hasChanges || locked || saving}
           className="ml-auto px-3 py-1 rounded-lg text-[10px] font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
         >
-          {saving ? <Loader2 size={10} className="animate-spin" /> : t('myWorkTable.fieldManager.save')}
+          {saving ? (
+            <Loader2 size={10} className="animate-spin" />
+          ) : (
+            t('myWorkTable.fieldManager.save')
+          )}
         </button>
       </div>
     </div>
@@ -599,7 +601,10 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
 
   if (field.fieldType === 'currency') {
     if (opts.currencySymbol) {
-      items.push({ label: t('myWorkTable.fieldManager.symbol'), value: String(opts.currencySymbol) });
+      items.push({
+        label: t('myWorkTable.fieldManager.symbol'),
+        value: String(opts.currencySymbol),
+      });
     }
   }
 
@@ -691,7 +696,9 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">{t('myWorkTable.fieldManager.newField')}</h3>
+          <h3 className="text-sm font-bold text-c-text">
+            {t('myWorkTable.fieldManager.newField')}
+          </h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"

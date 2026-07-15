@@ -40,17 +40,42 @@ const STRUCTURE_ACTIONS = [
 ];
 
 const SEMANTIC_TYPES = [
-  { action: 'mm_insert_topic', iconEl: CircleDot, tkey: 'myWorkMindmap.semanticType.topic', labelEn: 'Topic' },
-  { action: 'mm_insert_hypothesis', iconEl: Lightbulb, tkey: 'myWorkMindmap.semanticType.hypothesis', labelEn: 'Hypothesis' },
-  { action: 'mm_insert_risk', iconEl: AlertTriangle, tkey: 'myWorkMindmap.semanticType.risk', labelEn: 'Risk' },
-  { action: 'mm_insert_action', iconEl: CheckSquare, tkey: 'myWorkMindmap.semanticType.action', labelEn: 'Action' },
+  {
+    action: 'mm_insert_topic',
+    iconEl: CircleDot,
+    tkey: 'myWorkMindmap.semanticType.topic',
+    labelEn: 'Topic',
+  },
+  {
+    action: 'mm_insert_hypothesis',
+    iconEl: Lightbulb,
+    tkey: 'myWorkMindmap.semanticType.hypothesis',
+    labelEn: 'Hypothesis',
+  },
+  {
+    action: 'mm_insert_risk',
+    iconEl: AlertTriangle,
+    tkey: 'myWorkMindmap.semanticType.risk',
+    labelEn: 'Risk',
+  },
+  {
+    action: 'mm_insert_action',
+    iconEl: CheckSquare,
+    tkey: 'myWorkMindmap.semanticType.action',
+    labelEn: 'Action',
+  },
   {
     action: 'mm_insert_decision',
     iconEl: Diamond,
     tkey: 'myWorkMindmap.semanticType.decision',
     labelEn: 'Decision point',
   },
-  { action: 'mm_insert_option', iconEl: Star, tkey: 'myWorkMindmap.semanticType.option', labelEn: 'Option' },
+  {
+    action: 'mm_insert_option',
+    iconEl: Star,
+    tkey: 'myWorkMindmap.semanticType.option',
+    labelEn: 'Option',
+  },
 ];
 
 export const AddNodePopover: React.FC<AddNodePopoverProps> = ({

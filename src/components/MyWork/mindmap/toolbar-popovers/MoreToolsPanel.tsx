@@ -152,16 +152,18 @@ const CATEGORY_LABELS: Record<string, string> = {
   formatting: 'Formatting',
 };
 
-export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl: _isPl, onAction, onClose }) => {
+export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({
+  isPl: _isPl,
+  onAction,
+  onClose,
+}) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
     if (!search.trim()) return ALL_TOOLS;
     const q = search.toLowerCase();
-    return ALL_TOOLS.filter((tool) =>
-      t(tool.tkey, tool.labelEn).toLowerCase().includes(q)
-    );
+    return ALL_TOOLS.filter((tool) => t(tool.tkey, tool.labelEn).toLowerCase().includes(q));
   }, [search, t]);
 
   const grouped = useMemo(() => {

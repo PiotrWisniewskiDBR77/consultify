@@ -183,7 +183,8 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                     </a>
                   )}
                   <p className="text-[10px] text-c-text-secondary mt-0.5">
-                    {t('myWorkTable.sourcePopover.addedBy')} {source.created_by} · {fmtDate(source.created_at)}
+                    {t('myWorkTable.sourcePopover.addedBy')} {source.created_by} ·{' '}
+                    {fmtDate(source.created_at)}
                     {source.last_verified_at && (
                       <>
                         {' · '}

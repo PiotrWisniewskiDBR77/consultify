@@ -439,8 +439,8 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
                       {isPl ? fw.descPl : fw.descEn}
                     </div>
                     <div className="text-[9px] text-c-text-secondary mt-1">
-                      {fw.columns.length} {t('myWorkTable.frameworkGenerator.columns')} · {fw.sampleRows.length}{' '}
-                      {t('myWorkTable.frameworkGenerator.rows')}
+                      {fw.columns.length} {t('myWorkTable.frameworkGenerator.columns')} ·{' '}
+                      {fw.sampleRows.length} {t('myWorkTable.frameworkGenerator.rows')}
                     </div>
                   </div>
                 </button>

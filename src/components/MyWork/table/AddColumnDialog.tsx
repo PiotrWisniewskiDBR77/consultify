@@ -192,7 +192,9 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
       <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">{t('myWorkTable.addColumnDialog.addColumn')}</h3>
+          <h3 className="text-sm font-bold text-c-text">
+            {t('myWorkTable.addColumnDialog.addColumn')}
+          </h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
@@ -319,9 +321,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               <textarea
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder={
-                  t('myWorkTable.addColumnDialog.assessRiskBasedOnCompany')
-                }
+                placeholder={t('myWorkTable.addColumnDialog.assessRiskBasedOnCompany')}
                 rows={3}
                 className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
               />
@@ -413,7 +413,9 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   </option>
                   <option value="min">{t('ideas.table.addColumn.rollup.min', 'Min')}</option>
                   <option value="max">{t('ideas.table.addColumn.rollup.max', 'Max')}</option>
-                  <option value="percent_checked">{t('myWorkTable.addColumnDialog.checked')}</option>
+                  <option value="percent_checked">
+                    {t('myWorkTable.addColumnDialog.checked')}
+                  </option>
                 </select>
               </div>
             </div>

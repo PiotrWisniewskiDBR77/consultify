@@ -10,8 +10,8 @@ import {
   Scissors,
   Sparkles,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ContextMenuPortal } from './ContextMenuPortal';
 import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
@@ -178,7 +178,9 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
                   size={13}
                   className="text-c-text-secondary dark:text-c-text-secondary shrink-0"
                 />
-                <span className="flex-1">{t(`myWorkMindmap.paneMenu.${item.id}`, item.labelEn)}</span>
+                <span className="flex-1">
+                  {t(`myWorkMindmap.paneMenu.${item.id}`, item.labelEn)}
+                </span>
                 {item.shortcut && (
                   <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary font-mono ml-3">
                     {item.shortcut}

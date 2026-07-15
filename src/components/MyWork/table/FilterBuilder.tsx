@@ -446,7 +446,9 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-c-text">{t('myWorkTable.filterBuilder.filters')}</span>
+          <span className="text-xs font-bold text-c-text">
+            {t('myWorkTable.filterBuilder.filters')}
+          </span>
           {filters.rules.length > 1 && (
             <button
               type="button"
@@ -496,7 +498,9 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               {/* Logic label */}
               {idx > 0 ? (
                 <span className="text-[9px] font-bold text-c-text-secondary w-8 text-center flex-shrink-0 pt-2">
-                  {filters.logic === 'and' ? (t('myWorkTable.filterBuilder.and')) : t('myWorkTable.filterBuilder.or')}
+                  {filters.logic === 'and'
+                    ? t('myWorkTable.filterBuilder.and')
+                    : t('myWorkTable.filterBuilder.or')}
                 </span>
               ) : (
                 <span className="w-8 flex-shrink-0" />

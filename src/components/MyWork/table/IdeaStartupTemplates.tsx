@@ -264,9 +264,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               value={heroText}
               onChange={(e) => setHeroText(e.target.value)}
               rows={3}
-              placeholder={
-                t('myWorkTable.ideaStartupTemplates.eGIWantTo')
-              }
+              placeholder={t('myWorkTable.ideaStartupTemplates.eGIWantTo')}
               autoFocus
               className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
             />
@@ -445,9 +443,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     setStructuredBrief((prev) => ({ ...prev, constraints: e.target.value }))
                   }
                   rows={2}
-                  placeholder={
-                    t('myWorkTable.ideaStartupTemplates.constraintsOnePerLine')
-                  }
+                  placeholder={t('myWorkTable.ideaStartupTemplates.constraintsOnePerLine')}
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs resize-none"
                 />
               </div>

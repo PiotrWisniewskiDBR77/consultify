@@ -104,9 +104,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
     try {
       const result = await TablePlatformApi.testWebhookRelay(relayId);
       if (result.success) {
-        toast.success(
-          t('myWorkTable.webhookRelayPanel.testPassed', { value: result.statusCode })
-        );
+        toast.success(t('myWorkTable.webhookRelayPanel.testPassed', { value: result.statusCode }));
       } else {
         toast.error(
           t('myWorkTable.webhookRelayPanel.testFailedWithReason', {

@@ -165,9 +165,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-c-text">
-          {t('myWorkNotebook.todayView.today')}
-        </h2>
+        <h2 className="text-lg font-semibold text-c-text">{t('myWorkNotebook.todayView.today')}</h2>
         <button
           type="button"
           onClick={load}

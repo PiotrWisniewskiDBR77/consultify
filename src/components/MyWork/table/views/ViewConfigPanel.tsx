@@ -710,23 +710,23 @@ const FieldSelect: React.FC<{
 }> = ({ label, value, options, onChange, isPl, allowEmpty }) => {
   const { t } = useTranslation();
   return (
-  <div>
-    <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
-      {label}
-    </label>
-    <select
-      value={value || ''}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus"
-    >
-      {allowEmpty && <option value="">{t('myWorkTable.viewConfigPanel.none')}</option>}
-      {options.map((col) => (
-        <option key={col.key} value={col.key}>
-          {col.header}
-        </option>
-      ))}
-    </select>
-  </div>
+    <div>
+      <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
+        {label}
+      </label>
+      <select
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+      >
+        {allowEmpty && <option value="">{t('myWorkTable.viewConfigPanel.none')}</option>}
+        {options.map((col) => (
+          <option key={col.key} value={col.key}>
+            {col.header}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 };
 

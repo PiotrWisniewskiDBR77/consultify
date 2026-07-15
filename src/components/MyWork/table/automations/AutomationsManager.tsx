@@ -467,7 +467,11 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                   className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${
                     auto.enabled ? 'bg-c-success' : 'bg-c-surface-raised'
                   }`}
-                  title={auto.enabled ? (t('myWorkTable.automationsManager.disable')) : t('myWorkTable.automationsManager.enable')}
+                  title={
+                    auto.enabled
+                      ? t('myWorkTable.automationsManager.disable')
+                      : t('myWorkTable.automationsManager.enable')
+                  }
                 >
                   <span
                     className={`absolute top-0.5 h-4 w-4 rounded-full bg-c-surface shadow transition-transform ${

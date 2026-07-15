@@ -194,10 +194,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
           </Section>
 
           {/* Outputs */}
-          <Section
-            title={t('myWorkNotebook.topicView.linkedOutputs')}
-            count={agg.outputs.length}
-          >
+          <Section title={t('myWorkNotebook.topicView.linkedOutputs')} count={agg.outputs.length}>
             {agg.outputs.length === 0 ? (
               <Empty text={t('myWorkNotebook.topicView.noLinkedOutputs')} />
             ) : (

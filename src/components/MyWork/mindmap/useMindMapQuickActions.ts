@@ -844,7 +844,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
         const branchId = `branch-auto-${key}-${Date.now()}`;
         const branchLabel = CLUSTER_LABELS[key]
-          ? i18n.t(`myWorkMindmap.quickActions.cluster.${key}`, { defaultValue: CLUSTER_LABELS[key] })
+          ? i18n.t(`myWorkMindmap.quickActions.cluster.${key}`, {
+              defaultValue: CLUSTER_LABELS[key],
+            })
           : key;
 
         newNodes.push({

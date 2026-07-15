@@ -393,9 +393,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
               icon={Send}
               compact
               title={t('myWorkTable.distributionBuilder.noDistributionsYet')}
-              description={
-                t('myWorkTable.distributionBuilder.createYourFirstDistributionTo')
-              }
+              description={t('myWorkTable.distributionBuilder.createYourFirstDistributionTo')}
             />
           ) : (
             <div className="space-y-2">

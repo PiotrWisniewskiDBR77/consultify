@@ -113,8 +113,20 @@ const SHARED_TOP: ToolSlot[] = [
 ];
 
 const MM_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'frame', icon: Frame, tkey: 'myWorkMindmap.toolbar.mm.frame', labelEn: 'Frame', action: 'mm_add_frame' },
-  { id: 'add', icon: GitBranch, tkey: 'myWorkMindmap.toolbar.mm.addNode', labelEn: 'Add node', popover: 'addNode' },
+  {
+    id: 'frame',
+    icon: Frame,
+    tkey: 'myWorkMindmap.toolbar.mm.frame',
+    labelEn: 'Frame',
+    action: 'mm_add_frame',
+  },
+  {
+    id: 'add',
+    icon: GitBranch,
+    tkey: 'myWorkMindmap.toolbar.mm.addNode',
+    labelEn: 'Add node',
+    popover: 'addNode',
+  },
   {
     id: 'knowledge',
     icon: FileText,
@@ -153,7 +165,13 @@ const WB_CONTEXT_SLOTS: ToolSlot[] = [
     labelEn: 'Sticky',
     action: 'wb_add_sticky',
   },
-  { id: 'text', icon: Type, tkey: 'myWorkMindmap.toolbar.wb.text', labelEn: 'Text', action: 'wb_add_text' },
+  {
+    id: 'text',
+    icon: Type,
+    tkey: 'myWorkMindmap.toolbar.wb.text',
+    labelEn: 'Text',
+    action: 'wb_add_text',
+  },
   {
     id: 'shape',
     icon: Square,
@@ -161,8 +179,20 @@ const WB_CONTEXT_SLOTS: ToolSlot[] = [
     labelEn: 'Shape',
     action: 'wb_add_shape_rectangle',
   },
-  { id: 'pen', icon: Pen, tkey: 'myWorkMindmap.toolbar.wb.draw', labelEn: 'Draw', action: 'wb_mode_draw' },
-  { id: 'frame', icon: Frame, tkey: 'myWorkMindmap.toolbar.wb.frame', labelEn: 'Frame', action: 'wb_add_frame' },
+  {
+    id: 'pen',
+    icon: Pen,
+    tkey: 'myWorkMindmap.toolbar.wb.draw',
+    labelEn: 'Draw',
+    action: 'wb_mode_draw',
+  },
+  {
+    id: 'frame',
+    icon: Frame,
+    tkey: 'myWorkMindmap.toolbar.wb.frame',
+    labelEn: 'Frame',
+    action: 'wb_add_frame',
+  },
 ];
 
 const PF_CONTEXT_SLOTS: ToolSlot[] = [
@@ -173,7 +203,13 @@ const PF_CONTEXT_SLOTS: ToolSlot[] = [
     labelEn: 'Start/End',
     action: 'pf_add_start',
   },
-  { id: 'task', icon: Square, tkey: 'myWorkMindmap.toolbar.pf.task', labelEn: 'Task', action: 'pf_add_action' },
+  {
+    id: 'task',
+    icon: Square,
+    tkey: 'myWorkMindmap.toolbar.pf.task',
+    labelEn: 'Task',
+    action: 'pf_add_action',
+  },
   {
     id: 'decision',
     icon: Diamond,
@@ -181,17 +217,53 @@ const PF_CONTEXT_SLOTS: ToolSlot[] = [
     labelEn: 'Decision',
     action: 'pf_add_decision',
   },
-  { id: 'lane', icon: Plus, tkey: 'myWorkMindmap.toolbar.pf.lane', labelEn: 'Lane', action: 'pf_add_lane' },
+  {
+    id: 'lane',
+    icon: Plus,
+    tkey: 'myWorkMindmap.toolbar.pf.lane',
+    labelEn: 'Lane',
+    action: 'pf_add_lane',
+  },
   // Frame removed: Process Flow has no frame concept (lanes group instead).
   // It emitted dead `wb_add_frame` (no PF handler) = no-op copy-paste from whiteboard.
 ];
 
 const TBL_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'row', icon: Plus, tkey: 'myWorkMindmap.toolbar.tbl.addRow', labelEn: 'Add row', action: 'tbl_add_row' },
-  { id: 'cols', icon: Columns3, tkey: 'myWorkMindmap.toolbar.tbl.columns', labelEn: 'Columns', action: 'tbl_add_column' },
-  { id: 'grid', icon: LayoutGrid, tkey: 'myWorkMindmap.toolbar.tbl.view', labelEn: 'View', action: 'tbl_grid' },
-  { id: 'filter', icon: Filter, tkey: 'myWorkMindmap.toolbar.tbl.filter', labelEn: 'Filter', action: 'tbl_filter' },
-  { id: 'summary', icon: Frame, tkey: 'myWorkMindmap.toolbar.tbl.dashboard', labelEn: 'Dashboard', action: 'tbl_summary' },
+  {
+    id: 'row',
+    icon: Plus,
+    tkey: 'myWorkMindmap.toolbar.tbl.addRow',
+    labelEn: 'Add row',
+    action: 'tbl_add_row',
+  },
+  {
+    id: 'cols',
+    icon: Columns3,
+    tkey: 'myWorkMindmap.toolbar.tbl.columns',
+    labelEn: 'Columns',
+    action: 'tbl_add_column',
+  },
+  {
+    id: 'grid',
+    icon: LayoutGrid,
+    tkey: 'myWorkMindmap.toolbar.tbl.view',
+    labelEn: 'View',
+    action: 'tbl_grid',
+  },
+  {
+    id: 'filter',
+    icon: Filter,
+    tkey: 'myWorkMindmap.toolbar.tbl.filter',
+    labelEn: 'Filter',
+    action: 'tbl_filter',
+  },
+  {
+    id: 'summary',
+    icon: Frame,
+    tkey: 'myWorkMindmap.toolbar.tbl.dashboard',
+    labelEn: 'Dashboard',
+    action: 'tbl_summary',
+  },
 ];
 
 const CONTEXT_SLOTS: Record<CanvasToolType, ToolSlot[]> = {
@@ -365,10 +437,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect';
     const slotTitle =
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect'
-        ? t(
-            'ideas.mindmap.finishConnectingReturnSelect',
-            'Finish connecting and return to select'
-          )
+        ? t('ideas.mindmap.finishConnectingReturnSelect', 'Finish connecting and return to select')
         : t(slot.tkey, slot.labelEn);
     const isActive = isModeSlot || (openPopover === slot.popover && slot.popover != null);
     return (

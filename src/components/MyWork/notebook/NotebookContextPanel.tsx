@@ -507,7 +507,9 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                 className="text-[10px] font-semibold text-c-text-muted hover:text-c-text-secondary px-2 py-1 rounded-md hover:bg-c-surface-raised transition-colors"
                 title={t('myWorkNotebook.contextPanel.moreLess')}
               >
-                {expanded[k] ? t('myWorkNotebook.contextPanel.less') : t('myWorkNotebook.contextPanel.more')}
+                {expanded[k]
+                  ? t('myWorkNotebook.contextPanel.less')
+                  : t('myWorkNotebook.contextPanel.more')}
               </button>
             )}
             {onMore && (

@@ -108,7 +108,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             id: `slide-title-${Date.now()}`,
             layout: 'title',
             blocks: [
-              { type: 'heading', content: ideaTitle || (t('myWorkTable.exportToPresentation.ideas')) },
+              {
+                type: 'heading',
+                content: ideaTitle || t('myWorkTable.exportToPresentation.ideas'),
+              },
               {
                 type: 'text',
                 content: `${nodes.length} ${t('myWorkTable.exportToPresentation.ideas2')} • ${new Date().toLocaleDateString(isPl ? 'pl' : 'en')}`,
@@ -139,7 +142,9 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
           if (groupCol) {
             const groups = new Map<string, TableNode[]>();
             for (const n of nodes) {
-              const val = String(n.data?.[groupCol.key] || (t('myWorkTable.exportToPresentation.other')));
+              const val = String(
+                n.data?.[groupCol.key] || t('myWorkTable.exportToPresentation.other')
+              );
               if (!groups.has(val)) groups.set(val, []);
               groups.get(val)!.push(n);
             }
@@ -187,7 +192,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
               {
                 type: 'stats',
                 items: [
-                  { label: t('myWorkTable.exportToPresentation.ideas3'), value: String(nodes.length) },
+                  {
+                    label: t('myWorkTable.exportToPresentation.ideas3'),
+                    value: String(nodes.length),
+                  },
                   {
                     label: t('myWorkTable.exportToPresentation.categories'),
                     value: String(
@@ -223,7 +231,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
     }
 
     return {
-      title: ideaTitle || (t('myWorkTable.exportToPresentation.ideas')),
+      title: ideaTitle || t('myWorkTable.exportToPresentation.ideas'),
       theme: 'modern',
       slides: slideBlocks,
     };
@@ -312,8 +320,9 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
           <div className="flex items-center gap-2">
             <FileImage size={12} className="text-slate-600" />
             <span className="text-[10px] text-slate-500">
-              {slides.filter((s) => s.enabled).length} {t('myWorkTable.exportToPresentation.slides')} •{' '}
-              {nodes.length} {t('myWorkTable.exportToPresentation.ideas2')}
+              {slides.filter((s) => s.enabled).length}{' '}
+              {t('myWorkTable.exportToPresentation.slides')} • {nodes.length}{' '}
+              {t('myWorkTable.exportToPresentation.ideas2')}
             </span>
           </div>
         </div>

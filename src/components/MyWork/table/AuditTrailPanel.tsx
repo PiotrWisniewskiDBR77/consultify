@@ -4,6 +4,7 @@
  * Shows field-level diffs with old→new highlighting, user avatars,
  * relative timestamps, action badges, and pagination.
  */
+import type { TFunction } from 'i18next';
 import {
   Calendar,
   ChevronDown,
@@ -16,7 +17,6 @@ import {
   User,
   X,
 } from 'lucide-react';
-import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -116,11 +116,7 @@ const FieldDiff = React.memo(function FieldDiff({ change }: { change: FieldChang
   );
 });
 
-const RevisionItem = React.memo(function RevisionItem({
-  revision,
-}: {
-  revision: RecordRevision;
-}) {
+const RevisionItem = React.memo(function RevisionItem({ revision }: { revision: RecordRevision }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const hasChanges = revision.changes.length > 0;
@@ -263,9 +259,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             icon={Lock}
             compact
             title={t('myWorkTable.auditTrailPanel.notAvailableForThisTable')}
-            description={
-              t('myWorkTable.auditTrailPanel.revisionHistoryIsOnlyAvailable')
-            }
+            description={t('myWorkTable.auditTrailPanel.revisionHistoryIsOnlyAvailable')}
           />
         </div>
       </div>
@@ -329,9 +323,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             icon={Clock}
             compact
             title={t('myWorkTable.auditTrailPanel.selectARecord')}
-            description={
-              t('myWorkTable.auditTrailPanel.selectARecordToView')
-            }
+            description={t('myWorkTable.auditTrailPanel.selectARecordToView')}
           />
         ) : loading && revisions.length === 0 ? (
           <LoadingState template="list" rows={5} />
@@ -341,9 +333,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             icon={Clock}
             compact
             title={t('myWorkTable.auditTrailPanel.noRevisionHistory')}
-            description={
-              t('myWorkTable.auditTrailPanel.changesToThisRecordWill')
-            }
+            description={t('myWorkTable.auditTrailPanel.changesToThisRecordWill')}
           />
         ) : (
           <>

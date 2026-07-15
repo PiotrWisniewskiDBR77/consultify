@@ -22,7 +22,12 @@ interface ImportExportPopoverProps {
 }
 
 const IMPORT_ACTIONS = [
-  { action: 'mm_import_device', tkey: 'myWorkMindmap.importExport.jsonMap', iconEl: Upload, labelEn: 'JSON map' },
+  {
+    action: 'mm_import_device',
+    tkey: 'myWorkMindmap.importExport.jsonMap',
+    iconEl: Upload,
+    labelEn: 'JSON map',
+  },
   {
     action: 'mm_import_external',
     tkey: 'myWorkMindmap.importExport.xmindFreemindOpml',
@@ -35,7 +40,12 @@ const IMPORT_ACTIONS = [
     iconEl: FileText,
     labelEn: 'Document → Map',
   },
-  { action: 'mm_voice', tkey: 'myWorkMindmap.importExport.voiceToNode', iconEl: Mic, labelEn: 'Voice to Node' },
+  {
+    action: 'mm_voice',
+    tkey: 'myWorkMindmap.importExport.voiceToNode',
+    iconEl: Mic,
+    labelEn: 'Voice to Node',
+  },
   {
     action: 'mm_interview_to_map',
     tkey: 'myWorkMindmap.importExport.interviewsToMap',
@@ -45,17 +55,42 @@ const IMPORT_ACTIONS = [
 ];
 
 const EXPORT_ACTIONS = [
-  { action: 'mm_export_pdf', tkey: 'myWorkMindmap.importExport.exportPdf', iconEl: Printer, labelEn: 'Export PDF' },
-  { action: 'mm_export_png', tkey: 'myWorkMindmap.importExport.png', iconEl: Image, labelEn: 'PNG' },
-  { action: 'mm_export_svg', tkey: 'myWorkMindmap.importExport.svg', iconEl: Image, labelEn: 'SVG' },
-  { action: 'mm_export_json', tkey: 'myWorkMindmap.importExport.json', iconEl: Download, labelEn: 'JSON' },
+  {
+    action: 'mm_export_pdf',
+    tkey: 'myWorkMindmap.importExport.exportPdf',
+    iconEl: Printer,
+    labelEn: 'Export PDF',
+  },
+  {
+    action: 'mm_export_png',
+    tkey: 'myWorkMindmap.importExport.png',
+    iconEl: Image,
+    labelEn: 'PNG',
+  },
+  {
+    action: 'mm_export_svg',
+    tkey: 'myWorkMindmap.importExport.svg',
+    iconEl: Image,
+    labelEn: 'SVG',
+  },
+  {
+    action: 'mm_export_json',
+    tkey: 'myWorkMindmap.importExport.json',
+    iconEl: Download,
+    labelEn: 'JSON',
+  },
   {
     action: 'mm_export_diagram',
     tkey: 'myWorkMindmap.importExport.mermaidPlantuml',
     iconEl: Code,
     labelEn: 'Mermaid / PlantUML',
   },
-  { action: 'mm_export_csv', tkey: 'myWorkMindmap.importExport.csvExcel', iconEl: FileText, labelEn: 'CSV (Excel)' },
+  {
+    action: 'mm_export_csv',
+    tkey: 'myWorkMindmap.importExport.csvExcel',
+    iconEl: FileText,
+    labelEn: 'CSV (Excel)',
+  },
   {
     action: 'mm_export_markdown',
     tkey: 'myWorkMindmap.importExport.markdownOutline',

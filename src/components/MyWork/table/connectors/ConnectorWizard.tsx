@@ -214,7 +214,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       } else {
         setTestStatus('failed');
         setTestError(res.error ?? '');
-        toast.error(res.error ?? (t('myWorkTable.connectorWizard.connectionFailed')));
+        toast.error(res.error ?? t('myWorkTable.connectorWizard.connectionFailed'));
       }
     } catch {
       setTestStatus('failed');
@@ -363,7 +363,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           >
             <Upload size={14} className="text-c-text-secondary" />
             <span className={fileName ? 'text-c-text' : 'text-c-text-secondary'}>
-              {fileName || (t('myWorkTable.connectorWizard.chooseFile'))}
+              {fileName || t('myWorkTable.connectorWizard.chooseFile')}
             </span>
           </button>
         </div>
@@ -495,9 +495,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             </div>
           </div>
           <div>
-            <label className={labelCls}>
-              {t('myWorkTable.connectorWizard.tableOrSqlQuery')}
-            </label>
+            <label className={labelCls}>{t('myWorkTable.connectorWizard.tableOrSqlQuery')}</label>
             <input
               className={inputCls}
               value={config.tableOrQuery ?? ''}
@@ -541,9 +539,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             </div>
           </div>
           <div>
-            <label className={labelCls}>
-              {t('myWorkTable.connectorWizard.projectOptional')}
-            </label>
+            <label className={labelCls}>{t('myWorkTable.connectorWizard.projectOptional')}</label>
             <input
               className={inputCls}
               value={config.project ?? ''}
@@ -573,9 +569,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             type="password"
             value={config.webhookSecret ?? ''}
             onChange={(e) => setConfig((p) => ({ ...p, webhookSecret: e.target.value }))}
-            placeholder={
-              t('myWorkTable.connectorWizard.sharedSecretForValidation')
-            }
+            placeholder={t('myWorkTable.connectorWizard.sharedSecretForValidation')}
           />
           <p className="mt-1 text-xs text-c-text-muted">
             {t('myWorkTable.connectorWizard.afterCreatingTheConnectorYou')}
@@ -600,7 +594,8 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         {testStatus === 'success' && (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-c-success">
             <Check size={14} /> {t('myWorkTable.connectorWizard.connected')}
-            {sourceFields.length > 0 && ` (${sourceFields.length} ${t('myWorkTable.connectorWizard.fields')})`}
+            {sourceFields.length > 0 &&
+              ` (${sourceFields.length} ${t('myWorkTable.connectorWizard.fields')})`}
           </span>
         )}
         {testStatus === 'failed' && <span className="text-xs text-danger-500">{testError}</span>}
@@ -830,7 +825,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           className="h-4 w-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
         />
         <div>
-          <p className="text-sm font-medium text-c-text">{t('myWorkTable.connectorWizard.runNow')}</p>
+          <p className="text-sm font-medium text-c-text">
+            {t('myWorkTable.connectorWizard.runNow')}
+          </p>
           <p className="text-xs text-c-text-muted">
             {t('myWorkTable.connectorWizard.startImportingImmediatelyAfterCreation')}
           </p>
@@ -936,9 +933,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       open={open}
       onClose={onClose}
       title={t('myWorkTable.connectorWizard.newDataConnector')}
-      description={
-        t('myWorkTable.connectorWizard.importDataFromAnExternal')
-      }
+      description={t('myWorkTable.connectorWizard.importDataFromAnExternal')}
       size="xl"
       footer={footer}
     >

@@ -34,14 +34,24 @@ interface AIActionsPopoverProps {
 const HEURISTIC_ACTIONS = new Set(['mm_ai_cluster']);
 
 const GENERAL_GENERATORS = [
-  { action: 'mm_ai_expand', iconEl: Zap, tkey: 'myWorkMindmap.aiGen.expandMap', labelEn: 'Expand map (AI)' },
+  {
+    action: 'mm_ai_expand',
+    iconEl: Zap,
+    tkey: 'myWorkMindmap.aiGen.expandMap',
+    labelEn: 'Expand map (AI)',
+  },
   {
     action: 'mm_ai_suggest',
     iconEl: Lightbulb,
     tkey: 'myWorkMindmap.aiGen.suggestBranches',
     labelEn: 'Suggest branches',
   },
-  { action: 'mm_ai_gap_analysis', iconEl: Search, tkey: 'myWorkMindmap.aiGen.gapAnalysis', labelEn: 'Gap analysis' },
+  {
+    action: 'mm_ai_gap_analysis',
+    iconEl: Search,
+    tkey: 'myWorkMindmap.aiGen.gapAnalysis',
+    labelEn: 'Gap analysis',
+  },
   {
     action: 'mm_ai_cluster',
     iconEl: GitMerge,
@@ -69,7 +79,12 @@ const NODE_SPECIFIC_GENERATORS = [
     tkey: 'myWorkMindmap.aiAction.expandNode',
     labelEn: 'Expand this node',
   },
-  { action: 'mm_ai_deepen', iconEl: Wand2, tkey: 'myWorkMindmap.aiAction.deepenTopic', labelEn: 'Deepen topic' },
+  {
+    action: 'mm_ai_deepen',
+    iconEl: Wand2,
+    tkey: 'myWorkMindmap.aiAction.deepenTopic',
+    labelEn: 'Deepen topic',
+  },
   {
     action: 'mm_ai_summarize_branch',
     iconEl: Brain,

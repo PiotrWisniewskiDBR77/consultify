@@ -464,9 +464,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                   <Icon size={13} />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <div className="text-[10px] font-bold text-c-text truncate">
-                    {t(labelKey)}
-                  </div>
+                  <div className="text-[10px] font-bold text-c-text truncate">{t(labelKey)}</div>
                   {disabled && isDeliverable && convertBlockedReason ? (
                     <div className="mt-0.5 text-[9px] text-c-text-muted line-clamp-2">
                       {convertBlockedReason}
