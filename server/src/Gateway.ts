@@ -17,6 +17,7 @@ import accessCodeRoutes from './routes/accessCodes.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
+import enterpriseComplianceAdminRoutes from './routes/admin/enterprise-compliance.routes.js';
 import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
@@ -213,6 +214,7 @@ import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
 import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
 import pmoDomainsRoutes from './routes/pmo/pmoDomains.routes.js';
 import pmoRolesRoutes from './routes/pmo/pmoRoles.routes.js';
+import pmoStandardsRoutes from './routes/pmo/pmo-standards.routes.js';
 import projectMembersRoutes from './routes/pmo/project-members.routes.js';
 import projectRoutes from './routes/pmo/projects.routes.js';
 import roadmapRoutes from './routes/pmo/roadmap.routes.js';
@@ -291,6 +293,7 @@ import tablePlatformSourcePackRoutes from './routes/table-platform.source-pack.r
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import testSupportRoutes from './routes/testSupport.routes.js';
 import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
+import transactionReadinessRoutes from './routes/transactionReadiness.routes.js';
 import toolAssetsRoutes from './routes/toolAssets.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
@@ -582,6 +585,12 @@ export class ApiGateway {
       app.use('/api/superadmin', resourceManagementRoutes);
       app.use('/api/admin/ai-observability', aiObservabilityAdminRoutes);
       app.use('/api/admin/health-panel', healthPanelAdminRoutes);
+      // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
+      // Own auth (verifyToken + admin-role check) is applied inside the router —
+      // matches ai-quality.routes.ts pattern. Distinct from '/api/compliance'
+      // (compliance.routes.ts: /gdpr, /cookies, /data-retention) — no path overlap
+      // (this router: /audit-trail/*, /dlp/*, /data-residency, /retention/*, /ai-policy).
+      app.use('/api/admin/enterprise-compliance', enterpriseComplianceAdminRoutes);
 
       // Test support (hard-gated: NODE_ENV=test + ENABLE_TEST_SUPPORT=true + secret key)
       app.use('/api/test-support', testSupportRoutes);
@@ -742,6 +751,12 @@ export class ApiGateway {
       app.use('/api/organizations', organizationRoutes);
       app.use('/api/organizations', ownershipRoutes);
       app.use('/api/organizations', approvedDomainsRoutes);
+      // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
+      // Mounted at '/api' root (not '/api/organizations') because the router's
+      // own paths mix '/organizations/:id/transaction-readiness[...]' with a
+      // separate '/transaction-readiness/ranking' segment. Own auth (verifyToken
+      // + verifySuperAdmin) is applied inside the router — see its header comment.
+      app.use('/api', transactionReadinessRoutes);
       // Public, token-based invitation endpoints must bypass JWT auth: the recipient
       // has no account/session yet when validating a link or completing first login.
       // (req.path here is relative to the '/api/invitations' mount, e.g. '/accept'.)
@@ -906,6 +921,12 @@ export class ApiGateway {
       app.use('/api/pmo-analysis', pmoAnalysisRoutes);
       app.use('/api/pmo-context', pmoContextRoutes);
       app.use('/api/pmo', pmoRoutes);
+      // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
+      // Own auth (verifyToken) is applied inside the router. Paths (/standards,
+      // /standards/:id, /standards/:id/roles, /my-project-permissions/:projectId,
+      // /check-permission/:projectId/:permission) don't overlap with pmoRoutes
+      // above (only /health/:projectId) or any other /api/pmo/* mount below.
+      app.use('/api/pmo', pmoStandardsRoutes);
       // Compatibility mounts (some clients expect PMO-scoped prefixes)
       app.use('/api/pmo/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
       app.use('/api/pmo/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
