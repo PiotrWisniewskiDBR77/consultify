@@ -58,8 +58,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
   showProgress = true,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const completed = items.filter((i) => i.completed).length;
@@ -87,14 +86,14 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
       {items.length === 0 ? (
         <div className="py-6 text-center">
           <p className="text-xs text-slate-600 dark:text-slate-500 mb-2">
-            {isPolish ? 'Brak elementów na liście.' : 'No items in the checklist.'}
+            {t('sharedComponents.checklistBlock.noItems')}
           </p>
           <button
             onClick={onAdd}
             disabled={locked}
             className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
           >
-            + {isPolish ? 'Dodaj element' : 'Add item'}
+            + {t('sharedComponents.checklistBlock.addItem')}
           </button>
         </div>
       ) : (
@@ -132,7 +131,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
                     ? 'text-slate-600 dark:text-slate-500 line-through'
                     : 'text-slate-700 dark:text-slate-200'
                 }`}
-                placeholder={isPolish ? 'Element listy...' : 'Checklist item...'}
+                placeholder={t('sharedComponents.checklistBlock.itemPlaceholder')}
               />
               {/* Delete */}
               {hoveredId === item.id && !locked && (
@@ -156,7 +155,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
           className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
         >
           <Plus size={12} />
-          {isPolish ? 'Dodaj element' : 'Add item'}
+          {t('sharedComponents.checklistBlock.addItem')}
         </button>
         {onAIGenerate && (
           <button
@@ -169,7 +168,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
             ) : (
               <Sparkles size={12} />
             )}
-            {isPolish ? 'Generuj AI' : 'AI Generate'}
+            {t('sharedComponents.checklistBlock.aiGenerate')}
           </button>
         )}
       </div>

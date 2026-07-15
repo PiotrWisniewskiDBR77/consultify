@@ -28391,6 +28391,23 @@
       "noEntries": "No activity entries yet.",
       "from": "From",
       "to": "To"
+    },
+    "checklistBlock": {
+      "noItems": "No items in the checklist.",
+      "addItem": "Add item",
+      "itemPlaceholder": "Checklist item...",
+      "aiGenerate": "AI Generate"
+    },
+    "artifactLinkIndicator": {
+      "linkedCount": "{{count}} linked artifacts",
+      "open": "Open",
+      "remove": "Remove",
+      "attachArtifact": "Attach artifact"
+    },
+    "artifactPermalinkButton": {
+      "copied": "Permalink copied",
+      "copyFailed": "Failed to copy link",
+      "copyPermalink": "Copy permalink"
     }
   },
   "reportBuilder": {

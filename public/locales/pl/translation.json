@@ -29451,6 +29451,23 @@
       "noEntries": "Brak wpisów w logu.",
       "from": "Było",
       "to": "Jest"
+    },
+    "checklistBlock": {
+      "noItems": "Brak elementów na liście.",
+      "addItem": "Dodaj element",
+      "itemPlaceholder": "Element listy...",
+      "aiGenerate": "Generuj AI"
+    },
+    "artifactLinkIndicator": {
+      "linkedCount": "{{count}} powiązanych artefaktów",
+      "open": "Otwórz",
+      "remove": "Usuń",
+      "attachArtifact": "Dołącz artefakt"
+    },
+    "artifactPermalinkButton": {
+      "copied": "Permalink skopiowany",
+      "copyFailed": "Nie udało się skopiować linku",
+      "copyPermalink": "Kopiuj permalink"
     }
   },
   "reportBuilder": {

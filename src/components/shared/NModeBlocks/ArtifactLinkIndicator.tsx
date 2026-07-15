@@ -8,6 +8,7 @@
  */
 import { ChevronDown, ExternalLink, Link2, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ArtifactType } from '../../../utils/artifactLinks';
 import { ARTIFACT_IDENTITY, buildArtifactCode } from '../../../utils/artifactLinks';
@@ -37,6 +38,8 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
   isPl = false,
   size = 'sm',
 }) => {
+  const { i18n } = useTranslation();
+  const t = i18n.getFixedT(isPl ? 'pl' : 'en');
   const [expanded, setExpanded] = useState(false);
 
   const toggle = useCallback(() => setExpanded((p) => !p), []);
@@ -52,7 +55,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
         type="button"
         onClick={toggle}
         className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded ${textSize} font-medium text-blue-500 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-500/15 hover:bg-blue-500/20 dark:hover:bg-blue-500/25 transition-colors`}
-        title={isPl ? `${links.length} powiązanych artefaktów` : `${links.length} linked artifacts`}
+        title={t('sharedComponents.artifactLinkIndicator.linkedCount', { count: links.length })}
       >
         <Link2 size={iconSize} />
         {links.length > 0 && <span>{links.length}</span>}
@@ -97,7 +100,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
                         type="button"
                         onClick={() => onOpen({ type: link.type, id: link.id })}
                         className="p-0.5 rounded hover:bg-white/20 text-slate-600"
-                        title={isPl ? 'Otwórz' : 'Open'}
+                        title={t('sharedComponents.artifactLinkIndicator.open')}
                       >
                         <ExternalLink size={8} />
                       </button>
@@ -107,7 +110,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
                         type="button"
                         onClick={() => onRemove({ type: link.type, id: link.id })}
                         className="p-0.5 rounded hover:bg-danger-500/10 text-slate-600 hover:text-danger-500"
-                        title={isPl ? 'Usuń' : 'Remove'}
+                        title={t('sharedComponents.artifactLinkIndicator.remove')}
                       >
                         <X size={8} />
                       </button>
@@ -127,7 +130,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
               className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-[9px] font-medium text-blue-500 hover:bg-blue-500/5 border-t border-slate-200/40 dark:border-white/[0.04] transition-colors"
             >
               <Link2 size={8} />
-              {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
+              {t('sharedComponents.artifactLinkIndicator.attachArtifact')}
             </button>
           )}
         </div>
