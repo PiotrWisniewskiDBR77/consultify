@@ -32216,6 +32216,63 @@
             }
           ]
         }
+      },
+      "portfolioPriority": {
+        "goal": {
+          "positioningBody": "Portfolio Priority pomaga wybrać, które produkty, inicjatywy albo bety finansować, utrzymywać, testować, harvestować lub zatrzymać. AI proponuje pierwszy szkic na podstawie kontekstu i wywiadu, ale decyzje przechodzą przez akceptację użytkownika."
+        },
+        "process": {
+          "missionText": "Zakres portfolio, ograniczenia i sygnał sukcesu.",
+          "evidenceText": "Sygnały z wywiadu, rynku, finansów i zasobów.",
+          "itemsText": "Karty BCG z oceną growth/share/investment.",
+          "outputsText": "Trade-offy, ruchy, inicjatywy i final summary."
+        },
+        "outcomes": {
+          "tradeOffs": "Jawne trade-offy alokacji zasobów",
+          "moves": "Rekomendowane ruchy: invest, maintain, test, harvest, stop",
+          "candidates": "Kandydaci outputów i inicjatyw downstream"
+        },
+        "example": {
+          "intro": "Firma ma kilka produktów i inicjatyw, ale budżet pozwala sfinansować tylko część z nich. Portfolio Priority porządkuje karty BCG, pokazuje koszt alternatywny i buduje rekomendowany portfel działań.",
+          "cases": [
+            {
+              "title": "Budżet inwestycyjny tylko na 3 z 9 inicjatyw",
+              "context": "Lista projektów jest długa, a sponsorzy naciskają na swoje tematy.",
+              "question": "Które inicjatywy finansować, utrzymać, testować albo zatrzymać?",
+              "evidence": [
+                "Każda inicjatywa ma innego sponsora, ale tylko część ma dowody wpływu na wzrost lub marżę.",
+                "Dane PMO pokazują przeciążenie zespołów i brak jasnego kryterium stop/continue."
+              ],
+              "aiDraft": "AI proponuje karty portfolio z oceną growth/share/investment, uzasadnieniem oraz rekomendacją invest, maintain, test, harvest albo stop.",
+              "approvedUse": "Użytkownik akceptuje scoring tylko tam, gdzie zgadza się z evidence, a potem AI buduje trade-offy zasobów.",
+              "outcome": "Powstaje portfel decyzji: trzy inicjatywy do finansowania, dwie do testu z bramkami, reszta do zatrzymania lub odłożenia."
+            },
+            {
+              "title": "Portfolio produktów po szybkim wzroście",
+              "context": "Część produktów ma wolumen, ale niską marżę; inne są małe, lecz perspektywiczne.",
+              "question": "Gdzie przesunąć zasoby produktowe i sprzedażowe?",
+              "evidence": [
+                "Raport sprzedaży pokazuje produkty o wysokim wolumenie i niskiej marży oraz małe produkty z szybkim wzrostem.",
+                "Wywiady z sales wskazują, że zespół sprzedaje to, co łatwe, niekoniecznie to, co strategiczne."
+              ],
+              "aiDraft": "AI klasyfikuje produkty jako stars, cash cows, question marks i dogs oraz proponuje przesunięcia uwagi sprzedaży.",
+              "approvedUse": "Po akceptacji kart narzędzie pokazuje koszt alternatywny utrzymywania zbyt szerokiego portfolio.",
+              "outcome": "Rekomendacja: utrzymać cash cow, dofinansować jednego question marka, harvestować niskomarżowy wolumen i zatrzymać produkty bez strategicznej roli."
+            },
+            {
+              "title": "Transformacja z nadmiarem projektów",
+              "context": "PMO prowadzi wiele równoległych strumieni i traci zdolność dowożenia.",
+              "question": "Które prace są strategiczne, a które tylko zużywają przepustowość?",
+              "evidence": [
+                "Statusy projektów są zielone na papierze, ale zależności blokują kluczowe milestone’y.",
+                "Rozmowy z liderami pokazują, że te same osoby są krytyczne dla kilku inicjatyw jednocześnie."
+              ],
+              "aiDraft": "AI ocenia inicjatywy według strategicznego potencjału, pozycji, poziomu inwestycji i realnej przepustowości organizacji.",
+              "approvedUse": "Zaakceptowane karty przechodzą do syntezy: co finansować, co utrzymać minimalnie, co zakończyć, a co zamienić w krótki test.",
+              "outcome": "Powstaje plan odciążenia PMO: mniej aktywnych strumieni, jasne kryteria restartu i lista tematów do zamknięcia."
+            }
+          ]
+        }
       }
     }
   },

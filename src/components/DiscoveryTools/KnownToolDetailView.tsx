@@ -1059,9 +1059,7 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {isPolish
-              ? 'Portfolio Priority pomaga wybrać, które produkty, inicjatywy albo bety finansować, utrzymywać, testować, harvestować lub zatrzymać. AI proponuje pierwszy szkic na podstawie kontekstu i wywiadu, ale decyzje przechodzą przez akceptację użytkownika.'
-              : 'Portfolio Priority helps decide which products, initiatives, or bets to fund, maintain, test, harvest, or stop. AI proposes the first draft from context and interview evidence, but decisions flow through user approval.'}
+            {t('discoveryToolsMain.knownToolDetail.portfolioPriority.goal.positioningBody')}
           </div>
         </div>
         <PortfolioPriorityLibraryGraphic isPolish={isPolish} variant="process" />
@@ -1071,29 +1069,15 @@ export function KnownToolDetailView(props: {
     const portfolioProcessSection = (
       <div className="grid gap-4 md:grid-cols-2">
         {[
-          [
-            'Mission',
-            isPolish
-              ? 'Zakres portfolio, ograniczenia i sygnał sukcesu.'
-              : 'Portfolio scope, constraints, and success signal.',
-          ],
+          ['Mission', t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.missionText')],
           [
             'Evidence',
-            isPolish
-              ? 'Sygnały z wywiadu, rynku, finansów i zasobów.'
-              : 'Interview, market, financial, and resource signals.',
+            t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.evidenceText'),
           ],
-          [
-            'Items',
-            isPolish
-              ? 'Karty BCG z oceną growth/share/investment.'
-              : 'BCG cards scored on growth/share/investment.',
-          ],
+          ['Items', t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.itemsText')],
           [
             'Outputs',
-            isPolish
-              ? 'Trade-offy, ruchy, inicjatywy i final summary.'
-              : 'Trade-offs, moves, initiatives, and final summary.',
+            t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.outputsText'),
           ],
         ].map(([title, text]) => (
           <div
@@ -1113,15 +1097,9 @@ export function KnownToolDetailView(props: {
       <div className="space-y-3">
         {[
           t('discoveryToolsMain.knownToolDetailView.approvedBCGPortfolioMatrix'),
-          isPolish
-            ? 'Jawne trade-offy alokacji zasobów'
-            : 'Explicit resource allocation trade-offs',
-          isPolish
-            ? 'Rekomendowane ruchy: invest, maintain, test, harvest, stop'
-            : 'Recommended moves: invest, maintain, test, harvest, stop',
-          isPolish
-            ? 'Kandydaci outputów i inicjatyw downstream'
-            : 'Downstream output and initiative candidates',
+          t('discoveryToolsMain.knownToolDetail.portfolioPriority.outcomes.tradeOffs'),
+          t('discoveryToolsMain.knownToolDetail.portfolioPriority.outcomes.moves'),
+          t('discoveryToolsMain.knownToolDetail.portfolioPriority.outcomes.candidates'),
         ].map((text) => (
           <div
             key={text}
@@ -1136,108 +1114,20 @@ export function KnownToolDetailView(props: {
     const portfolioExampleSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-sm leading-relaxed text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
-          {isPolish
-            ? 'Firma ma kilka produktów i inicjatyw, ale budżet pozwala sfinansować tylko część z nich. Portfolio Priority porządkuje karty BCG, pokazuje koszt alternatywny i buduje rekomendowany portfel działań.'
-            : 'A company has several products and initiatives, but budget only supports a subset. Portfolio Priority organizes the BCG cards, exposes opportunity cost, and builds the recommended action portfolio.'}
+          {t('discoveryToolsMain.knownToolDetail.portfolioPriority.example.intro')}
         </div>
         {caseGrid(
-          isPolish
-            ? [
-                {
-                  title: 'Budżet inwestycyjny tylko na 3 z 9 inicjatyw',
-                  context: 'Lista projektów jest długa, a sponsorzy naciskają na swoje tematy.',
-                  question: 'Które inicjatywy finansować, utrzymać, testować albo zatrzymać?',
-                  evidence: [
-                    'Każda inicjatywa ma innego sponsora, ale tylko część ma dowody wpływu na wzrost lub marżę.',
-                    'Dane PMO pokazują przeciążenie zespołów i brak jasnego kryterium stop/continue.',
-                  ],
-                  aiDraft:
-                    'AI proponuje karty portfolio z oceną growth/share/investment, uzasadnieniem oraz rekomendacją invest, maintain, test, harvest albo stop.',
-                  approvedUse:
-                    'Użytkownik akceptuje scoring tylko tam, gdzie zgadza się z evidence, a potem AI buduje trade-offy zasobów.',
-                  outcome:
-                    'Powstaje portfel decyzji: trzy inicjatywy do finansowania, dwie do testu z bramkami, reszta do zatrzymania lub odłożenia.',
-                },
-                {
-                  title: 'Portfolio produktów po szybkim wzroście',
-                  context:
-                    'Część produktów ma wolumen, ale niską marżę; inne są małe, lecz perspektywiczne.',
-                  question: 'Gdzie przesunąć zasoby produktowe i sprzedażowe?',
-                  evidence: [
-                    'Raport sprzedaży pokazuje produkty o wysokim wolumenie i niskiej marży oraz małe produkty z szybkim wzrostem.',
-                    'Wywiady z sales wskazują, że zespół sprzedaje to, co łatwe, niekoniecznie to, co strategiczne.',
-                  ],
-                  aiDraft:
-                    'AI klasyfikuje produkty jako stars, cash cows, question marks i dogs oraz proponuje przesunięcia uwagi sprzedaży.',
-                  approvedUse:
-                    'Po akceptacji kart narzędzie pokazuje koszt alternatywny utrzymywania zbyt szerokiego portfolio.',
-                  outcome:
-                    'Rekomendacja: utrzymać cash cow, dofinansować jednego question marka, harvestować niskomarżowy wolumen i zatrzymać produkty bez strategicznej roli.',
-                },
-                {
-                  title: 'Transformacja z nadmiarem projektów',
-                  context: 'PMO prowadzi wiele równoległych strumieni i traci zdolność dowożenia.',
-                  question: 'Które prace są strategiczne, a które tylko zużywają przepustowość?',
-                  evidence: [
-                    'Statusy projektów są zielone na papierze, ale zależności blokują kluczowe milestone’y.',
-                    'Rozmowy z liderami pokazują, że te same osoby są krytyczne dla kilku inicjatyw jednocześnie.',
-                  ],
-                  aiDraft:
-                    'AI ocenia inicjatywy według strategicznego potencjału, pozycji, poziomu inwestycji i realnej przepustowości organizacji.',
-                  approvedUse:
-                    'Zaakceptowane karty przechodzą do syntezy: co finansować, co utrzymać minimalnie, co zakończyć, a co zamienić w krótki test.',
-                  outcome:
-                    'Powstaje plan odciążenia PMO: mniej aktywnych strumieni, jasne kryteria restartu i lista tematów do zamknięcia.',
-                },
-              ]
-            : [
-                {
-                  title: 'Investment budget for only 3 of 9 initiatives',
-                  context: 'The project list is long and sponsors push their own priorities.',
-                  question: 'Which initiatives should be funded, maintained, tested, or stopped?',
-                  evidence: [
-                    'Each initiative has a different sponsor, but only some have evidence of growth or margin impact.',
-                    'PMO data shows team overload and no clear stop/continue criteria.',
-                  ],
-                  aiDraft:
-                    'AI proposes portfolio cards with growth/share/investment scores, rationale, and an invest/maintain/test/harvest/stop recommendation.',
-                  approvedUse:
-                    'The user approves scoring only where evidence fits, then AI builds resource trade-offs.',
-                  outcome:
-                    'The portfolio decision funds three initiatives, tests two with gates, and stops or defers the rest.',
-                },
-                {
-                  title: 'Product portfolio after rapid growth',
-                  context:
-                    'Some products have volume but low margin; others are small but promising.',
-                  question: 'Where should product and sales resources move?',
-                  evidence: [
-                    'Sales reports show high-volume low-margin products and smaller products with faster growth.',
-                    'Sales interviews show the team sells what is easiest, not always what is strategic.',
-                  ],
-                  aiDraft:
-                    'AI classifies products as stars, cash cows, question marks, and dogs, then proposes sales-focus shifts.',
-                  approvedUse:
-                    'Approved cards expose the opportunity cost of keeping the portfolio too broad.',
-                  outcome:
-                    'The recommendation maintains the cash cow, funds one question mark, harvests low-margin volume, and stops products without strategic role.',
-                },
-                {
-                  title: 'Transformation overloaded with projects',
-                  context: 'PMO runs many parallel streams and loses delivery capacity.',
-                  question: 'Which work is strategic and which only consumes throughput?',
-                  evidence: [
-                    'Project statuses look green on paper, but dependencies block key milestones.',
-                    'Leader interviews show the same people are critical to several initiatives at once.',
-                  ],
-                  aiDraft:
-                    'AI scores initiatives by strategic potential, position, investment level, and real organizational capacity.',
-                  approvedUse:
-                    'Approved cards feed synthesis: what to fund, minimally maintain, stop, or convert into a short test.',
-                  outcome:
-                    'The result is a PMO relief plan: fewer active streams, restart criteria, and a list of topics to close.',
-                },
-              ]
+          t('discoveryToolsMain.knownToolDetail.portfolioPriority.example.cases', {
+            returnObjects: true,
+          }) as Array<{
+            title: string;
+            context: string;
+            question: string;
+            evidence: string[];
+            aiDraft: string;
+            approvedUse: string;
+            outcome: string;
+          }>
         )}
         <PortfolioPriorityLibraryGraphic isPolish={isPolish} variant="example" />
       </div>
