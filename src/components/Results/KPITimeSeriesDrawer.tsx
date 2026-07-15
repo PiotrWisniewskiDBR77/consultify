@@ -1402,7 +1402,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           type="button"
                           disabled={caseBusy}
                           onClick={() => void handleAcknowledge()}
-                          className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-60"
+                          className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
                         >
                           {t('results.deviation.ack', 'Acknowledge')}
                         </button>
@@ -1462,7 +1462,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           type="button"
                           disabled={rcaSuggestBusy}
                           onClick={() => void handleSuggestRca()}
-                          className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors inline-flex items-center gap-1.5 disabled:opacity-60"
+                          className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors inline-flex items-center gap-1.5 disabled:opacity-60"
                         >
                           <Sparkles size={13} />
                           {rcaSuggestBusy
@@ -1488,23 +1488,23 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                 'results.deviation.rcaSuggestApply',
                                 'Click to append to root cause analysis'
                               )}
-                              className="w-full text-left rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                              className="w-full text-left rounded-lg border border-c-border bg-c-surface px-3 py-2 hover:bg-c-surface-raised transition-colors"
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                <span className="text-[10px] uppercase tracking-wide text-c-text-muted">
                                   {h.category}
                                 </span>
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                <span className="text-[10px] text-c-text-muted">
                                   {Math.round((h.confidence ?? 0) * 100)}%
                                 </span>
                               </div>
-                              <div className="text-xs text-slate-700 dark:text-slate-200 mt-0.5">
+                              <div className="text-xs text-c-text-secondary mt-0.5">
                                 {h.hypothesis}
                               </div>
                             </button>
                           ))}
                           {rcaActions && rcaActions.length > 0 ? (
-                            <ul className="list-disc pl-5 pt-1 space-y-0.5 text-[11px] text-slate-600 dark:text-slate-300">
+                            <ul className="list-disc pl-5 pt-1 space-y-0.5 text-[11px] text-c-text-secondary">
                               {rcaActions.map((a, i) => (
                                 <li key={i}>{a.title}</li>
                               ))}
@@ -1586,7 +1586,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         type="button"
                         disabled={caseBusy || !newActionTitle.trim()}
                         onClick={() => void handleAddAction()}
-                        className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-60"
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
                       >
                         {t('results.deviation.addAction', 'Add action')}
                       </button>
@@ -1904,7 +1904,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => setEditMode(true)}
-                        className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                       >
                         <span className="inline-flex items-center gap-2">
                           <Pencil size={14} />
