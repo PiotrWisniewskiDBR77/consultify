@@ -27998,6 +27998,14 @@
       "openLink": "Otwórz link",
       "cellNote": "Notatka do komórki",
       "addNotePlaceholder": "Dodaj notatkę..."
+    },
+    "aiCopilotMode": {
+      "couldNotGenerate": "Nie udało się wygenerować odpowiedzi.",
+      "connectionError": "Błąd połączenia z AI. Spróbuj ponownie.",
+      "ideas": "pomysłów",
+      "quickActions": "Szybkie akcje",
+      "add": "Dodaj",
+      "askPlaceholder": "Zapytaj AI o pomysły…"
     }
   },
   "myWorkNotebook": {

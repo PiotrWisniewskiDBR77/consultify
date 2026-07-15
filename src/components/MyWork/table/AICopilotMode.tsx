@@ -171,7 +171,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
 
         const responseText =
           (result?.suggestions || []).map((s: any) => s.text || s.detail || '').join('\n') ||
-          (isPl ? 'Nie udało się wygenerować odpowiedzi.' : 'Could not generate a response.');
+          t('myWorkTable.aiCopilotMode.couldNotGenerate');
 
         await simulateStreaming(responseText);
 
@@ -206,9 +206,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
           {
             id: `msg-${Date.now()}-err`,
             role: 'system',
-            content: isPl
-              ? 'Błąd połączenia z AI. Spróbuj ponownie.'
-              : 'AI connection error. Please try again.',
+            content: t('myWorkTable.aiCopilotMode.connectionError'),
             timestamp: Date.now(),
           },
         ]);
@@ -216,7 +214,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
         setLoading(false);
       }
     },
-    [i18n.language, ideaId, input, isPl, mode, nodes, simulateStreaming]
+    [i18n.language, ideaId, input, mode, nodes, simulateStreaming, t]
   );
 
   const handleAddSuggestion = useCallback(
@@ -298,7 +296,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
 
           <div className="flex-1" />
           <span className="text-[9px] text-c-text-secondary">
-            {nodes.length} {isPl ? 'pomysłów' : 'ideas'}
+            {nodes.length} {t('myWorkTable.aiCopilotMode.ideas')}
           </span>
           <button
             onClick={onClose}
@@ -312,7 +310,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
         {messages.length === 0 && (
           <div className="px-4 py-3 border-b border-c-border-subtle">
             <p className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-2">
-              {isPl ? 'Szybkie akcje' : 'Quick actions'}
+              {t('myWorkTable.aiCopilotMode.quickActions')}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {(
@@ -379,7 +377,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
                         >
                           <Plus size={8} />
-                          {isPl ? 'Dodaj' : 'Add'}
+                          {t('myWorkTable.aiCopilotMode.add')}
                         </button>
                       </div>
                     ))}
@@ -425,7 +423,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                   handleSend();
                 }
               }}
-              placeholder={isPl ? 'Zapytaj AI o pomysły…' : 'Ask AI about ideas…'}
+              placeholder={t('myWorkTable.aiCopilotMode.askPlaceholder')}
               disabled={loading}
               className="flex-1 h-9 px-3 rounded-xl text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
             />
