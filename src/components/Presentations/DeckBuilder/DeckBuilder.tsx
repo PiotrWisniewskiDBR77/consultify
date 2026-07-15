@@ -1392,7 +1392,7 @@ export const DeckBuilder: React.FC = () => {
                     }
                     className="rounded-full border border-c-border-subtle/[0.08] bg-c-surface/[0.04] px-3 py-1 text-[11px] font-medium text-c-text hover:border-blue-400 dark:hover:border-blue-500/50"
                   >
-                    {getSourceDisplayLabel(bl.sourceType, i18n.language === 'pl')}: {bl.sourceId}
+                    {getSourceDisplayLabel(bl.sourceType)}: {bl.sourceId}
                   </button>
                 ))}
               </div>
