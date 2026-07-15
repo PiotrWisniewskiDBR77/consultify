@@ -6,7 +6,7 @@
  * Handles token and storage usage tracking, quota enforcement, and overage calculation
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4Default } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
@@ -148,6 +148,7 @@ interface UsageRecordMetadataRow {
 // ==========================================
 
 let db: IDatabase = getDatabase();
+let uuidv4: () => string = uuidv4Default;
 
 // Lazy-loaded dependencies
 let billingService: any;
@@ -171,10 +172,39 @@ async function initDeps(): Promise<void> {
 
 /**
  * Set dependencies for testing
+ *
+ * NOTE: billingService/payAsYouGoService/budgetManagementService are normally
+ * populated lazily by initDeps() via dynamic import() of the real modules —
+ * each of those modules holds its OWN module-level `db` set at ITS import
+ * time, independent of this service's `db`. Injecting a mock db here does
+ * NOT reach into them. Passing a mock service here directly (as tests do)
+ * pre-fills the module-level var so initDeps()'s `if (!x)` guard skips the
+ * real import and the mock is used instead — this is the intended escape
+ * hatch, not a workaround.
  */
-export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
+export function setDependencies(
+  newDeps: {
+    db?: IDatabase;
+    uuidv4?: () => string;
+    billingService?: any;
+    payAsYouGoService?: any;
+    budgetManagementService?: any;
+  } = {}
+): void {
   if (newDeps.db) {
     db = newDeps.db;
+  }
+  if (newDeps.uuidv4) {
+    uuidv4 = newDeps.uuidv4;
+  }
+  if (newDeps.billingService) {
+    billingService = newDeps.billingService;
+  }
+  if (newDeps.payAsYouGoService) {
+    payAsYouGoService = newDeps.payAsYouGoService;
+  }
+  if (newDeps.budgetManagementService) {
+    budgetManagementService = newDeps.budgetManagementService;
   }
 }
 
@@ -208,12 +238,18 @@ export async function recordTokenUsage(
     logger.warn('[UsageService] Budget check failed:', error.message);
   }
 
+  // fallback: false — this write is the billing/usage record of record. With
+  // the default fallback:true, a real insert failure was silently swallowed
+  // (DbPromise.run() resolves { success: false } instead of throwing) and
+  // this function returned as if the usage had been recorded, undercounting
+  // billed usage with no error surfaced to the caller.
   const id = `usage-${uuidv4()}`;
   await DbPromise.run(
     db,
     `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
          VALUES (?, ?, ?, 'token', ?, ?, ?)`,
-    [id, orgId, userId, tokens, action, JSON.stringify(metadata)]
+    [id, orgId, userId, tokens, action, JSON.stringify(metadata)],
+    { fallback: false }
   );
 
   // Record PAYG usage if billing model is PAYG
@@ -277,12 +313,15 @@ export async function recordStorageUsage(
     logger.warn('[UsageService] Budget check failed:', error.message);
   }
 
+  // fallback: false — see recordTokenUsage() above for why this must not be
+  // silently swallowed.
   const id = `usage-${uuidv4()}`;
   await DbPromise.run(
     db,
     `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
          VALUES (?, ?, NULL, 'storage', ?, ?, ?)`,
-    [id, orgId, bytes, action, JSON.stringify(metadata)]
+    [id, orgId, bytes, action, JSON.stringify(metadata)],
+    { fallback: false }
   );
 
   // Record PAYG usage if billing model is PAYG

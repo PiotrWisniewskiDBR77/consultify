@@ -70,23 +70,43 @@ describe('AISettingsService', () => {
         vi.restoreAllMocks();
     });
 
-    // TODO(bug, found 2026-07-15 reviving orphaned test): server/src/services/
-    // aiSettingsService.ts's `AISettingsService` class has NO setDependencies()
-    // method at all (the `if (AISettingsService.setDependencies)` guard above is
-    // always false for this service) — every method (getSuperAdminSettings,
-    // getOrgSettings, getUserSettings, getAuditLog, getUserCostHistory,
-    // getOrgCostAttribution, getOrgUserTiers, assignUserTier,
-    // generateComplianceReport, ...) calls the module-level `dbGet`/`dbAll`/`dbRun`
-    // imported directly from '../utils/DbPromise.js', which always talks to the
-    // real database singleton — `mocks.db` injected by this test's beforeEach has
-    // zero effect. Every test below that expects a specific mocked row gets
-    // whatever the real (schema-less in this harness) test DB returns instead —
-    // usually a "not found" default. This affects effectively the whole file (all
-    // it() below except 'should generate GDPR compliance report', which happens
-    // to pass because its assertions only check the shape of the DEFAULT/fallback
-    // response). Not fixed here (aiSettingsService.ts is product code, out of
-    // scope) — same family of bug as the invitationService.ts/usageService.ts
-    // setDependencies findings from this same pass.
+    // UPDATE 2026-07-15: the DI half of this bug is now FIXED —
+    // aiSettingsService.ts's `AISettingsService` class previously had NO
+    // setDependencies() at all (the `if (AISettingsService.setDependencies)`
+    // guard above was always false), so every method's module-level
+    // `dbGet`/`dbAll`/`dbRun` (imported directly from '../utils/DbPromise.js')
+    // always talked to the real database singleton regardless of `mocks.db`.
+    // AISettingsService.setDependencies() now exists and rebinds those to the
+    // injected mock db.
+    //
+    // BUT un-skipping the tests below and re-running still leaves 26/27
+    // failing (verified) — for a SEPARATE, unrelated reason: the tests assert
+    // a shape/feature set the current implementation does not have,
+    // regardless of DB wiring. Examples found by reading the two files side by
+    // side:
+    // - camelCase fields (result.defaultProvider, result.organizationId,
+    //   result.responseStyle, ...) vs. the service's actual snake_case
+    //   passthrough (default_provider, organization_id, response_style, ...) —
+    //   affects getSuperAdminSettings/getOrgSettings/getUserSettings/
+    //   getEffectiveSettings.
+    // - `logAudit` is a module-private const, never attached to the
+    //   `AISettingsService` class — `AISettingsService.logAudit(...)` is not a
+    //   function.
+    // - getAuditLog() returns `{ total, rows, entries }`, not the bare array
+    //   the test does `expect(result).toHaveLength(1)` against.
+    // - getUserCostHistory()'s real return is a plain array of daily rows;
+    //   tests expect { period, totalCost, totalRequests, totalTokens, byTier[] }.
+    // - assignUserTier() doesn't verify the target user belongs to `orgId`
+    //   (tests expect a reject when it doesn't) and its return shape doesn't
+    //   include `success`.
+    // - generateComplianceReport() has no `checks`/`findings`/`summary.score`/CSV
+    //   export — the real implementation returns a minimal
+    //   { orgId, standard, generatedAt, summary: {...}, status } and throws on
+    //   format==='pdf'; the per-standard checklist engine these tests expect
+    //   (ISO21500/PMBOK7/PRINCE2 7-themes/SOC2 5-principles/CSV) doesn't exist.
+    // This is a much larger scope than a DI fix (looks like tests written
+    // against an aspirational/older version of the service) — left skipped and
+    // flagged separately rather than building out the missing features here.
     describe('getSuperAdminSettings', () => {
         it.skip('should return existing settings', async () => {
             const mockSettings = {

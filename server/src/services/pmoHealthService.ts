@@ -126,9 +126,16 @@ export async function getHealthSnapshot(projectId: string): Promise<PMOHealthSna
   const startTime = Date.now();
 
   // 1. Get project and current phase
-  const project = await DbPromise.get<Project>(db, `SELECT * FROM projects WHERE id = ?`, [
-    projectId,
-  ]);
+  // fallback: false — this lookup expects a definite row; without it,
+  // DbPromise.get() silently swallows real DB errors (connection lost,
+  // locked table, etc.) as `null`, which then gets reported below as the
+  // generic "Project not found", masking the actual failure.
+  const project = await DbPromise.get<Project>(
+    db,
+    `SELECT * FROM projects WHERE id = ?`,
+    [projectId],
+    { fallback: false }
+  );
 
   if (!project) {
     throw new Error('Project not found');

@@ -26,6 +26,17 @@ export class InvitationDataService {
     };
   }
 
+  /**
+   * Update dependencies after construction (e.g. test DI injecting a mock db).
+   * Needed because the parent InvitationServiceClass constructs this sub-service
+   * once at instantiation time — without this setter, a later
+   * InvitationServiceClass.setDependencies({ db }) call would silently have no
+   * effect on the db this instance actually queries.
+   */
+  setDependencies(newDeps: Partial<InvitationDataDependencies>): void {
+    this.deps = { ...this.deps, ...newDeps };
+  }
+
   async getInvitationById(id: string): Promise<InvitationRecord | null> {
     return this.deps.db.get<InvitationRecord>(`SELECT * FROM invitations WHERE id = ?`, [id]);
   }
