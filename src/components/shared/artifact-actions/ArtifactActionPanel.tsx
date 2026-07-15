@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
@@ -62,59 +63,31 @@ interface ArtifactActionPanelProps {
 const TARGET_META: Record<
   ArtifactActionTarget,
   {
-    labelPl: string;
-    labelEn: string;
-    descriptionPl: string;
-    descriptionEn: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
     tone: string;
   }
 > = {
   report: {
-    labelPl: 'Utwórz raport',
-    labelEn: 'Create report',
-    descriptionPl: 'Dokument do omówienia wyników audytu.',
-    descriptionEn: 'Document for audit readout.',
     icon: FileText,
     tone: 'text-slate-700 bg-slate-100 border-slate-200 dark:text-slate-200 dark:bg-white/[0.05] dark:border-white/[0.08]',
   },
   presentation: {
-    labelPl: 'Utwórz prezentację',
-    labelEn: 'Create deck',
-    descriptionPl: 'Deck dla zespołu lub sponsora projektu.',
-    descriptionEn: 'Deck for team or sponsor readout.',
     icon: Presentation,
     tone: 'text-fuchsia-700 bg-fuchsia-50 border-fuchsia-200 dark:text-fuchsia-200 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/20',
   },
   table: {
-    labelPl: 'Utwórz tabelę',
-    labelEn: 'Create table',
-    descriptionPl: 'Arkusz do uporządkowania danych i decyzji.',
-    descriptionEn: 'Workbook for structured follow-up.',
     icon: Table,
     tone: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20',
   },
   idea: {
-    labelPl: 'Utwórz ideę',
-    labelEn: 'Create idea',
-    descriptionPl: 'Zapisz kierunek dalszej pracy w My Work.',
-    descriptionEn: 'Capture a direction in My Work.',
     icon: Lightbulb,
     tone: 'text-amber-800 bg-amber-100 border-amber-300 dark:text-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20',
   },
   note: {
-    labelPl: 'Utwórz notatkę',
-    labelEn: 'Create note',
-    descriptionPl: 'Zachowaj kontekst w Notatniku.',
-    descriptionEn: 'Save context in Notebook.',
     icon: StickyNote,
     tone: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-200 dark:bg-sky-500/10 dark:border-sky-500/20',
   },
   initiative: {
-    labelPl: 'Utwórz inicjatywę',
-    labelEn: 'Create initiative',
-    descriptionPl: 'Przenieś insight do intake inicjatyw.',
-    descriptionEn: 'Move the insight into initiative intake.',
     icon: Rocket,
     tone: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/20',
   },
@@ -157,36 +130,31 @@ function buildInsightMarkdown(source: ArtifactActionSource): string {
   return lines.join('\n');
 }
 
-function downstreamReadinessWarnings(source: ArtifactActionSource, isPolish: boolean): string[] {
+function downstreamReadinessWarnings(
+  source: ArtifactActionSource,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string[] {
   const reportPack = source.reportPack;
   const warnings: string[] = [];
   if (!reportPack?.id) {
-    warnings.push(
-      isPolish
-        ? 'Brak powiązanego Report Pack w lineage downstream action.'
-        : 'No linked Report Pack is present in downstream action lineage.'
-    );
+    warnings.push(t('sharedComponents.artifactActionPanel.warnings.noLinkedReportPack'));
   }
   if (reportPack?.status && reportPack.status !== 'published') {
     warnings.push(
-      isPolish
-        ? `Report Pack ma status ${reportPack.status}; tworzony artefakt musi pozostać draftem/propozycją.`
-        : `Report Pack is ${reportPack.status}; created artifact must remain a draft/proposal.`
+      t('sharedComponents.artifactActionPanel.warnings.reportPackStatus', {
+        status: reportPack.status,
+      })
     );
   }
   if (reportPack?.readinessStatus && reportPack.readinessStatus !== 'ready_for_review') {
     warnings.push(
-      isPolish
-        ? `Readiness gate: ${reportPack.readinessStatus}; downstream wymaga review operatora.`
-        : `Readiness gate: ${reportPack.readinessStatus}; downstream requires operator review.`
+      t('sharedComponents.artifactActionPanel.warnings.readinessGate', {
+        status: reportPack.readinessStatus,
+      })
     );
   }
   if (reportPack?.degraded) {
-    warnings.push(
-      isPolish
-        ? 'Report Pack jest zdegradowany; ograniczenia muszą pozostać widoczne w artefakcie.'
-        : 'Report Pack is degraded; limitations must remain visible in the artifact.'
-    );
+    warnings.push(t('sharedComponents.artifactActionPanel.warnings.reportPackDegraded'));
   }
   return warnings;
 }
@@ -253,9 +221,9 @@ function buildActionContract(
 function buildGovernanceProposal(
   source: ArtifactActionSource,
   target: ArtifactActionTarget,
-  isPolish: boolean
+  t: (key: string, opts?: Record<string, unknown>) => string
 ): Record<string, unknown> {
-  const targetLabel = isPolish ? TARGET_META[target].labelPl : TARGET_META[target].labelEn;
+  const targetLabel = t(`sharedComponents.artifactActionPanel.targetMeta.${target}.label`);
   return {
     sourceInsight: {
       id: source.id,
@@ -267,12 +235,16 @@ function buildGovernanceProposal(
     },
     target,
     targetLabel,
-    readBackText: isPolish
-      ? `Potwierdzam utworzenie artefaktu "${targetLabel}" z insightu "${source.title}". Widziałem/am ograniczenia, liczbę dowodów (${source.evidenceCount ?? 0}) oraz poziom pewności (${source.confidence || 'brak'}).`
-      : `I confirm creating "${targetLabel}" from insight "${source.title}". I reviewed the limits, evidence count (${source.evidenceCount ?? 0}), and confidence (${source.confidence || 'none'}).`,
+    readBackText: t('sharedComponents.artifactActionPanel.readBackText', {
+      targetLabel,
+      title: source.title,
+      evidenceCount: source.evidenceCount ?? 0,
+      confidence:
+        source.confidence || t('sharedComponents.artifactActionPanel.confidenceNone'),
+    }),
     limits: source.limits || null,
     evidenceRefs: extractEvidenceRefs(source),
-    readinessWarnings: downstreamReadinessWarnings(source, isPolish),
+    readinessWarnings: downstreamReadinessWarnings(source, t),
   };
 }
 
@@ -281,6 +253,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
   isPolish,
   variant = 'full',
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loadingTarget, setLoadingTarget] = useState<ArtifactActionTarget | null>(null);
   const [createdTargets, setCreatedTargets] = useState<
@@ -295,10 +268,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
   const isCompact = variant === 'compact';
   const sourceMarkdown = useMemo(() => buildInsightMarkdown(source), [source]);
   const isActionDisabled = source.status === 'generating' || source.status === 'failed';
-  const readinessWarnings = useMemo(
-    () => downstreamReadinessWarnings(source, isPolish),
-    [isPolish, source]
-  );
+  const readinessWarnings = useMemo(() => downstreamReadinessWarnings(source, t), [source, t]);
 
   const recordConversion = async (target: CreatedTarget, payload: Record<string, unknown>) => {
     const actionContract = payload.actionContract as Record<string, unknown> | undefined;
@@ -330,12 +300,12 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
     setLoadingTarget(target);
     try {
       const titlePrefix: Record<ArtifactActionTarget, string> = {
-        report: isPolish ? 'Raport' : 'Report',
-        presentation: isPolish ? 'Prezentacja' : 'Presentation',
-        table: isPolish ? 'Tabela' : 'Table',
-        idea: isPolish ? 'Idea' : 'Idea',
-        note: isPolish ? 'Notatka' : 'Note',
-        initiative: isPolish ? 'Inicjatywa' : 'Initiative',
+        report: t('sharedComponents.artifactActionPanel.titlePrefix.report'),
+        presentation: t('sharedComponents.artifactActionPanel.titlePrefix.presentation'),
+        table: t('sharedComponents.artifactActionPanel.titlePrefix.table'),
+        idea: t('sharedComponents.artifactActionPanel.titlePrefix.idea'),
+        note: t('sharedComponents.artifactActionPanel.titlePrefix.note'),
+        initiative: t('sharedComponents.artifactActionPanel.titlePrefix.initiative'),
       };
       const title = `${titlePrefix[target]}: ${source.title}`;
       let created: CreatedTarget | null = null;
@@ -377,7 +347,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         created = {
           id,
           type: target,
-          label: isPolish ? 'Otwórz raport' : 'Open report',
+          label: t('sharedComponents.artifactActionPanel.openReport'),
           path: `/reports/builder/${id}`,
         };
         rawPayload = res;
@@ -399,25 +369,23 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 type: 'title',
                 content: {
                   title,
-                  subtitle: isPolish
-                    ? 'Wygenerowane z Interview Insight'
-                    : 'Generated from Interview Insight',
+                  subtitle: t('sharedComponents.artifactActionPanel.generatedFromInterviewInsight'),
                 },
               },
               {
                 type: 'executive_summary',
                 content: {
-                  title: isPolish ? 'Kluczowy wniosek' : 'Key insight',
+                  title: t('sharedComponents.artifactActionPanel.keyInsight'),
                   body: source.content || source.title,
                 },
               },
               {
                 type: 'next_steps',
                 content: {
-                  title: isPolish ? 'Dalsze działania' : 'Next actions',
+                  title: t('sharedComponents.artifactActionPanel.nextActions'),
                   bullets: [
-                    isPolish ? 'Omów z zespołem' : 'Discuss with the team',
-                    isPolish ? 'Zdecyduj o inicjatywie' : 'Decide on initiative intake',
+                    t('sharedComponents.artifactActionPanel.discussWithTheTeam'),
+                    t('sharedComponents.artifactActionPanel.decideOnInitiativeIntake'),
                   ],
                 },
               },
@@ -429,7 +397,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         created = {
           id,
           type: target,
-          label: isPolish ? 'Otwórz prezentację' : 'Open deck',
+          label: t('sharedComponents.artifactActionPanel.openDeck'),
           path: `/presentations/builder/${id}`,
         };
         rawPayload = res;
@@ -438,7 +406,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
       if (target === 'table') {
         const res = unwrapPayload(
           await Api.post('/workbook/generate', {
-            prompt: `${isPolish ? 'Utwórz tabelę roboczą z insightu' : 'Create a working table from this insight'}:\n\n${sourceMarkdown}`,
+            prompt: `${t('sharedComponents.artifactActionPanel.createAWorkingTableFromThisInsight')}:\n\n${sourceMarkdown}`,
             researchContext: {
               sourceType: source.type,
               sourceId: source.id,
@@ -461,7 +429,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         created = {
           id,
           type: target,
-          label: isPolish ? 'Otwórz tabelę' : 'Open table',
+          label: t('sharedComponents.artifactActionPanel.openTable'),
           path: `/tabele?artifactId=${id}`,
         };
         rawPayload = res;
@@ -486,7 +454,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         created = {
           id,
           type: target,
-          label: isPolish ? 'Otwórz ideę' : 'Open idea',
+          label: t('sharedComponents.artifactActionPanel.openIdea'),
           path: `/my-work/ideas/${id}`,
         };
         rawPayload = res;
@@ -524,7 +492,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         created = {
           id,
           type: target,
-          label: isPolish ? 'Otwórz notatkę' : 'Open note',
+          label: t('sharedComponents.artifactActionPanel.openNote'),
           path: `/my-work/notebook`,
         };
         rawPayload = res;
@@ -550,9 +518,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             reportPack: source.reportPack || null,
             actionContract,
             evidenceRefs,
-            reportName: isPolish
-              ? 'Draft z Interview Insight - użyj pełnej zatwierdzonej wiedzy organizacji'
-              : 'Draft from Interview Insight - use full approved organizational knowledge',
+            reportName: t('sharedComponents.artifactActionPanel.draftReportName'),
           })
         );
         const id = firstString(res?.id, res?.initiative?.id, res?.data?.id);
@@ -560,7 +526,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         created = {
           id,
           type: target,
-          label: isPolish ? 'Otwórz w Wywiad > Inicjatywy' : 'Open in Interview Initiatives',
+          label: t('sharedComponents.artifactActionPanel.openInInterviewInitiatives'),
           path: `/interview?tab=initiatives&initiativeId=${id}`,
         };
         rawPayload = res;
@@ -574,10 +540,10 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         governanceProposal: governanceProposal || null,
       });
       setCreatedTargets((prev) => ({ ...prev, [target]: created }));
-      toast.success(isPolish ? 'Artefakt utworzony' : 'Artifact created');
+      toast.success(t('sharedComponents.artifactActionPanel.artifactCreated'));
     } catch (error) {
       console.error('[ArtifactActionPanel] Failed to create target:', error);
-      toast.error(isPolish ? 'Nie udało się utworzyć artefaktu' : 'Failed to create artifact');
+      toast.error(t('sharedComponents.artifactActionPanel.failedToCreateArtifact'));
     } finally {
       setLoadingTarget(null);
     }
@@ -597,10 +563,12 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             <Icon size={18} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold">{isPolish ? meta.labelPl : meta.labelEn}</div>
+            <div className="text-sm font-semibold">
+              {t(`sharedComponents.artifactActionPanel.targetMeta.${target}.label`)}
+            </div>
             {!isCompact && (
               <div className="mt-1 text-xs opacity-80">
-                {isPolish ? meta.descriptionPl : meta.descriptionEn}
+                {t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
               </div>
             )}
           </div>
@@ -628,12 +596,8 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             {created
               ? created.label
               : isDocumentTarget
-                ? isPolish
-                  ? 'Otwórz generator'
-                  : 'Open generator'
-                : isPolish
-                  ? 'Utwórz'
-                  : 'Create'}
+                ? t('sharedComponents.artifactActionPanel.openGenerator')
+                : t('sharedComponents.artifactActionPanel.create')}
           </button>
         </div>
       </div>
@@ -649,7 +613,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
     const created = createdTargets[target];
     const loading = loadingTarget === target;
     const isDocumentTarget = DOC_TARGETS.includes(target);
-    const stripped = (isPolish ? meta.labelPl : meta.labelEn)
+    const stripped = t(`sharedComponents.artifactActionPanel.targetMeta.${target}.label`)
       .replace(/^Utwórz\s+/i, '')
       .replace(/^Create\s+/i, '');
     const label = stripped.charAt(0).toUpperCase() + stripped.slice(1);
@@ -665,7 +629,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               : setProposalTarget(target)
         }
         disabled={loading || isActionDisabled}
-        title={isPolish ? meta.descriptionPl : meta.descriptionEn}
+        title={t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
         className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:brightness-110 ${meta.tone}`}
       >
         {loading ? (
@@ -686,18 +650,18 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-2.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
           <div className="mb-2 inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             <BookOpen size={11} />
-            {isPolish ? 'Co dalej z insightem' : 'What next with this insight'}
+            {t('sharedComponents.artifactActionPanel.whatNextWithThisInsight')}
           </div>
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
-                {isPolish ? 'Dokumenty' : 'Documents'}
+                {t('sharedComponents.artifactActionPanel.documents')}
               </span>
               {DOC_TARGETS.map(renderCompactButton)}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
-                {isPolish ? 'W aplikacji' : 'In app'}
+                {t('sharedComponents.artifactActionPanel.inApp')}
               </span>
               {APP_TARGETS.map(renderCompactButton)}
             </div>
@@ -711,19 +675,17 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-c-info/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info dark:text-c-info">
                 <BookOpen size={12} />
-                {isPolish ? 'Co dalej z tym insightem?' : 'What next with this insight?'}
+                {t('sharedComponents.artifactActionPanel.whatNextWithThisInsightQuestion')}
               </div>
               {!isCompact && (
                 <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-                  {isPolish
-                    ? 'Insight jest artefaktem źródłowym. Z tego miejsca tworzysz dokumenty albo działania w aplikacji, a system zapisuje pełny backlink i lineage.'
-                    : 'This insight is the source artifact. Create documents or app actions here while the system keeps backlink and lineage.'}
+                  {t('sharedComponents.artifactActionPanel.insightSourceHint')}
                 </p>
               )}
               {!isCompact && readinessWarnings.length > 0 && (
                 <div className="mt-3 rounded-2xl border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 p-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
                   <div className="font-semibold">
-                    {isPolish ? 'Warunki downstream' : 'Downstream conditions'}
+                    {t('sharedComponents.artifactActionPanel.downstreamConditions')}
                   </div>
                   <ul className="mt-1 list-disc space-y-1 pl-4">
                     {readinessWarnings.slice(0, 3).map((warning) => (
@@ -737,7 +699,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               <div className="grid shrink-0 grid-cols-3 gap-2 text-center text-xs">
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
                   <div className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Pewność' : 'Confidence'}
+                    {t('sharedComponents.artifactActionPanel.confidence')}
                   </div>
                   <div className="font-semibold text-slate-900 dark:text-slate-100">
                     {source.confidence || '-'}
@@ -745,7 +707,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
                   <div className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Dowody' : 'Evidence'}
+                    {t('sharedComponents.artifactActionPanel.evidence')}
                   </div>
                   <div className="font-semibold text-slate-900 dark:text-slate-100">
                     {source.evidenceCount ?? 0}
@@ -753,7 +715,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
                   <div className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Sesje' : 'Sessions'}
+                    {t('sharedComponents.artifactActionPanel.sessions')}
                   </div>
                   <div className="font-semibold text-slate-900 dark:text-slate-100">
                     {source.sourceSessionCount ?? 0}
@@ -767,7 +729,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             <div className="space-y-2">
               {!isCompact && (
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  {isPolish ? 'Dokumenty' : 'Documents'}
+                  {t('sharedComponents.artifactActionPanel.documents')}
                 </div>
               )}
               <div
@@ -779,7 +741,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             <div className="space-y-2">
               {!isCompact && (
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  {isPolish ? 'Działania w aplikacji' : 'App actions'}
+                  {t('sharedComponents.artifactActionPanel.appActions')}
                 </div>
               )}
               <div
@@ -797,12 +759,10 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">
-                  {isPolish ? 'Generator dokumentu' : 'Document generator'}
+                  {t('sharedComponents.artifactActionPanel.documentGenerator')}
                 </div>
                 <p className="mt-1 text-xs text-slate-600">
-                  {isPolish
-                    ? 'Wybierz, czy AI ma użyć template, czy ułożyć dokument od zera. Kontekst insightu zostanie przekazany dalej.'
-                    : 'Choose whether AI should use a template or compose from scratch. The insight context will be passed forward.'}
+                  {t('sharedComponents.artifactActionPanel.composerHint')}
                 </p>
               </div>
               <button
@@ -813,28 +773,28 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 }}
                 className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white/[0.08]"
               >
-                {isPolish ? 'Zamknij' : 'Close'}
+                {t('sharedComponents.artifactActionPanel.close')}
               </button>
             </div>
 
             <div className="mt-4 rounded-2xl bg-white/[0.04] p-4">
-              <div className={TEXT_L1}>{isPolish ? 'Kontekst' : 'Context'}</div>
+              <div className={TEXT_L1}>{t('sharedComponents.artifactActionPanel.context')}</div>
               <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
               <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-600">
                 <div>
-                  {isPolish ? 'Dowody' : 'Evidence'}: {source.evidenceCount ?? 0}
+                  {t('sharedComponents.artifactActionPanel.evidence')}: {source.evidenceCount ?? 0}
                 </div>
                 <div>
-                  {isPolish ? 'Sesje' : 'Sessions'}: {source.sourceSessionCount ?? 0}
+                  {t('sharedComponents.artifactActionPanel.sessions')}: {source.sourceSessionCount ?? 0}
                 </div>
                 <div>
-                  {isPolish ? 'Pewność' : 'Confidence'}: {source.confidence || '-'}
+                  {t('sharedComponents.artifactActionPanel.confidence')}: {source.confidence || '-'}
                 </div>
               </div>
               {readinessWarnings.length > 0 && (
                 <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
                   <div className="font-semibold">
-                    {isPolish ? 'Ograniczenia downstream' : 'Downstream limits'}
+                    {t('sharedComponents.artifactActionPanel.downstreamLimits')}
                   </div>
                   <ul className="mt-1 list-disc space-y-1 pl-4">
                     {readinessWarnings.map((warning) => (
@@ -847,7 +807,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
 
             <div className="mt-4">
               <label className="block text-xs font-semibold text-slate-600">
-                {isPolish ? 'Template' : 'Template'}
+                {t('sharedComponents.artifactActionPanel.template')}
               </label>
               <select
                 value={composerTemplate}
@@ -855,18 +815,16 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 className="mt-1 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white"
               >
                 <option value="ai_freeform">
-                  {isPolish
-                    ? 'Bez template - AI układa strukturę'
-                    : 'No template - AI composes structure'}
+                  {t('sharedComponents.artifactActionPanel.noTemplateAiComposesStructure')}
                 </option>
                 <option value="executive_readout">
-                  {isPolish ? 'Executive readout' : 'Executive readout'}
+                  {t('sharedComponents.artifactActionPanel.executiveReadout')}
                 </option>
                 <option value="consulting_workpaper">
-                  {isPolish ? 'Workpaper konsultingowy' : 'Consulting workpaper'}
+                  {t('sharedComponents.artifactActionPanel.consultingWorkpaper')}
                 </option>
                 <option value="decision_pack">
-                  {isPolish ? 'Decision pack' : 'Decision pack'}
+                  {t('sharedComponents.artifactActionPanel.decisionPack')}
                 </option>
               </select>
             </div>
@@ -879,9 +837,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 className="mt-0.5"
               />
               <span>
-                {isPolish
-                  ? 'Potwierdzam utworzenie draftu/propozycji z widocznym lineage i ograniczeniami Report Pack.'
-                  : 'I confirm creating a draft/proposal with visible lineage and Report Pack limits.'}
+                {t('sharedComponents.artifactActionPanel.composerConfirmText')}
               </span>
             </label>
 
@@ -894,7 +850,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 }}
                 className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-white/[0.06]"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('sharedComponents.artifactActionPanel.cancel')}
               </button>
               <button
                 type="button"
@@ -911,7 +867,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 }}
                 className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
               >
-                {isPolish ? 'Uruchom generator' : 'Run generator'}
+                {t('sharedComponents.artifactActionPanel.runGenerator')}
               </button>
             </div>
           </div>
@@ -923,12 +879,10 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-white">
-                  {isPolish ? 'Potwierdzenie działania' : 'Action confirmation'}
+                  {t('sharedComponents.artifactActionPanel.actionConfirmation')}
                 </div>
                 <p className="mt-1 text-xs text-slate-600">
-                  {isPolish
-                    ? 'To jest mutacja biznesowa. Sprawdź proposal i read-back przed utworzeniem artefaktu.'
-                    : 'This is a business mutation. Review the proposal and read-back before creating the artifact.'}
+                  {t('sharedComponents.artifactActionPanel.proposalHint')}
                 </p>
               </div>
               <button
@@ -939,39 +893,37 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 }}
                 className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white/[0.08]"
               >
-                {isPolish ? 'Zamknij' : 'Close'}
+                {t('sharedComponents.artifactActionPanel.close')}
               </button>
             </div>
 
             <div className="mt-4 space-y-3 rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-200">
               <div>
-                <div className={TEXT_L1}>{isPolish ? 'Źródło' : 'Source'}</div>
+                <div className={TEXT_L1}>{t('sharedComponents.artifactActionPanel.source')}</div>
                 <div className="mt-1 font-medium text-white">{source.title}</div>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
                 <div>
-                  {isPolish ? 'Cel' : 'Target'}:{' '}
-                  {isPolish
-                    ? TARGET_META[proposalTarget].labelPl
-                    : TARGET_META[proposalTarget].labelEn}
+                  {t('sharedComponents.artifactActionPanel.targetColumnLabel')}:{' '}
+                  {t(`sharedComponents.artifactActionPanel.targetMeta.${proposalTarget}.label`)}
                 </div>
                 <div>
-                  {isPolish ? 'Dowody' : 'Evidence'}: {source.evidenceCount ?? 0}
+                  {t('sharedComponents.artifactActionPanel.evidence')}: {source.evidenceCount ?? 0}
                 </div>
                 <div>
-                  {isPolish ? 'Pewność' : 'Confidence'}: {source.confidence || '-'}
+                  {t('sharedComponents.artifactActionPanel.confidence')}: {source.confidence || '-'}
                 </div>
               </div>
               {source.limits && (
                 <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
-                  <span className="font-semibold">{isPolish ? 'Ograniczenia:' : 'Limits:'}</span>{' '}
+                  <span className="font-semibold">{t('sharedComponents.artifactActionPanel.limits')}</span>{' '}
                   {source.limits}
                 </div>
               )}
               {readinessWarnings.length > 0 && (
                 <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
                   <div className="font-semibold">
-                    {isPolish ? 'Warunki Report Pack:' : 'Report Pack conditions:'}
+                    {t('sharedComponents.artifactActionPanel.reportPackConditions')}
                   </div>
                   <ul className="mt-1 list-disc space-y-1 pl-4">
                     {readinessWarnings.map((warning) => (
@@ -981,7 +933,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 </div>
               )}
               <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-xs text-slate-600">
-                {buildGovernanceProposal(source, proposalTarget, isPolish).readBackText as string}
+                {buildGovernanceProposal(source, proposalTarget, t).readBackText as string}
               </div>
               <label className="flex items-start gap-2 text-xs text-slate-600">
                 <input
@@ -991,9 +943,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   className="mt-0.5"
                 />
                 <span>
-                  {isPolish
-                    ? 'Potwierdzam, że read-back jest zgodny z intencją i artefakt ma zostać utworzony.'
-                    : 'I confirm the read-back matches the intent and the artifact should be created.'}
+                  {t('sharedComponents.artifactActionPanel.proposalConfirmText')}
                 </span>
               </label>
             </div>
@@ -1007,7 +957,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 }}
                 className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-white/[0.06]"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('sharedComponents.artifactActionPanel.cancel')}
               </button>
               <button
                 type="button"
@@ -1015,14 +965,14 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 onClick={() => {
                   const target = proposalTarget;
                   if (!target) return;
-                  const proposal = buildGovernanceProposal(source, target, isPolish);
+                  const proposal = buildGovernanceProposal(source, target, t);
                   setProposalTarget(null);
                   setProposalConfirmed(false);
                   createTarget(target, undefined, proposal);
                 }}
                 className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
               >
-                {isPolish ? 'Potwierdź i utwórz' : 'Confirm and create'}
+                {t('sharedComponents.artifactActionPanel.confirmAndCreate')}
               </button>
             </div>
           </div>

@@ -27025,6 +27025,98 @@
       "escalateAfterDays": "Escalate after (days)",
       "select": "Select",
       "escalationMode": "Escalation mode"
+    },
+    "artifactActionPanel": {
+      "openReport": "Open report",
+      "generatedFromInterviewInsight": "Generated from Interview Insight",
+      "keyInsight": "Key insight",
+      "nextActions": "Next actions",
+      "discussWithTheTeam": "Discuss with the team",
+      "decideOnInitiativeIntake": "Decide on initiative intake",
+      "openDeck": "Open deck",
+      "createAWorkingTableFromThisInsight": "Create a working table from this insight",
+      "openTable": "Open table",
+      "openIdea": "Open idea",
+      "openNote": "Open note",
+      "draftReportName": "Draft from Interview Insight - use full approved organizational knowledge",
+      "openInInterviewInitiatives": "Open in Interview Initiatives",
+      "artifactCreated": "Artifact created",
+      "failedToCreateArtifact": "Failed to create artifact",
+      "openGenerator": "Open generator",
+      "create": "Create",
+      "whatNextWithThisInsight": "What next with this insight",
+      "documents": "Documents",
+      "inApp": "In app",
+      "whatNextWithThisInsightQuestion": "What next with this insight?",
+      "insightSourceHint": "This insight is the source artifact. Create documents or app actions here while the system keeps backlink and lineage.",
+      "downstreamConditions": "Downstream conditions",
+      "confidence": "Confidence",
+      "evidence": "Evidence",
+      "sessions": "Sessions",
+      "appActions": "App actions",
+      "documentGenerator": "Document generator",
+      "composerHint": "Choose whether AI should use a template or compose from scratch. The insight context will be passed forward.",
+      "close": "Close",
+      "context": "Context",
+      "downstreamLimits": "Downstream limits",
+      "template": "Template",
+      "noTemplateAiComposesStructure": "No template - AI composes structure",
+      "executiveReadout": "Executive readout",
+      "consultingWorkpaper": "Consulting workpaper",
+      "decisionPack": "Decision pack",
+      "composerConfirmText": "I confirm creating a draft/proposal with visible lineage and Report Pack limits.",
+      "cancel": "Cancel",
+      "runGenerator": "Run generator",
+      "actionConfirmation": "Action confirmation",
+      "proposalHint": "This is a business mutation. Review the proposal and read-back before creating the artifact.",
+      "source": "Source",
+      "limits": "Limits:",
+      "reportPackConditions": "Report Pack conditions:",
+      "proposalConfirmText": "I confirm the read-back matches the intent and the artifact should be created.",
+      "confirmAndCreate": "Confirm and create",
+      "warnings": {
+        "noLinkedReportPack": "No linked Report Pack is present in downstream action lineage.",
+        "reportPackStatus": "Report Pack is {{status}}; created artifact must remain a draft/proposal.",
+        "readinessGate": "Readiness gate: {{status}}; downstream requires operator review.",
+        "reportPackDegraded": "Report Pack is degraded; limitations must remain visible in the artifact."
+      },
+      "targetMeta": {
+        "report": {
+          "label": "Create report",
+          "description": "Document for audit readout."
+        },
+        "presentation": {
+          "label": "Create deck",
+          "description": "Deck for team or sponsor readout."
+        },
+        "table": {
+          "label": "Create table",
+          "description": "Workbook for structured follow-up."
+        },
+        "idea": {
+          "label": "Create idea",
+          "description": "Capture a direction in My Work."
+        },
+        "note": {
+          "label": "Create note",
+          "description": "Save context in Notebook."
+        },
+        "initiative": {
+          "label": "Create initiative",
+          "description": "Move the insight into initiative intake."
+        }
+      },
+      "titlePrefix": {
+        "report": "Report",
+        "presentation": "Presentation",
+        "table": "Table",
+        "idea": "Idea",
+        "note": "Note",
+        "initiative": "Initiative"
+      },
+      "readBackText": "I confirm creating \"{{targetLabel}}\" from insight \"{{title}}\". I reviewed the limits, evidence count ({{evidenceCount}}), and confidence ({{confidence}}).",
+      "confidenceNone": "none",
+      "targetColumnLabel": "Target"
     }
   }
 }

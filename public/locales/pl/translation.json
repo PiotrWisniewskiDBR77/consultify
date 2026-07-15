@@ -28101,6 +28101,98 @@
       "escalateAfterDays": "Eskaluj po (dni)",
       "select": "Wybierz",
       "escalationMode": "Tryb eskalacji"
+    },
+    "artifactActionPanel": {
+      "openReport": "Otwórz raport",
+      "generatedFromInterviewInsight": "Wygenerowane z Interview Insight",
+      "keyInsight": "Kluczowy wniosek",
+      "nextActions": "Dalsze działania",
+      "discussWithTheTeam": "Omów z zespołem",
+      "decideOnInitiativeIntake": "Zdecyduj o inicjatywie",
+      "openDeck": "Otwórz prezentację",
+      "createAWorkingTableFromThisInsight": "Utwórz tabelę roboczą z insightu",
+      "openTable": "Otwórz tabelę",
+      "openIdea": "Otwórz ideę",
+      "openNote": "Otwórz notatkę",
+      "draftReportName": "Draft z Interview Insight - użyj pełnej zatwierdzonej wiedzy organizacji",
+      "openInInterviewInitiatives": "Otwórz w Wywiad > Inicjatywy",
+      "artifactCreated": "Artefakt utworzony",
+      "failedToCreateArtifact": "Nie udało się utworzyć artefaktu",
+      "openGenerator": "Otwórz generator",
+      "create": "Utwórz",
+      "whatNextWithThisInsight": "Co dalej z insightem",
+      "documents": "Dokumenty",
+      "inApp": "W aplikacji",
+      "whatNextWithThisInsightQuestion": "Co dalej z tym insightem?",
+      "insightSourceHint": "Insight jest artefaktem źródłowym. Z tego miejsca tworzysz dokumenty albo działania w aplikacji, a system zapisuje pełny backlink i lineage.",
+      "downstreamConditions": "Warunki downstream",
+      "confidence": "Pewność",
+      "evidence": "Dowody",
+      "sessions": "Sesje",
+      "appActions": "Działania w aplikacji",
+      "documentGenerator": "Generator dokumentu",
+      "composerHint": "Wybierz, czy AI ma użyć template, czy ułożyć dokument od zera. Kontekst insightu zostanie przekazany dalej.",
+      "close": "Zamknij",
+      "context": "Kontekst",
+      "downstreamLimits": "Ograniczenia downstream",
+      "template": "Template",
+      "noTemplateAiComposesStructure": "Bez template - AI układa strukturę",
+      "executiveReadout": "Executive readout",
+      "consultingWorkpaper": "Workpaper konsultingowy",
+      "decisionPack": "Decision pack",
+      "composerConfirmText": "Potwierdzam utworzenie draftu/propozycji z widocznym lineage i ograniczeniami Report Pack.",
+      "cancel": "Anuluj",
+      "runGenerator": "Uruchom generator",
+      "actionConfirmation": "Potwierdzenie działania",
+      "proposalHint": "To jest mutacja biznesowa. Sprawdź proposal i read-back przed utworzeniem artefaktu.",
+      "source": "Źródło",
+      "limits": "Ograniczenia:",
+      "reportPackConditions": "Warunki Report Pack:",
+      "proposalConfirmText": "Potwierdzam, że read-back jest zgodny z intencją i artefakt ma zostać utworzony.",
+      "confirmAndCreate": "Potwierdź i utwórz",
+      "warnings": {
+        "noLinkedReportPack": "Brak powiązanego Report Pack w lineage downstream action.",
+        "reportPackStatus": "Report Pack ma status {{status}}; tworzony artefakt musi pozostać draftem/propozycją.",
+        "readinessGate": "Readiness gate: {{status}}; downstream wymaga review operatora.",
+        "reportPackDegraded": "Report Pack jest zdegradowany; ograniczenia muszą pozostać widoczne w artefakcie."
+      },
+      "targetMeta": {
+        "report": {
+          "label": "Utwórz raport",
+          "description": "Dokument do omówienia wyników audytu."
+        },
+        "presentation": {
+          "label": "Utwórz prezentację",
+          "description": "Deck dla zespołu lub sponsora projektu."
+        },
+        "table": {
+          "label": "Utwórz tabelę",
+          "description": "Arkusz do uporządkowania danych i decyzji."
+        },
+        "idea": {
+          "label": "Utwórz ideę",
+          "description": "Zapisz kierunek dalszej pracy w My Work."
+        },
+        "note": {
+          "label": "Utwórz notatkę",
+          "description": "Zachowaj kontekst w Notatniku."
+        },
+        "initiative": {
+          "label": "Utwórz inicjatywę",
+          "description": "Przenieś insight do intake inicjatyw."
+        }
+      },
+      "titlePrefix": {
+        "report": "Raport",
+        "presentation": "Prezentacja",
+        "table": "Tabela",
+        "idea": "Idea",
+        "note": "Notatka",
+        "initiative": "Inicjatywa"
+      },
+      "readBackText": "Potwierdzam utworzenie artefaktu \"{{targetLabel}}\" z insightu \"{{title}}\". Widziałem/am ograniczenia, liczbę dowodów ({{evidenceCount}}) oraz poziom pewności ({{confidence}}).",
+      "confidenceNone": "brak",
+      "targetColumnLabel": "Cel"
     }
   }
 }
