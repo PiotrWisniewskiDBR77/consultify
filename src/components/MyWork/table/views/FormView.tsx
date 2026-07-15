@@ -27,8 +27,8 @@ const FieldRenderer: React.FC<{
   col: ColumnDef;
   value: unknown;
   onChange: (val: unknown) => void;
-  isPl: boolean;
-}> = ({ col, value, onChange, isPl }) => {
+}> = ({ col, value, onChange }) => {
+  const { t } = useTranslation();
   const baseInput =
     'w-full h-9 px-3 rounded-xl text-xs bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus transition-all';
 
@@ -51,7 +51,7 @@ const FieldRenderer: React.FC<{
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
           className={baseInput}
-          placeholder={isPl ? 'Wpisz wartość...' : 'Enter value...'}
+          placeholder={t('myWorkTable.formView.enterValuePlaceholder')}
         />
       );
 
@@ -89,7 +89,7 @@ const FieldRenderer: React.FC<{
             className="w-4 h-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
           />
           <span className="text-xs text-c-text-muted">
-            {value ? (isPl ? 'Tak' : 'Yes') : isPl ? 'Nie' : 'No'}
+            {value ? t('myWorkTable.formView.yes') : t('myWorkTable.formView.no')}
           </span>
         </label>
       );
@@ -102,7 +102,7 @@ const FieldRenderer: React.FC<{
           onChange={(e) => onChange(e.target.value || null)}
           className={baseInput}
         >
-          <option value="">{isPl ? '— Wybierz —' : '— Select —'}</option>
+          <option value="">{t('myWorkTable.formView.selectPlaceholder')}</option>
           {(col.options || []).map((opt) => (
             <option key={opt} value={opt}>
               {opt}
@@ -182,7 +182,7 @@ const FieldRenderer: React.FC<{
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
           className={baseInput}
-          placeholder={isPl ? 'Wpisz wartość...' : 'Enter value...'}
+          placeholder={t('myWorkTable.formView.enterValuePlaceholder')}
         />
       );
   }
@@ -195,7 +195,7 @@ export const FormView: React.FC<FormViewProps> = ({
   onRecordUpdate,
   onRecordCreate,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [newRecordData, setNewRecordData] = useState<Record<string, unknown> | null>(null);
@@ -257,14 +257,14 @@ export const FormView: React.FC<FormViewProps> = ({
         <div className="w-16 h-16 rounded-2xl bg-c-surface-raised flex items-center justify-center">
           <FileText size={28} className="text-c-text-muted" />
         </div>
-        <span className="text-sm font-medium">{isPl ? 'Brak rekordów' : 'No records'}</span>
+        <span className="text-sm font-medium">{t('myWorkTable.formView.noRecords')}</span>
         {onRecordCreate && (
           <button
             onClick={startCreate}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
           >
             <Plus size={14} />
-            {isPl ? 'Utwórz pierwszy rekord' : 'Create first record'}
+            {t('myWorkTable.formView.createFirstRecord')}
           </button>
         )}
       </div>
@@ -285,9 +285,7 @@ export const FormView: React.FC<FormViewProps> = ({
           </button>
           <span className="text-xs font-bold text-c-text-muted min-w-[80px] text-center">
             {isCreating
-              ? isPl
-                ? 'Nowy rekord'
-                : 'New record'
+              ? t('myWorkTable.formView.newRecord')
               : `${currentIndex + 1} / ${records.length}`}
           </span>
           <button
@@ -306,13 +304,13 @@ export const FormView: React.FC<FormViewProps> = ({
                 onClick={cancelCreate}
                 className="px-3 py-1.5 rounded-xl text-xs font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
               >
-                {isPl ? 'Anuluj' : 'Cancel'}
+                {t('myWorkTable.formView.cancel')}
               </button>
               <button
                 onClick={handleCreate}
                 className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
               >
-                {isPl ? 'Zapisz' : 'Save'}
+                {t('myWorkTable.formView.save')}
               </button>
             </>
           ) : onRecordCreate ? (
@@ -321,7 +319,7 @@ export const FormView: React.FC<FormViewProps> = ({
               className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
             >
               <Plus size={12} />
-              {isPl ? 'Nowy' : 'New'}
+              {t('myWorkTable.formView.new')}
             </button>
           ) : null}
         </div>
@@ -346,7 +344,6 @@ export const FormView: React.FC<FormViewProps> = ({
                   col={col}
                   value={displayData[col.key]}
                   onChange={(val) => handleFieldChange(col.key, val)}
-                  isPl={isPl}
                 />
               </div>
             );

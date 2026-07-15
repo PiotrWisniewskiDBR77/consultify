@@ -26893,6 +26893,18 @@
       "columnHeaderAction": "Action",
       "columnHeaderOwner": "Owner",
       "frameworkApplied": "Framework \"{{name}}\" applied"
+    },
+    "formView": {
+      "enterValuePlaceholder": "Enter value...",
+      "yes": "Yes",
+      "no": "No",
+      "selectPlaceholder": "— Select —",
+      "noRecords": "No records",
+      "createFirstRecord": "Create first record",
+      "newRecord": "New record",
+      "cancel": "Cancel",
+      "save": "Save",
+      "new": "New"
     }
   },
   "myWorkNotebook": {

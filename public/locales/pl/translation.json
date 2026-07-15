@@ -27953,6 +27953,18 @@
       "columnHeaderAction": "Działanie",
       "columnHeaderOwner": "Właściciel",
       "frameworkApplied": "Framework \"{{name}}\" zastosowany"
+    },
+    "formView": {
+      "enterValuePlaceholder": "Wpisz wartość...",
+      "yes": "Tak",
+      "no": "Nie",
+      "selectPlaceholder": "— Wybierz —",
+      "noRecords": "Brak rekordów",
+      "createFirstRecord": "Utwórz pierwszy rekord",
+      "newRecord": "Nowy rekord",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "new": "Nowy"
     }
   },
   "myWorkNotebook": {
