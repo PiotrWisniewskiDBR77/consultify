@@ -6343,6 +6343,22 @@
       "title": "Brak assessmentów",
       "createFirst": "Utwórz pierwszy assessment",
       "description": "Utwórz pierwszy assessment, aby rozpocząć diagnozę."
+    },
+    "team": {
+      "addModal": {
+        "title": "Dodaj osobę do zespołu",
+        "subtitle": "Wyszukaj i dodaj użytkowników do zespołu",
+        "searchLabel": "Szukaj użytkowników",
+        "searchPlaceholder": "Szukaj po nazwie lub email…",
+        "selectRole": "Wybierz rolę",
+        "adding": "Dodaję…",
+        "add": "Dodaj"
+      },
+      "outsideOrg": "Poza organizacją",
+      "inOrg": "W organizacji",
+      "partner": "Partner",
+      "consultant": "Konsultant",
+      "organizationColumn": "Organizacja"
     }
   },
   "initiatives": {

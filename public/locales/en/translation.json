@@ -7108,6 +7108,22 @@
       "title": "No assessments yet",
       "createFirst": "Create First Assessment",
       "description": "Create your first assessment to start the diagnosis."
+    },
+    "team": {
+      "addModal": {
+        "title": "Add Team Member",
+        "subtitle": "Search and add users to the team",
+        "searchLabel": "Search Users",
+        "searchPlaceholder": "Search by name or email...",
+        "selectRole": "Select Role",
+        "adding": "Adding...",
+        "add": "Add Member"
+      },
+      "outsideOrg": "Outside org",
+      "inOrg": "In org",
+      "partner": "Partner",
+      "consultant": "Consultant",
+      "organizationColumn": "Organization"
     }
   },
   "initiatives": {
