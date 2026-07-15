@@ -215,14 +215,15 @@ const SchemaContextSummary: React.FC<{
   schema: DiffTable[];
   isPl: boolean;
 }> = ({ schema, isPl }) => {
+  const { t } = useTranslation();
   if (schema.length === 0) return null;
   const totalFields = schema.reduce((sum, t) => sum + t.fields.length, 0);
   return (
     <div className="flex items-center gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface-raised">
       <Database size={12} className="text-c-text-secondary" />
       <span className="text-[10px] text-c-text-secondary">
-        {isPl ? 'Aktualny schemat' : 'Current schema'}: {schema.length} {isPl ? 'tabel' : 'tables'},{' '}
-        {totalFields} {isPl ? 'pól' : 'fields'}
+        {t('myWorkTable.chatToSchemaPanel.currentSchema')}: {schema.length} {t('myWorkTable.chatToSchemaPanel.tables')},{' '}
+        {totalFields} {t('myWorkTable.chatToSchemaPanel.fields')}
       </span>
       <div className="flex items-center gap-1 ml-auto">
         {schema.slice(0, 3).map((t) => (
@@ -245,6 +246,7 @@ const ProposalHistoryList: React.FC<{
   history: ProposalHistoryEntry[];
   isPl: boolean;
 }> = ({ history, isPl }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   if (history.length === 0) return null;
@@ -256,7 +258,7 @@ const ProposalHistoryList: React.FC<{
         className="flex items-center gap-1.5 px-4 py-2 w-full text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary transition-colors"
       >
         <History size={12} />
-        {isPl ? 'Historia propozycji' : 'Proposal history'} ({history.length})
+        {t('myWorkTable.chatToSchemaPanel.proposalHistory')} ({history.length})
         {expanded ? (
           <ChevronDown size={10} className="ml-auto" />
         ) : (
@@ -310,7 +312,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
   mode: modeProp,
 }) => {
   const mode = modeProp ?? (slideOver ? 'slideOver' : 'modal');
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const {
@@ -365,7 +367,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
         {
           id: `ai-${Date.now()}`,
           role: 'ai' as const,
-          content: summary || (isPl ? 'Oto moja propozycja:' : 'Here is my proposal:'),
+          content: summary || (t('myWorkTable.chatToSchemaPanel.hereIsMyProposal')),
           timestamp: new Date(),
         },
       ]);
@@ -473,9 +475,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               status: o.status === 'running' ? ('failed' as OperationStatus) : o.status,
               error:
                 o.status === 'running'
-                  ? isPl
-                    ? 'Operacja nie powiodła się'
-                    : 'Operation failed'
+                  ? t('myWorkTable.chatToSchemaPanel.operationFailed')
                   : undefined,
             })) ?? null
         );
@@ -524,19 +524,28 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
   }, [clearProposal, onClose]);
 
   // Quick action chips
-  const quickActions = isPl
-    ? [
-        { label: 'Nowa tabela', icon: <Table2 size={10} />, text: 'Utwórz nową tabelę ' },
-        { label: 'Dodaj kolumny', icon: <Plus size={10} />, text: 'Dodaj kolumny do tabeli ' },
-        { label: 'Utwórz widok', icon: <Sparkles size={10} />, text: 'Utwórz widok dla tabeli ' },
-        { label: 'Importuj dane', icon: <Upload size={10} />, text: 'Importuj dane do tabeli ' },
-      ]
-    : [
-        { label: 'New table', icon: <Table2 size={10} />, text: 'Create a new table ' },
-        { label: 'Add columns', icon: <Plus size={10} />, text: 'Add columns to table ' },
-        { label: 'Create view', icon: <Sparkles size={10} />, text: 'Create a view for table ' },
-        { label: 'Import data', icon: <Upload size={10} />, text: 'Import data into table ' },
-      ];
+  const quickActions = [
+    {
+      label: t('myWorkTable.chatToSchemaPanel.quickActionNewTableLabel'),
+      icon: <Table2 size={10} />,
+      text: t('myWorkTable.chatToSchemaPanel.quickActionNewTableText'),
+    },
+    {
+      label: t('myWorkTable.chatToSchemaPanel.quickActionAddColumnsLabel'),
+      icon: <Plus size={10} />,
+      text: t('myWorkTable.chatToSchemaPanel.quickActionAddColumnsText'),
+    },
+    {
+      label: t('myWorkTable.chatToSchemaPanel.quickActionCreateViewLabel'),
+      icon: <Sparkles size={10} />,
+      text: t('myWorkTable.chatToSchemaPanel.quickActionCreateViewText'),
+    },
+    {
+      label: t('myWorkTable.chatToSchemaPanel.quickActionImportDataLabel'),
+      icon: <Upload size={10} />,
+      text: t('myWorkTable.chatToSchemaPanel.quickActionImportDataText'),
+    },
+  ];
 
   // -------------------------------------------------------------------------
   // Render: Panel content
@@ -549,7 +558,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
       <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle bg-c-accent-soft flex-shrink-0">
         <Sparkles size={16} className="text-c-accent" />
         <span className="text-sm font-semibold text-c-text">
-          {isPl ? 'AI Kreator Tabel' : 'AI Table Builder'}
+          {t('myWorkTable.chatToSchemaPanel.aiTableBuilder')}
         </span>
         {companyContext?.workspaceName && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-c-accent-soft text-c-accent">
@@ -575,12 +584,10 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               <Table2 size={24} className="text-c-accent" />
             </div>
             <p className="text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Opisz swoją tabelę' : 'Describe your table'}
+              {t('myWorkTable.chatToSchemaPanel.describeYourTable')}
             </p>
             <p className="text-xs text-c-text-secondary max-w-[280px]">
-              {isPl
-                ? 'Powiedz mi czego potrzebujesz, a zaproponuję strukturę tabeli z przykładowymi danymi.'
-                : "Tell me what you need and I'll propose a table structure with sample data."}
+              {t('myWorkTable.chatToSchemaPanel.tellMeWhatYouNeed')}
             </p>
           </div>
         )}
@@ -607,7 +614,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-c-surface-raised px-3.5 py-2.5">
               <Loader2 size={14} className="animate-spin text-c-accent" />
               <span className="text-xs text-c-text-muted">
-                {isPl ? 'Generuję propozycję...' : 'Generating proposal...'}
+                {t('myWorkTable.chatToSchemaPanel.generatingProposal')}
               </span>
             </div>
           </div>
@@ -687,12 +694,8 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               }}
               placeholder={
                 proposal
-                  ? isPl
-                    ? 'Doprecyzuj... np. "Dodaj kolumnę priorytet"'
-                    : 'Refine... e.g. "Add a priority column"'
-                  : isPl
-                    ? 'Opisz czego potrzebujesz...'
-                    : 'Describe what you need...'
+                  ? t('myWorkTable.chatToSchemaPanel.refineEGAddA')
+                  : t('myWorkTable.chatToSchemaPanel.describeWhatYouNeed')
               }
               disabled={loading}
               rows={1}

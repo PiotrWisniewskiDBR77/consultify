@@ -26975,6 +26975,56 @@
       "rollupAggregations": "Rollup agregacje",
       "aggregateDataFromRelatedTables": "Agreguj dane z powiązanych tabel",
       "addRollupColumn": "Dodaj kolumnę rollup"
+    },
+    "chatToSchemaPanel": {
+      "currentSchema": "Aktualny schemat",
+      "tables": "tabel",
+      "fields": "pól",
+      "proposalHistory": "Historia propozycji",
+      "hereIsMyProposal": "Oto moja propozycja:",
+      "operationFailed": "Operacja nie powiodła się",
+      "aiTableBuilder": "AI Kreator Tabel",
+      "describeYourTable": "Opisz swoją tabelę",
+      "tellMeWhatYouNeed": "Powiedz mi czego potrzebujesz, a zaproponuję strukturę tabeli z przykładowymi danymi.",
+      "generatingProposal": "Generuję propozycję...",
+      "refineEGAddA": "Doprecyzuj... np. \"Dodaj kolumnę priorytet\"",
+      "describeWhatYouNeed": "Opisz czego potrzebujesz...",
+      "quickActionNewTableLabel": "Nowa tabela",
+      "quickActionNewTableText": "Utwórz nową tabelę ",
+      "quickActionAddColumnsLabel": "Dodaj kolumny",
+      "quickActionAddColumnsText": "Dodaj kolumny do tabeli ",
+      "quickActionCreateViewLabel": "Utwórz widok",
+      "quickActionCreateViewText": "Utwórz widok dla tabeli ",
+      "quickActionImportDataLabel": "Importuj dane",
+      "quickActionImportDataText": "Importuj dane do tabeli "
+    },
+    "auditTrailPanel": {
+      "revisionHistory": "Historia zmian",
+      "notAvailableForThisTable": "Niedostępne dla tej tabeli",
+      "revisionHistoryIsOnlyAvailable": "Historia zmian jest dostępna tylko dla tabel platformowych.",
+      "filterByUser": "Filtruj po użytkowniku…",
+      "selectARecord": "Wybierz rekord",
+      "selectARecordToView": "Wybierz rekord, aby zobaczyć historię zmian.",
+      "noRevisionHistory": "Brak historii zmian",
+      "changesToThisRecordWill": "Zmiany tego rekordu pojawią się tutaj po pierwszej edycji.",
+      "loadMore": "Załaduj więcej",
+      "justNow": "teraz",
+      "minutesAgo": "{{value}} min temu",
+      "hoursAgo": "{{value}} godz. temu",
+      "daysAgo": "{{value}} dn. temu",
+      "unknown": "Nieznany",
+      "changes": "zmian"
+    },
+    "filterBuilder": {
+      "select": "Wybierz…",
+      "checked": "Zaznaczony",
+      "unchecked": "Niezaznaczony",
+      "filters": "Filtry",
+      "clearAll": "Wyczyść",
+      "noFiltersAddOne": "Brak filtrów. Dodaj pierwszy.",
+      "and": "I",
+      "or": "LUB",
+      "addFilter": "Dodaj filtr"
     }
   }
 }

@@ -25899,6 +25899,56 @@
       "rollupAggregations": "Rollup Aggregations",
       "aggregateDataFromRelatedTables": "Aggregate data from related tables",
       "addRollupColumn": "Add rollup column"
+    },
+    "chatToSchemaPanel": {
+      "currentSchema": "Current schema",
+      "tables": "tables",
+      "fields": "fields",
+      "proposalHistory": "Proposal history",
+      "hereIsMyProposal": "Here is my proposal:",
+      "operationFailed": "Operation failed",
+      "aiTableBuilder": "AI Table Builder",
+      "describeYourTable": "Describe your table",
+      "tellMeWhatYouNeed": "Tell me what you need and I'll propose a table structure with sample data.",
+      "generatingProposal": "Generating proposal...",
+      "refineEGAddA": "Refine... e.g. \"Add a priority column\"",
+      "describeWhatYouNeed": "Describe what you need...",
+      "quickActionNewTableLabel": "New table",
+      "quickActionNewTableText": "Create a new table ",
+      "quickActionAddColumnsLabel": "Add columns",
+      "quickActionAddColumnsText": "Add columns to table ",
+      "quickActionCreateViewLabel": "Create view",
+      "quickActionCreateViewText": "Create a view for table ",
+      "quickActionImportDataLabel": "Import data",
+      "quickActionImportDataText": "Import data into table "
+    },
+    "auditTrailPanel": {
+      "revisionHistory": "Revision History",
+      "notAvailableForThisTable": "Not available for this table",
+      "revisionHistoryIsOnlyAvailable": "Revision history is only available for platform tables.",
+      "filterByUser": "Filter by user…",
+      "selectARecord": "Select a record",
+      "selectARecordToView": "Select a record to view its change history.",
+      "noRevisionHistory": "No revision history",
+      "changesToThisRecordWill": "Changes to this record will appear here after the first edit.",
+      "loadMore": "Load more",
+      "justNow": "just now",
+      "minutesAgo": "{{value}} min ago",
+      "hoursAgo": "{{value}}h ago",
+      "daysAgo": "{{value}}d ago",
+      "unknown": "Unknown",
+      "changes": "changes"
+    },
+    "filterBuilder": {
+      "select": "Select…",
+      "checked": "Checked",
+      "unchecked": "Unchecked",
+      "filters": "Filters",
+      "clearAll": "Clear all",
+      "noFiltersAddOne": "No filters. Add one.",
+      "and": "AND",
+      "or": "OR",
+      "addFilter": "Add filter"
     }
   }
 }

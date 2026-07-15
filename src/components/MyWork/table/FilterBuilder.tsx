@@ -200,7 +200,7 @@ const DateValueInput: React.FC<ValueInputProps> = ({ value, operator, onChange, 
         onChange={(e) => onChange(e.target.value)}
         className={inputCls}
       >
-        <option value="">{isPl ? 'Wybierz…' : 'Select…'}</option>
+        <option value="">{t('myWorkTable.filterBuilder.select')}</option>
         {DATE_WITHIN_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {isPl ? opt.labelPl : opt.labelEn}
@@ -222,16 +222,19 @@ const DateValueInput: React.FC<ValueInputProps> = ({ value, operator, onChange, 
   );
 };
 
-const CheckboxValueInput: React.FC<ValueInputProps> = ({ value, onChange, isPl }) => (
-  <select
-    value={value === true || value === 'true' ? 'true' : 'false'}
-    onChange={(e) => onChange(e.target.value === 'true')}
-    className={inputCls}
-  >
-    <option value="true">{isPl ? 'Zaznaczony' : 'Checked'}</option>
-    <option value="false">{isPl ? 'Niezaznaczony' : 'Unchecked'}</option>
-  </select>
-);
+const CheckboxValueInput: React.FC<ValueInputProps> = ({ value, onChange, isPl }) => {
+  const { t } = useTranslation();
+  return (
+    <select
+      value={value === true || value === 'true' ? 'true' : 'false'}
+      onChange={(e) => onChange(e.target.value === 'true')}
+      className={inputCls}
+    >
+      <option value="true">{t('myWorkTable.filterBuilder.checked')}</option>
+      <option value="false">{t('myWorkTable.filterBuilder.unchecked')}</option>
+    </select>
+  );
+};
 
 const SelectValueInput: React.FC<ValueInputProps> = ({
   field,
@@ -240,6 +243,7 @@ const SelectValueInput: React.FC<ValueInputProps> = ({
   onChange,
   isPl,
 }) => {
+  const { t } = useTranslation();
   const options = getSelectOptions(field);
   const isMulti = isMultiValueOperator(operator);
 
@@ -256,7 +260,7 @@ const SelectValueInput: React.FC<ValueInputProps> = ({
       onChange={(e) => onChange(e.target.value)}
       className={inputCls}
     >
-      <option value="">{isPl ? 'Wybierz…' : 'Select…'}</option>
+      <option value="">{t('myWorkTable.filterBuilder.select')}</option>
       {options.map((opt) => (
         <option key={opt.id} value={opt.name ?? opt.id}>
           {opt.name ?? opt.id}
@@ -281,6 +285,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   onChange,
   isPl,
 }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -306,7 +311,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         className={`${inputCls} text-left flex items-center justify-between gap-1`}
       >
         <span className="truncate">
-          {selected.length > 0 ? selected.join(', ') : isPl ? 'Wybierz…' : 'Select…'}
+          {selected.length > 0 ? selected.join(', ') : t('myWorkTable.filterBuilder.select')}
         </span>
         <ChevronDown size={10} className="text-c-text-secondary flex-shrink-0" />
       </button>
@@ -363,7 +368,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   onChange,
   fields,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const fieldMap = useMemo(() => new Map(fields.map((f) => [f.id, f])), [fields]);
@@ -441,7 +446,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-c-text">{isPl ? 'Filtry' : 'Filters'}</span>
+          <span className="text-xs font-bold text-c-text">{t('myWorkTable.filterBuilder.filters')}</span>
           {filters.rules.length > 1 && (
             <button
               type="button"
@@ -459,7 +464,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               onClick={clearAll}
               className="text-[10px] text-c-text-secondary hover:text-danger-500 transition-colors px-1"
             >
-              {isPl ? 'Wyczyść' : 'Clear all'}
+              {t('myWorkTable.filterBuilder.clearAll')}
             </button>
           )}
           <button
@@ -476,7 +481,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       <div className="px-4 py-3 space-y-2 max-h-[360px] overflow-auto">
         {filters.rules.length === 0 && (
           <p className="text-[11px] text-c-text-secondary text-center py-4">
-            {isPl ? 'Brak filtrów. Dodaj pierwszy.' : 'No filters. Add one.'}
+            {t('myWorkTable.filterBuilder.noFiltersAddOne')}
           </p>
         )}
         {filters.rules.map((rule, idx) => {
@@ -491,7 +496,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               {/* Logic label */}
               {idx > 0 ? (
                 <span className="text-[9px] font-bold text-c-text-secondary w-8 text-center flex-shrink-0 pt-2">
-                  {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : isPl ? 'LUB' : 'OR'}
+                  {filters.logic === 'and' ? (t('myWorkTable.filterBuilder.and')) : t('myWorkTable.filterBuilder.or')}
                 </span>
               ) : (
                 <span className="w-8 flex-shrink-0" />
@@ -559,7 +564,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
           className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
-          {isPl ? 'Dodaj filtr' : 'Add filter'}
+          {t('myWorkTable.filterBuilder.addFilter')}
         </button>
       </div>
     </div>
