@@ -368,7 +368,8 @@ function safeScaleRubrics(rubrics: ConsultingRubric[] | undefined | null): Consu
     if (!seen.has(fallback.dimension)) out.push(fallback);
   }
   out.sort(
-    (a, b) => CONSULTING_DIMENSIONS.indexOf(a.dimension) - CONSULTING_DIMENSIONS.indexOf(b.dimension)
+    (a, b) =>
+      CONSULTING_DIMENSIONS.indexOf(a.dimension) - CONSULTING_DIMENSIONS.indexOf(b.dimension)
   );
   return out;
 }
@@ -381,9 +382,7 @@ function safeTask(task: JudgeTaskInput | undefined | null): JudgeTaskInput {
     taskId: safeString(task.taskId),
     prompt: clampString(safeString(task.prompt), MAX_PROMPT_CHARS),
     context:
-      typeof task.context === 'string'
-        ? clampString(task.context, MAX_CONTEXT_CHARS)
-        : undefined,
+      typeof task.context === 'string' ? clampString(task.context, MAX_CONTEXT_CHARS) : undefined,
     modelAnswer: clampString(safeString(task.modelAnswer), MAX_MODEL_ANSWER_CHARS),
     binaryCriteria: safeBinaryCriteria(task.binaryCriteria),
     scaleRubrics: Array.isArray(task.scaleRubrics) ? task.scaleRubrics : undefined,

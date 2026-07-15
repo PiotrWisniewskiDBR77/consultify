@@ -52,7 +52,8 @@ function binaryPassAll(criteria: BinaryCriterion[]): BinaryCriterionResult[] {
 function taskFixture(overrides: Partial<JudgeTaskInput> = {}): JudgeTaskInput {
   return {
     taskId: 'drd-1A3-001',
-    prompt: 'The client reports inconsistent lead qualification across regions. Diagnose and recommend.',
+    prompt:
+      'The client reports inconsistent lead qualification across regions. Diagnose and recommend.',
     context: 'Sales team uses 4 different scoring sheets across EMEA/APAC/AMER/LATAM regions.',
     modelAnswer:
       'Recommendation: consolidate to one scoring rubric owned by the RevOps lead within Q3, ' +
@@ -264,7 +265,9 @@ describe('parseJudgeResponse', () => {
   });
 
   it('Test 15: rejects a missing binary result for an expected criterion', () => {
-    const partial: BinaryCriterionResult[] = [{ id: 'cites-evidence', pass: true, rationale: 'ok' }];
+    const partial: BinaryCriterionResult[] = [
+      { id: 'cites-evidence', pass: true, rationale: 'ok' },
+    ];
     const result = parseJudgeResponse(
       jsonResponseFrom(fullScores(4), partial),
       DEFAULT_CONSULTING_RUBRICS,
@@ -361,7 +364,9 @@ describe('gradeAllPass', () => {
   });
 
   it('Test 21: a missing result counts as failed — never assumes a pass', () => {
-    const results: BinaryCriterionResult[] = [{ id: 'cites-evidence', pass: true, rationale: 'ok' }];
+    const results: BinaryCriterionResult[] = [
+      { id: 'cites-evidence', pass: true, rationale: 'ok' },
+    ];
     const result = gradeAllPass(results, criteria);
     expect(result.verdict).toBe('FAIL');
     expect(result.failedCriteria).toEqual(['names-owner']);
@@ -509,7 +514,10 @@ describe('judgeConsultingTask', () => {
   });
 
   it('Test 33: judge result round-trips through JSON.stringify cleanly', async () => {
-    const adapter = mockLlmAdapter({ scores: fullScores(3.5), binaryResults: binaryPassAll(criteria) });
+    const adapter = mockLlmAdapter({
+      scores: fullScores(3.5),
+      binaryResults: binaryPassAll(criteria),
+    });
     const result = await judgeConsultingTask({ adapter, task: taskFixture() });
     const json = JSON.stringify(result);
     const parsed = JSON.parse(json) as JudgeResult;
