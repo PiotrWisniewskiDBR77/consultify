@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../services/api';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
+import { isBusinessCaseAdvisoryEnabled } from '../utils/businessCaseAdvisoryFlag';
 import {
   FullInitiative,
   InitiativeComment,
@@ -47,6 +48,7 @@ import {
   StrategicIntent,
   User,
 } from '../types';
+import { InitiativeBusinessCaseCard } from './Economics/InitiativeBusinessCaseCard';
 import { InitiativeFinancialIntegration } from './Economics/InitiativeFinancialIntegration';
 import { InitiativeIntelligenceTab } from './InitiativeIntelligenceTab';
 import { InitiativeTasksTab } from './InitiativeTasksTab';
@@ -2165,6 +2167,24 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     }}
                   />
                 </div>
+
+                {/* AI-assisted business case (Oxford O4). Default OFF —
+                    renders nothing until the flag is flipped after owner
+                    acceptance on screenshots (CLAUDE.md rule #7). */}
+                {isBusinessCaseAdvisoryEnabled() && (
+                  <div className="col-span-2 mt-4">
+                    <InitiativeBusinessCaseCard
+                      initiative={{
+                        id: initiative.id,
+                        name: initiative.name,
+                        problem: initiative.problemStatement || initiative.description,
+                        costCapex: initiative.costCapex,
+                        costOpex: initiative.costOpex,
+                        annualBenefit: initiative.annualBenefit,
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
