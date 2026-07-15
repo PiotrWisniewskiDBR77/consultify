@@ -86,7 +86,7 @@ type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
 interface ToolSlot {
   id: string;
   icon: IconComponent;
-  labelPl: string;
+  tkey: string;
   labelEn: string;
   action?: string;
   popover?: PopoverId;
@@ -96,50 +96,50 @@ const SHARED_TOP: ToolSlot[] = [
   {
     id: 'pointer_toggle',
     icon: MousePointer2,
-    labelPl: 'Tryb kursora',
+    tkey: 'myWorkMindmap.toolbar.cursorMode',
     labelEn: 'Cursor mode',
     action: 'mm_toggle_pointer',
   },
   // #6j: AI na samej górze raila, zaraz pod wskaźnikiem trybu chwytu —
   // najcenniejsza część raila, ma być widoczna od razu z góry.
-  { id: 'ai', icon: Sparkles, labelPl: 'AI', labelEn: 'AI', popover: 'ai' },
+  { id: 'ai', icon: Sparkles, tkey: 'myWorkMindmap.toolbar.ai', labelEn: 'AI', popover: 'ai' },
   {
     id: 'templates',
     icon: LayoutTemplate,
-    labelPl: 'Szablony',
+    tkey: 'myWorkMindmap.toolbar.templates',
     labelEn: 'Templates',
     popover: 'templates',
   },
 ];
 
 const MM_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'mm_add_frame' },
-  { id: 'add', icon: GitBranch, labelPl: 'Dodaj węzeł', labelEn: 'Add node', popover: 'addNode' },
+  { id: 'frame', icon: Frame, tkey: 'myWorkMindmap.toolbar.mm.frame', labelEn: 'Frame', action: 'mm_add_frame' },
+  { id: 'add', icon: GitBranch, tkey: 'myWorkMindmap.toolbar.mm.addNode', labelEn: 'Add node', popover: 'addNode' },
   {
     id: 'knowledge',
     icon: FileText,
-    labelPl: 'Wiedza',
+    tkey: 'myWorkMindmap.toolbar.mm.knowledge',
     labelEn: 'Knowledge',
     popover: 'knowledge',
   },
   {
     id: 'comment',
     icon: MessageSquare,
-    labelPl: 'Komentarze',
+    tkey: 'myWorkMindmap.toolbar.mm.comments',
     labelEn: 'Comments',
     action: 'mm_comments',
   },
   {
     id: 'connect',
     icon: Link2,
-    labelPl: 'Połącz — przeciągnij z uchwytu jednego węzła do drugiego',
+    tkey: 'myWorkMindmap.toolbar.mm.connect',
     labelEn: 'Connect — drag from one node handle to another',
     action: 'mm_connect_mode',
   },
   {
     id: 'present',
     icon: Play,
-    labelPl: 'Prezentacja',
+    tkey: 'myWorkMindmap.toolbar.mm.present',
     labelEn: 'Present',
     action: 'mm_presentation',
   },
@@ -149,49 +149,49 @@ const WB_CONTEXT_SLOTS: ToolSlot[] = [
   {
     id: 'sticky',
     icon: StickyNote,
-    labelPl: 'Karteczka',
+    tkey: 'myWorkMindmap.toolbar.wb.sticky',
     labelEn: 'Sticky',
     action: 'wb_add_sticky',
   },
-  { id: 'text', icon: Type, labelPl: 'Tekst', labelEn: 'Text', action: 'wb_add_text' },
+  { id: 'text', icon: Type, tkey: 'myWorkMindmap.toolbar.wb.text', labelEn: 'Text', action: 'wb_add_text' },
   {
     id: 'shape',
     icon: Square,
-    labelPl: 'Kształt',
+    tkey: 'myWorkMindmap.toolbar.wb.shape',
     labelEn: 'Shape',
     action: 'wb_add_shape_rectangle',
   },
-  { id: 'pen', icon: Pen, labelPl: 'Rysuj', labelEn: 'Draw', action: 'wb_mode_draw' },
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
+  { id: 'pen', icon: Pen, tkey: 'myWorkMindmap.toolbar.wb.draw', labelEn: 'Draw', action: 'wb_mode_draw' },
+  { id: 'frame', icon: Frame, tkey: 'myWorkMindmap.toolbar.wb.frame', labelEn: 'Frame', action: 'wb_add_frame' },
 ];
 
 const PF_CONTEXT_SLOTS: ToolSlot[] = [
   {
     id: 'start',
     icon: Workflow,
-    labelPl: 'Start/End',
+    tkey: 'myWorkMindmap.toolbar.pf.startEnd',
     labelEn: 'Start/End',
     action: 'pf_add_start',
   },
-  { id: 'task', icon: Square, labelPl: 'Task', labelEn: 'Task', action: 'pf_add_action' },
+  { id: 'task', icon: Square, tkey: 'myWorkMindmap.toolbar.pf.task', labelEn: 'Task', action: 'pf_add_action' },
   {
     id: 'decision',
     icon: Diamond,
-    labelPl: 'Decyzja',
+    tkey: 'myWorkMindmap.toolbar.pf.decision',
     labelEn: 'Decision',
     action: 'pf_add_decision',
   },
-  { id: 'lane', icon: Plus, labelPl: 'Lane', labelEn: 'Lane', action: 'pf_add_lane' },
+  { id: 'lane', icon: Plus, tkey: 'myWorkMindmap.toolbar.pf.lane', labelEn: 'Lane', action: 'pf_add_lane' },
   // Frame removed: Process Flow has no frame concept (lanes group instead).
   // It emitted dead `wb_add_frame` (no PF handler) = no-op copy-paste from whiteboard.
 ];
 
 const TBL_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'row', icon: Plus, labelPl: 'Nowy wiersz', labelEn: 'Add row', action: 'tbl_add_row' },
-  { id: 'cols', icon: Columns3, labelPl: 'Kolumny', labelEn: 'Columns', action: 'tbl_add_column' },
-  { id: 'grid', icon: LayoutGrid, labelPl: 'Widok', labelEn: 'View', action: 'tbl_grid' },
-  { id: 'filter', icon: Filter, labelPl: 'Filtruj', labelEn: 'Filter', action: 'tbl_filter' },
-  { id: 'summary', icon: Frame, labelPl: 'Dashboard', labelEn: 'Dashboard', action: 'tbl_summary' },
+  { id: 'row', icon: Plus, tkey: 'myWorkMindmap.toolbar.tbl.addRow', labelEn: 'Add row', action: 'tbl_add_row' },
+  { id: 'cols', icon: Columns3, tkey: 'myWorkMindmap.toolbar.tbl.columns', labelEn: 'Columns', action: 'tbl_add_column' },
+  { id: 'grid', icon: LayoutGrid, tkey: 'myWorkMindmap.toolbar.tbl.view', labelEn: 'View', action: 'tbl_grid' },
+  { id: 'filter', icon: Filter, tkey: 'myWorkMindmap.toolbar.tbl.filter', labelEn: 'Filter', action: 'tbl_filter' },
+  { id: 'summary', icon: Frame, tkey: 'myWorkMindmap.toolbar.tbl.dashboard', labelEn: 'Dashboard', action: 'tbl_summary' },
 ];
 
 const CONTEXT_SLOTS: Record<CanvasToolType, ToolSlot[]> = {
@@ -205,14 +205,14 @@ const SHARED_BOTTOM: ToolSlot[] = [
   {
     id: 'import',
     icon: Upload,
-    labelPl: 'Import / Eksport',
+    tkey: 'myWorkMindmap.toolbar.importExport',
     labelEn: 'Import / Export',
     popover: 'importExport',
   },
   {
     id: 'more',
     icon: MoreHorizontal,
-    labelPl: 'Więcej narzędzi',
+    tkey: 'myWorkMindmap.toolbar.moreTools',
     labelEn: 'More tools',
     popover: 'more',
   },
@@ -228,8 +228,20 @@ const UNDO_REDO_PREFIX: Record<CanvasToolType, string> = {
 function getUndoRedoSlots(activeTool: CanvasToolType): ToolSlot[] {
   const prefix = UNDO_REDO_PREFIX[activeTool] || 'mm';
   return [
-    { id: 'undo', icon: Undo2, labelPl: 'Cofnij', labelEn: 'Undo', action: `${prefix}_undo` },
-    { id: 'redo', icon: Redo2, labelPl: 'Ponów', labelEn: 'Redo', action: `${prefix}_redo` },
+    {
+      id: 'undo',
+      icon: Undo2,
+      tkey: 'myWorkMindmap.toolbar.undo',
+      labelEn: 'Undo',
+      action: `${prefix}_undo`,
+    },
+    {
+      id: 'redo',
+      icon: Redo2,
+      tkey: 'myWorkMindmap.toolbar.redo',
+      labelEn: 'Redo',
+      action: `${prefix}_redo`,
+    },
   ];
 }
 
@@ -352,18 +364,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     const isModeSlot =
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect';
     const slotTitle =
-      activeTool === 'mindmap' && slot.id === 'connect'
-        ? interactionMode === 'connect'
-          ? t(
-              'ideas.mindmap.finishConnectingReturnSelect',
-              'Finish connecting and return to select'
-            )
-          : isPl
-            ? slot.labelPl
-            : slot.labelEn
-        : isPl
-          ? slot.labelPl
-          : slot.labelEn;
+      activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect'
+        ? t(
+            'ideas.mindmap.finishConnectingReturnSelect',
+            'Finish connecting and return to select'
+          )
+        : t(slot.tkey, slot.labelEn);
     const isActive = isModeSlot || (openPopover === slot.popover && slot.popover != null);
     return (
       <div key={slot.id} className="relative">
@@ -502,8 +508,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             <button
               onClick={() => !isDisabled && slot.action && onAction(slot.action)}
               disabled={isDisabled}
-              title={isPl ? slot.labelPl : slot.labelEn}
-              aria-label={isPl ? slot.labelPl : slot.labelEn}
+              title={t(slot.tkey, slot.labelEn)}
+              aria-label={t(slot.tkey, slot.labelEn)}
               className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted'
