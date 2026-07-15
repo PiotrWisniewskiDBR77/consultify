@@ -176,19 +176,9 @@ const getConsultingJourneyStage = (stepId?: string) => {
   return 'conversation';
 };
 
-const statusLabel = (
-  status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED',
-  isPolish: boolean
-) =>
-  (
-    ({
-      DRAFT: isPolish ? 'Draft' : 'Draft',
-      REVIEW: isPolish ? 'Review' : 'Review',
-      APPROVED: isPolish ? 'Approved' : 'Approved',
-      GENERATED: isPolish ? 'Generated' : 'Generated',
-      COMPLETED: isPolish ? 'Completed' : 'Completed',
-    }) as const
-  )[status] || status;
+// Status codes are identical in both languages, no translation needed.
+const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED') =>
+  status;
 
 type ToolSaveState = 'saved' | 'saving' | 'dirty' | 'error';
 
@@ -207,18 +197,12 @@ const getPriorityButtonClass = (priority: CommentPriority, isActive: boolean) =>
 const getPriorityLabel = (priority: CommentPriority) =>
   priority === 'high' ? 'High' : priority === 'low' ? 'Low' : 'Normal';
 
-const getPriorityHint = (priority: CommentPriority, isPolish: boolean) =>
+const getPriorityHint = (priority: CommentPriority, t: (key: string) => string) =>
   priority === 'high'
-    ? isPolish
-      ? 'Wymaga natychmiastowej uwagi'
-      : 'Requires immediate attention'
+    ? t('discoveryToolsMain.toolDocumentView.priorityHintHigh')
     : priority === 'low'
-      ? isPolish
-        ? 'Komentarz informacyjny'
-        : 'Informational comment'
-      : isPolish
-        ? 'Komentarz standardowy'
-        : 'Standard comment';
+      ? t('discoveryToolsMain.toolDocumentView.priorityHintLow')
+      : t('discoveryToolsMain.toolDocumentView.priorityHintNormal');
 
 export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   toolType,
@@ -439,9 +423,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         title: `${toolMeta.name} • Tool Report`,
         orientation: 'portrait',
       });
-      toast.success(isPolish ? 'Wyeksportowano PDF' : 'PDF exported');
+      toast.success(t('discoveryToolsMain.toolDocumentView.pDFExported'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się wyeksportować PDF' : 'PDF export failed');
+      toast.error(t('discoveryToolsMain.toolDocumentView.pDFExportFailed'));
     } finally {
       setIsExportingPdf(false);
     }
@@ -505,7 +489,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       }
     } catch (error) {
       console.error('Failed to fetch tool session:', error);
-      toast.error(isPolish ? 'Błąd ładowania sesji' : 'Failed to load session');
+      toast.error(t('discoveryToolsMain.toolDocumentView.failedToLoadSession'));
     } finally {
       setLoading(false);
     }
@@ -554,7 +538,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           setSaveState('saved');
         } catch (error) {
           console.error('Failed to create tool session:', error);
-          toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
+          toast.error(t('discoveryToolsMain.toolDocumentView.failedToCreateSession'));
         }
       }
     };
@@ -642,10 +626,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       const savedAt = new Date().toISOString();
       setLastModified(savedAt);
       setSaveState('saved');
-      toast.success(isPolish ? 'Zapisano' : 'Saved');
+      toast.success(t('discoveryToolsMain.toolDocumentView.saved'));
     } catch {
       setSaveState('error');
-      toast.error(isPolish ? 'Błąd zapisu' : 'Save failed');
+      toast.error(t('discoveryToolsMain.toolDocumentView.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -662,7 +646,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const handleRequestReview = async () => {
     if (!toolSessionId || !completionReady) {
       toast.error(
-        isPolish ? 'Wypełnij wszystkie wymagane elementy' : 'Complete all required items first'
+        t('discoveryToolsMain.toolDocumentView.completeAllRequiredItemsFirst')
       );
       return;
     }
@@ -678,7 +662,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         priority: reviewPriority,
       });
       setToolStatus((result.status || 'REVIEW').toUpperCase() as any);
-      toast.success(isPolish ? 'Wysłano do review' : 'Sent to review');
+      toast.success(t('discoveryToolsMain.toolDocumentView.sentToReview'));
       setShowRequestReviewModal(false);
       setReviewDecisionOwnerId('');
       setReviewDueDate('');
@@ -694,7 +678,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     try {
       const result = await Api.approveTool(toolSessionId);
       setToolStatus((result.status || 'APPROVED').toUpperCase() as any);
-      toast.success(isPolish ? 'Zatwierdzono' : 'Approved');
+      toast.success(t('discoveryToolsMain.toolDocumentView.approved'));
       await fetchAll();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to approve');
@@ -703,12 +687,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const handleSendBack = async () => {
     if (!toolSessionId) return;
-    const reason = prompt(isPolish ? 'Powód odesłania:' : 'Reason for sending back:');
+    const reason = prompt(t('discoveryToolsMain.toolDocumentView.reasonForSendingBack'));
     if (!reason) return;
     try {
       const result = await Api.sendToolBackToDraft(toolSessionId, reason);
       setToolStatus((result.status || 'DRAFT').toUpperCase() as any);
-      toast.success(isPolish ? 'Odesłano do draftu' : 'Sent back to draft');
+      toast.success(t('discoveryToolsMain.toolDocumentView.sentBackToDraft'));
       await fetchAll();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to send back');
@@ -723,7 +707,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   }) => {
     if (!toolSessionId) return;
     if (toolPermissions.canGenerate === false) {
-      toast.error(isPolish ? 'Brak uprawnień' : 'Permission denied');
+      toast.error(t('discoveryToolsMain.toolDocumentView.permissionDenied'));
       return;
     }
     try {
@@ -736,7 +720,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       setGeneratedInitiatives(updated.initiatives || []);
       setShowGenerateModal(false);
       await fetchAll();
-      toast.success(isPolish ? 'Wygenerowano inicjatywy' : 'Initiatives generated');
+      toast.success(t('discoveryToolsMain.toolDocumentView.initiativesGenerated'));
     } catch (err: any) {
       toast.error(err?.message || 'Failed to generate');
     }
@@ -748,9 +732,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     setIsGeneratingAI(true);
     try {
       await runPhaseAiAction(primaryAction.id);
-      toast.success(isPolish ? 'AI zakończyło generowanie' : 'AI generation finished');
+      toast.success(t('discoveryToolsMain.toolDocumentView.aIGenerationFinished'));
     } catch {
-      toast.error(isPolish ? 'Błąd generowania AI' : 'AI generation failed');
+      toast.error(t('discoveryToolsMain.toolDocumentView.aIGenerationFailed'));
     } finally {
       setIsGeneratingAI(false);
     }
@@ -762,10 +746,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       await Api.post(`/api/tools/${toolSessionId}/comments`, { content: content.trim() });
       const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
       setComments(updated || []);
-      toast.success(isPolish ? 'Dodano komentarz' : 'Comment added');
+      toast.success(t('discoveryToolsMain.toolDocumentView.commentAdded'));
       return true;
     } catch {
-      toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      toast.error(t('discoveryToolsMain.toolDocumentView.failedToAddComment'));
       return false;
     }
   };
@@ -776,9 +760,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       await Api.delete(`/api/tools/${toolSessionId}/comments/${commentId}`);
       const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
       setComments(updated || []);
-      toast.success(isPolish ? 'Usunięto komentarz' : 'Comment deleted');
+      toast.success(t('discoveryToolsMain.toolDocumentView.commentDeleted'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+      toast.error(t('discoveryToolsMain.toolDocumentView.failedToDeleteComment'));
     }
   };
 
@@ -839,17 +823,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       const map: Record<string, ActivityTypeMeta> = {
         created: {
           icon: <CheckCircle2 size={10} />,
-          label: isPolish ? 'Utworzono' : 'Created',
+          label: t('discoveryToolsMain.toolDocumentView.created'),
           style: 'border-emerald-300/50 bg-emerald-500/10 text-emerald-600',
         },
         comment: {
           icon: <MessageSquare size={10} />,
-          label: isPolish ? 'Komentarz' : 'Comment',
+          label: t('discoveryToolsMain.toolDocumentView.comment'),
           style: 'border-amber-300/50 bg-amber-500/10 text-amber-600',
         },
         review_requested: {
           icon: <Send size={10} />,
-          label: isPolish ? 'Review' : 'Review',
+          label: t('discoveryToolsMain.toolDocumentView.review'),
           style: 'border-blue-300/50 bg-blue-500/10 text-blue-600',
         },
       };
@@ -886,7 +870,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         id: 'status',
         label: { en: 'Status', pl: 'Status' },
         type: 'text',
-        value: statusLabel(toolStatus, isPolish),
+        value: statusLabel(toolStatus),
         onChange: () => {},
         readOnly: true,
       },
@@ -896,10 +880,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         type: 'text',
         value:
           {
-            entry: isPolish ? 'Wejście i cel' : 'Entry & purpose',
-            conversation: isPolish ? 'Rozmowa i zbieranie' : 'Conversation & capture',
-            analysis: isPolish ? 'Analiza' : 'Analysis',
-            summary: isPolish ? 'Wnioski i summary' : 'Conclusions & summary',
+            entry: t('discoveryToolsMain.toolDocumentView.entryPurpose'),
+            conversation: t('discoveryToolsMain.toolDocumentView.conversationCapture'),
+            analysis: t('discoveryToolsMain.toolDocumentView.analysis'),
+            summary: t('discoveryToolsMain.toolDocumentView.conclusionsSummary'),
           }[consultingJourneyStage] || consultingJourneyStage,
         onChange: () => {},
         readOnly: true,
@@ -939,12 +923,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
               <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Visible human + AI loop' : 'Visible human + AI loop'}
+                {t('discoveryToolsMain.toolDocumentView.visibleHumanAILoop')}
               </div>
               <div className="text-sm text-slate-700 dark:text-slate-300">
-                {isPolish
-                  ? 'Sesja ma pokazywać pytanie decyzyjne, jakość dowodów, warstwę syntezy i gotowość outputów bez ukrywania pracy AI.'
-                  : 'The session should keep the decision question, evidence quality, synthesis layer, and output readiness visible without hiding AI work.'}
+                {t('discoveryToolsMain.toolDocumentView.sessionVisibilityDescription')}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -976,13 +958,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
-              {isPolish ? 'Aktualny etap' : 'Current stage'}:{' '}
+              {t('discoveryToolsMain.toolDocumentView.currentStage')}:{' '}
               {
                 {
-                  entry: isPolish ? 'Wejście i cel' : 'Entry & purpose',
-                  conversation: isPolish ? 'Rozmowa i zbieranie' : 'Conversation & capture',
-                  analysis: isPolish ? 'Analiza i benchmarking' : 'Analysis & benchmarking',
-                  summary: isPolish ? 'Wnioski i final summary' : 'Conclusions & final summary',
+                  entry: t('discoveryToolsMain.toolDocumentView.entryPurpose'),
+                  conversation: t('discoveryToolsMain.toolDocumentView.conversationCapture'),
+                  analysis: t('discoveryToolsMain.toolDocumentView.analysisBenchmarking'),
+                  summary: t('discoveryToolsMain.toolDocumentView.conclusionsFinalSummary'),
                 }[consultingJourneyStage]
               }
             </div>
@@ -1036,12 +1018,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     {phase.primaryGap ||
                       (phase.done
-                        ? isPolish
-                          ? 'Gotowe'
-                          : 'Ready'
-                        : isPolish
-                          ? 'Wymaga pracy'
-                          : 'Needs work')}
+                        ? t('discoveryToolsMain.toolDocumentView.readyStatus')
+                        : t('discoveryToolsMain.toolDocumentView.needsWorkStatus'))}
                   </div>
                 </button>
               );
@@ -1109,7 +1087,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             />
           ) : (
             <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Brak danych sesji' : 'No session data'}
+              {t('discoveryToolsMain.toolDocumentView.noSessionData')}
             </div>
           )}
         </div>
@@ -1121,10 +1099,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             disabled={currentStep <= 1}
             className="rounded-lg bg-slate-100 dark:bg-navy-900/70 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 disabled:opacity-50"
           >
-            {isPolish ? 'Previous' : 'Previous'}
+            {t('discoveryToolsMain.toolDocumentView.previous')}
           </button>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Krok' : 'Step'} {currentStep}/{stepDefs.length}
+            {t('discoveryToolsMain.toolDocumentView.step')} {currentStep}/{stepDefs.length}
           </div>
           <button
             type="button"
@@ -1132,7 +1110,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             disabled={currentStep >= stepDefs.length || !canAdvanceStep()}
             className="rounded-lg bg-navy-900 px-3 py-2 text-sm text-white hover:bg-navy-800 disabled:opacity-50"
           >
-            {isPolish ? 'Next' : 'Next'}
+            {t('discoveryToolsMain.toolDocumentView.next')}
           </button>
         </div>
       </div>
@@ -1142,32 +1120,30 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       <div className="space-y-8">
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Applied conclusions i gotowość' : 'Applied conclusions & readiness'}
+            {t('discoveryToolsMain.toolDocumentView.appliedConclusionsReadiness')}
           </h2>
           <div className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 space-y-4">
             <div className="rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
-              {isPolish
-                ? 'Ta sekcja zamienia analizę w praktyczne wnioski i sprawdza, czy sesja ma już jakość źródła do raportu, prezentacji, inicjatywy lub idei.'
-                : 'This section turns analysis into applied conclusions and checks whether the session is source-grade enough for a report, presentation, initiative, or idea.'}
+              {t('discoveryToolsMain.toolDocumentView.appliedConclusionsSectionDescription')}
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                  {isPolish ? 'Status' : 'Status'}
+                  {t('discoveryToolsMain.toolDocumentView.status')}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                  {statusLabel(toolStatus, isPolish)}
+                  {statusLabel(toolStatus)}
                 </div>
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                  {isPolish ? 'Progress' : 'Progress'}
+                  {t('discoveryToolsMain.toolDocumentView.progress')}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">{progress}%</div>
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                  {isPolish ? 'Created' : 'Created'}
+                  {t('discoveryToolsMain.toolDocumentView.created2')}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                   {createdAt ? new Date(createdAt).toLocaleDateString() : '—'}
@@ -1175,7 +1151,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                  {isPolish ? 'Last modified' : 'Last modified'}
+                  {t('discoveryToolsMain.toolDocumentView.lastModified')}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                   {lastModified ? new Date(lastModified).toLocaleString() : '—'}
@@ -1208,7 +1184,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               (swotData?.summary?.appliedConclusions?.length || 0) > 0 && (
                 <div className="rounded-xl border border-emerald-200/80 bg-emerald-500/5 px-4 py-3">
                   <div className="mb-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                    {isPolish ? 'Applied conclusions' : 'Applied conclusions'}
+                    {t('discoveryToolsMain.toolDocumentView.appliedConclusions')}
                   </div>
                   <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
                     {swotData?.summary?.appliedConclusions?.map((conclusion, index) => (
@@ -1221,7 +1197,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             {toolType === 'dynamic-swot' && swotData?.summary?.executiveSummary && (
               <div className="rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 dark:border-navy-700/70 dark:bg-navy-950/30">
                 <div className="mb-2 text-sm font-medium text-slate-800 dark:text-slate-100">
-                  {isPolish ? 'Final source summary' : 'Final source summary'}
+                  {t('discoveryToolsMain.toolDocumentView.finalSourceSummary')}
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   {swotData.summary.executiveSummary}
@@ -1232,7 +1208,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             {reviewGaps.length > 0 && (
               <div className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
                 <div className="mb-2 font-medium">
-                  {isPolish ? 'Brakujące elementy' : 'Missing items'}
+                  {t('discoveryToolsMain.toolDocumentView.missingItems')}
                 </div>
                 <ul className="space-y-1">
                   {reviewGaps.map((gap, index) => (
@@ -1243,21 +1219,19 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             )}
 
             <div className="rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-xs text-slate-500 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-400">
-              {isPolish
-                ? 'Akcje lifecycle tej sesji są w Menu 3 po prawej: Request Review, Approve, Send back i Generate initiatives.'
-                : 'Session lifecycle actions live in Menu 3 on the right: Request Review, Approve, Send back, and Generate initiatives.'}
+              {t('discoveryToolsMain.toolDocumentView.lifecycleActionsHint')}
             </div>
           </div>
         </div>
 
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Generation settings' : 'Generation settings'}
+            {t('discoveryToolsMain.toolDocumentView.generationSettings')}
           </h2>
           <div className="grid gap-4 md:grid-cols-3 rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4">
             <label className="space-y-1">
               <span className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Methodology' : 'Methodology'}
+                {t('discoveryToolsMain.toolDocumentView.methodology')}
               </span>
               <select
                 value={generationDefaults.methodologyId}
@@ -1273,7 +1247,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             </label>
             <label className="space-y-1">
               <span className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Initiatives count' : 'Initiatives count'}
+                {t('discoveryToolsMain.toolDocumentView.initiativesCount')}
               </span>
               <input
                 type="number"
@@ -1300,7 +1274,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   }))
                 }
               />
-              <span>{isPolish ? 'Include chat context' : 'Include chat context'}</span>
+              <span>{t('discoveryToolsMain.toolDocumentView.includeChatContext')}</span>
             </label>
           </div>
         </div>
@@ -1308,7 +1282,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         {toolDecisions.length > 0 && (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {isPolish ? 'Gate decisions' : 'Gate decisions'}
+              {t('discoveryToolsMain.toolDocumentView.gateDecisions')}
             </h2>
             <div className="space-y-2 rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4">
               {toolDecisions.map((decision, index) => (
@@ -1335,11 +1309,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         {toolType === 'dynamic-swot' && swotData?.summary?.executiveSummary && (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {isPolish ? 'Source artifact' : 'Source artifact'}
+              {t('discoveryToolsMain.toolDocumentView.sourceArtifact')}
             </h2>
             <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
               <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Final source summary' : 'Final source summary'}
+                {t('discoveryToolsMain.toolDocumentView.finalSourceSummary')}
               </div>
               <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
                 {swotData.summary.executiveSummary}
@@ -1347,7 +1321,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               {(swotData.summary.appliedConclusions?.length || 0) > 0 && (
                 <div className="mt-4">
                   <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Applied conclusions' : 'Applied conclusions'}
+                    {t('discoveryToolsMain.toolDocumentView.appliedConclusions')}
                   </div>
                   <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
                     {swotData.summary.appliedConclusions?.map((conclusion, index) => (
@@ -1362,7 +1336,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Kontrakt outputów' : 'Output contract'}
+            {t('discoveryToolsMain.toolDocumentView.outputContract')}
           </h2>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {CONSULTING_TOOL_STANDARD_OUTPUTS.map((outputType) => (
@@ -1373,20 +1347,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 <div className="font-medium text-slate-800 dark:text-slate-100">{outputType}</div>
                 <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   {outputType === 'initiative'
-                    ? isPolish
-                      ? 'Dla ruchów lub wniosków gotowych do wdrożenia.'
-                      : 'For moves or conclusions ready for execution.'
+                    ? t('discoveryToolsMain.toolDocumentView.outputHintInitiative')
                     : outputType === 'report'
-                      ? isPolish
-                        ? 'Dla final source summary gotowego do pokazania.'
-                        : 'For a final source summary ready to be reviewed.'
+                      ? t('discoveryToolsMain.toolDocumentView.outputHintReport')
                       : outputType === 'presentation'
-                        ? isPolish
-                          ? 'Dla komunikacji wizualnej bez ponownego składania narracji.'
-                          : 'For visual communication without rebuilding the narrative.'
-                        : isPolish
-                          ? 'Dla obiecujących hipotez lub kierunków do dalszej pracy.'
-                          : 'For promising hypotheses or directions that need further work.'}
+                        ? t('discoveryToolsMain.toolDocumentView.outputHintPresentation')
+                        : t('discoveryToolsMain.toolDocumentView.outputHintIdea')}
                 </div>
               </div>
             ))}
@@ -1395,17 +1361,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Inicjatywy z tej sesji' : 'Initiatives from this session'}
+            {t('discoveryToolsMain.toolDocumentView.initiativesFromThisSession')}
           </h2>
           <EmbeddedView
-            title={isPolish ? 'Generated initiatives' : 'Generated initiatives'}
+            title={t('discoveryToolsMain.toolDocumentView.generatedInitiatives')}
             count={generatedInitiatives.length}
             viewModes={['list']}
             readOnly
           >
             {generatedInitiatives.length === 0 ? (
               <div className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Brak wygenerowanych inicjatyw' : 'No initiatives generated yet'}
+                {t('discoveryToolsMain.toolDocumentView.noInitiativesGeneratedYet')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -1429,12 +1395,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           <>
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                {isPolish ? 'Recommended moves' : 'Recommended moves'}
+                {t('discoveryToolsMain.toolDocumentView.recommendedMoves')}
               </h2>
               <div className="space-y-2">
                 {(swotData?.recommendedMoves || []).length === 0 ? (
                   <div className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 text-sm text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak wygenerowanych ruchów.' : 'No moves generated yet.'}
+                    {t('discoveryToolsMain.toolDocumentView.noMovesGeneratedYet')}
                   </div>
                 ) : (
                   swotData?.recommendedMoves?.map((move) => (
@@ -1457,12 +1423,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                {isPolish ? 'Output candidates' : 'Output candidates'}
+                {t('discoveryToolsMain.toolDocumentView.outputCandidates')}
               </h2>
               <div className="space-y-2">
                 {(swotData?.outputCandidates || []).length === 0 ? (
                   <div className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 text-sm text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak kandydatów outputów.' : 'No output candidates yet.'}
+                    {t('discoveryToolsMain.toolDocumentView.noOutputCandidatesYet')}
                   </div>
                 ) : (
                   swotData?.outputCandidates?.map((candidate) => (
@@ -1509,7 +1475,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       />
     ) : (
       <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Brak danych sesji' : 'No session data'}
+        {t('discoveryToolsMain.toolDocumentView.noSessionData')}
       </div>
     );
 
@@ -1517,9 +1483,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     // A bilingual groupLabels array switched on isPolish, plus a per-section
     // group + cSpan assignment, so NModeShell's C-board renders top group tabs
     // and lets wide/table-heavy sections breathe in the dense 3-column grid.
-    const groupLabels = isPolish
-      ? ['Sesja', 'Analiza', 'Outputs', 'Współpraca', 'Zapisy']
-      : ['Session', 'Analysis', 'Outputs', 'Collaboration', 'Records'];
+    const groupLabels = t('discoveryToolsMain.toolDocumentView.groupLabels', {
+      returnObjects: true,
+    }) as string[];
     const phaseGroupIndex = (stepId: string): number => {
       if (['mission', 'context', 'input', 'signals'].includes(stepId)) return 0;
       if (
@@ -1577,7 +1543,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-2">
                     <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
-                      {isPolish ? 'AI consultant flow' : 'AI consultant flow'}
+                      {t('discoveryToolsMain.toolDocumentView.aIConsultantFlow')}
                     </div>
                     <div className="text-sm text-slate-700 dark:text-slate-300">
                       {isPolish ? phaseStep.descriptionPl : phaseStep.description}
@@ -1614,7 +1580,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 />
               ) : (
                 <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Brak danych sesji' : 'No session data'}
+                  {t('discoveryToolsMain.toolDocumentView.noSessionData')}
                 </div>
               )}
             </div>
@@ -1628,10 +1594,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 disabled={phaseIndex <= 1}
                 className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:bg-navy-900/70 dark:text-slate-300"
               >
-                {isPolish ? 'Poprzedni' : 'Previous'}
+                {t('discoveryToolsMain.toolDocumentView.previous2')}
               </button>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Krok' : 'Step'} {phaseIndex}/{stepDefs.length}
+                {t('discoveryToolsMain.toolDocumentView.step')} {phaseIndex}/{stepDefs.length}
               </div>
               <button
                 type="button"
@@ -1648,12 +1614,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 className="rounded-lg bg-navy-900 px-3 py-2 text-sm text-white hover:bg-navy-800 disabled:opacity-50"
               >
                 {phaseIndex >= stepDefs.length
-                  ? isPolish
-                    ? 'Zakończ'
-                    : 'Finish'
-                  : isPolish
-                    ? 'Następny'
-                    : 'Next'}
+                  ? t('discoveryToolsMain.toolDocumentView.finish')
+                  : t('discoveryToolsMain.toolDocumentView.nextStep')}
               </button>
             </div>
           </div>
@@ -1752,7 +1714,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             getCommentPriority={() => 'normal'}
             getPriorityButtonClass={getPriorityButtonClass}
             getCommentPriorityLabel={getPriorityLabel}
-            getCommentPriorityHint={(priority) => getPriorityHint(priority, isPolish)}
+            getCommentPriorityHint={(priority) => getPriorityHint(priority, t)}
           />
         ),
       },
@@ -1776,7 +1738,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         badge: toolBacklinks.length,
         component: (
           <EmbeddedView
-            title={isPolish ? 'Powiązania' : 'Backlinks'}
+            title={t('discoveryToolsMain.toolDocumentView.backlinks')}
             count={toolBacklinks.length}
             loading={toolBacklinksLoading}
             readOnly
@@ -1784,7 +1746,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           >
             {toolBacklinks.length === 0 && !toolBacklinksLoading ? (
               <div className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Brak powiązań' : 'No links yet'}
+                {t('discoveryToolsMain.toolDocumentView.noLinksYet')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -1883,7 +1845,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const lastSavedLabel = useMemo(() => {
     if (!lastModified) return undefined;
-    return `${isPolish ? 'Zapisano' : 'Saved'} ${new Date(lastModified).toLocaleTimeString([], {
+    return `${t('discoveryToolsMain.toolDocumentView.saved')} ${new Date(lastModified).toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
     })}`;
@@ -1901,7 +1863,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           className="inline-flex h-8 items-center rounded-full border border-slate-200/60 bg-slate-100 px-3 text-[11px] font-semibold text-slate-500 dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300"
           data-menu3-lifecycle-status={toolStatus}
         >
-          {statusLabel(toolStatus, isPolish)}
+          {statusLabel(toolStatus)}
         </span>
         {toolStatus === 'DRAFT' ? (
           <button
@@ -1911,16 +1873,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             className={getMenu3AiButtonClass(false)}
             title={
               completionReady
-                ? isPolish
-                  ? 'Wyślij sesję do review'
-                  : 'Request review for this session'
-                : isPolish
-                  ? 'Uzupełnij wymagane elementy przed review'
-                  : 'Complete required items before review'
+                ? t('discoveryToolsMain.toolDocumentView.requestReviewTitleReady')
+                : t('discoveryToolsMain.toolDocumentView.requestReviewTitleNotReady')
             }
           >
             <Send size={12} />
-            {isPolish ? 'Request Review' : 'Request Review'}
+            {t('discoveryToolsMain.toolDocumentView.requestReview')}
           </button>
         ) : null}
         {toolStatus === 'REVIEW' ? (
@@ -1930,21 +1888,21 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               onClick={handleApprove}
               disabled={toolPermissions.canApproveTool === false}
               className={getMenu3AiButtonClass(false)}
-              title={isPolish ? 'Zatwierdź sesję' : 'Approve this session'}
+              title={t('discoveryToolsMain.toolDocumentView.approveThisSession')}
             >
               <CheckCircle2 size={12} />
-              {isPolish ? 'Approve' : 'Approve'}
+              {t('discoveryToolsMain.toolDocumentView.approve')}
             </button>
             <button
               type="button"
               onClick={handleSendBack}
               className={getMenu3AiButtonClass(false)}
               title={
-                isPolish ? 'Odeślij do draftu z komentarzem' : 'Send back to draft with a comment'
+                t('discoveryToolsMain.toolDocumentView.sendBackToDraftWithAComment')
               }
             >
               <ExternalLink size={12} />
-              {isPolish ? 'Send back' : 'Send back'}
+              {t('discoveryToolsMain.toolDocumentView.sendBack')}
             </button>
           </>
         ) : null}
@@ -1954,14 +1912,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             onClick={() => setShowGenerateModal(true)}
             disabled={toolPermissions.canGenerate === false}
             className={getMenu3AiButtonClass(false)}
-            title={
-              isPolish
-                ? 'Wygeneruj inicjatywy z zatwierdzonej sesji'
-                : 'Generate initiatives from approved session'
-            }
+            title={t('discoveryToolsMain.toolDocumentView.generateInitiativesTitle')}
           >
             <Sparkles size={12} />
-            {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
+            {t('discoveryToolsMain.toolDocumentView.generateInitiatives')}
           </button>
         ) : null}
         {showAiActions ? (
@@ -2019,7 +1973,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <LoadingState variant="spinner" label={isPolish ? 'Ładowanie...' : 'Loading...'} />
+        <LoadingState variant="spinner" label={t('discoveryToolsMain.toolDocumentView.loading')} />
       </div>
     );
   }
@@ -2062,7 +2016,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         <h1 className="text-2xl font-semibold">{sessionName || `${toolMeta.name} — Session`}</h1>
         <p className="mt-2 text-sm text-slate-600">{toolType}</p>
         <div className="mt-6 space-y-2">
-          <div>Status: {statusLabel(toolStatus, false)}</div>
+          <div>Status: {statusLabel(toolStatus)}</div>
           <div>Progress: {progress}%</div>
           <div>Current step: {currentStepDef?.name || '-'}</div>
         </div>
@@ -2088,26 +2042,24 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           <div className="w-full max-w-lg rounded-2xl bg-white p-5 dark:bg-navy-900">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {isPolish ? 'Request review' : 'Request review'}
+                {t('discoveryToolsMain.toolDocumentView.requestReview2')}
               </h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? 'Skonfiguruj właściciela decyzji i termin review.'
-                  : 'Configure decision owner and review due date.'}
+                {t('discoveryToolsMain.toolDocumentView.configureDecisionOwnerHint')}
               </p>
             </div>
 
             <div className="space-y-4">
               <label className="block space-y-1">
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {isPolish ? 'Decision owner' : 'Decision owner'}
+                  {t('discoveryToolsMain.toolDocumentView.decisionOwner')}
                 </span>
                 <select
                   value={reviewDecisionOwnerId}
                   onChange={(e) => setReviewDecisionOwnerId(e.target.value)}
                   className="h-10 w-full rounded-lg border border-slate-300/60 bg-white px-3 text-sm dark:border-navy-600/40 dark:bg-navy-950"
                 >
-                  <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
+                  <option value="">{t('discoveryToolsMain.toolDocumentView.select')}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name ||
@@ -2121,7 +2073,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
               <label className="block space-y-1">
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {isPolish ? 'Due date' : 'Due date'}
+                  {t('discoveryToolsMain.toolDocumentView.dueDate')}
                 </span>
                 <input
                   type="date"
@@ -2133,7 +2085,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
               <label className="block space-y-1">
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {isPolish ? 'Priority' : 'Priority'}
+                  {t('discoveryToolsMain.toolDocumentView.priority')}
                 </span>
                 <select
                   value={reviewPriority}
@@ -2154,14 +2106,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 onClick={() => setShowRequestReviewModal(false)}
                 className="rounded-lg border border-slate-300/60 px-4 py-2 text-sm text-slate-700 dark:border-navy-600/40 dark:text-slate-300"
               >
-                {isPolish ? 'Cancel' : 'Cancel'}
+                {t('discoveryToolsMain.toolDocumentView.cancel')}
               </button>
               <button
                 type="button"
                 onClick={() => void handleConfirmRequestReview()}
                 className="rounded-lg bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-800"
               >
-                {isPolish ? 'Send review' : 'Send review'}
+                {t('discoveryToolsMain.toolDocumentView.sendReview')}
               </button>
             </div>
           </div>
