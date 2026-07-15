@@ -22,7 +22,11 @@ import { toast } from 'react-hot-toast';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { StandardTable } from '../../components/standard/StandardTable';
-import type { TableColumn, TableRow } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -712,10 +716,89 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     [editingOrgId, editForm, processingId, onViewUsers]
   );
 
+  const organizationRowMenu = (row: TableRow): StandardRowMenu => {
+    const org = row as unknown as Organization;
+    return {
+      primary: [
+        ...(onViewUsers
+          ? [
+              {
+                id: 'view-users',
+                label: 'View Users',
+                icon: Users,
+                onClick: () => onViewUsers(org.id),
+              },
+            ]
+          : []),
+        {
+          id: 'view-details',
+          label: 'View Details',
+          icon: Eye,
+          onClick: () => setSelectedOrg(org),
+        },
+      ],
+      universalHandlers: {
+        preview: () => setSelectedOrg(org),
+        edit: () => startInlineEdit(org),
+      },
+      destructive: {
+        label: 'Delete',
+        icon: Trash2,
+        onClick: () => handleDeleteOrg(org.id, getOrgName(org)),
+      },
+    };
+  };
+
   // ── Pending requests tab: kanon §27 — StandardTable ──────────────────────
   const requestRows = useMemo<TableRow[]>(() => requests.map((r) => ({ ...r, id: r.id })), [
     requests,
   ]);
+
+  const requestRowMenu = (row: TableRow): StandardRowMenu => {
+    const req = row as unknown as AccessRequest;
+    return {
+      statusTransitions:
+        req.status === 'pending'
+          ? [
+              {
+                id: 'approve',
+                label: 'Approve',
+                icon: CheckCircle,
+                disabled: processingId === req.id,
+                onClick: () => handleApprove(req.id),
+              },
+              {
+                id: 'reject',
+                label: 'Reject',
+                icon: XCircle,
+                disabled: processingId === req.id,
+                onClick: () => handleReject(req.id),
+              },
+            ]
+          : [],
+      destructive: { note: 'Requests are approved or rejected, not deleted' },
+    };
+  };
+
+  const codeRowMenu = (row: TableRow): StandardRowMenu => {
+    const code = row as unknown as AccessCode;
+    return {
+      primary: [
+        {
+          id: 'copy',
+          label: 'Copy code',
+          icon: Copy,
+          onClick: () => copyCode(code.code),
+        },
+      ],
+      destructive: {
+        label: 'Deactivate code',
+        icon: XCircle,
+        onClick: processingId === code.id ? undefined : () => handleDeactivateCode(code.id),
+        note: processingId === code.id ? 'Processing…' : undefined,
+      },
+    };
+  };
 
   const requestColumns = useMemo<TableColumn[]>(
     () => [
@@ -1055,6 +1138,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 columns={organizationColumns}
                 data={organizationRows}
                 loading={loading}
+                rowMenu={organizationRowMenu}
                 empty={{ title: 'No organizations found' }}
                 persistKey="superadmin.organizations.list"
               />
@@ -1083,6 +1167,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               columns={requestColumns}
               data={requestRows}
               loading={loading}
+              rowMenu={requestRowMenu}
               empty={{ title: 'No access requests found.' }}
               persistKey="superadmin.accessRequests.list"
             />
@@ -1113,6 +1198,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 columns={codeColumns}
                 data={codeRows}
                 loading={loading}
+                rowMenu={codeRowMenu}
                 empty={{ title: 'No access codes generated yet.' }}
                 persistKey="superadmin.accessCodes.list"
               />
