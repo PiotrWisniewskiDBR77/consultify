@@ -12798,6 +12798,30 @@
       "noTimelineEntries": "Brak wpisów w timeline kontekstu.",
       "sourceProvenance": "Source Provenance",
       "provenanceHelp": "Każdy zapis do Context OS zachowuje źródło, kanał i explicitness, dzięki czemu AI może pracować na trwałym kontekście zamiast na pojedynczym prompt snapshot."
+    },
+    "approvalPatterns": {
+      "confirmDelete": "Czy na pewno chcesz usunąć ten wzorzec? AI nie będzie już pamiętać tej decyzji.",
+      "title": "Wzorce Zatwierdzania AI",
+      "subtitle": "Zarządzaj nauczonymi wzorcami decyzji",
+      "statPatterns": "Wzorców",
+      "statAutoEnabled": "Automatycznych",
+      "statApprovals": "Akceptacji",
+      "statRejections": "Odrzuceń",
+      "howItWorksTitle": "Jak działają wzorce?",
+      "howItWorksBody": "System uczy się Twoich decyzji. Po 3 podobnych akceptacjach/odrzuceniach, może automatycznie podejmować takie same decyzje (jeśli włączysz auto-zatwierdzanie).",
+      "learnedPatterns": "Nauczone Wzorce",
+      "emptyState": "Brak nauczonych wzorców. Zatwierdzaj lub odrzucaj propozycje AI, aby system się uczył.",
+      "decisionApprove": "Akceptuj",
+      "decisionReject": "Odrzuć",
+      "modeAuto": "Auto",
+      "modeManual": "Ręcznie",
+      "decisionCount": "Liczba decyzji",
+      "lastDecision": "Ostatnia decyzja",
+      "created": "Utworzono",
+      "riskLevel": "Poziom ryzyka",
+      "autoApproveEnabled": "Auto-zatwierdzanie włączone",
+      "autoApproveHintApproved": "Podobne akcje będą automatycznie akceptowane.",
+      "autoApproveHintRejected": "Podobne akcje będą automatycznie odrzucane."
     }
   },
   "showcase": {

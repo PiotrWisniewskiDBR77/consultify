@@ -13595,6 +13595,30 @@
       "noTimelineEntries": "No entries in the context timeline.",
       "sourceProvenance": "Source Provenance",
       "provenanceHelp": "Every Context OS write keeps source, channel, and explicitness so AI can work on durable context instead of a single prompt snapshot."
+    },
+    "approvalPatterns": {
+      "confirmDelete": "Are you sure you want to delete this pattern? AI will no longer remember this decision.",
+      "title": "AI Approval Patterns",
+      "subtitle": "Manage learned decision patterns",
+      "statPatterns": "Patterns",
+      "statAutoEnabled": "Auto-enabled",
+      "statApprovals": "Approvals",
+      "statRejections": "Rejections",
+      "howItWorksTitle": "How do patterns work?",
+      "howItWorksBody": "The system learns from your decisions. After 3 similar approvals/rejections, it can automatically make the same decisions (if you enable auto-approve).",
+      "learnedPatterns": "Learned Patterns",
+      "emptyState": "No learned patterns yet. Approve or reject AI proposals to teach the system.",
+      "decisionApprove": "Approve",
+      "decisionReject": "Reject",
+      "modeAuto": "Auto",
+      "modeManual": "Manual",
+      "decisionCount": "Decision count",
+      "lastDecision": "Last decision",
+      "created": "Created",
+      "riskLevel": "Risk level",
+      "autoApproveEnabled": "Auto-approve enabled",
+      "autoApproveHintApproved": "Similar actions will be automatically approved.",
+      "autoApproveHintRejected": "Similar actions will be automatically rejected."
     }
   },
   "showcase": {
