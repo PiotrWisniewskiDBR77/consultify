@@ -28119,6 +28119,41 @@
         "implicationPlaceholder": "Implikacja luki kompetencyjnej...",
         "hint": "Oceń lukę między dojrzałością obecną a docelową i czy ją zbudować, kupić czy zlecić."
       }
+    },
+    "valueChain": {
+      "margin": {
+        "creator": "Tworzy marżę",
+        "neutral": "Neutralny",
+        "drain": "Drenuje marżę"
+      },
+      "kind": {
+        "primary": "Podstawowa",
+        "support": "Wspierająca"
+      },
+      "signalsTitle": "Sygnały i dowody łańcucha wartości",
+      "signalsSubtitle": "Zbierz fakty o kosztach, operacjach i wartości zanim AI oceni aktywności.",
+      "addSignalPlaceholder": "Dodaj sygnał...",
+      "scorecardTitle": "Scorecard łańcucha wartości Portera",
+      "scorecardSubtitle": "Każda aktywność powinna mieć udział w kosztach, wkład w wartość, rolę w marży, drivery i implikację.",
+      "primaryActivities": "Aktywności podstawowe",
+      "supportActivities": "Aktywności wspierające",
+      "leversTitle": "Dźwignie marży i ruchy",
+      "leversSubtitle": "Tu analiza aktywności zamienia się w dźwignie marży, ruchy strategiczne i werdykt pozycjonowania.",
+      "positioningVerdict": "Werdykt pozycjonowania",
+      "acceptedActivities": "Zaakceptowane aktywności",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "costContribution": "Udział w kosztach",
+        "valueContribution": "Wkład w wartość",
+        "marginRole": "Rola w marży",
+        "maturity": "Dojrzałość",
+        "addDriverPlaceholder": "Dodaj czynnik...",
+        "noDrivers": "Brak dodanych czynników",
+        "implicationPlaceholder": "Implikacja dla marży...",
+        "hint": "Oceń, czy ta aktywność tworzy czy drenuje marżę i dlaczego."
+      }
     }
   }
 }

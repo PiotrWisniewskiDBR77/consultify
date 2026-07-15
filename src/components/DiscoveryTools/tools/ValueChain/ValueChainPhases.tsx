@@ -13,7 +13,9 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   ProposalCardType,
   ToolSession,
@@ -62,25 +64,20 @@ const ACTIVITY_SHORT: Record<ValueActivityId, { en: string; pl: string }> = {
   procurement: { en: 'Procurement', pl: 'Zaopatrzenie' },
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
-const marginBadge = (role: 'creator' | 'neutral' | 'drain', isPolish: boolean) =>
+const marginBadge = (role: 'creator' | 'neutral' | 'drain') =>
   role === 'creator'
-    ? isPolish
-      ? 'Tworzy marżę'
-      : 'Creator'
+    ? i18n.t('discoveryToolsTools.valueChain.margin.creator')
     : role === 'drain'
-      ? isPolish
-        ? 'Drenuje marżę'
-        : 'Drain'
-      : isPolish
-        ? 'Neutralny'
-        : 'Neutral';
+      ? i18n.t('discoveryToolsTools.valueChain.margin.drain')
+      : i18n.t('discoveryToolsTools.valueChain.margin.neutral');
 
 // ==================== INPUT PHASE ====================
 
@@ -91,6 +88,7 @@ export function ValueChainInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as ValueChainData;
   const [draft, setDraft] = useState('');
@@ -104,12 +102,12 @@ export function ValueChainInputPhase({
           id: `signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -127,12 +125,10 @@ export function ValueChainInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały i dowody łańcucha wartości' : 'Value Chain Signals & Evidence'}
+          {t('discoveryToolsTools.valueChain.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz fakty o kosztach, operacjach i wartości zanim AI oceni aktywności.'
-            : 'Capture cost, operations, and value facts before scoring the activities.'}
+          {t('discoveryToolsTools.valueChain.signalsSubtitle')}
         </p>
       </div>
 
@@ -146,7 +142,7 @@ export function ValueChainInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał...' : 'Add a value chain signal...'}
+          placeholder={t('discoveryToolsTools.valueChain.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -167,7 +163,7 @@ export function ValueChainInputPhase({
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -210,18 +206,17 @@ export function ValueChainBuildPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as ValueChainData;
 
   return (
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Scorecard łańcucha wartości Portera' : "Porter's Value Chain Scorecard"}
+          {t('discoveryToolsTools.valueChain.scorecardTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Każda aktywność powinna mieć udział w kosztach, wkład w wartość, rolę w marży, drivery i implikację.'
-            : 'Each activity should have a cost share, value contribution, margin role, drivers, and an implication.'}
+          {t('discoveryToolsTools.valueChain.scorecardSubtitle')}
         </p>
       </div>
 
@@ -235,7 +230,7 @@ export function ValueChainBuildPhase({
       {/* Primary activities */}
       <div>
         <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Aktywności podstawowe' : 'Primary activities'}
+          {t('discoveryToolsTools.valueChain.primaryActivities')}
         </div>
         <div className="grid gap-4 xl:grid-cols-2">
           {PRIMARY_ORDER.map((activityId) => (
@@ -255,7 +250,7 @@ export function ValueChainBuildPhase({
       {/* Support activities */}
       <div>
         <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Aktywności wspierające' : 'Support activities'}
+          {t('discoveryToolsTools.valueChain.supportActivities')}
         </div>
         <div className="grid gap-4 xl:grid-cols-2">
           {SUPPORT_ORDER.map((activityId) => (
@@ -284,6 +279,7 @@ export function ValueChainInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as ValueChainData;
   const acceptedActivities = useMemo(
     () =>
@@ -297,12 +293,10 @@ export function ValueChainInsightsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Dźwignie marży i ruchy' : 'Margin Levers & Moves'}
+          {t('discoveryToolsTools.valueChain.leversTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu analiza aktywności zamienia się w dźwignie marży, ruchy strategiczne i werdykt pozycjonowania.'
-            : 'This is where the activity analysis turns into margin levers, strategic moves, and a positioning verdict.'}
+          {t('discoveryToolsTools.valueChain.leversSubtitle')}
         </p>
       </div>
 
@@ -310,7 +304,7 @@ export function ValueChainInsightsPhase({
       {data.positioningVerdict && (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-sky-500">
-            {isPolish ? 'Werdykt pozycjonowania' : 'Positioning verdict'} ·{' '}
+            {t('discoveryToolsTools.valueChain.positioningVerdict')} ·{' '}
             {data.positioningVerdict.positioning}
           </div>
           <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
@@ -322,7 +316,7 @@ export function ValueChainInsightsPhase({
       {/* Accepted activities snapshot */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Zaakceptowane aktywności' : 'Accepted activities'}
+          {t('discoveryToolsTools.valueChain.acceptedActivities')}
         </div>
         <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-5">
           {acceptedActivities.map((activityId) => (
@@ -331,7 +325,7 @@ export function ValueChainInsightsPhase({
                 {isPolish ? ACTIVITY_SHORT[activityId].pl : ACTIVITY_SHORT[activityId].en}
               </div>
               <div className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
-                {marginBadge(data.activities[activityId].marginRole, isPolish)}
+                {marginBadge(data.activities[activityId].marginRole)}
               </div>
             </div>
           ))}
@@ -348,7 +342,7 @@ export function ValueChainInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(lever.proposalStatus, isPolish)} · {lever.leverType}
+                  {proposalBadge(lever.proposalStatus)} · {lever.leverType}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {lever.title}
@@ -407,7 +401,7 @@ export function ValueChainInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -430,6 +424,7 @@ export function ValueChainOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as ValueChainData;
   const summary = data.summary;
   const initiatives = [
@@ -441,12 +436,10 @@ export function ValueChainOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.valueChain.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.'
-            : 'The final source summary and output candidates are based on the approved diagnosis.'}
+          {t('discoveryToolsTools.valueChain.outputsSubtitle')}
         </p>
       </div>
 
@@ -455,7 +448,7 @@ export function ValueChainOutputsPhase({
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                {isPolish ? 'Final source summary' : 'Final source summary'}
+                {t('discoveryToolsTools.valueChain.finalSourceSummary')}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                 {summary.executiveSummary}
@@ -510,11 +503,11 @@ export function ValueChainOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

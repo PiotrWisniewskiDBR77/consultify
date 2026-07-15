@@ -27043,6 +27043,41 @@
         "implicationPlaceholder": "Implication of the capability gap...",
         "hint": "Judge the gap between current and target maturity and whether to build, buy, or partner."
       }
+    },
+    "valueChain": {
+      "margin": {
+        "creator": "Creator",
+        "neutral": "Neutral",
+        "drain": "Drain"
+      },
+      "kind": {
+        "primary": "Primary",
+        "support": "Support"
+      },
+      "signalsTitle": "Value Chain Signals & Evidence",
+      "signalsSubtitle": "Capture cost, operations, and value facts before scoring the activities.",
+      "addSignalPlaceholder": "Add a value chain signal...",
+      "scorecardTitle": "Porter's Value Chain Scorecard",
+      "scorecardSubtitle": "Each activity should have a cost share, value contribution, margin role, drivers, and an implication.",
+      "primaryActivities": "Primary activities",
+      "supportActivities": "Support activities",
+      "leversTitle": "Margin Levers & Moves",
+      "leversSubtitle": "This is where the activity analysis turns into margin levers, strategic moves, and a positioning verdict.",
+      "positioningVerdict": "Positioning verdict",
+      "acceptedActivities": "Accepted activities",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on the approved diagnosis.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "costContribution": "Cost contribution",
+        "valueContribution": "Value contribution",
+        "marginRole": "Margin role",
+        "maturity": "Maturity",
+        "addDriverPlaceholder": "Add a driver...",
+        "noDrivers": "No drivers added",
+        "implicationPlaceholder": "Implication for margin...",
+        "hint": "Judge whether this activity creates or drains margin, and why."
+      }
     }
   }
 }
