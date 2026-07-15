@@ -27315,6 +27315,14 @@
         "subtitle": "Category summary based on growth and share.",
         "initiativesAndCategories": "Initiatives and categories"
       }
+    },
+    "digital": {
+      "genericDomainStep": {
+        "defaultHint": "Teresa: add concrete, measurable items — better inputs sharpen the recommendations.",
+        "namePlaceholder": "Item title...",
+        "descPlaceholder": "Description / notes...",
+        "empty": "No items yet"
+      }
     }
   }
 }

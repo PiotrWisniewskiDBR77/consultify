@@ -28391,6 +28391,14 @@
         "subtitle": "Podsumowanie kategorii na podstawie wzrostu i udziału.",
         "initiativesAndCategories": "Inicjatywy i kategorie"
       }
+    },
+    "digital": {
+      "genericDomainStep": {
+        "defaultHint": "Teresa: dodaj konkretne, mierzalne pozycje — jakość wejść poprawia rekomendacje.",
+        "namePlaceholder": "Nazwa pozycji...",
+        "descPlaceholder": "Opis / notatka...",
+        "empty": "Brak pozycji"
+      }
     }
   }
 }
