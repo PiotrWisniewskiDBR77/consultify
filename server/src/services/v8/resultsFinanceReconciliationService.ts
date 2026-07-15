@@ -29,11 +29,28 @@
  * The pure functions (normalizeToFinanceBasis / computeDeviation /
  * buildDeviationConclusion) carry no I/O so the reconciliation math is unit
  * testable offline; `pullAndReconcileInitiative` is the DB-backed round-trip.
+ *
+ * O4.7 WIRING — market-vs-execution post-mortem
+ * -------------------------------------------
+ * `buildDeviationConclusion` above narrates the deviation but implicitly treats
+ * the whole gap as "our execution" (favorable/unfavorable), never asking whether
+ * the MARKET moved. `financePostMortemService.decomposeVariance` (O4.7, built,
+ * zero callers before this wiring) answers that: given projected/realized (this
+ * module already computes both, unit-normalised) it splits the gap into a market
+ * effect and an execution effect. This module has NO market-shift data source
+ * yet (no benchmark/market-growth feed reaches this reconciliation path), so we
+ * call it with `marketShifts: []` — which `decomposeVariance` honestly reports as
+ * `'undetermined'` (not "execution failure") rather than fabricating an
+ * attribution. The moment a market-shift feed exists, wiring it in here is a
+ * one-line change (populate `marketShifts`); until then this is an honest,
+ * additive `postMortem` field alongside the existing conclusion — never
+ * overwrites the K1..K4 narrative already computed.
  */
 
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { decomposeVariance, type VarianceDecomposition } from '../financePostMortemService.js';
 
 // ---------------------------------------------------------------------------
 // Contract
@@ -110,6 +127,13 @@ export interface ReconciledKpi {
   deviationAbsolute: number | null;
   deviationPercent: number | null;
   conclusion: DeviationConclusion | null;
+  /**
+   * O4.7 — market-vs-execution decomposition of the same realized/projected pair.
+   * `null` only when realized or projected is itself missing (no fabricated 0).
+   * With no market-shift feed wired yet, a real (non-on-plan) gap resolves to
+   * `verdict: 'undetermined'` — honest, not a guessed execution failure.
+   */
+  postMortem: VarianceDecomposition | null;
 }
 
 export interface InitiativeReconciliationResult {
@@ -387,6 +411,19 @@ export async function pullAndReconcileInitiative(
     });
     if (deviation.severity === 'off_track') offTrackCount += 1;
 
+    // O4.7 — market-vs-execution post-mortem on the SAME realized/projected pair (already
+    // unit-normalised above). Only computed when both sides are real numbers — a missing
+    // side means "no data", never a fabricated 0 baseline (honest-empty, §"no guessing").
+    const postMortem: VarianceDecomposition | null =
+      isFiniteNumber(realizedValue) && isFiniteNumber(projectedValue)
+        ? decomposeVariance({
+            projected: projectedValue,
+            realized: realizedValue,
+            marketShifts: [], // no market-shift feed wired to this reconciliation path yet
+            language: 'pl',
+          })
+        : null;
+
     await upsertReconciliation({
       organizationId,
       kpiId: kpi.kpi_id,
@@ -396,6 +433,7 @@ export async function pullAndReconcileInitiative(
       realizedValue,
       deviation,
       conclusion,
+      postMortem,
       initiatedBy,
       nowIso,
     });
@@ -413,6 +451,7 @@ export async function pullAndReconcileInitiative(
       deviationAbsolute: deviation.deviationAbsolute,
       deviationPercent: deviation.deviationPercent,
       conclusion,
+      postMortem,
     });
   }
 
@@ -435,6 +474,8 @@ async function upsertReconciliation(input: {
   realizedValue: number | null;
   deviation: DeviationResult;
   conclusion: DeviationConclusion;
+  /** O4.7 — persisted alongside the conclusion (no schema migration: embedded in conclusion_json). */
+  postMortem: VarianceDecomposition | null;
   initiatedBy: 'results' | 'finance';
   nowIso: string;
 }): Promise<void> {
@@ -447,11 +488,19 @@ async function upsertReconciliation(input: {
     realizedValue,
     deviation,
     conclusion,
+    postMortem,
     initiatedBy,
     nowIso,
   } = input;
 
-  const conclusionJson = JSON.stringify(conclusion);
+  // O4.7 — additive: `conclusion_json` already flows through to the Results reconciliation
+  // read seam (`resultsROIService.getReconciliationOverview` → `eng_conclusion_json` →
+  // `conclusion`), so embedding `postMortem` here (no new column, no migration) makes the
+  // market-vs-execution decomposition reach that existing render path for free. `conclusion`
+  // itself keeps its original shape — postMortem is a sibling key on the serialized object.
+  const conclusionJson = JSON.stringify(
+    postMortem ? { ...conclusion, postMortem } : conclusion
+  );
 
   const existing = await dbGet<{ reconciliation_id: string }>(
     `SELECT reconciliation_id

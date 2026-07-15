@@ -67,6 +67,12 @@ import {
   type FinanceConclusionWithValidation,
   renderFinanceConclusionsMarkdown,
 } from './financeReportConclusion.js';
+import {
+  analyseStatementLine,
+  loadLineSeries,
+  type SeriesPoint,
+  type StatementTrendAnalysis,
+} from './financeStatementTrendService.js';
 import { getStatementPackDetail, loadPackValueMaps } from './financialStatementPackService.js';
 import {
   buildRatioBenchmark,
@@ -128,6 +134,31 @@ export interface FinanceValuationSummary {
   valuationId: string | null;
   valuationTitle: string | null;
   basket: BasketResult | null;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   O4.6 TREND (financeStatementTrendService) — wiring, nie nowa matematyka.
+   `analyseStatementLine` jest CZYSTA (trend/driver/forecast z serii periodów);
+   ta sekcja tylko dobiera, KTÓRE linie kanoniczne śledzimy i honoruje kontrakt
+   "brak serii → uczciwie puste" (periods < 2 → cagr/forecast = null, nigdy
+   zgadywane). Seria = `loadLineSeries` po WSZYSTKICH pakietach organizacji
+   (nie tylko bieżącym packId z scope) — trend z definicji wymaga historii.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/** Linie kanoniczne śledzone dla trendu sekcji finansowej raportu (O4.6). */
+const TRACKED_TREND_LINES: ReadonlyArray<{ code: string; namePl: string }> = [
+  { code: 'REVENUE', namePl: 'Przychody' },
+  { code: 'EBITDA', namePl: 'EBITDA' },
+  { code: 'NET_INCOME', namePl: 'Wynik netto' },
+];
+
+export interface FinanceReportTrendSection {
+  /** true = przynajmniej jedna śledzona linia ma ≥2 okresy (realny trend policzalny). */
+  available: boolean;
+  /** Jedna pozycja na śledzoną linię kanoniczną, zawsze (nawet periods=0/1 — honest empty). */
+  lines: StatementTrendAnalysis[];
+  /** PL — wyjaśnienie stanu (dostępny / brak historii pakietów). */
+  note: string;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -395,6 +426,13 @@ export interface FinanceReportSection {
   /** #82g — jawny ślad źródeł per liczba (pakiet/okres · formuła/check/metoda · założenia). */
   lineage: FinanceReportLineage;
   /**
+   * O4.6 TREND — CAGR/kierunek/kształt + prognoza dla `TRACKED_TREND_LINES`, z serii
+   * wieloookresowej (`financeStatementTrendService.loadLineSeries`, wszystkie pakiety
+   * organizacji). `available=false` gdy organizacja ma <2 policzalne okresy dla każdej
+   * śledzonej linii — sekcja NIE zgaduje trendu z jednego pakietu (honest-empty).
+   */
+  trend: FinanceReportTrendSection;
+  /**
    * HP-14 Evidence Contract — warstwa dowodowa sekcji (źródła/założenia/ryzyka/pewność/
    * do-weryfikacji). Wyprowadzana DETERMINISTYCZNIE z lineage + reconcile + dataQuality
    * (zero LLM). Ten sam obiekt zasila render FE (HP-16) i log jakości.
@@ -461,6 +499,12 @@ export interface RawFinanceReportInputs {
   /** null = pakiet nigdy nie przeszedł recompute (brak wpisów w financial_statement_validations). */
   reconcileValidations: RawReconcileValidationRow[] | null;
   valuation: { id: string; title: string | null; basket: BasketResult | null } | null;
+  /**
+   * O4.6 — seria wartości per linia kanoniczna (`TRACKED_TREND_LINES`), oldest→newest,
+   * już pobrana przez wołającego (`loadLineSeries`, org-scoped, wszystkie pakiety).
+   * Brak klucza / pusta tablica = ta linia nie ma historii → honest-empty w `trend`.
+   */
+  trendSeries?: Record<string, SeriesPoint[]>;
   asOf?: number;
 }
 
@@ -670,9 +714,39 @@ function emptyFinanceReportSection(organizationId: string, asOf: string): Financ
       ratios,
       missingStatementTypes
     ),
-    lineage: emptyFinanceReportLineage(asOf),
+    trend: {
+      available: false,
+      lines: [],
+      note: 'Brak pakietu — trend niedostępny.',
+    },
     conclusions: [],
   };
+}
+
+/**
+ * O4.6 — komponuje sekcję trendu z JUŻ POBRANYCH serii (`trendSeries`), PURE (żadnego
+ * I/O). Śledzi `TRACKED_TREND_LINES`; linie bez serii nadal dostają wpis (periods=0),
+ * więc `section.trend.lines` zawsze ma stałą długość — brak danych jest WIDOCZNY, nie
+ * pominięty milcząco. `available=true` tylko gdy przynajmniej jedna linia ma ≥2 okresy
+ * (financeStatementTrendService.computeTrend wymaga tego, by CAGR/kierunek były realne,
+ * nie zgadywane z jednego punktu).
+ */
+function composeFinanceReportTrend(
+  trendSeries: Record<string, SeriesPoint[]> | undefined
+): FinanceReportTrendSection {
+  const lines: StatementTrendAnalysis[] = TRACKED_TREND_LINES.map(({ code, namePl }) =>
+    analyseStatementLine({
+      lineCode: code,
+      lineName: namePl,
+      series: trendSeries?.[code] ?? [],
+    })
+  );
+  const linesWithHistory = lines.filter((l) => l.trend.periods >= 2);
+  const available = linesWithHistory.length > 0;
+  const note = available
+    ? `Trend liczony z historii pakietów organizacji (financeStatementTrendService, O4.6) — ${linesWithHistory.length}/${lines.length} śledzonych linii ma ≥2 okresy.`
+    : 'Brak wystarczającej historii pakietów organizacji (potrzeba ≥2 okresów sprawozdań na linię) — trend niedostępny, nie zgadywany z jednego pakietu.';
+  return { available, lines, note };
 }
 
 /**
@@ -739,6 +813,9 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
     { language: 'pl', topN: 3 }
   );
 
+  // O4.6 TREND — pure compose z już pobranej serii (patrz `trendSeries` w loadFinanceReportSectionData).
+  const trend = composeFinanceReportTrend(input.trendSeries);
+
   return {
     organizationId: input.organizationId,
     packId: input.pack.packId,
@@ -770,6 +847,7 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
       { total: ratios.length, computed: computedCount, skipped: ratios.length - computedCount },
       input.pack.missingStatementTypes
     ),
+    trend,
     conclusions,
   };
 }
@@ -801,6 +879,23 @@ async function loadOrgBenchmarkRows(organizationId: string): Promise<OrgBenchmar
     );
     return [];
   }
+}
+
+/**
+ * O4.6 — loads the multi-period value series for every `TRACKED_TREND_LINES` code,
+ * org-scoped across ALL packs (not just the current `packId`), via the existing
+ * `financeStatementTrendService.loadLineSeries` (already fail-soft: DB/schema issues
+ * degrade to `[]` per line, never throw). Independent of the report's scope.packId —
+ * a trend needs history, not the single pack being reported on.
+ */
+async function loadTrendSeriesForOrg(organizationId: string): Promise<Record<string, SeriesPoint[]>> {
+  const entries = await Promise.all(
+    TRACKED_TREND_LINES.map(async ({ code }) => {
+      const series = await loadLineSeries({ organizationId, lineCode: code });
+      return [code, series] as const;
+    })
+  );
+  return Object.fromEntries(entries);
 }
 
 async function resolveValuation(
@@ -859,12 +954,13 @@ export async function loadFinanceReportSectionData(
   const requiredTypes = ['P&L', 'BS', 'CF'];
   const missingStatementTypes = requiredTypes.filter((t) => !statementTypesPresent.includes(t));
 
-  const [maps, waccPct, orgIndustry, orgBenchmarkRows, valuation] = await Promise.all([
+  const [maps, waccPct, orgIndustry, orgBenchmarkRows, valuation, trendSeries] = await Promise.all([
     loadPackValueMaps(statements),
     getOrgDefaultWacc(scope.organizationId).catch(() => undefined),
     loadOrganizationIndustry(scope.organizationId).catch(() => undefined),
     loadOrgBenchmarkRows(scope.organizationId),
     resolveValuation(scope.organizationId, scope.valuationId),
+    loadTrendSeriesForOrg(scope.organizationId).catch(() => ({}) as Record<string, SeriesPoint[]>),
   ]);
   const lineValues: LineValueMap = { ...maps.pnl, ...maps.bs, ...maps.cf };
 
@@ -890,6 +986,7 @@ export async function loadFinanceReportSectionData(
     orgBenchmarkRows,
     reconcileValidations,
     valuation,
+    trendSeries,
     asOf: scope.asOf,
   });
 }
@@ -1044,11 +1141,45 @@ export function renderFinanceReportMarkdown(section: FinanceReportSection): Reco
   // itself sourced only from `section.ratios` (Z111).
   const narrative = renderFinanceConclusionsMarkdown(section.conclusions, true);
 
+  // O4.6 TREND — CAGR/kierunek/kształt + prognoza per śledzona linia kanoniczna, z
+  // `section.trend` (już policzone przez `composeFinanceReportTrend`, zero I/O tutaj).
+  // Honest-empty: brak historii pakietów → jawna notatka, żaden numer nie jest zgadywany.
+  const DIRECTION_PL: Record<StatementTrendAnalysis['trend']['direction'], string> = {
+    rising: 'rosnący',
+    falling: 'malejący',
+    flat: 'płaski',
+  };
+  const SHAPE_PL: Record<StatementTrendAnalysis['trend']['shape'], string> = {
+    accelerating: 'przyspieszający',
+    decelerating: 'zwalniający',
+    steady: 'stabilny',
+  };
+  const trendAnalysis = section.trend.available
+    ? [
+        '## Trend (O4.6) — CAGR, kierunek, prognoza',
+        '',
+        section.trend.note,
+        '',
+        ...section.trend.lines
+          .filter((l) => l.trend.periods >= 2)
+          .map((l) => {
+            const t = l.trend;
+            const cagr = t.cagrPct != null ? `${t.cagrPct}%/okres` : 'CAGR niedostępny (wartości ≤0)';
+            const forecastLine =
+              l.forecast.confidence === 'computed'
+                ? `Prognoza (${l.forecast.method}): ${l.forecast.projected.map((p) => p.value).join(', ')} — ${l.forecast.assumption?.pl ?? ''}`
+                : 'Prognoza niedostępna (za krótka seria, <3 okresy).';
+            return `- **${l.lineName}**: ${DIRECTION_PL[t.direction]}, ${SHAPE_PL[t.shape]}, zmiana całkowita ${t.totalChange} (${t.totalChangePct}%) na ${t.periods} okresach, CAGR ${cagr}. ${forecastLine}`;
+          }),
+      ].join('\n')
+    : ['## Trend (O4.6) — CAGR, kierunek, prognoza', '', `_${section.trend.note}_`].join('\n');
+
   return {
     header,
     ratio_table: ratioTable,
     reconcile_result: reconcileResult,
     ev_football_field: evFootballField,
+    trend_analysis: trendAnalysis,
     narrative,
   };
 }
