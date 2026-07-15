@@ -14,6 +14,7 @@
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/utils/cn';
 
@@ -84,6 +85,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   className,
   'aria-label': ariaLabel,
 }) => {
+  const { i18n } = useTranslation();
+  const t = i18n.getFixedT(isPolish ? 'pl' : 'en');
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -188,13 +191,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               {/* Shortcuts */}
               <div className="mb-3 flex flex-wrap gap-1.5">
                 <button type="button" className={SHORTCUT_CLASS} onClick={() => shortcut(0)}>
-                  {isPolish ? 'Dziś' : 'Today'}
+                  {t('sharedComponents.datePicker.today')}
                 </button>
                 <button type="button" className={SHORTCUT_CLASS} onClick={() => shortcut(1)}>
-                  {isPolish ? 'Jutro' : 'Tomorrow'}
+                  {t('sharedComponents.datePicker.tomorrow')}
                 </button>
                 <button type="button" className={SHORTCUT_CLASS} onClick={() => shortcut(7)}>
-                  {isPolish ? 'Za tydzień' : 'Next week'}
+                  {t('sharedComponents.datePicker.nextWeek')}
                 </button>
               </div>
 
@@ -202,7 +205,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               <div className="mb-2 flex items-center justify-between">
                 <button
                   type="button"
-                  aria-label={isPolish ? 'Poprzedni miesiąc' : 'Previous month'}
+                  aria-label={t('sharedComponents.datePicker.previousMonth')}
                   onClick={() =>
                     setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
                   }
@@ -215,7 +218,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 </span>
                 <button
                   type="button"
-                  aria-label={isPolish ? 'Następny miesiąc' : 'Next month'}
+                  aria-label={t('sharedComponents.datePicker.nextMonth')}
                   onClick={() =>
                     setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
                   }

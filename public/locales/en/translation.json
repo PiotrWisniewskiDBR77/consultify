@@ -28357,6 +28357,13 @@
       "detailsOptions": "Details options",
       "options": "Options",
       "noDescription": "No description."
+    },
+    "datePicker": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "nextWeek": "Next week",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
     }
   },
   "reportBuilder": {

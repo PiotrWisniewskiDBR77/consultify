@@ -29417,6 +29417,13 @@
       "detailsOptions": "Opcje szczegółów",
       "options": "Opcje",
       "noDescription": "Brak opisu."
+    },
+    "datePicker": {
+      "today": "Dziś",
+      "tomorrow": "Jutro",
+      "nextWeek": "Za tydzień",
+      "previousMonth": "Poprzedni miesiąc",
+      "nextMonth": "Następny miesiąc"
     }
   },
   "reportBuilder": {
