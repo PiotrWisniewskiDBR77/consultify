@@ -27927,5 +27927,66 @@
       "2": "Opisz problem lub pomysł",
       "3": "Kliknij „Akceptuj\" w panelu Tools"
     }
+  },
+  "discoveryToolsTools": {
+    "common": {
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "comment": "Komentarz",
+      "explore": "Pogłęb",
+      "chooseDirection": "Wybierz kierunek pogłębienia:",
+      "yourCommentPlaceholder": "Twój komentarz do tej obserwacji…",
+      "factorsWord": "czynników",
+      "impact": "Wpływ",
+      "effort": "Wysiłek",
+      "rationale": "Uzasadnienie",
+      "rationaleColon": "Uzasadnienie:",
+      "createInitiative": "Utwórz inicjatywę",
+      "initiativeCreated": "Inicjatywa utworzona",
+      "none": "Brak",
+      "firstStepColon": "Pierwszy krok:",
+      "whyNowColon": "Dlaczego teraz:",
+      "collapseRationale": "Zwiń uzasadnienie",
+      "showRationale": "Pokaż uzasadnienie",
+      "acceptAllProposals": "Zaakceptuj wszystkie propozycje",
+      "notNowDefer": "Nie teraz / odłóż",
+      "close": "Zamknij",
+      "remove": "Usuń",
+      "apply": "Zastosuj"
+    },
+    "dynamicSwot": {
+      "insightsPhase": {
+        "factorPictureTitle": "Obraz czynników",
+        "evidenceBadge": "Dowody",
+        "synthesisBadge": "Synteza",
+        "perAreaObservationsTitle": "Obserwacje per obszar",
+        "perAreaObservationsSubtitle": "Kluczowe obserwacje konsultingowe z każdego obszaru SWOT — co widzimy i co z tego wynika.",
+        "internalSynthesis": "Synteza wewnętrzna",
+        "internalSynthesisSubtitle": "Jak mocne i słabe strony razem kształtują pozycję wewnętrzną organizacji.",
+        "internalSynthesisEmpty": "Uruchom analizę AI, aby wygenerować syntezę wewnętrzną. AI porówna mocne i słabe strony i wskaże, co naprawdę kształtuje pozycję firmy.",
+        "externalSynthesis": "Synteza zewnętrzna",
+        "externalSynthesisSubtitle": "Co rynek otwiera i co zamyka — presja zewnętrzna, okna szans i realne zagrożenia.",
+        "externalSynthesisEmpty": "Uruchom analizę AI, aby wygenerować syntezę zewnętrzną. AI przeanalizuje szanse i zagrożenia w kontekście pozycji firmy.",
+        "insightsBadge": "Wnioski",
+        "strategicInsightsTitle": "Wnioski strategiczne",
+        "strategicInsightsSubtitle": "Interpretacja konsultingowa — napięcia, trade-offy i to, co naprawdę wynika z analizy dla decyzji biznesowej.",
+        "keyInsightsTitle": "Kluczowe wnioski",
+        "appliedConclusionsTitle": "Wnioski aplikowalne",
+        "towsTitle": "Napięcia strategiczne (TOWS)",
+        "crossFactorAnalysisTitle": "Analiza krzyżowa czynników",
+        "noInsightsEmptyState": "Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować wnioski strategiczne.",
+        "recommendationsBadge": "Rekomendacje",
+        "recommendationsSubtitle": "Konkretne rekomendowane ruchy strategiczne wynikające z całej analizy. Każda rekomendacja może stać się inicjatywą.",
+        "aiRecommendationsTitle": "Rekomendacje AI",
+        "analysisDerivedRecommendationsTitle": "Rekomendacje z analizy",
+        "deferredEffortNote": "Wysoki wysiłek, nieproporcjonalny do oczekiwanego wpływu.",
+        "noRecommendationsEmptyState": "Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować rekomendacje.",
+        "initiativesBadge": "Inicjatywy",
+        "strategicInitiativesTitle": "Inicjatywy strategiczne",
+        "strategicInitiativesSubtitle": "Inicjatywy utworzone z rekomendacji — gotowe do przeniesienia do modułu Execution.",
+        "initiativeCreatedToast": "Inicjatywa utworzona w module Inicjatywy",
+        "initiativeCreateErrorToast": "Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia"
+      }
+    }
   }
 }

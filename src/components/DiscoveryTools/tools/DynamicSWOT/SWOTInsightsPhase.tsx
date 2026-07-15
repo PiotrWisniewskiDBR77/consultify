@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
@@ -325,6 +326,7 @@ function ObservationCard({
   titleColor?: string;
   isPolish: boolean;
 }) {
+  const { t } = useTranslation();
   const pm = PRIORITY_META[obs.priority];
   const [activeMode, setActiveMode] = useState<'comment' | 'deep-thinker' | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -383,9 +385,7 @@ function ObservationCard({
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={
-              isPolish ? 'Twój komentarz do tej obserwacji…' : 'Your comment on this observation…'
-            }
+            placeholder={t('discoveryToolsTools.common.yourCommentPlaceholder')}
             className="w-full resize-none rounded-md border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-300 dark:border-navy-700 dark:bg-navy-950/40 dark:text-slate-300 dark:placeholder-slate-500 dark:focus:border-navy-600"
             rows={2}
             autoFocus
@@ -396,7 +396,7 @@ function ObservationCard({
               onClick={handleCancel}
               className="rounded-md px-3 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-navy-800"
             >
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('discoveryToolsTools.common.cancel')}
             </button>
             <button
               type="button"
@@ -404,7 +404,7 @@ function ObservationCard({
               disabled={!inputValue.trim()}
               className="rounded-md bg-slate-900 px-3 py-1 text-[11px] font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
             >
-              {isPolish ? 'Zapisz' : 'Save'}
+              {t('discoveryToolsTools.common.save')}
             </button>
           </div>
         </div>
@@ -413,7 +413,7 @@ function ObservationCard({
       {activeMode === 'deep-thinker' && (
         <div className="mt-3 space-y-2 rounded-lg border border-primary-200/70 bg-primary-50/30 p-3 dark:border-primary-900/40 dark:bg-primary-950/15">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">
-            {isPolish ? 'Wybierz kierunek pogłębienia:' : 'Choose a direction to explore:'}
+            {t('discoveryToolsTools.common.chooseDirection')}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {prompts.map((prompt, idx) => (
@@ -437,7 +437,7 @@ function ObservationCard({
               onClick={handleCancel}
               className="rounded-md px-3 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-navy-800"
             >
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('discoveryToolsTools.common.cancel')}
             </button>
             <button
               type="button"
@@ -445,7 +445,7 @@ function ObservationCard({
               disabled={!selectedPrompt}
               className="rounded-md bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1 text-[11px] font-medium text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-40"
             >
-              {isPolish ? 'Pogłęb' : 'Explore'}
+              {t('discoveryToolsTools.common.explore')}
             </button>
           </div>
         </div>
@@ -459,7 +459,7 @@ function ObservationCard({
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-950/40 dark:text-slate-400 dark:hover:bg-navy-900/60"
           >
             <MessageSquare className="h-3 w-3" />
-            {isPolish ? 'Komentarz' : 'Comment'}
+            {t('discoveryToolsTools.common.comment')}
           </button>
           <button
             type="button"
@@ -484,6 +484,7 @@ function QuadrantObservationsBlock({
   items: SWOTItem[];
   isPolish: boolean;
 }) {
+  const { t } = useTranslation();
   const meta = QUADRANT_META[quadrant];
   if (!meta || items.length === 0) return null;
   const observations = deriveObservations(items, quadrant, isPolish);
@@ -495,7 +496,7 @@ function QuadrantObservationsBlock({
         <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${meta.label}`}>
           {isPolish ? meta.title.pl : meta.title.en}
           <span className="ml-2 text-slate-600 dark:text-slate-500">
-            ({items.length} {isPolish ? 'czynników' : 'factors'})
+            ({items.length} {t('discoveryToolsTools.common.factorsWord')})
           </span>
         </div>
       </div>
@@ -614,6 +615,7 @@ function InternalSynthesisBlock({
   isPolish: boolean;
   getItemText: (id: string) => string;
 }) {
+  const { t } = useTranslation();
   const observations = useMemo(
     () =>
       deriveInternalObservations(strengths, weaknesses, correlations, executiveSummary, isPolish),
@@ -623,22 +625,21 @@ function InternalSynthesisBlock({
 
   return (
     <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-      <SectionHeader title="" badge={isPolish ? 'Synteza wewnętrzna' : 'Internal synthesis'}>
+      <SectionHeader
+        title=""
+        badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.internalSynthesis')}
+      >
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Synteza wewnętrzna' : 'Internal synthesis'}
+          {t('discoveryToolsTools.dynamicSwot.insightsPhase.internalSynthesis')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Jak mocne i słabe strony razem kształtują pozycję wewnętrzną organizacji.'
-            : 'How strengths and weaknesses together shape the internal position of the organization.'}
+          {t('discoveryToolsTools.dynamicSwot.insightsPhase.internalSynthesisSubtitle')}
         </p>
       </SectionHeader>
       <div className="space-y-4 px-6 py-5">
         {!hasContent ? (
           <div className="rounded-xl border-2 border-dashed border-slate-200 p-5 text-center text-sm text-slate-600 dark:border-navy-700 dark:text-slate-500">
-            {isPolish
-              ? 'Uruchom analizę AI, aby wygenerować syntezę wewnętrzną. AI porówna mocne i słabe strony i wskaże, co naprawdę kształtuje pozycję firmy.'
-              : 'Run AI analysis to generate internal synthesis. AI will compare strengths and weaknesses to reveal what truly shapes the company position.'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.internalSynthesisEmpty')}
           </div>
         ) : (
           <>
@@ -767,6 +768,7 @@ function ExternalSynthesisBlock({
   isPolish: boolean;
   getItemText: (id: string) => string;
 }) {
+  const { t } = useTranslation();
   const observations = useMemo(
     () => deriveExternalObservations(opportunities, threats, correlations, isPolish),
     [opportunities, threats, correlations, isPolish]
@@ -774,22 +776,21 @@ function ExternalSynthesisBlock({
 
   return (
     <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-      <SectionHeader title="" badge={isPolish ? 'Synteza zewnętrzna' : 'External synthesis'}>
+      <SectionHeader
+        title=""
+        badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.externalSynthesis')}
+      >
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Synteza zewnętrzna' : 'External synthesis'}
+          {t('discoveryToolsTools.dynamicSwot.insightsPhase.externalSynthesis')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Co rynek otwiera i co zamyka — presja zewnętrzna, okna szans i realne zagrożenia.'
-            : 'What the market opens and closes — external pressure, windows of opportunity, and real threats.'}
+          {t('discoveryToolsTools.dynamicSwot.insightsPhase.externalSynthesisSubtitle')}
         </p>
       </SectionHeader>
       <div className="space-y-4 px-6 py-5">
         {observations.length === 0 ? (
           <div className="rounded-xl border-2 border-dashed border-slate-200 p-5 text-center text-sm text-slate-600 dark:border-navy-700 dark:text-slate-500">
-            {isPolish
-              ? 'Uruchom analizę AI, aby wygenerować syntezę zewnętrzną. AI przeanalizuje szanse i zagrożenia w kontekście pozycji firmy.'
-              : 'Run AI analysis to generate external synthesis. AI will analyze opportunities and threats in the context of the company position.'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.externalSynthesisEmpty')}
           </div>
         ) : (
           <div className="space-y-4">
@@ -1141,6 +1142,7 @@ function RecommendationCard({
   isPolish: boolean;
   onCreateInitiative: (rec: DerivedRecommendation) => void;
 }) {
+  const { t } = useTranslation();
   const meta = REC_TYPE_META[rec.type];
   const TypeIcon = meta.icon;
   const [expanded, setExpanded] = useState(false);
@@ -1173,7 +1175,7 @@ function RecommendationCard({
                       : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-950/40 dark:text-slate-400'
                 }`}
               >
-                {isPolish ? 'Wpływ' : 'Impact'}: {rec.estimatedImpact}
+                {t('discoveryToolsTools.common.impact')}: {rec.estimatedImpact}
               </span>
               <span
                 className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
@@ -1184,7 +1186,7 @@ function RecommendationCard({
                       : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                 }`}
               >
-                {isPolish ? 'Wysiłek' : 'Effort'}: {rec.estimatedEffort}
+                {t('discoveryToolsTools.common.effort')}: {rec.estimatedEffort}
               </span>
             </div>
           </div>
@@ -1199,7 +1201,7 @@ function RecommendationCard({
           {expanded && (
             <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-navy-700/40 dark:bg-navy-950/20">
               <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Uzasadnienie' : 'Rationale'}
+                {t('discoveryToolsTools.common.rationale')}
               </div>
               <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 {rec.rationale}
@@ -1213,18 +1215,14 @@ function RecommendationCard({
               className="text-xs font-medium text-slate-600 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
             >
               {expanded
-                ? isPolish
-                  ? 'Zwiń uzasadnienie'
-                  : 'Collapse rationale'
-                : isPolish
-                  ? 'Pokaż uzasadnienie'
-                  : 'Show rationale'}
+                ? t('discoveryToolsTools.common.collapseRationale')
+                : t('discoveryToolsTools.common.showRationale')}
             </button>
 
             {initiativeCreated ? (
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
                 <Check className="h-3.5 w-3.5" />
-                {isPolish ? 'Inicjatywa utworzona' : 'Initiative created'}
+                {t('discoveryToolsTools.common.initiativeCreated')}
               </span>
             ) : (
               <button
@@ -1232,7 +1230,7 @@ function RecommendationCard({
                 className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] hover:shadow-md"
               >
                 <Rocket className="h-3.5 w-3.5" />
-                {isPolish ? 'Utwórz inicjatywę' : 'Create initiative'}
+                {t('discoveryToolsTools.common.createInitiative')}
               </button>
             )}
           </div>
@@ -1259,6 +1257,7 @@ export function SWOTInsightsPhase({
   onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
+  const { t } = useTranslation();
   const { acceptCard, rejectCard, acceptAllInPhase, addInitiative } = useToolStore();
   const swotData = session.inputData as SWOTData;
   const tensions = swotData.tensions || [];
@@ -1343,16 +1342,10 @@ export function SWOTInsightsPhase({
         sourceType: 'tool',
         sourceId: session.id,
       });
-      toast.success(
-        isPolish ? 'Inicjatywa utworzona w module Inicjatywy' : 'Initiative created in Initiatives'
-      );
+      toast.success(t('discoveryToolsTools.dynamicSwot.insightsPhase.initiativeCreatedToast'));
     } catch (err) {
       console.error('[DynamicSWOT] initiative handoff failed:', err);
-      toast.error(
-        isPolish
-          ? 'Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia'
-          : 'Could not save the initiative to the Initiatives module — draft kept in the tool session'
-      );
+      toast.error(t('discoveryToolsTools.dynamicSwot.insightsPhase.initiativeCreateErrorToast'));
     }
   };
 
@@ -1364,8 +1357,8 @@ export function SWOTInsightsPhase({
       {items.length > 0 && (
         <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
           <SectionHeader
-            title={isPolish ? 'Obraz czynników' : 'Factor picture'}
-            badge={isPolish ? 'Dowody' : 'Evidence'}
+            title={t('discoveryToolsTools.dynamicSwot.insightsPhase.factorPictureTitle')}
+            badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.evidenceBadge')}
           />
           <div className="grid gap-4 p-5 md:grid-cols-2">
             {(['strengths', 'weaknesses', 'opportunities', 'threats'] as const).map((q) => {
@@ -1392,7 +1385,9 @@ export function SWOTInsightsPhase({
                     </div>
                   ))}
                   {qItems.length === 0 && (
-                    <div className="text-sm text-slate-600">{isPolish ? 'Brak' : 'None'}</div>
+                    <div className="text-sm text-slate-600">
+                      {t('discoveryToolsTools.common.none')}
+                    </div>
                   )}
                 </div>
               );
@@ -1405,14 +1400,15 @@ export function SWOTInsightsPhase({
           SYNTHESIS 1 — Per-quadrant observations
           ═══════════════════════════════════════════════════ */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-        <SectionHeader title="" badge={isPolish ? 'Synteza' : 'Synthesis'}>
+        <SectionHeader
+          title=""
+          badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.synthesisBadge')}
+        >
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Obserwacje per obszar' : 'Per-area observations'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsTitle')}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Kluczowe obserwacje konsultingowe z każdego obszaru SWOT — co widzimy i co z tego wynika.'
-              : 'Key consulting observations from each SWOT area — what we see and what it means.'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsSubtitle')}
           </p>
         </SectionHeader>
         <div className="space-y-4 p-5">
@@ -1454,14 +1450,15 @@ export function SWOTInsightsPhase({
           STRATEGIC INSIGHTS — ciało doradcze
           ═══════════════════════════════════════════════════ */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-        <SectionHeader title="" badge={isPolish ? 'Wnioski' : 'Insights'}>
+        <SectionHeader
+          title=""
+          badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.insightsBadge')}
+        >
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Wnioski strategiczne' : 'Strategic insights'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInsightsTitle')}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Interpretacja konsultingowa — napięcia, trade-offy i to, co naprawdę wynika z analizy dla decyzji biznesowej.'
-              : 'Consulting interpretation — tensions, trade-offs, and what the analysis truly means for the business decision.'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInsightsSubtitle')}
           </p>
         </SectionHeader>
         <div className="space-y-6 px-6 py-5">
@@ -1472,7 +1469,7 @@ export function SWOTInsightsPhase({
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
               >
                 <Check className="h-3.5 w-3.5" />
-                {isPolish ? 'Zaakceptuj wszystkie propozycje' : 'Accept all proposals'}
+                {t('discoveryToolsTools.common.acceptAllProposals')}
               </button>
             </div>
           )}
@@ -1481,7 +1478,7 @@ export function SWOTInsightsPhase({
           {keyInsights.length > 0 && (
             <div>
               <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">
-                {isPolish ? 'Kluczowe wnioski' : 'Key insights'}
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.keyInsightsTitle')}
               </div>
               <div className="space-y-2">
                 {keyInsights.map((insight, idx) => (
@@ -1503,7 +1500,7 @@ export function SWOTInsightsPhase({
           {appliedConclusions.length > 0 && (
             <div>
               <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Wnioski aplikowalne' : 'Applied conclusions'}
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.appliedConclusionsTitle')}
               </div>
               <ul className="space-y-1.5">
                 {appliedConclusions.map((c, idx) => (
@@ -1525,7 +1522,7 @@ export function SWOTInsightsPhase({
               <div className="mb-4 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary-500" />
                 <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Napięcia strategiczne (TOWS)' : 'Strategic tensions (TOWS)'}
+                  {t('discoveryToolsTools.dynamicSwot.insightsPhase.towsTitle')}
                 </span>
               </div>
               <div className="space-y-4">
@@ -1562,7 +1559,7 @@ export function SWOTInsightsPhase({
                               {tension.whyNow && (
                                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                                   <span className="font-semibold">
-                                    {isPolish ? 'Dlaczego teraz:' : 'Why now:'}
+                                    {t('discoveryToolsTools.common.whyNowColon')}
                                   </span>{' '}
                                   {tension.whyNow}
                                 </div>
@@ -1616,7 +1613,7 @@ export function SWOTInsightsPhase({
               <div className="mb-4 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary-500" />
                 <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Analiza krzyżowa czynników' : 'Cross-factor analysis'}
+                  {t('discoveryToolsTools.dynamicSwot.insightsPhase.crossFactorAnalysisTitle')}
                 </span>
               </div>
               <div className="space-y-3">
@@ -1648,9 +1645,7 @@ export function SWOTInsightsPhase({
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
               <Lightbulb className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? 'Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować wnioski strategiczne.'
-                  : 'Add SWOT factors in previous steps to generate strategic insights.'}
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.noInsightsEmptyState')}
               </div>
             </div>
           )}
@@ -1661,14 +1656,15 @@ export function SWOTInsightsPhase({
           RECOMMENDATIONS — rekomendacje z "Utwórz inicjatywę"
           ═══════════════════════════════════════════════════ */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-        <SectionHeader title="" badge={isPolish ? 'Rekomendacje' : 'Recommendations'}>
+        <SectionHeader
+          title=""
+          badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsBadge')}
+        >
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Rekomendacje' : 'Recommendations'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsBadge')}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Konkretne rekomendowane ruchy strategiczne wynikające z całej analizy. Każda rekomendacja może stać się inicjatywą.'
-              : 'Specific recommended strategic moves derived from the full analysis. Each recommendation can become an initiative.'}
+            {t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsSubtitle')}
           </p>
         </SectionHeader>
         <div className="space-y-4 px-6 py-5">
@@ -1676,7 +1672,7 @@ export function SWOTInsightsPhase({
           {activeMoves.length > 0 && (
             <div className="space-y-4">
               <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-                {isPolish ? 'Rekomendacje AI' : 'AI recommendations'}
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.aiRecommendationsTitle')}
               </div>
               {activeMoves.map((move, idx) => {
                 const isProposal =
@@ -1704,7 +1700,7 @@ export function SWOTInsightsPhase({
                                 : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-950/40 dark:text-slate-400'
                           }`}
                         >
-                          {isPolish ? 'Wpływ' : 'Impact'}: {move.expectedImpact}
+                          {t('discoveryToolsTools.common.impact')}: {move.expectedImpact}
                         </span>
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
@@ -1715,7 +1711,7 @@ export function SWOTInsightsPhase({
                                 : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                           }`}
                         >
-                          {isPolish ? 'Wysiłek' : 'Effort'}: {move.estimatedEffort}
+                          {t('discoveryToolsTools.common.effort')}: {move.estimatedEffort}
                         </span>
                       </div>
                     </div>
@@ -1729,7 +1725,7 @@ export function SWOTInsightsPhase({
                       {move.firstStep && (
                         <div className="mt-3 rounded-lg bg-slate-50/80 px-3 py-2 text-xs text-slate-600 dark:bg-navy-950/40 dark:text-slate-400">
                           <span className="font-semibold">
-                            {isPolish ? 'Pierwszy krok:' : 'First step:'}
+                            {t('discoveryToolsTools.common.firstStepColon')}
                           </span>{' '}
                           {move.firstStep}
                         </div>
@@ -1773,7 +1769,9 @@ export function SWOTInsightsPhase({
               {activeMoves.length > 0 && (
                 <div className="mt-2 border-t border-slate-200/50 pt-4 dark:border-navy-700/40">
                   <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Rekomendacje z analizy' : 'Analysis-derived recommendations'}
+                    {t(
+                      'discoveryToolsTools.dynamicSwot.insightsPhase.analysisDerivedRecommendationsTitle'
+                    )}
                   </div>
                 </div>
               )}
@@ -1795,7 +1793,7 @@ export function SWOTInsightsPhase({
               <div className="mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-3.5 w-3.5 text-danger-500" />
                 <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-danger-600 dark:text-danger-400">
-                  {isPolish ? 'Nie teraz / odłóż' : 'Not now / defer'}
+                  {t('discoveryToolsTools.common.notNowDefer')}
                 </span>
               </div>
               <div className="space-y-2">
@@ -1811,9 +1809,7 @@ export function SWOTInsightsPhase({
                       {move.rationale}
                     </div>
                     <div className="mt-1 text-xs text-danger-600 dark:text-danger-400">
-                      {isPolish
-                        ? 'Wysoki wysiłek, nieproporcjonalny do oczekiwanego wpływu.'
-                        : 'High effort, disproportionate to expected impact.'}
+                      {t('discoveryToolsTools.dynamicSwot.insightsPhase.deferredEffortNote')}
                     </div>
                   </div>
                 ))}
@@ -1826,9 +1822,7 @@ export function SWOTInsightsPhase({
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
               <ArrowRight className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? 'Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować rekomendacje.'
-                  : 'Add SWOT factors in previous steps to generate recommendations.'}
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.noRecommendationsEmptyState')}
               </div>
             </div>
           )}
@@ -1840,14 +1834,15 @@ export function SWOTInsightsPhase({
           ═══════════════════════════════════════════════════ */}
       {(session.generatedInitiatives || []).length > 0 && (
         <section className="rounded-[28px] border border-primary-200/70 bg-gradient-to-br from-primary-50/40 to-white dark:border-primary-900/40 dark:from-primary-950/20 dark:to-navy-900/40">
-          <SectionHeader title="" badge={isPolish ? 'Inicjatywy' : 'Initiatives'}>
+          <SectionHeader
+            title=""
+            badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.initiativesBadge')}
+          >
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              {isPolish ? 'Inicjatywy strategiczne' : 'Strategic initiatives'}
+              {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInitiativesTitle')}
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'Inicjatywy utworzone z rekomendacji — gotowe do przeniesienia do modułu Execution.'
-                : 'Initiatives created from recommendations — ready to transfer to the Execution module.'}
+              {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInitiativesSubtitle')}
             </p>
           </SectionHeader>
           <div className="space-y-3 px-6 py-5">
@@ -1878,7 +1873,7 @@ export function SWOTInsightsPhase({
                               : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
                           }`}
                         >
-                          {isPolish ? 'Wpływ' : 'Impact'}: {initiative.estimatedImpact}
+                          {t('discoveryToolsTools.common.impact')}: {initiative.estimatedImpact}
                         </span>
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
@@ -1889,7 +1884,7 @@ export function SWOTInsightsPhase({
                                 : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                           }`}
                         >
-                          {isPolish ? 'Wysiłek' : 'Effort'}: {initiative.estimatedEffort}
+                          {t('discoveryToolsTools.common.effort')}: {initiative.estimatedEffort}
                         </span>
                       </div>
                     </div>
@@ -1901,7 +1896,7 @@ export function SWOTInsightsPhase({
                     </p>
                     <div className="mt-2 rounded-lg bg-primary-50/60 px-3 py-2 text-xs text-slate-600 dark:bg-primary-950/20 dark:text-slate-400">
                       <span className="font-semibold">
-                        {isPolish ? 'Uzasadnienie:' : 'Rationale:'}
+                        {t('discoveryToolsTools.common.rationaleColon')}
                       </span>{' '}
                       {initiative.rationale}
                     </div>

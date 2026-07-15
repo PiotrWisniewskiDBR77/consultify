@@ -26851,5 +26851,66 @@
       "2": "Describe the problem or idea",
       "3": "Click \"Accept\" in the Tools panel"
     }
+  },
+  "discoveryToolsTools": {
+    "common": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "comment": "Comment",
+      "explore": "Explore",
+      "chooseDirection": "Choose a direction to explore:",
+      "yourCommentPlaceholder": "Your comment on this observation…",
+      "factorsWord": "factors",
+      "impact": "Impact",
+      "effort": "Effort",
+      "rationale": "Rationale",
+      "rationaleColon": "Rationale:",
+      "createInitiative": "Create initiative",
+      "initiativeCreated": "Initiative created",
+      "none": "None",
+      "firstStepColon": "First step:",
+      "whyNowColon": "Why now:",
+      "collapseRationale": "Collapse rationale",
+      "showRationale": "Show rationale",
+      "acceptAllProposals": "Accept all proposals",
+      "notNowDefer": "Not now / defer",
+      "close": "Close",
+      "remove": "Remove",
+      "apply": "Apply"
+    },
+    "dynamicSwot": {
+      "insightsPhase": {
+        "factorPictureTitle": "Factor picture",
+        "evidenceBadge": "Evidence",
+        "synthesisBadge": "Synthesis",
+        "perAreaObservationsTitle": "Per-area observations",
+        "perAreaObservationsSubtitle": "Key consulting observations from each SWOT area — what we see and what it means.",
+        "internalSynthesis": "Internal synthesis",
+        "internalSynthesisSubtitle": "How strengths and weaknesses together shape the internal position of the organization.",
+        "internalSynthesisEmpty": "Run AI analysis to generate internal synthesis. AI will compare strengths and weaknesses to reveal what truly shapes the company position.",
+        "externalSynthesis": "External synthesis",
+        "externalSynthesisSubtitle": "What the market opens and closes — external pressure, windows of opportunity, and real threats.",
+        "externalSynthesisEmpty": "Run AI analysis to generate external synthesis. AI will analyze opportunities and threats in the context of the company position.",
+        "insightsBadge": "Insights",
+        "strategicInsightsTitle": "Strategic insights",
+        "strategicInsightsSubtitle": "Consulting interpretation — tensions, trade-offs, and what the analysis truly means for the business decision.",
+        "keyInsightsTitle": "Key insights",
+        "appliedConclusionsTitle": "Applied conclusions",
+        "towsTitle": "Strategic tensions (TOWS)",
+        "crossFactorAnalysisTitle": "Cross-factor analysis",
+        "noInsightsEmptyState": "Add SWOT factors in previous steps to generate strategic insights.",
+        "recommendationsBadge": "Recommendations",
+        "recommendationsSubtitle": "Specific recommended strategic moves derived from the full analysis. Each recommendation can become an initiative.",
+        "aiRecommendationsTitle": "AI recommendations",
+        "analysisDerivedRecommendationsTitle": "Analysis-derived recommendations",
+        "deferredEffortNote": "High effort, disproportionate to expected impact.",
+        "noRecommendationsEmptyState": "Add SWOT factors in previous steps to generate recommendations.",
+        "initiativesBadge": "Initiatives",
+        "strategicInitiativesTitle": "Strategic initiatives",
+        "strategicInitiativesSubtitle": "Initiatives created from recommendations — ready to transfer to the Execution module.",
+        "initiativeCreatedToast": "Initiative created in Initiatives",
+        "initiativeCreateErrorToast": "Could not save the initiative to the Initiatives module — draft kept in the tool session"
+      }
+    }
   }
 }
