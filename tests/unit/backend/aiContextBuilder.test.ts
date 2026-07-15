@@ -7,14 +7,20 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import AIContextBuilder from '../../../server/src/services/aiContextBuilder.js';
-import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
+import { createUnifiedTestSetup } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
 describe('AIContextBuilder', () => {
     let mocks;
 
     beforeEach(() => {
-        mocks = setupStandardTest();
+        mocks = createUnifiedTestSetup();
+        // Not provided by createUnifiedTestSetup — this service isn't covered by a
+        // dedicated factory there; stub the two methods buildContext() calls.
+        mocks.aiActionExecutor = {
+            getPendingActions: vi.fn(),
+            getPatternInfo: vi.fn()
+        };
 
         // Setup specific AI service mocks with correct responses
         mocks.pmoHealthService.getHealthSnapshot.mockResolvedValue({
@@ -64,8 +70,8 @@ describe('AIContextBuilder', () => {
             const orgId = testOrganizations.org1.id;
             const projectId = testProjects.project1.id;
 
-            // Mock all DB queries using the standardized mockDb
-            mockDb.get.mockImplementation(async (query, params) => {
+            // Mock all DB queries using the standardized mocks.db
+            mocks.db.get.mockImplementation(async (query, params) => {
                 if (query.includes('users')) {
                     if (userId === testUsers.admin.id) return { role: 'ADMIN' };
                     if (userId === testUsers.superadmin.id) return { role: 'SUPERADMIN' };
@@ -98,7 +104,7 @@ describe('AIContextBuilder', () => {
                 return null;
             });
 
-            mockDb.all.mockImplementation(async (query, params) => {
+            mocks.db.all.mockImplementation(async (query, params) => {
                 if (query.includes('due_date') || query.includes('tasks')) return [];
                 if (query.includes('initiatives')) return [];
                 if (query.includes('decisions')) return [];
@@ -124,7 +130,7 @@ describe('AIContextBuilder', () => {
             const userId = testUsers.user.id;
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation(async (query, params) => {
+            mocks.db.get.mockImplementation(async (query, params) => {
                 if (query.includes('users')) return { role: 'USER' };
                 if (query.includes('ai_policies')) return { policy_level: 'ASSISTED' };
                 if (query.includes('organizations')) return { name: 'Test Org' };
@@ -150,14 +156,14 @@ describe('AIContextBuilder', () => {
                 }
             };
 
-            mockPMOHealthService.getHealthSnapshot.mockResolvedValue(healthSnapshot);
+            mocks.pmoHealthService.getHealthSnapshot.mockResolvedValue(healthSnapshot);
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
 
             expect(context.pmo.healthSnapshot).toEqual(healthSnapshot);
-            expect(mockPMOHealthService.getHealthSnapshot).toHaveBeenCalledWith(projectId);
+            expect(mocks.pmoHealthService.getHealthSnapshot).toHaveBeenCalledWith(projectId);
         });
 
         it('should handle PMO health service errors gracefully', async () => {
@@ -165,9 +171,9 @@ describe('AIContextBuilder', () => {
             const orgId = testOrganizations.org1.id;
             const projectId = testProjects.project1.id;
 
-            mockPMOHealthService.getHealthSnapshot.mockRejectedValue(new Error('Service unavailable'));
+            mocks.pmoHealthService.getHealthSnapshot.mockRejectedValue(new Error('Service unavailable'));
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
 
@@ -185,7 +191,7 @@ describe('AIContextBuilder', () => {
                 selectedObjectType: 'initiative'
             };
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, null, options);
 
@@ -200,7 +206,7 @@ describe('AIContextBuilder', () => {
             const projectId = testProjects.project1.id;
             const options = { focusMode: 'pmo-docs' };
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
 
@@ -217,7 +223,7 @@ describe('AIContextBuilder', () => {
             const projectId = testProjects.project1.id;
             const options = { focusMode: 'project-data' };
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
 
@@ -233,7 +239,7 @@ describe('AIContextBuilder', () => {
             const projectId = testProjects.project1.id;
             const options = { focusMode: 'research' };
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
 
@@ -248,7 +254,7 @@ describe('AIContextBuilder', () => {
             const projectId = testProjects.project1.id;
             const options = { focusMode: 'web' };
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
 
@@ -265,7 +271,7 @@ describe('AIContextBuilder', () => {
             const projectId = testProjects.project1.id;
             const options = { focusMode: 'all' };
 
-            mockDb.get.mockImplementation(async () => ({}));
+            mocks.db.get.mockImplementation(async () => ({}));
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
 
@@ -285,7 +291,7 @@ describe('AIContextBuilder', () => {
             const userId = testUsers.admin.id;
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation(async (query) => {
+            mocks.db.get.mockImplementation(async (query) => {
                 if (query.includes('users')) return { role: 'ADMIN' };
                 if (query.includes('ai_policies')) return {
                     policy_level: 'ASSISTED',
@@ -307,7 +313,7 @@ describe('AIContextBuilder', () => {
             const userId = testUsers.superadmin.id;
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation(async (query) => {
+            mocks.db.get.mockImplementation(async (query) => {
                 if (query.includes('users')) return { role: 'SUPERADMIN' };
                 return {};
             });
@@ -322,13 +328,13 @@ describe('AIContextBuilder', () => {
         it('should build organization context', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation(async () => ({
+            mocks.db.get.mockImplementation(async () => ({
                 name: 'Test Org',
                 plan: 'enterprise',
                 status: 'active'
             }));
 
-            mockDb.all.mockImplementation(async () => [{ id: 'proj-1' }, { id: 'proj-2' }]);
+            mocks.db.all.mockImplementation(async () => [{ id: 'proj-1' }, { id: 'proj-2' }]);
 
             const org = await AIContextBuilder._buildOrganizationContext(orgId);
 
@@ -342,7 +348,7 @@ describe('AIContextBuilder', () => {
         it('should build project context', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.get.mockImplementation(async (query) => {
+            mocks.db.get.mockImplementation(async (query) => {
                 if (query.includes('SELECT * FROM projects')) {
                     return {
                         id: projectId,

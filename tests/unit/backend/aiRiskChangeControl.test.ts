@@ -50,15 +50,15 @@ describe('AI Risk & Change Control Service', () => {
         it('should aggregate risks from all detectors', async () => {
             // Inject dependencies
             AIRiskChangeControl.setDependencies({
-                db: mockDb,
-                uuidv4: mockUuid.v4
+                db: mocks.db,
+                uuidv4: mocks.uuid.v4
             });
 
             // Mock org ID fetch
-            mockDb.get.mockResolvedValue({ organization_id: 'org-1' });
+            mocks.db.get.mockResolvedValue({ organization_id: 'org-1' });
 
             // Mock sub-detectors via DB responses
-            mockDb.all.mockImplementation(async (db, sql) => {
+            mocks.db.all.mockImplementation(async (db, sql) => {
                 // Handle case where db is sql (if called without db arg? No, source passes db)
                 // But wait, source: return DbPromise.all(db, sql, params) OR DbPromise.all(sql, params)
                 // If db is missing, DbPromise.all(sql, params).
@@ -101,7 +101,7 @@ describe('AI Risk & Change Control Service', () => {
             });
 
             // Mock risk registration
-            mockDb.run.mockResolvedValue({ changes: 1 });
+            mocks.db.run.mockResolvedValue({ changes: 1 });
 
             const result = await AIRiskChangeControl.detectRisks('p-1');
 
@@ -113,8 +113,8 @@ describe('AI Risk & Change Control Service', () => {
 
     describe('trackScopeChange', () => {
         it('should log scope change', async () => {
-            mockDb.get.mockResolvedValue({ organization_id: 'org-1' });
-            mockDb.run.mockResolvedValue({ changes: 1, lastID: 'mock-change-id' });
+            mocks.db.get.mockResolvedValue({ organization_id: 'org-1' });
+            mocks.db.run.mockResolvedValue({ changes: 1, lastID: 'mock-change-id' });
 
             const change = {
                 projectId: 'p-1',
@@ -135,7 +135,7 @@ describe('AI Risk & Change Control Service', () => {
         it('should identify when escalation is NOT needed (Logic Check)', async () => {
             // Mock retrieval of a low severity recent risk
             const recent = new Date().toISOString();
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'r-1', severity: 'low', detected_at: recent, status: 'identified', title: 'Small Delay'
             });
 
@@ -149,7 +149,7 @@ describe('AI Risk & Change Control Service', () => {
         });
 
         it('should trigger warning for critical risks', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'r-1',
                 severity: 'critical',
                 detected_at: new Date().toISOString(),

@@ -22,7 +22,7 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
     describe('recalculateProgress with organizationId', () => {
         it('should filter tasks by organization_id AND initiative_id', async () => {
             // Simulate tasks from DB
-            mockDb.all.mockImplementation((query, params) => {
+            mocks.db.all.mockImplementation((query, params) => {
                 // Verify the query includes org_id filter
                 if (query.includes('FROM tasks')) {
                     expect(query).toContain('organization_id = ?');
@@ -43,11 +43,11 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
         });
 
         it('should update initiative with org-scoped WHERE clause', async () => {
-            mockDb.all.mockResolvedValue([{ progress: 50, priority: 'high' }]);
+            mocks.db.all.mockResolvedValue([{ progress: 50, priority: 'high' }]);
 
             let updateQuery = '';
             let updateParams = [];
-            mockDb.run.mockImplementation((query, params) => {
+            mocks.db.run.mockImplementation((query, params) => {
                 if (query.includes('UPDATE initiatives')) {
                     updateQuery = query;
                     updateParams = params;
@@ -73,7 +73,7 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
             const orgATasks = [{ progress: 100, priority: 'high' }];
             const orgBTasks = [{ progress: 0, priority: 'low' }];
 
-            mockDb.all.mockImplementation((query, params) => {
+            mocks.db.all.mockImplementation((query, params) => {
                 if (query.includes('FROM tasks')) {
                     const orgId = params.find(p => p === 'org-a' || p === 'org-b');
                     if (orgId === 'org-a') {

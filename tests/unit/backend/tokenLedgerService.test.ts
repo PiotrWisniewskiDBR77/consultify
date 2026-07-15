@@ -63,7 +63,7 @@ describe('TokenBillingService - Ledger Functionality', () => {
 
     describe('getOrgBalance', () => {
         it('should return organization balance and billing status', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
+            mocks.db.get.mockImplementation((sql, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 cb(null, {
                     token_balance: 10000,
@@ -77,7 +77,7 @@ describe('TokenBillingService - Ledger Functionality', () => {
             expect(result).toHaveProperty('balance', 10000);
             expect(result).toHaveProperty('billingStatus', 'TRIAL');
             expect(result).toHaveProperty('organizationType', 'TRIAL');
-            expect(mockDb.get).toHaveBeenCalledWith(
+            expect(mocks.db.get).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT'),
                 ['org-123'],
                 expect.any(Function)
@@ -87,7 +87,7 @@ describe('TokenBillingService - Ledger Functionality', () => {
 
     describe('hasOrgSufficientBalance', () => {
         it('should allow call when balance is sufficient', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
+            mocks.db.get.mockImplementation((sql, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 cb(null, {
                     token_balance: 10000,
@@ -103,7 +103,7 @@ describe('TokenBillingService - Ledger Functionality', () => {
         });
 
         it('should deny call when trial balance is insufficient', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
+            mocks.db.get.mockImplementation((sql, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 cb(null, {
                     token_balance: 50,
@@ -121,7 +121,7 @@ describe('TokenBillingService - Ledger Functionality', () => {
 
     describe('getLedger', () => {
         it('should return ledger entries for organization', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('token_ledger')) {
                     callback(null, [
                         { id: 'led-1', type: 'CREDIT', amount: 50000, reason: 'Trial Bonus', created_at: new Date().toISOString() },
@@ -143,7 +143,7 @@ describe('TokenBillingService - Ledger Functionality', () => {
 
     describe('getLedgerSummary', () => {
         it('should return aggregated ledger summary', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('token_ledger')) {
                     callback(null, { total_credits: 50000, total_debits: 1500, transaction_count: 15 });
                 } else {
@@ -185,7 +185,7 @@ describe('TokenBillingService - Ledger Functionality', () => {
     // Merged test case from second describe block
     it('should create ledger entry when deducting from organization', async () => {
         // Mock margin lookup
-        mockDb.get.mockImplementation((query, params, callback) => {
+        mocks.db.get.mockImplementation((query, params, callback) => {
             if (query.includes('billing_margins')) {
                 callback(null, { base_cost_per_1k: 0.01, margin_percent: 20, min_charge: 0 });
             } else {
@@ -194,12 +194,12 @@ describe('TokenBillingService - Ledger Functionality', () => {
         });
 
         // Mock transaction - serialize executes callback synchronously
-        mockDb.serialize.mockImplementation((callback) => {
+        mocks.db.serialize.mockImplementation((callback) => {
             callback();
         });
 
         let ledgerInsertCalled = false;
-        mockDb.run.mockImplementation(function (query, params, callback) {
+        mocks.db.run.mockImplementation(function (query, params, callback) {
             if (typeof params === 'function') {
                 callback = params;
                 params = [];
