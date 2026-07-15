@@ -9744,6 +9744,10 @@
       "keyboardShortcutsTooltip": "Skróty klawiszowe",
       "keyboardShortcutsTitle": "Skróty klawiszowe",
       "goToLabel": "Przejdź do..."
+    },
+    "radarChart": {
+      "actualLabel": "Aktualny",
+      "targetLabel": "Docelowy"
     }
   },
   "auth": {

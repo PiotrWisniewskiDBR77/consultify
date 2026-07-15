@@ -131,7 +131,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
   animated = true,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // Transform data for Recharts
@@ -167,7 +167,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full bg-blue-500" />
           <span className="text-sm text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Aktualny' : 'Actual'}:{' '}
+            {t('reports.radarChart.actualLabel', 'Actual')}:{' '}
             <strong className="text-navy-900 dark:text-white">{averageActual.toFixed(1)}</strong>
           </span>
         </div>
@@ -175,7 +175,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-green-500" />
             <span className="text-sm text-slate-600 dark:text-slate-400">
-              {isPolish ? 'Docelowy' : 'Target'}:{' '}
+              {t('reports.radarChart.targetLabel', 'Target')}:{' '}
               <strong className="text-navy-900 dark:text-white">{averageTarget.toFixed(1)}</strong>
             </span>
           </div>
@@ -184,7 +184,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-slate-400" />
             <span className="text-sm text-slate-600 dark:text-slate-400">
-              {isPolish ? 'Benchmark' : 'Benchmark'}
+              Benchmark
             </span>
           </div>
         )}
@@ -214,7 +214,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
           {/* Benchmark area (if shown) */}
           {showBenchmark && (
             <Radar
-              name={isPolish ? 'Benchmark' : 'Benchmark'}
+              name="Benchmark"
               dataKey="benchmark"
               stroke="#94a3b8"
               fill="#94a3b8"
@@ -230,7 +230,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
           {/* Target area */}
           {showTarget && (
             <Radar
-              name={isPolish ? 'Docelowy' : 'Target'}
+              name={t('reports.radarChart.targetLabel', 'Target')}
               dataKey="target"
               stroke="#10b981"
               fill="#10b981"
@@ -245,7 +245,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
 
           {/* Actual area */}
           <Radar
-            name={isPolish ? 'Aktualny' : 'Actual'}
+            name={t('reports.radarChart.actualLabel', 'Actual')}
             dataKey="actual"
             stroke="#3b82f6"
             fill="#3b82f6"

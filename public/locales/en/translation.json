@@ -10509,6 +10509,10 @@
       "keyboardShortcutsTooltip": "Keyboard shortcuts",
       "keyboardShortcutsTitle": "Keyboard Shortcuts",
       "goToLabel": "Go to..."
+    },
+    "radarChart": {
+      "actualLabel": "Actual",
+      "targetLabel": "Target"
     }
   },
   "auth": {
