@@ -26,7 +26,13 @@ vi.mock('@google/genai', () => ({
   },
 }));
 
-import i18n from '../../../src/i18n';
+// F2 fix: don't import the real i18next singleton in tests — it's a true
+// module-level singleton (src/i18n.ts calls i18n.init() at import time) and
+// importing it directly across many test files leaks state between them,
+// crashing the coverage collection run. react-i18next is globally mocked in
+// tests/setup.ts (I18nextProvider is a passthrough), so this stub only needs
+// to satisfy the `i18n` prop shape.
+const i18n: any = { language: 'en', changeLanguage: () => Promise.resolve() };
 import { AnnaAssistantWidget } from '../../../src/components/Landing/AnnaAssistantWidget';
 
 const navigateMock = vi.fn();
