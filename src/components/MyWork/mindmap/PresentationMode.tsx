@@ -83,8 +83,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   branches,
   onFocusBranch,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -237,9 +236,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
             <Lightbulb size={48} className="text-c-warning mx-auto mb-6" />
             <h1 className="text-3xl font-bold text-c-text dark:text-c-text mb-4">{ideaTitle}</h1>
             <p className="text-sm text-c-text-secondary dark:text-c-text-muted">
-              {isPl
-                ? `${branches.length} gałęzi · ${branches.reduce((s, b) => s + b.nodes.length, 0)} pomysłów`
-                : `${branches.length} branches · ${branches.reduce((s, b) => s + b.nodes.length, 0)} ideas`}
+              {t('myWorkMindmap.presentation.branchesIdeas', '{{branches}} branches · {{ideas}} ideas', {
+                branches: branches.length,
+                ideas: branches.reduce((s, b) => s + b.nodes.length, 0),
+              })}
             </p>
             <div className="flex items-center justify-center gap-3 mt-8">
               {branches.map((b) => {

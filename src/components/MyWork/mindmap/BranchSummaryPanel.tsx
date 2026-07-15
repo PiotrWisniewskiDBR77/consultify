@@ -104,7 +104,6 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
   edges,
 }) => {
   const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<BranchSummary | null>(null);
@@ -117,9 +116,11 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
     try {
       const descendants = collectDescendants(branchNodeId, nodes, edges);
       const labels = descendants.map((n) => n.data?.label).filter(Boolean);
-      const prompt = isPl
-        ? `Podsumuj tę gałąź mapy myśli. Gałąź: ${branchLabel}. Węzły: ${labels.join(', ')}. Zwróć podsumowanie narracyjne, kluczowe punkty i rekomendacje.`
-        : `Summarize this branch of a mind map. Branch: ${branchLabel}. Nodes: ${labels.join(', ')}. Return a narrative summary, key points, and recommendations.`;
+      const prompt = t(
+        'myWorkMindmap.branchSummary.prompt',
+        'Summarize this branch of a mind map. Branch: {{branch}}. Nodes: {{nodes}}. Return a narrative summary, key points, and recommendations.',
+        { branch: branchLabel, nodes: labels.join(', ') }
+      );
       const res = await Api.getMyIdeaAISuggestions(ideaId, {
         seedText: `${prompt}\n\n${labels.join(', ')}`,
         mapNodes: descendants.map((n) => ({ id: n.id, label: n.data?.label, type: n.type })),
@@ -136,7 +137,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [branchNodeId, branchLabel, nodes, edges, ideaId, i18n.language, isPl]);
+  }, [branchNodeId, branchLabel, nodes, edges, ideaId, i18n.language, t]);
 
   useEffect(() => {
     if (open && branchNodeId) fetchSummary();
@@ -166,7 +167,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
     navigator.clipboard
       .writeText(md)
       .then(() => toast.success(t('ideas.mindmap.copiedClipboard', 'Copied to clipboard')));
-  }, [summary, branchLabel, isPl]);
+  }, [summary, branchLabel, t]);
 
   if (!open) return null;
 

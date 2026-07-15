@@ -43,8 +43,7 @@ const INTENSITY_COLORS = [
 ];
 
 export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const { days, maxCount, totalActivity, typeCounts } = useMemo(() => {
     const entries = loadActivity(ideaId);
@@ -81,9 +80,15 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
 
   if (!open) return null;
 
-  const weekDays = isPl
-    ? ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd']
-    : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+  const weekDays = [
+    t('myWorkMindmap.heatmap.mon', 'Mo'),
+    t('myWorkMindmap.heatmap.tue', 'Tu'),
+    t('myWorkMindmap.heatmap.wed', 'We'),
+    t('myWorkMindmap.heatmap.thu', 'Th'),
+    t('myWorkMindmap.heatmap.fri', 'Fr'),
+    t('myWorkMindmap.heatmap.sat', 'Sa'),
+    t('myWorkMindmap.heatmap.sun', 'Su'),
+  ];
 
   return (
     <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
