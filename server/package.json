@@ -28,6 +28,7 @@
     "test:migration:duplicates": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/duplicates.test.ts",
     "test:migration:performance": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/performance.test.ts",
     "seed:finance": "tsx scripts/seed-finance.ts",
+    "benchmark:consulting": "tsx scripts/run-consulting-benchmark.ts",
     "v8:deploy:check": "tsx scripts/v8-deploy.ts --check",
     "v8:deploy": "tsx scripts/v8-deploy.ts --deploy",
     "v8:deploy:status": "tsx scripts/v8-deploy.ts --status",

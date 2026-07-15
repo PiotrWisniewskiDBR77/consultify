@@ -84,6 +84,7 @@
     "benchmark:statement-ready": "tsx server/scripts/benchmark-statement-ready.ts",
     "benchmark:monthly": "tsx server/scripts/run-monthly-benchmark.ts",
     "benchmark:judge": "tsx server/scripts/run-benchmark-judge.ts",
+    "benchmark:consulting": "tsx server/scripts/run-consulting-benchmark.ts",
     "audit:statement-import": "tsx server/scripts/audit-statement-import-corpus.ts",
     "audit:statement-import:strict": "tsx server/scripts/audit-statement-import-corpus.ts --strict",
     "audit:statement-import:real": "tsx server/scripts/audit-statement-import-real-corpus.ts",
