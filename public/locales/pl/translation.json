@@ -6269,6 +6269,33 @@
         "matrixTitle": "Macierz dojrzałości ADMA",
         "dimensionColumn": "Wymiar"
       }
+    },
+    "siri": {
+      "editor": {
+        "score": "Wynik",
+        "viewDimensions": "Wymiary",
+        "viewPrioritisation": "Priorytetyzacja",
+        "viewMatrix": "Macierz",
+        "currentLevel": "Aktualny poziom",
+        "targetLevel": "Poziom docelowy",
+        "prioritisationAreas": "Obszary priorytetyzacji",
+        "overallScore": "Wynik ogólny",
+        "gapAnalysis": "Analiza luki",
+        "gapMessage": "Luka: {{gap}} poziomów do osiągnięcia celu",
+        "aiGuidanceCta": "Podpowiedź AI (dlaczego to ważne + jak oceniać)",
+        "generatingGuidance": "Generuję podpowiedź…",
+        "consultantGuidance": "Podpowiedź konsultanta",
+        "canonSource": "kanon",
+        "whyItMatters": "Dlaczego to ważne: ",
+        "howToScore": "Jak oceniać poziom: ",
+        "canonLabel": "Kanon: ",
+        "watchOutFor": "Uważaj na: ",
+        "notesAndEvidence": "Notatki i dowody",
+        "notesPlaceholder": "Dodaj notatki lub dowody...",
+        "relatedPrioritisationAreas": "Powiązane obszary priorytetyzacji",
+        "matrixTitle": "Macierz dojrzałości SIRI",
+        "dimensionColumn": "Wymiar"
+      }
     }
   },
   "initiatives": {

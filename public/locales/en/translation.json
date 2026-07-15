@@ -7034,6 +7034,33 @@
         "matrixTitle": "ADMA Maturity Matrix",
         "dimensionColumn": "Dimension"
       }
+    },
+    "siri": {
+      "editor": {
+        "score": "Score",
+        "viewDimensions": "Dimensions",
+        "viewPrioritisation": "Prioritisation",
+        "viewMatrix": "Matrix",
+        "currentLevel": "Current Level",
+        "targetLevel": "Target Level",
+        "prioritisationAreas": "Prioritisation Areas",
+        "overallScore": "Overall Score",
+        "gapAnalysis": "Gap Analysis",
+        "gapMessage": "Gap: {{gap}} levels to reach target",
+        "aiGuidanceCta": "AI guidance (why it matters + how to score)",
+        "generatingGuidance": "Generating guidance…",
+        "consultantGuidance": "Consultant guidance",
+        "canonSource": "canon",
+        "whyItMatters": "Why it matters: ",
+        "howToScore": "How to score this level: ",
+        "canonLabel": "Canon: ",
+        "watchOutFor": "Watch out for: ",
+        "notesAndEvidence": "Notes & Evidence",
+        "notesPlaceholder": "Add notes or evidence...",
+        "relatedPrioritisationAreas": "Related Prioritisation Areas",
+        "matrixTitle": "SIRI Maturity Matrix",
+        "dimensionColumn": "Dimension"
+      }
     }
   },
   "initiatives": {
