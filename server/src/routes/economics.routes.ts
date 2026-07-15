@@ -1523,7 +1523,18 @@ router.post(
 
 /**
  * POST /api/economics/analyses/:id/business-case
- * BUG-07: Generate business case stub document for an analysis
+ *
+ * BUG-07 (fixed): this used to be a stub that returned `sections: []`
+ * disguised as `status: 'generated'` — silently lying about doing work.
+ * There is now a REAL business-case generator
+ * (server/src/services/advisory/BusinessCaseService.ts, Oxford O4: 5-phase
+ * PLAN → CONFIRM → MODEL (deterministic NPV/IRR/payback) → REVIEW
+ * (anti-fabrication) → NARRATIVE pipeline), wired at
+ * POST /api/v8/advisory/business-case. That endpoint takes a free-text
+ * `prompt` describing the decision, not an analysis-row id — the two shapes
+ * are not drop-in compatible, so rather than fabricate a mapping here this
+ * route now fails LOUDLY and points the caller at the real one, instead of
+ * silently returning an empty document.
  */
 router.post(
   '/analyses/:id/business-case',
@@ -1544,14 +1555,16 @@ router.post(
       return res.status(404).json({ error: 'Analysis not found' });
     }
 
-    const businessCaseId = uuidv4();
-
-    return res.json({
-      data: {
-        businessCaseId,
-        status: 'generated',
-        title: `Business Case — ${analysis.name}`,
-        sections: [],
+    return res.status(501).json({
+      error: 'not_implemented',
+      message:
+        'Ten endpoint był stubem (BUG-07) i nie generuje już fałszywego pustego dokumentu. ' +
+        'Prawdziwy generator business case jest dostępny pod POST /api/v8/advisory/business-case ' +
+        '(przyjmuje opis decyzji w polu "prompt", nie id analizy).',
+      replacement: {
+        method: 'POST',
+        path: '/api/v8/advisory/business-case',
+        body: { prompt: 'string (required)', horizonYears: 'number?', waccPct: 'number?' },
       },
     });
   })
