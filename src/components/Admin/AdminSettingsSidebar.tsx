@@ -2,6 +2,7 @@ import {
   Activity,
   ArrowLeft,
   CreditCard,
+  Gauge,
   ScrollText,
   ShieldCheck,
   Sparkles,
@@ -11,8 +12,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../utils/cn';
+import { isCommandCenterEnabled } from '../../utils/commandCenterFlag';
 
-export type AdminSettingsSection = 'people' | 'billing' | 'ai' | 'security' | 'audit' | 'health';
+export type AdminSettingsSection =
+  | 'people'
+  | 'billing'
+  | 'ai'
+  | 'security'
+  | 'audit'
+  | 'health'
+  | 'command';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -72,6 +81,14 @@ const NAV_ITEMS: NavItem[] = [
     icon: ScrollText,
   },
   {
+    id: 'command',
+    labelKey: 'admin.nav.command.label',
+    labelDefault: 'Command Center',
+    descriptionKey: 'admin.nav.command.description',
+    descriptionDefault: 'Trust & control posture — SOC2, DLP, residency, retention, AI policy',
+    icon: Gauge,
+  },
+  {
     id: 'health',
     labelKey: 'admin.nav.health.label',
     labelDefault: 'Health',
@@ -88,6 +105,10 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
   onBack,
 }) => {
   const { t } = useTranslation();
+  const commandCenterEnabled = isCommandCenterEnabled();
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => item.id !== 'command' || commandCenterEnabled
+  );
 
   return (
     <aside
@@ -117,7 +138,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
       </div>
 
       <nav className="flex-1 space-y-2 px-3 py-4">
-        {NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.id === activeSection;
 

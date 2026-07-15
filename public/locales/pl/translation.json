@@ -14862,6 +14862,10 @@
       "audit": {
         "label": "Dziennik audytu",
         "description": "Działania administracyjne wysokiego ryzyka i dowody zgodności"
+      },
+      "command": {
+        "label": "Centrum dowodzenia",
+        "description": "Postawa zaufania i kontroli — SOC2, DLP, rezydencja danych, retencja, polityka AI"
       }
     },
     "shell": {
@@ -14888,6 +14892,10 @@
       "audit": {
         "title": "Dziennik audytu",
         "subtitle": "Działania administracyjne wysokiego ryzyka, ocena ryzyka i dowody zgodności."
+      },
+      "command": {
+        "title": "Centrum dowodzenia",
+        "subtitle": "Postawa zaufania i kontroli — eksport audytu SOC2, DLP, rezydencja danych, retencja i polityka AI organizacji."
       }
     },
     "billing": {
@@ -25316,6 +25324,63 @@
     },
     "reminderSummary": {
       "prefix": "Przypomnienie"
+    }
+  },
+  "commandCenter": {
+    "title": "Centrum dowodzenia",
+    "description": "Jedna powierzchnia zaufania i kontroli — eksport audytu SOC2, DLP, rezydencja danych, retencja i polityka AI organizacji. Role, SSO i dziennik audytu żyją we własnych sekcjach — stąd tylko linkujemy do nich.",
+    "tabs": {
+      "overview": "Przegląd",
+      "audit": "Audyt SOC2",
+      "dlp": "DLP",
+      "residency": "Rezydencja danych",
+      "retention": "Retencja",
+      "aiPolicy": "Polityka AI"
+    },
+    "overview": {
+      "linksTitle": "Powierzchnie zaufania",
+      "linksSubtitle": "Żyją we własnych sekcjach — Centrum dowodzenia tylko do nich linkuje.",
+      "complianceTitle": "Postawa zgodności",
+      "complianceSubtitle": "Dane na żywo z /api/admin/enterprise-compliance — zakres organizacji z tokenu.",
+      "tiles": {
+        "open": "Otwórz",
+        "people": {
+          "label": "Zespół i dostęp",
+          "description": "Role, właścicielstwo i uprawnienia w tej organizacji."
+        },
+        "security": {
+          "label": "SSO i tożsamość",
+          "description": "Polityka uwierzytelniania, cykl życia SCIM i delegowany IAM."
+        },
+        "audit": {
+          "label": "Dziennik audytu",
+          "description": "Działania administracyjne wysokiego ryzyka i dowody zgodności."
+        },
+        "residency": {
+          "label": "Rezydencja danych",
+          "notSet": "Nie ustawiono",
+          "euEnforced": "Wymuszono tylko UE",
+          "euNotEnforced": "Nie wymuszono tylko UE",
+          "error": "Nie udało się wczytać polityki rezydencji danych"
+        },
+        "aiPolicy": {
+          "label": "Polityka AI organizacji",
+          "citationMode": "Cytowania: {{mode}}",
+          "maxTokens": "Maks. {{tokens}} tokenów / wiadomość",
+          "error": "Nie udało się wczytać polityki AI"
+        },
+        "dlp": {
+          "label": "Reguły DLP",
+          "comingSoon": "Podpięcie w kolejnym kroku (F-CC3)."
+        },
+        "retention": {
+          "label": "Retencja",
+          "comingSoon": "Podpięcie w kolejnym kroku (F-CC4)."
+        }
+      }
+    },
+    "placeholder": {
+      "description": "Ta zakładka jest zaplanowana na kolejny krok dostawy i nie jest jeszcze podpięta."
     }
   }
 }
