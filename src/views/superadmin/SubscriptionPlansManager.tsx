@@ -218,7 +218,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       label: 'Plan Name',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="font-medium text-slate-900 dark:text-white">{row.name}</span>
+        <span className="font-medium text-c-text">{row.name}</span>
       ),
     },
     {
@@ -227,7 +227,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-slate-700 dark:text-slate-300">
+        <span className="text-c-text-secondary">
           ${(row.price_monthly as number).toFixed(2)}
         </span>
       ),
@@ -238,7 +238,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-slate-700 dark:text-slate-300">{row.memory_limit_mb || 0} MB</span>
+        <span className="text-c-text-secondary">{row.memory_limit_mb || 0} MB</span>
       ),
     },
     {
@@ -247,7 +247,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-slate-700 dark:text-slate-300">{row.cpu_quota_percent || 0}%</span>
+        <span className="text-c-text-secondary">{row.cpu_quota_percent || 0}%</span>
       ),
     },
     {
@@ -256,7 +256,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-slate-700 dark:text-slate-300">
+        <span className="text-c-text-secondary">
           {((row.token_limit as number) / 1000).toFixed(0)}K
         </span>
       ),
@@ -267,7 +267,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-slate-700 dark:text-slate-300">{row.storage_limit_gb} GB</span>
+        <span className="text-c-text-secondary">{row.storage_limit_gb} GB</span>
       ),
     },
     {
@@ -276,7 +276,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-slate-700 dark:text-slate-300">
+        <span className="text-c-text-secondary">
           {row.max_concurrent_ai_jobs || 0}
         </span>
       ),
@@ -289,8 +289,8 @@ export const SubscriptionPlansManager: React.FC = () => {
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
             row.is_active === 1
-              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-              : 'bg-slate-200/60 text-slate-600 dark:bg-navy-700/50 dark:text-slate-400'
+              ? 'bg-success-500/10 text-success-600 dark:text-success-400'
+              : 'bg-c-surface-2 text-c-text-muted'
           }`}
         >
           {row.is_active === 1 ? 'Active' : 'Inactive'}
