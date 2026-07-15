@@ -8910,7 +8910,10 @@
     },
     "financeShortcut": "Finanse",
     "copyLinkAction": "Kopiuj link",
-    "newButton": "Nowy"
+    "newButton": "Nowy",
+    "initiativeFullView": {
+      "viewSource": "Zobacz źródło"
+    }
   },
   "execution": {
     "title": "Centrum Realizacji",

@@ -9764,7 +9764,10 @@
     },
     "financeShortcut": "Finance",
     "copyLinkAction": "Copy link",
-    "newButton": "New"
+    "newButton": "New",
+    "initiativeFullView": {
+      "viewSource": "View source"
+    }
   },
   "execution": {
     "title": "Execution Center",

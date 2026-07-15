@@ -517,7 +517,7 @@ export const InitiativePreviewV3Footer: React.FC<{
 
   const sourceType = String(initiative.sourceType || '').trim();
   const sourceId = String(initiative.sourceId || '').trim();
-  const sourceDisplayType = sourceType ? getSourceDisplayLabel(sourceType, isPolish) : '';
+  const sourceDisplayType = sourceType ? getSourceDisplayLabel(sourceType) : '';
   const sourceLabel = sourceDisplayType
     ? sourceId
       ? `${sourceDisplayType} · ${sourceId.slice(0, 8)}…`
