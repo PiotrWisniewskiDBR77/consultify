@@ -59,6 +59,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -78,6 +79,7 @@ import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
@@ -776,6 +778,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     setChatKickoffMessage,
     currentProjectId,
     emitMyWorkEvent,
+    currentUser,
   } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const openChatWithContext = useOpenChatWithContext();
@@ -8685,6 +8688,20 @@ Use userId only from this list:
               sections={rightPanelSections}
               className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
               ariaLabel={t('myWork.decisionDetail.ariaLabel', 'Decision details')}
+              statusBar={
+                // HP-8 workflow-engine status bar — behind ff_artifactApprovalUi
+                // (default OFF, see src/utils/artifactApprovalUiFlag.ts). At OFF
+                // this is `undefined` and ArtifactRightPanel renders 1:1 as
+                // before (no new DOM, no visual change).
+                isArtifactApprovalUiEnabled() && decisionId ? (
+                  <ArtifactApprovalStatusBar
+                    artifactType="decision"
+                    artifactId={decisionId}
+                    currentUserId={currentUser?.id}
+                    canReview
+                  />
+                ) : undefined
+              }
             />
           </div>
         </div>

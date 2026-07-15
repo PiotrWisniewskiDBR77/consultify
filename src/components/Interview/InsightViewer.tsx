@@ -99,6 +99,7 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -124,6 +125,7 @@ import {
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
+import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
@@ -8031,6 +8033,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           <ArtifactRightPanel
             sections={rightPanelSections}
             ariaLabel={t('interview.insightViewer.insightDetails')}
+            statusBar={
+              // HP-8 workflow-engine status bar — behind ff_artifactApprovalUi
+              // (default OFF, see src/utils/artifactApprovalUiFlag.ts). At
+              // OFF this is `undefined` and ArtifactRightPanel renders 1:1
+              // as before (no new DOM, no visual change).
+              isArtifactApprovalUiEnabled() && insight?.id ? (
+                <ArtifactApprovalStatusBar
+                  artifactType="insight"
+                  artifactId={insight.id}
+                  currentUserId={currentUser?.id}
+                  canReview
+                />
+              ) : undefined
+            }
           />
         }
         buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
