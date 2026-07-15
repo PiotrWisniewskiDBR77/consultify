@@ -174,3 +174,82 @@ export function mapToCanonicalProjectRole(role: unknown): CanonicalProjectRoleTy
 
   return null;
 }
+
+/**
+ * HP-25 B1 — Governance-sync role unification.
+ *
+ * Reverse maps: canonical role -> concrete role key in the two other
+ * representations named in the module doc comment above. These are the
+ * single source of truth for "canonical -> legacy" translation; other
+ * modules (projectMemberService, SCIM group-mapping translation) should
+ * read from here instead of re-encoding their own if/else ladder, to avoid
+ * the three-way drift risk flagged in _KONCEPT_HP25_GOVERNANCE_SYNC.md (G5).
+ *
+ * Every one of the 12 CanonicalProjectRole keys MUST have an entry in both
+ * maps below — enforced by a completeness unit test (round-trip guard).
+ */
+
+/**
+ * Mirrors server/src/services/projectMemberService.ts PROJECT_ROLES keys.
+ * Kept as string literals (not imported) to avoid a module cycle and to
+ * keep this file dependency-free/pure — it is read by services that must
+ * not carry DB or route-layer imports.
+ */
+export const CANONICAL_TO_PROJECT_MEMBER_ROLE: Record<CanonicalProjectRoleType, string> = {
+  PROJECT_SPONSOR: 'SPONSOR',
+  PROJECT_LEADER: 'PMO_LEAD',
+  TASK_ASSIGNEE: 'TASK_ASSIGNEE',
+  OBSERVER: 'OBSERVER',
+  PMO: 'PMO_LEAD',
+  INITIATIVE_OWNER: 'INITIATIVE_OWNER',
+  WORKSTREAM_OWNER: 'WORKSTREAM_OWNER',
+  REVIEWER: 'REVIEWER',
+  SME: 'SME',
+  CONSULTANT: 'CONSULTANT',
+  BUSINESS_OWNER: 'SPONSOR',
+  STEERING_COMMITTEE: 'SPONSOR',
+};
+
+/**
+ * Mirrors src/types/core.ts ProjectRole enum values (frontend module,
+ * intentionally not imported from a backend service).
+ */
+export const CANONICAL_TO_CORE_PROJECT_ROLE: Record<CanonicalProjectRoleType, string> = {
+  PROJECT_SPONSOR: 'PROJECT_EXECUTIVE',
+  PROJECT_LEADER: 'PROJECT_MANAGER',
+  TASK_ASSIGNEE: 'TASK_ASSIGNEE',
+  OBSERVER: 'OBSERVER',
+  PMO: 'PMO_LEAD',
+  INITIATIVE_OWNER: 'INITIATIVE_OWNER',
+  WORKSTREAM_OWNER: 'WORKSTREAM_OWNER',
+  REVIEWER: 'REVIEWER',
+  SME: 'SME',
+  CONSULTANT: 'CONSULTANT',
+  BUSINESS_OWNER: 'SPONSOR',
+  STEERING_COMMITTEE: 'SPONSOR',
+};
+
+/**
+ * Translate a canonical role into its projectMemberService.PROJECT_ROLES key.
+ * The map above is total over CanonicalProjectRoleType, so this only
+ * returns null when the input itself is null/undefined/unrecognized.
+ * Fail-closed contract: callers MUST treat null as "no role resolved",
+ * never as an implicit/default grant.
+ */
+export function canonicalToProjectMemberRole(
+  canon: CanonicalProjectRoleType | null | undefined
+): string | null {
+  if (!canon) return null;
+  return CANONICAL_TO_PROJECT_MEMBER_ROLE[canon] ?? null;
+}
+
+/**
+ * Translate a canonical role into its core.ts ProjectRole enum value.
+ * Same fail-closed contract as canonicalToProjectMemberRole.
+ */
+export function canonicalToCoreProjectRole(
+  canon: CanonicalProjectRoleType | null | undefined
+): string | null {
+  if (!canon) return null;
+  return CANONICAL_TO_CORE_PROJECT_ROLE[canon] ?? null;
+}
