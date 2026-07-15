@@ -3602,7 +3602,9 @@
       "label4": "Następny piątek",
       "label5": "Za tydzień",
       "dToLocaleDateString": "pl-PL",
-      "removeDueDate": "Usuń termin"
+      "removeDueDate": "Usuń termin",
+      "setPriorityCount": "Ustaw priorytet ({{count}} zad.)",
+      "setDueDateCount": "Ustaw termin ({{count}} zad.)"
     },
     "quickActions": {
       "unassigned": "Nieprzypisane",
