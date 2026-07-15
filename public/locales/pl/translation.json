@@ -31773,7 +31773,253 @@
       "outputsFromTheSession": "Outputy z sesji",
       "aIPhilosophy": "Filozofia AI",
       "whyUseIt": "Po co używać",
-      "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfolio BCG"
+      "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfolio BCG",
+      "sectionPendingExpansion": "Ta sekcja zostanie uzupełniona w kolejnych iteracjach."
+    },
+    "knownToolDetail": {
+      "dynamicSwot": {
+        "goal": {
+          "positioningHeadline": "Dynamic SWOT nie służy do wypełnienia macierzy. Służy do zamiany rozproszonej rozmowy strategicznej w decyzję, napięcia i ruchy gotowe do dalszego użycia.",
+          "positioningBody": "To narzędzie typu conversation-first, structure-backed. Najpierw ustawia pytanie strategiczne i porządkuje evidence z wnętrza firmy oraz z rynku. Dopiero potem buduje macierz, wyciąga napięcia, układa rekomendowane ruchy i przygotowuje materiał, który może przejść do raportu, prezentacji, inicjatyw lub dalszej pracy decyzyjnej.",
+          "whatItDoes": [
+            "oddziela sygnały ważne od szumu, opinii i marketingowych ogólników",
+            "ustawia wspólny obraz sytuacji wewnętrznej i zewnętrznej",
+            "zamienia klasyczny SWOT w logikę napięć, trade-offów i decyzji",
+            "prowadzi od diagnozy do rekomendowanego ruchu oraz outputów"
+          ],
+          "whatItIsNot": [
+            "nie jest szkolnym ćwiczeniem polegającym na zapełnieniu czterech pól",
+            "nie jest miejscem na wrzucenie wszystkiego bez oceny jakości evidence",
+            "nie jest narzędziem do udawania decyzji, gdy pytanie strategiczne nadal jest nieostre",
+            "nie jest końcowym artefaktem, tylko źródłem dla dalszych materiałów i przejścia do działania"
+          ],
+          "whenToUse": [
+            "gdy zarząd lub zespół ma dużo sygnałów, ale nie ma jednej logiki decyzji",
+            "gdy trzeba połączyć realia firmy z rynkiem i nazwać, co naprawdę zmienia kierunek",
+            "gdy decyzja jest ważna, ale sytuacja nadal wygląda jak zbiór luźnych obserwacji",
+            "gdy wynik ma przejść dalej do raportu, decka, inicjatywy albo materiału decyzyjnego"
+          ],
+          "whenNotToUse": [
+            "gdy najpierw trzeba zrozumieć makrootoczenie, trendy i regulacje: wtedy najpierw PESTEL",
+            "gdy główne pytanie dotyczy struktury branży i sił konkurencyjnych: wtedy najpierw Five Forces",
+            "gdy decyzja jest już podjęta i potrzeba jedynie planu wykonawczego: wtedy lepsze jest planowanie inicjatyw",
+            "gdy zespół chce wyłącznie pozytywnego języka mobilizacyjnego bez pracy na ryzykach i słabościach"
+          ],
+          "prepare": [
+            "konkretne pytanie strategiczne, które naprawdę wymaga decyzji",
+            "zakres, horyzont czasu, success signal i najważniejsze constraints",
+            "znane sygnały wewnętrzne i zewnętrzne, nawet jeśli są jeszcze niepełne",
+            "pliki, linki, benchmarki, notatki z rozmów albo wcześniejsze analizy"
+          ],
+          "dynamicLabel": "Co sprawia, że SWOT jest tutaj dynamiczny",
+          "dynamicBody": "Klasyczna macierz jest tylko etapem pośrodku. Dynamiczna wersja wymusza najpierw lepsze ustawienie pytania, potem higienę sygnałów i evidence, a następnie przejście do TOWS-owej logiki połączeń, napięć i ruchów strategicznych."
+        },
+        "process": {
+          "intro": "Dobry Dynamic SWOT prowadzi przez pięć kroków biznesowych. Flow jest prosty dla użytkownika, ale rygorystyczny merytorycznie: najpierw ustawienie decyzji, potem higiena sygnałów, potem porządna macierz, a dopiero na końcu napięcia, ruchy i outputy.",
+          "steps": [
+            {
+              "oneLiner": "Ustaw pytanie decyzyjne, zakres i success signal",
+              "items": [
+                "nazwij decyzję, która naprawdę ma zostać podjęta",
+                "ustal zakres, horyzont czasu, success signal i constraints",
+                "odróżnij temat sesji od wszystkiego, co jest dziś poza zakresem"
+              ],
+              "note": "Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem."
+            },
+            {
+              "oneLiner": "Zbierz fakty, obserwacje i hipotezy z wnętrza firmy i rynku",
+              "items": [
+                "zbierz sygnały z rozmów, materiałów, plików, linków i benchmarków",
+                "oznacz, czy wpis jest faktem, obserwacją czy hipotezą",
+                "rozdziel sygnały wewnętrzne od zewnętrznych i skróć je do jednej tezy"
+              ],
+              "note": "Na tym etapie nie wyciąga się jeszcze decyzji. Powstaje warstwa źródłowa, z której później da się obronić wnioski."
+            },
+            {
+              "oneLiner": "Przypisz sygnały do S/W/O/T, usuń szum, zostaw to co zmienia decyzję",
+              "items": [
+                "przypisz sygnały do Strengths, Weaknesses, Opportunities i Threats",
+                "usuń duplikaty, rozdziel objawy od przyczyn i podważaj ogólniki",
+                "zostaw tylko karty, które rzeczywiście zmieniają pole decyzji"
+              ],
+              "note": "Mocna macierz nie jest długa. Jest selektywna, konkretna i oparta na źródłach."
+            },
+            {
+              "oneLiner": "Pokaż, gdzie przewaga zderza się z ograniczeniem lub ryzykiem",
+              "items": [
+                "połącz karty w sytuacje decyzyjne: ofensywa, naprawa, obrona, ograniczanie",
+                "pokaż, gdzie przewaga zderza się z ograniczeniem albo ryzykiem",
+                "nazwij, dlaczego właśnie to napięcie ma znaczenie teraz, a nie później"
+              ],
+              "note": "To tutaj pojawia się wartość konsultingowa. Sama lista kart przestaje być tabelą i zaczyna tworzyć logikę decyzji."
+            },
+            {
+              "oneLiner": "Przełóż napięcia na rekomendowane ruchy i materiał do dalszego użycia",
+              "items": [
+                "przełóż napięcia na 2-4 rekomendowane ruchy z jasną sekwencją",
+                "odróżnij quick win od ruchu strategicznego i od elementu, który wymaga jeszcze walidacji",
+                "zamknij sesję source summary gotowym do raportu, decka, inicjatywy lub dalszej eksploracji"
+              ],
+              "note": "Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania."
+            }
+          ],
+          "sessionQualityLabel": "Jak wygląda dobra sesja końcowa",
+          "sessionQualityItems": [
+            "macierz z 6-12 wyselekcjonowanymi czynnikami rozłożonymi w 4 ćwiartkach (S/W/O/T) — każdy z oznaczonym źródłem i typem evidence, zamiast długiej listy wszystkiego",
+            "3-6 napięć strategicznych, które naprawdę tłumaczą pole decyzji",
+            "2-4 rekomendowane ruchy z jasną sekwencją i pierwszym krokiem",
+            "co najmniej 1 output candidate gotowy do dalszej decyzji lub akceptacji sponsora",
+            "final source summary, z którego da się bezpośrednio zbudować raport lub deck"
+          ],
+          "decisionSituationsIntro": "W kroku 4 łączysz czynniki wewnętrzne z zewnętrznymi. Każde takie połączenie tworzy jedną z czterech sytuacji decyzyjnych. Rozpoznanie typu sytuacji pomaga szybko zdecydować, jaki ruch jest logiczny.",
+          "decisionSituationsCards": [
+            {
+              "label": "Siła + Szansa",
+              "desc": "Masz przewagę i rynek daje okazję. Graj ofensywnie — wykorzystaj to, co masz, żeby wejść w szansę.",
+              "accent": "emerald"
+            },
+            {
+              "label": "Słabość + Szansa",
+              "desc": "Szansa jest, ale wewnętrzna luka ją blokuje. Najpierw napraw lukę, potem wejdź w szansę.",
+              "accent": "sky"
+            },
+            {
+              "label": "Siła + Zagrożenie",
+              "desc": "Zewnętrzne ryzyko rośnie, ale masz przewagę. Użyj jej, żeby obronić pozycję.",
+              "accent": "amber"
+            },
+            {
+              "label": "Słabość + Zagrożenie",
+              "desc": "Słabość zwiększa ekspozycję na ryzyko. Najpierw ogranicz słabość, żeby zmniejszyć zagrożenie.",
+              "accent": "rose"
+            }
+          ],
+          "workingNotesItems": [
+            "SWOT nie jest celem, tylko etapem syntezy prowadzącym do decyzji",
+            "najczęstszy błąd to zbyt wiele słabych kart i zbyt mało selekcji",
+            "jakość wniosków nigdy nie będzie wyższa niż jakość sygnałów źródłowych",
+            "dobry prowadzący oddziela fakt od hipotezy i symptom od przyczyny",
+            "mocna sesja łączy realia wewnętrzne z rynkiem, a nie tylko opisuje jedną stronę sytuacji",
+            "wynik powinien być gotowy do użycia przez management, nie tylko do przeczytania przez autora analizy"
+          ]
+        },
+        "outcomes": {
+          "intro": "Dobrze wykonany Dynamic SWOT kończy się materiałem gotowym do użycia: pytanie decyzyjne, jakość evidence, kluczowe napięcia i sekwencja ruchów.",
+          "blocks": [
+            {
+              "title": "Rama decyzji",
+              "what": "Pytanie strategiczne, zakres, horyzont czasu i success signal. Jasne przypomnienie, czego analiza dotyczy, a czego nie.",
+              "why": "Bez ramy nawet dobra macierz zamienia się w ogólny opis firmy oderwany od decyzji.",
+              "next": "Executive summary z logiką decyzji dla sponsora lub zarządu."
+            },
+            {
+              "title": "Obraz czynników i evidence",
+              "what": "Najmocniejsze karty S/W/O/T ze źródłami. Rozdzielenie faktów, obserwacji i hipotez.",
+              "why": "Decydent widzi nie tylko wniosek, ale też jakość materiału, na którym ten wniosek stoi.",
+              "next": "Uzasadniona macierz i defensible story do rozmowy decyzyjnej."
+            },
+            {
+              "title": "Napięcia strategiczne",
+              "what": "Najważniejsze połączenia między kartami wewnętrznymi i zewnętrznymi. Sytuacje decyzyjne, które zmieniają logikę ruchu.",
+              "why": "Obserwacje przestają być listą i zaczynają tłumaczyć, gdzie leży prawdziwy trade-off.",
+              "next": "Warstwa interpretacji do dyskusji z managementem i wyboru priorytetów."
+            },
+            {
+              "title": "Rekomendowane ruchy",
+              "what": "2-4 ruchy wynikające z napięć z jasną sekwencją. Rozróżnienie: quick win, big bet, ruch obronny, capability build.",
+              "why": "Przejście od diagnozy do ruchu, który ma sens biznesowy, ma pierwszy krok i da się obronić logicznie.",
+              "next": "Shortlista ruchów do decka, sponsor decision lub rozwinięcia w inicjatywę."
+            },
+            {
+              "title": "Most do działania",
+              "what": "Source summary gotowy do raportu lub prezentacji. Wybór: co na inicjatywę, co na deck, co zostaje ideą.",
+              "why": "SWOT bez tego etapu zostawia zespół z ciekawą analizą, ale bez ruchu.",
+              "next": "Raport, prezentacja, inicjatywa albo dalsza eksploracja z tego samego materiału."
+            }
+          ],
+          "qualityBody": "Dobry wynik jest selektywny, evidence-backed i decyzyjny. Nie pokazuje wszystkiego, co udało się zebrać, tylko to, co naprawdę zmienia logikę wyboru i pozwala przejść do kolejnego kroku."
+        },
+        "example": {
+          "intro": "Przykład pokazuje sytuację typową dla firm w transformacji: presja rośnie i technologia kusi jako szybka odpowiedź, ale najpierw trzeba ustalić, czy problemem jest naprawdę brak rozwiązania, czy brak prawdy o sytuacji.",
+          "cases": [
+            {
+              "title": "Premium producent przed CAPEX-em",
+              "context": "Marża spada, lead times są niestabilne, a zarząd rozważa automatyzację.",
+              "question": "Czy zaczynać od inwestycji technologicznej, czy od diagnozy strat i bottlenecków?",
+              "evidence": [
+                "Wywiady pokazują silną markę i zaufanie klientów premium, ale też decyzje operacyjne podejmowane intuicyjnie.",
+                "Dane wskazują straty w przepływie, brak wspólnej definicji bottlenecków i rosnące koszty ekspresowych dostaw."
+              ],
+              "aiDraft": "AI proponuje SWOT z mocnymi stronami w reputacji i relacjach B2B, słabościami w widoczności procesu, szansą w diagnostyce danych oraz zagrożeniem automatyzacji złego problemu.",
+              "approvedUse": "Użytkownik akceptuje tylko te karty, które mają evidence, a odrzuca ogólniki typu “wdrożyć AI”. Zaakceptowane elementy przechodzą do napięć i ruchów.",
+              "outcome": "Powstaje decyzja: przed CAPEX-em uruchomić diagnozę strat, mapę bottlenecków i warstwę danych, a automatyzację potraktować jako drugi etap."
+            },
+            {
+              "title": "Software house po utracie dużego klienta",
+              "context": "Firma ma mocny zespół ekspercki, ale pipeline sprzedażowy jest zbyt zależny od rekomendacji.",
+              "question": "Czy skalować sprzedaż outbound, czy najpierw zawęzić pozycjonowanie oferty?",
+              "evidence": [
+                "CRM pokazuje długi cykl sprzedaży poza rekomendacjami, a rozmowy z klientami wskazują niejasne rozróżnienie oferty.",
+                "Zespół ma mocne kompetencje techniczne, ale materiały sprzedażowe nie pokazują mierzalnych efektów projektów."
+              ],
+              "aiDraft": "AI proponuje czynniki SWOT dotyczące eksperckiego delivery, słabej narracji wartości, szansy w pionizacji oferty i zagrożenia dalszą zależnością od pojedynczych kont.",
+              "approvedUse": "Po akceptacji kart AI buduje napięcie między jakością delivery a brakiem ostrego ICP oraz proponuje ruchy przed skalowaniem outboundu.",
+              "outcome": "Powstaje sekwencja: zawęzić ICP, stworzyć proof pack z efektami klientów, przetestować 2 kampanie segmentowe i dopiero potem zwiększać sprzedaż."
+            },
+            {
+              "title": "Sieć usług lokalnych przed ekspansją",
+              "context": "Popyt rośnie, ale jakość operacyjna różni się między lokalizacjami.",
+              "question": "Czy otwierać kolejne punkty, czy najpierw standaryzować model działania?",
+              "evidence": [
+                "Opinie klientów są bardzo dobre w najlepszych lokalizacjach, ale reklamacje koncentrują się wokół kilku powtarzalnych etapów usługi.",
+                "Managerowie lokalni różnie rozumieją standard jakości, a onboarding nowych pracowników trwa zbyt długo."
+              ],
+              "aiDraft": "AI proponuje mocne strony w marce lokalnej i relacji z klientem, słabości w standardzie operacyjnym, szansę w playbooku ekspansji i zagrożenie utraty jakości przy skalowaniu.",
+              "approvedUse": "Zaakceptowane karty są używane do wyboru, czy przewaga jest naprawdę skalowalna, czy zależy od pojedynczych ludzi i lokalnych praktyk.",
+              "outcome": "Rekomendacja: najpierw stworzyć standard usługi, dashboard jakości i model szkolenia, a dopiero potem otwierać kolejne punkty."
+            }
+          ],
+          "situationLabel": "Sytuacja i pytanie decyzyjne",
+          "situationItems": [
+            "Ateliertoy to firma premium z własną produkcją i silną reputacją w B2B",
+            "marża spada, lead times są niestabilne, a zarząd rozważa wejście w kosztowną automatyzację",
+            "pytanie sesji brzmi: czy zaczynać transformację od CAPEX-u, czy najpierw od diagnozy strat, bottlenecków i blind spotów danych"
+          ],
+          "signalsLabel": "Kluczowe sygnały wejściowe",
+          "signalsItems": [
+            "mocna marka i zaufanie klientów premium są realną przewagą",
+            "decyzje operacyjne są nadal intuicyjne, a firma nie ma wspólnej prawdy o stratach i bottleneckach",
+            "na rynku rośnie oczekiwanie szybszych wdrożeń i większej przewidywalności",
+            "istnieje ryzyko przepalenia inwestycji, jeśli automatyzacja zostanie uruchomiona przed diagnozą procesu"
+          ],
+          "matrixLabel": "Jak wygląda macierz",
+          "matrixItems": [
+            "Strengths: marka, relacje B2B, własna produkcja, kontrola IP",
+            "Weaknesses: brak wspólnej diagnozy, analogowe zarządzanie, słaba widoczność strat",
+            "Opportunities: diagnoza cyfrowa, warstwa danych, lepsze sekwencjonowanie inwestycji",
+            "Threats: presja cenowa, rosnące koszty i ryzyko automatyzacji złego problemu"
+          ],
+          "tensionLabel": "Napięcie i interpretacja",
+          "tensionItems": [
+            "firma ma realne aktywa do skalowania, ale nie ma jeszcze prawdy o tym, gdzie dziś wycieka wartość",
+            "automatyzacja wygląda atrakcyjnie, lecz bez diagnozy może tylko przyspieszyć chaos",
+            "główny wniosek brzmi: najpierw zobaczyć, co naprawdę ogranicza marżę i przepływ, a dopiero potem wybierać technologię"
+          ],
+          "movesLabel": "Rekomendowane ruchy",
+          "movesItems": [
+            "uruchomić diagnozę strat, bottlenecków i blind spotów danych przed CAPEX-em",
+            "zbudować wspólny obraz procesu oraz priorytetów transformacyjnych dla zarządu",
+            "dopiero potem ułożyć sekwencję: dane -> automatyzacja -> governance inwestycji"
+          ],
+          "outputsLabel": "Outputy z sesji",
+          "outputsItems": [
+            "board-ready materiał tłumaczący, dlaczego transformację należy zacząć od diagnozy, a nie od zakupu technologii",
+            "krótka lista priorytetów i ryzyk do najbliższych decyzji transformacyjnych",
+            "materiał źródłowy do roadmapy, decka i wygenerowania inicjatyw w platformie"
+          ],
+          "closingNote": "To jest dobry case, bo nie kończy się na opisaniu czterech ćwiartek. Pokazuje, jak z sygnałów powstaje decyzja o kolejności ruchów oraz materiał, z którego można od razu przejść do działania."
+        }
+      }
     }
   },
   "discoveryToolsTools": {

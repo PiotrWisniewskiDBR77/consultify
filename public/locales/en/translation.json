@@ -30713,7 +30713,253 @@
       "outputsFromTheSession": "Outputs from the session",
       "aIPhilosophy": "AI philosophy",
       "whyUseIt": "Why use it",
-      "approvedBCGPortfolioMatrix": "Approved BCG portfolio matrix"
+      "approvedBCGPortfolioMatrix": "Approved BCG portfolio matrix",
+      "sectionPendingExpansion": "This section will be expanded in upcoming iterations."
+    },
+    "knownToolDetail": {
+      "dynamicSwot": {
+        "goal": {
+          "positioningHeadline": "Dynamic SWOT is not meant to fill a matrix. It is meant to turn a fragmented strategic conversation into a decision, tensions, and moves ready for downstream use.",
+          "positioningBody": "This is a conversation-first, structure-backed tool. It frames the strategic question and structures evidence from inside the company and the market first. Only then does it build the matrix, surface tensions, sequence recommended moves, and prepare material that can feed a report, presentation, initiatives, or further decision work.",
+          "whatItDoes": [
+            "separates the critical signals from noise, opinion, and generic statements",
+            "builds one shared picture of internal and external reality",
+            "turns classic SWOT into tension, trade-off, and decision logic",
+            "takes the user from diagnosis to a recommended move and downstream outputs"
+          ],
+          "whatItIsNot": [
+            "it is not a classroom exercise about filling four boxes",
+            "it is not a dump for everything without assessing evidence quality",
+            "it is not a way to fake a decision when the strategic question is still vague",
+            "it is not the final deliverable, but the source for deliverables and execution"
+          ],
+          "whenToUse": [
+            "when leadership has many signals but no single decision logic",
+            "when internal reality must be confronted with the market and translated into what truly changes the direction",
+            "when the decision matters but the situation still looks like disconnected observations",
+            "when the result must feed a report, deck, initiative, or decision brief"
+          ],
+          "whenNotToUse": [
+            "when the first job is to understand macro trends, context, or regulation: start with PESTEL",
+            "when the core question is industry structure and competitive pressure: start with Five Forces",
+            "when the decision has already been made and only execution planning is needed: use initiative planning instead",
+            "when the team wants only positive mobilization language without working through risk and weakness"
+          ],
+          "prepare": [
+            "a concrete strategic question that truly needs a decision",
+            "scope, time horizon, success signal, and the key constraints",
+            "known internal and external signals, even if still incomplete",
+            "files, links, benchmarks, interview notes, or prior analyses"
+          ],
+          "dynamicLabel": "What makes the SWOT dynamic here",
+          "dynamicBody": "The classical matrix is only the middle step. The dynamic version forces stronger framing first, then signal and evidence hygiene, and only then moves into TOWS-style connection logic, tensions, and strategic moves."
+        },
+        "process": {
+          "intro": "A strong Dynamic SWOT runs through five business steps. The flow is simple for the user but rigorous in substance: frame the decision first, clean the signals second, build a strong matrix third, and only then move into tensions, moves, and outputs.",
+          "steps": [
+            {
+              "oneLiner": "Frame the decision question, scope, and success signal",
+              "items": [
+                "name the decision that truly needs to be made",
+                "set the scope, time horizon, success signal, and constraints",
+                "separate the session topic from everything that is out of scope today"
+              ],
+              "note": "The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos."
+            },
+            {
+              "oneLiner": "Collect facts, observations, and hypotheses from inside and outside",
+              "items": [
+                "collect signals from interviews, materials, files, links, and benchmarks",
+                "mark whether an entry is a fact, observation, or hypothesis",
+                "separate internal from external signals and reduce each to one clear thesis"
+              ],
+              "note": "This is not the stage for conclusions yet. It builds the source layer from which the later conclusions can be defended."
+            },
+            {
+              "oneLiner": "Assign signals to S/W/O/T, remove noise, keep what moves the decision",
+              "items": [
+                "assign the signals to Strengths, Weaknesses, Opportunities, and Threats",
+                "remove duplicates, separate symptoms from causes, and challenge generic wording",
+                "keep only the cards that truly change the decision space"
+              ],
+              "note": "A strong matrix is not long. It is selective, concrete, and backed by sources."
+            },
+            {
+              "oneLiner": "Show where advantage collides with constraint or risk",
+              "items": [
+                "connect cards into decision situations: attack, repair, defend, reduce",
+                "show where advantage meets constraint or risk",
+                "name why this tension matters now rather than later"
+              ],
+              "note": "This is where consulting value appears. The card list stops being a table and starts becoming decision logic."
+            },
+            {
+              "oneLiner": "Translate tensions into recommended moves and downstream material",
+              "items": [
+                "translate the tensions into 2-4 recommended moves with a clear sequence",
+                "separate a quick win from a strategic move and from an item that still needs validation",
+                "close the session with a source summary ready for a report, deck, initiative, or further exploration"
+              ],
+              "note": "Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action."
+            }
+          ],
+          "sessionQualityLabel": "What a strong finished session looks like",
+          "sessionQualityItems": [
+            "a matrix with 6-12 selected factors across the 4 quadrants (S/W/O/T) — each with a marked source and evidence type, instead of a long list of everything",
+            "3-6 strategic tensions that genuinely explain the decision space",
+            "2-4 recommended moves with a clear sequence and first step",
+            "at least 1 output candidate ready for further decision or sponsor approval",
+            "a final source summary that can directly feed a report or deck"
+          ],
+          "decisionSituationsIntro": "In step 4 you connect internal factors with external ones. Each connection creates one of four decision situations. Recognizing the type helps quickly decide what move makes sense.",
+          "decisionSituationsCards": [
+            {
+              "label": "Strength + Opportunity",
+              "desc": "You have advantage and the market offers an opening. Play offensively — use what you have to capture the opportunity.",
+              "accent": "emerald"
+            },
+            {
+              "label": "Weakness + Opportunity",
+              "desc": "The opportunity exists, but an internal gap blocks it. Fix the gap first, then move in.",
+              "accent": "sky"
+            },
+            {
+              "label": "Strength + Threat",
+              "desc": "External risk is rising, but you have advantage. Use it to defend your position.",
+              "accent": "amber"
+            },
+            {
+              "label": "Weakness + Threat",
+              "desc": "A weakness increases exposure to risk. Reduce the weakness first to lower the threat.",
+              "accent": "rose"
+            }
+          ],
+          "workingNotesItems": [
+            "SWOT is not the goal, but a synthesis step on the way to a decision",
+            "the most common mistake is too many weak cards and too little selection",
+            "the quality of conclusions never exceeds the quality of source signals",
+            "a strong facilitator separates fact from hypothesis and symptom from cause",
+            "a strong session connects internal reality with the market instead of describing only one side",
+            "the output should be ready for management use, not only for the analyst to read"
+          ]
+        },
+        "outcomes": {
+          "intro": "A strong Dynamic SWOT ends with usable material: the decision question, evidence quality, key tensions, and a move sequence.",
+          "blocks": [
+            {
+              "title": "Decision frame",
+              "what": "The strategic question, scope, time horizon, and success signal. An explicit statement of what the analysis covers and what it does not.",
+              "why": "Without this frame even a strong matrix drifts away from the real decision.",
+              "next": "An executive summary with a clear decision frame for the sponsor or board."
+            },
+            {
+              "title": "Factor picture & evidence",
+              "what": "The strongest S/W/O/T cards with their sources. A clear separation of facts, observations, and hypotheses.",
+              "why": "Decision-makers see not only the conclusion, but the quality of the material underneath it.",
+              "next": "A defensible matrix and narrative for the next decision discussion."
+            },
+            {
+              "title": "Strategic tensions",
+              "what": "The most important connections between internal and external cards. Decision situations that change the move logic.",
+              "why": "Observations stop being a list and start explaining where the real trade-off sits.",
+              "next": "An interpretation layer for leadership discussion and priority choices."
+            },
+            {
+              "title": "Recommended moves",
+              "what": "2-4 moves emerging from tensions with a clear sequence. Quick win vs big bet vs defensive move vs capability build.",
+              "why": "The handoff from diagnosis to a move that makes business sense and can be defended logically.",
+              "next": "A shortlist of moves for the deck, sponsor decision, or initiative design."
+            },
+            {
+              "title": "Bridge to execution",
+              "what": "A source summary ready for the report or presentation. What goes to an initiative, what needs a deck, what stays an idea.",
+              "why": "SWOT without this step leaves the team with an interesting analysis but no move.",
+              "next": "A report, presentation, initiative push, or further exploration from the same source package."
+            }
+          ],
+          "qualityBody": "A strong result is selective, evidence-backed, and decision-oriented. It does not show everything that was collected, only what truly changes the choice logic and enables the next step."
+        },
+        "example": {
+          "intro": "This example shows a common transformation moment: pressure rises and technology looks like the quick answer, but the first job is to establish whether the real problem is the missing solution or the missing truth about the situation.",
+          "cases": [
+            {
+              "title": "Premium manufacturer before CAPEX",
+              "context": "Margin is falling, lead times are unstable, and leadership is considering automation.",
+              "question": "Should the company start with technology investment or diagnose losses and bottlenecks first?",
+              "evidence": [
+                "Interviews show strong brand trust and premium customer relationships, but operational decisions are still intuition-led.",
+                "Data points to flow losses, no shared bottleneck definition, and rising expediting costs."
+              ],
+              "aiDraft": "AI proposes SWOT cards around reputation and B2B trust, weak process visibility, a data-diagnosis opportunity, and the threat of automating the wrong problem.",
+              "approvedUse": "The user accepts only evidence-backed cards and rejects generic “implement AI” recommendations. Approved cards feed tensions and moves.",
+              "outcome": "The decision becomes: run loss diagnosis, bottleneck mapping, and a data layer before CAPEX, with automation as the second stage."
+            },
+            {
+              "title": "Software firm after losing a major client",
+              "context": "The team is strong, but the sales pipeline depends too heavily on referrals.",
+              "question": "Should it scale outbound sales or first sharpen offer positioning?",
+              "evidence": [
+                "CRM data shows long sales cycles outside referrals, while customer interviews reveal unclear offer differentiation.",
+                "The team has strong technical capability, but sales materials do not show measurable customer outcomes."
+              ],
+              "aiDraft": "AI proposes SWOT cards on expert delivery, weak value narrative, an opportunity to verticalize the offer, and the threat of continued key-account dependency.",
+              "approvedUse": "Approved cards create the tension between delivery quality and weak ICP clarity, then shape moves before outbound scale.",
+              "outcome": "The sequence is: narrow ICP, build a customer proof pack, test two segment campaigns, and only then expand sales effort."
+            },
+            {
+              "title": "Local services network before expansion",
+              "context": "Demand is growing, but operating quality varies across locations.",
+              "question": "Should the company open more sites or standardize the operating model first?",
+              "evidence": [
+                "Customer reviews are excellent in the best locations, but complaints cluster around repeatable service steps.",
+                "Local managers interpret quality standards differently, and onboarding new staff takes too long."
+              ],
+              "aiDraft": "AI proposes strengths in local brand and customer trust, weaknesses in operating standard, an expansion-playbook opportunity, and the threat of quality loss while scaling.",
+              "approvedUse": "Approved cards help decide whether the advantage is truly scalable or dependent on individual people and local habits.",
+              "outcome": "The recommendation is to build a service standard, quality dashboard, and training model before opening more sites."
+            }
+          ],
+          "situationLabel": "Situation & decision question",
+          "situationItems": [
+            "Ateliertoy is a premium company with in-house production and a strong B2B reputation",
+            "margin is under pressure, lead times are unstable, and leadership is considering expensive automation",
+            "the session question is whether the transformation should start with CAPEX or first with a diagnosis of losses, bottlenecks, and data blind spots"
+          ],
+          "signalsLabel": "Key input signals",
+          "signalsItems": [
+            "a strong brand and trusted premium customers are real advantages",
+            "operating decisions are still intuition-driven and there is no shared truth about losses and bottlenecks",
+            "the market increasingly expects faster delivery and higher predictability",
+            "there is a real risk of burning investment if automation starts before process diagnosis"
+          ],
+          "matrixLabel": "How the matrix looks",
+          "matrixItems": [
+            "Strengths: brand, B2B trust, in-house production, IP control",
+            "Weaknesses: no shared diagnosis, analog management, weak visibility into losses",
+            "Opportunities: digital diagnosis, stronger data layer, better sequencing of investments",
+            "Threats: price pressure, rising costs, and the risk of automating the wrong problem"
+          ],
+          "tensionLabel": "Tension & interpretation",
+          "tensionItems": [
+            "the company has real assets to scale, but still lacks truth about where value is leaking today",
+            "automation looks attractive, yet without diagnosis it may only accelerate chaos",
+            "the main conclusion is to first see what truly constrains margin and flow, and only then choose the technology response"
+          ],
+          "movesLabel": "Recommended moves",
+          "movesItems": [
+            "run a diagnosis of losses, bottlenecks, and data blind spots before CAPEX",
+            "build one shared view of the process and the transformation priorities for leadership",
+            "only then sequence the roadmap: data -> automation -> investment governance"
+          ],
+          "outputsLabel": "Outputs from the session",
+          "outputsItems": [
+            "board-ready material explaining why the transformation should begin with diagnosis instead of a technology purchase",
+            "a short list of priorities and risks for the next transformation decisions",
+            "a source package for the roadmap, deck, and initiative generation in the platform"
+          ],
+          "closingNote": "This is a strong case because it does not stop at describing four quadrants. It shows how signals turn into a decision about move sequence and into material that can immediately bridge into execution."
+        }
+      }
     }
   },
   "discoveryToolsTools": {
