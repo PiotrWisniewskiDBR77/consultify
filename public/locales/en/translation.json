@@ -31187,6 +31187,128 @@
         "descPlaceholder": "Description / notes...",
         "empty": "No items yet"
       }
+    },
+    "operational": {
+      "operationalSectionStep": {
+        "namePlaceholder": "Item title...",
+        "descPlaceholder": "Description / notes...",
+        "hint": "Add concrete operational items.",
+        "empty": "No items yet"
+      },
+      "dmsKpisStep": {
+        "title": "KPIs and thresholds",
+        "description": "Define KPIs, targets and owners.",
+        "kpiPlaceholder": "KPI...",
+        "targetPlaceholder": "Target...",
+        "frequencyPlaceholder": "Frequency...",
+        "ownerPlaceholder": "Owner...",
+        "addKpi": "Add KPI",
+        "hint": "Each KPI should have a target and owner.",
+        "empty": "No KPIs yet",
+        "targetLabel": "Target",
+        "frequencyLabel": "Frequency",
+        "ownerLabel": "Owner"
+      },
+      "smedStepsStep": {
+        "title": "Changeover steps",
+        "description": "Separate internal and external steps.",
+        "stepPlaceholder": "Changeover step...",
+        "internal": "Internal",
+        "external": "External",
+        "hint": "Mark type and duration for each step.",
+        "empty": "No steps yet",
+        "typeLabel": "Type",
+        "durationLabel": "Duration"
+      },
+      "smedImprovementsStep": {
+        "title": "SMED improvements",
+        "description": "Add quick wins and investments.",
+        "improvementPlaceholder": "Improvement...",
+        "descPlaceholder": "Description / ROI...",
+        "investment": "Investment",
+        "hint": "Label quick wins vs investments.",
+        "empty": "No improvements yet",
+        "typeLabel": "Type"
+      },
+      "inventoryReplenishmentStep": {
+        "title": "Replenishment policies",
+        "description": "Define thresholds and targets for replenishment.",
+        "policyPlaceholder": "Policy...",
+        "reorderPointPlaceholder": "Reorder point...",
+        "targetPlaceholder": "Target / service level...",
+        "addPolicy": "Add policy",
+        "hint": "Each policy should have threshold and target.",
+        "empty": "No policies yet",
+        "thresholdLabel": "Threshold",
+        "targetLabel": "Target"
+      },
+      "dmsEscalationStep": {
+        "title": "Escalation rules",
+        "description": "Define thresholds and escalation owners.",
+        "rulePlaceholder": "Rule...",
+        "thresholdPlaceholder": "Threshold...",
+        "ownerPlaceholder": "Owner...",
+        "addRule": "Add rule",
+        "hint": "Rules should have thresholds and owners.",
+        "empty": "No rules yet",
+        "thresholdLabel": "Threshold",
+        "ownerLabel": "Owner"
+      },
+      "a3CountermeasuresStep": {
+        "title": "Countermeasures",
+        "description": "Add actions and owners.",
+        "actionPlaceholder": "Action...",
+        "ownerPlaceholder": "Owner / role...",
+        "targetPlaceholder": "KPI / target...",
+        "hint": "Tie each action to a measurable KPI.",
+        "empty": "No countermeasures yet",
+        "ownerLabel": "Owner",
+        "targetLabel": "Target"
+      },
+      "sopStandardsStep": {
+        "title": "Standards & quality criteria",
+        "description": "Define operational standards and quality criteria.",
+        "namePlaceholder": "Standard name...",
+        "criteriaPlaceholder": "Quality criteria...",
+        "frequencyPlaceholder": "Audit frequency...",
+        "addStandard": "Add standard",
+        "hint": "Add measurable criteria and audit frequency.",
+        "empty": "No standards yet",
+        "frequencyLabel": "Frequency"
+      },
+      "sopChecklistsStep": {
+        "title": "Checklists & verification",
+        "description": "Define checklist steps and owners.",
+        "itemPlaceholder": "Checklist item...",
+        "descPlaceholder": "Step description...",
+        "ownerPlaceholder": "Owner / Role...",
+        "hint": "Each checklist item should have an owner role.",
+        "empty": "No checklists yet",
+        "ownerLabel": "Owner"
+      },
+      "inventoryClassificationStep": {
+        "title": "ABC/XYZ classification",
+        "description": "Define SKU groups and assign categories.",
+        "skuGroupPlaceholder": "SKU group...",
+        "notesPlaceholder": "Notes...",
+        "hint": "Classify by value and demand variability.",
+        "empty": "No classifications yet"
+      },
+      "a3ProblemStep": {
+        "title": "Problem statement",
+        "description": "Define the problem, impact, and scope.",
+        "problemPlaceholder": "Problem...",
+        "impactPlaceholder": "Business impact...",
+        "scopePlaceholder": "Scope / process...",
+        "hint": "Problem should be measurable and data-backed."
+      },
+      "a3RootCauseStep": {
+        "title": "Root cause (5 Why)",
+        "description": "List the main root causes.",
+        "causePlaceholder": "Cause...",
+        "hint": "Ensure the cause is measurable.",
+        "empty": "No causes yet"
+      }
     }
   }
 }

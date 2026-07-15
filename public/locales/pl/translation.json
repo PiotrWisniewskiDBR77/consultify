@@ -32247,6 +32247,128 @@
         "descPlaceholder": "Opis / notatka...",
         "empty": "Brak pozycji"
       }
+    },
+    "operational": {
+      "operationalSectionStep": {
+        "namePlaceholder": "Nazwa elementu...",
+        "descPlaceholder": "Opis / notatka...",
+        "hint": "Dodaj konkretne elementy operacyjne.",
+        "empty": "Brak elementów"
+      },
+      "dmsKpisStep": {
+        "title": "KPI i progi",
+        "description": "Zdefiniuj KPI, targety i ownerów.",
+        "kpiPlaceholder": "KPI...",
+        "targetPlaceholder": "Target...",
+        "frequencyPlaceholder": "Częstotliwość...",
+        "ownerPlaceholder": "Owner...",
+        "addKpi": "Dodaj KPI",
+        "hint": "KPI powinny mieć jasny target i ownera.",
+        "empty": "Brak KPI",
+        "targetLabel": "Target",
+        "frequencyLabel": "Częstotliwość",
+        "ownerLabel": "Owner"
+      },
+      "smedStepsStep": {
+        "title": "Kroki przezbrojenia",
+        "description": "Rozdziel kroki na wewnętrzne i zewnętrzne.",
+        "stepPlaceholder": "Krok przezbrojenia...",
+        "internal": "Wewnętrzny",
+        "external": "Zewnętrzny",
+        "hint": "Oznacz typ i czas trwania każdego kroku.",
+        "empty": "Brak kroków",
+        "typeLabel": "Typ",
+        "durationLabel": "Czas"
+      },
+      "smedImprovementsStep": {
+        "title": "Usprawnienia SMED",
+        "description": "Dodaj quick wins oraz inwestycje.",
+        "improvementPlaceholder": "Usprawnienie...",
+        "descPlaceholder": "Opis / ROI...",
+        "investment": "Inwestycja",
+        "hint": "Oznacz czy to quick win czy większa inwestycja.",
+        "empty": "Brak usprawnień",
+        "typeLabel": "Typ"
+      },
+      "inventoryReplenishmentStep": {
+        "title": "Polityki uzupełniania",
+        "description": "Zdefiniuj progi i cele polityk uzupełniania.",
+        "policyPlaceholder": "Polityka...",
+        "reorderPointPlaceholder": "Punkt uzupełnienia...",
+        "targetPlaceholder": "Cel / service level...",
+        "addPolicy": "Dodaj politykę",
+        "hint": "Każda polityka powinna mieć próg i cel.",
+        "empty": "Brak polityk",
+        "thresholdLabel": "Próg",
+        "targetLabel": "Cel"
+      },
+      "dmsEscalationStep": {
+        "title": "Reguły eskalacji",
+        "description": "Zdefiniuj progi i właścicieli eskalacji.",
+        "rulePlaceholder": "Reguła...",
+        "thresholdPlaceholder": "Próg...",
+        "ownerPlaceholder": "Owner...",
+        "addRule": "Dodaj regułę",
+        "hint": "Reguły powinny mieć próg i właściciela eskalacji.",
+        "empty": "Brak reguł",
+        "thresholdLabel": "Próg",
+        "ownerLabel": "Owner"
+      },
+      "a3CountermeasuresStep": {
+        "title": "Środki zaradcze",
+        "description": "Dodaj działania i odpowiedzialnych.",
+        "actionPlaceholder": "Działanie...",
+        "ownerPlaceholder": "Owner / rola...",
+        "targetPlaceholder": "KPI / cel...",
+        "hint": "Powiąż działanie z mierzalnym KPI.",
+        "empty": "Brak działań",
+        "ownerLabel": "Owner",
+        "targetLabel": "Cel"
+      },
+      "sopStandardsStep": {
+        "title": "Standardy i kryteria jakości",
+        "description": "Zdefiniuj standardy operacyjne i kryteria jakości.",
+        "namePlaceholder": "Nazwa standardu...",
+        "criteriaPlaceholder": "Kryteria jakości...",
+        "frequencyPlaceholder": "Częstotliwość kontroli...",
+        "addStandard": "Dodaj standard",
+        "hint": "Dodaj mierzalne kryteria i częstotliwość kontroli.",
+        "empty": "Brak standardów",
+        "frequencyLabel": "Częstotliwość"
+      },
+      "sopChecklistsStep": {
+        "title": "Checklisty i weryfikacja",
+        "description": "Zdefiniuj kroki kontrolne i odpowiedzialnych.",
+        "itemPlaceholder": "Nazwa checklisty...",
+        "descPlaceholder": "Opis kroku...",
+        "ownerPlaceholder": "Owner / Rola...",
+        "hint": "Każdy punkt powinien mieć odpowiedzialną rolę.",
+        "empty": "Brak checklist",
+        "ownerLabel": "Owner"
+      },
+      "inventoryClassificationStep": {
+        "title": "Klasyfikacja ABC/XYZ",
+        "description": "Zdefiniuj grupy SKU i przypisz kategorię.",
+        "skuGroupPlaceholder": "Grupa SKU...",
+        "notesPlaceholder": "Notatki...",
+        "hint": "Klasyfikuj według wartości i zmienności popytu.",
+        "empty": "Brak klasyfikacji"
+      },
+      "a3ProblemStep": {
+        "title": "Opis problemu",
+        "description": "Zdefiniuj problem, wpływ i zakres.",
+        "problemPlaceholder": "Problem...",
+        "impactPlaceholder": "Wpływ biznesowy...",
+        "scopePlaceholder": "Zakres / proces...",
+        "hint": "Problem powinien być mierzalny i osadzony w danych."
+      },
+      "a3RootCauseStep": {
+        "title": "Przyczyna źródłowa (5 Why)",
+        "description": "Wypisz główne przyczyny problemu.",
+        "causePlaceholder": "Przyczyna...",
+        "hint": "Upewnij się, że przyczyna jest mierzalna.",
+        "empty": "Brak przyczyn"
+      }
     }
   }
 }

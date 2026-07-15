@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -30,6 +31,7 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
   session,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [itemTitle, setItemTitle] = useState('');
   const [itemDescription, setItemDescription] = useState('');
@@ -90,13 +92,13 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
           type="text"
           value={itemTitle}
           onChange={(e) => setItemTitle(e.target.value)}
-          placeholder={isPolish ? 'Nazwa elementu...' : 'Item title...'}
+          placeholder={t('discoveryToolsTools.operational.operationalSectionStep.namePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <textarea
           value={itemDescription}
           onChange={(e) => setItemDescription(e.target.value)}
-          placeholder={isPolish ? 'Opis / notatka...' : 'Description / notes...'}
+          placeholder={t('discoveryToolsTools.operational.operationalSectionStep.descPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
@@ -106,18 +108,18 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
             onChange={(e) => setImpact(e.target.value as 'high' | 'medium' | 'low')}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="high">{isPolish ? 'Wysoki wpływ' : 'High impact'}</option>
-            <option value="medium">{isPolish ? 'Średni wpływ' : 'Medium impact'}</option>
-            <option value="low">{isPolish ? 'Niski wpływ' : 'Low impact'}</option>
+            <option value="high">{t('discoveryToolsTools.growthPaths.step.highImpact')}</option>
+            <option value="medium">{t('discoveryToolsTools.growthPaths.step.mediumImpact')}</option>
+            <option value="low">{t('discoveryToolsTools.growthPaths.step.lowImpact')}</option>
           </select>
           <select
             value={effort}
             onChange={(e) => setEffort(e.target.value as 'high' | 'medium' | 'low')}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="high">{isPolish ? 'Wysoki wysiłek' : 'High effort'}</option>
-            <option value="medium">{isPolish ? 'Średni wysiłek' : 'Medium effort'}</option>
-            <option value="low">{isPolish ? 'Niski wysiłek' : 'Low effort'}</option>
+            <option value="high">{t('discoveryToolsTools.growthPaths.step.highEffort')}</option>
+            <option value="medium">{t('discoveryToolsTools.growthPaths.step.mediumEffort')}</option>
+            <option value="low">{t('discoveryToolsTools.growthPaths.step.lowEffort')}</option>
           </select>
           <button
             onClick={handleAdd}
@@ -125,20 +127,16 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
-        <InlineAssist
-          hint={
-            isPolish ? 'Dodaj konkretne elementy operacyjne.' : 'Add concrete operational items.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.operationalSectionStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak elementów' : 'No items yet'}
+            {t('discoveryToolsTools.operational.operationalSectionStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -155,8 +153,8 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
                     </p>
                   )}
                   <div className="mt-2 text-xs text-slate-500">
-                    {isPolish ? 'Wpływ' : 'Impact'}: {item.impact} •{' '}
-                    {isPolish ? 'Wysiłek' : 'Effort'}: {item.effort}
+                    {t('discoveryToolsTools.common.impact')}: {item.impact} •{' '}
+                    {t('discoveryToolsTools.common.effort')}: {item.effort}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -167,9 +165,9 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
                     }
                     className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
                   >
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
+                    <option value="high">{t('discoveryToolsTools.common.level.high')}</option>
+                    <option value="medium">{t('discoveryToolsTools.common.level.medium')}</option>
+                    <option value="low">{t('discoveryToolsTools.common.level.low')}</option>
                   </select>
                   <select
                     value={item.effort}
@@ -178,13 +176,14 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
                     }
                     className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
                   >
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
+                    <option value="high">{t('discoveryToolsTools.common.level.high')}</option>
+                    <option value="medium">{t('discoveryToolsTools.common.level.medium')}</option>
+                    <option value="low">{t('discoveryToolsTools.common.level.low')}</option>
                   </select>
                   <button
                     onClick={() => handleRemove(item.id)}
                     className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500"
+                    aria-label={t('discoveryToolsTools.common.remove')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
