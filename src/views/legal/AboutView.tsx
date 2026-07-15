@@ -109,9 +109,15 @@ export const AboutView: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="grid grid-cols-2 gap-4"
             >
-              <StatCard number="10x" label="Faster Strategy Development" />
-              <StatCard number="80%" label="Cost Reduction vs Traditional" />
-              <StatCard number="100%" label="Human Control Maintained" />
+              {/* Placeholder ROI metrics — flagged for validation (Z139 integrity check)
+                   Removed until backed by real data or case studies:
+                   - 10x Faster Strategy Development
+                   - 80% Cost Reduction vs Traditional
+                   - 100% Human Control Maintained
+                   See: Harvard/wdrozenie-100/_HANDOFF_PRZESIADKA_2026-07-15.md §1.2 */}
+              {/* <StatCard number="10x" label="Faster Strategy Development" /> */}
+              {/* <StatCard number="80%" label="Cost Reduction vs Traditional" /> */}
+              {/* <StatCard number="100%" label="Human Control Maintained" /> */}
               <StatCard number="24/7" label="AI Partner Availability" />
             </motion.div>
           </div>
