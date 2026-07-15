@@ -24,6 +24,7 @@ import {
   start as startGeneration,
 } from '../../deliverables/deliverablesGenerationService.js';
 import type { EvidenceContract } from '../../evidence/evidenceContract.js';
+import { safePersistEvidenceContract } from '../../evidence/evidenceContractBridge.js';
 import { createNote } from '../../notebookService.js';
 import { hasPresentationCapability } from '../../presentationAccessPolicyService.js';
 import {
@@ -263,6 +264,19 @@ export async function generateDeliverable(
         { writer: 'chat_deliverable' }
       );
       mindmapId = materialized.id;
+      // HP-17 bridge — persist the inline EvidenceContract (built above) as an
+      // EvidenceEnvelope (`artifact_evidence`, artifactType='canvas') so the
+      // evidence panel has something to render for mind maps. Previously: the
+      // contract rode along only in `my_idea_maps.extensions_json` — never
+      // persisted to the polymorphic evidence table the panel actually fetches
+      // from. Fire-and-forget + fail-safe: never blocks the chat turn.
+      void safePersistEvidenceContract(evidence, {
+        organizationId: orgId,
+        artifactType: 'canvas',
+        artifactId: mindmapId,
+        service: 'canvasGraphLlm.generateMindmapGraph',
+        createdBy: userId,
+      }).catch(() => {});
     } catch (materializeErr) {
       logger.warn(
         `[generate_deliverable] mindmap server-side materialize failed, falling back to FE-mount id: ${
@@ -393,6 +407,19 @@ export async function generateDeliverable(
         { writer: 'chat_deliverable' }
       );
       draftId = materialized.id;
+      // HP-17 bridge — same as the mindmap branch above, persist the inline
+      // EvidenceContract as an EvidenceEnvelope. Only process_flow builds a
+      // real contract today (HP-16 8/8 scope) — table/whiteboard get
+      // `evidence === undefined`, so there is nothing to persist for those.
+      if (evidence) {
+        void safePersistEvidenceContract(evidence, {
+          organizationId: orgId,
+          artifactType: 'canvas',
+          artifactId: draftId,
+          service: 'canvasGraphLlm.generateProcessFlowGraph',
+          createdBy: userId,
+        }).catch(() => {});
+      }
     } catch (materializeErr) {
       logger.warn(
         `[generate_deliverable] ${preferredSystem} server-side materialize failed, falling back to FE-mount id: ${
