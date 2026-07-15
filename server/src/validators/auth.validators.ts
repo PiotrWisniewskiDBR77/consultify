@@ -47,8 +47,13 @@ export const RefreshTokenRequestSchema = z.object({
 });
 
 // Change Password Request
-// feedback 5b28d67e: frontend required a special char but backend did not → button
-// appeared permanently disabled for passwords without special chars. Align backend.
+// F2 fix: the special-char regex here diverged from the actual frontend gate.
+// PasswordSecuritySettings.tsx shows "special character" as a strength hint but its
+// `isPasswordValid` (which enables the submit button) only checks minLength/upper/
+// lower/number/match — hasSpecial is NOT required to submit. With the special-char
+// regex enforced here, a user could pass the frontend gate and still get rejected by
+// the backend. Dropped to match the real frontend requirement (min 8 + upper/lower/
+// number). If special chars become mandatory again, gate them in isPasswordValid too.
 export const ChangePasswordRequestSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z
@@ -56,8 +61,7 @@ export const ChangePasswordRequestSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+    .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
 // Reset Password Request
