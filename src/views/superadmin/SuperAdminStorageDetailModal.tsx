@@ -168,11 +168,11 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
       id: 'name',
       label: 'File Name',
       sortable: true,
-      sortAccessor: (row: TableRow) => getFileName(row as StorageFile),
+      sortAccessor: (row: TableRow) => getFileName(row as unknown as StorageFile),
       render: (row: TableRow) => (
         <span className="font-medium text-c-text flex items-center gap-2">
           <File size={16} className="text-blue-400" />
-          {getFileName(row as StorageFile)}
+          {getFileName(row as unknown as StorageFile)}
         </span>
       ),
     },
