@@ -10479,6 +10479,19 @@
       "densityLabel": "Density",
       "sectionsLabel": "Sections",
       "audiencePrefix": "Audience:"
+    },
+    "readingModeToggle": {
+      "readingSettingsTooltip": "Reading settings",
+      "readingModeLabel": "Reading Mode",
+      "readingSettingsTitle": "Reading Settings",
+      "focusModeLabel": "Focus Mode",
+      "fontSizeLabel": "Font Size",
+      "themeLabel": "Theme",
+      "lightThemeLabel": "Light",
+      "darkThemeLabel": "Dark",
+      "printButton": "Print",
+      "fullscreenButton": "Fullscreen",
+      "readingModeTooltip": "Reading mode"
     }
   },
   "auth": {

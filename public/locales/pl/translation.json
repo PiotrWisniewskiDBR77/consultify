@@ -9714,6 +9714,19 @@
       "densityLabel": "Gęstość",
       "sectionsLabel": "Sekcje",
       "audiencePrefix": "Odbiorcy:"
+    },
+    "readingModeToggle": {
+      "readingSettingsTooltip": "Ustawienia czytania",
+      "readingModeLabel": "Tryb czytania",
+      "readingSettingsTitle": "Ustawienia czytania",
+      "focusModeLabel": "Tryb focus",
+      "fontSizeLabel": "Rozmiar czcionki",
+      "themeLabel": "Motyw",
+      "lightThemeLabel": "Jasny",
+      "darkThemeLabel": "Ciemny",
+      "printButton": "Drukuj",
+      "fullscreenButton": "Pełny ekran",
+      "readingModeTooltip": "Tryb czytania"
     }
   },
   "auth": {
