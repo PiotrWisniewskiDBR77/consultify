@@ -28299,6 +28299,30 @@
         "driversHint": "Dodaj 2-4 konkretne czynniki dla kazdej sily.",
         "guidingQuestions": "Pytania pomocnicze"
       }
+    },
+    "growthPaths": {
+      "signalsTitle": "Sygnały wzrostu i evidence",
+      "signalsSubtitle": "Zbierz obserwacje z wywiadu, rynku i organizacji zanim AI zaproponuje opcje Ansoffa.",
+      "addSignalPlaceholder": "Dodaj sygnał wzrostu...",
+      "matrixTitle": "Macierz opcji wzrostu Ansoffa",
+      "matrixSubtitle": "Każda karta powinna mieć hipotezę wzrostu, uzasadnienie, ryzyko i pierwszy krok.",
+      "risk": "Ryzyko",
+      "comparisonTitle": "Porównanie strategiczne",
+      "comparisonSubtitle": "Tu opcje wzrostu zamieniają się w trade-offy, priorytety i rekomendowane ruchy.",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zaakceptowanych opcji wzrostu.",
+      "step": {
+        "titlePlaceholder": "Nazwa inicjatywy...",
+        "descPlaceholder": "Opis / uzasadnienie...",
+        "highImpact": "Wysoki wpływ",
+        "mediumImpact": "Średni wpływ",
+        "lowImpact": "Niski wpływ",
+        "highEffort": "Wysoki wysiłek",
+        "mediumEffort": "Średni wysiłek",
+        "lowEffort": "Niski wysiłek",
+        "hint": "Dodaj konkretne inicjatywy i oznacz wpływ oraz wysiłek.",
+        "empty": "Brak wpisów"
+      }
     }
   }
 }

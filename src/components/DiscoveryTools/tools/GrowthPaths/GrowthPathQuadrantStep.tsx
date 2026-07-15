@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { GrowthPathItem, GrowthPathsData, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -65,6 +66,7 @@ export const GrowthPathQuadrantStep: React.FC<GrowthPathQuadrantStepProps> = ({
   session,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -131,13 +133,13 @@ export const GrowthPathQuadrantStep: React.FC<GrowthPathQuadrantStepProps> = ({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'Nazwa inicjatywy...' : 'Initiative title...'}
+          placeholder={t('discoveryToolsTools.growthPaths.step.titlePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={isPolish ? 'Opis / uzasadnienie...' : 'Description / rationale...'}
+          placeholder={t('discoveryToolsTools.growthPaths.step.descPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         />
@@ -147,18 +149,18 @@ export const GrowthPathQuadrantStep: React.FC<GrowthPathQuadrantStepProps> = ({
             onChange={(e) => setImpact(e.target.value as 'high' | 'medium' | 'low')}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="high">{isPolish ? 'Wysoki wpływ' : 'High impact'}</option>
-            <option value="medium">{isPolish ? 'Średni wpływ' : 'Medium impact'}</option>
-            <option value="low">{isPolish ? 'Niski wpływ' : 'Low impact'}</option>
+            <option value="high">{t('discoveryToolsTools.growthPaths.step.highImpact')}</option>
+            <option value="medium">{t('discoveryToolsTools.growthPaths.step.mediumImpact')}</option>
+            <option value="low">{t('discoveryToolsTools.growthPaths.step.lowImpact')}</option>
           </select>
           <select
             value={effort}
             onChange={(e) => setEffort(e.target.value as 'high' | 'medium' | 'low')}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="high">{isPolish ? 'Wysoki wysiłek' : 'High effort'}</option>
-            <option value="medium">{isPolish ? 'Średni wysiłek' : 'Medium effort'}</option>
-            <option value="low">{isPolish ? 'Niski wysiłek' : 'Low effort'}</option>
+            <option value="high">{t('discoveryToolsTools.growthPaths.step.highEffort')}</option>
+            <option value="medium">{t('discoveryToolsTools.growthPaths.step.mediumEffort')}</option>
+            <option value="low">{t('discoveryToolsTools.growthPaths.step.lowEffort')}</option>
           </select>
           <button
             onClick={handleAdd}
@@ -166,22 +168,16 @@ export const GrowthPathQuadrantStep: React.FC<GrowthPathQuadrantStepProps> = ({
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Dodaj konkretne inicjatywy i oznacz wpływ oraz wysiłek.'
-              : 'Add specific initiatives and mark impact and effort.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.growthPaths.step.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak wpisów' : 'No items yet'}
+            {t('discoveryToolsTools.growthPaths.step.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -198,8 +194,8 @@ export const GrowthPathQuadrantStep: React.FC<GrowthPathQuadrantStepProps> = ({
                     </p>
                   )}
                   <div className="mt-2 text-xs text-slate-500">
-                    {isPolish ? 'Wpływ' : 'Impact'}: {item.impact} •{' '}
-                    {isPolish ? 'Wysiłek' : 'Effort'}: {item.effort}
+                    {t('discoveryToolsTools.common.impact')}: {item.impact} •{' '}
+                    {t('discoveryToolsTools.common.effort')}: {item.effort}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

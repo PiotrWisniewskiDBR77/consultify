@@ -27223,6 +27223,30 @@
         "driversHint": "Add 2-4 concrete drivers for each force.",
         "guidingQuestions": "Guiding Questions"
       }
+    },
+    "growthPaths": {
+      "signalsTitle": "Growth Signals & Evidence",
+      "signalsSubtitle": "Capture interview, market, and organization signals before AI proposes Ansoff options.",
+      "addSignalPlaceholder": "Add a growth signal...",
+      "matrixTitle": "Ansoff Growth Option Matrix",
+      "matrixSubtitle": "Each card should carry a growth hypothesis, rationale, risk, and first step.",
+      "risk": "Risk",
+      "comparisonTitle": "Strategic Comparison",
+      "comparisonSubtitle": "This is where growth options become trade-offs, priorities, and recommended moves.",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on approved growth options.",
+      "step": {
+        "titlePlaceholder": "Initiative title...",
+        "descPlaceholder": "Description / rationale...",
+        "highImpact": "High impact",
+        "mediumImpact": "Medium impact",
+        "lowImpact": "Low impact",
+        "highEffort": "High effort",
+        "mediumEffort": "Medium effort",
+        "lowEffort": "Low effort",
+        "hint": "Add specific initiatives and mark impact and effort.",
+        "empty": "No items yet"
+      }
     }
   }
 }
