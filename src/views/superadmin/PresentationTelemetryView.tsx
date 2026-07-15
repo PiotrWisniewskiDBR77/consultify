@@ -540,8 +540,7 @@ function renderBody(props: BodyProps): React.ReactElement {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table
-                  /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800"
+                <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800"
                 >
                   <thead className="bg-slate-50 dark:bg-slate-900/60">
                     <tr>

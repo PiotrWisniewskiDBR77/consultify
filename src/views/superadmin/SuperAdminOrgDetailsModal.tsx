@@ -417,8 +417,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             </h4>
           </div>
           <div className="max-h-56 overflow-y-auto">
-            <table
-              /* §27-exempt: sub-tabela w widoku szczegolow (Invoice History w modalu org, read-only max-h-56), nie samodzielna lista (przetagowane z §27-todo, m27-b 07-15) */ className="w-full text-left border-collapse"
+            <table /* §27-exempt: sub-tabela w widoku szczegolow (Invoice History w modalu org, read-only max-h-56), nie samodzielna lista (przetagowane z §27-todo, m27-b 07-15) */ className="w-full text-left border-collapse"
             >
               <thead className="bg-slate-50 dark:bg-navy-900 text-slate-500 dark:text-slate-400 text-xs uppercase sticky top-0">
                 <tr>

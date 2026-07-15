@@ -651,8 +651,7 @@ const SavedReportsView: React.FC = () => {
                   {/* Data Preview */}
                   {executionResult.data && executionResult.data.length > 0 && (
                     <div className="overflow-x-auto">
-                      <table
-                        /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full text-sm"
+                      <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full text-sm"
                       >
                         <thead>
                           <tr className="border-b border-gray-700">
