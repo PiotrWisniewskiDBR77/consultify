@@ -66,12 +66,11 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   onDiscuss,
   discussDisabled,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
-  const searchLabel = isPl ? 'Szukaj' : 'Search';
+  const { t } = useTranslation();
+  const searchLabel = t('myWorkIdeas.workspaceToolbar.search');
   const searchShortcut = isMac ? '⌘F' : 'Ctrl+F';
-  const helpLabel = isPl ? 'Skróty klawiszowe' : 'Keyboard shortcuts';
-  const discussLabel = isPl ? 'Omów z Teresą' : 'Discuss with Teresa';
+  const helpLabel = t('myWorkIdeas.workspaceToolbar.keyboardShortcuts');
+  const discussLabel = t('myWorkIdeas.workspaceToolbar.discussTeresa');
 
   return (
     <div className="absolute top-3 right-3 z-sticky pointer-events-none">

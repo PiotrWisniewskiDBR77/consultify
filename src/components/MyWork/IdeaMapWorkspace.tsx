@@ -28,6 +28,7 @@ import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip'
 import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import i18n from '@/i18n';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -126,7 +127,6 @@ class CanvasToolErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
-      const isPl = typeof window !== 'undefined' && (navigator.language || '').startsWith('pl');
       return (
         <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-c-surface-raised dark:bg-c-surface p-8">
           <div className="p-3 rounded-2xl bg-c-surface border border-c-danger">
@@ -134,11 +134,11 @@ class CanvasToolErrorBoundary extends React.Component<
           </div>
           <div className="text-center">
             <div className="text-sm font-semibold text-c-text dark:text-c-text mb-1">
-              {this.props.toolName} {isPl ? 'nie załadował się' : 'failed to load'}
+              {this.props.toolName} {i18n.t('myWorkIdeas.mapWorkspace.failedLoad')}
             </div>
             <div className="text-xs text-c-text-secondary dark:text-c-text-muted max-w-sm">
               {this.state.error?.message ||
-                (isPl ? 'Wystąpił nieoczekiwany błąd' : 'An unexpected error occurred')}
+                i18n.t('myWorkIdeas.mapWorkspace.anUnexpectedErrorOccurred')}
             </div>
           </div>
           {this.props.onRetry && (
@@ -150,7 +150,7 @@ class CanvasToolErrorBoundary extends React.Component<
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
             >
               <RefreshCw size={14} />
-              {isPl ? 'Ponów' : 'Retry'}
+              {i18n.t('myWorkIdeas.mapWorkspace.retry')}
             </button>
           )}
         </div>

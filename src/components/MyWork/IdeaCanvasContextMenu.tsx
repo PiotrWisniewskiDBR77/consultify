@@ -23,6 +23,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
 
@@ -86,10 +87,8 @@ const NODE_ACTIONS: MenuItem[] = [
     labelPl: 'AI: Kwestionuj',
     labelEn: 'AI: Challenge',
     nodeOnly: true,
-    chatPrompt: (label, isPl) =>
-      isPl
-        ? `Zakwestionuj ten pomysł i zaproponuj kontrargumenty: "${label}"`
-        : `Challenge this idea and propose counterarguments: "${label}"`,
+    chatPrompt: (label, _isPl) =>
+      i18n.t('myWorkIdeas.canvasContextMenu.challengePrompt', { value: label }),
   },
   {
     id: 'evidence',
@@ -97,10 +96,8 @@ const NODE_ACTIONS: MenuItem[] = [
     labelPl: 'AI: Znajdź dowody',
     labelEn: 'AI: Find evidence',
     nodeOnly: true,
-    chatPrompt: (label, isPl) =>
-      isPl
-        ? `Znajdź dowody i dane firmy wspierające lub podważające: "${label}"`
-        : `Find company data and evidence supporting or contradicting: "${label}"`,
+    chatPrompt: (label, _isPl) =>
+      i18n.t('myWorkIdeas.canvasContextMenu.evidencePrompt', { value: label }),
   },
   {
     id: 'connections',
@@ -108,10 +105,8 @@ const NODE_ACTIONS: MenuItem[] = [
     labelPl: 'AI: Sugeruj połączenia',
     labelEn: 'AI: Suggest connections',
     nodeOnly: true,
-    chatPrompt: (label, isPl) =>
-      isPl
-        ? `Zasugeruj połączenia między "${label}" a innymi elementami na mapie`
-        : `Suggest connections between "${label}" and other map elements`,
+    chatPrompt: (label, _isPl) =>
+      i18n.t('myWorkIdeas.canvasContextMenu.connectionsPrompt', { value: label }),
   },
   {
     id: 'attach_knowledge',
@@ -207,7 +202,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   onSendToChat,
   onAttachKnowledge,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const menuRef = useRef<HTMLDivElement>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -323,7 +318,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
         <div className="px-3 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04]">
           <div className="text-[10px] font-bold text-c-info flex items-center gap-1">
             <Sparkles size={10} />
-            {isPl ? 'Akcje AI' : 'AI Actions'}
+            {t('myWorkIdeas.canvasContextMenu.aiActions')}
           </div>
         </div>
       )}
@@ -351,7 +346,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
 
       {!isAccepted && (
         <div className="px-3 py-1.5 text-[10px] text-amber-600 dark:text-amber-400 border-t border-slate-200/30 dark:border-white/[0.04]">
-          {isPl ? 'Zaakceptuj wyzwanie, aby odblokować AI' : 'Accept challenge to unlock AI'}
+          {t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')}
         </div>
       )}
     </div>

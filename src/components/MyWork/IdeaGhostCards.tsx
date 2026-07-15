@@ -56,8 +56,7 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
   graphEdges,
   onMaterialize,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
   const [ghosts, setGhosts] = useState<GhostCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -185,7 +184,7 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
         <div className="absolute top-4 right-4 pointer-events-auto">
           <div className="flex items-center gap-1.5 bg-white/80 dark:bg-navy-800/80 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-[10px] text-c-info shadow-sm">
             <Loader2 size={10} className="animate-spin" />
-            {isPl ? 'AI szuka luk...' : 'AI finding gaps...'}
+            {t('myWorkIdeas.ghostCards.aiFindingGaps')}
           </div>
         </div>
       )}

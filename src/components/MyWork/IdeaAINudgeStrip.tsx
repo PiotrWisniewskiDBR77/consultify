@@ -50,7 +50,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
   onActionConvert,
   onSendToChat,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [serverNudges, setServerNudges] = useState<Nudge[]>([]);
@@ -208,12 +208,12 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors shrink-0"
             >
               <ArrowRight size={10} />
-              {isPl ? 'Działaj' : 'Go'}
+              {t('myWorkIdeas.aiNudgeStrip.go')}
             </button>
             <button
               type="button"
               onClick={() => setDismissed((prev) => new Set(prev).add(nudge.id))}
-              aria-label={isPl ? 'Odrzuć podpowiedź' : 'Dismiss nudge'}
+              aria-label={t('myWorkIdeas.aiNudgeStrip.dismissNudge')}
               className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
             >
               <X size={12} />
