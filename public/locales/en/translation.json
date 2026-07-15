@@ -27039,6 +27039,10 @@
       "uncategorized": "Uncategorized",
       "noItems": "No items",
       "add": "Add"
+    },
+    "validationBadge": {
+      "validationStatus": "Validation status",
+      "validationStatusTitle": "Validation status — set manually by a human reviewer."
     }
   },
   "myWorkNotebook": {

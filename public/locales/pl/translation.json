@@ -28099,6 +28099,10 @@
       "uncategorized": "Bez kategorii",
       "noItems": "Brak elementów",
       "add": "Dodaj"
+    },
+    "validationBadge": {
+      "validationStatus": "Status walidacji",
+      "validationStatusTitle": "Status walidacji rekordu (zmieniany ręcznie przez recenzenta)."
     }
   },
   "myWorkNotebook": {
