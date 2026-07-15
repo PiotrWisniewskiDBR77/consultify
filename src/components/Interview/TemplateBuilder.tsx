@@ -73,6 +73,7 @@ import { Api } from '@/services/api';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import {
+  getAnswerTypeLabel,
   getTemplateAreaTagLabel,
   INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS,
   normalizeInterviewTemplateAreaTags,
@@ -683,13 +684,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (allowedAnswerTypes.length === ANSWER_TYPES.length) {
       return t('interview.templateBuilder.allAnswerTypes');
     }
-    return allowedAnswerTypes
-      .map(
-        (type) =>
-          ANSWER_TYPES.find((item) => item.id === type)?.[isPolish ? 'labelPl' : 'labelEn'] || type
-      )
-      .join(', ');
-  }, [allowedAnswerTypes, isPolish, t]);
+    return allowedAnswerTypes.map((type) => getAnswerTypeLabel(type, t, type)).join(', ');
+  }, [allowedAnswerTypes, t]);
 
   const areaTagsLabel = useMemo(() => {
     if (areaTags.length === 0) {
@@ -2290,13 +2286,13 @@ ${sourceText || '(none)'}`;
                                 {item.questionText || current.questionText}
                               </p>
                               <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {(item.answerType
-                                  ? ANSWER_TYPES.find(
-                                      (type) => type.id === normalizeAnswerType(item.answerType)
-                                    )
-                                  : ANSWER_TYPES.find((type) => type.id === current.answerType))?.[
-                                  isPolish ? 'labelPl' : 'labelEn'
-                                ] || '-'}
+                                {getAnswerTypeLabel(
+                                  item.answerType
+                                    ? normalizeAnswerType(item.answerType)
+                                    : current.answerType,
+                                  t,
+                                  '-'
+                                )}
                               </p>
                               {item.rationale ? (
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -2338,9 +2334,7 @@ ${sourceText || '(none)'}`;
                               {item.questionText}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {ANSWER_TYPES.find(
-                                (type) => type.id === normalizeAnswerType(item.answerType)
-                              )?.[isPolish ? 'labelPl' : 'labelEn'] || '-'}
+                              {getAnswerTypeLabel(normalizeAnswerType(item.answerType), t, '-')}
                             </p>
                             {item.rationale ? (
                               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -2787,11 +2781,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </span>
           )}
           <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700/70 text-slate-600 dark:text-slate-200 text-[10px] rounded border border-slate-300 dark:border-slate-600/60 leading-none">
-            {
-              ANSWER_TYPES.find((item) => item.id === question.answerType)?.[
-                isPolish ? 'labelPl' : 'labelEn'
-              ]
-            }
+            {getAnswerTypeLabel(question.answerType, t)}
           </span>
           {question.allowVoice && <Mic size={12} className="text-slate-500 dark:text-slate-400" />}
           {question.allowFileUpload && (

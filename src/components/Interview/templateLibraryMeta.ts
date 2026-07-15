@@ -76,3 +76,21 @@ export const getTemplateAreaTagLabel = (tag: string, t: (key: string) => string)
   const label = t(key);
   return label === key ? normalized : label;
 };
+
+// Odpowiedniki ANSWER_TYPES.labelPl/labelEn w TemplateBuilder.tsx — klucze i18n
+// żyją pod interview.templateBuilder.answerTypeLabel.* (już istniały z wcześniejszego
+// sweepu inline w tym samym pliku; ta funkcja tylko centralizuje wywołania, które
+// wcześniej robiły ręczny wybór isPolish ? labelPl : labelEn).
+const ANSWER_TYPE_ID_SET = new Set(['open', 'select', 'scale', 'boolean', 'number', 'date', 'dropdown']);
+
+export const getAnswerTypeLabel = (
+  answerTypeId: string,
+  t: (key: string, fallback?: string) => string,
+  fallback?: string
+): string => {
+  const normalized = String(answerTypeId || '')
+    .trim()
+    .toLowerCase();
+  if (!ANSWER_TYPE_ID_SET.has(normalized)) return fallback ?? normalized;
+  return t(`interview.templateBuilder.answerTypeLabel.${normalized}`, fallback ?? normalized);
+};

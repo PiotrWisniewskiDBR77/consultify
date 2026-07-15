@@ -9301,7 +9301,7 @@ Return ONLY the answer text (no markdown fences).`;
         data-testid="interview-unified-create-launcher-trigger"
         className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
       >
-        <span>{isPolish ? '+ Nowy' : '+ New'}</span>
+        <span>{t('interview.hub.unifiedCreateLauncherLabel')}</span>
       </button>
     ) : null;
 
