@@ -28487,6 +28487,25 @@
       "estimatedHoursPerWeek": "Szacowane godziny / tydzień",
       "baselineLabel": "Baseline",
       "targetLabel": "Target"
+    },
+    "impactHypothesisStep": {
+      "title": "Hipoteza wpływu",
+      "subtitle": "Zdefiniuj mierzalny baseline → target oraz kluczowe założenia.",
+      "metric": "Metryka",
+      "metricPlaceholder": "np. czas cyklu, koszt, błędy...",
+      "unit": "Jednostka",
+      "unitPlaceholder": "np. min/tydzień, %, PLN",
+      "baseline": "Baseline",
+      "baselinePlaceholder": "Wartość bazowa",
+      "target": "Target",
+      "targetPlaceholder": "Wartość docelowa",
+      "timeframe": "Horyzont",
+      "timeframePlaceholder": "np. 6 tygodni / Q2",
+      "assumptions": "Założenia",
+      "assumptionPlaceholder": "Dodaj założenie...",
+      "add": "Dodaj",
+      "noAssumptions": "Brak założeń.",
+      "remove": "Usuń"
     }
   }
 }
