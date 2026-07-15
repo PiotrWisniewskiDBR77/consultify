@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -21,6 +22,7 @@ interface A3RootCauseStepProps {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export const A3RootCauseStep: React.FC<A3RootCauseStepProps> = ({ session, isPolish }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [cause, setCause] = useState('');
 
@@ -58,10 +60,10 @@ export const A3RootCauseStep: React.FC<A3RootCauseStepProps> = ({ session, isPol
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Przyczyna źródłowa (5 Why)' : 'Root cause (5 Why)'}
+          {t('discoveryToolsTools.operational.a3RootCauseStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Wypisz główne przyczyny problemu.' : 'List the main root causes.'}
+          {t('discoveryToolsTools.operational.a3RootCauseStep.description')}
         </p>
       </div>
 
@@ -70,7 +72,7 @@ export const A3RootCauseStep: React.FC<A3RootCauseStepProps> = ({ session, isPol
           type="text"
           value={cause}
           onChange={(e) => setCause(e.target.value)}
-          placeholder={isPolish ? 'Przyczyna...' : 'Cause...'}
+          placeholder={t('discoveryToolsTools.operational.a3RootCauseStep.causePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <button
@@ -79,21 +81,15 @@ export const A3RootCauseStep: React.FC<A3RootCauseStepProps> = ({ session, isPol
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
-          {isPolish ? 'Dodaj' : 'Add'}
+          {t('discoveryToolsTools.common.add')}
         </button>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Upewnij się, że przyczyna jest mierzalna.'
-              : 'Ensure the cause is measurable.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.a3RootCauseStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak przyczyn' : 'No causes yet'}
+            {t('discoveryToolsTools.operational.a3RootCauseStep.empty')}
           </div>
         ) : (
           items.map((item) => (
