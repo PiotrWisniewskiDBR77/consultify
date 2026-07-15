@@ -511,7 +511,14 @@ export interface V8ResultsKpiForecastResponse {
 }
 
 export interface V8ResultsRcaHypothesis {
-  category: 'measurement' | 'adoption' | 'scope' | 'external' | 'capacity' | 'data-quality' | string;
+  category:
+    | 'measurement'
+    | 'adoption'
+    | 'scope'
+    | 'external'
+    | 'capacity'
+    | 'data-quality'
+    | string;
   hypothesis: string;
   confidence: number;
 }

@@ -40,13 +40,7 @@ const isRealtimeSubstrateUnavailableError = (error: unknown): boolean => {
 // Roles that may grant/reassign facilitation roles org-wide even without being the
 // session owner or an existing facilitator (mirrors the requireRole/admin-data pattern
 // used elsewhere: normalized, case-insensitive match against org membership roles).
-const ORG_ADMIN_ROLES = new Set([
-  'owner',
-  'admin',
-  'administrator',
-  'super_admin',
-  'superadmin',
-]);
+const ORG_ADMIN_ROLES = new Set(['owner', 'admin', 'administrator', 'super_admin', 'superadmin']);
 
 const isOrgAdminRequester = (req: AuthRequest): boolean => {
   const role = (req.userRole || req.user?.role || '').toString().trim().toLowerCase();
@@ -820,7 +814,8 @@ router.post(
 
       if (!isSessionOwner && !isOrgAdmin && !isExistingFacilitator) {
         res.status(403).json({
-          error: 'Only the session facilitator, its creator, or an org admin can assign facilitation roles',
+          error:
+            'Only the session facilitator, its creator, or an org admin can assign facilitation roles',
           code: 'REALTIME_FACILITATION_ROLE_FORBIDDEN',
         });
         return;
