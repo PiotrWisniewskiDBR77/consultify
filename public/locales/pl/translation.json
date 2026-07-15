@@ -28249,6 +28249,10 @@
       "useMetrics": "Metryki liczbowe",
       "industryReferences": "Standardy branżowe",
       "axisN": "Oś {{number}}"
+    },
+    "blockSettingsPanel": {
+      "presets": "Presety",
+      "fineTune": "Zaawansowane"
     }
   }
 }

@@ -27173,6 +27173,10 @@
       "useMetrics": "Use metrics",
       "industryReferences": "Industry references",
       "axisN": "Axis {{number}}"
+    },
+    "blockSettingsPanel": {
+      "presets": "Presets",
+      "fineTune": "Fine-tune"
     }
   }
 }
