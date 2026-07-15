@@ -179,7 +179,10 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               type="text"
               value={scheduleName}
               onChange={(e) => setScheduleName(e.target.value)}
-              placeholder={t('reportBuilder.scheduleReportModal.eGWeeklyStatusReport', 'e.g. Weekly Status Report')}
+              placeholder={t(
+                'reportBuilder.scheduleReportModal.eGWeeklyStatusReport',
+                'e.g. Weekly Status Report'
+              )}
               className="w-full px-3 py-2 text-sm rounded-lg border border-c-border-subtle bg-c-text text-c-bg placeholder:text-c-text-muted focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
             />
           </div>

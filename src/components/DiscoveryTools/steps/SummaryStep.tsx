@@ -271,9 +271,7 @@ function DynamicSwotOutputs({
       {
         id: 'insights',
         label: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.insights.label'),
-        description: t(
-          'discoveryToolsSteps.summaryStep.dynamicSwot.sections.insights.description'
-        ),
+        description: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.insights.description'),
         available: (summary?.keyInsights?.length || 0) > 0 || tensions.length > 0,
         itemCount: (summary?.keyInsights?.length || 0) + tensions.length,
       },
@@ -344,9 +342,7 @@ function DynamicSwotOutputs({
         <SectionHeader
           title={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.title')}
           badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.badge')}
-          description={t(
-            'discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.description'
-          )}
+          description={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.description')}
         />
         <div className="p-5">
           {/* Readiness bar */}

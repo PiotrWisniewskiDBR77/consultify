@@ -147,9 +147,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
     const insightText =
       aiContent ||
       coach?.whyNow ||
-      (readiness
-        ? readiness.label
-        : t('discoveryToolsMain.toolContextPanel.aiReviewingPhase'));
+      (readiness ? readiness.label : t('discoveryToolsMain.toolContextPanel.aiReviewingPhase'));
     const recommendations = [
       coach?.nextQuestion,
       swotSignals?.missingEvidence?.[0],
@@ -247,7 +245,10 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                 {[
                   [t('discoveryToolsMain.toolContextPanel.signals'), proposalCounts?.signals || 0],
                   [t('discoveryToolsMain.toolContextPanel.cards'), proposalCounts?.items || 0],
-                  [t('discoveryToolsMain.toolContextPanel.tensions'), proposalCounts?.tensions || 0],
+                  [
+                    t('discoveryToolsMain.toolContextPanel.tensions'),
+                    proposalCounts?.tensions || 0,
+                  ],
                   [t('discoveryToolsMain.toolContextPanel.outputs'), proposalCounts?.outputs || 0],
                 ].map(([label, value]) => (
                   <div
@@ -434,9 +435,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
           <div className="rounded-2xl border border-primary-200 bg-primary-50/50 p-4 dark:border-primary-800/40 dark:bg-primary-950/20">
             <div className="flex items-center gap-2 text-sm font-semibold text-primary-700 dark:text-primary-300">
               <Sparkles className="h-4 w-4 animate-pulse" />
-              <span>
-                {t('discoveryToolsMain.toolContextPanel.aiPreparingSession')}
-              </span>
+              <span>{t('discoveryToolsMain.toolContextPanel.aiPreparingSession')}</span>
             </div>
             <p className="mt-2 text-xs text-primary-600 dark:text-primary-400">
               {t('discoveryToolsMain.toolContextPanel.aiPreparingSessionDescription')}
@@ -635,7 +634,9 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
-                  <div className="text-slate-600">{t('discoveryToolsMain.toolContextPanel.tensions')}</div>
+                  <div className="text-slate-600">
+                    {t('discoveryToolsMain.toolContextPanel.tensions')}
+                  </div>
                   <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {swotSignals?.tensions || 0}
                   </div>

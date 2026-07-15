@@ -457,13 +457,19 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             >
               <thead>
                 <tr className={TH}>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.person')}</th>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.role')}</th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.person')}
+                  </th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.role')}
+                  </th>
                   <th className="text-left py-2 pr-2">Email</th>
                   <th className="text-left py-2 pr-2">
                     {t('sharedComponents.governanceCanvas.notifications')}
                   </th>
-                  <th className="text-right py-2">{t('sharedComponents.governanceCanvas.actions')}</th>
+                  <th className="text-right py-2">
+                    {t('sharedComponents.governanceCanvas.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -557,13 +563,21 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             <table className="w-full text-sm">
               <thead>
                 <tr className={TH}>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.type')}</th>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.days')}</th>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.recipients')}</th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.type')}
+                  </th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.days')}
+                  </th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.recipients')}
+                  </th>
                   <th className="text-left py-2 pr-2">
                     {t('sharedComponents.governanceCanvas.notifications')}
                   </th>
-                  <th className="text-right py-2">{t('sharedComponents.governanceCanvas.actions')}</th>
+                  <th className="text-right py-2">
+                    {t('sharedComponents.governanceCanvas.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -590,7 +604,9 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       <td className="py-2 pr-2 text-xs">
                         <div className="flex flex-wrap gap-1">
                           {!r.enabled && (
-                            <span className={BADGE}>{t('sharedComponents.governanceCanvas.disabled')}</span>
+                            <span className={BADGE}>
+                              {t('sharedComponents.governanceCanvas.disabled')}
+                            </span>
                           )}
                           {deliveryBadgeLabels(r.delivery, r).map((label) => (
                             <span key={`${r.id}-${label}`} className={BADGE}>
@@ -669,11 +685,21 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   <th className="text-left py-2 pr-2">
                     {t('sharedComponents.governanceCanvas.escalateAfter')}
                   </th>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.escalateTo')}</th>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.message')}</th>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.mode')}</th>
-                  <th className="text-left py-2 pr-2">{t('sharedComponents.governanceCanvas.channels')}</th>
-                  <th className="text-right py-2">{t('sharedComponents.governanceCanvas.actions')}</th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.escalateTo')}
+                  </th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.message')}
+                  </th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.mode')}
+                  </th>
+                  <th className="text-left py-2 pr-2">
+                    {t('sharedComponents.governanceCanvas.channels')}
+                  </th>
+                  <th className="text-right py-2">
+                    {t('sharedComponents.governanceCanvas.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -853,7 +879,10 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 <ChannelChips
                   label={t('sharedComponents.governanceCanvas.coreChannels')}
                   channels={[
-                    { key: 'enabled', label: t('sharedComponents.governanceCanvas.channelEnabledChip') },
+                    {
+                      key: 'enabled',
+                      label: t('sharedComponents.governanceCanvas.channelEnabledChip'),
+                    },
                     { key: 'in_app', label: 'In-app' },
                     { key: 'email', label: 'Email' },
                   ]}
@@ -994,8 +1023,12 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   }
                   className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                 >
-                  <option value="before_due">{t('sharedComponents.governanceCanvas.beforeDue')}</option>
-                  <option value="after_due">{t('sharedComponents.governanceCanvas.afterDue')}</option>
+                  <option value="before_due">
+                    {t('sharedComponents.governanceCanvas.beforeDue')}
+                  </option>
+                  <option value="after_due">
+                    {t('sharedComponents.governanceCanvas.afterDue')}
+                  </option>
                 </select>
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400">
@@ -1021,7 +1054,9 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
               >
                 <option value="both">{t('sharedComponents.governanceCanvas.both')}</option>
-                <option value="stakeholders">{t('sharedComponents.governanceCanvas.stakeholders')}</option>
+                <option value="stakeholders">
+                  {t('sharedComponents.governanceCanvas.stakeholders')}
+                </option>
                 <option value="owner">Owner</option>
               </select>
             </label>

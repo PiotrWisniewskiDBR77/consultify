@@ -386,7 +386,8 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                     </div>
                     <div className="flex justify-between mt-1 text-xs text-slate-500 dark:text-slate-400">
                       <span>
-                        {percentage.toFixed(0)}% {t('reports.financialImpact.ofBudgetSuffix', 'of budget')}
+                        {percentage.toFixed(0)}%{' '}
+                        {t('reports.financialImpact.ofBudgetSuffix', 'of budget')}
                       </span>
                       <span>
                         ~

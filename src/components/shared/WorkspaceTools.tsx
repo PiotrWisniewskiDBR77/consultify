@@ -221,10 +221,9 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
     [setChatKickoffMessage, isChatCollapsed, toggleChatCollapse]
   );
 
-  const entityLabel = t(
-    `sharedComponents.workspaceTools.entityLabel.${context.entityType}`,
-    { defaultValue: t('sharedComponents.workspaceTools.entityLabel.default') }
-  );
+  const entityLabel = t(`sharedComponents.workspaceTools.entityLabel.${context.entityType}`, {
+    defaultValue: t('sharedComponents.workspaceTools.entityLabel.default'),
+  });
 
   const handleTranslate = () => {
     const targetLang = t('sharedComponents.workspaceTools.otherLanguageName');

@@ -588,7 +588,9 @@ export const ReportGeneratorWizard: React.FC = () => {
       {/* Presentation: sections */}
       {selectedType && (
         <div className="space-y-1.5">
-          <SectionLabel>{t('reports.reportGeneratorWizard.sectionsLabel', 'Sections')}</SectionLabel>
+          <SectionLabel>
+            {t('reports.reportGeneratorWizard.sectionsLabel', 'Sections')}
+          </SectionLabel>
           <div className="flex flex-wrap gap-2">
             {selectedType.defaultSections.map((section) => {
               const active = sections.includes(section);

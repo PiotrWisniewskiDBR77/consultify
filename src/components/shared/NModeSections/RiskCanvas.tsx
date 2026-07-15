@@ -132,7 +132,8 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
   );
 
   const quickContingencyArguments = useMemo(
-    () => t('sharedComponents.riskCanvas.quickContingencyArgs', { returnObjects: true }) as string[],
+    () =>
+      t('sharedComponents.riskCanvas.quickContingencyArgs', { returnObjects: true }) as string[],
     [t]
   );
 
@@ -201,9 +202,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
         </div>
       ) : (
         <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
-          <span>
-            {t('sharedComponents.riskCanvas.sortedByHighestRiskScorePI')}
-          </span>
+          <span>{t('sharedComponents.riskCanvas.sortedByHighestRiskScorePI')}</span>
           <span>{t('sharedComponents.riskCanvas.riskCount', { count: risks.length })}</span>
         </div>
       )}
@@ -339,9 +338,9 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       rows={4}
                       readOnly={locked}
                       className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
-                      placeholder={
-                        t('sharedComponents.riskCanvas.whatIsTheFallbackIfRiskMaterializes')
-                      }
+                      placeholder={t(
+                        'sharedComponents.riskCanvas.whatIsTheFallbackIfRiskMaterializes'
+                      )}
                     />
                     <div className="flex flex-wrap gap-1">
                       {quickContingencyArguments.map((arg) => (
@@ -384,9 +383,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       rows={4}
                       readOnly={locked}
                       className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
-                      placeholder={
-                        t('sharedComponents.riskCanvas.howDoWeMitigateThisRisk')
-                      }
+                      placeholder={t('sharedComponents.riskCanvas.howDoWeMitigateThisRisk')}
                     />
                     <div className="flex flex-wrap gap-1">
                       {quickMitigationArguments.map((arg) => (

@@ -177,8 +177,7 @@ const getConsultingJourneyStage = (stepId?: string) => {
 };
 
 // Status codes are identical in both languages, no translation needed.
-const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED') =>
-  status;
+const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED') => status;
 
 type ToolSaveState = 'saved' | 'saving' | 'dirty' | 'error';
 
@@ -645,9 +644,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const handleRequestReview = async () => {
     if (!toolSessionId || !completionReady) {
-      toast.error(
-        t('discoveryToolsMain.toolDocumentView.completeAllRequiredItemsFirst')
-      );
+      toast.error(t('discoveryToolsMain.toolDocumentView.completeAllRequiredItemsFirst'));
       return;
     }
     setShowRequestReviewModal(true);
@@ -1845,7 +1842,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const lastSavedLabel = useMemo(() => {
     if (!lastModified) return undefined;
-    return `${t('discoveryToolsMain.toolDocumentView.saved')} ${new Date(lastModified).toLocaleTimeString([], {
+    return `${t('discoveryToolsMain.toolDocumentView.saved')} ${new Date(
+      lastModified
+    ).toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
     })}`;
@@ -1897,9 +1896,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               type="button"
               onClick={handleSendBack}
               className={getMenu3AiButtonClass(false)}
-              title={
-                t('discoveryToolsMain.toolDocumentView.sendBackToDraftWithAComment')
-              }
+              title={t('discoveryToolsMain.toolDocumentView.sendBackToDraftWithAComment')}
             >
               <ExternalLink size={12} />
               {t('discoveryToolsMain.toolDocumentView.sendBack')}

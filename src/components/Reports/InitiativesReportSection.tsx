@@ -497,7 +497,10 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
         <div>
           <h4 className="flex items-center gap-2 text-sm font-semibold text-navy-900 dark:text-white mb-3">
             <Target className="w-4 h-4 text-primary-500" />
-            {t('reports.initiativesReportSection.strategicInitiativesTitle', 'Strategic Initiatives')}{' '}
+            {t(
+              'reports.initiativesReportSection.strategicInitiativesTitle',
+              'Strategic Initiatives'
+            )}{' '}
             ({strategic.length})
           </h4>
           <div className="space-y-3">
@@ -532,9 +535,13 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
             ))}
             {other.length > 5 && (
               <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-2">
-                {t('reports.initiativesReportSection.moreInitiativesSuffix', '+ {{count}} more initiatives', {
-                  count: other.length - 5,
-                })}
+                {t(
+                  'reports.initiativesReportSection.moreInitiativesSuffix',
+                  '+ {{count}} more initiatives',
+                  {
+                    count: other.length - 5,
+                  }
+                )}
               </p>
             )}
           </div>

@@ -95,9 +95,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
       setAssessments((data.items || data.assessments || []) as Assessment[]);
     } catch (err: any) {
       console.error('[AssessmentTable] Error:', err);
-      setError(
-        String(err?.message || t('assessment.table.loadError', 'Failed to load'))
-      );
+      setError(String(err?.message || t('assessment.table.loadError', 'Failed to load')));
     } finally {
       setIsLoading(false);
     }

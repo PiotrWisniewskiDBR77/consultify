@@ -141,7 +141,10 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <Database className="h-10 w-10 text-c-text mb-3" />
         <p className="text-sm text-c-text">
-          {t('reportBuilder.sourceTraceabilityPanel.noLinkedDataSources', 'No linked data sources.')}
+          {t(
+            'reportBuilder.sourceTraceabilityPanel.noLinkedDataSources',
+            'No linked data sources.'
+          )}
         </p>
       </div>
     );
@@ -234,7 +237,10 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
                 className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md
                            text-c-text hover:text-c-text hover:bg-c-surface/[0.06]
                            opacity-0 group-hover:opacity-100 transition-all"
-                title={t('reportBuilder.sourceTraceabilityPanel.refreshFromSource', 'Refresh from source')}
+                title={t(
+                  'reportBuilder.sourceTraceabilityPanel.refreshFromSource',
+                  'Refresh from source'
+                )}
                 onClick={() => {
                   /* Phase 8: wire to actual refresh */
                 }}

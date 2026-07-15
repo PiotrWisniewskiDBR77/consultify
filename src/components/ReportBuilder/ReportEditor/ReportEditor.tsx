@@ -483,7 +483,10 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                       <div className="text-center py-12 text-c-text-secondary">
                         <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p className="text-sm italic">
-                          {t('reportBuilder.editor.thisSectionHasNoContentYet', 'This section has no content yet. Click "Generate" in the editor.')}
+                          {t(
+                            'reportBuilder.editor.thisSectionHasNoContentYet',
+                            'This section has no content yet. Click "Generate" in the editor.'
+                          )}
                         </p>
                       </div>
                     )}
@@ -882,7 +885,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     />
   ) : (
     <div className="text-sm text-c-text-secondary">
-      {t('reportBuilder.editor.saveTheReportToEnableExport', 'Save the report to enable export and sharing.')}
+      {t(
+        'reportBuilder.editor.saveTheReportToEnableExport',
+        'Save the report to enable export and sharing.'
+      )}
     </div>
   );
 
@@ -947,7 +953,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     </>
   ) : (
     <div className="text-sm text-c-text-secondary">
-      {t('reportBuilder.editor.saveTheReportToEnableReview', 'Save the report to enable review workflow.')}
+      {t(
+        'reportBuilder.editor.saveTheReportToEnableReview',
+        'Save the report to enable review workflow.'
+      )}
     </div>
   );
 
@@ -1349,7 +1358,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         const ch1Key = `chapter_1_${ts}`;
         const ch1Title = t('reportBuilder.editor.chapter1', 'Chapter 1');
         const ch2Key = `chapter_2_${ts}`;
-        const ch2Title = newTitle || (t('reportBuilder.editor.chapter2', 'Chapter 2'));
+        const ch2Title = newTitle || t('reportBuilder.editor.chapter2', 'Chapter 2');
 
         setBlocks((prev) =>
           prev.map((b, idx) => ({
@@ -1587,8 +1596,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
         if (response?.newContent) {
           const changesList =
-            (response.diff || []).join(', ') ||
-            t('reportBuilder.editor.noDetails', 'no details');
+            (response.diff || []).join(', ') || t('reportBuilder.editor.noDetails', 'no details');
           const accept = window.confirm(
             t('reportBuilder.editor.newContentGeneratedConfirm', {
               defaultValue: `New content has been generated.\n\nChanges: ${changesList}\n\nApply the new version?`,
@@ -1756,7 +1764,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       if (!report?.id) return;
       try {
         await Api.post(`/report-builder/${report.id}/versions`, {
-          changeSummary: summary || (t('reportBuilder.editor.manualSave', 'Manual save')),
+          changeSummary: summary || t('reportBuilder.editor.manualSave', 'Manual save'),
         });
         toast.success(t('reportBuilder.editor.versionSaved', 'Version saved'));
         loadVersions();
@@ -1947,7 +1955,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       } catch (err: any) {
         console.error('Failed to save template:', err);
         toast.error(
-          err?.error || err?.message || (t('reportBuilder.editor.failedToSaveTemplate', 'Failed to save template'))
+          err?.error ||
+            err?.message ||
+            t('reportBuilder.editor.failedToSaveTemplate', 'Failed to save template')
         );
       } finally {
         setIsSaving(false);
@@ -2696,7 +2706,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   {t('reportBuilder.editor.startBuildingYourReport', 'Start building your report')}
                 </h3>
                 <p className="text-c-text-secondary max-w-md mx-auto mb-6">
-                  {t('reportBuilder.editor.addBlocksToDefineYourReport', 'Add blocks to define your report structure. Each block can contain text, data, charts, or visualizations.')}
+                  {t(
+                    'reportBuilder.editor.addBlocksToDefineYourReport',
+                    'Add blocks to define your report structure. Each block can contain text, data, charts, or visualizations.'
+                  )}
                 </p>
                 <button
                   onClick={() => setShowBlockPalette(true)}

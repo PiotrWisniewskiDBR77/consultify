@@ -239,8 +239,7 @@ function buildGovernanceProposal(
       targetLabel,
       title: source.title,
       evidenceCount: source.evidenceCount ?? 0,
-      confidence:
-        source.confidence || t('sharedComponents.artifactActionPanel.confidenceNone'),
+      confidence: source.confidence || t('sharedComponents.artifactActionPanel.confidenceNone'),
     }),
     limits: source.limits || null,
     evidenceRefs: extractEvidenceRefs(source),
@@ -785,7 +784,8 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   {t('sharedComponents.artifactActionPanel.evidence')}: {source.evidenceCount ?? 0}
                 </div>
                 <div>
-                  {t('sharedComponents.artifactActionPanel.sessions')}: {source.sourceSessionCount ?? 0}
+                  {t('sharedComponents.artifactActionPanel.sessions')}:{' '}
+                  {source.sourceSessionCount ?? 0}
                 </div>
                 <div>
                   {t('sharedComponents.artifactActionPanel.confidence')}: {source.confidence || '-'}
@@ -836,9 +836,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 onChange={(event) => setComposerConfirmed(event.target.checked)}
                 className="mt-0.5"
               />
-              <span>
-                {t('sharedComponents.artifactActionPanel.composerConfirmText')}
-              </span>
+              <span>{t('sharedComponents.artifactActionPanel.composerConfirmText')}</span>
             </label>
 
             <div className="mt-5 flex justify-end gap-2">
@@ -916,7 +914,9 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               </div>
               {source.limits && (
                 <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
-                  <span className="font-semibold">{t('sharedComponents.artifactActionPanel.limits')}</span>{' '}
+                  <span className="font-semibold">
+                    {t('sharedComponents.artifactActionPanel.limits')}
+                  </span>{' '}
                   {source.limits}
                 </div>
               )}
@@ -942,9 +942,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   onChange={(event) => setProposalConfirmed(event.target.checked)}
                   className="mt-0.5"
                 />
-                <span>
-                  {t('sharedComponents.artifactActionPanel.proposalConfirmText')}
-                </span>
+                <span>{t('sharedComponents.artifactActionPanel.proposalConfirmText')}</span>
               </label>
             </div>
 

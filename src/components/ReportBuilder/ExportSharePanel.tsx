@@ -216,7 +216,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
     if (enabledBlocks.length === 0) {
       warnings.push({
         type: 'error',
-        message: t('reportBuilder.exportSharePanel.noEnabledBlocksInTheReport', 'No enabled blocks in the report'),
+        message: t(
+          'reportBuilder.exportSharePanel.noEnabledBlocksInTheReport',
+          'No enabled blocks in the report'
+        ),
       });
     }
 
@@ -245,7 +248,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
     if (!['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(reportStatus)) {
       warnings.push({
         type: 'error',
-        message: t('reportBuilder.exportSharePanel.reportHasNotBeenGeneratedYet', 'Report has not been generated yet'),
+        message: t(
+          'reportBuilder.exportSharePanel.reportHasNotBeenGeneratedYet',
+          'Report has not been generated yet'
+        ),
       });
     }
 
@@ -340,7 +346,12 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
           disabled={!canShare}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           title={
-            !canShare ? (t('reportBuilder.exportSharePanel.reportMustBeGenerated', 'Report must be generated')) : ''
+            !canShare
+              ? t(
+                  'reportBuilder.exportSharePanel.reportMustBeGenerated',
+                  'Report must be generated'
+                )
+              : ''
           }
         >
           <Share2 className="w-4 h-4" />
@@ -383,9 +394,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder={
-                      t('reportBuilder.exportSharePanel.leaveEmptyForPublicAccess', 'Leave empty for public access')
-                    }
+                    placeholder={t(
+                      'reportBuilder.exportSharePanel.leaveEmptyForPublicAccess',
+                      'Leave empty for public access'
+                    )}
                     className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
@@ -400,9 +412,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     type="number"
                     value={expiresInDays}
                     onChange={(e) => setExpiresInDays(e.target.value ? Number(e.target.value) : '')}
-                    placeholder={
-                      t('reportBuilder.exportSharePanel.leaveEmptyForNoExpiration', 'Leave empty for no expiration')
-                    }
+                    placeholder={t(
+                      'reportBuilder.exportSharePanel.leaveEmptyForNoExpiration',
+                      'Leave empty for no expiration'
+                    )}
                     min={1}
                     className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
@@ -418,9 +431,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     type="text"
                     value={customMessage}
                     onChange={(e) => setCustomMessage(e.target.value)}
-                    placeholder={
-                      t('reportBuilder.exportSharePanel.eGReportForManagement', 'E.g., "Report for management"')
-                    }
+                    placeholder={t(
+                      'reportBuilder.exportSharePanel.eGReportForManagement',
+                      'E.g., "Report for management"'
+                    )}
                     className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
@@ -433,7 +447,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     onChange={(e) => setShowBranding(e.target.checked)}
                     className="rounded border-c-border-subtle"
                   />
-                  {t('reportBuilder.exportSharePanel.showConsultifyBranding', 'Show Consultify branding')}
+                  {t(
+                    'reportBuilder.exportSharePanel.showConsultifyBranding',
+                    'Show Consultify branding'
+                  )}
                 </label>
 
                 <button

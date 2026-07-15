@@ -346,7 +346,10 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                   <button
                     onClick={() => setShowKeyboardHint(!showKeyboardHint)}
                     className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
-                    title={t('reports.stickyNavigation.keyboardShortcutsTooltip', 'Keyboard shortcuts')}
+                    title={t(
+                      'reports.stickyNavigation.keyboardShortcutsTooltip',
+                      'Keyboard shortcuts'
+                    )}
                   >
                     <Keyboard className="w-4 h-4" />
                   </button>
@@ -360,7 +363,10 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                         className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 z-50"
                       >
                         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                          {t('reports.stickyNavigation.keyboardShortcutsTitle', 'Keyboard Shortcuts')}
+                          {t(
+                            'reports.stickyNavigation.keyboardShortcutsTitle',
+                            'Keyboard Shortcuts'
+                          )}
                         </p>
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center justify-between">
@@ -373,7 +379,10 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-slate-600 dark:text-slate-400">
-                              {t('reports.stickyNavigation.previousSectionLabel', 'Previous section')}
+                              {t(
+                                'reports.stickyNavigation.previousSectionLabel',
+                                'Previous section'
+                              )}
                             </span>
                             <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">
                               K

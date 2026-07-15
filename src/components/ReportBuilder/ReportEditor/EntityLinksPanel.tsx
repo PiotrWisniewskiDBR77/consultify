@@ -92,7 +92,9 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
       const res = await Api.get(`/report-builder/${reportId}/entity-links`);
       setData(res as EntityLinksData);
     } catch {
-      setError(t('reportBuilder.entityLinksPanel.failedToLoadEntityLinks', 'Failed to load entity links'));
+      setError(
+        t('reportBuilder.entityLinksPanel.failedToLoadEntityLinks', 'Failed to load entity links')
+      );
     } finally {
       setLoading(false);
     }
@@ -138,7 +140,10 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
         <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-40" />
         <p>{t('reportBuilder.entityLinksPanel.noLinkedEntities', 'No linked entities')}</p>
         <p className="mt-1 text-xs text-c-text-secondary">
-          {t('reportBuilder.entityLinksPanel.createAnInitiativeFromAReport', 'Create an initiative from a report section to see links here')}
+          {t(
+            'reportBuilder.entityLinksPanel.createAnInitiativeFromAReport',
+            'Create an initiative from a report section to see links here'
+          )}
         </p>
       </div>
     );
@@ -224,7 +229,9 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
             )}
 
             {isExpanded && count === 0 && (
-              <p className="ml-10 text-xs text-c-text-secondary py-1">{t('reportBuilder.entityLinksPanel.none', 'None')}</p>
+              <p className="ml-10 text-xs text-c-text-secondary py-1">
+                {t('reportBuilder.entityLinksPanel.none', 'None')}
+              </p>
             )}
           </div>
         );

@@ -517,7 +517,9 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                             if (!isUngrouped) startRename(chapter.key, chapter.title);
                           }}
                         >
-                          {isUngrouped ? (t('reportBuilder.chapterNavigation.ungrouped', 'Ungrouped')) : chapter.title}
+                          {isUngrouped
+                            ? t('reportBuilder.chapterNavigation.ungrouped', 'Ungrouped')
+                            : chapter.title}
                         </span>
                       )}
 
@@ -564,7 +566,10 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                                 setConfirmDeleteChapter(chapter.key);
                               }}
                               className="p-0.5 text-c-text-secondary hover:text-danger-500 rounded"
-                              title={t('reportBuilder.chapterNavigation.deleteChapter', 'Delete chapter')}
+                              title={t(
+                                'reportBuilder.chapterNavigation.deleteChapter',
+                                'Delete chapter'
+                              )}
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
@@ -604,7 +609,10 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
         {!hasAnyChapters && blocks.length > 5 && !isAddingChapter && (
           <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
             <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
-              {t('reportBuilder.chapterNavigation.youHaveMoreThan5Blocks', 'You have more than 5 blocks. Consider organizing them into chapters.')}
+              {t(
+                'reportBuilder.chapterNavigation.youHaveMoreThan5Blocks',
+                'You have more than 5 blocks. Consider organizing them into chapters.'
+              )}
             </p>
             <button
               onClick={() => setIsAddingChapter(true)}

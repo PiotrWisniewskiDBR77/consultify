@@ -44,9 +44,10 @@ export const StaleDataBadge: React.FC<StaleDataBadgeProps> = ({
       <button
         onClick={onRefresh}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60 transition-colors"
-        title={
-          t('reportBuilder.staleDataBadge.dataMayBeStaleClickTo', 'Data may be stale. Click to refresh.')
-        }
+        title={t(
+          'reportBuilder.staleDataBadge.dataMayBeStaleClickTo',
+          'Data may be stale. Click to refresh.'
+        )}
       >
         <AlertTriangle className="w-3 h-3" />
         {t('reportBuilder.staleDataBadge.staleData', 'Stale data')}

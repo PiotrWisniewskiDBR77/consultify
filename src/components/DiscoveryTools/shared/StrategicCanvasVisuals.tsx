@@ -120,12 +120,7 @@ export function PorterPentagonVisual({ data }: { data: PorterData; isPolish: boo
   );
 }
 
-export function AnsoffMatrixVisual({
-  data,
-}: {
-  data: GrowthPathsData;
-  isPolish: boolean;
-}) {
+export function AnsoffMatrixVisual({ data }: { data: GrowthPathsData; isPolish: boolean }) {
   const { t } = useTranslation();
   const cells = [
     ['marketPenetration', 'Market penetration'],
@@ -156,12 +151,7 @@ export function AnsoffMatrixVisual({
   );
 }
 
-export function PortfolioBcgVisual({
-  data,
-}: {
-  data: PortfolioPriorityData;
-  isPolish: boolean;
-}) {
+export function PortfolioBcgVisual({ data }: { data: PortfolioPriorityData; isPolish: boolean }) {
   const { t } = useTranslation();
   const items = data.initiatives || [];
   return (
@@ -193,12 +183,7 @@ export function PortfolioBcgVisual({
   );
 }
 
-export function RiskMatrixVisual({
-  data,
-}: {
-  data: RiskUncertaintyData;
-  isPolish: boolean;
-}) {
+export function RiskMatrixVisual({ data }: { data: RiskUncertaintyData; isPolish: boolean }) {
   const { t } = useTranslation();
   return (
     <div className={cardClass}>
@@ -378,10 +363,7 @@ export function ValueChainVisual({
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
         {(
           [
-            [
-              'creator',
-              t('discoveryToolsSteps.strategicCanvasVisuals.valueChain.createsMargin'),
-            ],
+            ['creator', t('discoveryToolsSteps.strategicCanvasVisuals.valueChain.createsMargin')],
             ['neutral', t('discoveryToolsSteps.strategicCanvasVisuals.valueChain.neutral')],
             ['drain', t('discoveryToolsSteps.strategicCanvasVisuals.valueChain.drainsMargin')],
           ] as Array<[ValueActivity['marginRole'], string]>
@@ -794,14 +776,8 @@ export function FocusTradeoffVisual({
       t('discoveryToolsSteps.strategicCanvasVisuals.focusTradeoff.quadrants.quickWins'),
     ],
     ['Big bets', t('discoveryToolsSteps.strategicCanvasVisuals.focusTradeoff.quadrants.bigBets')],
-    [
-      'Fill-ins',
-      t('discoveryToolsSteps.strategicCanvasVisuals.focusTradeoff.quadrants.fillIns'),
-    ],
-    [
-      'Money pit',
-      t('discoveryToolsSteps.strategicCanvasVisuals.focusTradeoff.quadrants.moneyPit'),
-    ],
+    ['Fill-ins', t('discoveryToolsSteps.strategicCanvasVisuals.focusTradeoff.quadrants.fillIns')],
+    ['Money pit', t('discoveryToolsSteps.strategicCanvasVisuals.focusTradeoff.quadrants.moneyPit')],
   ];
 
   return (

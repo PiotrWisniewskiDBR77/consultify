@@ -184,7 +184,8 @@ export const KnownToolPreviewV3Body: React.FC<{
     const desc = String(full?.description || tool.description || '').trim();
     const fallbackGoal =
       desc || t('discoveryToolsMain.knownToolPreviewV3.toolInPreparation', 'Tool in preparation.');
-    const fallbackOutcome = (full?.whatYouGet || tool.whatYouGet || []).slice(0, 2).join(', ') || '—';
+    const fallbackOutcome =
+      (full?.whatYouGet || tool.whatYouGet || []).slice(0, 2).join(', ') || '—';
 
     return {
       goal: fallbackGoal,
@@ -270,8 +271,7 @@ export const KnownToolPreviewV3Body: React.FC<{
         ? t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations')
         : tool.libraryCategory === 'digital'
           ? t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital')
-          : tool.libraryCategory ||
-            t('discoveryToolsMain.knownToolPreviewV3.categoryTool', 'Tool');
+          : tool.libraryCategory || t('discoveryToolsMain.knownToolPreviewV3.categoryTool', 'Tool');
 
   const metaPills: MetaPill[] = [
     {
@@ -304,7 +304,11 @@ export const KnownToolPreviewV3Body: React.FC<{
   ];
 
   const snippetRows: { label: string; value: string; minH: string }[] = [
-    { label: t('discoveryToolsMain.knownToolPreviewV3.goal', 'Goal'), value: previewSnippet.goal, minH: 'min-h-[40px]' },
+    {
+      label: t('discoveryToolsMain.knownToolPreviewV3.goal', 'Goal'),
+      value: previewSnippet.goal,
+      minH: 'min-h-[40px]',
+    },
     {
       label: t('discoveryToolsMain.knownToolPreviewV3.outcome', 'Outcome'),
       value: previewSnippet.outcome,

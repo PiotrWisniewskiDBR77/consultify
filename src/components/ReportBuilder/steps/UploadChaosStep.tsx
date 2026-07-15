@@ -113,7 +113,10 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
       if (newFiles.length === 0) {
         setError(
-          t('reportBuilder.uploadChaosStep.unsupportedFileTypesAllowedPdfDocx', 'Unsupported file types. Allowed: PDF, DOCX, XLSX, CSV.')
+          t(
+            'reportBuilder.uploadChaosStep.unsupportedFileTypesAllowedPdfDocx',
+            'Unsupported file types. Allowed: PDF, DOCX, XLSX, CSV.'
+          )
         );
         return;
       }
@@ -248,7 +251,10 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           {t('reportBuilder.uploadChaosStep.dragDropFilesHere', 'Drag & drop files here')}
         </p>
         <p className="text-xs text-c-text-secondary mt-1">
-          {t('reportBuilder.uploadChaosStep.orClickToBrowsePdfDocx', 'or click to browse • PDF, DOCX, XLSX, CSV • up to 20 MB')}
+          {t(
+            'reportBuilder.uploadChaosStep.orClickToBrowsePdfDocx',
+            'or click to browse • PDF, DOCX, XLSX, CSV • up to 20 MB'
+          )}
         </p>
       </div>
 
@@ -335,17 +341,23 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-lg font-bold text-c-accent">{knowledgeMap.sourceCount}</div>
-              <div className="text-xs text-c-text-secondary">{t('reportBuilder.uploadChaosStep.files', 'Files')}</div>
+              <div className="text-xs text-c-text-secondary">
+                {t('reportBuilder.uploadChaosStep.files', 'Files')}
+              </div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-lg font-bold text-c-accent">{knowledgeMap.keyTopics.length}</div>
-              <div className="text-xs text-c-text-secondary">{t('reportBuilder.uploadChaosStep.topics', 'Topics')}</div>
+              <div className="text-xs text-c-text-secondary">
+                {t('reportBuilder.uploadChaosStep.topics', 'Topics')}
+              </div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-lg font-bold text-c-accent">
                 {knowledgeMap.extractedEntities.length}
               </div>
-              <div className="text-xs text-c-text-secondary">{t('reportBuilder.uploadChaosStep.entities', 'Entities')}</div>
+              <div className="text-xs text-c-text-secondary">
+                {t('reportBuilder.uploadChaosStep.entities', 'Entities')}
+              </div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-xs font-semibold text-c-accent truncate">
@@ -404,7 +416,10 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-4 h-4" />
-              {t('reportBuilder.uploadChaosStep.freeIntelligencePathB', 'Free Intelligence (Path B)')}
+              {t(
+                'reportBuilder.uploadChaosStep.freeIntelligencePathB',
+                'Free Intelligence (Path B)'
+              )}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

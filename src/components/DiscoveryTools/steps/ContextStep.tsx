@@ -489,9 +489,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       {
         id: 'go-to-market',
         label: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.goToMarket.label'),
-        description: t(
-          'discoveryToolsSteps.contextStep.dynamicSwot.scope.goToMarket.description'
-        ),
+        description: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.goToMarket.description'),
         patch: {
           scopeChoice: 'go-to-market',
           scope: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.goToMarket.scope'),
@@ -591,9 +589,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       {
         id: 'medium' as const,
         label: t('discoveryToolsSteps.contextStep.dynamicSwot.timeframe.medium.label'),
-        description: t(
-          'discoveryToolsSteps.contextStep.dynamicSwot.timeframe.medium.description'
-        ),
+        description: t('discoveryToolsSteps.contextStep.dynamicSwot.timeframe.medium.description'),
       },
       {
         id: 'long' as const,
@@ -686,9 +682,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       if (basedOnDirection.includes('market-position')) {
         options.push({
           id: 'positioning-choice',
-          label: t(
-            'discoveryToolsSteps.contextStep.dynamicSwot.question4.positioningChoice.label'
-          ),
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.question4.positioningChoice.label'),
           description: t(
             'discoveryToolsSteps.contextStep.dynamicSwot.question4.positioningChoice.description'
           ),
@@ -878,11 +872,15 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       understanding: [
         {
           id: 'broader-strategy',
-          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.understanding.broaderStrategy'),
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.deepDive.understanding.broaderStrategy'
+          ),
         },
         {
           id: 'leadership-angle',
-          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.understanding.leadershipAngle'),
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.deepDive.understanding.leadershipAngle'
+          ),
         },
         {
           id: 'real-choice',
@@ -920,7 +918,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       success: [
         {
           id: 'decision-readiness',
-          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.success.decisionReadiness'),
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.deepDive.success.decisionReadiness'
+          ),
         },
         {
           id: 'execution-bridge',
@@ -934,7 +934,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       constraints: [
         {
           id: 'resource-limits',
-          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.constraints.resourceLimits'),
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.deepDive.constraints.resourceLimits'
+          ),
         },
         {
           id: 'governance',
@@ -942,7 +944,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
         },
         {
           id: 'risk-tolerance',
-          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.constraints.riskTolerance'),
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.deepDive.constraints.riskTolerance'
+          ),
         },
       ],
     };
@@ -1645,7 +1649,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   {missionSuggestion.goal ? (
                     <div>
                       <span className="font-semibold">
-                        {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.strategicQuestionLabel')}
+                        {t(
+                          'discoveryToolsSteps.contextStep.dynamicSwot.jsx.strategicQuestionLabel'
+                        )}
                       </span>{' '}
                       {missionSuggestion.goal}
                     </div>
@@ -1758,9 +1764,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           rows={3}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         />
-        <InlineAssist
-          hint={t('discoveryToolsSteps.contextStep.generic.goalHint')}
-        />
+        <InlineAssist hint={t('discoveryToolsSteps.contextStep.generic.goalHint')} />
       </div>
 
       {/* Scope / Geographic */}
@@ -1777,9 +1781,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         />
-        <InlineAssist
-          hint={t('discoveryToolsSteps.contextStep.generic.scopeHint')}
-        />
+        <InlineAssist hint={t('discoveryToolsSteps.contextStep.generic.scopeHint')} />
       </div>
 
       {/* Timeframe (SWOT) or Position (Porter) */}

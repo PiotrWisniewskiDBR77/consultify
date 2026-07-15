@@ -679,8 +679,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
           ? 'Outgoing (This item → Target)'
           : 'Incoming (Target → This item)';
       const targetName =
-        stagedInternalItem?.title ||
-        t('sharedComponents.attachmentsLinksCanvas.targetNotSelected');
+        stagedInternalItem?.title || t('sharedComponents.attachmentsLinksCanvas.targetNotSelected');
       const targetType = stagedInternalItem?.type || '';
 
       const prompt = isPolish
@@ -698,7 +697,9 @@ Write a clear, professional comment explaining why this link exists and its sign
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('sharedComponents.attachmentsLinksCanvas.aiLinkCommentSystemInstruction'),
+        systemInstruction: t(
+          'sharedComponents.attachmentsLinksCanvas.aiLinkCommentSystemInstruction'
+        ),
         roleName: 'Link Comment Advisor',
       });
 

@@ -237,7 +237,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             {t('reportBuilder.intentStep.reportType', 'Report Type')}
           </h3>
           <p className="text-sm text-c-text-secondary mt-1">
-            {t('reportBuilder.intentStep.chooseACanonicalReportTypeR1', 'Choose a canonical report type (R1-R4) or create a custom report')}
+            {t(
+              'reportBuilder.intentStep.chooseACanonicalReportTypeR1',
+              'Choose a canonical report type (R1-R4) or create a custom report'
+            )}
           </p>
         </div>
 
@@ -296,7 +299,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               {t('reportBuilder.intentStep.invocationProfile', 'Invocation Profile')}
             </h3>
             <p className="text-sm text-c-text-secondary mt-1">
-              {t('reportBuilder.intentStep.optionallySelectAGenerationTemplateTailored', 'Optionally select a generation template tailored to your source')}
+              {t(
+                'reportBuilder.intentStep.optionallySelectAGenerationTemplateTailored',
+                'Optionally select a generation template tailored to your source'
+              )}
             </p>
           </div>
 
@@ -363,7 +369,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             {t('reportBuilder.intentStep.reportDefinition', 'Report Definition')}
           </h3>
           <p className="text-sm text-c-text-secondary mt-1">
-            {t('reportBuilder.intentStep.theseParametersControlTheStructureStyle', 'These parameters control the structure, style, and content of the report')}
+            {t(
+              'reportBuilder.intentStep.theseParametersControlTheStructureStyle',
+              'These parameters control the structure, style, and content of the report'
+            )}
           </p>
         </div>
 
@@ -379,9 +388,15 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               className={selectClasses}
             >
               <option value="inform">{t('reportBuilder.intentStep.inform', 'Inform')}</option>
-              <option value="decide">{t('reportBuilder.intentStep.supportDecision', 'Support Decision')}</option>
-              <option value="sell">{t('reportBuilder.intentStep.sellConvince', 'Sell / Convince')}</option>
-              <option value="align">{t('reportBuilder.intentStep.alignStakeholders', 'Align Stakeholders')}</option>
+              <option value="decide">
+                {t('reportBuilder.intentStep.supportDecision', 'Support Decision')}
+              </option>
+              <option value="sell">
+                {t('reportBuilder.intentStep.sellConvince', 'Sell / Convince')}
+              </option>
+              <option value="align">
+                {t('reportBuilder.intentStep.alignStakeholders', 'Align Stakeholders')}
+              </option>
             </select>
           </div>
 
@@ -397,10 +412,18 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               }
               className={selectClasses}
             >
-              <option value="executive">{t('reportBuilder.intentStep.executive', 'Executive')}</option>
-              <option value="professional">{t('reportBuilder.intentStep.professional', 'Professional')}</option>
-              <option value="technical">{t('reportBuilder.intentStep.technical', 'Technical')}</option>
-              <option value="narrative">{t('reportBuilder.intentStep.narrative', 'Narrative')}</option>
+              <option value="executive">
+                {t('reportBuilder.intentStep.executive', 'Executive')}
+              </option>
+              <option value="professional">
+                {t('reportBuilder.intentStep.professional', 'Professional')}
+              </option>
+              <option value="technical">
+                {t('reportBuilder.intentStep.technical', 'Technical')}
+              </option>
+              <option value="narrative">
+                {t('reportBuilder.intentStep.narrative', 'Narrative')}
+              </option>
             </select>
           </div>
 
@@ -432,7 +455,9 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               <option value="concise">{t('reportBuilder.intentStep.concise', 'Concise')}</option>
               <option value="standard">{t('reportBuilder.intentStep.standard', 'Standard')}</option>
               <option value="detailed">{t('reportBuilder.intentStep.detailed', 'Detailed')}</option>
-              <option value="comprehensive">{t('reportBuilder.intentStep.comprehensive', 'Comprehensive')}</option>
+              <option value="comprehensive">
+                {t('reportBuilder.intentStep.comprehensive', 'Comprehensive')}
+              </option>
             </select>
           </div>
 
@@ -446,10 +471,18 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               onChange={(e) => onIntentChange({ form: e.target.value as ReportForm })}
               className={selectClasses}
             >
-              <option value="strategic">{t('reportBuilder.intentStep.strategic', 'Strategic')}</option>
-              <option value="operational">{t('reportBuilder.intentStep.operational', 'Operational')}</option>
-              <option value="technical">{t('reportBuilder.intentStep.technical', 'Technical')}</option>
-              <option value="investment">{t('reportBuilder.intentStep.investment', 'Investment')}</option>
+              <option value="strategic">
+                {t('reportBuilder.intentStep.strategic', 'Strategic')}
+              </option>
+              <option value="operational">
+                {t('reportBuilder.intentStep.operational', 'Operational')}
+              </option>
+              <option value="technical">
+                {t('reportBuilder.intentStep.technical', 'Technical')}
+              </option>
+              <option value="investment">
+                {t('reportBuilder.intentStep.investment', 'Investment')}
+              </option>
             </select>
           </div>
 
@@ -463,9 +496,13 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               onChange={(e) => onIntentChange({ dataLevel: e.target.value as DataLevel })}
               className={selectClasses}
             >
-              <option value="data-heavy">{t('reportBuilder.intentStep.dataHeavy', 'Data-heavy')}</option>
+              <option value="data-heavy">
+                {t('reportBuilder.intentStep.dataHeavy', 'Data-heavy')}
+              </option>
               <option value="balanced">{t('reportBuilder.intentStep.balanced', 'Balanced')}</option>
-              <option value="narrative-heavy">{t('reportBuilder.intentStep.narrativeHeavy', 'Narrative-heavy')}</option>
+              <option value="narrative-heavy">
+                {t('reportBuilder.intentStep.narrativeHeavy', 'Narrative-heavy')}
+              </option>
             </select>
           </div>
 
@@ -525,7 +562,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             {t('reportBuilder.intentStep.advancedParameters', 'Advanced Parameters')}
           </h3>
           <p className="text-sm text-c-text-secondary mt-1">
-            {t('reportBuilder.intentStep.additionalSettingsControllingContentGeneration', 'Additional settings controlling content generation')}
+            {t(
+              'reportBuilder.intentStep.additionalSettingsControllingContentGeneration',
+              'Additional settings controlling content generation'
+            )}
           </p>
         </div>
 
@@ -540,9 +580,15 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               onChange={(e) => onIntentChange({ audience: e.target.value as any })}
               className={selectClasses}
             >
-              <option value="executive">{t('reportBuilder.intentStep.executiveCLevel', 'Executive / C-level')}</option>
-              <option value="it">{t('reportBuilder.intentStep.itEngineering', 'IT / Engineering')}</option>
-              <option value="operations">{t('reportBuilder.intentStep.operations', 'Operations')}</option>
+              <option value="executive">
+                {t('reportBuilder.intentStep.executiveCLevel', 'Executive / C-level')}
+              </option>
+              <option value="it">
+                {t('reportBuilder.intentStep.itEngineering', 'IT / Engineering')}
+              </option>
+              <option value="operations">
+                {t('reportBuilder.intentStep.operations', 'Operations')}
+              </option>
               <option value="mixed">{t('reportBuilder.intentStep.mixed', 'Mixed')}</option>
             </select>
           </div>
@@ -557,7 +603,9 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               onChange={(e) => onIntentChange({ tone: e.target.value as any })}
               className={selectClasses}
             >
-              <option value="consulting">{t('reportBuilder.intentStep.consulting', 'Consulting')}</option>
+              <option value="consulting">
+                {t('reportBuilder.intentStep.consulting', 'Consulting')}
+              </option>
               <option value="neutral">{t('reportBuilder.intentStep.neutral', 'Neutral')}</option>
               <option value="decisive">{t('reportBuilder.intentStep.decisive', 'Decisive')}</option>
             </select>
@@ -630,7 +678,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                   })
                 }
               />
-              {t('reportBuilder.intentStep.includeAssessmentMatrixDrd', 'Include assessment matrix (DRD)')}
+              {t(
+                'reportBuilder.intentStep.includeAssessmentMatrixDrd',
+                'Include assessment matrix (DRD)'
+              )}
             </label>
           </div>
         </div>
@@ -655,9 +706,15 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               className={selectClasses}
             >
               <option value="formal">{t('reportBuilder.intentStep.formal', 'Formal')}</option>
-              <option value="professional">{t('reportBuilder.intentStep.professional', 'Professional')}</option>
-              <option value="consultative">{t('reportBuilder.intentStep.consultative', 'Consultative')}</option>
-              <option value="persuasive">{t('reportBuilder.intentStep.persuasive', 'Persuasive')}</option>
+              <option value="professional">
+                {t('reportBuilder.intentStep.professional', 'Professional')}
+              </option>
+              <option value="consultative">
+                {t('reportBuilder.intentStep.consultative', 'Consultative')}
+              </option>
+              <option value="persuasive">
+                {t('reportBuilder.intentStep.persuasive', 'Persuasive')}
+              </option>
             </select>
           </div>
 
@@ -674,7 +731,9 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             >
               <option value="minimal">{t('reportBuilder.intentStep.minimal', 'Minimal')}</option>
               <option value="moderate">{t('reportBuilder.intentStep.moderate', 'Moderate')}</option>
-              <option value="extensive">{t('reportBuilder.intentStep.extensive', 'Extensive')}</option>
+              <option value="extensive">
+                {t('reportBuilder.intentStep.extensive', 'Extensive')}
+              </option>
             </select>
           </div>
 

@@ -160,7 +160,9 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               onChange={(e) => setDecisionOwnerId(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm bg-white dark:bg-navy-900"
             >
-              <option value="">{t('discoveryToolsMain.generateInitiativesModal.selectPlaceholder')}</option>
+              <option value="">
+                {t('discoveryToolsMain.generateInitiativesModal.selectPlaceholder')}
+              </option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name || user.email || user.id}

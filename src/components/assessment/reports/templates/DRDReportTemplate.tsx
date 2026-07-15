@@ -111,7 +111,8 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
 
   const maturityVerdict = useMemo(() => {
     if (normalizedMaturityPercent >= 75) return t('assessment.drdReport.verdictHigh', 'high');
-    if (normalizedMaturityPercent >= 50) return t('assessment.drdReport.verdictModerate', 'moderate');
+    if (normalizedMaturityPercent >= 50)
+      return t('assessment.drdReport.verdictModerate', 'moderate');
     if (normalizedMaturityPercent >= 25) return t('assessment.drdReport.verdictBasic', 'basic');
     return t('assessment.drdReport.verdictInitial', 'initial');
   }, [normalizedMaturityPercent, t]);

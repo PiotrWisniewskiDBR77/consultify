@@ -655,7 +655,11 @@ export const AISuggestionPanel: React.FC<Props> = ({
       {/* Tabs */}
       <div className="flex border-b border-slate-200 dark:border-navy-700">
         {[
-          { id: 'levels', label: t('assessment.aiSuggestions.tabs.levels', 'Levels'), icon: Target },
+          {
+            id: 'levels',
+            label: t('assessment.aiSuggestions.tabs.levels', 'Levels'),
+            icon: Target,
+          },
           {
             id: 'technologies',
             label: t('assessment.aiSuggestions.tabs.technologies', 'Technologies'),

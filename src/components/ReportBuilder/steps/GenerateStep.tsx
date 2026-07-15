@@ -146,7 +146,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
                 {t('reportBuilder.generateStep.reportGenerated', 'Report Generated!')}
               </div>
               <div className="text-sm text-c-text-secondary mt-1">
-                {t('reportBuilder.generateStep.youCanNowProceedToReview', 'You can now proceed to review and edit the content')}
+                {t(
+                  'reportBuilder.generateStep.youCanNowProceedToReview',
+                  'You can now proceed to review and edit the content'
+                )}
               </div>
             </div>
           </div>
@@ -223,7 +226,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
       <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
         <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
         <div className="text-sm text-amber-800 dark:text-amber-200">
-          {t('reportBuilder.generateStep.youCanRegenerateIndividualSectionsAfter', 'You can regenerate individual sections after the report is generated. In the next step, you\'ll be able to edit content and add additional AI guidance.')}
+          {t(
+            'reportBuilder.generateStep.youCanRegenerateIndividualSectionsAfter',
+            "You can regenerate individual sections after the report is generated. In the next step, you'll be able to edit content and add additional AI guidance."
+          )}
         </div>
       </div>
     </div>

@@ -234,7 +234,9 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-c-accent" />
             <div>
-              <h3 className="font-semibold text-c-text">{t('reportBuilder.commentPanel.comments', 'Comments')}</h3>
+              <h3 className="font-semibold text-c-text">
+                {t('reportBuilder.commentPanel.comments', 'Comments')}
+              </h3>
               {sectionName && <p className="text-xs text-c-text-secondary">{sectionName}</p>}
             </div>
           </div>
@@ -314,7 +316,10 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
               {t('reportBuilder.commentPanel.noCommentsYet', 'No comments yet')}
             </p>
             <p className="text-xs text-c-text-secondary">
-              {t('reportBuilder.commentPanel.addACommentToStartThe', 'Add a comment to start the discussion')}
+              {t(
+                'reportBuilder.commentPanel.addACommentToStartThe',
+                'Add a comment to start the discussion'
+              )}
             </p>
           </div>
         ) : (

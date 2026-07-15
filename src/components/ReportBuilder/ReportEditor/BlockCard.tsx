@@ -56,8 +56,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { BlockSettingsPanel } from './BlockSettingsPanel';
@@ -1375,7 +1375,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         setMode('preview');
       });
       toast.success(
-        t('reportBuilder.blockCard.commentResolvedAiUpdatingContent', 'Comment resolved — AI updating content')
+        t(
+          'reportBuilder.blockCard.commentResolvedAiUpdatingContent',
+          'Comment resolved — AI updating content'
+        )
       );
     } else {
       toast.success(t('reportBuilder.blockCard.commentResolved', 'Comment resolved'));
@@ -1503,7 +1506,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 : !block.isGenerated
                   ? t('reportBuilder.blockCard.generateThisBlock', 'Generate this block')
                   : block.needsRegeneration
-                    ? t('reportBuilder.blockCard.regenerateSettingsChanged', 'Regenerate (settings changed)')
+                    ? t(
+                        'reportBuilder.blockCard.regenerateSettingsChanged',
+                        'Regenerate (settings changed)'
+                      )
                     : t('reportBuilder.blockCard.regenerate', 'Regenerate')
             }
           >
@@ -1569,7 +1575,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"
               >
-                <Plus className="w-3.5 h-3.5" /> {t('reportBuilder.blockCard.addBelow', 'Add below')}
+                <Plus className="w-3.5 h-3.5" />{' '}
+                {t('reportBuilder.blockCard.addBelow', 'Add below')}
               </button>
               <button
                 onClick={(e) => {
@@ -1579,7 +1586,9 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"
               >
-                {block.enabled ? (t('reportBuilder.blockCard.disable', 'Disable')) : t('reportBuilder.blockCard.enable', 'Enable')}
+                {block.enabled
+                  ? t('reportBuilder.blockCard.disable', 'Disable')
+                  : t('reportBuilder.blockCard.enable', 'Enable')}
               </button>
               {block.content && (
                 <button
@@ -1591,7 +1600,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"
                 >
-                  <ClipboardCopy className="w-3.5 h-3.5" /> {t('reportBuilder.blockCard.copy', 'Copy')}
+                  <ClipboardCopy className="w-3.5 h-3.5" />{' '}
+                  {t('reportBuilder.blockCard.copy', 'Copy')}
                 </button>
               )}
               <hr className="my-1 border-c-border-subtle" />
@@ -1772,9 +1782,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 <textarea
                   value={additionalPrompt}
                   onChange={(e) => setAdditionalPrompt(e.target.value)}
-                  placeholder={
-                    t('reportBuilder.blockCard.eGShortenTo3Paragraphs', 'E.g., "Shorten to 3 paragraphs, add metrics, formal tone..."')
-                  }
+                  placeholder={t(
+                    'reportBuilder.blockCard.eGShortenTo3Paragraphs',
+                    'E.g., "Shorten to 3 paragraphs, add metrics, formal tone..."'
+                  )}
                   className="w-full px-3 py-2 text-[11px] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200/60 dark:border-blue-800/40 rounded-lg resize-none h-12 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 leading-relaxed placeholder:text-c-text-muted"
                 />
               </div>
@@ -1870,9 +1881,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   <textarea
                     value={block.sourceContext || ''}
                     onChange={(e) => onUpdate({ sourceContext: e.target.value })}
-                    placeholder={
-                      t('reportBuilder.blockCard.pasteSourceDataContextBusinessRequirements', 'Paste source data, context, business requirements...')
-                    }
+                    placeholder={t(
+                      'reportBuilder.blockCard.pasteSourceDataContextBusinessRequirements',
+                      'Paste source data, context, business requirements...'
+                    )}
                     className="w-full px-3 py-2 text-[11px] bg-c-surface-raised border border-c-border-subtle rounded-lg resize-none h-14 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 leading-relaxed placeholder:text-c-text-muted"
                   />
                 </div>
@@ -2075,7 +2087,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
                         }`}
                       >
-                        <Check className="w-2.5 h-2.5" /> {t('reportBuilder.blockCard.save', 'Save')}
+                        <Check className="w-2.5 h-2.5" />{' '}
+                        {t('reportBuilder.blockCard.save', 'Save')}
                       </button>
                     </div>
                   </div>
@@ -2121,7 +2134,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                                 <Sparkles className="w-3 h-3" />
-                                {t('reportBuilder.blockCard.contentUpdatedByAi', 'Content updated by AI')}
+                                {t(
+                                  'reportBuilder.blockCard.contentUpdatedByAi',
+                                  'Content updated by AI'
+                                )}
                               </span>
                               <div className="flex items-center gap-1">
                                 <button
@@ -2211,7 +2227,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                           <Sparkles className="w-7 h-7 text-blue-500 opacity-70" />
                         </div>
                         <p className="text-sm text-c-text-secondary">
-                          {t('reportBuilder.blockCard.contentWillBeGeneratedByAi', 'Content will be generated by AI')}
+                          {t(
+                            'reportBuilder.blockCard.contentWillBeGeneratedByAi',
+                            'Content will be generated by AI'
+                          )}
                         </p>
                         <div className="flex items-center gap-2 justify-center">
                           {onGenerateBlock && !block.id.startsWith('tmp_') && (
@@ -2230,7 +2249,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                 </>
                               ) : (
                                 <>
-                                  <Play className="w-3.5 h-3.5" /> {t('reportBuilder.blockCard.generate', 'Generate')}
+                                  <Play className="w-3.5 h-3.5" />{' '}
+                                  {t('reportBuilder.blockCard.generate', 'Generate')}
                                 </>
                               )}
                             </button>
@@ -2270,7 +2290,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               }}
                               className="flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors font-medium"
                             >
-                              <Pencil className="w-3 h-3" /> {t('reportBuilder.blockCard.edit', 'Edit')}
+                              <Pencil className="w-3 h-3" />{' '}
+                              {t('reportBuilder.blockCard.edit', 'Edit')}
                             </button>
                             <button
                               onClick={(e) => {
@@ -2280,7 +2301,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               }}
                               className="flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded transition-colors font-medium"
                             >
-                              <ClipboardCopy className="w-3 h-3" /> {t('reportBuilder.blockCard.copy', 'Copy')}
+                              <ClipboardCopy className="w-3 h-3" />{' '}
+                              {t('reportBuilder.blockCard.copy', 'Copy')}
                             </button>
                             {onGenerateBlock && (
                               <button
@@ -2323,7 +2345,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             </span>
                             {/* Reading time + word count */}
                             <span className="text-[9px] text-c-text-secondary">
-                              {wordCount} {t('reportBuilder.blockCard.words', 'words')} · ~{readingMinutes} min
+                              {wordCount} {t('reportBuilder.blockCard.words', 'words')} · ~
+                              {readingMinutes} min
                             </span>
                           </div>
                         </div>
@@ -2405,9 +2428,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddComment();
                     }}
-                    placeholder={
-                      t('reportBuilder.blockCard.describeWhatShouldBeChanged', 'Describe what should be changed...')
-                    }
+                    placeholder={t(
+                      'reportBuilder.blockCard.describeWhatShouldBeChanged',
+                      'Describe what should be changed...'
+                    )}
                     className="flex-1 px-3 py-2 text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-14 focus:ring-1 focus:ring-amber-500 leading-relaxed"
                   />
                   <button
@@ -2419,7 +2443,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   </button>
                 </div>
                 <p className="text-[9px] text-c-text-secondary mt-1">
-                  {t('reportBuilder.blockCard.enterToAddResolvingSuggestionsChanges', '⌘+Enter to add. Resolving suggestions/changes will instruct AI to update content.')}
+                  {t(
+                    'reportBuilder.blockCard.enterToAddResolvingSuggestionsChanges',
+                    '⌘+Enter to add. Resolving suggestions/changes will instruct AI to update content.'
+                  )}
                 </p>
               </div>
 
@@ -2431,9 +2458,14 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               ) : blockComments.length === 0 ? (
                 <div className="text-center py-6 text-c-text-secondary">
                   <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-[11px]">{t('reportBuilder.blockCard.noCommentsYet', 'No comments yet')}</p>
+                  <p className="text-[11px]">
+                    {t('reportBuilder.blockCard.noCommentsYet', 'No comments yet')}
+                  </p>
                   <p className="text-[9px] mt-0.5">
-                    {t('reportBuilder.blockCard.addACommentToSuggestChanges', 'Add a comment to suggest changes')}
+                    {t(
+                      'reportBuilder.blockCard.addACommentToSuggestChanges',
+                      'Add a comment to suggest changes'
+                    )}
                   </p>
                 </div>
               ) : (
@@ -2494,7 +2526,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                 {(comment.userName || 'U')[0].toUpperCase()}
                               </div>
                               <span className="text-[10px] font-semibold text-c-text">
-                                {comment.userName || (t('reportBuilder.blockCard.user', 'User'))}
+                                {comment.userName || t('reportBuilder.blockCard.user', 'User')}
                               </span>
                               <span
                                 className={`text-[8px] px-1 py-0.5 rounded font-medium ${typeColors[comment.commentType] || typeColors.FEEDBACK}`}

@@ -466,9 +466,7 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
 
       {/* Detailed Area Analysis */}
       <div className="area-details-section">
-        <h3>
-          📋 {t('reports.axisReportSection.detailedAnalysisTitle', 'Detailed Area Analysis')}
-        </h3>
+        <h3>📋 {t('reports.axisReportSection.detailedAnalysisTitle', 'Detailed Area Analysis')}</h3>
         <p className="section-intro">
           {t(
             'reports.axisReportSection.sectionIntroText',

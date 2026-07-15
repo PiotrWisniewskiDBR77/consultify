@@ -173,9 +173,7 @@ export function ProcessAutomationEconomicsStep(props: {
             onChange={(e) => patch({ baselineHoursPerWeek: coerceNumber(e.target.value) })}
             placeholder={
               measuredBaselineHours == null
-                ? t(
-                    'discoveryToolsSteps.processAutomationEconomicsStep.baselineHoursPlaceholder'
-                  )
+                ? t('discoveryToolsSteps.processAutomationEconomicsStep.baselineHoursPlaceholder')
                 : `${measuredBaselineHours.toFixed(1)} (${t(
                     'discoveryToolsSteps.processAutomationEconomicsStep.fromMeasurement'
                   )})`

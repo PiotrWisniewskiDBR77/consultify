@@ -327,7 +327,8 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
     t(`sharedComponents.raidCanvas.quickActions.${type}`, { returnObjects: true }) as string[];
 
   const quickContingencyArgs = useMemo(
-    () => t('sharedComponents.raidCanvas.quickContingencyArgs', { returnObjects: true }) as string[],
+    () =>
+      t('sharedComponents.raidCanvas.quickContingencyArgs', { returnObjects: true }) as string[],
     [t]
   );
 
@@ -422,7 +423,11 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   const filterTabs: { key: RaidTypeFilter; label: string; count: number }[] = useMemo(
     () => [
       { key: 'all', label: t('sharedComponents.raidCanvas.filterTabs.all'), count: items.length },
-      { key: 'risk', label: t('sharedComponents.raidCanvas.filterTabs.risk'), count: typeCounts.risk },
+      {
+        key: 'risk',
+        label: t('sharedComponents.raidCanvas.filterTabs.risk'),
+        count: typeCounts.risk,
+      },
       {
         key: 'assumption',
         label: t('sharedComponents.raidCanvas.filterTabs.assumption'),
@@ -676,9 +681,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       {/* ── Sort info ───────────────────────────────────────────────────── */}
       {filteredItems.length > 0 && (
         <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
-          <span>
-            {t('sharedComponents.raidCanvas.sortedByHighestImpactScore')}
-          </span>
+          <span>{t('sharedComponents.raidCanvas.sortedByHighestImpactScore')}</span>
           <span>
             {filteredItems.length} / {items.length} {t('sharedComponents.raidCanvas.items')}
           </span>
@@ -1044,9 +1047,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           onChange={(e) => onUpdateItem(item.id, { source: e.target.value })}
                           readOnly={locked}
                           className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
-                          placeholder={
-                            t('sharedComponents.raidCanvas.eGMeetingAuditAiWorkshop')
-                          }
+                          placeholder={t('sharedComponents.raidCanvas.eGMeetingAuditAiWorkshop')}
                         />
                       </div>
                     </div>
@@ -1076,9 +1077,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           rows={3}
                           readOnly={locked}
                           className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
-                          placeholder={
-                            t('sharedComponents.raidCanvas.whatIsTheFallbackIfRiskMaterializes')
-                          }
+                          placeholder={t(
+                            'sharedComponents.raidCanvas.whatIsTheFallbackIfRiskMaterializes'
+                          )}
                         />
                         <div className="flex flex-wrap gap-1">
                           {quickContingencyArgs.map((arg) => (
@@ -1121,9 +1122,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           rows={3}
                           readOnly={locked}
                           className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
-                          placeholder={
-                            t('sharedComponents.raidCanvas.howDoWeReduceTheProbabilityOfThisRisk')
-                          }
+                          placeholder={t(
+                            'sharedComponents.raidCanvas.howDoWeReduceTheProbabilityOfThisRisk'
+                          )}
                         />
                         <div className="flex flex-wrap gap-1">
                           {quickMitigationArgs.map((arg) => (

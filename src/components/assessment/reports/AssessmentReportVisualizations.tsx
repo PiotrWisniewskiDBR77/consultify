@@ -386,11 +386,7 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
               <span className="text-slate-700 dark:text-slate-300 text-sm">{value}</span>
             )}
           />
-          <Tooltip
-            content={
-              <RadarTooltip colors={colors} framework={data.framework} t={t} />
-            }
-          />
+          <Tooltip content={<RadarTooltip colors={colors} framework={data.framework} t={t} />} />
         </RechartsRadar>
       </ResponsiveContainer>
     </div>

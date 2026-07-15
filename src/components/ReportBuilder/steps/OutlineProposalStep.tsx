@@ -62,7 +62,10 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
       })
       .catch(() => {
         setError(
-          t('reportBuilder.outlineProposalStep.failedToFetchOutlineProposal', 'Failed to fetch outline proposal.')
+          t(
+            'reportBuilder.outlineProposalStep.failedToFetchOutlineProposal',
+            'Failed to fetch outline proposal.'
+          )
         );
       })
       .finally(() => setFetching(false));
@@ -105,7 +108,10 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
           <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
         </div>
         <p className="text-sm text-c-text-secondary">
-          {t('reportBuilder.outlineProposalStep.analyzingYourReportDefinition', 'Analyzing your report definition...')}
+          {t(
+            'reportBuilder.outlineProposalStep.analyzingYourReportDefinition',
+            'Analyzing your report definition...'
+          )}
         </p>
       </div>
     );
@@ -125,7 +131,10 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               )
               .catch(() =>
                 setError(
-                  t('reportBuilder.outlineProposalStep.failedToFetchOutlineProposal', 'Failed to fetch outline proposal.')
+                  t(
+                    'reportBuilder.outlineProposalStep.failedToFetchOutlineProposal',
+                    'Failed to fetch outline proposal.'
+                  )
                 )
               )
               .finally(() => setFetching(false));
@@ -150,7 +159,10 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
             {t('reportBuilder.outlineProposalStep.aiOutlineProposal', 'AI Outline Proposal')}
           </h3>
           <p className="text-sm text-c-text-secondary">
-            {t('reportBuilder.outlineProposalStep.reviewAndCustomizeTheProposedReport', 'Review and customize the proposed report sections')}
+            {t(
+              'reportBuilder.outlineProposalStep.reviewAndCustomizeTheProposedReport',
+              'Review and customize the proposed report sections'
+            )}
           </p>
         </div>
       </div>
@@ -229,7 +241,10 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
           />
           <input
             type="text"
-            placeholder={t('reportBuilder.outlineProposalStep.briefDescriptionOptional', 'Brief description (optional)')}
+            placeholder={t(
+              'reportBuilder.outlineProposalStep.briefDescriptionOptional',
+              'Brief description (optional)'
+            )}
             value={newSummary}
             onChange={(e) => setNewSummary(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:outline-none"

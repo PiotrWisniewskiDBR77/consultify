@@ -364,14 +364,18 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
           ) : (
             <div className="p-3 space-y-2">
               <label className="block text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
-                {t('reportBuilder.settingsPanel.changeSummaryOptional', 'Change summary (optional)')}
+                {t(
+                  'reportBuilder.settingsPanel.changeSummaryOptional',
+                  'Change summary (optional)'
+                )}
               </label>
               <textarea
                 value={saveSummary}
                 onChange={(e) => setSaveSummary(e.target.value)}
-                placeholder={
-                  t('reportBuilder.settingsPanel.whatChangedInThisVersion', 'What changed in this version...')
-                }
+                placeholder={t(
+                  'reportBuilder.settingsPanel.whatChangedInThisVersion',
+                  'What changed in this version...'
+                )}
                 className="w-full px-2.5 py-2 text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-c-text-secondary placeholder:text-c-text-secondary leading-relaxed"
                 autoFocus
                 onKeyDown={(e) => {
@@ -437,7 +441,10 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
             {t('reportBuilder.settingsPanel.noSavedVersions', 'No saved versions')}
           </p>
           <p className="text-[9px] text-c-text-secondary mt-0.5">
-            {t('reportBuilder.settingsPanel.saveTheFirstVersionOfYour', 'Save the first version of your report')}
+            {t(
+              'reportBuilder.settingsPanel.saveTheFirstVersionOfYour',
+              'Save the first version of your report'
+            )}
           </p>
         </div>
       ) : (
@@ -611,7 +618,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert(t('reportBuilder.settingsPanel.pleaseSelectAnImageFile', 'Please select an image file'));
+      alert(
+        t('reportBuilder.settingsPanel.pleaseSelectAnImageFile', 'Please select an image file')
+      );
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -857,7 +866,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) => onTemplateMetaChange?.({ reportType: e.target.value })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="">— {t('reportBuilder.settingsPanel.select', 'Select')} —</option>
+                      <option value="">
+                        — {t('reportBuilder.settingsPanel.select', 'Select')} —
+                      </option>
                       {MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.map((tool) => (
                         <option key={tool.value} value={tool.value}>
                           {tool.label}
@@ -893,7 +904,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <textarea
                     value={templateMeta.description || ''}
                     onChange={(e) => onTemplateMetaChange?.({ description: e.target.value })}
-                    placeholder={t('reportBuilder.settingsPanel.templateDescription', 'Template description...')}
+                    placeholder={t(
+                      'reportBuilder.settingsPanel.templateDescription',
+                      'Template description...'
+                    )}
                     rows={2}
                     className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none"
                   />
@@ -942,11 +956,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) => onIntentChange({ audience: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="executive">{t('reportBuilder.settingsPanel.executive', 'Executive')}</option>
-                      <option value="board">{t('reportBuilder.settingsPanel.board', 'Board')}</option>
-                      <option value="technical">{t('reportBuilder.settingsPanel.technical', 'Technical')}</option>
-                      <option value="operational">{t('reportBuilder.settingsPanel.operational', 'Operational')}</option>
-                      <option value="mixed">{t('reportBuilder.settingsPanel.mixed', 'Mixed')}</option>
+                      <option value="executive">
+                        {t('reportBuilder.settingsPanel.executive', 'Executive')}
+                      </option>
+                      <option value="board">
+                        {t('reportBuilder.settingsPanel.board', 'Board')}
+                      </option>
+                      <option value="technical">
+                        {t('reportBuilder.settingsPanel.technical', 'Technical')}
+                      </option>
+                      <option value="operational">
+                        {t('reportBuilder.settingsPanel.operational', 'Operational')}
+                      </option>
+                      <option value="mixed">
+                        {t('reportBuilder.settingsPanel.mixed', 'Mixed')}
+                      </option>
                     </select>
                   </div>
                   <div>
@@ -958,13 +982,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) => onIntentChange({ goal: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="diagnosis">{t('reportBuilder.settingsPanel.diagnosis', 'Diagnosis')}</option>
-                      <option value="roadmap">{t('reportBuilder.settingsPanel.roadmap', 'Roadmap')}</option>
+                      <option value="diagnosis">
+                        {t('reportBuilder.settingsPanel.diagnosis', 'Diagnosis')}
+                      </option>
+                      <option value="roadmap">
+                        {t('reportBuilder.settingsPanel.roadmap', 'Roadmap')}
+                      </option>
                       <option value="investment_decision">
                         {t('reportBuilder.settingsPanel.investment', 'Investment')}
                       </option>
-                      <option value="stakeholder_update">{t('reportBuilder.settingsPanel.update', 'Update')}</option>
-                      <option value="summary">{t('reportBuilder.settingsPanel.summary', 'Summary')}</option>
+                      <option value="stakeholder_update">
+                        {t('reportBuilder.settingsPanel.update', 'Update')}
+                      </option>
+                      <option value="summary">
+                        {t('reportBuilder.settingsPanel.summary', 'Summary')}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -974,9 +1006,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </label>
                   <div className="flex gap-1">
                     {[
-                      { value: 'consulting', label: t('reportBuilder.settingsPanel.consulting', 'Consulting') },
-                      { value: 'neutral', label: t('reportBuilder.settingsPanel.neutral', 'Neutral') },
-                      { value: 'decisive', label: t('reportBuilder.settingsPanel.decisive', 'Decisive') },
+                      {
+                        value: 'consulting',
+                        label: t('reportBuilder.settingsPanel.consulting', 'Consulting'),
+                      },
+                      {
+                        value: 'neutral',
+                        label: t('reportBuilder.settingsPanel.neutral', 'Neutral'),
+                      },
+                      {
+                        value: 'decisive',
+                        label: t('reportBuilder.settingsPanel.decisive', 'Decisive'),
+                      },
                     ].map((t) => (
                       <button
                         key={t.value}
@@ -1006,7 +1047,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   {[
                     { value: 'full', label: t('reportBuilder.settingsPanel.full', 'Full') },
                     { value: 'executive', label: 'Executive' },
-                    { value: 'focused', label: t('reportBuilder.settingsPanel.focused', 'Focused') },
+                    {
+                      value: 'focused',
+                      label: t('reportBuilder.settingsPanel.focused', 'Focused'),
+                    },
                   ].map((s) => (
                     <button
                       key={s.value}
@@ -1031,7 +1075,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) => onIntentChange({ targetLength: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="short">{t('reportBuilder.settingsPanel.short', 'Short')}</option>
+                      <option value="short">
+                        {t('reportBuilder.settingsPanel.short', 'Short')}
+                      </option>
                       <option value="standard">Standard</option>
                       <option value="long">{t('reportBuilder.settingsPanel.long', 'Long')}</option>
                     </select>
@@ -1071,13 +1117,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <textarea
                     value={(intent as any).narrativeThread || ''}
                     onChange={(e) => onIntentChange({ narrativeThread: e.target.value } as any)}
-                    placeholder={
-                      t('reportBuilder.settingsPanel.eGTheOrganizationNeedsA', 'E.g., "The organization needs a fundamental shift in data strategy..."')
-                    }
+                    placeholder={t(
+                      'reportBuilder.settingsPanel.eGTheOrganizationNeedsA',
+                      'E.g., "The organization needs a fundamental shift in data strategy..."'
+                    )}
                     className="w-full px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-16"
                   />
                   <p className="text-[10px] text-c-text-secondary mt-1">
-                    {t('reportBuilder.settingsPanel.thisThreadWillBeEmphasizedAcross', 'This thread will be emphasized across all report sections')}
+                    {t(
+                      'reportBuilder.settingsPanel.thisThreadWillBeEmphasizedAcross',
+                      'This thread will be emphasized across all report sections'
+                    )}
                   </p>
                 </div>
                 <div>
@@ -1087,13 +1137,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <textarea
                     value={(intent as any).glossaryTerms || ''}
                     onChange={(e) => onIntentChange({ glossaryTerms: e.target.value } as any)}
-                    placeholder={
-                      t('reportBuilder.settingsPanel.eGDrdDigitalReadinessDiagnosis', 'E.g., "DRD = Digital Readiness Diagnosis; digital transformation; Industry 4.0"')
-                    }
+                    placeholder={t(
+                      'reportBuilder.settingsPanel.eGDrdDigitalReadinessDiagnosis',
+                      'E.g., "DRD = Digital Readiness Diagnosis; digital transformation; Industry 4.0"'
+                    )}
                     className="w-full px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-16"
                   />
                   <p className="text-[10px] text-c-text-secondary mt-1">
-                    {t('reportBuilder.settingsPanel.aiWillConsistentlyUseTheseTerms', 'AI will consistently use these terms throughout')}
+                    {t(
+                      'reportBuilder.settingsPanel.aiWillConsistentlyUseTheseTerms',
+                      'AI will consistently use these terms throughout'
+                    )}
                   </p>
                 </div>
               </div>
@@ -1131,7 +1185,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             >
               <div className="space-y-2">
                 {[
-                  { key: 'assessmentMatrix', label: t('reportBuilder.settingsPanel.assessmentMatrix', 'Assessment Matrix') },
+                  {
+                    key: 'assessmentMatrix',
+                    label: t('reportBuilder.settingsPanel.assessmentMatrix', 'Assessment Matrix'),
+                  },
                   { key: 'charts', label: t('reportBuilder.settingsPanel.charts', 'Charts') },
                   { key: 'icons', label: t('reportBuilder.settingsPanel.icons', 'Icons') },
                 ].map((v) => (
@@ -1183,7 +1240,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   >
                     <Smartphone className="w-8 h-8 text-c-text-secondary" />
                     <div className="text-center">
-                      <div className="text-sm font-medium">{t('reportBuilder.settingsPanel.portrait', 'Portrait')}</div>
+                      <div className="text-sm font-medium">
+                        {t('reportBuilder.settingsPanel.portrait', 'Portrait')}
+                      </div>
                       <div className="text-[10px] text-c-text-secondary">A4 / Letter</div>
                     </div>
                   </button>
@@ -1197,7 +1256,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   >
                     <Monitor className="w-8 h-8 text-c-text-secondary" />
                     <div className="text-center">
-                      <div className="text-sm font-medium">{t('reportBuilder.settingsPanel.landscape', 'Landscape')}</div>
+                      <div className="text-sm font-medium">
+                        {t('reportBuilder.settingsPanel.landscape', 'Landscape')}
+                      </div>
                       <div className="text-[10px] text-c-text-secondary">16:9 / Slides</div>
                     </div>
                   </button>
@@ -1212,7 +1273,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                   >
                     <option value="none">{t('reportBuilder.settingsPanel.none', 'None')}</option>
-                    <option value="minimal">{t('reportBuilder.settingsPanel.minimal', 'Minimal')}</option>
+                    <option value="minimal">
+                      {t('reportBuilder.settingsPanel.minimal', 'Minimal')}
+                    </option>
                     <option value="full">{t('reportBuilder.settingsPanel.full2', 'Full')}</option>
                   </select>
                 </div>
@@ -1228,10 +1291,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { value: 'professional', label: t('reportBuilder.settingsPanel.professional', 'Professional') },
+                    {
+                      value: 'professional',
+                      label: t('reportBuilder.settingsPanel.professional', 'Professional'),
+                    },
                     { value: 'modern', label: t('reportBuilder.settingsPanel.modern', 'Modern') },
-                    { value: 'minimal', label: t('reportBuilder.settingsPanel.minimal2', 'Minimal') },
-                    { value: 'corporate', label: t('reportBuilder.settingsPanel.corporate', 'Corporate') },
+                    {
+                      value: 'minimal',
+                      label: t('reportBuilder.settingsPanel.minimal2', 'Minimal'),
+                    },
+                    {
+                      value: 'corporate',
+                      label: t('reportBuilder.settingsPanel.corporate', 'Corporate'),
+                    },
                   ].map((theme) => (
                     <button
                       key={theme.value}
@@ -1271,9 +1343,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) => onStylingChange({ fontSize: e.target.value as any })}
                       className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
-                      <option value="small">{t('reportBuilder.settingsPanel.small', 'Small')}</option>
-                      <option value="medium">{t('reportBuilder.settingsPanel.medium', 'Medium')}</option>
-                      <option value="large">{t('reportBuilder.settingsPanel.large', 'Large')}</option>
+                      <option value="small">
+                        {t('reportBuilder.settingsPanel.small', 'Small')}
+                      </option>
+                      <option value="medium">
+                        {t('reportBuilder.settingsPanel.medium', 'Medium')}
+                      </option>
+                      <option value="large">
+                        {t('reportBuilder.settingsPanel.large', 'Large')}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -1423,7 +1501,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <label className="flex items-center justify-between cursor-pointer">
                     <div>
                       <div className="text-sm text-c-text">
-                        {t('reportBuilder.settingsPanel.createdInConsultify', '"Created in Consultify"')}
+                        {t(
+                          'reportBuilder.settingsPanel.createdInConsultify',
+                          '"Created in Consultify"'
+                        )}
                       </div>
                       <div className="text-xs text-c-text-secondary">
                         {t('reportBuilder.settingsPanel.autoFooterText', 'Auto footer text')}

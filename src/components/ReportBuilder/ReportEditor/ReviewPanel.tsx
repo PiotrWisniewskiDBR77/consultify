@@ -572,7 +572,8 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         <div className="p-2.5 bg-blue-950/30 rounded-lg border border-blue-800/40 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
-              <Send className="w-3 h-3" /> {t('reportBuilder.reviewPanel.sendForReview', 'Send for Review')}
+              <Send className="w-3 h-3" />{' '}
+              {t('reportBuilder.reviewPanel.sendForReview', 'Send for Review')}
             </span>
             <button
               onClick={() => {
@@ -702,7 +703,10 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                     { v: 'GENERAL' as const, l: t('reportBuilder.reviewPanel.general', 'General') },
                     { v: 'ISSUE' as const, l: t('reportBuilder.reviewPanel.issue', 'Issue') },
                     { v: 'QUESTION' as const, l: t('reportBuilder.reviewPanel.q', 'Q') },
-                    { v: 'SUGGESTION' as const, l: t('reportBuilder.reviewPanel.suggest', 'Suggest') },
+                    {
+                      v: 'SUGGESTION' as const,
+                      l: t('reportBuilder.reviewPanel.suggest', 'Suggest'),
+                    },
                   ].map((t) => (
                     <button
                       key={t.v}

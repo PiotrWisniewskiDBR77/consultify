@@ -190,7 +190,8 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
             {t('discoveryToolsMain.toolReviewPanel.generateInitiativesTitle')}
           </h3>
           <div className="text-sm text-slate-600 dark:text-slate-400">
-            {t('discoveryToolsMain.toolReviewPanel.methodology')}: {generationDefaults.methodologyId}
+            {t('discoveryToolsMain.toolReviewPanel.methodology')}:{' '}
+            {generationDefaults.methodologyId}
           </div>
           <div className="text-sm text-slate-600 dark:text-slate-400">
             {t('discoveryToolsMain.toolReviewPanel.count')}: {generationDefaults.count}

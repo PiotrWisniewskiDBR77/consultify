@@ -71,7 +71,10 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
           {t('discoveryToolsMain.toolActionBar.previous')}
         </button>
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          {t('discoveryToolsMain.toolActionBar.stepOf', { current: currentStep, total: totalSteps })}
+          {t('discoveryToolsMain.toolActionBar.stepOf', {
+            current: currentStep,
+            total: totalSteps,
+          })}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">

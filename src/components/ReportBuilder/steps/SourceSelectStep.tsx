@@ -237,7 +237,10 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
             </div>
           ) : filteredSources.length === 0 ? (
             <div className="text-center py-12 text-c-text-secondary">
-              {t('reportBuilder.sourceSelectStep.noApprovedSourcesAvailable', 'No approved sources available')}
+              {t(
+                'reportBuilder.sourceSelectStep.noApprovedSourcesAvailable',
+                'No approved sources available'
+              )}
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -306,7 +309,10 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
               type="text"
               value={reportTitle}
               onChange={(e) => onTitleChange(e.target.value)}
-              placeholder={t('reportBuilder.sourceSelectStep.enterReportTitle', 'Enter report title...')}
+              placeholder={t(
+                'reportBuilder.sourceSelectStep.enterReportTitle',
+                'Enter report title...'
+              )}
               className="w-full px-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -314,19 +320,26 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {t('reportBuilder.sourceSelectStep.descriptionReportPurpose', 'Description / Report Purpose')}
+              {t(
+                'reportBuilder.sourceSelectStep.descriptionReportPurpose',
+                'Description / Report Purpose'
+              )}
             </label>
             <textarea
               value={reportDescription}
               onChange={(e) => onDescriptionChange(e.target.value)}
-              placeholder={
-                t('reportBuilder.sourceSelectStep.describeTheReportPurposeTargetAudience', 'Describe the report purpose, target audience, decisions it should support...')
-              }
+              placeholder={t(
+                'reportBuilder.sourceSelectStep.describeTheReportPurposeTargetAudience',
+                'Describe the report purpose, target audience, decisions it should support...'
+              )}
               rows={3}
               className="w-full px-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
             <p className="text-xs text-c-text-secondary mt-1">
-              {t('reportBuilder.sourceSelectStep.thisDescriptionWillBeUsedBy', 'This description will be used by AI to better tailor the report content')}
+              {t(
+                'reportBuilder.sourceSelectStep.thisDescriptionWillBeUsedBy',
+                'This description will be used by AI to better tailor the report content'
+              )}
             </p>
           </div>
         </div>

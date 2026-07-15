@@ -276,14 +276,18 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
             <div className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-c-text mb-1">
-                  {t('reportBuilder.reviewEditStep.additionalGuidanceOptional', 'Additional Guidance (optional)')}
+                  {t(
+                    'reportBuilder.reviewEditStep.additionalGuidanceOptional',
+                    'Additional Guidance (optional)'
+                  )}
                 </label>
                 <textarea
                   value={regeneratePrompt}
                   onChange={(e) => setRegeneratePrompt(e.target.value)}
-                  placeholder={
-                    t('reportBuilder.reviewEditStep.eGUseMoreFormalLanguage', 'E.g., "Use more formal language", "Add more technical details"...')
-                  }
+                  placeholder={t(
+                    'reportBuilder.reviewEditStep.eGUseMoreFormalLanguage',
+                    'E.g., "Use more formal language", "Add more technical details"...'
+                  )}
                   rows={3}
                   className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
                 />
@@ -474,12 +478,18 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 {t('reportBuilder.reviewEditStep.readyToFinalize', 'Ready to Finalize?')}
               </h3>
               <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                {t('reportBuilder.reviewEditStep.afterFinalizingTheReportWillMove', 'After finalizing, the report will move to "In Review" status. You can still edit it.')}
+                {t(
+                  'reportBuilder.reviewEditStep.afterFinalizingTheReportWillMove',
+                  'After finalizing, the report will move to "In Review" status. You can still edit it.'
+                )}
               </p>
 
               {!allSectionsReady && (
                 <div className="mt-3 p-2 bg-amber-100 dark:bg-amber-900/30 rounded text-sm text-amber-700 dark:text-amber-300">
-                  {t('reportBuilder.reviewEditStep.warningSomeSectionsDoNotHave', 'Warning: Some sections do not have content yet.')}
+                  {t(
+                    'reportBuilder.reviewEditStep.warningSomeSectionsDoNotHave',
+                    'Warning: Some sections do not have content yet.'
+                  )}
                 </div>
               )}
 
@@ -512,7 +522,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 {t('reportBuilder.reviewEditStep.inReview', 'In Review')}
               </h3>
               <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                {t('reportBuilder.reviewEditStep.thisReportIsInReviewYou', 'This report is in review. You can approve it or send it back for changes.')}
+                {t(
+                  'reportBuilder.reviewEditStep.thisReportIsInReviewYou',
+                  'This report is in review. You can approve it or send it back for changes.'
+                )}
               </p>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -553,7 +566,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 {t('reportBuilder.reviewEditStep.reportApproved', 'Report Approved')}
               </h3>
               <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-                {t('reportBuilder.reviewEditStep.reportHasBeenApprovedMarkAs', 'Report has been approved. Mark as sent internally when you share it with the team.')}
+                {t(
+                  'reportBuilder.reviewEditStep.reportHasBeenApprovedMarkAs',
+                  'Report has been approved. Mark as sent internally when you share it with the team.'
+                )}
               </p>
 
               <button
@@ -585,7 +601,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 {t('reportBuilder.reviewEditStep.sentInternally', 'Sent Internally')}
               </h3>
               <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                {t('reportBuilder.reviewEditStep.reportHasBeenSentInternallyMark', 'Report has been sent internally. Mark as sent externally when you share it with the client.')}
+                {t(
+                  'reportBuilder.reviewEditStep.reportHasBeenSentInternallyMark',
+                  'Report has been sent internally. Mark as sent externally when you share it with the client.'
+                )}
               </p>
 
               <button
@@ -617,7 +636,10 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 {t('reportBuilder.reviewEditStep.sentExternally', 'Sent Externally')}
               </h3>
               <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                {t('reportBuilder.reviewEditStep.reportHasBeenSentToThe', 'Report has been sent to the client. The report lifecycle is complete.')}
+                {t(
+                  'reportBuilder.reviewEditStep.reportHasBeenSentToThe',
+                  'Report has been sent to the client. The report lifecycle is complete.'
+                )}
               </p>
             </div>
           </div>

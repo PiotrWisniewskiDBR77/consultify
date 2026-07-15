@@ -118,7 +118,9 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-          <h3 className="font-semibold text-c-text">{t('reportBuilder.configureStructureStep.sectionOptions', 'Section Options')}</h3>
+          <h3 className="font-semibold text-c-text">
+            {t('reportBuilder.configureStructureStep.sectionOptions', 'Section Options')}
+          </h3>
           <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
             <X className="w-5 h-5" />
           </button>
@@ -187,7 +189,10 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
                   `}
                 >
                   <div className="font-medium text-sm text-c-text">
-                    {t(`reportBuilder.configureStructureStep.languageOption.${opt.value}`, opt.label)}
+                    {t(
+                      `reportBuilder.configureStructureStep.languageOption.${opt.value}`,
+                      opt.label
+                    )}
                   </div>
                   <div className="text-xs text-c-text-secondary">{opt.description}</div>
                 </button>
@@ -198,14 +203,18 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
           {/* Custom Prompt */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {t('reportBuilder.configureStructureStep.additionalAiGuidance', 'Additional AI Guidance')}
+              {t(
+                'reportBuilder.configureStructureStep.additionalAiGuidance',
+                'Additional AI Guidance'
+              )}
             </label>
             <textarea
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder={
-                t('reportBuilder.configureStructureStep.eGFocusOnFinancialAspects', 'E.g., "Focus on financial aspects", "Include competitor comparison"...')
-              }
+              placeholder={t(
+                'reportBuilder.configureStructureStep.eGFocusOnFinancialAspects',
+                'E.g., "Focus on financial aspects", "Include competitor comparison"...'
+              )}
               rows={3}
               className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
             />
@@ -285,7 +294,9 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-          <h3 className="font-semibold text-c-text">{t('reportBuilder.configureStructureStep.addSection', 'Add Section')}</h3>
+          <h3 className="font-semibold text-c-text">
+            {t('reportBuilder.configureStructureStep.addSection', 'Add Section')}
+          </h3>
           <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
             <X className="w-5 h-5" />
           </button>
@@ -305,7 +316,12 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             }}
             className="w-full mb-4 px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">{t('reportBuilder.configureStructureStep.customTitlePrompt', 'Custom (title + prompt)')}</option>
+            <option value="">
+              {t(
+                'reportBuilder.configureStructureStep.customTitlePrompt',
+                'Custom (title + prompt)'
+              )}
+            </option>
             {isLoadingBlocks ? (
               <option value="" disabled>
                 {t('reportBuilder.configureStructureStep.loading', 'Loading…')}
@@ -461,7 +477,10 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
     async (sectionKey: string) => {
       if (
         confirm(
-          t('reportBuilder.configureStructureStep.areYouSureYouWantTo', 'Are you sure you want to remove this section?')
+          t(
+            'reportBuilder.configureStructureStep.areYouSureYouWantTo',
+            'Are you sure you want to remove this section?'
+          )
         )
       ) {
         await onRemoveSection(sectionKey);

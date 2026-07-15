@@ -79,9 +79,7 @@ export function KnownToolDetailView(props: {
   const startSession = async () => {
     if (!tool) return;
     if (!tool.isActive) {
-      toast.error(
-        t('discoveryToolsMain.knownToolDetailView.thisToolIsNotActiveYet')
-      );
+      toast.error(t('discoveryToolsMain.knownToolDetailView.thisToolIsNotActiveYet'));
       return;
     }
     try {

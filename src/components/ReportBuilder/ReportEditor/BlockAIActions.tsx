@@ -355,7 +355,10 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
-            placeholder={t('reportBuilder.blockAIActions.customInstruction', 'Custom instruction...')}
+            placeholder={t(
+              'reportBuilder.blockAIActions.customInstruction',
+              'Custom instruction...'
+            )}
             className="flex-1 px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg focus:ring-1 focus:ring-c-focus focus:border-c-accent"
             disabled={isProcessing}
           />

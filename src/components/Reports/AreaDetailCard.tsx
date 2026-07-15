@@ -299,7 +299,9 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
 
                   {data.interview.observations && data.interview.observations.length > 0 && (
                     <div className="observations">
-                      <h5>{t('reports.areaDetailCard.keyObservationsTitle', 'Key Observations')}:</h5>
+                      <h5>
+                        {t('reports.areaDetailCard.keyObservationsTitle', 'Key Observations')}:
+                      </h5>
                       <ul>
                         {data.interview.observations.map((obs, i) => (
                           <li key={i}>{obs}</li>

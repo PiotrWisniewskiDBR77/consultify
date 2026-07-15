@@ -262,17 +262,12 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleMarkSentInternal = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/mark-sent-internal`, {});
-      toast.success(
-        t('assessment.reportsTable.toastSentInternal', 'Marked as sent internally')
-      );
+      toast.success(t('assessment.reportsTable.toastSentInternal', 'Marked as sent internally'));
       await fetchReports();
     } catch (err) {
       console.error('[ReportsTable] Mark sent internal error:', err);
       toast.error(
-        t(
-          'assessment.reportsTable.toastSentInternalFailed',
-          'Failed to mark as sent internally'
-        )
+        t('assessment.reportsTable.toastSentInternalFailed', 'Failed to mark as sent internally')
       );
     }
   };
@@ -281,17 +276,12 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleMarkSentExternal = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/mark-sent-external`, {});
-      toast.success(
-        t('assessment.reportsTable.toastSentExternal', 'Marked as sent externally')
-      );
+      toast.success(t('assessment.reportsTable.toastSentExternal', 'Marked as sent externally'));
       await fetchReports();
     } catch (err) {
       console.error('[ReportsTable] Mark sent external error:', err);
       toast.error(
-        t(
-          'assessment.reportsTable.toastSentExternalFailed',
-          'Failed to mark as sent externally'
-        )
+        t('assessment.reportsTable.toastSentExternalFailed', 'Failed to mark as sent externally')
       );
     }
   };
@@ -300,9 +290,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleSendBack = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/send-back`, {});
-      toast.success(
-        t('assessment.reportsTable.toastSentBack', 'Report sent back for editing')
-      );
+      toast.success(t('assessment.reportsTable.toastSentBack', 'Report sent back for editing'));
       await fetchReports();
     } catch (err) {
       console.error('[ReportsTable] Send back error:', err);
@@ -807,10 +795,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             loading={isLoading}
             empty={{
               title: searchQuery
-                ? t(
-                    'assessment.reportsTable.empty.noMatchTitle',
-                    'No reports match your search'
-                  )
+                ? t('assessment.reportsTable.empty.noMatchTitle', 'No reports match your search')
                 : showAllStatuses
                   ? t('assessment.reportsTable.empty.noneTitle', 'No reports yet')
                   : t(

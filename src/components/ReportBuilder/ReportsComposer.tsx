@@ -77,7 +77,10 @@ const ProfilesList: React.FC = () => {
             {t('reportBuilder.reportsComposer.invocationProfiles', 'Invocation Profiles')}
           </h2>
           <p className="text-sm text-c-text-secondary mt-1">
-            {t('reportBuilder.reportsComposer.profilesDefineAvailableBlocksTemplatesAnd', 'Profiles define available blocks, templates, and settings for different contexts')}
+            {t(
+              'reportBuilder.reportsComposer.profilesDefineAvailableBlocksTemplatesAnd',
+              'Profiles define available blocks, templates, and settings for different contexts'
+            )}
           </p>
         </div>
       </div>
@@ -152,9 +155,14 @@ const ProfilesList: React.FC = () => {
         <div className="flex items-start gap-3">
           <Settings className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-700 dark:text-blue-300">
-            <p className="font-medium">{t('reportBuilder.reportsComposer.systemProfiles', 'System Profiles')}</p>
+            <p className="font-medium">
+              {t('reportBuilder.reportsComposer.systemProfiles', 'System Profiles')}
+            </p>
             <p className="mt-1 text-blue-600 dark:text-blue-400">
-              {t('reportBuilder.reportsComposer.profilesAreCurrentlyDefinedInSystem', 'Profiles are currently defined in system configuration. Custom profile creation will be available in a future version.')}
+              {t(
+                'reportBuilder.reportsComposer.profilesAreCurrentlyDefinedInSystem',
+                'Profiles are currently defined in system configuration. Custom profile creation will be available in a future version.'
+              )}
             </p>
           </div>
         </div>
@@ -217,7 +225,10 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
               {t('reportBuilder.reportsComposer.reportsComposer', 'Reports Composer')}
             </h1>
             <p className="text-c-text-secondary mt-1">
-              {t('reportBuilder.reportsComposer.manageReportBlocksAndTemplates', 'Manage report blocks and templates')}
+              {t(
+                'reportBuilder.reportsComposer.manageReportBlocksAndTemplates',
+                'Manage report blocks and templates'
+              )}
             </p>
           </div>
         </div>

@@ -186,9 +186,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
         >
           <thead>
             <tr>
-              <th className="level-header">
-                {t('reports.areaMatrixTable.levelLabel', 'Level')}
-              </th>
+              <th className="level-header">{t('reports.areaMatrixTable.levelLabel', 'Level')}</th>
               {BUSINESS_AREAS.map((area) => (
                 <th
                   key={area.id}
@@ -271,9 +269,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               })}
             </tr>
             <tr className="summary-row gap-row">
-              <td className="summary-label-cell">
-                {t('reports.areaMatrixTable.gapLabel', 'Gap')}
-              </td>
+              <td className="summary-label-cell">{t('reports.areaMatrixTable.gapLabel', 'Gap')}</td>
               {BUSINESS_AREAS.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;

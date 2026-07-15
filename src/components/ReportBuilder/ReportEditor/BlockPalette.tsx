@@ -507,7 +507,9 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-c-border-subtle">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-c-text">{t('reportBuilder.blockPalette.addBlock', 'Add Block')}</h2>
+            <h2 className="text-xl font-bold text-c-text">
+              {t('reportBuilder.blockPalette.addBlock', 'Add Block')}
+            </h2>
             <button
               onClick={onClose}
               className="p-2 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
@@ -587,7 +589,10 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                       </h3>
                       {!isCompatible && (
                         <div className="mt-1 text-[11px] text-c-text-secondary">
-                          {t('reportBuilder.blockPalette.notAvailableForThisContext', 'Not available for this context')}
+                          {t(
+                            'reportBuilder.blockPalette.notAvailableForThisContext',
+                            'Not available for this context'
+                          )}
                         </div>
                       )}
                       <p className="text-sm text-c-text-secondary mt-1 line-clamp-2">

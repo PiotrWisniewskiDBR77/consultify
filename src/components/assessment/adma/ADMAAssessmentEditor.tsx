@@ -711,9 +711,13 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                       </span>
                     </div>
                     <p className="text-sm text-c-warning">
-                      {t('assessment.adma.editor.gapMessage', 'Gap: {{gap}} levels to reach target', {
-                        gap: currentDimensionState.target - currentDimensionState.current,
-                      })}
+                      {t(
+                        'assessment.adma.editor.gapMessage',
+                        'Gap: {{gap}} levels to reach target',
+                        {
+                          gap: currentDimensionState.target - currentDimensionState.current,
+                        }
+                      )}
                     </p>
                   </div>
                 )}

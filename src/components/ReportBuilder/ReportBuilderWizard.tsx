@@ -696,7 +696,10 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
           <p className="mt-1 text-c-text-secondary ml-[52px]">
             {report
               ? report.title
-              : t('reportBuilder.wizard.createAProfessionalReportBasedOn', 'Create a professional report based on assessment data')}
+              : t(
+                  'reportBuilder.wizard.createAProfessionalReportBasedOn',
+                  'Create a professional report based on assessment data'
+                )}
           </p>
         </div>
         {report?.id && (

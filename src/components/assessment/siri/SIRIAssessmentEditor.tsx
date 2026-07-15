@@ -715,9 +715,13 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                       </span>
                     </div>
                     <p className="text-sm text-c-warning">
-                      {t('assessment.siri.editor.gapMessage', 'Gap: {{gap}} levels to reach target', {
-                        gap: currentDimensionState.target - currentDimensionState.current,
-                      })}
+                      {t(
+                        'assessment.siri.editor.gapMessage',
+                        'Gap: {{gap}} levels to reach target',
+                        {
+                          gap: currentDimensionState.target - currentDimensionState.current,
+                        }
+                      )}
                     </p>
                   </div>
                 )}

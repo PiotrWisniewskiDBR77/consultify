@@ -183,9 +183,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
         {showBenchmark && (
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-slate-400" />
-            <span className="text-sm text-slate-600 dark:text-slate-400">
-              Benchmark
-            </span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">Benchmark</span>
           </div>
         )}
       </div>

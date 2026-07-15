@@ -666,10 +666,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   if (!currentSession) {
     return (
       <div className="p-6">
-        <LoadingState
-          template="panel"
-          label={t('discoveryToolsMain.toolWorkspace.loadingTool')}
-        />
+        <LoadingState template="panel" label={t('discoveryToolsMain.toolWorkspace.loadingTool')} />
       </div>
     );
   }
@@ -816,7 +813,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   onChange={(e) => setReviewDecisionOwnerId(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
-                  <option value="">{t('discoveryToolsMain.toolWorkspace.selectPlaceholder')}</option>
+                  <option value="">
+                    {t('discoveryToolsMain.toolWorkspace.selectPlaceholder')}
+                  </option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name || user.email || user.id}
@@ -847,9 +846,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
                   <option value="low">{t('discoveryToolsMain.toolWorkspace.priorityLow')}</option>
-                  <option value="medium">{t('discoveryToolsMain.toolWorkspace.priorityMedium')}</option>
+                  <option value="medium">
+                    {t('discoveryToolsMain.toolWorkspace.priorityMedium')}
+                  </option>
                   <option value="high">{t('discoveryToolsMain.toolWorkspace.priorityHigh')}</option>
-                  <option value="critical">{t('discoveryToolsMain.toolWorkspace.priorityCritical')}</option>
+                  <option value="critical">
+                    {t('discoveryToolsMain.toolWorkspace.priorityCritical')}
+                  </option>
                 </select>
               </div>
             </div>
