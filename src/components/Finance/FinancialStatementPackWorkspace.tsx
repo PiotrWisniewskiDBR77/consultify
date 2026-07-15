@@ -345,8 +345,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   onCreateAnalysisFromPack,
   onAddFile,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [detail, setDetail] = useState<PackDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -607,7 +606,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.04]"
         >
           <RefreshCw size={12} />
-          {isPl ? 'Ponów' : 'Retry'}
+          {t('finance.pack.retry', 'Retry')}
         </button>
       </div>
     );
@@ -646,16 +645,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 }`}
               >
                 {packRow.status === 'APPROVED'
-                  ? isPl
-                    ? 'Gotowy'
-                    : 'Ready'
+                  ? t('finance.pack.statusReady', 'Ready')
                   : packRow.status === 'REVIEW'
-                    ? isPl
-                      ? 'Do naprawy'
-                      : 'Recovery'
-                    : isPl
-                      ? 'Szkic'
-                      : 'Draft'}
+                    ? t('finance.pack.statusRecovery', 'Recovery')
+                    : t('finance.pack.statusDraft', 'Draft')}
               </span>
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -663,7 +656,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               <span>{packRow.currency}</span>
               <span>{packRow.scaling}</span>
               <span>
-                {childStatements.length} {isPl ? 'dok.' : 'docs'}
+                {childStatements.length} {t('finance.pack.docsAbbrev', 'docs')}
               </span>
             </div>
           </div>
@@ -675,7 +668,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
               >
                 <Calculator size={12} />
-                <span className="hidden sm:inline">{isPl ? 'Model' : 'Model'}</span>
+                <span className="hidden sm:inline">Model</span>
               </button>
             )}
             {onCreateAnalysisFromPack && packRow.isWorkable && (
@@ -685,7 +678,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
               >
                 <BarChart3 size={12} />
-                <span className="hidden sm:inline">{isPl ? 'Analiza' : 'Analysis'}</span>
+                <span className="hidden sm:inline">{t('finance.pack.analysisLabel', 'Analysis')}</span>
               </button>
             )}
           </div>
@@ -734,7 +727,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   </span>
                 )}
                 {!hasDocument && (
-                  <span className="text-[9px] font-normal italic">{isPl ? 'brak' : 'n/a'}</span>
+                  <span className="text-[9px] font-normal italic">
+                    {t('finance.pack.notApplicable', 'n/a')}
+                  </span>
                 )}
               </button>
             );
@@ -776,11 +771,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             type="button"
             onClick={toggleLineage}
             className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]"
-            title={
-              isPl
-                ? 'Ślad źródła (skąd ta liczba)'
-                : 'Source lineage (where this number comes from)'
-            }
+            title={t(
+              'finance.pack.sourceLineageTooltip',
+              'Source lineage (where this number comes from)'
+            )}
           >
             <Search size={11} />
             {showLineage ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
@@ -792,7 +786,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           {/* Aggregation control */}
           <div className="flex items-center gap-1">
             <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-              {isPl ? 'Agg' : 'Agg'}
+              Agg
             </span>
             <div className="inline-flex items-center rounded-md border border-slate-200/70 bg-slate-50/80 p-0.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
               {([1, 2, 3] as const).map((level) => {
@@ -825,10 +819,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 : 'text-slate-500 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]'
             }`}
             aria-pressed={showSidePanel}
-            title={isPl ? 'Panel szczegółów' : 'Details panel'}
+            title={t('finance.pack.detailsPanelTooltip', 'Details panel')}
           >
             {showSidePanel ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-            <span className="hidden lg:inline">{isPl ? 'Szczegóły' : 'Details'}</span>
+            <span className="hidden lg:inline">{t('finance.pack.detailsLabel', 'Details')}</span>
           </button>
         </div>
 
@@ -837,7 +831,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           <div className="border-t border-slate-200/50 px-4 py-2 dark:border-white/[0.05]">
             <StatementValidationBadges
               validations={packValidations}
-              emptyLabel={isPl ? 'Brak walidacji pakietu.' : 'No pack validations.'}
+              emptyLabel={t('finance.pack.noValidations', 'No pack validations.')}
             />
           </div>
         )}
@@ -847,13 +841,14 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           <div className="border-t border-slate-200/50 dark:border-white/[0.05]">
             {lineageLoading ? (
               <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPl ? 'Ładowanie śladu źródła…' : 'Loading source lineage…'}
+                {t('finance.pack.loadingLineage', 'Loading source lineage…')}
               </div>
             ) : !lineage || lineage.entries.length === 0 ? (
               <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPl
-                  ? 'Brak śladu źródła — pakiet nie ma jeszcze przeliczonych wskaźników/reconcile/wyceny.'
-                  : 'No lineage yet — this pack has no computed ratios/reconcile/valuation.'}
+                {t(
+                  'finance.pack.noLineage',
+                  'No lineage yet — this pack has no computed ratios/reconcile/valuation.'
+                )}
               </div>
             ) : (
               <div className="max-h-64 divide-y divide-slate-200/40 overflow-y-auto dark:divide-white/[0.04]">
@@ -872,14 +867,14 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     </div>
                     {entry.sourcePack && (
                       <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
-                        {isPl ? 'Skąd: ' : 'Source: '}
+                        {t('finance.pack.sourcePrefix', 'Source: ')}
                         {entry.sourcePack.entityName || entry.sourcePack.packId}
                         {entry.sourcePack.periodLabel ? ` · ${entry.sourcePack.periodLabel}` : ''}
                       </div>
                     )}
                     {entry.assumptions.length > 0 && (
                       <div className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-                        {isPl ? 'Założenia: ' : 'Assumptions: '}
+                        {t('finance.pack.assumptionsPrefix', 'Assumptions: ')}
                         {entry.assumptions.map((a) => `${a.key}=${String(a.value)}`).join(', ')}
                       </div>
                     )}
@@ -889,7 +884,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             )}
             {lineage && lineage.assumptions.length > 0 && (
               <div className="border-t border-slate-200/40 px-4 py-2 text-[10px] text-slate-500 dark:border-white/[0.04] dark:text-slate-400">
-                {isPl ? 'Założenia sekcji: ' : 'Section assumptions: '}
+                {t('finance.pack.sectionAssumptionsPrefix', 'Section assumptions: ')}
                 {lineage.assumptions.map((a) => a.key).join(', ')}
               </div>
             )}
@@ -929,19 +924,17 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     setSelectedRow(row);
                     if (!showSidePanel) setShowSidePanel(true);
                   }}
-                  lineLabel={isPl ? 'Pozycja' : 'Line item'}
-                  valueLabel={isPl ? 'Wartość' : 'Value'}
-                  mappingLabel={isPl ? 'Mapowanie' : 'Mapping'}
-                  originLabel={isPl ? 'Pochodzenie' : 'Origin'}
+                  lineLabel={t('finance.pack.lineItemLabel', 'Line item')}
+                  valueLabel={t('finance.pack.valueLabel', 'Value')}
+                  mappingLabel={t('finance.pack.mappingLabel', 'Mapping')}
+                  originLabel={t('finance.pack.originLabel', 'Origin')}
                   currency={packRow.currency}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center gap-2 py-12">
                   <FileText size={20} className="text-slate-600" />
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {isPl
-                      ? 'Nie udało się załadować tabeli dokumentu.'
-                      : 'Could not load document table.'}
+                    {t('finance.pack.couldNotLoadTable', 'Could not load document table.')}
                   </div>
                   <button
                     type="button"
@@ -949,7 +942,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 px-3 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300"
                   >
                     <RefreshCw size={10} />
-                    {isPl ? 'Ponów' : 'Retry'}
+                    {t('finance.pack.retry', 'Retry')}
                   </button>
                 </div>
               )}
@@ -978,28 +971,26 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   explain={selectedExplain}
                   selectedRow={selectedRow}
                   currency={packRow.currency}
-                  title={isPl ? 'Szczegóły pozycji' : 'Line item details'}
-                  emptyLabel={
-                    isPl
-                      ? 'Kliknij wiersz, aby zobaczyć szczegóły pozycji.'
-                      : 'Select a row to see line item details.'
-                  }
-                  mappingLabel={isPl ? 'Mapowanie' : 'Mapping'}
-                  originLabel={isPl ? 'Pochodzenie' : 'Origin'}
-                  confidenceLabel={isPl ? 'Pewność' : 'Confidence'}
-                  sourceLabel={isPl ? 'Źródło' : 'Source'}
-                  noEvidenceLabel={
-                    isPl
-                      ? 'Brak zapisanych evidence dla tej pozycji.'
-                      : 'No stored evidence for this value.'
-                  }
+                  title={t('finance.pack.lineItemDetailsTitle', 'Line item details')}
+                  emptyLabel={t(
+                    'finance.pack.selectRowHint',
+                    'Select a row to see line item details.'
+                  )}
+                  mappingLabel={t('finance.pack.mappingLabel', 'Mapping')}
+                  originLabel={t('finance.pack.originLabel', 'Origin')}
+                  confidenceLabel={t('finance.pack.confidenceLabel', 'Confidence')}
+                  sourceLabel={t('finance.pack.sourceLabel', 'Source')}
+                  noEvidenceLabel={t(
+                    'finance.pack.noEvidence',
+                    'No stored evidence for this value.'
+                  )}
                 />
               ) : (
                 /* Source files list when no row selected */
                 <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/90">
                   <div className="flex-shrink-0 border-b border-slate-200/70 px-3 py-2.5 dark:border-white/[0.06]">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-                      {isPl ? 'Pliki źródłowe' : 'Source files'}
+                      {t('finance.pack.sourceFilesLabel', 'Source files')}
                     </div>
                     <div className="mt-2 flex items-center gap-1.5">
                       <button
@@ -1008,7 +999,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                         className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
                       >
                         <Upload size={12} />
-                        {isPl ? 'Dodaj plik' : 'Add file'}
+                        {t('finance.pack.addFile', 'Add file')}
                       </button>
                       <button
                         type="button"
@@ -1020,10 +1011,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                           }
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
-                        title={isPl ? 'Przelicz ponownie' : 'Recalculate'}
+                        title={t('finance.pack.recalculateTooltip', 'Recalculate')}
                       >
                         <RotateCcw size={12} />
-                        {isPl ? 'Przelicz' : 'Recalc'}
+                        {t('finance.pack.recalcShort', 'Recalc')}
                       </button>
                     </div>
                   </div>
@@ -1070,7 +1061,8 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                                     </span>
                                     {file.total > 0 && (
                                       <span className="tabular-nums">
-                                        {file.mapped}/{file.total} {isPl ? 'linii' : 'lines'}
+                                        {file.mapped}/{file.total}{' '}
+                                        {t('finance.pack.linesAbbrev', 'lines')}
                                       </span>
                                     )}
                                   </div>
@@ -1094,16 +1086,17 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                       <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
                         <FileText size={20} className="text-slate-600 dark:text-slate-500" />
                         <div className="text-[12px] text-slate-500 dark:text-slate-400">
-                          {isPl ? 'Brak plików źródłowych.' : 'No source files.'}
+                          {t('finance.pack.noSourceFiles', 'No source files.')}
                         </div>
                       </div>
                     )}
                   </div>
                   <div className="border-t border-slate-200/50 px-4 py-2 dark:border-white/[0.05]">
                     <div className="text-[10px] text-slate-600 dark:text-slate-500">
-                      {isPl
-                        ? 'Kliknij wiersz w tabeli, aby zobaczyć szczegóły pozycji.'
-                        : 'Click a table row to see line item details.'}
+                      {t(
+                        'finance.pack.clickRowHint',
+                        'Click a table row to see line item details.'
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1115,9 +1108,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/70 py-12 dark:border-white/[0.08]">
           <FileText size={20} className="text-slate-600" />
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPl
-              ? 'Brak wybranego dokumentu dla tej tabeli.'
-              : 'No document selected for this table.'}
+            {t('finance.pack.noDocumentSelected', 'No document selected for this table.')}
           </div>
         </div>
       )}
