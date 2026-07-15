@@ -27745,6 +27745,30 @@
       "createTasksButton": "Utwórz {{value}} {{word}}",
       "taskWordSingular": "zadanie",
       "taskWordPlural": "zadań"
+    },
+    "workSurface": {
+      "processSteps": "Kroki procesu",
+      "addStep": "Dodaj krok",
+      "stepName": "Nazwa kroku",
+      "actor": "Aktor",
+      "system": "System",
+      "minutes": "Min",
+      "cost": "Koszt",
+      "automation": "Automatyzacja",
+      "notes": "Uwagi",
+      "emptyTable": "Brak kroków. Kliknij „Dodaj krok” aby rozpocząć.",
+      "moveUp": "Przesuń w górę",
+      "moveDown": "Przesuń w dół",
+      "namePlaceholder": "Nazwa",
+      "rolePlaceholder": "Rola",
+      "systemPlaceholder": "System",
+      "notesPlaceholder": "Uwagi",
+      "remove": "Usuń",
+      "flowTitle": "Przepływ procesu",
+      "emptyFlow": "Dodaj kroki w tabeli, aby zobaczyć przepływ",
+      "start": "Start",
+      "unnamed": "(Bez nazwy)",
+      "end": "Koniec"
     }
   },
   "ssoSelfService": {

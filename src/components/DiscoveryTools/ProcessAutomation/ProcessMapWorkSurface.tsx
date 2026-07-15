@@ -149,7 +149,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
       <div className="flex-[6] min-w-0 flex flex-col rounded-xl border border-slate-700 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-            {lang === 'pl' ? 'Kroki procesu' : 'Process Steps'}
+            {t('processFlow.workSurface.processSteps', 'Process Steps')}
           </h3>
           {!locked && (
             <button
@@ -157,7 +157,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
             >
               <Plus size={14} />
-              {lang === 'pl' ? 'Dodaj krok' : 'Add step'}
+              {t('processFlow.workSurface.addStep', 'Add step')}
             </button>
           )}
         </div>
@@ -172,34 +172,34 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                   #
                 </th>
                 <th className="min-w-[120px] px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
-                  {lang === 'pl' ? 'Nazwa kroku' : 'Step Name'}
+                  {t('processFlow.workSurface.stepName', 'Step Name')}
                 </th>
                 <th className="min-w-[90px] px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
-                  {lang === 'pl' ? 'Aktor' : 'Actor/Role'}
+                  {t('processFlow.workSurface.actor', 'Actor/Role')}
                 </th>
                 <th className="min-w-[90px] px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
-                  {lang === 'pl' ? 'System' : 'System/Tool'}
+                  {t('processFlow.workSurface.system', 'System/Tool')}
                 </th>
                 <th className="w-20 px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
                   <span className="flex items-center gap-1">
                     <Clock size={12} />
-                    {lang === 'pl' ? 'Min' : 'Min'}
+                    {t('processFlow.workSurface.minutes', 'Min')}
                   </span>
                 </th>
                 <th className="w-20 px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
                   <span className="flex items-center gap-1">
                     <DollarSign size={12} />
-                    {lang === 'pl' ? 'Koszt' : 'Cost'}
+                    {t('processFlow.workSurface.cost', 'Cost')}
                   </span>
                 </th>
                 <th className="min-w-[100px] px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
                   <span className="flex items-center gap-1">
                     <Cpu size={12} />
-                    {lang === 'pl' ? 'Automatyzacja' : 'Automation'}
+                    {t('processFlow.workSurface.automation', 'Automation')}
                   </span>
                 </th>
                 <th className="min-w-[80px] px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
-                  {lang === 'pl' ? 'Uwagi' : 'Notes'}
+                  {t('processFlow.workSurface.notes', 'Notes')}
                 </th>
                 {!locked && (
                   <th className="w-16 px-2 py-2 text-left text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700" />
@@ -213,9 +213,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                     colSpan={locked ? 9 : 10}
                     className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                   >
-                    {lang === 'pl'
-                      ? 'Brak kroków. Kliknij „Dodaj krok” aby rozpocząć.'
-                      : 'No steps yet. Click "Add step" to start.'}
+                    {t('processFlow.workSurface.emptyTable', 'No steps yet. Click "Add step" to start.')}
                   </td>
                 </tr>
               ) : (
@@ -232,7 +230,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                             onClick={() => handleMoveUp(step.id)}
                             disabled={idx === 0}
                             className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                            title={lang === 'pl' ? 'Przesuń w górę' : 'Move up'}
+                            title={t('processFlow.workSurface.moveUp', 'Move up')}
                           >
                             <ChevronUp size={14} className="text-slate-600" />
                           </button>
@@ -240,7 +238,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                             onClick={() => handleMoveDown(step.id)}
                             disabled={idx === sortedSteps.length - 1}
                             className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                            title={lang === 'pl' ? 'Przesuń w dół' : 'Move down'}
+                            title={t('processFlow.workSurface.moveDown', 'Move down')}
                           >
                             <ChevronDown size={14} className="text-slate-600" />
                           </button>
@@ -253,7 +251,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         type="text"
                         value={step.name}
                         onChange={(e) => handleUpdateStep(step.id, { name: e.target.value })}
-                        placeholder={lang === 'pl' ? 'Nazwa' : 'Name'}
+                        placeholder={t('processFlow.workSurface.namePlaceholder', 'Name')}
                         className="w-full min-w-[100px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
@@ -263,7 +261,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         type="text"
                         value={step.actor}
                         onChange={(e) => handleUpdateStep(step.id, { actor: e.target.value })}
-                        placeholder={lang === 'pl' ? 'Rola' : 'Role'}
+                        placeholder={t('processFlow.workSurface.rolePlaceholder', 'Role')}
                         className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
@@ -273,7 +271,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         type="text"
                         value={step.system}
                         onChange={(e) => handleUpdateStep(step.id, { system: e.target.value })}
-                        placeholder={lang === 'pl' ? 'System' : 'System'}
+                        placeholder={t('processFlow.workSurface.systemPlaceholder', 'System')}
                         className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
@@ -332,7 +330,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         type="text"
                         value={step.notes}
                         onChange={(e) => handleUpdateStep(step.id, { notes: e.target.value })}
-                        placeholder={lang === 'pl' ? 'Uwagi' : 'Notes'}
+                        placeholder={t('processFlow.workSurface.notesPlaceholder', 'Notes')}
                         className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
@@ -342,7 +340,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         <button
                           onClick={() => handleRemoveStep(step.id)}
                           className="p-1.5 rounded text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors"
-                          title={lang === 'pl' ? 'Usuń' : 'Remove'}
+                          title={t('processFlow.workSurface.remove', 'Remove')}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -360,22 +358,20 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
       <div className="flex-[4] min-w-0 flex flex-col rounded-xl border border-slate-700 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-            {lang === 'pl' ? 'Przepływ procesu' : 'Process Flow'}
+            {t('processFlow.workSurface.flowTitle', 'Process Flow')}
           </h3>
         </div>
         <div className="flex-1 overflow-auto p-4 flex flex-col items-center">
           {sortedSteps.length === 0 ? (
             <div className="flex flex-col items-center justify-center flex-1 text-slate-500 dark:text-slate-400 text-sm">
               <Cpu size={32} className="mb-2 opacity-50" />
-              {lang === 'pl'
-                ? 'Dodaj kroki w tabeli, aby zobaczyć przepływ'
-                : 'Add steps in the table to see the flow'}
+              {t('processFlow.workSurface.emptyFlow', 'Add steps in the table to see the flow')}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-0 w-full max-w-[200px]">
               {/* Start */}
               <div className="w-full px-3 py-2 rounded-lg border-2 border-dashed border-slate-400 dark:border-navy-500 bg-slate-100 dark:bg-navy-800/50 text-xs font-medium text-slate-600 dark:text-slate-400 text-center">
-                {lang === 'pl' ? 'Start' : 'Start'}
+                {t('processFlow.workSurface.start', 'Start')}
               </div>
               <div className="flex flex-col items-center py-1">
                 <ArrowDown size={16} className="text-slate-600" />
@@ -388,7 +384,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                     }`}
                   >
                     <div className="font-medium truncate">
-                      {step.name || (lang === 'pl' ? '(Bez nazwy)' : '(Unnamed)')}
+                      {step.name || t('processFlow.workSurface.unnamed', '(Unnamed)')}
                     </div>
                     {step.actor && (
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
@@ -413,7 +409,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
               </div>
               {/* End */}
               <div className="w-full px-3 py-2 rounded-lg border-2 border-dashed border-slate-400 dark:border-navy-500 bg-slate-100 dark:bg-navy-800/50 text-xs font-medium text-slate-600 dark:text-slate-400 text-center">
-                {lang === 'pl' ? 'Koniec' : 'End'}
+                {t('processFlow.workSurface.end', 'End')}
               </div>
             </div>
           )}

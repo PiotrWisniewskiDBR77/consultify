@@ -26701,6 +26701,30 @@
       "createTasksButton": "Create {{value}} {{word}}",
       "taskWordSingular": "task",
       "taskWordPlural": "tasks"
+    },
+    "workSurface": {
+      "processSteps": "Process Steps",
+      "addStep": "Add step",
+      "stepName": "Step Name",
+      "actor": "Actor/Role",
+      "system": "System/Tool",
+      "minutes": "Min",
+      "cost": "Cost",
+      "automation": "Automation",
+      "notes": "Notes",
+      "emptyTable": "No steps yet. Click \"Add step\" to start.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "namePlaceholder": "Name",
+      "rolePlaceholder": "Role",
+      "systemPlaceholder": "System",
+      "notesPlaceholder": "Notes",
+      "remove": "Remove",
+      "flowTitle": "Process Flow",
+      "emptyFlow": "Add steps in the table to see the flow",
+      "start": "Start",
+      "unnamed": "(Unnamed)",
+      "end": "End"
     }
   },
   "ssoSelfService": {
