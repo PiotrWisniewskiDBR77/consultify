@@ -20,6 +20,7 @@ import { localizeLadder } from './index';
 import { buildW2MoveSequence, rankRisks } from './moveValidator';
 import { assessRiskEvidence, buildRiskStaircasePromptRules } from './riskInsightStaircase';
 import { buildRiskMatrix, buildRiskMatrixPromptRules } from './riskMatrixEngine';
+import { buildRiskQuestionBankPromptRules } from './riskQuestionBank';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -131,6 +132,8 @@ ${rules.map((r) => `- ${r}`).join('\n')}
 ${buildRiskMatrixPromptRules(isPolish ? 'pl' : 'en')}
 
 ${buildRiskStaircasePromptRules(isPolish ? 'pl' : 'en')}
+
+${buildRiskQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
 
 W2 STRUCTURE (mandatory):
 1. "summary.verdict" — answer-first, 1-2 sentences: what the risk landscape means for the decision — which assumption or exposure gates the plan.

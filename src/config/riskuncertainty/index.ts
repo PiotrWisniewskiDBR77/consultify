@@ -8,6 +8,9 @@
  *   - riskMatrixEngine.ts    : 2x2 probability x impact zone classification + response map (O3)
  *   - riskInsightStaircase.ts: fact->interpretation->implication staircase + invented-number guard
  *                              + risk-vs-uncertainty (known/unknown-unknown) discipline (O3)
+ *   - riskQuestionBank.ts    : dedicated laddered intake q-bank per risk — L1 identification ->
+ *                              L2 FORCED quantification (numbers, not "high/low") -> L3 forced
+ *                              response strategy -> L4 owner+trigger+RAID readiness (O3)
  *   - conclusionPrompts.ts   : AI prompt builders grounded in the engine output
  *   - raidHandoff.ts         : Risk → Initiative RAID handoff with tool-session provenance
  *
@@ -29,6 +32,7 @@ export * from './moveValidator';
 export * from './raidHandoff';
 export * from './riskInsightStaircase';
 export * from './riskMatrixEngine';
+export * from './riskQuestionBank';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
