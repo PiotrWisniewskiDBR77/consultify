@@ -27377,6 +27377,33 @@
         "Quality control plan"
       ],
       "riskCount": "{{count}} risks"
+    },
+    "aiConsultantPanel": {
+      "systemPromptNoun": {
+        "initiative": "initiative",
+        "insight": "insight"
+      },
+      "artifactContextLabel": "Artifact context",
+      "systemPromptTemplate": "You are an AI consultant working on the whole {{noun}}{{titlePart}}. You have access to the full context (all sections + metadata). Help the user fill empty fields, synthesize, run quality checks, and propose next steps. Answer concisely and concretely.{{ctx}}",
+      "kickoffNoun": {
+        "initiative": "this initiative",
+        "insight": "this insight"
+      },
+      "kickoffTemplate": "Hi! I'm here to help you with {{noun}}{{titlePartEn}}. What would you like to work on — fill the gaps, synthesize, or run a quality check?",
+      "actionPrompt": {
+        "fillEmpty": "Fill in the empty and weak fields of this {{nounEn}} with well-reasoned draft content based on the existing context. Call out which fields you are completing.",
+        "synthesize": "Synthesize this {{nounEn}}: surface the key themes, tensions, and the through-line across all sections.",
+        "qualityCheck": "Do a quality check of this {{nounEn}}: what's missing, weak, contradictory, or not client-ready? Give a prioritized list.",
+        "continue": "Continue where we left off on this {{nounEn}} — what's the most valuable next step, and help me do it."
+      },
+      "closeLabel": "Close",
+      "quickPrompts": [
+        "Fill the empty fields",
+        "Synthesize everything",
+        "Run a quality check",
+        "What's next?"
+      ],
+      "chatUnavailableMessage": "AI chat is temporarily unavailable. Use the actions above."
     }
   }
 }

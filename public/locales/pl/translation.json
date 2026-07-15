@@ -28453,6 +28453,33 @@
         "Plan kontroli jakości"
       ],
       "riskCount": "{{count}} ryzyk"
+    },
+    "aiConsultantPanel": {
+      "systemPromptNoun": {
+        "initiative": "inicjatywy",
+        "insight": "insightu"
+      },
+      "artifactContextLabel": "Kontekst artefaktu",
+      "systemPromptTemplate": "Jesteś konsultantem AI pracującym nad całym artefaktem {{noun}}{{titlePart}}. Masz dostęp do pełnego kontekstu (wszystkie sekcje + metadane). Pomagaj: uzupełniaj puste pola, syntetyzuj, kontroluj jakość, proponuj kolejne kroki. Odpowiadaj zwięźle i konkretnie.{{ctx}}",
+      "kickoffNoun": {
+        "initiative": "tą inicjatywą",
+        "insight": "tym insightem"
+      },
+      "kickoffTemplate": "Cześć! Pracuję z Tobą nad {{noun}}{{titlePart}}. Co chcesz dopracować — uzupełnić luki, zsyntetyzować całość, czy sprawdzić jakość?",
+      "actionPrompt": {
+        "fillEmpty": "Uzupełnij puste i słabe pola {{nounPlLoc}} dobrze uzasadnioną propozycją treści, opartą na istniejącym kontekście. Wskaż, które pola uzupełniasz.",
+        "synthesize": "Zsyntetyzuj tę {{nounPl}}: wydobądź kluczowe tematy, napięcia i myśl przewodnią spinającą wszystkie sekcje.",
+        "qualityCheck": "Zrób kontrolę jakości tej {{nounPl}}: czego brakuje, co jest słabe, sprzeczne lub niegotowe dla klienta? Podaj listę priorytetową.",
+        "continue": "Kontynuujmy pracę nad tą {{nounPl}} od miejsca, w którym skończyliśmy — jaki jest najbardziej wartościowy następny krok i pomóż mi go wykonać."
+      },
+      "closeLabel": "Zamknij",
+      "quickPrompts": [
+        "Uzupełnij puste pola",
+        "Zsyntetyzuj całość",
+        "Sprawdź jakość",
+        "Co dalej?"
+      ],
+      "chatUnavailableMessage": "Czat AI jest chwilowo niedostępny. Skorzystaj z akcji powyżej."
     }
   }
 }

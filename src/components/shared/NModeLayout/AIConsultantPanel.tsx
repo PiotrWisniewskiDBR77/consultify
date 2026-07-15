@@ -28,7 +28,10 @@ import { CheckCircle2, Loader2, Sparkles, Wand2, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
+import i18n from '@/i18n';
 import type { WorkspaceContext } from '@/types/workspace';
+
+type TFunc = (key: string, opts?: Record<string, unknown>) => string;
 
 // ============================================================================
 // Types
@@ -79,57 +82,35 @@ function buildSystemPrompt(
   artifactType: AIConsultantPanelProps['artifactType'],
   artifactTitle: string | undefined,
   contextText: string | undefined,
-  isPolish: boolean
+  t: TFunc
 ): string {
-  const noun =
-    artifactType === 'initiative'
-      ? isPolish
-        ? 'inicjatywy'
-        : 'initiative'
-      : isPolish
-        ? 'insightu'
-        : 'insight';
+  const noun = t(`sharedComponents.aiConsultantPanel.systemPromptNoun.${artifactType}`);
   const titlePart = artifactTitle ? ` "${artifactTitle}"` : '';
   const ctx =
     contextText && contextText.trim()
-      ? `\n\n${isPolish ? 'Kontekst artefaktu' : 'Artifact context'}:\n${contextText.trim()}`
+      ? `\n\n${t('sharedComponents.aiConsultantPanel.artifactContextLabel')}:\n${contextText.trim()}`
       : '';
 
-  if (isPolish) {
-    return (
-      `Jesteś konsultantem AI pracującym nad całym artefaktem ${noun}${titlePart}. ` +
-      `Masz dostęp do pełnego kontekstu (wszystkie sekcje + metadane). ` +
-      `Pomagaj: uzupełniaj puste pola, syntetyzuj, kontroluj jakość, proponuj kolejne kroki. ` +
-      `Odpowiadaj zwięźle i konkretnie.${ctx}`
-    );
-  }
-  return (
-    `You are an AI consultant working on the whole ${noun}${titlePart}. ` +
-    `You have access to the full context (all sections + metadata). ` +
-    `Help the user fill empty fields, synthesize, run quality checks, and propose next steps. ` +
-    `Answer concisely and concretely.${ctx}`
-  );
+  return t('sharedComponents.aiConsultantPanel.systemPromptTemplate', {
+    noun,
+    titlePart,
+    ctx,
+  });
 }
 
 function buildKickoff(
   artifactType: AIConsultantPanelProps['artifactType'],
   artifactTitle: string | undefined,
-  isPolish: boolean
+  t: TFunc
 ): string {
   const titlePart = artifactTitle ? ` „${artifactTitle}”` : '';
   const titlePartEn = artifactTitle ? ` "${artifactTitle}"` : '';
-  const noun =
-    artifactType === 'initiative'
-      ? isPolish
-        ? 'tą inicjatywą'
-        : 'this initiative'
-      : isPolish
-        ? 'tym insightem'
-        : 'this insight';
-  if (isPolish) {
-    return `Cześć! Pracuję z Tobą nad ${noun}${titlePart}. Co chcesz dopracować — uzupełnić luki, zsyntetyzować całość, czy sprawdzić jakość?`;
-  }
-  return `Hi! I'm here to help you with ${noun}${titlePartEn}. What would you like to work on — fill the gaps, synthesize, or run a quality check?`;
+  const noun = t(`sharedComponents.aiConsultantPanel.kickoffNoun.${artifactType}`);
+  return t('sharedComponents.aiConsultantPanel.kickoffTemplate', {
+    noun,
+    titlePart,
+    titlePartEn,
+  });
 }
 
 /**
@@ -145,7 +126,7 @@ function buildKickoff(
 function buildActionPrompt(
   actionId: string,
   artifactType: AIConsultantPanelProps['artifactType'],
-  isPolish: boolean
+  t: TFunc
 ): string | null {
   const nounEn = artifactType === 'initiative' ? 'initiative' : 'insight';
   const nounPl = artifactType === 'initiative' ? 'inicjatywę' : 'insight';
@@ -153,21 +134,19 @@ function buildActionPrompt(
 
   switch (actionId) {
     case 'fill-empty':
-      return isPolish
-        ? `Uzupełnij puste i słabe pola ${nounPlLoc} dobrze uzasadnioną propozycją treści, opartą na istniejącym kontekście. Wskaż, które pola uzupełniasz.`
-        : `Fill in the empty and weak fields of this ${nounEn} with well-reasoned draft content based on the existing context. Call out which fields you are completing.`;
+      return t('sharedComponents.aiConsultantPanel.actionPrompt.fillEmpty', {
+        nounEn,
+        nounPlLoc,
+      });
     case 'synthesize':
-      return isPolish
-        ? `Zsyntetyzuj tę ${nounPl}: wydobądź kluczowe tematy, napięcia i myśl przewodnią spinającą wszystkie sekcje.`
-        : `Synthesize this ${nounEn}: surface the key themes, tensions, and the through-line across all sections.`;
+      return t('sharedComponents.aiConsultantPanel.actionPrompt.synthesize', { nounEn, nounPl });
     case 'quality-check':
-      return isPolish
-        ? `Zrób kontrolę jakości tej ${nounPl}: czego brakuje, co jest słabe, sprzeczne lub niegotowe dla klienta? Podaj listę priorytetową.`
-        : `Do a quality check of this ${nounEn}: what's missing, weak, contradictory, or not client-ready? Give a prioritized list.`;
+      return t('sharedComponents.aiConsultantPanel.actionPrompt.qualityCheck', {
+        nounEn,
+        nounPl,
+      });
     case 'continue':
-      return isPolish
-        ? `Kontynuujmy pracę nad tą ${nounPl} od miejsca, w którym skończyliśmy — jaki jest najbardziej wartościowy następny krok i pomóż mi go wykonać.`
-        : `Continue where we left off on this ${nounEn} — what's the most valuable next step, and help me do it.`;
+      return t('sharedComponents.aiConsultantPanel.actionPrompt.continue', { nounEn, nounPl });
     case 'refresh':
     default:
       return null;
@@ -191,16 +170,17 @@ export const AIConsultantPanel: React.FC<AIConsultantPanelProps> = ({
   isBusy = false,
   isPolish = false,
 }) => {
+  const t = useMemo<TFunc>(() => i18n.getFixedT(isPolish ? 'pl' : 'en'), [isPolish]);
   const resolvedTitle = title || 'AI Consultant';
 
   const systemPrompt = useMemo(
-    () => buildSystemPrompt(artifactType, artifactTitle, contextText, isPolish),
-    [artifactType, artifactTitle, contextText, isPolish]
+    () => buildSystemPrompt(artifactType, artifactTitle, contextText, t),
+    [artifactType, artifactTitle, contextText, t]
   );
 
   const greetingMessage = useMemo(
-    () => buildKickoff(artifactType, artifactTitle, isPolish),
-    [artifactType, artifactTitle, isPolish]
+    () => buildKickoff(artifactType, artifactTitle, t),
+    [artifactType, artifactTitle, t]
   );
 
   // Controlled kickoff: starts as the AI greeting (auto-sent on first open via
@@ -238,7 +218,7 @@ export const AIConsultantPanel: React.FC<AIConsultantPanelProps> = ({
 
   const handleActionClick = useCallback(
     (action: AIConsultantAction) => {
-      const prompt = buildActionPrompt(action.id, artifactType, isPolish);
+      const prompt = buildActionPrompt(action.id, artifactType, t);
       if (prompt) {
         seedChatWithPrompt(prompt);
       }
@@ -246,17 +226,17 @@ export const AIConsultantPanel: React.FC<AIConsultantPanelProps> = ({
       // `refresh`, which has no prompt of its own).
       void action.onClick();
     },
-    [artifactType, isPolish, seedChatWithPrompt]
+    [artifactType, t, seedChatWithPrompt]
   );
 
   const roleName = artifactType === 'initiative' ? 'Initiative Consultant' : 'Insight Consultant';
 
   const quickPrompts = useMemo(
     () =>
-      isPolish
-        ? ['Uzupełnij puste pola', 'Zsyntetyzuj całość', 'Sprawdź jakość', 'Co dalej?']
-        : ['Fill the empty fields', 'Synthesize everything', 'Run a quality check', "What's next?"],
-    [isPolish]
+      t('sharedComponents.aiConsultantPanel.quickPrompts', {
+        returnObjects: true,
+      }) as unknown as string[],
+    [t]
   );
 
   // The chat is "unavailable" only if we genuinely cannot embed it. The
@@ -288,7 +268,7 @@ export const AIConsultantPanel: React.FC<AIConsultantPanelProps> = ({
         <button
           type="button"
           onClick={onClose}
-          aria-label={isPolish ? 'Zamknij' : 'Close'}
+          aria-label={t('sharedComponents.aiConsultantPanel.closeLabel')}
           className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 dark:text-slate-400 dark:hover:bg-navy-800 dark:hover:text-slate-200"
         >
           <X className="h-4 w-4" />
@@ -348,9 +328,7 @@ export const AIConsultantPanel: React.FC<AIConsultantPanelProps> = ({
           <div className="flex h-full items-center justify-center px-6 text-center">
             <div className="text-sm text-slate-500 dark:text-slate-400">
               <CheckCircle2 className="mx-auto mb-2 h-5 w-5 text-teal-600 dark:text-teal-300" />
-              {isPolish
-                ? 'Czat AI jest chwilowo niedostępny. Skorzystaj z akcji powyżej.'
-                : 'AI chat is temporarily unavailable. Use the actions above.'}
+              {t('sharedComponents.aiConsultantPanel.chatUnavailableMessage')}
             </div>
           </div>
         )}
