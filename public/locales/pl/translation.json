@@ -28448,6 +28448,97 @@
           "duration": "60-90 min"
         }
       }
+    },
+    "toolContextPanel": {
+      "coach": {
+        "mission": {
+          "nextQuestion": "Jaka decyzja naprawdę ma zostać podjęta po tej sesji?",
+          "whyNow": "Bez ostrego pytania AI będzie generować ogólniki zamiast materiału do decyzji."
+        },
+        "input": {
+          "nextQuestion": "Jakich dowodów jeszcze brakuje, żeby nie budować SWOT-u na opiniach?",
+          "whyNow": "To jest moment na higienę sygnałów: źródło, typ dowodu, pewność i luki."
+        },
+        "swot": {
+          "nextQuestion": "Które karty są już akceptowalne, a które nadal są tylko propozycją AI?",
+          "whyNow": "Macierz ma być warstwą syntezy, nie zrzutem wszystkich notatek."
+        },
+        "insights": {
+          "nextQuestion": "Jakie napięcie lub trade-off naprawdę wymaga ruchu strategicznego teraz?",
+          "whyNow": "To tutaj narzędzie przestaje być tabelą, a staje się materiałem decyzyjnym."
+        },
+        "outputs": {
+          "nextQuestion": "Co z tej sesji jest gotowe na inicjatywę, a co wymaga jeszcze decku lub dowodów?",
+          "whyNow": "Końcowa wartość narzędzia zależy od jakości mostu do outputów."
+        },
+        "fallback": {
+          "nextQuestion": "Co jest teraz najważniejszą luką?",
+          "whyNow": "Panel AI pokazuje następny najlepszy ruch."
+        }
+      },
+      "aiReviewingPhase": "AI analizuje bieżącą fazę narzędzia, kompletność danych i gotowość do przejścia w outputy.",
+      "reviewGeneratedInitiatives": "Sprawdź, które wygenerowane inicjatywy powinny przejść do portfela wykonawczego.",
+      "aiWorkspaceTitle": "Centrum pracy AI dla tej sesji",
+      "aiWorkspaceSubtitle": "Tu trafiają wszystkie podpowiedzi, rekomendacje i uzasadnienia AI. Panel nie zabiera już szerokości canvasowi narzędzia.",
+      "openChat": "Otwórz chat",
+      "clarifyMissingInputs": "Doprecyzuj brakujące dane wejściowe, zaakceptuj wartościowe karty AI i przejdź do syntezy outputów.",
+      "organizationContext": "Organization context",
+      "noOrganizationProfile": "Brak profilu organizacji",
+      "aiRationale": "Uzasadnienie AI: rekomendacje powinny być interpretowane przez pryzmat organizacji, jej aktualnego kontekstu i celu sesji, a nie jako generyczna lista dobrych praktyk.",
+      "aiProposalQueue": "Kolejka propozycji AI",
+      "signals": "Sygnały",
+      "cards": "Karty",
+      "tensions": "Napięcia",
+      "outputs": "Outputy",
+      "qualityGaps": "Luki jakościowe",
+      "noCriticalInputGaps": "Brak krytycznych luk wejściowych.",
+      "sessionState": "Stan sesji",
+      "missingIndustry": "Brak branży",
+      "missingGeographicScope": "Brak zakresu geograficznego",
+      "workWithAi": "Praca z AI",
+      "workingMode": "Tryb pracy",
+      "workingModeDescription": "Po lewej stronie widzisz pierwszą wersję framingu przygotowaną przez konsultanta. Tutaj możesz skorygować kierunek, doprecyzować akcent albo przejść dalej do wygenerowania całej sesji.",
+      "workingNoteForAi": "Komentarz roboczy dla AI",
+      "workingNotePlaceholder": "Np. za mocno akcentujemy marżę; dodaj perspektywę rynku niemieckiego i pokaż to bardziej jak decyzję zarządczą.",
+      "takeToAiChat": "Przenieś to do czatu AI",
+      "quickRefinementAngles": "Szybkie kierunki korekty",
+      "refinementAngleOptions": [
+        "Zaostrz tezę strategiczną",
+        "Dodaj kontekst rynku",
+        "Pokaż większe ryzyka",
+        "Napisz to bardziej zarządczo"
+      ],
+      "moveToFullSession": "Przejście do pełnej sesji",
+      "moveToFullSessionDescription": "Jeśli framing po lewej stronie jest wystarczająco dobry, AI przygotuje dalsze części sesji: input map, macierz SWOT, napięcia, ruchy i outputy.",
+      "aiBuildingSession": "AI buduje pełną sesję...",
+      "acceptFramingGenerate": "Akceptuj ten framing i generuj dalej",
+      "aiCollaborationPanel": "AI Collaboration Panel",
+      "aiPreparingSession": "AI przygotowuje sesję...",
+      "aiPreparingSessionDescription": "Konsultant AI generuje pełną propozycję: sygnały, macierz SWOT, napięcia, ruchy strategiczne i propozycje outputów.",
+      "aiProposals": "Propozycje AI",
+      "toReview": "do przeglądu",
+      "swotCards": "Karty SWOT",
+      "moves": "Ruchy",
+      "accepted": "zaakceptowanych",
+      "readiness": "Readiness",
+      "ready": "gotowe",
+      "needsWork": "wymaga pracy",
+      "aiCoachBrief": "AI coach brief",
+      "panelShowsNextMove": "Panel pokazuje następny najlepszy ruch i luki jakościowe dla bieżącej fazy.",
+      "nextQuestion": "Next question",
+      "whyNow": "Dlaczego teraz:",
+      "proposalQueue": "Proposal queue",
+      "noUnacceptedProposals": "Brak niezaakceptowanych propozycji AI.",
+      "missingEvidence": "Missing evidence",
+      "sessionCounters": "Session counters",
+      "acceptedCards": "Akceptowane karty",
+      "proposals": "Propozycje",
+      "readyOutputs": "Gotowe outputy",
+      "outputRoutes": "Output routes",
+      "open": "Otwórz",
+      "noOutputCandidates": "Brak kandydatów do outputów.",
+      "generatedFromThisTool": "Generated from this tool",
+      "recentInitiatives": "Recent initiatives"
     }
   }
 }

@@ -27372,6 +27372,97 @@
           "duration": "60-90 min"
         }
       }
+    },
+    "toolContextPanel": {
+      "coach": {
+        "mission": {
+          "nextQuestion": "What concrete decision should this session unlock?",
+          "whyNow": "Without a sharp question, AI will produce generic guidance instead of decision support."
+        },
+        "input": {
+          "nextQuestion": "Which evidence is still missing so the SWOT is not built on opinions?",
+          "whyNow": "This is the moment for signal hygiene: source, evidence type, confidence, and gaps."
+        },
+        "swot": {
+          "nextQuestion": "Which cards are accepted, and which ones are still only AI proposals?",
+          "whyNow": "The matrix should be a synthesis layer, not a dump of all notes."
+        },
+        "insights": {
+          "nextQuestion": "Which tension or trade-off truly requires a strategic move now?",
+          "whyNow": "This is where the tool stops being a table and becomes decision material."
+        },
+        "outputs": {
+          "nextQuestion": "What is ready for an initiative, and what still needs a deck or more evidence?",
+          "whyNow": "The tool’s final value depends on the quality of the bridge to outputs."
+        },
+        "fallback": {
+          "nextQuestion": "What is the most important gap right now?",
+          "whyNow": "The AI panel shows the next best move."
+        }
+      },
+      "aiReviewingPhase": "AI reviews the current tool phase, data completeness, and readiness to move into outputs.",
+      "reviewGeneratedInitiatives": "Review which generated initiatives should move into the execution portfolio.",
+      "aiWorkspaceTitle": "AI workspace for this session",
+      "aiWorkspaceSubtitle": "All AI hints, recommendations, and rationale live here. The panel no longer takes width away from the tool canvas.",
+      "openChat": "Open chat",
+      "clarifyMissingInputs": "Clarify missing inputs, accept useful AI cards, and move into output synthesis.",
+      "organizationContext": "Organization context",
+      "noOrganizationProfile": "No organization profile",
+      "aiRationale": "AI rationale: recommendations should be interpreted through the organization, current context, and session goal, not as a generic best-practice list.",
+      "aiProposalQueue": "AI proposal queue",
+      "signals": "Signals",
+      "cards": "Cards",
+      "tensions": "Tensions",
+      "outputs": "Outputs",
+      "qualityGaps": "Quality gaps",
+      "noCriticalInputGaps": "No critical input gaps.",
+      "sessionState": "Session state",
+      "missingIndustry": "Missing industry",
+      "missingGeographicScope": "Missing geographic scope",
+      "workWithAi": "Work with AI",
+      "workingMode": "Working mode",
+      "workingModeDescription": "On the left you see the first framing draft prepared by the consultant. Here you can redirect the angle, sharpen the emphasis, or move forward to generate the full session.",
+      "workingNoteForAi": "Working note for AI",
+      "workingNotePlaceholder": "E.g. we are over-weighting margin; add the German market perspective and frame this more like a leadership decision.",
+      "takeToAiChat": "Take this to AI chat",
+      "quickRefinementAngles": "Quick refinement angles",
+      "refinementAngleOptions": [
+        "Sharpen the strategic thesis",
+        "Add market context",
+        "Show bigger risks",
+        "Make it more board-ready"
+      ],
+      "moveToFullSession": "Move to full session",
+      "moveToFullSessionDescription": "If the framing on the left is strong enough, AI will prepare the remaining parts of the session: input map, SWOT matrix, tensions, moves, and outputs.",
+      "aiBuildingSession": "AI is building the full session...",
+      "acceptFramingGenerate": "Accept this framing and generate next",
+      "aiCollaborationPanel": "AI Collaboration Panel",
+      "aiPreparingSession": "AI is preparing your session...",
+      "aiPreparingSessionDescription": "AI consultant is generating a full proposal: signals, SWOT matrix, tensions, strategic moves, and output proposals.",
+      "aiProposals": "AI Proposals",
+      "toReview": "to review",
+      "swotCards": "SWOT cards",
+      "moves": "Moves",
+      "accepted": "accepted",
+      "readiness": "Readiness",
+      "ready": "ready",
+      "needsWork": "needs work",
+      "aiCoachBrief": "AI coach brief",
+      "panelShowsNextMove": "This panel shows the next best move and quality gaps for the current phase.",
+      "nextQuestion": "Next question",
+      "whyNow": "Why now:",
+      "proposalQueue": "Proposal queue",
+      "noUnacceptedProposals": "No unaccepted AI proposals.",
+      "missingEvidence": "Missing evidence",
+      "sessionCounters": "Session counters",
+      "acceptedCards": "Accepted cards",
+      "proposals": "Proposals",
+      "readyOutputs": "Ready outputs",
+      "outputRoutes": "Output routes",
+      "open": "Open",
+      "noOutputCandidates": "No output candidates yet.",
+      "generatedFromThisTool": "Generated from this tool",
+      "recentInitiatives": "Recent initiatives"
     }
   }
 }
