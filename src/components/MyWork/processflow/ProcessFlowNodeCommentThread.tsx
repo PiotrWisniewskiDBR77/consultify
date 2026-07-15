@@ -11,6 +11,7 @@
  */
 import { AtSign, Send, Trash2, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ProcessFlowNodeComment } from './nodeComments';
 import { buildProcessFlowComment } from './nodeComments';
@@ -50,10 +51,10 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
   comments,
   locked,
   currentUser,
-  isPl,
   onAddComment,
   onDeleteComment,
 }) => {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -82,7 +83,7 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle">
         <div className="min-w-0 flex-1">
           <div className="text-[11px] font-bold text-c-text truncate">
-            {isPl ? 'Komentarze' : 'Comments'}
+            {t('processFlow.nodeCommentThread.title', 'Comments')}
           </div>
           <div className="text-[9px] text-c-text-muted truncate">{nodeLabel}</div>
         </div>
@@ -90,7 +91,7 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
         <button
           onClick={onClose}
           className="p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
-          aria-label={isPl ? 'Zamknij' : 'Close'}
+          aria-label={t('processFlow.nodeCommentThread.close', 'Close')}
         >
           <X size={14} />
         </button>
@@ -100,7 +101,7 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {comments.length === 0 && (
           <div className="text-center py-8 text-[11px] text-c-text-muted">
-            {isPl ? 'Brak komentarzy. Napisz pierwszy!' : 'No comments yet. Write the first one!'}
+            {t('processFlow.nodeCommentThread.empty', 'No comments yet. Write the first one!')}
           </div>
         )}
 
@@ -118,7 +119,10 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
                     <button
                       onClick={() => onDeleteComment(nodeId, c.id)}
                       className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-c-text-muted hover:text-c-danger transition-all"
-                      aria-label={isPl ? 'Usuń komentarz' : 'Delete comment'}
+                      aria-label={t(
+                        'processFlow.nodeCommentThread.deleteComment',
+                        'Delete comment'
+                      )}
                     >
                       <Trash2 size={10} />
                     </button>
@@ -152,9 +156,10 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={2}
-                placeholder={
-                  isPl ? 'Napisz komentarz... (@wzmianka)' : 'Write a comment... (@mention)'
-                }
+                placeholder={t(
+                  'processFlow.nodeCommentThread.placeholder',
+                  'Write a comment... (@mention)'
+                )}
                 className="w-full px-3 py-2 rounded-xl border border-c-border-subtle bg-c-bg text-[11px] text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
               />
               <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-c-text-muted" />
@@ -163,7 +168,7 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
               onClick={handleSubmit}
               disabled={!text.trim()}
               className="p-2.5 rounded-xl bg-c-surface-raised text-c-info hover:opacity-80 transition-opacity disabled:opacity-30"
-              aria-label={isPl ? 'Wyślij' : 'Send'}
+              aria-label={t('processFlow.nodeCommentThread.send', 'Send')}
             >
               <Send size={14} />
             </button>

@@ -1,5 +1,6 @@
 import { Activity, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ProcessFlowHealthScoreProps {
   nodes: Array<{ id: string; data?: any; type?: string }>;
@@ -9,8 +10,7 @@ interface ProcessFlowHealthScoreProps {
 
 interface HealthMetric {
   key: string;
-  labelPl: string;
-  labelEn: string;
+  label: string;
   score: number;
   detail: string;
 }
@@ -27,11 +27,8 @@ function scoreBg(score: number): string {
   return 'bg-danger-500';
 }
 
-export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
-  nodes,
-  edges,
-  isPl,
-}) => {
+export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({ nodes, edges }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const metrics: HealthMetric[] = useMemo(() => {
@@ -58,17 +55,12 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
     const completenessScore = hasStart && hasEnd ? 100 : hasStart || hasEnd ? 50 : 0;
     result.push({
       key: 'completeness',
-      labelPl: 'Kompletność (Start/End)',
-      labelEn: 'Completeness (Start/End)',
+      label: t('processFlow.healthScore.completenessLabel', 'Completeness (Start/End)'),
       score: completenessScore,
       detail:
         hasStart && hasEnd
-          ? isPl
-            ? 'Start i End obecne'
-            : 'Start and End present'
-          : isPl
-            ? 'Brak Start lub End'
-            : 'Missing Start or End',
+          ? t('processFlow.healthScore.completenessOk', 'Start and End present')
+          : t('processFlow.healthScore.completenessMissing', 'Missing Start or End'),
     });
 
     const totalFlowNodes = flowNodes.length;
@@ -84,17 +76,14 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
         : Math.round(((totalFlowNodes - danglingCount) / totalFlowNodes) * 100);
     result.push({
       key: 'connectivity',
-      labelPl: 'Połączenia',
-      labelEn: 'Connectivity',
+      label: t('processFlow.healthScore.connectivityLabel', 'Connectivity'),
       score: connectivityScore,
       detail:
         danglingCount === 0
-          ? isPl
-            ? 'Wszystkie elementy połączone'
-            : 'All elements connected'
-          : isPl
-            ? `${danglingCount} niepołączonych`
-            : `${danglingCount} disconnected`,
+          ? t('processFlow.healthScore.connectivityOk', 'All elements connected')
+          : t('processFlow.healthScore.connectivityDisconnected', '{{value}} disconnected', {
+              value: danglingCount,
+            }),
     });
 
     const labeledCount = flowNodes.filter(
@@ -103,17 +92,14 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
     const labelScore = totalFlowNodes === 0 ? 0 : Math.round((labeledCount / totalFlowNodes) * 100);
     result.push({
       key: 'labels',
-      labelPl: 'Etykiety',
-      labelEn: 'Labels',
+      label: t('processFlow.healthScore.labelsLabel', 'Labels'),
       score: labelScore,
       detail:
         labeledCount === totalFlowNodes
-          ? isPl
-            ? 'Wszystkie etykiety uzupełnione'
-            : 'All labels filled'
-          : isPl
-            ? `${totalFlowNodes - labeledCount} bez etykiety`
-            : `${totalFlowNodes - labeledCount} unlabeled`,
+          ? t('processFlow.healthScore.labelsAllFilled', 'All labels filled')
+          : t('processFlow.healthScore.labelsUnlabeled', '{{value}} unlabeled', {
+              value: totalFlowNodes - labeledCount,
+            }),
     });
 
     const decisions = flowNodes.filter(
@@ -134,25 +120,18 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
     }
     result.push({
       key: 'gateways',
-      labelPl: 'Bramki decyzyjne',
-      labelEn: 'Decision gateways',
+      label: t('processFlow.healthScore.gatewaysLabel', 'Decision gateways'),
       score: gatewayScore,
       detail:
         decisions.length === 0
-          ? isPl
-            ? 'Brak bramek'
-            : 'No gateways'
+          ? t('processFlow.healthScore.gatewaysNone', 'No gateways')
           : gatewayScore === 100
-            ? isPl
-              ? 'Wszystkie bramki poprawne'
-              : 'All gateways valid'
-            : isPl
-              ? 'Niektóre bramki niepoprawne'
-              : 'Some gateways invalid',
+            ? t('processFlow.healthScore.gatewaysAllValid', 'All gateways valid')
+            : t('processFlow.healthScore.gatewaysSomeInvalid', 'Some gateways invalid'),
     });
 
     return result;
-  }, [edges, isPl, nodes]);
+  }, [edges, nodes, t]);
 
   const overallScore = useMemo(() => {
     if (metrics.length === 0) return 0;
@@ -197,7 +176,7 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
               )}
               <div className="flex-1 min-w-0">
                 <div className="text-[10px] font-medium text-c-text-secondary truncate">
-                  {isPl ? m.labelPl : m.labelEn}
+                  {m.label}
                 </div>
                 <div className="text-[9px] text-c-text-muted truncate">{m.detail}</div>
               </div>

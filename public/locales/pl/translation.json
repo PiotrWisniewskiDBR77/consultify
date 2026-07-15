@@ -25401,6 +25401,59 @@
       "styleSolid": "Ciągła",
       "styleDashed": "Przerywana",
       "arrow": "Strzałka"
+    },
+    "healthScore": {
+      "completenessLabel": "Kompletność (Start/End)",
+      "completenessOk": "Start i End obecne",
+      "completenessMissing": "Brak Start lub End",
+      "connectivityLabel": "Połączenia",
+      "connectivityOk": "Wszystkie elementy połączone",
+      "connectivityDisconnected": "{{value}} niepołączonych",
+      "labelsLabel": "Etykiety",
+      "labelsAllFilled": "Wszystkie etykiety uzupełnione",
+      "labelsUnlabeled": "{{value}} bez etykiety",
+      "gatewaysLabel": "Bramki decyzyjne",
+      "gatewaysNone": "Brak bramek",
+      "gatewaysAllValid": "Wszystkie bramki poprawne",
+      "gatewaysSomeInvalid": "Niektóre bramki niepoprawne"
+    },
+    "contextMenu": {
+      "openProperties": "Otwórz właściwości",
+      "editLabel": "Edytuj etykietę",
+      "duplicate": "Duplikuj",
+      "autoLayout": "Auto-układ",
+      "convertToInitiative": "Konwertuj na inicjatywę",
+      "delete": "Usuń",
+      "addAction": "Dodaj akcję",
+      "addDecision": "Dodaj decyzję",
+      "paste": "Wklej"
+    },
+    "laneSystem": {
+      "expandLane": "Rozwiń tor",
+      "collapseLane": "Zwiń tor",
+      "resizeLane": "Zmień wysokość toru"
+    },
+    "exportDialog": {
+      "jsonDesc": "Typowany graf do integracji",
+      "readbackTitle": "Tekst (Human Readback)",
+      "readbackDesc": "Czytelna ścieżka procesu",
+      "pngDesc": "Zrzut ekranu canvas",
+      "title": "Eksport procesu",
+      "description": "Wybierz format eksportu"
+    },
+    "nodeCommentThread": {
+      "title": "Komentarze",
+      "close": "Zamknij",
+      "empty": "Brak komentarzy. Napisz pierwszy!",
+      "deleteComment": "Usuń komentarz",
+      "placeholder": "Napisz komentarz... (@wzmianka)",
+      "send": "Wyślij"
+    },
+    "readbackPanel": {
+      "title": "Odczyt semantyczny",
+      "cta": "Generuj odczyt",
+      "empty": "Uruchom odczyt, aby zobaczyć przejście przepływu procesu",
+      "warnings": "Ostrzeżenia"
     }
   }
 }

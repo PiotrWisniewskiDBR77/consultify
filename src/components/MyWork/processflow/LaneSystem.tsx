@@ -1,5 +1,6 @@
 import { ArrowDownUp, ChevronDown, ChevronRight, Palette, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { LANE_HEIGHT } from './FlowNodeComponent';
 import { laneBandLayout } from './laneState';
@@ -80,8 +81,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   isFirst,
   isLast,
   laneCount,
-  isPl,
 }) => {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(lane.label);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -130,21 +131,13 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
             className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
             title={
               collapsed
-                ? isPl
-                  ? 'Rozwiń tor'
-                  : 'Expand lane'
-                : isPl
-                  ? 'Zwiń tor'
-                  : 'Collapse lane'
+                ? t('processFlow.laneSystem.expandLane', 'Expand lane')
+                : t('processFlow.laneSystem.collapseLane', 'Collapse lane')
             }
             aria-label={
               collapsed
-                ? isPl
-                  ? 'Rozwiń tor'
-                  : 'Expand lane'
-                : isPl
-                  ? 'Zwiń tor'
-                  : 'Collapse lane'
+                ? t('processFlow.laneSystem.expandLane', 'Expand lane')
+                : t('processFlow.laneSystem.collapseLane', 'Collapse lane')
             }
           >
             {collapsed ? (
@@ -250,7 +243,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
         <div
           onPointerDown={startResize}
           className="absolute left-0 right-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 hover:opacity-100 transition-opacity bg-[var(--c-info)]/40"
-          title={isPl ? 'Zmień wysokość toru' : 'Resize lane'}
+          title={t('processFlow.laneSystem.resizeLane', 'Resize lane')}
         />
       )}
     </div>
