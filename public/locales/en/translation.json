@@ -27388,6 +27388,29 @@
       "netSavingsPerMonth": "Net savings / month",
       "paybackMonths": "Payback (months)",
       "disclaimer": "Note: quick model (52 weeks/year, no discounting). Refine assumptions before approval."
+    },
+    "processAutomationMeasurementStep": {
+      "measurementTitle": "Measurement",
+      "reEstimationTitle": "Re-estimation",
+      "measurementSubtitle": "Capture the baseline: volume, time, and errors.",
+      "reEstimationSubtitle": "Estimate the target after redesign: time and errors.",
+      "processName": "Process name",
+      "processNamePlaceholder": "e.g. invoice processing, order intake...",
+      "owner": "Owner (role/person)",
+      "ownerPlaceholder": "e.g. AP Manager",
+      "volumePerWeek": "Volume / week",
+      "volumePerWeekPlaceholder": "e.g. 250",
+      "baselineMinutesPerCycle": "Baseline: min/cycle",
+      "baselineMinutesPlaceholder": "e.g. 12",
+      "baselineErrorRate": "Baseline: error rate (%)",
+      "baselineErrorRatePlaceholder": "e.g. 3.5",
+      "targetMinutesPerCycle": "Target: min/cycle",
+      "targetMinutesPlaceholder": "e.g. 5",
+      "targetErrorRate": "Target: error rate (%)",
+      "targetErrorRatePlaceholder": "e.g. 1",
+      "estimatedHoursPerWeek": "Estimated hours / week",
+      "baselineLabel": "Baseline",
+      "targetLabel": "Target"
     }
   }
 }

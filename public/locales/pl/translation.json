@@ -28464,6 +28464,29 @@
       "netSavingsPerMonth": "Oszczędność netto / miesiąc",
       "paybackMonths": "Payback (mies.)",
       "disclaimer": "Uwaga: to szybki model (52 tygodnie/rok, bez dyskonta). Doprecyzuj założenia przed zatwierdzeniem."
+    },
+    "processAutomationMeasurementStep": {
+      "measurementTitle": "Pomiar",
+      "reEstimationTitle": "Re-estymacja",
+      "measurementSubtitle": "Zbierz baseline: wolumen, czas i błędy.",
+      "reEstimationSubtitle": "Oszacuj target po redesignie: czas i błędy.",
+      "processName": "Nazwa procesu",
+      "processNamePlaceholder": "np. obsługa faktur, przyjęcie zamówienia...",
+      "owner": "Właściciel (rola/osoba)",
+      "ownerPlaceholder": "np. AP Manager",
+      "volumePerWeek": "Wolumen / tydzień",
+      "volumePerWeekPlaceholder": "np. 250",
+      "baselineMinutesPerCycle": "Baseline: min/cykl",
+      "baselineMinutesPlaceholder": "np. 12",
+      "baselineErrorRate": "Baseline: error rate (%)",
+      "baselineErrorRatePlaceholder": "np. 3.5",
+      "targetMinutesPerCycle": "Target: min/cykl",
+      "targetMinutesPlaceholder": "np. 5",
+      "targetErrorRate": "Target: error rate (%)",
+      "targetErrorRatePlaceholder": "np. 1",
+      "estimatedHoursPerWeek": "Szacowane godziny / tydzień",
+      "baselineLabel": "Baseline",
+      "targetLabel": "Target"
     }
   }
 }
