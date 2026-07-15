@@ -70,7 +70,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
   onDismiss,
   showOnce = true,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
   const [isVisible, setIsVisible] = useState(false);
@@ -260,7 +260,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
               onClick={handleDismiss}
               className="text-sm text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
             >
-              {lang === 'pl' ? 'Rozumiem' : 'Got it'}
+              {t('onboarding.featureSpotlight.gotIt', 'Got it')}
             </button>
 
             {ctaText && ctaAction && (

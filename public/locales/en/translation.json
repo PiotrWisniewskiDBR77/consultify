@@ -21904,7 +21904,10 @@
       "PORTFOLIO_OWNER": "Portfolio Owner",
       "BUSINESS_OWNER": "Business Owner (Benefits)",
       "STEERING_COMMITTEE": "Steering Committee"
-    }
+    },
+    "memberTypeChair": "Chair",
+    "memberTypeBoardMember": "Board member",
+    "memberTypeObserver": "Observer"
   },
   "branch": {
     "delete": "Delete"
@@ -23781,6 +23784,9 @@
       "tierError": "Couldn't select the plan",
       "termsAccepted": "Terms accepted",
       "tierSelected": "Pricing plan selected"
+    },
+    "featureSpotlight": {
+      "gotIt": "Got it"
     }
   },
   "editor": {

@@ -22932,7 +22932,10 @@
       "PORTFOLIO_OWNER": "Właściciel portfela",
       "BUSINESS_OWNER": "Business Owner (Korzyści)",
       "STEERING_COMMITTEE": "Komitet sterujący"
-    }
+    },
+    "memberTypeChair": "Przewodniczący",
+    "memberTypeBoardMember": "Członek",
+    "memberTypeObserver": "Obserwator"
   },
   "branch": {
     "delete": "Usuń"
@@ -24837,6 +24840,9 @@
       "tierError": "Nie udało się wybrać planu",
       "termsAccepted": "Regulamin zaakceptowany",
       "tierSelected": "Plan cenowy wybrany"
+    },
+    "featureSpotlight": {
+      "gotIt": "Rozumiem"
     }
   },
   "editor": {
