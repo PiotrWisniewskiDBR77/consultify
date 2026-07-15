@@ -16,9 +16,10 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -104,6 +105,129 @@ const getCreatedWorkflowId = (result: unknown) => {
       ''
   );
 };
+
+// canon TRIADA §27 — StandardTable columns for the Workflows tab. Kebab
+// (actions) is auto-appended by StandardTable itself; NOT declared here.
+const buildWorkflowColumns = (formatDate: (value: string) => string): TableColumn[] => [
+  {
+    id: 'name',
+    label: 'Name',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as ApprovalWorkflow).name || ''),
+    render: (row: TableRow) => {
+      const workflow = row as unknown as ApprovalWorkflow;
+      return (
+        <div>
+          <p className="font-medium">{workflow.name}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">{workflow.description}</p>
+        </div>
+      );
+    },
+  },
+  {
+    id: 'resource_type',
+    label: 'Resource Type',
+    render: (row: TableRow) => (
+      <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
+        {(row as unknown as ApprovalWorkflow).resource_type}
+      </span>
+    ),
+  },
+  {
+    id: 'approvers',
+    label: 'Approvers',
+    render: (row: TableRow) => {
+      const workflow = row as unknown as ApprovalWorkflow;
+      return (
+        <div className="flex items-center gap-1">
+          <Users className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+          <span className="text-sm">{workflow.approvers?.length || 0} approvers</span>
+        </div>
+      );
+    },
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    render: (row: TableRow) =>
+      (row as unknown as ApprovalWorkflow).isActive ? (
+        <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
+          Active
+        </span>
+      ) : (
+        <span className="px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded text-xs">
+          Inactive
+        </span>
+      ),
+  },
+  {
+    id: 'created_at',
+    label: 'Created',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as ApprovalWorkflow).created_at || ''),
+    render: (row: TableRow) => (
+      <span className="text-sm text-slate-600">
+        {formatDate((row as unknown as ApprovalWorkflow).created_at)}
+      </span>
+    ),
+  },
+];
+
+// canon TRIADA §27 — StandardTable columns for the Requests tab.
+const buildRequestColumns = (
+  formatDate: (value: string) => string,
+  getStatusBadge: (status: string) => React.ReactNode
+): TableColumn[] => [
+  {
+    id: 'workflow_name',
+    label: 'Workflow',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as ApprovalRequest).workflow_name || ''),
+    render: (row: TableRow) => (
+      <p className="font-medium">{(row as unknown as ApprovalRequest).workflow_name}</p>
+    ),
+  },
+  {
+    id: 'requester_email',
+    label: 'Requester',
+    render: (row: TableRow) => (
+      <span className="text-sm">{(row as unknown as ApprovalRequest).requester_email}</span>
+    ),
+  },
+  {
+    id: 'resource_type',
+    label: 'Resource',
+    render: (row: TableRow) => {
+      const request = row as unknown as ApprovalRequest;
+      return (
+        <div>
+          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
+            {request.resource_type}
+          </span>
+          <p className="text-xs text-slate-600 dark:text-slate-500 mt-1 truncate max-w-[150px]">
+            {request.resource_id}
+          </p>
+        </div>
+      );
+    },
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    render: (row: TableRow) => getStatusBadge((row as unknown as ApprovalRequest).status),
+  },
+  {
+    id: 'created_at',
+    label: 'Created',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as ApprovalRequest).created_at || ''),
+    render: (row: TableRow) => (
+      <span className="text-sm text-slate-600">
+        {formatDate((row as unknown as ApprovalRequest).created_at)}
+      </span>
+    ),
+  },
+];
 
 const ApprovalWorkflowsView: React.FC = () => {
   const [workflows, setWorkflows] = useState<ApprovalWorkflow[]>([]);
@@ -272,6 +396,9 @@ const ApprovalWorkflowsView: React.FC = () => {
     }
   };
 
+  const workflowColumns = useMemo(() => buildWorkflowColumns(formatDate), []);
+  const requestColumns = useMemo(() => buildRequestColumns(formatDate, getStatusBadge), []);
+
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -411,101 +538,20 @@ const ApprovalWorkflowsView: React.FC = () => {
               <DegradedState title="Approval workflows unavailable" description={loadError} />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table
-                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-              >
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Name
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Resource Type
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Approvers
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Created
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {workflows.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center py-8 text-slate-600 dark:text-slate-400"
-                      >
-                        No workflows configured
-                      </td>
-                    </tr>
-                  ) : (
-                    workflows.map((workflow) => (
-                      <tr
-                        key={workflow.id}
-                        className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                      >
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="font-medium">{workflow.name}</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-500">
-                              {workflow.description}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
-                            {workflow.resource_type}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4 text-slate-600 dark:text-slate-500" />
-                            <span className="text-sm">
-                              {workflow.approvers?.length || 0} approvers
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          {workflow.isActive ? (
-                            <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
-                              Active
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded text-xs">
-                              Inactive
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {formatDate(workflow.created_at)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => setWorkflowPendingDelete(workflow)}
-                              className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
-                              aria-label={`Delete approval workflow ${workflow.name}`}
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <StandardTable
+              columns={workflowColumns}
+              data={workflows as unknown as TableRow[]}
+              empty={{ title: 'No workflows configured' }}
+              rowMenu={(row) => {
+                const workflow = row as unknown as ApprovalWorkflow;
+                return {
+                  destructive: {
+                    icon: Trash2,
+                    onClick: () => setWorkflowPendingDelete(workflow),
+                  },
+                };
+              }}
+            />
           )}
         </CardWithHeader>
       )}
@@ -518,98 +564,31 @@ const ApprovalWorkflowsView: React.FC = () => {
               <DegradedState title="Approval requests unavailable" description={loadError} />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Workflow
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Requester
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Resource
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Created
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {requests.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center py-8 text-slate-600 dark:text-slate-400"
-                      >
-                        No approval requests
-                      </td>
-                    </tr>
-                  ) : (
-                    requests.map((request) => (
-                      <tr
-                        key={request.id}
-                        className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                      >
-                        <td className="py-3 px-4">
-                          <p className="font-medium">{request.workflow_name}</p>
-                        </td>
-                        <td className="py-3 px-4 text-sm">{request.requester_email}</td>
-                        <td className="py-3 px-4">
-                          <div>
-                            <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
-                              {request.resource_type}
-                            </span>
-                            <p className="text-xs text-slate-600 dark:text-slate-500 mt-1 truncate max-w-[150px]">
-                              {request.resource_id}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">{getStatusBadge(request.status)}</td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {formatDate(request.created_at)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          {request.status === 'pending' && (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleApprove(request.id)}
-                                disabled={actionLoading === request.id}
-                                className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                aria-label={`Approve request ${request.id}`}
-                                title="Approve"
-                              >
-                                {actionLoading === request.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Check className="w-4 h-4" />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleReject(request.id)}
-                                disabled={actionLoading === request.id}
-                                className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                aria-label={`Reject request ${request.id}`}
-                                title="Reject"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <StandardTable
+              columns={requestColumns}
+              data={requests as unknown as TableRow[]}
+              empty={{ title: 'No approval requests' }}
+              rowMenu={(row) => {
+                const request = row as unknown as ApprovalRequest;
+                if (request.status !== 'pending') return {};
+                return {
+                  primary: [
+                    {
+                      id: 'approve',
+                      label: 'Approve',
+                      icon: Check,
+                      disabled: actionLoading === request.id,
+                      onClick: () => void handleApprove(request.id),
+                    },
+                  ],
+                  destructive: {
+                    label: 'Reject',
+                    icon: X,
+                    onClick: () => void handleReject(request.id),
+                  },
+                };
+              }}
+            />
           )}
         </CardWithHeader>
       )}

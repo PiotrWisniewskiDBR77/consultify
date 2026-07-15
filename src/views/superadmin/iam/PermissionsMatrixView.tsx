@@ -9,18 +9,17 @@ import {
   BarChart3,
   Check,
   Copy,
-  Edit2,
   Key,
   Loader2,
   Plus,
   RefreshCw,
-  Trash2,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -350,6 +349,43 @@ const PermissionsMatrixView: React.FC = () => {
 
   const categories = ['general', 'users', 'organizations', 'billing', 'security', 'ai', 'content'];
 
+  const permissionColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'key',
+        label: 'Key',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as Permission).key,
+        render: (row: TableRow) => (
+          <span className="font-mono text-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
+            {(row as unknown as Permission).key}
+          </span>
+        ),
+      },
+      {
+        id: 'description',
+        label: 'Description',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-slate-300">
+            {(row as unknown as Permission).description}
+          </span>
+        ),
+      },
+      {
+        id: 'category',
+        label: 'Category',
+        filterable: true,
+        filterOptions: categories.map((cat) => ({ value: cat, label: cat })),
+        render: (row: TableRow) => (
+          <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded text-xs">
+            {(row as unknown as Permission).category}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -480,7 +516,7 @@ const PermissionsMatrixView: React.FC = () => {
           <CardWithHeader title="Permissions Matrix" subtitle="Role-based permissions overview">
             <div className="overflow-x-auto">
               <table
-                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+                /* §27-exempt: macierz permission×role (naglowki grupujace kategorie, kolumny=role, komorki=toggle) — pivot, nie kolekcja encji (kanon §2 def.1) */ className="w-full"
               >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700">
@@ -582,76 +618,22 @@ const PermissionsMatrixView: React.FC = () => {
             <DegradedState title="Permission definitions unavailable" description={loadError} />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Key
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Description
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Category
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {permissions.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                      No permissions defined
-                    </td>
-                  </tr>
-                ) : (
-                  permissions.map((perm) => (
-                    <tr
-                      key={perm.key}
-                      className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    >
-                      <td className="py-3 px-4">
-                        <span className="font-mono text-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
-                          {perm.key}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
-                        {perm.description}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded text-xs">
-                          {perm.category}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openEditModal(perm)}
-                            aria-label={`Edit permission ${perm.key}`}
-                            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(perm.key)}
-                            aria-label={`Delete permission ${perm.key}`}
-                            className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={permissionColumns}
+            data={permissions as unknown as TableRow[]}
+            empty={{ title: 'No permissions defined' }}
+            rowMenu={(row) => {
+              const perm = row as unknown as Permission;
+              return {
+                universalHandlers: {
+                  edit: () => openEditModal(perm),
+                },
+                destructive: {
+                  onClick: () => void handleDelete(perm.key),
+                },
+              };
+            }}
+          />
         )}
       </CardWithHeader>
 

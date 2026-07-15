@@ -18,10 +18,11 @@ import {
   Shield,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -363,6 +364,97 @@ const AdminAuditLogsView: React.FC = () => {
     );
   };
 
+  const columns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'admin',
+        label: 'Admin',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as AuditLog).admin?.email || '',
+        render: (row: TableRow) => {
+          const log = row as unknown as AuditLog;
+          return (
+            <div>
+              <p className="font-medium">
+                {asText(log.admin?.firstName, 'Unknown')} {asText(log.admin?.lastName, '')}
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {asText(log.admin?.email, 'Unknown admin')}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'action_type',
+        label: 'Action',
+        filterable: true,
+        filterOptions: [
+          { value: 'login', label: 'Login' },
+          { value: 'logout', label: 'Logout' },
+          { value: 'create', label: 'Create' },
+          { value: 'modify', label: 'Modify' },
+          { value: 'delete', label: 'Delete' },
+          { value: 'export_data', label: 'Export Data' },
+          { value: 'bulk_action', label: 'Bulk Action' },
+          { value: 'session_revoke', label: 'Session Revoke' },
+        ],
+        render: (row: TableRow) => (
+          <span className="text-sm font-mono bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
+            {asText((row as unknown as AuditLog).action_type, 'Unknown action')}
+          </span>
+        ),
+      },
+      {
+        id: 'resource_type',
+        label: 'Resource',
+        render: (row: TableRow) => {
+          const log = row as unknown as AuditLog;
+          return (
+            <div>
+              <p className="text-sm">{asText(log.resource_type, '-')}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
+                {asText(log.resource_id, '-')}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'ip_address',
+        label: 'IP Address',
+        render: (row: TableRow) => (
+          <span className="text-sm">{asText((row as unknown as AuditLog).ip_address, 'Unknown')}</span>
+        ),
+      },
+      {
+        id: 'risk_score',
+        label: 'Risk',
+        sortable: true,
+        sortAccessor: (row: TableRow) => safeNumber((row as unknown as AuditLog).risk_score),
+        render: (row: TableRow) => getRiskBadge((row as unknown as AuditLog).risk_score),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => getStatusBadge((row as unknown as AuditLog).status),
+      },
+      {
+        id: 'created_at',
+        label: 'Time',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as AuditLog).created_at || '',
+        render: (row: TableRow) => (
+          <div className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-300">
+            <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            {formatDateTime((row as unknown as AuditLog).created_at)}
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
   if (loading && logs.length === 0) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -646,104 +738,25 @@ const AdminAuditLogsView: React.FC = () => {
             <DegradedState title="Admin audit log list unavailable" description={loadError} />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-            >
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Admin
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Action
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Resource
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    IP Address
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Risk
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Time
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                      No audit logs found
-                    </td>
-                  </tr>
-                ) : (
-                  logs.map((log) => (
-                    <tr
-                      key={log.id}
-                      className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                    >
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">
-                            {asText(log.admin?.firstName, 'Unknown')}{' '}
-                            {asText(log.admin?.lastName, '')}
-                          </p>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {asText(log.admin?.email, 'Unknown admin')}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm font-mono bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
-                          {asText(log.action_type, 'Unknown action')}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="text-sm">{asText(log.resource_type, '-')}</p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
-                            {asText(log.resource_id, '-')}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-sm">{asText(log.ip_address, 'Unknown')}</td>
-                      <td className="py-3 px-4">{getRiskBadge(log.risk_score)}</td>
-                      <td className="py-3 px-4">{getStatusBadge(log.status)}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-300">
-                          <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                          {formatDateTime(log.created_at)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {log.status !== 'resolved' && (
-                            <button
-                              onClick={() => setShowResolveModal(log.id)}
-                              aria-label={`Resolve audit log ${log.id}`}
-                              className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                              title="Resolve"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={columns}
+            data={logs as unknown as TableRow[]}
+            empty={{ title: 'No audit logs found' }}
+            rowMenu={(row) => {
+              const log = row as unknown as AuditLog;
+              if (log.status === 'resolved') return {};
+              return {
+                primary: [
+                  {
+                    id: 'resolve',
+                    label: 'Resolve',
+                    icon: Check,
+                    onClick: () => setShowResolveModal(log.id),
+                  },
+                ],
+              };
+            }}
+          />
         )}
       </CardWithHeader>
 

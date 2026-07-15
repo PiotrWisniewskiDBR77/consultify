@@ -2,21 +2,12 @@
  * AuditEventsViewer — V4-ENT-03 unified audit events viewer.
  * Consumes GET /api/audit/events via Api.getAuditEvents().
  */
-import {
-  AlertTriangle,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Loader2,
-  RefreshCw,
-  Search,
-  User,
-} from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Calendar, ChevronLeft, ChevronRight, Filter, RefreshCw, Search, User } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -108,6 +99,81 @@ const normalizeAuditEventsResponse = (value: unknown) => {
   };
 };
 
+// canon TRIADA §27 — StandardTable columns. Read-only audit log, no row
+// actions (kebab defaults to disabled universal blocks — 1:1 with the
+// previous action-less table).
+const buildColumns = (): TableColumn[] => [
+  {
+    id: 'created_at',
+    label: 'Timestamp',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as AuditEvent).created_at || ''),
+    render: (row: TableRow) => (
+      <span className="text-slate-500 whitespace-nowrap">
+        {formatDateTime((row as unknown as AuditEvent).created_at)}
+      </span>
+    ),
+  },
+  {
+    id: 'action',
+    label: 'Action',
+    render: (row: TableRow) => (
+      <span className="px-1.5 py-0.5 rounded-md bg-c-accent-soft text-c-accent font-medium">
+        {asText((row as unknown as AuditEvent).action)}
+      </span>
+    ),
+  },
+  {
+    id: 'resource_type',
+    label: 'Resource',
+    render: (row: TableRow) => {
+      const ev = row as unknown as AuditEvent;
+      return (
+        <>
+          <span className="font-medium">{asText(ev.resource_type)}</span>
+          {ev.resource_id && (
+            <span className="text-slate-600 ml-1 font-mono text-[10px]">
+              {asText(ev.resource_id).slice(0, 12)}
+            </span>
+          )}
+        </>
+      );
+    },
+  },
+  {
+    id: 'actor_id',
+    label: 'Actor',
+    render: (row: TableRow) => {
+      const ev = row as unknown as AuditEvent;
+      return (
+        <>
+          {ev.actor_type && (
+            <span className="text-[10px] uppercase font-bold text-slate-600 mr-1">
+              {asText(ev.actor_type)}
+            </span>
+          )}
+          <span className="font-mono text-[10px]">{asText(ev.actor_id).slice(0, 12)}</span>
+        </>
+      );
+    },
+  },
+  {
+    id: 'details',
+    label: 'Details',
+    render: (row: TableRow) => {
+      const ev = row as unknown as AuditEvent;
+      return (
+        <span
+          className="text-slate-600 max-w-[200px] truncate block"
+          title={ev.metadata ? JSON.stringify(ev.metadata) : ''}
+        >
+          {summarizeMetadata(ev.metadata)}
+        </span>
+      );
+    },
+  },
+];
+
 const AuditEventsViewer: React.FC = () => {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [total, setTotal] = useState(0);
@@ -152,6 +218,7 @@ const AuditEventsViewer: React.FC = () => {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
+  const columns = useMemo(() => buildColumns(), []);
 
   return (
     <div className="space-y-4">
@@ -232,82 +299,14 @@ const AuditEventsViewer: React.FC = () => {
 
       {/* Table */}
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-        <table
-          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-xs"
-        >
-          <thead>
-            <tr className="bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200/40 dark:border-navy-700/40">
-              <th className="text-left px-3 py-2 font-semibold text-slate-500">Timestamp</th>
-              <th className="text-left px-3 py-2 font-semibold text-slate-500">Action</th>
-              <th className="text-left px-3 py-2 font-semibold text-slate-500">Resource</th>
-              <th className="text-left px-3 py-2 font-semibold text-slate-500">Actor</th>
-              <th className="text-left px-3 py-2 font-semibold text-slate-500">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loadError ? (
-              <tr>
-                <td colSpan={5} className="py-8">
-                  <DegradedState title="Audit events unavailable" description={loadError} />
-                </td>
-              </tr>
-            ) : loading && events.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-12 text-slate-600">
-                  <Loader2 size={20} className="animate-spin mx-auto mb-2" />
-                  Loading audit events...
-                </td>
-              </tr>
-            ) : events.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-12 text-slate-600">
-                  <AlertTriangle size={20} className="mx-auto mb-2 opacity-40" />
-                  No audit events found
-                </td>
-              </tr>
-            ) : (
-              events.map((ev) => (
-                <tr
-                  key={ev.id}
-                  className="border-b border-slate-200 dark:border-navy-800 hover:bg-slate-50/50 dark:hover:bg-navy-900/30 transition-colors"
-                >
-                  <td className="px-3 py-2 text-slate-500 whitespace-nowrap">
-                    {formatDateTime(ev.created_at)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span className="px-1.5 py-0.5 rounded-md bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium">
-                      {asText(ev.action)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
-                    <span className="font-medium">{asText(ev.resource_type)}</span>
-                    {ev.resource_id && (
-                      <span className="text-slate-600 ml-1 font-mono text-[10px]">
-                        {asText(ev.resource_id).slice(0, 12)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-slate-600 dark:text-slate-400">
-                    {ev.actor_type && (
-                      <span className="text-[10px] uppercase font-bold text-slate-600 mr-1">
-                        {asText(ev.actor_type)}
-                      </span>
-                    )}
-                    <span className="font-mono text-[10px]">
-                      {asText(ev.actor_id).slice(0, 12)}
-                    </span>
-                  </td>
-                  <td
-                    className="px-3 py-2 text-slate-600 max-w-[200px] truncate"
-                    title={ev.metadata ? JSON.stringify(ev.metadata) : ''}
-                  >
-                    {summarizeMetadata(ev.metadata)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <StandardTable
+          columns={columns}
+          data={events as unknown as TableRow[]}
+          loading={loading && events.length === 0}
+          error={loadError}
+          onRetry={fetchEvents}
+          empty={{ title: 'No audit events found' }}
+        />
       </div>
 
       {/* Pagination */}

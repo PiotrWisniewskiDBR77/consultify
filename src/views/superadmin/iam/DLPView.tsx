@@ -13,13 +13,13 @@ import {
   Power,
   PowerOff,
   RefreshCw,
-  Trash2,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -425,6 +425,146 @@ const DLPView: React.FC = () => {
     return ENFORCEMENT_ACTIONS.find((a) => a.value === action)?.label || action;
   };
 
+  const policyColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'name',
+        label: 'Name',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as DLPPolicy).name,
+        render: (row: TableRow) => {
+          const policy = row as unknown as DLPPolicy;
+          return (
+            <div>
+              <p className="font-medium">{policy.name}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-xs">
+                {policy.description}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'policyType',
+        label: 'Type',
+        filterable: true,
+        filterOptions: POLICY_TYPES,
+        render: (row: TableRow) => (
+          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
+            {getPolicyTypeLabel((row as unknown as DLPPolicy).policyType)}
+          </span>
+        ),
+      },
+      {
+        id: 'enforcementAction',
+        label: 'Enforcement',
+        render: (row: TableRow) => {
+          const action = (row as unknown as DLPPolicy).enforcementAction;
+          return (
+            <span
+              className={`px-2 py-1 rounded text-xs ${
+                action === 'block'
+                  ? 'bg-danger-500/10 text-danger-400'
+                  : action === 'warn'
+                    ? 'bg-amber-500/10 text-amber-400'
+                    : 'bg-slate-500/10 text-slate-600 dark:text-slate-500'
+              }`}
+            >
+              {getEnforcementLabel(action)}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'rules',
+        label: 'Rules',
+        render: (row: TableRow) => (
+          <span className="text-sm">{(row as unknown as DLPPolicy).rules?.length || 0} rules</span>
+        ),
+      },
+      {
+        id: 'isActive',
+        label: 'Status',
+        render: (row: TableRow) =>
+          (row as unknown as DLPPolicy).isActive ? (
+            <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
+              Active
+            </span>
+          ) : (
+            <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
+              Inactive
+            </span>
+          ),
+      },
+    ],
+    []
+  );
+
+  const violationColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'policyName',
+        label: 'Policy',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as DLPViolation).policyName,
+        render: (row: TableRow) => {
+          const violation = row as unknown as DLPViolation;
+          return (
+            <div>
+              <p className="font-medium">{violation.policyName}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {getPolicyTypeLabel(violation.policyType)}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'resourceType',
+        label: 'Resource',
+        render: (row: TableRow) => {
+          const violation = row as unknown as DLPViolation;
+          return (
+            <div>
+              <p className="text-sm">{violation.resourceType}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
+                {violation.resourceId}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'violationType',
+        label: 'Violation',
+        render: (row: TableRow) => (
+          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs font-mono">
+            {(row as unknown as DLPViolation).violationType}
+          </span>
+        ),
+      },
+      {
+        id: 'severity',
+        label: 'Severity',
+        filterable: true,
+        filterOptions: SEVERITY_LEVELS.map((s) => ({ value: s, label: s })),
+        render: (row: TableRow) => getSeverityBadge((row as unknown as DLPViolation).severity),
+      },
+      {
+        id: 'detectedAt',
+        label: 'Detected',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as DLPViolation).detectedAt,
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-600">
+            {formatDateTime((row as unknown as DLPViolation).detectedAt)}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
   if (loading && policies.length === 0) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -577,120 +717,27 @@ const DLPView: React.FC = () => {
               <DegradedState title="DLP policies unavailable" description={loadError} />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table
-                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-              >
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Name
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Type
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Enforcement
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Rules
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Status
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {policies.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center py-8 text-slate-600 dark:text-slate-400"
-                      >
-                        No DLP policies found
-                      </td>
-                    </tr>
-                  ) : (
-                    policies.map((policy) => (
-                      <tr
-                        key={policy.id}
-                        className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                      >
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="font-medium">{policy.name}</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-xs">
-                              {policy.description}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
-                            {getPolicyTypeLabel(policy.policyType)}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${
-                              policy.enforcementAction === 'block'
-                                ? 'bg-danger-500/10 text-danger-400'
-                                : policy.enforcementAction === 'warn'
-                                  ? 'bg-amber-500/10 text-amber-400'
-                                  : 'bg-slate-500/10 text-slate-600 dark:text-slate-500'
-                            }`}
-                          >
-                            {getEnforcementLabel(policy.enforcementAction)}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm">{policy.rules?.length || 0} rules</td>
-                        <td className="py-3 px-4">
-                          {policy.isActive ? (
-                            <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
-                              Active
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
-                              Inactive
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleTogglePolicy(policy.id, policy.isActive)}
-                              aria-label={`${policy.isActive ? 'Deactivate' : 'Activate'} DLP policy ${policy.id}`}
-                              className={`p-2 rounded-lg transition-colors ${
-                                policy.isActive
-                                  ? 'text-amber-400 hover:bg-amber-500/10'
-                                  : 'text-emerald-400 hover:bg-emerald-500/10'
-                              }`}
-                              title={policy.isActive ? 'Deactivate' : 'Activate'}
-                            >
-                              {policy.isActive ? (
-                                <PowerOff className="w-4 h-4" />
-                              ) : (
-                                <Power className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleDeletePolicy(policy.id)}
-                              aria-label={`Delete DLP policy ${policy.id}`}
-                              className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <StandardTable
+              columns={policyColumns}
+              data={policies as unknown as TableRow[]}
+              empty={{ title: 'No DLP policies found' }}
+              rowMenu={(row) => {
+                const policy = row as unknown as DLPPolicy;
+                return {
+                  primary: [
+                    {
+                      id: 'toggle',
+                      label: policy.isActive ? 'Deactivate' : 'Activate',
+                      icon: policy.isActive ? PowerOff : Power,
+                      onClick: () => void handleTogglePolicy(policy.id, policy.isActive),
+                    },
+                  ],
+                  destructive: {
+                    onClick: () => void handleDeletePolicy(policy.id),
+                  },
+                };
+              }}
+            />
           )}
         </CardWithHeader>
       )}
@@ -703,87 +750,24 @@ const DLPView: React.FC = () => {
               <DegradedState title="DLP violations unavailable" description={loadError} />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Policy
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Resource
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Violation
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Severity
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Detected
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {violations.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center py-8 text-slate-600 dark:text-slate-400"
-                      >
-                        No unresolved violations
-                      </td>
-                    </tr>
-                  ) : (
-                    violations.map((violation) => (
-                      <tr
-                        key={violation.id}
-                        className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                      >
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="font-medium">{violation.policyName}</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                              {getPolicyTypeLabel(violation.policyType)}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="text-sm">{violation.resourceType}</p>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
-                              {violation.resourceId}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs font-mono">
-                            {violation.violationType}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">{getSeverityBadge(violation.severity)}</td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {formatDateTime(violation.detectedAt)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => handleResolveViolation(violation.id)}
-                            aria-label={`Resolve DLP violation ${violation.id}`}
-                            className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                            title="Resolve"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <StandardTable
+              columns={violationColumns}
+              data={violations as unknown as TableRow[]}
+              empty={{ title: 'No unresolved violations' }}
+              rowMenu={(row) => {
+                const violation = row as unknown as DLPViolation;
+                return {
+                  primary: [
+                    {
+                      id: 'resolve',
+                      label: 'Resolve',
+                      icon: Check,
+                      onClick: () => void handleResolveViolation(violation.id),
+                    },
+                  ],
+                };
+              }}
+            />
           )}
         </CardWithHeader>
       )}

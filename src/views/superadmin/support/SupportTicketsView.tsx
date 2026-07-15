@@ -3,11 +3,12 @@
  * Manages support tickets
  */
 
-import { MessageSquare, Plus } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Eye, MessageSquare, Plus } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -100,6 +101,67 @@ const getCreatedCommentId = (value: unknown) => {
       ''
   );
 };
+
+// canon TRIADA §27 — StandardTable columns. Kebab (actions) is auto-appended
+// by StandardTable itself; it is intentionally NOT declared here.
+const buildColumns = (
+  getPriorityColor: (priority: string) => string,
+  getStatusColor: (status: string) => string
+): TableColumn[] => [
+  {
+    id: 'ticket_number',
+    label: 'Ticket #',
+    render: (row: TableRow) => (
+      <span className="text-slate-900 dark:text-white font-mono text-sm">
+        {(row as unknown as SupportTicketRow).ticket_number}
+      </span>
+    ),
+  },
+  {
+    id: 'subject',
+    label: 'Subject',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as SupportTicketRow).subject || ''),
+    render: (row: TableRow) => (
+      <span className="text-slate-900 dark:text-white">
+        {(row as unknown as SupportTicketRow).subject}
+      </span>
+    ),
+  },
+  {
+    id: 'priority',
+    label: 'Priority',
+    render: (row: TableRow) => {
+      const priority = (row as unknown as SupportTicketRow).priority || 'unknown';
+      return (
+        <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(priority)}`}>
+          {priority}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    render: (row: TableRow) => {
+      const status = (row as unknown as SupportTicketRow).status || 'unknown';
+      return (
+        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(status)}`}>{status}</span>
+      );
+    },
+  },
+  {
+    id: 'created_at',
+    label: 'Created',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as SupportTicketRow).created_at || ''),
+    render: (row: TableRow) => (
+      <span className="text-slate-700 dark:text-slate-300">
+        {formatSupportDate((row as unknown as SupportTicketRow).created_at)}
+      </span>
+    ),
+  },
+];
 
 export const SupportTicketsView: React.FC = () => {
   const [tickets, setTickets] = useState<SupportTicketRow[]>([]);
@@ -291,6 +353,8 @@ export const SupportTicketsView: React.FC = () => {
     }
   };
 
+  const columns = useMemo(() => buildColumns(getPriorityColor, getStatusColor), []);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -345,86 +409,30 @@ export const SupportTicketsView: React.FC = () => {
         </select>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : loadError ? null : (
+      {loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-          >
-            <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Ticket #
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Subject
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Priority
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Created
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {tickets.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    No tickets found
-                  </td>
-                </tr>
-              ) : (
-                tickets.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
-                    <td className="px-6 py-4 text-slate-900 dark:text-white font-mono text-sm">
-                      {ticket.ticket_number}
-                    </td>
-                    <td className="px-6 py-4 text-slate-900 dark:text-white">{ticket.subject}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${getPriorityColor(ticket.priority || 'unknown')}`}
-                      >
-                        {ticket.priority || 'unknown'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${getStatusColor(ticket.status || 'unknown')}`}
-                      >
-                        {ticket.status || 'unknown'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {formatSupportDate(ticket.created_at)}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        className="text-primary-400 hover:text-primary-300"
-                        onClick={() => {
-                          setSelectedTicket(ticket);
-                          setShowDetailsModal(true);
-                        }}
-                        title="View ticket details"
-                      >
-                        <MessageSquare size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={columns}
+            data={tickets as unknown as TableRow[]}
+            loading={loading}
+            empty={{ icon: MessageSquare, title: 'No tickets found' }}
+            rowMenu={(row) => {
+              const ticket = row as unknown as SupportTicketRow;
+              return {
+                primary: [
+                  {
+                    id: 'view-details',
+                    label: 'View ticket details',
+                    icon: Eye,
+                    onClick: () => {
+                      setSelectedTicket(ticket);
+                      setShowDetailsModal(true);
+                    },
+                  },
+                ],
+              };
+            }}
+          />
         </div>
       )}
 

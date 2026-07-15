@@ -4,10 +4,11 @@
  */
 
 import { Ban } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -88,6 +89,89 @@ const getDeviceLabel = (device: DeviceRow) => {
   return 'Unknown device';
 };
 
+// canon TRIADA §27 — StandardTable columns. Kebab (actions) is auto-appended
+// by StandardTable itself; it is intentionally NOT declared here.
+const buildColumns = (): TableColumn[] => [
+  {
+    id: 'device',
+    label: 'Device',
+    sortable: true,
+    sortAccessor: (row: TableRow) => getDeviceLabel(row as unknown as DeviceRow),
+    render: (row: TableRow) => (
+      <span className="text-slate-900 dark:text-white">
+        {getDeviceLabel(row as unknown as DeviceRow)}
+      </span>
+    ),
+  },
+  {
+    id: 'device_type',
+    label: 'Type',
+    render: (row: TableRow) => (
+      <span className="text-slate-700 dark:text-slate-300">
+        {asText((row as unknown as DeviceRow).device_type, '-')}
+      </span>
+    ),
+  },
+  {
+    id: 'browserOs',
+    label: 'Browser/OS',
+    render: (row: TableRow) => {
+      const device = row as unknown as DeviceRow;
+      return (
+        <span className="text-slate-700 dark:text-slate-300">
+          {asText(device.browser, '-')} / {asText(device.os, '-')}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'ip_address',
+    label: 'IP Address',
+    render: (row: TableRow) => (
+      <span className="text-slate-700 dark:text-slate-300">
+        {asText((row as unknown as DeviceRow).ip_address, '-')}
+      </span>
+    ),
+  },
+  {
+    id: 'last_seen_at',
+    label: 'Last Seen',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as DeviceRow).last_seen_at || ''),
+    render: (row: TableRow) => (
+      <span className="text-slate-700 dark:text-slate-300">
+        {formatDeviceDate((row as unknown as DeviceRow).last_seen_at)}
+      </span>
+    ),
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    render: (row: TableRow) => {
+      const device = row as unknown as DeviceRow;
+      if (device.is_blocked) {
+        return (
+          <span className="px-2 py-1 rounded text-xs bg-danger-500/10 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400">
+            Blocked
+          </span>
+        );
+      }
+      if (device.is_trusted) {
+        return (
+          <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400">
+            Trusted
+          </span>
+        );
+      }
+      return (
+        <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300">
+          Unknown
+        </span>
+      );
+    },
+  },
+];
+
 export const DeviceManagementView: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -147,6 +231,8 @@ export const DeviceManagementView: React.FC = () => {
     toast.error(blockUnavailableMessage);
   };
 
+  const columns = useMemo(() => buildColumns(), []);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -172,102 +258,34 @@ export const DeviceManagementView: React.FC = () => {
 
       {loadError && <DegradedState title="Device inventory unavailable" description={loadError} />}
 
-      {loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : loadError ? null : (
+      {loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
             Device inventory is read-only. Blocking requires a configured device management backend.
           </div>
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-          >
-            <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Device
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Type
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Browser/OS
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  IP Address
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Last Seen
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {devices.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    No devices found
-                  </td>
-                </tr>
-              ) : (
-                devices.map((device) => (
-                  <tr key={device.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
-                    <td className="px-6 py-4 text-slate-900 dark:text-white">
-                      {getDeviceLabel(device)}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {asText(device.device_type, '-')}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {asText(device.browser, '-')} / {asText(device.os, '-')}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {asText(device.ip_address, '-')}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {formatDeviceDate(device.last_seen_at)}
-                    </td>
-                    <td className="px-6 py-4">
-                      {device.is_blocked ? (
-                        <span className="px-2 py-1 rounded text-xs bg-danger-500/10 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400">
-                          Blocked
-                        </span>
-                      ) : device.is_trusted ? (
-                        <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400">
-                          Trusted
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300">
-                          Unknown
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {!device.is_blocked && (
-                        <button
-                          onClick={() => handleBlockDevice(device.id, 'Admin action')}
-                          disabled
-                          aria-label={`Block device ${device.id}`}
-                          className="text-slate-600 cursor-not-allowed opacity-60"
-                          title={blockUnavailableMessage}
-                        >
-                          <Ban size={18} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={columns}
+            data={devices as unknown as TableRow[]}
+            loading={loading}
+            empty={{ title: 'No devices found' }}
+            rowMenu={(row) => {
+              const device = row as unknown as DeviceRow;
+              return {
+                primary: device.is_blocked
+                  ? []
+                  : [
+                      {
+                        id: 'block',
+                        label: 'Block device',
+                        icon: Ban,
+                        disabled: true,
+                        note: blockUnavailableMessage,
+                        onClick: () => handleBlockDevice(device.id, 'Admin action'),
+                      },
+                    ],
+              };
+            }}
+          />
         </div>
       )}
     </div>

@@ -20,9 +20,10 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -120,6 +121,103 @@ const normalizeStats = (value: unknown): SessionStats => {
   };
 };
 
+// canon TRIADA §27 — StandardTable columns. Kebab (actions) is auto-appended
+// by StandardTable itself; it is intentionally NOT declared here.
+const buildColumns = (
+  getDeviceIcon: (userAgent: string) => React.ReactNode,
+  formatDate: (dateString: string) => string,
+  isExpired: (expiresAt: string) => boolean
+): TableColumn[] => [
+  {
+    id: 'admin',
+    label: 'Admin',
+    sortable: true,
+    sortAccessor: (row: TableRow) => (row as unknown as AdminSession).admin?.email || '',
+    render: (row: TableRow) => {
+      const session = row as unknown as AdminSession;
+      return (
+        <div>
+          <p className="font-medium">
+            {session.admin?.firstName || 'Unknown'} {session.admin?.lastName || ''}
+          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {session.admin?.email || 'Unknown admin'}
+          </p>
+        </div>
+      );
+    },
+  },
+  {
+    id: 'userAgent',
+    label: 'Device',
+    render: (row: TableRow) => {
+      const session = row as unknown as AdminSession;
+      return (
+        <div className="flex items-center gap-2">
+          {getDeviceIcon(session.userAgent)}
+          <span className="text-sm text-slate-600 truncate max-w-[200px]">
+            {String(session.userAgent || 'Unknown device').split(' ')[0]}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    id: 'ipAddress',
+    label: 'IP Address',
+    render: (row: TableRow) => (
+      <div className="flex items-center gap-2">
+        <Globe className="w-4 h-4 text-slate-500 dark:text-slate-500" />
+        <span className="text-sm">{(row as unknown as AdminSession).ipAddress || 'Unknown'}</span>
+      </div>
+    ),
+  },
+  {
+    id: 'mfaVerified',
+    label: 'MFA',
+    render: (row: TableRow) =>
+      (row as unknown as AdminSession).mfaVerified ? (
+        <span className="flex items-center gap-1 text-emerald-400">
+          <ShieldCheck className="w-4 h-4" />
+          Verified
+        </span>
+      ) : (
+        <span className="flex items-center gap-1 text-amber-400">
+          <ShieldX className="w-4 h-4" />
+          Not Verified
+        </span>
+      ),
+  },
+  {
+    id: 'createdAt',
+    label: 'Created',
+    sortable: true,
+    sortAccessor: (row: TableRow) => (row as unknown as AdminSession).createdAt || '',
+    render: (row: TableRow) => (
+      <div className="flex items-center gap-1 text-sm text-slate-600">
+        <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
+        {formatDate((row as unknown as AdminSession).createdAt)}
+      </div>
+    ),
+  },
+  {
+    id: 'expiresAt',
+    label: 'Expires',
+    sortable: true,
+    sortAccessor: (row: TableRow) => (row as unknown as AdminSession).expiresAt || '',
+    render: (row: TableRow) => {
+      const session = row as unknown as AdminSession;
+      return (
+        <span
+          className={`text-sm ${isExpired(session.expiresAt) ? 'text-danger-400' : 'text-slate-600'}`}
+        >
+          {formatDate(session.expiresAt)}
+        </span>
+      );
+    },
+  },
+];
+
 const AdminSessionsView: React.FC = () => {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [stats, setStats] = useState<SessionStats | null>(null);
@@ -216,6 +314,11 @@ const AdminSessionsView: React.FC = () => {
     const date = new Date(expiresAt);
     return !Number.isNaN(date.getTime()) && date < new Date();
   };
+
+  const columns = useMemo(
+    () => buildColumns(getDeviceIcon, formatDate, isExpired),
+    []
+  );
 
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
@@ -353,119 +456,24 @@ const AdminSessionsView: React.FC = () => {
             <DegradedState title="Active admin sessions unavailable" description={loadError} />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-            >
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Admin
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Device
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    IP Address
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    MFA
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Created
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Expires
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sessions.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                      No active sessions found
-                    </td>
-                  </tr>
-                ) : (
-                  sessions.map((session) => (
-                    <tr
-                      key={session.id}
-                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                    >
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">
-                            {session.admin?.firstName || 'Unknown'} {session.admin?.lastName || ''}
-                          </p>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {session.admin?.email || 'Unknown admin'}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          {getDeviceIcon(session.userAgent)}
-                          <span className="text-sm text-slate-600 truncate max-w-[200px]">
-                            {String(session.userAgent || 'Unknown device').split(' ')[0]}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-slate-500 dark:text-slate-500" />
-                          <span className="text-sm">{session.ipAddress || 'Unknown'}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {session.mfaVerified ? (
-                          <span className="flex items-center gap-1 text-emerald-400">
-                            <ShieldCheck className="w-4 h-4" />
-                            Verified
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-amber-400">
-                            <ShieldX className="w-4 h-4" />
-                            Not Verified
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1 text-sm text-slate-600">
-                          <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
-                          {formatDate(session.createdAt)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`text-sm ${isExpired(session.expiresAt) ? 'text-danger-400' : 'text-slate-600'}`}
-                        >
-                          {formatDate(session.expiresAt)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => handleRevokeSession(session.id)}
-                          disabled={actionLoading === session.id}
-                          aria-label={`Revoke admin session ${session.id}`}
-                          className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
-                          title="Revoke Session"
-                        >
-                          {actionLoading === session.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={columns}
+            data={sessions as unknown as TableRow[]}
+            empty={{ title: 'No active sessions found' }}
+            rowMenu={(row) => {
+              const session = row as unknown as AdminSession;
+              return {
+                destructive: {
+                  label: 'Revoke Session',
+                  icon: Trash2,
+                  onClick: () => {
+                    if (actionLoading === session.id) return;
+                    void handleRevokeSession(session.id);
+                  },
+                },
+              };
+            }}
+          />
         )}
       </CardWithHeader>
     </div>
