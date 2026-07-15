@@ -17182,7 +17182,18 @@
       "selectModel": "Wybierz model",
       "selectAnalysis": "Wybierz analizę",
       "selectBudget": "Wybierz budżet",
-      "selectPlaceholder": "— wybierz —"
+      "selectPlaceholder": "— wybierz —",
+      "suffixAnalysis": "analiza",
+      "suffixBudget": "budżet",
+      "suffixFinancialAnalysis": "analiza finansowa",
+      "suffixValuation": "wycena",
+      "modelForecastFallback": "Model prognostyczny",
+      "monthsAbbrev": "mies.",
+      "periodsAbbrev": "okr.",
+      "yearsAbbrev": "lat",
+      "requiresReadyStatementOrModel": "Wymaga gotowego statementu lub modelu",
+      "confirmBulkDeleteStatements": "Czy na pewno chcesz usunąć {{value}} pozycji? Tej operacji nie można cofnąć.",
+      "confirmBulkDeleteRows": "Czy na pewno chcesz usunąć {{value}} pozycji? Tej operacji nie można cofnąć."
     }
   },
   "portfolio": {

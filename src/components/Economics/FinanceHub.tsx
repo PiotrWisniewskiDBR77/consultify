@@ -205,8 +205,7 @@ function isInvestmentAnalysisType(value: unknown): boolean {
 }
 
 export const FinanceHub: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -763,12 +762,12 @@ export const FinanceHub: React.FC = () => {
       setAnalysisInitialTitle(
         buildAnalyzeTitle(
           row.entityName || row.periodLabel || row.title,
-          isPl ? 'analiza' : 'analysis'
+          t('finance.preview.suffixAnalysis', 'analysis')
         )
       );
       setShowAnalysisCreateModal(true);
     },
-    [buildAnalyzeTitle, isPl]
+    [buildAnalyzeTitle, t]
   );
 
   // ---- Row actions ----
@@ -1305,16 +1304,16 @@ export const FinanceHub: React.FC = () => {
           row.kind === 'statements'
             ? `${(row as FinanceStatementRow).completenessLabel || 'PACK'} • ${(row as FinanceStatementRow).currency} • ${((row as FinanceStatementRow).periodLabel || (row as FinanceStatementRow).periodEnd) ?? ''}`
             : row.kind === 'models'
-              ? `${(row as FinanceModelRow).sourceDocumentTitle || (isPl ? 'Model prognostyczny' : 'Forecast model')} • ${(row as FinanceModelRow).forecastWindowLabel || ''} • ${(row as FinanceModelRow).variantLabel || ''}`
+              ? `${(row as FinanceModelRow).sourceDocumentTitle || t('finance.preview.modelForecastFallback', 'Forecast model')} • ${(row as FinanceModelRow).forecastWindowLabel || ''} • ${(row as FinanceModelRow).variantLabel || ''}`
               : row.kind === 'prediction'
                 ? (row as FinanceModelRow).predictionType === 'budget'
-                  ? `${isPl ? 'Budżet' : 'Budget'} • ${(row as FinanceModelRow).periodStart || ''} → ${(row as FinanceModelRow).periodEnd || ''}`
-                  : `${(row as FinanceModelRow).scenario} • ${(row as FinanceModelRow).currency} • ${(row as FinanceModelRow).horizonMonths} ${isPl ? 'mies.' : 'mo'}`
+                  ? `${t('finance.prediction.budget', 'Budget')} • ${(row as FinanceModelRow).periodStart || ''} → ${(row as FinanceModelRow).periodEnd || ''}`
+                  : `${(row as FinanceModelRow).scenario} • ${(row as FinanceModelRow).currency} • ${(row as FinanceModelRow).horizonMonths} ${t('finance.preview.monthsAbbrev', 'mo')}`
                 : row.kind === 'analysis' || row.kind === 'investment'
-                  ? `${(row as FinanceAnalysisRow).analysisType} • ${(row as FinanceAnalysisRow).currency} • ${(row as FinanceAnalysisRow).periodCount} ${isPl ? 'okr.' : 'per.'}`
-                  : `${(row as FinanceValuationRow).method} • ${(row as FinanceValuationRow).currency} • ${(row as FinanceValuationRow).horizonYears} ${isPl ? 'lat' : 'yr'}`,
+                  ? `${(row as FinanceAnalysisRow).analysisType} • ${(row as FinanceAnalysisRow).currency} • ${(row as FinanceAnalysisRow).periodCount} ${t('finance.preview.periodsAbbrev', 'per.')}`
+                  : `${(row as FinanceValuationRow).method} • ${(row as FinanceValuationRow).currency} • ${(row as FinanceValuationRow).horizonYears} ${t('finance.preview.yearsAbbrev', 'yr')}`,
       })),
-    [filteredRows, isPl]
+    [filteredRows, t]
   );
 
   // ---- Primary CTA ----
@@ -1400,7 +1399,7 @@ export const FinanceHub: React.FC = () => {
               readyStatementContext
                 ? buildAnalyzeTitle(
                     readyStatementContext.periodLabel || readyStatementContext.title,
-                    isPl ? 'budżet' : 'budget'
+                    t('finance.preview.suffixBudget', 'budget')
                   )
                 : ''
             ),
@@ -1418,7 +1417,7 @@ export const FinanceHub: React.FC = () => {
               title: readyStatementContext
                 ? buildAnalyzeTitle(
                     readyStatementContext.periodLabel || readyStatementContext.title,
-                    isPl ? 'analiza finansowa' : 'financial analysis'
+                    t('finance.preview.suffixFinancialAnalysis', 'financial analysis')
                   )
                 : '',
               statementPackId: readyStatementContext ? readyStatementContext.id : null,
@@ -1452,7 +1451,7 @@ export const FinanceHub: React.FC = () => {
               title: modelContext
                 ? buildAnalyzeTitle(
                     modelContext.title,
-                    isPl ? 'analiza finansowa' : 'financial analysis'
+                    t('finance.preview.suffixFinancialAnalysis', 'financial analysis')
                   )
                 : '',
             }),
@@ -1468,7 +1467,7 @@ export const FinanceHub: React.FC = () => {
           onSelect: () =>
             openValuationFlow({
               title: modelContext
-                ? buildAnalyzeTitle(modelContext.title, isPl ? 'wycena' : 'valuation')
+                ? buildAnalyzeTitle(modelContext.title, t('finance.preview.suffixValuation', 'valuation'))
                 : '',
               sourceType: 'financial_model',
               sourceId: modelContext?.id,
@@ -1492,7 +1491,7 @@ export const FinanceHub: React.FC = () => {
               title: budgetContext
                 ? buildAnalyzeTitle(
                     budgetContext.title,
-                    isPl ? 'analiza finansowa' : 'financial analysis'
+                    t('finance.preview.suffixFinancialAnalysis', 'financial analysis')
                   )
                 : '',
             }),
@@ -1509,7 +1508,10 @@ export const FinanceHub: React.FC = () => {
             openValuationFlow(
               budgetContext
                 ? {
-                    title: buildAnalyzeTitle(budgetContext.title, isPl ? 'wycena' : 'valuation'),
+                    title: buildAnalyzeTitle(
+                      budgetContext.title,
+                      t('finance.preview.suffixValuation', 'valuation')
+                    ),
                     sourceType: 'budget',
                     sourceId: getBudgetRawId(budgetContext.id),
                   }
@@ -1536,7 +1538,7 @@ export const FinanceHub: React.FC = () => {
           onSelect: () =>
             openValuationFlow({
               title: analysisContext
-                ? buildAnalyzeTitle(analysisContext.title, isPl ? 'wycena' : 'valuation')
+                ? buildAnalyzeTitle(analysisContext.title, t('finance.preview.suffixValuation', 'valuation'))
                 : '',
               sourceType: 'financial_analysis',
               sourceId: analysisContext?.id,
@@ -1556,7 +1558,6 @@ export const FinanceHub: React.FC = () => {
     openValuationFlow,
     buildAnalyzeTitle,
     getBudgetRawId,
-    isPl,
     t,
   ]);
 
@@ -1649,9 +1650,10 @@ export const FinanceHub: React.FC = () => {
                   disabled={action.disabled}
                   title={
                     action.disabled
-                      ? isPl
-                        ? 'Wymaga gotowego statementu lub modelu'
-                        : 'Requires a ready statement or model'
+                      ? t(
+                          'finance.preview.requiresReadyStatementOrModel',
+                          'Requires a ready statement or model'
+                        )
                       : undefined
                   }
                   className="group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-c-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
@@ -1674,7 +1676,7 @@ export const FinanceHub: React.FC = () => {
         )}
       </div>
     );
-  }, [allAnalyzeActions, showAnalyzeMenu, analyzeActionIcons, isPl, t]);
+  }, [allAnalyzeActions, showAnalyzeMenu, analyzeActionIcons, t]);
 
   // commandRowRightContent — canonical right slot for Menu 3 actions.
   // Rendered inside commandRowContent (justify-between) because ModuleNavBar does not
@@ -2069,9 +2071,11 @@ export const FinanceHub: React.FC = () => {
 
   const handleBulkDeleteStatements = useCallback(async () => {
     if (selectedStatementIds.size === 0) return;
-    const confirmMsg = isPl
-      ? `Czy na pewno chcesz usunąć ${selectedStatementIds.size} pozycji? Tej operacji nie można cofnąć.`
-      : `Are you sure you want to delete ${selectedStatementIds.size} statement(s)? This cannot be undone.`;
+    const confirmMsg = t(
+      'finance.preview.confirmBulkDeleteStatements',
+      'Are you sure you want to delete {{value}} statement(s)? This cannot be undone.',
+      { value: selectedStatementIds.size }
+    );
     if (!window.confirm(confirmMsg)) return;
     const ids = Array.from(selectedStatementIds);
     for (const id of ids) {
@@ -2079,7 +2083,7 @@ export const FinanceHub: React.FC = () => {
       if (row) await handleFinanceDelete(row);
     }
     setSelectedStatementIds(new Set());
-  }, [selectedStatementIds, statementRowsData, handleFinanceDelete, isPl]);
+  }, [selectedStatementIds, statementRowsData, handleFinanceDelete, t]);
 
   const statementsBulkCommandRowContent =
     activeTab === 'statements' && selectedStatementIds.size > 0 ? (
@@ -2427,9 +2431,11 @@ export const FinanceHub: React.FC = () => {
 
   const handleBulkDeleteFinanceRows = useCallback(async () => {
     if (selectedFinanceRowIds.size === 0) return;
-    const confirmMsg = isPl
-      ? `Czy na pewno chcesz usunąć ${selectedFinanceRowIds.size} pozycji? Tej operacji nie można cofnąć.`
-      : `Are you sure you want to delete ${selectedFinanceRowIds.size} item(s)? This cannot be undone.`;
+    const confirmMsg = t(
+      'finance.preview.confirmBulkDeleteRows',
+      'Are you sure you want to delete {{value}} item(s)? This cannot be undone.',
+      { value: selectedFinanceRowIds.size }
+    );
     if (!window.confirm(confirmMsg)) return;
     const ids = Array.from(selectedFinanceRowIds);
     for (const id of ids) {
@@ -2437,7 +2443,7 @@ export const FinanceHub: React.FC = () => {
       if (row) await handleFinanceDelete(row);
     }
     setSelectedFinanceRowIds(new Set());
-  }, [selectedFinanceRowIds, filteredRows, handleFinanceDelete, isPl]);
+  }, [selectedFinanceRowIds, filteredRows, handleFinanceDelete, t]);
 
   const financeBulkCommandRowContent =
     activeTab !== 'statements' && selectedFinanceRowIds.size > 0 ? (

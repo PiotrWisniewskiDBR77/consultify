@@ -16720,7 +16720,18 @@
       "selectModel": "Select model",
       "selectAnalysis": "Select analysis",
       "selectBudget": "Select budget",
-      "selectPlaceholder": "— select —"
+      "selectPlaceholder": "— select —",
+      "suffixAnalysis": "analysis",
+      "suffixBudget": "budget",
+      "suffixFinancialAnalysis": "financial analysis",
+      "suffixValuation": "valuation",
+      "modelForecastFallback": "Forecast model",
+      "monthsAbbrev": "mo",
+      "periodsAbbrev": "per.",
+      "yearsAbbrev": "yr",
+      "requiresReadyStatementOrModel": "Requires a ready statement or model",
+      "confirmBulkDeleteStatements": "Are you sure you want to delete {{value}} statement(s)? This cannot be undone.",
+      "confirmBulkDeleteRows": "Are you sure you want to delete {{value}} item(s)? This cannot be undone."
     }
   },
   "portfolio": {
