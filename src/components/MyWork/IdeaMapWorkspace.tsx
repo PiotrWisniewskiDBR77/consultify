@@ -3442,9 +3442,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             // 'canvas') tylko za flagą ff_evidencePanel (default OFF, patrz
             // src/utils/evidencePanelFlag.ts). OFF → prop `undefined` → karta się
             // nie montuje → powłoka panelu 1:1 jak przed HP-17 (zero zmian DOM).
-            evidenceArtifactId={
-              isEvidencePanelEnabled() && realId ? realId : undefined
-            }
+            evidenceArtifactId={isEvidencePanelEnabled() && realId ? realId : undefined}
             propertiesContent={
               <IdeaWorkspaceTools
                 {...ideaWorkspaceToolsSharedProps}

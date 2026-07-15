@@ -116,8 +116,7 @@ router.get(
       id: l.id,
       createdAt: l.created_at,
       userId: l.user_id || null,
-      userName:
-        [l.first_name, l.last_name].filter(Boolean).join(' ').trim() || l.user_id || null,
+      userName: [l.first_name, l.last_name].filter(Boolean).join(' ').trim() || l.user_id || null,
       actionType: l.action_type || null,
       actionDescription: l.action_description || null,
       aiRole: l.ai_project_role || l.ai_role || null,

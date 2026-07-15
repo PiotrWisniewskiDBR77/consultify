@@ -130,7 +130,13 @@ export const InitiativeBusinessCaseCard: React.FC<Props> = ({ initiative, projec
       />
 
       <div className="flex items-center gap-3 mt-3">
-        <Button variant="primary" size="md" onClick={handleGenerate} loading={loading} icon={<Sparkles />}>
+        <Button
+          variant="primary"
+          size="md"
+          onClick={handleGenerate}
+          loading={loading}
+          icon={<Sparkles />}
+        >
           {loading ? t('businessCase.generating') : t('businessCase.generate')}
         </Button>
         {loading && (
@@ -158,13 +164,17 @@ export const InitiativeBusinessCaseCard: React.FC<Props> = ({ initiative, projec
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-c-surface dark:bg-c-surface-raised rounded-lg p-3 border border-c-border-subtle">
-                <div className="text-[11px] uppercase text-c-text-muted">{t('businessCase.npv')}</div>
+                <div className="text-[11px] uppercase text-c-text-muted">
+                  {t('businessCase.npv')}
+                </div>
                 <div className="text-c-text font-mono text-sm font-bold mt-1">
                   {fmtNumber(model.base.npv, model.currency)}
                 </div>
               </div>
               <div className="bg-c-surface dark:bg-c-surface-raised rounded-lg p-3 border border-c-border-subtle">
-                <div className="text-[11px] uppercase text-c-text-muted">{t('businessCase.irr')}</div>
+                <div className="text-[11px] uppercase text-c-text-muted">
+                  {t('businessCase.irr')}
+                </div>
                 <div className="text-c-text font-mono text-sm font-bold mt-1">
                   {fmtPct(model.base.irrPct)}
                 </div>
@@ -178,7 +188,9 @@ export const InitiativeBusinessCaseCard: React.FC<Props> = ({ initiative, projec
                 </div>
               </div>
               <div className="bg-c-surface dark:bg-c-surface-raised rounded-lg p-3 border border-c-border-subtle">
-                <div className="text-[11px] uppercase text-c-text-muted">{t('businessCase.roi')}</div>
+                <div className="text-[11px] uppercase text-c-text-muted">
+                  {t('businessCase.roi')}
+                </div>
                 <div className="text-c-text font-mono text-sm font-bold mt-1">
                   {fmtPct(model.base.roiPct)}
                 </div>
@@ -218,7 +230,9 @@ export const InitiativeBusinessCaseCard: React.FC<Props> = ({ initiative, projec
                       <th className="py-2 pr-3 font-medium">{t('businessCase.scenario')}</th>
                       <th className="py-2 px-3 font-medium text-right">{t('businessCase.npv')}</th>
                       <th className="py-2 px-3 font-medium text-right">{t('businessCase.irr')}</th>
-                      <th className="py-2 px-3 font-medium text-right">{t('businessCase.payback')}</th>
+                      <th className="py-2 px-3 font-medium text-right">
+                        {t('businessCase.payback')}
+                      </th>
                       <th className="py-2 pl-3 font-medium text-right">{t('businessCase.roi')}</th>
                     </tr>
                   </thead>

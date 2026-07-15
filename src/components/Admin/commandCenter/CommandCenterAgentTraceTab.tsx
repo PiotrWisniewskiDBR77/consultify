@@ -135,8 +135,7 @@ export const CommandCenterAgentTraceTab: React.FC = () => {
           const decision = row.userDecision as string | null;
           return (
             <span className={`text-sm font-medium ${decisionTone(decision)}`}>
-              {decision ||
-                t('commandCenter.agentTrace.pending', 'Pending')}
+              {decision || t('commandCenter.agentTrace.pending', 'Pending')}
             </span>
           );
         },

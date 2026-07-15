@@ -114,7 +114,14 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
       });
     }
     return base;
-  }, [isPolish, activeSection, propertiesContent, contextContent, teresaContent, evidenceArtifactId]);
+  }, [
+    isPolish,
+    activeSection,
+    propertiesContent,
+    contextContent,
+    teresaContent,
+    evidenceArtifactId,
+  ]);
 
   return (
     <ArtifactRightPanel

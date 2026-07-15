@@ -209,7 +209,8 @@ export const RISK_ITEM_LADDER: RiskQuestionNode[] = [
         labelEn: 'A specific strategy named, with a rationale tied to this risk',
         labelPl: 'Nazwana konkretna strategia, z uzasadnieniem powiązanym z tym ryzykiem',
         consultantSignalEn: 'A real response — proceed to ownership, trigger, and RAID readiness.',
-        consultantSignalPl: 'Prawdziwa reakcja — przejdź do właściciela, triggera i gotowości RAID.',
+        consultantSignalPl:
+          'Prawdziwa reakcja — przejdź do właściciela, triggera i gotowości RAID.',
       },
       {
         key: 'generic-non-strategy',
@@ -237,7 +238,7 @@ export const RISK_ITEM_LADDER: RiskQuestionNode[] = [
     intentPl:
       'Reakcja bez właściciela i triggera to akapit, nie plan — a to dokładnie kształt, jakiego oczekuje rejestr RAID inicjatywy (patrz raidHandoff.ts).',
     textEn:
-      'Who owns this response, what is the early-warning trigger that fires it, and is this risk ready to hand off into the initiative\'s RAID log?',
+      "Who owns this response, what is the early-warning trigger that fires it, and is this risk ready to hand off into the initiative's RAID log?",
     textPl:
       'Kto jest właścicielem tej reakcji, jaki jest trigger wczesnego ostrzegania, który ją uruchamia, i czy to ryzyko jest gotowe do przekazania do rejestru RAID inicjatywy?',
     probeEn: 'If the owner left tomorrow, would anyone notice the trigger fired?',

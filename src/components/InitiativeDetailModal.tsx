@@ -36,7 +36,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../services/api';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
-import { isBusinessCaseAdvisoryEnabled } from '../utils/businessCaseAdvisoryFlag';
 import {
   FullInitiative,
   InitiativeComment,
@@ -48,6 +47,7 @@ import {
   StrategicIntent,
   User,
 } from '../types';
+import { isBusinessCaseAdvisoryEnabled } from '../utils/businessCaseAdvisoryFlag';
 import { InitiativeBusinessCaseCard } from './Economics/InitiativeBusinessCaseCard';
 import { InitiativeFinancialIntegration } from './Economics/InitiativeFinancialIntegration';
 import { InitiativeIntelligenceTab } from './InitiativeIntelligenceTab';
