@@ -20,6 +20,7 @@ import {
   type EvidenceContract,
   type EvidenceContractSource,
 } from './evidence/evidenceContract.js';
+import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
 import {
   type MaterializationOutcome,
   type MaterializationSourceItem,
@@ -1050,14 +1051,31 @@ Return a JSON array with exactly ${count} initiatives in this format:
         [uuidv4(), assessment.id, batchId, id, now]
       );
 
+      // HP-16: realny EvidenceContract (nie emptyEvidenceContract()) — źródło = ocena +
+      // (jeśli obecna) oś/wymiar, na którym inicjatywa się opiera; pewność wyprowadzona
+      // deterministycznie z completion_percent/confidence_avg realnie zapisanych na ocenie.
+      const evidence = buildInitiativeEvidenceContract(assessment, scoreSummaryForEvidence, initiative);
+
+      // HP-17 bridge (follow-up, fala 11b) — persist the inline EvidenceContract as an
+      // EvidenceEnvelope (`artifact_evidence`, artifactType='initiative') so the evidence
+      // panel (fala 9, ArtifactRightPanel) has something to render. Previously: contract
+      // computed (HP-16) and returned to the caller but never persisted — panel showed
+      // empty state for initiatives despite the engine having real data (same gap as
+      // deck/canvas/document, closed in fala 11a). Fire-and-forget + fail-safe: a write
+      // failure NEVER blocks initiative creation.
+      void safePersistEvidenceContract(evidence, {
+        organizationId: String(assessment.organization_id),
+        artifactType: 'initiative',
+        artifactId: id,
+        service: 'assessmentInitiativeService',
+        createdBy: userId ?? null,
+      }).catch(() => {});
+
       created.push({
         id,
         title: initiative.title,
         status: 'DRAFT',
-        // HP-16: realny EvidenceContract (nie emptyEvidenceContract()) — źródło = ocena +
-        // (jeśli obecna) oś/wymiar, na którym inicjatywa się opiera; pewność wyprowadzona
-        // deterministycznie z completion_percent/confidence_avg realnie zapisanych na ocenie.
-        evidence: buildInitiativeEvidenceContract(assessment, scoreSummaryForEvidence, initiative),
+        evidence,
       });
     }
 
