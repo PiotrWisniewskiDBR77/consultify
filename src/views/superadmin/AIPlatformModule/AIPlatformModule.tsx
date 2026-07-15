@@ -13,6 +13,7 @@
 import {
   Activity,
   BarChart2,
+  BookMarked,
   BookOpen,
   Code,
   Cpu,
@@ -36,10 +37,11 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
+import { useFeatureFlagsContext } from '../../../contexts/FeatureFlagsContext';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -63,6 +65,7 @@ import { RoutingRulesTab } from './Configuration/RoutingRulesTab';
 import { ExperimentsTab } from './Development/ExperimentsTab';
 import { PromptBuilderTab } from './Development/PromptBuilderTab';
 // Development Tab Components
+import { PromptRegistryTab } from './Development/PromptRegistryTab';
 import { PromptsLibraryTab } from './Development/PromptsLibraryTab';
 import { DocumentsRAGTab } from './Knowledge/DocumentsRAGTab';
 // Knowledge Tab Components
@@ -238,9 +241,35 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
     searchProvider: null,
   });
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
+  const { isEnabled: isFeatureEnabled } = useFeatureFlagsContext();
+  // Oxford O5.5 wiring: screen ships plain/kanoniczny (StandardTable) behind a
+  // flag OFF by default — Vegas polishes visuals after Piotr's screenshot
+  // acceptance (CLAUDE.md rule #7). See useFeatureFlags DEFAULT_FLAGS.
+  const promptRegistryUiEnabled = isFeatureEnabled('promptRegistryUi');
+
+  // AI_PLATFORM_TABS with the flag-gated "Prompt Registry" sub-tab spliced
+  // into Development when enabled. OFF = identical to today's tab list.
+  const resolvedTabs = useMemo<MainTab[]>(() => {
+    if (!promptRegistryUiEnabled) return AI_PLATFORM_TABS;
+    return AI_PLATFORM_TABS.map((tab) =>
+      tab.id === 'development'
+        ? {
+            ...tab,
+            subTabs: [
+              ...tab.subTabs,
+              {
+                id: 'prompt-registry',
+                label: 'Prompt Registry',
+                icon: <BookMarked size={16} />,
+              },
+            ],
+          }
+        : tab
+    );
+  }, [promptRegistryUiEnabled]);
 
   // Get current main tab configuration
-  const currentMainTab = AI_PLATFORM_TABS.find((tab) => tab.id === activeMainTab);
+  const currentMainTab = resolvedTabs.find((tab) => tab.id === activeMainTab);
 
   useEffect(() => {
     if (initialTab) setActiveMainTab(initialTab);
@@ -269,6 +298,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'development/prompt-builder': 'superadmin_ai_development_prompt_builder',
       'development/experiments': 'superadmin_ai_development_experiments',
       'development/model-registry': 'superadmin_ai_development_model_registry',
+      'development/prompt-registry': 'superadmin_ai_development_prompt_registry',
       'operations/mission-control': 'superadmin_ai_operations_mission_control',
       'operations/health-monitoring': 'superadmin_ai_operations_health',
       'operations/performance-dashboard': 'superadmin_ai_operations_performance',
@@ -310,7 +340,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   // Handle main tab change
   const handleMainTabChange = (tabId: string) => {
     setActiveMainTab(tabId);
-    const newTab = AI_PLATFORM_TABS.find((t) => t.id === tabId);
+    const newTab = resolvedTabs.find((t) => t.id === tabId);
     if (newTab && newTab.subTabs.length > 0) {
       setActiveSubTab(newTab.subTabs[0].id);
     }
@@ -346,6 +376,8 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         return <ExperimentsTab />;
       case 'development/model-registry':
         return <ModelRegistryHub />;
+      case 'development/prompt-registry':
+        return promptRegistryUiEnabled ? <PromptRegistryTab /> : null;
 
       // Operations
       case 'operations/mission-control':
@@ -427,6 +459,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'development/prompt-builder': 'superadmin-ai-intelligence',
       'development/experiments': 'superadmin-ai-ab-testing',
       'development/model-registry': 'superadmin-ai-model-registry',
+      'development/prompt-registry': 'superadmin-ai-development',
       'operations/prompt-os-runtime': 'superadmin-ai-operations',
       'analytics/llm-observatory': 'superadmin-ai-operations',
       'policy/enforcement-state': 'superadmin-ai-governance',
@@ -544,7 +577,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
 
         {/* Main Tabs */}
         <div className="px-6 flex gap-1 overflow-x-auto">
-          {AI_PLATFORM_TABS.map((tab) => (
+          {resolvedTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleMainTabChange(tab.id)}
