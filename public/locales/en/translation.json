@@ -17058,14 +17058,20 @@
         "done": "Done",
         "ready": "Ready",
         "cannotFinalize": "Cannot finalize yet",
-        "button": "Finalize Session"
+        "button": "Finalize Session",
+        "doneHint": "Session is locked. Go to the Outputs step to create reports, presentations, initiatives, and ideas.",
+        "cannotFinalizeHint": "{{count}} required items are missing. Go back to Review.",
+        "readyHint": "Finalizing will lock the session for editing. You will be able to create outputs (reports, initiatives, presentations, and ideas)."
       },
       "next": "next",
       "step": "Step",
       "define": {
         "intent": "Intent / Goal",
         "scope": "Scope",
-        "audience": "Target Audience"
+        "audience": "Target Audience",
+        "intentPlaceholder": "What do you want to achieve with this analysis?",
+        "scopePlaceholder": "What is the scope of this analysis?",
+        "audiencePlaceholder": "Who is the target audience for the results?"
       },
       "review": {
         "missingRequired": "Missing required items",
@@ -17073,7 +17079,8 @@
         "reprocess": "Re-process missing items",
         "allComplete": "All required items are complete",
         "aiSuggestions": "AI Suggestions",
-        "summaries": "Key Findings"
+        "summaries": "Key Findings",
+        "allCompleteHint": "You can proceed to finalize the session."
       },
       "outputs": {
         "notFinalized": "Finalize first",
@@ -17081,9 +17088,25 @@
         "createReport": "Create Report",
         "createPresentation": "Create Presentation",
         "createIdea": "Create Idea",
-        "created": "Created Outputs"
+        "created": "Created Outputs",
+        "notFinalizedHint": "Finalize the session to create outputs.",
+        "hint": "Create artifacts based on session results. Each output will be linked to this session. The standard output layer includes initiative, report, presentation, and idea."
       },
-      "prev": "Previous"
+      "prev": "Previous",
+      "inputs": {
+        "noFieldsTitle": "No input fields defined",
+        "noFieldsHint": "This tool does not require additional input data"
+      },
+      "assumptionsEmptyTitle": "No assumptions yet",
+      "assumptionsEmptyHint": "AI will propose assumptions during work",
+      "work": {
+        "placeholderTitle": "Work surface",
+        "placeholderHint": "Work surface configuration depends on the tool type"
+      },
+      "aiSuggestion": {
+        "accept": "Accept",
+        "reject": "Reject"
+      }
     },
     "session": {
       "notLoadedYet": "Session is still loading — try again in a moment"

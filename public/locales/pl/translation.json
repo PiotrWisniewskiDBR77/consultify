@@ -17727,14 +17727,20 @@
         "done": "Zrobione",
         "ready": "Gotowy",
         "cannotFinalize": "Nie można jeszcze finalizować",
-        "button": "Finalizuj sesję"
+        "button": "Finalizuj sesję",
+        "doneHint": "Sesja jest zablokowana. Przejdź do zakładki Outputs aby tworzyć raporty, prezentacje, inicjatywy i pomysły.",
+        "cannotFinalizeHint": "Brakuje {{count}} wymaganych elementów. Wróć do Review.",
+        "readyHint": "Finalizacja zablokuje sesję do edycji. Będziesz mógł tworzyć outputy (raporty, inicjatywy, prezentacje i pomysły)."
       },
       "next": "następne",
       "step": "Krok",
       "define": {
         "intent": "Cel / Zamiar",
         "scope": "Zakres",
-        "audience": "Grupa docelowa"
+        "audience": "Grupa docelowa",
+        "intentPlaceholder": "Co chcesz osiągnąć tą analizą?",
+        "scopePlaceholder": "Jaki zakres obejmuje analiza?",
+        "audiencePlaceholder": "Kto jest odbiorcą wyników?"
       },
       "review": {
         "missingRequired": "Brakujące wymagane elementy",
@@ -17742,7 +17748,8 @@
         "reprocess": "Przetwórz ponownie brakujące elementy",
         "allComplete": "Wszystkie wymagane elementy są kompletne",
         "aiSuggestions": "Sugestie AI",
-        "summaries": "Kluczowe wnioski"
+        "summaries": "Kluczowe wnioski",
+        "allCompleteHint": "Możesz przejść do finalizacji sesji."
       },
       "outputs": {
         "notFinalized": "Najpierw finalizuj",
@@ -17750,9 +17757,25 @@
         "createReport": "Utwórz raport",
         "createPresentation": "Utwórz prezentację",
         "createIdea": "Utwórz pomysł",
-        "created": "Utworzone wyniki"
+        "created": "Utworzone wyniki",
+        "notFinalizedHint": "Finalizuj sesję aby móc tworzyć outputy.",
+        "hint": "Twórz artefakty na podstawie wyników sesji. Każdy output będzie powiązany z tą sesją. Docelowy standard obejmuje inicjatywę, raport, prezentację i pomysł."
       },
-      "prev": "Wstecz"
+      "prev": "Wstecz",
+      "inputs": {
+        "noFieldsTitle": "Brak zdefiniowanych pól wejściowych",
+        "noFieldsHint": "To narzędzie nie wymaga dodatkowych danych wejściowych"
+      },
+      "assumptionsEmptyTitle": "Brak założeń",
+      "assumptionsEmptyHint": "AI zaproponuje założenia w trakcie pracy",
+      "work": {
+        "placeholderTitle": "Powierzchnia robocza",
+        "placeholderHint": "Konfiguracja powierzchni roboczej zależy od typu narzędzia"
+      },
+      "aiSuggestion": {
+        "accept": "Akceptuj",
+        "reject": "Odrzuć"
+      }
     },
     "session": {
       "notLoadedYet": "Sesja wciąż się ładuje — spróbuj ponownie za chwilę"
