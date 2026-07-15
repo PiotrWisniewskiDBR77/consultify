@@ -6,8 +6,15 @@
 import './SubscriptionPlansManager.css';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CheckCircle2, Trash2, XCircle } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { StandardTable } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
 import { useToast } from '../../components/ui/use-toast';
 import api from '../../services/api';
@@ -199,6 +206,121 @@ export const SubscriptionPlansManager: React.FC = () => {
     });
   };
 
+  // ── Kanon §27: plany → StandardTable ─────────────────────────────────────
+  const planRows: TableRow[] = filteredPlans.map((plan: SubscriptionPlan) => ({
+    ...plan,
+    id: plan.id,
+  }));
+
+  const planColumns: TableColumn[] = [
+    {
+      id: 'name',
+      label: 'Plan Name',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="font-medium text-slate-900 dark:text-white">{row.name}</span>
+      ),
+    },
+    {
+      id: 'price_monthly',
+      label: 'Price/Month',
+      align: 'right',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300">
+          ${(row.price_monthly as number).toFixed(2)}
+        </span>
+      ),
+    },
+    {
+      id: 'memory_limit_mb',
+      label: 'Memory',
+      align: 'right',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300">{row.memory_limit_mb || 0} MB</span>
+      ),
+    },
+    {
+      id: 'cpu_quota_percent',
+      label: 'CPU',
+      align: 'right',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300">{row.cpu_quota_percent || 0}%</span>
+      ),
+    },
+    {
+      id: 'token_limit',
+      label: 'Tokens',
+      align: 'right',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300">
+          {((row.token_limit as number) / 1000).toFixed(0)}K
+        </span>
+      ),
+    },
+    {
+      id: 'storage_limit_gb',
+      label: 'Storage',
+      align: 'right',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300">{row.storage_limit_gb} GB</span>
+      ),
+    },
+    {
+      id: 'max_concurrent_ai_jobs',
+      label: 'AI Jobs',
+      align: 'right',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300">
+          {row.max_concurrent_ai_jobs || 0}
+        </span>
+      ),
+    },
+    {
+      id: 'is_active',
+      label: 'Status',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+            row.is_active === 1
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              : 'bg-slate-200/60 text-slate-600 dark:bg-navy-700/50 dark:text-slate-400'
+          }`}
+        >
+          {row.is_active === 1 ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+  ];
+
+  const planRowMenu = (row: TableRow): StandardRowMenu => {
+    const plan = row as unknown as SubscriptionPlan;
+    return {
+      statusTransitions: [
+        {
+          id: 'toggle-active',
+          label: plan.is_active === 1 ? 'Deactivate' : 'Activate',
+          icon: plan.is_active === 1 ? XCircle : CheckCircle2,
+          onClick: () => handleToggleActive(plan),
+        },
+      ],
+      universalHandlers: {
+        edit: () => handleEditPlan(plan),
+      },
+      destructive: {
+        label: 'Delete',
+        icon: Trash2,
+        onClick: () => handleDeletePlan(plan.id, plan.name),
+      },
+    };
+  };
+
   if (isLoading) {
     return (
       <div className="subscription-plans-manager">
@@ -248,72 +370,18 @@ export const SubscriptionPlansManager: React.FC = () => {
       </div>
 
       <div className="plans-table-container">
-        <table
-          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="plans-table"
-        >
-          <thead>
-            <tr>
-              <th>Plan Name</th>
-              <th>Price/Month</th>
-              <th>Memory</th>
-              <th>CPU</th>
-              <th>Tokens</th>
-              <th>Storage</th>
-              <th>AI Jobs</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPlans.map((plan: any) => (
-              <tr key={plan.id} className={plan.is_active === 0 ? 'inactive' : ''}>
-                <td className="plan-name">{plan.name}</td>
-                <td>${plan.price_monthly.toFixed(2)}</td>
-                <td>{plan.memory_limit_mb || 0} MB</td>
-                <td>{plan.cpu_quota_percent || 0}%</td>
-                <td>{(plan.token_limit / 1000).toFixed(0)}K</td>
-                <td>{plan.storage_limit_gb} GB</td>
-                <td>{plan.max_concurrent_ai_jobs || 0}</td>
-                <td>
-                  <span className={`status-badge ${plan.is_active === 1 ? 'active' : 'inactive'}`}>
-                    {plan.is_active === 1 ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="actions">
-                  <button className="btn-icon" onClick={() => handleEditPlan(plan)} title="Edit">
-                    ✏️
-                  </button>
-                  <button
-                    className="btn-icon"
-                    onClick={() => handleToggleActive(plan)}
-                    title={plan.is_active === 1 ? 'Deactivate' : 'Activate'}
-                  >
-                    {plan.is_active === 1 ? '🔴' : '🟢'}
-                  </button>
-                  <button
-                    className="btn-icon danger"
-                    onClick={() => handleDeletePlan(plan.id, plan.name)}
-                    title="Delete"
-                  >
-                    🗑️
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredPlans.length === 0 && searchTerm && (
-          <div className="empty-state">
-            <p>No plans match your search.</p>
-          </div>
-        )}
-
-        {plans?.length === 0 && (
-          <div className="empty-state">
-            <p>No subscription plans yet. Create your first plan!</p>
-          </div>
-        )}
+        <StandardTable
+          columns={planColumns}
+          data={planRows}
+          rowMenu={planRowMenu}
+          rowClassName={(row) => ((row.is_active as number) === 0 ? 'opacity-60' : '')}
+          empty={{
+            title: searchTerm
+              ? 'No plans match your search.'
+              : 'No subscription plans yet. Create your first plan!',
+          }}
+          persistKey="superadmin.subscriptionPlans.list"
+        />
       </div>
 
       {/* Create/Edit Modal */}
