@@ -56,19 +56,18 @@ const Btn: React.FC<ToolbarBtnProps> = ({ icon: Icon, onClick, isActive, disable
 const Divider: React.FC = () => <div className="w-px h-5 bg-c-surface-raised mx-0.5" />;
 
 export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
-  const { i18n } = useTranslation();
-  const pl = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const setLink = useCallback(() => {
     const prev = editor.getAttributes('link').href;
-    const url = window.prompt(pl ? 'Wklej URL:' : 'Paste URL:', prev || 'https://');
+    const url = window.prompt(t('myWorkNotebook.toolbar.pasteUrl'), prev || 'https://');
     if (url === null) return;
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }, [editor, pl]);
+  }, [editor, t]);
 
   return (
     <div className="flex items-center gap-0.5 px-3 py-1.5 shrink-0 flex-wrap">
@@ -76,13 +75,13 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         icon={Undo}
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
-        title={pl ? 'Cofnij' : 'Undo'}
+        title={t('myWorkNotebook.toolbar.undo')}
       />
       <Btn
         icon={Redo}
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
-        title={pl ? 'Ponów' : 'Redo'}
+        title={t('myWorkNotebook.toolbar.redo')}
       />
       <Divider />
 
@@ -90,43 +89,43 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         icon={Bold}
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
-        title={pl ? 'Pogrubienie (Ctrl+B)' : 'Bold (Ctrl+B)'}
+        title={t('myWorkNotebook.toolbar.bold')}
       />
       <Btn
         icon={Italic}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
-        title={pl ? 'Kursywa (Ctrl+I)' : 'Italic (Ctrl+I)'}
+        title={t('myWorkNotebook.toolbar.italic')}
       />
       <Btn
         icon={Underline}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive('underline')}
-        title={pl ? 'Podkreślenie (Ctrl+U)' : 'Underline (Ctrl+U)'}
+        title={t('myWorkNotebook.toolbar.underline')}
       />
       <Btn
         icon={Strikethrough}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive('strike')}
-        title={pl ? 'Przekreślenie' : 'Strikethrough'}
+        title={t('myWorkNotebook.toolbar.strikethrough')}
       />
       <Btn
         icon={Highlighter}
         onClick={() => editor.chain().focus().toggleHighlight().run()}
         isActive={editor.isActive('highlight')}
-        title={pl ? 'Podświetlenie' : 'Highlight'}
+        title={t('myWorkNotebook.toolbar.highlight')}
       />
       <Btn
         icon={Code}
         onClick={() => editor.chain().focus().toggleCode().run()}
         isActive={editor.isActive('code')}
-        title={pl ? 'Kod inline' : 'Inline code'}
+        title={t('myWorkNotebook.toolbar.inlineCode')}
       />
       <Btn
         icon={Link}
         onClick={setLink}
         isActive={editor.isActive('link')}
-        title={pl ? 'Link (Ctrl+K)' : 'Link (Ctrl+K)'}
+        title={t('myWorkNotebook.toolbar.link')}
       />
       <Divider />
 
@@ -134,25 +133,25 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         icon={AlignLeft}
         onClick={() => editor.chain().focus().setTextAlign('left').run()}
         isActive={editor.isActive({ textAlign: 'left' })}
-        title={pl ? 'Wyrównaj do lewej' : 'Align left'}
+        title={t('myWorkNotebook.toolbar.alignLeft')}
       />
       <Btn
         icon={AlignCenter}
         onClick={() => editor.chain().focus().setTextAlign('center').run()}
         isActive={editor.isActive({ textAlign: 'center' })}
-        title={pl ? 'Wyśrodkuj' : 'Align center'}
+        title={t('myWorkNotebook.toolbar.alignCenter')}
       />
       <Btn
         icon={AlignRight}
         onClick={() => editor.chain().focus().setTextAlign('right').run()}
         isActive={editor.isActive({ textAlign: 'right' })}
-        title={pl ? 'Wyrównaj do prawej' : 'Align right'}
+        title={t('myWorkNotebook.toolbar.alignRight')}
       />
       <Btn
         icon={AlignJustify}
         onClick={() => editor.chain().focus().setTextAlign('justify').run()}
         isActive={editor.isActive({ textAlign: 'justify' })}
-        title={pl ? 'Justowanie' : 'Justify'}
+        title={t('myWorkNotebook.toolbar.justify')}
       />
       <Divider />
 
@@ -160,19 +159,19 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         icon={Heading1}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isActive={editor.isActive('heading', { level: 1 })}
-        title={pl ? 'Nagłówek 1' : 'Heading 1'}
+        title={t('myWorkNotebook.toolbar.heading1')}
       />
       <Btn
         icon={Heading2}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isActive={editor.isActive('heading', { level: 2 })}
-        title={pl ? 'Nagłówek 2' : 'Heading 2'}
+        title={t('myWorkNotebook.toolbar.heading2')}
       />
       <Btn
         icon={Heading3}
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isActive={editor.isActive('heading', { level: 3 })}
-        title={pl ? 'Nagłówek 3' : 'Heading 3'}
+        title={t('myWorkNotebook.toolbar.heading3')}
       />
       <Divider />
 
@@ -180,32 +179,32 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         icon={List}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive('bulletList')}
-        title={pl ? 'Lista punktowana' : 'Bullet list'}
+        title={t('myWorkNotebook.toolbar.bulletList')}
       />
       <Btn
         icon={ListOrdered}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive('orderedList')}
-        title={pl ? 'Lista numerowana' : 'Numbered list'}
+        title={t('myWorkNotebook.toolbar.numberedList')}
       />
       <Btn
         icon={ListChecks}
         onClick={() => editor.chain().focus().toggleTaskList().run()}
         isActive={editor.isActive('taskList')}
-        title={pl ? 'Checklista' : 'Todo list'}
+        title={t('myWorkNotebook.toolbar.todoList')}
       />
       <Btn
         icon={Quote}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive('blockquote')}
-        title={pl ? 'Cytat' : 'Blockquote'}
+        title={t('myWorkNotebook.toolbar.blockquote')}
       />
       <Divider />
 
       <Btn
         icon={RemoveFormatting}
         onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
-        title={pl ? 'Wyczyść formatowanie' : 'Clear formatting'}
+        title={t('myWorkNotebook.toolbar.clearFormatting')}
       />
 
       <div className="flex-1" />

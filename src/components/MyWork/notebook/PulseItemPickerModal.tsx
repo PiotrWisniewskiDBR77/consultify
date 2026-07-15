@@ -129,16 +129,15 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
   onInsertReference,
   onOpenItem,
 }) => {
-  const { i18n } = useTranslation();
-  const pl = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [items, setItems] = useState<PulseItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), search ? 300 : 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedSearch(search), search ? 300 : 0);
+    return () => clearTimeout(timer);
   }, [search]);
 
   const load = useCallback(async () => {
@@ -172,7 +171,9 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={pl ? `Wybierz ${cfg.labelPl}` : `Select ${cfg.label}`}
+      title={t('myWorkNotebook.pulseItemPicker.title', {
+        type: t(`myWorkNotebook.pulseItemPicker.type_${type}`),
+      })}
       size="lg"
     >
       <div className="flex flex-col gap-4 min-h-0">
@@ -185,7 +186,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={pl ? 'Szukaj po tytule...' : 'Search by title...'}
+            placeholder={t('myWorkNotebook.pulseItemPicker.searchPlaceholder')}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] text-sm"
           />
         </div>
@@ -197,9 +198,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
             </div>
           ) : items.length === 0 ? (
             <div className="py-12 text-center text-sm text-c-text-muted">
-              {pl
-                ? 'Brak wyników. Zmień zapytanie lub wybierz inny typ.'
-                : 'No results. Try a different search or type.'}
+              {t('myWorkNotebook.pulseItemPicker.noResults')}
             </div>
           ) : (
             items.map((item) => (
@@ -221,7 +220,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
                     className={`flex items-center gap-1.5 rounded-md ${cfg.bg} ${cfg.color} px-3 py-1.5 text-xs font-medium hover:opacity-80 transition-opacity`}
                   >
                     <ArrowRight size={12} />
-                    {pl ? 'Wstaw' : 'Insert'}
+                    {t('myWorkNotebook.pulseItemPicker.insert')}
                   </button>
                   {onOpenItem && (
                     <button
@@ -229,7 +228,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
                       className="flex items-center gap-1.5 rounded-md bg-c-surface-raised text-c-text-secondary px-3 py-1.5 text-xs font-medium hover:bg-c-surface-raised transition-colors"
                     >
                       <ExternalLink size={12} />
-                      {pl ? 'Otwórz' : 'Open'}
+                      {t('myWorkNotebook.pulseItemPicker.open')}
                     </button>
                   )}
                 </div>
@@ -239,9 +238,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
         </div>
 
         <p className="text-[11px] text-c-text-muted">
-          {pl
-            ? 'Wstaw odniesienie do notatki, aby pokazać kontekst rozmowy.'
-            : 'Insert a reference into the note to show conversation context.'}
+          {t('myWorkNotebook.pulseItemPicker.footer')}
         </p>
       </div>
     </Modal>
