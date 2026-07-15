@@ -10,6 +10,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
@@ -532,6 +537,83 @@ export const PurposeAssignmentsTab: React.FC = () => {
     }
   };
 
+  const assignmentColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'priority',
+        label: 'Priority',
+        render: (row: TableRow) => <span className="font-mono text-xs">{row.priority}</span>,
+      },
+      {
+        id: 'scope',
+        label: 'Scope',
+        render: (row: TableRow) =>
+          row.organization_id ? (
+            <span className="px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 text-xs">org</span>
+          ) : (
+            <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-500 text-xs">
+              global
+            </span>
+          ),
+      },
+      {
+        id: 'provider',
+        label: 'Provider',
+        render: (row: TableRow) => (
+          <div>
+            <div className="font-medium">{row.provider_name || row.provider_id}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {row.provider || '—'}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'model',
+        label: 'Model',
+        render: (row: TableRow) => (
+          <span className="font-mono text-xs">{row.model_id || row.provider_model_id || '—'}</span>
+        ),
+      },
+      {
+        id: 'health',
+        label: 'Health',
+        render: (row: TableRow) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {row.health_status || 'unknown'}
+          </span>
+        ),
+      },
+      {
+        id: 'remove',
+        label: '',
+        align: 'right',
+        render: (row: TableRow) => (
+          <button
+            onClick={() => void handleRemoveAssignment(row.__assignment as AssignmentRow)}
+            disabled={saving}
+            className="p-2 rounded-lg hover:bg-danger-500/10 text-slate-500 hover:text-danger-400 transition-colors"
+            title="Remove"
+          >
+            <Trash2 size={16} />
+          </button>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [saving]
+  );
+
+  const assignmentRows: TableRow[] = useMemo(
+    () =>
+      assignments.map((a) => ({
+        ...a,
+        id: String(a.id),
+        __assignment: a,
+      })),
+    [assignments]
+  );
+
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -729,77 +811,13 @@ export const PurposeAssignmentsTab: React.FC = () => {
                 />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table
-                  /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full text-sm"
-                >
-                  <thead className="bg-slate-50 dark:bg-navy-900/60">
-                    <tr className="text-left text-slate-600 dark:text-slate-300">
-                      <th className="px-4 py-3">Priority</th>
-                      <th className="px-4 py-3">Scope</th>
-                      <th className="px-4 py-3">Provider</th>
-                      <th className="px-4 py-3">Model</th>
-                      <th className="px-4 py-3">Health</th>
-                      <th className="px-4 py-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {assignments.map((a) => (
-                      <tr
-                        key={a.id}
-                        className="border-t border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200"
-                      >
-                        <td className="px-4 py-3 font-mono text-xs">{a.priority}</td>
-                        <td className="px-4 py-3">
-                          {a.organization_id ? (
-                            <span className="px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 text-xs">
-                              org
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-500 text-xs">
-                              global
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="font-medium">{a.provider_name || a.provider_id}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {a.provider || '—'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-mono text-xs">
-                          {a.model_id || a.provider_model_id || '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {a.health_status || 'unknown'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => handleRemoveAssignment(a)}
-                            disabled={saving}
-                            className="p-2 rounded-lg hover:bg-danger-500/10 text-slate-500 hover:text-danger-400 transition-colors"
-                            title="Remove"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {assignments.length === 0 ? (
-                      <tr>
-                        <td
-                          className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
-                          colSpan={6}
-                        >
-                          No assignments. Add one above.
-                        </td>
-                      </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
+              <StandardTable
+                columns={assignmentColumns}
+                data={assignmentRows}
+                empty={{ title: 'No assignments. Add one above.' }}
+                persistKey="superadmin.aiPlatform.purposeAssignments"
+                canvasClassName="p-0"
+              />
             )}
           </div>
 
