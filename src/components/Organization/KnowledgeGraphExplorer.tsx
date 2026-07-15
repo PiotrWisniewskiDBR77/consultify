@@ -355,10 +355,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                   <Network size={32} />
                 </span>
                 <p className="text-base font-semibold text-slate-800 dark:text-white">
-                  {t(
-                    'organization.knowledgeGraph.emptyOrg.title',
-                    'Your knowledge graph is empty'
-                  )}
+                  {t('organization.knowledgeGraph.emptyOrg.title', 'Your knowledge graph is empty')}
                 </p>
                 <p className="max-w-md text-sm text-slate-500 dark:text-slate-400">
                   {t(
@@ -371,7 +368,10 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                   onClick={() => navigate(ROUTES.ORGANIZATION.PROFILE)}
                   className="mt-1 inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-crimson-700"
                 >
-                  {t('organization.knowledgeGraph.emptyOrg.setupProfile', 'Set up your org profile')}
+                  {t(
+                    'organization.knowledgeGraph.emptyOrg.setupProfile',
+                    'Set up your org profile'
+                  )}
                   <ChevronRight size={14} />
                 </button>
               </div>

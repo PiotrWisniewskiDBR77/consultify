@@ -670,10 +670,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     const labels: Record<string, string> = {
       sourced: t('finance.modelWorkspace.assumptionStatus.sourced', 'Sourced'),
       edited: t('finance.modelWorkspace.assumptionStatus.edited', 'Edited'),
-      assumed: t(
-        'finance.modelWorkspace.assumptionStatus.assumed',
-        'AI assumed — needs review'
-      ),
+      assumed: t('finance.modelWorkspace.assumptionStatus.assumed', 'AI assumed — needs review'),
       missing: t('finance.modelWorkspace.assumptionStatus.missing', 'Missing'),
     };
     const cls = ASSUMPTION_STATUS_LABEL_CLASS[row.status] || ASSUMPTION_STATUS_LABEL_CLASS.missing;

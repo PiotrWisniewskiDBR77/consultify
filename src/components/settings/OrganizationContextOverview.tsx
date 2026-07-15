@@ -130,7 +130,10 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
       );
     } catch {
       toast.error(
-        t('settings.orgContext.rebuildFailedToast', 'Failed to rebuild organization context snapshot.')
+        t(
+          'settings.orgContext.rebuildFailedToast',
+          'Failed to rebuild organization context snapshot.'
+        )
       );
     } finally {
       setRebuilding(false);

@@ -1056,7 +1056,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   </h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {smartAnalysis.documentDescription ||
-                      t('finance.importWizard.analysisCompletedDefault', 'Analysis completed successfully')}
+                      t(
+                        'finance.importWizard.analysisCompletedDefault',
+                        'Analysis completed successfully'
+                      )}
                   </p>
                 </div>
               </div>

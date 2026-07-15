@@ -418,9 +418,7 @@ export function buildInterviewInsightEvidenceContract(
 
   const risks: string[] = [...(materialQuality.limitations || [])];
   if (materialQuality.coverage_posture === 'single_perspective') {
-    risks.push(
-      'Pokrycie jednoosobowe — wnioski mogą nie generalizować na całą organizację.'
-    );
+    risks.push('Pokrycie jednoosobowe — wnioski mogą nie generalizować na całą organizację.');
   }
   (materialQuality.missing_voices || []).forEach((v) => risks.push(`Brak głosu: ${v}`));
 

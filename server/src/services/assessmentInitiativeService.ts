@@ -1054,7 +1054,11 @@ Return a JSON array with exactly ${count} initiatives in this format:
       // HP-16: realny EvidenceContract (nie emptyEvidenceContract()) — źródło = ocena +
       // (jeśli obecna) oś/wymiar, na którym inicjatywa się opiera; pewność wyprowadzona
       // deterministycznie z completion_percent/confidence_avg realnie zapisanych na ocenie.
-      const evidence = buildInitiativeEvidenceContract(assessment, scoreSummaryForEvidence, initiative);
+      const evidence = buildInitiativeEvidenceContract(
+        assessment,
+        scoreSummaryForEvidence,
+        initiative
+      );
 
       // HP-17 bridge (follow-up, fala 11b) — persist the inline EvidenceContract as an
       // EvidenceEnvelope (`artifact_evidence`, artifactType='initiative') so the evidence
