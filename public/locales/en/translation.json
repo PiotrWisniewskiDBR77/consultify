@@ -1577,7 +1577,89 @@
     "dismiss": "Dismiss",
     "restore": "Restore",
     "showLess": "Show less",
-    "apply": "Apply"
+    "apply": "Apply",
+    "showMore": "Show more",
+    "tryAgain": "Try again",
+    "minimize": "Minimize",
+    "pendingReview": "Pending Review",
+    "approved": "Approved",
+    "inProgress": "In Progress",
+    "proposed": "Proposed",
+    "planned": "Planned",
+    "cancelled": "Cancelled",
+    "untitled": "Untitled",
+    "source": "Source",
+    "clearFilters": "Clear filters",
+    "comingSoonPrep": "Coming soon",
+    "show": "Show",
+    "muted": "Muted",
+    "unmute": "Unmute",
+    "clearAll": "Clear all",
+    "new": "NEW",
+    "prev": "Prev",
+    "selectOrganization": "Select Organization",
+    "organizations": "Organizations",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "adding": "Adding...",
+    "exportJson": "Export JSON",
+    "on": "On",
+    "off": "Off",
+    "selected": "selected",
+    "unsaved": "Unsaved",
+    "maximize": "Maximize",
+    "characters": "characters",
+    "unassigned": "Unassigned",
+    "filters": "Filters",
+    "overview": "Overview",
+    "deleting": "Deleting...",
+    "noData": "No data",
+    "summary": "Summary",
+    "relations": "Relations",
+    "notes": "Notes",
+    "period": "Cadence cron",
+    "progress": "Progress",
+    "description": "Description",
+    "ai": "AI",
+    "print": "Print",
+    "sortByDate": "Sort by Date",
+    "sortByTitle": "Sort by Title",
+    "hideArchived": "Hide Archived",
+    "showArchived": "Show Archived",
+    "goBack": "Go Back",
+    "upgrade": "Upgrade",
+    "upgradeNow": "Upgrade Now",
+    "processing": "Processing...",
+    "backToHome": "Back to Home",
+    "later": "Maybe Later",
+    "settings": "Settings",
+    "exporting": "Exporting...",
+    "verify": "Verify",
+    "expired": "Expired",
+    "reconnect": "Reconnect",
+    "connecting": "Connecting...",
+    "change": "Change",
+    "justNow": "Just now",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "viewAll": "View All",
+    "tomorrow": "Tomorrow",
+    "inDays": "in {{count}} days",
+    "inactive": "Inactive",
+    "resolved": "Resolved",
+    "batchOperations": "Batch Operations",
+    "dragToMove": "Drag to move to another column",
+    "backToDashboard": "Back to Dashboard",
+    "saveProfile": "Save Profile",
+    "exitFullscreen": "Exit Fullscreen",
+    "fullscreen": "Fullscreen",
+    "sending": "Sending...",
+    "exportCSV": "Export CSV",
+    "pending": "Pending",
+    "notAvailable": "Not available",
+    "months": "months",
+    "count": "Count",
+    "thisPanel": "This panel"
   },
   "superadmin": {
     "confirm": {
@@ -1991,7 +2073,23 @@
     "expand": "Expand",
     "finance": "Finance",
     "mainNavigation": "Main navigation",
-    "conclusions": "Conclusions"
+    "conclusions": "Conclusions",
+    "collapse": "Collapse sidebar",
+    "materialy": "Materials",
+    "audits": "Audits",
+    "internalTools": "Internal Tools",
+    "aiOs": "AI OS",
+    "aiActions": "AI Actions",
+    "aiResearch": "Research Sessions",
+    "aiArtifacts": "Artifacts",
+    "aiMemory": "Memory & Scope",
+    "aiConnectors": "Connectors",
+    "aiAgents": "Agents",
+    "aiOutcomes": "KPI/ROI & AI Ops",
+    "superAdmin": "SuperAdmin",
+    "portfolioRoadmap": "Portfolio & Roadmap",
+    "mcpIris": "MCP IRIS",
+    "mcpMarketplace": "MCP Marketplace"
   },
   "widgets": {
     "help": {
@@ -2720,7 +2818,10 @@
     },
     "dueDate": {
       "today": "Today",
-      "completed": "Completed"
+      "completed": "Completed",
+      "yesterday": "Yesterday",
+      "tomorrow": "Tomorrow",
+      "noDate": "No date"
     },
     "hub": {
       "name": "Idea",
@@ -4700,7 +4801,9 @@
       "demoteNode": "Demote node under previous sibling",
       "selectAll": "Select all",
       "clearSelection": "Clear selection",
-      "showHideHelp": "Show / hide keyboard help"
+      "showHideHelp": "Show / hide keyboard help",
+      "title": "Keyboard Shortcuts",
+      "tip": "Press ? to open this help at any time"
     },
     "taskInbox": {
       "loadFailed": "Failed to load tasks",
@@ -4761,6 +4864,9 @@
         "pinFailed": "Failed to pin",
         "statusUpdateFailed": "Failed to update status"
       }
+    },
+    "empty": {
+      "aiSuggest": "AI Suggest"
     }
   },
   "step1": {
@@ -13387,7 +13493,9 @@
       "export": "Export History",
       "clear": "Clear All History"
     },
-    "sectionNotFoundHint": "This settings section does not exist. Pick another from the sidebar."
+    "sectionNotFoundHint": "This settings section does not exist. Pick another from the sidebar.",
+    "unsavedChanges": "Unsaved changes",
+    "allChangesSaved": "All changes saved"
   },
   "showcase": {
     "common": {
@@ -16848,9 +16956,34 @@
       "assumptions": "assumptions",
       "finalize": {
         "done": "Done",
-        "ready": "Ready"
+        "ready": "Ready",
+        "cannotFinalize": "Cannot finalize yet",
+        "button": "Finalize Session"
       },
-      "next": "next"
+      "next": "next",
+      "step": "Step",
+      "define": {
+        "intent": "Intent / Goal",
+        "scope": "Scope",
+        "audience": "Target Audience"
+      },
+      "review": {
+        "missingRequired": "Missing required items",
+        "goToStep": "Go to step",
+        "reprocess": "Re-process missing items",
+        "allComplete": "All required items are complete",
+        "aiSuggestions": "AI Suggestions",
+        "summaries": "Key Findings"
+      },
+      "outputs": {
+        "notFinalized": "Finalize first",
+        "createInitiative": "Create Initiative",
+        "createReport": "Create Report",
+        "createPresentation": "Create Presentation",
+        "createIdea": "Create Idea",
+        "created": "Created Outputs"
+      },
+      "prev": "Previous"
     },
     "session": {
       "notLoadedYet": "Session is still loading — try again in a moment"
@@ -18105,6 +18238,11 @@
       "expand": "Expand sidebar",
       "groupModules": "MODULES",
       "groupAdmin": "ADMIN"
+    },
+    "bottom": {
+      "primary": "Primary mobile navigation",
+      "openChat": "Open AI chat",
+      "openMenu": "Open menu"
     }
   },
   "modelRegistry": {
@@ -31276,5 +31414,14 @@
       "progress": "Progress",
       "approvals": "Approvals"
     }
+  },
+  "views": {
+    "d": "D",
+    "dTooltip": "D view (standard)",
+    "n": "N",
+    "nTooltip": "N view: navigation + content",
+    "c": "C",
+    "cTooltip": "C view: dense (maximum information)",
+    "switchLabel": "View style"
   }
 }

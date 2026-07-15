@@ -155,7 +155,89 @@
     "dismiss": "Zamknij",
     "restore": "Przywróć",
     "showLess": "Pokaż mniej",
-    "apply": "Zastosuj"
+    "apply": "Zastosuj",
+    "showMore": "Pokaż więcej",
+    "tryAgain": "Spróbuj ponownie",
+    "minimize": "Zminimalizuj",
+    "pendingReview": "Oczekuje na przegląd",
+    "approved": "Zatwierdzone",
+    "inProgress": "W trakcie",
+    "proposed": "Zaproponowane",
+    "planned": "Zaplanowane",
+    "cancelled": "Anulowane",
+    "untitled": "Bez tytułu",
+    "source": "Źródło",
+    "clearFilters": "Wyczyść filtry",
+    "comingSoonPrep": "Wkrótce",
+    "show": "Pokaż",
+    "muted": "Wyciszone",
+    "unmute": "Wyłącz wyciszenie",
+    "clearAll": "Wyczyść wszystko",
+    "new": "NOWE",
+    "prev": "Wstecz",
+    "selectOrganization": "Wybierz organizację",
+    "organizations": "Organizacje",
+    "enabled": "Włączone",
+    "disabled": "Wyłączone",
+    "adding": "Dodawanie...",
+    "exportJson": "Eksportuj JSON",
+    "on": "Włączone",
+    "off": "Wyłączone",
+    "selected": "wybrano",
+    "unsaved": "Niezapisane",
+    "maximize": "Zmaksymalizuj",
+    "characters": "znaków",
+    "unassigned": "Nieprzypisane",
+    "filters": "Filtry",
+    "overview": "Przegląd",
+    "deleting": "Usuwanie...",
+    "noData": "Brak danych",
+    "summary": "Podsumowanie",
+    "relations": "Powiązania",
+    "notes": "Notatki",
+    "period": "Harmonogram (cron)",
+    "progress": "Postęp",
+    "description": "Opis",
+    "ai": "AI",
+    "print": "Drukuj",
+    "sortByDate": "Sortuj wg daty",
+    "sortByTitle": "Sortuj wg tytułu",
+    "hideArchived": "Ukryj zarchiwizowane",
+    "showArchived": "Pokaż zarchiwizowane",
+    "goBack": "Wróć",
+    "upgrade": "Ulepsz",
+    "upgradeNow": "Ulepsz teraz",
+    "processing": "Przetwarzanie...",
+    "backToHome": "Powrót do strony głównej",
+    "later": "Może później",
+    "settings": "Ustawienia",
+    "exporting": "Eksportowanie...",
+    "verify": "Zweryfikuj",
+    "expired": "Wygasłe",
+    "reconnect": "Połącz ponownie",
+    "connecting": "Łączenie...",
+    "change": "Zmień",
+    "justNow": "Przed chwilą",
+    "hoursAgo": "{{count}}h temu",
+    "daysAgo": "{{count}}d temu",
+    "viewAll": "Zobacz wszystko",
+    "tomorrow": "Jutro",
+    "inDays": "za {{count}} dni",
+    "inactive": "Nieaktywne",
+    "resolved": "Rozwiązane",
+    "batchOperations": "Operacje wsadowe",
+    "dragToMove": "Przeciągnij, aby przenieść do innej kolumny",
+    "backToDashboard": "Powrót do panelu",
+    "saveProfile": "Zapisz profil",
+    "exitFullscreen": "Wyjdź z pełnego ekranu",
+    "fullscreen": "Pełny ekran",
+    "sending": "Wysyłanie...",
+    "exportCSV": "Eksportuj CSV",
+    "pending": "Oczekujące",
+    "notAvailable": "Niedostępne",
+    "months": "miesięcy",
+    "count": "Liczba",
+    "thisPanel": "Ten panel"
   },
   "superadmin": {
     "confirm": {
@@ -1125,7 +1207,23 @@
     "expand": "Rozwiń",
     "finance": "Finanse",
     "mainNavigation": "Nawigacja główna",
-    "conclusions": "Wnioski"
+    "conclusions": "Wnioski",
+    "collapse": "Zwiń panel boczny",
+    "materialy": "Materiały",
+    "audits": "Audyty",
+    "internalTools": "Narzędzia wewnętrzne",
+    "aiOs": "AI OS",
+    "aiActions": "Akcje AI",
+    "aiResearch": "Sesje badawcze",
+    "aiArtifacts": "Artefakty",
+    "aiMemory": "Pamięć i zakres",
+    "aiConnectors": "Konektory",
+    "aiAgents": "Agenci",
+    "aiOutcomes": "KPI/ROI i AI Ops",
+    "superAdmin": "SuperAdmin",
+    "portfolioRoadmap": "Portfolio i Roadmapa",
+    "mcpIris": "MCP IRIS",
+    "mcpMarketplace": "MCP Marketplace"
   },
   "widgets": {
     "help": {
@@ -1854,7 +1952,10 @@
     },
     "dueDate": {
       "today": "Dziś",
-      "completed": "Zakończony"
+      "completed": "Zakończony",
+      "yesterday": "Wczoraj",
+      "tomorrow": "Jutro",
+      "noDate": "Brak daty"
     },
     "hub": {
       "name": "Pomysł",
@@ -3834,7 +3935,9 @@
       "demoteNode": "Obniż węzeł pod poprzedni element równorzędny",
       "selectAll": "Zaznacz wszystko",
       "clearSelection": "Wyczyść zaznaczenie",
-      "showHideHelp": "Pokaż / ukryj pomoc klawiaturową"
+      "showHideHelp": "Pokaż / ukryj pomoc klawiaturową",
+      "title": "Skróty klawiszowe",
+      "tip": "Naciśnij ?, aby otworzyć tę pomoc w dowolnym momencie"
     },
     "taskInbox": {
       "loadFailed": "Nie udało się wczytać zadań",
@@ -3895,6 +3998,9 @@
         "pinFailed": "Nie udało się przypiąć",
         "statusUpdateFailed": "Nie udało się zaktualizować statusu"
       }
+    },
+    "empty": {
+      "aiSuggest": "Sugestia AI"
     }
   },
   "step1": {
@@ -12578,7 +12684,9 @@
       "export": "Eksportuj historię",
       "clear": "Wyczyść całą historię"
     },
-    "sectionNotFoundHint": "Ta sekcja ustawień nie istnieje. Wybierz inną z paska bocznego."
+    "sectionNotFoundHint": "Ta sekcja ustawień nie istnieje. Wybierz inną z paska bocznego.",
+    "unsavedChanges": "Niezapisane zmiany",
+    "allChangesSaved": "Wszystkie zmiany zapisane"
   },
   "showcase": {
     "common": {
@@ -17505,9 +17613,34 @@
       "assumptions": "założenia",
       "finalize": {
         "done": "Zrobione",
-        "ready": "Gotowy"
+        "ready": "Gotowy",
+        "cannotFinalize": "Nie można jeszcze finalizować",
+        "button": "Finalizuj sesję"
       },
-      "next": "następne"
+      "next": "następne",
+      "step": "Krok",
+      "define": {
+        "intent": "Cel / Zamiar",
+        "scope": "Zakres",
+        "audience": "Grupa docelowa"
+      },
+      "review": {
+        "missingRequired": "Brakujące wymagane elementy",
+        "goToStep": "Przejdź do kroku",
+        "reprocess": "Przetwórz ponownie brakujące elementy",
+        "allComplete": "Wszystkie wymagane elementy są kompletne",
+        "aiSuggestions": "Sugestie AI",
+        "summaries": "Kluczowe wnioski"
+      },
+      "outputs": {
+        "notFinalized": "Najpierw finalizuj",
+        "createInitiative": "Utwórz inicjatywę",
+        "createReport": "Utwórz raport",
+        "createPresentation": "Utwórz prezentację",
+        "createIdea": "Utwórz pomysł",
+        "created": "Utworzone wyniki"
+      },
+      "prev": "Wstecz"
     },
     "session": {
       "notLoadedYet": "Sesja wciąż się ładuje — spróbuj ponownie za chwilę"
@@ -18608,6 +18741,11 @@
       "expand": "Rozwiń sidebar",
       "groupModules": "MODUŁY",
       "groupAdmin": "ADMINISTRACJA"
+    },
+    "bottom": {
+      "primary": "Główna nawigacja mobilna",
+      "openChat": "Otwórz czat AI",
+      "openMenu": "Otwórz menu"
     }
   },
   "modelRegistry": {
@@ -32330,5 +32468,14 @@
       "progress": "Postęp",
       "approvals": "Aprobaty"
     }
+  },
+  "views": {
+    "d": "D",
+    "dTooltip": "Widok D (standardowy)",
+    "n": "N",
+    "nTooltip": "Widok N: nawigacja + treść",
+    "c": "C",
+    "cTooltip": "Widok C: gęsty (maksimum informacji)",
+    "switchLabel": "Styl widoku"
   }
 }
