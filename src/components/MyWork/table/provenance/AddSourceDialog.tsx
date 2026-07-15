@@ -37,7 +37,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
   defaultType = 'manual',
   testId = 'provenance-add-source-dialog',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [type, setType] = useState<SourceType>(defaultType);
   const [uri, setUri] = useState('');
@@ -59,16 +59,12 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
   const validate = (): string | null => {
     if (uri && uri.trim().length > 2048) {
-      return isPl
-        ? 'Adres URL nie może przekraczać 2048 znaków.'
-        : 'URI must be ≤ 2048 characters.';
+      return t('myWorkTable.addSourceDialog.uriTooLong');
     }
     if (contribution) {
       const n = Number(contribution);
       if (!Number.isFinite(n) || n < 0 || n > 1) {
-        return isPl
-          ? 'Wkład w pewność musi być liczbą między 0 a 1.'
-          : 'Confidence contribution must be a number between 0 and 1.';
+        return t('myWorkTable.addSourceDialog.confidenceMustBeNumber');
       }
     }
     return null;
@@ -96,7 +92,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
     } catch (submitErr) {
       const message =
         (submitErr as { message?: string })?.message ??
-        (isPl ? 'Nie udało się zapisać źródła.' : 'Failed to save the source.');
+        t('myWorkTable.addSourceDialog.failedToSave');
       setError(message);
     } finally {
       setSubmitting(false);
@@ -126,7 +122,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <h2 id={`${testId}-title`} className="text-sm font-semibold text-c-text">
-            {isPl ? 'Dodaj źródło' : 'Add source'}
+            {t('myWorkTable.addSourceDialog.title')}
           </h2>
           <button
             type="button"
@@ -137,7 +133,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
               }
             }}
             className="text-c-text-secondary hover:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus rounded p-1"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkTable.addSourceDialog.close')}
             data-testid={`${testId}-close`}
           >
             <X size={16} />
@@ -147,7 +143,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
         <div className="px-4 py-3 space-y-3">
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {isPl ? 'Typ źródła' : 'Source type'}
+              {t('myWorkTable.addSourceDialog.sourceType')}
             </span>
             <select
               value={type}
@@ -165,7 +161,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {isPl ? 'URI / link (opcjonalnie)' : 'URI / link (optional)'}
+              {t('myWorkTable.addSourceDialog.uriLabel')}
             </span>
             <input
               type="text"
@@ -179,9 +175,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {isPl
-                ? 'Wkład w pewność (0–1, opcjonalnie)'
-                : 'Confidence contribution (0–1, optional)'}
+              {t('myWorkTable.addSourceDialog.confidenceLabel')}
             </span>
             <input
               type="number"
@@ -198,7 +192,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {isPl ? 'Notatka (opcjonalnie)' : 'Note (optional)'}
+              {t('myWorkTable.addSourceDialog.noteLabel')}
             </span>
             <textarea
               value={note}
@@ -227,7 +221,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
             }}
             className="px-3 py-1.5 rounded-md text-sm text-c-text-muted hover:bg-c-surface-raised"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkTable.addSourceDialog.cancel')}
           </button>
           <button
             type="submit"
@@ -236,7 +230,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
             data-testid={`${testId}-submit`}
           >
             {submitting && <Loader2 size={14} className="animate-spin" aria-hidden />}
-            {isPl ? 'Zapisz' : 'Save'}
+            {t('myWorkTable.addSourceDialog.save')}
           </button>
         </div>
       </form>

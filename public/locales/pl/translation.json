@@ -28006,6 +28006,19 @@
       "quickActions": "Szybkie akcje",
       "add": "Dodaj",
       "askPlaceholder": "Zapytaj AI o pomysły…"
+    },
+    "addSourceDialog": {
+      "uriTooLong": "Adres URL nie może przekraczać 2048 znaków.",
+      "confidenceMustBeNumber": "Wkład w pewność musi być liczbą między 0 a 1.",
+      "failedToSave": "Nie udało się zapisać źródła.",
+      "title": "Dodaj źródło",
+      "close": "Zamknij",
+      "sourceType": "Typ źródła",
+      "uriLabel": "URI / link (opcjonalnie)",
+      "confidenceLabel": "Wkład w pewność (0–1, opcjonalnie)",
+      "noteLabel": "Notatka (opcjonalnie)",
+      "cancel": "Anuluj",
+      "save": "Zapisz"
     }
   },
   "myWorkNotebook": {

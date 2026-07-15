@@ -26946,6 +26946,19 @@
       "quickActions": "Quick actions",
       "add": "Add",
       "askPlaceholder": "Ask AI about ideas…"
+    },
+    "addSourceDialog": {
+      "uriTooLong": "URI must be ≤ 2048 characters.",
+      "confidenceMustBeNumber": "Confidence contribution must be a number between 0 and 1.",
+      "failedToSave": "Failed to save the source.",
+      "title": "Add source",
+      "close": "Close",
+      "sourceType": "Source type",
+      "uriLabel": "URI / link (optional)",
+      "confidenceLabel": "Confidence contribution (0–1, optional)",
+      "noteLabel": "Note (optional)",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   },
   "myWorkNotebook": {
