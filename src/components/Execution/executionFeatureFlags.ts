@@ -45,6 +45,15 @@ const FLAGS = {
     localStorage: 'ff.exec_summary_onelook',
     env: 'VITE_EXEC_SUMMARY_ONELOOK_ENABLED',
   },
+  // M14-wire (2026-07-15) — Sygnały wydolności/gotowości ludzi/championów zmiany
+  // (capacitySignalService + peopleChangeReadinessService + changeChampionsService).
+  // Nowy, jeszcze nie zrzucony ekran → default OFF wszędzie (patrz special-case w
+  // isExecutionFlagEnabled poniżej — NIE dziedziczy fallbacku D-D "ON poza prod").
+  changeSignals: {
+    query: 'ff_execChangeSignals',
+    localStorage: 'ff.exec_change_signals',
+    env: 'VITE_EXEC_CHANGE_SIGNALS_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
@@ -92,6 +101,10 @@ export function isExecutionFlagEnabled(flag: ExecutionFlag): boolean {
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
+  // ★ Rule #7 (CLAUDE.md): brand-new, not-yet-screenshotted cockpit surface stays
+  // OFF everywhere — including demo — until Piotr accepts a clean dev-render.
+  // Does NOT inherit the D-D "ON except public prod" fallback below.
+  if (flag === 'changeSignals') return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).

@@ -120,6 +120,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import ExecutionChangeSignalsPanel from './ExecutionChangeSignalsPanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
@@ -5603,6 +5604,11 @@ Please return:
           {isExecutionFlagEnabled('intelligence') && (
             <div className="shrink-0 px-4 pt-3">
               <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
+            </div>
+          )}
+          {isExecutionFlagEnabled('changeSignals') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionChangeSignalsPanel />
             </div>
           )}
           {isExecutionFlagEnabled('whatIfSandbox') && (

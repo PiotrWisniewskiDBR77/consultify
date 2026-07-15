@@ -35,7 +35,7 @@ vi.mock('../../../server/src/middleware/validation.middleware.js', () => ({
 
 // vi.mock factories are hoisted above module-level consts, so the mock fns must
 // be created inside vi.hoisted to be available when the factory runs.
-const { raidMocks, pirMocks, championMocks } = vi.hoisted(() => ({
+const { raidMocks, pirMocks, championMocks, dbMocks } = vi.hoisted(() => ({
   raidMocks: {
     linkIssueToRisk: vi.fn(),
     materializeRiskToIssue: vi.fn(),
@@ -55,12 +55,20 @@ const { raidMocks, pirMocks, championMocks } = vi.hoisted(() => ({
     listChampions: vi.fn(),
     addChampion: vi.fn(),
     removeChampion: vi.fn(),
+    coalitionCoverage: vi.fn((championCount: number, affectedPopulation: number) => ({
+      coveragePct: affectedPopulation > 0 ? Math.round((championCount / affectedPopulation) * 1000) / 10 : 0,
+      adequate: affectedPopulation > 0 && championCount / affectedPopulation >= 0.15,
+    })),
+  },
+  dbMocks: {
+    get: vi.fn(),
   },
 }));
 
 vi.mock('../../../server/src/services/raidGovernanceService.js', () => raidMocks);
 vi.mock('../../../server/src/services/pirService.js', () => pirMocks);
 vi.mock('../../../server/src/services/changeChampionsService.js', () => championMocks);
+vi.mock('../../../server/src/utils/DbPromise.js', () => dbMocks);
 
 import raidGovernanceRoutes from '../../../server/src/routes/raidGovernance.routes.js';
 
@@ -152,6 +160,46 @@ describe('raidGovernance.routes — org-scoped wiring', () => {
   });
 
   describe('F6 — Change Champions', () => {
+    it('GET /champions lists org-wide champions (no initiative filter)', async () => {
+      championMocks.listChampions.mockResolvedValue([{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }]);
+      const res = await request(createApp()).get('/api/champions');
+      expect(res.status).toBe(200);
+      expect(res.body.count).toBe(3);
+      expect(championMocks.listChampions).toHaveBeenCalledWith('org-rg-A', undefined);
+    });
+
+    it('GET /champions?initiativeId= forwards the filter org-scoped', async () => {
+      championMocks.listChampions.mockResolvedValue([{ id: 'c1' }]);
+      const res = await request(createApp()).get('/api/champions?initiativeId=init-9');
+      expect(res.status).toBe(200);
+      expect(championMocks.listChampions).toHaveBeenCalledWith('org-rg-A', 'init-9');
+    });
+
+    it('GET /champions/coverage uses the caller-supplied affectedPopulation (no DB fallback)', async () => {
+      championMocks.listChampions.mockResolvedValue([
+        { id: 'c1', status: 'active' },
+        { id: 'c2', status: 'active' },
+        { id: 'c3', status: 'inactive' },
+      ]);
+      const res = await request(createApp()).get('/api/champions/coverage?affectedPopulation=20');
+      expect(res.status).toBe(200);
+      // only the 2 active champions count
+      expect(res.body.championCount).toBe(2);
+      expect(res.body.affectedPopulation).toBe(20);
+      expect(championMocks.coalitionCoverage).toHaveBeenCalledWith(2, 20);
+      expect(dbMocks.get).not.toHaveBeenCalled();
+    });
+
+    it('GET /champions/coverage falls back to active org user count when affectedPopulation omitted', async () => {
+      championMocks.listChampions.mockResolvedValue([{ id: 'c1', status: 'active' }]);
+      dbMocks.get.mockResolvedValue({ cnt: 12 });
+      const res = await request(createApp()).get('/api/champions/coverage');
+      expect(res.status).toBe(200);
+      expect(res.body.affectedPopulation).toBe(12);
+      expect(dbMocks.get).toHaveBeenCalledWith(expect.stringContaining('FROM users'), ['org-rg-A']);
+      expect(championMocks.coalitionCoverage).toHaveBeenCalledWith(1, 12);
+    });
+
     it('GET /champions/:initiativeId lists champions org-scoped', async () => {
       championMocks.listChampions.mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]);
       const res = await request(createApp()).get('/api/champions/init-5');
@@ -193,6 +241,13 @@ describe('raidGovernance.routes — org-scoped wiring', () => {
       const champions = await request(app).get('/api/champions/init-5');
       expect(champions.status).toBe(401);
       expect(championMocks.listChampions).not.toHaveBeenCalled();
+
+      const championsOrgWide = await request(app).get('/api/champions');
+      expect(championsOrgWide.status).toBe(401);
+
+      const coverage = await request(app).get('/api/champions/coverage');
+      expect(coverage.status).toBe(401);
+      expect(championMocks.coalitionCoverage).not.toHaveBeenCalled();
 
       const pir = await request(app).post('/api/pir/init-2').send({});
       expect(pir.status).toBe(401);

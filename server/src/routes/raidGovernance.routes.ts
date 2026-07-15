@@ -16,6 +16,8 @@
  *    POST /pir/:id/finalize                    finalize a DRAFT PIR
  *
  *  F6 (6.6) Change Champions — changeChampionsService:
+ *    GET    /champions                         org-wide champion list (optional ?initiativeId=)
+ *    GET    /champions/coverage                Kotter ~15% coalition-coverage vs affected population
  *    GET    /champions/:initiativeId           list champions for an initiative
  *    POST   /champions                         add a champion
  *    DELETE /champions/:id                     remove a champion
@@ -23,7 +25,7 @@
  * Auth pattern mirrors rollout.routes.ts: verifyToken + isAuthenticated, then a
  * per-handler `requireOrg` guard that 401s when no org is attached.
  *
- * NOTE: not yet mounted in Gateway.ts (wiring is a separate step).
+ * Mounted in Gateway.ts at /api/raid-governance.
  */
 import { Response, Router } from 'express';
 import { z } from 'zod';
@@ -34,7 +36,12 @@ import {
   requireProjectCapability,
 } from '../middleware/effectiveCapability.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import { addChampion, listChampions, removeChampion } from '../services/changeChampionsService.js';
+import {
+  addChampion,
+  coalitionCoverage,
+  listChampions,
+  removeChampion,
+} from '../services/changeChampionsService.js';
 import { createPir, finalizePir, getPir } from '../services/pirService.js';
 import {
   assumptionSignals,
@@ -43,6 +50,7 @@ import {
   materializeRiskToIssue,
 } from '../services/raidGovernanceService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 
 const router = Router();
 
@@ -190,6 +198,55 @@ const ChampionCreateSchema = z.object({
   influence: z.string().max(64).nullable().optional(),
   status: z.string().max(32).optional(),
 });
+
+/**
+ * Org-wide champion list (no initiative filter) — powers the ExecutionHub
+ * cockpit panel, which runs org/portfolio-scoped rather than per-initiative.
+ * Declared BEFORE /champions/:initiativeId so '/champions' and
+ * '/champions/coverage' are not swallowed by the param route.
+ */
+router.get(
+  '/champions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrg(req, res);
+    if (!orgId) return;
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' ? req.query.initiativeId : undefined;
+    const champions = await listChampions(orgId, initiativeId);
+    return res.json({ champions, count: champions.length });
+  })
+);
+
+/**
+ * Coalition coverage vs Kotter's ~15% guiding-coalition target (pure analytics
+ * in changeChampionsService.coalitionCoverage). championCount comes from a
+ * real org-scoped DB read; affectedPopulation is caller-supplied via query
+ * (e.g. unique task assignees for the current scope) and falls back to the
+ * org's active user count when omitted.
+ */
+router.get(
+  '/champions/coverage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrg(req, res);
+    if (!orgId) return;
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' ? req.query.initiativeId : undefined;
+    const champions = await listChampions(orgId, initiativeId);
+    const activeChampionCount = champions.filter((c) => c.status === 'active').length;
+
+    let affectedPopulation = Number(req.query.affectedPopulation);
+    if (!Number.isFinite(affectedPopulation) || affectedPopulation <= 0) {
+      const row = await dbGet<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM users WHERE organization_id = ? AND status = 'active'`,
+        [orgId]
+      );
+      affectedPopulation = Number(row?.cnt) || 0;
+    }
+
+    const coverage = coalitionCoverage(activeChampionCount, affectedPopulation);
+    return res.json({ championCount: activeChampionCount, affectedPopulation, ...coverage });
+  })
+);
 
 router.get(
   '/champions/:initiativeId',

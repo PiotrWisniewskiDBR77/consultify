@@ -35,6 +35,7 @@ import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
 import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
 import EvFootballFieldScreen from './screens/ev-football-field';
+import ExecutionChangeSignalsScreen from './screens/execution-change-signals';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
@@ -123,6 +124,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,
+  },
+  'execution-change-signals': {
+    label:
+      'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
+    render: () => <ExecutionChangeSignalsScreen />,
   },
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',

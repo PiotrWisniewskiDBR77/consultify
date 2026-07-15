@@ -14,8 +14,11 @@
  *   - POST /triage               executionTriageService.triageSignals + groupByInitiative
  *   - POST /dependencies/analyze raidDependencyService (cycles / topo / cascade / critical chain)
  *   - POST /capacity/analyze     capacityModelService (utilization / demand / heatmap / overloads)
+ *   - POST /capacity/signals     capacitySignalService (severity-graded overload/underutil signals
+ *                                + portfolio balance) — layered on top of /capacity/analyze's model
+ *   - POST /readiness/analyze    peopleChangeReadinessService (ADKAR roll-up + manager-lane problem)
  *
- * NOT mounted in Gateway.ts yet (wiring is a follow-up step).
+ * Mounted in Gateway.ts at /api/execution-analytics.
  */
 import { Response, Router } from 'express';
 
@@ -29,6 +32,10 @@ import {
   resourceHeatmap,
 } from '../services/capacityModelService.js';
 import {
+  buildCapacitySignals,
+  capacityPortfolioSignal,
+} from '../services/capacitySignalService.js';
+import {
   buildExecutionIntelligence,
   type IntelligenceInitiative,
 } from '../services/executionIntelligenceService.js';
@@ -41,6 +48,11 @@ import {
   type Signal,
   triageSignals,
 } from '../services/executionTriageService.js';
+import {
+  computeReadiness,
+  type ReadinessInputs,
+  readinessToLaneProblem,
+} from '../services/peopleChangeReadinessService.js';
 import {
   cascadeImpact,
   criticalDependencyChain,
@@ -149,6 +161,60 @@ router.post(
     const overloads = overloadAlerts(utilization);
 
     return res.json({ utilization, demand, heatmap, overloads });
+  })
+);
+
+// ================================================================
+// F4 (4.3) — Capacity signals (severity-graded, portfolio balance)
+// ================================================================
+
+/**
+ * Upgrades the raw utilization model (see /capacity/analyze) into typed,
+ * severity-graded signals (CAPACITY_OVERLOAD / CAPACITY_UNDERUTILIZED) plus a
+ * single portfolio balance verdict. Same caller-supplied-input contract as
+ * /capacity/analyze — pure function, no DB, org-gated only.
+ */
+router.post(
+  '/capacity/signals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrg(req, res);
+    if (!orgId) return;
+    const allocations = Array.isArray(req.body?.allocations)
+      ? (req.body.allocations as ResourceAllocation[])
+      : [];
+    const capacities = Array.isArray(req.body?.capacities)
+      ? (req.body.capacities as ResourceCapacity[])
+      : [];
+
+    const signals = buildCapacitySignals(allocations, capacities);
+    const portfolio = capacityPortfolioSignal(allocations, capacities);
+
+    return res.json({ signals, portfolio });
+  })
+);
+
+// ================================================================
+// F6 (6.5) — People-change readiness (ADKAR roll-up)
+// ================================================================
+
+/**
+ * Rolls up already-collected adoption signals (communication coverage,
+ * sentiment, capability gap, reinforcement follow-ups) into an ADKAR
+ * readiness result + a manager-lane problem descriptor when adoption is
+ * at risk. Pure function, no DB — the caller (ExecutionHub cockpit) gathers
+ * the inputs from already-fetched sentiment/capability data.
+ */
+router.post(
+  '/readiness/analyze',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrg(req, res);
+    if (!orgId) return;
+    const inputs = (req.body ?? {}) as ReadinessInputs;
+
+    const readiness = computeReadiness(inputs);
+    const laneProblem = readinessToLaneProblem(readiness);
+
+    return res.json({ readiness, laneProblem });
   })
 );
 
