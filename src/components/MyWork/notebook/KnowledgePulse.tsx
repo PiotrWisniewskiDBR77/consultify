@@ -1,3 +1,4 @@
+// ORPHAN 2026-07-15: 0 importerów (tylko wzmianka w komentarzu MyWorkHub.tsx:1232) — decyzja Piotra
 import {
   ArrowRight,
   CheckSquare,

@@ -1,3 +1,4 @@
+// ORPHAN 2026-07-15: 0 importerów, kandydat do rm lub wpięcia — decyzja Piotra
 /**
  * WebhookSettings — Configure webhook URLs for map events.
  * Stores config in localStorage; dispatches mm-webhook-trigger events.

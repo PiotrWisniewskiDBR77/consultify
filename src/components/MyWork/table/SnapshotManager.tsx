@@ -1,3 +1,4 @@
+// ORPHAN 2026-07-15: 0 importerów, kandydat do rm lub wpięcia — decyzja Piotra
 /**
  * SnapshotManager — Create, list, restore, and delete base snapshots.
  *

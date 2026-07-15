@@ -1,3 +1,6 @@
+// NOTE: to NIE jest mózg promptów narzędzi. Prompty per-tool żyją w
+// src/hooks/discovery/toolAi/promptRegistry.ts (build*ConclusionPrompt).
+// Ten plik = tylko indeks meta.
 /**
  * AI Prompt Registry — index of prompt assets used across Consultify (O5.5).
  *
