@@ -516,7 +516,8 @@ export const PricingPlansAdvancedView: React.FC = () => {
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table /* §27-exempt: macierz porównawcza plan×feature (wiersze=stałe cechy, kolumny=wybrane plany, pivot nie lista encji) — kanon §2 def.1 nie spełniona, formularz/matryca w modalu Compare */ className="w-full"
+              <table
+                /* §27-exempt: macierz porównawcza plan×feature (wiersze=stałe cechy, kolumny=wybrane plany, pivot nie lista encji) — kanon §2 def.1 nie spełniona, formularz/matryca w modalu Compare */ className="w-full"
               >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10">

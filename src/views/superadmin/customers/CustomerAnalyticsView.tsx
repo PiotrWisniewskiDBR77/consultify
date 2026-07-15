@@ -244,7 +244,8 @@ const CustomerAnalyticsView: React.FC = () => {
                 No analytics data available yet.
               </div>
             ) : (
-              <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full"
+              <table
+                /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full"
               >
                 <thead>
                   <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-white/10">

@@ -336,7 +336,8 @@ export const SuperAdminRevenueView: React.FC = () => {
             </h3>
 
             <div className="overflow-x-auto">
-              <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+              <table
+                /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
               >
                 <thead>
                   <tr className="text-left text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
@@ -396,7 +397,8 @@ export const SuperAdminRevenueView: React.FC = () => {
             </p>
 
             <div className="overflow-x-auto">
-              <table /* §27-exempt: data-viz/render analityczny read-only (koszty operacyjne + tfoot suma), nie lista encji */ className="w-full"
+              <table
+                /* §27-exempt: data-viz/render analityczny read-only (koszty operacyjne + tfoot suma), nie lista encji */ className="w-full"
               >
                 <thead>
                   <tr className="text-left text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">

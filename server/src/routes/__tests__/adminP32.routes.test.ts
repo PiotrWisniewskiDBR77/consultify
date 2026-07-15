@@ -580,17 +580,15 @@ describe('adminP32Routes', () => {
     });
 
     const app = createApp();
-    const res = await request(app)
-      .post('/api/admin/identity/scim/group-mappings')
-      .send({
-        externalGroupName: 'Finance',
-        externalGroupId: 'grp-1',
-        internalRole: 'PROJECT_LEADER',
-        projectId: 'proj-A',
-        // Attempt to smuggle another org — must be ignored.
-        organizationId: 'org-evil',
-        orgId: 'org-evil',
-      });
+    const res = await request(app).post('/api/admin/identity/scim/group-mappings').send({
+      externalGroupName: 'Finance',
+      externalGroupId: 'grp-1',
+      internalRole: 'PROJECT_LEADER',
+      projectId: 'proj-A',
+      // Attempt to smuggle another org — must be ignored.
+      organizationId: 'org-evil',
+      orgId: 'org-evil',
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.mapping.projectId).toBe('proj-A');
@@ -613,14 +611,12 @@ describe('adminP32Routes', () => {
     );
 
     const app = createApp();
-    const res = await request(app)
-      .post('/api/admin/identity/scim/group-mappings')
-      .send({
-        externalGroupName: 'Finance',
-        externalGroupId: 'grp-1',
-        internalRole: 'member',
-        projectId: 'proj-from-org-2',
-      });
+    const res = await request(app).post('/api/admin/identity/scim/group-mappings').send({
+      externalGroupName: 'Finance',
+      externalGroupId: 'grp-1',
+      internalRole: 'member',
+      projectId: 'proj-from-org-2',
+    });
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('PROJECT_NOT_IN_ORG');

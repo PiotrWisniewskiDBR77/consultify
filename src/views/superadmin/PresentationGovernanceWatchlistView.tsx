@@ -2102,7 +2102,8 @@ function renderBody(props: BodyProps): React.ReactElement {
             </span>
           </div>
           <div className="overflow-x-auto">
-            <table /* §27-exempt: lista encji z deep-link highlight wymagajacym refa do <tr> (highlightedRowRef + scrollIntoView + aria-current + mark-segmenty w tytule) — StandardTable nie eksponuje row refs; migracja 1:1 zlamie skok wyszukiwarki; wymaga rozszerzenia fasady, pelna przebudowa — deferred m27-canon-rest 07-15 */ className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800"
+            <table
+              /* §27-exempt: lista encji z deep-link highlight wymagajacym refa do <tr> (highlightedRowRef + scrollIntoView + aria-current + mark-segmenty w tytule) — StandardTable nie eksponuje row refs; migracja 1:1 zlamie skok wyszukiwarki; wymaga rozszerzenia fasady, pelna przebudowa — deferred m27-canon-rest 07-15 */ className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800"
             >
               <thead className="bg-slate-50 dark:bg-slate-900/60">
                 <tr>

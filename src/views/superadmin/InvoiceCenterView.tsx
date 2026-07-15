@@ -1132,7 +1132,8 @@ export const InvoiceCenterView: React.FC = () => {
               </div>
             </div>
 
-            <table /* §27-exempt: sub-tabela w widoku szczegolow (pozycje faktury w modalu), tabela dokumentowa, nie samodzielna lista */ className="w-full mb-6"
+            <table
+              /* §27-exempt: sub-tabela w widoku szczegolow (pozycje faktury w modalu), tabela dokumentowa, nie samodzielna lista */ className="w-full mb-6"
             >
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700">

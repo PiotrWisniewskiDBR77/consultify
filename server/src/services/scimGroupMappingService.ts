@@ -20,8 +20,8 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
-import { hasColumn } from '../utils/dbSchema.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 const TABLE = 'scim_group_mappings';

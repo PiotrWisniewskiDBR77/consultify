@@ -499,7 +499,8 @@ export const BulkOperationsView: React.FC = () => {
           </p>
 
           <div className="max-h-64 overflow-auto border border-c-border-subtle rounded-lg mb-6">
-            <table /* §27-exempt: podgląd surowych wierszy CSV w kreatorze importu (krok wizard, 10 pierwszych wierszy, kolumny dynamiczne wg mappingu, brak id/akcji) — nie kolekcja encji (kanon §2 def.1), formularz/podgląd danych */ className="w-full"
+            <table
+              /* §27-exempt: podgląd surowych wierszy CSV w kreatorze importu (krok wizard, 10 pierwszych wierszy, kolumny dynamiczne wg mappingu, brak id/akcji) — nie kolekcja encji (kanon §2 def.1), formularz/podgląd danych */ className="w-full"
             >
               <thead className="sticky top-0 bg-c-surface-raised">
                 <tr>

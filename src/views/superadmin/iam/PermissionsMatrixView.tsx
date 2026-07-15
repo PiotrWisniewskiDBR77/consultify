@@ -515,7 +515,8 @@ const PermissionsMatrixView: React.FC = () => {
         Object.keys(matrix.categories).length > 0 && (
           <CardWithHeader title="Permissions Matrix" subtitle="Role-based permissions overview">
             <div className="overflow-x-auto">
-              <table /* §27-exempt: macierz permission×role (naglowki grupujace kategorie, kolumny=role, komorki=toggle) — pivot, nie kolekcja encji (kanon §2 def.1) */ className="w-full"
+              <table
+                /* §27-exempt: macierz permission×role (naglowki grupujace kategorie, kolumny=role, komorki=toggle) — pivot, nie kolekcja encji (kanon §2 def.1) */ className="w-full"
               >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700">

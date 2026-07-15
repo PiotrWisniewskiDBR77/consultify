@@ -120,7 +120,14 @@ describe('insertScimGroupMapping', () => {
     // INSERT includes project_id and the token org (never body org).
     const [insertSql, insertParams] = dbRun.mock.calls[0];
     expect(insertSql).toContain('project_id');
-    expect(insertParams).toEqual(['mapping-uuid', 'org-1', 'grp-1', 'Finance', 'PROJECT_LEADER', 'proj-A']);
+    expect(insertParams).toEqual([
+      'mapping-uuid',
+      'org-1',
+      'grp-1',
+      'Finance',
+      'PROJECT_LEADER',
+      'proj-A',
+    ]);
   });
 
   it('rejects a projectId that does not belong to the org (cross-org guard)', async () => {

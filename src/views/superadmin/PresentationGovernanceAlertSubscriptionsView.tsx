@@ -523,7 +523,8 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <table /* §27-exempt: lista encji z per-row expansion panels (Rotate/Test/Tokens jako <tr colSpan=7>) — StandardTable/FilterableTable nie wspiera wierszy-paneli; migracja 1:1 niemozliwa bez redesignu flow rotacji sekretu (panel→preview/modal), wymaga pelnej przebudowy — deferred m27-canon-rest 07-15 */ className="min-w-full divide-y divide-slate-200 dark:divide-slate-800"
+      <table
+        /* §27-exempt: lista encji z per-row expansion panels (Rotate/Test/Tokens jako <tr colSpan=7>) — StandardTable/FilterableTable nie wspiera wierszy-paneli; migracja 1:1 niemozliwa bez redesignu flow rotacji sekretu (panel→preview/modal), wymaga pelnej przebudowy — deferred m27-canon-rest 07-15 */ className="min-w-full divide-y divide-slate-200 dark:divide-slate-800"
       >
         <thead className="bg-slate-50 dark:bg-slate-900/60">
           <tr>

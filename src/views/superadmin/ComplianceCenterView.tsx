@@ -915,7 +915,8 @@ export const ComplianceCenterView: React.FC = () => {
               Framework requirements are read-only here. Persisted DSAR, audit and processing
               records remain editable through their dedicated flows.
             </div>
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
             >
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700">

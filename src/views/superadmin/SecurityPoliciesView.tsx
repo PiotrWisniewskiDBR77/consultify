@@ -802,7 +802,8 @@ export const SecurityPoliciesView: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <table /* §27-exempt: matryca-formularz konfiguracji per-org (DataGovRow = stanowy wiersz-formularz z inputami retention/legal-hold/residency + Save), nie przegladana lista encji — poza definicja 1 kanonu (przetagowane z §27-todo, m27-b 07-15) */ className="w-full"
+          <table
+            /* §27-exempt: matryca-formularz konfiguracji per-org (DataGovRow = stanowy wiersz-formularz z inputami retention/legal-hold/residency + Save), nie przegladana lista encji — poza definicja 1 kanonu (przetagowane z §27-todo, m27-b 07-15) */ className="w-full"
           >
             <thead>
               <tr className="border-b border-slate-200 dark:border-navy-700">

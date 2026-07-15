@@ -37,9 +37,21 @@ type ProjectOption = { id: string; name: string };
 const ROLE_OPTIONS: Array<{ value: string; labelKey: string; fallback: string }> = [
   { value: 'member', labelKey: 'scimGroupSync.roles.member', fallback: 'Member' },
   { value: 'admin', labelKey: 'scimGroupSync.roles.admin', fallback: 'Admin' },
-  { value: 'PROJECT_LEADER', labelKey: 'scimGroupSync.roles.projectLeader', fallback: 'Project Leader' },
-  { value: 'INITIATIVE_OWNER', labelKey: 'scimGroupSync.roles.initiativeOwner', fallback: 'Initiative Owner' },
-  { value: 'WORKSTREAM_OWNER', labelKey: 'scimGroupSync.roles.workstreamOwner', fallback: 'Workstream Owner' },
+  {
+    value: 'PROJECT_LEADER',
+    labelKey: 'scimGroupSync.roles.projectLeader',
+    fallback: 'Project Leader',
+  },
+  {
+    value: 'INITIATIVE_OWNER',
+    labelKey: 'scimGroupSync.roles.initiativeOwner',
+    fallback: 'Initiative Owner',
+  },
+  {
+    value: 'WORKSTREAM_OWNER',
+    labelKey: 'scimGroupSync.roles.workstreamOwner',
+    fallback: 'Workstream Owner',
+  },
   { value: 'REVIEWER', labelKey: 'scimGroupSync.roles.reviewer', fallback: 'Reviewer' },
   { value: 'SME', labelKey: 'scimGroupSync.roles.sme', fallback: 'Subject Matter Expert' },
   { value: 'OBSERVER', labelKey: 'scimGroupSync.roles.observer', fallback: 'Observer' },
@@ -70,11 +82,14 @@ export const AdminScimGroupSyncCard: React.FC = () => {
         Api.getAdminScimSummary(),
         Api.getProjects().catch(() => []),
       ]);
-      setMappings(Array.isArray(summaryRes?.summary?.groupMappings)
-        ? summaryRes.summary.groupMappings
-        : []);
+      setMappings(
+        Array.isArray(summaryRes?.summary?.groupMappings) ? summaryRes.summary.groupMappings : []
+      );
       const projectOptions: ProjectOption[] = (Array.isArray(projectsRes) ? projectsRes : [])
-        .map((p: any) => ({ id: String(p?.id || ''), name: String(p?.name || p?.title || p?.id || '') }))
+        .map((p: any) => ({
+          id: String(p?.id || ''),
+          name: String(p?.name || p?.title || p?.id || ''),
+        }))
         .filter((p: ProjectOption) => p.id);
       setProjects(projectOptions);
     } catch (error: any) {
@@ -98,9 +113,7 @@ export const AdminScimGroupSyncCard: React.FC = () => {
 
   const handleCreate = async () => {
     if (!groupName.trim() && !groupId.trim()) {
-      toast.error(
-        t('scimGroupSync.errors.groupRequired', 'Enter an IdP group name or ID')
-      );
+      toast.error(t('scimGroupSync.errors.groupRequired', 'Enter an IdP group name or ID'));
       return;
     }
     setSaving(true);
@@ -232,9 +245,7 @@ export const AdminScimGroupSyncCard: React.FC = () => {
             onChange={(event) => setProjectId(event.target.value)}
             className={`${inputClass} mt-1`}
           >
-            <option value="">
-              {t('scimGroupSync.fields.orgWide', 'Organization-wide')}
-            </option>
+            <option value="">{t('scimGroupSync.fields.orgWide', 'Organization-wide')}</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
@@ -267,12 +278,11 @@ export const AdminScimGroupSyncCard: React.FC = () => {
         ) : (
           <ul className="divide-y divide-c-border rounded-lg border border-c-border">
             {mappings.map((mapping) => {
-              const scopeLabel =
-                mapping.project_id
-                  ? mapping.project_name ||
-                    projectNameById.get(String(mapping.project_id)) ||
-                    t('scimGroupSync.list.projectScoped', 'Project-scoped')
-                  : t('scimGroupSync.list.orgWide', 'Organization-wide');
+              const scopeLabel = mapping.project_id
+                ? mapping.project_name ||
+                  projectNameById.get(String(mapping.project_id)) ||
+                  t('scimGroupSync.list.projectScoped', 'Project-scoped')
+                : t('scimGroupSync.list.orgWide', 'Organization-wide');
               return (
                 <li
                   key={mapping.id}
