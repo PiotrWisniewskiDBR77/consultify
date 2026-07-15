@@ -91,6 +91,11 @@ import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
+import {
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+  type TableRow as StandardTableRow,
+} from '@/components/standard';
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -111,9 +116,10 @@ import {
 } from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { isM03InboxStandardTableEnabled } from '@/utils/m03InboxStandardTableFlag';
 
-type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
-type InboxItemType =
+export type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
+export type InboxItemType =
   | 'new_assignment'
   | 'mention'
   | 'escalation'
@@ -124,7 +130,7 @@ type InboxItemType =
   | 'billing_alert'
   | 'project_update';
 
-type InboxSection =
+export type InboxSection =
   | 'decisions_required'
   | 'approvals_gates'
   | 'assigned_tasks'
@@ -224,7 +230,7 @@ const getEntityKind = (item: InboxItem): InboxEntityKind => {
   }
 };
 
-interface InboxItem {
+export interface InboxItem {
   id: string;
   type: InboxItemType;
   section: InboxSection;
@@ -506,14 +512,41 @@ interface InboxContentProps {
 }
 
 // ── Deduplication: group items by _key ──
-interface InboxGroup {
+// Exported (kanon TRIADA §27, flag ff_m03InboxStandardTable) so the
+// grouped-rows flatten/mirror invariant (`flattenInboxDisplayGroups` below)
+// is unit-testable without rendering the component — see
+// tests/inboxStandardTableGrouping.test.ts.
+export interface InboxGroup {
   key: string;
   representative: InboxItem;
   items: InboxItem[];
   count: number;
 }
 
-const groupItems = (items: InboxItem[]): InboxGroup[] => {
+// ── StandardTable grouped-rows shape (kanon TRIADA §27, flag
+// ff_m03InboxStandardTable) — flattened dedup-group row (representative or
+// child). Typed cast target for `row as unknown as InboxStandardRow`, wzór
+// `row as unknown as Task` (MyTasksListContent) zamiast `any`. `status`/
+// `urgency`/`type`/`section`/`source`/`title`/`received` are the
+// group-representative-MIRRORED sort/filter keys (see `inboxStandardRows`
+// comment) — cell rendering never reads them, only `__item`.
+export interface InboxStandardRow extends StandardTableRow {
+  __item: InboxItem;
+  __groupKey: string;
+  __groupCount: number;
+  __isGroupHeader: boolean;
+  __groupExpanded: boolean;
+  __visibleIndex: number;
+  status: string;
+  urgency: InboxUrgency;
+  type: InboxItemType;
+  section: InboxSection;
+  source: string;
+  title: string;
+  received: string;
+}
+
+export const groupItems = (items: InboxItem[]): InboxGroup[] => {
   const map = new Map<string, InboxItem[]>();
   for (const item of items) {
     const existing = map.get(item._key);
@@ -526,6 +559,67 @@ const groupItems = (items: InboxItem[]): InboxGroup[] => {
     items: groupItems,
     count: groupItems.length,
   }));
+};
+
+// ── Flatten dedup-groups into StandardTable rows (kanon TRIADA §27, flag
+// ff_m03InboxStandardTable) — pure, exported for unit testing (see
+// tests/inboxStandardTableGrouping.test.ts). Each group becomes a
+// representative row + (when `isExpanded`) its child rows, all independent
+// `InboxStandardRow`s. `status`/`urgency`/`type`/`section`/`source`/`title`/
+// `received` are MIRRORED from the group's representative onto EVERY row of
+// the group (parent + children): StandardTable/FilterableTable's native
+// per-column sort/filter operate directly on this flat array, and would
+// otherwise split a group apart (e.g. sorting by "Received" could scatter
+// children away from their parent). Because every row in a group carries the
+// SAME sort/filter key, and `Array.prototype.sort` is spec-stable (rows with
+// equal keys keep their original relative order), the child rows stay glued
+// immediately after their representative regardless of which column is
+// sorted/filtered. Cell rendering never reads these mirrored fields — it
+// always reads `__item` (the row's OWN real item) so children still display
+// their OWN actual status/urgency/etc, exactly like legacy
+// `renderRow(group.items[i], …)`.
+export const flattenInboxDisplayGroups = (
+  displayGroups: (InboxGroup & { isExpanded: boolean })[]
+): InboxStandardRow[] => {
+  const rows: InboxStandardRow[] = [];
+  let visibleIndex = 0;
+  for (const group of displayGroups) {
+    const rep = group.representative;
+    const mirrored = {
+      status: rep.itemStatus || (rep.triaged ? 'done' : 'open'),
+      urgency: rep.urgency,
+      type: rep.type,
+      section: rep.section,
+      source: rep.source?.type || 'system',
+      title: rep.title,
+      received: rep.receivedAt,
+    };
+    rows.push({
+      id: rep.id,
+      __item: rep,
+      __groupKey: group.key,
+      __groupCount: group.count,
+      __isGroupHeader: true,
+      __groupExpanded: group.isExpanded,
+      __visibleIndex: visibleIndex++,
+      ...mirrored,
+    } as unknown as InboxStandardRow);
+    if (group.count > 1 && group.isExpanded) {
+      for (let i = 1; i < group.items.length; i++) {
+        rows.push({
+          id: group.items[i].id,
+          __item: group.items[i],
+          __groupKey: group.key,
+          __groupCount: group.count,
+          __isGroupHeader: false,
+          __groupExpanded: group.isExpanded,
+          __visibleIndex: visibleIndex++,
+          ...mirrored, // MIRRORED to representative — group cohesion, see comment above
+        } as unknown as InboxStandardRow);
+      }
+    }
+  }
+  return rows;
 };
 
 // ── Urgency config ──
@@ -1632,6 +1726,144 @@ const AIHintStrip: React.FC<{
   );
 };
 
+// ── StandardTable kebab (kanon TRIADA §27, flag ff_m03InboxStandardTable) ──
+// Plain function (not a hook) — StandardTable calls `rowActions(row)` directly,
+// same pattern as `buildTaskKebabSections` (MyTasksListContent) /
+// `buildDecisionKebabSections` (DecisionsPanelContent). Sections 1:1 z legacy
+// `renderRow`'s inline kebab (context actions / fixed manifest — Open preview·
+// Edit·Archive / danger — Reject); legacy `renderRow` keeps its OWN inline
+// copy untouched (this is a parallel extraction for the new render path, not
+// a refactor of the default one — zero risk to the legacy render).
+interface InboxRowHandlers {
+  onOpen: (item: InboxItem) => void;
+  onOpenPreview: (item: InboxItem) => void;
+  onTriage: (item: InboxItem, action: TriageAction) => void;
+  onApplyAiSuggestion: (item: InboxItem) => void;
+  onSaveAsNote: (item: InboxItem) => void;
+  onSnooze: (item: InboxItem, preset: SnoozePreset) => void;
+}
+
+const buildInboxKebabSections = (
+  item: InboxItem,
+  h: InboxRowHandlers,
+  t: (key: string, defaultValue: string) => string,
+  isPolish: boolean
+): RowActionSection[] => {
+  const contextActions: RowAction[] = [
+    {
+      id: 'open',
+      label: t('myWork.inboxContent.label17', 'Open'),
+      icon: Eye,
+      variant: 'primary',
+      onClick: () => h.onOpen(item),
+    },
+    ...(item.suggestedAction && !item.triaged
+      ? [
+          {
+            id: 'apply-ai',
+            label: isPolish
+              ? `Zastosuj AI (${item.suggestedAction})`
+              : `Apply AI (${item.suggestedAction})`,
+            icon: Sparkles,
+            onClick: () => h.onApplyAiSuggestion(item),
+          } as RowAction,
+        ]
+      : []),
+    {
+      id: 'focus-today',
+      label: t('myWork.inboxContent.label18', 'Focus → Today'),
+      icon: Zap,
+      onClick: () => h.onTriage(item, 'accept_today'),
+    },
+    {
+      id: 'focus-week',
+      label: t('myWork.inboxContent.label19', 'Focus → This week'),
+      icon: CalendarClock,
+      onClick: () => h.onTriage(item, 'accept_week'),
+    },
+    {
+      id: 'focus-later',
+      label: t('myWork.inboxContent.label20', 'Focus → Later'),
+      icon: Calendar,
+      onClick: () => h.onTriage(item, 'accept_later'),
+    },
+    {
+      id: 'done',
+      label: t('myWork.inboxContent.label21', 'Done'),
+      icon: CheckCircle2,
+      divider: true,
+      onClick: () => h.onTriage(item, 'done'),
+    },
+    {
+      id: 'save',
+      label: t('myWork.inboxContent.label22', 'Save'),
+      icon: Bookmark,
+      onClick: () => h.onTriage(item, 'save'),
+    },
+    {
+      id: 'save-note',
+      label: t('myWork.inboxContent.label23', 'Save as note'),
+      icon: FileText,
+      onClick: () => h.onSaveAsNote(item),
+    },
+    ...SNOOZE_PRESETS.map(
+      (p, idx) =>
+        ({
+          id: `snooze-${p.id}`,
+          label: `${t('myWork.inboxContent.snooze2', 'Snooze')}: ${isPolish ? p.labelPl : p.labelEn}`,
+          icon: Clock,
+          divider: idx === 0,
+          onClick: () => h.onSnooze(item, p.id),
+        }) as RowAction
+    ),
+  ];
+
+  return [
+    { id: 'context', kind: 'context', actions: contextActions },
+    {
+      id: 'fixed',
+      kind: 'manage',
+      actions: [
+        {
+          id: 'open-preview',
+          label: t('myWork.inboxContent.label13', 'Open preview'),
+          icon: ChevronRight,
+          divider: true,
+          onClick: () => h.onOpenPreview(item),
+        },
+        {
+          id: 'edit',
+          label: t('myWork.inboxContent.label14', 'Edit'),
+          icon: Edit2,
+          disabled: true,
+          description: t('myWork.inboxContent.description', 'Coming soon (backend)'),
+          onClick: () => {},
+        },
+        {
+          // Archive = soft-delete (reversible); maps to existing "dismiss" triage.
+          id: 'archive',
+          label: t('myWork.inboxContent.label15', 'Archive'),
+          icon: Archive,
+          onClick: () => h.onTriage(item, 'dismiss'),
+        },
+      ],
+    },
+    {
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'reject',
+          label: t('myWork.inboxContent.label24', 'Reject'),
+          icon: X,
+          variant: 'danger',
+          onClick: () => h.onTriage(item, 'reject'),
+        },
+      ],
+    },
+  ];
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Component
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1674,6 +1906,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     },
     [controlledViewMode, onViewModeChange]
   );
+  // kanon TRIADA §27 (flag ff_m03InboxStandardTable, default OFF) — flat mode
+  // renders StandardTable grouped-rows instead of the bespoke table markup
+  // below (renderFlatView, untouched as the default render). `sections` view
+  // is never affected by this flag.
+  const useInboxStandardTable = isM03InboxStandardTableEnabled();
   const [uncontrolledInboxSection, setUncontrolledInboxSection] = useState<
     'today' | 'this_week' | 'all'
   >('all');
@@ -1754,6 +1991,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // Expanded groups (for deduplication)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const toggleGroupExpanded = useCallback((key: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
 
   // Collapsed sections (for smart sections view)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -2030,6 +2275,231 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     }
     return map;
   }, [groups, viewMode]);
+
+  // ── StandardTable rows (kanon TRIADA §27, flag ff_m03InboxStandardTable) ──
+  // Delegates to the pure, unit-tested `flattenInboxDisplayGroups` (see its
+  // doc comment above for the group-cohesion/mirroring rationale, and
+  // tests/inboxStandardTableGrouping.test.ts for the regression coverage).
+  const inboxStandardRows = useMemo<StandardTableRow[]>(() => {
+    if (!useInboxStandardTable) return [];
+    return flattenInboxDisplayGroups(displayItems);
+  }, [displayItems, useInboxStandardTable]);
+
+  // ── StandardTable columns (kanon TRIADA §27) — cell markup 1:1 z legacy
+  // `renderRow` (title/status/urgency/type/section/source/received/sla).
+  // `row as unknown as InboxStandardRow` at each render/sortAccessor boundary
+  // — wzór `row as unknown as Task` (MyTasksListContent) zamiast `any`.
+  const inboxStandardColumns = useMemo<StandardTableColumn[]>(() => {
+    if (!useInboxStandardTable) return [];
+    return [
+      {
+        id: 'title',
+        label: t('myWork.inboxContent.columns.title', 'Title'),
+        width: '380px',
+        sortable: true,
+        render: (row: StandardTableRow) => {
+          const r = row as unknown as InboxStandardRow;
+          const item = r.__item;
+          const showDupeCount = r.__isGroupHeader && r.__groupCount > 1;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-semibold text-c-text truncate" title={item.title}>
+                {item.title}
+              </span>
+              {item.suggestedAction && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-c-border-subtle bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
+                  title={
+                    item.suggestedReason || t('myWork.inboxContent.aISuggestion', 'AI suggestion')
+                  }
+                >
+                  AI:{' '}
+                  {item.suggestedAction === 'accept_today'
+                    ? '✓'
+                    : item.suggestedAction === 'archive'
+                      ? '📦'
+                      : item.suggestedAction === 'schedule'
+                        ? '📅'
+                        : '→'}
+                </span>
+              )}
+              {showDupeCount && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleGroupExpanded(r.__groupKey);
+                  }}
+                  className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary hover:bg-c-border-subtle transition-colors"
+                  title={isPolish ? `${r.__groupCount} podobnych` : `${r.__groupCount} similar`}
+                >
+                  <Layers size={10} />x{r.__groupCount}
+                  {r.__groupExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: t('myWork.inboxContent.columns.status', 'Status'),
+        width: '130px',
+        sortable: true,
+        sortAccessor: (row) =>
+          INBOX_STATUS_ORDER[(row as unknown as InboxStandardRow).status] ?? 99,
+        filterable: true,
+        filterOptions: INBOX_STATUS_FILTER_OPTIONS,
+        render: (row: StandardTableRow) => {
+          const item = (row as unknown as InboxStandardRow).__item;
+          const st = item.itemStatus || (item.triaged ? 'done' : 'open');
+          const labels: Record<string, string> = {
+            open: t('myWork.inboxContent.open2', 'Open'),
+            done: t('myWork.inboxContent.done2', 'Done'),
+            saved: t('myWork.inboxContent.saved', 'Saved'),
+            snoozed: t('myWork.inboxContent.snoozed', 'Snoozed'),
+            dismissed: t('myWork.inboxContent.dismissed', 'Dismissed'),
+          };
+          return (
+            <span className="inline-flex items-center gap-1.5">
+              <EntityStatusChip status={st} label={labels[st] || labels.open} />
+              {item.isActionable && <Zap size={10} className="text-c-warning" />}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'urgency',
+        label: t('myWork.inboxContent.columns.urgency', 'Urgency'),
+        width: '120px',
+        sortable: true,
+        sortAccessor: (row) =>
+          INBOX_URGENCY_ORDER[(row as unknown as InboxStandardRow).urgency] ?? 9,
+        filterable: true,
+        filterOptions: INBOX_URGENCY_FILTER_OPTIONS,
+        render: (row: StandardTableRow) => {
+          const item = (row as unknown as InboxStandardRow).__item;
+          const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
+          const UIcon = u.icon;
+          return (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
+            >
+              <UIcon size={11} />
+              {u.label}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'type',
+        label: t('myWork.inboxContent.columns.type', 'Type'),
+        width: '130px',
+        sortable: true,
+        filterable: true,
+        filterOptions: INBOX_TYPE_FILTER_OPTIONS,
+        render: (row: StandardTableRow) => {
+          const item = (row as unknown as InboxStandardRow).__item;
+          return (
+            <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
+              <span className="truncate">
+                {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
+              </span>
+            </span>
+          );
+        },
+      },
+      {
+        id: 'section',
+        label: t('myWork.inboxContent.columns.section', 'Section'),
+        width: '170px',
+        sortable: true,
+        filterable: true,
+        filterOptions: INBOX_SECTION_FILTER_OPTIONS,
+        render: (row: StandardTableRow) => {
+          const item = (row as unknown as InboxStandardRow).__item;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {SMART_SECTIONS.find((s) => s.id === item.section)?.[
+                isPolish ? 'labelPl' : 'labelEn'
+              ] || item.section}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'source',
+        label: t('myWork.inboxContent.columns.source', 'Source'),
+        width: '130px',
+        sortable: true,
+        filterable: true,
+        filterOptions: INBOX_SOURCE_FILTER_OPTIONS,
+        render: (row: StandardTableRow) => {
+          const item = (row as unknown as InboxStandardRow).__item;
+          const src = item.source?.type || 'system';
+          const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
+            system: {
+              icon: Bell,
+              color: 'text-c-text-muted',
+              label: t('myWork.inboxContent.label16', 'System'),
+            },
+            ai: { icon: Star, color: 'text-primary-500', label: 'AI' },
+            user: {
+              icon: MessageSquare,
+              color: 'text-c-info',
+              label: item.source?.userName || t('myWork.inboxContent.team', 'Team'),
+            },
+          };
+          const c = cfg[src] || cfg.system;
+          const SrcIcon = c.icon;
+          return (
+            <span className={`inline-flex items-center gap-1 text-xs ${c.color}`}>
+              <SrcIcon size={11} />
+              <span className="truncate">{c.label}</span>
+            </span>
+          );
+        },
+      },
+      {
+        id: 'received',
+        label: t('myWork.inboxContent.columns.received', 'Received'),
+        width: '130px',
+        sortable: true,
+        sortAccessor: (row) => new Date((row as unknown as InboxStandardRow).received).getTime(),
+        render: (row: StandardTableRow) => {
+          const item = (row as unknown as InboxStandardRow).__item;
+          const { text: receivedText, agingLevel } = formatRelativeTime(item.receivedAt, isPolish);
+          return (
+            <span className={`text-xs font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
+              {receivedText}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'sla',
+        label: t('myWork.inboxContent.columns.sla', 'SLA'),
+        width: '110px',
+        render: (row: StandardTableRow) => {
+          const item = (row as unknown as InboxStandardRow).__item;
+          const sla = slaPill(item.sla);
+          if (sla.label === '-') return <span className="text-c-text-muted">—</span>;
+          return (
+            <DueChip
+              label={sla.label}
+              risk={
+                item.sla?.isBreached
+                  ? 'overdue'
+                  : item.sla && item.sla.level !== 'none' && item.sla.level !== 'L1'
+                    ? 'soon'
+                    : 'none'
+              }
+              title={sla.title}
+            />
+          );
+        },
+      },
+    ];
+  }, [t, isPolish, useInboxStandardTable, toggleGroupExpanded]);
 
   // ── Triage ──
   const triage = useCallback(
@@ -3322,6 +3792,63 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     );
   };
 
+  // ── Render flat view — StandardTable grouped-rows (kanon TRIADA §27, flag
+  // ff_m03InboxStandardTable, default OFF). Replaces the ENTIRE bespoke table
+  // markup above for the flat mode when the flag is ON; `renderFlatView`
+  // (legacy, default render) stays untouched. `sections` view is unaffected.
+  const renderStandardFlatView = () => (
+    <StandardTable
+      columns={inboxStandardColumns}
+      data={inboxStandardRows}
+      onRowClick={(row) => preview((row as unknown as InboxStandardRow).__item)}
+      onRowDoubleClick={(row) => open((row as unknown as InboxStandardRow).__item)}
+      rowActions={(row) => {
+        const item = (row as unknown as InboxStandardRow).__item;
+        const handlers: InboxRowHandlers = {
+          onOpen: open,
+          onOpenPreview: (it) => setPreviewItem(it),
+          onTriage: (it, action) => {
+            void triage(it, action);
+          },
+          onApplyAiSuggestion: (it) => {
+            if (!it.suggestedAction) return;
+            void triage(it, it.suggestedAction, {
+              fromAISuggestion: true,
+              confidence: it.suggestedConfidence,
+            });
+          },
+          onSaveAsNote: (it) => {
+            void handleSaveAsNote(it);
+          },
+          onSnooze: (it, preset) => {
+            void handleSnooze(it, preset);
+          },
+        };
+        return buildInboxKebabSections(item, handlers, t, !!isPolish);
+      }}
+      rowClassName={(row) => {
+        const r = row as unknown as InboxStandardRow;
+        const item = r.__item;
+        const isSelected = selectedIds.has(item.id);
+        const isPreviewed = previewItem?.id === item.id;
+        const isFocused = r.__visibleIndex === focusedIndex;
+        return [
+          isSelected ? SELECTED_ROW_CLASS : '',
+          isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : '',
+          isFocused && !isPreviewed ? FOCUSED_ROW_CLASS : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+      }}
+      rowDescription={(row) => {
+        const item = (row as unknown as InboxStandardRow).__item;
+        return item.description || item.reason || null;
+      }}
+      selection={{ selectedIds, onChange: setSelectedIds }}
+      persistKey="mywork.inbox.flat"
+    />
+  );
+
   // ═══════════════════════════════════════════════════════════════════════════
   // Render
   // ═══════════════════════════════════════════════════════════════════════════
@@ -3390,7 +3917,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             </div>
           ) : (
             <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
-              {viewMode === 'sections' ? renderSectionsView() : renderFlatView()}
+              {viewMode === 'sections'
+                ? renderSectionsView()
+                : useInboxStandardTable
+                  ? renderStandardFlatView()
+                  : renderFlatView()}
             </div>
           )}
         </div>
