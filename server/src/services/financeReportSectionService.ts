@@ -67,7 +67,21 @@ import {
   type FinanceConclusionWithValidation,
   renderFinanceConclusionsMarkdown,
 } from './financeReportConclusion.js';
+import {
+  buildFinanceScenarioSection,
+  buildFinanceValueTreeSection,
+  type FinanceScenarioSection,
+  type FinanceValueTreeSection,
+  renderFinanceScenarioMarkdown,
+  renderFinanceValueTreeMarkdown,
+} from './financeReportAdvisory.js';
 import { getStatementPackDetail, loadPackValueMaps } from './financialStatementPackService.js';
+import {
+  buildPortfolioAdvisory,
+  type PortfolioAdvisory,
+  type PortfolioItemInput,
+  type SynergyInput,
+} from './financePortfolioAdvisory.js';
 import {
   buildRatioBenchmark,
   type ComputedRatio,
@@ -409,6 +423,37 @@ export interface FinanceReportSection {
    * guessing"). See `financeReportConclusion.ts` for the ranking + mapping.
    */
   conclusions: FinanceConclusionWithValidation[];
+  /**
+   * O4.2 CONCLUSION LAYER — named business-decision scenarios (not the anonymous ±15% band),
+   * ranked risk-adjusted from `financeScenarioLevers.ts`. `metric`/`deltaVsStatusQuo` are pure
+   * arithmetic over the already-resolved REVENUE/NET_INCOME lines (see `financeReportAdvisory.ts`
+   * docblock) — zero LLM, zero new magnitudes. Empty/unavailable when those lines are missing.
+   */
+  scenarios: FinanceScenarioSection;
+  /**
+   * O4.3 — benefit value-tree decomposition of the O4.2 recommended lever's projected swing into
+   * growth/savings buckets with a bankability grade (`financeValueTree.ts`). Empty/unavailable
+   * when there is no recommended lever with a real (non-zero) swing to decompose.
+   */
+  valueTree: FinanceValueTreeSection;
+  /**
+   * O4.4 — initiative INTERDEPENDENCIES advisory (`financePortfolioAdvisory.ts`): a
+   * prerequisite-respecting funded sequence + synergies + budget verdict over the organization's
+   * OWN initiatives (real `initiatives.cost_capex`/`expected_roi` + real
+   * `initiative_dependencies`, see `loadPortfolioAdvisoryInputs` below). `npv` is NOT a
+   * discounted-cash-flow figure — it is `capex × (expected_roi / 100)`, a deterministic value
+   * proxy over two already-stored fields (no DCF field exists on `initiatives` today). Synergies
+   * are always `[]` — no synergy concept is persisted anywhere in the app (honest omission, not
+   * invented). Empty/unavailable when the organization has no initiative with BOTH capex and ROI
+   * recorded.
+   */
+  portfolioAdvisory: FinancePortfolioAdvisorySection;
+}
+
+export interface FinancePortfolioAdvisorySection {
+  available: boolean;
+  itemCount: number;
+  advisory: PortfolioAdvisory | null;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -461,6 +506,10 @@ export interface RawFinanceReportInputs {
   /** null = pakiet nigdy nie przeszedł recompute (brak wpisów w financial_statement_validations). */
   reconcileValidations: RawReconcileValidationRow[] | null;
   valuation: { id: string; title: string | null; basket: BasketResult | null } | null;
+  /** O4.4 — org's own initiatives with real capex+ROI (see `loadPortfolioAdvisoryInputs`). */
+  portfolioItems?: PortfolioItemInput[];
+  /** O4.4 — always [] today (no synergy concept persisted anywhere, see field docblock). */
+  portfolioSynergies?: SynergyInput[];
   asOf?: number;
 }
 
@@ -670,8 +719,15 @@ function emptyFinanceReportSection(organizationId: string, asOf: string): Financ
       ratios,
       missingStatementTypes
     ),
-    lineage: emptyFinanceReportLineage(asOf),
     conclusions: [],
+    scenarios: {
+      available: false,
+      baseMetricLabel: 'NET_INCOME',
+      outcomes: [],
+      recommendation: null,
+    },
+    valueTree: { available: false, forLeverId: null, tree: null, narrative: null },
+    portfolioAdvisory: { available: false, itemCount: 0, advisory: null },
   };
 }
 
@@ -739,6 +795,26 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
     { language: 'pl', topN: 3 }
   );
 
+  // 4) O4.2 named scenario levers — pure arithmetic over REVENUE/NET_INCOME already
+  //    in `input.lineValues` (see financeReportAdvisory.ts docblock, no new I/O).
+  const scenarios = buildFinanceScenarioSection(input.lineValues, 'pl');
+
+  // 5) O4.3 benefit value tree — decomposes the O4.2 recommended lever's own swing.
+  const valueTree = buildFinanceValueTreeSection(scenarios, input.lineValues, 'pl');
+
+  // 6) O4.4 portfolio advisory — org's own initiatives (real capex/ROI/dependencies),
+  //    loaded by the caller (see `loadPortfolioAdvisoryInputs`); [] here → honestly empty.
+  const portfolioItems = input.portfolioItems ?? [];
+  const portfolioSynergies = input.portfolioSynergies ?? [];
+  const portfolioAdvisory: FinancePortfolioAdvisorySection =
+    portfolioItems.length > 0
+      ? {
+          available: true,
+          itemCount: portfolioItems.length,
+          advisory: buildPortfolioAdvisory(portfolioItems, portfolioSynergies, 0, 'pl'),
+        }
+      : { available: false, itemCount: 0, advisory: null };
+
   return {
     organizationId: input.organizationId,
     packId: input.pack.packId,
@@ -771,6 +847,9 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
       input.pack.missingStatementTypes
     ),
     conclusions,
+    scenarios,
+    valueTree,
+    portfolioAdvisory,
   };
 }
 
@@ -842,6 +921,104 @@ async function resolveValuation(
   }
 }
 
+function effortTextToNumeric(effort: string | null | undefined): number {
+  const e = (effort || '').toLowerCase();
+  if (e === 'low') return 1;
+  if (e === 'high') return 3;
+  return 2; // 'medium' or unrecognised — deterministic mid-point default, documented.
+}
+
+function riskLevelToNumeric(risk: string | null | undefined): number {
+  const r = (risk || '').toLowerCase();
+  if (r === 'low') return 0.2;
+  if (r === 'high') return 0.8;
+  if (r === 'critical') return 0.9;
+  return 0.5; // 'medium' or unrecognised — deterministic mid-point default, documented.
+}
+
+interface PortfolioInitiativeRow {
+  id: string;
+  name: string;
+  cost_capex: number | null;
+  expected_roi: number | null;
+  effort: string | null;
+  risk_level: string | null;
+}
+
+interface PortfolioDependencyRow {
+  from_initiative_id: string;
+  to_initiative_id: string;
+}
+
+/**
+ * O4.4 fail-soft loader: the org's OWN initiatives with real `cost_capex` + `expected_roi`
+ * (only rows carrying BOTH — "no guessing", same doctrine as the ratio engine's skip-not-zero
+ * rule) plus their real prerequisite links from `initiative_dependencies` (query pattern reused
+ * verbatim from `delayDetectionService.analyzeWhySlip`, the existing live caller of that table).
+ * `npv` is `capex × (expected_roi / 100)` — a deterministic value proxy over two already-stored
+ * fields, NOT a discounted-cash-flow NPV (no such field exists on `initiatives`; documented on
+ * `FinancePortfolioAdvisorySection`). Synergies are always `[]` (no synergy concept persisted
+ * anywhere). Degrades to empty on any DB error — never blocks the rest of the report section.
+ */
+export async function loadPortfolioAdvisoryInputs(
+  organizationId: string
+): Promise<{ items: PortfolioItemInput[]; synergies: SynergyInput[] }> {
+  try {
+    const rows = await dbAll<PortfolioInitiativeRow>(
+      `SELECT id, name, cost_capex, expected_roi, effort, risk_level
+         FROM initiatives
+        WHERE organization_id = ?
+          AND archived_at IS NULL
+          AND cancelled_at IS NULL
+          AND cost_capex IS NOT NULL
+          AND expected_roi IS NOT NULL
+        ORDER BY created_at DESC
+        LIMIT 12`,
+      [organizationId]
+    );
+    if (!rows || rows.length === 0) return { items: [], synergies: [] };
+
+    const ids = rows.map((r) => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const depRows = await dbAll<PortfolioDependencyRow>(
+      `SELECT from_initiative_id, to_initiative_id
+         FROM initiative_dependencies
+        WHERE organization_id = ? AND to_initiative_id IN (${placeholders})`,
+      [organizationId, ...ids]
+    );
+
+    const idSet = new Set(ids);
+    const dependsOnMap = new Map<string, string[]>();
+    for (const d of depRows || []) {
+      if (!idSet.has(d.from_initiative_id)) continue; // predecessor must have its own real economics too
+      const arr = dependsOnMap.get(d.to_initiative_id) || [];
+      arr.push(d.from_initiative_id);
+      dependsOnMap.set(d.to_initiative_id, arr);
+    }
+
+    const items: PortfolioItemInput[] = rows.map((r) => {
+      const capex = Number(r.cost_capex) || 0;
+      const roiPct = Number(r.expected_roi) || 0;
+      return {
+        id: r.id,
+        name: r.name,
+        npv: Math.round(capex * (roiPct / 100)),
+        capex,
+        effort: effortTextToNumeric(r.effort),
+        risk: riskLevelToNumeric(r.risk_level),
+        dependsOn: dependsOnMap.get(r.id),
+      };
+    });
+
+    return { items, synergies: [] };
+  } catch (err) {
+    logger.warn(
+      `[financeReportSectionService] loadPortfolioAdvisoryInputs failed (degrading to empty): ${(err as Error)?.message || err}`
+    );
+    return { items: [], synergies: [] };
+  }
+}
+
 /** Orkiestracja DB: pack detail + benchmark + persystowany reconcile + koszyk EV → compose. */
 export async function loadFinanceReportSectionData(
   scope: FinanceReportSectionScope
@@ -859,13 +1036,15 @@ export async function loadFinanceReportSectionData(
   const requiredTypes = ['P&L', 'BS', 'CF'];
   const missingStatementTypes = requiredTypes.filter((t) => !statementTypesPresent.includes(t));
 
-  const [maps, waccPct, orgIndustry, orgBenchmarkRows, valuation] = await Promise.all([
-    loadPackValueMaps(statements),
-    getOrgDefaultWacc(scope.organizationId).catch(() => undefined),
-    loadOrganizationIndustry(scope.organizationId).catch(() => undefined),
-    loadOrgBenchmarkRows(scope.organizationId),
-    resolveValuation(scope.organizationId, scope.valuationId),
-  ]);
+  const [maps, waccPct, orgIndustry, orgBenchmarkRows, valuation, portfolioInputs] =
+    await Promise.all([
+      loadPackValueMaps(statements),
+      getOrgDefaultWacc(scope.organizationId).catch(() => undefined),
+      loadOrganizationIndustry(scope.organizationId).catch(() => undefined),
+      loadOrgBenchmarkRows(scope.organizationId),
+      resolveValuation(scope.organizationId, scope.valuationId),
+      loadPortfolioAdvisoryInputs(scope.organizationId),
+    ]);
   const lineValues: LineValueMap = { ...maps.pnl, ...maps.bs, ...maps.cf };
 
   const packValidations: Array<Record<string, any>> = Array.isArray(detail.validations)
@@ -890,6 +1069,8 @@ export async function loadFinanceReportSectionData(
     orgBenchmarkRows,
     reconcileValidations,
     valuation,
+    portfolioItems: portfolioInputs.items,
+    portfolioSynergies: portfolioInputs.synergies,
     asOf: scope.asOf,
   });
 }
@@ -1044,12 +1225,32 @@ export function renderFinanceReportMarkdown(section: FinanceReportSection): Reco
   // itself sourced only from `section.ratios` (Z111).
   const narrative = renderFinanceConclusionsMarkdown(section.conclusions, true);
 
+  // O4.2/O4.3 — named scenario levers + benefit value-tree decomposition.
+  const scenarioLevers = renderFinanceScenarioMarkdown(section.scenarios, true);
+  const valueTree = renderFinanceValueTreeMarkdown(section.valueTree, true);
+
+  // O4.4 — initiative interdependencies advisory (org's own initiatives).
+  const portfolioAdvisory = section.portfolioAdvisory.advisory
+    ? [
+        '## Portfel inicjatyw — sekwencja i współzależności',
+        '',
+        section.portfolioAdvisory.advisory.conclusion,
+      ].join('\n')
+    : [
+        '## Portfel inicjatyw — sekwencja i współzależności',
+        '',
+        '_Brak inicjatyw organizacji z policzonym capex + expected ROI — portfel do uzupełnienia._',
+      ].join('\n');
+
   return {
     header,
     ratio_table: ratioTable,
     reconcile_result: reconcileResult,
     ev_football_field: evFootballField,
     narrative,
+    scenario_levers: scenarioLevers,
+    value_tree: valueTree,
+    portfolio_advisory: portfolioAdvisory,
   };
 }
 
