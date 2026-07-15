@@ -486,6 +486,23 @@ describe('planSheet + startSheet (L3)', () => {
     expect(status.artifact?.unitCount).toBe(2);
   });
 
+  it('startSheet: system prompt zabrania prezentowania zmyślonych liczb jako realnych danych org (§0.3)', async () => {
+    getDraftMock.mockResolvedValue(sheetDraftRow());
+    generateChatResponseMock.mockResolvedValue({ content: GFM_TABLE });
+
+    await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+
+    const call = generateChatResponseMock.mock.calls[0][0];
+    expect(call.systemPrompt).toContain('§0.3');
+    expect(call.systemPrompt).toContain('przykładowe');
+    expect(call.systemPrompt).toContain(
+      'NIGDY nie prezentuj zmyślonych precyzyjnych metryk biznesowych jako rzeczywistych danych organizacji'
+    );
+  });
+
   it('startSheet: odpowiedź bez tabeli ⇒ error, treść = uczciwy komunikat błędu', async () => {
     getDraftMock.mockResolvedValue(sheetDraftRow());
     generateChatResponseMock.mockResolvedValue({ content: 'Przepraszam, nie mogę.' });
