@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,9 +83,9 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
   nodes,
   edges,
   lanes,
-  isPl,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const kpis = useMemo(() => {
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
@@ -151,12 +152,12 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
         <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-          {isPl ? 'Metryki procesu' : 'Process KPIs'}
+          {t('processFlow.kpiDashboard.title', 'Process KPIs')}
         </span>
         <button
           type="button"
           onClick={onClose}
-          aria-label={isPl ? 'Zamknij' : 'Close'}
+          aria-label={t('processFlow.kpiDashboard.close', 'Close')}
           className="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
           <X size={12} className="text-slate-600" />
@@ -166,22 +167,24 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
       <div className="px-3 pb-3 space-y-0.5">
         <KPICard
           icon={<Activity size={14} className="text-blue-600 dark:text-blue-400" />}
-          label={isPl ? 'Kroki / Decyzje' : 'Steps / Decisions'}
+          label={t('processFlow.kpiDashboard.stepsDecisions', 'Steps / Decisions')}
           value={`${kpis.steps} / ${kpis.decisions}`}
           color="bg-blue-100 dark:bg-blue-900/40"
-          subtitle={`${nodes.length} ${isPl ? 'węzłów łącznie' : 'total nodes'}`}
+          subtitle={t('processFlow.kpiDashboard.totalNodes', '{{value}} total nodes', {
+            value: nodes.length,
+          })}
         />
 
         <KPICard
           icon={<Layers size={14} className="text-primary-600 dark:text-primary-400" />}
-          label={isPl ? 'Ścieżki (lanes)' : 'Lanes'}
+          label={t('processFlow.kpiDashboard.lanes', 'Lanes')}
           value={kpis.lanesCount}
           color="bg-primary-100 dark:bg-primary-900/40"
         />
 
         <KPICard
           icon={<Clock size={14} className="text-amber-600 dark:text-amber-400" />}
-          label={isPl ? 'Szac. czas' : 'Est. Duration'}
+          label={t('processFlow.kpiDashboard.estDuration', 'Est. Duration')}
           value={formatHours(kpis.totalDuration)}
           color="bg-amber-100 dark:bg-amber-900/40"
         />
@@ -189,7 +192,7 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
         {kpis.totalCost > 0 && (
           <KPICard
             icon={<DollarSign size={14} className="text-emerald-600 dark:text-emerald-400" />}
-            label={isPl ? 'Szac. koszt' : 'Est. Cost'}
+            label={t('processFlow.kpiDashboard.estCost', 'Est. Cost')}
             value={`$${kpis.totalCost.toLocaleString()}`}
             color="bg-emerald-100 dark:bg-emerald-900/40"
           />
@@ -197,21 +200,25 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
 
         <KPICard
           icon={<ArrowRightLeft size={14} className="text-amber-600 dark:text-amber-400" />}
-          label={isPl ? 'Przekazania' : 'Handoffs'}
+          label={t('processFlow.kpiDashboard.handoffs', 'Handoffs')}
           value={kpis.handoffs}
           color="bg-amber-100 dark:bg-amber-900/40"
           subtitle={
-            kpis.handoffs > 3 ? (isPl ? '⚠ Dużo przekazań' : '⚠ High handoff count') : undefined
+            kpis.handoffs > 3
+              ? t('processFlow.kpiDashboard.highHandoffCount', '⚠ High handoff count')
+              : undefined
           }
         />
 
         {kpis.bottleneckLabel && (
           <KPICard
             icon={<Target size={14} className="text-danger-600 dark:text-danger-400" />}
-            label={isPl ? 'Wąskie gardło' : 'Bottleneck'}
+            label={t('processFlow.kpiDashboard.bottleneck', 'Bottleneck')}
             value={kpis.bottleneckLabel}
             color="bg-danger-100 dark:bg-danger-900/40"
-            subtitle={`${kpis.bottleneckScore} ${isPl ? 'wejść' : 'incoming'}`}
+            subtitle={t('processFlow.kpiDashboard.incomingCount', '{{value}} incoming', {
+              value: kpis.bottleneckScore,
+            })}
           />
         )}
       </div>

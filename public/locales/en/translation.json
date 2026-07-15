@@ -18044,7 +18044,11 @@
       "createsSession": "Creates a MyWork session first",
       "createdFrom": "Created {{type}} from {{source}}",
       "openOutput": "Open output",
-      "openSourceSession": "Open source session"
+      "openSourceSession": "Open source session",
+      "financial_model": "Financial Model",
+      "budget": "Budget",
+      "valuation": "Valuation",
+      "analysis": "Financial Analysis"
     }
   },
   "rap": {
@@ -24378,6 +24382,45 @@
       "cta": "Generate readback",
       "empty": "Run readback to see the process flow traversal",
       "warnings": "Warnings"
+    },
+    "vsmTimelineBar": {
+      "vaTimeLabel": "VA Time",
+      "valueAdded": "Value-added: {{value}}%",
+      "nonValueAdded": "Non-value-added: {{value}}%"
+    },
+    "kpiDashboard": {
+      "title": "Process KPIs",
+      "close": "Close",
+      "stepsDecisions": "Steps / Decisions",
+      "totalNodes": "{{value}} total nodes",
+      "lanes": "Lanes",
+      "estDuration": "Est. Duration",
+      "estCost": "Est. Cost",
+      "handoffs": "Handoffs",
+      "highHandoffCount": "⚠ High handoff count",
+      "bottleneck": "Bottleneck",
+      "incomingCount": "{{value}} incoming"
+    },
+    "postDecisionFollowUp": {
+      "suggestImplement": "Implement decision: {{title}}",
+      "suggestNotify": "Notify stakeholders about: {{title}}",
+      "suggestUpdateDocs": "Update documentation for: {{title}}",
+      "suggestCommunicateRejection": "Communicate rejection of: {{title}}",
+      "suggestDocumentRationale": "Document rationale for rejecting: {{title}}",
+      "suggestProposeAlternative": "Propose alternative for: {{title}}",
+      "taskDescription": "Follow-up task from decision: {{title}}",
+      "createTasksError": "Failed to create tasks",
+      "title": "Follow-up Tasks",
+      "decisionSummary": "Decision \"{{title}}\" was {{status}}. Suggested follow-up tasks:",
+      "statusApproved": "approved",
+      "statusRejected": "{{status}}",
+      "taskTitlePlaceholder": "Task title...",
+      "addTask": "Add task",
+      "notifyTeam": "Notify team",
+      "skip": "Skip",
+      "createTasksButton": "Create {{value}} {{word}}",
+      "taskWordSingular": "task",
+      "taskWordPlural": "tasks"
     }
   }
 }

@@ -7,6 +7,7 @@
  */
 import { Clock, Timer, TrendingUp } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +44,8 @@ function estimateWaitTime(inventoryQty: number | undefined): number {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) => {
+export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes }) => {
+  const { t } = useTranslation();
   const metrics = useMemo(() => {
     let vaTime = 0;
     let waitTime = 0;
@@ -80,7 +82,8 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
       <div className="flex items-center gap-1.5">
         <Clock size={13} className="text-slate-600" />
         <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-          {isPl ? 'Lead Time' : 'Lead Time'}:
+          {/* "Lead Time" — identical in both locales in the original, not translated */}
+          Lead Time:
         </span>
         <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100">
           {formatMinutes(metrics.leadTime)}
@@ -90,7 +93,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
       <div className="flex items-center gap-1.5">
         <Timer size={13} className="text-emerald-500" />
         <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-          {isPl ? 'Czas VA' : 'VA Time'}:
+          {t('processFlow.vsmTimelineBar.vaTimeLabel', 'VA Time')}:
         </span>
         <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
           {formatMinutes(metrics.vaTime)}
@@ -120,22 +123,18 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
             <div
               className="h-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-300"
               style={{ width: `${vaPercent}%` }}
-              title={
-                isPl
-                  ? `Wartość dodana: ${vaPercent.toFixed(1)}%`
-                  : `Value-added: ${vaPercent.toFixed(1)}%`
-              }
+              title={t('processFlow.vsmTimelineBar.valueAdded', 'Value-added: {{value}}%', {
+                value: vaPercent.toFixed(1),
+              })}
             />
           )}
           {nvaPercent > 0 && (
             <div
               className="h-full bg-danger-400 dark:bg-danger-500 transition-all duration-300"
               style={{ width: `${nvaPercent}%` }}
-              title={
-                isPl
-                  ? `Bez wartości: ${nvaPercent.toFixed(1)}%`
-                  : `Non-value-added: ${nvaPercent.toFixed(1)}%`
-              }
+              title={t('processFlow.vsmTimelineBar.nonValueAdded', 'Non-value-added: {{value}}%', {
+                value: nvaPercent.toFixed(1),
+              })}
             />
           )}
         </div>

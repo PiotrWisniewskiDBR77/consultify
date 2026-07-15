@@ -18633,7 +18633,11 @@
       "createsSession": "Najpierw tworzy sesję MyWork",
       "createdFrom": "Utworzono {{type}} z {{source}}",
       "openOutput": "Otwórz output",
-      "openSourceSession": "Otwórz sesję źródłową"
+      "openSourceSession": "Otwórz sesję źródłową",
+      "financial_model": "Model finansowy",
+      "budget": "Budżet",
+      "valuation": "Wycena",
+      "analysis": "Analiza finansowa"
     }
   },
   "rap": {
@@ -25454,6 +25458,45 @@
       "cta": "Generuj odczyt",
       "empty": "Uruchom odczyt, aby zobaczyć przejście przepływu procesu",
       "warnings": "Ostrzeżenia"
+    },
+    "vsmTimelineBar": {
+      "vaTimeLabel": "Czas VA",
+      "valueAdded": "Wartość dodana: {{value}}%",
+      "nonValueAdded": "Bez wartości: {{value}}%"
+    },
+    "kpiDashboard": {
+      "title": "Metryki procesu",
+      "close": "Zamknij",
+      "stepsDecisions": "Kroki / Decyzje",
+      "totalNodes": "{{value}} węzłów łącznie",
+      "lanes": "Ścieżki (lanes)",
+      "estDuration": "Szac. czas",
+      "estCost": "Szac. koszt",
+      "handoffs": "Przekazania",
+      "highHandoffCount": "⚠ Dużo przekazań",
+      "bottleneck": "Wąskie gardło",
+      "incomingCount": "{{value}} wejść"
+    },
+    "postDecisionFollowUp": {
+      "suggestImplement": "Wdrożenie decyzji: {{title}}",
+      "suggestNotify": "Powiadomienie interesariuszy o: {{title}}",
+      "suggestUpdateDocs": "Aktualizacja dokumentacji dla: {{title}}",
+      "suggestCommunicateRejection": "Komunikacja odrzucenia: {{title}}",
+      "suggestDocumentRationale": "Udokumentowanie uzasadnienia odrzucenia: {{title}}",
+      "suggestProposeAlternative": "Zaproponowanie alternatywy dla: {{title}}",
+      "taskDescription": "Zadanie następcze z decyzji: {{title}}",
+      "createTasksError": "Nie udało się utworzyć zadań",
+      "title": "Zadania następcze",
+      "decisionSummary": "Decyzja \"{{title}}\" została {{status}}. Sugerowane zadania:",
+      "statusApproved": "zatwierdzona",
+      "statusRejected": "odrzucona",
+      "taskTitlePlaceholder": "Tytuł zadania...",
+      "addTask": "Dodaj zadanie",
+      "notifyTeam": "Powiadom zespół",
+      "skip": "Pomiń",
+      "createTasksButton": "Utwórz {{value}} {{word}}",
+      "taskWordSingular": "zadanie",
+      "taskWordPlural": "zadań"
     }
   }
 }

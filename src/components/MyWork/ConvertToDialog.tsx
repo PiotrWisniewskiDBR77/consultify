@@ -47,14 +47,16 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
   targetType: initialTargetType,
   onConvert,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [targetType, setTargetType] = useState<ConvertTargetType>(
     initialTargetType ?? 'initiative'
   );
   const [creating, setCreating] = useState(false);
 
-  const targetLabel = TARGET_LABELS[targetType]?.[isPl ? 'pl' : 'en'] ?? targetType;
+  const targetLabel = t(
+    `traceability.convertTo.${targetType}`,
+    TARGET_LABELS[targetType]?.en ?? targetType
+  );
 
   const handleConfirm = async () => {
     if (!sources?.length) return;
@@ -143,7 +145,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
-                    {t(`traceability.convertTo.${tt}`, TARGET_LABELS[tt][isPl ? 'pl' : 'en'])}
+                    {t(`traceability.convertTo.${tt}`, TARGET_LABELS[tt].en)}
                   </button>
                 ))}
               </div>
