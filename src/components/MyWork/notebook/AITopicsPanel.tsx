@@ -32,7 +32,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
   contentText,
   editor,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
 
@@ -56,7 +56,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
         setTopics(next || []);
         trackFunnelEvent('notebook_ai_topics_fetched', { noteId, count: (next || []).length });
       } catch (err: any) {
-        const msg = err?.message || (isPl ? 'Błąd pobierania' : 'Fetch failed');
+        const msg = err?.message || t('myWorkNotebook.aiTopicsPanel.fetchFailed');
         setError(msg);
         setTopics([]);
         toast.error(msg);
@@ -65,7 +65,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
         setReplacingFor(null);
       }
     },
-    [noteId, isPl]
+    [noteId, isPl, t]
   );
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
   const handleRemove = useCallback(
     async (topic: string) => {
       setDismissed((prev) => new Set(prev).add(topic));
-      const remaining = topics.filter((t) => t !== topic);
+      const remaining = topics.filter((tp) => tp !== topic);
       setTopics(remaining);
       setReplacingFor(topic);
       try {
@@ -87,7 +87,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           excludedTopics: excluded,
           language: isPl ? 'pl' : 'en',
         });
-        const newOne = (next || []).find((t) => !excluded.includes(t));
+        const newOne = (next || []).find((tp) => !excluded.includes(tp));
         if (newOne) setTopics((prev) => [...prev, newOne]);
       } catch {
         /* keep remaining list */
@@ -101,7 +101,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
   const handleAdd = useCallback(
     (topic: string) => {
       if (!editor) return;
-      const aiLabel = isPl ? 'Sugestia AI' : 'AI suggestion';
+      const aiLabel = t('myWorkNotebook.aiTopicsPanel.aiSuggestionLabel');
       editor
         .chain()
         .focus()
@@ -116,11 +116,11 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           ],
         })
         .run();
-      setTopics((prev) => prev.filter((t) => t !== topic));
+      setTopics((prev) => prev.filter((tp) => tp !== topic));
       trackFunnelEvent('notebook_ai_topic_added', { noteId });
-      toast.success(isPl ? 'Dodano do notatki' : 'Added to note');
+      toast.success(t('myWorkNotebook.aiTopicsPanel.addedToNote'));
     },
-    [editor, isPl, noteId]
+    [editor, isPl, noteId, t]
   );
 
   const handleStartEdit = useCallback((topic: string) => {
@@ -132,15 +132,15 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
     if (!editingTopic) return;
     const next = editingValue.trim();
     if (!next) {
-      toast.error(isPl ? 'Temat nie może być pusty' : 'Topic cannot be empty');
+      toast.error(t('myWorkNotebook.aiTopicsPanel.topicCannotBeEmpty'));
       return;
     }
-    setTopics((prev) => prev.map((t) => (t === editingTopic ? next : t)));
+    setTopics((prev) => prev.map((tp) => (tp === editingTopic ? next : tp)));
     setEditingTopic(null);
     setEditingValue('');
     trackFunnelEvent('notebook_ai_topic_edited', { noteId });
-    toast.success(isPl ? 'Zapisano' : 'Saved');
-  }, [editingTopic, editingValue, isPl, noteId]);
+    toast.success(t('myWorkNotebook.aiTopicsPanel.saved'));
+  }, [editingTopic, editingValue, isPl, noteId, t]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingTopic(null);
@@ -153,30 +153,22 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
       const excerpt = String(contentText || '')
         .trim()
         .slice(0, 700);
-      const msg = isPl
-        ? [
-            `Pracuję nad notatką: "${noteTitle || 'Bez tytułu'}".`,
-            tags ? `Tagi: ${tags}.` : null,
-            `Temat do przemyślenia: "${topic}".`,
-            'Pomóż mi to przeanalizować: zadaj 3–5 pytań doprecyzowujących, podaj 5 perspektyw/ryzyk, i zaproponuj co dopisać do notatki.',
-            excerpt ? `Kontekst (fragment): ${excerpt}` : null,
-          ]
-            .filter(Boolean)
-            .join('\n')
-        : [
-            `I'm working on a note: "${noteTitle || 'Untitled'}".`,
-            tags ? `Tags: ${tags}.` : null,
-            `Topic to think about: "${topic}".`,
-            'Help me analyze it: ask 3–5 clarifying questions, give 5 perspectives/risks, and propose what to add to the note.',
-            excerpt ? `Context (excerpt): ${excerpt}` : null,
-          ]
-            .filter(Boolean)
-            .join('\n');
+      const msg = [
+        t('myWorkNotebook.aiTopicsPanel.chatWorkingOnNote', {
+          title: noteTitle || t('myWorkNotebook.aiTopicsPanel.untitled'),
+        }),
+        tags ? t('myWorkNotebook.aiTopicsPanel.chatTags', { tags }) : null,
+        t('myWorkNotebook.aiTopicsPanel.chatTopic', { topic }),
+        t('myWorkNotebook.aiTopicsPanel.chatInstruction'),
+        excerpt ? t('myWorkNotebook.aiTopicsPanel.chatContext', { excerpt }) : null,
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       setChatKickoffMessage(msg);
       if (isChatCollapsed) toggleChatCollapse();
       trackFunnelEvent('notebook_ai_topic_sent_to_chat', { noteId });
-      toast.success(isPl ? 'Dodano do czata' : 'Added to chat');
+      toast.success(t('myWorkNotebook.aiTopicsPanel.addedToChat'));
     },
     [
       contentText,
@@ -187,6 +179,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
       noteTitle,
       setChatKickoffMessage,
       toggleChatCollapse,
+      t,
     ]
   );
 
@@ -197,7 +190,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
       <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2 text-sm font-semibold text-c-text-secondary">
           <Sparkles size={16} />
-          <span>{isPl ? 'Tematy do analizy' : 'Topics to analyze'}</span>
+          <span>{t('myWorkNotebook.aiTopicsPanel.topicsToAnalyze')}</span>
         </div>
         <div className="flex items-center gap-1">
           {(topics.length === 0 || error) && (
@@ -205,7 +198,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
               onClick={() => fetchTopics()}
               disabled={loading}
               className="p-1.5 rounded-lg text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
-              title={isPl ? 'Generuj sugestie' : 'Generate suggestions'}
+              title={t('myWorkNotebook.aiTopicsPanel.generateSuggestions')}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             </button>
@@ -213,7 +206,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkNotebook.aiTopicsPanel.close')}
           >
             <X size={14} />
           </button>
@@ -222,9 +215,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
 
       <div className="px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised">
         <p className="text-[11px] text-c-text-secondary leading-relaxed">
-          {isPl
-            ? 'To są sugestie AI: tematy, które warto rozważyć w kontekście tej notatki. Wybierz temat i zdecyduj co dalej: dodaj do notatki jako blok, doprecyzuj treść, usuń (AI podmieni na inny), albo wrzuć do czata, żeby pogłębić analizę.'
-            : 'These are AI suggestions: topics worth thinking through in the context of this note. Pick a topic and decide: add it to the note as a block, refine the wording, remove it (AI will replace it), or send it to chat to deepen the analysis.'}
+          {t('myWorkNotebook.aiTopicsPanel.intro')}
         </p>
       </div>
 
@@ -233,7 +224,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <Loader2 size={20} className="animate-spin text-c-text-muted" />
             <span className="text-xs text-c-text-muted">
-              {isPl ? 'AI analizuje notatkę...' : 'AI analyzing note...'}
+              {t('myWorkNotebook.aiTopicsPanel.analyzing')}
             </span>
           </div>
         ) : topics.length === 0 ? (
@@ -241,12 +232,8 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
             <Sparkles size={24} className="text-c-text-secondary" />
             <span className="text-xs text-c-text-muted">
               {error
-                ? isPl
-                  ? 'Nie udało się pobrać. Kliknij odśwież w nagłówku.'
-                  : 'Failed to fetch. Click refresh in header.'
-                : isPl
-                  ? 'Brak sugestii. Dodaj treść lub tagi.'
-                  : 'No suggestions. Add content or tags.'}
+                ? t('myWorkNotebook.aiTopicsPanel.fetchFailedHint')
+                : t('myWorkNotebook.aiTopicsPanel.noSuggestions')}
             </span>
             <button
               onClick={() => fetchTopics()}
@@ -254,7 +241,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-c-surface-raised hover:bg-c-surface-raised text-c-text-secondary text-xs font-medium transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              {isPl ? 'Generuj' : 'Generate'}
+              {t('myWorkNotebook.aiTopicsPanel.generate')}
             </button>
           </div>
         ) : (
@@ -271,20 +258,20 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                       onChange={(e) => setEditingValue(e.target.value)}
                       rows={3}
                       className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text text-sm p-2 outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] resize-none"
-                      placeholder={isPl ? 'Edytuj temat…' : 'Edit topic…'}
+                      placeholder={t('myWorkNotebook.aiTopicsPanel.editTopicPlaceholder')}
                     />
                     <div className="mt-2 flex items-center gap-2">
                       <button
                         onClick={handleSaveEdit}
                         className="flex items-center justify-center gap-1 rounded-lg bg-c-surface-raised hover:bg-c-border-subtle text-c-text-secondary px-2.5 py-1 text-[11px] font-medium transition-colors"
                       >
-                        {isPl ? 'Zapisz' : 'Save'}
+                        {t('myWorkNotebook.aiTopicsPanel.save')}
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         className="flex items-center justify-center gap-1 rounded-lg bg-c-surface-raised text-c-text-secondary px-2.5 py-1 text-[11px] font-medium transition-colors hover:bg-c-border-subtle"
                       >
-                        {isPl ? 'Anuluj' : 'Cancel'}
+                        {t('myWorkNotebook.aiTopicsPanel.cancel')}
                       </button>
                     </div>
                   </div>
@@ -303,7 +290,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                       actions: [
                         {
                           id: 'add',
-                          label: isPl ? 'Dodaj do notatki' : 'Add to note',
+                          label: t('myWorkNotebook.aiTopicsPanel.addToNote'),
                           icon: Plus,
                           onClick: () => handleAdd(topic),
                           variant: 'primary' as const,
@@ -311,21 +298,21 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                         },
                         {
                           id: 'chat',
-                          label: isPl ? 'Do czata' : 'Send to chat',
+                          label: t('myWorkNotebook.aiTopicsPanel.sendToChat'),
                           icon: MessageSquare,
                           onClick: () => handleSendToChat(topic),
                           disabled: editingTopic === topic,
                         },
                         {
                           id: 'edit',
-                          label: isPl ? 'Edytuj' : 'Edit',
+                          label: t('myWorkNotebook.aiTopicsPanel.edit'),
                           icon: Pencil,
                           onClick: () => handleStartEdit(topic),
                           disabled: editingTopic !== null,
                         },
                         {
                           id: 'remove',
-                          label: isPl ? 'Usuń' : 'Delete',
+                          label: t('myWorkNotebook.aiTopicsPanel.delete'),
                           icon: Trash2,
                           onClick: () => handleRemove(topic),
                           variant: 'danger' as const,
@@ -345,14 +332,10 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
       <div className="px-3 py-2 border-t border-c-border-subtle">
         <div className="text-[10px] text-c-text-muted space-y-1">
           <p>
-            {isPl
-              ? 'Cel: pomóc Ci pomyśleć szerzej o tej notatce — ryzyka, luki, dane do zebrania, decyzje, kolejne kroki.'
-              : 'Goal: help you think wider about this note — risks, gaps, data to collect, decisions, and next steps.'}
+            {t('myWorkNotebook.aiTopicsPanel.footerGoal')}
           </p>
           <p>
-            {isPl
-              ? 'Tip: jeśli chcesz pogłębić temat, wybierz „Do czata” — AI rozwinie kontekst i dopyta o brakujące informacje.'
-              : 'Tip: if you want to go deeper, choose “Send to chat” — AI will expand the context and ask for missing information.'}
+            {t('myWorkNotebook.aiTopicsPanel.footerTip')}
           </p>
         </div>
       </div>
