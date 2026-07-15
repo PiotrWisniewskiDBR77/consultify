@@ -382,6 +382,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   isPl,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const enabledBlocks = useMemo(
     () => blocks.filter((b) => b.enabled).sort((a, b) => a.orderIndex - b.orderIndex),
     [blocks]
@@ -412,10 +413,10 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
         <div className="flex items-center gap-3">
           <Eye className="w-4 h-4 text-c-text-secondary" />
           <span className="text-sm font-medium text-c-text">
-            {isPl ? 'Podgląd raportu' : 'Report Preview'}
+            {t('reportBuilder.editor.reportPreview', 'Report Preview')}
           </span>
           <span className="text-xs text-c-text-secondary ml-2">
-            {enabledBlocks.length} {isPl ? 'sekcji' : 'sections'}
+            {enabledBlocks.length} {t('reportBuilder.editor.sections', 'sections')}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -424,14 +425,14 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
           >
             <Download className="w-4 h-4" />
-            {isPl ? 'Drukuj / PDF' : 'Print / PDF'}
+            {t('reportBuilder.editor.printPdf', 'Print / PDF')}
           </button>
           <button
             onClick={onClose}
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-c-border-subtle text-c-text hover:bg-c-border rounded-lg"
           >
             <X className="w-4 h-4" />
-            {isPl ? 'Zamknij' : 'Close'}
+            {t('reportBuilder.editor.close', 'Close')}
           </button>
         </div>
       </header>
@@ -482,9 +483,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                       <div className="text-center py-12 text-c-text-secondary">
                         <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p className="text-sm italic">
-                          {isPl
-                            ? 'Ta sekcja nie ma jeszcze treści. Kliknij "Generuj" w edytorze.'
-                            : 'This section has no content yet. Click "Generate" in the editor.'}
+                          {t('reportBuilder.editor.thisSectionHasNoContentYet', 'This section has no content yet. Click "Generate" in the editor.')}
                         </p>
                       </div>
                     )}
@@ -497,7 +496,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
           {/* Footer */}
           {styling.showBranding && (
             <div className="border-t border-c-border-subtle px-12 py-6 text-center text-xs text-c-text-secondary print:text-c-text-secondary">
-              {isPl ? 'Utworzono w' : 'Created with'} Consultify
+              {t('reportBuilder.editor.createdWith', 'Created with')} Consultify
             </div>
           )}
         </div>
@@ -522,7 +521,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   onTemplateSaved,
   onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const isTemplateMode = mode === 'template';
 
@@ -702,12 +701,13 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       setBlocks(newBlocks);
 
       toast.success(
-        isPl
-          ? `Preset "${preset.replace('_', ' ')}" zastosowany`
-          : `Preset "${preset.replace('_', ' ')}" applied`
+        t('reportBuilder.editor.presetApplied', {
+          defaultValue: `Preset "${preset.replace('_', ' ')}" applied`,
+          preset: preset.replace('_', ' '),
+        })
       );
     },
-    [isPl]
+    [isPl, t]
   );
 
   // Template-mode metadata
@@ -823,27 +823,32 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         if (report?.id) {
           const formatLabel = format.toUpperCase();
           await Api.post(`/report-builder/${report.id}/versions`, {
-            changeSummary: isPl ? `Eksport ${formatLabel}` : `${formatLabel} export`,
+            changeSummary: t('reportBuilder.editor.exportFormatLabel', {
+              defaultValue: `${formatLabel} export`,
+              format: formatLabel,
+            }),
           });
           loadVersions();
           toast.success(
-            isPl
-              ? `Wygenerowano ${formatLabel} i zapisano wersję`
-              : `${formatLabel} exported & version saved`
+            t('reportBuilder.editor.exportedAndVersionSaved', {
+              defaultValue: `${formatLabel} exported & version saved`,
+              format: formatLabel,
+            })
           );
         }
       } catch (err) {
         console.error(`Export ${format} failed:`, err);
         toast.error(
-          isPl
-            ? `Błąd eksportu ${format.toUpperCase()}`
-            : `Failed to export ${format.toUpperCase()}`
+          t('reportBuilder.editor.failedToExportFormat', {
+            defaultValue: `Failed to export ${format.toUpperCase()}`,
+            format: format.toUpperCase(),
+          })
         );
       } finally {
         setIsExporting(null);
       }
     },
-    [downloadExport, report?.id, isPl, loadVersions]
+    [downloadExport, report?.id, t, loadVersions]
   );
 
   const exportPanel = reportIdForActions ? (
@@ -877,9 +882,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     />
   ) : (
     <div className="text-sm text-c-text-secondary">
-      {isPl
-        ? 'Zapisz raport, aby odblokować eksport i udostępnianie.'
-        : 'Save the report to enable export and sharing.'}
+      {t('reportBuilder.editor.saveTheReportToEnableExport', 'Save the report to enable export and sharing.')}
     </div>
   );
 
@@ -896,7 +899,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         isPl={isPl}
       />
       <EmbeddedView
-        title={isPl ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
+        title={t('reportBuilder.editor.usedInBacklinks', 'Used in (backlinks)')}
         count={reportBacklinks.length}
         loading={reportBacklinksLoading}
         readOnly
@@ -904,7 +907,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       >
         {reportBacklinks.length === 0 && !reportBacklinksLoading ? (
           <div className="text-xs text-c-text-secondary">
-            {isPl ? 'Brak powiązań' : 'No links yet'}
+            {t('reportBuilder.editor.noLinksYet', 'No links yet')}
           </div>
         ) : (
           <div className="space-y-2">
@@ -934,7 +937,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   }
                   className="shrink-0 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                 >
-                  {isPl ? 'Otwórz' : 'Open'}
+                  {t('reportBuilder.editor.open', 'Open')}
                 </button>
               </div>
             ))}
@@ -944,9 +947,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     </>
   ) : (
     <div className="text-sm text-c-text-secondary">
-      {isPl
-        ? 'Zapisz raport, aby włączyć workflow recenzji.'
-        : 'Save the report to enable review workflow.'}
+      {t('reportBuilder.editor.saveTheReportToEnableReview', 'Save the report to enable review workflow.')}
     </div>
   );
 
@@ -1183,7 +1184,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {
               id: 'exec_summary',
               type: 'summary',
-              title: isPl ? 'Streszczenie Zarządcze' : 'Executive Summary',
+              title: t('reportBuilder.editor.executiveSummary', 'Executive Summary'),
               length: 'medium',
               includeVisuals: false,
               enabled: true,
@@ -1192,7 +1193,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {
               id: 'assessment_matrix',
               type: 'matrix',
-              title: isPl ? 'Macierz Oceny' : 'Assessment Matrix',
+              title: t('reportBuilder.editor.assessmentMatrix', 'Assessment Matrix'),
               length: 'medium',
               includeVisuals: true,
               enabled: true,
@@ -1201,7 +1202,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {
               id: 'analysis',
               type: 'analysis',
-              title: isPl ? 'Analiza Szczegółowa' : 'Detailed Analysis',
+              title: t('reportBuilder.editor.detailedAnalysis', 'Detailed Analysis'),
               length: 'long',
               includeVisuals: true,
               enabled: true,
@@ -1210,7 +1211,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {
               id: 'recommendations',
               type: 'recommendations',
-              title: isPl ? 'Rekomendacje' : 'Recommendations',
+              title: t('reportBuilder.editor.recommendations', 'Recommendations'),
               length: 'medium',
               includeVisuals: false,
               enabled: true,
@@ -1221,7 +1222,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {
               id: 'summary',
               type: 'summary',
-              title: isPl ? 'Podsumowanie' : 'Summary',
+              title: t('reportBuilder.editor.summary', 'Summary'),
               length: 'medium',
               includeVisuals: false,
               enabled: true,
@@ -1230,7 +1231,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {
               id: 'content',
               type: 'custom',
-              title: isPl ? 'Treść' : 'Content',
+              title: t('reportBuilder.editor.content', 'Content'),
               length: 'long',
               includeVisuals: true,
               enabled: true,
@@ -1333,7 +1334,12 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       const hasExistingChapters = existingChapterKeys.size > 0;
       const chapterNum = existingChapterKeys.size + 1;
       const newKey = `chapter_${chapterNum}_${Date.now()}`;
-      const newTitle = chapterName || (isPl ? `Rozdział ${chapterNum}` : `Chapter ${chapterNum}`);
+      const newTitle =
+        chapterName ||
+        t('reportBuilder.editor.chapterN', {
+          defaultValue: `Chapter ${chapterNum}`,
+          number: chapterNum,
+        });
 
       if (!hasExistingChapters) {
         // FIRST TIME creating chapters: auto-split blocks into 2 chapters
@@ -1341,9 +1347,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         const midpoint = Math.ceil(blocks.length / 2);
         const ts = Date.now();
         const ch1Key = `chapter_1_${ts}`;
-        const ch1Title = isPl ? 'Rozdział 1' : 'Chapter 1';
+        const ch1Title = t('reportBuilder.editor.chapter1', 'Chapter 1');
         const ch2Key = `chapter_2_${ts}`;
-        const ch2Title = newTitle || (isPl ? 'Rozdział 2' : 'Chapter 2');
+        const ch2Title = newTitle || (t('reportBuilder.editor.chapter2', 'Chapter 2'));
 
         setBlocks((prev) =>
           prev.map((b, idx) => ({
@@ -1382,7 +1388,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         }
       }
     },
-    [blocks, isPl, selectedBlockId]
+    [blocks, t, selectedBlockId]
   );
 
   const assignChapter = useCallback((blockId: string, chapterKey: string | undefined) => {
@@ -1525,17 +1531,22 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 : b
             )
           );
-          toast.success(isPl ? `Wygenerowano: ${block.title}` : `Generated: ${block.title}`);
+          toast.success(
+            t('reportBuilder.editor.generatedBlockTitle', {
+              defaultValue: `Generated: ${block.title}`,
+              title: block.title,
+            })
+          );
         }
       } catch (err) {
         console.error('Failed to generate block:', err);
-        toast.error(isPl ? 'Błąd generowania' : 'Generation failed');
+        toast.error(t('reportBuilder.editor.generationFailed', 'Generation failed'));
         setBlocks((prev) =>
           prev.map((b) => (b.id === blockId ? { ...b, isGenerating: false } : b))
         );
       }
     },
-    [report?.id, blocks, isPl]
+    [report?.id, blocks, t]
   );
 
   // Save edited content to backend (REQ-6: Inline Editing)
@@ -1553,11 +1564,11 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           });
         } catch (err) {
           console.error('Failed to save block content:', err);
-          toast.error(isPl ? 'Błąd zapisu treści' : 'Failed to save content');
+          toast.error(t('reportBuilder.editor.failedToSaveContent', 'Failed to save content'));
         }
       }
     },
-    [report?.id, isPl]
+    [report?.id, t]
   );
 
   // ===== REFRESH (Phase 8: Refreshable Blocks) =====
@@ -1575,10 +1586,14 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         );
 
         if (response?.newContent) {
+          const changesList =
+            (response.diff || []).join(', ') ||
+            t('reportBuilder.editor.noDetails', 'no details');
           const accept = window.confirm(
-            isPl
-              ? `Nowa treść została wygenerowana.\n\nZmiany: ${(response.diff || []).join(', ') || 'brak szczegółów'}\n\nCzy zastosować nową wersję?`
-              : `New content has been generated.\n\nChanges: ${(response.diff || []).join(', ') || 'no details'}\n\nApply the new version?`
+            t('reportBuilder.editor.newContentGeneratedConfirm', {
+              defaultValue: `New content has been generated.\n\nChanges: ${changesList}\n\nApply the new version?`,
+              changes: changesList,
+            })
           );
 
           if (accept) {
@@ -1598,7 +1613,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   : b
               )
             );
-            toast.success(isPl ? 'Sekcja odświeżona' : 'Section refreshed');
+            toast.success(t('reportBuilder.editor.sectionRefreshed', 'Section refreshed'));
           } else {
             setBlocks((prev) =>
               prev.map((b) => (b.id === blockId ? { ...b, isRefreshing: false } : b))
@@ -1611,13 +1626,13 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         }
       } catch (err) {
         console.error('Failed to refresh block:', err);
-        toast.error(isPl ? 'Błąd odświeżania sekcji' : 'Failed to refresh section');
+        toast.error(t('reportBuilder.editor.failedToRefreshSection', 'Failed to refresh section'));
         setBlocks((prev) =>
           prev.map((b) => (b.id === blockId ? { ...b, isRefreshing: false } : b))
         );
       }
     },
-    [report?.id, isPl]
+    [report?.id, t]
   );
 
   // ===== COMMENTS (Backend CRUD) =====
@@ -1671,11 +1686,11 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         };
       } catch (err) {
         console.error('Failed to add comment:', err);
-        toast.error(isPl ? 'Błąd dodawania komentarza' : 'Failed to add comment');
+        toast.error(t('reportBuilder.editor.failedToAddComment', 'Failed to add comment'));
         return null;
       }
     },
-    [report?.id, isPl]
+    [report?.id, t]
   );
 
   const resolveBlockComment = useCallback(
@@ -1741,16 +1756,16 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       if (!report?.id) return;
       try {
         await Api.post(`/report-builder/${report.id}/versions`, {
-          changeSummary: summary || (isPl ? 'Ręczny zapis' : 'Manual save'),
+          changeSummary: summary || (t('reportBuilder.editor.manualSave', 'Manual save')),
         });
-        toast.success(isPl ? 'Wersja zapisana' : 'Version saved');
+        toast.success(t('reportBuilder.editor.versionSaved', 'Version saved'));
         loadVersions();
       } catch (err) {
         console.error('Failed to create version:', err);
-        toast.error(isPl ? 'Błąd zapisu wersji' : 'Failed to save version');
+        toast.error(t('reportBuilder.editor.failedToSaveVersion', 'Failed to save version'));
       }
     },
-    [report?.id, isPl, loadVersions]
+    [report?.id, t, loadVersions]
   );
 
   const rollbackToVersion = useCallback(
@@ -1758,15 +1773,15 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       if (!report?.id) return;
       try {
         await Api.post(`/report-builder/versions/${versionId}/rollback`, {});
-        toast.success(isPl ? 'Przywrócono wersję' : 'Version restored');
+        toast.success(t('reportBuilder.editor.versionRestored', 'Version restored'));
         loadReport(report.id);
         loadVersions();
       } catch (err) {
         console.error('Failed to rollback:', err);
-        toast.error(isPl ? 'Błąd przywracania wersji' : 'Failed to restore version');
+        toast.error(t('reportBuilder.editor.failedToRestoreVersion', 'Failed to restore version'));
       }
     },
-    [report?.id, isPl, loadVersions]
+    [report?.id, t, loadVersions]
   );
 
   // ==========================================
@@ -1851,7 +1866,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     if (isTemplateMode) {
       const name = (reportTitle || '').trim();
       if (!name) {
-        toast.error(isPl ? 'Nazwa szablonu jest wymagana' : 'Template name is required');
+        toast.error(t('reportBuilder.editor.templateNameIsRequired', 'Template name is required'));
         return;
       }
 
@@ -1924,15 +1939,15 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         const tpl = saved?.template;
         if (tpl?.id) {
           setEditingTemplateId(String(tpl.id));
-          toast.success(isPl ? 'Szablon zapisany' : 'Template saved');
+          toast.success(t('reportBuilder.editor.templateSaved', 'Template saved'));
           onTemplateSaved?.({ id: String(tpl.id), name: String(tpl.name || name) });
         } else {
-          toast.success(isPl ? 'Szablon zapisany' : 'Template saved');
+          toast.success(t('reportBuilder.editor.templateSaved', 'Template saved'));
         }
       } catch (err: any) {
         console.error('Failed to save template:', err);
         toast.error(
-          err?.error || err?.message || (isPl ? 'Błąd zapisu szablonu' : 'Failed to save template')
+          err?.error || err?.message || (t('reportBuilder.editor.failedToSaveTemplate', 'Failed to save template'))
         );
       } finally {
         setIsSaving(false);
@@ -2130,10 +2145,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       }
       // Create a version snapshot on manual save
       if (report?.id) {
-        await createManualVersion(isPl ? 'Ręczny zapis' : 'Manual save');
+        await createManualVersion(t('reportBuilder.editor.manualSave', 'Manual save'));
         setLastSavedAt(new Date().toISOString());
         setHasUnsavedChanges(false);
-        toast.success(isPl ? 'Raport zapisany' : 'Report saved');
+        toast.success(t('reportBuilder.editor.reportSaved', 'Report saved'));
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -2157,7 +2172,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           (b) => b.enabled && b.needsRegeneration && !b.id.startsWith('tmp_')
         );
         if (dirtyBlocks.length === 0) {
-          toast(isPl ? 'Brak bloków do ponownego wygenerowania' : 'No blocks need regeneration');
+          toast(t('reportBuilder.editor.noBlocksNeedRegeneration', 'No blocks need regeneration'));
           setIsGenerating(false);
           return;
         }
@@ -2195,9 +2210,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           }
         }
         toast.success(
-          isPl
-            ? `Zaktualizowano ${dirtyBlocks.length} bloków`
-            : `Updated ${dirtyBlocks.length} blocks`
+          t('reportBuilder.editor.updatedNBlocks', {
+            defaultValue: `Updated ${dirtyBlocks.length} blocks`,
+            count: dirtyBlocks.length,
+          })
         );
       } else {
         // new_only (regenerateAll: false) or all (regenerateAll: true)
@@ -2236,7 +2252,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       <div className="h-screen flex items-center justify-center bg-c-surface-raised">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-c-text-secondary">{isPl ? 'Ładowanie...' : 'Loading...'}</p>
+          <p className="text-c-text-secondary">{t('reportBuilder.editor.loading', 'Loading...')}</p>
         </div>
       </div>
     );
@@ -2271,12 +2287,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             }}
             placeholder={
               isTemplateMode
-                ? isPl
-                  ? 'Nazwa szablonu...'
-                  : 'Template name...'
-                : isPl
-                  ? 'Tytuł raportu...'
-                  : 'Report title...'
+                ? t('reportBuilder.editor.templateName', 'Template name...')
+                : t('reportBuilder.editor.reportTitle', 'Report title...')
             }
             className="text-lg font-semibold bg-transparent border-none outline-none text-c-text placeholder:text-c-text-muted w-80 hover:bg-c-surface-raised rounded px-2 py-0.5 -ml-2 transition-colors focus:bg-c-surface-raised"
           />
@@ -2285,7 +2297,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           {!isTemplateMode && report?.id && hasUnsavedChanges && (
             <span
               className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 animate-pulse"
-              title={isPl ? 'Niezapisane zmiany' : 'Unsaved changes'}
+              title={t('reportBuilder.editor.unsavedChanges', 'Unsaved changes')}
             />
           )}
         </div>
@@ -2302,12 +2314,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             }`}
             title={
               hasUnsavedChanges
-                ? isPl
-                  ? 'Zapisz zmiany'
-                  : 'Save changes'
-                : isPl
-                  ? 'Zapisano'
-                  : 'Saved'
+                ? t('reportBuilder.editor.saveChanges', 'Save changes')
+                : t('reportBuilder.editor.saved', 'Saved')
             }
           >
             {isSaving ? (
@@ -2315,7 +2323,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
-            {isPl ? 'Zapisz' : 'Save'}
+            {t('reportBuilder.editor.save', 'Save')}
           </button>
 
           {/* 2. Generate (AI) */}
@@ -2331,7 +2339,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 ) : (
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
-                {isPl ? 'Generuj' : 'Generate'}
+                {t('reportBuilder.editor.generate', 'Generate')}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
               <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
@@ -2343,10 +2351,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <Zap className="w-3.5 h-3.5 text-c-accent flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
-                      {isPl ? 'Generuj nowe' : 'Generate new'}
+                      {t('reportBuilder.editor.generateNew', 'Generate new')}
                     </div>
                     <div className="text-[10px] text-c-text-secondary">
-                      {isPl ? 'Tylko puste sekcje' : 'Empty sections only'}
+                      {t('reportBuilder.editor.emptySectionsOnly', 'Empty sections only')}
                     </div>
                   </div>
                 </button>
@@ -2358,10 +2366,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <RefreshCw className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
-                      {isPl ? 'Odśwież zmienione' : 'Refresh modified'}
+                      {t('reportBuilder.editor.refreshModified', 'Refresh modified')}
                     </div>
                     <div className="text-[10px] text-c-text-secondary">
-                      {isPl ? 'Sekcje wymagające aktualizacji' : 'Sections needing update'}
+                      {t('reportBuilder.editor.sectionsNeedingUpdate', 'Sections needing update')}
                     </div>
                   </div>
                 </button>
@@ -2374,10 +2382,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
-                      {isPl ? 'Regeneruj wszystko' : 'Regenerate all'}
+                      {t('reportBuilder.editor.regenerateAll', 'Regenerate all')}
                     </div>
                     <div className="text-[10px] text-c-text-secondary">
-                      {isPl ? 'Nadpisz wszystkie sekcje' : 'Overwrite all sections'}
+                      {t('reportBuilder.editor.overwriteAllSections', 'Overwrite all sections')}
                     </div>
                   </div>
                 </button>
@@ -2394,10 +2402,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   ? 'border-c-accent bg-c-accent-soft0 text-c-accent'
                   : 'border-c-border-strong bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-secondary'
               }`}
-              title={isPl ? 'Asystent raportu' : 'Report Agent'}
+              title={t('reportBuilder.editor.reportAgent', 'Report Agent')}
             >
               <TeresaMark className="w-3.5 h-3.5" />
-              {isPl ? 'Agent' : 'Agent'}
+              {t('reportBuilder.editor.agent', 'Agent')}
             </button>
           )}
 
@@ -2415,12 +2423,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <Eye className="w-3.5 h-3.5" />
                 )}
                 {isExporting
-                  ? isPl
-                    ? `${isExporting.toUpperCase()}...`
-                    : `${isExporting.toUpperCase()}...`
-                  : isPl
-                    ? 'Podgląd'
-                    : 'View'}
+                  ? `${isExporting.toUpperCase()}...`
+                  : t('reportBuilder.editor.view', 'View')}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
               <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
@@ -2431,17 +2435,17 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <Monitor className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
-                      {isPl ? 'Podgląd Web' : 'Web Preview'}
+                      {t('reportBuilder.editor.webPreview', 'Web Preview')}
                     </div>
                     <div className="text-[10px] text-c-text-secondary">
-                      {isPl ? 'Podgląd w przeglądarce' : 'Preview in browser'}
+                      {t('reportBuilder.editor.previewInBrowser', 'Preview in browser')}
                     </div>
                   </div>
                 </button>
                 <div className="border-t border-c-border-subtle my-1" />
                 <div className="px-3.5 py-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
-                    {isPl ? 'Eksport i zapis do wersji' : 'Export & save to versions'}
+                    {t('reportBuilder.editor.exportSaveToVersions', 'Export & save to versions')}
                   </span>
                 </div>
                 <button
@@ -2453,7 +2457,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <div className="text-left">
                     <div className="text-xs font-medium">PDF</div>
                     <div className="text-[10px] text-c-text-secondary">
-                      {isPl ? 'Dokument PDF' : 'PDF document'}
+                      {t('reportBuilder.editor.pdfDocument', 'PDF document')}
                     </div>
                   </div>
                   <Download className="w-3 h-3 text-c-text-secondary ml-auto" />
@@ -2467,7 +2471,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <div className="text-left">
                     <div className="text-xs font-medium">PPTX</div>
                     <div className="text-[10px] text-c-text-secondary">
-                      {isPl ? 'Prezentacja PowerPoint' : 'PowerPoint presentation'}
+                      {t('reportBuilder.editor.powerpointPresentation', 'PowerPoint presentation')}
                     </div>
                   </div>
                   <Download className="w-3 h-3 text-c-text-secondary ml-auto" />
@@ -2481,7 +2485,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <div className="text-left">
                     <div className="text-xs font-medium">Word</div>
                     <div className="text-[10px] text-c-text-secondary">
-                      {isPl ? 'Dokument Word (.docx)' : 'Word document (.docx)'}
+                      {t('reportBuilder.editor.wordDocumentDocx', 'Word document (.docx)')}
                     </div>
                   </div>
                   <Download className="w-3 h-3 text-c-text-secondary ml-auto" />
@@ -2519,7 +2523,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <div className="flex items-center gap-2 text-sm text-c-text-secondary mb-6">
                 <Layers className="w-4 h-4" />
                 <span>
-                  {isPl ? 'Źródło:' : 'Source:'} {sourceName}
+                  {t('reportBuilder.editor.source', 'Source:')} {sourceName}
                 </span>
               </div>
             )}
@@ -2548,7 +2552,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                         <h2 className="text-lg font-bold text-c-text flex-1">{chapter.title}</h2>
                         <span className="text-xs text-c-text-secondary">
                           {chapter.blocks.filter((b) => b.enabled).length}{' '}
-                          {isPl ? 'bloków' : 'blocks'}
+                          {t('reportBuilder.editor.blocks', 'blocks')}
                         </span>
                       </div>
                     )}
@@ -2679,7 +2683,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               className="w-full py-4 border-2 border-dashed border-c-border-subtle rounded-xl text-c-text-secondary hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-5 h-5" />
-              {isPl ? 'Dodaj blok' : 'Add block'}
+              {t('reportBuilder.editor.addBlock', 'Add block')}
             </button>
 
             {/* Empty State */}
@@ -2689,19 +2693,17 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <Layers className="w-10 h-10 text-blue-500" />
                 </div>
                 <h3 className="text-xl font-semibold text-c-text mb-2">
-                  {isPl ? 'Zacznij budować raport' : 'Start building your report'}
+                  {t('reportBuilder.editor.startBuildingYourReport', 'Start building your report')}
                 </h3>
                 <p className="text-c-text-secondary max-w-md mx-auto mb-6">
-                  {isPl
-                    ? 'Dodaj bloki, aby zdefiniować strukturę raportu. Każdy blok może zawierać tekst, dane, wykresy lub wizualizacje.'
-                    : 'Add blocks to define your report structure. Each block can contain text, data, charts, or visualizations.'}
+                  {t('reportBuilder.editor.addBlocksToDefineYourReport', 'Add blocks to define your report structure. Each block can contain text, data, charts, or visualizations.')}
                 </p>
                 <button
                   onClick={() => setShowBlockPalette(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-c-text rounded-xl hover:bg-blue-700 font-medium"
                 >
                   <Plus className="w-5 h-5" />
-                  {isPl ? 'Dodaj pierwszy blok' : 'Add first block'}
+                  {t('reportBuilder.editor.addFirstBlock', 'Add first block')}
                 </button>
               </div>
             )}
