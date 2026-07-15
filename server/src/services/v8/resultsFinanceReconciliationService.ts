@@ -498,9 +498,7 @@ async function upsertReconciliation(input: {
   // `conclusion`), so embedding `postMortem` here (no new column, no migration) makes the
   // market-vs-execution decomposition reach that existing render path for free. `conclusion`
   // itself keeps its original shape — postMortem is a sibling key on the serialized object.
-  const conclusionJson = JSON.stringify(
-    postMortem ? { ...conclusion, postMortem } : conclusion
-  );
+  const conclusionJson = JSON.stringify(postMortem ? { ...conclusion, postMortem } : conclusion);
 
   const existing = await dbGet<{ reconciliation_id: string }>(
     `SELECT reconciliation_id

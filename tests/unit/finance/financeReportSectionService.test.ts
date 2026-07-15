@@ -18,8 +18,10 @@
  *      individual checks), RECONCILE_SUMMARY excluded from `checks`
  *   4. reconcile validations === null (pack never recomputed) → available:false
  *   5. verdict is worst-of(reconcile status, EV consistency flag)
- *   6. renderFinanceReportMarkdown produces all five sections, degrading
- *      gracefully when reconcile/valuation are unavailable
+ *   6. renderFinanceReportMarkdown produces all six sections, degrading
+ *      gracefully when reconcile/valuation/trend are unavailable
+ *   7. O4.6 trend wiring: honest-empty with <2 periods per line (no series /
+ *      single pack), real CAGR+forecast when a ≥3-period series is supplied
  */
 import { describe, expect, it } from 'vitest';
 
@@ -344,16 +346,18 @@ describe('financeReportSectionService — lineage (#82g jawny ślad źródeł)',
 });
 
 describe('financeReportSectionService — renderFinanceReportMarkdown', () => {
-  it('renders all five sections, degrading gracefully when reconcile/valuation are unavailable', () => {
+  it('renders all six sections, degrading gracefully when reconcile/valuation/trend are unavailable', () => {
     const section = composeFinanceReportSection(baseInput());
     const md = renderFinanceReportMarkdown(section);
     expect(Object.keys(md).sort()).toEqual(
-      ['ev_football_field', 'header', 'narrative', 'ratio_table', 'reconcile_result'].sort()
+      ['ev_football_field', 'header', 'narrative', 'ratio_table', 'reconcile_result', 'trend_analysis'].sort()
     );
     expect(md.header).toContain('FY2025');
     expect(md.ratio_table).toContain('Wskaźniki');
     expect(md.reconcile_result).toContain('nie przeszedł jeszcze przeliczenia');
     expect(md.ev_football_field).toContain('Brak wyceny');
+    // Single pack, no trendSeries supplied → honest-empty, never a fabricated trend.
+    expect(md.trend_analysis).toContain('Brak wystarczającej historii pakietów');
   });
 
   it('renders the reconcile findings and football-field table when data is available', () => {
@@ -452,5 +456,89 @@ describe('financeReportSectionService — evaluateReconcileEnforcement (RECONCIL
     // uses. Must be a no-op today: RECONCILE_ENFORCE is a hardcoded `false` until DBR77
     // calibration flips it (see reconciliationService.ts).
     expect(evaluateReconcileEnforcement('pack-1', dirtySummary)).toBeNull();
+  });
+});
+
+/**
+ * O4.6 wiring — financeStatementTrendService.analyseStatementLine consumed via
+ * `composeFinanceReportTrend` (internal to financeReportSectionService, exercised
+ * indirectly through `composeFinanceReportSection`'s public `trend` field + the
+ * `trend_analysis` markdown block). Proves the honest-empty contract: a single
+ * pack (no `trendSeries`, or a 1-point series) never fabricates a trend; a real
+ * ≥2/≥3-period series produces the same CAGR/direction/forecast the pure engine
+ * computes (re-verified here only at the wiring boundary, not re-testing the
+ * engine's own math — see tests/unit/finance/financeStatementTrendService.test.ts).
+ */
+describe('financeReportSectionService — O4.6 trend wiring', () => {
+  it('no trendSeries supplied → trend.available=false, honest note, no fabricated numbers', () => {
+    const section = composeFinanceReportSection(baseInput());
+    expect(section.trend.available).toBe(false);
+    expect(section.trend.lines).toHaveLength(3); // REVENUE, EBITDA, NET_INCOME — always present
+    expect(section.trend.lines.every((l) => l.trend.periods === 0)).toBe(true);
+    expect(section.trend.lines.every((l) => l.trend.cagrPct === null)).toBe(true);
+    expect(section.trend.lines.every((l) => l.forecast.method === 'none')).toBe(true);
+    expect(section.trend.note).toContain('Brak wystarczającej historii pakietów');
+  });
+
+  it('a single-point series (1 pack) stays honest-empty — periods=1 is not a trend', () => {
+    const section = composeFinanceReportSection(
+      baseInput({
+        trendSeries: {
+          REVENUE: [{ periodLabel: 'FY2025', periodIndex: 0, value: 1000 }],
+        },
+      })
+    );
+    const revenue = section.trend.lines.find((l) => l.lineCode === 'REVENUE')!;
+    expect(revenue.trend.periods).toBe(1);
+    expect(revenue.trend.cagrPct).toBeNull();
+    expect(section.trend.available).toBe(false);
+  });
+
+  it('a real multi-period series → CAGR/direction computed + forecast when ≥3 points', () => {
+    const section = composeFinanceReportSection(
+      baseInput({
+        trendSeries: {
+          REVENUE: [
+            { periodLabel: 'FY2023', periodIndex: 0, value: 800 },
+            { periodLabel: 'FY2024', periodIndex: 1, value: 900 },
+            { periodLabel: 'FY2025', periodIndex: 2, value: 1000 },
+          ],
+          EBITDA: [
+            { periodLabel: 'FY2024', periodIndex: 0, value: 200 },
+            { periodLabel: 'FY2025', periodIndex: 1, value: 220 },
+          ],
+          // NET_INCOME left without a series → stays honest-empty alongside the other two.
+        },
+      })
+    );
+    expect(section.trend.available).toBe(true);
+
+    const revenue = section.trend.lines.find((l) => l.lineCode === 'REVENUE')!;
+    expect(revenue.trend.periods).toBe(3);
+    expect(revenue.trend.direction).toBe('rising');
+    expect(revenue.trend.cagrPct).toBeCloseTo(11.8, 1); // (1000/800)^(1/2)-1 ≈ 11.8%
+    expect(revenue.forecast.method).toBe('cagr-extrapolation');
+    expect(revenue.forecast.confidence).toBe('computed');
+    expect(revenue.forecast.projected).toHaveLength(1);
+
+    const ebitda = section.trend.lines.find((l) => l.lineCode === 'EBITDA')!;
+    expect(ebitda.trend.periods).toBe(2);
+    expect(ebitda.trend.direction).toBe('rising');
+    // Only 2 points → forecast stays honest-empty (needs ≥3 to extrapolate).
+    expect(ebitda.forecast.method).toBe('none');
+    expect(ebitda.forecast.confidence).toBe('insufficient-data');
+
+    const netIncome = section.trend.lines.find((l) => l.lineCode === 'NET_INCOME')!;
+    expect(netIncome.trend.periods).toBe(0);
+
+    const md = renderFinanceReportMarkdown(section);
+    expect(md.trend_analysis).toContain('Przychody');
+    expect(md.trend_analysis).toContain('rosnący');
+    expect(md.trend_analysis).toContain('Prognoza');
+    // EBITDA has periods>=2 so it is listed, but with the honest "too short" forecast line.
+    expect(md.trend_analysis).toContain('EBITDA');
+    expect(md.trend_analysis).toContain('za krótka seria');
+    // NET_INCOME has periods<2 → excluded from the rendered per-line list.
+    expect(md.trend_analysis).not.toContain('**Wynik netto**');
   });
 });

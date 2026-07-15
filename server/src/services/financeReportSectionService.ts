@@ -888,7 +888,9 @@ async function loadOrgBenchmarkRows(organizationId: string): Promise<OrgBenchmar
  * degrade to `[]` per line, never throw). Independent of the report's scope.packId —
  * a trend needs history, not the single pack being reported on.
  */
-async function loadTrendSeriesForOrg(organizationId: string): Promise<Record<string, SeriesPoint[]>> {
+async function loadTrendSeriesForOrg(
+  organizationId: string
+): Promise<Record<string, SeriesPoint[]>> {
   const entries = await Promise.all(
     TRACKED_TREND_LINES.map(async ({ code }) => {
       const series = await loadLineSeries({ organizationId, lineCode: code });
@@ -1164,7 +1166,8 @@ export function renderFinanceReportMarkdown(section: FinanceReportSection): Reco
           .filter((l) => l.trend.periods >= 2)
           .map((l) => {
             const t = l.trend;
-            const cagr = t.cagrPct != null ? `${t.cagrPct}%/okres` : 'CAGR niedostępny (wartości ≤0)';
+            const cagr =
+              t.cagrPct != null ? `${t.cagrPct}%/okres` : 'CAGR niedostępny (wartości ≤0)';
             const forecastLine =
               l.forecast.confidence === 'computed'
                 ? `Prognoza (${l.forecast.method}): ${l.forecast.projected.map((p) => p.value).join(', ')} — ${l.forecast.assumption?.pl ?? ''}`
