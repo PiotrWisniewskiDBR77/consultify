@@ -104,7 +104,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
   onChange,
   onSave,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [expandedSection, setExpandedSection] = useState<string | null>('type');
 
@@ -173,7 +173,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           <div className="flex items-center gap-2">
             <Settings2 size={14} className="text-c-text-muted" />
             <span className="text-xs font-bold text-c-text">
-              {isPl ? 'Konfiguracja widoku' : 'View Configuration'}
+              {t('myWorkTable.viewConfigPanel.viewConfiguration')}
             </span>
           </div>
           <button
@@ -187,7 +187,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
         <div className="p-4 space-y-4">
           {/* View type selector */}
           <Section
-            title={isPl ? 'Typ widoku' : 'View type'}
+            title={t('myWorkTable.viewConfigPanel.viewType')}
             id="type"
             expanded={expandedSection}
             onToggle={setExpandedSection}
@@ -217,14 +217,14 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Group by (grid view) */}
           {config.viewType === 'grid' && (
             <Section
-              title={isPl ? 'Grupowanie' : 'Group by'}
+              title={t('myWorkTable.viewConfigPanel.groupBy')}
               id="groupBy"
               expanded={expandedSection}
               onToggle={setExpandedSection}
             >
               <div className="space-y-3">
                 <FieldSelect
-                  label={isPl ? 'Grupuj po polu' : 'Group by field'}
+                  label={t('myWorkTable.viewConfigPanel.groupByField')}
                   value={config.groupByFieldId}
                   options={columns}
                   onChange={(id) => updateConfig({ groupByFieldId: id || undefined })}
@@ -238,21 +238,21 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Kanban config */}
           {config.viewType === 'kanban' && (
             <Section
-              title={isPl ? 'Ustawienia Kanban' : 'Kanban settings'}
+              title={t('myWorkTable.viewConfigPanel.kanbanSettings')}
               id="kanban"
               expanded={expandedSection}
               onToggle={setExpandedSection}
             >
               <div className="space-y-3">
                 <FieldSelect
-                  label={isPl ? 'Grupuj po' : 'Group by'}
+                  label={t('myWorkTable.viewConfigPanel.groupBy2')}
                   value={config.groupByFieldId}
                   options={selectFields}
                   onChange={(id) => updateConfig({ groupByFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldMultiSelect
-                  label={isPl ? 'Pola na karcie' : 'Card fields'}
+                  label={t('myWorkTable.viewConfigPanel.cardFields')}
                   selected={config.cardFieldIds || []}
                   options={columns.filter((c) => c.key !== 'label' && c.key !== 'type')}
                   onChange={(ids) => updateConfig({ cardFieldIds: ids })}
@@ -265,21 +265,21 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Calendar config */}
           {config.viewType === 'calendar' && (
             <Section
-              title={isPl ? 'Ustawienia kalendarza' : 'Calendar settings'}
+              title={t('myWorkTable.viewConfigPanel.calendarSettings')}
               id="calendar"
               expanded={expandedSection}
               onToggle={setExpandedSection}
             >
               <div className="space-y-3">
                 <FieldSelect
-                  label={isPl ? 'Pole daty' : 'Date field'}
+                  label={t('myWorkTable.viewConfigPanel.dateField')}
                   value={config.dateFieldId}
                   options={dateFields}
                   onChange={(id) => updateConfig({ dateFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Kolor wg' : 'Color by'}
+                  label={t('myWorkTable.viewConfigPanel.colorBy')}
                   value={config.colorByFieldId}
                   options={selectFields}
                   onChange={(id) => updateConfig({ colorByFieldId: id })}
@@ -293,14 +293,14 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Gallery config */}
           {config.viewType === 'gallery' && (
             <Section
-              title={isPl ? 'Ustawienia galerii' : 'Gallery settings'}
+              title={t('myWorkTable.viewConfigPanel.gallerySettings')}
               id="gallery"
               expanded={expandedSection}
               onToggle={setExpandedSection}
             >
               <div className="space-y-3">
                 <FieldSelect
-                  label={isPl ? 'Pole okładki' : 'Cover image field'}
+                  label={t('myWorkTable.viewConfigPanel.coverImageField')}
                   value={config.coverImageFieldId}
                   options={attachmentFields}
                   onChange={(id) => updateConfig({ coverImageFieldId: id })}
@@ -309,7 +309,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                 />
                 <div>
                   <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
-                    {isPl ? 'Rozmiar karty' : 'Card size'}
+                    {t('myWorkTable.viewConfigPanel.cardSize')}
                   </label>
                   <div className="flex gap-1">
                     {CARD_SIZES.map((s) => (
@@ -328,7 +328,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   </div>
                 </div>
                 <FieldMultiSelect
-                  label={isPl ? 'Pola na karcie' : 'Card fields'}
+                  label={t('myWorkTable.viewConfigPanel.cardFields')}
                   selected={config.cardFieldIds || []}
                   options={columns.filter((c) => c.key !== 'label' && c.key !== 'type')}
                   onChange={(ids) => updateConfig({ cardFieldIds: ids })}
@@ -341,35 +341,35 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Timeline config */}
           {config.viewType === 'timeline' && (
             <Section
-              title={isPl ? 'Ustawienia osi czasu' : 'Timeline settings'}
+              title={t('myWorkTable.viewConfigPanel.timelineSettings')}
               id="timeline"
               expanded={expandedSection}
               onToggle={setExpandedSection}
             >
               <div className="space-y-3">
                 <FieldSelect
-                  label={isPl ? 'Pole daty początkowej' : 'Start date field'}
+                  label={t('myWorkTable.viewConfigPanel.startDateField')}
                   value={config.startDateFieldId}
                   options={dateFields}
                   onChange={(id) => updateConfig({ startDateFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Pole daty końcowej' : 'End date field'}
+                  label={t('myWorkTable.viewConfigPanel.endDateField')}
                   value={config.endDateFieldId}
                   options={dateFields}
                   onChange={(id) => updateConfig({ endDateFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Pole tytułu' : 'Title field'}
+                  label={t('myWorkTable.viewConfigPanel.titleField')}
                   value={config.titleFieldId}
                   options={textLikeFields}
                   onChange={(id) => updateConfig({ titleFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Kolor wg' : 'Color by'}
+                  label={t('myWorkTable.viewConfigPanel.colorBy')}
                   value={config.colorByFieldId}
                   options={selectFields}
                   onChange={(id) => updateConfig({ colorByFieldId: id })}
@@ -378,7 +378,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                 />
                 <div>
                   <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
-                    {isPl ? 'Zoom' : 'Zoom'}
+                    {t('myWorkTable.viewConfigPanel.zoom')}
                   </label>
                   <div className="flex gap-1">
                     {(['day', 'week', 'month'] as const).map((z) => (
@@ -392,16 +392,10 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         }`}
                       >
                         {z === 'day'
-                          ? isPl
-                            ? 'Dzień'
-                            : 'Day'
+                          ? t('myWorkTable.viewConfigPanel.day')
                           : z === 'week'
-                            ? isPl
-                              ? 'Tydzień'
-                              : 'Week'
-                            : isPl
-                              ? 'Miesiąc'
-                              : 'Month'}
+                            ? t('myWorkTable.viewConfigPanel.week')
+                            : t('myWorkTable.viewConfigPanel.month')}
                       </button>
                     ))}
                   </div>
@@ -413,35 +407,35 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Gantt config */}
           {config.viewType === 'gantt' && (
             <Section
-              title={isPl ? 'Ustawienia Gantta' : 'Gantt settings'}
+              title={t('myWorkTable.viewConfigPanel.ganttSettings')}
               id="gantt"
               expanded={expandedSection}
               onToggle={setExpandedSection}
             >
               <div className="space-y-3">
                 <FieldSelect
-                  label={isPl ? 'Pole daty początkowej' : 'Start date field'}
+                  label={t('myWorkTable.viewConfigPanel.startDateField')}
                   value={config.startDateFieldId}
                   options={dateFields}
                   onChange={(id) => updateConfig({ startDateFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Pole daty końcowej' : 'End date field'}
+                  label={t('myWorkTable.viewConfigPanel.endDateField')}
                   value={config.endDateFieldId}
                   options={dateFields}
                   onChange={(id) => updateConfig({ endDateFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Pole tytułu' : 'Title field'}
+                  label={t('myWorkTable.viewConfigPanel.titleField')}
                   value={config.titleFieldId}
                   options={textLikeFields}
                   onChange={(id) => updateConfig({ titleFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Pole zależności' : 'Dependency field'}
+                  label={t('myWorkTable.viewConfigPanel.dependencyField')}
                   value={config.dependencyFieldId}
                   options={relationFields}
                   onChange={(id) => updateConfig({ dependencyFieldId: id })}
@@ -449,7 +443,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   allowEmpty
                 />
                 <FieldSelect
-                  label={isPl ? 'Pole postępu' : 'Progress field'}
+                  label={t('myWorkTable.viewConfigPanel.progressField')}
                   value={config.progressFieldId}
                   options={numberFields}
                   onChange={(id) => updateConfig({ progressFieldId: id })}
@@ -458,7 +452,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                 />
                 <div>
                   <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
-                    {isPl ? 'Zoom' : 'Zoom'}
+                    {t('myWorkTable.viewConfigPanel.zoom')}
                   </label>
                   <div className="flex gap-1">
                     {(['day', 'week', 'month'] as const).map((z) => (
@@ -472,16 +466,10 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         }`}
                       >
                         {z === 'day'
-                          ? isPl
-                            ? 'Dzień'
-                            : 'Day'
+                          ? t('myWorkTable.viewConfigPanel.day')
                           : z === 'week'
-                            ? isPl
-                              ? 'Tydzień'
-                              : 'Week'
-                            : isPl
-                              ? 'Miesiąc'
-                              : 'Month'}
+                            ? t('myWorkTable.viewConfigPanel.week')
+                            : t('myWorkTable.viewConfigPanel.month')}
                       </button>
                     ))}
                   </div>
@@ -493,7 +481,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Form config */}
           {config.viewType === 'form' && (
             <Section
-              title={isPl ? 'Ustawienia formularza' : 'Form settings'}
+              title={t('myWorkTable.viewConfigPanel.formSettings')}
               id="form"
               expanded={expandedSection}
               onToggle={setExpandedSection}
@@ -501,7 +489,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
               <div className="space-y-3">
                 <div>
                   <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
-                    {isPl ? 'Układ' : 'Layout'}
+                    {t('myWorkTable.viewConfigPanel.layout')}
                   </label>
                   <div className="flex gap-1">
                     {(['single-column', 'two-column'] as const).map((l) => (
@@ -515,18 +503,14 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         }`}
                       >
                         {l === 'single-column'
-                          ? isPl
-                            ? '1 kolumna'
-                            : '1 Column'
-                          : isPl
-                            ? '2 kolumny'
-                            : '2 Columns'}
+                          ? t('myWorkTable.viewConfigPanel.n1Column')
+                          : t('myWorkTable.viewConfigPanel.n2Columns')}
                       </button>
                     ))}
                   </div>
                 </div>
                 <FieldMultiSelect
-                  label={isPl ? 'Widoczne pola' : 'Visible fields'}
+                  label={t('myWorkTable.viewConfigPanel.visibleFields')}
                   selected={config.visibleFieldIds}
                   options={columns}
                   onChange={(ids) => updateConfig({ visibleFieldIds: ids })}
@@ -539,7 +523,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
           {/* Chart config */}
           {config.viewType === 'chart' && (
             <Section
-              title={isPl ? 'Ustawienia wykresu' : 'Chart settings'}
+              title={t('myWorkTable.viewConfigPanel.chartSettings')}
               id="chart"
               expanded={expandedSection}
               onToggle={setExpandedSection}
@@ -547,7 +531,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
               <div className="space-y-3">
                 <div>
                   <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
-                    {isPl ? 'Typ wykresu' : 'Chart type'}
+                    {t('myWorkTable.viewConfigPanel.chartType')}
                   </label>
                   <div className="grid grid-cols-2 gap-1">
                     {(['bar', 'line', 'pie', 'donut'] as const).map((ct) => (
@@ -566,14 +550,14 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   </div>
                 </div>
                 <FieldSelect
-                  label={isPl ? 'Pole osi X' : 'X-Axis field'}
+                  label={t('myWorkTable.viewConfigPanel.xAxisField')}
                   value={config.chartXFieldId}
                   options={columns}
                   onChange={(id) => updateConfig({ chartXFieldId: id })}
                   isPl={isPl}
                 />
                 <FieldSelect
-                  label={isPl ? 'Pole osi Y (liczbowe)' : 'Y-Axis field (numeric)'}
+                  label={t('myWorkTable.viewConfigPanel.yAxisFieldNumeric')}
                   value={config.chartYFieldId}
                   options={numberFields}
                   onChange={(id) => updateConfig({ chartYFieldId: id })}
@@ -582,7 +566,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                 />
                 <div>
                   <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
-                    {isPl ? 'Agregacja' : 'Aggregation'}
+                    {t('myWorkTable.viewConfigPanel.aggregation')}
                   </label>
                   <select
                     value={config.chartAggregation || 'count'}
@@ -606,7 +590,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
 
           {/* Row coloring */}
           <Section
-            title={isPl ? 'Kolorowanie wierszy' : 'Row coloring'}
+            title={t('myWorkTable.viewConfigPanel.rowColoring')}
             id="rowColoring"
             expanded={expandedSection}
             onToggle={setExpandedSection}
@@ -620,7 +604,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
 
           {/* Conditional formatting */}
           <Section
-            title={isPl ? 'Formatowanie warunkowe' : 'Conditional formatting'}
+            title={t('myWorkTable.viewConfigPanel.conditionalFormatting')}
             id="conditionalFormatting"
             expanded={expandedSection}
             onToggle={setExpandedSection}
@@ -634,7 +618,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
 
           {/* Visible fields */}
           <Section
-            title={isPl ? 'Widoczne pola' : 'Visible fields'}
+            title={t('myWorkTable.viewConfigPanel.visibleFields')}
             id="fields"
             expanded={expandedSection}
             onToggle={setExpandedSection}
@@ -671,7 +655,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
               onClick={onClose}
               className="flex-1 px-3 py-2 rounded-xl text-xs font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
             >
-              {isPl ? 'Anuluj' : 'Cancel'}
+              {t('myWorkTable.viewConfigPanel.cancel')}
             </button>
             <button
               onClick={() => {
@@ -680,7 +664,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
               }}
               className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
             >
-              {isPl ? 'Zapisz' : 'Save'}
+              {t('myWorkTable.viewConfigPanel.save')}
             </button>
           </div>
         </div>
@@ -723,7 +707,9 @@ const FieldSelect: React.FC<{
   onChange: (id: string) => void;
   isPl: boolean;
   allowEmpty?: boolean;
-}> = ({ label, value, options, onChange, isPl, allowEmpty }) => (
+}> = ({ label, value, options, onChange, isPl, allowEmpty }) => {
+  const { t } = useTranslation();
+  return (
   <div>
     <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
       {label}
@@ -733,7 +719,7 @@ const FieldSelect: React.FC<{
       onChange={(e) => onChange(e.target.value)}
       className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus"
     >
-      {allowEmpty && <option value="">{isPl ? '— Brak —' : '— None —'}</option>}
+      {allowEmpty && <option value="">{t('myWorkTable.viewConfigPanel.none')}</option>}
       {options.map((col) => (
         <option key={col.key} value={col.key}>
           {col.header}
@@ -741,7 +727,8 @@ const FieldSelect: React.FC<{
       ))}
     </select>
   </div>
-);
+  );
+};
 
 const FieldMultiSelect: React.FC<{
   label: string;

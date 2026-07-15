@@ -198,7 +198,7 @@ interface DataLineageViewProps {
 }
 
 export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables, onClose }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [models, setModels] = useState<any[]>([]);
@@ -239,7 +239,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
     const sourceIds = new Set<string>();
     ns.push({
       id: 'src-import',
-      label: isPl ? 'Import CSV/Sheets' : 'CSV/Sheets Import',
+      label: t('myWorkTable.dataLineageView.csvSheetsImport'),
       type: 'source',
       meta: 'connector',
       column: 0,
@@ -247,7 +247,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
     });
     ns.push({
       id: 'src-form',
-      label: isPl ? 'Formularze' : 'Forms',
+      label: t('myWorkTable.dataLineageView.forms'),
       type: 'source',
       meta: 'form input',
       column: 0,
@@ -255,7 +255,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
     });
     ns.push({
       id: 'src-manual',
-      label: isPl ? 'Wpis ręczny' : 'Manual Entry',
+      label: t('myWorkTable.dataLineageView.manualEntry'),
       type: 'source',
       meta: 'manual',
       column: 0,
@@ -303,10 +303,10 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
 
     // Column 3: Output modules
     const outputModules = [
-      { id: 'out-results', label: isPl ? 'Wyniki' : 'Results', meta: 'module' },
-      { id: 'out-finance', label: isPl ? 'Finanse' : 'Finance', meta: 'module' },
-      { id: 'out-execution', label: isPl ? 'Egzekucja' : 'Execution', meta: 'module' },
-      { id: 'out-initiatives', label: isPl ? 'Inicjatywy' : 'Initiatives', meta: 'module' },
+      { id: 'out-results', label: t('myWorkTable.dataLineageView.results'), meta: 'module' },
+      { id: 'out-finance', label: t('myWorkTable.dataLineageView.finance'), meta: 'module' },
+      { id: 'out-execution', label: t('myWorkTable.dataLineageView.execution'), meta: 'module' },
+      { id: 'out-initiatives', label: t('myWorkTable.dataLineageView.initiatives'), meta: 'module' },
     ];
     outputModules.forEach((o, i) => {
       ns.push({ id: o.id, label: o.label, type: 'output', meta: o.meta, column: 3, row: i });
@@ -339,12 +339,10 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-c-text">
-            {isPl ? 'Przepływ danych' : 'Data Lineage'}
+            {t('myWorkTable.dataLineageView.dataLineage')}
           </h2>
           <p className="text-xs text-c-text-muted mt-0.5">
-            {isPl
-              ? 'Wizualizacja przepływu danych od źródeł do modułów Consultify'
-              : 'Visualize data flow from sources to Consultify modules'}
+            {t('myWorkTable.dataLineageView.visualizeDataFlowFromSources')}
           </p>
         </div>
         {onClose && (
@@ -357,10 +355,10 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
       {/* Column headers */}
       <div className="flex items-center gap-0" style={{ paddingLeft: PADDING_X }}>
         {[
-          isPl ? 'Źródła' : 'Sources',
-          isPl ? 'Tabele' : 'Tables',
-          isPl ? 'Modele' : 'Models',
-          isPl ? 'Moduły' : 'Modules',
+          t('myWorkTable.dataLineageView.sources'),
+          t('myWorkTable.dataLineageView.tables'),
+          t('myWorkTable.dataLineageView.models'),
+          t('myWorkTable.dataLineageView.modules'),
         ].map((lbl, i) => (
           <div
             key={i}
@@ -418,14 +416,14 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
           </div>
           <div className="flex items-center gap-3 text-xs text-c-text-muted">
             <span className="capitalize">
-              {isPl ? 'Typ' : 'Type'}: {selectedNode.type}
+              {t('myWorkTable.dataLineageView.type')}: {selectedNode.type}
             </span>
             {selectedNode.meta && <span>{selectedNode.meta}</span>}
           </div>
           <div className="mt-2 text-xs text-c-text-muted">
-            <span className="font-medium">{isPl ? 'Połączenia' : 'Connections'}:</span>{' '}
+            <span className="font-medium">{t('myWorkTable.dataLineageView.connections')}:</span>{' '}
             {edges.filter((e) => e.from === selectedNode.id || e.to === selectedNode.id).length}{' '}
-            {isPl ? 'krawędzi' : 'edges'}
+            {t('myWorkTable.dataLineageView.edges')}
           </div>
         </div>
       )}

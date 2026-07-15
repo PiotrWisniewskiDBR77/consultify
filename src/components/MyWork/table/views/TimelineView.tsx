@@ -145,7 +145,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   onRecordUpdate,
   onRecordClick,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<TimelineZoom>(config.zoom || 'week');
@@ -278,11 +278,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
         <Calendar size={32} />
-        <span className="text-sm font-medium">{isPl ? 'Widok osi czasu' : 'Timeline View'}</span>
+        <span className="text-sm font-medium">{t('myWorkTable.timelineView.timelineView')}</span>
         <span className="text-xs text-c-text-secondary">
-          {isPl
-            ? 'Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku'
-            : 'Configure start and end date fields in view settings'}
+          {t('myWorkTable.timelineView.configureStartAndEndDate')}
         </span>
       </div>
     );
@@ -298,36 +296,30 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-c-border-subtle">
         <span className="text-xs font-bold text-c-text-muted">
-          {isPl ? 'Oś czasu' : 'Timeline'}
+          {t('myWorkTable.timelineView.timeline')}
           <span className="ml-2 text-[10px] font-normal text-c-text-secondary">
-            {timelineRecords.length} {isPl ? 'rekordów' : 'records'}
+            {timelineRecords.length} {t('myWorkTable.timelineView.records')}
           </span>
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => cycleZoom('in')}
             className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
-            title={isPl ? 'Przybliż' : 'Zoom in'}
+            title={t('myWorkTable.timelineView.zoomIn')}
           >
             <ZoomIn size={14} className="text-c-text-muted" />
           </button>
           <span className="text-[10px] font-medium text-c-text-muted min-w-[50px] text-center capitalize">
             {zoom === 'day'
-              ? isPl
-                ? 'Dzień'
-                : 'Day'
+              ? t('myWorkTable.timelineView.day')
               : zoom === 'week'
-                ? isPl
-                  ? 'Tydzień'
-                  : 'Week'
-                : isPl
-                  ? 'Miesiąc'
-                  : 'Month'}
+                ? t('myWorkTable.timelineView.week')
+                : t('myWorkTable.timelineView.month')}
           </span>
           <button
             onClick={() => cycleZoom('out')}
             className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
-            title={isPl ? 'Oddal' : 'Zoom out'}
+            title={t('myWorkTable.timelineView.zoomOut')}
           >
             <ZoomOut size={14} className="text-c-text-muted" />
           </button>
@@ -346,7 +338,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             style={{ height: HEADER_HEIGHT }}
           >
             <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
-              {isPl ? 'Rekord' : 'Record'}
+              {t('myWorkTable.timelineView.record')}
             </span>
           </div>
           {timelineRecords.map((tr) => (

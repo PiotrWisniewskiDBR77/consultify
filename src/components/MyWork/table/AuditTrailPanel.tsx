@@ -16,6 +16,7 @@ import {
   User,
   X,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -60,15 +61,15 @@ interface AuditTrailPanelProps {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function relativeTime(ts: string, isPl: boolean): string {
+function relativeTime(ts: string, t: TFunction): string {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return isPl ? 'teraz' : 'just now';
-  if (mins < 60) return isPl ? `${mins} min temu` : `${mins} min ago`;
+  if (mins < 1) return t('myWorkTable.auditTrailPanel.justNow');
+  if (mins < 60) return t('myWorkTable.auditTrailPanel.minutesAgo', { value: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return isPl ? `${hours} godz. temu` : `${hours}h ago`;
+  if (hours < 24) return t('myWorkTable.auditTrailPanel.hoursAgo', { value: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return isPl ? `${days} dn. temu` : `${days}d ago`;
+  if (days < 7) return t('myWorkTable.auditTrailPanel.daysAgo', { value: days });
   return new Date(ts).toLocaleDateString();
 }
 
@@ -117,11 +118,10 @@ const FieldDiff = React.memo(function FieldDiff({ change }: { change: FieldChang
 
 const RevisionItem = React.memo(function RevisionItem({
   revision,
-  isPl,
 }: {
   revision: RecordRevision;
-  isPl: boolean;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const hasChanges = revision.changes.length > 0;
 
@@ -137,7 +137,7 @@ const RevisionItem = React.memo(function RevisionItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-semibold text-c-text truncate">
-              {revision.userName || (isPl ? 'Nieznany' : 'Unknown')}
+              {revision.userName || t('myWorkTable.auditTrailPanel.unknown')}
             </span>
             <span
               className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${ACTION_STYLES[revision.action] ?? 'bg-c-surface-raised text-c-text-muted'}`}
@@ -147,10 +147,10 @@ const RevisionItem = React.memo(function RevisionItem({
           </div>
           <div className="flex items-center gap-1 mt-0.5 text-[10px] text-c-text-secondary">
             <Clock size={10} />
-            {relativeTime(revision.timestamp, isPl)}
+            {relativeTime(revision.timestamp, t)}
             {hasChanges && (
               <span className="ml-1 text-c-text-secondary">
-                ({revision.changes.length} {isPl ? 'zmian' : 'changes'})
+                ({revision.changes.length} {t('myWorkTable.auditTrailPanel.changes')})
               </span>
             )}
             {hasChanges && (
@@ -177,8 +177,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
   tableId,
   isPlatformTable = false,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [revisions, setRevisions] = useState<RecordRevision[]>([]);
   const [loading, setLoading] = useState(false);
@@ -249,7 +248,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
           <Clock size={14} className="text-c-text-muted" />
           <span className="text-xs font-bold text-c-text flex-1">
-            {isPl ? 'Historia zmian' : 'Revision History'}
+            {t('myWorkTable.auditTrailPanel.revisionHistory')}
           </span>
           <button
             onClick={onClose}
@@ -263,11 +262,9 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             variant="forbidden"
             icon={Lock}
             compact
-            title={isPl ? 'Niedostępne dla tej tabeli' : 'Not available for this table'}
+            title={t('myWorkTable.auditTrailPanel.notAvailableForThisTable')}
             description={
-              isPl
-                ? 'Historia zmian jest dostępna tylko dla tabel platformowych.'
-                : 'Revision history is only available for platform tables.'
+              t('myWorkTable.auditTrailPanel.revisionHistoryIsOnlyAvailable')
             }
           />
         </div>
@@ -281,7 +278,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
         <Clock size={14} className="text-c-text-muted" />
         <span className="text-xs font-bold text-c-text flex-1">
-          {isPl ? 'Historia zmian' : 'Revision History'}
+          {t('myWorkTable.auditTrailPanel.revisionHistory')}
         </span>
         <button
           onClick={() => setShowFilters((p) => !p)}
@@ -303,7 +300,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
           <input
             value={filterUser}
             onChange={(e) => setFilterUser(e.target.value)}
-            placeholder={isPl ? 'Filtruj po użytkowniku…' : 'Filter by user…'}
+            placeholder={t('myWorkTable.auditTrailPanel.filterByUser')}
             className="w-full h-7 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-blue-500/30 text-c-text"
           />
           <div className="flex gap-1">
@@ -331,11 +328,9 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             variant="new"
             icon={Clock}
             compact
-            title={isPl ? 'Wybierz rekord' : 'Select a record'}
+            title={t('myWorkTable.auditTrailPanel.selectARecord')}
             description={
-              isPl
-                ? 'Wybierz rekord, aby zobaczyć historię zmian.'
-                : 'Select a record to view its change history.'
+              t('myWorkTable.auditTrailPanel.selectARecordToView')
             }
           />
         ) : loading && revisions.length === 0 ? (
@@ -345,17 +340,15 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             variant="new"
             icon={Clock}
             compact
-            title={isPl ? 'Brak historii zmian' : 'No revision history'}
+            title={t('myWorkTable.auditTrailPanel.noRevisionHistory')}
             description={
-              isPl
-                ? 'Zmiany tego rekordu pojawią się tutaj po pierwszej edycji.'
-                : 'Changes to this record will appear here after the first edit.'
+              t('myWorkTable.auditTrailPanel.changesToThisRecordWill')
             }
           />
         ) : (
           <>
             {filtered.map((rev) => (
-              <RevisionItem key={rev.id} revision={rev} isPl={!!isPl} />
+              <RevisionItem key={rev.id} revision={rev} />
             ))}
             {hasMore && (
               <div className="px-3 py-3">
@@ -369,7 +362,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
                   ) : (
                     <ChevronDown size={12} />
                   )}
-                  {isPl ? 'Załaduj więcej' : 'Load more'}
+                  {t('myWorkTable.auditTrailPanel.loadMore')}
                 </button>
               </div>
             )}

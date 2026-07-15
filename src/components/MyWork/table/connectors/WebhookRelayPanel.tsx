@@ -43,7 +43,7 @@ interface WebhookRelayPanelProps {
 }
 
 export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceId, onClose }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [baseId, setBaseId] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
       const data = await TablePlatformApi.listWebhookRelays(resolvedBaseId);
       setRelays(data?.relays ?? []);
     } catch {
-      toast.error(isPl ? 'Nie udało się pobrać webhooków' : 'Failed to load webhooks');
+      toast.error(t('myWorkTable.webhookRelayPanel.failedToLoadWebhooks'));
     } finally {
       setLoading(false);
     }
@@ -82,9 +82,9 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
     try {
       await TablePlatformApi.deleteWebhookRelay(relayId);
       setRelays((prev) => prev.filter((r) => r.id !== relayId));
-      toast.success(isPl ? 'Webhook usunięty' : 'Webhook deleted');
+      toast.success(t('myWorkTable.webhookRelayPanel.webhookDeleted'));
     } catch {
-      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+      toast.error(t('myWorkTable.webhookRelayPanel.failedToDelete'));
     }
   };
 
@@ -95,7 +95,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
       });
       setRelays((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
     } catch {
-      toast.error(isPl ? 'Nie udało się zmienić statusu' : 'Failed to toggle status');
+      toast.error(t('myWorkTable.webhookRelayPanel.failedToToggleStatus'));
     }
   };
 
@@ -105,17 +105,17 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
       const result = await TablePlatformApi.testWebhookRelay(relayId);
       if (result.success) {
         toast.success(
-          isPl ? `Test OK (${result.statusCode})` : `Test passed (${result.statusCode})`
+          t('myWorkTable.webhookRelayPanel.testPassed', { value: result.statusCode })
         );
       } else {
         toast.error(
-          isPl
-            ? `Test nieudany: ${result.error ?? result.statusCode}`
-            : `Test failed: ${result.error ?? result.statusCode}`
+          t('myWorkTable.webhookRelayPanel.testFailedWithReason', {
+            value: result.error ?? result.statusCode,
+          })
         );
       }
     } catch {
-      toast.error(isPl ? 'Test nieudany' : 'Test failed');
+      toast.error(t('myWorkTable.webhookRelayPanel.testFailed'));
     } finally {
       setTestingId(null);
     }
@@ -176,7 +176,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
           </button>
           <Webhook size={18} className="text-c-tag-2" />
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Webhook Relay' : 'Webhook Relays'}
+            {t('myWorkTable.webhookRelayPanel.webhookRelays')}
             {relays.length > 0 && (
               <span className="text-c-text-secondary font-normal ml-1">({relays.length})</span>
             )}
@@ -187,7 +187,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
           className="inline-flex items-center gap-1 rounded-lg bg-c-tag-2 px-2.5 py-1.5 text-xs font-medium text-c-tag-2 hover:bg-c-tag-2 transition-colors"
         >
           <Plus size={12} />
-          {isPl ? 'Dodaj' : 'Add'}
+          {t('myWorkTable.webhookRelayPanel.add')}
         </button>
       </div>
 
@@ -205,19 +205,17 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
             <Webhook size={28} className="text-c-text-muted" />
           </div>
           <p className="text-sm font-medium text-c-text-muted mb-1">
-            {isPl ? 'Brak skonfigurowanych webhooków' : 'No webhook relays configured'}
+            {t('myWorkTable.webhookRelayPanel.noWebhookRelaysConfigured')}
           </p>
           <p className="text-xs text-c-text-muted mb-4 max-w-xs">
-            {isPl
-              ? 'Przekazuj zdarzenia z tabeli do Zapier, Make lub dowolnego URL.'
-              : 'Forward table events to Zapier, Make, or any webhook URL.'}
+            {t('myWorkTable.webhookRelayPanel.forwardTableEventsToZapier')}
           </p>
           <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-c-tag-2 px-4 py-2 text-sm font-medium text-c-text hover:bg-c-tag-2 transition-colors"
           >
             <Plus size={14} />
-            {isPl ? 'Dodaj webhook' : 'Add webhook'}
+            {t('myWorkTable.webhookRelayPanel.addWebhook')}
           </button>
         </div>
       )}
@@ -241,7 +239,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                   <span className="text-sm font-medium text-c-text truncate">{relay.name}</span>
                   {!relay.is_active && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-secondary">
-                      {isPl ? 'Wył.' : 'Off'}
+                      {t('myWorkTable.webhookRelayPanel.off')}
                     </span>
                   )}
                 </div>
@@ -252,7 +250,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                 </div>
                 <div className="flex items-center gap-3 mt-0.5 text-[10px] text-c-text-muted">
                   <span>
-                    {isPl ? 'Ostatnio:' : 'Last:'} {formatTime(relay.last_triggered_at)}
+                    {t('myWorkTable.webhookRelayPanel.last')} {formatTime(relay.last_triggered_at)}
                   </span>
                   <span>×{relay.trigger_count ?? 0}</span>
                 </div>
@@ -279,7 +277,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                             <Play size={13} />
                           )
                         }
-                        label={isPl ? 'Testuj' : 'Test'}
+                        label={t('myWorkTable.webhookRelayPanel.test')}
                         onClick={() => {
                           setMenuOpen(null);
                           handleTest(relay.id);
@@ -289,12 +287,8 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                         icon={relay.is_active ? <PowerOff size={13} /> : <Power size={13} />}
                         label={
                           relay.is_active
-                            ? isPl
-                              ? 'Wyłącz'
-                              : 'Disable'
-                            : isPl
-                              ? 'Włącz'
-                              : 'Enable'
+                            ? t('myWorkTable.webhookRelayPanel.disable')
+                            : t('myWorkTable.webhookRelayPanel.enable')
                         }
                         onClick={() => {
                           setMenuOpen(null);
@@ -303,7 +297,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                       />
                       <MenuBtn
                         icon={<Pencil size={13} />}
-                        label={isPl ? 'Edytuj' : 'Edit'}
+                        label={t('myWorkTable.webhookRelayPanel.edit')}
                         onClick={() => {
                           setMenuOpen(null);
                           setEditingRelay(relay);
@@ -312,7 +306,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                       <div className="my-1 border-t border-c-border-subtle" />
                       <MenuBtn
                         icon={<Trash2 size={13} />}
-                        label={isPl ? 'Usuń' : 'Delete'}
+                        label={t('myWorkTable.webhookRelayPanel.delete')}
                         danger
                         onClick={() => {
                           setMenuOpen(null);
@@ -344,6 +338,7 @@ interface RelayFormProps {
 }
 
 const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSaved }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(relay?.name ?? '');
   const [targetUrl, setTargetUrl] = useState(relay?.target_url ?? '');
   const [secret, setSecret] = useState(relay?.secret ?? '');
@@ -359,11 +354,11 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !targetUrl.trim()) {
-      toast.error(isPl ? 'Nazwa i URL są wymagane' : 'Name and URL are required');
+      toast.error(t('myWorkTable.webhookRelayPanel.nameAndUrlAreRequired'));
       return;
     }
     if (eventTypes.length === 0) {
-      toast.error(isPl ? 'Wybierz przynajmniej jedno zdarzenie' : 'Select at least one event');
+      toast.error(t('myWorkTable.webhookRelayPanel.selectAtLeastOneEvent'));
       return;
     }
 
@@ -387,16 +382,12 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
       }
       toast.success(
         relay
-          ? isPl
-            ? 'Webhook zaktualizowany'
-            : 'Webhook updated'
-          : isPl
-            ? 'Webhook utworzony'
-            : 'Webhook created'
+          ? t('myWorkTable.webhookRelayPanel.webhookUpdated')
+          : t('myWorkTable.webhookRelayPanel.webhookCreated')
       );
       onSaved(result);
     } catch {
-      toast.error(isPl ? 'Nie udało się zapisać' : 'Failed to save');
+      toast.error(t('myWorkTable.webhookRelayPanel.failedToSave'));
     } finally {
       setSaving(false);
     }
@@ -413,12 +404,8 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
         </button>
         <h3 className="text-sm font-semibold text-c-text">
           {relay
-            ? isPl
-              ? 'Edytuj webhook'
-              : 'Edit webhook'
-            : isPl
-              ? 'Nowy webhook'
-              : 'New webhook'}
+            ? t('myWorkTable.webhookRelayPanel.editWebhook')
+            : t('myWorkTable.webhookRelayPanel.newWebhook')}
         </h3>
       </div>
 
@@ -426,12 +413,12 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
         {/* Name */}
         <div>
           <label className="block text-xs font-medium text-c-text-muted mb-1">
-            {isPl ? 'Nazwa' : 'Name'}
+            {t('myWorkTable.webhookRelayPanel.name')}
           </label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={isPl ? 'np. Zapier — nowe rekordy' : 'e.g. Zapier — new records'}
+            placeholder={t('myWorkTable.webhookRelayPanel.eGZapierNewRecords')}
             className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
         </div>
@@ -439,7 +426,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
         {/* URL */}
         <div>
           <label className="block text-xs font-medium text-c-text-muted mb-1">
-            {isPl ? 'URL docelowy' : 'Target URL'}
+            {t('myWorkTable.webhookRelayPanel.targetUrl')}
           </label>
           <input
             value={targetUrl}
@@ -453,27 +440,25 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
         {/* Secret */}
         <div>
           <label className="block text-xs font-medium text-c-text-muted mb-1">
-            {isPl ? 'Sekret HMAC (opcjonalny)' : 'HMAC Secret (optional)'}
+            {t('myWorkTable.webhookRelayPanel.hmacSecretOptional')}
           </label>
           <input
             value={secret}
             onChange={(e) => setSecret(e.target.value)}
-            placeholder={isPl ? 'Klucz do podpisu HMAC-SHA256' : 'Key for HMAC-SHA256 signing'}
+            placeholder={t('myWorkTable.webhookRelayPanel.keyForHmacSha256Signing')}
             type="password"
             autoComplete="off"
             className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
           <p className="mt-1 text-[10px] text-c-text-secondary">
-            {isPl
-              ? 'Nagłówek X-Consultify-Signature zostanie dodany do żądań.'
-              : 'X-Consultify-Signature header will be added to requests.'}
+            {t('myWorkTable.webhookRelayPanel.xConsultifySignatureHeaderWill')}
           </p>
         </div>
 
         {/* Event Types */}
         <div>
           <label className="block text-xs font-medium text-c-text-muted mb-2">
-            {isPl ? 'Zdarzenia' : 'Events'}
+            {t('myWorkTable.webhookRelayPanel.events')}
           </label>
           <div className="space-y-1.5">
             {EVENT_OPTIONS.map((opt) => (
@@ -508,12 +493,8 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {relay
-              ? isPl
-                ? 'Zapisz zmiany'
-                : 'Save changes'
-              : isPl
-                ? 'Utwórz webhook'
-                : 'Create webhook'}
+              ? t('myWorkTable.webhookRelayPanel.saveChanges')
+              : t('myWorkTable.webhookRelayPanel.createWebhook')}
           </button>
         </div>
       </form>

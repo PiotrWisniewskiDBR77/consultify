@@ -87,7 +87,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
       const list = await TablePlatformApi.listDistributions(baseId);
       setDistributions(Array.isArray(list) ? list : []);
     } catch {
-      toast.error(isPl ? 'Nie udało się załadować dystrybucji' : 'Failed to load distributions');
+      toast.error(t('myWorkTable.distributionBuilder.failedToLoadDistributions'));
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
 
   const handleCreate = async () => {
     if (!form.name.trim()) {
-      toast.error(isPl ? 'Nazwa jest wymagana' : 'Name is required');
+      toast.error(t('myWorkTable.distributionBuilder.nameIsRequired'));
       return;
     }
     try {
@@ -113,12 +113,12 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
         format: form.format,
         schedule: form.schedule || undefined,
       });
-      toast.success(isPl ? 'Dystrybucja utworzona' : 'Distribution created');
+      toast.success(t('myWorkTable.distributionBuilder.distributionCreated'));
       setShowForm(false);
       setForm({ ...INITIAL_FORM });
       await loadDistributions();
     } catch {
-      toast.error(isPl ? 'Nie udało się utworzyć' : 'Failed to create');
+      toast.error(t('myWorkTable.distributionBuilder.failedToCreate'));
     } finally {
       setCreating(false);
     }
@@ -127,10 +127,10 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
   const handleDelete = async (id: string) => {
     try {
       await TablePlatformApi.deleteDistribution(id);
-      toast.success(isPl ? 'Usunięto' : 'Deleted');
+      toast.success(t('myWorkTable.distributionBuilder.deleted'));
       setDistributions((prev) => prev.filter((d) => d.id !== id));
     } catch {
-      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+      toast.error(t('myWorkTable.distributionBuilder.failedToDelete'));
     }
   };
 
@@ -139,7 +139,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
       const updated = await TablePlatformApi.toggleDistribution(id);
       setDistributions((prev) => prev.map((d) => (d.id === id ? updated : d)));
     } catch {
-      toast.error(isPl ? 'Nie udało się przełączyć' : 'Failed to toggle');
+      toast.error(t('myWorkTable.distributionBuilder.failedToToggle'));
     }
   };
 
@@ -148,13 +148,14 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
       setExecutingId(id);
       const result = await TablePlatformApi.executeDistribution(id);
       toast.success(
-        isPl
-          ? `Wysłano ${result.recordCount} rekordów przez ${result.channel}`
-          : `Sent ${result.recordCount} records via ${result.channel}`
+        t('myWorkTable.distributionBuilder.sentRecordsVia', {
+          records: result.recordCount,
+          channel: result.channel,
+        })
       );
       await loadDistributions();
     } catch {
-      toast.error(isPl ? 'Wysyłka nie powiodła się' : 'Send failed');
+      toast.error(t('myWorkTable.distributionBuilder.sendFailed'));
     } finally {
       setExecutingId(null);
     }
@@ -181,7 +182,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
           <div className="flex items-center gap-2">
             <Send size={16} className="text-blue-600 dark:text-blue-400" />
             <h2 className="text-sm font-semibold text-c-text">
-              {isPl ? 'Dystrybucja' : 'Distributions'}
+              {t('myWorkTable.distributionBuilder.distributions')}
             </h2>
           </div>
           <button
@@ -201,7 +202,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               <Plus size={12} />
-              {isPl ? 'Nowa dystrybucja' : 'New Distribution'}
+              {t('myWorkTable.distributionBuilder.newDistribution')}
             </button>
           )}
 
@@ -210,50 +211,50 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
             <div className="rounded-xl border border-c-border-subtle p-4 space-y-3 bg-c-surface-raised">
               <div>
                 <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                  {isPl ? 'Nazwa' : 'Name'}
+                  {t('myWorkTable.distributionBuilder.name')}
                 </label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                   className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
-                  placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
+                  placeholder={t('myWorkTable.distributionBuilder.eGWeeklyReport')}
                 />
               </div>
 
               {/* Source type */}
               <div>
                 <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                  {isPl ? 'Typ źródła' : 'Source Type'}
+                  {t('myWorkTable.distributionBuilder.sourceType')}
                 </label>
                 <select
                   value={form.sourceType}
                   onChange={(e) => setForm((p) => ({ ...p, sourceType: e.target.value as any }))}
                   className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text outline-none"
                 >
-                  <option value="table">{isPl ? 'Tabela' : 'Table'}</option>
-                  <option value="view">{isPl ? 'Widok' : 'View'}</option>
+                  <option value="table">{t('myWorkTable.distributionBuilder.table')}</option>
+                  <option value="view">{t('myWorkTable.distributionBuilder.view')}</option>
                 </select>
               </div>
 
               {/* Source ID */}
               <div>
                 <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                  {isPl ? 'ID źródła' : 'Source ID'}
+                  {t('myWorkTable.distributionBuilder.sourceId')}
                 </label>
                 <input
                   type="text"
                   value={form.sourceId}
                   onChange={(e) => setForm((p) => ({ ...p, sourceId: e.target.value }))}
                   className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
-                  placeholder={isPl ? 'ID tabeli lub widoku' : 'Table or view ID'}
+                  placeholder={t('myWorkTable.distributionBuilder.tableOrViewId')}
                 />
               </div>
 
               {/* Channel */}
               <div>
                 <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                  {isPl ? 'Kanał' : 'Channel'}
+                  {t('myWorkTable.distributionBuilder.channel')}
                 </label>
                 <div className="flex gap-1.5">
                   {CHANNELS.map((ch) => {
@@ -283,9 +284,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 {form.channel === 'email' && (
                   <div>
                     <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                      {isPl
-                        ? 'Adresy email (oddzielone przecinkami)'
-                        : 'Email addresses (comma-separated)'}
+                      {t('myWorkTable.distributionBuilder.emailAddressesCommaSeparated')}
                     </label>
                     <input
                       type="text"
@@ -329,7 +328,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
               {/* Format */}
               <div>
                 <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                  {isPl ? 'Format' : 'Format'}
+                  {t('myWorkTable.distributionBuilder.format')}
                 </label>
                 <div className="flex gap-1.5">
                   {FORMATS.map((f) => (
@@ -351,7 +350,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
               {/* Schedule */}
               <div>
                 <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                  {isPl ? 'Harmonogram (cron, opcjonalnie)' : 'Schedule (cron, optional)'}
+                  {t('myWorkTable.distributionBuilder.scheduleCronOptional')}
                 </label>
                 <input
                   type="text"
@@ -370,7 +369,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {creating && <Loader2 size={12} className="animate-spin" />}
-                  {isPl ? 'Utwórz' : 'Create'}
+                  {t('myWorkTable.distributionBuilder.create')}
                 </button>
                 <button
                   onClick={() => {
@@ -379,7 +378,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                   }}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
                 >
-                  {isPl ? 'Anuluj' : 'Cancel'}
+                  {t('myWorkTable.distributionBuilder.cancel')}
                 </button>
               </div>
             </div>
@@ -393,11 +392,9 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
               variant="new"
               icon={Send}
               compact
-              title={isPl ? 'Brak dystrybucji' : 'No distributions yet'}
+              title={t('myWorkTable.distributionBuilder.noDistributionsYet')}
               description={
-                isPl
-                  ? 'Utwórz pierwszą dystrybucję, aby udostępnić tabelę.'
-                  : 'Create your first distribution to share this table.'
+                t('myWorkTable.distributionBuilder.createYourFirstDistributionTo')
               }
             />
           ) : (
@@ -420,7 +417,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                         </span>
                         {!dist.is_active && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                            {isPl ? 'Wstrzymane' : 'Paused'}
+                            {t('myWorkTable.distributionBuilder.paused')}
                           </span>
                         )}
                       </div>
@@ -430,7 +427,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                         {dist.send_count > 0 && (
                           <>
                             {' '}
-                            · {dist.send_count}x {isPl ? 'wysłano' : 'sent'}
+                            · {dist.send_count}x {t('myWorkTable.distributionBuilder.sent')}
                           </>
                         )}
                         {dist.last_sent_at && (
@@ -444,7 +441,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                         onClick={() => handleExecute(dist.id)}
                         disabled={isExecuting}
                         className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
-                        title={isPl ? 'Wyślij teraz' : 'Send Now'}
+                        title={t('myWorkTable.distributionBuilder.sendNow')}
                       >
                         {isExecuting ? (
                           <Loader2 size={12} className="animate-spin" />
@@ -461,12 +458,8 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                         }`}
                         title={
                           dist.is_active
-                            ? isPl
-                              ? 'Wstrzymaj'
-                              : 'Pause'
-                            : isPl
-                              ? 'Wznów'
-                              : 'Resume'
+                            ? t('myWorkTable.distributionBuilder.pause')
+                            : t('myWorkTable.distributionBuilder.resume')
                         }
                       >
                         {dist.is_active ? <Pause size={12} /> : <Power size={12} />}
@@ -474,7 +467,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                       <button
                         onClick={() => handleDelete(dist.id)}
                         className="p-1.5 rounded-lg text-danger-500 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
-                        title={isPl ? 'Usuń' : 'Delete'}
+                        title={t('myWorkTable.distributionBuilder.delete')}
                       >
                         <Trash2 size={12} />
                       </button>

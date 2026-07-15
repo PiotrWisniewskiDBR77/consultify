@@ -121,7 +121,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
   saving = false,
   fields = [],
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [name, setName] = useState(initialData?.name ?? '');
@@ -197,13 +197,13 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={isPl ? 'Nazwa automatyzacji...' : 'Automation name...'}
+          placeholder={t('myWorkTable.automationBuilder.automationName')}
           className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2.5 text-base font-medium border-c-border-subtle bg-c-surface-raised"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={isPl ? 'Opis (opcjonalny)' : 'Description (optional)'}
+          placeholder={t('myWorkTable.automationBuilder.descriptionOptional')}
           rows={2}
           className="w-full resize-none rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm border-c-border-subtle bg-c-surface-raised"
         />
@@ -211,7 +211,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
 
       {/* Enabled toggle */}
       <div className="flex items-center justify-between rounded-lg border border-c-border-subtle px-4 py-3 border-c-border-subtle">
-        <span className="text-sm font-medium">{isPl ? 'Aktywna' : 'Enabled'}</span>
+        <span className="text-sm font-medium">{t('myWorkTable.automationBuilder.enabled')}</span>
         <button
           type="button"
           onClick={() => setEnabled((v) => !v)}
@@ -231,7 +231,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-c-text-muted">
           <Zap className="mr-1.5 inline h-4 w-4" />
-          {isPl ? 'Wyzwalacz' : 'Trigger'}
+          {t('myWorkTable.automationBuilder.trigger')}
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {TRIGGER_OPTIONS.map((opt) => {
@@ -268,7 +268,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
       {/* Trigger config */}
       <div className="rounded-lg border border-c-border-subtle p-4 border-c-border-subtle">
         <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-          {isPl ? 'Konfiguracja wyzwalacza' : 'Trigger configuration'}
+          {t('myWorkTable.automationBuilder.triggerConfiguration')}
         </h4>
 
         {triggerType === 'scheduled' && (
@@ -283,14 +283,12 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
         {(triggerType === 'record_created' || triggerType === 'record_updated') && (
           <div className="space-y-3">
             <p className="text-xs text-c-text-muted">
-              {isPl
-                ? 'Opcjonalnie dodaj warunki filtrujące (pole, operator, wartość).'
-                : 'Optionally add filter conditions (field, operator, value).'}
+              {t('myWorkTable.automationBuilder.optionallyAddFilterConditionsField')}
             </p>
             {fields.length > 0 && (
               <div className="space-y-2">
                 <label className="block text-xs font-medium text-c-text-muted">
-                  {isPl ? 'Pole warunkowe' : 'Condition field'}
+                  {t('myWorkTable.automationBuilder.conditionField')}
                 </label>
                 <select
                   value={(triggerConfig.conditionFieldId as string) || ''}
@@ -302,7 +300,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                   }
                   className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface-raised"
                 >
-                  <option value="">{isPl ? '(brak warunku)' : '(no condition)'}</option>
+                  <option value="">{t('myWorkTable.automationBuilder.noCondition')}</option>
                   {fields.map((f) => (
                     <option key={f.id} value={f.id}>
                       {f.name}
@@ -316,9 +314,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
 
         {triggerType === 'webhook_received' && (
           <p className="text-xs text-c-text-muted">
-            {isPl
-              ? 'Webhook URL zostanie wygenerowany po zapisaniu automatyzacji.'
-              : 'Webhook URL will be generated after saving the automation.'}
+            {t('myWorkTable.automationBuilder.webhookUrlWillBeGenerated')}
           </p>
         )}
       </div>
@@ -328,7 +324,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-c-text-muted">
             <Bell className="mr-1.5 inline h-4 w-4" />
-            {isPl ? 'Akcje' : 'Actions'}
+            {t('myWorkTable.automationBuilder.actions')}
             <span className="ml-1.5 text-xs font-normal text-c-text-secondary">
               ({actions.length})
             </span>
@@ -339,7 +335,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
             className="flex items-center gap-1 rounded-md bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised"
           >
             <Plus className="h-3 w-3" />
-            {isPl ? 'Dodaj akcję' : 'Add action'}
+            {t('myWorkTable.automationBuilder.addAction')}
           </button>
         </div>
 
@@ -411,9 +407,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 )}
                 {action.actionType === 'create_record' && fields.length > 0 && (
                   <p className="text-xs text-c-text-secondary">
-                    {isPl
-                      ? 'Rekord zostanie utworzony z domyślnymi wartościami.'
-                      : 'Record will be created with default values.'}
+                    {t('myWorkTable.automationBuilder.recordWillBeCreatedWith')}
                   </p>
                 )}
                 {action.actionType === 'update_record' && fields.length > 0 && (
@@ -422,7 +416,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     onChange={(e) => updateActionConfig(action.id, 'fieldId', e.target.value)}
                     className="w-full rounded border border-c-border-subtle bg-transparent px-2.5 py-1.5 text-sm border-c-border-subtle"
                   >
-                    <option value="">{isPl ? 'Wybierz pole...' : 'Select field...'}</option>
+                    <option value="">{t('myWorkTable.automationBuilder.selectField')}</option>
                     {fields.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
@@ -432,9 +426,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 )}
                 {action.actionType === 'send_email' && (
                   <p className="text-xs text-c-warning">
-                    {isPl
-                      ? 'Usługa email nie jest jeszcze skonfigurowana.'
-                      : 'Email service not yet configured.'}
+                    {t('myWorkTable.automationBuilder.emailServiceNotYetConfigured')}
                   </p>
                 )}
               </div>
@@ -451,7 +443,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           disabled={saving}
           className="rounded-lg border border-c-border-subtle px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised"
         >
-          {isPl ? 'Anuluj' : 'Cancel'}
+          {t('myWorkTable.automationBuilder.cancel')}
         </button>
         <button
           type="button"
@@ -460,7 +452,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           className="flex items-center gap-2 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-surface hover:opacity-90 disabled:opacity-50"
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          {isPl ? 'Zapisz' : 'Save'}
+          {t('myWorkTable.automationBuilder.save')}
         </button>
       </div>
     </div>

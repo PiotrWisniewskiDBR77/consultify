@@ -40,7 +40,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
   onRecordsUpdated,
   locked = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const dateFields = fields.filter((f) => DATE_FIELD_TYPES.includes(f.fieldType));
@@ -59,7 +59,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       const res = await TablePlatformApi.getDependencyConfig(tableId);
       setConfig(res.config ?? null);
     } catch {
-      toast.error(isPl ? 'Nie udało się wczytać konfiguracji' : 'Failed to load config');
+      toast.error(t('myWorkTable.dateDependencyConfig.failedToLoadConfig'));
     } finally {
       setLoading(false);
     }
@@ -75,10 +75,10 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
     setCycleWarning(null);
     try {
       await TablePlatformApi.putDependencyConfig(tableId, config);
-      toast.success(isPl ? 'Konfiguracja zapisana' : 'Config saved');
+      toast.success(t('myWorkTable.dateDependencyConfig.configSaved'));
       onConfigSaved?.();
     } catch {
-      toast.error(isPl ? 'Nie udało się zapisać' : 'Failed to save');
+      toast.error(t('myWorkTable.dateDependencyConfig.failedToSave'));
     } finally {
       setSaving(false);
     }
@@ -95,19 +95,19 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       if (cycleRes.hasCycle && cycleRes.cycleNodes?.length) {
         setCycleWarning({ cycleNodes: cycleRes.cycleNodes });
         toast.error(
-          isPl
-            ? `Wykryto cykl w zależnościach: ${cycleRes.cycleNodes.length} rekordów`
-            : `Cycle detected: ${cycleRes.cycleNodes.length} records affected`
+          t('myWorkTable.dateDependencyConfig.cycleDetectedCount', {
+            value: cycleRes.cycleNodes.length,
+          })
         );
         return;
       }
 
       const recalcRes = await TablePlatformApi.recalculateDateDependencies(tableId, config);
       const count = recalcRes.updatedRecords ?? 0;
-      toast.success(isPl ? `Zaktualizowano ${count} rekordów` : `${count} records updated`);
+      toast.success(t('myWorkTable.dateDependencyConfig.recordsUpdated', { value: count }));
       onRecordsUpdated?.();
     } catch {
-      toast.error(isPl ? 'Nie udało się przeliczyć' : 'Failed to recalculate');
+      toast.error(t('myWorkTable.dateDependencyConfig.failedToRecalculate'));
     } finally {
       setRecalculating(false);
     }
@@ -142,7 +142,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       {/* Start date */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Pole daty początkowej' : 'Start date field'}
+          {t('myWorkTable.dateDependencyConfig.startDateField')}
         </label>
         <select
           value={config?.startDateFieldId ?? ''}
@@ -162,7 +162,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       {/* End date */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Pole daty końcowej' : 'End date field'}
+          {t('myWorkTable.dateDependencyConfig.endDateField')}
         </label>
         <select
           value={config?.endDateFieldId ?? ''}
@@ -182,7 +182,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       {/* Duration (optional) */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Pole czasu trwania (opcjonalnie)' : 'Duration field (optional)'}
+          {t('myWorkTable.dateDependencyConfig.durationFieldOptional')}
         </label>
         <select
           value={config?.durationFieldId ?? ''}
@@ -202,7 +202,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       {/* Predecessor (optional) */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Pole poprzednika (opcjonalnie)' : 'Predecessor field (optional)'}
+          {t('myWorkTable.dateDependencyConfig.predecessorFieldOptional')}
         </label>
         <select
           value={config?.predecessorFieldId ?? ''}
@@ -222,7 +222,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       {/* Default dependency type */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Domyślny typ zależności' : 'Default dependency type'}
+          {t('myWorkTable.dateDependencyConfig.defaultDependencyType')}
         </label>
         <div className="flex flex-wrap gap-1">
           {DEPENDENCY_TYPES.map(({ value, labelEn, labelPl }) => (
@@ -246,7 +246,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       {/* Default lag days */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Domyślne opóźnienie (dni)' : 'Default lag days'}
+          {t('myWorkTable.dateDependencyConfig.defaultLagDays')}
         </label>
         <input
           type="number"
@@ -269,7 +269,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           />
           <div className="w-9 h-5 rounded-full bg-c-border-subtle peer-checked:bg-c-surface peer-disabled:opacity-50 peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-c-surface after:rounded-full after:h-4 after:w-4 after:transition-all" />
           <span className="ml-2 text-[11px] font-medium text-c-text-secondary">
-            {isPl ? 'Pomijaj weekendy' : 'Skip weekends'}
+            {t('myWorkTable.dateDependencyConfig.skipWeekends')}
           </span>
         </label>
       </div>
@@ -277,7 +277,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
       {/* Cycle warning */}
       {cycleWarning && (
         <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-2 text-[10px] text-amber-800 dark:text-amber-200">
-          {isPl ? 'Cykl wykryty w rekordach: ' : 'Cycle detected in records: '}
+          {t('myWorkTable.dateDependencyConfig.cycleDetectedInRecords')}
           {cycleWarning.cycleNodes.slice(0, 5).join(', ')}
           {cycleWarning.cycleNodes.length > 5 && ` +${cycleWarning.cycleNodes.length - 5}`}
         </div>
@@ -292,7 +292,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
           >
             {saving ? <Loader2 size={10} className="animate-spin" /> : null}
-            {isPl ? 'Zapisz' : 'Save'}
+            {t('myWorkTable.dateDependencyConfig.save')}
           </button>
         )}
         <button
@@ -301,7 +301,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
         >
           {recalculating ? <Loader2 size={10} className="animate-spin" /> : <Calendar size={10} />}
-          {isPl ? 'Przelicz daty' : 'Recalculate'}
+          {t('myWorkTable.dateDependencyConfig.recalculate')}
         </button>
       </div>
     </div>

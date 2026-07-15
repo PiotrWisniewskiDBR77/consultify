@@ -48,43 +48,43 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
   viewLayout,
   onExportComplete,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [slides, setSlides] = useState<SlideConfig[]>([
     {
       type: 'title',
-      label: isPl ? 'Slajd tytułowy' : 'Title slide',
+      label: t('myWorkTable.exportToPresentation.titleSlide'),
       icon: <Layout size={14} />,
       enabled: true,
     },
     {
       type: 'table',
-      label: isPl ? 'Tabela pomysłów' : 'Ideas table',
+      label: t('myWorkTable.exportToPresentation.ideasTable'),
       icon: <Table2 size={14} />,
       enabled: true,
     },
     {
       type: 'kanban',
-      label: isPl ? 'Widok Kanban' : 'Kanban view',
+      label: t('myWorkTable.exportToPresentation.kanbanView'),
       icon: <Layers size={14} />,
       enabled: viewLayout === 'kanban',
     },
     {
       type: 'matrix',
-      label: isPl ? 'Macierz 2×2' : '2×2 Matrix',
+      label: t('myWorkTable.exportToPresentation.n22Matrix'),
       icon: <FileImage size={14} />,
       enabled: viewLayout === 'matrix',
     },
     {
       type: 'summary',
-      label: isPl ? 'Podsumowanie AI' : 'AI Summary',
+      label: t('myWorkTable.exportToPresentation.aiSummary'),
       icon: <Sparkles size={14} />,
       enabled: true,
     },
     {
       type: 'ranking',
-      label: isPl ? 'Ranking pomysłów' : 'Idea ranking',
+      label: t('myWorkTable.exportToPresentation.ideaRanking'),
       icon: <Presentation size={14} />,
       enabled: nodes.some((n) => n.data?.score != null),
     },
@@ -108,10 +108,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             id: `slide-title-${Date.now()}`,
             layout: 'title',
             blocks: [
-              { type: 'heading', content: ideaTitle || (isPl ? 'Pomysły' : 'Ideas') },
+              { type: 'heading', content: ideaTitle || (t('myWorkTable.exportToPresentation.ideas')) },
               {
                 type: 'text',
-                content: `${nodes.length} ${isPl ? 'pomysłów' : 'ideas'} • ${new Date().toLocaleDateString(isPl ? 'pl' : 'en')}`,
+                content: `${nodes.length} ${t('myWorkTable.exportToPresentation.ideas2')} • ${new Date().toLocaleDateString(isPl ? 'pl' : 'en')}`,
               },
             ],
           });
@@ -122,7 +122,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             id: `slide-table-${Date.now()}`,
             layout: 'content',
             blocks: [
-              { type: 'heading', content: isPl ? 'Przegląd pomysłów' : 'Ideas Overview' },
+              { type: 'heading', content: t('myWorkTable.exportToPresentation.ideasOverview') },
               {
                 type: 'table',
                 headers: visibleCols.slice(0, 5).map((c) => c.header),
@@ -139,7 +139,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
           if (groupCol) {
             const groups = new Map<string, TableNode[]>();
             for (const n of nodes) {
-              const val = String(n.data?.[groupCol.key] || (isPl ? 'Inne' : 'Other'));
+              const val = String(n.data?.[groupCol.key] || (t('myWorkTable.exportToPresentation.other')));
               if (!groups.has(val)) groups.set(val, []);
               groups.get(val)!.push(n);
             }
@@ -166,7 +166,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             id: `slide-matrix-${Date.now()}`,
             layout: 'content',
             blocks: [
-              { type: 'heading', content: isPl ? 'Macierz priorytetów' : 'Priority Matrix' },
+              { type: 'heading', content: t('myWorkTable.exportToPresentation.priorityMatrix') },
               {
                 type: 'text',
                 content: nodes
@@ -183,13 +183,13 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             id: `slide-summary-${Date.now()}`,
             layout: 'content',
             blocks: [
-              { type: 'heading', content: isPl ? 'Podsumowanie' : 'Summary' },
+              { type: 'heading', content: t('myWorkTable.exportToPresentation.summary') },
               {
                 type: 'stats',
                 items: [
-                  { label: isPl ? 'Pomysłów' : 'Ideas', value: String(nodes.length) },
+                  { label: t('myWorkTable.exportToPresentation.ideas3'), value: String(nodes.length) },
                   {
-                    label: isPl ? 'Kategorii' : 'Categories',
+                    label: t('myWorkTable.exportToPresentation.categories'),
                     value: String(
                       new Set(nodes.map((n) => n.data?.category || n.data?.status || '')).size
                     ),
@@ -208,7 +208,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             id: `slide-ranking-${Date.now()}`,
             layout: 'content',
             blocks: [
-              { type: 'heading', content: isPl ? 'Top pomysły' : 'Top Ideas' },
+              { type: 'heading', content: t('myWorkTable.exportToPresentation.topIdeas') },
               {
                 type: 'list',
                 items: ranked
@@ -223,7 +223,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
     }
 
     return {
-      title: ideaTitle || (isPl ? 'Pomysły' : 'Ideas'),
+      title: ideaTitle || (t('myWorkTable.exportToPresentation.ideas')),
       theme: 'modern',
       slides: slideBlocks,
     };
@@ -245,7 +245,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
         onExportComplete?.(deckId);
         setExportDone(true);
       } else {
-        throw new Error(isPl ? 'Brak ID utworzonej prezentacji' : 'Created deck ID missing');
+        throw new Error(t('myWorkTable.exportToPresentation.createdDeckIdMissing'));
       }
     } catch (error) {
       console.error('[ExportToPresentation] export failed', error);
@@ -270,7 +270,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           <Presentation size={16} className="text-c-info" />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            {isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
+            {t('myWorkTable.exportToPresentation.exportToPresentation')}
           </span>
           <div className="flex-1" />
           <button
@@ -284,7 +284,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
         {/* Slide selection */}
         <div className="px-5 py-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-            {isPl ? 'Wybierz slajdy' : 'Select slides'}
+            {t('myWorkTable.exportToPresentation.selectSlides')}
           </p>
           <div className="space-y-2">
             {slides.map((slide) => (
@@ -312,8 +312,8 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
           <div className="flex items-center gap-2">
             <FileImage size={12} className="text-slate-600" />
             <span className="text-[10px] text-slate-500">
-              {slides.filter((s) => s.enabled).length} {isPl ? 'slajdów' : 'slides'} •{' '}
-              {nodes.length} {isPl ? 'pomysłów' : 'ideas'}
+              {slides.filter((s) => s.enabled).length} {t('myWorkTable.exportToPresentation.slides')} •{' '}
+              {nodes.length} {t('myWorkTable.exportToPresentation.ideas2')}
             </span>
           </div>
         </div>
@@ -324,12 +324,12 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkTable.exportToPresentation.cancel')}
           </button>
           <div className="flex-1" />
           {exportDone ? (
             <span className="text-xs font-bold text-emerald-500">
-              {isPl ? 'Wyeksportowano!' : 'Exported!'}
+              {t('myWorkTable.exportToPresentation.exported')}
             </span>
           ) : (
             <button
@@ -342,7 +342,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
               ) : (
                 <Presentation size={12} />
               )}
-              {isPl ? 'Eksportuj' : 'Export'}
+              {t('myWorkTable.exportToPresentation.export')}
             </button>
           )}
         </div>

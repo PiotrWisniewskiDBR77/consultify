@@ -66,7 +66,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
   onViewHistory,
   isRunning,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
@@ -89,14 +89,12 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
     return (
       <EmptyState
         icon={<RefreshCw />}
-        title={isPl ? 'Brak skonfigurowanych konektorów' : 'No connectors configured'}
+        title={t('myWorkTable.connectorList.noConnectorsConfigured')}
         description={
-          isPl
-            ? 'Połącz zewnętrzne źródła danych, aby automatycznie importować dane do tabeli.'
-            : 'Connect external data sources to automatically import data into your table.'
+          t('myWorkTable.connectorList.connectExternalDataSourcesTo')
         }
         action={{
-          label: isPl ? 'Dodaj konektor' : 'Add connector',
+          label: t('myWorkTable.connectorList.addConnector'),
           onClick: onAdd,
         }}
       />
@@ -114,7 +112,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-c-text">
-          {isPl ? 'Konektory' : 'Connectors'}{' '}
+          {t('myWorkTable.connectorList.connectors')}{' '}
           <span className="text-c-text-secondary font-normal">({connectors.length})</span>
         </h3>
         <button
@@ -122,7 +120,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
           className="inline-flex items-center gap-1 rounded-lg bg-c-accent-soft px-2.5 py-1.5 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
         >
           <Plus size={12} />
-          {isPl ? 'Dodaj' : 'Add'}
+          {t('myWorkTable.connectorList.add')}
         </button>
       </div>
 
@@ -149,7 +147,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
               </div>
               <div className="flex items-center gap-3 mt-0.5 text-[11px] text-c-text-muted">
                 <span>
-                  {isPl ? 'Ostatni:' : 'Last:'} {formatTime(c.lastRunAt)}
+                  {t('myWorkTable.connectorList.last')} {formatTime(c.lastRunAt)}
                 </span>
                 {c.schedule && (
                   <span className="inline-flex items-center gap-1">
@@ -178,7 +176,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                   <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1">
                     <MenuBtn
                       icon={<Play size={13} />}
-                      label={isPl ? 'Uruchom teraz' : 'Run now'}
+                      label={t('myWorkTable.connectorList.runNow')}
                       onClick={() => {
                         setMenuOpen(null);
                         onRun(c);
@@ -186,7 +184,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                     />
                     <MenuBtn
                       icon={<History size={13} />}
-                      label={isPl ? 'Historia' : 'History'}
+                      label={t('myWorkTable.connectorList.history')}
                       onClick={() => {
                         setMenuOpen(null);
                         onViewHistory(c);
@@ -194,7 +192,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                     />
                     <MenuBtn
                       icon={<Pencil size={13} />}
-                      label={isPl ? 'Edytuj' : 'Edit'}
+                      label={t('myWorkTable.connectorList.edit')}
                       onClick={() => {
                         setMenuOpen(null);
                         onEdit(c);
@@ -203,7 +201,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                     <div className="my-1 border-t border-c-border-subtle" />
                     <MenuBtn
                       icon={<Trash2 size={13} />}
-                      label={isPl ? 'Usuń' : 'Delete'}
+                      label={t('myWorkTable.connectorList.delete')}
                       danger
                       onClick={() => {
                         setMenuOpen(null);

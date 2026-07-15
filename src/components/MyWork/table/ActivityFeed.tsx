@@ -6,6 +6,7 @@
  */
 import { Activity, ChevronRight, Clock, Edit3, Lock, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
@@ -50,25 +51,25 @@ const POLL_INTERVAL = 30_000;
 
 const TIME_GROUP_ORDER = ['last_hour', 'today', 'yesterday', 'this_week', 'earlier'] as const;
 
-function timeGroupLabel(group: string, isPl: boolean): string {
-  const labels: Record<string, [string, string]> = {
-    last_hour: ['Ostatnia godzina', 'Last hour'],
-    today: ['Dzisiaj', 'Today'],
-    yesterday: ['Wczoraj', 'Yesterday'],
-    this_week: ['Ten tydzień', 'This week'],
-    earlier: ['Wcześniej', 'Earlier'],
+function timeGroupLabel(group: string, t: TFunction): string {
+  const keys: Record<string, string> = {
+    last_hour: 'myWorkTable.activityFeed.timeGroupLastHour',
+    today: 'myWorkTable.activityFeed.timeGroupToday',
+    yesterday: 'myWorkTable.activityFeed.timeGroupYesterday',
+    this_week: 'myWorkTable.activityFeed.timeGroupThisWeek',
+    earlier: 'myWorkTable.activityFeed.timeGroupEarlier',
   };
-  const pair = labels[group];
-  return pair ? pair[isPl ? 0 : 1] : group;
+  const key = keys[group];
+  return key ? t(key) : group;
 }
 
-function relativeTime(ts: string, isPl: boolean): string {
+function relativeTime(ts: string, t: TFunction): string {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return isPl ? 'teraz' : 'just now';
-  if (mins < 60) return isPl ? `${mins} min temu` : `${mins}m ago`;
+  if (mins < 1) return t('myWorkTable.activityFeed.justNow');
+  if (mins < 60) return t('myWorkTable.activityFeed.minutesAgo', { value: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return isPl ? `${hours} godz. temu` : `${hours}h ago`;
+  if (hours < 24) return t('myWorkTable.activityFeed.hoursAgo', { value: hours });
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -83,15 +84,17 @@ function eventIcon(eventType: string) {
   }
 }
 
-function eventLabel(event: AuditEvent, isPl: boolean): string {
-  const actor = event.actorName || (isPl ? 'Ktoś' : 'Someone');
-  const entity = event.entityType === 'record' ? (isPl ? 'rekord' : 'record') : event.entityType;
-  const actionMap: Record<string, [string, string]> = {
-    create: ['utworzył(a)', 'created'],
-    update: ['zaktualizował(a)', 'updated'],
-    delete: ['usunął/ęła', 'deleted'],
+function eventLabel(event: AuditEvent, t: TFunction): string {
+  const actor = event.actorName || t('myWorkTable.activityFeed.someone');
+  const entity =
+    event.entityType === 'record' ? t('myWorkTable.activityFeed.recordNoun') : event.entityType;
+  const actionKeys: Record<string, string> = {
+    create: 'myWorkTable.activityFeed.actionCreated',
+    update: 'myWorkTable.activityFeed.actionUpdated',
+    delete: 'myWorkTable.activityFeed.actionDeleted',
   };
-  const action = actionMap[event.eventType]?.[isPl ? 0 : 1] ?? event.eventType;
+  const actionKey = actionKeys[event.eventType];
+  const action = actionKey ? t(actionKey) : event.eventType;
   const shortId = event.entityId.slice(0, 8);
   return `${actor} ${action} ${entity} ${shortId}`;
 }
@@ -100,15 +103,14 @@ function eventLabel(event: AuditEvent, isPl: boolean): string {
 
 const EventItem = React.memo(function EventItem({
   event,
-  isPl,
   compact,
   onClick,
 }: {
   event: AuditEvent;
-  isPl: boolean;
   compact: boolean;
   onClick?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <button
       onClick={onClick}
@@ -118,11 +120,11 @@ const EventItem = React.memo(function EventItem({
         {eventIcon(event.eventType)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-c-text leading-snug truncate">{eventLabel(event, isPl)}</p>
+        <p className="text-[11px] text-c-text leading-snug truncate">{eventLabel(event, t)}</p>
         {!compact && (
           <span className="text-[10px] text-c-text-secondary flex items-center gap-1 mt-0.5">
             <Clock size={9} />
-            {relativeTime(event.timestamp, isPl)}
+            {relativeTime(event.timestamp, t)}
           </span>
         )}
       </div>
@@ -146,8 +148,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   onEventClick,
   isPlatformTable = false,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = !!i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -221,7 +222,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
           <Activity size={14} className="text-c-text-muted" />
           <span className="text-xs font-bold text-c-text flex-1">
-            {isPl ? 'Aktywność' : 'Activity'}
+            {t('myWorkTable.activityFeed.title')}
           </span>
           <button
             onClick={onClose}
@@ -235,12 +236,8 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             variant="forbidden"
             icon={Lock}
             compact
-            title={isPl ? 'Niedostępne dla tej tabeli' : 'Not available for this table'}
-            description={
-              isPl
-                ? 'Historia aktywności jest dostępna tylko dla tabel platformowych.'
-                : 'Activity history is only available for platform tables.'
-            }
+            title={t('myWorkTable.activityFeed.notAvailableForTable')}
+            description={t('myWorkTable.activityFeed.historyAvailableOnlyForPlatform')}
           />
         </div>
       </div>
@@ -262,7 +259,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
         <Activity size={14} className="text-c-text-muted" />
         <span className="text-xs font-bold text-c-text flex-1">
-          {isPl ? 'Aktywność' : 'Activity'}
+          {t('myWorkTable.activityFeed.title')}
         </span>
         <button
           onClick={onClose}
@@ -281,12 +278,8 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             variant="new"
             icon={Activity}
             compact
-            title={isPl ? 'Brak aktywności' : 'No activity yet'}
-            description={
-              isPl
-                ? 'Zmiany w tabeli pojawią się tutaj, gdy zaczniesz pracować.'
-                : 'Table changes will appear here as you start working.'
-            }
+            title={t('myWorkTable.activityFeed.noActivityYet')}
+            description={t('myWorkTable.activityFeed.changesWillAppearHere')}
           />
         ) : (
           TIME_GROUP_ORDER.map((group) => {
@@ -295,13 +288,12 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             return (
               <div key={group}>
                 <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary bg-c-surface-raised sticky top-0 z-[1]">
-                  {timeGroupLabel(group, isPl)}
+                  {timeGroupLabel(group, t)}
                 </div>
                 {items.map((ev) => (
                   <EventItem
                     key={ev.id}
                     event={ev}
-                    isPl={isPl}
                     compact={compact}
                     onClick={onEventClick ? () => onEventClick(ev.entityId) : undefined}
                   />

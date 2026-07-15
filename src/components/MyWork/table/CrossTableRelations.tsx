@@ -81,7 +81,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
   onAddEdge,
   onAddRollupColumn,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [externalMaps, setExternalMaps] = useState<ExternalIdeaMap[]>([]);
@@ -107,19 +107,19 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
           setExternalMaps([
             {
               id: 'demo-1',
-              title: isPl ? 'Strategia cyfrowa' : 'Digital Strategy',
+              title: t('myWorkTable.crossTableRelations.digitalStrategy'),
               nodeCount: 12,
               updatedAt: new Date().toISOString(),
             },
             {
               id: 'demo-2',
-              title: isPl ? 'Optymalizacja procesów' : 'Process Optimization',
+              title: t('myWorkTable.crossTableRelations.processOptimization'),
               nodeCount: 8,
               updatedAt: new Date().toISOString(),
             },
             {
               id: 'demo-3',
-              title: isPl ? 'Innowacje produktowe' : 'Product Innovation',
+              title: t('myWorkTable.crossTableRelations.productInnovation'),
               nodeCount: 15,
               updatedAt: new Date().toISOString(),
             },
@@ -218,7 +218,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Network size={16} className="text-c-accent" />
           <span className="text-sm font-bold text-c-text">
-            {isPl ? 'Relacje między tabelami' : 'Cross-Table Relations'}
+            {t('myWorkTable.crossTableRelations.crossTableRelations')}
           </span>
           <div className="flex-1" />
           <button
@@ -238,13 +238,9 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === tab ? 'bg-c-border-subtle text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
             >
               {tab === 'relations'
-                ? isPl
-                  ? 'Relacje'
-                  : 'Relations'
+                ? t('myWorkTable.crossTableRelations.relations')
                 : tab === 'network'
-                  ? isPl
-                    ? 'Sieć'
-                    : 'Network'
+                  ? t('myWorkTable.crossTableRelations.network')
                   : 'Rollups'}
               {tab === 'relations' && allRelations.length > 0 && ` (${allRelations.length})`}
             </button>
@@ -258,7 +254,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
               {/* Left: external maps */}
               <div className="w-48 border-r border-c-border-subtle p-3 overflow-auto flex-shrink-0">
                 <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary block mb-2">
-                  {isPl ? 'Inne mapy pomysłów' : 'Other idea maps'}
+                  {t('myWorkTable.crossTableRelations.otherIdeaMaps')}
                 </span>
                 {loading && externalMaps.length === 0 ? (
                   <Loader2 size={14} className="animate-spin text-c-text-secondary mx-auto mt-4" />
@@ -272,7 +268,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                       >
                         <div className="font-medium truncate">{map.title}</div>
                         <div className="text-[8px] text-c-text-secondary">
-                          {map.nodeCount} {isPl ? 'elementów' : 'items'}
+                          {map.nodeCount} {t('myWorkTable.crossTableRelations.items')}
                         </div>
                       </button>
                     ))}
@@ -286,7 +282,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                   <div className="text-center py-8">
                     <Link2 size={20} className="text-c-text-secondary mx-auto mb-2" />
                     <p className="text-xs text-c-text-secondary">
-                      {isPl ? 'Wybierz mapę aby zobaczyć elementy' : 'Select a map to see items'}
+                      {t('myWorkTable.crossTableRelations.selectAMapToSee')}
                     </p>
                   </div>
                 ) : (
@@ -300,7 +296,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                         <input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder={isPl ? 'Szukaj…' : 'Search…'}
+                          placeholder={t('myWorkTable.crossTableRelations.search')}
                           className="w-full h-7 pl-7 pr-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                         />
                       </div>
@@ -323,9 +319,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                     {!linkSource && (
                       <div className="mb-3 p-2 rounded-xl bg-amber-500/5 border border-amber-500/20">
                         <p className="text-[9px] font-bold text-amber-600 mb-1.5">
-                          {isPl
-                            ? 'Wybierz źródło z bieżącej tabeli:'
-                            : 'Select source from current table:'}
+                          {t('myWorkTable.crossTableRelations.selectSourceFromCurrentTable')}
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {currentNodes.slice(0, 10).map((n) => (
@@ -348,7 +342,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                         </span>
                         <ArrowRight size={9} />
                         <span className="text-c-text-secondary">
-                          {isPl ? 'wybierz cel…' : 'select target…'}
+                          {t('myWorkTable.crossTableRelations.selectTarget')}
                         </span>
                         <button
                           onClick={() => setLinkSource(null)}
@@ -381,7 +375,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                                 className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
                               >
                                 <Link2 size={8} />
-                                {isPl ? 'Połącz' : 'Link'}
+                                {t('myWorkTable.crossTableRelations.link')}
                               </button>
                             )}
                             <ExternalLink size={9} className="text-c-text-secondary" />
@@ -400,17 +394,15 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
               <div className="text-center mb-4">
                 <Network size={32} className="text-c-accent mx-auto mb-2" />
                 <p className="text-xs font-bold text-c-text">
-                  {isPl ? 'Sieć pomysłów' : 'Idea Network'}
+                  {t('myWorkTable.crossTableRelations.ideaNetwork')}
                 </p>
                 <p className="text-[10px] text-c-text-secondary">
-                  {allRelations.length} {isPl ? 'połączeń' : 'connections'}
+                  {allRelations.length} {t('myWorkTable.crossTableRelations.connections')}
                 </p>
               </div>
               {allRelations.length === 0 ? (
                 <p className="text-xs text-c-text-secondary text-center">
-                  {isPl
-                    ? 'Brak relacji — utwórz pierwszą w zakładce Relacje'
-                    : 'No relations — create one in the Relations tab'}
+                  {t('myWorkTable.crossTableRelations.noRelationsCreateOneIn')}
                 </p>
               ) : (
                 <div className="space-y-1.5">
@@ -449,10 +441,10 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
               <div className="text-center py-6">
                 <Sigma size={24} className="text-c-text-secondary mx-auto mb-2" />
                 <p className="text-xs font-bold text-c-text mb-1">
-                  {isPl ? 'Rollup agregacje' : 'Rollup Aggregations'}
+                  {t('myWorkTable.crossTableRelations.rollupAggregations')}
                 </p>
                 <p className="text-[10px] text-c-text-secondary mb-4">
-                  {isPl ? 'Agreguj dane z powiązanych tabel' : 'Aggregate data from related tables'}
+                  {t('myWorkTable.crossTableRelations.aggregateDataFromRelatedTables')}
                 </p>
                 {onAddRollupColumn && (
                   <button
@@ -467,7 +459,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
                   >
                     <Plus size={10} />
-                    {isPl ? 'Dodaj kolumnę rollup' : 'Add rollup column'}
+                    {t('myWorkTable.crossTableRelations.addRollupColumn')}
                   </button>
                 )}
               </div>
