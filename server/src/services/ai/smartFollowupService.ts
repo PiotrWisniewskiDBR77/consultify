@@ -25,8 +25,11 @@ class SmartFollowupService {
     response: string;
     screenContext?: string;
     language?: string;
+    /** Required (alongside userId) to take the LLM path — the adapter needs a tenant to bill/scope the call against. */
+    organizationId?: string;
+    userId?: string;
   }): Promise<FollowupSuggestion[]> {
-    if (this.llmClient && input.response.length > 50) {
+    if (this.llmClient && input.response.length > 50 && input.organizationId && input.userId) {
       return this.generateWithLLM(input);
     }
     return this.generateHeuristic(input);
@@ -37,6 +40,8 @@ class SmartFollowupService {
     response: string;
     screenContext?: string;
     language?: string;
+    organizationId?: string;
+    userId?: string;
   }): Promise<FollowupSuggestion[]> {
     const lang = input.language === 'pl' ? 'Polish' : 'English';
 
@@ -56,6 +61,12 @@ class SmartFollowupService {
         temperature: 0.7,
         max_tokens: 300,
         response_format: { type: 'json_object' },
+        // Not part of the OpenAI wire format — passed through so a tenant-aware
+        // adapter (see routes/ai/smart-followup.routes.ts) can route the call
+        // through the org's configured LLM pipeline without relying on shared
+        // mutable state on this singleton (which would be a cross-tenant race).
+        organizationId: input.organizationId,
+        userId: input.userId,
       });
 
       const raw = result.choices?.[0]?.message?.content;
