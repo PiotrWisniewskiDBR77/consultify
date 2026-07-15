@@ -24,8 +24,8 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import businessCaseService from '../../services/advisory/BusinessCaseService.js';
 import type { SizeBand } from '../../services/financeParameterGuidance.js';
-import logger from '../../utils/Logger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -71,15 +71,22 @@ router.post(
         : undefined;
     const waccPct =
       typeof body.waccPct === 'number' && Number.isFinite(body.waccPct) ? body.waccPct : undefined;
-    const currency = typeof body.currency === 'string' && body.currency.trim() ? body.currency.trim() : undefined;
-    const language = ALLOWED_LANGUAGES.has(body.language) ? (body.language as 'pl' | 'en') : undefined;
+    const currency =
+      typeof body.currency === 'string' && body.currency.trim() ? body.currency.trim() : undefined;
+    const language = ALLOWED_LANGUAGES.has(body.language)
+      ? (body.language as 'pl' | 'en')
+      : undefined;
     const industrySegment =
       typeof body.industrySegment === 'string' && body.industrySegment.trim()
         ? body.industrySegment.trim()
         : undefined;
-    const sizeBand = ALLOWED_SIZE_BANDS.has(body.sizeBand) ? (body.sizeBand as SizeBand) : undefined;
+    const sizeBand = ALLOWED_SIZE_BANDS.has(body.sizeBand)
+      ? (body.sizeBand as SizeBand)
+      : undefined;
     const projectId =
-      typeof body.projectId === 'string' && body.projectId.trim() ? body.projectId.trim() : undefined;
+      typeof body.projectId === 'string' && body.projectId.trim()
+        ? body.projectId.trim()
+        : undefined;
 
     try {
       const result = await businessCaseService.generate({
