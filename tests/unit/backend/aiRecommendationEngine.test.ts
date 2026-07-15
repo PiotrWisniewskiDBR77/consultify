@@ -16,13 +16,18 @@ const { mockDb, mockAIPipeline } = vi.hoisted(() => {
 });
 
 vi.mock('../../../server/database', () => mockDb);
-vi.mock('../../../server/src/services/ai/aiPipeline', () => ({ aiPipeline: mockAIPipeline }));
+vi.mock('../../../server/src/services/ai/AIPipeline', () => ({ aiPipeline: mockAIPipeline }));
 
-const AIRecommendationEngine = require('../../../server/ai/recommendationEngine');
+let AIRecommendationEngine;
 
 describe('AIRecommendationEngine', () => {
     // Engine is now a singleton object
-    const engine = AIRecommendationEngine;
+    let engine;
+
+    beforeAll(async () => {
+        AIRecommendationEngine = (await import('../../../server/src/ai/recommendationEngine.js')).default;
+        engine = AIRecommendationEngine;
+    });
 
     beforeEach(() => {
         vi.resetAllMocks(); // Clear call history

@@ -64,9 +64,7 @@ describe('SubscriptionAnalyticsService', () => {
         });
 
         it('should handle database errors', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
-            });
+            mockDb.all.mockRejectedValue(new Error('DB Error'));
 
             await expect(subscriptionAnalyticsService.getMRRTrend()).rejects.toThrow('DB Error');
         });
@@ -195,7 +193,6 @@ describe('SubscriptionAnalyticsService', () => {
                 { plan_id: 'plan-1', plan_name: 'Basic', price_monthly: 29, subscriber_count: 20, plan_mrr: 580 },
                 { plan_id: 'plan-2', plan_name: 'Pro', price_monthly: 99, subscriber_count: 30, plan_mrr: 2970 }
                 ]);
-            });
 
             const result = await subscriptionAnalyticsService.getCurrentMRR();
 
@@ -208,17 +205,13 @@ describe('SubscriptionAnalyticsService', () => {
 
     describe('Error Handling', () => {
         it('should handle database connection errors', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(new Error('Connection lost'), null);
-            });
+            mockDb.all.mockRejectedValue(new Error('Connection lost'));
 
             await expect(subscriptionAnalyticsService.getMRRTrend()).rejects.toThrow('Connection lost');
         });
 
         it('should handle query timeout errors', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(new Error('Query timeout'), null);
-            });
+            mockDb.all.mockRejectedValue(new Error('Query timeout'));
 
             await expect(subscriptionAnalyticsService.getExpansionRevenue()).rejects.toThrow('Query timeout');
         });
