@@ -22,6 +22,12 @@ import {
   type FormulaVerdict,
   validateInsightCard,
 } from './cardContentFormulaValidator.js';
+import {
+  deriveConfidence,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from './evidence/evidenceContract.js';
+import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
 import { canonicalizeContextDocumentStatus } from './organizationContext/ContextDocumentService.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
 import { P10_CONFIDENCE_LEVELS, P10_NO_OVERCLAIM_RULES } from './v8/interviewInsightCanon.js';
@@ -364,6 +370,78 @@ export interface InsightEvidenceValidationResult {
   invalidEvidenceMapRefs: string[];
   degraded: boolean;
   warnings: string[];
+}
+
+/**
+ * HP-17 follow-up (fala 11b) — buduje `EvidenceContract` dla V6 insight,
+ * DETERMINISTYCZNIE, zero LLM, zero I/O. Analogiczne do
+ * `buildInitiativeEvidenceContract` (assessmentInitiativeService.ts, HP-16),
+ * ale dedykowane kształtowi V6 (`ParsedInsightGenerationData`/
+ * `InsightMaterialQuality`) — który różni się od generycznego `InsightCandidate`
+ * (insightMaterializationService.ts, ścieżka Tools/Assessment): evidence_map tu
+ * niesie `answer_id` (nie `item_id`), a material_quality ma
+ * `overall_material_score`/`coverage_posture` z innym zestawem etykiet
+ * ('single_perspective' nie 'single_source').
+ *
+ * Sygnały pewności REALNE, nie zgadywane:
+ *   - `sources` = unikalne `answer_id` faktycznie zacytowane (evidence_map +
+ *     evidence_refs tematów/issues/opportunities),
+ *   - `qualityScore` = `material_quality.overall_material_score` (realny wynik
+ *     `buildInsightMaterialQuality`, to samo pole, którego lifecycle-gate używa),
+ *   - `unresolvedGaps` = missing_data + missing_voices + evidence_gap_count.
+ * `risks`/`toVerify` cytują te same realne braki — nie zgadywanie modelu.
+ */
+export function buildInterviewInsightEvidenceContract(
+  v6Data: ParsedInsightGenerationData,
+  materialQuality: InsightMaterialQuality
+): EvidenceContract {
+  const refIds = new Set<string>();
+  const snippetByRef = new Map<string, string>();
+  (v6Data.evidence_map || []).forEach((e) => {
+    if (e?.answer_id) {
+      const ref = String(e.answer_id);
+      refIds.add(ref);
+      if (e.answer_snippet) snippetByRef.set(ref, String(e.answer_snippet));
+    }
+  });
+  const collectRefs = (arr: Array<{ evidence_refs?: string[] }> | undefined) =>
+    (arr || []).forEach((x) => (x.evidence_refs || []).forEach((r) => r && refIds.add(String(r))));
+  collectRefs(v6Data.themes);
+  collectRefs(v6Data.issues);
+  collectRefs(v6Data.opportunities);
+
+  const sources: EvidenceContractSource[] = Array.from(refIds).map((ref) => ({
+    type: 'interview',
+    ref,
+    snippet: snippetByRef.get(ref),
+  }));
+
+  const risks: string[] = [...(materialQuality.limitations || [])];
+  if (materialQuality.coverage_posture === 'single_perspective') {
+    risks.push(
+      'Pokrycie jednoosobowe — wnioski mogą nie generalizować na całą organizację.'
+    );
+  }
+  (materialQuality.missing_voices || []).forEach((v) => risks.push(`Brak głosu: ${v}`));
+
+  const toVerify: string[] = [
+    ...(v6Data.missing_data || []),
+    ...(materialQuality.recommended_followups || []),
+  ];
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    qualityScore:
+      typeof materialQuality.overall_material_score === 'number'
+        ? materialQuality.overall_material_score
+        : undefined,
+    unresolvedGaps:
+      (v6Data.missing_data?.length || 0) +
+      (materialQuality.missing_voices?.length || 0) +
+      (materialQuality.evidence_gap_count || 0),
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
 }
 
 export interface Insight {
@@ -2433,6 +2511,27 @@ Rules:
           evidenceValidation,
         },
       });
+
+      // HP-17 bridge (follow-up, fala 11b) — persist the inline EvidenceContract
+      // (`buildInterviewInsightEvidenceContract`) as an EvidenceEnvelope
+      // (`artifact_evidence`, artifactType='insight') so the evidence panel (fala 9,
+      // ArtifactRightPanel) has something to render. Previously: the V6 insight had
+      // its own evidence validation (`validateInsightEvidenceRefs`) but no HP-14/HP-16
+      // EvidenceContract was ever computed or persisted for it — panel showed empty
+      // state for insights despite the engine having real evidence_map/themes/issues/
+      // opportunities data (same gap as deck/canvas/document, closed in fala 11a, and
+      // initiative, closed alongside this change). Fire-and-forget + fail-safe: a
+      // write failure NEVER blocks insight generation.
+      void safePersistEvidenceContract(
+        buildInterviewInsightEvidenceContract(v6Data, materialQuality),
+        {
+          organizationId,
+          artifactType: 'insight',
+          artifactId: insightId,
+          service: 'InterviewInsightService',
+          createdBy: userId ?? null,
+        }
+      ).catch(() => {});
 
       logger.info(
         `[InterviewInsightService] Generated V6 insight ${insightId} in ${generationTime}ms ` +
