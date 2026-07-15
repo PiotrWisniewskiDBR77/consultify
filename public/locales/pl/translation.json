@@ -28537,6 +28537,16 @@
       "dataNeededPlaceholder": "Dodaj dane...",
       "timeline": "Timeline",
       "timelinePlaceholder": "np. 2 tygodnie discovery + 4 tygodnie wdrożenia"
+    },
+    "porterRadar": {
+      "industryAttractiveness": "Atrakcyjność branży",
+      "inverseHint": "Odwrotność średniej siły sił",
+      "low": "Niska",
+      "high": "Wysoka",
+      "scoreInterpretation": "Interpretacja wyników",
+      "lowForce": "Niska siła",
+      "moderate": "Umiarkowana",
+      "highForce": "Wysoka siła"
     }
   }
 }

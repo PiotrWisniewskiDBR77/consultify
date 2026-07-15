@@ -27461,6 +27461,16 @@
       "dataNeededPlaceholder": "Add data...",
       "timeline": "Timeline",
       "timelinePlaceholder": "e.g. 2 weeks discovery + 4 weeks delivery"
+    },
+    "porterRadar": {
+      "industryAttractiveness": "Industry Attractiveness",
+      "inverseHint": "Inverse of average force strength",
+      "low": "Low",
+      "high": "High",
+      "scoreInterpretation": "Score Interpretation",
+      "lowForce": "Low force",
+      "moderate": "Moderate",
+      "highForce": "High force"
     }
   }
 }
