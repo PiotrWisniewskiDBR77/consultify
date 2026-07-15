@@ -24450,11 +24450,13 @@
     "description": "One trust & control surface — SOC2 audit export, DLP, data residency, retention, and org AI policy. Roles, SSO, and the audit log live in their own sections and are only linked from here.",
     "tabs": {
       "overview": "Overview",
+      "agentTrace": "Agent trace",
       "audit": "SOC2 audit",
       "dlp": "DLP",
       "residency": "Data residency",
       "retention": "Retention",
-      "aiPolicy": "AI policy"
+      "aiPolicy": "AI policy",
+      "benchmark": "Consulting Bench"
     },
     "overview": {
       "linksTitle": "Trust surfaces",
@@ -24720,6 +24722,53 @@
         "saved": "AI policy updated",
         "loadError": "Failed to load AI policy",
         "saveError": "Failed to update AI policy"
+      }
+    },
+    "agentTrace": {
+      "title": "Agent decision trace",
+      "description": "Every AI/agent action — who triggered it, what the AI proposed, and whether it was accepted. Org-scoped by token.",
+      "summary": "{{count}} actions — as of {{time}}",
+      "pending": "Pending",
+      "filters": {
+        "from": "From",
+        "to": "To",
+        "userId": "User ID",
+        "actionType": "Action type",
+        "apply": "Apply filters"
+      },
+      "columns": {
+        "createdAt": "When",
+        "user": "User",
+        "action": "Action",
+        "role": "AI role",
+        "description": "Decision / artifact",
+        "outcome": "Outcome"
+      },
+      "empty": {
+        "title": "No agent actions in this range",
+        "description": "Widen the date range or clear the filters. AI suggestions and agent runs appear here as they happen."
+      },
+      "toasts": {
+        "loadError": "Failed to load agent decision trace"
+      }
+    },
+    "benchmark": {
+      "title": "Consulting Bench",
+      "description": "Regression benchmark for consulting-output quality — task bank, rubric, and LLM judge.",
+      "status": {
+        "builtLabel": "Harness status",
+        "built": "Built",
+        "builtDetail": "Task bank, rubric, and judge service are in place.",
+        "runLabel": "Latest graded run",
+        "pending": "Run pending",
+        "pendingDetail": "No graded run recorded yet — no score is shown until a run is produced."
+      },
+      "caveats": {
+        "title": "What this does not claim",
+        "noCompetitive": "No competitive comparison — this does not measure Consultify against other AI tools or consultants.",
+        "noHumanBaseline": "No human baseline — pass-rate refers only to this benchmark rubric, not to a real consultant.",
+        "regression": "Internal regression tool — it catches quality regressions between product versions, not a marketing claim.",
+        "llmJudge": "The judge is an LLM, not an auditor — verdicts carry the judge model’s own limits and variance."
       }
     },
     "placeholder": {

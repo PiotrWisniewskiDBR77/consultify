@@ -96,6 +96,53 @@ export async function getComplianceAuditExport(
   return res.data as AuditExportResult;
 }
 
+// ── Agent Decision Trace (HP-12) ────────────────────────────────────────
+
+export interface AgentDecisionEntry {
+  id: string;
+  createdAt: string;
+  userId: string | null;
+  userName: string | null;
+  actionType: string | null;
+  actionDescription: string | null;
+  aiRole: string | null;
+  aiSuggestion: string | null;
+  userDecision: string | null;
+  confidenceLevel: string | null;
+  projectId: string | null;
+}
+
+export interface AgentDecisionResult {
+  entries: AgentDecisionEntry[];
+  totalCount: number;
+  exportedAt: string;
+}
+
+export interface AgentDecisionFilters {
+  from?: string;
+  to?: string;
+  userId?: string;
+  actionType?: string;
+  limit?: number;
+}
+
+export async function getAgentDecisionTrace(
+  filters: AgentDecisionFilters = {}
+): Promise<AgentDecisionResult> {
+  const qs = buildQuery({
+    from: filters.from,
+    to: filters.to,
+    user_id: filters.userId,
+    action_type: filters.actionType,
+    limit: filters.limit !== undefined ? String(filters.limit) : undefined,
+  });
+  const res = await apiGet<ApiEnvelope<AgentDecisionResult>>(
+    `${BASE}/audit-trail/agent-decisions${qs}`,
+    'Failed to load agent decision trace'
+  );
+  return res.data as AgentDecisionResult;
+}
+
 export async function getComplianceCostAttribution(
   filters: CostAttributionFilters = {}
 ): Promise<CostAttributionResult> {
@@ -319,6 +366,7 @@ export async function setAiPolicy(policy: Partial<OrgAiPolicy>): Promise<OrgAiPo
 
 export const EnterpriseComplianceApi = {
   getComplianceAuditExport,
+  getAgentDecisionTrace,
   getComplianceCostAttribution,
   getDlpRules,
   createDlpRule,
