@@ -10322,6 +10322,23 @@
       "developmentRecommendationsTitle": "Development Recommendations",
       "risksTitle": "Risks",
       "kpisToMonitorTitle": "KPIs to Monitor"
+    },
+    "riskMatrix": {
+      "matrixTitle": "Transformation Risk Matrix",
+      "matrixSubtitle": "Impact vs Probability",
+      "criticalSuffix": "critical",
+      "risksSuffix": "risks",
+      "impactAxisLabel": "IMPACT →",
+      "probabilityAxisLabel": "PROBABILITY →",
+      "dropHereEmpty": "Drop here",
+      "noRisksEmpty": "No risks",
+      "impactHighLabel": "High",
+      "impactLowLabel": "Low",
+      "probabilityLowLabel": "Low",
+      "probabilityHighLabel": "High",
+      "impactLabel": "Impact",
+      "probabilityLabel": "Probability",
+      "removeRiskButton": "Remove risk"
     }
   },
   "auth": {

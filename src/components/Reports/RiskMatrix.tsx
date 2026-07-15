@@ -146,7 +146,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
   onRiskRemove,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [draggedRisk, setDraggedRisk] = useState<string | null>(null);
@@ -203,10 +203,10 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-            {isPolish ? 'Macierz Ryzyk Transformacji' : 'Transformation Risk Matrix'}
+            {t('reports.riskMatrix.matrixTitle', 'Transformation Risk Matrix')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Wpływ vs Prawdopodobieństwo' : 'Impact vs Probability'}
+            {t('reports.riskMatrix.matrixSubtitle', 'Impact vs Probability')}
           </p>
         </div>
 
@@ -215,12 +215,12 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-danger-100 dark:bg-danger-500/20 rounded-full">
             <AlertTriangle className="w-4 h-4 text-danger-600 dark:text-danger-400" />
             <span className="text-sm font-medium text-danger-700 dark:text-danger-300">
-              {stats.critical} {isPolish ? 'krytycznych' : 'critical'}
+              {stats.critical} {t('reports.riskMatrix.criticalSuffix', 'critical')}
             </span>
           </div>
           <div className="px-3 py-1.5 bg-slate-100 dark:bg-white/5 rounded-full">
             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              {stats.total} {isPolish ? 'ryzyk' : 'risks'}
+              {stats.total} {t('reports.riskMatrix.risksSuffix', 'risks')}
             </span>
           </div>
         </div>
@@ -230,10 +230,10 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
       <div className="relative">
         {/* Axis labels */}
         <div className="absolute -left-20 top-1/2 -translate-y-1/2 -rotate-90 text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
-          {isPolish ? 'WPŁYW →' : 'IMPACT →'}
+          {t('reports.riskMatrix.impactAxisLabel', 'IMPACT →')}
         </div>
         <div className="absolute left-1/2 -bottom-8 -translate-x-1/2 text-sm font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'PRAWDOPODOBIEŃSTWO →' : 'PROBABILITY →'}
+          {t('reports.riskMatrix.probabilityAxisLabel', 'PROBABILITY →')}
         </div>
 
         {/* Grid */}
@@ -310,12 +310,8 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                 {quadrantRisks.length === 0 && (
                   <div className="flex items-center justify-center h-20 text-sm text-slate-600 dark:text-slate-500">
                     {editable
-                      ? isPolish
-                        ? 'Przeciągnij tutaj'
-                        : 'Drop here'
-                      : isPolish
-                        ? 'Brak ryzyk'
-                        : 'No risks'}
+                      ? t('reports.riskMatrix.dropHereEmpty', 'Drop here')
+                      : t('reports.riskMatrix.noRisksEmpty', 'No risks')}
                   </div>
                 )}
               </div>
@@ -394,12 +390,8 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                 {quadrantRisks.length === 0 && (
                   <div className="flex items-center justify-center h-20 text-sm text-slate-600 dark:text-slate-500">
                     {editable
-                      ? isPolish
-                        ? 'Przeciągnij tutaj'
-                        : 'Drop here'
-                      : isPolish
-                        ? 'Brak ryzyk'
-                        : 'No risks'}
+                      ? t('reports.riskMatrix.dropHereEmpty', 'Drop here')
+                      : t('reports.riskMatrix.noRisksEmpty', 'No risks')}
                   </div>
                 )}
               </div>
@@ -409,12 +401,12 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
         {/* Axis arrows */}
         <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-between py-4 text-xs text-slate-600 dark:text-slate-500">
-          <span>{isPolish ? 'Wysoki' : 'High'}</span>
-          <span>{isPolish ? 'Niski' : 'Low'}</span>
+          <span>{t('reports.riskMatrix.impactHighLabel', 'High')}</span>
+          <span>{t('reports.riskMatrix.impactLowLabel', 'Low')}</span>
         </div>
         <div className="absolute left-8 right-0 -bottom-6 flex justify-between text-xs text-slate-600 dark:text-slate-500">
-          <span>{isPolish ? 'Niskie' : 'Low'}</span>
-          <span>{isPolish ? 'Wysokie' : 'High'}</span>
+          <span>{t('reports.riskMatrix.probabilityLowLabel', 'Low')}</span>
+          <span>{t('reports.riskMatrix.probabilityHighLabel', 'High')}</span>
         </div>
       </div>
 
@@ -491,7 +483,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                   }`}
                 >
                   <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {isPolish ? 'Wpływ' : 'Impact'}
+                    {t('reports.riskMatrix.impactLabel', 'Impact')}
                   </p>
                   <p
                     className={`font-semibold ${
@@ -501,12 +493,8 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     }`}
                   >
                     {selectedRisk.impact === 'high'
-                      ? isPolish
-                        ? 'Wysoki'
-                        : 'High'
-                      : isPolish
-                        ? 'Niski'
-                        : 'Low'}
+                      ? t('reports.riskMatrix.impactHighLabel', 'High')
+                      : t('reports.riskMatrix.impactLowLabel', 'Low')}
                   </p>
                 </div>
                 <div
@@ -517,7 +505,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                   }`}
                 >
                   <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
+                    {t('reports.riskMatrix.probabilityLabel', 'Probability')}
                   </p>
                   <p
                     className={`font-semibold ${
@@ -527,12 +515,8 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     }`}
                   >
                     {selectedRisk.probability === 'high'
-                      ? isPolish
-                        ? 'Wysokie'
-                        : 'High'
-                      : isPolish
-                        ? 'Niskie'
-                        : 'Low'}
+                      ? t('reports.riskMatrix.probabilityHighLabel', 'High')
+                      : t('reports.riskMatrix.probabilityLowLabel', 'Low')}
                   </p>
                 </div>
               </div>
@@ -545,7 +529,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                   }}
                   className="w-full mt-4 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
                 >
-                  {isPolish ? 'Usuń ryzyko' : 'Remove risk'}
+                  {t('reports.riskMatrix.removeRiskButton', 'Remove risk')}
                 </button>
               )}
             </motion.div>

@@ -9557,6 +9557,23 @@
       "developmentRecommendationsTitle": "Rekomendacje rozwojowe",
       "risksTitle": "Ryzyka",
       "kpisToMonitorTitle": "KPI do monitorowania"
+    },
+    "riskMatrix": {
+      "matrixTitle": "Macierz Ryzyk Transformacji",
+      "matrixSubtitle": "Wpływ vs Prawdopodobieństwo",
+      "criticalSuffix": "krytycznych",
+      "risksSuffix": "ryzyk",
+      "impactAxisLabel": "WPŁYW →",
+      "probabilityAxisLabel": "PRAWDOPODOBIEŃSTWO →",
+      "dropHereEmpty": "Przeciągnij tutaj",
+      "noRisksEmpty": "Brak ryzyk",
+      "impactHighLabel": "Wysoki",
+      "impactLowLabel": "Niski",
+      "probabilityLowLabel": "Niskie",
+      "probabilityHighLabel": "Wysokie",
+      "impactLabel": "Wpływ",
+      "probabilityLabel": "Prawdopodobieństwo",
+      "removeRiskButton": "Usuń ryzyko"
     }
   },
   "auth": {
