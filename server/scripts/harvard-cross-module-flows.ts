@@ -83,13 +83,13 @@ export const FLOWS: CrossModuleFlow[] = [
     note: 'convert→initiative/task_set/team_chat DZIAŁA; eksport serwerowy STUB',
   },
   {
-    id: 'B8b', name: 'Ideas — eksport serwerowy → Outputs', chain: 'M05→M17', status: 'stub',
+    id: 'B8b', name: 'Ideas — eksport serwerowy → Outputs', chain: 'M05→M17', status: 'partial',
     targetTables: ['idea_exports'],
     anchors: [
-      { file: 'server/src/services/finalBatchService.ts', needle: 'requestExport' },
+      { file: 'server/src/services/finalBatchService.ts', needle: 'requestAndGenerateExport' },
       { file: 'server/src/services/finalBatchService.ts', needle: 'idea_exports' },
     ],
-    note: 'STUB: wpis pending, plik nigdy nie powstaje (decyzja #9)',
+    note: 'PARTIAL: json/markdown generowane realnie (storage seam) za flagą IDEA_SERVER_EXPORT_ENABLED (default OFF, decyzja #9/DP-5); png/svg/pdf/… nadal wymagają client canvas → 501 zamiast fałszywego sukcesu',
   },
   {
     id: 'B9', name: 'Tabele Studio governed → Results/Finance/Execution', chain: 'M20→M15/M16/M14', status: 'stub',

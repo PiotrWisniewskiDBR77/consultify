@@ -29,13 +29,17 @@ import {
 import type { IdeaWorkspaceImportPayload } from './ideaSelectionTypes';
 
 /**
- * L-05 / D-01 / DP-5 — Server-side idea export is a STUB:
- * `POST /v4-final/ideas/:id/export` only records a row in `idea_exports`; no worker
- * ever produces a downloadable file (no `completeExport` caller). Per decision DP-5 we do
- * NOT build a server export worker — instead the server-export path is gated behind an
- * OFF-by-default flag. When off, no stub request is fired and no "server export" affordance
- * is presented as a working action. All genuinely-working CLIENT-side exports (PNG/SVG/PDF/
- * Markdown/JSON/package/mapping/share + report/presentation conversion) remain fully functional.
+ * L-05 / D-01 / DP-5 — Server-side idea export is OFF by default. Historically
+ * `POST /v4-final/ideas/:id/export` was a pure stub (records a row, no worker ever
+ * produced a file). It now has a real — but backend-flag-gated — generator for
+ * `json`/`markdown` (server/src/services/finalBatchService.ts#requestAndGenerateExport,
+ * env `IDEA_SERVER_EXPORT_ENABLED`, default OFF); formats needing a live canvas
+ * (png/svg/pdf/…) still can't be produced server-side and the endpoint fails those
+ * explicitly (501) rather than faking success. Per decision DP-5 this path stays
+ * gated behind THIS client flag: when off (default), no request is fired at all and
+ * no "server export" affordance is presented as a working action — all genuinely
+ * working exports run entirely CLIENT-side (PNG/SVG/PDF/Markdown/JSON/package/mapping/
+ * share + report/presentation conversion) and never depend on the server round-trip.
  */
 export const IDEA_SERVER_EXPORT_ENABLED = import.meta.env.VITE_ENABLE_IDEA_SERVER_EXPORT === 'true';
 

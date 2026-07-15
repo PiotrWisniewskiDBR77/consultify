@@ -12,6 +12,69 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { getStorage } from './storage/index.js';
+
+/**
+ * M05/wire-m05-export — server-side export used to be a pure stub: `requestExport`
+ * only inserted a `pending` row and NOTHING ever called `completeExport` (no worker
+ * existed). Per decision #9 / DP-5 the client never surfaces this path unless
+ * `VITE_ENABLE_IDEA_SERVER_EXPORT=true`; all genuinely-working exports (PNG/SVG/PDF/
+ * Markdown/JSON/…) already run entirely client-side (see IdeaExportMenu.tsx) and do
+ * NOT depend on this endpoint.
+ *
+ * This flag gates a REAL (thin) synchronous generator for the two formats that need
+ * no browser-side canvas rendering — `json` and `markdown` — built from the
+ * org-scoped `my_idea_maps` graph and written through the existing storage seam
+ * (server/src/services/storage). Formats that require rendering a live canvas
+ * (png/svg/pdf/package/mapping_report/share_manifest/report/presentation) are NOT
+ * fakeable server-side; when requested with the flag on they fail the export row
+ * and the route responds 501 rather than pretending to succeed.
+ *
+ * Default (flag OFF, unset in prod/demo) is UNCHANGED: requestExport just inserts
+ * the pending audit row, exactly like before.
+ */
+const IDEA_SERVER_EXPORT_ENABLED = process.env.IDEA_SERVER_EXPORT_ENABLED === 'true';
+
+/** Formats `generateExportFile` can produce without a browser-rendered canvas. */
+const SERVER_GENERATABLE_FORMATS = new Set(['json', 'markdown']);
+
+type IdeaMapRow = { nodes_json?: string | null; edges_json?: string | null };
+
+function safeParseArray(raw: unknown): any[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(String(raw));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function buildIdeaMarkdown(title: string, nodes: any[], edges: any[], footer: string): string {
+  const lines: string[] = [`# ${title || 'Idea Map'}`, ''];
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const childMap = new Map<string, any[]>();
+  for (const edge of edges) {
+    const children = childMap.get(edge.source) || [];
+    const target = nodeMap.get(edge.target);
+    if (target) children.push(target);
+    childMap.set(edge.source, children);
+  }
+  const rootNodes = nodes.filter((n) => !edges.some((e: any) => e.target === n.id));
+  const renderNode = (node: any, depth: number) => {
+    const label = node.data?.label || node.id;
+    const prefix = depth === 0 ? '## ' : '  '.repeat(depth - 1) + '- ';
+    lines.push(`${prefix}${label}`);
+    for (const child of childMap.get(node.id) || []) renderNode(child, depth + 1);
+  };
+  if (rootNodes.length > 0) {
+    for (const root of rootNodes) renderNode(root, 0);
+  } else {
+    for (const node of nodes) lines.push(`- ${node.data?.label || node.id}`);
+  }
+  lines.push('', '---', `*Exported from ${footer} (${new Date().toISOString().slice(0, 10)})*`);
+  return lines.join('\n');
+}
 
 class FinalBatchService {
   // ── V4-IDEA-06: Export ──
@@ -43,6 +106,123 @@ class FinalBatchService {
       ]
     );
     return { id };
+  }
+
+  /**
+   * Entry point used by the route: creates the audit row (unchanged behavior),
+   * then — ONLY when IDEA_SERVER_EXPORT_ENABLED is true — attempts real
+   * generation for server-generatable formats. Flag OFF returns exactly the
+   * legacy `{ id }` stub shape.
+   */
+  async requestAndGenerateExport(
+    orgId: string,
+    data: {
+      ideaId: string;
+      exportType: string;
+      exportFormat: string;
+      watermarkText?: string;
+      includeMetadata?: boolean;
+      requestedBy: string;
+    }
+  ): Promise<
+    | { id: string; status: 'pending' }
+    | { id: string; status: 'completed'; fileUrl: string; fileSizeBytes: number }
+    | { id: string; status: 'failed'; reason: 'unsupported_format' | 'idea_not_found'; message: string }
+  > {
+    const { id } = await this.requestExport(orgId, data);
+
+    if (!IDEA_SERVER_EXPORT_ENABLED) {
+      return { id, status: 'pending' };
+    }
+
+    if (!SERVER_GENERATABLE_FORMATS.has(data.exportFormat)) {
+      const message = `Server-side export not implemented for format "${data.exportFormat}" — it requires client-side canvas rendering. Use the in-app export (PNG/SVG/PDF/…) instead.`;
+      await this.failExport(id, message);
+      return { id, status: 'failed', reason: 'unsupported_format', message };
+    }
+
+    try {
+      const generated = await this.generateExportFile(orgId, data.ideaId, data.exportFormat, {
+        watermarkText: data.watermarkText,
+      });
+      if (!generated) {
+        const message = 'Idea map not found for this organization';
+        await this.failExport(id, message);
+        return { id, status: 'failed', reason: 'idea_not_found', message };
+      }
+      await this.completeExport(id, {
+        fileUrl: generated.fileUrl,
+        fileSizeBytes: generated.fileSizeBytes,
+      });
+      return {
+        id,
+        status: 'completed',
+        fileUrl: generated.fileUrl,
+        fileSizeBytes: generated.fileSizeBytes,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Export generation failed';
+      await this.failExport(id, message);
+      throw err;
+    }
+  }
+
+  /**
+   * Real generation for `json`/`markdown`: reads the org-scoped canonical
+   * `my_idea_maps` graph, renders the file, and writes it through the storage
+   * seam (local disk in dev, S3/R2 when STORAGE_PROVIDER=s3). Returns null if
+   * the idea/map doesn't exist in this org (never reaches across orgs).
+   */
+  private async generateExportFile(
+    orgId: string,
+    ideaId: string,
+    exportFormat: string,
+    opts: { watermarkText?: string }
+  ): Promise<{ fileUrl: string; fileSizeBytes: number } | null> {
+    const idea = await queryHelpers.queryFirst<{ title: string }>(
+      `SELECT title FROM my_ideas WHERE id=$1 AND organization_id=$2`,
+      [ideaId, orgId]
+    );
+    if (!idea) return null;
+
+    const map = await queryHelpers.queryFirst<IdeaMapRow>(
+      `SELECT nodes_json, edges_json FROM my_idea_maps WHERE idea_id=$1 AND organization_id=$2 AND is_canonical=TRUE LIMIT 1`,
+      [ideaId, orgId]
+    );
+    const nodes = safeParseArray(map?.nodes_json);
+    const edges = safeParseArray(map?.edges_json);
+    const footer = opts.watermarkText || 'Consultify Idea Workspace';
+
+    let body: string;
+    let contentType: string;
+    let ext: string;
+    if (exportFormat === 'markdown') {
+      body = buildIdeaMarkdown(idea.title, nodes, edges, footer);
+      contentType = 'text/markdown';
+      ext = 'md';
+    } else {
+      body = JSON.stringify(
+        {
+          id: ideaId,
+          title: idea.title,
+          exportedAt: new Date().toISOString(),
+          nodes,
+          edges,
+          watermark: footer,
+        },
+        null,
+        2
+      );
+      contentType = 'application/json';
+      ext = 'json';
+    }
+
+    const buffer = Buffer.from(body, 'utf-8');
+    const key = `idea-exports/${orgId}/${ideaId}-${uuidv4()}.${ext}`;
+    const storage = getStorage();
+    await storage.putObject({ key, body: buffer, contentType });
+    const fileUrl = await storage.getUrl(key);
+    return { fileUrl, fileSizeBytes: buffer.length };
   }
 
   async getExports(orgId: string, ideaId: string) {
