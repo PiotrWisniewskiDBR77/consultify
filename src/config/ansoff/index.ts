@@ -3,9 +3,12 @@
  *
  * SSOT for the Ansoff methodology content and its deterministic synthesis
  * engine. Cloned from the SWOT/Porter config pattern:
- *   - deepeningLadder.ts  : per-quadrant depth staircase + partner-grade proposal bank (PL/EN)
- *   - moveValidator.ts    : scoring, ranking, and W2 move sequencing (rationale/trade-off/rejected variant)
- *   - conclusionPrompts.ts: AI prompt builders grounded in the engine output
+ *   - deepeningLadder.ts   : per-quadrant depth staircase + partner-grade proposal bank (PL/EN)
+ *   - ansoffQuestionBank.ts: laddered, branching q-bank — growth claim -> forced evidence ->
+ *                            quantification -> sequencing & capability (OXFORD O3)
+ *   - moveValidator.ts     : scoring, ranking, coverage-gap detection, and W2 move sequencing
+ *                            (rationale/trade-off/rejected variant)
+ *   - conclusionPrompts.ts : AI prompt builders grounded in the engine output
  */
 
 import type { GrowthQuadrantId } from '@/store/useToolStore';
@@ -16,6 +19,7 @@ import {
   type LadderRung,
 } from './deepeningLadder';
 
+export * from './ansoffQuestionBank';
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
