@@ -53,6 +53,19 @@ const FLAGS = {
     localStorage: 'ff.results_three_pairs',
     env: 'VITE_RESULTS_THREE_PAIRS_ENABLED',
   },
+  // #M15/OC2 (2026-07-15): wires the 3 previously orphaned engines
+  // (kpiAnomalyService/kpiForecastService/deviationRcaSuggestService, added to
+  // v8/results.routes.ts in fala 3) into the deviation-case panel of
+  // KPITimeSeriesDrawer — anomaly badge, forecast projection, RCA hypothesis
+  // suggestions. Default OFF (rule #7: dev-render + Piotr's odbiór on
+  // screenshots before any default flip). NOT part of the threePairs D-D
+  // default-on set above — this is a brand-new AI surface, not a
+  // verified-ready cockpit screen.
+  deviationDiagnostics: {
+    query: 'ff_deviationDiagnostics',
+    localStorage: 'ff.results_deviation_diagnostics',
+    env: 'VITE_RESULTS_DEVIATION_DIAGNOSTICS_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsFlag = keyof typeof FLAGS;
@@ -100,6 +113,12 @@ export function isResultsFlagEnabled(flag: ResultsFlag): boolean {
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
+  // deviationDiagnostics (#M15/OC2): brand-new AI surface — rule #7 requires a
+  // dev-render + Piotr's odbiór BEFORE any default flip, so it is explicitly
+  // EXCLUDED from the D-D default-on set below. Stays default OFF everywhere
+  // (demo/stage/dev/prod); opt-in only via ?ff_deviationDiagnostics=1,
+  // localStorage, or the VITE env. Move it into the default-on set after odbiór.
+  if (flag === 'deviationDiagnostics') return false;
   // threePairs (#81/OC2): Piotr ZAAKCEPTOWAŁ redesign na zrzucie harness 07-13
   // (CLAUDE.md rule #7 spełniona) → dołączony do D-D default-on (demo/stage/dev),
   // prod pozostaje OFF. Opt-out: ?ff_resultsThreePairs=0.

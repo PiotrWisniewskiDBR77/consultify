@@ -463,4 +463,67 @@ describe('V8ResultsApi', () => {
     });
     expect(data.id).toBe('real-1');
   });
+
+  // #M15/OC2 (2026-07-15): wiring of the 3 previously orphaned Results engines
+  // (kpiAnomaly/kpiForecast/deviationRcaSuggest) into the V8 namespace.
+  it('requests KPI anomalies from the V8 namespace (no query when unset)', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      kpiId: 'kpi-1',
+      anomalies: [{ index: 4, value: 100, periodIso: '2026-05-01', method: 'zscore', severity: 'severe', score: 3.2 }],
+      summary: { hasAnomalies: true, count: 1 },
+    });
+
+    const data = await V8ResultsApi.getKpiAnomalies('kpi-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/results/kpis/kpi-1/anomalies');
+    expect(data.summary.hasAnomalies).toBe(true);
+    expect(data.anomalies[0].value).toBe(100);
+  });
+
+  it('appends only defined query overrides for KPI anomalies', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ kpiId: 'kpi-1', anomalies: [], summary: { hasAnomalies: false, count: 0 } });
+
+    await V8ResultsApi.getKpiAnomalies('kpi-1', { zThreshold: 2.5, iqrK: undefined });
+
+    expect(v8Get).toHaveBeenCalledWith('/results/kpis/kpi-1/anomalies?zThreshold=2.5');
+  });
+
+  it('requests KPI forecast from the V8 namespace and encodes the kpiId', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      kpiId: 'kpi/1',
+      target: 100,
+      direction: 'HIGHER_IS_BETTER',
+      trend: { slope: 30, intercept: 10 },
+      projection: { willHitTarget: true },
+      alert: null,
+      points: [],
+    });
+
+    const data = await V8ResultsApi.getKpiForecast('kpi/1', { deadlineT: 5 });
+
+    expect(v8Get).toHaveBeenCalledWith('/results/kpis/kpi%2F1/forecast?deadlineT=5');
+    expect(data.projection?.willHitTarget).toBe(true);
+    expect(data.trend.slope).toBe(30);
+  });
+
+  it('requests deviation-case RCA suggestions from the V8 namespace with judgment overrides', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      caseId: 'case-1',
+      kpiId: 'kpi-1',
+      signals: { deviationPct: -0.4, trend: 'declining', scopeChanged: true },
+      hypotheses: [{ category: 'scope', hypothesis: 'Scope creep diluted the effect', confidence: 0.7 }],
+      actions: [{ title: 'Re-baseline the initiative scope' }],
+    });
+
+    const data = await V8ResultsApi.getDeviationCaseRcaSuggest('case-1', {
+      scopeChanged: true,
+      adoptionScore: 0.1,
+    });
+
+    expect(v8Get).toHaveBeenCalledWith(
+      '/results/deviation-cases/case-1/rca-suggest?scopeChanged=true&adoptionScore=0.1'
+    );
+    expect(data.hypotheses[0].category).toBe('scope');
+    expect(data.actions[0].title).toContain('Re-baseline');
+  });
 });

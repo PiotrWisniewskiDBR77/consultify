@@ -25,11 +25,14 @@ import {
   shouldFallbackToLegacyResults,
   V8ResultsApi,
   type V8ResultsCreateKpiMappingPayload,
+  type V8ResultsRcaAction,
+  type V8ResultsRcaHypothesis,
   type V8ResultsUpdateKpiPayload,
 } from '@/services/api/v8/results';
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
 import type { KpiDrawerSection } from './kpiDomain';
+import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { buildLinkedInitiatives, dedupeInitiativeOptions } from './resultsLineage';
 
 interface KPITimeSeriesDrawerProps {
@@ -153,6 +156,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [newActionTitle, setNewActionTitle] = useState('');
   const [newActionDue, setNewActionDue] = useState('');
   const [caseBusy, setCaseBusy] = useState(false);
+  // #M15/OC2: RCA-suggest diagnostics (flag deviationDiagnostics, default OFF).
+  const [rcaSuggestBusy, setRcaSuggestBusy] = useState(false);
+  const [rcaHypotheses, setRcaHypotheses] = useState<V8ResultsRcaHypothesis[] | null>(null);
+  const [rcaActions, setRcaActions] = useState<V8ResultsRcaAction[] | null>(null);
   const [closeEvidenceText, setCloseEvidenceText] = useState('');
   const [closeEvidenceRef, setCloseEvidenceRef] = useState('');
   const [closeResolutionNotes, setCloseResolutionNotes] = useState('');
@@ -1053,6 +1060,26 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     }
   }, [openCase?.id, rcaDraft, fetchData]);
 
+  // #M15/OC2: pull heuristic RCA hypotheses + actions from the (formerly
+  // orphaned) deviationRcaSuggestService via the V8 rca-suggest endpoint.
+  // Read-only — does NOT persist rca_text; the user still saves via handleSaveRca.
+  const handleSuggestRca = useCallback(async () => {
+    if (!openCase?.id) return;
+    setRcaSuggestBusy(true);
+    try {
+      const res = await V8ResultsApi.getDeviationCaseRcaSuggest(openCase.id);
+      setRcaHypotheses(Array.isArray(res?.hypotheses) ? res.hypotheses : []);
+      setRcaActions(Array.isArray(res?.actions) ? res.actions : []);
+    } catch (error) {
+      // No legacy fallback exists for this new engine — surface and stop.
+      toast.error(t('results.deviation.rcaSuggestError', 'Could not generate RCA suggestions'));
+      // eslint-disable-next-line no-console
+      console.error('rca-suggest failed', error);
+    } finally {
+      setRcaSuggestBusy(false);
+    }
+  }, [openCase?.id, t]);
+
   const handleAddAction = useCallback(async () => {
     if (!openCase?.id || !newActionTitle.trim()) return;
     setCaseBusy(true);
@@ -1429,6 +1456,62 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       >
                         {t('common.save', 'Save')}
                       </button>
+
+                      {isResultsFlagEnabled('deviationDiagnostics') ? (
+                        <button
+                          type="button"
+                          disabled={rcaSuggestBusy}
+                          onClick={() => void handleSuggestRca()}
+                          className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors inline-flex items-center gap-1.5 disabled:opacity-60"
+                        >
+                          <Sparkles size={13} />
+                          {rcaSuggestBusy
+                            ? t('results.deviation.rcaSuggesting', 'Analyzing…')
+                            : t('results.deviation.rcaSuggest', 'Suggest root causes')}
+                        </button>
+                      ) : null}
+
+                      {isResultsFlagEnabled('deviationDiagnostics') &&
+                      rcaHypotheses &&
+                      rcaHypotheses.length > 0 ? (
+                        <div className="mt-1 space-y-1.5">
+                          {rcaHypotheses.map((h, i) => (
+                            <button
+                              key={`${h.category}-${i}`}
+                              type="button"
+                              onClick={() =>
+                                setRcaDraft((prev) =>
+                                  prev.trim() ? `${prev}\n${h.hypothesis}` : h.hypothesis
+                                )
+                              }
+                              title={t(
+                                'results.deviation.rcaSuggestApply',
+                                'Click to append to root cause analysis'
+                              )}
+                              className="w-full text-left rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                  {h.category}
+                                </span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                  {Math.round((h.confidence ?? 0) * 100)}%
+                                </span>
+                              </div>
+                              <div className="text-xs text-slate-700 dark:text-slate-200 mt-0.5">
+                                {h.hypothesis}
+                              </div>
+                            </button>
+                          ))}
+                          {rcaActions && rcaActions.length > 0 ? (
+                            <ul className="list-disc pl-5 pt-1 space-y-0.5 text-[11px] text-slate-600 dark:text-slate-300">
+                              {rcaActions.map((a, i) => (
+                                <li key={i}>{a.title}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="space-y-2">
