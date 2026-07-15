@@ -2393,7 +2393,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         render: (row: TableRow) => {
           const task = row as unknown as Task;
           const assigneeName = taskAssigneeName(task) || 'Unassigned';
-          const assigneeInitial = assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
+          const assigneeInitial =
+            assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
           return (
             <div className="flex items-center gap-2">
               {assigneeInitial ? (
@@ -2405,7 +2406,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               )}
               <span
                 className={`text-xs truncate max-w-[120px] ${
-                  assigneeName === 'Unassigned' ? 'text-c-text-muted italic' : 'text-c-text-secondary'
+                  assigneeName === 'Unassigned'
+                    ? 'text-c-text-muted italic'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 {assigneeName}
@@ -2760,7 +2763,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 }}
                 selection={{ selectedIds, onChange: setSelectedIds }}
                 empty={{
-                  title: t('myWork.personalTasks.empty.title', 'No personal tasks in the current scope'),
+                  title: t(
+                    'myWork.personalTasks.empty.title',
+                    'No personal tasks in the current scope'
+                  ),
                   description: t(
                     'myWork.personalTasks.empty.description',
                     'This view shows only personal tasks assigned in the active organization.'

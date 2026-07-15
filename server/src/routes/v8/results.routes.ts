@@ -1140,12 +1140,7 @@ router.get(
 
     const target = kpi?.target_value != null ? Number(kpi.target_value) : null;
     let deviationPct: number | undefined;
-    if (
-      measurement?.value != null &&
-      target != null &&
-      Number.isFinite(target) &&
-      target !== 0
-    ) {
+    if (measurement?.value != null && target != null && Number.isFinite(target) && target !== 0) {
       deviationPct = (Number(measurement.value) - target) / Math.abs(target);
     }
 
@@ -1715,8 +1710,7 @@ router.get(
       zThresholdRaw != null && Number.isFinite(Number(zThresholdRaw))
         ? Number(zThresholdRaw)
         : undefined;
-    const iqrK =
-      iqrKRaw != null && Number.isFinite(Number(iqrKRaw)) ? Number(iqrKRaw) : undefined;
+    const iqrK = iqrKRaw != null && Number.isFinite(Number(iqrKRaw)) ? Number(iqrKRaw) : undefined;
     const severeZThreshold =
       severeZThresholdRaw != null && Number.isFinite(Number(severeZThresholdRaw))
         ? Number(severeZThresholdRaw)
@@ -1788,7 +1782,11 @@ router.get(
     // the service is time-unit-agnostic, so an ordinal index keeps callers from
     // having to pass timestamps while still supporting the deadlineT query override.
     const points = (rows || [])
-      .map((r, i) => ({ t: i, value: Number(r.value), periodIso: r.period_start || r.measured_at || null }))
+      .map((r, i) => ({
+        t: i,
+        value: Number(r.value),
+        periodIso: r.period_start || r.measured_at || null,
+      }))
       .filter((p) => Number.isFinite(p.value));
 
     const trend = linearTrend(points);
