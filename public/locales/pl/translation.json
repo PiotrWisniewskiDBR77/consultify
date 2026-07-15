@@ -25309,6 +25309,35 @@
       "convertTaskSet": "Zadania",
       "convertReport": "Raport",
       "convertAnalysis": "Analiza"
+    },
+    "propertiesPanel": {
+      "emptyState": "Zaznacz węzeł lub krawędź, aby zobaczyć właściwości",
+      "edgeSectionTitle": "Krawędź",
+      "label": "Etykieta",
+      "edgeTypeTitle": "Typ krawędzi",
+      "edgeKindSequence": "Sekwencja",
+      "edgeKindConditional": "Warunkowa",
+      "edgeKindMessage": "Komunikat",
+      "orthogonalRouting": "Routing ortogonalny",
+      "conditionTypeTitle": "Warunek",
+      "conditionYes": "Tak",
+      "conditionNo": "Nie",
+      "conditionDefault": "Domyślny",
+      "conditionException": "Wyjątek",
+      "nodeTypeTitle": "Typ węzła",
+      "unknownShape": "nieznany",
+      "gatewayKindTitle": "Rodzaj bramki",
+      "laneTitle": "Tor",
+      "metadataTitle": "Metadane",
+      "descriptionField": "Opis",
+      "assigneeField": "Przypisany",
+      "metricsTitle": "Metryki",
+      "durationField": "Czas trwania",
+      "unitField": "Jedn.",
+      "unitHour": "godz.",
+      "unitDay": "dni",
+      "costField": "Koszt",
+      "fteField": "Liczba FTE"
     }
   }
 }

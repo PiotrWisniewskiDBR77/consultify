@@ -24233,6 +24233,35 @@
       "convertTaskSet": "Task set",
       "convertReport": "Report",
       "convertAnalysis": "Analysis"
+    },
+    "propertiesPanel": {
+      "emptyState": "Select a node or edge to view properties",
+      "edgeSectionTitle": "Edge properties",
+      "label": "Label",
+      "edgeTypeTitle": "Edge type",
+      "edgeKindSequence": "Sequence",
+      "edgeKindConditional": "Conditional",
+      "edgeKindMessage": "Message",
+      "orthogonalRouting": "Orthogonal routing",
+      "conditionTypeTitle": "Condition type",
+      "conditionYes": "Yes",
+      "conditionNo": "No",
+      "conditionDefault": "Default",
+      "conditionException": "Exception",
+      "nodeTypeTitle": "Node type",
+      "unknownShape": "unknown",
+      "gatewayKindTitle": "Gateway kind",
+      "laneTitle": "Lane",
+      "metadataTitle": "Metadata",
+      "descriptionField": "Description",
+      "assigneeField": "Assignee",
+      "metricsTitle": "Metrics",
+      "durationField": "Duration",
+      "unitField": "Unit",
+      "unitHour": "h",
+      "unitDay": "d",
+      "costField": "Cost",
+      "fteField": "FTE count"
     }
   }
 }
