@@ -20,6 +20,26 @@
  */
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
+
+/**
+ * This module receives `isPl` as an explicit parameter (not read from global
+ * i18next state) so output stays deterministic regardless of the app's
+ * current active language. `tr()` mirrors that by forcing the i18next `lng`
+ * per-call instead of using the reactive `useTranslation()` hook.
+ */
+function tr(
+  isPl: boolean,
+  key: string,
+  defaultValue: string,
+  vars?: Record<string, unknown>
+): string {
+  return i18n.t(`processFlow.generateReadback.${key}`, defaultValue, {
+    lng: isPl ? 'pl' : 'en',
+    ...vars,
+  });
+}
+
 export interface ReadbackStep {
   type: 'step' | 'decision' | 'parallel_split' | 'parallel_join' | 'start' | 'end';
   label: string;
@@ -46,12 +66,14 @@ function nodeShape(node: Node): string {
   return String(node.data?.shape || node.type || '');
 }
 
-function nodeLabel(node: Node, lanes: LaneLike[], isPl: boolean): string {
+function nodeLabel(node: Node, lanes: LaneLike[]): string {
   const baseLabel = String(node.data?.label || node.id);
   const laneId = node.data?.laneId as string | undefined;
   const lane = laneId ? lanes.find((l) => l.id === laneId) : undefined;
   if (lane?.label) {
-    return isPl ? `${baseLabel} (${lane.label})` : `${baseLabel} (${lane.label})`;
+    // Not a translation: same concatenation for both languages. `isPl` param
+    // removed here — it never affected the output (dead branch).
+    return `${baseLabel} (${lane.label})`;
   }
   return baseLabel;
 }
@@ -95,9 +117,7 @@ function traverse(
     // Cycle: close the branch here rather than recursing again.
     return {
       type: 'step',
-      label: isPl
-        ? `Powrót do: ${nodeLabel(node, lanes, isPl)}`
-        : `Back to: ${nodeLabel(node, lanes, isPl)}`,
+      label: tr(isPl, 'backTo', 'Back to: {{label}}', { label: nodeLabel(node, lanes) }),
       object_id: `cycle-${nodeId}-${Math.random().toString(36).slice(2, 6)}`,
     };
   }
@@ -107,7 +127,7 @@ function traverse(
 
   const step: ReadbackStep = {
     type: stepTypeForNode(node),
-    label: nodeLabel(node, lanes, isPl),
+    label: nodeLabel(node, lanes),
     object_id: nodeId,
   };
 
@@ -126,7 +146,7 @@ function traverse(
       if (label) {
         branchSteps.push({
           type: 'step',
-          label: isPl ? `Gałąź: ${label}` : `Branch: ${label}`,
+          label: tr(isPl, 'branchLabel', 'Branch: {{label}}', { label }),
           object_id: `branch-label-${edge.id}`,
         });
       }
@@ -211,23 +231,23 @@ export function generateReadback(
   const unreachable = flowNodes.filter((n) => !globalVisited.has(n.id));
   if (unreachable.length > 0) {
     warnings.push(
-      isPl
-        ? `${unreachable.length} węzeł/węzły nieosiągalne z punktu startowego`
-        : `${unreachable.length} node(s) unreachable from any start node`
+      tr(isPl, 'unreachableWarning', '{{value}} node(s) unreachable from any start node', {
+        value: unreachable.length,
+      })
     );
     for (const node of unreachable) {
       paths.push({
         type: 'step',
-        label: isPl
-          ? `Nieosiągalny: ${nodeLabel(node, lanes, isPl)}`
-          : `Unreachable: ${nodeLabel(node, lanes, isPl)}`,
+        label: tr(isPl, 'unreachableNode', 'Unreachable: {{label}}', {
+          label: nodeLabel(node, lanes),
+        }),
         object_id: node.id,
       });
     }
   }
 
   if (rootsInOrder.length === 0 && flowNodes.length > 0) {
-    warnings.push(isPl ? 'Nie znaleziono węzła startowego' : 'No start node found for traversal');
+    warnings.push(tr(isPl, 'noStartNode', 'No start node found for traversal'));
   }
 
   return { paths, warnings };
@@ -239,7 +259,7 @@ export function generateReadback(
  */
 export function readbackToText(result: ReadbackResult, isPl = false): string {
   const lines: string[] = [];
-  const title = isPl ? 'Odczyt semantyczny procesu' : 'Process Semantic Readback';
+  const title = tr(isPl, 'title', 'Process Semantic Readback');
   lines.push(title);
   lines.push('='.repeat(title.length));
   lines.push('');
@@ -250,7 +270,7 @@ export function readbackToText(result: ReadbackResult, isPl = false): string {
     if (step.branches && step.branches.length > 0) {
       step.branches.forEach((branch, i) => {
         if (step.branches!.length > 1) {
-          lines.push(`${'  '.repeat(depth + 1)}${isPl ? 'Gałąź' : 'Branch'} ${i + 1}:`);
+          lines.push(`${'  '.repeat(depth + 1)}${tr(isPl, 'branchWord', 'Branch')} ${i + 1}:`);
         }
         branch.forEach((child) => walk(child, depth + (step.branches!.length > 1 ? 2 : 1)));
       });
@@ -263,7 +283,7 @@ export function readbackToText(result: ReadbackResult, isPl = false): string {
 
   if (result.warnings.length > 0) {
     lines.push('');
-    lines.push(isPl ? 'Ostrzeżenia:' : 'Warnings:');
+    lines.push(tr(isPl, 'warningsLabel', 'Warnings:'));
     for (const w of result.warnings) lines.push(`  - ${w}`);
   }
 

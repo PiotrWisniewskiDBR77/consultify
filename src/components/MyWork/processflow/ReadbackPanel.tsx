@@ -9,6 +9,7 @@ import {
   Square,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/Button';
 
@@ -95,17 +96,16 @@ const ReadbackStepRow: React.FC<{
 export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
   result,
   isLoading,
-  isPl,
   onFetchReadback,
   onClickStep,
 }) => {
-  const t = {
-    title: isPl ? 'Odczyt semantyczny' : 'Semantic Readback',
-    cta: isPl ? 'Generuj odczyt' : 'Generate readback',
-    empty: isPl
-      ? 'Uruchom odczyt, aby zobaczyć przejście przepływu procesu'
-      : 'Run readback to see the process flow traversal',
-    warnings: isPl ? 'Ostrzeżenia' : 'Warnings',
+  const { t } = useTranslation();
+  // Renamed from a local `t` object (would have shadowed react-i18next's `t`).
+  const labels = {
+    title: t('processFlow.readbackPanel.title', 'Semantic Readback'),
+    cta: t('processFlow.readbackPanel.cta', 'Generate readback'),
+    empty: t('processFlow.readbackPanel.empty', 'Run readback to see the process flow traversal'),
+    warnings: t('processFlow.readbackPanel.warnings', 'Warnings'),
   };
 
   const hasPaths = Boolean(result?.paths?.length);
@@ -115,7 +115,7 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-            {t.title}
+            {labels.title}
           </div>
         </div>
         <Button
@@ -125,7 +125,7 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
           disabled={isLoading}
           icon={isLoading ? <Loader2 size={14} className="animate-spin" /> : undefined}
         >
-          {t.cta}
+          {labels.cta}
         </Button>
       </div>
 
@@ -136,7 +136,7 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
       ) : null}
 
       {!isLoading && !hasPaths ? (
-        <p className="py-6 text-center text-xs text-c-text-muted">{t.empty}</p>
+        <p className="py-6 text-center text-xs text-c-text-muted">{labels.empty}</p>
       ) : null}
 
       {hasPaths ? (
@@ -155,7 +155,7 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
         <div className="rounded-lg border border-warning-200/70 bg-warning-50/60 p-2.5 dark:border-warning-500/25 dark:bg-warning-950/20">
           <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-warning-800 dark:text-warning-200">
             <AlertTriangle size={12} />
-            {t.warnings}
+            {labels.warnings}
           </div>
           <ul className="flex flex-col gap-1">
             {result.warnings.map((w, i) => (

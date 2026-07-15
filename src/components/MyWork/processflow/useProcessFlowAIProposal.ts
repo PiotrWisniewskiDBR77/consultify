@@ -22,6 +22,7 @@
 import { useCallback, useState } from 'react';
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 
 import type { ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
@@ -35,6 +36,23 @@ import {
 import { generateReadback, readbackToText } from './generateReadback';
 import type { Lane } from './useProcessFlowNodes';
 import { validateFlow } from './validateFlow';
+
+/**
+ * `isPl` is threaded explicitly through this hook's opts (not read from
+ * global i18next state), so `tr()` forces the i18next `lng` per-call to stay
+ * behaviorally identical to the old inline ternaries.
+ */
+function tr(
+  isPl: boolean,
+  key: string,
+  defaultValue: string,
+  vars?: Record<string, unknown>
+): string {
+  return i18n.t(`processFlow.aiProposal.${key}`, defaultValue, {
+    lng: isPl ? 'pl' : 'en',
+    ...vars,
+  });
+}
 
 export interface AIProposalOp {
   action: 'create' | 'delete' | 'connect' | 'move' | 'update_label';
@@ -84,29 +102,55 @@ export interface UseProcessFlowAIProposalOpts {
 function localizeWarning(w: ApplyPatchWarning, isPl: boolean): string {
   switch (w.code) {
     case 'unknown_lane_fallback':
-      return isPl
-        ? `Nieznany lane "${w.detail}" — węzeł "${w.objectId}" trafi do pierwszego lane`
-        : `Unknown lane "${w.detail}" — node "${w.objectId}" assigned to the first lane`;
+      return tr(
+        isPl,
+        'warning.unknownLaneFallback',
+        'Unknown lane "{{detail}}" — node "{{objectId}}" assigned to the first lane',
+        { detail: w.detail, objectId: w.objectId }
+      );
     case 'duplicate_node_skipped':
-      return isPl
-        ? `Węzeł "${w.objectId}" już istnieje — pominięto`
-        : `Node "${w.objectId}" already exists — skipped`;
+      return tr(
+        isPl,
+        'warning.duplicateNodeSkipped',
+        'Node "{{objectId}}" already exists — skipped',
+        {
+          objectId: w.objectId,
+        }
+      );
     case 'duplicate_edge_skipped':
-      return isPl
-        ? `Połączenie "${w.objectId}" już istnieje — pominięto`
-        : `Edge "${w.objectId}" already exists — skipped`;
+      return tr(
+        isPl,
+        'warning.duplicateEdgeSkipped',
+        'Edge "{{objectId}}" already exists — skipped',
+        {
+          objectId: w.objectId,
+        }
+      );
     case 'dangling_edge_skipped':
-      return isPl
-        ? `Połączenie "${w.objectId}" (${w.detail}) wskazuje nieistniejący węzeł — pominięto`
-        : `Edge "${w.objectId}" (${w.detail}) references a missing node — skipped`;
+      return tr(
+        isPl,
+        'warning.danglingEdgeSkipped',
+        'Edge "{{objectId}}" ({{detail}}) references a missing node — skipped',
+        { objectId: w.objectId, detail: w.detail }
+      );
     case 'unknown_update_target':
-      return isPl
-        ? `Aktualizacja "${w.objectId}" pominięta — węzeł nie istnieje`
-        : `Update for "${w.objectId}" skipped — node does not exist`;
+      return tr(
+        isPl,
+        'warning.unknownUpdateTarget',
+        'Update for "{{objectId}}" skipped — node does not exist',
+        {
+          objectId: w.objectId,
+        }
+      );
     case 'unknown_move_target':
-      return isPl
-        ? `Przesunięcie "${w.objectId}" pominięte — węzeł nie istnieje`
-        : `Move for "${w.objectId}" skipped — node does not exist`;
+      return tr(
+        isPl,
+        'warning.unknownMoveTarget',
+        'Move for "{{objectId}}" skipped — node does not exist',
+        {
+          objectId: w.objectId,
+        }
+      );
     default:
       return w.code;
   }
@@ -226,9 +270,11 @@ export function useProcessFlowAIProposal({
         );
         if (!proposal) {
           setError(
-            isPl
-              ? 'AI nie zwróciło propozycji zmian dla tego procesu. Doprecyzuj instrukcję i spróbuj ponownie.'
-              : 'AI returned no change proposal for this process. Refine the prompt and try again.'
+            tr(
+              isPl,
+              'errorNoProposal',
+              'AI returned no change proposal for this process. Refine the prompt and try again.'
+            )
           );
           return;
         }
@@ -250,7 +296,7 @@ export function useProcessFlowAIProposal({
           summary:
             proposal.rationale ||
             proposal.resultSummary ||
-            (isPl ? 'Propozycja zmian w procesie' : 'Proposed process changes'),
+            tr(isPl, 'defaultSummary', 'Proposed process changes'),
           operations: patchToOperations(proposal.patch),
           risk_flags: sim.warnings.map((w) => localizeWarning(w, isPl)),
           validation_before: {
@@ -273,9 +319,7 @@ export function useProcessFlowAIProposal({
         const message = err instanceof Error && err.message ? err.message : null;
         setError(
           message ||
-            (isPl
-              ? 'Nie udało się wygenerować propozycji AI. Spróbuj ponownie.'
-              : 'Failed to generate the AI proposal. Please try again.')
+            tr(isPl, 'errorGenerate', 'Failed to generate the AI proposal. Please try again.')
         );
       } finally {
         setIsGenerating(false);

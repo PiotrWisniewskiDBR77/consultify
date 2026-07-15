@@ -11,6 +11,18 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
+import i18n from '@/i18n';
+
+/**
+ * `getNodeContextActions` / `getCanvasContextActions` below are plain
+ * exported functions (not components/hooks) called from IdeaProcessFlowTool
+ * with an explicit `isPl` — `tr()` forces the i18next `lng` per-call so
+ * behavior stays identical to the old inline ternaries.
+ */
+function tr(isPl: boolean, key: string, defaultValue: string): string {
+  return i18n.t(`processFlow.contextMenu.${key}`, defaultValue, { lng: isPl ? 'pl' : 'en' });
+}
+
 interface ContextMenuAction {
   id: string;
   label: string;
@@ -103,14 +115,14 @@ export function getNodeContextActions(opts: {
     // Open / inspect
     {
       id: 'properties',
-      label: opts.isPl ? 'Otwórz właściwości' : 'Open properties',
+      label: tr(opts.isPl, 'openProperties', 'Open properties'),
       icon: <Settings size={14} />,
       onClick: opts.onOpenProperties,
     },
     // Context edits
     {
       id: 'edit',
-      label: opts.isPl ? 'Edytuj etykietę' : 'Edit label',
+      label: tr(opts.isPl, 'editLabel', 'Edit label'),
       icon: <Pencil size={14} />,
       onClick: opts.onEditLabel,
       disabled: opts.locked,
@@ -118,7 +130,7 @@ export function getNodeContextActions(opts: {
     },
     {
       id: 'duplicate',
-      label: opts.isPl ? 'Duplikuj' : 'Duplicate',
+      label: tr(opts.isPl, 'duplicate', 'Duplicate'),
       icon: <Copy size={14} />,
       onClick: opts.onDuplicate,
       disabled: opts.locked,
@@ -128,7 +140,7 @@ export function getNodeContextActions(opts: {
   if (opts.onAutoLayout) {
     items.push({
       id: 'auto-layout',
-      label: opts.isPl ? 'Auto-układ' : 'Auto-layout',
+      label: tr(opts.isPl, 'autoLayout', 'Auto-layout'),
       icon: <LayoutGrid size={14} />,
       onClick: opts.onAutoLayout,
       disabled: opts.locked,
@@ -138,7 +150,7 @@ export function getNodeContextActions(opts: {
   if (opts.onConvertInitiative) {
     items.push({
       id: 'convert-initiative',
-      label: opts.isPl ? 'Konwertuj na inicjatywę' : 'Convert to initiative',
+      label: tr(opts.isPl, 'convertToInitiative', 'Convert to initiative'),
       icon: <Rocket size={14} />,
       onClick: opts.onConvertInitiative,
       disabled: opts.locked,
@@ -148,7 +160,7 @@ export function getNodeContextActions(opts: {
 
   items.push({
     id: 'delete',
-    label: opts.isPl ? 'Usuń' : 'Delete',
+    label: tr(opts.isPl, 'delete', 'Delete'),
     icon: <Trash2 size={14} />,
     onClick: opts.onDelete,
     danger: true,
@@ -170,28 +182,28 @@ export function getCanvasContextActions(opts: {
   return [
     {
       id: 'add-action',
-      label: opts.isPl ? 'Dodaj akcję' : 'Add action',
+      label: tr(opts.isPl, 'addAction', 'Add action'),
       icon: <Plus size={14} />,
       onClick: () => opts.onAddNode('action'),
       disabled: opts.locked,
     },
     {
       id: 'add-decision',
-      label: opts.isPl ? 'Dodaj decyzję' : 'Add decision',
+      label: tr(opts.isPl, 'addDecision', 'Add decision'),
       icon: <GitBranch size={14} />,
       onClick: () => opts.onAddNode('decision'),
       disabled: opts.locked,
     },
     {
       id: 'paste',
-      label: opts.isPl ? 'Wklej' : 'Paste',
+      label: tr(opts.isPl, 'paste', 'Paste'),
       icon: <ClipboardPaste size={14} />,
       onClick: opts.onPaste,
       disabled: opts.locked,
     },
     {
       id: 'layout',
-      label: opts.isPl ? 'Auto-układ' : 'Auto-layout',
+      label: tr(opts.isPl, 'autoLayout', 'Auto-layout'),
       icon: <LayoutGrid size={14} />,
       onClick: opts.onAutoLayout,
       disabled: opts.locked,

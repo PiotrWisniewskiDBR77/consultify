@@ -1,5 +1,6 @@
 import { Download, FileJson, FileText, Image, Loader2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/Button';
 import {
@@ -25,26 +26,27 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   onClose,
   onExport,
   isExporting,
-  isPl,
 }) => {
+  const { t } = useTranslation();
   const formats: { id: ExportFormat; icon: React.ReactNode; title: string; desc: string }[] = [
     {
       id: 'json',
       icon: <FileJson size={20} />,
-      title: isPl ? 'JSON (Machine Export)' : 'JSON (Machine Export)',
-      desc: isPl ? 'Typowany graf do integracji' : 'Typed graph for integration',
+      // Identical in both locales in the original — not translated.
+      title: 'JSON (Machine Export)',
+      desc: t('processFlow.exportDialog.jsonDesc', 'Typed graph for integration'),
     },
     {
       id: 'readback',
       icon: <FileText size={20} />,
-      title: isPl ? 'Tekst (Human Readback)' : 'Text (Human Readback)',
-      desc: isPl ? 'Czytelna ścieżka procesu' : 'Human-readable process path',
+      title: t('processFlow.exportDialog.readbackTitle', 'Text (Human Readback)'),
+      desc: t('processFlow.exportDialog.readbackDesc', 'Human-readable process path'),
     },
     {
       id: 'png',
       icon: <Image size={20} />,
       title: 'PNG',
-      desc: isPl ? 'Zrzut ekranu canvas' : 'Canvas screenshot',
+      desc: t('processFlow.exportDialog.pngDesc', 'Canvas screenshot'),
     },
   ];
 
@@ -53,10 +55,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       <DialogContent className="sm:max-w-sm bg-c-surface border-c-border-subtle">
         <DialogHeader>
           <DialogTitle className="text-c-text">
-            {isPl ? 'Eksport procesu' : 'Export process'}
+            {t('processFlow.exportDialog.title', 'Export process')}
           </DialogTitle>
           <DialogDescription>
-            {isPl ? 'Wybierz format eksportu' : 'Choose export format'}
+            {t('processFlow.exportDialog.description', 'Choose export format')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">

@@ -14,6 +14,7 @@
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Ban } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import type { Edge } from 'reactflow';
+import { type TFunction, useTranslation } from 'react-i18next';
 
 export type EdgeArrowDirection = 'none' | 'start' | 'end' | 'both';
 export type EdgeStrokeStyle = 'solid' | 'dashed';
@@ -32,11 +33,11 @@ const ARROW_OPTIONS: Array<{
   { id: 'both', icon: ArrowLeftRight },
 ];
 
-const arrowLabel = (id: EdgeArrowDirection, isPl: boolean): string => {
-  if (id === 'none') return isPl ? 'Brak' : 'None';
-  if (id === 'end') return isPl ? 'Koniec' : 'End';
-  if (id === 'start') return isPl ? 'Start' : 'Start';
-  return isPl ? 'Obie strony' : 'Both';
+const arrowLabel = (id: EdgeArrowDirection, t: TFunction): string => {
+  if (id === 'none') return t('processFlow.edgeStylePopover.arrowNone', 'None');
+  if (id === 'end') return t('processFlow.edgeStylePopover.arrowEnd', 'End');
+  if (id === 'start') return t('processFlow.edgeStylePopover.arrowStart', 'Start');
+  return t('processFlow.edgeStylePopover.arrowBoth', 'Both');
 };
 
 interface EdgeStylePopoverProps {
@@ -53,7 +54,6 @@ interface EdgeStylePopoverProps {
 }
 
 export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
-  isPl,
   edge,
   locked,
   x,
@@ -64,6 +64,7 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
   onArrowChange,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const popoverRef = useRef<HTMLDivElement>(null);
   const [labelDraft, setLabelDraft] = useState(String(edge.label ?? edge.data?.label ?? ''));
 
@@ -112,7 +113,7 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
       {/* Label */}
       <div className="mb-2">
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
-          {isPl ? 'Etykieta' : 'Label'}
+          {t('processFlow.edgeStylePopover.label', 'Label')}
         </div>
         <input
           value={labelDraft}
@@ -129,12 +130,12 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
       {/* Color */}
       <div className="mb-2">
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
-          {isPl ? 'Kolor' : 'Color'}
+          {t('processFlow.edgeStylePopover.color', 'Color')}
         </div>
         <div className="flex flex-wrap gap-1">
           <button
             type="button"
-            title={isPl ? 'Automatyczny' : 'Auto'}
+            title={t('processFlow.edgeStylePopover.autoColor', 'Auto')}
             disabled={locked}
             onClick={() => onColorChange(edge.id, null)}
             className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all disabled:opacity-40 ${
@@ -166,7 +167,7 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
       {/* Line style */}
       <div className="mb-2">
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
-          {isPl ? 'Styl' : 'Style'}
+          {t('processFlow.edgeStylePopover.style', 'Style')}
         </div>
         <div className="flex gap-1">
           {(['solid', 'dashed'] as EdgeStrokeStyle[]).map((s) => (
@@ -181,7 +182,9 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
                   : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
-              {s === 'solid' ? (isPl ? 'Ciągła' : 'Solid') : isPl ? 'Przerywana' : 'Dashed'}
+              {s === 'solid'
+                ? t('processFlow.edgeStylePopover.styleSolid', 'Solid')
+                : t('processFlow.edgeStylePopover.styleDashed', 'Dashed')}
             </button>
           ))}
         </div>
@@ -190,7 +193,7 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
       {/* Arrow direction */}
       <div>
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
-          {isPl ? 'Strzałka' : 'Arrow'}
+          {t('processFlow.edgeStylePopover.arrow', 'Arrow')}
         </div>
         <div className="flex gap-1">
           {ARROW_OPTIONS.map((opt) => {
@@ -200,8 +203,8 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
               <button
                 key={opt.id}
                 type="button"
-                title={arrowLabel(opt.id, isPl)}
-                aria-label={arrowLabel(opt.id, isPl)}
+                title={arrowLabel(opt.id, t)}
+                aria-label={arrowLabel(opt.id, t)}
                 disabled={locked}
                 onClick={() => onArrowChange(edge.id, opt.id)}
                 className={`flex-1 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${

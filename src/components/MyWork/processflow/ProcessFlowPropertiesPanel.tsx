@@ -1,6 +1,7 @@
 import { ChevronDown, Clock, DollarSign, Layers, Server, Tag, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { Edge, Node } from 'reactflow';
+import { useTranslation } from 'react-i18next';
 
 import { CONDITION_TYPES, EDGE_KINDS, type EdgeKind } from './FlowEdgeComponent';
 
@@ -44,7 +45,6 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
   selectedNode,
   selectedEdge,
   lanes,
-  isPl,
   locked,
   onNodeLabelChange,
   onGatewayKindChange,
@@ -56,6 +56,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
   onNodeMetricsChange,
   onNodeMetadataChange = () => {},
 }) => {
+  const { t } = useTranslation();
   const [labelDraft, setLabelDraft] = useState('');
   const [edgeLabelDraft, setEdgeLabelDraft] = useState('');
   const [descriptionDraft, setDescriptionDraft] = useState('');
@@ -149,9 +150,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
   if (!selectedNode && !selectedEdge) {
     return (
       <div className="space-y-4 p-4 text-sm text-c-text-muted">
-        {isPl
-          ? 'Zaznacz węzeł lub krawędź, aby zobaczyć właściwości'
-          : 'Select a node or edge to view properties'}
+        {t('processFlow.propertiesPanel.emptyState', 'Select a node or edge to view properties')}
       </div>
     );
   }
@@ -166,24 +165,20 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
     const orthogonal = Boolean(selectedEdge.data?.orthogonal);
     const edgeKindLabel = (k: EdgeKind) =>
       k === 'sequence'
-        ? isPl
-          ? 'Sekwencja'
-          : 'Sequence'
+        ? t('processFlow.propertiesPanel.edgeKindSequence', 'Sequence')
         : k === 'conditional'
-          ? isPl
-            ? 'Warunkowa'
-            : 'Conditional'
-          : isPl
-            ? 'Komunikat'
-            : 'Message';
+          ? t('processFlow.propertiesPanel.edgeKindConditional', 'Conditional')
+          : t('processFlow.propertiesPanel.edgeKindMessage', 'Message');
     return (
       <div className="space-y-4 p-4 text-sm">
         <div>
-          <h3 className={sectionHeaderClass}>{isPl ? 'Krawędź' : 'Edge properties'}</h3>
+          <h3 className={sectionHeaderClass}>
+            {t('processFlow.propertiesPanel.edgeSectionTitle', 'Edge properties')}
+          </h3>
           <label className="block">
             <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <Tag size={14} className="opacity-70" />
-              {isPl ? 'Etykieta' : 'Label'}
+              {t('processFlow.propertiesPanel.label', 'Label')}
             </span>
             <input
               className={inputClass}
@@ -198,7 +193,9 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           </label>
         </div>
         <div>
-          <h3 className={sectionHeaderClass}>{isPl ? 'Typ krawędzi' : 'Edge type'}</h3>
+          <h3 className={sectionHeaderClass}>
+            {t('processFlow.propertiesPanel.edgeTypeTitle', 'Edge type')}
+          </h3>
           <div className="relative">
             <select
               className={`${inputClass} appearance-none pr-9`}
@@ -222,7 +219,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
         <div>
           <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-navy-700 dark:bg-navy-900/40">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              {isPl ? 'Routing ortogonalny' : 'Orthogonal routing'}
+              {t('processFlow.propertiesPanel.orthogonalRouting', 'Orthogonal routing')}
             </span>
             <input
               type="checkbox"
@@ -234,7 +231,9 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           </label>
         </div>
         <div>
-          <h3 className={sectionHeaderClass}>{isPl ? 'Warunek' : 'Condition type'}</h3>
+          <h3 className={sectionHeaderClass}>
+            {t('processFlow.propertiesPanel.conditionTypeTitle', 'Condition type')}
+          </h3>
           <div className="relative">
             <select
               className={`${inputClass} appearance-none pr-9`}
@@ -247,24 +246,14 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               {CONDITION_TYPES.map((ct) => (
                 <option key={ct || 'none'} value={ct}>
                   {ct === ''
-                    ? isPl
-                      ? '—'
-                      : '—'
+                    ? /* dead ternary in the original — "—" is identical in both locales */ '—'
                     : ct === 'yes'
-                      ? isPl
-                        ? 'Tak'
-                        : 'Yes'
+                      ? t('processFlow.propertiesPanel.conditionYes', 'Yes')
                       : ct === 'no'
-                        ? isPl
-                          ? 'Nie'
-                          : 'No'
+                        ? t('processFlow.propertiesPanel.conditionNo', 'No')
                         : ct === 'default'
-                          ? isPl
-                            ? 'Domyślny'
-                            : 'Default'
-                          : isPl
-                            ? 'Wyjątek'
-                            : 'Exception'}
+                          ? t('processFlow.propertiesPanel.conditionDefault', 'Default')
+                          : t('processFlow.propertiesPanel.conditionException', 'Exception')}
                 </option>
               ))}
             </select>
@@ -286,14 +275,16 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
   return (
     <div className="space-y-4 p-4 text-sm">
       <div>
-        <h3 className={sectionHeaderClass}>{isPl ? 'Typ węzła' : 'Node type'}</h3>
+        <h3 className={sectionHeaderClass}>
+          {t('processFlow.propertiesPanel.nodeTypeTitle', 'Node type')}
+        </h3>
         <span className="inline-flex items-center rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-secondary">
-          {shape || (isPl ? 'nieznany' : 'unknown')}
+          {shape || t('processFlow.propertiesPanel.unknownShape', 'unknown')}
         </span>
       </div>
 
       <div>
-        <h3 className={sectionHeaderClass}>{isPl ? 'Etykieta' : 'Label'}</h3>
+        <h3 className={sectionHeaderClass}>{t('processFlow.propertiesPanel.label', 'Label')}</h3>
         <input
           className={inputClass}
           value={labelDraft}
@@ -308,7 +299,9 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
 
       {showGateway && (
         <div>
-          <h3 className={sectionHeaderClass}>{isPl ? 'Rodzaj bramki' : 'Gateway kind'}</h3>
+          <h3 className={sectionHeaderClass}>
+            {t('processFlow.propertiesPanel.gatewayKindTitle', 'Gateway kind')}
+          </h3>
           <div className="flex flex-col gap-2">
             <label className="flex cursor-pointer items-center gap-2 text-c-text-secondary">
               <input
@@ -340,7 +333,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
         <h3 className={sectionHeaderClass}>
           <span className="inline-flex items-center gap-1">
             <Layers size={14} className="opacity-70" />
-            {isPl ? 'Tor' : 'Lane'}
+            {t('processFlow.propertiesPanel.laneTitle', 'Lane')}
           </span>
         </h3>
         <div className="relative">
@@ -365,11 +358,13 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
       </div>
 
       <div>
-        <h3 className={sectionHeaderClass}>{isPl ? 'Metadane' : 'Metadata'}</h3>
+        <h3 className={sectionHeaderClass}>
+          {t('processFlow.propertiesPanel.metadataTitle', 'Metadata')}
+        </h3>
         <div className="space-y-2">
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-c-text-secondary">
-              {isPl ? 'Opis' : 'Description'}
+              {t('processFlow.propertiesPanel.descriptionField', 'Description')}
             </span>
             <textarea
               className={`${inputClass} min-h-[72px] resize-y`}
@@ -382,7 +377,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           <label className="block">
             <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <User size={14} className="opacity-70" />
-              {isPl ? 'Przypisany' : 'Assignee'}
+              {t('processFlow.propertiesPanel.assigneeField', 'Assignee')}
             </span>
             <input
               className={inputClass}
@@ -398,7 +393,8 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           <label className="block">
             <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <Server size={14} className="opacity-70" />
-              {isPl ? 'System' : 'System'}
+              {/* "System" — identical in both locales in the original, not translated */}
+              System
             </span>
             <input
               className={inputClass}
@@ -415,13 +411,15 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
       </div>
 
       <div>
-        <h3 className={sectionHeaderClass}>{isPl ? 'Metryki' : 'Metrics'}</h3>
+        <h3 className={sectionHeaderClass}>
+          {t('processFlow.propertiesPanel.metricsTitle', 'Metrics')}
+        </h3>
         <div className="space-y-2">
           <div className="flex gap-2">
             <label className="min-w-0 flex-1">
               <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
                 <Clock size={14} className="opacity-70" />
-                {isPl ? 'Czas trwania' : 'Duration'}
+                {t('processFlow.propertiesPanel.durationField', 'Duration')}
               </span>
               <input
                 className={inputClass}
@@ -436,7 +434,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
             </label>
             <label className="w-24 shrink-0">
               <span className="mb-1 block text-xs font-medium text-c-text-secondary">
-                {isPl ? 'Jedn.' : 'Unit'}
+                {t('processFlow.propertiesPanel.unitField', 'Unit')}
               </span>
               <select
                 className={inputClass}
@@ -452,16 +450,17 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
                   });
                 }}
               >
-                <option value="h">{isPl ? 'godz.' : 'h'}</option>
-                <option value="min">{isPl ? 'min' : 'min'}</option>
-                <option value="d">{isPl ? 'dni' : 'd'}</option>
+                <option value="h">{t('processFlow.propertiesPanel.unitHour', 'h')}</option>
+                {/* "min" — identical in both locales in the original, not translated */}
+                <option value="min">min</option>
+                <option value="d">{t('processFlow.propertiesPanel.unitDay', 'd')}</option>
               </select>
             </label>
           </div>
           <label className="block">
             <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <DollarSign size={14} className="opacity-70" />
-              {isPl ? 'Koszt' : 'Cost'}
+              {t('processFlow.propertiesPanel.costField', 'Cost')}
             </span>
             <input
               className={inputClass}
@@ -476,7 +475,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           </label>
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-c-text-secondary">
-              {isPl ? 'Liczba FTE' : 'FTE count'}
+              {t('processFlow.propertiesPanel.fteField', 'FTE count')}
             </span>
             <input
               className={inputClass}

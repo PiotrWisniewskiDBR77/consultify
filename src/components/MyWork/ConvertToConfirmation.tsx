@@ -36,17 +36,17 @@ function ConvertToConfirmationContent({
   onOpenOutput,
   onOpenSession,
   t,
-  i18n,
 }: {
   outputType: string;
   sourceTitle: string;
   onOpenOutput?: () => void;
   onOpenSession?: () => void;
   t: TFunction;
-  i18n: { language: string };
 }) {
-  const isPl = i18n.language === 'pl';
-  const typeLabel = OUTPUT_TYPE_LABELS[outputType]?.[isPl ? 'pl' : 'en'] ?? outputType;
+  const typeLabel = t(
+    `traceability.convertTo.${outputType}`,
+    OUTPUT_TYPE_LABELS[outputType]?.en ?? outputType
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -97,7 +97,7 @@ function ToastContent({
   toastInstance: Toast;
   options: ConvertToConfirmationOptions;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { outputType, sourceTitle, onOpenOutput, onOpenSession } = options;
 
   return (
@@ -112,7 +112,6 @@ function ToastContent({
         onOpenOutput={onOpenOutput}
         onOpenSession={onOpenSession}
         t={t}
-        i18n={i18n}
       />
     </div>
   );
