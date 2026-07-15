@@ -26851,5 +26851,264 @@
       "2": "Describe the problem or idea",
       "3": "Click \"Accept\" in the Tools panel"
     }
+  },
+  "discoveryToolsSteps": {
+    "contextStep": {
+      "dynamicSwot": {
+        "seed": {
+          "understanding": "I understand this session as an attempt to define the strategic direction for the whole organization, not just improve a single KPI. Dynamic SWOT should help name where the company should go, what advantage it can build on, and which choices matter most for leadership now.",
+          "goal": "How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?",
+          "scope": "The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice.",
+          "successSignal": "By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution.",
+          "kpiTarget": "12-18 months for directional change, 90 days for the first moves and execution decisions",
+          "constraints": "The direction must be realistic for current resources; we do not assume a full transformation of everything at once; the recommendation must be clear for leadership and translatable into next decisions.",
+          "assumptions": "The company has several possible growth paths, but no shared answer yet on which one truly builds advantage; some tensions come from the market, others from inside the organization; leadership needs material that structures the choice instead of merely describing the situation."
+        },
+        "refinement": {
+          "understanding": {
+            "comment": "We place even more emphasis on {{detail}}",
+            "thinkDeeper": "We sharpen this especially around {{detail}}"
+          },
+          "direction": {
+            "comment": "This narrows the strategic question toward {{detail}}",
+            "thinkDeeper": "We define the direction more deeply around {{detail}}"
+          },
+          "scope": {
+            "comment": "The analysis is further focused on {{detail}}",
+            "thinkDeeper": "We deepen the dimension of {{detail}}"
+          },
+          "success": {
+            "comment": "A strong result should also include {{detail}}",
+            "thinkDeeper": "We sharpen the outcome especially around {{detail}}"
+          },
+          "constraints": {
+            "comment": "In practice this means accounting for {{detail}}",
+            "thinkDeeper": "We tighten the guardrails especially around {{detail}}"
+          }
+        },
+        "direction": {
+          "companyDirection": {
+            "label": "Whole-company strategic direction",
+            "description": "Find the answer to where the company should go as a whole.",
+            "goal": "How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?"
+          },
+          "growthEngine": {
+            "label": "New growth engine",
+            "description": "Choose where the next wave of growth should come from.",
+            "goal": "Which growth direction should become the company’s next engine and how should it be built without fragmenting the organization?"
+          },
+          "marketPosition": {
+            "label": "Market repositioning",
+            "description": "Answer how the company should reposition itself in the market.",
+            "goal": "How should the company redefine its market position to win in more important segments and defend value?"
+          },
+          "capabilityShift": {
+            "label": "Capability model shift",
+            "description": "Focus on which capabilities must shift to make strategy executable.",
+            "goal": "What operating-model shift must the company make so its strategy becomes real, scalable, and coherent?"
+          }
+        },
+        "scope": {
+          "wholeCompany": {
+            "label": "Whole organization",
+            "description": "Offer, market, growth model, and execution.",
+            "scope": "The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice."
+          },
+          "goToMarket": {
+            "label": "Go-to-market and offer",
+            "description": "Sales, segments, value proposition, pricing.",
+            "scope": "The analysis focuses on how the company sells, who it targets, how it positions value, and which segments should be prioritized now."
+          },
+          "portfolioFocus": {
+            "label": "Portfolio and investment priorities",
+            "description": "Where to invest and what to de-prioritize.",
+            "scope": "The analysis covers the portfolio of initiatives and directions to identify where the company should invest attention, resources, and capital, and where it should pull back."
+          },
+          "capabilitiesAndConstraints": {
+            "label": "Capabilities and organizational constraints",
+            "description": "What the organization can do and what holds it back.",
+            "scope": "The analysis focuses on internal capabilities, constraints, and execution tensions that determine which strategy is actually feasible today."
+          }
+        },
+        "success": {
+          "directionAndPriorities": {
+            "label": "Direction and strategic priorities",
+            "description": "A clear choice and list of priorities for leadership.",
+            "successSignal": "By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution."
+          },
+          "boardDecision": {
+            "label": "Board decision material",
+            "description": "Ready material that structures the choice.",
+            "successSignal": "Success means material that allows leadership to compare options, see the tensions, and decide without further interpretive chaos."
+          },
+          "executionBridge": {
+            "label": "Bridge to execution",
+            "description": "Moves that can quickly be translated into action.",
+            "successSignal": "After the session, the company should know not only which direction to choose, but also which first moves to launch within 90 days and how to secure execution."
+          },
+          "strategicClarity": {
+            "label": "Strategic clarity",
+            "description": "Order the thinking and language of strategy.",
+            "successSignal": "Success in this session means a shared language of strategy: naming advantages, risks, priorities, and boundaries of choice so the whole organization understands what it is truly playing for."
+          }
+        },
+        "timeframe": {
+          "short": {
+            "label": "Short horizon",
+            "description": "The next 1-2 quarters."
+          },
+          "medium": {
+            "label": "Medium horizon",
+            "description": "The next 12-18 months."
+          },
+          "long": {
+            "label": "Long horizon",
+            "description": "Transformation over 2+ years."
+          }
+        },
+        "ui": {
+          "comment": "Comment",
+          "thinkDeeper": "Think deeper",
+          "implement": "Implement",
+          "close": "Close",
+          "next": "Next",
+          "previous": "Previous",
+          "confirm": "Confirm",
+          "selectedMany": "You can select multiple answers"
+        },
+        "question4": {
+          "leadershipChoice": {
+            "label": "What is the real leadership choice?",
+            "description": "Name the decision leadership actually needs to make."
+          },
+          "wholeCompanyPriority": {
+            "label": "Which priority should align the whole company?",
+            "description": "A question about one shared direction for the whole organization."
+          },
+          "growthSource": {
+            "label": "Where should the next growth wave come from?",
+            "description": "Go deeper on the source of growth and commercial concentration."
+          },
+          "positioningChoice": {
+            "label": "What market position do we truly want to hold?",
+            "description": "Clarify market ambition and target segments."
+          },
+          "tradeOff": {
+            "label": "Which trade-off must be accepted?",
+            "description": "Name the compromise that cannot be avoided."
+          }
+        },
+        "question5": {
+          "resourceReality": {
+            "label": "Which resource constraints are real?",
+            "description": "People, time, budget, execution capacity."
+          },
+          "riskBoundary": {
+            "label": "Which risk boundary should not be crossed?",
+            "description": "The acceptable risk boundary for this strategy."
+          },
+          "decisionSpeed": {
+            "label": "How fast does this decision need to be?",
+            "description": "Pace of action and rhythm of next moves."
+          },
+          "boardClarity": {
+            "label": "What must be crystal-clear for leadership?",
+            "description": "How to frame the choice so it is unmistakably clear."
+          },
+          "executionReadiness": {
+            "label": "What must be ready for execution?",
+            "description": "Which first moves should follow from this session."
+          }
+        },
+        "confirm": {
+          "direction": "The strategic direction of this session focuses on: {{list}}.",
+          "scope": "At the center of the analysis we place: {{list}}.",
+          "success": "A strong result from this session should deliver: {{list}}.",
+          "question4": "The key contextual questions we need to resolve are: {{list}}.",
+          "question5": "This session must respect the following boundaries: {{list}}."
+        },
+        "summary": {
+          "intro": "This Dynamic SWOT is meant to build decision material for leadership, not just a neat diagnosis. Its role is to identify the strategic direction the organization should consider most sensible, and show why that choice deserves to be carried forward into actions, priorities, and subsequent decisions.",
+          "body": "Based on the answers so far, this session should focus on: {{direction}}. At the center of the analysis should sit: {{scope}}. That means the SWOT should not merely describe the situation, but structure the strategic choice, surface the tensions, name the constraints, and show which decision logic is most justified today.",
+          "delivery": "The intended delivery of this work is an outcome shaped as: {{success}}. To make that outcome credible, the session must additionally answer: {{question4}}, while respecting the boundaries: {{question5}}. This is the exact fragment that should later become the first slide of the presentation, explaining the purpose of the SWOT, the scope of work, and the intended logic of delivery."
+        },
+        "deepDive": {
+          "understanding": {
+            "broaderStrategy": "Broaden the strategy framing",
+            "leadershipAngle": "Make it more leadership-facing",
+            "realChoice": "Make the underlying choice more explicit"
+          },
+          "direction": {
+            "competition": "Go deeper on competition and market",
+            "capabilities": "Go deeper on capabilities",
+            "tradeOffs": "Surface the real trade-offs"
+          },
+          "scope": {
+            "narrowerScope": "Narrow the scope to a sharper area",
+            "organizationWide": "Show whole-organization implications",
+            "marketVsInternal": "Separate market and internal factors"
+          },
+          "success": {
+            "decisionReadiness": "Clarify decision-readiness",
+            "executionBridge": "Strengthen the bridge to execution",
+            "boardMaterial": "Make it more board-material oriented"
+          },
+          "constraints": {
+            "resourceLimits": "Clarify resource limits",
+            "governance": "Add governance boundaries",
+            "riskTolerance": "Name the acceptable risk level"
+          }
+        },
+        "placeholder": {
+          "feedbackComment": "Write the comment that should shape the next version of this block.",
+          "horizonComment": "Add if the recommendation should follow a different time rhythm or horizon."
+        },
+        "jsx": {
+          "consultantProposal": "Consultant proposal",
+          "aiWorking": "AI working",
+          "alignIntent": "First we align on how I understand the intent of this session and what type of strategic direction we are trying to design.",
+          "aiUnderstanding": "AI understanding",
+          "question1Heading": "1. What strategic direction are we designing?",
+          "question1Description": "Choose what kind of strategic direction we are actually trying to build here.",
+          "question2Heading": "2. What should sit at the center of this analysis?",
+          "question2Description": "Here we narrow down what exactly should become the object of work in this session.",
+          "question3Heading": "3. How do we recognize a strong outcome from this session?",
+          "question3Description": "Choose which type of outcome should be genuinely useful once this session is complete.",
+          "question4Heading": "4. Which contextual question still needs sharpening?",
+          "question4Description": "This question already depends on previous answers and helps sharpen the real strategic context.",
+          "question5Heading": "5. Which boundaries and realities must this strategy respect?",
+          "question5Description": "At the end, we sharpen the constraints this strategy cannot ignore.",
+          "executiveSummaryHeading": "Executive summary of this session",
+          "aiMissionBriefHeading": "AI mission brief proposal",
+          "strategicQuestionLabel": "Strategic question:",
+          "scopeLabel": "Scope:",
+          "successSignalLabel": "Success signal:",
+          "constraintsLabel": "Constraints:",
+          "applyToMissionBrief": "Apply to mission brief",
+          "discardSuggestion": "Discard suggestion",
+          "moveToNextPhases": "Move to the next phases",
+          "moveToNextPhasesDescription": "Once Mission & Context are aligned, AI can prepare the rest of the session: input map, SWOT matrix, tensions, moves, and outputs.",
+          "generatingFullSession": "AI is building the full session...",
+          "generateFullSession": "Generate the next parts of the session"
+        }
+      },
+      "generic": {
+        "lightStartHint": "This is a light entry: define the goal, scope, and expected finish, and AI will help build the structure for the rest of the conversation and analysis.",
+        "goalHint": "Add concrete KPIs or expected outcome.",
+        "scopeHint": "Specify business area and stakeholders.",
+        "timeframe": {
+          "short": "Short",
+          "medium": "Medium",
+          "long": "Long"
+        },
+        "position": {
+          "leader": "Market Leader",
+          "challenger": "Challenger",
+          "follower": "Follower",
+          "niche": "Niche Player"
+        },
+        "helpText": "💡 A clearly defined goal will help AI generate more relevant suggestions in the following steps."
+      }
+    }
   }
 }

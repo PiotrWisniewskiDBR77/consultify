@@ -27927,5 +27927,264 @@
       "2": "Opisz problem lub pomysł",
       "3": "Kliknij „Akceptuj\" w panelu Tools"
     }
+  },
+  "discoveryToolsSteps": {
+    "contextStep": {
+      "dynamicSwot": {
+        "seed": {
+          "understanding": "Rozumiem tę sesję jako próbę uchwycenia kierunku strategicznego dla całej organizacji, a nie tylko poprawy jednego KPI. Dynamic SWOT ma pomóc nazwać, gdzie firma powinna iść, na czym zbudować przewagę i jakie wybory są dziś najważniejsze dla zarządu.",
+          "goal": "Jak wyznaczyć kolejny kierunek strategiczny firmy, tak aby połączyć wzrost, pozycję rynkową i zdolność wykonawczą organizacji?",
+          "scope": "Analiza obejmuje całą firmę: ofertę, segmenty klientów, model wzrostu, kluczowe zdolności operacyjne, ograniczenia organizacyjne oraz czynniki rynkowe, które wpływają na wybór kierunku.",
+          "successSignal": "Po tej sesji zarząd ma mieć uzgodniony kierunek strategiczny, logikę wyboru, najważniejsze priorytety i listę ruchów, które można przełożyć na dalsze decyzje oraz execution.",
+          "kpiTarget": "12-18 miesięcy na zmianę kierunku, 90 dni na pierwsze ruchy i decyzje wykonawcze",
+          "constraints": "Kierunek musi być realistyczny wobec obecnych zasobów; nie zakładamy pełnej transformacji wszystkiego naraz; rekomendacja ma być zrozumiała dla zarządu i możliwa do przełożenia na kolejne decyzje.",
+          "assumptions": "Firma ma kilka możliwych ścieżek wzrostu, ale nie ma jeszcze wspólnej odpowiedzi, która z nich naprawdę buduje przewagę; część napięć wynika z rynku, część z wnętrza organizacji; zarząd potrzebuje materiału, który porządkuje wybór, a nie tylko opisuje sytuację."
+        },
+        "refinement": {
+          "understanding": {
+            "comment": "Rdzeń tej sesji jeszcze mocniej ustawiamy wokół {{detailLower}}",
+            "thinkDeeper": "Szczególnie doprecyzowujemy tutaj {{detailLower}}"
+          },
+          "direction": {
+            "comment": "To zawęża pytanie strategiczne do {{detailLower}}",
+            "thinkDeeper": "Mocniej definiujemy tutaj kierunek związany z {{detailLower}}"
+          },
+          "scope": {
+            "comment": "Analizę dodatkowo ogniskujemy na {{detailLower}}",
+            "thinkDeeper": "Pogłębiamy zwłaszcza wymiar {{detailLower}}"
+          },
+          "success": {
+            "comment": "Za mocny wynik uznajemy również {{detailLower}}",
+            "thinkDeeper": "Silniej doprecyzowujemy rezultat związany z {{detailLower}}"
+          },
+          "constraints": {
+            "comment": "W praktyce oznacza to konieczność uwzględnienia {{detailLower}}",
+            "thinkDeeper": "Szczególnie zaostrzamy ograniczenia związane z {{detailLower}}"
+          }
+        },
+        "direction": {
+          "companyDirection": {
+            "label": "Kierunek strategiczny całej firmy",
+            "description": "Szukanie odpowiedzi, dokąd firma ma zmierzać jako całość.",
+            "goal": "Jak wyznaczyć kolejny kierunek strategiczny firmy, tak aby połączyć wzrost, pozycję rynkową i zdolność wykonawczą organizacji?"
+          },
+          "growthEngine": {
+            "label": "Nowy silnik wzrostu",
+            "description": "Wybór, skąd ma przyjść następna fala wzrostu.",
+            "goal": "Który kierunek wzrostu powinien stać się następnym silnikiem rozwoju firmy i jak go zbudować bez rozproszenia organizacji?"
+          },
+          "marketPosition": {
+            "label": "Repozycjonowanie rynkowe",
+            "description": "Odpowiedź, jak firma ma zmienić pozycję na rynku.",
+            "goal": "Jak firma powinna przedefiniować swoją pozycję rynkową, aby wygrać w ważniejszych segmentach i obronić wartość?"
+          },
+          "capabilityShift": {
+            "label": "Zmiana modelu działania",
+            "description": "Skupienie na tym, jakie zdolności trzeba przestawić, by strategia była wykonalna.",
+            "goal": "Jaką zmianę w modelu działania firma musi wykonać, aby jej strategia była realna, skalowalna i spójna?"
+          }
+        },
+        "scope": {
+          "wholeCompany": {
+            "label": "Cała organizacja",
+            "description": "Oferta, rynek, model wzrostu i wykonanie.",
+            "scope": "Analiza obejmuje całą firmę: ofertę, segmenty klientów, model wzrostu, kluczowe zdolności operacyjne, ograniczenia organizacyjne oraz czynniki rynkowe, które wpływają na wybór kierunku."
+          },
+          "goToMarket": {
+            "label": "Go-to-market i oferta",
+            "description": "Sprzedaż, segmenty, propozycja wartości, pricing.",
+            "scope": "Analiza koncentruje się na tym, jak firma sprzedaje, do kogo kieruje ofertę, jak pozycjonuje wartość i które segmenty powinny być dziś priorytetem."
+          },
+          "portfolioFocus": {
+            "label": "Portfolio i priorytety inwestycji",
+            "description": "Gdzie inwestować, a z czego schodzić.",
+            "scope": "Analiza obejmuje portfolio działań i kierunków, aby wskazać, gdzie firma powinna inwestować uwagę, zasoby i kapitał, a gdzie ograniczyć zaangażowanie."
+          },
+          "capabilitiesAndConstraints": {
+            "label": "Zdolności i ograniczenia organizacji",
+            "description": "Co organizacja potrafi, a co ją blokuje.",
+            "scope": "Analiza skupia się na wewnętrznych zdolnościach, ograniczeniach i napięciach wykonawczych, które przesądzają o tym, jaka strategia jest dziś rzeczywiście możliwa."
+          }
+        },
+        "success": {
+          "directionAndPriorities": {
+            "label": "Kierunek i priorytety strategiczne",
+            "description": "Jasny wybór i lista priorytetów dla zarządu.",
+            "successSignal": "Po tej sesji zarząd ma mieć uzgodniony kierunek strategiczny, logikę wyboru, najważniejsze priorytety i listę ruchów, które można przełożyć na dalsze decyzje oraz execution."
+          },
+          "boardDecision": {
+            "label": "Materiał do decyzji zarządu",
+            "description": "Gotowy materiał, który porządkuje wybór.",
+            "successSignal": "Sukces oznacza materiał, który pozwala zarządowi porównać opcje, zobaczyć napięcia i podjąć decyzję bez dalszego chaosu interpretacyjnego."
+          },
+          "executionBridge": {
+            "label": "Most do execution",
+            "description": "Ruchy, które można od razu przełożyć na działanie.",
+            "successSignal": "Po sesji firma ma wiedzieć nie tylko jaki kierunek wybrać, ale także jakie pierwsze ruchy uruchomić w ciągu 90 dni i jak zabezpieczyć wykonanie."
+          },
+          "strategicClarity": {
+            "label": "Jasność strategiczna",
+            "description": "Uporządkowanie myślenia i języka strategii.",
+            "successSignal": "Sukces tej sesji to wspólny język strategii: nazwanie przewag, ryzyk, priorytetów i granic wyboru, tak aby cała organizacja rozumiała, o co naprawdę gramy."
+          }
+        },
+        "timeframe": {
+          "short": {
+            "label": "Krótki horyzont",
+            "description": "Najbliższe 1-2 kwartały."
+          },
+          "medium": {
+            "label": "Średni horyzont",
+            "description": "Najbliższe 12-18 miesięcy."
+          },
+          "long": {
+            "label": "Długi horyzont",
+            "description": "Transformacja na 2+ lata."
+          }
+        },
+        "ui": {
+          "comment": "Komentarz",
+          "thinkDeeper": "Pogłęb",
+          "implement": "Wprowadź",
+          "close": "Zamknij",
+          "next": "Next",
+          "previous": "Previous",
+          "confirm": "Potwierdź",
+          "selectedMany": "Możesz zaznaczyć wiele odpowiedzi"
+        },
+        "question4": {
+          "leadershipChoice": {
+            "label": "Jaki wybór naprawdę stoi przed zarządem?",
+            "description": "Nazwij decyzję, którą zarząd faktycznie ma podjąć."
+          },
+          "wholeCompanyPriority": {
+            "label": "Który priorytet ma spiąć całą firmę?",
+            "description": "Pytanie o wspólny kierunek dla całej organizacji."
+          },
+          "growthSource": {
+            "label": "Skąd ma przyjść następna fala wzrostu?",
+            "description": "Pogłębienie źródła wzrostu i koncentracji handlowej."
+          },
+          "positioningChoice": {
+            "label": "Jaką pozycję rynkową chcemy naprawdę zająć?",
+            "description": "Doprecyzowanie aspiracji rynkowej i segmentów."
+          },
+          "tradeOff": {
+            "label": "Jaki trade-off trzeba zaakceptować?",
+            "description": "Nazwij kompromis, którego nie da się ominąć."
+          }
+        },
+        "question5": {
+          "resourceReality": {
+            "label": "Jakie ograniczenia zasobów są realne?",
+            "description": "Ludzie, czas, budżet, zdolność wykonawcza."
+          },
+          "riskBoundary": {
+            "label": "Jakiego ryzyka nie chcemy przekroczyć?",
+            "description": "Granice akceptowalnego ryzyka dla tej strategii."
+          },
+          "decisionSpeed": {
+            "label": "Jak szybka musi być ta decyzja?",
+            "description": "Tempo działania i rytm kolejnych kroków."
+          },
+          "boardClarity": {
+            "label": "Co musi być jasne dla zarządu?",
+            "description": "Jak opisać wybór, by był jednoznaczny."
+          },
+          "executionReadiness": {
+            "label": "Co musi być gotowe do execution?",
+            "description": "Jakie pierwsze ruchy powinny wynikać z tej sesji."
+          }
+        },
+        "confirm": {
+          "direction": "Strategiczny kierunek tej sesji koncentruje się na obszarach: {{list}}.",
+          "scope": "W centrum analizy stawiamy: {{list}}.",
+          "success": "Dobry wynik tej sesji powinien dostarczyć: {{list}}.",
+          "question4": "Kluczowe pytania kontekstowe, które trzeba rozstrzygnąć, to: {{list}}.",
+          "question5": "Ta sesja musi respektować następujące granice: {{list}}."
+        },
+        "summary": {
+          "intro": "Ten Dynamic SWOT ma zbudować materiał decyzyjny dla zarządu, a nie tylko porządną diagnozę. Jego rolą jest uchwycenie kierunku strategicznego, który organizacja powinna uznać za najbardziej sensowny, oraz pokazanie, dlaczego właśnie ten wybór powinien zostać dowieziony dalej w formie działań, priorytetów i kolejnych decyzji.",
+          "body": "Na podstawie odpowiedzi przyjmujemy, że ta sesja koncentruje się na obszarach: {{direction}}. W centrum analizy powinny znaleźć się: {{scope}}. Oznacza to, że SWOT ma nie tylko opisać sytuację, ale uporządkować wybór strategiczny, pokazać napięcia, nazwać ograniczenia oraz wskazać, jaka logika decyzji jest dziś najbardziej uzasadniona.",
+          "delivery": "Założeniem dowiezienia tej pracy jest rezultat w postaci: {{success}}. Żeby ten rezultat był wiarygodny, sesja musi dodatkowo odpowiedzieć na pytania: {{question4}}, przy jednoczesnym uszanowaniu granic: {{question5}}. To właśnie ten fragment powinien później wejść na pierwszy slajd prezentacji jako uzasadnienie celu SWOT-a, zakresu pracy i oczekiwanego sposobu dowiezienia rekomendacji."
+        },
+        "deepDive": {
+          "understanding": {
+            "broaderStrategy": "Pokaż szerzej, o jaką strategię chodzi",
+            "leadershipAngle": "Napisz to bardziej pod zarząd",
+            "realChoice": "Mocniej pokaż, jaki wybór jest do podjęcia"
+          },
+          "direction": {
+            "competition": "Mocniej uwzględnij konkurencję i rynek",
+            "capabilities": "Pokaż mocniej zdolności organizacji",
+            "tradeOffs": "Nazwij ważniejsze trade-offy"
+          },
+          "scope": {
+            "narrowerScope": "Zawęź zakres do konkretnego obszaru",
+            "organizationWide": "Pokaż skutki dla całej organizacji",
+            "marketVsInternal": "Rozdziel rynek i wnętrze organizacji"
+          },
+          "success": {
+            "decisionReadiness": "Doprecyzuj gotowość do decyzji",
+            "executionBridge": "Mocniej pokaż most do execution",
+            "boardMaterial": "Zrób z tego bardziej materiał zarządczy"
+          },
+          "constraints": {
+            "resourceLimits": "Doprecyzuj ograniczenia zasobów",
+            "governance": "Dodaj ograniczenia governance",
+            "riskTolerance": "Nazwij poziom akceptowanego ryzyka"
+          }
+        },
+        "placeholder": {
+          "feedbackComment": "Wpisz komentarz, który ma wpłynąć na nową wersję tego bloku.",
+          "horizonComment": "Dopisz, jeśli rekomendacja ma obejmować inny rytm lub horyzont."
+        },
+        "jsx": {
+          "consultantProposal": "Propozycja konsultanta",
+          "aiWorking": "AI pracuje",
+          "alignIntent": "Najpierw uzgadniamy, jak rozumiem intencję tej sesji i jaki typ kierunku strategicznego próbujemy zaprojektować.",
+          "aiUnderstanding": "AI understanding",
+          "question1Heading": "1. Jaki kierunek strategiczny projektujemy?",
+          "question1Description": "Wybierz, jaki rodzaj kierunku strategicznego naprawdę próbujemy tutaj zbudować.",
+          "question2Heading": "2. Co ma być w centrum tej analizy?",
+          "question2Description": "Tutaj zawężamy, co dokładnie ma być przedmiotem pracy w tej sesji.",
+          "question3Heading": "3. Jak rozpoznajemy dobry wynik tej sesji?",
+          "question3Description": "Wybierz, jaki rodzaj wyniku ma być naprawdę użyteczny po zakończeniu tej sesji.",
+          "question4Heading": "4. Jakie pytanie kontekstowe musimy jeszcze doprecyzować?",
+          "question4Description": "To pytanie jest już zależne od wcześniejszych odpowiedzi i pomaga doprecyzować właściwy kontekst strategiczny.",
+          "question5Heading": "5. Jakie granice i realia ta strategia musi respektować?",
+          "question5Description": "Na końcu doprecyzowujemy ograniczenia, których ta strategia nie może ignorować.",
+          "executiveSummaryHeading": "Executive summary tej sesji",
+          "aiMissionBriefHeading": "Propozycja AI dla mission brief",
+          "strategicQuestionLabel": "Pytanie strategiczne:",
+          "scopeLabel": "Zakres:",
+          "successSignalLabel": "Sygnał sukcesu:",
+          "constraintsLabel": "Ograniczenia:",
+          "applyToMissionBrief": "Zastosuj do mission brief",
+          "discardSuggestion": "Odrzuć propozycję",
+          "moveToNextPhases": "Przejście do kolejnych faz",
+          "moveToNextPhasesDescription": "Kiedy Mission & Context są już uzgodnione, AI może przygotować dalszą część sesji: input map, macierz SWOT, napięcia, ruchy i outputy.",
+          "generatingFullSession": "AI buduje pełną sesję...",
+          "generateFullSession": "Generuj dalszą część sesji"
+        }
+      },
+      "generic": {
+        "lightStartHint": "To jest lekki start: opisz cel, zakres i efekt końcowy, a AI pomoże zbudować dalszą strukturę rozmowy i analizy.",
+        "goalHint": "Dodaj konkretne KPI lub oczekiwany wynik.",
+        "scopeHint": "Wskaz obszar biznesowy i interesariuszy.",
+        "timeframe": {
+          "short": "Krótki",
+          "medium": "Średni",
+          "long": "Długi"
+        },
+        "position": {
+          "leader": "Lider rynku",
+          "challenger": "Pretendent",
+          "follower": "Naśladowca",
+          "niche": "Gracz niszowy"
+        },
+        "helpText": "💡 Jasno zdefiniowany cel pomoże AI generować bardziej trafne sugestie w kolejnych krokach."
+      }
+    }
   }
 }
