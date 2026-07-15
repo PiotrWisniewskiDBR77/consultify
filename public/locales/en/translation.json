@@ -27310,6 +27310,68 @@
       "confirmApproval": "I confirm approval",
       "approve": "Approve",
       "sendBackToDraft": "Send back to Draft"
+    },
+    "knownToolPreviewV3": {
+      "intentWhenToUse": "When to use",
+      "intentFirstSteps": "First steps",
+      "intentCommonMistakes": "Common mistakes",
+      "hintMistakes": "Mistakes",
+      "toolInPreparation": "Tool in preparation.",
+      "dependsOnTool": "Depends on the tool",
+      "sessionAssistantModerator": "Session assistant and moderator",
+      "dependsOnScope": "Depends on scope",
+      "goal": "Goal",
+      "outcome": "Outcome",
+      "aiRole": "AI Role",
+      "duration": "Duration",
+      "aiUnavailable": "AI unavailable",
+      "categoryStrategy": "Strategy",
+      "categoryOperations": "Operations",
+      "categoryDigital": "Digital",
+      "categoryTool": "Tool",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "startSession": "Start session",
+      "chat": "Chat",
+      "loadingEllipsis": "Loading…",
+      "toolNotActiveYet": "This tool is not active yet. You can see the description, but cannot open the full view or start a session.",
+      "snippets": {
+        "dynamic-swot": {
+          "goal": "Turns a fragmented strategic conversation into a decision-grade diagnosis backed by evidence.",
+          "outcome": "Decision frame, strategic tensions, recommended moves, and source material.",
+          "team": "C-level / owners, strategy lead or COO",
+          "aiRole": "Session moderator, evidence analyst, tension & recommendation generator",
+          "duration": "60-90 min"
+        },
+        "market-forces": {
+          "goal": "Turns market and interview context into a read on competitive pressure, defensibility, and margin pressure.",
+          "outcome": "Five Forces scorecard, strategic implications, recommended moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, commercial lead, or market owner",
+          "aiRole": "Market analyst, evidence moderator, and proposal generator for approval",
+          "duration": "60-90 min"
+        },
+        "growth-paths": {
+          "goal": "Turns growth ambition and interview signals into Ansoff options and a decision sequence.",
+          "outcome": "Option matrix, trade-off comparison, recommended moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, commercial lead, or growth owner",
+          "aiRole": "Growth evidence moderator, option generator, and move-sequencing consultant",
+          "duration": "60-90 min"
+        },
+        "portfolio-priority": {
+          "goal": "Turns organization and interview context into decisions on which portfolio items to fund, test, maintain, or stop.",
+          "outcome": "BCG matrix, resource allocation trade-offs, recommended moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, product lead, CFO, or portfolio owner",
+          "aiRole": "Portfolio analyst, card proposal generator, and resource allocation consultant",
+          "duration": "60-90 min"
+        },
+        "risk-uncertainty": {
+          "goal": "Turns decision context and interview signals into an assumption, risk, and scenario map.",
+          "outcome": "Assumptions to validate, risks, scenarios, resilience moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, transformation lead, PMO, or risk owner",
+          "aiRole": "Risk analyst, card proposal generator, and resilience consultant",
+          "duration": "60-90 min"
+        }
+      }
     }
   }
 }

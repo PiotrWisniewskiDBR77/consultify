@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -93,24 +94,20 @@ async function refineText(params: {
 async function runKnownToolAi(params: {
   intent: KnownToolPreviewAiIntent;
   isPolish: boolean;
+  t: TFunction;
   tool: KnownToolListItem;
   full: KnownToolFull | null;
 }): Promise<string> {
-  const { intent, isPolish, tool, full } = params;
+  const { intent, isPolish, t, tool, full } = params;
   const language: 'pl' | 'en' = isPolish ? 'pl' : 'en';
+  const ns = 'discoveryToolsMain.knownToolPreviewV3';
 
   const intentLabel =
     intent === 'when_to_use'
-      ? isPolish
-        ? 'Kiedy użyć'
-        : 'When to use'
+      ? t(`${ns}.intentWhenToUse`, 'When to use')
       : intent === 'first_steps'
-        ? isPolish
-          ? 'Pierwsze kroki'
-          : 'First steps'
-        : isPolish
-          ? 'Typowe błędy'
-          : 'Common mistakes';
+        ? t(`${ns}.intentFirstSteps`, 'First steps')
+        : t(`${ns}.intentCommonMistakes`, 'Common mistakes');
 
   const systemInstruction = [
     `You are a senior transformation consultant.`,
@@ -171,131 +168,45 @@ export const KnownToolPreviewV3Body: React.FC<{
     duration: string;
   };
 
+  const snippetNs = 'discoveryToolsMain.knownToolPreviewV3.snippets';
   const previewSnippet = useMemo((): PreviewSnippet => {
-    if (tool.toolType === 'dynamic-swot') {
-      return isPolish
-        ? {
-            goal: 'Zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę opartą na evidence.',
-            outcome:
-              'Rama decyzji, napięcia strategiczne, rekomendowane ruchy i materiał źródłowy.',
-            team: 'C-level / właściciele, lider strategii lub dyrektor operacyjny',
-            aiRole: 'Moderator sesji, analityk evidence, generator napięć i rekomendacji',
-            duration: '60-90 min',
-          }
-        : {
-            goal: 'Turns a fragmented strategic conversation into a decision-grade diagnosis backed by evidence.',
-            outcome: 'Decision frame, strategic tensions, recommended moves, and source material.',
-            team: 'C-level / owners, strategy lead or COO',
-            aiRole: 'Session moderator, evidence analyst, tension & recommendation generator',
-            duration: '60-90 min',
-          };
-    }
-
-    if (tool.toolType === 'market-forces') {
-      return isPolish
-        ? {
-            goal: 'Zamienia kontekst rynku i wywiadu w ocenę presji konkurencyjnej, defensibility i presji marży.',
-            outcome:
-              'Scorecard 5 sił, implikacje strategiczne, rekomendowane ruchy i kandydaci na inicjatywy.',
-            team: 'Zarząd, strategy lead, commercial lead lub właściciel rynku',
-            aiRole: 'Analityk rynku, moderator evidence i generator propozycji do akceptacji',
-            duration: '60-90 min',
-          }
-        : {
-            goal: 'Turns market and interview context into a read on competitive pressure, defensibility, and margin pressure.',
-            outcome:
-              'Five Forces scorecard, strategic implications, recommended moves, and initiative candidates.',
-            team: 'Leadership, strategy lead, commercial lead, or market owner',
-            aiRole: 'Market analyst, evidence moderator, and proposal generator for approval',
-            duration: '60-90 min',
-          };
-    }
-
-    if (tool.toolType === 'growth-paths') {
-      return isPolish
-        ? {
-            goal: 'Zamienia ambicję wzrostu i sygnały z wywiadu w opcje Ansoffa oraz sekwencję decyzji.',
-            outcome:
-              'Macierz opcji, porównanie trade-offów, rekomendowane ruchy i kandydaci na inicjatywy.',
-            team: 'Zarząd, strategy lead, commercial lead lub właściciel wzrostu',
-            aiRole: 'Moderator growth evidence, generator opcji i konsultant sekwencji ruchów',
-            duration: '60-90 min',
-          }
-        : {
-            goal: 'Turns growth ambition and interview signals into Ansoff options and a decision sequence.',
-            outcome:
-              'Option matrix, trade-off comparison, recommended moves, and initiative candidates.',
-            team: 'Leadership, strategy lead, commercial lead, or growth owner',
-            aiRole: 'Growth evidence moderator, option generator, and move-sequencing consultant',
-            duration: '60-90 min',
-          };
-    }
-
-    if (tool.toolType === 'portfolio-priority') {
-      return isPolish
-        ? {
-            goal: 'Zamienia kontekst organizacji i wywiadu w decyzje, które elementy portfolio finansować, testować, utrzymać lub wygasić.',
-            outcome:
-              'Macierz BCG, trade-offy alokacji zasobów, rekomendowane ruchy i kandydaci na inicjatywy.',
-            team: 'Zarząd, strategy lead, product lead, CFO lub właściciel portfolio',
-            aiRole:
-              'Analityk portfolio, generator kart do akceptacji i konsultant alokacji zasobów',
-            duration: '60-90 min',
-          }
-        : {
-            goal: 'Turns organization and interview context into decisions on which portfolio items to fund, test, maintain, or stop.',
-            outcome:
-              'BCG matrix, resource allocation trade-offs, recommended moves, and initiative candidates.',
-            team: 'Leadership, strategy lead, product lead, CFO, or portfolio owner',
-            aiRole:
-              'Portfolio analyst, card proposal generator, and resource allocation consultant',
-            duration: '60-90 min',
-          };
-    }
-
-    if (tool.toolType === 'risk-uncertainty') {
-      return isPolish
-        ? {
-            goal: 'Zamienia kontekst decyzji i sygnały z wywiadu w mapę założeń, ryzyk i scenariuszy.',
-            outcome:
-              'Założenia do walidacji, ryzyka, scenariusze, ruchy odporności i kandydaci na inicjatywy.',
-            team: 'Zarząd, strategy lead, transformation lead, PMO lub właściciel ryzyka',
-            aiRole: 'Analityk ryzyka, generator kart do akceptacji i konsultant odporności',
-            duration: '60-90 min',
-          }
-        : {
-            goal: 'Turns decision context and interview signals into an assumption, risk, and scenario map.',
-            outcome:
-              'Assumptions to validate, risks, scenarios, resilience moves, and initiative candidates.',
-            team: 'Leadership, strategy lead, transformation lead, PMO, or risk owner',
-            aiRole: 'Risk analyst, card proposal generator, and resilience consultant',
-            duration: '60-90 min',
-          };
+    const knownTypes = [
+      'dynamic-swot',
+      'market-forces',
+      'growth-paths',
+      'portfolio-priority',
+      'risk-uncertainty',
+    ];
+    if (knownTypes.includes(tool.toolType)) {
+      return t(`${snippetNs}.${tool.toolType}`, { returnObjects: true }) as PreviewSnippet;
     }
 
     const desc = String(full?.description || tool.description || '').trim();
-    const fallbackGoal = desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
-    const fallbackOutcome =
-      (full?.whatYouGet || tool.whatYouGet || []).slice(0, 2).join(', ') || (isPolish ? '—' : '—');
+    const fallbackGoal =
+      desc || t('discoveryToolsMain.knownToolPreviewV3.toolInPreparation', 'Tool in preparation.');
+    const fallbackOutcome = (full?.whatYouGet || tool.whatYouGet || []).slice(0, 2).join(', ') || '—';
 
     return {
       goal: fallbackGoal,
       outcome: fallbackOutcome,
-      team: isPolish ? 'Zależy od narzędzia' : 'Depends on the tool',
-      aiRole: isPolish ? 'Asystent i moderator sesji' : 'Session assistant and moderator',
-      duration: isPolish ? 'Zależy od zakresu' : 'Depends on scope',
+      team: t('discoveryToolsMain.knownToolPreviewV3.dependsOnTool', 'Depends on the tool'),
+      aiRole: t(
+        'discoveryToolsMain.knownToolPreviewV3.sessionAssistantModerator',
+        'Session assistant and moderator'
+      ),
+      duration: t('discoveryToolsMain.knownToolPreviewV3.dependsOnScope', 'Depends on scope'),
     };
-  }, [full, isPolish, tool.description, tool.toolType, tool.whatYouGet]);
+  }, [full, isPolish, t, tool.description, tool.toolType, tool.whatYouGet]);
 
   const initialDetailsText = useMemo(() => {
     const s = previewSnippet;
-    const goalL = isPolish ? 'Cel' : 'Goal';
-    const outcomeL = isPolish ? 'Rezultat' : 'Outcome';
+    const goalL = t('discoveryToolsMain.knownToolPreviewV3.goal', 'Goal');
+    const outcomeL = t('discoveryToolsMain.knownToolPreviewV3.outcome', 'Outcome');
     const teamL = 'Team';
-    const aiL = isPolish ? 'Rola AI' : 'AI Role';
-    const durL = isPolish ? 'Czas' : 'Duration';
+    const aiL = t('discoveryToolsMain.knownToolPreviewV3.aiRole', 'AI Role');
+    const durL = t('discoveryToolsMain.knownToolPreviewV3.duration', 'Duration');
     return `${goalL}: ${s.goal}\n${outcomeL}: ${s.outcome}\n${teamL}: ${s.team}\n${aiL}: ${s.aiRole}\n${durL}: ${s.duration}`;
-  }, [previewSnippet, isPolish]);
+  }, [previewSnippet, t]);
 
   useEffect(() => {
     setDetailsText(initialDetailsText);
@@ -305,11 +216,11 @@ export const KnownToolPreviewV3Body: React.FC<{
   const handleCopyDetails = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(detailsText || tool.name || '');
-      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      toast.success(t('common.copied', 'Copied'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('common.copyFailed', 'Copy failed'));
     }
-  }, [detailsText, tool.name, isPolish]);
+  }, [detailsText, tool.name, t]);
 
   const handleRefineDetails = useCallback(
     async (mode: 'expand' | 'shorten') => {
@@ -344,28 +255,23 @@ export const KnownToolPreviewV3Body: React.FC<{
         if (!refined) throw new Error('empty');
         setDetailsText(refined);
       } catch {
-        toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        toast.error(t('discoveryToolsMain.knownToolPreviewV3.aiUnavailable', 'AI unavailable'));
       } finally {
         setDetailsLoading(false);
       }
     },
-    [detailsText, initialDetailsText, isPolish, tool.description, tool.id, tool.name]
+    [detailsText, initialDetailsText, isPolish, t, tool.description, tool.id, tool.name]
   );
 
   const categoryLabel =
     tool.libraryCategory === 'strategic'
-      ? isPolish
-        ? 'Strategia'
-        : 'Strategy'
+      ? t('discoveryToolsMain.knownToolPreviewV3.categoryStrategy', 'Strategy')
       : tool.libraryCategory === 'operational'
-        ? isPolish
-          ? 'Operacje'
-          : 'Operations'
+        ? t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations')
         : tool.libraryCategory === 'digital'
-          ? isPolish
-            ? 'Digital'
-            : 'Digital'
-          : tool.libraryCategory || (isPolish ? 'Narzędzie' : 'Tool');
+          ? t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital')
+          : tool.libraryCategory ||
+            t('discoveryToolsMain.knownToolPreviewV3.categoryTool', 'Tool');
 
   const metaPills: MetaPill[] = [
     {
@@ -381,12 +287,8 @@ export const KnownToolPreviewV3Body: React.FC<{
     },
     {
       label: tool.isActive
-        ? isPolish
-          ? 'Aktywny'
-          : 'Active'
-        : isPolish
-          ? 'Nieaktywny'
-          : 'Inactive',
+        ? t('discoveryToolsMain.knownToolPreviewV3.statusActive', 'Active')
+        : t('discoveryToolsMain.knownToolPreviewV3.statusInactive', 'Inactive'),
       className: tool.isActive
         ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
         : 'bg-danger-50 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
@@ -402,15 +304,23 @@ export const KnownToolPreviewV3Body: React.FC<{
   ];
 
   const snippetRows: { label: string; value: string; minH: string }[] = [
-    { label: isPolish ? 'Cel' : 'Goal', value: previewSnippet.goal, minH: 'min-h-[40px]' },
+    { label: t('discoveryToolsMain.knownToolPreviewV3.goal', 'Goal'), value: previewSnippet.goal, minH: 'min-h-[40px]' },
     {
-      label: isPolish ? 'Rezultat' : 'Outcome',
+      label: t('discoveryToolsMain.knownToolPreviewV3.outcome', 'Outcome'),
       value: previewSnippet.outcome,
       minH: 'min-h-[40px]',
     },
     { label: 'Team', value: previewSnippet.team, minH: 'min-h-[28px]' },
-    { label: isPolish ? 'Rola AI' : 'AI Role', value: previewSnippet.aiRole, minH: 'min-h-[28px]' },
-    { label: isPolish ? 'Czas' : 'Duration', value: previewSnippet.duration, minH: 'min-h-[20px]' },
+    {
+      label: t('discoveryToolsMain.knownToolPreviewV3.aiRole', 'AI Role'),
+      value: previewSnippet.aiRole,
+      minH: 'min-h-[28px]',
+    },
+    {
+      label: t('discoveryToolsMain.knownToolPreviewV3.duration', 'Duration'),
+      value: previewSnippet.duration,
+      minH: 'min-h-[20px]',
+    },
   ];
 
   return (
@@ -433,7 +343,7 @@ export const KnownToolPreviewV3Body: React.FC<{
         onCopy={() => void handleCopyDetails()}
         extraCopyFormats={[
           {
-            label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+            label: t('preview.copyAsMarkdown', 'Copy as Markdown'),
             onClick: () =>
               void copyAsMarkdown(
                 { title: tool.name, description: detailsText },
@@ -441,7 +351,7 @@ export const KnownToolPreviewV3Body: React.FC<{
               ),
           },
           {
-            label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+            label: t('preview.copyForSlack', 'Copy for Slack'),
             onClick: () =>
               void copyForSlack(
                 { title: tool.name, description: detailsText },
@@ -496,27 +406,27 @@ export const KnownToolPreviewV3Footer: React.FC<{
       try {
         setAiLoading(true);
         setAiError(null);
-        const text = await runKnownToolAi({ intent, isPolish: Boolean(isPolish), tool, full });
+        const text = await runKnownToolAi({ intent, isPolish: Boolean(isPolish), t, tool, full });
         if (!text) throw new Error('empty');
         setAiText(text);
       } catch {
-        setAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        setAiError(t('discoveryToolsMain.knownToolPreviewV3.aiUnavailable', 'AI unavailable'));
       } finally {
         setAiLoading(false);
       }
     },
-    [full, isPolish, tool]
+    [full, isPolish, t, tool]
   );
 
   const handleCopyAi = useCallback(async () => {
     if (!aiText) return;
     try {
       await navigator.clipboard.writeText(aiText);
-      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      toast.success(t('common.copied', 'Copied'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('common.copyFailed', 'Copy failed'));
     }
-  }, [aiText, isPolish]);
+  }, [aiText, t]);
 
   const handleClearAi = useCallback(() => {
     setAiText(null);
@@ -532,9 +442,9 @@ export const KnownToolPreviewV3Footer: React.FC<{
   const overflowCount = Math.max(0, tags.length - visibleTags.length);
 
   const aiHints = [
-    isPolish ? 'Kiedy użyć' : 'When to use',
-    isPolish ? 'Pierwsze kroki' : 'First steps',
-    isPolish ? 'Błędy' : 'Mistakes',
+    t('discoveryToolsMain.knownToolPreviewV3.intentWhenToUse', 'When to use'),
+    t('discoveryToolsMain.knownToolPreviewV3.intentFirstSteps', 'First steps'),
+    t('discoveryToolsMain.knownToolPreviewV3.hintMistakes', 'Mistakes'),
   ];
   const hintToIntent: Record<string, KnownToolPreviewAiIntent> = {
     [aiHints[0]]: 'when_to_use',
@@ -558,7 +468,7 @@ export const KnownToolPreviewV3Footer: React.FC<{
     {
       buttons: [
         {
-          label: isPolish ? 'Start sesji' : 'Start session',
+          label: t('discoveryToolsMain.knownToolPreviewV3.startSession', 'Start session'),
           onClick: onStartSession,
           colorScheme: 'primary',
           disabled: tool.isComingSoon || !tool.isActive,
@@ -577,7 +487,7 @@ export const KnownToolPreviewV3Footer: React.FC<{
     {
       buttons: [
         {
-          label: isPolish ? 'Czat' : 'Chat',
+          label: t('discoveryToolsMain.knownToolPreviewV3.chat', 'Chat'),
           onClick: onChat,
           colorScheme: 'neutral',
           disabled: !tool.isActive,
@@ -590,9 +500,7 @@ export const KnownToolPreviewV3Footer: React.FC<{
   if (!tool.isActive) {
     return (
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5 text-xs text-slate-600 dark:text-slate-300">
-        {isPolish
-          ? 'To narzędzie jest jeszcze nieaktywne. Możesz zobaczyć opis, ale nie otworzysz pełnego widoku ani sesji.'
-          : 'This tool is not active yet. You can see the description, but cannot open the full view or start a session.'}
+        {t('discoveryToolsMain.knownToolPreviewV3.toolNotActiveYet')}
       </div>
     );
   }
@@ -618,12 +526,8 @@ export const KnownToolPreviewV3Footer: React.FC<{
         items={relationItems}
         emptyLabel={
           fullLoading
-            ? isPolish
-              ? 'Ładowanie…'
-              : 'Loading…'
-            : isPolish
-              ? 'Brak powiązań'
-              : 'No relations'
+            ? t('discoveryToolsMain.knownToolPreviewV3.loadingEllipsis', 'Loading…')
+            : t('preview.noRelations', 'No relations')
         }
       />
 

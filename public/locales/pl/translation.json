@@ -28386,6 +28386,68 @@
       "confirmApproval": "Potwierdzam zatwierdzenie",
       "approve": "Approve",
       "sendBackToDraft": "Send back to Draft"
+    },
+    "knownToolPreviewV3": {
+      "intentWhenToUse": "Kiedy użyć",
+      "intentFirstSteps": "Pierwsze kroki",
+      "intentCommonMistakes": "Typowe błędy",
+      "hintMistakes": "Błędy",
+      "toolInPreparation": "Narzędzie w przygotowaniu.",
+      "dependsOnTool": "Zależy od narzędzia",
+      "sessionAssistantModerator": "Asystent i moderator sesji",
+      "dependsOnScope": "Zależy od zakresu",
+      "goal": "Cel",
+      "outcome": "Rezultat",
+      "aiRole": "Rola AI",
+      "duration": "Czas",
+      "aiUnavailable": "AI niedostępne",
+      "categoryStrategy": "Strategia",
+      "categoryOperations": "Operacje",
+      "categoryDigital": "Digital",
+      "categoryTool": "Narzędzie",
+      "statusActive": "Aktywny",
+      "statusInactive": "Nieaktywny",
+      "startSession": "Start sesji",
+      "chat": "Czat",
+      "loadingEllipsis": "Ładowanie…",
+      "toolNotActiveYet": "To narzędzie jest jeszcze nieaktywne. Możesz zobaczyć opis, ale nie otworzysz pełnego widoku ani sesji.",
+      "snippets": {
+        "dynamic-swot": {
+          "goal": "Zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę opartą na evidence.",
+          "outcome": "Rama decyzji, napięcia strategiczne, rekomendowane ruchy i materiał źródłowy.",
+          "team": "C-level / właściciele, lider strategii lub dyrektor operacyjny",
+          "aiRole": "Moderator sesji, analityk evidence, generator napięć i rekomendacji",
+          "duration": "60-90 min"
+        },
+        "market-forces": {
+          "goal": "Zamienia kontekst rynku i wywiadu w ocenę presji konkurencyjnej, defensibility i presji marży.",
+          "outcome": "Scorecard 5 sił, implikacje strategiczne, rekomendowane ruchy i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, commercial lead lub właściciel rynku",
+          "aiRole": "Analityk rynku, moderator evidence i generator propozycji do akceptacji",
+          "duration": "60-90 min"
+        },
+        "growth-paths": {
+          "goal": "Zamienia ambicję wzrostu i sygnały z wywiadu w opcje Ansoffa oraz sekwencję decyzji.",
+          "outcome": "Macierz opcji, porównanie trade-offów, rekomendowane ruchy i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, commercial lead lub właściciel wzrostu",
+          "aiRole": "Moderator growth evidence, generator opcji i konsultant sekwencji ruchów",
+          "duration": "60-90 min"
+        },
+        "portfolio-priority": {
+          "goal": "Zamienia kontekst organizacji i wywiadu w decyzje, które elementy portfolio finansować, testować, utrzymać lub wygasić.",
+          "outcome": "Macierz BCG, trade-offy alokacji zasobów, rekomendowane ruchy i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, product lead, CFO lub właściciel portfolio",
+          "aiRole": "Analityk portfolio, generator kart do akceptacji i konsultant alokacji zasobów",
+          "duration": "60-90 min"
+        },
+        "risk-uncertainty": {
+          "goal": "Zamienia kontekst decyzji i sygnały z wywiadu w mapę założeń, ryzyk i scenariuszy.",
+          "outcome": "Założenia do walidacji, ryzyka, scenariusze, ruchy odporności i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, transformation lead, PMO lub właściciel ryzyka",
+          "aiRole": "Analityk ryzyka, generator kart do akceptacji i konsultant odporności",
+          "duration": "60-90 min"
+        }
+      }
     }
   }
 }
