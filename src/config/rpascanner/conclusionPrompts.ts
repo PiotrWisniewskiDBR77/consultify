@@ -22,6 +22,8 @@ import {
   type RpaSession,
 } from './feasibilityEngine';
 import { localizeLadder } from './index';
+import { buildRpaStaircasePromptRules, detectRpaGaps } from './rpaInsightStaircase';
+import { buildRpaQuestionBankPromptRules } from './rpaQuestionBank';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -81,6 +83,13 @@ export function buildRpaConclusionPrompt(session: RpaSession, isPolish: boolean)
         'If measurement is weak, keep a measure-first move before any bot-build spend.',
       ];
 
+  const gaps = detectRpaGaps(session);
+  const gapLines = gaps.length
+    ? gaps.map((g) => `- [${g.code}] ${localize(g.messagePl, g.messageEn, isPolish)}`).join('\n')
+    : isPolish
+      ? '(brak wykrytych luk strukturalnych)'
+      : '(no structural gaps detected)';
+
   return `${header}
 
 === AUTOMATION PORTFOLIO (facts — the only admissible source of volume and ROI) ===
@@ -92,8 +101,15 @@ ${scoreLines}
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
 
+=== STRUCTURAL GAPS (engine — surface these, do not paper over them) ===
+${gapLines}
+
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
+
+${buildRpaQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
+
+${buildRpaStaircasePromptRules(isPolish ? 'pl' : 'en')}
 
 QUALITY BARS:
 - Answer-first: "verdict" is a thesis about the decision, not a recap of the inputs.

@@ -21,6 +21,11 @@ import {
   computeBaseline,
   rankAutomationPhases,
 } from './automationEngine';
+import {
+  buildAutomationStaircasePromptRules,
+  detectAutomationGaps,
+} from './automationInsightStaircase';
+import { buildAutomationQuestionBankPromptRules } from './automationQuestionBank';
 import { type AutomationPhaseId } from './deepeningLadder';
 import { localizeLadder } from './index';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
@@ -89,6 +94,13 @@ export function buildProcessAutomationConclusionPrompt(
         'If the baseline is unquantified, keep a map-and-measure move before any automation build.',
       ];
 
+  const gaps = detectAutomationGaps(session);
+  const gapLines = gaps.length
+    ? gaps.map((g) => `- [${g.code}] ${localize(g.messagePl, g.messageEn, isPolish)}`).join('\n')
+    : isPolish
+      ? '(brak wykrytych luk strukturalnych)'
+      : '(no structural gaps detected)';
+
   return `${header}
 
 === PROCESS BASELINE (facts — the only admissible source of hours) ===
@@ -100,8 +112,15 @@ ${scoreLines}
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
 
+=== STRUCTURAL GAPS (engine — surface these, do not paper over them) ===
+${gapLines}
+
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
+
+${buildAutomationQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
+
+${buildAutomationStaircasePromptRules(isPolish ? 'pl' : 'en')}
 
 QUALITY BARS:
 - Answer-first: "verdict" is a thesis about the decision, not a recap of the inputs.

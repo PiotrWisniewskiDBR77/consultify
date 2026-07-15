@@ -21,6 +21,8 @@ import {
 } from './changeoverEngine';
 import { type SmedPhaseId } from './deepeningLadder';
 import { localizeLadder } from './index';
+import { buildSmedStaircasePromptRules, detectSmedGaps } from './smedInsightStaircase';
+import { buildSmedQuestionBankPromptRules } from './smedQuestionBank';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -80,6 +82,13 @@ export function buildSmedConclusionPrompt(session: SmedSession, isPolish: boolea
         'If measurement is weak, keep a measure-first move before any tooling spend.',
       ];
 
+  const gaps = detectSmedGaps(session);
+  const gapLines = gaps.length
+    ? gaps.map((g) => `- [${g.code}] ${localize(g.messagePl, g.messageEn, isPolish)}`).join('\n')
+    : isPolish
+      ? '(brak wykrytych luk strukturalnych)'
+      : '(no structural gaps detected)';
+
   return `${header}
 
 === CHANGEOVER BASELINE (facts — the only admissible source of minutes) ===
@@ -91,8 +100,15 @@ ${scoreLines}
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
 
+=== STRUCTURAL GAPS (engine — surface these, do not paper over them) ===
+${gapLines}
+
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
+
+${buildSmedQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
+
+${buildSmedStaircasePromptRules(isPolish ? 'pl' : 'en')}
 
 QUALITY BARS:
 - Answer-first: "verdict" is a thesis about the decision, not a recap of the inputs.
