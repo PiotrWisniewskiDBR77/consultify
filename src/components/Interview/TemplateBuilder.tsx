@@ -2781,7 +2781,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </span>
           )}
           <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700/70 text-slate-600 dark:text-slate-200 text-[10px] rounded border border-slate-300 dark:border-slate-600/60 leading-none">
-            {getAnswerTypeLabel(question.answerType, t)}
+            {getAnswerTypeLabel(question.answerType, (k, f) => t(k, f ?? k))}
           </span>
           {question.allowVoice && <Mic size={12} className="text-slate-500 dark:text-slate-400" />}
           {question.allowFileUpload && (

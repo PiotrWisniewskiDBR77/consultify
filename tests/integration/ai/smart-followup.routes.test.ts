@@ -5,13 +5,17 @@ import { canBindEphemeralPort, makeTestApp } from '../_helpers/testApp';
 
 const process_ = vi.fn();
 
-vi.mock('../../../server/src/services/ai/AIPipeline.js', () => ({
-  AIPipeline: class {
+vi.mock('../../../server/src/services/ai/AIPipeline.js', () => {
+  class MockAIPipeline {
+    static getInstance() {
+      return new MockAIPipeline();
+    }
     process(...args: any[]) {
       return process_(...args);
     }
-  },
-}));
+  }
+  return { AIPipeline: MockAIPipeline };
+});
 
 describe('AI routes: /smart-followup (REAL integration)', () => {
   const origNodeEnv = process.env.NODE_ENV;

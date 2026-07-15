@@ -63,7 +63,7 @@ function ensureLlmAdapterInstalled(): void {
           const userMsg = params.messages.find((m) => m.role === 'user')?.content || '';
 
           const { AIPipeline } = await import('../../services/ai/AIPipeline.js');
-          const pipeline = new AIPipeline();
+          const pipeline = AIPipeline.getInstance();
           const result = await pipeline.process({
             capability: 'chat',
             userId,
