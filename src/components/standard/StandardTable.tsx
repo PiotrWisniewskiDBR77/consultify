@@ -408,7 +408,10 @@ export const StandardTable: React.FC<StandardTableProps> = ({
       onRowClick={onRowClick}
       onRowDoubleClick={onRowDoubleClick}
       getRowActionSections={getSections}
-      hideRowActions={false}
+      /* Bez rowMenu/rowActions FilterableTable renderowałby domyślny kebab
+         z 5 no-op pozycjami (onRowAction nie jest forwardowany) — martwe
+         kliknięcia. Kebab tylko gdy moduł zadeklarował akcje. */
+      hideRowActions={!getSections}
       activeFilters={filters}
       onFilterChange={handleFilterChange}
       canvasClassName={canvasClassName}
