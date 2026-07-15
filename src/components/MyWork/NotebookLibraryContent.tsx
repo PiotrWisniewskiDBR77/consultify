@@ -2,8 +2,9 @@
  * NotebookLibraryContent — Level 1 of the Notebook module.
  *
  * Lists the notebooks (Notatniki) the user can access before they open one.
- * Rendered as an App Table per docs/ui-standards/03-modules/app-table-standard.md
- * (reuses ResizableTable + RowActionsMenu, the Decisions/Ideas canon). The
+ * Rendered via the Triada standard `StandardTable` (kanon TRIADA §27 — was a
+ * bespoke ResizableTable embedding, migrated to the canonical facade; kebab
+ * built from the same `rowActions` sections as before, unchanged). The
  * primary "New notebook" CTA lives in Menu 2 (MyWorkHub), not in this body.
  * See docs/product/NOTEBOOK_STRUCTURE_SSOT.md.
  */
@@ -23,14 +24,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
-import { EmptyState as SharedEmptyState } from '@/components/shared/states';
-import {
-  type ColumnDef,
-  type ColumnWidths,
-  ResizableTable,
-  type TableFilters,
-} from '@/components/ui/ResizableTable';
+import { type RowActionSection } from '@/components/shared/RowActionsMenu';
+import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import type { Notebook, NotebookContextSharing, NotebookScope } from '@/types/myWork';
@@ -68,72 +63,108 @@ const formatRelative = (iso: string | null, pl: boolean): string => {
   return new Date(iso).toLocaleDateString(pl ? 'pl-PL' : 'en-US');
 };
 
-const buildColumns = (pl: boolean): ColumnDef[] => [
+// canon TRIADA §27 — StandardTable columns. Kebab (actions) is auto-appended
+// by StandardTable itself; it is intentionally NOT declared here.
+const buildColumns = (pl: boolean): TableColumn[] => [
   {
     id: 'title',
     label: pl ? 'Notatnik' : 'Notebook',
-    width: 440,
-    minWidth: 260,
-    maxWidth: 900,
-    resizable: true,
-    filterable: false,
+    width: '440px',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as Notebook).title || ''),
+    render: (row: TableRow) => {
+      const nb = row as unknown as Notebook;
+      return (
+        // S1-U2a: Ideas-row anatomy — neutral icon tile + L2 title + L5 meta.
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised">
+            {nb.icon && /\p{Emoji}/u.test(nb.icon) ? (
+              <span className="text-sm leading-none">{nb.icon}</span>
+            ) : (
+              <BookOpen size={14} className="text-c-text-muted" />
+            )}
+          </span>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-c-text">{nb.title}</div>
+            <div className="truncate text-[11px] leading-4 text-c-text-muted">
+              {nb.pageCount} {pl ? 'notatek' : 'notes'} · {formatRelative(nb.updatedAt, pl)}
+            </div>
+          </div>
+        </div>
+      );
+    },
   },
   {
     // Scope filtering lives in Menu 3 (Command Row) presets, so the header
     // filter is intentionally omitted here to avoid duplicate controls.
     id: 'scope',
     label: pl ? 'Typ' : 'Type',
-    width: 150,
-    minWidth: 110,
-    maxWidth: 200,
-    resizable: true,
-    filterable: false,
+    width: '150px',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as Notebook).scope || ''),
+    render: (row: TableRow) => {
+      const nb = row as unknown as Notebook;
+      return nb.scope === 'team' ? (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
+          <Users size={11} />
+          {pl ? 'Cała organizacja' : 'Organization'}
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
+          <Lock size={11} />
+          {pl ? 'Osobisty' : 'Personal'}
+        </span>
+      );
+    },
   },
   {
-    id: 'context',
+    // canon: filter matching is row[column.id] (FilterableTable §L495) — id
+    // must equal the Notebook field name (contextSharing), not a display alias.
+    id: 'contextSharing',
     label: pl ? 'Kontekst' : 'Context',
-    width: 170,
-    minWidth: 120,
-    maxWidth: 230,
-    resizable: true,
+    width: '170px',
     filterable: true,
-    filterType: 'multiselect',
     filterOptions: [
       { value: 'private', label: pl ? 'Prywatny' : 'Private' },
       { value: 'org_context', label: pl ? 'Kontekst org' : 'Org context' },
     ],
+    render: (row: TableRow) => {
+      const nb = row as unknown as Notebook;
+      return nb.contextSharing === 'org_context' ? (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
+          <Globe size={11} />
+          {pl ? 'Kontekst org' : 'Org context'}
+        </span>
+      ) : (
+        <span className="text-c-text-muted">—</span>
+      );
+    },
   },
   {
     id: 'notes',
     label: pl ? 'Notatki' : 'Notes',
-    width: 110,
-    minWidth: 80,
-    maxWidth: 150,
-    resizable: true,
-    filterable: false,
+    width: '110px',
+    sortable: true,
+    sortAccessor: (row: TableRow) => Number((row as unknown as Notebook).pageCount) || 0,
     // canon §3.3 — numeric counts align right.
     align: 'right',
+    render: (row: TableRow) => (
+      <span className="text-sm text-c-text-muted">{(row as unknown as Notebook).pageCount}</span>
+    ),
   },
   {
     id: 'date',
     label: pl ? 'Zmieniono' : 'Updated',
-    width: 140,
-    minWidth: 100,
-    maxWidth: 190,
-    resizable: true,
-    filterable: false,
+    width: '140px',
+    sortable: true,
+    sortAccessor: (row: TableRow) => String((row as unknown as Notebook).updatedAt || ''),
     // canon §3.3 — dates align left.
     align: 'left',
-  },
-  {
-    id: 'actions',
-    label: '',
-    width: 56,
-    minWidth: 56,
-    maxWidth: 56,
-    resizable: false,
-    filterable: false,
-    align: 'right',
+    render: (row: TableRow) => (
+      <span className="text-xs text-c-text-muted">
+        {formatRelative((row as unknown as Notebook).updatedAt, pl)}
+      </span>
+    ),
   },
 ];
 
@@ -155,10 +186,6 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
   const [modal, setModal] = useState<ModalState>(null);
 
   const columns = useMemo(() => buildColumns(pl), [pl]);
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(() =>
-    buildColumns(pl).reduce((acc, c) => ({ ...acc, [c.id]: c.width }), {})
-  );
-  const [tableFilters, setTableFilters] = useState<TableFilters>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -193,16 +220,17 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
     onScopeCountsChange?.({ all: notebooks.length, personal, team });
   }, [notebooks, onScopeCountsChange]);
 
+  // Search (Menu 3 lupa) + scope preset filter data upstream. The per-column
+  // "Context" filter is handled internally by StandardTable/FilterableTable
+  // (column id `contextSharing` matches the Notebook field — canon §L495).
   const rows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const contextFilter = (tableFilters.context as string[] | undefined) || [];
     return notebooks.filter((n) => {
       if (q && !(n.title || '').toLowerCase().includes(q)) return false;
       if (scopeFilter !== 'all' && n.scope !== scopeFilter) return false;
-      if (contextFilter.length && !contextFilter.includes(n.contextSharing)) return false;
       return true;
     });
-  }, [notebooks, searchQuery, scopeFilter, tableFilters]);
+  }, [notebooks, searchQuery, scopeFilter]);
 
   const handleSaved = useCallback(
     (nb: Notebook, mode: 'create' | 'edit') => {
@@ -315,161 +343,28 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
   return (
     <div className="flex flex-col h-full bg-c-bg">
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
-        {loading ? (
-          <ResizableTable
-            columns={columns}
-            showSelectColumn={false}
-            filters={tableFilters}
-            onFilterChange={setTableFilters}
-            onColumnWidthChange={(id, w) => setColumnWidths((prev) => ({ ...prev, [id]: w }))}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <tr key={`sk-${i}`} className="border-b border-c-border-subtle" aria-hidden="true">
-                <td style={{ width: columnWidths.title }} className="px-3 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-5 w-5 shrink-0 rounded-md bg-c-border-subtle animate-pulse" />
-                    <span className="h-3.5 w-40 rounded bg-c-border-subtle animate-pulse" />
-                  </div>
-                </td>
-                <td style={{ width: columnWidths.scope }} className="px-3 py-3">
-                  <span className="block h-4 w-16 rounded-full bg-c-border-subtle animate-pulse" />
-                </td>
-                <td style={{ width: columnWidths.context }} className="px-3 py-3">
-                  <span className="block h-4 w-20 rounded-full bg-c-border-subtle animate-pulse" />
-                </td>
-                <td style={{ width: columnWidths.notes }} className="px-3 py-3 text-right">
-                  <span className="ml-auto block h-3.5 w-8 rounded bg-c-border-subtle animate-pulse" />
-                </td>
-                <td style={{ width: columnWidths.date }} className="px-3 py-3 text-right">
-                  <span className="ml-auto block h-3.5 w-16 rounded bg-c-border-subtle animate-pulse" />
-                </td>
-                <td style={{ width: columnWidths.actions }} className="px-3 py-3" />
-              </tr>
-            ))}
-          </ResizableTable>
-        ) : error ? (
-          <SharedEmptyState
-            variant="error"
-            title={pl ? 'Nie udało się wczytać notatników' : 'Failed to load notebooks'}
-            description={
-              pl ? 'Sprawdź połączenie i spróbuj ponownie.' : 'Check your connection and try again.'
-            }
-            onRetry={() => void load()}
-          />
-        ) : rows.length === 0 ? (
-          searchQuery || scopeFilter !== 'all' || Object.keys(tableFilters).length ? (
-            <SharedEmptyState
-              variant="filter"
-              title={
-                pl ? 'Brak notatników pasujących do filtrów' : 'No notebooks match your filters'
-              }
-              description={
-                pl
-                  ? 'Zmień frazę wyszukiwania lub zakres, aby zobaczyć więcej.'
-                  : 'Try a different search or scope to see more.'
-              }
-            />
-          ) : (
-            <SharedEmptyState
-              variant="new"
-              icon={BookOpen}
-              title={pl ? 'Nie masz jeszcze żadnego notatnika' : 'No notebooks yet'}
-              description={
-                pl
-                  ? 'Utwórz pierwszy notatnik, aby zbierać notatki, wiedzę i ustalenia zespołu.'
-                  : 'Create your first notebook to collect notes, knowledge and team decisions.'
-              }
-              primaryAction={{
-                label: pl ? 'Nowy notatnik' : 'New notebook',
-                onClick: () => setModal({ mode: 'create' }),
-                icon: Plus,
-              }}
-            />
-          )
-        ) : (
-          <ResizableTable
-            columns={columns}
-            showSelectColumn={false}
-            filters={tableFilters}
-            onFilterChange={setTableFilters}
-            onColumnWidthChange={(id, w) => setColumnWidths((prev) => ({ ...prev, [id]: w }))}
-          >
-            {rows.map((nb) => (
-              <tr
-                key={nb.id}
-                onClick={() => onOpenNotebook(nb)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') onOpenNotebook(nb);
-                }}
-                tabIndex={0}
-                className="group cursor-pointer border-b border-c-border-subtle outline-none transition-colors hover:bg-c-surface-raised hover:shadow-[inset_0_0_0_1px_var(--c-border)]"
-              >
-                {/* S1-U2a: Ideas-row anatomy — neutral icon tile + L2 title +
-                    L5 meta subtitle (no oversized emoji as identity). */}
-                <td style={{ width: columnWidths.title }} className="px-3 py-2.5">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised">
-                      {nb.icon && /\p{Emoji}/u.test(nb.icon) ? (
-                        <span className="text-sm leading-none">{nb.icon}</span>
-                      ) : (
-                        <BookOpen size={14} className="text-c-text-muted" />
-                      )}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-c-text">{nb.title}</div>
-                      <div className="truncate text-[11px] leading-4 text-c-text-muted">
-                        {nb.pageCount} {pl ? 'notatek' : 'notes'} ·{' '}
-                        {formatRelative(nb.updatedAt, pl)}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td style={{ width: columnWidths.scope }} className="px-3 py-2.5 text-left">
-                  {nb.scope === 'team' ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
-                      <Users size={11} />
-                      {pl ? 'Cała organizacja' : 'Organization'}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
-                      <Lock size={11} />
-                      {pl ? 'Osobisty' : 'Personal'}
-                    </span>
-                  )}
-                </td>
-                <td style={{ width: columnWidths.context }} className="px-3 py-2.5 text-left">
-                  {nb.contextSharing === 'org_context' ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
-                      <Globe size={11} />
-                      {pl ? 'Kontekst org' : 'Org context'}
-                    </span>
-                  ) : (
-                    <span className="text-c-text-muted">—</span>
-                  )}
-                </td>
-                <td
-                  style={{ width: columnWidths.notes }}
-                  className="px-3 py-2.5 text-right text-sm text-c-text-muted"
-                >
-                  {nb.pageCount}
-                </td>
-                <td
-                  style={{ width: columnWidths.date }}
-                  className="px-3 py-2.5 text-left text-xs text-c-text-muted"
-                >
-                  {formatRelative(nb.updatedAt, pl)}
-                </td>
-                <td
-                  style={{ width: columnWidths.actions }}
-                  className="px-2 py-2.5 text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <RowActionsMenu sections={rowActions(nb)} />
-                </td>
-              </tr>
-            ))}
-          </ResizableTable>
-        )}
+        <StandardTable
+          columns={columns}
+          data={rows as unknown as TableRow[]}
+          loading={loading}
+          error={
+            error ? (pl ? 'Nie udało się wczytać notatników' : 'Failed to load notebooks') : null
+          }
+          onRetry={() => void load()}
+          empty={{
+            icon: BookOpen,
+            title: pl ? 'Nie masz jeszcze żadnego notatnika' : 'No notebooks yet',
+            description: pl
+              ? 'Utwórz pierwszy notatnik, aby zbierać notatki, wiedzę i ustalenia zespołu.'
+              : 'Create your first notebook to collect notes, knowledge and team decisions.',
+            actionLabel: pl ? 'Nowy notatnik' : 'New notebook',
+            onAction: () => setModal({ mode: 'create' }),
+          }}
+          onRowClick={(row) => onOpenNotebook(row as unknown as Notebook)}
+          rowActions={(row) => rowActions(row as unknown as Notebook)}
+          defaultSort={{ columnId: 'date', direction: 'desc' }}
+          persistKey="mywork.notebooks.library"
+        />
       </div>
 
       {modal && (
