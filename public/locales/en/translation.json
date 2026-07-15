@@ -9178,7 +9178,8 @@
       "noChangesSuggested": "No changes suggested.",
       "rolesLookConsistent": "Roles look consistent.",
       "cancel": "Cancel",
-      "apply": "Apply"
+      "apply": "Apply",
+      "autoCreatedProjectDescription": "Project auto-created for initiative \"{{name}}\""
     },
     "financialAnalysisSection": {
       "financialAnalysis": "Financial Analysis",

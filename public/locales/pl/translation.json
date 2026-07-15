@@ -8324,7 +8324,8 @@
       "noChangesSuggested": "Brak propozycji zmian.",
       "rolesLookConsistent": "Role wyglądają spójnie.",
       "cancel": "Anuluj",
-      "apply": "Zastosuj"
+      "apply": "Zastosuj",
+      "autoCreatedProjectDescription": "Projekt automatycznie utworzony dla inicjatywy \"{{name}}\""
     },
     "financialAnalysisSection": {
       "financialAnalysis": "Analiza finansowa",

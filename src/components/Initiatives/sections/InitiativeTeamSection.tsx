@@ -132,9 +132,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
 
     const createRes: any = await Api.post('/projects', {
       name: initiativeName,
-      description: isPolish
-        ? `Projekt automatycznie utworzony dla inicjatywy "${initiativeName}"`
-        : `Project auto-created for initiative "${initiativeName}"`,
+      description: t('initiatives.initiativeTeamSection.autoCreatedProjectDescription', {
+        name: initiativeName,
+      }),
     });
     const newProjectId = String(createRes?.id || '');
     if (!newProjectId) throw new Error(t('initiatives.initiativeTeamSection.failedCreateProject'));
