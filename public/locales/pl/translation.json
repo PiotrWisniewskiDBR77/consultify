@@ -28253,6 +28253,35 @@
     "blockSettingsPanel": {
       "presets": "Presety",
       "fineTune": "Zaawansowane"
+    },
+    "reviewEditStep": {
+      "edited": "Edytowane",
+      "copy": "Kopiuj",
+      "regenerate": "Regeneruj",
+      "edit": "Edytuj",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "regenerateSection": "Regeneruj Sekcję",
+      "additionalGuidanceOptional": "Dodatkowe Wskazówki (opcjonalnie)",
+      "eGUseMoreFormalLanguage": "Np. \"Użyj bardziej formalnego języka\", \"Dodaj więcej szczegółów technicznych\"...",
+      "edit2": "Edycja",
+      "preview": "Podgląd",
+      "readyToFinalize": "Gotowy do finalizacji?",
+      "afterFinalizingTheReportWillMove": "Po finalizacji raport przejdzie do statusu \"W przeglądzie\". Nadal będziesz mógł go edytować.",
+      "warningSomeSectionsDoNotHave": "Uwaga: Niektóre sekcje nie mają jeszcze treści.",
+      "finalizeReport": "Finalizuj Raport",
+      "inReview": "Weryfikacja",
+      "thisReportIsInReviewYou": "Raport jest w weryfikacji. Możesz go zatwierdzić lub odesłać do poprawek.",
+      "sendBack": "Odeślij do poprawek",
+      "approve": "Zatwierdź",
+      "reportApproved": "Raport zatwierdzony",
+      "reportHasBeenApprovedMarkAs": "Raport został zatwierdzony. Oznacz jako wysłany wewnętrznie, gdy przekażesz go do zespołu.",
+      "markAsSentInternally": "Oznacz jako wysłany wewnętrznie",
+      "sentInternally": "Wysłany wewnętrznie",
+      "reportHasBeenSentInternallyMark": "Raport został wysłany wewnętrznie. Oznacz jako wysłany zewnętrznie, gdy przekażesz go do klienta.",
+      "markAsSentExternally": "Oznacz jako wysłany zewnętrznie",
+      "sentExternally": "Wysłany zewnętrznie",
+      "reportHasBeenSentToThe": "Raport został wysłany do klienta. Cykl życia raportu został zakończony."
     }
   }
 }

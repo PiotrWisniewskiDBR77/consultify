@@ -27177,6 +27177,35 @@
     "blockSettingsPanel": {
       "presets": "Presets",
       "fineTune": "Fine-tune"
+    },
+    "reviewEditStep": {
+      "edited": "Edited",
+      "copy": "Copy",
+      "regenerate": "Regenerate",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "regenerateSection": "Regenerate Section",
+      "additionalGuidanceOptional": "Additional Guidance (optional)",
+      "eGUseMoreFormalLanguage": "E.g., \"Use more formal language\", \"Add more technical details\"...",
+      "edit2": "Edit",
+      "preview": "Preview",
+      "readyToFinalize": "Ready to Finalize?",
+      "afterFinalizingTheReportWillMove": "After finalizing, the report will move to \"In Review\" status. You can still edit it.",
+      "warningSomeSectionsDoNotHave": "Warning: Some sections do not have content yet.",
+      "finalizeReport": "Finalize Report",
+      "inReview": "In Review",
+      "thisReportIsInReviewYou": "This report is in review. You can approve it or send it back for changes.",
+      "sendBack": "Send back",
+      "approve": "Approve",
+      "reportApproved": "Report Approved",
+      "reportHasBeenApprovedMarkAs": "Report has been approved. Mark as sent internally when you share it with the team.",
+      "markAsSentInternally": "Mark as Sent Internally",
+      "sentInternally": "Sent Internally",
+      "reportHasBeenSentInternallyMark": "Report has been sent internally. Mark as sent externally when you share it with the client.",
+      "markAsSentExternally": "Mark as Sent Externally",
+      "sentExternally": "Sent Externally",
+      "reportHasBeenSentToThe": "Report has been sent to the client. The report lifecycle is complete."
     }
   }
 }
