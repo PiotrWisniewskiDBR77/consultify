@@ -241,4 +241,36 @@ describe('tableSchemaGeneratorService (B4)', () => {
       JSON.stringify(callArgs);
     expect(systemPrompt).toMatch(/TOTALS ROW/i);
   });
+
+  // ── FT-G — data-integrity guard (§0.3 parity, commit 0868a37b09) ────────
+  // Smoke test mirroring docGenerationRuntime.test.ts's "startSheet: system
+  // prompt zabrania prezentowania zmyślonych liczb jako realnych danych org
+  // (§0.3)": asserts the premium sheet-schema brief carries the same
+  // fabrication-forbidding doctrine, not the exact wording.
+  it('FT-G/1: PREMIUM system prompt forbids presenting fabricated numbers as real org data (§0.3)', async () => {
+    mockResolveTier.mockReturnValue('PREMIUM');
+    mockLlmCall.mockResolvedValue({ object: RISK_LLM_OBJECT });
+
+    await generateTableSchema('tabela ryzyk projektu', { orgId: 'org-1' });
+
+    const callArgs = mockLlmCall.mock.calls[0][0];
+    const systemPrompt: string = callArgs?.systemPrompt ?? '';
+    expect(systemPrompt).toContain('§0.3');
+    expect(systemPrompt).toMatch(/DATA INTEGRITY/i);
+    expect(systemPrompt).toMatch(/ILLUSTRATIVE EXAMPLE/i);
+    expect(systemPrompt).toMatch(
+      /NEVER invent a precise-looking business metric.*present it as real organisation data/i
+    );
+  });
+
+  it('FT-G/2: PREMIUM system prompt instructs verbatim use of caller-embedded real data', async () => {
+    mockResolveTier.mockReturnValue('PREMIUM');
+    mockLlmCall.mockResolvedValue({ object: RISK_LLM_OBJECT });
+
+    await generateTableSchema('tabela z danymi', { orgId: 'org-1' });
+
+    const callArgs = mockLlmCall.mock.calls[0][0];
+    const systemPrompt: string = callArgs?.systemPrompt ?? '';
+    expect(systemPrompt).toMatch(/reproduce EXACTLY those values, unmodified/i);
+  });
 });
