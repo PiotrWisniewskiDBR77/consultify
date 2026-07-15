@@ -26877,6 +26877,34 @@
       "previewList": "Preview list",
       "cancel": "Cancel",
       "generateDrafts": "Generate drafts"
+    },
+    "riskUncertaintyLibraryGraphic": {
+      "titleProcess": "How Risk & Uncertainty moves from signals to safeguards",
+      "titleExample": "Example: from uncertainty to resilience moves",
+      "subtitle": "The tool does not produce a fear list. It captures signals, builds assumptions, risks, and scenarios, requires card approval, and only then recommends validation, mitigation, monitoring, and escalation.",
+      "missionProcess": "Risk mission, scope, success signal, and constraints",
+      "missionExample": "How do we protect a transformation from delays, cost pressure, and demand shifts?",
+      "cards": [
+        ["Assumptions", "What must be true for the strategy to work"],
+        ["Risks", "What can hit outcome, cost, timing, or reputation"],
+        ["Scenarios", "How different futures change the decision"],
+        ["Moves", "Validate, mitigate, monitor, hedge, escalate"]
+      ]
+    },
+    "portfolioPriorityLibraryGraphic": {
+      "titleProcess": "How Portfolio Priority moves from evidence to decisions",
+      "titleExample": "Example: from initiative list to resource allocation",
+      "subtitle": "BCG is not a decorative matrix. The tool captures signals, proposes portfolio cards, asks for user approval, and only then builds trade-offs, moves, and initiatives.",
+      "missionProcess": "Portfolio mission, scope, constraints, and success signal",
+      "missionExample": "Which products and initiatives should receive funding next quarter under a constrained budget?",
+      "quadrants": [
+        ["Stars", "High growth and strong position: invest selectively"],
+        ["Question Marks", "High growth and weak position: test or choose the bet"],
+        ["Cash Cows", "Stable position: maintain and fund growth"],
+        ["Dogs", "Weak position: reduce, harvest, or redesign"]
+      ],
+      "insight": "The recommendation is not equal support for every topic, but deliberate allocation: invest, maintain, test, harvest, stop.",
+      "output": "Source summary -> portfolio initiatives -> deck -> report"
     }
   }
 }

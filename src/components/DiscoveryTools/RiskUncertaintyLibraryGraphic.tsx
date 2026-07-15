@@ -1,52 +1,29 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function RiskUncertaintyLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Risk & Uncertainty',
-        title: isExample
-          ? 'Przykład: od niepewności do ruchów odporności'
-          : 'Jak Risk & Uncertainty prowadzi od sygnałów do zabezpieczeń',
-        subtitle:
-          'Narzędzie nie tworzy listy strachów. Zbiera sygnały, buduje założenia, ryzyka i scenariusze, wymaga akceptacji kart i dopiero potem rekomenduje walidację, mitygację, monitoring i eskalację.',
-        mission: isExample
-          ? 'Jak zabezpieczyć transformację przed opóźnieniami, presją kosztów i zmianą popytu?'
-          : 'Risk mission, scope, success signal i constraints',
-        stages: ['Mission', 'Evidence', 'Risk map', 'Synthesis', 'Outputs'],
-        cards: [
-          ['Assumptions', 'Co musi być prawdą, żeby strategia działała'],
-          ['Risks', 'Co może uderzyć w wynik, koszt, czas lub reputację'],
-          ['Scenarios', 'Jak różne przyszłości zmieniają decyzję'],
-          ['Moves', 'Validate, mitigate, monitor, hedge, escalate'],
-        ],
-        output: 'Source summary -> resilience initiatives -> risk deck -> report',
-      }
-    : {
-        eyebrow: 'Risk & Uncertainty',
-        title: isExample
-          ? 'Example: from uncertainty to resilience moves'
-          : 'How Risk & Uncertainty moves from signals to safeguards',
-        subtitle:
-          'The tool does not produce a fear list. It captures signals, builds assumptions, risks, and scenarios, requires card approval, and only then recommends validation, mitigation, monitoring, and escalation.',
-        mission: isExample
-          ? 'How do we protect a transformation from delays, cost pressure, and demand shifts?'
-          : 'Risk mission, scope, success signal, and constraints',
-        stages: ['Mission', 'Evidence', 'Risk map', 'Synthesis', 'Outputs'],
-        cards: [
-          ['Assumptions', 'What must be true for the strategy to work'],
-          ['Risks', 'What can hit outcome, cost, timing, or reputation'],
-          ['Scenarios', 'How different futures change the decision'],
-          ['Moves', 'Validate, mitigate, monitor, hedge, escalate'],
-        ],
-        output: 'Source summary -> resilience initiatives -> risk deck -> report',
-      };
+  const labels = {
+    eyebrow: 'Risk & Uncertainty',
+    title: isExample
+      ? t('discoveryToolsMain.riskUncertaintyLibraryGraphic.titleExample')
+      : t('discoveryToolsMain.riskUncertaintyLibraryGraphic.titleProcess'),
+    subtitle: t('discoveryToolsMain.riskUncertaintyLibraryGraphic.subtitle'),
+    mission: isExample
+      ? t('discoveryToolsMain.riskUncertaintyLibraryGraphic.missionExample')
+      : t('discoveryToolsMain.riskUncertaintyLibraryGraphic.missionProcess'),
+    stages: ['Mission', 'Evidence', 'Risk map', 'Synthesis', 'Outputs'],
+    cards: t('discoveryToolsMain.riskUncertaintyLibraryGraphic.cards', {
+      returnObjects: true,
+    }) as Array<[string, string]>,
+    output: 'Source summary -> resilience initiatives -> risk deck -> report',
+  };
 
   return (
     <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.16),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(239,68,68,0.1),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.18),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(239,68,68,0.12),transparent_22%),linear-gradient(180deg,#0b1020,#0a0f1b)]">

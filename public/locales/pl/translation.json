@@ -27953,6 +27953,34 @@
       "previewList": "Preview list",
       "cancel": "Anuluj",
       "generateDrafts": "Generate drafts"
+    },
+    "riskUncertaintyLibraryGraphic": {
+      "titleProcess": "Jak Risk & Uncertainty prowadzi od sygnałów do zabezpieczeń",
+      "titleExample": "Przykład: od niepewności do ruchów odporności",
+      "subtitle": "Narzędzie nie tworzy listy strachów. Zbiera sygnały, buduje założenia, ryzyka i scenariusze, wymaga akceptacji kart i dopiero potem rekomenduje walidację, mitygację, monitoring i eskalację.",
+      "missionProcess": "Risk mission, scope, success signal i constraints",
+      "missionExample": "Jak zabezpieczyć transformację przed opóźnieniami, presją kosztów i zmianą popytu?",
+      "cards": [
+        ["Assumptions", "Co musi być prawdą, żeby strategia działała"],
+        ["Risks", "Co może uderzyć w wynik, koszt, czas lub reputację"],
+        ["Scenarios", "Jak różne przyszłości zmieniają decyzję"],
+        ["Moves", "Validate, mitigate, monitor, hedge, escalate"]
+      ]
+    },
+    "portfolioPriorityLibraryGraphic": {
+      "titleProcess": "Jak Portfolio Priority prowadzi od evidence do decyzji",
+      "titleExample": "Przykład: od listy inicjatyw do alokacji zasobów",
+      "subtitle": "BCG nie jest dekoracyjną macierzą. Narzędzie zbiera sygnały, proponuje karty portfolio, wymusza akceptację użytkownika i dopiero potem buduje trade-offy, ruchy oraz inicjatywy.",
+      "missionProcess": "Portfolio mission, scope, constraints i success signal",
+      "missionExample": "Które produkty i inicjatywy finansować w kolejnym kwartale przy ograniczonym budżecie?",
+      "quadrants": [
+        ["Stars", "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"],
+        ["Question Marks", "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"],
+        ["Cash Cows", "Stabilna pozycja: utrzymuj i finansuj wzrost"],
+        ["Dogs", "Słaba pozycja: ogranicz, wygasz lub przebuduj"]
+      ],
+      "insight": "Rekomendacja nie polega na równym wsparciu wszystkich tematów, tylko na świadomej alokacji: invest, maintain, test, harvest, stop.",
+      "output": "Source summary -> inicjatywy portfolio -> deck -> raport"
     }
   }
 }
