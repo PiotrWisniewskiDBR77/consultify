@@ -684,7 +684,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (allowedAnswerTypes.length === ANSWER_TYPES.length) {
       return t('interview.templateBuilder.allAnswerTypes');
     }
-    return allowedAnswerTypes.map((type) => getAnswerTypeLabel(type, t, type)).join(', ');
+    return allowedAnswerTypes.map((type) => getAnswerTypeLabel(type, (k, f) => t(k, f ?? k), type)).join(', ');
   }, [allowedAnswerTypes, t]);
 
   const areaTagsLabel = useMemo(() => {
@@ -2290,7 +2290,7 @@ ${sourceText || '(none)'}`;
                                   item.answerType
                                     ? normalizeAnswerType(item.answerType)
                                     : current.answerType,
-                                  t,
+                                  (k, f) => t(k, f ?? k),
                                   '-'
                                 )}
                               </p>
@@ -2334,7 +2334,7 @@ ${sourceText || '(none)'}`;
                               {item.questionText}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {getAnswerTypeLabel(normalizeAnswerType(item.answerType), t, '-')}
+                              {getAnswerTypeLabel(normalizeAnswerType(item.answerType), (k, f) => t(k, f ?? k), '-')}
                             </p>
                             {item.rationale ? (
                               <p className="text-xs text-slate-500 dark:text-slate-400">
