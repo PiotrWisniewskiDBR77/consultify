@@ -890,7 +890,7 @@ export const MeetingHub: React.FC = () => {
                     selectedMeeting.projectId
                       ? [
                           {
-                            label: `${isPolish ? 'Projekt' : 'Project'}: ${selectedMeeting.projectId.slice(0, 8)}…`,
+                            label: `${t('meeting.project', 'Project')}: ${selectedMeeting.projectId.slice(0, 8)}…`,
                           },
                         ]
                       : []

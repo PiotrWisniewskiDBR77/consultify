@@ -17735,6 +17735,34 @@
         "viewGraph": "View knowledge graph",
         "errorRebuild": "Rebuild failed — try again"
       }
+    },
+    "knowledgeGraph": {
+      "stats": {
+        "entities": "Entities",
+        "relations": "Relations",
+        "avgConfidence": "Avg confidence",
+        "stale": "Stale",
+        "redacted": "Redacted"
+      },
+      "searchPlaceholder": "Search knowledge graph entities...",
+      "search": "Search",
+      "refreshStats": "Refresh stats",
+      "emptyOrg": {
+        "title": "Your knowledge graph is empty",
+        "description": "Your knowledge graph will fill as Teresa processes interviews, documents, and organization context.",
+        "setupProfile": "Set up your org profile"
+      },
+      "emptySearch": {
+        "title": "Search entities to explore the knowledge graph",
+        "hint": "Click a node to see details and provenance"
+      },
+      "properties": "Properties",
+      "type": "Type",
+      "confidence": "Confidence",
+      "mentions": "Mentions",
+      "traverse": "Traverse",
+      "provenance": "Provenance",
+      "sources": "Sources"
     }
   },
   "megatrends": {
@@ -20583,7 +20611,8 @@
       "confirmDeleteTitle": "Delete selected meetings?",
       "confirmDeleteDesc": "You will permanently delete {{count}} meeting(s). This cannot be undone.",
       "deletedNoun": "deleted"
-    }
+    },
+    "project": "Project"
   },
   "manager": {
     "col": {

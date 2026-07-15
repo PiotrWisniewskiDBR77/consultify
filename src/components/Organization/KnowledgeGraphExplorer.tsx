@@ -137,8 +137,7 @@ function layoutGraph(
 }
 
 export const KnowledgeGraphExplorer: React.FC = () => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [query, setQuery] = useState('');
@@ -258,14 +257,26 @@ export const KnowledgeGraphExplorer: React.FC = () => {
       {stats && (
         <div className="flex items-center gap-4 flex-wrap">
           {[
-            { label: isPl ? 'Encje' : 'Entities', value: stats.totalEntities },
-            { label: isPl ? 'Relacje' : 'Relations', value: stats.totalRelations },
             {
-              label: isPl ? 'Śr. pewność' : 'Avg confidence',
+              label: t('organization.knowledgeGraph.stats.entities', 'Entities'),
+              value: stats.totalEntities,
+            },
+            {
+              label: t('organization.knowledgeGraph.stats.relations', 'Relations'),
+              value: stats.totalRelations,
+            },
+            {
+              label: t('organization.knowledgeGraph.stats.avgConfidence', 'Avg confidence'),
               value: `${(stats.avgConfidence * 100).toFixed(0)}%`,
             },
-            { label: isPl ? 'Nieaktualne' : 'Stale', value: stats.staleEntities },
-            { label: isPl ? 'Zredagowane' : 'Redacted', value: stats.redactedEntities },
+            {
+              label: t('organization.knowledgeGraph.stats.stale', 'Stale'),
+              value: stats.staleEntities,
+            },
+            {
+              label: t('organization.knowledgeGraph.stats.redacted', 'Redacted'),
+              value: stats.redactedEntities,
+            },
           ].map((s) => (
             <div
               key={s.label}
@@ -301,9 +312,10 @@ export const KnowledgeGraphExplorer: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder={
-              isPl ? 'Szukaj encji w grafie wiedzy...' : 'Search knowledge graph entities...'
-            }
+            placeholder={t(
+              'organization.knowledgeGraph.searchPlaceholder',
+              'Search knowledge graph entities...'
+            )}
             className="w-full h-9 pl-9 pr-3 rounded-xl text-xs bg-white dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
           />
         </div>
@@ -313,12 +325,12 @@ export const KnowledgeGraphExplorer: React.FC = () => {
           className="h-9 px-4 rounded-xl text-xs font-semibold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-40 transition-colors flex items-center gap-1.5"
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-          {isPl ? 'Szukaj' : 'Search'}
+          {t('organization.knowledgeGraph.search', 'Search')}
         </button>
         <button
           onClick={loadStats}
           className="h-9 px-3 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-          title={isPl ? 'Odśwież statystyki' : 'Refresh stats'}
+          title={t('organization.knowledgeGraph.refreshStats', 'Refresh stats')}
         >
           <RefreshCw size={14} />
         </button>
@@ -343,19 +355,23 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                   <Network size={32} />
                 </span>
                 <p className="text-base font-semibold text-slate-800 dark:text-white">
-                  {isPl ? 'Twój graf wiedzy jest jeszcze pusty' : 'Your knowledge graph is empty'}
+                  {t(
+                    'organization.knowledgeGraph.emptyOrg.title',
+                    'Your knowledge graph is empty'
+                  )}
                 </p>
                 <p className="max-w-md text-sm text-slate-500 dark:text-slate-400">
-                  {isPl
-                    ? 'Graf wiedzy będzie się wypełniać, gdy Teresa przetworzy wywiady, dokumenty i kontekst organizacji.'
-                    : 'Your knowledge graph will fill as Teresa processes interviews, documents, and organization context.'}
+                  {t(
+                    'organization.knowledgeGraph.emptyOrg.description',
+                    'Your knowledge graph will fill as Teresa processes interviews, documents, and organization context.'
+                  )}
                 </p>
                 <button
                   type="button"
                   onClick={() => navigate(ROUTES.ORGANIZATION.PROFILE)}
                   className="mt-1 inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-crimson-700"
                 >
-                  {isPl ? 'Uzupełnij profil organizacji' : 'Set up your org profile'}
+                  {t('organization.knowledgeGraph.emptyOrg.setupProfile', 'Set up your org profile')}
                   <ChevronRight size={14} />
                 </button>
               </div>
@@ -363,14 +379,16 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-3">
                 <Network size={48} className="opacity-30" />
                 <p className="text-sm font-medium">
-                  {isPl
-                    ? 'Wyszukaj encje aby zobaczyć graf wiedzy'
-                    : 'Search entities to explore the knowledge graph'}
+                  {t(
+                    'organization.knowledgeGraph.emptySearch.title',
+                    'Search entities to explore the knowledge graph'
+                  )}
                 </p>
                 <p className="text-xs opacity-60">
-                  {isPl
-                    ? 'Kliknij na węzeł aby zobaczyć szczegóły i proweniencję'
-                    : 'Click a node to see details and provenance'}
+                  {t(
+                    'organization.knowledgeGraph.emptySearch.hint',
+                    'Click a node to see details and provenance'
+                  )}
                 </p>
               </div>
             )
@@ -424,16 +442,19 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               {/* Properties */}
               <div className="space-y-2">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                  {isPl ? 'Właściwości' : 'Properties'}
+                  {t('organization.knowledgeGraph.properties', 'Properties')}
                 </h4>
                 {[
-                  { k: isPl ? 'Typ' : 'Type', v: selectedEntity.entity_type },
                   {
-                    k: isPl ? 'Pewność' : 'Confidence',
+                    k: t('organization.knowledgeGraph.type', 'Type'),
+                    v: selectedEntity.entity_type,
+                  },
+                  {
+                    k: t('organization.knowledgeGraph.confidence', 'Confidence'),
                     v: `${(selectedEntity.confidence * 100).toFixed(0)}%`,
                   },
                   {
-                    k: isPl ? 'Wzmianki' : 'Mentions',
+                    k: t('organization.knowledgeGraph.mentions', 'Mentions'),
                     v: selectedEntity.mention_count ?? '—',
                   },
                 ].map((p) => (
@@ -457,7 +478,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                   className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
                   <GitBranch size={12} />
-                  {isPl ? 'Przejdź graf' : 'Traverse'}
+                  {t('organization.knowledgeGraph.traverse', 'Traverse')}
                 </button>
                 <button
                   onClick={async () => {
@@ -471,7 +492,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                   className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
                   <Eye size={12} />
-                  {isPl ? 'Proweniencja' : 'Provenance'}
+                  {t('organization.knowledgeGraph.provenance', 'Provenance')}
                 </button>
               </div>
 
@@ -479,7 +500,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               {provenance && (
                 <div className="space-y-2">
                   <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                    {isPl ? 'Proweniencja' : 'Provenance'}
+                    {t('organization.knowledgeGraph.provenance', 'Provenance')}
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                     {provenance.whyExplainer}
@@ -487,7 +508,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                   {provenance.sourceArtifacts.length > 0 && (
                     <div className="space-y-1">
                       <span className="text-[9px] font-bold uppercase text-slate-600">
-                        {isPl ? 'Źródła' : 'Sources'}
+                        {t('organization.knowledgeGraph.sources', 'Sources')}
                       </span>
                       {provenance.sourceArtifacts.map((sa, i) => (
                         <div
