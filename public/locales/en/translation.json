@@ -27509,6 +27509,11 @@
       "reject": "Reject",
       "feedbackPlaceholder": "Your feedback for AI...",
       "rethinkShort": "Rethink"
+    },
+    "swotMatrix": {
+      "noItems": "No items",
+      "internalFactors": "Internal Factors",
+      "externalFactors": "External Factors"
     }
   }
 }

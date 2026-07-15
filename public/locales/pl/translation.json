@@ -28585,6 +28585,11 @@
       "reject": "Odrzuć",
       "feedbackPlaceholder": "Dodaj feedback dla AI...",
       "rethinkShort": "Przemyśl"
+    },
+    "swotMatrix": {
+      "noItems": "Brak elementów",
+      "internalFactors": "Czynniki wewnętrzne",
+      "externalFactors": "Czynniki zewnętrzne"
     }
   }
 }

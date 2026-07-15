@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SWOTData, SWOTItem } from '@/store/useToolStore';
 
@@ -57,6 +58,7 @@ const QUADRANT_CONFIG = {
 // ==================== COMPONENT ====================
 
 export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemClick }) => {
+  const { t } = useTranslation();
   const lang = isPolish ? 'pl' : 'en';
 
   const getQuadrantItems = (quadrant: keyof typeof QUADRANT_CONFIG) => {
@@ -117,7 +119,7 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemCl
             ))
           ) : (
             <div className="text-sm text-slate-600 italic">
-              {isPolish ? 'Brak elementów' : 'No items'}
+              {t('discoveryToolsSteps.swotMatrix.noItems')}
             </div>
           )}
         </div>
@@ -129,14 +131,14 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemCl
     <div className="grid grid-cols-2 gap-4">
       {/* Internal factors (top row) */}
       <div className="col-span-2 text-center text-xs text-slate-600 uppercase tracking-wide">
-        {isPolish ? 'Czynniki wewnętrzne' : 'Internal Factors'}
+        {t('discoveryToolsSteps.swotMatrix.internalFactors')}
       </div>
       {renderQuadrant('strengths')}
       {renderQuadrant('weaknesses')}
 
       {/* External factors (bottom row) */}
       <div className="col-span-2 text-center text-xs text-slate-600 uppercase tracking-wide mt-2">
-        {isPolish ? 'Czynniki zewnętrzne' : 'External Factors'}
+        {t('discoveryToolsSteps.swotMatrix.externalFactors')}
       </div>
       {renderQuadrant('opportunities')}
       {renderQuadrant('threats')}
