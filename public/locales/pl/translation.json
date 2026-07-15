@@ -22231,7 +22231,11 @@
     "notGeneratedUseGenerateSurveys": "Niewygenerowane. Użyj „Generuj ankiety”, aby rozłożyć szablony × osoby na przydziały wywiadów.",
     "surveysCompletedOfTotal": "{{done}} z {{total}} ankiet ukończonych",
     "completionUnavailable": "Postęp niedostępny.",
-    "suggestedPlan": "Sugerowany plan"
+    "suggestedPlan": "Sugerowany plan",
+    "confirmDeleteBulk": "Usunąć {{count}} program(ów) audytowych?",
+    "aiHintSummarize": "Podsumuj audyt",
+    "aiHintNextSteps": "Następne kroki",
+    "noSuggestedPlan": "Brak sugerowanego planu"
   },
   "aios": {
     "wave5ArtifactRuntimePanel": {

@@ -21213,7 +21213,11 @@
     "notGeneratedUseGenerateSurveys": "Not generated. Use \"Generate surveys\" to fan out templates × assignees into interview assignments.",
     "surveysCompletedOfTotal": "{{done}} of {{total}} surveys completed",
     "completionUnavailable": "Completion unavailable.",
-    "suggestedPlan": "Suggested plan"
+    "suggestedPlan": "Suggested plan",
+    "confirmDeleteBulk": "Delete {{count}} audit program(s)?",
+    "aiHintSummarize": "Summarize audit",
+    "aiHintNextSteps": "Next steps",
+    "noSuggestedPlan": "No suggested plan"
   },
   "aios": {
     "wave5ArtifactRuntimePanel": {
