@@ -6,7 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
+import { isScimGroupSyncEnabled } from '../../utils/scimGroupSyncFlag';
 import { isSsoSelfServiceEnabled } from '../../utils/ssoSelfServiceFlag';
+import { AdminScimGroupSyncCard } from './AdminScimGroupSyncCard';
 import { AdminSsoSelfServiceCard } from './AdminSsoSelfServiceCard';
 
 type SecurityPolicyState = {
@@ -302,6 +304,11 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
       {/* HP-24: SSO self-service metadata (SAML/OIDC) — dobudowane do istniejącej
           karty "SSO posture" powyżej. Za flagą, default OFF (reguła #7/#9). */}
       {isSsoSelfServiceEnabled() && <AdminSsoSelfServiceCard />}
+
+      {/* HP-25 B4: SCIM group-mapping self-service (Entra/Okta group → role,
+          optional per-project). Org-scoped backend. Za flagą, default OFF
+          (reguła #7/#9 — czeka na zrzut + akcept Piotra). */}
+      {isScimGroupSyncEnabled() && <AdminScimGroupSyncCard />}
     </div>
   );
 };
