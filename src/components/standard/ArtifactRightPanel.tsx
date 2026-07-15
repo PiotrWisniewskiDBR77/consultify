@@ -50,6 +50,17 @@ export interface ArtifactRightPanelProps {
   className?: string;
   /** Aria-label kontenera (a11y). */
   ariaLabel?: string;
+  /**
+   * HP-8 (Harvey-Parity workflow engine): opcjonalny slot NAD sekcjami dla
+   * paska stanu draft/review/approved (np. `ArtifactApprovalStatusBar`,
+   * src/components/standard/ArtifactApprovalStatusBar.tsx). Czysto addytywne
+   * — gdy nieustawione (domyślnie wszędzie dziś), panel renderuje się 1:1
+   * jak wcześniej. Wołający decyduje KIEDY go pokazać (typowo za flagą
+   * `artifactApprovalUi`, patrz src/utils/artifactApprovalUiFlag.ts) —
+   * wygląd/dobór miejsca to praca Vegas po akceptacji zrzutów (DoD §18.1),
+   * ten prop tylko udostępnia miejsce w powłoce.
+   */
+  statusBar?: React.ReactNode;
 }
 
 const SectionRow: React.FC<{
@@ -117,6 +128,7 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   width = 360,
   className,
   ariaLabel,
+  statusBar,
 }) => {
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(sections.filter((s) => s.defaultOpen ?? true).map((s) => s.id))
@@ -137,6 +149,9 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
       style={{ width, minWidth: width }}
       className={`shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle ${className ?? ''}`}
     >
+      {statusBar ? (
+        <div className="border-b border-c-border-subtle px-4 py-3">{statusBar}</div>
+      ) : null}
       {sections.map((section) => (
         <SectionRow
           key={section.id}
