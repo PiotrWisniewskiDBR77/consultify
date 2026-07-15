@@ -150,7 +150,11 @@
     "convertTo": "Konwertuj na",
     "openPreview": "Otwórz podgląd",
     "chatAbout": "Chat",
-    "comingSoonBackend": "Wkrótce (backend)"
+    "comingSoonBackend": "Wkrótce (backend)",
+    "delay": "Opóźnij",
+    "dismiss": "Zamknij",
+    "restore": "Przywróć",
+    "showLess": "Pokaż mniej"
   },
   "superadmin": {
     "confirm": {
@@ -1061,6 +1065,12 @@
       "confirmDeleteTitle": "Usunąć zaznaczone prezentacje?",
       "confirmDeleteDesc": "Trwale usuniesz {{count}} prezentacji. Tej operacji nie można cofnąć.",
       "deletedNoun": "usunięto"
+    },
+    "relations": {
+      "empty": "Brak powiązanych źródeł. Bloki wygenerowane z inicjatyw, analiz i narzędzi pojawią się tutaj.",
+      "jumpTo": "Przejdź do artefaktu",
+      "subtitle": "Wszystkie źródła powiązane z tą prezentacją — kliknij, aby przejść do artefaktu.",
+      "title": "Powiązania"
     }
   },
   "sidebar": {
@@ -1153,7 +1163,10 @@
         "done": "Gotowe",
         "snooze": "Odłóż",
         "remove": "Usuń z fokusa",
-        "delegate": "Deleguj"
+        "delegate": "Deleguj",
+        "delay": "Przesuń termin",
+        "edit": "Edytuj",
+        "openPreview": "Otwórz podgląd"
       },
       "delegateTitle": "Deleguj zadanie",
       "completed": "Oznaczono jako gotowe!",
@@ -8388,6 +8401,16 @@
       "high": "Wysoki",
       "medium": "Średni",
       "low": "Niski"
+    },
+    "candidates": {
+      "dismiss": "Odrzuć",
+      "empty": "Brak kandydatów. Uruchom skan, aby AI zaproponowało inicjatywy z rozpoznania.",
+      "error": "Nie udało się pobrać kandydatów.",
+      "source": "Źródło"
+    },
+    "proposedCards": {
+      "core": "rdzeń",
+      "proposedHeading": "Proponowane karty (AI)"
     }
   },
   "execution": {
@@ -8996,7 +9019,9 @@
       "confirmStatusTitle": "Zmienić status zaznaczonych inicjatyw?",
       "setStatus": "Zmień status:",
       "statusPartial": "Zmieniono {{success}}, błędów: {{failed}}",
-      "statusUpdated": "Zaktualizowano status {{count}} inicjatyw"
+      "statusUpdated": "Zaktualizowano status {{count}} inicjatyw",
+      "confirmStatusDesc": "Nowy status „{{status}}\" dla {{count}} inicjatyw. Każda zmiana podlega regułom governance.",
+      "noCommonStatus": "Brak wspólnej akcji statusu dla zaznaczenia"
     },
     "controlTower": {
       "failed": "Sygnały wieży kontrolnej niedostępne"
@@ -9053,6 +9078,20 @@
       "signals": "Sygnały",
       "tasks": "Zadania",
       "tasksCount": "Zadania: {{count}}"
+    },
+    "changeSignals": {
+      "affected": "osób objętych zmianą",
+      "capacity": "Sygnały wydolności zespołu",
+      "capacityEmpty": "Brak przeciążeń — obłożenie w normie.",
+      "capacityFailed": "Sygnały wydolności niedostępne chwilowo — kokpit działa normalnie.",
+      "champions": "Koalicja championów zmiany",
+      "championsEmpty": "Brak jeszcze zgłoszonych championów zmiany.",
+      "championsFailed": "Koalicja championów niedostępna chwilowo — kokpit działa normalnie.",
+      "loading": "Ładowanie…",
+      "overall": "Ogółem",
+      "readiness": "Gotowość ludzi na zmianę",
+      "readinessEmpty": "Brak jeszcze sygnałów adopcji (pulse/capability) do oceny.",
+      "readinessFailed": "Gotowość na zmianę niedostępna chwilowo — kokpit działa normalnie."
     }
   },
   "benefits": {
@@ -9502,7 +9541,8 @@
     "sharedSnapshot": "Udostępniona migawka",
     "sharedSnapshotFooter": "To jest udostępniona migawka tylko do odczytu",
     "snapshotGeneratedAt": "Wygenerowano",
-    "aiActionComplete": "Akcja AI zakończona"
+    "aiActionComplete": "Akcja AI zakończona",
+    "clientReport": "Raport DRD"
   },
   "auth": {
     "logIn": "Zaloguj się",
@@ -9552,7 +9592,8 @@
       "successMessage": "Twój adres e-mail został zweryfikowany.",
       "successTitle": "E-mail zweryfikowany",
       "verifying": "Weryfikujemy Twój adres e-mail…"
-    }
+    },
+    "privacyLink": "Polityka prywatności"
   },
   "help": {
     "onboarding": {
@@ -13328,7 +13369,8 @@
       "cta": "Utwórz i podłącz profil",
       "success": "Profil partnera został podłączony. Możesz teraz uzupełnić profil firmy.",
       "unavailable": "Portal Partnerski nie jest jeszcze skonfigurowany. Uruchom migracje portalu partnerskiego w bazie danych.",
-      "requiredToNavigate": "Najpierw podłącz profil partnera, aby przejść do innych sekcji."
+      "requiredToNavigate": "Najpierw podłącz profil partnera, aby przejść do innych sekcji.",
+      "contactAdmin": "Aby dołączyć do programu partnerskiego, skontaktuj się z administratorem lub poproś o zaproszenie."
     },
     "sidebar": {
       "title": "Portal Partnerski",
@@ -13396,7 +13438,8 @@
       "featureSoon": "Wkrótce dostępne",
       "col": {
         "status": "Status"
-      }
+      },
+      "userCount": "{{count}} użytkowników"
     },
     "dashboard": {
       "welcome": "Witaj ponownie",
@@ -13432,7 +13475,8 @@
         "governance": "Rejestracja i akceptacja dealu",
         "benefits": "Śledzenie prowizji i rozliczenia",
         "resource": "Zarządzanie dostępem klientów"
-      }
+      },
+      "freshHint": "Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych."
     },
     "metrics": {
       "title": "Metryki",
@@ -13444,7 +13488,8 @@
       "customerSatisfaction": "Zadowolenie klientów",
       "avgProjectDuration": "Śr. czas trwania projektu",
       "performanceScore": "Wynik wydajności",
-      "scoreBreakdown": "Rozkład wyniku"
+      "scoreBreakdown": "Rozkład wyniku",
+      "freshHint": "Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych."
     },
     "certification": {
       "learningPath": "Ścieżka nauki",
@@ -13477,7 +13522,8 @@
     },
     "resources": {
       "desc": "Pobierz zasoby pakietu partnerskiego",
-      "empty": "Brak zasobów w tej kategorii"
+      "empty": "Brak zasobów w tej kategorii",
+      "downloadError": "Nie udało się pobrać zasobu."
     },
     "profile": {
       "companyInfo": "Dane firmy",
@@ -13496,7 +13542,81 @@
       "getStarted": "Rozpocznij",
       "quickLinks": "Szybkie linki",
       "contact": {
-        "role": "Opiekun sukcesu partnera"
+        "role": "Opiekun sukcesu partnera",
+        "bookCall": "Umów rozmowę",
+        "bookCallSub": "Zaplanuj 15-min rozmowę wprowadzającą",
+        "linkedin": "Połącz się na LinkedIn",
+        "quote": "Jestem tu, aby pomóc Ci rozwijać biznes z Consultify. Niezależnie od tego, czy masz pytania o program, potrzebujesz wsparcia przy ofercie dla klienta, czy chcesz omówić możliwości co-marketingu — odezwij się!",
+        "responseTime": "Średni czas odpowiedzi: {{time}}",
+        "sendEmail": "Wyślij e-mail",
+        "subtitle": "Twój dedykowany Partner Manager pomoże Ci osiągnąć sukces"
+      },
+      "academy": {
+        "badgeFree": "BEZPŁATNY",
+        "boundaryText": "Pomoc i dokumentacja partnera wyjaśniają procesy podczas pracy. Partner Academy to oddzielna warstwa szkoleniowa do ustrukturyzowanego rozwoju, powtarzalnego enablementu i sygnałów certyfikacji.",
+        "courses": {
+          "drd": {
+            "description": "Dogłębne poznanie metodologii Digital Readiness Diagnostic."
+          },
+          "fundamentals": {
+            "description": "Poznaj platformę Consultify od podszewki. Opanuj oceny, raportowanie i zarządzanie klientami."
+          },
+          "selling": {
+            "description": "Sprawdzona metodologia sprzedaży usług transformacyjnych.",
+            "title": "Jak sprzedawać transformację cyfrową"
+          },
+          "success": {
+            "description": "Maksymalizuj retencję i wskaźniki satysfakcji klientów."
+          }
+        },
+        "openCertGuide": "Otwórz przewodnik certyfikacji",
+        "openLearningPath": "Otwórz ścieżkę nauki",
+        "pillarRolePath": "Ścieżka roli",
+        "subtitle": "Ustrukturyzowane wsparcie partnera wykraczające poza dokumentację: podstawy, ścieżki dla ról i gotowość do certyfikacji.",
+        "title": "Rozwijaj umiejętności z Partner Academy"
+      },
+      "calculator": {
+        "avgValueLabel": "Średnia wartość klienta (€/miesiąc)",
+        "basis": "Na podstawie {{count}} poleceń rocznie przy średniej wartości €{{value}}",
+        "clientsLabel": "Ilu klientów możesz polecić miesięcznie?",
+        "cta": "Zacznij zarabiać — wygeneruj swój kod",
+        "subtitle": "Zobacz, ile możesz zarobić jako Partner Consultify",
+        "title": "Oblicz swój potencjał zarobkowy",
+        "yourTier": "Twój poziom:"
+      },
+      "faq": {
+        "cancel": {
+          "a": "Jeśli polecony klient zrezygnuje w ciągu pierwszych {{days}} dni (okres na odstąpienie), prowizja za tego klienta jest korygowana. Po {{days}} dniach zachowujesz wszystkie wypracowane prowizje, nawet jeśli klient później zrezygnuje. Wierzymy w uczciwe i przejrzyste struktury prowizji.",
+          "q": "Co się dzieje, gdy polecony klient zrezygnuje?"
+        },
+        "certification": {
+          "a": "Certyfikacja Podstawy platformy trwa około 45 minut. Zaawansowane certyfikacje, takie jak framework DRD, zajmują 2-3 godziny. Wszystkie certyfikacje są samodzielne, więc możesz je ukończyć w dogodnym dla siebie czasie."
+        },
+        "countries": {
+          "a": "Tak! Consultify działa globalnie i możesz polecać klientów z dowolnego kraju. Twój wpis w katalogu partnerów może wyróżniać Twoją wiedzę regionalną, pomagając lokalnym klientom Cię znaleźć. Wypłaty prowizji mogą być realizowane w EUR, USD lub GBP.",
+          "q": "Czy mogę polecać klientów z dowolnego kraju?"
+        },
+        "earn": {
+          "a": "Zarabiasz prowizje, polecając nowych klientów Consultify. Gdy klient zarejestruje się za pomocą Twojego unikalnego kodu lub linku i zostanie płacącym klientem, otrzymujesz procent jego opłaty subskrypcyjnej. Stawki prowizji wynoszą od {{min}}% do {{max}}% w zależności od Twojego poziomu partnerskiego.",
+          "q": "Jak zarabiam prowizje jako partner?"
+        },
+        "openFull": "Otwórz pełne FAQ partnera",
+        "payout": {
+          "a": "Prowizje są wypłacane miesięcznie przelewem bankowym lub przez PayPal, po osiągnięciu minimalnego progu {{threshold}}. Płatności są realizowane {{day}}. dnia każdego miesiąca za zatwierdzone prowizje z poprzedniego miesiąca. Wszystkie zarobki śledzisz w czasie rzeczywistym w Panelu Partnera.",
+          "q": "Kiedy i jak otrzymuję wypłatę?"
+        },
+        "support": {
+          "a": "Wszyscy partnerzy otrzymują dostęp do szkoleń Partner Academy, materiałów marketingowych i społeczności partnerskiej. Od poziomu Bronze wzwyż dostępne są priorytetowe wsparcie i dedykowane szkolenia. Partnerzy Gold i Platinum otrzymują dedykowanego Partner Managera, możliwości co-marketingu i wczesny dostęp do nowych funkcji.",
+          "q": "Jakie wsparcie otrzymuję jako partner?"
+        },
+        "title": "Najczęściej zadawane pytania"
+      },
+      "onboarding": {
+        "customTerms": "Omów niestandardowe warunki",
+        "openGuide": "Otwórz przewodnik aplikacji",
+        "reviewCase": "Zobacz case potwierdzający",
+        "secureNote": "Twoje dane są szyfrowane i bezpieczne",
+        "sharedFlow": "To ten sam wspólny proces aplikacyjny używany ze strony publicznej i z wnętrza produktu. Przejrzyj przewodnik aplikacji, sprawdź case potwierdzający lub od razu przejdź do rozmowy o niestandardowych warunkach, gdy self-serve to za mało."
       }
     },
     "earnings": {
@@ -13585,6 +13705,9 @@
     },
     "referrals": {
       "deleteFailed": "Nie udało się usunąć prezentacji"
+    },
+    "common": {
+      "comingSoon": "Wkrótce"
     }
   },
   "thinking": {
@@ -13849,7 +13972,9 @@
     },
     "titles": {
       "idea": "Pomysł",
-      "note": "Notatka"
+      "note": "Notatka",
+      "ideasTable": "Tabela pomysłów",
+      "processFlow": "Przepływ procesu"
     },
     "deliverable": {
       "sheetTitle": "Arkusz z czatu",
@@ -13873,6 +13998,9 @@
       "viewEvidence": "Zobacz mapę dowodów",
       "openOutputs": "Otwórz Bibliotekę Outputs",
       "reviewPending": "Przejrzyj oczekujące artefakty"
+    },
+    "feedback": {
+      "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi..."
     }
   },
   "aiChat": {
@@ -14152,7 +14280,8 @@
       "formatConversational": "Swobodny",
       "missingInfo": "Czego brakowało? (opcjonalnie)",
       "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi...",
-      "submit": "Wyślij opinię"
+      "submit": "Wyślij opinię",
+      "whatWasGood": "Co było dobre? (opcjonalnie)"
     },
     "greeting": {
       "morning": "Dzień dobry",
@@ -14399,7 +14528,8 @@
       "noFiles": "Brak plików",
       "selectFile": "Wybierz plik",
       "downloading": "Pobieranie: {{name}}",
-      "loadError": "Nie udało się załadować plików"
+      "loadError": "Nie udało się załadować plików",
+      "notAvailable": "Integracje chmurowe nie są dostępne"
     },
     "myProjects": "Moje foldery",
     "teamProjects": "Foldery organizacji",
@@ -14518,6 +14648,15 @@
     "teresaProposal": {
       "failed": "Błąd",
       "reject": "Odrzuć"
+    },
+    "attachments": {
+      "extractionFailed": "Nie udało się odczytać tekstu z pliku \"{{name}}\". Sprawdź czy plik nie jest pusty lub uszkodzony.",
+      "unsupportedType": "Plik \"{{name}}\" nie jest obsługiwany. Dozwolone formaty: {{types}}.",
+      "uploadError": "Błąd przesyłania pliku \"{{name}}\": {{error}}",
+      "uploadFailed": "Nie udało się przetworzyć pliku \"{{name}}\".",
+      "uploadSuccess": "Załącznik \"{{name}}\" przetworzony.",
+      "urlError": "Błąd przetwarzania linku: {{error}}",
+      "urlIngestFailed": "Nie udało się przetworzyć linku."
     }
   },
   "agentAudit": {
@@ -14988,7 +15127,8 @@
     },
     "refresh": "Odśwież",
     "desktopOnly": {
-      "body": "{{surface}} jest zoptymalizowany na desktop. Na telefonie część układu (tabele, podgląd boczny) może być trudna w obsłudze."
+      "body": "{{surface}} jest zoptymalizowany na desktop. Na telefonie część układu (tabele, podgląd boczny) może być trudna w obsłudze.",
+      "title": "Najlepiej na większym ekranie"
     },
     "select": "Wybierz…",
     "initiativeCreator": {
@@ -16981,7 +17121,8 @@
       "createAnalysis": "Utwórz analizę",
       "createModelFromStatement": "Utwórz model",
       "createValuation": "Utwórz wycenę",
-      "openRecoveryQueue": "Otwórz recovery queue"
+      "openRecoveryQueue": "Otwórz recovery queue",
+      "confirmStatement": "Potwierdź statement"
     },
     "toast": {
       "deleted": "Usunięto",
@@ -17005,7 +17146,9 @@
       "valuationComputed": "Wycena obliczona",
       "statementConfirmed": "Statement potwierdzony",
       "valuationCreated": "Wycena utworzona",
-      "createFailed": "Nie udało się utworzyć"
+      "createFailed": "Nie udało się utworzyć",
+      "budgetCreated": "Budżet utworzony",
+      "statementDuplicateUnsupported": "Duplikacja statementu nie jest wspierana"
     },
     "prediction": {
       "budget": "Budżet",
@@ -17020,7 +17163,8 @@
       "budgetName": "Nazwa",
       "namePlaceholder": "np. Budżet 2026 Q1-Q4",
       "periodStart": "Okres od",
-      "periodEnd": "Okres do"
+      "periodEnd": "Okres do",
+      "monthly": "Miesięczna"
     },
     "analysis": {
       "ratioSummary": "Wskaźniki finansowe",
@@ -17119,7 +17263,18 @@
       "linkHint": "Kliknij, aby powiązać inicjatywę z finansami"
     },
     "analyze": {
-      "cta": "Analizuj"
+      "cta": "Analizuj",
+      "analysisFromModelHint": "Przejdź do Analizy i utwórz draft w kontekście bieżącego modelu.",
+      "analysisFromPredictionHint": "Przejdź do Analizy i utwórz draft w kontekście bieżącego budżetu lub scenariusza.",
+      "budgeting": "Budżetowanie",
+      "budgetingHint": "Przejdź do budżetu i utwórz nową pozycję planowania.",
+      "financialAnalysisHint": "Utwórz analizę finansową na bazie gotowych statementów.",
+      "modelingHint": "Utwórz model finansowy z gotowego statementu.",
+      "valuation": "Wycena przedsiębiorstwa",
+      "valuationFromAnalysisHint": "Przejdź do Wyceny i utwórz pozycję na bazie bieżącej analizy.",
+      "valuationFromModelHint": "Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu.",
+      "valuationFromPredictionHint": "Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu lub budżetu.",
+      "valuationFromStatementsHint": "Wycena jest dostępna po utworzeniu modelu, budżetu lub analizy finansowej."
     },
     "importWizard": {
       "completed": "Zakończony",
@@ -17261,7 +17416,9 @@
   },
   "portfolio": {
     "toast": {
-      "cannotDowngrade": "Nie można obniżyć statusu. Użyj „Anuluj” lub „Archiwizuj”."
+      "cannotDowngrade": "Nie można obniżyć statusu. Użyj „Anuluj” lub „Archiwizuj”.",
+      "gateDecisionError": "Nie udało się utworzyć decyzji bramki",
+      "projectRequired": "Projekt jest wymagany do zgłoszenia decyzji"
     },
     "ai": {
       "selectedCount": "Zaznaczone",
@@ -18278,7 +18435,9 @@
       "ideaSubmitted": "Dziękujemy za pomysł. Trafił do naszego backlogu.",
       "pulse": "Dziękujemy za opinię!",
       "feature": "Prośba o funkcję została wysłana.",
-      "featureWithAI": "Prośba o funkcję została wysłana. AI znalazło podobne zgłoszenia."
+      "featureWithAI": "Prośba o funkcję została wysłana. AI znalazło podobne zgłoszenia.",
+      "reference": "Numer zgłoszenia",
+      "referenceHint": "Powiadomimy Cię tutaj, gdy zmieni się status."
     },
     "error": {
       "submit": "Nie udało się wysłać opinii"
@@ -18344,7 +18503,20 @@
       }
     },
     "attach": {
-      "upload": "Przesłane"
+      "upload": "Przesłane",
+      "diagnostics": "Dołącz logi konsoli, błędy sieci i breadcrumbs (bez wartości z formularzy)",
+      "notAnImage": "Plik musi być obrazem (PNG, JPG, GIF lub WebP).",
+      "pasteHint": "lub wklej (Ctrl/⌘+V)",
+      "preparing": "Przygotowuję…",
+      "previewHint": "Hasła i pola email są zamazywane automatycznie. Użyj atrybutu data-feedback-redact dla innych wrażliwych miejsc.",
+      "readFailed": "Nie udało się odczytać pliku. Spróbuj ponownie.",
+      "remove": "Usuń załączony screenshot",
+      "removeShort": "Usuń",
+      "replace": "Wymień screenshot",
+      "screenshot": "Dołącz screenshot bieżącego widoku (opcjonalnie)",
+      "tooLarge": "Zrzut ekranu jest za duży (max ~1.4 MB). Użyj narzędzia do kompresji lub przytnij obraz.",
+      "uploaded": "Screenshot dodany do zgłoszenia.",
+      "uploadHint": "Wgraj własny zrzut ekranu (PNG/JPG, max ~1.4 MB) lub wklej obraz ze schowka (Ctrl/Cmd+V)."
     },
     "backlog": {
       "empty": "Brak prezentacji."
@@ -18356,7 +18528,17 @@
       "more": "więcej",
       "all": "Wszystkie"
     },
-    "loadMore": "Załaduj więcej"
+    "loadMore": "Załaduj więcej",
+    "duplicateBadge": {
+      "title": "Triage wykrył podobne zgłoszenia — otwórz szczegóły żeby je zobaczyć"
+    },
+    "floatingButton": {
+      "ariaLabel": "Zgłoś błąd (Shift+Ctrl+B)",
+      "label": "Zgłoś błąd"
+    },
+    "hasDiagnostics": "Zgłoszenie zawiera logi konsoli / sieci / breadcrumbs",
+    "overdueHint": "Pokaż tylko zgłoszenia po terminie odpowiedzi (SLA)",
+    "overdueOnly": "Zaległe (SLA)"
   },
   "behaviorIntelligence": {
     "journeyTracked": "Zdarzenie ścieżki zarejestrowane",
@@ -21553,12 +21735,25 @@
     "builderUnreachable": "Brak identyfikatora prezentacji — nie można jeszcze otworzyć Kreatora prezentacji.",
     "openingBuilder": "Otwieranie Kreatora prezentacji...",
     "qualityGateBlocked": "Eksport zablokowany przez bramkę jakości",
-    "qualityGateBlockedDetailed": "Bramka jakości zablokowana — wymagany przegląd przed eksportem"
+    "qualityGateBlockedDetailed": "Bramka jakości zablokowana — wymagany przegląd przed eksportem",
+    "leftRail": {
+      "openBuilder": "Otwórz w Builderze"
+    }
   },
   "aiActions": {
     "report": "Raport",
     "failed": "Błąd",
-    "completed": "Zakończony"
+    "completed": "Zakończony",
+    "approve": "Zatwierdź",
+    "dismiss": "Odrzuć",
+    "dismissAll": "Odrzuć wszystkie",
+    "edit": "Edytuj",
+    "mediumRisk": "Średnie ryzyko",
+    "navigateTo": "Przejdź do",
+    "pendingActions": "Proponowane akcje",
+    "proposedActions": "Proponowane akcje",
+    "showLess": "Pokaż mniej",
+    "showMore": "Pokaż więcej"
   },
   "artifacts": {
     "next": "następne",
@@ -21632,7 +21827,10 @@
     "presentation": {
       "empty": "Brak prezentacji.",
       "loading": "Ładowanie…",
-      "failed": "Błąd"
+      "failed": "Błąd",
+      "generating": "Generuję…",
+      "generatingBody": "Teresa generuje slajdy — pojawią się tutaj automatycznie.",
+      "openInBuilder": "Otwórz w Deck Builder"
     },
     "panel": {
       "common": {
@@ -22000,7 +22198,12 @@
     }
   },
   "focusMode": {
-    "all": "Wszystkie"
+    "all": "Wszystkie",
+    "allDesc": "Wszystkie dostępne źródła",
+    "projectDataDesc": "Kontekst bieżącego projektu",
+    "researchDesc": "Tryb głębokiej analizy",
+    "selectSource": "Wybierz źródła",
+    "projectData": "Projekt"
   },
   "trust": {
     "badge": {
@@ -23452,7 +23655,12 @@
   },
   "onboarding": {
     "toast": {
-      "completed": "Zakończony"
+      "completed": "Zakończony",
+      "acceptBoth": "Zaakceptuj Regulamin i Politykę Prywatności",
+      "completeError": "Nie udało się zakończyć onboardingu",
+      "selectTier": "Wybierz plan cenowy",
+      "termsError": "Nie udało się zaakceptować regulaminu",
+      "tierError": "Nie udało się wybrać planu"
     }
   },
   "editor": {
@@ -23475,7 +23683,8 @@
   },
   "dashboard": {
     "shortcuts": {
-      "error": "Błąd"
+      "error": "Błąd",
+      "allMarkedRead": "Wszystkie powiadomienia oznaczone jako przeczytane"
     }
   },
   "aiPlatform": {
@@ -27926,6 +28135,12 @@
       "1": "Nadaj tytuł wyzwaniu",
       "2": "Opisz problem lub pomysł",
       "3": "Kliknij „Akceptuj\" w panelu Tools"
+    }
+  },
+  "roadmap": {
+    "toast": {
+      "clickToCreateDependency": "Kliknij inną inicjatywę, aby utworzyć zależność",
+      "dependencyCreated": "Zależność utworzona"
     }
   }
 }
