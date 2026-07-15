@@ -15,8 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { DegradedState } from './AdminState';
 import { Api } from '../../services/api';
+import { DegradedState } from './AdminState';
 
 type SsoSelfConfig = {
   organizationId: string;
@@ -53,7 +53,13 @@ const EMPTY_CONFIG: SsoSelfConfig = {
   providerName: '',
   providerType: 'custom',
   domains: [],
-  saml: { entityId: '', ssoUrl: '', sloUrl: '', nameIdFormat: 'emailAddress', certificateSet: false },
+  saml: {
+    entityId: '',
+    ssoUrl: '',
+    sloUrl: '',
+    nameIdFormat: 'emailAddress',
+    certificateSet: false,
+  },
   oidc: {
     issuer: '',
     clientId: '',
@@ -244,7 +250,9 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
           <input
             type="text"
             value={config.providerName}
-            onChange={(event) => setConfig((prev) => ({ ...prev, providerName: event.target.value }))}
+            onChange={(event) =>
+              setConfig((prev) => ({ ...prev, providerName: event.target.value }))
+            }
             placeholder="Okta"
             className={`${inputClass} mt-1`}
           />
@@ -328,7 +336,10 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
                 type="text"
                 value={config.oidc.issuer}
                 onChange={(event) =>
-                  setConfig((prev) => ({ ...prev, oidc: { ...prev.oidc, issuer: event.target.value } }))
+                  setConfig((prev) => ({
+                    ...prev,
+                    oidc: { ...prev.oidc, issuer: event.target.value },
+                  }))
                 }
                 placeholder="https://idp.example.com"
                 className={`${inputClass} mt-1`}
@@ -387,7 +398,10 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
                 type="text"
                 value={config.oidc.tokenUrl}
                 onChange={(event) =>
-                  setConfig((prev) => ({ ...prev, oidc: { ...prev.oidc, tokenUrl: event.target.value } }))
+                  setConfig((prev) => ({
+                    ...prev,
+                    oidc: { ...prev.oidc, tokenUrl: event.target.value },
+                  }))
                 }
                 className={`${inputClass} mt-1`}
               />

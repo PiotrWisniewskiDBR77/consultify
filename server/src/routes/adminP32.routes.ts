@@ -1093,7 +1093,9 @@ function validateSsoSelfConfigUpdate(
   return {
     errors: [],
     next: {
-      protocol: SECURITY_SSO_PROTOCOLS.has(protocol) ? (protocol as 'saml' | 'oidc') : current.protocol,
+      protocol: SECURITY_SSO_PROTOCOLS.has(protocol)
+        ? (protocol as 'saml' | 'oidc')
+        : current.protocol,
       providerName,
       providerType,
       domains,

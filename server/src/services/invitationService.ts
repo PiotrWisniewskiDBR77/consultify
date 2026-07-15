@@ -104,7 +104,10 @@ export class InvitationServiceClass {
     // reference at that time — a later setDependencies() call (e.g. test DI
     // injecting a mock db) would otherwise silently have no effect on what
     // those sub-services actually use (they'd keep hitting the real DB).
-    if ((newDeps.db || newDeps.uuidv4) && typeof this.deps.dataService?.setDependencies === 'function') {
+    if (
+      (newDeps.db || newDeps.uuidv4) &&
+      typeof this.deps.dataService?.setDependencies === 'function'
+    ) {
       this.deps.dataService.setDependencies({
         ...(newDeps.db ? { db: newDeps.db } : {}),
         ...(newDeps.uuidv4 ? { uuidv4: newDeps.uuidv4 } : {}),
