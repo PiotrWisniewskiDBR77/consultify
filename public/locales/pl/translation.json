@@ -29295,6 +29295,41 @@
       "moveDownTooltip": "W dół",
       "removeCardTooltip": "Usuń kartę",
       "restoreDefaultsLabel": "Przywróć domyślne"
+    },
+    "commentsCanvas": {
+      "title": "Komentarze",
+      "addComment": "Dodaj komentarz",
+      "filterAll": "Wszystkie",
+      "filterToday": "Dziś",
+      "filter7d": "7 dni",
+      "filter30d": "30 dni",
+      "sortAsc": "Sortowanie: od najstarszych do najnowszych",
+      "sortDesc": "Sortowanie: od najnowszych do najstarszych",
+      "filterButtonTitle": "Filtr daty komentarzy (klikaj, aby zmienić zakres)",
+      "noComments": "Brak komentarzy dla wybranego zakresu dat.",
+      "priorityTitle": "Priorytet: {{priority}}",
+      "less": "Mniej",
+      "more": "Więcej",
+      "commentPriorityTitle": "Priorytet komentarza: {{label}}",
+      "priorityWord": "Priorytet",
+      "placeholder": "Napisz komentarz...",
+      "sendTitle": "Wyślij komentarz",
+      "send": "Wyślij",
+      "aiEnhanceTitle": "AI pomoże dopracować komentarz"
+    },
+    "aiFieldEnhancer": {
+      "triggerTitle": "Akcje AI dla tego pola",
+      "menuGenerate": "Wygeneruj",
+      "menuImprove": "Popraw",
+      "menuShorten": "Skróć",
+      "menuExpand": "Rozwiń",
+      "menuFormal": "Formalny ton",
+      "generateSuccess": "Treść wygenerowana przez AI",
+      "generateError": "Nie udało się wygenerować treści przez AI",
+      "fallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
+      "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Undo AI aby cofnąć.",
+      "enhanceError": "Nie udało się poprawić treści przez AI",
+      "undoSuccess": "Przywrócono poprzednią wersję tekstu"
     }
   },
   "reportBuilder": {
