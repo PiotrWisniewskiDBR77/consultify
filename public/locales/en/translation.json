@@ -10513,6 +10513,9 @@
     "radarChart": {
       "actualLabel": "Actual",
       "targetLabel": "Target"
+    },
+    "embeddedMatrix": {
+      "moSuffix": "mo."
     }
   },
   "auth": {

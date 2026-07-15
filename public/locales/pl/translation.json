@@ -9748,6 +9748,9 @@
     "radarChart": {
       "actualLabel": "Aktualny",
       "targetLabel": "Docelowy"
+    },
+    "embeddedMatrix": {
+      "moSuffix": "mies."
     }
   },
   "auth": {

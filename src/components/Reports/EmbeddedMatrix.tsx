@@ -496,7 +496,8 @@ const GapAnalysisMatrix: React.FC<{ axisData: Record<string, AxisData> }> = ({ a
                   <PriorityBadge gap={axis.gap} />
                 </td>
                 <td className="py-3 text-center text-slate-600 dark:text-slate-400">
-                  {axis.effort} {axis.effort !== '-' && (isPolish ? 'mies.' : 'mo.')}
+                  {axis.effort}{' '}
+                  {axis.effort !== '-' && t('reports.embeddedMatrix.moSuffix', 'mo.')}
                 </td>
                 <td className="py-3 text-center">
                   <span
