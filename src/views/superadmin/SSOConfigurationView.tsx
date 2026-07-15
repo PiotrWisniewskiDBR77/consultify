@@ -22,7 +22,6 @@ import {
   Key,
   Loader2,
   Lock,
-  MoreVertical,
   RefreshCw,
   Search,
   Settings,
@@ -35,6 +34,12 @@ import toast from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { StandardTable } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 
 interface SSOConfig {
@@ -325,6 +330,217 @@ export const SSOConfigurationView: React.FC = () => {
     navigator.clipboard.writeText(text);
   };
 
+  // ── Kanon §27: SSO Configs → StandardTable ───────────────────────────────
+  const ssoConfigRows: TableRow[] = filteredConfigs.map((c) => ({ ...c, id: c.id }));
+
+  const ssoConfigColumns: TableColumn[] = [
+    {
+      id: 'organizationName',
+      label: 'Organization',
+      sortable: true,
+      render: (row: TableRow) => {
+        const config = row as unknown as SSOConfig;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold">
+              {config.organizationName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="font-medium text-slate-900 dark:text-white">
+                {config.organizationName}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                {config.organizationId.slice(0, 8)}...
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'providerType',
+      label: 'Provider',
+      sortable: true,
+      filterable: true,
+      filterOptions: [
+        { value: 'google', label: 'Google' },
+        { value: 'saml', label: 'SAML' },
+        { value: 'azure_ad', label: 'Azure AD' },
+        { value: 'okta', label: 'Okta' },
+        { value: 'oidc', label: 'OIDC' },
+        { value: 'microsoft', label: 'Microsoft' },
+      ],
+      render: (row: TableRow) => {
+        const config = row as unknown as SSOConfig;
+        return (
+          <div className="flex items-center gap-2">
+            {config.providerType === 'google' && (
+              <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5" />
+            )}
+            {config.providerType === 'saml' && <Shield size={18} className="text-blue-500" />}
+            {config.providerType === 'azure_ad' && <Shield size={18} className="text-sky-500" />}
+            {config.providerType === 'okta' && <Shield size={18} className="text-indigo-500" />}
+            <span className="text-slate-700 dark:text-slate-300 capitalize">
+              {config.providerName || (config.providerType ?? '').replace('_', ' ')}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      render: (row: TableRow) => {
+        const config = row as unknown as SSOConfig;
+        return (
+          <div className="flex items-center gap-2">
+            {config.isActive ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 size={12} />
+                Active
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
+                <XCircle size={12} />
+                Inactive
+              </span>
+            )}
+            {config.isVerified && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                Verified
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'policies',
+      label: 'Policies',
+      render: (row: TableRow) => {
+        const config = row as unknown as SSOConfig;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {config.enforceSso && (
+              <span className="text-xs px-2 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400">
+                SSO Only
+              </span>
+            )}
+            {config.autoProvisionUsers && (
+              <span className="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                Auto-provision
+              </span>
+            )}
+            {config.allowPasswordLogin && (
+              <span className="text-xs px-2 py-0.5 rounded bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
+                Password fallback
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'createdAt',
+      label: 'Created',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          {new Date((row as unknown as SSOConfig).createdAt).toLocaleDateString()}
+        </span>
+      ),
+    },
+  ];
+
+  const ssoConfigRowMenu = (row: TableRow): StandardRowMenu => {
+    const config = row as unknown as SSOConfig;
+    return {
+      statusTransitions: [
+        {
+          id: 'toggle-active',
+          label: config.isActive ? 'Deactivate' : 'Activate',
+          icon: config.isActive ? XCircle : CheckCircle2,
+          onClick: () => toggleSSOConfig(config.id, config.isActive),
+        },
+      ],
+      universalHandlers: {
+        edit: () => setEditingConfig(config),
+      },
+      destructive: {
+        label: 'Delete',
+        onClick: () => deleteSSOConfig(config.id),
+      },
+    };
+  };
+
+  // ── Kanon §27: Domain Mappings → StandardTable ───────────────────────────
+  const domainMappingRows: TableRow[] = domainMappings.map((m: any) => ({ ...m, id: m.id }));
+
+  const domainMappingColumns: TableColumn[] = [
+    {
+      id: 'domain',
+      label: 'Domain',
+      sortable: true,
+      sortAccessor: (row: any) => row.domain || (Array.isArray(row.domains) ? row.domains[0] : ''),
+      render: (row: TableRow) => (
+        <span className="text-sm text-slate-900 dark:text-white font-mono">
+          {row.domain || (Array.isArray(row.domains) ? row.domains[0] : '—')}
+        </span>
+      ),
+    },
+    {
+      id: 'organization',
+      label: 'Organization',
+      sortable: true,
+      sortAccessor: (row: any) => row.organizationName || row.organizationId || '',
+      render: (row: TableRow) => (
+        <span className="text-sm text-slate-700 dark:text-slate-300">
+          {row.organizationName || row.organizationId}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      render: (row: TableRow) => (
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+            row.status === 'active'
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              : 'bg-slate-200/60 text-slate-600 dark:bg-navy-700/50 dark:text-slate-400'
+          }`}
+        >
+          {row.status || 'active'}
+        </span>
+      ),
+    },
+    {
+      id: 'createdAt',
+      label: 'Added',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          {row.createdAt ? new Date(row.createdAt as string).toLocaleDateString() : '—'}
+        </span>
+      ),
+    },
+  ];
+
+  const domainMappingRowMenu = (row: TableRow): StandardRowMenu => ({
+    destructive: {
+      label: 'Delete',
+      onClick: async () => {
+        if (!window.confirm('Delete this domain mapping?')) return;
+        try {
+          await (Api as any).deleteSsoConfig(row.id);
+          fetchDomainMappings();
+        } catch {
+          toast.error('Failed to delete domain mapping');
+        }
+      },
+    },
+  });
+
   const renderOverviewTab = () => (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -422,156 +638,17 @@ export const SSOConfigurationView: React.FC = () => {
             />
           </div>
         ) : (
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-          >
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Organization
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Provider
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Policies
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {filteredConfigs.map((config) => (
-                <tr
-                  key={config.id}
-                  className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
-                        {config.organizationName.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-medium text-slate-900 dark:text-white">
-                          {config.organizationName}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                          {config.organizationId.slice(0, 8)}...
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      {config.providerType === 'google' && (
-                        <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5" />
-                      )}
-                      {config.providerType === 'saml' && (
-                        <Shield size={18} className="text-blue-500" />
-                      )}
-                      {config.providerType === 'azure_ad' && (
-                        <Shield size={18} className="text-sky-500" />
-                      )}
-                      {config.providerType === 'okta' && (
-                        <Shield size={18} className="text-indigo-500" />
-                      )}
-                      <span className="text-slate-700 dark:text-slate-300 capitalize">
-                        {config.providerName || (config.providerType ?? '').replace('_', ' ')}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      {config.isActive ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                          <CheckCircle2 size={12} />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
-                          <XCircle size={12} />
-                          Inactive
-                        </span>
-                      )}
-                      {config.isVerified && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                          Verified
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {config.enforceSso && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400">
-                          SSO Only
-                        </span>
-                      )}
-                      {config.autoProvisionUsers && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400">
-                          Auto-provision
-                        </span>
-                      )}
-                      {config.allowPasswordLogin && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
-                          Password fallback
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {new Date(config.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => toggleSSOConfig(config.id, config.isActive)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          config.isActive
-                            ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20'
-                            : 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
-                        }`}
-                      >
-                        {config.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
-                        onClick={() => deleteSSOConfig(config.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-danger-500/10 text-danger-600 hover:bg-danger-500/20 transition-colors"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => setEditingConfig(config)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                      >
-                        <MoreVertical size={16} className="text-slate-600 dark:text-slate-500" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredConfigs.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <div className="text-slate-500 dark:text-slate-400">
-                      <Key size={40} className="mx-auto mb-3 opacity-30" />
-                      <p className="font-medium">No SSO configurations found</p>
-                      <p className="text-sm">
-                        Configure SSO for organizations to enable enterprise authentication
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={ssoConfigColumns}
+            data={ssoConfigRows}
+            rowMenu={ssoConfigRowMenu}
+            empty={{
+              title: 'No SSO configurations found',
+              description: 'Configure SSO for organizations to enable enterprise authentication',
+              icon: Key,
+            }}
+            persistKey="superadmin.ssoConfigs.list"
+          />
         )}
       </div>
     </div>
@@ -1056,80 +1133,13 @@ export const SSOConfigurationView: React.FC = () => {
             />
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Domain
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Organization
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Added
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {domainMappings.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    No domain mappings configured yet
-                  </td>
-                </tr>
-              ) : (
-                domainMappings.map((m: any) => (
-                  <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-navy-900/40">
-                    <td className="px-4 py-3 text-sm text-slate-900 dark:text-white font-mono">
-                      {m.domain || (Array.isArray(m.domains) ? m.domains[0] : '—')}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                      {m.organizationName || m.organizationId}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          m.status === 'active'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-slate-200/60 text-slate-600 dark:bg-navy-700/50 dark:text-slate-400'
-                        }`}
-                      >
-                        {m.status || 'active'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                      {m.createdAt ? new Date(m.createdAt).toLocaleDateString() : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={async () => {
-                          if (!window.confirm('Delete this domain mapping?')) return;
-                          try {
-                            await (Api as any).deleteSsoConfig(m.id);
-                            fetchDomainMappings();
-                          } catch {
-                            toast.error('Failed to delete domain mapping');
-                          }
-                        }}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={domainMappingColumns}
+            data={domainMappingRows}
+            rowMenu={domainMappingRowMenu}
+            empty={{ title: 'No domain mappings configured yet' }}
+            persistKey="superadmin.ssoDomainMappings.list"
+          />
         )}
       </div>
     </div>

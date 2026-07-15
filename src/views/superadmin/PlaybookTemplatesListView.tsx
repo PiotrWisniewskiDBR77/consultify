@@ -17,6 +17,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { StandardTable } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
 import { PlaybookEditorView } from './PlaybookEditorView';
@@ -228,6 +234,124 @@ export const PlaybookTemplatesListView: React.FC = () => {
     );
   };
 
+  // ── Kanon §27: wiersze + kolumny + kebab dla StandardTable ───────────────
+  const templateRows = useMemo<TableRow[]>(
+    () => filteredTemplates.map((tpl) => ({ ...tpl, id: tpl.id })),
+    [filteredTemplates]
+  );
+
+  const templateColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'title',
+        label: t('superadmin.playbookTemplates.table.template'),
+        sortable: true,
+        render: (row: TableRow) => (
+          <div className="flex items-center">
+            <FileText className="h-5 w-5 text-slate-500 dark:text-slate-400 mr-3" />
+            <div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">{row.title}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">{row.key}</div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'triggerSignal',
+        label: t('superadmin.playbookTemplates.table.trigger'),
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-slate-300 font-mono">
+            {row.triggerSignal || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'version',
+        label: t('superadmin.playbookTemplates.table.version'),
+        width: '110px',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-slate-300">v{row.version}</span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('superadmin.playbookTemplates.table.status'),
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          { value: TemplateStatus.DRAFT, label: t('superadmin.playbookTemplates.filters.drafts') },
+          {
+            value: TemplateStatus.PUBLISHED,
+            label: t('superadmin.playbookTemplates.filters.published'),
+          },
+          {
+            value: TemplateStatus.DEPRECATED,
+            label: t('superadmin.playbookTemplates.filters.deprecated'),
+          },
+        ],
+        render: (row: TableRow) => getStatusBadge(row.status as TemplateStatus),
+      },
+    ],
+    [t]
+  );
+
+  const templateRowMenu = (row: TableRow): StandardRowMenu => {
+    const template = row as unknown as PlaybookTemplateVersion;
+    const isDraft = template.status === TemplateStatus.DRAFT;
+    const isPublished = template.status === TemplateStatus.PUBLISHED;
+    return {
+      primary: [
+        {
+          id: 'open',
+          label: isDraft
+            ? t('superadmin.playbookTemplates.actions.edit')
+            : t('superadmin.playbookTemplates.actions.view'),
+          icon: isDraft ? Edit3 : Eye,
+          onClick: () => setEditorTemplateId(template.id),
+        },
+        {
+          id: 'validate',
+          label: t('superadmin.playbookTemplates.actions.validate'),
+          icon: AlertCircle,
+          disabled: validating === template.id,
+          onClick: () => handleValidate(template.id),
+        },
+        ...(isDraft
+          ? [
+              {
+                id: 'publish',
+                label: t('superadmin.playbookTemplates.actions.publish'),
+                icon: Check,
+                onClick: () => handlePublish(template.id),
+              },
+            ]
+          : []),
+        {
+          id: 'duplicate',
+          label: t('superadmin.playbookTemplates.actions.duplicate'),
+          icon: Copy,
+          onClick: () => handleDuplicate(template.id),
+        },
+        {
+          id: 'export',
+          label: t('superadmin.playbookTemplates.actions.export'),
+          icon: Download,
+          onClick: () => handleExport(template.id),
+        },
+      ],
+      universalHandlers: {
+        edit: () => setEditorTemplateId(template.id),
+        archive: isPublished ? () => handleDeprecate(template.id) : undefined,
+        archiveNote: isPublished
+          ? undefined
+          : t('superadmin.playbookTemplates.actions.deprecate') + ' — PUBLISHED only',
+      },
+      destructive: { note: 'Templates are deprecated, not deleted' },
+    };
+  };
+
   if (editorTemplateId) {
     return (
       <PlaybookEditorView
@@ -338,134 +462,13 @@ export const PlaybookTemplatesListView: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full divide-y divide-slate-200 dark:divide-white/10"
-          >
-            <thead className="bg-slate-50 dark:bg-navy-900/20">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  {t('superadmin.playbookTemplates.table.template')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  {t('superadmin.playbookTemplates.table.trigger')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  {t('superadmin.playbookTemplates.table.version')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  {t('superadmin.playbookTemplates.table.status')}
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  {t('superadmin.playbookTemplates.table.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {filteredTemplates.map((template) => (
-                <tr
-                  key={template.id}
-                  className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-slate-500 dark:text-slate-400 mr-3" />
-                      <div>
-                        <div className="text-sm font-medium text-slate-900 dark:text-white">
-                          {template.title}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                          {template.key}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-700 dark:text-slate-300 font-mono">
-                      {template.triggerSignal || '—'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">
-                      v{template.version}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{getStatusBadge(template.status)}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-1">
-                      {/* View/Edit */}
-                      {template.status === TemplateStatus.DRAFT ? (
-                        <button
-                          onClick={() => setEditorTemplateId(template.id)}
-                          title={t('superadmin.playbookTemplates.actions.edit')}
-                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary-600 hover:bg-primary-500/10 rounded transition"
-                        >
-                          <Edit3 size={16} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setEditorTemplateId(template.id)}
-                          title={t('superadmin.playbookTemplates.actions.view')}
-                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary-600 hover:bg-primary-500/10 rounded transition"
-                        >
-                          <Eye size={16} />
-                        </button>
-                      )}
-
-                      {/* Validate */}
-                      <button
-                        onClick={() => handleValidate(template.id)}
-                        disabled={validating === template.id}
-                        title={t('superadmin.playbookTemplates.actions.validate')}
-                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-500/10 rounded transition disabled:opacity-50"
-                      >
-                        <AlertCircle size={16} />
-                      </button>
-
-                      {/* Publish (only for DRAFT) */}
-                      {template.status === TemplateStatus.DRAFT && (
-                        <button
-                          onClick={() => handlePublish(template.id)}
-                          title={t('superadmin.playbookTemplates.actions.publish')}
-                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-500/10 rounded transition"
-                        >
-                          <Check size={16} />
-                        </button>
-                      )}
-
-                      {/* Duplicate */}
-                      <button
-                        onClick={() => handleDuplicate(template.id)}
-                        title={t('superadmin.playbookTemplates.actions.duplicate')}
-                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary-600 hover:bg-primary-500/10 rounded transition"
-                      >
-                        <Copy size={16} />
-                      </button>
-
-                      {/* Export */}
-                      <button
-                        onClick={() => handleExport(template.id)}
-                        title={t('superadmin.playbookTemplates.actions.export')}
-                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition"
-                      >
-                        <Download size={16} />
-                      </button>
-
-                      {/* Deprecate (only for PUBLISHED) */}
-                      {template.status === TemplateStatus.PUBLISHED && (
-                        <button
-                          onClick={() => handleDeprecate(template.id)}
-                          title={t('superadmin.playbookTemplates.actions.deprecate')}
-                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-amber-600 hover:bg-amber-500/10 rounded transition"
-                        >
-                          <Archive size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={templateColumns}
+            data={templateRows}
+            rowMenu={templateRowMenu}
+            onRowDoubleClick={(row) => setEditorTemplateId(String(row.id))}
+            persistKey="superadmin.playbookTemplates.list"
+          />
         </div>
       )}
       {showCreateModal && (

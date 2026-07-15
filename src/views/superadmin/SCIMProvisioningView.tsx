@@ -22,6 +22,12 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { StandardTable } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -773,6 +779,57 @@ const SCIMProvisioningView: React.FC = () => {
     </div>
   );
 
+  // ── Kanon §27: Group Mappings → StandardTable ────────────────────────────
+  const mappingRows: TableRow[] = groupMappings.map((m) => ({ ...m, id: m.id }));
+
+  const mappingColumns: TableColumn[] = [
+    {
+      id: 'externalGroupName',
+      label: 'External Group',
+      sortable: true,
+      render: (row: TableRow) => (
+        <div>
+          <div className="text-slate-900 dark:text-white font-medium">{row.externalGroupName}</div>
+          <div className="text-sm text-slate-500 dark:text-gray-400">{row.externalGroupId}</div>
+        </div>
+      ),
+    },
+    {
+      id: 'arrow',
+      label: '',
+      width: '48px',
+      render: () => <ChevronRight className="text-slate-600 dark:text-gray-400" size={18} />,
+    },
+    {
+      id: 'internalRole',
+      label: 'Internal Role',
+      sortable: true,
+      filterable: true,
+      filterOptions: [
+        { value: 'viewer', label: 'Viewer' },
+        { value: 'member', label: 'Member' },
+        { value: 'project_manager', label: 'Project Manager' },
+        { value: 'admin', label: 'Admin' },
+      ],
+      render: (row: TableRow) => (
+        <span className="px-2 py-1 bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200 rounded text-sm">
+          {row.internalRole}
+        </span>
+      ),
+    },
+  ];
+
+  const mappingRowMenu = (row: TableRow): StandardRowMenu => {
+    const mapping = row as unknown as GroupMapping;
+    return {
+      destructive: {
+        label: `Delete mapping`,
+        icon: Trash2,
+        onClick: () => handleDeleteMapping(mapping.id),
+      },
+    };
+  };
+
   const renderMappings = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -801,57 +858,12 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl overflow-hidden">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-          >
-            <thead className="bg-slate-50 dark:bg-gray-900/50">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  External Group
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  →
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  Internal Role
-                </th>
-                <th className="text-right px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
-              {groupMappings.map((mapping) => (
-                <tr key={mapping.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/30">
-                  <td className="px-4 py-3">
-                    <div className="text-slate-900 dark:text-white font-medium">
-                      {mapping.externalGroupName}
-                    </div>
-                    <div className="text-sm text-slate-500 dark:text-gray-400">
-                      {mapping.externalGroupId}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <ChevronRight className="text-slate-600 dark:text-gray-400" size={18} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-primary-500/15 text-primary-700 dark:text-primary-200 rounded text-sm">
-                      {mapping.internalRole}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDeleteMapping(mapping.id)}
-                      title={`Delete mapping ${mapping.externalGroupName}`}
-                      className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={mappingColumns}
+            data={mappingRows}
+            rowMenu={mappingRowMenu}
+            persistKey="superadmin.scim.groupMappings"
+          />
         </div>
       )}
 

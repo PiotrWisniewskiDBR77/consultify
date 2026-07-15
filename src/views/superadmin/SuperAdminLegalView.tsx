@@ -3,6 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { StandardTable } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { LegalDocType } from '../../types';
@@ -256,6 +262,100 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
     return `${dateStr}.${existing.length + 1}`;
   };
 
+  // ── Kanon §27: dokumenty prawne → StandardTable ──────────────────────────
+  const documentRows: TableRow[] = documents.map((doc) => ({ ...doc, id: String(doc.id) }));
+
+  const documentColumns: TableColumn[] = [
+    {
+      id: 'type',
+      label: 'Type',
+      sortable: true,
+      sortAccessor: (row: TableRow) => getDocumentType(row as SuperAdminLegalDocument),
+      render: (row: TableRow) => (
+        <span className="text-sm font-medium text-slate-900 dark:text-white">
+          {getDocumentType(row as SuperAdminLegalDocument)}
+        </span>
+      ),
+    },
+    {
+      id: 'title',
+      label: 'Title',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-sm text-slate-600 dark:text-slate-300">{row.title}</span>
+      ),
+    },
+    {
+      id: 'version',
+      label: 'Version',
+      render: (row: TableRow) => (
+        <code className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+          {row.version}
+        </code>
+      ),
+    },
+    {
+      id: 'effective_from',
+      label: 'Effective',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          {formatDate((row.effective_from as string) || '')}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      align: 'center',
+      render: (row: TableRow) =>
+        isDocumentActive(row as SuperAdminLegalDocument) ? (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+            <Check size={12} />
+            Active
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+            Inactive
+          </span>
+        ),
+    },
+  ];
+
+  const documentRowMenu = (row: TableRow): StandardRowMenu => {
+    const doc = row as SuperAdminLegalDocument & TableRow;
+    const active = isDocumentActive(doc);
+    return {
+      primary: [
+        {
+          id: 'view',
+          label: 'View',
+          icon: Eye,
+          onClick: () => viewDocument(String(doc.id)),
+        },
+      ],
+      statusTransitions: [
+        active
+          ? {
+              id: 'deactivate',
+              label: 'Deactivate',
+              icon: X,
+              onClick: () => toggleActive(String(doc.id), false),
+            }
+          : {
+              id: 'activate',
+              label: 'Activate',
+              icon: Check,
+              onClick: () => toggleActive(String(doc.id), true),
+            },
+      ],
+      universalHandlers: {
+        preview: () => viewDocument(String(doc.id)),
+      },
+      destructive: { note: 'Legal documents are deactivated, not deleted' },
+    };
+  };
+
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -421,106 +521,18 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
             <DegradedState title="Legal documents unavailable" description={loadError} />
           </div>
         ) : (
-          <>
-            <table
-              /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full"
-            >
-              <thead className="bg-slate-50 dark:bg-navy-800">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                    Type
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                    Title
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                    Version
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                    Effective
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {documents.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {getDocumentType(doc)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                      {doc.title}
-                    </td>
-                    <td className="px-4 py-3">
-                      <code className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                        {doc.version}
-                      </code>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                      {formatDate(doc.effective_from || '')}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {isDocumentActive(doc) ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                          <Check size={12} />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
-                          Inactive
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => viewDocument(doc.id)}
-                          className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800/40"
-                          title="View"
-                        >
-                          <Eye size={16} className="text-slate-500 dark:text-slate-400" />
-                        </button>
-                        {!isDocumentActive(doc) && (
-                          <button
-                            onClick={() => toggleActive(doc.id, true)}
-                            className="p-1.5 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
-                            title="Activate"
-                          >
-                            <Check size={16} className="text-green-600" />
-                          </button>
-                        )}
-                        {isDocumentActive(doc) && (
-                          <button
-                            onClick={() => toggleActive(doc.id, false)}
-                            className="p-1.5 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30"
-                            title="Deactivate"
-                          >
-                            <X size={16} className="text-danger-600" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {documents.length === 0 && (
-              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-                {t(
-                  'superadmin.legal.noDocuments',
-                  'No legal documents found. Click "Publish New Version" to add one.'
-                )}
-              </div>
-            )}
-          </>
+          <StandardTable
+            columns={documentColumns}
+            data={documentRows}
+            rowMenu={documentRowMenu}
+            empty={{
+              title: t(
+                'superadmin.legal.noDocuments',
+                'No legal documents found. Click "Publish New Version" to add one.'
+              ),
+            }}
+            persistKey="superadmin.legalDocuments.list"
+          />
         )}
       </div>
 

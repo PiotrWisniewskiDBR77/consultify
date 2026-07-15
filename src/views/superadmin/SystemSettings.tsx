@@ -21,6 +21,12 @@ import { toast } from 'react-hot-toast';
 
 import { ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { StandardTable } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { User, UserRole } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -603,6 +609,135 @@ export const SystemSettings: React.FC = () => {
     </div>
   );
 
+  // ── Kanon §27: Super Administrators → StandardTable ──────────────────────
+  const adminRows: TableRow[] = admins.map((a) => ({ ...a, id: String(a.id) }));
+
+  const adminColumns: TableColumn[] = [
+    {
+      id: 'name',
+      label: 'Name',
+      sortable: true,
+      sortAccessor: (row: TableRow) => `${row.firstName ?? ''} ${row.lastName ?? ''}`,
+      render: (row: TableRow) => (
+        <span className="font-medium text-slate-900 dark:text-slate-100">
+          {row.firstName} {row.lastName}
+        </span>
+      ),
+    },
+    {
+      id: 'email',
+      label: 'Email',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300">{row.email}</span>
+      ),
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      filterable: true,
+      filterOptions: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+      render: (row: TableRow) => (
+        <span
+          className={`flex items-center gap-1.5 ${
+            row.status === 'active'
+              ? 'text-emerald-700 dark:text-emerald-400'
+              : 'text-danger-700 dark:text-danger-400'
+          }`}
+        >
+          {row.status === 'active' ? <Check size={14} /> : <AlertCircle size={14} />}
+          {row.status}
+        </span>
+      ),
+    },
+    {
+      id: 'lastLogin',
+      label: 'Last Login',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-500 dark:text-slate-400 text-xs">
+          {row.lastLogin ? new Date(row.lastLogin as string).toLocaleString() : 'Never'}
+        </span>
+      ),
+    },
+  ];
+
+  const adminRowMenu = (row: TableRow): StandardRowMenu => ({
+    destructive: {
+      label: 'Remove Admin',
+      icon: Trash2,
+      onClick: savingAdmin ? undefined : () => handleDeleteAdmin(String(row.id)),
+      note: savingAdmin ? 'Saving…' : undefined,
+    },
+  });
+
+  // ── Kanon §27: Storage by Organization → StandardTable ───────────────────
+  const storageRows: TableRow[] = (storageStats?.breakdown ?? [])
+    .slice()
+    .sort((a: any, b: any) => b.size - a.size)
+    .map((item: any) => ({ ...item, id: item.name }));
+
+  const storageColumns: TableColumn[] = [
+    {
+      id: 'displayName',
+      label: 'Organization / Folder',
+      sortable: true,
+      render: (row: TableRow) => (
+        <div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">{row.displayName}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">{row.name}</div>
+        </div>
+      ),
+    },
+    {
+      id: 'size',
+      label: 'Size',
+      align: 'right',
+      sortable: true,
+      sortAccessor: (row: TableRow) => Number(row.size) || 0,
+      render: (row: TableRow) => (
+        <span className="text-slate-700 dark:text-slate-300 font-mono">
+          {formatBytes(row.size as number)}
+        </span>
+      ),
+    },
+    {
+      id: 'visual',
+      label: 'Visual',
+      width: '33%',
+      render: (row: TableRow) => {
+        const percent =
+          storageStats?.totalSize > 0 ? ((row.size as number) / storageStats.totalSize) * 100 : 0;
+        return (
+          <div className="w-full h-2 bg-slate-200 dark:bg-navy-950 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-pink-500 rounded-full"
+              style={{ width: `${Math.max(percent, 1)}%` }}
+            />
+          </div>
+        );
+      },
+    },
+  ];
+
+  const storageRowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'browse',
+        label: 'Browse files',
+        icon: HardDrive,
+        onClick: () => setSelectedOrg({ id: String(row.name), name: String(row.displayName) }),
+      },
+    ],
+    universalHandlers: {
+      preview: () => setSelectedOrg({ id: String(row.name), name: String(row.displayName) }),
+    },
+    destructive: { note: 'Delete individual files from the file browser' },
+  });
+
   const renderAdmins = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -625,71 +760,14 @@ export const SystemSettings: React.FC = () => {
       )}
 
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-        <table
-          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left border-collapse"
-        >
-          <thead>
-            <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
-              <th className="p-4 font-medium">Name</th>
-              <th className="p-4 font-medium">Email</th>
-              <th className="p-4 font-medium">Status</th>
-              <th className="p-4 font-medium">Last Login</th>
-              <th className="p-4 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
-            {adminsLoading ? (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                  Loading admins...
-                </td>
-              </tr>
-            ) : admins.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                  No active super administrators found.
-                </td>
-              </tr>
-            ) : (
-              admins.map((admin) => (
-                <tr
-                  key={admin.id}
-                  className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                >
-                  <td className="p-4 font-medium text-slate-900 dark:text-slate-100">
-                    {admin.firstName} {admin.lastName}
-                  </td>
-                  <td className="p-4 text-slate-700 dark:text-slate-300">{admin.email}</td>
-                  <td className="p-4">
-                    <span
-                      className={`flex items-center gap-1.5 ${
-                        admin.status === 'active'
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-danger-700 dark:text-danger-400'
-                      }`}
-                    >
-                      {admin.status === 'active' ? <Check size={14} /> : <AlertCircle size={14} />}
-                      {admin.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                    {admin.lastLogin ? new Date(admin.lastLogin).toLocaleString() : 'Never'}
-                  </td>
-                  <td className="p-4 text-right">
-                    <button
-                      onClick={() => handleDeleteAdmin(admin.id)}
-                      disabled={savingAdmin}
-                      className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors disabled:opacity-60"
-                      title="Remove Admin"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <StandardTable
+          columns={adminColumns}
+          data={adminRows}
+          loading={adminsLoading}
+          rowMenu={adminRowMenu}
+          empty={{ title: 'No active super administrators found.' }}
+          persistKey="superadmin.systemAdmins.list"
+        />
       </div>
 
       {/* Add Admin Modal */}
@@ -798,58 +876,16 @@ export const SystemSettings: React.FC = () => {
             <RefreshCw size={16} />
           </button>
         </div>
-        <table className="w-full text-left">
-          <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
-            <tr>
-              <th className="px-6 py-3">Organization / Folder</th>
-              <th className="px-6 py-3 text-right">Size</th>
-              <th className="px-6 py-3 w-1/3">Visual</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5 text-sm">
-            {!storageStats?.breakdown?.length ? (
-              <tr>
-                <td colSpan={3} className="p-6 text-center text-slate-500 dark:text-slate-400">
-                  No uploads found
-                </td>
-              </tr>
-            ) : (
-              storageStats.breakdown
-                .sort((a: any, b: any) => b.size - a.size)
-                .map((item: any) => {
-                  const percent =
-                    storageStats.totalSize > 0 ? (item.size / storageStats.totalSize) * 100 : 0;
-                  return (
-                    <tr
-                      key={item.name}
-                      className="hover:bg-slate-50 dark:hover:bg-navy-800/20 cursor-pointer transition-colors"
-                      onClick={() => setSelectedOrg({ id: item.name, name: item.displayName })}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
-                          {item.displayName}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                          {item.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right text-slate-700 dark:text-slate-300 font-mono">
-                        {formatBytes(item.size)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="w-full h-2 bg-slate-200 dark:bg-navy-950 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-pink-500 rounded-full"
-                            style={{ width: `${Math.max(percent, 1)}%` }}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-            )}
-          </tbody>
-        </table>
+        <StandardTable
+          columns={storageColumns}
+          data={storageRows}
+          rowMenu={storageRowMenu}
+          onRowClick={(row) =>
+            setSelectedOrg({ id: String(row.name), name: String(row.displayName) })
+          }
+          empty={{ title: 'No uploads found' }}
+          persistKey="superadmin.systemStorage.list"
+        />
       </div>
 
       {/* Storage Detail Modal */}
@@ -876,6 +912,73 @@ export const SystemSettings: React.FC = () => {
               return log.action?.includes('login') || log.action?.includes('auth');
             return true;
           });
+
+    // Kanon §27: logi audytowe → StandardTable (read-only, kebab disabled z notą)
+    const auditRows: TableRow[] = filteredLogs.map((log: any, idx: number) => ({
+      ...log,
+      id: String(log.id || idx),
+    }));
+
+    const auditColumns: TableColumn[] = [
+      {
+        id: 'created_at',
+        label: 'Timestamp',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 text-xs">
+            {row.created_at ? new Date(row.created_at as string).toLocaleString() : '-'}
+          </span>
+        ),
+      },
+      {
+        id: 'user',
+        label: 'User',
+        sortable: true,
+        sortAccessor: (row: TableRow) => row.user_name || row.user_email || 'System',
+        render: (row: TableRow) => (
+          <span className="text-slate-900 dark:text-slate-100">
+            {row.user_name || row.user_email || 'System'}
+          </span>
+        ),
+      },
+      {
+        id: 'action',
+        label: 'Action',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${
+              row.action === 'created'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : row.action === 'deleted'
+                  ? 'bg-danger-500/20 text-danger-400'
+                  : row.action === 'updated'
+                    ? 'bg-blue-500/20 text-blue-400'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            {row.action}
+          </span>
+        ),
+      },
+      {
+        id: 'entity_type',
+        label: 'Entity',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-slate-700 dark:text-slate-300">{row.entity_type}</span>
+        ),
+      },
+      {
+        id: 'details',
+        label: 'Details',
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 max-w-xs truncate block">
+            {row.entity_name || (row.entity_id as string | undefined)?.slice(0, 8) || '-'}
+          </span>
+        ),
+      },
+    ];
 
     return (
       <div className="space-y-6">
@@ -906,61 +1009,15 @@ export const SystemSettings: React.FC = () => {
 
         {/* Logs Table */}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
-              <tr>
-                <th className="px-6 py-4">Timestamp</th>
-                <th className="px-6 py-4">User</th>
-                <th className="px-6 py-4">Action</th>
-                <th className="px-6 py-4">Entity</th>
-                <th className="px-6 py-4">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-sm">
-              {filteredLogs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                    No audit logs found
-                  </td>
-                </tr>
-              ) : (
-                filteredLogs.map((log: any, idx: number) => (
-                  <tr
-                    key={log.id || idx}
-                    className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-slate-900 dark:text-slate-100">
-                      {log.user_name || log.user_email || 'System'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          log.action === 'created'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : log.action === 'deleted'
-                              ? 'bg-danger-500/20 text-danger-400'
-                              : log.action === 'updated'
-                                ? 'bg-blue-500/20 text-blue-400'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                        }`}
-                      >
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {log.entity_type}
-                    </td>
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
-                      {log.entity_name || log.entity_id?.slice(0, 8) || '-'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={auditColumns}
+            data={auditRows}
+            rowMenu={() => ({
+              destructive: { note: 'Audit logs are immutable' },
+            })}
+            empty={{ title: 'No audit logs found' }}
+            persistKey="superadmin.systemAudit.list"
+          />
         </div>
 
         <div className="flex items-center justify-between pt-2">
@@ -1053,7 +1110,9 @@ export const SystemSettings: React.FC = () => {
                 </div>
               ) : (
                 <div className="overflow-x-auto max-h-[50vh]">
-                  <table className="w-full text-left text-sm">
+                  <table /* §27-exempt: read-only podglad surowych tabel DB (kolumny dynamiczne z dowolnej tabeli, debug-only), nie lista encji */
+                    className="w-full text-left text-sm"
+                  >
                     <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-white/10 sticky top-0">
                       <tr>
                         {columns.map((col) => (

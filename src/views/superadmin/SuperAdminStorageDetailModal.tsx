@@ -3,6 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { StandardTable } from '../../components/standard/StandardTable';
+import type {
+  StandardRowMenu,
+  TableColumn,
+  TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
@@ -154,6 +160,60 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
     `${getFileName(f)} ${f.path}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // ── Kanon §27: pliki org → StandardTable ─────────────────────────────────
+  const fileRows: TableRow[] = filteredFiles.map((file) => ({ ...file, id: file.path }));
+
+  const fileColumns: TableColumn[] = [
+    {
+      id: 'name',
+      label: 'File Name',
+      sortable: true,
+      sortAccessor: (row: TableRow) => getFileName(row as StorageFile),
+      render: (row: TableRow) => (
+        <span className="font-medium text-c-text flex items-center gap-2">
+          <File size={16} className="text-blue-400" />
+          {getFileName(row as StorageFile)}
+        </span>
+      ),
+    },
+    {
+      id: 'path',
+      label: 'Path (Relative)',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-600 dark:text-slate-500 font-mono text-xs">{row.path}</span>
+      ),
+    },
+    {
+      id: 'size',
+      label: 'Size',
+      align: 'right',
+      sortable: true,
+      sortAccessor: (row: TableRow) => Number(row.size) || 0,
+      render: (row: TableRow) => (
+        <span className="text-slate-600 whitespace-nowrap">{formatBytes(row.size)}</span>
+      ),
+    },
+    {
+      id: 'created_at',
+      label: 'Date',
+      sortable: true,
+      render: (row: TableRow) => (
+        <span className="text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          {formatDate(row.created_at as string | null)}
+        </span>
+      ),
+    },
+  ];
+
+  const fileRowMenu = (row: TableRow): StandardRowMenu => ({
+    destructive: {
+      label: 'Permanently Delete',
+      icon: Trash2,
+      onClick: () => handleDelete(String(row.path)),
+    },
+  });
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-c-surface border border-white/10 rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
@@ -215,48 +275,12 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
               {searchTerm ? 'No matching files found' : 'No files stored for this organization'}
             </div>
           ) : (
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left border-collapse"
-            >
-              <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase sticky top-0">
-                <tr>
-                  <th className="p-4">File Name</th>
-                  <th className="p-4">Path (Relative)</th>
-                  <th className="p-4">Size</th>
-                  <th className="p-4">Date</th>
-                  <th className="p-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
-                {filteredFiles.map((file) => (
-                  <tr key={file.path} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                    <td className="p-4 font-medium text-c-text flex items-center gap-2">
-                      <File size={16} className="text-blue-400" />
-                      {getFileName(file)}
-                    </td>
-                    <td className="p-4 text-slate-600 dark:text-slate-500 font-mono text-xs">
-                      {file.path}
-                    </td>
-                    <td className="p-4 text-slate-600 whitespace-nowrap">
-                      {formatBytes(file.size)}
-                    </td>
-                    <td className="p-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      {formatDate(file.created_at)}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => handleDelete(file.path)}
-                        aria-label={`Delete file ${file.path}`}
-                        className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors"
-                        title="Permanently Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <StandardTable
+              columns={fileColumns}
+              data={fileRows}
+              rowMenu={fileRowMenu}
+              persistKey="superadmin.storageFiles.list"
+            />
           )}
         </div>
       </div>
