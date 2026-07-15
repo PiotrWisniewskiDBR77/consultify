@@ -28421,6 +28421,26 @@
         "lowResonance": "Niski rezonans",
         "hint": "Dach = myśl przewodnia, kolumny = filary (twierdzenie + liczba dowodów), kolor = rezonans u odbiorcy."
       }
+    },
+    "resultsStep": {
+      "title": "Wyniki",
+      "subtitle": "Zamknij wnioski w zwięzłe rezultaty: quick wins, zakłady strategiczne oraz ryzyka/prerekwizyty.",
+      "executiveSummary": "Podsumowanie wykonawcze",
+      "executiveSummaryPlaceholder": "Napisz 3–5 zdań: co znaleźliśmy i co to znaczy.",
+      "keyFindings": "Kluczowe wnioski",
+      "keyFindingsPlaceholder": "Dodaj wniosek...",
+      "quickWinsPlaceholder": "Dodaj quick win...",
+      "strategicBets": "Zakłady strategiczne",
+      "strategicBetsPlaceholder": "Dodaj zakład...",
+      "prerequisites": "Prerekwizyty",
+      "prerequisitesPlaceholder": "Dodaj prerequisite...",
+      "risks": "Ryzyka",
+      "risksPlaceholder": "Dodaj ryzyko...",
+      "dependencies": "Zależności (dependency map)",
+      "dependenciesPlaceholder": "Dodaj zależność...",
+      "add": "Dodaj",
+      "remove": "Usuń",
+      "noItems": "Brak elementów."
     }
   }
 }

@@ -27345,6 +27345,26 @@
         "lowResonance": "Low resonance",
         "hint": "Roof = core message, columns = pillars (claim + proof count), color = audience resonance."
       }
+    },
+    "resultsStep": {
+      "title": "Results",
+      "subtitle": "Turn inputs into crisp outcomes: quick wins, strategic bets, and key risks/prerequisites.",
+      "executiveSummary": "Executive Summary",
+      "executiveSummaryPlaceholder": "Write 3–5 sentences: what you found and what it means.",
+      "keyFindings": "Key Findings",
+      "keyFindingsPlaceholder": "Add a finding...",
+      "quickWinsPlaceholder": "Add a quick win...",
+      "strategicBets": "Strategic bets",
+      "strategicBetsPlaceholder": "Add a strategic bet...",
+      "prerequisites": "Prerequisites",
+      "prerequisitesPlaceholder": "Add a prerequisite...",
+      "risks": "Risks",
+      "risksPlaceholder": "Add a risk...",
+      "dependencies": "Dependencies (dependency map)",
+      "dependenciesPlaceholder": "Add a dependency...",
+      "add": "Add",
+      "remove": "Remove",
+      "noItems": "No items."
     }
   }
 }
