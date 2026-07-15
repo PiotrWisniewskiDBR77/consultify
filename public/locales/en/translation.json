@@ -27274,6 +27274,32 @@
         "business": "Business",
         "general": "General"
       }
+    },
+    "exportSharePanel": {
+      "noEnabledBlocksInTheReport": "No enabled blocks in the report",
+      "reportHasNotBeenGeneratedYet": "Report has not been generated yet",
+      "docx": "DOCX",
+      "reportMustBeGenerated": "Report must be generated",
+      "share": "Share",
+      "shareReport": "Share Report",
+      "createNewLink": "Create New Link",
+      "passwordOptional": "Password (optional)",
+      "leaveEmptyForPublicAccess": "Leave empty for public access",
+      "expiresAfterDays": "Expires after (days)",
+      "leaveEmptyForNoExpiration": "Leave empty for no expiration",
+      "messageOptional": "Message (optional)",
+      "eGReportForManagement": "E.g., \"Report for management\"",
+      "showConsultifyBranding": "Show Consultify branding",
+      "createLink": "Create Link",
+      "activeLinks": "Active Links",
+      "noActiveLinks": "No active links",
+      "views": "views",
+      "expires": "Expires",
+      "copyLink": "Copy link",
+      "revokeLink": "Revoke link",
+      "close": "Close",
+      "nBlocksWithoutContent": "{{count}} block(s) without content: {{titles}}",
+      "nBlocksNotGenerated": "{{count}} block(s) not generated"
     }
   }
 }

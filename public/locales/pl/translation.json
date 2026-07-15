@@ -28350,6 +28350,32 @@
         "business": "Biznesowy",
         "general": "Ogólny"
       }
+    },
+    "exportSharePanel": {
+      "noEnabledBlocksInTheReport": "Brak włączonych bloków w raporcie",
+      "reportHasNotBeenGeneratedYet": "Raport nie został jeszcze wygenerowany",
+      "docx": "DOCX",
+      "reportMustBeGenerated": "Raport musi być wygenerowany",
+      "share": "Udostępnij",
+      "shareReport": "Udostępnij Raport",
+      "createNewLink": "Utwórz nowy link",
+      "passwordOptional": "Hasło (opcjonalne)",
+      "leaveEmptyForPublicAccess": "Pozostaw puste dla publicznego dostępu",
+      "expiresAfterDays": "Wygasa po (dni)",
+      "leaveEmptyForNoExpiration": "Pozostaw puste dla linku bez wygaśnięcia",
+      "messageOptional": "Wiadomość (opcjonalna)",
+      "eGReportForManagement": "Np. \"Raport dla zarządu\"",
+      "showConsultifyBranding": "Pokaż branding Consultify",
+      "createLink": "Utwórz Link",
+      "activeLinks": "Aktywne linki",
+      "noActiveLinks": "Brak aktywnych linków",
+      "views": "wyświetleń",
+      "expires": "Wygasa",
+      "copyLink": "Kopiuj link",
+      "revokeLink": "Usuń link",
+      "close": "Zamknij",
+      "nBlocksWithoutContent": "{{count}} blok(ów) bez treści: {{titles}}",
+      "nBlocksNotGenerated": "{{count}} blok(ów) nie wygenerowanych"
     }
   }
 }
