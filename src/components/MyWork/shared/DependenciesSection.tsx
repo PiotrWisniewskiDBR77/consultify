@@ -502,8 +502,9 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   // ── Render helpers ───────────────────────────────────────────
   const formatLag = (lagDaysValue: number) => {
     if (lagDaysValue === 0) return '—';
-    if (lagDaysValue > 0) return isPolish ? `+${lagDaysValue} dni` : `+${lagDaysValue} days`;
-    return isPolish ? `${lagDaysValue} dni` : `${lagDaysValue} days`;
+    if (lagDaysValue > 0)
+      return t('myWork.dependencies.lagDaysPositive', '+{{count}} days', { count: lagDaysValue });
+    return t('myWork.dependencies.lagDaysNegative', '{{count}} days', { count: lagDaysValue });
   };
 
   // ── Render ───────────────────────────────────────────────────
@@ -1100,13 +1101,13 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                   >
                     <span>
                       {lagDays > 0
-                        ? isPolish
-                          ? `⏳ ${lagDays} ${lagDays === 1 ? 'dzień' : 'dni'} opóźnienia po zakończeniu`
-                          : `⏳ ${lagDays} day${lagDays === 1 ? '' : 's'} delay after completion`
+                        ? t('myWork.dependencies.delayAfterCompletion', '⏳ {{count}} day delay after completion', {
+                            count: lagDays,
+                          })
                         : lagDays < 0
-                          ? isPolish
-                            ? `⚡ ${Math.abs(lagDays)} ${Math.abs(lagDays) === 1 ? 'dzień' : 'dni'} wyprzedzenia (overlap)`
-                            : `⚡ ${Math.abs(lagDays)} day${Math.abs(lagDays) === 1 ? '' : 's'} lead (overlap)`
+                          ? t('myWork.dependencies.leadOverlap', '⚡ {{count}} day lead (overlap)', {
+                              count: Math.abs(lagDays),
+                            })
                           : t(
                               'myWork.dependencies.noDelayTasksConnect',
                               '→ No delay — tasks connect directly'

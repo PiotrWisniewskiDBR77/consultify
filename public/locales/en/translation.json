@@ -4147,7 +4147,13 @@
       "quickAdd": "quick add",
       "changesWillBeSaved": "Changes will be saved immediately",
       "cancel": "Cancel",
-      "saveChanges": "Save Changes"
+      "saveChanges": "Save Changes",
+      "lagDaysPositive": "+{{count}} days",
+      "lagDaysNegative": "{{count}} days",
+      "delayAfterCompletion_one": "⏳ {{count}} day delay after completion",
+      "delayAfterCompletion_other": "⏳ {{count}} days delay after completion",
+      "leadOverlap_one": "⚡ {{count}} day lead (overlap)",
+      "leadOverlap_other": "⚡ {{count}} days lead (overlap)"
     },
     "taskTemplates": {
       "toastError": "Template name is required",
@@ -4239,7 +4245,9 @@
       "messageOptional2": "Message (optional)",
       "placeholder": "Escalation reason...",
       "selectPerson2": "(select person)",
-      "escalationDisabled": "Escalation disabled"
+      "escalationDisabled": "Escalation disabled",
+      "reminderNumber": "Reminder {{number}}",
+      "escalationPreview": "If decision is not made {{days}} days after due, it will be escalated to: "
     },
     "comments": {
       "justNow": "Just now",
@@ -4917,6 +4925,13 @@
     },
     "empty": {
       "aiSuggest": "AI Suggest"
+    },
+    "delegationModal": {
+      "inputRequestedFromCount": "Input requested from {{count}} people",
+      "toastDelegated": "Decision delegated",
+      "toastReviewRequested": "Review requested",
+      "toastInputRequested": "Input requested",
+      "toastCoDecisionRequested": "Co-decision requested"
     }
   },
   "step1": {

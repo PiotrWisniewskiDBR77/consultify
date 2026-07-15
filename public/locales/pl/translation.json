@@ -3293,7 +3293,17 @@
       "quickAdd": "szybkie dodawanie",
       "changesWillBeSaved": "Zmiany zostaną zapisane natychmiast",
       "cancel": "Anuluj",
-      "saveChanges": "Zapisz zmiany"
+      "saveChanges": "Zapisz zmiany",
+      "lagDaysPositive": "+{{count}} dni",
+      "lagDaysNegative": "{{count}} dni",
+      "delayAfterCompletion_one": "⏳ {{count}} dzień opóźnienia po zakończeniu",
+      "delayAfterCompletion_few": "⏳ {{count}} dni opóźnienia po zakończeniu",
+      "delayAfterCompletion_many": "⏳ {{count}} dni opóźnienia po zakończeniu",
+      "delayAfterCompletion_other": "⏳ {{count}} dni opóźnienia po zakończeniu",
+      "leadOverlap_one": "⚡ {{count}} dzień wyprzedzenia (overlap)",
+      "leadOverlap_few": "⚡ {{count}} dni wyprzedzenia (overlap)",
+      "leadOverlap_many": "⚡ {{count}} dni wyprzedzenia (overlap)",
+      "leadOverlap_other": "⚡ {{count}} dni wyprzedzenia (overlap)"
     },
     "taskTemplates": {
       "toastError": "Nazwa szablonu jest wymagana",
@@ -3385,7 +3395,9 @@
       "messageOptional2": "Wiadomość (opcjonalnie)",
       "placeholder": "Powód eskalacji...",
       "selectPerson2": "(wybierz osobę)",
-      "escalationDisabled": "Eskalacja wyłączona"
+      "escalationDisabled": "Eskalacja wyłączona",
+      "reminderNumber": "Przypomnienie {{number}}",
+      "escalationPreview": "Jeśli decyzja nie zostanie podjęta {{days}} dni po terminie, zostanie eskalowana do: "
     },
     "comments": {
       "justNow": "Przed chwilą",
@@ -4067,6 +4079,13 @@
     },
     "empty": {
       "aiSuggest": "Sugestia AI"
+    },
+    "delegationModal": {
+      "inputRequestedFromCount": "Wysłano prośbę o opinię do {{count}} osób",
+      "toastDelegated": "Decyzja przekazana",
+      "toastReviewRequested": "Prośba o przegląd wysłana",
+      "toastInputRequested": "Prośba o opinię wysłana",
+      "toastCoDecisionRequested": "Prośba o współdecyzję wysłana"
     }
   },
   "step1": {

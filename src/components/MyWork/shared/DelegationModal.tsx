@@ -149,9 +149,9 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
           comment,
         });
         toast.success(
-          isPolish
-            ? `Wysłano prośbę o opinię do ${selectedUsers.length} osób`
-            : `Input requested from ${selectedUsers.length} people`
+          t('myWork.delegationModal.inputRequestedFromCount', 'Input requested from {{count}} people', {
+            count: selectedUsers.length,
+          })
         );
       } else {
         // Delegate to single user
@@ -162,14 +162,20 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
           comment,
         });
 
-        const typeLabels: Record<DelegationType, { en: string; pl: string }> = {
-          full: { en: 'Decision delegated', pl: 'Decyzja przekazana' },
-          review: { en: 'Review requested', pl: 'Prośba o przegląd wysłana' },
-          input: { en: 'Input requested', pl: 'Prośba o opinię wysłana' },
-          co_decide: { en: 'Co-decision requested', pl: 'Prośba o współdecyzję wysłana' },
+        const typeLabelKeys: Record<DelegationType, string> = {
+          full: 'myWork.delegationModal.toastDelegated',
+          review: 'myWork.delegationModal.toastReviewRequested',
+          input: 'myWork.delegationModal.toastInputRequested',
+          co_decide: 'myWork.delegationModal.toastCoDecisionRequested',
+        };
+        const typeLabelDefaults: Record<DelegationType, string> = {
+          full: 'Decision delegated',
+          review: 'Review requested',
+          input: 'Input requested',
+          co_decide: 'Co-decision requested',
         };
 
-        toast.success(isPolish ? typeLabels[delegationType].pl : typeLabels[delegationType].en);
+        toast.success(t(typeLabelKeys[delegationType], typeLabelDefaults[delegationType]));
       }
 
       onDelegated?.();
