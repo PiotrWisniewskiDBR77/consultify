@@ -6232,6 +6232,31 @@
         "creatorDesc": "Utwórz nowy raport lub otwórz istniejący z listy.",
         "reviewDesc": "Raporty pojawią się tutaj po przesłaniu do przeglądu"
       }
+    },
+    "adma": {
+      "editor": {
+        "viewDimensions": "Wymiary",
+        "viewRadar": "Radar",
+        "viewMatrix": "Macierz",
+        "currentMaturityLevel": "Aktualny poziom dojrzałości",
+        "targetLevel": "Poziom docelowy",
+        "characteristics": "Charakterystyki",
+        "overallMaturity": "Dojrzałość ogólna",
+        "gapAnalysis": "Analiza luki",
+        "gapMessage": "Luka: {{gap}} poziomów do osiągnięcia celu",
+        "aiGuidanceCta": "Podpowiedź AI (dlaczego to ważne + jak oceniać)",
+        "generatingGuidance": "Generuję podpowiedź…",
+        "consultantGuidance": "Podpowiedź konsultanta",
+        "canonSource": "kanon",
+        "whyItMatters": "Dlaczego to ważne: ",
+        "howToScore": "Jak oceniać poziom: ",
+        "canonLabel": "Kanon: ",
+        "watchOutFor": "Uważaj na: ",
+        "notesAndEvidence": "Notatki i dowody",
+        "notesPlaceholder": "Dodaj notatki lub dowody...",
+        "matrixTitle": "Macierz dojrzałości ADMA",
+        "dimensionColumn": "Wymiar"
+      }
     }
   },
   "initiatives": {

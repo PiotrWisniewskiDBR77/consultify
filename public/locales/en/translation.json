@@ -6997,6 +6997,31 @@
         "creatorDesc": "Create a new report or open an existing one from the list.",
         "reviewDesc": "Reports will appear here after being submitted for review"
       }
+    },
+    "adma": {
+      "editor": {
+        "viewDimensions": "Dimensions",
+        "viewRadar": "Radar",
+        "viewMatrix": "Matrix",
+        "currentMaturityLevel": "Current Maturity Level",
+        "targetLevel": "Target Level",
+        "characteristics": "Characteristics",
+        "overallMaturity": "Overall Maturity",
+        "gapAnalysis": "Gap Analysis",
+        "gapMessage": "Gap: {{gap}} levels to reach target",
+        "aiGuidanceCta": "AI guidance (why it matters + how to score)",
+        "generatingGuidance": "Generating guidance…",
+        "consultantGuidance": "Consultant guidance",
+        "canonSource": "canon",
+        "whyItMatters": "Why it matters: ",
+        "howToScore": "How to score this level: ",
+        "canonLabel": "Canon: ",
+        "watchOutFor": "Watch out for: ",
+        "notesAndEvidence": "Notes & Evidence",
+        "notesPlaceholder": "Add notes or evidence...",
+        "matrixTitle": "ADMA Maturity Matrix",
+        "dimensionColumn": "Dimension"
+      }
     }
   },
   "initiatives": {

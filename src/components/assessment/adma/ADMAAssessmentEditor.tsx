@@ -214,8 +214,8 @@ const LevelSelector: React.FC<{
   onChange: (level: number) => void;
   onTargetChange: (level: number | undefined) => void;
   readOnly?: boolean;
-  isPolish: boolean;
-}> = ({ currentLevel, targetLevel, onChange, onTargetChange, readOnly, isPolish }) => {
+}> = ({ currentLevel, targetLevel, onChange, onTargetChange, readOnly }) => {
+  const { t } = useTranslation();
   const currentLevelData = ADMA_MATURITY_LEVELS.find((l) => l.level === currentLevel);
 
   return (
@@ -223,7 +223,7 @@ const LevelSelector: React.FC<{
       {/* Current Level */}
       <div>
         <label className="block text-sm font-medium text-c-text-secondary mb-2">
-          {isPolish ? 'Aktualny poziom dojrzałości' : 'Current Maturity Level'}
+          {t('assessment.adma.editor.currentMaturityLevel', 'Current Maturity Level')}
         </label>
         <div className="flex gap-2">
           {ADMA_MATURITY_LEVELS.map((level) => (
@@ -249,7 +249,7 @@ const LevelSelector: React.FC<{
       {/* Target Level */}
       <div>
         <label className="block text-sm font-medium text-c-text-secondary mb-2">
-          {isPolish ? 'Poziom docelowy' : 'Target Level'}
+          {t('assessment.adma.editor.targetLevel', 'Target Level')}
         </label>
         <div className="flex gap-2">
           {ADMA_MATURITY_LEVELS.map((level) => (
@@ -281,7 +281,7 @@ const LevelSelector: React.FC<{
           {currentLevelData.characteristics && (
             <div>
               <h5 className="text-xs font-medium text-c-text-muted uppercase mb-2">
-                {isPolish ? 'Charakterystyki' : 'Characteristics'}
+                {t('assessment.adma.editor.characteristics', 'Characteristics')}
               </h5>
               <ul className="space-y-1">
                 {currentLevelData.characteristics.map((char, i) => (
@@ -417,6 +417,7 @@ const ScoreSummaryPanel: React.FC<{
   answers: ADMAEditorAnswers | undefined;
   isPolish: boolean;
 }> = ({ answers, isPolish }) => {
+  const { t } = useTranslation();
   const dimensionScores: Record<string, number> = {};
   ADMA_DIMENSIONS.forEach((dim) => {
     const state = getDimensionState(answers, dim.id);
@@ -435,7 +436,7 @@ const ScoreSummaryPanel: React.FC<{
       <div className="text-center">
         <div className="text-4xl font-bold text-c-text">{overallScore.toFixed(1)}</div>
         <div className="text-sm text-c-text-muted">
-          {isPolish ? 'Dojrzałość ogólna' : 'Overall Maturity'} / 5
+          {t('assessment.adma.editor.overallMaturity', 'Overall Maturity')} / 5
         </div>
       </div>
 
@@ -459,7 +460,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
   onDimensionChange,
   currentDimensionId,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // State
@@ -602,7 +603,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
               }`}
             >
               <List size={16} className="inline mr-1" />
-              {isPolish ? 'Wymiary' : 'Dimensions'}
+              {t('assessment.adma.editor.viewDimensions', 'Dimensions')}
             </button>
             <button
               onClick={() => setViewMode('radar')}
@@ -613,7 +614,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
               }`}
             >
               <Target size={16} className="inline mr-1" />
-              {isPolish ? 'Radar' : 'Radar'}
+              {t('assessment.adma.editor.viewRadar', 'Radar')}
             </button>
             <button
               onClick={() => setViewMode('matrix')}
@@ -624,7 +625,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
               }`}
             >
               <Grid2X2 size={16} className="inline mr-1" />
-              {isPolish ? 'Macierz' : 'Matrix'}
+              {t('assessment.adma.editor.viewMatrix', 'Matrix')}
             </button>
           </div>
         </div>
@@ -697,7 +698,6 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                 onChange={handleLevelChange}
                 onTargetChange={handleTargetChange}
                 readOnly={readOnly}
-                isPolish={isPolish}
               />
 
               {/* Gap Analysis */}
@@ -707,13 +707,13 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                     <div className="flex items-center gap-2 mb-2">
                       <AlertTriangle className="w-5 h-5 text-c-warning" />
                       <span className="font-medium text-c-warning">
-                        {isPolish ? 'Analiza luki' : 'Gap Analysis'}
+                        {t('assessment.adma.editor.gapAnalysis', 'Gap Analysis')}
                       </span>
                     </div>
                     <p className="text-sm text-c-warning">
-                      {isPolish
-                        ? `Luka: ${currentDimensionState.target - currentDimensionState.current} poziomów do osiągnięcia celu`
-                        : `Gap: ${currentDimensionState.target - currentDimensionState.current} levels to reach target`}
+                      {t('assessment.adma.editor.gapMessage', 'Gap: {{gap}} levels to reach target', {
+                        gap: currentDimensionState.target - currentDimensionState.current,
+                      })}
                     </p>
                   </div>
                 )}
@@ -732,16 +732,17 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-c-info hover:underline"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        {isPolish
-                          ? 'Podpowiedź AI (dlaczego to ważne + jak oceniać)'
-                          : 'AI guidance (why it matters + how to score)'}
+                        {t(
+                          'assessment.adma.editor.aiGuidanceCta',
+                          'AI guidance (why it matters + how to score)'
+                        )}
                       </button>
                     );
                   }
                   if (g.loading) {
                     return (
                       <div className="text-xs text-c-text-muted">
-                        {isPolish ? 'Generuję podpowiedź…' : 'Generating guidance…'}
+                        {t('assessment.adma.editor.generatingGuidance', 'Generating guidance…')}
                       </div>
                     );
                   }
@@ -750,31 +751,35 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                     <div className="rounded-lg border border-c-border-subtle bg-[color-mix(in_srgb,var(--c-info)_6%,transparent)] p-3 space-y-2 text-sm">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-info">
                         <Sparkles className="w-3 h-3" />
-                        {isPolish ? 'Podpowiedź konsultanta' : 'Consultant guidance'}
+                        {t('assessment.adma.editor.consultantGuidance', 'Consultant guidance')}
                         <span className="ml-auto font-normal normal-case text-c-text-muted">
-                          {g.data.source === 'llm' ? 'AI' : isPolish ? 'kanon' : 'canon'}
+                          {g.data.source === 'llm'
+                            ? 'AI'
+                            : t('assessment.adma.editor.canonSource', 'canon')}
                         </span>
                       </div>
                       <p className="text-c-text">
                         <span className="font-semibold">
-                          {isPolish ? 'Dlaczego to ważne: ' : 'Why it matters: '}
+                          {t('assessment.adma.editor.whyItMatters', 'Why it matters: ')}
                         </span>
                         {g.data.whyItMatters}
                       </p>
                       <p className="text-c-text-secondary dark:text-c-text-muted">
                         <span className="font-semibold">
-                          {isPolish ? 'Jak oceniać poziom: ' : 'How to score this level: '}
+                          {t('assessment.adma.editor.howToScore', 'How to score this level: ')}
                         </span>
                         {g.data.levelInterpretation}
                       </p>
                       <p className="text-xs text-c-text-muted">
-                        <span className="font-semibold">{isPolish ? 'Kanon: ' : 'Canon: '}</span>
+                        <span className="font-semibold">
+                          {t('assessment.adma.editor.canonLabel', 'Canon: ')}
+                        </span>
                         {g.data.canonContext}
                       </p>
                       {g.data.pitfalls.length > 0 && (
                         <p className="text-xs text-c-text-muted">
                           <span className="font-semibold">
-                            {isPolish ? 'Uważaj na: ' : 'Watch out for: '}
+                            {t('assessment.adma.editor.watchOutFor', 'Watch out for: ')}
                           </span>
                           {g.data.pitfalls.join(' · ')}
                         </p>
@@ -791,7 +796,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                   className="flex items-center gap-2 text-sm text-c-text-secondary dark:text-c-text-muted hover:text-c-text dark:hover:text-c-text"
                 >
                   <MessageSquare size={16} />
-                  {isPolish ? 'Notatki i dowody' : 'Notes & Evidence'}
+                  {t('assessment.adma.editor.notesAndEvidence', 'Notes & Evidence')}
                   <ChevronDown
                     size={16}
                     className={`transition-transform ${showNotes ? 'rotate-180' : ''}`}
@@ -802,9 +807,10 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                     value={currentDimensionState.notes || ''}
                     onChange={(e) => handleNotesChange(e.target.value)}
                     disabled={readOnly}
-                    placeholder={
-                      isPolish ? 'Dodaj notatki lub dowody...' : 'Add notes or evidence...'
-                    }
+                    placeholder={t(
+                      'assessment.adma.editor.notesPlaceholder',
+                      'Add notes or evidence...'
+                    )}
                     className="mt-2 w-full h-32 p-3 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface dark:bg-c-bg text-c-text resize-none disabled:opacity-60"
                   />
                 )}
@@ -815,7 +821,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
           {viewMode === 'matrix' && (
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-c-text">
-                {isPolish ? 'Macierz dojrzałości ADMA' : 'ADMA Maturity Matrix'}
+                {t('assessment.adma.editor.matrixTitle', 'ADMA Maturity Matrix')}
               </h3>
 
               {/* Matrix Table */}
@@ -826,7 +832,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                   <thead>
                     <tr>
                       <th className="p-3 text-left bg-c-surface-raised border border-c-border-subtle">
-                        {isPolish ? 'Wymiar' : 'Dimension'}
+                        {t('assessment.adma.editor.dimensionColumn', 'Dimension')}
                       </th>
                       {ADMA_MATURITY_LEVELS.map((level) => (
                         <th
