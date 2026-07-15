@@ -4165,7 +4165,9 @@
       "quickAdd": "quick add",
       "changesWillBeSaved": "Changes will be saved immediately",
       "cancel": "Cancel",
-      "saveChanges": "Save Changes"
+      "saveChanges": "Save Changes",
+      "lagDays_one": "{{count}} day",
+      "lagDays_other": "{{count}} days"
     },
     "taskTemplates": {
       "toastError": "Template name is required",
@@ -4279,7 +4281,12 @@
       "noCommentsYet": "No comments yet",
       "startTheConversation": "Start the conversation...",
       "placeholder2": "Write a comment...",
-      "send": "Send"
+      "send": "Send",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago",
+      "repliesCount_one": "{{count}} reply",
+      "repliesCount_other": "{{count}} replies"
     },
     "taskTimer": {
       "toastSuccess": "⏱️ Timer started",

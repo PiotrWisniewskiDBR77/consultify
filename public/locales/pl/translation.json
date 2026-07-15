@@ -3311,7 +3311,11 @@
       "quickAdd": "szybkie dodawanie",
       "changesWillBeSaved": "Zmiany zostaną zapisane natychmiast",
       "cancel": "Anuluj",
-      "saveChanges": "Zapisz zmiany"
+      "saveChanges": "Zapisz zmiany",
+      "lagDays_one": "{{count}} dzień",
+      "lagDays_few": "{{count}} dni",
+      "lagDays_many": "{{count}} dni",
+      "lagDays_other": "{{count}} dni"
     },
     "taskTemplates": {
       "toastError": "Nazwa szablonu jest wymagana",
@@ -3425,7 +3429,14 @@
       "noCommentsYet": "Brak komentarzy",
       "startTheConversation": "Rozpocznij dyskusję...",
       "placeholder2": "Napisz komentarz...",
-      "send": "Wyślij"
+      "send": "Wyślij",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu",
+      "repliesCount_one": "{{count}} odpowiedź",
+      "repliesCount_few": "{{count}} odpowiedzi",
+      "repliesCount_many": "{{count}} odpowiedzi",
+      "repliesCount_other": "{{count}} odpowiedzi"
     },
     "taskTimer": {
       "toastSuccess": "⏱️ Timer uruchomiony",

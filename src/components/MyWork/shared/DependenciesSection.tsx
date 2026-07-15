@@ -502,8 +502,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   // ── Render helpers ───────────────────────────────────────────
   const formatLag = (lagDaysValue: number) => {
     if (lagDaysValue === 0) return '—';
-    if (lagDaysValue > 0) return isPolish ? `+${lagDaysValue} dni` : `+${lagDaysValue} days`;
-    return isPolish ? `${lagDaysValue} dni` : `${lagDaysValue} days`;
+    const formatted = t('myWork.dependencies.lagDays', { count: Math.abs(lagDaysValue) });
+    return lagDaysValue > 0 ? `+${formatted}` : `-${formatted}`;
   };
 
   // ── Render ───────────────────────────────────────────────────
