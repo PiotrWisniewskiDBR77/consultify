@@ -8,6 +8,7 @@ import featureFlagRoutes from './admin/feature-flags.routes.js';
 import adminHealthRoutes from './admin/health.routes.js';
 import adminMetricsRoutes from './admin/metrics.routes.js';
 import shadowRoutes from './admin/shadow.routes.js';
+import advisoryRoutes from './advisory.routes.js';
 import aiCoreRoutes from './ai-core.routes.js';
 import assessmentRoutes from './assessment.routes.js';
 import calendarRoutes from './calendar.routes.js';
@@ -59,6 +60,7 @@ v8Router.use(attachV8Context);
 v8Router.use(v8MetricsMiddleware);
 
 v8Router.use('/health', healthRoutes);
+v8Router.use('/advisory', advisoryRoutes);
 v8Router.use('/assessment', assessmentRoutes);
 v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
