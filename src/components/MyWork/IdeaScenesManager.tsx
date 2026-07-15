@@ -41,7 +41,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
   currentViewport,
   onNavigateToScene,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [expanded, setExpanded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
   const handleAddScene = useCallback(() => {
     const newScene: Scene = {
       id: `scene-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      name: `${isPl ? 'Widok' : 'View'} ${scenes.length + 1}`,
+      name: `${t('myWorkIdeas.scenesManager.view')} ${scenes.length + 1}`,
       viewport: { ...currentViewport },
       createdAt: Date.now(),
     };
@@ -136,7 +136,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-sm text-[10px] font-semibold text-slate-600 dark:text-slate-400 hover:text-c-info transition-colors"
         >
           <Bookmark size={12} />
-          {isPl ? 'Zapisz widok' : 'Save view'}
+          {t('myWorkIdeas.scenesManager.saveView')}
         </button>
       </div>
     );
@@ -151,7 +151,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
             <div className="flex items-center gap-1.5">
               <Bookmark size={12} className="text-c-info" />
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-                {isPl ? 'Widoki' : 'Scenes'}
+                {t('myWorkIdeas.scenesManager.scenes')}
               </span>
               <span className="text-[9px] text-slate-600 font-semibold">{scenes.length}</span>
             </div>
@@ -160,23 +160,23 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 <button
                   onClick={startPresentation}
                   className="p-1 rounded-lg text-c-info hover:bg-c-info/10 transition-colors"
-                  title={isPl ? 'Prezentacja' : 'Present'}
+                  title={t('myWorkIdeas.scenesManager.present')}
                 >
                   <Play size={12} />
                 </button>
               )}
               <button
                 onClick={handleAddScene}
-                aria-label={isPl ? 'Dodaj widok' : 'Add scene'}
-                title={isPl ? 'Dodaj widok' : 'Add scene'}
+                aria-label={t('myWorkIdeas.scenesManager.addScene')}
+                title={t('myWorkIdeas.scenesManager.addScene')}
                 className="p-1 rounded-lg text-slate-600 hover:text-c-info hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <Plus size={12} />
               </button>
               <button
                 onClick={() => setExpanded(false)}
-                aria-label={isPl ? 'Zamknij panel widoków' : 'Close scenes panel'}
-                title={isPl ? 'Zamknij' : 'Close'}
+                aria-label={t('myWorkIdeas.scenesManager.closeScenesPanel')}
+                title={t('myWorkIdeas.scenesManager.close')}
                 className="p-1 rounded-lg text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <X size={12} />
@@ -216,8 +216,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleMoveScene(scene.id, 'up');
                     }}
-                    aria-label={isPl ? 'Przesuń w górę' : 'Move up'}
-                    title={isPl ? 'Przesuń w górę' : 'Move up'}
+                    aria-label={t('myWorkIdeas.scenesManager.moveUp')}
+                    title={t('myWorkIdeas.scenesManager.moveUp')}
                     className="p-0.5 text-slate-600 hover:text-slate-600"
                   >
                     <ChevronUp size={10} />
@@ -227,8 +227,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleMoveScene(scene.id, 'down');
                     }}
-                    aria-label={isPl ? 'Przesuń w dół' : 'Move down'}
-                    title={isPl ? 'Przesuń w dół' : 'Move down'}
+                    aria-label={t('myWorkIdeas.scenesManager.moveDown')}
+                    title={t('myWorkIdeas.scenesManager.moveDown')}
                     className="p-0.5 text-slate-600 hover:text-slate-600"
                   >
                     <ChevronDown size={10} />
@@ -239,8 +239,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       setEditingId(scene.id);
                       setEditName(scene.name);
                     }}
-                    aria-label={isPl ? 'Zmień nazwę' : 'Rename'}
-                    title={isPl ? 'Zmień nazwę' : 'Rename'}
+                    aria-label={t('myWorkIdeas.scenesManager.rename')}
+                    title={t('myWorkIdeas.scenesManager.rename')}
                     className="p-0.5 text-slate-600 hover:text-c-info"
                   >
                     <Edit3 size={10} />
@@ -250,8 +250,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleDeleteScene(scene.id);
                     }}
-                    aria-label={isPl ? 'Usuń widok' : 'Delete scene'}
-                    title={isPl ? 'Usuń widok' : 'Delete scene'}
+                    aria-label={t('myWorkIdeas.scenesManager.deleteScene')}
+                    title={t('myWorkIdeas.scenesManager.deleteScene')}
                     className="p-0.5 text-slate-600 hover:text-danger-500"
                   >
                     <Trash2 size={10} />
@@ -274,7 +274,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 if (scenes[prev]) onNavigateToScene(scenes[prev].viewport);
               }}
               disabled={currentSlide === 0}
-              aria-label={isPl ? 'Poprzedni widok' : 'Previous scene'}
+              aria-label={t('myWorkIdeas.scenesManager.previousScene')}
               className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
             >
               <ArrowLeft size={18} />
@@ -288,7 +288,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                     setCurrentSlide(i);
                     if (scenes[i]) onNavigateToScene(scenes[i].viewport);
                   }}
-                  aria-label={`${isPl ? 'Widok' : 'Scene'} ${i + 1}`}
+                  aria-label={`${t('myWorkIdeas.scenesManager.scene')} ${i + 1}`}
                   aria-current={i === currentSlide}
                   className={`w-2 h-2 rounded-full transition-all ${
                     i === currentSlide ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/60'
@@ -304,7 +304,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 if (scenes[next]) onNavigateToScene(scenes[next].viewport);
               }}
               disabled={currentSlide === scenes.length - 1}
-              aria-label={isPl ? 'Następny widok' : 'Next scene'}
+              aria-label={t('myWorkIdeas.scenesManager.nextScene')}
               className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
             >
               <ArrowRight size={18} />
@@ -321,8 +321,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 setPresentationMode(false);
                 if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
               }}
-              aria-label={isPl ? 'Zakończ prezentację' : 'Exit presentation'}
-              title={isPl ? 'Zakończ prezentację' : 'Exit presentation'}
+              aria-label={t('myWorkIdeas.scenesManager.exitPresentation')}
+              title={t('myWorkIdeas.scenesManager.exitPresentation')}
               className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors ml-2"
             >
               <Minimize2 size={16} />

@@ -1969,7 +1969,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
   baseVersion,
   existingNodeCount = 0,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const { dialog: confirmDialog, confirm } = useConfirmDialog();
   const [applying, setApplying] = useState<string | null>(null);
@@ -1995,16 +1995,19 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
       // Gdy kanwa ma już elementy — wymagaj świadomego potwierdzenia, by nie utracić pracy.
       if (existingNodeCount > 0) {
         const proceed = await confirm({
-          title: isPl ? 'Zastąpić istniejące elementy?' : 'Replace existing elements?',
-          description: isPl
-            ? `Na kanwie znajduje się ${existingNodeCount} ${
-                existingNodeCount === 1 ? 'element' : 'elementów'
-              }. Zastosowanie szablonu nadpisze całą zawartość. Tej operacji nie można cofnąć.`
-            : `The canvas contains ${existingNodeCount} ${
-                existingNodeCount === 1 ? 'element' : 'elements'
-              }. Applying a template will overwrite all content. This cannot be undone.`,
-          confirmLabel: isPl ? 'Zastąp' : 'Replace',
-          cancelLabel: isPl ? 'Anuluj' : 'Cancel',
+          title: t('myWorkIdeas.templateGallery.replaceExistingElements'),
+          description: t('myWorkIdeas.templateGallery.replaceExistingElementsDesc', {
+            value: existingNodeCount,
+            word: isPl
+              ? existingNodeCount === 1
+                ? 'element'
+                : 'elementów'
+              : existingNodeCount === 1
+                ? 'element'
+                : 'elements',
+          }),
+          confirmLabel: t('myWorkIdeas.templateGallery.replace'),
+          cancelLabel: t('myWorkIdeas.templateGallery.cancel'),
           variant: 'warning',
         });
         if (!proceed) return;
@@ -2048,24 +2051,18 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
           }
         }
 
-        toast.success(isPl ? 'Szablon zastosowany' : 'Template applied');
+        toast.success(t('myWorkIdeas.templateGallery.templateApplied'));
         onApplied();
         onClose();
       } catch (err: any) {
         if (err?.status === 409) {
-          toast(
-            isPl
-              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-              : 'Change conflict detected. Refreshing map from server.',
-            { icon: '⚠️' }
-          );
+          toast(t('myWorkIdeas.templateGallery.changeConflictDetectedRefreshingMapFrom'), {
+            icon: '⚠️',
+          });
           onApplied();
           onClose();
         } else {
-          toast.error(
-            err?.message ||
-              (isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
-          );
+          toast.error(err?.message || t('myWorkIdeas.templateGallery.failedApplyTemplate'));
         }
       } finally {
         setApplying(null);
@@ -2095,12 +2092,10 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
             <div>
               <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                {isPl ? 'Galeria szablonów' : 'Template Gallery'}
+                {t('myWorkIdeas.templateGallery.templateGallery')}
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                {isPl
-                  ? 'Wybierz szablon aby szybko rozpocząć'
-                  : 'Choose a template to get started quickly'}
+                {t('myWorkIdeas.templateGallery.chooseTemplateGetStartedQuickly')}
               </p>
             </div>
             <button
@@ -2148,9 +2143,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
           <div className="flex-1 overflow-y-auto p-5">
             {templates.length === 0 ? (
               <div className="text-center py-8 text-[11px] text-slate-500 dark:text-slate-400">
-                {isPl
-                  ? 'Brak szablonów dla tego narzędzia'
-                  : 'No templates available for this tool'}
+                {t('myWorkIdeas.templateGallery.noTemplatesAvailableTool')}
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
@@ -2193,12 +2186,8 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                               className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
                             >
                               {applying === template.id && !aiFilling
-                                ? isPl
-                                  ? 'Stosowanie…'
-                                  : 'Applying…'
-                                : isPl
-                                  ? 'Użyj szablonu'
-                                  : 'Use template'}
+                                ? t('myWorkIdeas.templateGallery.applying')
+                                : t('myWorkIdeas.templateGallery.useTemplate')}
                               <ArrowRight size={10} />
                             </button>
                             {template.nodes.length > 0 && (
@@ -2212,7 +2201,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                                 ) : (
                                   <Sparkles size={10} />
                                 )}
-                                {isPl ? 'AI wypełni' : 'AI fill'}
+                                {t('myWorkIdeas.templateGallery.aiFill')}
                               </button>
                             )}
                           </div>
