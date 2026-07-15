@@ -1,3 +1,5 @@
+// NOTE: to jest realny builder promptów narzędzi (wołany przez useToolAI→ToolWorkspace).
+// NIE myl z server/src/ai/promptRegistry.ts (indeks meta).
 import {
   A3_SECTIONS,
   type A3SectionId,
