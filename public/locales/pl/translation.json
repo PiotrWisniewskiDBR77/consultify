@@ -28402,6 +28402,25 @@
         "REJECTION": "Odrzucenie",
         "CHANGE_REQUEST": "Prośba o zmianę"
       }
+    },
+    "chapterNavigation": {
+      "showTableOfContents": "Pokaż spis treści",
+      "contents": "Spis treści",
+      "tableOfContents": "Spis Treści",
+      "addChapter": "Dodaj rozdział",
+      "collapsePanel": "Zwiń panel",
+      "blocks": "bloków",
+      "chapters": "rozdziałów",
+      "ungrouped": "Bez rozdziału",
+      "rename": "Zmień nazwę",
+      "confirm": "Potwierdź",
+      "deleteChapter": "Usuń rozdział",
+      "youHaveMoreThan5Blocks": "Masz więcej niż 5 bloków. Rozważ organizację w rozdziały.",
+      "addChapters": "Dodaj rozdziały",
+      "newChapter": "Nowy rozdział",
+      "chapterName": "Nazwa rozdziału...",
+      "add": "Dodaj",
+      "cancel": "Anuluj"
     }
   }
 }

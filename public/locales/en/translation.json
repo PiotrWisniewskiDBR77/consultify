@@ -27326,6 +27326,25 @@
         "REJECTION": "Rejection",
         "CHANGE_REQUEST": "Change Request"
       }
+    },
+    "chapterNavigation": {
+      "showTableOfContents": "Show table of contents",
+      "contents": "Contents",
+      "tableOfContents": "Table of Contents",
+      "addChapter": "Add chapter",
+      "collapsePanel": "Collapse panel",
+      "blocks": "blocks",
+      "chapters": "chapters",
+      "ungrouped": "Ungrouped",
+      "rename": "Rename",
+      "confirm": "Confirm",
+      "deleteChapter": "Delete chapter",
+      "youHaveMoreThan5Blocks": "You have more than 5 blocks. Consider organizing them into chapters.",
+      "addChapters": "Add chapters",
+      "newChapter": "New chapter",
+      "chapterName": "Chapter name...",
+      "add": "Add",
+      "cancel": "Cancel"
     }
   }
 }
