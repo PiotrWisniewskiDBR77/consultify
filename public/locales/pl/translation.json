@@ -27986,6 +27986,35 @@
         "strategicInitiativesSubtitle": "Inicjatywy utworzone z rekomendacji — gotowe do przeniesienia do modułu Execution.",
         "initiativeCreatedToast": "Inicjatywa utworzona w module Inicjatywy",
         "initiativeCreateErrorToast": "Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia"
+      },
+      "inputExplorationPhase": {
+        "consultantProposal": "Propozycja konsultanta",
+        "draft": "Draft",
+        "totalAccepted": "Zaakceptowane punkty",
+        "confirmedAreas": "Potwierdzone obszary",
+        "activeDialogue": "Aktywne dialogi",
+        "maxTarget": "Maksymalny target",
+        "aiProposal": "Aktualna propozycja AI",
+        "acceptedList": "Zaakceptowane punkty dla tego obszaru",
+        "accept": "Akceptuj ten punkt",
+        "nextProposal": "Kolejna propozycja",
+        "deepen": "Pogłęb",
+        "confirmSet": "Potwierdź ten zestaw",
+        "keepGoing": "Szukaj dalej do 5",
+        "readyEnough": "To już może wystarczyć",
+        "attempts": "Próby",
+        "accepted": "Zaakceptowane",
+        "confirmed": "Potwierdzone",
+        "confirmedToMatrix": "Ten zestaw jest już potwierdzony do macierzy.",
+        "confirmedButOpen": "Ten zestaw jest już potwierdzony do macierzy, ale możesz dalej dodawać kolejne punkty do limitu 5.",
+        "continueAdding": "Dodawaj dalej",
+        "emptyAccepted": "Na razie nie masz jeszcze zaakceptowanych punktów w tym obszarze.",
+        "showExplanation": "Pokaż wyjaśnienie",
+        "hideExplanation": "Ukryj wyjaśnienie",
+        "introTitle": "Tutaj AI będzie proponować kolejne punkty do czterech obszarów SWOT, aż ustalicie minimalnie 2 i maksymalnie 5 zaakceptowanych punktów na obszar.",
+        "introSubtitle": "Każda propozycja składa się z tytułu i rozwinięcia. Możesz ją zaakceptować, odrzucić przez przejście do kolejnej propozycji, albo przepisać przez komentarz i pogłębienie.",
+        "refineAcceptedPlaceholder": "Wpisz komentarz, który ma dopracować ten zaakceptowany punkt.",
+        "rewriteProposalPlaceholder": "Wpisz komentarz, który ma przepisać tę propozycję."
       }
     }
   }

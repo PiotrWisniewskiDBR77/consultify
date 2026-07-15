@@ -26910,6 +26910,35 @@
         "strategicInitiativesSubtitle": "Initiatives created from recommendations — ready to transfer to the Execution module.",
         "initiativeCreatedToast": "Initiative created in Initiatives",
         "initiativeCreateErrorToast": "Could not save the initiative to the Initiatives module — draft kept in the tool session"
+      },
+      "inputExplorationPhase": {
+        "consultantProposal": "Consultant proposal",
+        "draft": "Draft",
+        "totalAccepted": "Accepted points",
+        "confirmedAreas": "Confirmed areas",
+        "activeDialogue": "Active dialogues",
+        "maxTarget": "Maximum target",
+        "aiProposal": "Current AI proposal",
+        "acceptedList": "Accepted points for this area",
+        "accept": "Accept this point",
+        "nextProposal": "Another proposal",
+        "deepen": "Think deeper",
+        "confirmSet": "Confirm this set",
+        "keepGoing": "Keep exploring to 5",
+        "readyEnough": "This may already be enough",
+        "attempts": "Attempts",
+        "accepted": "Accepted",
+        "confirmed": "Confirmed",
+        "confirmedToMatrix": "This set is already confirmed for the matrix.",
+        "confirmedButOpen": "This set is already confirmed for the matrix, but you can still add more points up to the limit of 5.",
+        "continueAdding": "Continue adding",
+        "emptyAccepted": "You do not have any accepted points in this area yet.",
+        "showExplanation": "Show explanation",
+        "hideExplanation": "Hide explanation",
+        "introTitle": "Here AI will keep proposing candidate points for the four SWOT areas until you settle on at least 2 and at most 5 accepted points per area.",
+        "introSubtitle": "Each proposal is made of a title and an explanation. You can accept it, skip to another proposal, or rewrite it through comment and a deeper framing.",
+        "refineAcceptedPlaceholder": "Write the comment that should refine this accepted point.",
+        "rewriteProposalPlaceholder": "Write the comment that should rewrite this proposal."
       }
     }
   }
