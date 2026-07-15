@@ -205,7 +205,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
-            <ShieldCheck className="h-4 w-4 text-primary-500" />
+            <ShieldCheck className="h-4 w-4 text-c-text-secondary" />
             {t('ssoSelfService.title', 'SSO configuration (SAML / OIDC)')}
           </div>
           <p className="mt-1 text-sm text-c-text-secondary">
