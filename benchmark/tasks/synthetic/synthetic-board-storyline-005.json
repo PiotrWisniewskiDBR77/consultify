@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-board-storyline-005",
+  "prompt": "You must recommend the board approve a cost-reduction program to protect margin amid rising input costs. Write the storyline, leading with the recommendation.",
+  "context": "Input costs (key raw material) have risen 19% year-over-year (public commodity index, referenced internally). The company has not raised prices in 14 months due to competitive positioning concerns. Finance has identified three cost levers: (1) procurement consolidation across suppliers, estimated $4.2M/year savings, 6-month implementation; (2) manufacturing footprint consolidation (closing one of four plants), estimated $7.8M/year savings, 14-month implementation, requires workforce reduction; (3) SG&A reduction across corporate functions, estimated $2.5M/year savings, 3-month implementation. A customer-pricing study (completed) suggests a targeted 3-4% price increase on the top 2 product lines would be absorbed by the market with minimal volume loss.",
+  "binaryCriteria": [
+    {
+      "id": "includes-price-increase-as-a-recommended-lever",
+      "description": "Includes the evidenced 3-4% targeted price increase as part of the recommendation, not only cost-cutting levers, since the pricing study directly supports it.",
+      "guidance": "Fail if the price-increase option is omitted from the recommendation despite being directly evidenced in the context."
+    },
+    {
+      "id": "separates-plant-consolidation-as-distinct-higher-stakes-decision",
+      "description": "Treats manufacturing footprint consolidation (workforce reduction, 14-month timeline) as a distinct, higher-stakes decision requiring its own explicit discussion, not bundled at the same urgency as the other levers.",
+      "guidance": "Fail if plant consolidation is recommended with the same immediacy/ease as SG&A reduction or procurement consolidation without flagging its distinct risk profile."
+    },
+    {
+      "id": "sequences-fastest-lowest-risk-levers-first",
+      "description": "Recommends the fastest, lowest-risk levers (price increase, SG&A reduction) as near-term actions ahead of the longest/highest-risk lever (plant consolidation).",
+      "guidance": "Fail if the storyline does not differentiate timing/risk across the three cost levers."
+    }
+  ],
+  "goldNotes": "A strong storyline leads with a combined recommendation (not cost-cutting alone): pursue the targeted 3-4% price increase (fastest, revenue-positive, and directly evidenced by the completed pricing study) alongside the fastest-to-implement, lowest-risk cost lever (SG&A reduction, 3 months) as near-term actions, while treating plant consolidation ($7.8M, 14 months, workforce reduction) as a separate, higher-stakes decision requiring its own explicit board discussion given its scale and people impact — not bundled automatically into a single \"approve all cost levers\" ask. A weak storyline either ignores the pricing-increase option entirely (treating this as a pure cost-cutting problem when the data explicitly supports a revenue lever too) or recommends plant consolidation with the same urgency/ease as the other levers without flagging its distinct risk profile (workforce reduction, longest timeline).",
+  "archetype": "synthetic",
+  "domain": "Executive Storylining",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/board-storyline/cost-reduction-program-recommendation",
+  "consultingArchetype": "board-storyline"
+}

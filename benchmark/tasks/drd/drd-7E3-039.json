@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-7E3-039",
+  "prompt": "The client's board is asking whether \"AI Competencies and Culture\" is \"mature enough\". Using only what's in the context, tell them what's still unverified about the level 3 claim and what to do next.",
+  "context": "AI Maturity — AI Competencies and Culture — excerpt from a client diagnostic interview:\n\"The company provides training and tools. Roles are defined (e.g. AI Champion). First team successes appear.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Organized Development\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a 2025 AI training program (curriculum: AI Basics → Prompt Engineering → AI in My Role) with a schedule and a completion rate = 45% after 6 months (LMS report). Case study: \"How the sales department saved 3h/w…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does the organization run a structured AI training program for employees — with a curriculum, schedule and a designated \"AI Champion\" role per department? | Are the first successful AI projects documented and communicated internally as proof of real benefits? | Have at least 40% of employees completed basic AI training in the last 12 months (confirmed by an LMS report)?\nWhat satisfies the evidence bar: Evidence: a 2025 AI training program (curriculum: AI Basics → Prompt Engineering → AI in My Role) with a schedule and a completion rate = 45% after 6 months (LMS report). Case study: \"How the sales department saved 3h/week using AI\".\nNext level (4, \"AI Fluency\"): Employees build simple automations and AI workflows themselves. Continuous upskilling is the norm.\nRelevant technology categories: AI Training Platform (Coursera for Business, DataCamp), LMS (training tracking), AI Champions Program Framework, Microsoft Copilot Adoption Kit",
+  "archetype": "diagnostic",
+  "domain": "AI Maturity — AI Competencies and Culture",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "7E#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

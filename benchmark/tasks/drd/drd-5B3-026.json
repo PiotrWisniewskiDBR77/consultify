@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-5B3-026",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 3 for \"Readiness for Change\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "Culture of Transformation — Readiness for Change — excerpt from a client diagnostic interview:\n\"Trwa poszukiwanie wizji i strategii zmiany.\"\n\nThe team says this reflects digital maturity level 3 of 6 (\"Poszukiwanie wizji\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a \"Transformation Vision 2025–2027\" document approved by the board with KPIs and a timeline. Or a communication plan with a schedule of townhalls and messages tailored to specific groups."
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does the organization have a documented vision of the target (\"To Be\") state with a horizon of at least 2–3 years, approved by the board? | Is there a strategy for communicating the vision — an action plan, channels, timeline — rather than just a one-off presentation? | Is the change vision tied to concrete business metrics (e.g. cost reduction of 15%, NPS increase of 10 points)?\nWhat satisfies the evidence bar: Evidence: a \"Transformation Vision 2025–2027\" document approved by the board with KPIs and a timeline. Or a communication plan with a schedule of townhalls and messages tailored to specific groups.\nNext level (4, \"Komunikowanie wizji\"): Wizja jest komunikowana w organizacji, dwukierunkowo.\nRelevant technology categories: Strategic Planning Tool, Internal Communication Platform (Intranet), OKR Software",
+  "archetype": "diagnostic",
+  "domain": "Culture of Transformation — Readiness for Change",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "5B#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

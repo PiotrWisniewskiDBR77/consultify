@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-board-storyline-001",
+  "prompt": "You must recommend the board approve a turnaround plan for an underperforming business unit. Write the storyline (governing thought + 3 supporting pillars) for a board presentation, leading with the answer.",
+  "context": "The business unit has missed its operating-margin target for 6 consecutive quarters (current 4.2% vs. a 9% target). Root-cause work (completed) attributes the gap to: (1) a product mix skewed toward low-margin legacy SKUs (58% of unit revenue), (2) a cost structure with 22% higher SG&A-to-revenue than the next most comparable business unit in the portfolio, (3) two customer accounts representing 30% of unit revenue are on contracts up for renewal within 6 months at renegotiated (lower) rates already indicated by the customers. The proposed turnaround plan includes SKU rationalization, an SG&A reduction program, and a renegotiation strategy for the two at-risk accounts.",
+  "binaryCriteria": [
+    {
+      "id": "leads-with-recommendation",
+      "description": "States the governing thought/recommendation (approve the plan) in the first 1-2 sentences, before background or analysis.",
+      "guidance": "Fail if the recommendation only appears after multiple paragraphs of context."
+    },
+    {
+      "id": "three-pillars-map-to-three-root-causes",
+      "description": "Structures the storyline around exactly the three given root causes (product mix, SG&A gap, at-risk account renewals) as the supporting pillars, without inventing an unrelated framework.",
+      "guidance": "Fail if the supporting structure does not clearly correspond to the three diagnosed causes."
+    },
+    {
+      "id": "uses-specific-figures-not-generic-language",
+      "description": "Uses the specific figures given (4.2% vs 9%, 58% mix, 22% SG&A gap, 30% revenue, 6-month window) rather than only qualitative statements.",
+      "guidance": "Fail if the answer could apply to any turnaround situation without referencing these specific numbers."
+    }
+  ],
+  "goldNotes": "A strong storyline leads with the governing thought/recommendation up front (e.g., \"Approve the turnaround plan; without it, margin erosion continues and the two at-risk accounts alone could push the unit into a loss\") rather than opening with background. The 3 supporting pillars should map 1:1 to the three root causes given (mix, SG&A, at-risk accounts) — this is a MECE structure already implied by the diagnostic work, and a strong answer should recognize and use that structure rather than inventing a different framework. It should be quantitative and specific (4.2% vs 9% target, 58% legacy mix, 22% SG&A gap, 30% revenue at renewal risk) rather than qualitative hand-waving, and should note the urgency created by the 6-month renewal window as the reason the board needs to act now, not next quarter.",
+  "archetype": "synthetic",
+  "domain": "Executive Storylining",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/board-storyline/turnaround-plan-approval",
+  "consultingArchetype": "board-storyline"
+}

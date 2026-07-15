@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-7C3-037",
+  "prompt": "Lider obszaru \"AI w Produktach i Usługach\" opisał wam swoją praktykę tak, jak w kontekście, podczas wywiadu diagnostycznego. Napisz odpowiedź konsultanta: o co dopytasz, zanim zatwierdzisz poziom 3, i co powinni zrobić w pierwszej kolejności?",
+  "context": "Dojrzałość AI — AI w Produktach i Usługach — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"AI staje się kluczowym elementem architektury produktu. Bez niego większość nowoczesnych funkcji by nie działała. Produkt „rozumie\" użytkownika, dostosowuje się i reaguje na dane. Produkt istotnie odróżnia się od konkurencji dzięki AI.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 5 (\"AI jako kluczowy element produktu\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: dokument architektury technicznej z zaznaczonym komponentem AI jako centralnym. Badanie klientów: \"Dlaczego wybrałeś nasz produkt?\" z AI wymienianym w top 3 powodów. Mapa personalizacji: które elementy UI/UX zmie…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Czy AI jest kluczowym elementem architektury produktu — tzn. usunięcie AI uniemożliwiłoby działanie głównych funkcji? | Czy produkt personalizuje się dla każdego użytkownika na podstawie danych w czasie rzeczywistym? | Czy AI jest źródłem różnicowania od konkurencji — tzn. klienci wybierają produkt między innymi ze względu na AI?\nCo spełnia próg dowodowy: Dowód: dokument architektury technicznej z zaznaczonym komponentem AI jako centralnym. Badanie klientów: \"Dlaczego wybrałeś nasz produkt?\" z AI wymienianym w top 3 powodów. Mapa personalizacji: które elementy UI/UX zmieniają się per użytkownik.\nKolejny poziom (4, \"Fully AI-Driven Products\"): AI drives most of the product logic and dynamically adapts behavior. The product continuously learns customer behavior, optimizes processes, and reacts in real time. Functionality is personalized, adaptive, and self-improving.\nPowiązane kategorie technologii: Real-time ML Inference (Redis AI, TensorFlow Serving), Personalization Engine (Dynamic Yield, Braze), Feature Flags + ML (LaunchDarkly), Vector Database (Pinecone, Weaviate)",
+  "archetype": "diagnostic",
+  "domain": "Dojrzałość AI — AI w Produktach i Usługach",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "7C#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

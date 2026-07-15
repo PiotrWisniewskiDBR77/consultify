@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1G4-007",
+  "prompt": "The client's board is asking whether \"Quality Processes\" is \"mature enough\". Using only what's in the context, tell them what's still unverified about the level 4 claim and what to do next.",
+  "context": "Digital Processes — Quality Processes — excerpt from a client diagnostic interview:\n\"Robots and advanced vision systems are employed for precise automatic examination of product quality. These systems can analyse defects, dimensions and surface characteristics and can eliminate human errors to ensure consistent quality.\"\n\nThe team says this reflects digital maturity level 4 of 7 (\"Automation\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: vision system spec sheet listing the defect types it detects; a comparative accuracy report (robot vs. human inspection); a log of automatic actions following defect detection (stop → log → sort). Signal: the …"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Show us the robots or advanced vision systems used for automated quality inspection — which defects do they detect, and with what accuracy? | How does the defect-detection rate compare: automated system vs. visual inspector — based on the last 3 months of data? | What happens to defects detected by a robot/camera: automatic sorting, a line stop, or just a log entry?\nWhat satisfies the evidence bar: Evidence: vision system spec sheet listing the defect types it detects; a comparative accuracy report (robot vs. human inspection); a log of automatic actions following defect detection (stop → log → sort). Signal: the automated system has replaced or augmented 100% of visual inspection on critical items.\nNext level (5, \"MES\"): A Quality Management System (QMS) controls and monitors product quality at various stages of production. This includes document management, quality planning and control, and tracking of tests and inspections, as well as reporting on product quality and process stability.\nRelevant technology categories: Machine Vision, Cameras, Automated Inspection, QMS, MES",
+  "archetype": "diagnostic",
+  "domain": "Digital Processes — Quality Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1G#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

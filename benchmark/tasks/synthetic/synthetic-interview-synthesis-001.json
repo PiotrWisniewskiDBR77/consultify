@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-interview-synthesis-001",
+  "prompt": "Synthesize the 5 stakeholder interview notes below into 2-3 root-cause findings for why the digital transformation program has stalled, and recommend the single highest-priority fix.",
+  "context": "Interview notes (paraphrased): CEO: \"I approved the budget 8 months ago, I don't understand why we don't have anything live yet.\" CIO: \"We keep getting new requirements added mid-project from business units that weren't part of the original scoping.\" Head of Sales: \"Nobody asked my team what we actually needed before building the new CRM workflow — we found out about it in a demo.\" Head of Operations: \"We've had 3 different project managers in 8 months, each one restarts planning from scratch.\" Program Manager (most recent, 6 weeks in role): \"Honestly, I inherited a project plan with no clear sign-off process for scope changes — anyone senior enough can add a requirement and nobody says no.\"",
+  "binaryCriteria": [
+    {
+      "id": "converges-scope-governance-signals-into-one-finding",
+      "description": "Recognizes that the CIO's, Head of Sales', and Program Manager's comments all point to the same underlying governance/scope-control gap, and synthesizes them into one finding rather than listing them as unrelated separate issues.",
+      "guidance": "Fail if the answer lists all 5 interview comments as 5 separate, unconnected findings without identifying the convergence."
+    },
+    {
+      "id": "does-not-treat-ceo-frustration-as-a-root-cause",
+      "description": "Treats the CEO's comment as a symptom (frustration/visibility gap) rather than listing it as a root cause of the stall.",
+      "guidance": "Fail if \"the CEO is frustrated\" or equivalent is presented as one of the root-cause findings."
+    },
+    {
+      "id": "recommends-governance-fix-as-top-priority",
+      "description": "Recommends establishing a formal scope change-control/sign-off process as the single highest-priority fix, connecting it to both the scope creep and the PM churn.",
+      "guidance": "Fail if the top recommended fix is something unconnected to scope governance (e.g., \"hire more developers\" or \"communicate better\") without addressing the sign-off process gap."
+    }
+  ],
+  "goldNotes": "A strong synthesis identifies (1) a governance/scope-control failure as the central root cause — the CIO, Head of Sales, and current Program Manager all point to the same underlying issue from different angles: no formal sign-off process for scope changes, business units not consulted upfront, and requirements being added mid-project — these are not three separate problems but one governance gap seen from multiple vantage points, and a strong answer should recognize and state this convergence explicitly (a MECE synthesis groups these rather than listing all 5 interviews as separate findings). (2) Program-management discontinuity (3 PMs in 8 months, each restarting planning) is a second, related but distinct finding — leadership churn compounds the scope-control problem. The CEO's comment reflects a symptom (frustration at lack of visible progress), not a root cause, and should not be listed as a root cause itself. The highest-priority fix should address the governance gap directly (e.g., establishing a formal change-control/sign-off process with named decision rights) since it is the common thread underlying both the scope creep and, indirectly, the PM churn (a PM inheriting an ungoverned scope is more likely to struggle and rotate out).",
+  "archetype": "synthetic",
+  "domain": "Stakeholder Interview Synthesis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/interview-synthesis/stalled-digital-transformation",
+  "consultingArchetype": "interview-synthesis"
+}

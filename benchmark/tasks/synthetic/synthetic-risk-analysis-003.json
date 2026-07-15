@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-risk-analysis-003",
+  "prompt": "A telecom company plans to launch an AI-powered customer service chatbot handling billing and account questions. Identify the top risks using the data given.",
+  "context": "Pilot test (internal, 500 sampled conversations) showed the bot correctly resolved 78% of billing questions without escalation, but for the 22% requiring escalation, the average additional wait time for the customer (bot attempt + human handoff) was 40% longer than if the customer had gone straight to a human agent. Legal/compliance has noted the bot will handle some conversations involving payment disputes, which fall under a consumer-protection regulation requiring specific disclosures. No incident to date has caused a compliance violation, but the review process has not yet tested edge cases involving disputed charges.",
+  "binaryCriteria": [
+    {
+      "id": "identifies-escalation-slowdown-as-cx-risk",
+      "description": "Uses the given data (78% resolution, 22% escalation, 40% slower escalation path) to identify a customer-experience risk specifically for the escalating minority, not just a generic accuracy concern.",
+      "guidance": "Fail if the answer does not reference the escalation-path slowdown figure."
+    },
+    {
+      "id": "identifies-untested-disclosure-compliance-risk",
+      "description": "Identifies the untested edge cases in payment-dispute conversations under consumer-protection disclosure requirements as a specific compliance risk.",
+      "guidance": "Fail if this specific compliance gap is omitted or replaced with a generic \"legal risk\" statement."
+    },
+    {
+      "id": "does-not-overstate-confirmed-violation",
+      "description": "Does not claim a compliance violation has already occurred, correctly framing the risk as an untested gap rather than a confirmed incident.",
+      "guidance": "Fail if the answer states or implies a compliance violation has already happened."
+    }
+  ],
+  "goldNotes": "A strong answer identifies two distinct top risks: (1) a customer-experience risk for the 22% of conversations that escalate, since the given data shows escalation is 40% slower than going straight to a human — meaning the \"worst case\" for a meaningful minority of customers gets worse, not better; and (2) a compliance risk specific to payment-dispute conversations falling under consumer-protection disclosure requirements, which the context explicitly states has not been tested for edge cases. A weak answer only cites a generic \"AI could give wrong answers\" risk without using the specific 78%/22%/40% figures or the flagged compliance-disclosure gap. It should not overstate current compliance risk as \"already violated\" since the context explicitly states no incident has occurred yet — the risk is the untested edge cases, not a confirmed violation.",
+  "archetype": "synthetic",
+  "domain": "Risk Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/risk-analysis/ai-customer-service-bot-launch",
+  "consultingArchetype": "risk-analysis"
+}

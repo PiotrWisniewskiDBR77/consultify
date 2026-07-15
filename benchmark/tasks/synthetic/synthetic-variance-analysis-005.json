@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-variance-analysis-005",
+  "prompt": "A consumer packaged goods brand's marketing ROI came in at 1.4x versus a planned 2.3x for the latest campaign. Diagnose the deviation using the channel data given.",
+  "context": "Channel breakdown of the $2.0M campaign spend and attributed incremental revenue (internal marketing-mix model, illustrative): TV: $900K spend, $1.35M incremental revenue (1.5x). Paid social: $600K spend, $1.68M incremental revenue (2.8x). In-store promotion: $500K spend, $0.35M incremental revenue (0.7x). The in-store promotion ran during a period when a competitor launched a larger, overlapping in-store discount in the same retailers.",
+  "binaryCriteria": [
+    {
+      "id": "computes-per-channel-roi-from-data",
+      "description": "Derives approximate ROI for each channel from the given spend and incremental-revenue figures (TV ~1.5x, paid social ~2.8x, in-store ~0.7x).",
+      "guidance": "Pass if channel-level ROI figures (or clearly equivalent ratios) are shown or stated, not just the blended 1.4x."
+    },
+    {
+      "id": "attributes-instore-miss-to-competitive-context",
+      "description": "Connects the in-store promotion's weak ROI (0.7x) to the competitor's overlapping, larger discount rather than treating in-store promotion as generically ineffective.",
+      "guidance": "Fail if the answer recommends dropping in-store promotion entirely without acknowledging the competitive-cannibalization context given."
+    },
+    {
+      "id": "recommends-reallocation-not-uniform-cut",
+      "description": "Recommends shifting spend toward the highest-ROI channel (paid social) rather than applying an across-the-board budget cut to all channels.",
+      "guidance": "Fail if the recommendation treats all three channels symmetrically."
+    }
+  ],
+  "goldNotes": "A rigorous answer computes ROI per channel from the given spend/revenue figures (TV 1.5x, paid social 2.8x, in-store 0.7x) and identifies in-store promotion as the clear drag dragging the blended ROI down from what would otherwise be a healthy mix (TV and paid social alone would blend to roughly 2.0x). It should connect the in-store underperformance to the stated competitive context (an overlapping, larger competitor discount in the same retailers cannibalizing lift) rather than concluding in-store promotion is inherently ineffective. It should recommend reallocating future spend toward paid social (highest ROI) and reconsidering in-store promotion timing/coordination, not cutting all underperforming channels equally.",
+  "archetype": "synthetic",
+  "domain": "Variance & Deviation Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/variance-analysis/cpg-marketing-roi-variance",
+  "consultingArchetype": "variance-analysis"
+}

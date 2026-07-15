@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-variance-analysis-003",
+  "prompt": "A SaaS company's monthly logo churn rate jumped to 3.8% versus a forecast of 2.1%. Analyze the deviation with the segment data given and recommend where to focus retention efforts.",
+  "context": "Churn by segment this month: Enterprise (>250 seats): 0.9% churn (forecast 1.0% — in line). Mid-market (25-250 seats): 2.4% churn (forecast 2.0% — slightly elevated). SMB (<25 seats): 7.6% churn (forecast 2.6% — sharply elevated). SMB represents 55% of total logo count but only 14% of ARR. Support ticket data shows SMB accounts that churned this month had, on average, 2.1x the number of billing-related support tickets versus SMB accounts that did not churn.",
+  "binaryCriteria": [
+    {
+      "id": "isolates-smb-as-dominant-driver",
+      "description": "Identifies SMB (7.6% vs 2.6% forecast) as the dominant driver of the overall churn spike, distinguishing it from the on-target enterprise segment and only-slightly-elevated mid-market.",
+      "guidance": "Fail if the answer treats all three segments as equally responsible for the spike."
+    },
+    {
+      "id": "uses-arr-vs-logo-asymmetry",
+      "description": "Notes that SMB is 55% of logos but only 14% of ARR, and reasons about the appropriate (likely lower-cost/scalable) response given that asymmetry.",
+      "guidance": "Fail if the answer recommends an expensive, high-touch intervention without acknowledging the low revenue stake per SMB account."
+    },
+    {
+      "id": "flags-billing-ticket-correlation-as-lead",
+      "description": "Uses the 2.1x billing-ticket correlation among churned SMB accounts as the concrete lead for root-cause investigation.",
+      "guidance": "Fail if this specific correlation is omitted from the recommended next steps."
+    }
+  ],
+  "goldNotes": "A rigorous answer isolates SMB as the overwhelmingly dominant driver of the overall churn spike (7.6% vs 2.6% forecast, a huge miss, versus enterprise being on-target and mid-market only slightly elevated) and explicitly notes the ARR-vs-logo-count asymmetry (55% of logos but only 14% of ARR) — meaning this is a high-logo-count, low-revenue-impact problem, which should shape the response (e.g., self-serve/automated retention motions rather than expensive white-glove intervention). It should flag the billing-ticket correlation (2.1x more billing tickets among churned SMB accounts) as the most concrete lead for root cause (e.g., billing/invoicing friction) and recommend investigating that specifically rather than a generic \"improve SMB onboarding\" answer.",
+  "archetype": "synthetic",
+  "domain": "Variance & Deviation Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/variance-analysis/saas-churn-spike-variance",
+  "consultingArchetype": "variance-analysis"
+}

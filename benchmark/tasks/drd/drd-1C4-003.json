@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1C4-003",
+  "prompt": "Doradzasz klientowi w temacie dojrzałości cyfrowej w obszarze \"Technologia Procesowa i R&D\". Czy przyjmujesz deklarację poziomu 4 z kontekstu bez weryfikacji? Co musisz sprawdzić, zanim potwierdzisz ten poziom, i jaki jest najważniejszy kolejny krok?",
+  "context": "Procesy Cyfrowe — Technologia Procesowa i R&D — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Wykorzystujemy różne technologie automatyzacji, takie jak druk 3D, wirtualna rzeczywistość (VR) czy rozszerzona rzeczywistość (AR). Pozwalają one tworzyć i testować prototypy oraz usprawniać procesy technologiczne. Druk 3D umożliwia szybkie prototypowanie i weryfikację projektów, a technologie VR/AR wspierają symulację procesów i szkolenia pracowników.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 4 z 7 (\"Automatyzacja\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: rejestr prototypów 3D z ostatnich 12 miesięcy (model, cel, wynik); czas od projektu do gotowego prototypu (cel: dni, nie tygodnie); protokół szkolenia VR/AR lub lista ukończonych sesji. Sygnał: prototypowanie cyf…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Ile prototypów lub testów procesowych zostało wykonanych w technologiach cyfrowych (druk 3D, VR/AR) w ostatnim roku, vs tradycyjnymi metodami? | Pokaż ostatni prototyp z druku 3D lub symulację VR/AR — jakie pytanie inżynierskie rozwiązały, jaki czas zaoszczędziły vs metoda tradycyjna? | Jak szkolicie operatorów z nowych procesów — instrukcja papierowa, video, czy środowisko VR/AR?\nCo spełnia próg dowodowy: Dowód: rejestr prototypów 3D z ostatnich 12 miesięcy (model, cel, wynik); czas od projektu do gotowego prototypu (cel: dni, nie tygodnie); protokół szkolenia VR/AR lub lista ukończonych sesji. Sygnał: prototypowanie cyfrowe jest domyślnym krokiem, nie wyjątkiem przy budżecie.\nKolejny poziom (5, \"MES\"): Manufacturing Execution Systems are used to manage technological projects and monitor their implementation. MESs aid in planning, monitoring and managing technological projects, including task scheduling, resource allocation, progress control and reporting. In the development of manufacturing technologies, a Digital Twin is an MES-class tool.\nPowiązane kategorie technologii: 3D Printing, Rapid Prototyping, Design Verification, Virtual Reality (VR), Augmented Reality (AR)",
+  "archetype": "diagnostic",
+  "domain": "Procesy Cyfrowe — Technologia Procesowa i R&D",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1C#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

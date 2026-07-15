@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-kpi-design-003",
+  "prompt": "A manufacturer launching a supply-chain resilience initiative (after a recent single-supplier disruption) needs a KPI scorecard to track progress. Design 4-6 KPIs.",
+  "context": "Triggering event: a single sole-source supplier for a critical component caused a 6-week production stoppage this year. Post-incident review found that 34% of the company's critical components (by spend) currently have only one qualified supplier. The initiative's stated goals are to reduce single-source dependency and improve early-warning visibility into supplier risk, within an 18-month timeframe, without materially increasing procurement cost (a board-stated constraint).",
+  "binaryCriteria": [
+    {
+      "id": "tracks-single-source-percentage-from-given-baseline",
+      "description": "Includes tracking the percentage of critical spend/components with only one qualified supplier, explicitly referencing the given 34% baseline to be reduced over the program.",
+      "guidance": "Fail if this specific metric and baseline are absent from the scorecard."
+    },
+    {
+      "id": "includes-early-warning-visibility-metric",
+      "description": "Includes a leading, early-warning supplier-risk-visibility metric, matching the initiative's explicitly stated second goal.",
+      "guidance": "Fail if only single-source percentage is tracked with no supplier-risk-visibility measure."
+    },
+    {
+      "id": "includes-cost-guardrail-metric",
+      "description": "Includes a cost-impact/guardrail metric tracking procurement cost variance, given the explicit board constraint against materially increasing procurement cost.",
+      "guidance": "Fail if no cost-guardrail metric is proposed despite the explicit board constraint."
+    }
+  ],
+  "goldNotes": "A strong scorecard centers on the specific, quantified starting point given — % of critical spend with only one qualified supplier (currently 34%) — as the primary KPI to track down over the 18-month program, rather than a vague \"supplier diversification\" narrative with no baseline number. It should include a leading, early-warning-visibility metric (e.g., number/percentage of critical suppliers with an active risk-monitoring flag or equivalent), directly matching the initiative's stated second goal. Given the explicit board constraint of not materially increasing procurement cost, a strong scorecard should also include a cost-impact tracking metric (e.g., procurement cost variance attributable to the resilience program) as a guardrail KPI, not just a \"good news\" set of resilience metrics — omitting a cost guardrail given an explicit board constraint on cost would be a meaningful gap. A weak scorecard proposes generic supply-chain KPIs (e.g., on-time delivery) that are not tied to the specific single-source problem and stated goals in the context.",
+  "archetype": "synthetic",
+  "domain": "KPI & Scorecard Design",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/kpi-design/supply-chain-resilience-kpis",
+  "consultingArchetype": "kpi-design"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-5A6-054",
+  "prompt": "The client claims their \"Leadership Attitudes\" practice has reached the top maturity level (6) described in the context — the most advanced stage in this area. As their advisor, what would you check before accepting that claim, and how would you recommend they defend and extend this advantage over the next 12 months?",
+  "context": "Culture of Transformation — Leadership Attitudes — excerpt from a client diagnostic interview:\n\"Typ przywództwa wg książki: wizja, etyka, odrzucenie status quo i rozwój ludzi. To skala typów, nie rosnąca dojrzałość — oceniaj typ dominujący i 1–2 wspierające.\"\n\nThe team says this reflects digital maturity level 6 of 6 (\"Transformacyjny\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a \"Digital Vision 2026–2030\" document approved by the board with KPIs and owners. A succession program with an explicit \"AI/digital competency\" criterion. A quarterly progress report on the transformation pres…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does the board build and publicly articulate a 3–5 year digital vision, tied to business strategy and measured quarterly? | Does the leader spend at least 20% of their time on transformation activities (training, mentoring, external ecosystem) — measurable via calendar or OKR? | Does the organization have a formal leadership succession program that accounts for digital competencies and a change-oriented management style?\nWhat satisfies the evidence bar: Evidence: a \"Digital Vision 2026–2030\" document approved by the board with KPIs and owners. A succession program with an explicit \"AI/digital competency\" criterion. A quarterly progress report on the transformation presented to shareholders.\nThis is the highest defined level in this area — there is no \"level 7\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: Strategic Planning Tool (Cascade, Monday), Succession Planning (SAP SuccessFactors), Executive Reporting Dashboard",
+  "archetype": "diagnostic",
+  "domain": "Culture of Transformation — Leadership Attitudes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "5A#6",
+  "consultingArchetype": "maturity-defend-advantage"
+}

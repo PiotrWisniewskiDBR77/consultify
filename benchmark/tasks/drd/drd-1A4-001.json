@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1A4-001",
+  "prompt": "Lider obszaru \"Procesy Sprzedaży\" opisał wam swoją praktykę tak, jak w kontekście, podczas wywiadu diagnostycznego. Napisz odpowiedź konsultanta: o co dopytasz, zanim zatwierdzisz poziom 4, i co powinni zrobić w pierwszej kolejności?",
+  "context": "Procesy Cyfrowe — Procesy Sprzedaży — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Do automatyzacji sprzedaży wykorzystujemy różne narzędzia, takie jak sklepy internetowe, marketplace'y czy platformę samoobsługową (DIY), które pozwalają klientom kupować online bez kontaktu z naszymi pracownikami.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 4 z 7 (\"Automatyzacja\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: raport zamówień z oznaczeniem kanału (online vs handlowiec); zrzut ścieżki zamówienia w panelu klienta; log zamówień spoza godzin pracy z timestampami. Sygnał poziomu IV: przynajmniej jeden segment klientów kupuj…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Ile zamówień w ostatnim miesiącu złożyli klienci samodzielnie (sklep online/marketplace/platforma B2B) bez kontaktu z handlowcem? Jaki to % całości? | Opisz ścieżkę klienta od wejścia na platformę do złożenia zamówienia — gdzie interweniuje człowiek, a gdzie system? | Co się dzieje w systemie, gdy klient złoży zamówienie poza godzinami pracy — czy trafia do kolejki i realizacja startuje automatycznie?\nCo spełnia próg dowodowy: Dowód: raport zamówień z oznaczeniem kanału (online vs handlowiec); zrzut ścieżki zamówienia w panelu klienta; log zamówień spoza godzin pracy z timestampami. Sygnał poziomu IV: przynajmniej jeden segment klientów kupuje bez udziału handlowca.\nKolejny poziom (5, \"MES\"): Manufacturing Execution Systems are used for reporting in the sales process. These systems enable the monitoring and analysis of data related to deliveries and logistics. They generate reports on deliveries, track delivery statuses and provide information on shipments and delivery deadlines.\nPowiązane kategorie technologii: E-commerce Platform, Marketplace Integration, Self-service Ordering, B2B Procurement Platform",
+  "archetype": "diagnostic",
+  "domain": "Procesy Cyfrowe — Procesy Sprzedaży",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1A#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

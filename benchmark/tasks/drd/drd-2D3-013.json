@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-2D3-013",
+  "prompt": "Lider obszaru \"Dopasowanie Produktu do Oczekiwań Klienta\" opisał wam swoją praktykę tak, jak w kontekście, podczas wywiadu diagnostycznego. Napisz odpowiedź konsultanta: o co dopytasz, zanim zatwierdzisz poziom 3, i co powinni zrobić w pierwszej kolejności?",
+  "context": "Produkty Cyfrowe — Dopasowanie Produktu do Oczekiwań Klienta — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Produkt wykorzystuje elastyczne modele cenowe, które dostosowują się do zmieniających się warunków rynkowych, preferencji klientów i konkurencji, zapewniając optymalną wartość dla różnych grup odbiorców. Firma korzysta z platformy komunikacyjnej, która pozwala klientom kontaktować się z obsługą klienta przez czat na żywo.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 5 (\"Zaawansowany\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: raport zmian cen z ostatnich 90 dni z uzasadnieniem (trigger: dane vs decyzja); konfiguracja modelu cenowego w systemie (czy to możliwe automatycznie?); raport SLA obsługi klienta per kanał. Sygnał: przynajmniej …"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Jak cena produktu dostosowuje się do warunków rynkowych, popytu lub profilu klienta — dynamiczne cenowanie, segmentowe, czy stały cennik dla wszystkich? | Przez jakie kanały klient może skontaktować się z supportem i jaki jest czas odpowiedzi — mierzony z systemu, nie z deklaracji. | Kiedy cena produktu zmieniła się w ostatnim miesiącu i co to wywołało (system, decyzja menedżera)?\nCo spełnia próg dowodowy: Dowód: raport zmian cen z ostatnich 90 dni z uzasadnieniem (trigger: dane vs decyzja); konfiguracja modelu cenowego w systemie (czy to możliwe automatycznie?); raport SLA obsługi klienta per kanał. Sygnał: przynajmniej jeden element cenowy dostosowuje się automatycznie na bazie danych.\nKolejny poziom (4, \"Interactive\"): The product customizes experiences to individual customer needs, preferences and history by personalizing content, features and recommendations. The company sends automated emails with product offers and recommendations tailored to the customer's preferences.\nPowiązane kategorie technologii: Pricing Engine, CRM, E-commerce Platform, Customer Support Platform",
+  "archetype": "diagnostic",
+  "domain": "Produkty Cyfrowe — Dopasowanie Produktu do Oczekiwań Klienta",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "2D#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-risk-analysis-005",
+  "prompt": "A mid-size company is evaluating acquiring a smaller direct competitor. Identify the top integration risks using the data given.",
+  "context": "The target company has 60 employees and is known in the market for a loyal, technically skilled engineering team; an internal HR assessment estimates 3 key engineers are considered \"flight risks\" post-acquisition based on informal industry chatter and a recent uptick in their LinkedIn activity. The target uses a different core technology stack than the acquirer. Customer contracts show 12% revenue overlap in accounts already served by both companies. The acquirer's last acquisition (2 years ago, a smaller deal) suffered significant technical integration delays that were attributed, in a post-mortem, to underestimating the effort to merge incompatible tech stacks.",
+  "binaryCriteria": [
+    {
+      "id": "names-specific-flight-risk-engineers-as-retention-risk",
+      "description": "Identifies the 3 flagged flight-risk engineers specifically as a talent-retention risk, not a generic \"culture fit\" statement.",
+      "guidance": "Fail if the retention risk is described only generically without referencing the specific flight-risk signal given."
+    },
+    {
+      "id": "ties-tech-stack-risk-to-prior-acquisition-postmortem",
+      "description": "Explicitly connects the technical-integration risk (different tech stacks) to the acquirer's own prior acquisition post-mortem finding, treating it as a recurring, evidenced risk for this specific acquirer.",
+      "guidance": "Fail if the tech-stack risk is discussed without referencing the directly relevant prior post-mortem."
+    },
+    {
+      "id": "treats-customer-overlap-as-secondary-not-primary",
+      "description": "Treats the 12% customer-overlap figure as a secondary consideration rather than the primary or top-ranked risk.",
+      "guidance": "Fail if customer overlap is presented as the single biggest integration risk ahead of the talent and tech-stack risks."
+    }
+  ],
+  "goldNotes": "A strong answer identifies key-talent retention risk (the 3 flagged flight-risk engineers, given the target's reputation is built on its engineering team) as a top risk requiring an explicit retention plan (e.g., retention bonuses, early clarity on roles) rather than being left to \"cultural integration\" in general terms. It should also flag technical-integration risk given the different tech stacks, directly citing the company's own prior acquisition post-mortem as evidence this is a recurring, underestimated risk for this acquirer specifically (not a generic M&A risk) — this internal precedent is the strongest, most specific evidence in the context and should anchor the risk assessment. Customer overlap (12%) is a real but secondary consideration (mainly a customer-communication/contract-consolidation issue) and should not be the primary risk given the more acute, directly-evidenced talent and tech-stack risks.",
+  "archetype": "synthetic",
+  "domain": "Risk Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/risk-analysis/competitor-acquisition-risk",
+  "consultingArchetype": "risk-analysis"
+}

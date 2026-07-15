@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4B4-021",
+  "prompt": "Doradzasz klientowi w temacie dojrzałości cyfrowej w obszarze \"Metodologia Przechowywania Danych\". Czy przyjmujesz deklarację poziomu 4 z kontekstu bez weryfikacji? Co musisz sprawdzić, zanim potwierdzisz ten poziom, i jaki jest najważniejszy kolejny krok?",
+  "context": "Zarządzanie Danymi — Metodologia Przechowywania Danych — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Firma utrzymuje i zarządza infrastrukturą chmurową we własnym centrum danych. Pozwala to organizacji zachować pełną kontrolę nad danymi i zapewnić wysoki poziom bezpieczeństwa, ponieważ dostęp do danych mają wyłącznie osoby upoważnione.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 4 z 7 (\"Lokalna chmura obliczeniowa\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: dokumentacja architektury lokalnej chmury (hardware, hypervisor, storage tiers); raport dostępności z ostatnich 90 dni (uptime %); polityka DR/BCP z datą ostatniego testu. Sygnał: lokalna chmura ma SLA i monitori…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Jaka jest wasza prywatna infrastruktura chmurowa (on-premise cloud) — hardware, software, kto ją zarządza i jakie jest SLA dostępności? | Jak zarządzacie pojemnością lokalnej chmury — co się dzieje, gdy storage jest pełny? Kto to monitoruje i jak automatycznie? | Jak zabezpieczona jest lokalna chmura przed fizyczną katastrofą (pożar, zalanie, kradzież) i przed cyberatakiem?\nCo spełnia próg dowodowy: Dowód: dokumentacja architektury lokalnej chmury (hardware, hypervisor, storage tiers); raport dostępności z ostatnich 90 dni (uptime %); polityka DR/BCP z datą ostatniego testu. Sygnał: lokalna chmura ma SLA i monitoring — nie tylko serwer w szafce bez UPS.\nKolejny poziom (5, \"Public Cloud Storage\"): This involves using the data-processing services of external cloud service providers. These providers maintain cloud infrastructure, which their clients access via the Internet. Public clouds offer a wide range of services, including data processing, data storage, virtual machines and tools for data analysis.\nPowiązane kategorie technologii: VMware / Hyper-V, On-premise Cloud, Storage Management, Disaster Recovery",
+  "archetype": "diagnostic",
+  "domain": "Zarządzanie Danymi — Metodologia Przechowywania Danych",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4B#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

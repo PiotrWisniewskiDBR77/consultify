@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-interview-synthesis-002",
+  "prompt": "Synthesize the interview notes below into root-cause findings for a rising order-error rate, and recommend the priority fix.",
+  "context": "Sales rep 1: \"The product configurator lets me submit an order even if I skip optional fields — I don't always know if I need them for a given customer type.\" Sales rep 2: \"Half the time I'm not sure which fields are required for international orders versus domestic, so I guess.\" Warehouse ops lead: \"We get orders missing customs/tax fields maybe 15-20 times a week now, versus almost never a year ago.\" Sales director: \"We onboarded 40% of our current sales team in the last 6 months due to growth; most training was informal, shadowing an existing rep.\"",
+  "binaryCriteria": [
+    {
+      "id": "connects-onboarding-surge-to-error-rate-increase",
+      "description": "Explicitly connects the sales director's onboarding data (40% of team new in 6 months, informal training) to the timing/magnitude of the error-rate increase (15-20/week vs. near-zero a year ago).",
+      "guidance": "Fail if the onboarding context is not connected to the error-rate trend."
+    },
+    {
+      "id": "does-not-treat-configurator-bug-as-sole-root-cause",
+      "description": "Does not attribute the error rate solely to a configurator software defect without addressing the training/knowledge gap the reps describe.",
+      "guidance": "Fail if the only recommended fix is a pure software/configurator fix with no training component."
+    },
+    {
+      "id": "recommends-both-tooling-and-training-fix",
+      "description": "Recommends addressing both the tooling (dynamic required-field enforcement) and the training/onboarding gap as the priority fix, since both are supported by the interview data.",
+      "guidance": "Fail if the recommendation addresses only one of the two (tooling or training) when both are clearly evidenced."
+    }
+  ],
+  "goldNotes": "A strong synthesis connects the sales reps' uncertainty about which fields are required (especially for international orders) directly to the warehouse ops lead's quantified data (15-20 missing-field orders/week, up from near-zero a year ago) and to the sales director's onboarding context (40% of the team new in 6 months, informal shadowing-based training) — these three data points together point to one root cause: a training/tooling gap around field requirements that has been exposed by rapid, under-structured onboarding, not a sudden change in the configurator itself or a motivation problem. A weak synthesis treats \"the configurator has a bug\" as the root cause without connecting it to the onboarding/training signal, or treats onboarding as unrelated background rather than the likely trigger for why errors are now visible at 15-20/week versus almost never before. The priority fix should address both the tooling gap (e.g., make required fields dynamically enforced based on order type) and the training gap (e.g., structured onboarding on field requirements), since the data supports both being contributing factors, not just one.",
+  "archetype": "synthetic",
+  "domain": "Stakeholder Interview Synthesis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/interview-synthesis/high-order-error-rate",
+  "consultingArchetype": "interview-synthesis"
+}

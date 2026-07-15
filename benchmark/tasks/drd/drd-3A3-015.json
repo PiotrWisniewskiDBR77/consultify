@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-3A3-015",
+  "prompt": "Doradzasz klientowi w temacie dojrzałości cyfrowej w obszarze \"Modele E-commerce\". Czy przyjmujesz deklarację poziomu 3 z kontekstu bez weryfikacji? Co musisz sprawdzić, zanim potwierdzisz ten poziom, i jaki jest najważniejszy kolejny krok?",
+  "context": "Cyfrowe Modele Biznesowe — Modele E-commerce — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Sklepy e-commerce dalej rozwijają swoje możliwości poprzez integrację z różnymi platformami, w tym marketplace'ami. Bardziej zaawansowane narzędzia wizualizacji pozwalają klientom np. zobaczyć produkty w różnych kolorach lub konfiguracjach. Personalizacja oferty jest na tym etapie bardziej zaawansowana i opiera się na danych zakupowych klienta, umożliwiając dopasowanie.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 5 (\"Zaawansowany\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: zrzut konfiguratora produktu w działaniu; raport wyników A/B testu zmiany na stronie produktu; log rekomendacji per sesja klienta z ostatnich 7 dni. Sygnał: strona sklepu jest aktywnie optymalizowana na podstawie…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Pokaż konfigurator produktu lub zaawansowane narzędzie wizualizacji dostępne dla klienta online — jak klient personalizuje zamówienie przed zakupem? | Jak dane o historii zakupów klientów są używane do personalizacji oferty w sklepie online — pokaż konkretny mechanizm rekomendacji, nie plany. | Kiedy ostatnio zmieniliście wygląd lub strukturę sklepu na podstawie danych analitycznych (np. heatmap, funnel, A/B test) — co konkretnie zmieniliście i jaki był efekt?\nCo spełnia próg dowodowy: Dowód: zrzut konfiguratora produktu w działaniu; raport wyników A/B testu zmiany na stronie produktu; log rekomendacji per sesja klienta z ostatnich 7 dni. Sygnał: strona sklepu jest aktywnie optymalizowana na podstawie danych — nie zaprojektowana raz i zapomniana.\nKolejny poziom (4, \"Advanced Personalization\"): Internet stores reach for even more advanced visualization tools and sales applications that allow for full customization of offers. Integrated e-commerce platforms are more comprehensive, enabling the sale of products on multiple platforms simultaneously. At this level, personalization becomes a key element of the business strategy, facilitating the adaptation of offers to each customer's individual preferences.\nPowiązane kategorie technologii: Product Configurator, Recommendation Engine, A/B Testing, Web Analytics, Heatmap Tools",
+  "archetype": "diagnostic",
+  "domain": "Cyfrowe Modele Biznesowe — Modele E-commerce",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "3A#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

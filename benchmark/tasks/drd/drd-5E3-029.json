@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-5E3-029",
+  "prompt": "A client's \"Resource Availability\" lead just gave you the description in the context during a diagnostic interview. Write your consultant response: what would you probe before signing off on level 3, and what should they prioritize next?",
+  "context": "Culture of Transformation — Resource Availability — excerpt from a client diagnostic interview:\n\"Dostęp do ekspertów — wewnętrznych i zewnętrznych.\"\n\nThe team says this reflects digital maturity level 3 of 6 (\"Eksperci\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a register of internal experts and preferred external vendors with the date of the last update. An invoice or contract with a consultant from 2024/2025 plus a description of the engagement's outcome."
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Has the organization identified internal or external experts ready to support digital projects, with a procedure for engaging them? | In the last 12 months, was at least one external expert/consultant used in a transformation project — with a documented result? | Is the list of experts (internal and external partners) kept up to date and available to project managers?\nWhat satisfies the evidence bar: Evidence: a register of internal experts and preferred external vendors with the date of the last update. An invoice or contract with a consultant from 2024/2025 plus a description of the engagement's outcome.\nNext level (4, \"Dane\"): Dostęp do danych — systemy, bezpieczeństwo, sposób użycia.\nRelevant technology categories: CRM (vendor/expert management), Procurement System, Skills Directory (intranet)",
+  "archetype": "diagnostic",
+  "domain": "Culture of Transformation — Resource Availability",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "5E#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-risk-analysis-002",
+  "prompt": "A company is considering outsourcing core manufacturing to a new overseas supplier to cut costs. Identify the top risks using the data given and recommend a risk-mitigation structure (not a go/no-go decision).",
+  "context": "Supplier quote: 28% lower unit cost than current in-house production. Supplier due diligence (conducted by a third-party auditor) found the supplier is financially stable but has been in operation only 3 years and has no prior experience manufacturing this specific product category. Shipping lead time from the supplier's location adds 5 weeks versus current in-house lead time. The product line in question has historically had volatile demand, with month-to-month volume swings of +/-35% in the last 2 years (internal sales data).",
+  "binaryCriteria": [
+    {
+      "id": "identifies-quality-ramp-up-risk-from-inexperience",
+      "description": "Identifies the supplier's lack of experience in this specific product category as a quality/ramp-up risk, distinct from its financial stability.",
+      "guidance": "Fail if the answer conflates financial stability with product-category competence, or omits this risk."
+    },
+    {
+      "id": "connects-lead-time-to-demand-volatility-risk",
+      "description": "Connects the 5-week longer lead time to the historical +/-35% monthly demand volatility to identify a stockout/excess-inventory risk.",
+      "guidance": "Fail if lead time and demand volatility are discussed as separate, unconnected facts rather than combined into a single supply-responsiveness risk."
+    },
+    {
+      "id": "recommends-phased-or-dual-sourcing-mitigation",
+      "description": "Recommends a phased or dual-sourcing mitigation structure (e.g., partial volume shift, retained in-house buffer capacity) rather than a full immediate switch or a simple go/no-go answer.",
+      "guidance": "Fail if the answer only gives a go/no-go recommendation without a mitigation structure, since the prompt explicitly asks for the latter."
+    }
+  ],
+  "goldNotes": "A strong answer identifies quality/ramp-up risk (supplier has no experience in this specific product category, despite financial stability) and demand-responsiveness risk (a 5-week longer lead time combined with historically +/-35% monthly demand swings creates a real risk of stockouts or excess inventory, since the supplier cannot react as quickly as in-house production could) as the two dominant risks — cost savings (28%) should not be the focus since the prompt asks for risks, not the business case. It should recommend a mitigation structure such as a phased/dual-sourcing approach (e.g., start with a smaller share of volume or a less demand-volatile SKU subset while monitoring quality, keep some in-house capacity as a buffer for demand spikes) rather than either fully committing immediately or rejecting outright (the prompt explicitly asks for a mitigation structure, not a go/no-go call).",
+  "archetype": "synthetic",
+  "domain": "Risk Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/risk-analysis/manufacturing-outsourcing-risk",
+  "consultingArchetype": "risk-analysis"
+}

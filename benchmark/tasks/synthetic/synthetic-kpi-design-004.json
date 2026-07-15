@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-kpi-design-004",
+  "prompt": "A company's internal AI-adoption program (rolling out AI copilots across multiple functions) needs a KPI scorecard for the leadership steering committee. Design 4-6 KPIs.",
+  "context": "Program status: AI copilot tools have been licensed for 4 functions (customer support, sales, finance, engineering). A 60-day pilot in customer support showed 71% of licensed users had logged in at least once, but only 24% were using it weekly by day 60 — a gap flagged internally as \"activation without habituation\". Leadership's stated goal is measurable productivity impact within 2 quarters, not just tool rollout.",
+  "binaryCriteria": [
+    {
+      "id": "separates-activation-from-habituation-metrics",
+      "description": "Includes both an activation metric (e.g., has logged in/tried the tool) and a separate habituation metric (e.g., weekly active use), explicitly citing the pilot's 71%-vs-24% gap as the reason these must be tracked separately.",
+      "guidance": "Fail if the scorecard uses a single blended \"adoption\" metric that does not distinguish activation from ongoing habitual use."
+    },
+    {
+      "id": "cuts-by-function-not-single-blended-number",
+      "description": "Presents metrics cut by function (customer support, sales, finance, engineering) rather than only a single company-wide blended figure.",
+      "guidance": "Fail if the scorecard is presented as one blended number with no per-function breakdown."
+    },
+    {
+      "id": "includes-productivity-outcome-metric-not-just-usage",
+      "description": "Includes at least one productivity/outcome-linked metric per function, matching leadership's explicitly stated goal of measurable productivity impact, not just usage/login rates.",
+      "guidance": "Fail if the scorecard consists only of usage/login metrics with no productivity-outcome metric."
+    }
+  ],
+  "goldNotes": "A strong scorecard distinguishes activation (has logged in / tried the tool) from habituation (ongoing, weekly active use) as two separate metrics, explicitly because the pilot data already showed a large gap between the two (71% vs. 24%) — collapsing these into a single \"adoption\" number would hide exactly the problem the pilot already surfaced. It should include a per-function cut (customer support, sales, finance, engineering) rather than a single blended adoption number, since rollout timing and use-case fit likely differ by function. Given leadership's explicit goal of measurable productivity impact (not just usage), the scorecard should include at least one outcome/productivity-linked metric per function (e.g., time-per-ticket in customer support, proposal turnaround time in sales) rather than stopping at usage metrics alone — a scorecard that only measures login/usage rates without any productivity-outcome metric would not meet leadership's explicitly stated goal.",
+  "archetype": "synthetic",
+  "domain": "KPI & Scorecard Design",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/kpi-design/ai-adoption-program-kpis",
+  "consultingArchetype": "kpi-design"
+}

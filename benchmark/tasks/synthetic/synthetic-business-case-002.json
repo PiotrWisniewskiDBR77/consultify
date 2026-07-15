@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-business-case-002",
+  "prompt": "A mid-size industrial manufacturer (3 plants, ~40 critical machines total) is evaluating an IoT-based predictive maintenance platform. Draft the business case with a recommendation and the key assumption the whole case depends on.",
+  "context": "Unplanned downtime across the 3 plants totaled 620 hours last year (internal maintenance log), at an estimated cost of $14,000 per hour of downtime (illustrative, based on lost throughput). Platform vendor quote: $260,000 implementation (sensors + software) plus $60,000/year subscription. Vendor claims (per their published case studies) predictive maintenance typically reduces unplanned downtime by 30-45% within 12 months once fully adopted. Plant maintenance teams have not previously used any condition-monitoring tools; the last major technology rollout (a CMMS three years ago) took 14 months to reach full adoption due to technician training gaps.",
+  "binaryCriteria": [
+    {
+      "id": "quantifies-downtime-cost-baseline",
+      "description": "Multiplies the given downtime hours by the given per-hour cost to establish the baseline annual cost of the problem before evaluating the investment.",
+      "guidance": "Pass if the answer derives an annual downtime cost figure (~$8.68M) from 620 hours and $14,000/hour, or an equivalent clearly shown calculation."
+    },
+    {
+      "id": "identifies-adoption-as-key-assumption",
+      "description": "Explicitly identifies technician/organizational adoption speed (not the sensor technology) as the single assumption the business case depends on, referencing the prior CMMS rollout precedent.",
+      "guidance": "Pass if the answer connects the 14-month CMMS adoption history to a risk that predictive-maintenance savings will phase in slowly."
+    },
+    {
+      "id": "recommendation-is-decision-ready",
+      "description": "Opens with (or very early states) a clear go/no-go/pilot recommendation rather than only listing pros and cons.",
+      "guidance": "Fail if the reader has to infer the recommendation from a list of considerations."
+    }
+  ],
+  "goldNotes": "A strong answer states a recommendation up front (proceed with a phased pilot on the highest-downtime plant, for instance) and does the math: 620 hours x $14,000 = $8.68M annual cost of downtime (illustrative), so even the low end of a 30% reduction (~186 hours, ~$2.6M) dwarfs the $260k + $60k/year cost — but the answer should flag that the 30-45% reduction is contingent on full adoption, and the CMMS rollout history (14 months to adoption) is a direct precedent suggesting the benefit will phase in slowly, not from day one. The single assumption the case depends on is adoption speed/technician usage, not the sensor technology itself. A response that ignores the CMMS adoption precedent is missing the most important grounded risk in the context.",
+  "archetype": "synthetic",
+  "domain": "Business Case & Investment Justification",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/business-case/manufacturer-predictive-maintenance",
+  "consultingArchetype": "business-case"
+}

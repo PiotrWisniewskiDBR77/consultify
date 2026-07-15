@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1B4-002",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 4 for \"Marketing Processes\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "Digital Processes — Marketing Processes — excerpt from a client diagnostic interview:\n\"We use e-marketing tools to automate, for example, the sending of newsletters, email campaigns and offer personalization. E-marketing platforms automate campaigns based on predefined scenarios and customer segmentation, significantly enhancing the efficiency of marketing efforts.\"\n\nThe team says this reflects digital maturity level 4 of 7 (\"Automation\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: screenshot of the list of active automations in the email marketing platform (Mailchimp, HubSpot, Klaviyo, etc.); campaign report with segmentation parameters; A/B test result for a personalized variant vs. a …"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Describe your last email marketing campaign: how did you segment the list, what automated scenarios did it have, and what triggered each next step? | How many email/SMS campaigns currently run in automatic mode (triggered by an event, not sent manually)? Show us the list of active automations. | How personalized is the content in your sends — first name, segment, purchase history, or something more advanced?\nWhat satisfies the evidence bar: Evidence: screenshot of the list of active automations in the email marketing platform (Mailchimp, HubSpot, Klaviyo, etc.); campaign report with segmentation parameters; A/B test result for a personalized variant vs. a non-personalized one. Level IV signal: ≥3 automations active simultaneously, triggered by customer behavior.\nNext level (5, \"MES\"): Manufacturing Execution Systems are used to measure conversion in the sales process and evaluate the quality of marketing activities. In the marketing context, MES tools track conversions at various stages of the sales funnel and assign scores to potential customers (leads) based on their activities and behaviours.\nRelevant technology categories: Email Marketing, Campaign Automation, Personalization Engine, CRM, Marketing Automation",
+  "archetype": "diagnostic",
+  "domain": "Digital Processes — Marketing Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1B#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

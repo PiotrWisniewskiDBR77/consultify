@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-6B3-031",
+  "prompt": "Lider obszaru \"Ochrona sieci i systemów\" opisał wam swoją praktykę tak, jak w kontekście, podczas wywiadu diagnostycznego. Napisz odpowiedź konsultanta: o co dopytasz, zanim zatwierdzisz poziom 3, i co powinni zrobić w pierwszej kolejności?",
+  "context": "Cyberbezpieczeństwo — Ochrona sieci i systemów — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Działają systemy wykrywania włamań (IDS).\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 6 (\"IDS\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: raport z systemu IDS z ostatnich 30 dni: liczba alertów, kategorie, status obsługi. Przykładowy incident ticket z IDS → obsługa → zamknięcie."
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Czy w sieci działa system IDS (Intrusion Detection System) lub IPS wykrywający anomalie ruchu i zagrożenia wewnątrz sieci? | Czy alerty z IDS/IPS są analizowane przez człowieka (nie tylko ignorowane) co najmniej raz dziennie? | Czy w ostatnich 12 miesiącach IDS/IPS wykrył co najmniej jedno zdarzenie, które zostało udokumentowane i obsłużone?\nCo spełnia próg dowodowy: Dowód: raport z systemu IDS z ostatnich 30 dni: liczba alertów, kategorie, status obsługi. Przykładowy incident ticket z IDS → obsługa → zamknięcie.\nKolejny poziom (4, \"SIEM/IDS korelujące\"): SIEM/IDS korelujące zdarzenia z wielu źródeł.\nPowiązane kategorie technologii: IDS/IPS (Snort, Suricata, Cisco IPS), Network Detection & Response (NDR), SIEM (alert aggregation)",
+  "archetype": "diagnostic",
+  "domain": "Cyberbezpieczeństwo — Ochrona sieci i systemów",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "6B#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

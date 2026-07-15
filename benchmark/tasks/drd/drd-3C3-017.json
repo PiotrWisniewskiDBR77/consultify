@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-3C3-017",
+  "prompt": "Oceń, czy dowody w kontekście wystarczają, by potwierdzić poziom dojrzałości 3 dla obszaru \"Model As-a-Service\". Wskaż lukę (jeśli jest) i zarekomenduj konkretny następny krok.",
+  "context": "Cyfrowe Modele Biznesowe — Model As-a-Service — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Klient płaci dostawcy usługi za czas korzystania z dostępnych zasobów lub aktywów. Dostawca usługi koncentruje się na zarządzaniu i utrzymaniu aktywów na potrzeby klienta, zapewniając większą elastyczność.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 5 (\"Zaawansowany\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: dashboard zużycia zasobów per klient z granulacją dzienną/godzinową; przykładowa faktura z modelu pay-per-use z pozycjami; raport nowych klientów pozyskanych dzięki elastyczności cenowej. Sygnał: klienci aktywnie…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Czy oferujecie model płatności za czas lub użycie zasobów (pay-per-use, time-based) — jak jest mierzony i fakturowany? | Pokaż dane o typowym wzorcu użycia klienta w modelu pay-per-use — jak zmienia się zużycie w cyklu tygodniowym/miesięcznym i co to mówi o modelu? | Jak elastyczność modelu as-a-time/as-a-resource wpłynęła na pozyskanie klientów, którzy wcześniej nie mogli sobie pozwolić na zakup jednorazowy?\nCo spełnia próg dowodowy: Dowód: dashboard zużycia zasobów per klient z granulacją dzienną/godzinową; przykładowa faktura z modelu pay-per-use z pozycjami; raport nowych klientów pozyskanych dzięki elastyczności cenowej. Sygnał: klienci aktywnie zarządzają swoim zużyciem bo system to umożliwia — nie dostają jednej stawki za wszystko.\nKolejny poziom (4, \"Advanced Personalization\"): The customer pays a service provider to complete specific tasks or achieve precisely defined results. The provider adapts heavily to the customer's individual needs and delivers personalized solutions. The customer expects a specialized and tailored approach from the provider.\nPowiązane kategorie technologii: Usage-based Billing, Metering System, Resource Monitoring, Flexible Pricing Engine",
+  "archetype": "diagnostic",
+  "domain": "Cyfrowe Modele Biznesowe — Model As-a-Service",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "3C#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

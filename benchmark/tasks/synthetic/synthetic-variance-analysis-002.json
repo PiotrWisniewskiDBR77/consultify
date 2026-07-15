@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-variance-analysis-002",
+  "prompt": "A manufacturing plant's Overall Equipment Effectiveness (OEE) dropped from a target of 78% to an actual 65% over the last month. Diagnose the deviation using the OEE components given and identify the priority driver to fix first.",
+  "context": "OEE = Availability x Performance x Quality. This month: Availability 88% (target 92%), Performance 79% (target 86%), Quality 94% (target 98%). Maintenance log shows 3 unplanned changeover-related stoppages averaging 40 minutes each, tied to a new SKU introduced this month. Line operators report the new SKU runs at a slower validated cycle time than the legacy SKU it partially replaced.",
+  "binaryCriteria": [
+    {
+      "id": "decomposes-oee-components-correctly",
+      "description": "Explicitly breaks the OEE gap into the Availability, Performance, and Quality components rather than treating OEE as a single unexplained number.",
+      "guidance": "Fail if the answer does not reference the three components and their target-vs-actual gaps."
+    },
+    {
+      "id": "identifies-performance-as-priority-driver",
+      "description": "Identifies Performance (79% vs 86% target) as the largest relative decline and the priority driver, linking it to the new SKU's slower cycle time.",
+      "guidance": "Fail if the answer prioritizes Availability/maintenance stoppages as the main driver ahead of the cycle-time issue, or ignores the SKU cycle-time detail."
+    },
+    {
+      "id": "ties-diagnosis-to-given-causal-evidence",
+      "description": "Uses the specific evidence given (new SKU, slower validated cycle time, changeover stoppages) rather than generic manufacturing-efficiency platitudes.",
+      "guidance": "Fail if the recommendation could apply to any OEE problem without referencing the SKU-specific evidence."
+    }
+  ],
+  "goldNotes": "A strong answer decomposes OEE into its three multiplicative components and identifies which component degraded the most in relative terms, not just which has the biggest absolute point gap — Performance dropped from 86% to 79% (7pp, ~8% relative decline) and Availability from 92% to 88% (4pp, ~4% relative decline); Quality is closest to target (94% vs 98%, 4pp/~4%). A rigorous answer should note Performance is the largest relative decline and tie it directly to the new SKU's slower validated cycle time — a specific, given causal link — rather than treating all three components as equally weighted or defaulting to \"maintenance issues\" (which affects Availability, a smaller driver here). It should recommend prioritizing cycle-time/changeover work tied to the new SKU as the first fix.",
+  "archetype": "synthetic",
+  "domain": "Variance & Deviation Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/variance-analysis/plant-oee-variance",
+  "consultingArchetype": "variance-analysis"
+}

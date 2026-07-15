@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-kpi-design-005",
+  "prompt": "A company that recently closed an acquisition needs a KPI scorecard to track the integration program over its first year. Design 4-6 KPIs.",
+  "context": "Deal rationale (per the approved investment case) was primarily cost synergies from combining back-office functions and secondarily cross-selling the acquired company's product to the acquirer's existing customer base. The investment case assumed $12M/year in run-rate cost synergies by month 18 and an incremental $6M/year in cross-sell revenue by month 24. HR has flagged that voluntary attrition among the acquired company's employees in the first 90 days post-close has historically been a leading indicator of integration trouble at this acquirer, based on 2 prior acquisitions.",
+  "binaryCriteria": [
+    {
+      "id": "tracks-cost-synergy-progress-against-12m-target",
+      "description": "Includes a KPI tracking realized cost-synergy run-rate progress against the specific $12M/year by month-18 target from the investment case.",
+      "guidance": "Fail if cost synergies are not tracked against this specific target."
+    },
+    {
+      "id": "tracks-cross-sell-revenue-against-6m-target",
+      "description": "Includes a KPI tracking cross-sell revenue progress against the specific $6M/year by month-24 target.",
+      "guidance": "Fail if cross-sell revenue is not tracked against this specific target."
+    },
+    {
+      "id": "includes-90-day-attrition-early-warning-metric",
+      "description": "Includes the acquired company's first-90-days voluntary attrition rate as an explicit early-warning KPI, referencing the acquirer's own historical pattern from prior deals.",
+      "guidance": "Fail if this specific time-bound attrition metric is absent, or only a generic annual attrition/engagement metric is proposed instead."
+    }
+  ],
+  "goldNotes": "A strong scorecard tracks progress against the two specific, quantified deal-rationale targets given — cost-synergy run-rate (versus the $12M/month-18 target) and cross-sell revenue (versus the $6M/month-24 target) — as the primary financial KPIs, since these are the actual reasons the deal was approved, not generic \"integration health\" metrics untethered to the investment case. It should also include the acquired-company voluntary-attrition rate in the first 90 days as an explicit early-warning KPI, directly citing the acquirer's own historical pattern from 2 prior deals as the reason this specific, time-bound metric (not just \"annual attrition\") is the right one to watch. A weak scorecard proposes only generic M&A-integration metrics (e.g., \"employee satisfaction\") without connecting to the two specific investment-case targets or the acquirer's own attrition-timing precedent.",
+  "archetype": "synthetic",
+  "domain": "KPI & Scorecard Design",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/kpi-design/post-acquisition-integration-kpis",
+  "consultingArchetype": "kpi-design"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4D7-052",
+  "prompt": "The client claims their \"Big Data Analysis\" practice has reached the top maturity level (7) described in the context — the most advanced stage in this area. As their advisor, what would you check before accepting that claim, and how would you recommend they defend and extend this advantage over the next 12 months?",
+  "context": "Data Management — Big Data Analysis — excerpt from a client diagnostic interview:\n\"These powerful tools can identify and classify atypical data in ways that are often hard or impossible using traditional analytical methods. The algorithms learn from existing data in order to classify new data, making them extremely versatile.\"\n\nThe team says this reflects digital maturity level 7 of 7 (\"Machine Learning Algorithms\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a register of ML models in production (model, purpose, metrics, deployment date); a model-monitoring report (accuracy/F1 trend for the last 90 days); an A/B test or before/after analysis of the model's effect …"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: What machine-learning models run in production in the company — what do they predict, on what data are they trained, and how often are they retrained? | How do you monitor ML model quality in production — do you track drift, prediction-quality degradation, and who acts when a model degrades? | Show us a case where an ML model changed a business decision for the better — what was the baseline (without the model), and what was the result with the model?\nWhat satisfies the evidence bar: Evidence: a register of ML models in production (model, purpose, metrics, deployment date); a model-monitoring report (accuracy/F1 trend for the last 90 days); an A/B test or before/after analysis of the model's effect on a business metric. Signal: ML is in production and measurably improves the outcome — it is not just an experiment in an analyst's notebook.\nThis is the highest defined level in this area — there is no \"level 8\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: MLOps Platform, Model Registry, Model Monitoring, ML Pipeline, Feature Store",
+  "archetype": "diagnostic",
+  "domain": "Data Management — Big Data Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4D#7",
+  "consultingArchetype": "maturity-defend-advantage"
+}

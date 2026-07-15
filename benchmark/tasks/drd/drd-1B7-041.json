@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1B7-041",
+  "prompt": "In \"Marketing Processes\", the team says they are already at the most advanced level (7) in the context. Do you take this at face value? What evidence would you require, and what's the highest-value move to keep this from eroding into a commodity capability?",
+  "context": "Digital Processes — Marketing Processes — excerpt from a client diagnostic interview:\n\"We assess the extent to which advanced algorithms are used in marketing. Technologies such as chatbots and content generation based on natural language processing (NLP) support customer interaction and the creation of personalized content. Chatbots provide rapid responses to customer inquiries, while NLP algorithms deliver personalized information, significantly improving customer service quality and raising audience engagement.\"\n\nThe team says this reflects digital maturity level 7 of 7 (\"AI Support\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: chatbot log for the last 7 days (volume, containment rate, escalation rate); an example of AI-generated content with metadata (model, prompt, review); a campaign report with an AI-generated segment. Level VII …"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Do you use a chatbot or an NLP algorithm to handle marketing/sales inquiries? How many interactions per week, and what is the self-resolution rate? | How do you generate AI-assisted marketing content (product descriptions, posts, newsletters) — what % of content has AI input, and how do you measure quality? | Describe a case where AI suggested a campaign target audience or channel that turned out to be surprisingly effective.\nWhat satisfies the evidence bar: Evidence: chatbot log for the last 7 days (volume, containment rate, escalation rate); an example of AI-generated content with metadata (model, prompt, review); a campaign report with an AI-generated segment. Level VII signal: AI sits inside the campaign decision loop, not just as a copywriting tool.\nThis is the highest defined level in this area — there is no \"level 8\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: NLP, Chatbots, Content Generation, Customer Service Automation, ML Models",
+  "archetype": "diagnostic",
+  "domain": "Digital Processes — Marketing Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1B#7",
+  "consultingArchetype": "maturity-defend-advantage"
+}

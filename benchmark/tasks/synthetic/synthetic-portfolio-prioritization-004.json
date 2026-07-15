@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-portfolio-prioritization-004",
+  "prompt": "A hospital system's IT steering committee must prioritize a backlog of 5 projects against limited implementation bandwidth this year. Recommend a sequence.",
+  "context": "Projects (bandwidth required in FTE-quarters / status): (1) EHR patient-portal upgrade mandated by a new interoperability regulation — 6 FTE-quarters, compliance deadline in 2 quarters. (2) Telehealth platform expansion — 8 FTE-quarters, no deadline, projected to add $2.1M in new visit revenue/year. (3) Nurse scheduling system replacement — 4 FTE-quarters, no deadline, addresses a top-3 nurse-satisfaction complaint in last year's survey (nurse turnover cost estimated at $52,000 per departure). (4) Legacy billing system consolidation — 10 FTE-quarters, no deadline, projected $600K/year in reduced licensing and support costs. (5) Research data warehouse — 5 FTE-quarters, no deadline, supports grant applications but has no confirmed grant secured yet. Available bandwidth: 14 FTE-quarters this year.",
+  "binaryCriteria": [
+    {
+      "id": "funds-regulatory-deadline-project-first",
+      "description": "Funds the interoperability-regulation-mandated patient-portal upgrade as the first priority given its hard compliance deadline.",
+      "guidance": "Fail if this project is not funded first or its regulatory nature is not acknowledged as the deciding factor."
+    },
+    {
+      "id": "fits-recommendation-within-14-fte-quarters",
+      "description": "The total recommended bandwidth allocation does not exceed the 14 FTE-quarter constraint.",
+      "guidance": "Fail if the recommended set of projects requires materially more than 14 FTE-quarters."
+    },
+    {
+      "id": "deprioritizes-speculative-research-warehouse",
+      "description": "Explicitly deprioritizes or defers the research data warehouse project, citing its lack of a confirmed grant (speculative value) as the reason.",
+      "guidance": "Fail if the research data warehouse is funded ahead of nurse scheduling or telehealth without addressing its speculative-value problem."
+    }
+  ],
+  "goldNotes": "A strong answer funds the interoperability-regulation patient-portal upgrade first as mandatory (6 FTE-quarters, hard deadline), leaving 8 FTE-quarters. It should then reason about the best use of the remaining 8: the nurse-scheduling replacement (4 FTE-quarters) addresses a documented retention risk with a real cost-per-departure figure, and given only 8 quarters remain, telehealth expansion (8 FTE-quarters) would consume all of it alone — a defensible choice given its $2.1M revenue projection, OR a combination of nurse scheduling (4) plus starting billing consolidation partially — the key requirement is that the answer explicitly compares tradeoffs among the 3 non-mandatory options that fit within 8 FTE-quarters (nurse scheduling, or telehealth alone, or a partial combination) rather than including the research data warehouse, which should be explicitly deprioritized since it has no confirmed grant secured (speculative value) and there is insufficient remaining bandwidth for it under any reasonable combination.",
+  "archetype": "synthetic",
+  "domain": "Portfolio Prioritization",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/portfolio-prioritization/healthcare-it-backlog",
+  "consultingArchetype": "portfolio-prioritization"
+}

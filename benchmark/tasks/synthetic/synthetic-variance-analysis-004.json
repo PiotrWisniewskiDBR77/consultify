@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-variance-analysis-004",
+  "prompt": "A hospital network's average emergency-department wait time rose to 58 minutes versus a target of 35 minutes at one flagship site. Diagnose the deviation using the operational data given.",
+  "context": "Data available: ED bed occupancy averaged 96% this month (target 85%). Average length of stay for admitted patients awaiting an inpatient bed (\"boarding time\") rose to 4.1 hours from a typical 1.8 hours. Triage-to-first-provider-contact time was 22 minutes, roughly in line with the 20-minute target. Inpatient bed occupancy hospital-wide was 91% (target 80%), driven partly by a reported rise in flu-related admissions this month.",
+  "binaryCriteria": [
+    {
+      "id": "rules-out-triage-speed-using-given-data",
+      "description": "Explicitly notes that triage-to-provider-contact time (22 min) is near its 20-minute target, ruling out ED front-door speed as the driver of the overall wait-time miss.",
+      "guidance": "Fail if the answer attributes the wait-time increase to slow triage/provider response without acknowledging this metric is on target."
+    },
+    {
+      "id": "identifies-boarding-as-true-bottleneck",
+      "description": "Correctly identifies boarding time (patients awaiting an inpatient bed) as the primary driver, connecting it to hospital-wide inpatient occupancy at 91% vs. 80% target.",
+      "guidance": "Fail if the answer does not connect ED wait time to the boarding/inpatient-capacity chain."
+    },
+    {
+      "id": "recommends-capacity-not-front-door-fix",
+      "description": "Recommends investigating inpatient discharge throughput/bed capacity as the lever, rather than ED-specific process changes (e.g., \"add more triage nurses\").",
+      "guidance": "Fail if the recommendation focuses only on ED front-door staffing/process without addressing inpatient capacity."
+    }
+  ],
+  "goldNotes": "A strong diagnostic answer connects the dots: the wait-time miss is not explained by triage/provider-contact speed (22 vs 20 min target — roughly on track), so the bottleneck is downstream — specifically ED boarding time (patients awaiting an inpatient bed) more than doubling to 4.1 hours from 1.8, itself driven by hospital-wide inpatient occupancy at 91% vs an 80% target (a capacity problem upstream of the ED, plausibly linked to the flu-admission increase mentioned). The answer should explicitly rule out triage/provider speed as the driver (since it is near target) and correctly identify the true bottleneck as inpatient bed availability / boarding, not \"the ED is slow to see patients\". It should recommend investigating discharge-throughput and inpatient capacity levers, not ED front-door process changes.",
+  "archetype": "synthetic",
+  "domain": "Variance & Deviation Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/variance-analysis/hospital-wait-time-variance",
+  "consultingArchetype": "variance-analysis"
+}

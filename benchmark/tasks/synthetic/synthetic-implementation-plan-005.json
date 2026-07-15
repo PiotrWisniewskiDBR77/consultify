@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-implementation-plan-005",
+  "prompt": "A B2B software company is rolling out a change from subscription to usage-based pricing for its top product line. Draft an implementation plan for existing customers and flag the biggest risk.",
+  "context": "Existing customer base: 340 active accounts, average contract value $85,000/year, average remaining contract term 7 months. Legal has confirmed existing contracts cannot be unilaterally changed before renewal. Customer success data shows the top 15 accounts by revenue represent 40% of total ARR. A similar pricing change at a named competitor 18 months ago (public reporting, industry press) triggered public customer backlash when the change was applied retroactively mid-contract.",
+  "binaryCriteria": [
+    {
+      "id": "sequences-by-renewal-date-not-single-cutover",
+      "description": "Sequences the pricing change around each account's individual contract renewal date, not a single company-wide cutover date that would breach existing contracts.",
+      "guidance": "Fail if the plan proposes applying the new pricing to all 340 accounts on one fixed date regardless of renewal timing."
+    },
+    {
+      "id": "gives-top-15-accounts-differentiated-handling",
+      "description": "Gives the top 15 accounts (40% of ARR) differentiated, higher-touch transition handling given their revenue concentration.",
+      "guidance": "Fail if all 340 accounts are treated identically with no differentiation for the top revenue-concentrated accounts."
+    },
+    {
+      "id": "explicitly-avoids-competitor-retroactive-change-mistake",
+      "description": "Explicitly references avoiding a retroactive, mid-contract pricing change, tying this to the named competitor's public backlash precedent.",
+      "guidance": "Fail if the risk of a retroactive mid-contract change is not named given the direct precedent in the context."
+    }
+  ],
+  "goldNotes": "A strong plan explicitly respects the legal constraint that existing contracts cannot be changed before renewal, and sequences the rollout around each account's natural renewal date (average 7 months out) rather than proposing a single company-wide cutover date — proposing an immediate mid-contract switch would repeat the competitor's well-documented backlash. It should give the top-15 accounts (40% of ARR) white-glove, individualized transition handling ahead of the broader base, given their outsized revenue concentration. The biggest risk to name: repeating the named competitor's mistake of a retroactive mid-contract change, which the context explicitly shows caused public backlash — a plan that does not explicitly rule this out is missing the most directly relevant risk in the context.",
+  "archetype": "synthetic",
+  "domain": "Implementation Planning",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/implementation-plan/pricing-model-change-rollout",
+  "consultingArchetype": "implementation-plan"
+}

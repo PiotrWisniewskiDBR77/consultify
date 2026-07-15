@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-2E3-014",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 3 for \"Product Scalability\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "Digital Products — Product Scalability — excerpt from a client diagnostic interview:\n\"The product leverages global platforms and services such as e-commerce platforms, social networks or cloud services to reach customers in different markets. The product is accessible to customers from various countries but may require some adaptation to local preferences.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Advanced\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a screenshot of the global-platform listing with date and ratings; a downloads/installs-per-country report from the global platform; a history of product description or feature changes driven by the platform's…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Is your product available through global platforms (App Store, Google Play, a marketplace, the cloud) — show us the listing and its metrics there. | How does the product perform on global platforms compared to local alternatives — what do the download, rating, and conversion numbers say? | Which global-platform features do you use to extend reach (global recommendations, featured placement, cross-store promotions)?\nWhat satisfies the evidence bar: Evidence: a screenshot of the global-platform listing with date and ratings; a downloads/installs-per-country report from the global platform; a history of product description or feature changes driven by the platform's algorithm. Signal: the product generates organic traffic from the global platform without active local marketing.\nNext level (4, \"Interactive\"): The product has a presence in multiple international markets and is adapted to various regions. This may include content translation, user interface customization and compliance with local regulations and standards. An example is an e-commerce website available in different languages and supporting various currencies and payment methods.\nRelevant technology categories: App Store Optimization (ASO), Global Marketplace, Cloud Distribution",
+  "archetype": "diagnostic",
+  "domain": "Digital Products — Product Scalability",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "2E#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

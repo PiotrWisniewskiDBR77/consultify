@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-kpi-design-002",
+  "prompt": "A company's newly formed Digital Transformation Program Management Office (PMO) needs a scorecard to report progress to the executive team monthly. Design 4-6 KPIs.",
+  "context": "The transformation program spans 12 workstreams of varying size and maturity. Previous ad hoc reporting (before the PMO existed) consisted only of each workstream lead self-reporting a \"red/yellow/green\" status, which the CFO has noted was \"almost always green until it suddenly wasn't\" — several workstreams reported green status for months before revealing major delays. The program has a fixed, board-approved budget and a set of milestone dates; 3 of the 12 workstreams are on the critical path for a public commitment made to investors about a launch date.",
+  "binaryCriteria": [
+    {
+      "id": "adds-objective-measures-not-just-self-reported-status",
+      "description": "Includes objective, harder-to-game measures (e.g., schedule variance, budget burn-rate vs. plan) rather than relying solely on subjective self-reported RAG status.",
+      "guidance": "Fail if the proposed scorecard consists only of a (possibly relabeled) self-reported status color with no objective schedule/budget measure."
+    },
+    {
+      "id": "gives-critical-path-workstreams-distinct-tracking",
+      "description": "Explicitly gives the 3 critical-path workstreams (tied to the investor launch-date commitment) a distinct, more scrutinized tracking treatment compared to the other 9 workstreams.",
+      "guidance": "Fail if all 12 workstreams are treated identically with no distinction for the critical-path ones."
+    },
+    {
+      "id": "directly-addresses-cfo-credibility-complaint",
+      "description": "Explicitly connects at least one proposed KPI to solving the specific \"green until it suddenly wasn't\" credibility problem the CFO raised.",
+      "guidance": "Fail if the scorecard design does not address why the previous RAG-only approach failed to give early warning."
+    }
+  ],
+  "goldNotes": "A strong scorecard directly addresses the CFO's \"green until it suddenly wasn't\" complaint by including objective, leading indicators rather than relying solely on subjective self-reported RAG status — e.g., milestone-schedule variance (actual vs. planned dates, a factual/objective measure) and budget burn-rate versus plan (also objective), which are harder to game than a subjective color rating. It should explicitly call out the 3 critical-path workstreams as needing a distinct, more frequent or more scrutinized tracking cut (since they carry investor-commitment risk), rather than treating all 12 workstreams identically in the reporting cadence. A weak scorecard just re-proposes the same self-reported RAG status (possibly relabeled) without adding any objective, harder-to-game measure, which would fail to address the specific credibility problem the CFO raised.",
+  "archetype": "synthetic",
+  "domain": "KPI & Scorecard Design",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/kpi-design/digital-transformation-pmo-kpis",
+  "consultingArchetype": "kpi-design"
+}

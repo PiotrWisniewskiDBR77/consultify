@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-interview-synthesis-003",
+  "prompt": "Synthesize the interview notes below into root-cause findings for a rise in plant safety incidents, and recommend the priority fix.",
+  "context": "Plant manager: \"Incident count is up from 2/quarter to 7/quarter this year, mostly minor (no lost-time injuries yet).\" Safety officer: \"Most of the recent incidents happened on the night shift.\" Night-shift supervisor: \"We're running with 2 fewer experienced technicians than day shift after 2 retirements this year — we backfilled with newer hires but haven't finished cross-training them on all stations.\" Day-shift technician (transferred briefly to night shift to help): \"The safety-checklist sign-off on night shift felt rushed compared to how we do it on days — I think because they're short-staffed and behind on output targets.\"",
+  "binaryCriteria": [
+    {
+      "id": "builds-causal-chain-not-isolated-facts",
+      "description": "Builds an explicit causal chain connecting the night-shift concentration, the staffing/cross-training gap, and the rushed safety-checklist behavior, rather than listing them as separate, unconnected observations.",
+      "guidance": "Fail if the answer states \"incidents are higher on night shift\" without explaining why using the staffing and checklist evidence."
+    },
+    {
+      "id": "identifies-staffing-cross-training-gap-as-root-trigger",
+      "description": "Identifies the loss of 2 experienced technicians and incomplete cross-training of their replacements as the root trigger of the chain, not just a contributing detail.",
+      "guidance": "Fail if the staffing/cross-training gap is omitted from the root-cause findings."
+    },
+    {
+      "id": "recommends-staffing-fix-not-generic-safety-training",
+      "description": "Recommends addressing the staffing/cross-training gap directly as the priority fix, rather than only recommending generic \"more safety training\" or \"reinforce safety culture\".",
+      "guidance": "Fail if the recommendation is limited to generic safety-culture messaging without addressing the specific staffing/cross-training shortfall."
+    }
+  ],
+  "goldNotes": "A strong synthesis identifies that the incident increase is concentrated on night shift (per the safety officer) and connects this directly to two compounding factors from the other interviews: (1) a experience/staffing gap (2 fewer experienced technicians, incomplete cross-training of newer hires) and (2) a resulting process shortcut (rushed safety-checklist sign-off, explicitly linked by the transferred day-shift technician to being short-staffed and behind on output targets) — these are not independent findings but a causal chain (staffing gap -> time pressure -> rushed safety compliance -> more incidents). A weak synthesis lists \"night shift has more incidents\" as if that were itself an explanation, without identifying why, or treats the staffing gap and the rushed-checklist observation as unrelated. The priority fix should address the staffing/cross-training gap directly (since it is the root trigger of the causal chain), not just \"reinforce safety training\" in the abstract, which would treat a symptom (rushed compliance) rather than the cause (being short-staffed and behind on training).",
+  "archetype": "synthetic",
+  "domain": "Stakeholder Interview Synthesis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/interview-synthesis/plant-safety-incidents-rise",
+  "consultingArchetype": "interview-synthesis"
+}

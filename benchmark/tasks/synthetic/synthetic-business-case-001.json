@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-business-case-001",
+  "prompt": "A regional grocery chain (48 stores) is deciding whether to invest in self-checkout kiosks across its top 20 stores. Write the business case: recommendation, expected payback, and the top 2 risks to watch.",
+  "context": "Current state: average 6 staffed checkout lanes per store, average labor cost per store for checkout staff is $410,000/year (illustrative). Kiosk vendor quote: $85,000 per store installed (illustrative, one-time), plus $9,000/year maintenance. Vendor case studies (industry-typical range) suggest kiosks can reduce checkout staffing needs by roughly 25-35% per store while requiring 1 attendant per 6-8 kiosks for loss-prevention and assistance. Store customer satisfaction scores have been flat for two years; a recent customer survey (n=1,200 shoppers, internal) flagged \"checkout wait time\" as the #2 complaint after \"product availability\".",
+  "binaryCriteria": [
+    {
+      "id": "computes-payback-from-given-numbers",
+      "description": "Uses the specific cost and savings figures in the context to estimate a payback period or ROI range, rather than only describing the investment qualitatively.",
+      "guidance": "Pass if the answer shows arithmetic or a clear derived estimate using $85k install, $410k current labor cost, and the 25-35% range; fail if it only says \"this should pay for itself\"."
+    },
+    {
+      "id": "flags-vendor-claim-as-unverified",
+      "description": "Explicitly notes that the 25-35% staffing-reduction figure is a vendor/industry claim that should be validated (e.g., via pilot) rather than treated as guaranteed.",
+      "guidance": "Pass if the answer recommends piloting or validating before full rollout, or otherwise caveats the vendor figure."
+    },
+    {
+      "id": "names-two-concrete-risks",
+      "description": "Names at least two specific, non-generic risks (e.g., shrinkage/theft at self-checkout, residual attendant staffing needs for exceptions) rather than a generic \"execution risk\".",
+      "guidance": "Fail if risks are limited to vague statements like \"change management risk\" with no operational specificity."
+    }
+  ],
+  "goldNotes": "Strong answer leads with a clear recommendation (proceed / pilot first / do not proceed) before the analysis. Should compute an illustrative payback using the given numbers (e.g., ~25-35% labor reduction on $410k/store minus new attendant + maintenance cost, versus $85k one-time install) rather than restating the inputs without doing the arithmetic. Should flag that vendor-quoted savings ranges are a claim, not a guarantee, and recommend a pilot in a subset of stores before a full 20-store rollout. Top risks to name: (1) customer resistance / theft-related shrinkage increasing at self-checkout (a well-documented industry risk), (2) actual staffing reduction falling short of vendor range because attendants are still needed for produce/age-restricted items and troubleshooting. A generic \"digitize the store\" answer without engaging the specific $85k/$410k/25-35% figures should be marked down.",
+  "archetype": "synthetic",
+  "domain": "Business Case & Investment Justification",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/business-case/retail-self-checkout",
+  "consultingArchetype": "business-case"
+}

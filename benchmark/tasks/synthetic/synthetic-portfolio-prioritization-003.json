@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-portfolio-prioritization-003",
+  "prompt": "A manufacturer has $5M in capex approved this year across 3 plants and 4 candidate upgrade projects, only some of which fit the budget. Recommend which to fund.",
+  "context": "Projects: (1) Plant A line-speed upgrade — $2.2M cost, projected $1.1M/year margin improvement, 2-year payback. (2) Plant B safety-compliance retrofit — $1.4M cost, required by an updated safety regulation with a 9-month compliance deadline, no direct revenue impact. (3) Plant C energy-efficiency retrofit — $1.8M cost, projected $450K/year savings, 4-year payback, eligible for a government efficiency rebate covering 20% of cost. (4) Plant A warehouse automation — $2.6M cost, projected $700K/year savings, 3.7-year payback. Total capex budget: $5.0M.",
+  "binaryCriteria": [
+    {
+      "id": "treats-compliance-retrofit-as-mandatory",
+      "description": "Funds the safety-compliance retrofit regardless of its payback profile, because of the regulatory deadline.",
+      "guidance": "Fail if the compliance retrofit is deprioritized below a better-payback discretionary project."
+    },
+    {
+      "id": "fits-recommendation-within-5m-budget",
+      "description": "The recommended combination of funded projects totals at or under the $5.0M capex budget.",
+      "guidance": "Fail if all 4 projects are recommended for this year without acknowledging the budget shortfall."
+    },
+    {
+      "id": "explicitly-defers-remaining-projects-with-reason",
+      "description": "Explicitly names which project(s) are deferred to a future period and gives a reason (e.g., budget exhausted after compliance + best-payback project).",
+      "guidance": "Fail if a deferred project is simply omitted without explanation."
+    }
+  ],
+  "goldNotes": "A strong answer treats the safety-compliance retrofit ($1.4M) as mandatory given the regulatory deadline, regardless of its payback economics, leaving $3.6M of the $5.0M budget for the remaining 3 projects. Among those, the line-speed upgrade ($2.2M, 2-year payback) is the best economics; combined with the compliance retrofit that is $3.6M, leaving only $400K — not enough for either the energy retrofit ($1.8M net of a 20% rebate, i.e. effectively ~$1.44M) or warehouse automation ($2.6M). A rigorous answer should note this and recommend funding compliance + line-speed upgrade this year ($3.6M total), explicitly deferring energy-efficiency and warehouse automation to next year (possibly re-checking rebate eligibility timing for the energy project), rather than trying to squeeze all 4 projects into $5M or ignoring the compliance deadline.",
+  "archetype": "synthetic",
+  "domain": "Portfolio Prioritization",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/portfolio-prioritization/manufacturer-capex-portfolio",
+  "consultingArchetype": "portfolio-prioritization"
+}

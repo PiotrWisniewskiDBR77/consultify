@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4C4-022",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 4 for \"Data Communication\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "Data Management — Data Communication — excerpt from a client diagnostic interview:\n\"This specialized network configuration is designed for industrial applications and has higher reliability, security and data transmission speed than traditional Ethernet networks. Industrial networks employ special network devices such as switches, routers and gateways that are resistant to industrial conditions.\"\n\nThe team says this reflects digital maturity level 4 of 7 (\"Industrial Ethernet\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: an OT network map with protocols and devices; OT/IT segmentation documentation (DMZ, firewall rules); the industrial-network availability SLA with a history of outages. Signal: the industrial network is manage…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Where do you use an Industrial Ethernet network (PROFINET, EtherNet/IP, MODBUS TCP), and what does it connect — machines, PLCs, SCADA, IT systems? | How is the industrial network separated from the office network — what passes through the DMZ, what is fully isolated? | What is the availability SLA for the industrial network, and what happens to production if it fails — do you have a fallback?\nWhat satisfies the evidence bar: Evidence: an OT network map with protocols and devices; OT/IT segmentation documentation (DMZ, firewall rules); the industrial-network availability SLA with a history of outages. Signal: the industrial network is managed separately from the office network — it is not \"the same cable as the printer\".\nNext level (5, \"Wireless Communication\"): Devices in this network connect to one another via a central access point, facilitating centralized network management. Wireless networks find applications in various industries, including manufacturing, transportation, medicine and services.\nRelevant technology categories: Industrial Ethernet, PROFINET / EtherNet/IP, OT/IT Segmentation, Industrial Firewall",
+  "archetype": "diagnostic",
+  "domain": "Data Management — Data Communication",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4C#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

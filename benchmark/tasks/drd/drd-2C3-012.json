@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-2C3-012",
+  "prompt": "You are advising this client on their digital maturity in \"ICT-based Products\". Do you accept the level 3 claim in the context at face value? What must you verify before confirming it, and what is the single highest-leverage next step?",
+  "context": "Digital Products — ICT-based Products — excerpt from a client diagnostic interview:\n\"ICT is employed to facilitate communication and interaction with customers. Tools such as communication platforms, customer support systems and chatbots allow rapid and efficient information exchange. An example of effective ICT use for communication with customers is an integrated customer support platform that combines various communication channels in one place.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Advanced\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a customer-service SLA report per channel (first response time, resolution time); a screenshot of the agent view with multi-channel contact history; the chatbot/portal containment rate for the last 30 days. Si…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Which customer-communication channels does ICT support (chat, email, VoIP, a self-service portal), and how fast does a customer get a response in each channel? | Is data from all communication channels visible to the support agent in one place — show us the agent's view during a customer call. | What % of customer inquiries are resolved without escalating to a human (via bot, FAQ, portal)?\nWhat satisfies the evidence bar: Evidence: a customer-service SLA report per channel (first response time, resolution time); a screenshot of the agent view with multi-channel contact history; the chatbot/portal containment rate for the last 30 days. Signal: the customer doesn't have to repeat their issue after switching channels.\nNext level (4, \"Interactive\"): ICT is used to automate and personalize customer service processes. Advanced Customer Relationship Management (CRM) systems and marketing automation tools deliver messages, offers and responses all personalized to customer needs. An example of using ICT for automating and personalizing customer service processes is an advanced CRM system integrated with marketing automation tools.\nRelevant technology categories: Helpdesk, Chatbots, CRM, Omni-channel Platform, Self-service Portal",
+  "archetype": "diagnostic",
+  "domain": "Digital Products — ICT-based Products",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "2C#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

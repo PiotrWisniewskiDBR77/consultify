@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-6A3-030",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 3 for \"Strategy and Risk Management\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "Cybersecurity — Strategy and Risk Management — excerpt from a client diagnostic interview:\n\"Powstaje plan działań w obszarze bezpieczeństwa.\"\n\nThe team says this reflects digital maturity level 3 of 6 (\"Plan działań\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a \"Cyber Security Action Plan 2025\" approved by the board with a task list, timeline and owners. A quarterly status report."
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does the organization have a documented cybersecurity action plan for at least 12 months, derived from the risk analysis? | Does the plan contain concrete initiatives, owners, deadlines and budgets — not just \"improve security\"? | Is progress on the plan reported quarterly?\nWhat satisfies the evidence bar: Evidence: a \"Cyber Security Action Plan 2025\" approved by the board with a task list, timeline and owners. A quarterly status report.\nNext level (4, \"Polityki bezpieczeństwa\"): Wdrożone polityki bezpieczeństwa — standardy i procedury.\nRelevant technology categories: Project Portfolio Management, GRC Platform, ITSM (task tracking)",
+  "archetype": "diagnostic",
+  "domain": "Cybersecurity — Strategy and Risk Management",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "6A#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

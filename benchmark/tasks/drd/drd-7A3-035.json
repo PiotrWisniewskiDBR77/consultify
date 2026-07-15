@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-7A3-035",
+  "prompt": "Oceń, czy dowody w kontekście wystarczają, by potwierdzić poziom dojrzałości 3 dla obszaru \"Dane i Fundamenty AI\". Wskaż lukę (jeśli jest) i zarekomenduj konkretny następny krok.",
+  "context": "Dojrzałość AI — Dane i Fundamenty AI — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Organizacja buduje pierwsze scentralizowane repozytoria danych. Zaczynają działać procesy ETL, a dane trafiają w jedno miejsce. Pojawiają się pierwsze projekty uczenia maszynowego oparte na ustandaryzowanych zbiorach danych. Dane w hurtowni są aktualizowane regularnie.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 5 (\"Scentralizowane dane i wstępna gotowość AI\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: opis architektury data warehouse/lake z listą źródeł, częstotliwością zasilania i datą uruchomienia. Raport z pierwszego projektu ML / pilotażu predykcji z opisem danych wejściowych i wyników."
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Czy organizacja ma centralne repozytorium danych (data warehouse, data lake lub platforma chmurowa) zasilane automatycznie z co najmniej 3 systemów źródłowych? | Czy pierwsze modele ML lub projekty predykcyjne działają na danych z tego repozytorium (nawet jako pilot)? | Czy dane w repozytorium są aktualizowane co najmniej raz dziennie bez ręcznej interwencji?\nCo spełnia próg dowodowy: Dowód: opis architektury data warehouse/lake z listą źródeł, częstotliwością zasilania i datą uruchomienia. Raport z pierwszego projektu ML / pilotażu predykcji z opisem danych wejściowych i wyników.\nKolejny poziom (4, \"Fully AI-Ready Data Architecture\"): The organization has consistent governance principles, data quality is monitored, and data sources are documented. Data is available near real-time. Data is consistently accessible, coherent, and up to date. AI models have stable, repeatable pipelines.\nPowiązane kategorie technologii: Data Warehouse (Snowflake, BigQuery, Azure Synapse), ETL/ELT (dbt, Airbyte, Azure Data Factory), ML Platform (Azure ML, Databricks)",
+  "archetype": "diagnostic",
+  "domain": "Dojrzałość AI — Dane i Fundamenty AI",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "7A#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-risk-analysis-004",
+  "prompt": "A regional bank is evaluating migrating its core banking system to the cloud. Identify the top risks using the data given and recommend a risk-reduction approach for the migration itself (not whether to do it).",
+  "context": "The core banking system currently has 99.97% uptime and processes an average of 2.1 million transactions/day, including overnight batch settlement processes that have run unchanged for over a decade. The cloud vendor's reference architecture has been proven at 2 other named banks of similar transaction volume. The bank's internal engineering team has not previously operated a cloud-native production system at this scale. A regulator has indicated it will require a documented failback plan before approving the migration.",
+  "binaryCriteria": [
+    {
+      "id": "identifies-team-experience-gap-as-risk",
+      "description": "Identifies the bank's engineering team's lack of prior experience operating a cloud-native system at this scale as a distinct risk, separate from the vendor's track record at other banks.",
+      "guidance": "Fail if the answer treats the vendor being \"proven at 2 other banks\" as sufficient to dismiss execution risk for this specific team."
+    },
+    {
+      "id": "flags-legacy-batch-settlement-as-migration-risk",
+      "description": "Flags the decade-old, unchanged overnight batch settlement process as a specific legacy-dependency risk in the migration.",
+      "guidance": "Fail if this specific process is not mentioned as a migration risk."
+    },
+    {
+      "id": "recommends-parallel-run-consistent-with-failback-requirement",
+      "description": "Recommends a parallel-run or phased-cutover approach consistent with the regulator's explicit failback-plan requirement.",
+      "guidance": "Fail if the recommended approach is a single, full cutover with no parallel-run/failback provision."
+    }
+  ],
+  "goldNotes": "A strong answer identifies operational/execution risk from the team's lack of prior experience running a cloud-native system at this scale (despite the vendor architecture being proven elsewhere — proven-elsewhere does not equal proven-with-this-team) as a top risk, alongside the risk to the decade-old, unchanged overnight batch settlement process, which is a legacy dependency that migrations frequently underestimate. It should recommend a risk-reduction approach consistent with the regulator's explicit failback-plan requirement — e.g., a parallel-run period (running old and new systems simultaneously) before full cutover, and prioritizing the batch-settlement process as an early, isolated test case given its criticality and age — rather than a single \"flip the switch\" migration. A weak answer focuses only on the vendor's track record at other banks without addressing this specific bank's team-experience gap or the settlement-process dependency.",
+  "archetype": "synthetic",
+  "domain": "Risk Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/risk-analysis/core-banking-cloud-migration",
+  "consultingArchetype": "risk-analysis"
+}

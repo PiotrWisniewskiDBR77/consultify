@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-implementation-plan-004",
+  "prompt": "Two regional distributors have merged. Draft a 100-day integration plan for the combined sales and warehouse operations, and name the top people-risk.",
+  "context": "Company A (acquirer) has 12 warehouses and a centralized order-management system. Company B (acquired) has 5 warehouses and a legacy, regionally-fragmented ordering process, but B's regional account managers have deep, long-standing customer relationships that A's leadership explicitly wants to retain. Customer overlap between A and B is estimated at only 8% (mostly complementary customer bases). No warehouse closures have been publicly announced yet, but internal modeling shows 2 of B's 5 warehouses are redundant with nearby A warehouses.",
+  "binaryCriteria": [
+    {
+      "id": "sequences-systems-migration-ahead-of-warehouse-announcements",
+      "description": "Sequences low-disruption systems/process integration (e.g., order-management migration) ahead of any warehouse-consolidation announcement, rather than leading with warehouse closures.",
+      "guidance": "Fail if the 100-day plan opens with or front-loads warehouse-closure announcements."
+    },
+    {
+      "id": "names-account-manager-attrition-as-top-people-risk",
+      "description": "Explicitly names attrition of Company B's regional account managers (whose relationships are explicitly valuable) as the top people-risk, and connects it to uncertainty from the redundant-warehouse situation.",
+      "guidance": "Fail if the top people-risk named is generic (e.g., \"cultural fit\") rather than tied to the specific account-manager retention concern in the context."
+    },
+    {
+      "id": "uses-8-percent-overlap-to-justify-low-disruption-approach",
+      "description": "Uses the 8% customer-overlap figure to justify why systems integration can proceed as a mostly-backend change without major customer-facing disruption.",
+      "guidance": "Fail if the plan ignores the overlap figure or assumes high customer disruption is unavoidable."
+    }
+  ],
+  "goldNotes": "A strong 100-day plan prioritizes low-risk, low-customer-disruption moves early (e.g., migrating B onto A's order-management system in phases, given the complementary 8%-overlap customer base means this is mostly a backend systems change, not a customer-facing disruption) while explicitly NOT front-loading warehouse consolidation decisions, since the plan should recognize that announcing the 2 redundant-warehouse closures too early — before account managers and customers have been secured — risks triggering exactly the people-risk the context flags (B's account managers, who hold the customer relationships A wants to retain, leaving pre-emptively out of uncertainty/distrust). The top people-risk to name: attrition of B's regional account managers during the ambiguous pre-announcement period, given their explicitly-stated relationship value and the redundant-warehouse signal that is likely to leak or be guessed internally. A weak answer treats warehouse consolidation and account-manager retention as unrelated workstreams instead of connecting the sequencing risk between them.",
+  "archetype": "synthetic",
+  "domain": "Implementation Planning",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/implementation-plan/post-merger-distributor-integration",
+  "consultingArchetype": "implementation-plan"
+}

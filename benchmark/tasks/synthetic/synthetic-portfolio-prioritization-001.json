@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-portfolio-prioritization-001",
+  "prompt": "A CPG company has 6 candidate digital initiatives but budget for only 3 this year. Using the data given, recommend which 3 to fund and justify the sequencing.",
+  "context": "Initiatives (estimated annual value / one-time cost / delivery risk, internal estimates): (1) E-commerce personalization engine — $1.8M value, $600K cost, medium risk (depends on a data platform not yet built). (2) Retail media analytics dashboard — $900K value, $250K cost, low risk. (3) Supply-chain demand forecasting AI — $2.4M value, $900K cost, high risk (unproven internally, would be first ML deployment). (4) Consumer mobile app redesign — $500K value, $400K cost, low risk. (5) Trade promotion optimization tool — $1.1M value, $350K cost, medium risk. (6) Loyalty program overhaul — $700K value, $500K cost, medium risk. Total available budget: $1.2M.",
+  "binaryCriteria": [
+    {
+      "id": "respects-budget-constraint",
+      "description": "The recommended set of initiatives fits within the stated $1.2M budget rather than simply listing the highest-value initiatives regardless of cost.",
+      "guidance": "Fail if the recommended combination of initiatives sums to materially more than $1.2M without an explicit phasing/partial-funding explanation."
+    },
+    {
+      "id": "uses-value-to-cost-not-just-absolute-value",
+      "description": "Reasons using value-to-cost efficiency (or an equivalent ratio-based argument), not just picking the initiatives with the largest absolute dollar value.",
+      "guidance": "Fail if the #3 highest-value initiative (demand forecasting, $2.4M) is selected despite consuming most of the budget and carrying flagged high risk, with no acknowledgment of that tradeoff."
+    },
+    {
+      "id": "explicitly-addresses-deferred-high-value-item",
+      "description": "Explicitly explains why the high-value, high-risk demand-forecasting initiative is deferred rather than silently omitting it.",
+      "guidance": "Fail if demand forecasting is dropped from the answer with no explanation."
+    }
+  ],
+  "goldNotes": "A strong answer computes value-to-cost ratios (or equivalent) to rank initiatives: Retail media dashboard (3.6x), Trade promotion tool (3.1x), E-commerce personalization (3.0x), Loyalty overhaul (1.4x), Mobile app redesign (1.25x), Demand forecasting (2.7x but high risk/dependency). A naive \"pick the 3 highest absolute value\" answer would wrongly select demand forecasting ($2.4M) despite it alone consuming 75% of the $1.2M budget and carrying unproven-technology risk. The strong answer respects the $1.2M budget constraint (not just ranks by value) and should recommend a combination that fits the budget — e.g., Retail media dashboard + Trade promotion tool + E-commerce personalization ($250K+$350K+$600K = $1.2M, exactly at budget) — while explicitly flagging that the highest-absolute-value initiative (demand forecasting) is deliberately deferred due to cost and risk, not ignored, and recommending it be revisited for next year's budget cycle or piloted at smaller scope.",
+  "archetype": "synthetic",
+  "domain": "Portfolio Prioritization",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/portfolio-prioritization/cpg-digital-initiatives",
+  "consultingArchetype": "portfolio-prioritization"
+}

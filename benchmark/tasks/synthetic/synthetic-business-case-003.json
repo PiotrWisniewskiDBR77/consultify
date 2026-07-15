@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-business-case-003",
+  "prompt": "A B2B SaaS company (ARR ~$40M, currently flat-rate per-seat pricing) is considering shifting new contracts to usage-based pricing. Write the business case for the executive team, including the biggest financial risk.",
+  "context": "Current pricing: $120/seat/month flat, average 45 seats/account, ~180 enterprise accounts. Product usage data (internal analytics) shows the top 20% of accounts by usage consume roughly 3x the platform resources of the median account but pay the same per-seat price. Competitor benchmarking (2 named competitors, publicly disclosed pricing pages) shows both have moved to usage-based or hybrid pricing in the last 18 months. Finance estimates that a naive switch to pure usage-based pricing could make revenue less predictable quarter-to-quarter, since usage-based SaaS companies in public filings have historically shown 10-20% higher revenue variance than seat-based peers.",
+  "binaryCriteria": [
+    {
+      "id": "grounds-recommendation-in-usage-skew",
+      "description": "Uses the fact that top-20%-usage accounts consume ~3x resources at flat pricing to justify why usage-based (or hybrid) pricing better matches value to cost.",
+      "guidance": "Fail if the recommendation only cites competitor moves without referencing the internal usage-skew data."
+    },
+    {
+      "id": "names-revenue-variance-as-key-risk",
+      "description": "Explicitly identifies revenue predictability/variance as the primary financial risk of a full usage-based switch, referencing the variance benchmark given.",
+      "guidance": "Pass if the 10-20% variance figure (or an equivalent framing of predictability risk) appears as a named risk, not just an afterthought."
+    },
+    {
+      "id": "recommends-phased-or-hybrid-approach",
+      "description": "Recommends a specific mitigation approach (hybrid pricing, grandfathering, or phased rollout to new logos) rather than an all-or-nothing switch.",
+      "guidance": "Fail if the answer only says \"monitor closely\" with no structural mitigation."
+    }
+  ],
+  "goldNotes": "A strong answer recommends a hybrid model (base seat fee + usage overage) rather than a binary switch, explicitly reasoning from the fact that the top 20% of accounts consume ~3x resources but pay flat pricing (i.e., the current model under-monetizes heavy users and doesn't reflect value delivered). It should flag revenue predictability/variance as the central financial risk, citing the 10-20% variance benchmark, and recommend a mitigation (e.g., grandfathering existing contracts, phasing usage pricing to new logos first) rather than an abrupt company-wide switch. A weak answer treats this as \"switch pricing to look competitive\" without grounding the recommendation in the usage-skew data.",
+  "archetype": "synthetic",
+  "domain": "Business Case & Investment Justification",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/business-case/saas-usage-based-pricing",
+  "consultingArchetype": "business-case"
+}

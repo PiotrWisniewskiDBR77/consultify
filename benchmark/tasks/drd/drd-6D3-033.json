@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-6D3-033",
+  "prompt": "A client's \"Security Education and System Quality\" lead just gave you the description in the context during a diagnostic interview. Write your consultant response: what would you probe before signing off on level 3, and what should they prioritize next?",
+  "context": "Cybersecurity — Security Education and System Quality — excerpt from a client diagnostic interview:\n\"Działa system testów bezpieczeństwa.\"\n\nThe team says this reflects digital maturity level 3 of 6 (\"System testów\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a phishing campaign report (KnowBe4 or Proofpoint): date, number of recipients, % click-through (quarterly trend). A \"failed phishing → mandatory retraining\" policy with evidence of its application."
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does the organization conduct regular security tests — e.g. phishing simulations at least 4× a year with a measured click-through rate? | Are security test results (phishing click rate, knowledge test) reported to management quarterly? | Must employees who \"fail\" a phishing test undergo additional remedial training?\nWhat satisfies the evidence bar: Evidence: a phishing campaign report (KnowBe4 or Proofpoint): date, number of recipients, % click-through (quarterly trend). A \"failed phishing → mandatory retraining\" policy with evidence of its application.\nNext level (4, \"Audytorzy wewnętrzni\"): Wyznaczeni audytorzy wewnętrzni.\nRelevant technology categories: Phishing Simulation (KnowBe4, Proofpoint SA), Security Awareness Analytics, LMS (remedial training)",
+  "archetype": "diagnostic",
+  "domain": "Cybersecurity — Security Education and System Quality",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "6D#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}
