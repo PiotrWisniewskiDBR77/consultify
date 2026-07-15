@@ -17,6 +17,8 @@
 import {
   AlertTriangle,
   ArrowRight,
+  Bot,
+  ClipboardCheck,
   Clock,
   Globe,
   Loader2,
@@ -43,13 +45,23 @@ import {
 } from '../../services/enterpriseComplianceApi';
 import { cn } from '../../utils/cn';
 import type { AdminSettingsSection } from './AdminSettingsSidebar';
+import { CommandCenterAgentTraceTab } from './commandCenter/CommandCenterAgentTraceTab';
 import { CommandCenterAiPolicyTab } from './commandCenter/CommandCenterAiPolicyTab';
 import { CommandCenterAuditTab } from './commandCenter/CommandCenterAuditTab';
+import { CommandCenterBenchmarkTab } from './commandCenter/CommandCenterBenchmarkTab';
 import { CommandCenterDlpTab } from './commandCenter/CommandCenterDlpTab';
 import { CommandCenterResidencyTab } from './commandCenter/CommandCenterResidencyTab';
 import { CommandCenterRetentionTab } from './commandCenter/CommandCenterRetentionTab';
 
-type TabId = 'overview' | 'audit' | 'dlp' | 'residency' | 'retention' | 'ai-policy';
+type TabId =
+  | 'overview'
+  | 'agent-trace'
+  | 'audit'
+  | 'dlp'
+  | 'residency'
+  | 'retention'
+  | 'ai-policy'
+  | 'benchmark';
 
 interface AdminCommandCenterPanelProps {
   onSectionChange?: (section: AdminSettingsSection) => void;
@@ -478,6 +490,11 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
         icon: ShieldCheck,
       },
       {
+        id: 'agent-trace',
+        label: t('commandCenter.tabs.agentTrace', 'Agent trace'),
+        icon: Bot,
+      },
+      {
         id: 'audit',
         label: t('commandCenter.tabs.audit', 'SOC2 audit'),
         icon: ScrollText,
@@ -501,6 +518,11 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
         id: 'ai-policy',
         label: t('commandCenter.tabs.aiPolicy', 'AI policy'),
         icon: Sparkles,
+      },
+      {
+        id: 'benchmark',
+        label: t('commandCenter.tabs.benchmark', 'Consulting Bench'),
+        icon: ClipboardCheck,
       },
     ],
     [t]
@@ -562,11 +584,13 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
       </div>
 
       {activeTab === 'overview' && <CommandCenterOverviewTab onSectionChange={onSectionChange} />}
+      {activeTab === 'agent-trace' && <CommandCenterAgentTraceTab />}
       {activeTab === 'audit' && <CommandCenterAuditTab />}
       {activeTab === 'dlp' && <CommandCenterDlpTab />}
       {activeTab === 'residency' && <CommandCenterResidencyTab />}
       {activeTab === 'retention' && <CommandCenterRetentionTab />}
       {activeTab === 'ai-policy' && <CommandCenterAiPolicyTab />}
+      {activeTab === 'benchmark' && <CommandCenterBenchmarkTab />}
     </div>
   );
 };

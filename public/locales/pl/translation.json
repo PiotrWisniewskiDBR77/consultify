@@ -25500,11 +25500,13 @@
     "description": "Jedna powierzchnia zaufania i kontroli — eksport audytu SOC2, DLP, rezydencja danych, retencja i polityka AI organizacji. Role, SSO i dziennik audytu żyją we własnych sekcjach — stąd tylko linkujemy do nich.",
     "tabs": {
       "overview": "Przegląd",
+      "agentTrace": "Ślad agentów",
       "audit": "Audyt SOC2",
       "dlp": "DLP",
       "residency": "Rezydencja danych",
       "retention": "Retencja",
-      "aiPolicy": "Polityka AI"
+      "aiPolicy": "Polityka AI",
+      "benchmark": "Consulting Bench"
     },
     "overview": {
       "linksTitle": "Powierzchnie zaufania",
@@ -25770,6 +25772,53 @@
         "saved": "Polityka AI zaktualizowana",
         "loadError": "Nie udało się wczytać polityki AI",
         "saveError": "Nie udało się zaktualizować polityki AI"
+      }
+    },
+    "agentTrace": {
+      "title": "Ślad decyzji agentów",
+      "description": "Każde działanie AI/agenta — kto je uruchomił, co AI zaproponowało i czy zostało zaakceptowane. Zakres organizacji z tokenu.",
+      "summary": "{{count}} działań — stan na {{time}}",
+      "pending": "Oczekuje",
+      "filters": {
+        "from": "Od",
+        "to": "Do",
+        "userId": "ID użytkownika",
+        "actionType": "Typ akcji",
+        "apply": "Zastosuj filtry"
+      },
+      "columns": {
+        "createdAt": "Kiedy",
+        "user": "Użytkownik",
+        "action": "Akcja",
+        "role": "Rola AI",
+        "description": "Decyzja / artefakt",
+        "outcome": "Wynik"
+      },
+      "empty": {
+        "title": "Brak działań agentów w tym zakresie",
+        "description": "Poszerz zakres dat lub wyczyść filtry. Sugestie AI i uruchomienia agentów pojawiają się tu na bieżąco."
+      },
+      "toasts": {
+        "loadError": "Nie udało się wczytać śladu decyzji agentów"
+      }
+    },
+    "benchmark": {
+      "title": "Consulting Bench",
+      "description": "Benchmark regresyjny jakości outputu konsultingowego — bank zadań, rubryka i sędzia LLM.",
+      "status": {
+        "builtLabel": "Status harnessu",
+        "built": "Zbudowany",
+        "builtDetail": "Bank zadań, rubryka i usługa sędziego są na miejscu.",
+        "runLabel": "Ostatni oceniony run",
+        "pending": "Run oczekuje",
+        "pendingDetail": "Nie zarejestrowano jeszcze ocenionego runu — dopóki go nie ma, nie pokazujemy żadnego wyniku."
+      },
+      "caveats": {
+        "title": "Czego nie twierdzimy",
+        "noCompetitive": "Brak porównań konkurencyjnych — to nie mierzy Consultify na tle innych narzędzi AI ani konsultantów.",
+        "noHumanBaseline": "Brak baseline'u ludzkiego — pass-rate odnosi się wyłącznie do rubryki tego benchmarku, nie do realnego konsultanta.",
+        "regression": "Narzędzie wewnętrzne, regresyjne — wyłapuje regresje jakości między wersjami produktu, nie jest twierdzeniem marketingowym.",
+        "llmJudge": "Sędzia to LLM, nie audytor — werdykty niosą własne ograniczenia i wariancję modelu-sędziego."
       }
     },
     "placeholder": {

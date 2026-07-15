@@ -66,6 +66,74 @@ router.get(
   })
 );
 
+// === Agent Decision Trace (HP-12) ===
+//
+// AI/agent action log — WHO ran WHAT, the AI suggestion, and the human
+// decision on it. Sourced from `ai_audit_logs` via AIAuditLogger (the same
+// store InitiativeController / ProjectController / ai.routes write to on
+// every AI suggestion). Read-only, org-scoped by token, admin-gated by the
+// router-level `requireAdmin` above. Date range is applied in-route because
+// `getAuditLogs` filters by org/project/user/action, not by timestamp.
+router.get(
+  '/audit-trail/agent-decisions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(400).json({ error: 'Organization required' });
+
+    const { from, to, user_id, action_type, limit } = req.query;
+    const { AIAuditLogger } = await import('../../services/aiAuditLogger.js');
+
+    const rawLimit = Number(limit);
+    const safeLimit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(Math.trunc(rawLimit), 1), 500)
+      : 200;
+
+    const logs = await AIAuditLogger.getAuditLogs(orgId, {
+      userId: (user_id as string) || undefined,
+      actionType: (action_type as string) || undefined,
+      limit: safeLimit,
+      offset: 0,
+      includeExplanation: false,
+    });
+
+    let entries = Array.isArray(logs) ? logs : [];
+    if (from) {
+      const fromTime = new Date(from as string).getTime();
+      if (Number.isFinite(fromTime)) {
+        entries = entries.filter(
+          (l: any) => new Date(l.created_at as string).getTime() >= fromTime
+        );
+      }
+    }
+    if (to) {
+      const toTime = new Date(to as string).getTime();
+      if (Number.isFinite(toTime)) {
+        entries = entries.filter((l: any) => new Date(l.created_at as string).getTime() <= toTime);
+      }
+    }
+
+    const data = entries.map((l: any) => ({
+      id: l.id,
+      createdAt: l.created_at,
+      userId: l.user_id || null,
+      userName:
+        [l.first_name, l.last_name].filter(Boolean).join(' ').trim() || l.user_id || null,
+      actionType: l.action_type || null,
+      actionDescription: l.action_description || null,
+      aiRole: l.ai_project_role || l.ai_role || null,
+      aiSuggestion: l.ai_suggestion || null,
+      userDecision: l.user_decision || null,
+      confidenceLevel: l.confidence_level || null,
+      projectId: l.project_id || null,
+    }));
+
+    res.json({
+      success: true,
+      data: { entries: data, totalCount: data.length, exportedAt: new Date().toISOString() },
+    });
+  })
+);
+
 // === DLP Rules ===
 
 router.get(
