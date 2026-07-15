@@ -27019,6 +27019,21 @@
       "itemsSelected": "items selected",
       "reject": "Reject",
       "applySelected": "Apply selected"
+    },
+    "aiTableAssistant": {
+      "proposalGenerated": "Proposal generated (new backend)",
+      "schemaProposalFailed": "Schema proposal failed",
+      "commandNotRecognized": "Command not recognized",
+      "sorted": "Sorted",
+      "filterApplied": "Filter applied",
+      "groupingApplied": "Grouping applied",
+      "columnAdded": "Column added",
+      "rowsAdded": "Added {{count}} rows",
+      "error": "Error",
+      "actionNotSupported": "Action not supported",
+      "aiError": "AI error",
+      "commandPlaceholder": "Type a table command…",
+      "examples": "Examples"
     }
   },
   "myWorkNotebook": {

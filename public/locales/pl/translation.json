@@ -28079,6 +28079,21 @@
       "itemsSelected": "elementów zaznaczonych",
       "reject": "Odrzuć",
       "applySelected": "Zastosuj wybrane"
+    },
+    "aiTableAssistant": {
+      "proposalGenerated": "Propozycja wygenerowana (nowy backend)",
+      "schemaProposalFailed": "Nie udało się wygenerować propozycji schematu",
+      "commandNotRecognized": "Nie rozpoznano polecenia",
+      "sorted": "Posortowano",
+      "filterApplied": "Filtr zastosowany",
+      "groupingApplied": "Grupowanie zastosowane",
+      "columnAdded": "Kolumna dodana",
+      "rowsAdded": "Dodano {{count}} wierszy",
+      "error": "Błąd",
+      "actionNotSupported": "Akcja nieobsługiwana",
+      "aiError": "Błąd AI",
+      "commandPlaceholder": "Wpisz polecenie dla tabeli…",
+      "examples": "Przykłady"
     }
   },
   "myWorkNotebook": {
