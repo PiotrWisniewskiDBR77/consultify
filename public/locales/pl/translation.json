@@ -28321,6 +28321,35 @@
         "SENT_EXTERNAL": "Wysłany do klienta",
         "UTILIZED": "Wykorzystany"
       }
+    },
+    "configureStructureStep": {
+      "sectionOptions": "Opcje Sekcji",
+      "sectionTitle": "Tytuł Sekcji",
+      "length": "Długość",
+      "languageStyle": "Styl Języka",
+      "additionalAiGuidance": "Dodatkowe Wskazówki dla AI",
+      "eGFocusOnFinancialAspects": "Np. \"Skup się na aspektach finansowych\", \"Dodaj porównanie z konkurencją\"...",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "addSection": "Dodaj Sekcję",
+      "blockType": "Typ bloku",
+      "customTitlePrompt": "Custom (tytuł + prompt)",
+      "loading": "Ładowanie…",
+      "enterTitle": "Wprowadź tytuł...",
+      "add": "Dodaj",
+      "areYouSureYouWantTo": "Czy na pewno chcesz usunąć tę sekcję?",
+      "customPrompt": "Dodatkowe wskazówki",
+      "sectionsEnabledCount": "{{enabled}} z {{total}} sekcji włączonych",
+      "lengthOption": {
+        "short": "Krótka",
+        "medium": "Średnia",
+        "long": "Długa"
+      },
+      "languageOption": {
+        "technical": "Techniczny",
+        "business": "Biznesowy",
+        "general": "Ogólny"
+      }
     }
   }
 }

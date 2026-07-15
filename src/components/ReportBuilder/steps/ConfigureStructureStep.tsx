@@ -102,6 +102,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
   onSave,
   isPl,
 }) => {
+  const { t } = useTranslation();
   const [length, setLength] = useState<SectionLength>(section.length);
   const [language, setLanguage] = useState<SectionLanguage>(section.language);
   const [customPrompt, setCustomPrompt] = useState(section.customPrompt || '');
@@ -117,7 +118,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-          <h3 className="font-semibold text-c-text">{isPl ? 'Opcje Sekcji' : 'Section Options'}</h3>
+          <h3 className="font-semibold text-c-text">{t('reportBuilder.configureStructureStep.sectionOptions', 'Section Options')}</h3>
           <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
             <X className="w-5 h-5" />
           </button>
@@ -128,7 +129,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Tytuł Sekcji' : 'Section Title'}
+              {t('reportBuilder.configureStructureStep.sectionTitle', 'Section Title')}
             </label>
             <input
               type="text"
@@ -141,7 +142,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
           {/* Length */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-2">
-              {isPl ? 'Długość' : 'Length'}
+              {t('reportBuilder.configureStructureStep.length', 'Length')}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {LENGTH_OPTIONS.map((opt) => (
@@ -158,7 +159,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
                   `}
                 >
                   <div className="font-medium text-sm text-c-text">
-                    {isPl ? opt.labelPl : opt.label}
+                    {t(`reportBuilder.configureStructureStep.lengthOption.${opt.value}`, opt.label)}
                   </div>
                   <div className="text-xs text-c-text-secondary">{opt.description}</div>
                 </button>
@@ -169,7 +170,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
           {/* Language */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-2">
-              {isPl ? 'Styl Języka' : 'Language Style'}
+              {t('reportBuilder.configureStructureStep.languageStyle', 'Language Style')}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {LANGUAGE_OPTIONS.map((opt) => (
@@ -186,7 +187,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
                   `}
                 >
                   <div className="font-medium text-sm text-c-text">
-                    {isPl ? opt.labelPl : opt.label}
+                    {t(`reportBuilder.configureStructureStep.languageOption.${opt.value}`, opt.label)}
                   </div>
                   <div className="text-xs text-c-text-secondary">{opt.description}</div>
                 </button>
@@ -197,15 +198,13 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
           {/* Custom Prompt */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1">
-              {isPl ? 'Dodatkowe Wskazówki dla AI' : 'Additional AI Guidance'}
+              {t('reportBuilder.configureStructureStep.additionalAiGuidance', 'Additional AI Guidance')}
             </label>
             <textarea
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder={
-                isPl
-                  ? 'Np. "Skup się na aspektach finansowych", "Dodaj porównanie z konkurencją"...'
-                  : 'E.g., "Focus on financial aspects", "Include competitor comparison"...'
+                t('reportBuilder.configureStructureStep.eGFocusOnFinancialAspects', 'E.g., "Focus on financial aspects", "Include competitor comparison"...')
               }
               rows={3}
               className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
@@ -219,13 +218,13 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('reportBuilder.configureStructureStep.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-2 bg-blue-600 text-c-text rounded-lg hover:bg-blue-700"
           >
-            {isPl ? 'Zapisz' : 'Save'}
+            {t('reportBuilder.configureStructureStep.save', 'Save')}
           </button>
         </div>
       </div>
@@ -264,6 +263,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
   blockTypes,
   isLoadingBlocks,
 }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [selectedBlockTypeId, setSelectedBlockTypeId] = useState<string>('');
 
@@ -285,7 +285,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-          <h3 className="font-semibold text-c-text">{isPl ? 'Dodaj Sekcję' : 'Add Section'}</h3>
+          <h3 className="font-semibold text-c-text">{t('reportBuilder.configureStructureStep.addSection', 'Add Section')}</h3>
           <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
             <X className="w-5 h-5" />
           </button>
@@ -293,7 +293,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
 
         <div className="p-4">
           <label className="block text-sm font-medium text-c-text mb-1">
-            {isPl ? 'Typ bloku' : 'Block type'}
+            {t('reportBuilder.configureStructureStep.blockType', 'Block type')}
           </label>
           <select
             value={selectedBlockTypeId}
@@ -305,10 +305,10 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             }}
             className="w-full mb-4 px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">{isPl ? 'Custom (tytuł + prompt)' : 'Custom (title + prompt)'}</option>
+            <option value="">{t('reportBuilder.configureStructureStep.customTitlePrompt', 'Custom (title + prompt)')}</option>
             {isLoadingBlocks ? (
               <option value="" disabled>
-                {isPl ? 'Ładowanie…' : 'Loading…'}
+                {t('reportBuilder.configureStructureStep.loading', 'Loading…')}
               </option>
             ) : (
               blockTypes.map((b) => (
@@ -320,13 +320,13 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
           </select>
 
           <label className="block text-sm font-medium text-c-text mb-1">
-            {isPl ? 'Tytuł Sekcji' : 'Section Title'}
+            {t('reportBuilder.configureStructureStep.sectionTitle', 'Section Title')}
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={isPl ? 'Wprowadź tytuł...' : 'Enter title...'}
+            placeholder={t('reportBuilder.configureStructureStep.enterTitle', 'Enter title...')}
             autoFocus
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
@@ -338,14 +338,14 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('reportBuilder.configureStructureStep.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleAdd}
             disabled={!title.trim()}
             className="px-4 py-2 bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {isPl ? 'Dodaj' : 'Add'}
+            {t('reportBuilder.configureStructureStep.add', 'Add')}
           </button>
         </div>
       </div>
@@ -367,7 +367,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
   onSaveConfig,
   isLoading,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [optionsSection, setOptionsSection] = useState<ReportSection | null>(null);
@@ -461,15 +461,13 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
     async (sectionKey: string) => {
       if (
         confirm(
-          isPl
-            ? 'Czy na pewno chcesz usunąć tę sekcję?'
-            : 'Are you sure you want to remove this section?'
+          t('reportBuilder.configureStructureStep.areYouSureYouWantTo', 'Are you sure you want to remove this section?')
         )
       ) {
         await onRemoveSection(sectionKey);
       }
     },
-    [onRemoveSection, isPl]
+    [onRemoveSection, t]
   );
 
   // Get section type badge color
@@ -499,16 +497,18 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
       {/* Summary */}
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm text-c-text-secondary">
-          {isPl
-            ? `${sortedSections.filter((s) => s.enabled).length} z ${sortedSections.length} sekcji włączonych`
-            : `${sortedSections.filter((s) => s.enabled).length} of ${sortedSections.length} sections enabled`}
+          {t('reportBuilder.configureStructureStep.sectionsEnabledCount', {
+            defaultValue: `${sortedSections.filter((s) => s.enabled).length} of ${sortedSections.length} sections enabled`,
+            enabled: sortedSections.filter((s) => s.enabled).length,
+            total: sortedSections.length,
+          })}
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-          {isPl ? 'Dodaj Sekcję' : 'Add Section'}
+          {t('reportBuilder.configureStructureStep.addSection', 'Add Section')}
         </button>
       </div>
 
@@ -560,7 +560,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
                 {section.customPrompt && (
                   <span className="flex items-center gap-1 text-xs text-blue-500">
                     <MessageSquarePlus className="w-3 h-3" />
-                    {isPl ? 'Dodatkowe wskazówki' : 'Custom prompt'}
+                    {t('reportBuilder.configureStructureStep.customPrompt', 'Custom prompt')}
                   </span>
                 )}
               </div>

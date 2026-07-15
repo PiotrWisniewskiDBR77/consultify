@@ -27245,6 +27245,35 @@
         "SENT_EXTERNAL": "Sent to client",
         "UTILIZED": "Utilized"
       }
+    },
+    "configureStructureStep": {
+      "sectionOptions": "Section Options",
+      "sectionTitle": "Section Title",
+      "length": "Length",
+      "languageStyle": "Language Style",
+      "additionalAiGuidance": "Additional AI Guidance",
+      "eGFocusOnFinancialAspects": "E.g., \"Focus on financial aspects\", \"Include competitor comparison\"...",
+      "cancel": "Cancel",
+      "save": "Save",
+      "addSection": "Add Section",
+      "blockType": "Block type",
+      "customTitlePrompt": "Custom (title + prompt)",
+      "loading": "Loading…",
+      "enterTitle": "Enter title...",
+      "add": "Add",
+      "areYouSureYouWantTo": "Are you sure you want to remove this section?",
+      "customPrompt": "Custom prompt",
+      "sectionsEnabledCount": "{{enabled}} of {{total}} sections enabled",
+      "lengthOption": {
+        "short": "Short",
+        "medium": "Medium",
+        "long": "Long"
+      },
+      "languageOption": {
+        "technical": "Technical",
+        "business": "Business",
+        "general": "General"
+      }
     }
   }
 }
