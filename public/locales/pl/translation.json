@@ -28413,6 +28413,46 @@
         "shorter": "Skróć poniższą {{entityLabel}}. Zachowaj kluczowe punkty, usuń powtórzenia.\n\nTytuł: \"{{title}}\"\n\nTreść:\n{{excerpt}}",
         "longer": "Rozwiń poniższą {{entityLabel}}. Dodaj szczegóły, przykłady i kontekst.\n\nTytuł: \"{{title}}\"\n\nTreść:\n{{excerpt}}"
       }
+    },
+    "riskCanvas": {
+      "riskImpact": "Ryzyko i wpływ",
+      "addRisk": "Dodaj ryzyko",
+      "analyzeRisks": "Analizuj ryzyka",
+      "noRisksIdentified": "Brak zidentyfikowanych ryzyk.",
+      "sortedByHighestRiskScorePI": "Posortowane wg najwyższego risk score (P×I)",
+      "levelLegend": "Legenda poziomów:",
+      "riskName": "Nazwa ryzyka...",
+      "probability": "Prawdopodobieństwo",
+      "impact": "Wpływ",
+      "category": "Kategoria",
+      "riskMaterialized": "Ryzyko (materializacja)",
+      "whatIsTheFallbackIfRiskMaterializes": "Co robimy, gdy ryzyko się zmaterializuje?",
+      "mitigation": "Mitigacja",
+      "howDoWeMitigateThisRisk": "Jak ograniczamy to ryzyko?",
+      "levelLabel": {
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski"
+      },
+      "categoryLabel": {
+        "technical": "Techniczne",
+        "business": "Biznesowe",
+        "financial": "Finansowe",
+        "operational": "Operacyjne",
+        "security": "Bezpieczeństwo"
+      },
+      "quickContingencyArgs": [
+        "Tryb ręczny fallback",
+        "Eskalacja do PMO",
+        "Przesunięcie terminu + komunikat"
+      ],
+      "quickMitigationArgs": [
+        "POC przed wdrożeniem",
+        "Przegląd tygodniowy",
+        "Plan kontroli jakości"
+      ],
+      "riskCount": "{{count}} ryzyk"
     }
   }
 }

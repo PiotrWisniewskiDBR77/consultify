@@ -27337,6 +27337,46 @@
         "shorter": "Shorten the following {{entityLabel}}. Keep key points, remove repetition.\n\nTitle: \"{{title}}\"\n\nContent:\n{{excerpt}}",
         "longer": "Expand the following {{entityLabel}}. Add details, examples and context.\n\nTitle: \"{{title}}\"\n\nContent:\n{{excerpt}}"
       }
+    },
+    "riskCanvas": {
+      "riskImpact": "Risk & Impact",
+      "addRisk": "Add risk",
+      "analyzeRisks": "Analyze risks",
+      "noRisksIdentified": "No risks identified.",
+      "sortedByHighestRiskScorePI": "Sorted by highest risk score (P×I)",
+      "levelLegend": "Level legend:",
+      "riskName": "Risk name...",
+      "probability": "Probability",
+      "impact": "Impact",
+      "category": "Category",
+      "riskMaterialized": "Risk (materialized)",
+      "whatIsTheFallbackIfRiskMaterializes": "What is the fallback if risk materializes?",
+      "mitigation": "Mitigation",
+      "howDoWeMitigateThisRisk": "How do we mitigate this risk?",
+      "levelLabel": {
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "categoryLabel": {
+        "technical": "Technical",
+        "business": "Business",
+        "financial": "Financial",
+        "operational": "Operational",
+        "security": "Security"
+      },
+      "quickContingencyArgs": [
+        "Manual fallback mode",
+        "Escalate to PMO",
+        "Timeline shift with stakeholder notice"
+      ],
+      "quickMitigationArgs": [
+        "POC before rollout",
+        "Weekly review checkpoint",
+        "Quality control plan"
+      ],
+      "riskCount": "{{count}} risks"
     }
   }
 }
