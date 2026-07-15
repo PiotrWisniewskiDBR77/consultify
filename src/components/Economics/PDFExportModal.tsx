@@ -84,13 +84,9 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
       });
 
       setExportResult({ success: true, url: result.downloadUrl });
-      toast.success(
-        language === 'pl' ? 'PDF generated successfully' : 'PDF generated successfully'
-      );
+      toast.success(t('economics.pdfExport.generatedSuccess'));
     } catch (error: any) {
-      toast.error(
-        error.message || (language === 'pl' ? 'Failed to generate PDF' : 'Failed to generate PDF')
-      );
+      toast.error(error.message || t('economics.pdfExport.generateFailed'));
       setExportResult({ success: false });
     } finally {
       setIsExporting(false);

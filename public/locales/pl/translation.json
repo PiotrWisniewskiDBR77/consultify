@@ -9672,7 +9672,9 @@
       "ready": "PDF gotowy do pobrania!",
       "download": "Pobierz",
       "generating": "Generowanie...",
-      "generate": "Generuj PDF"
+      "generate": "Generuj PDF",
+      "generatedSuccess": "PDF wygenerowany pomyślnie",
+      "generateFailed": "Nie udało się wygenerować PDF"
     }
   },
   "reports": {

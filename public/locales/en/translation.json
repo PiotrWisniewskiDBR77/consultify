@@ -10526,7 +10526,9 @@
       "ready": "PDF ready for download!",
       "download": "Download",
       "generating": "Generating...",
-      "generate": "Generate PDF"
+      "generate": "Generate PDF",
+      "generatedSuccess": "PDF generated successfully",
+      "generateFailed": "Failed to generate PDF"
     }
   },
   "reports": {
