@@ -109,11 +109,15 @@ export const InventoryClassificationStep: React.FC<InventoryClassificationStepPr
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder={t('discoveryToolsTools.operational.inventoryClassificationStep.notesPlaceholder')}
+          placeholder={t(
+            'discoveryToolsTools.operational.inventoryClassificationStep.notesPlaceholder'
+          )}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
-        <InlineAssist hint={t('discoveryToolsTools.operational.inventoryClassificationStep.hint')} />
+        <InlineAssist
+          hint={t('discoveryToolsTools.operational.inventoryClassificationStep.hint')}
+        />
       </div>
 
       <div className="space-y-3">

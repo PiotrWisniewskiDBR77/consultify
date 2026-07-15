@@ -16,9 +16,9 @@
  * SSOT: docs/ui-standards/TRIADA_KANON.md.
  */
 
+import type { TFunction } from 'i18next';
 import { Copy, Trash2 } from 'lucide-react';
 import React, { useMemo } from 'react';
-import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import type { RowAction } from '@/components/shared/RowActionsMenu';

@@ -298,7 +298,8 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                   <div className="flex items-center gap-2 mb-2">
                     <GitMerge size={12} className="text-amber-500" />
                     <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                      {Math.round(dup.similarity * 100)}% {t('myWorkTable.aiCategorizeTool.similar')}
+                      {Math.round(dup.similarity * 100)}%{' '}
+                      {t('myWorkTable.aiCategorizeTool.similar')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-1.5">

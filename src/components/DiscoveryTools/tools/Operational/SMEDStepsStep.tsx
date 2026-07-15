@@ -87,8 +87,12 @@ export const SMEDStepsStep: React.FC<SMEDStepsStepProps> = ({ session, isPolish 
             onChange={(e) => setType(e.target.value as 'internal' | 'external')}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="internal">{t('discoveryToolsTools.operational.smedStepsStep.internal')}</option>
-            <option value="external">{t('discoveryToolsTools.operational.smedStepsStep.external')}</option>
+            <option value="internal">
+              {t('discoveryToolsTools.operational.smedStepsStep.internal')}
+            </option>
+            <option value="external">
+              {t('discoveryToolsTools.operational.smedStepsStep.external')}
+            </option>
           </select>
           <input
             type="number"

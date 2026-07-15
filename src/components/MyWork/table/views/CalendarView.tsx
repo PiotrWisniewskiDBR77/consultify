@@ -286,7 +286,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   : 'text-c-text-muted hover:bg-c-surface-raised'
               }`}
             >
-              {m === 'month' ? t('myWorkTable.calendarViewV2.month') : t('myWorkTable.calendarViewV2.week')}
+              {m === 'month'
+                ? t('myWorkTable.calendarViewV2.month')
+                : t('myWorkTable.calendarViewV2.week')}
             </button>
           ))}
         </div>
@@ -349,7 +351,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 ))}
                 {dayRecords.length > MAX_VISIBLE_PER_DAY && (
                   <div className="text-[7px] text-c-text-muted px-1 font-medium">
-                    +{dayRecords.length - MAX_VISIBLE_PER_DAY} {t('myWorkTable.calendarViewV2.more')}
+                    +{dayRecords.length - MAX_VISIBLE_PER_DAY}{' '}
+                    {t('myWorkTable.calendarViewV2.more')}
                   </div>
                 )}
 

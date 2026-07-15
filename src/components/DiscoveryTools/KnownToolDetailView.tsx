@@ -334,7 +334,13 @@ export function KnownToolDetailView(props: {
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
               {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.dynamicLabel')}
             </div>
-            {chipRow(['Mission brief', 'Evidence-first', 'Tensions', 'Recommended moves', 'Outputs'])}
+            {chipRow([
+              'Mission brief',
+              'Evidence-first',
+              'Tensions',
+              'Recommended moves',
+              'Outputs',
+            ])}
             <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
               {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.dynamicBody')}
             </div>
@@ -1069,7 +1075,10 @@ export function KnownToolDetailView(props: {
     const portfolioProcessSection = (
       <div className="grid gap-4 md:grid-cols-2">
         {[
-          ['Mission', t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.missionText')],
+          [
+            'Mission',
+            t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.missionText'),
+          ],
           [
             'Evidence',
             t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.evidenceText'),
@@ -1156,10 +1165,7 @@ export function KnownToolDetailView(props: {
             t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.evidenceText'),
           ],
           ['Risk map', t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.riskMapText')],
-          [
-            'Outputs',
-            t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.outputsText'),
-          ],
+          ['Outputs', t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.outputsText')],
         ].map(([title, text]) => (
           <div
             key={title}

@@ -119,17 +119,12 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             rows: [],
           };
           onProposal(mapped);
-          toast.success(
-            t('myWorkTable.aiTableAssistant.proposalGenerated')
-          );
+          toast.success(t('myWorkTable.aiTableAssistant.proposalGenerated'));
         }
         setCommand('');
         return;
       } catch (err: any) {
-        toast.error(
-          err?.message ||
-            t('myWorkTable.aiTableAssistant.schemaProposalFailed')
-        );
+        toast.error(err?.message || t('myWorkTable.aiTableAssistant.schemaProposalFailed'));
       } finally {
         setLoading(false);
       }
@@ -202,9 +197,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
               position: { x: 0, y: 0 },
             }));
             onAddRows(newRows);
-            toast.success(
-              t('myWorkTable.aiTableAssistant.rowsAdded', { count: newRows.length })
-            );
+            toast.success(t('myWorkTable.aiTableAssistant.rowsAdded', { count: newRows.length }));
           }
           break;
         case 'summarize':

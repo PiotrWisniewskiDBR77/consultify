@@ -607,9 +607,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               e.stopPropagation();
                               selection!.onToggleAll();
                             }}
-                            aria-label={
-                              selection!.selectAllLabel ?? t('common.selectAll')
-                            }
+                            aria-label={selection!.selectAllLabel ?? t('common.selectAll')}
                             className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
                           />
                         </div>
@@ -717,9 +715,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           columnsHeading={
                             rowDescription.columnsHeading ?? t('common.visibleColumns')
                           }
-                          descriptionLabel={
-                            rowDescription.label ?? t('common.showRowDescription')
-                          }
+                          descriptionLabel={rowDescription.label ?? t('common.showRowDescription')}
                         />
                       </div>
                     ) : enableColumnSettings ? (
@@ -810,9 +806,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               e.stopPropagation();
                               selection.onToggleRow(String(row.id));
                             }}
-                            aria-label={
-                              selection.selectRowLabel ?? t('common.selectRow')
-                            }
+                            aria-label={selection.selectRowLabel ?? t('common.selectRow')}
                             className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-info focus:ring-c-focus cursor-pointer"
                           />
                         ) : column.render ? (
