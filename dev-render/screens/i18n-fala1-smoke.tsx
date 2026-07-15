@@ -10,17 +10,29 @@
  *
  * Network: window.fetch is stubbed with empty engine-shaped JSON so the
  * components mount offline. Dev-only; never ships to demo.
+ *
+ * Scoped by `?screen=i18n-fala1-smoke`: every dev-render story's module body
+ * runs at import time (main.tsx imports all SCREENS eagerly), so an
+ * unconditional catch-all here would swallow every other story's `/api/*`
+ * traffic too — whichever story imports alphabetically after this one has
+ * its fetch stub wrapped INSIDE this one and never gets called. Found while
+ * building admin-command-center-panel/sso-self-service stories (2026-07-15):
+ * this catch-all was silently returning `{data:[],...}` for their
+ * `/api/admin/enterprise-compliance/*` etc. calls.
  */
 import React from 'react';
 
 import { TemplateBuilder } from '../../src/components/Interview/TemplateBuilder';
 import FormulaEditor from '../../src/components/MyWork/table/FormulaEditor';
 
-// ── Offline fetch stub (any /api/* call → empty-but-valid JSON) ─────────────
+// ── Offline fetch stub (any /api/* call → empty-but-valid JSON), scoped to
+// this screen only so it never shadows other stories' fetch mocks. ─────────
 const realFetch = window.fetch.bind(window);
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-  if (url.includes('/api/')) {
+  const isThisScreen =
+    new URLSearchParams(window.location.search).get('screen') === 'i18n-fala1-smoke';
+  if (isThisScreen && url.includes('/api/')) {
     return new Response(JSON.stringify({ data: [], items: [], results: [], templates: [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
