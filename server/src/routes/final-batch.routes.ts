@@ -45,13 +45,22 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res.status(201).json(
-      await finalBatchService.requestExport(id.orgId, {
-        ...p.data,
-        ideaId: req.params.ideaId,
-        requestedBy: id.userId,
-      })
-    );
+    const result = await finalBatchService.requestAndGenerateExport(id.orgId, {
+      ...p.data,
+      ideaId: req.params.ideaId,
+      requestedBy: id.userId,
+    });
+    if (result.status === 'failed') {
+      const status = result.reason === 'unsupported_format' ? 501 : 404;
+      res.status(status).json({
+        id: result.id,
+        status: result.status,
+        error: result.reason,
+        message: result.message,
+      });
+      return;
+    }
+    res.status(201).json(result);
   })
 );
 
