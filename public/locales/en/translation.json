@@ -26851,5 +26851,112 @@
       "2": "Describe the problem or idea",
       "3": "Click \"Accept\" in the Tools panel"
     }
+  },
+  "sharedComponents": {
+    "attachmentsLinksCanvas": {
+      "noFileSelected": "Choose at least one file",
+      "fileAdded": "Added: {{name}}",
+      "downloadFailed": "Failed to download file",
+      "connectProviderHint": "Connect this provider in Settings → Integrations",
+      "cloudComingSoon": "Cloud integrations coming soon.",
+      "provideUrl": "Provide a URL",
+      "externalStatusLabel": "External",
+      "targetNotSelected": "(item not yet selected)",
+      "aiLinkCommentSystemInstruction": "You are a project analyst. Write concisely and professionally.",
+      "generateCommentFailed": "Failed to generate comment",
+      "heading": "Attachments, Internal Links & External Links",
+      "attachmentsSectionTitle": "Attachments",
+      "sortOldestFirst": "Oldest first",
+      "sortNewestFirst": "Newest first",
+      "addFileButton": "Add file",
+      "emptyAttachments": "No attachments yet.",
+      "optionsLabel": "Options",
+      "previewAction": "Preview",
+      "editAction": "Edit",
+      "deleteAction": "Delete",
+      "externalLinksSectionTitle": "External Links",
+      "addLinkButton": "Add link",
+      "emptyExternalLinks": "No external links yet.",
+      "openAction": "Open",
+      "removeAction": "Remove",
+      "internalLinksSectionTitle": "Internal Links",
+      "emptyInternalLinks": "No internal links yet.",
+      "addAttachmentModalTitle": "Add attachment",
+      "fromComputerTab": "From computer",
+      "fromCloudTab": "From cloud",
+      "clickToChooseFiles": "Click to choose files",
+      "multipleFilesHint": "You can select multiple files at once",
+      "cloudProviderLabel": "Cloud provider",
+      "settingsLink": "Settings",
+      "connectedLabel": "Connected",
+      "notConnectedLabel": "Not connected",
+      "cloudNotConnected": "Cloud not connected.",
+      "connectAction": "Connect",
+      "chooseFileFromCloud": "Choose file from cloud",
+      "selectedFilesCount": "Selected files ({{count}})",
+      "cancelAction": "Cancel",
+      "addAction": "Add",
+      "editAttachmentModalTitle": "Edit attachment",
+      "nameLabel": "Name",
+      "saveAction": "Save",
+      "newInternalLinkModalTitle": "New Internal Link",
+      "newInternalLinkModalSubtitle": "Configure relationship and select an item to link",
+      "directionLabel": "Direction",
+      "outgoingLabel": "Outgoing",
+      "outgoingDesc": "This item → Target",
+      "incomingLabel": "Incoming",
+      "incomingDesc": "Target → This item",
+      "relationshipTypeLabel": "Relationship Type",
+      "linkRelations": {
+        "related": {
+          "label": "Related",
+          "desc": "General relationship between items"
+        },
+        "blocks": {
+          "label": "Blocks",
+          "desc": "This item blocks progress on the linked item"
+        },
+        "depends_on": {
+          "label": "Depends on",
+          "desc": "This item requires the linked item to progress"
+        },
+        "parent_of": {
+          "label": "Parent of",
+          "desc": "This item is a parent or container for the linked item"
+        },
+        "informs": {
+          "label": "Informs",
+          "desc": "This item provides context or information to the linked item"
+        },
+        "duplicates": {
+          "label": "Duplicates",
+          "desc": "These items represent the same work or concept"
+        }
+      },
+      "commentLabel": "Comment",
+      "optionalLabel": "optional",
+      "aiGenerateTooltip": "AI will generate a comment based on the selected relationship",
+      "aiDescribeButton": "AI Describe",
+      "commentPlaceholder": "Add context, reason, or notes about this link...",
+      "selectedItemLabel": "Selected Item",
+      "removeSelectionTooltip": "Remove selection",
+      "selectItemLabel": "Select Item",
+      "autoSyncInfo": "After linking, record metadata (status, priority) will sync automatically.",
+      "searchPlaceholder": "Search tasks, decisions, initiatives...",
+      "noResultsFound": "No results found.",
+      "tryDifferentSearch": "Try a different search term",
+      "typeMinCharsHint": "Type at least 2 characters to search for an item to link",
+      "readyToAdd": "Ready to add — click Add Link",
+      "selectItemToContinue": "Select an item to continue",
+      "addLinkConfirmButton": "Add Link",
+      "addExternalLinkModalTitle": "Add external link",
+      "linkTitleLabel": "Link title",
+      "linkTitlePlaceholder": "e.g. API Documentation",
+      "commentOptionalLabel": "Comment (optional)",
+      "externalCommentPlaceholder": "e.g. Final document version for the team.",
+      "editExternalLinkModalTitle": "Edit external link",
+      "editInternalLinkModalTitle": "Edit internal link",
+      "titleLabel": "Title"
+    }
   }
 }

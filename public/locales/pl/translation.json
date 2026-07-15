@@ -27927,5 +27927,112 @@
       "2": "Opisz problem lub pomysł",
       "3": "Kliknij „Akceptuj\" w panelu Tools"
     }
+  },
+  "sharedComponents": {
+    "attachmentsLinksCanvas": {
+      "noFileSelected": "Wybierz co najmniej jeden plik",
+      "fileAdded": "Dodano: {{name}}",
+      "downloadFailed": "Nie udało się pobrać pliku",
+      "connectProviderHint": "Podłącz tę chmurę w Ustawieniach → Integracje",
+      "cloudComingSoon": "Integracje chmurowe będą dostępne wkrótce.",
+      "provideUrl": "Podaj URL",
+      "externalStatusLabel": "Zewnętrzny",
+      "targetNotSelected": "(element jeszcze nie wybrany)",
+      "aiLinkCommentSystemInstruction": "Jesteś analitykiem projektowym. Piszesz zwięźle i profesjonalnie po polsku.",
+      "generateCommentFailed": "Nie udało się wygenerować komentarza",
+      "heading": "Załączniki, linki wewnętrzne i zewnętrzne",
+      "attachmentsSectionTitle": "Załączniki",
+      "sortOldestFirst": "Najstarsze",
+      "sortNewestFirst": "Najnowsze",
+      "addFileButton": "Dodaj",
+      "emptyAttachments": "Brak załączników.",
+      "optionsLabel": "Opcje",
+      "previewAction": "Podgląd",
+      "editAction": "Edytuj",
+      "deleteAction": "Usuń",
+      "externalLinksSectionTitle": "Linki zewnętrzne",
+      "addLinkButton": "Dodaj",
+      "emptyExternalLinks": "Brak linków zewnętrznych.",
+      "openAction": "Otwórz",
+      "removeAction": "Usuń",
+      "internalLinksSectionTitle": "Linki wewnętrzne",
+      "emptyInternalLinks": "Brak powiązań wewnętrznych.",
+      "addAttachmentModalTitle": "Dodaj załącznik",
+      "fromComputerTab": "Z komputera",
+      "fromCloudTab": "Z chmury",
+      "clickToChooseFiles": "Kliknij, aby wybrać pliki",
+      "multipleFilesHint": "Możesz wybrać wiele plików jednocześnie",
+      "cloudProviderLabel": "Dostawca chmury",
+      "settingsLink": "Ustawienia",
+      "connectedLabel": "Połączono",
+      "notConnectedLabel": "Niepołączono",
+      "cloudNotConnected": "Chmura niepołączona.",
+      "connectAction": "Podłącz",
+      "chooseFileFromCloud": "Wybierz plik z chmury",
+      "selectedFilesCount": "Wybrane pliki ({{count}})",
+      "cancelAction": "Anuluj",
+      "addAction": "Dodaj",
+      "editAttachmentModalTitle": "Edytuj załącznik",
+      "nameLabel": "Nazwa",
+      "saveAction": "Zapisz",
+      "newInternalLinkModalTitle": "Nowe połączenie wewnętrzne",
+      "newInternalLinkModalSubtitle": "Skonfiguruj relację i wybierz element do powiązania",
+      "directionLabel": "Kierunek",
+      "outgoingLabel": "Wychodzące",
+      "outgoingDesc": "Ten element → Docelowy",
+      "incomingLabel": "Przychodzące",
+      "incomingDesc": "Docelowy → Ten element",
+      "relationshipTypeLabel": "Typ relacji",
+      "linkRelations": {
+        "related": {
+          "label": "Powiązane",
+          "desc": "Ogólne powiązanie między elementami"
+        },
+        "blocks": {
+          "label": "Blokuje",
+          "desc": "Ten element blokuje postęp w powiązanym elemencie"
+        },
+        "depends_on": {
+          "label": "Zależy od",
+          "desc": "Ten element wymaga postępu powiązanego elementu"
+        },
+        "parent_of": {
+          "label": "Nadrzędny",
+          "desc": "Ten element jest nadrzędny wobec powiązanego"
+        },
+        "informs": {
+          "label": "Informuje",
+          "desc": "Ten element dostarcza kontekst lub informacje powiązanemu"
+        },
+        "duplicates": {
+          "label": "Duplikuje",
+          "desc": "Te elementy reprezentują tę samą pracę lub koncept"
+        }
+      },
+      "commentLabel": "Komentarz",
+      "optionalLabel": "opcjonalny",
+      "aiGenerateTooltip": "AI wygeneruje komentarz na podstawie wybranej relacji",
+      "aiDescribeButton": "AI Opisz",
+      "commentPlaceholder": "Dodaj kontekst, powód lub uwagi do tego połączenia...",
+      "selectedItemLabel": "Wybrany element",
+      "removeSelectionTooltip": "Usuń wybór",
+      "selectItemLabel": "Wybierz element",
+      "autoSyncInfo": "Po podlinkowaniu metadane (status, priorytet) zostaną pobrane automatycznie.",
+      "searchPlaceholder": "Szukaj task, decision, initiative...",
+      "noResultsFound": "Brak wyników.",
+      "tryDifferentSearch": "Spróbuj innej frazy",
+      "typeMinCharsHint": "Wpisz min. 2 znaki, aby wyszukać element do powiązania",
+      "readyToAdd": "Gotowe do dodania — kliknij Dodaj",
+      "selectItemToContinue": "Wybierz element, aby kontynuować",
+      "addLinkConfirmButton": "Dodaj połączenie",
+      "addExternalLinkModalTitle": "Dodaj link zewnętrzny",
+      "linkTitleLabel": "Tytuł linku",
+      "linkTitlePlaceholder": "Np. Dokumentacja API",
+      "commentOptionalLabel": "Komentarz (opcjonalnie)",
+      "externalCommentPlaceholder": "Np. Finalna wersja dokumentu dla zespołu.",
+      "editExternalLinkModalTitle": "Edytuj link zewnętrzny",
+      "editInternalLinkModalTitle": "Edytuj link wewnętrzny",
+      "titleLabel": "Tytuł"
+    }
   }
 }
