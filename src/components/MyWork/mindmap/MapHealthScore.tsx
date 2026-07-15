@@ -14,7 +14,6 @@ interface MapHealthScoreProps {
 
 interface HealthMetric {
   key: string;
-  labelPl: string;
   labelEn: string;
   score: number;
   detail: string;
@@ -111,8 +110,7 @@ export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
 /* ── Global MapHealthScore widget ─────────────────────────────────── */
 
 export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, visible = true }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const metrics = useMemo((): HealthMetric[] => {
@@ -171,7 +169,6 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
     return [
       {
         key: 'balance',
-        labelPl: 'Balans',
         labelEn: 'Balance',
         score: balanceScore,
         detail: t('ideas.mindmap.minMaxDetail', 'Min: {{min}}, Max: {{max}}', {
@@ -181,42 +178,40 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
       },
       {
         key: 'depth',
-        labelPl: 'Głębokość',
         labelEn: 'Depth',
         score: depthScore,
-        detail: isPl
-          ? `Śr. głębokość: ${avgDepth.toFixed(1)}`
-          : `Avg depth: ${avgDepth.toFixed(1)}`,
+        detail: t('myWorkMindmap.health.avgDepth', 'Avg depth: {{value}}', {
+          value: avgDepth.toFixed(1),
+        }),
       },
       {
         key: 'coverage',
-        labelPl: 'Pokrycie',
         labelEn: 'Coverage',
         score: coverageScore,
-        detail: isPl
-          ? `${coveredBranches}/${branchNodes.length} gałęzi`
-          : `${coveredBranches}/${branchNodes.length} branches`,
+        detail: t('myWorkMindmap.health.coverageBranches', '{{covered}}/{{total}} branches', {
+          covered: coveredBranches,
+          total: branchNodes.length,
+        }),
       },
       {
         key: 'maturity',
-        labelPl: 'Dojrzałość',
         labelEn: 'Maturity',
         score: maturityScore,
-        detail: isPl
-          ? `${matureCount}/${totalIdeas} dojrzałych`
-          : `${matureCount}/${totalIdeas} mature`,
+        detail: t('myWorkMindmap.health.matureCount', '{{mature}}/{{total}} mature', {
+          mature: matureCount,
+          total: totalIdeas,
+        }),
       },
       {
         key: 'connectivity',
-        labelPl: 'Połączenia',
         labelEn: 'Connectivity',
         score: connectivityScore,
-        detail: isPl
-          ? `${crossBranchEdges.length} cross-branch`
-          : `${crossBranchEdges.length} cross-branch`,
+        detail: t('myWorkMindmap.health.crossBranch', '{{count}} cross-branch', {
+          count: crossBranchEdges.length,
+        }),
       },
     ];
-  }, [edges, isPl, nodes]);
+  }, [edges, t, nodes]);
 
   const overallScore = useMemo(() => {
     if (metrics.length === 0) return 0;
@@ -287,7 +282,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
                 <div key={m.key}>
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-[9px] font-medium text-c-text-secondary dark:text-c-text-muted">
-                      {isPl ? m.labelPl : m.labelEn}
+                      {t(`myWorkMindmap.health.${m.key}`, m.labelEn)}
                     </span>
                     <span className="text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted">
                       {m.score}%

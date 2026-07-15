@@ -30,55 +30,49 @@ const NODE_COLOR_PALETTE = [
 ];
 
 const STRUCTURES = [
-  { id: 'mindmap', labelEn: 'Mindmap', labelPl: 'Mapa myśli' },
-  { id: 'org_chart', labelEn: 'Org chart', labelPl: 'Schemat org.' },
-  { id: 'tree_right', labelEn: 'Tree right', labelPl: 'Drzewo prawe' },
-  { id: 'fishbone', labelEn: 'Fishbone', labelPl: 'Ishikawa' },
-  { id: 'timeline', labelEn: 'Timeline', labelPl: 'Oś czasu' },
-  { id: 'semantic', labelEn: 'Semantic', labelPl: 'Semantyczna' },
+  { id: 'mindmap', labelEn: 'Mindmap' },
+  { id: 'org_chart', labelEn: 'Org chart' },
+  { id: 'tree_right', labelEn: 'Tree right' },
+  { id: 'fishbone', labelEn: 'Fishbone' },
+  { id: 'timeline', labelEn: 'Timeline' },
+  { id: 'semantic', labelEn: 'Semantic' },
 ] as const;
 
 const LAYOUT_MODES = [
-  { id: 'tree', labelEn: 'Tree', labelPl: 'Drzewo' },
-  { id: 'radial', labelEn: 'Radial', labelPl: 'Promienisty' },
-  { id: 'force', labelEn: 'Force', labelPl: 'Siłowy' },
+  { id: 'tree', labelEn: 'Tree' },
+  { id: 'radial', labelEn: 'Radial' },
+  { id: 'force', labelEn: 'Force' },
 ] as const;
 
 const THEMES = [
   {
     id: 'default',
     labelEn: 'Default',
-    labelPl: 'Domyślny',
     colors: ['#3b82f6', '#60a5fa', '#475569', '#e2e8f0'],
   },
   {
     id: 'ocean',
     labelEn: 'Ocean',
-    labelPl: 'Ocean',
     colors: ['#0d9488', '#22d3ee', '#155e75', '#cffafe'],
   },
   {
     id: 'forest',
     labelEn: 'Forest',
-    labelPl: 'Las',
     colors: ['#16a34a', '#34d399', '#166534', '#d1fae5'],
   },
   {
     id: 'sunset',
     labelEn: 'Sunset',
-    labelPl: 'Zachód',
     colors: ['#ea580c', '#fbbf24', '#9a3412', '#fef3c7'],
   },
   {
     id: 'midnight',
     labelEn: 'Midnight',
-    labelPl: 'Północ',
     colors: ['#6366f1', '#a78bfa', '#312e81', '#e0e7ff'],
   },
   {
     id: 'minimal',
     labelEn: 'Minimal',
-    labelPl: 'Minimalistyczny',
     colors: ['#6b7280', '#9ca3af', '#374151', '#f3f4f6'],
   },
 ] as const;
@@ -106,8 +100,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
   onSetLayoutMode,
   onApplyTheme,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [tab, setTab] = useState<InspectorTab>('style');
   const [autoLayout, setAutoLayout] = useState(true);
 
@@ -125,17 +118,17 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
       {/* Tab bar */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-c-surface-raised dark:bg-c-surface-raised">
         {[
-          { id: 'style' as const, icon: Brush, labelEn: 'Style', labelPl: 'Styl' },
-          { id: 'layout' as const, icon: Layout, labelEn: 'Layout', labelPl: 'Układ' },
-          { id: 'theme' as const, icon: Palette, labelEn: 'Theme', labelPl: 'Motyw' },
-        ].map((t) => (
+          { id: 'style' as const, icon: Brush, labelEn: 'Style' },
+          { id: 'layout' as const, icon: Layout, labelEn: 'Layout' },
+          { id: 'theme' as const, icon: Palette, labelEn: 'Theme' },
+        ].map((tb) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`${TAB_BTN} ${tab === t.id ? TAB_ACTIVE : TAB_INACTIVE}`}
+            key={tb.id}
+            onClick={() => setTab(tb.id)}
+            className={`${TAB_BTN} ${tab === tb.id ? TAB_ACTIVE : TAB_INACTIVE}`}
           >
-            <t.icon size={12} />
-            {isPl ? t.labelPl : t.labelEn}
+            <tb.icon size={12} />
+            {t(`myWorkMindmap.inspector.tab.${tb.id}`, tb.labelEn)}
           </button>
         ))}
       </div>
@@ -268,7 +261,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onClick={() => onSetStructure(s.id)}
                   className={currentStructure === s.id ? PILL_ACTIVE : PILL_BTN}
                 >
-                  {isPl ? s.labelPl : s.labelEn}
+                  {t(`myWorkMindmap.inspector.structure.${s.id}`, s.labelEn)}
                 </button>
               ))}
             </div>
@@ -286,7 +279,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onClick={() => onSetLayoutMode(m.id)}
                   className={currentLayoutMode === m.id ? PILL_ACTIVE : PILL_BTN}
                 >
-                  {isPl ? m.labelPl : m.labelEn}
+                  {t(`myWorkMindmap.inspector.layout.${m.id}`, m.labelEn)}
                 </button>
               ))}
             </div>
@@ -325,7 +318,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                 ))}
               </div>
               <span className="flex-1 text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted">
-                {isPl ? theme.labelPl : theme.labelEn}
+                {t(`myWorkMindmap.inspector.theme.${theme.id}`, theme.labelEn)}
               </span>
               <button
                 onClick={() => onApplyTheme(theme.id)}
