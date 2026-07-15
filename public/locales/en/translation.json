@@ -27463,6 +27463,10 @@
       "noOutputCandidates": "No output candidates yet.",
       "generatedFromThisTool": "Generated from this tool",
       "recentInitiatives": "Recent initiatives"
+    },
+    "toolCanvas": {
+      "stepBeingPrepared": "This step is being prepared",
+      "stepBeingPreparedDescription": "Head back to the summary to continue and generate initiatives."
     }
   }
 }

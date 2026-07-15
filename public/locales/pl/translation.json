@@ -28539,6 +28539,10 @@
       "noOutputCandidates": "Brak kandydatów do outputów.",
       "generatedFromThisTool": "Generated from this tool",
       "recentInitiatives": "Recent initiatives"
+    },
+    "toolCanvas": {
+      "stepBeingPrepared": "Ten krok jest w przygotowaniu",
+      "stepBeingPreparedDescription": "Wróć do podsumowania, aby kontynuować i wygenerować inicjatywy."
     }
   }
 }

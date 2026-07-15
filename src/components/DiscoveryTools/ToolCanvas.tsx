@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
 import {
@@ -145,6 +146,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
+  const { t } = useTranslation();
   // Render step-specific content
   const renderStepContent = () => {
     if (!stepDefinition) {
@@ -1095,12 +1097,10 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
       <div className="flex h-full items-center justify-center p-8">
         <div className="max-w-md rounded-2xl border border-dashed border-c-border-subtle bg-c-surface-raised p-8 text-center">
           <p className="text-base font-medium text-c-text-secondary">
-            {isPolish ? 'Ten krok jest w przygotowaniu' : 'This step is being prepared'}
+            {t('discoveryToolsMain.toolCanvas.stepBeingPrepared')}
           </p>
           <p className="mt-2 text-sm text-c-text-muted">
-            {isPolish
-              ? 'Wróć do podsumowania, aby kontynuować i wygenerować inicjatywy.'
-              : 'Head back to the summary to continue and generate initiatives.'}
+            {t('discoveryToolsMain.toolCanvas.stepBeingPreparedDescription')}
           </p>
         </div>
       </div>
