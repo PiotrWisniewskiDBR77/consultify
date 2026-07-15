@@ -67,7 +67,7 @@ const EMPTY_CONFIG: SsoSelfConfig = {
 };
 
 const inputClass =
-  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white';
+  'w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text';
 
 export const AdminSsoSelfServiceCard: React.FC = () => {
   const { t } = useTranslation();
@@ -167,8 +167,8 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+      <div className="rounded-xl border border-c-border bg-c-surface p-5">
+        <div className="flex items-center gap-2 text-sm text-c-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" />
           {t('ssoSelfService.loading', 'Loading SSO configuration…')}
         </div>
@@ -178,14 +178,14 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
 
   if (loadError) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-xl border border-c-border bg-c-surface p-5">
         <DegradedState
           title={t('ssoSelfService.errors.loadTitle', 'SSO configuration unavailable')}
           description={loadError}
         />
         <button
           onClick={() => void load()}
-          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10"
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm"
         >
           <RefreshCw className="h-4 w-4" />
           {t('ssoSelfService.actions.retry', 'Retry')}
@@ -195,14 +195,14 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+    <div className="rounded-xl border border-c-border bg-c-surface p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+          <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
             <ShieldCheck className="h-4 w-4 text-primary-500" />
             {t('ssoSelfService.title', 'SSO configuration (SAML / OIDC)')}
           </div>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-1 text-sm text-c-text-secondary">
             {t(
               'ssoSelfService.description',
               'Connect your own identity provider. This writes the metadata the login flow actually reads — separate from the toggle above.'
@@ -212,8 +212,8 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
         <span
           className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
             config.configured
-              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-              : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300'
+              ? 'bg-c-surface-raised text-c-success'
+              : 'bg-c-surface-raised text-c-text-secondary'
           }`}
         >
           {config.configured
@@ -223,7 +223,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <label className="block text-sm text-slate-600 dark:text-slate-300">
+        <label className="block text-sm text-c-text-secondary">
           {t('ssoSelfService.fields.protocol', 'Protocol')}
           <select
             value={config.protocol}
@@ -239,7 +239,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
             <option value="oidc">OIDC</option>
           </select>
         </label>
-        <label className="block text-sm text-slate-600 dark:text-slate-300">
+        <label className="block text-sm text-c-text-secondary">
           {t('ssoSelfService.fields.providerName', 'Provider name')}
           <input
             type="text"
@@ -249,7 +249,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
             className={`${inputClass} mt-1`}
           />
         </label>
-        <label className="block text-sm text-slate-600 dark:text-slate-300 md:col-span-2">
+        <label className="block text-sm text-c-text-secondary md:col-span-2">
           {t('ssoSelfService.fields.domains', 'Mapped domains (comma-separated)')}
           <input
             type="text"
@@ -262,12 +262,12 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
       </div>
 
       {config.protocol === 'saml' ? (
-        <div className="mt-4 space-y-3 rounded-lg border border-slate-200 p-4 dark:border-white/10">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="mt-4 space-y-3 rounded-lg border border-c-border p-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             {t('ssoSelfService.saml.heading', 'Identity provider (SAML)')}
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="block text-sm text-slate-600 dark:text-slate-300">
+            <label className="block text-sm text-c-text-secondary">
               {t('ssoSelfService.saml.entityId', 'IdP entity ID')}
               <input
                 type="text"
@@ -282,7 +282,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
                 className={`${inputClass} mt-1`}
               />
             </label>
-            <label className="block text-sm text-slate-600 dark:text-slate-300">
+            <label className="block text-sm text-c-text-secondary">
               {t('ssoSelfService.saml.ssoUrl', 'SSO URL')}
               <input
                 type="text"
@@ -298,7 +298,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
               />
             </label>
           </div>
-          <label className="block text-sm text-slate-600 dark:text-slate-300">
+          <label className="block text-sm text-c-text-secondary">
             {t('ssoSelfService.saml.certificate', 'X.509 certificate')}
             <textarea
               rows={4}
@@ -317,12 +317,12 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
           </label>
         </div>
       ) : (
-        <div className="mt-4 space-y-3 rounded-lg border border-slate-200 p-4 dark:border-white/10">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="mt-4 space-y-3 rounded-lg border border-c-border p-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             {t('ssoSelfService.oidc.heading', 'Identity provider (OIDC)')}
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="block text-sm text-slate-600 dark:text-slate-300">
+            <label className="block text-sm text-c-text-secondary">
               {t('ssoSelfService.oidc.issuer', 'Issuer URL')}
               <input
                 type="text"
@@ -334,7 +334,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
                 className={`${inputClass} mt-1`}
               />
             </label>
-            <label className="block text-sm text-slate-600 dark:text-slate-300">
+            <label className="block text-sm text-c-text-secondary">
               {t('ssoSelfService.oidc.clientId', 'Client ID')}
               <input
                 type="text"
@@ -349,7 +349,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
               />
             </label>
           </div>
-          <label className="block text-sm text-slate-600 dark:text-slate-300">
+          <label className="block text-sm text-c-text-secondary">
             {t('ssoSelfService.oidc.clientSecret', 'Client secret')}
             <input
               type="password"
@@ -367,7 +367,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
             />
           </label>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="block text-sm text-slate-600 dark:text-slate-300">
+            <label className="block text-sm text-c-text-secondary">
               {t('ssoSelfService.oidc.authorizationUrl', 'Authorization URL (optional)')}
               <input
                 type="text"
@@ -381,7 +381,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
                 className={`${inputClass} mt-1`}
               />
             </label>
-            <label className="block text-sm text-slate-600 dark:text-slate-300">
+            <label className="block text-sm text-c-text-secondary">
               {t('ssoSelfService.oidc.tokenUrl', 'Token URL (optional)')}
               <input
                 type="text"
@@ -396,7 +396,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
         </div>
       )}
 
-      <label className="mt-4 flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
+      <label className="mt-4 flex items-center justify-between text-sm text-c-text-secondary">
         <span>{t('ssoSelfService.fields.isEnabled', 'Enable this configuration')}</span>
         <input
           type="checkbox"
@@ -409,8 +409,8 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
         <div
           className={`mt-3 flex items-start gap-2 rounded-lg p-3 text-sm ${
             testResult.valid
-              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
-              : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400'
+              ? 'bg-c-surface-raised text-c-success'
+              : 'bg-c-surface-raised text-c-warning'
           }`}
         >
           {testResult.valid ? (
@@ -436,7 +436,7 @@ export const AdminSsoSelfServiceCard: React.FC = () => {
         <button
           onClick={() => void handleTestConnection()}
           disabled={testing}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+          className="inline-flex items-center gap-2 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
         >
           {testing && <Loader2 className="h-4 w-4 animate-spin" />}
           {t('ssoSelfService.actions.testConnection', 'Test connection')}
