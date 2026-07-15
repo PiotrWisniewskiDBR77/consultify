@@ -161,9 +161,15 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
                     }
                     className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   >
-                    <option value="high">{t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}</option>
-                    <option value="medium">{t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}</option>
-                    <option value="low">{t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}</option>
+                    <option value="high">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                    </option>
+                    <option value="medium">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}
+                    </option>
+                    <option value="low">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}
+                    </option>
                   </select>
 
                   {/* Delete button */}

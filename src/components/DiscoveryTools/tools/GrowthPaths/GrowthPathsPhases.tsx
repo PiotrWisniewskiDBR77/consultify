@@ -275,7 +275,9 @@ export function GrowthPathsOptionsPhase({
                           className="mt-1 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
                         >
                           <option value="high">{t('discoveryToolsTools.common.level.high')}</option>
-                          <option value="medium">{t('discoveryToolsTools.common.level.medium')}</option>
+                          <option value="medium">
+                            {t('discoveryToolsTools.common.level.medium')}
+                          </option>
                           <option value="low">{t('discoveryToolsTools.common.level.low')}</option>
                         </select>
                       </label>

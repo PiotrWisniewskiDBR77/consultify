@@ -278,9 +278,15 @@ export function MarketForcesBuildPhase({
                     }
                     className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm dark:border-navy-700 dark:bg-navy-900"
                   >
-                    <option value="increasing">{t('discoveryToolsTools.marketForces.trendIncreasing')}</option>
-                    <option value="stable">{t('discoveryToolsTools.marketForces.trendStable')}</option>
-                    <option value="decreasing">{t('discoveryToolsTools.marketForces.trendDecreasing')}</option>
+                    <option value="increasing">
+                      {t('discoveryToolsTools.marketForces.trendIncreasing')}
+                    </option>
+                    <option value="stable">
+                      {t('discoveryToolsTools.marketForces.trendStable')}
+                    </option>
+                    <option value="decreasing">
+                      {t('discoveryToolsTools.marketForces.trendDecreasing')}
+                    </option>
                   </select>
                 </label>
               </div>

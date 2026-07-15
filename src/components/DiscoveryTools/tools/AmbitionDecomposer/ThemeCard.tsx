@@ -140,7 +140,9 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
           <input
             value={theme.targetMetric}
             onChange={(event) => updateTheme({ targetMetric: event.target.value })}
-            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.targetMetricPlaceholder')}
+            placeholder={translate(
+              'discoveryToolsTools.ambitionDecomposer.card.targetMetricPlaceholder'
+            )}
             className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm dark:border-navy-700 dark:bg-navy-900"
           />
         </label>
@@ -149,7 +151,9 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
           <input
             value={theme.targetValue}
             onChange={(event) => updateTheme({ targetValue: event.target.value })}
-            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.targetValuePlaceholder')}
+            placeholder={translate(
+              'discoveryToolsTools.ambitionDecomposer.card.targetValuePlaceholder'
+            )}
             className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm dark:border-navy-700 dark:bg-navy-900"
           />
         </label>
@@ -198,7 +202,9 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
             type="text"
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
-            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.addDriverPlaceholder')}
+            placeholder={translate(
+              'discoveryToolsTools.ambitionDecomposer.card.addDriverPlaceholder'
+            )}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
@@ -255,7 +261,9 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
         value={theme.implication || ''}
         onChange={(event) => updateTheme({ implication: event.target.value })}
         rows={2}
-        placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.implicationPlaceholder')}
+        placeholder={translate(
+          'discoveryToolsTools.ambitionDecomposer.card.implicationPlaceholder'
+        )}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
       />
 

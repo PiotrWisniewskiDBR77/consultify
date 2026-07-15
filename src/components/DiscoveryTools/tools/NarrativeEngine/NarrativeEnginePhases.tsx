@@ -318,8 +318,7 @@ export function NarrativeEngineInsightsPhase({
                   {pillar.title || t('discoveryToolsTools.common.untitled')}
                 </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {(pillar.proofPoints || []).length} ·{' '}
-                  {resonanceBadge(pillar.audienceResonance)}
+                  {(pillar.proofPoints || []).length} · {resonanceBadge(pillar.audienceResonance)}
                 </div>
               </div>
             ))}

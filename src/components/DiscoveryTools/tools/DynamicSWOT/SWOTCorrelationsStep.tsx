@@ -218,7 +218,8 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
       {correlations.length > 0 && (
         <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
           <span>
-            {correlations.length} {t('discoveryToolsTools.dynamicSwot.correlationsStep.correlations')}
+            {correlations.length}{' '}
+            {t('discoveryToolsTools.dynamicSwot.correlationsStep.correlations')}
           </span>
           <span>•</span>
           <span>
