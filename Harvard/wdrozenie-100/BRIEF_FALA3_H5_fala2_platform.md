@@ -6,7 +6,7 @@ Cześć. Jesteś **Harvard 5**. Bierzesz warstwę platformową z Fali 2. **Teczk
 ## NAJPIERW PRZECZYTAJ
 1. `Harvard/wdrozenie-100/_KONTYNUACJA.md` (§7, §9)
 2. `Harvard/protokol/MODULE_AUDIT_PROTOCOL_V1.md`
-3. Teczki: `M25-ustawienia.md`, `M26-portal-partnerski.md`, `M27-superadmin.md`, `A1-affiliate.md` (§03)
+3. Teczki: `M25-ustawienia.md`, `M26-portal-partnerski.md`, `M27-superadmin.md`, `A1-affiliate.md` (§03, descoped 07-15)
 
 ## ZAKRES — zweryfikuj KAŻDĄ lukę w kodzie przed pracą
 
@@ -41,7 +41,7 @@ Cześć. Jesteś **Harvard 5**. Bierzesz warstwę platformową z Fali 2. **Teczk
 - L-01/L-02 = STALE (`verifySuperAdmin`/`requireRole('super_admin')`) → potwierdź, flip
 - L-09/L-10 = NAPRAWIONE (`36ceb52c60`) → live-verify po deploy, flip
 
-### A1 — Affiliate
+### A1 — Affiliate (descoped 07-15)
 - Teczka `A1-affiliate.md`: stub/descoped. Potwierdź status, udokumentuj decyzję (wejście do v1?).
 
 ## GRANICA (anty-kolizja)
