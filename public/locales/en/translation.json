@@ -10297,6 +10297,31 @@
       "annualBenefitsAssumption": "Annual transformation benefits: 15% of investment value",
       "implementationPeriodAssumption": "Implementation period: 18-24 months",
       "benefitsStartAssumption": "Benefits start from year 2"
+    },
+    "areaDetailCard": {
+      "priorityCritical": "Critical",
+      "priorityHigh": "High",
+      "priorityMedium": "Medium",
+      "priorityLow": "Low",
+      "currentAbbrev": "Cur.",
+      "targetAbbrev": "Tgt.",
+      "gapLabel": "Gap",
+      "currentStateDescriptionTitle": "Current State Description",
+      "levelLabel": "Level",
+      "currentLevelCharacteristicsTitle": "Characteristics of Current Level",
+      "toolsUsedTitle": "Tools Used",
+      "interviewNotesTitle": "Interview Notes",
+      "intervieweeLabel": "Interviewee",
+      "roleLabel": "Role",
+      "dateLabel": "Date",
+      "keyObservationsTitle": "Key Observations",
+      "toReachLevelPrefix": "To Reach Level",
+      "targetLabel": "Target",
+      "requiredCharacteristicsTitle": "Required Characteristics",
+      "exampleToolsTitle": "Example Tools",
+      "developmentRecommendationsTitle": "Development Recommendations",
+      "risksTitle": "Risks",
+      "kpisToMonitorTitle": "KPIs to Monitor"
     }
   },
   "auth": {

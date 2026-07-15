@@ -16,6 +16,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { BUSINESS_AREAS, MATURITY_LEVELS } from './AreaMatrixTable';
 
@@ -86,6 +87,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
   isEditable = false,
   initiallyExpanded = true,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(initiallyExpanded);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -96,10 +98,28 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
   // Priority based on gap
   const getPriorityInfo = (gap: number) => {
     if (gap >= 3)
-      return { label: isPolish ? 'Krytyczny' : 'Critical', color: '#f43f5e', bg: '#fef2f2' };
-    if (gap >= 2) return { label: isPolish ? 'Wysoki' : 'High', color: '#f59e0b', bg: '#fffbeb' };
-    if (gap >= 1) return { label: isPolish ? 'Średni' : 'Medium', color: '#eab308', bg: '#fefce8' };
-    return { label: isPolish ? 'Niski' : 'Low', color: '#22c55e', bg: '#f0fdf4' };
+      return {
+        label: t('reports.areaDetailCard.priorityCritical', 'Critical'),
+        color: '#f43f5e',
+        bg: '#fef2f2',
+      };
+    if (gap >= 2)
+      return {
+        label: t('reports.areaDetailCard.priorityHigh', 'High'),
+        color: '#f59e0b',
+        bg: '#fffbeb',
+      };
+    if (gap >= 1)
+      return {
+        label: t('reports.areaDetailCard.priorityMedium', 'Medium'),
+        color: '#eab308',
+        bg: '#fefce8',
+      };
+    return {
+      label: t('reports.areaDetailCard.priorityLow', 'Low'),
+      color: '#22c55e',
+      bg: '#f0fdf4',
+    };
   };
 
   const priority = getPriorityInfo(gap);
@@ -141,19 +161,23 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
           <div className="level-indicators">
             <div className="level-badge current" style={{ borderColor: currentLevelMeta?.color }}>
               <span className="level-value">{data.currentLevel}</span>
-              <span className="level-label">{isPolish ? 'Akt.' : 'Cur.'}</span>
+              <span className="level-label">
+                {t('reports.areaDetailCard.currentAbbrev', 'Cur.')}
+              </span>
             </div>
             <span className="arrow">→</span>
             <div className="level-badge target" style={{ borderColor: targetLevelMeta?.color }}>
               <span className="level-value">{data.targetLevel}</span>
-              <span className="level-label">{isPolish ? 'Cel' : 'Tgt.'}</span>
+              <span className="level-label">
+                {t('reports.areaDetailCard.targetAbbrev', 'Tgt.')}
+              </span>
             </div>
             <div
               className="level-badge gap"
               style={{ background: priority.bg, color: priority.color }}
             >
               <span className="level-value">+{gap}</span>
-              <span className="level-label">{isPolish ? 'Luka' : 'Gap'}</span>
+              <span className="level-label">{t('reports.areaDetailCard.gapLabel', 'Gap')}</span>
             </div>
           </div>
 
@@ -185,7 +209,13 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
             {/* Section 1: Current State Description */}
             <section className="content-section current-state">
               <div className="section-header">
-                <h4>📋 {isPolish ? 'Opis stanu aktualnego' : 'Current State Description'}</h4>
+                <h4>
+                  📋{' '}
+                  {t(
+                    'reports.areaDetailCard.currentStateDescriptionTitle',
+                    'Current State Description'
+                  )}
+                </h4>
                 <span
                   className="level-tag"
                   style={{
@@ -193,7 +223,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     color: currentLevelMeta?.color,
                   }}
                 >
-                  {isPolish ? 'Poziom' : 'Level'} {data.currentLevel}
+                  {t('reports.areaDetailCard.levelLabel', 'Level')} {data.currentLevel}
                 </span>
               </div>
               <div className="section-body">
@@ -205,9 +235,10 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
 
                 <div className="characteristics">
                   <h5>
-                    {isPolish
-                      ? 'Charakterystyki obecnego poziomu'
-                      : 'Characteristics of Current Level'}
+                    {t(
+                      'reports.areaDetailCard.currentLevelCharacteristicsTitle',
+                      'Characteristics of Current Level'
+                    )}
                     :
                   </h5>
                   <ul>
@@ -218,7 +249,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                 </div>
 
                 <div className="tools">
-                  <h5>{isPolish ? 'Używane narzędzia' : 'Tools Used'}:</h5>
+                  <h5>{t('reports.areaDetailCard.toolsUsedTitle', 'Tools Used')}:</h5>
                   <div className="tools-list">
                     {data.currentLevelInfo.tools.map((tool, i) => (
                       <span key={i} className="tool-badge">
@@ -234,20 +265,26 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
             {data.interview && (
               <section className="content-section interview-notes">
                 <div className="section-header">
-                  <h4>📝 {isPolish ? 'Notatki z wywiadu' : 'Interview Notes'}</h4>
+                  <h4>📝 {t('reports.areaDetailCard.interviewNotesTitle', 'Interview Notes')}</h4>
                 </div>
                 <div className="section-body">
                   <div className="interview-meta">
                     <div className="meta-item">
-                      <span className="meta-label">{isPolish ? 'Rozmówca' : 'Interviewee'}:</span>
+                      <span className="meta-label">
+                        {t('reports.areaDetailCard.intervieweeLabel', 'Interviewee')}:
+                      </span>
                       <span className="meta-value">{data.interview.intervieweeName}</span>
                     </div>
                     <div className="meta-item">
-                      <span className="meta-label">{isPolish ? 'Stanowisko' : 'Role'}:</span>
+                      <span className="meta-label">
+                        {t('reports.areaDetailCard.roleLabel', 'Role')}:
+                      </span>
                       <span className="meta-value">{data.interview.intervieweeRole}</span>
                     </div>
                     <div className="meta-item">
-                      <span className="meta-label">{isPolish ? 'Data' : 'Date'}:</span>
+                      <span className="meta-label">
+                        {t('reports.areaDetailCard.dateLabel', 'Date')}:
+                      </span>
                       <span className="meta-value">{data.interview.date}</span>
                     </div>
                   </div>
@@ -262,7 +299,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
 
                   {data.interview.observations && data.interview.observations.length > 0 && (
                     <div className="observations">
-                      <h5>{isPolish ? 'Kluczowe obserwacje' : 'Key Observations'}:</h5>
+                      <h5>{t('reports.areaDetailCard.keyObservationsTitle', 'Key Observations')}:</h5>
                       <ul>
                         {data.interview.observations.map((obs, i) => (
                           <li key={i}>{obs}</li>
@@ -278,7 +315,8 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
             <section className="content-section target-state">
               <div className="section-header">
                 <h4>
-                  🎯 {isPolish ? 'Aby osiągnąć poziom' : 'To Reach Level'} {data.targetLevel}:{' '}
+                  🎯 {t('reports.areaDetailCard.toReachLevelPrefix', 'To Reach Level')}{' '}
+                  {data.targetLevel}:{' '}
                   {isPolish ? data.targetLevelInfo.namePl : data.targetLevelInfo.name}
                 </h4>
                 <span
@@ -288,7 +326,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     color: targetLevelMeta?.color,
                   }}
                 >
-                  {isPolish ? 'Cel' : 'Target'}
+                  {t('reports.areaDetailCard.targetLabel', 'Target')}
                 </span>
               </div>
               <div className="section-body">
@@ -297,7 +335,13 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                 </p>
 
                 <div className="characteristics">
-                  <h5>{isPolish ? 'Wymagane charakterystyki' : 'Required Characteristics'}:</h5>
+                  <h5>
+                    {t(
+                      'reports.areaDetailCard.requiredCharacteristicsTitle',
+                      'Required Characteristics'
+                    )}
+                    :
+                  </h5>
                   <ul>
                     {data.targetLevelInfo.characteristics.map((char, i) => (
                       <li key={i}>{char}</li>
@@ -306,7 +350,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                 </div>
 
                 <div className="tools">
-                  <h5>{isPolish ? 'Przykładowe narzędzia' : 'Example Tools'}:</h5>
+                  <h5>{t('reports.areaDetailCard.exampleToolsTitle', 'Example Tools')}:</h5>
                   <div className="tools-list">
                     {data.targetLevelInfo.tools.map((tool, i) => (
                       <span key={i} className="tool-badge target">
@@ -322,7 +366,13 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
             {data.recommendations && data.recommendations.length > 0 && (
               <section className="content-section recommendations">
                 <div className="section-header">
-                  <h4>🚀 {isPolish ? 'Rekomendacje rozwojowe' : 'Development Recommendations'}</h4>
+                  <h4>
+                    🚀{' '}
+                    {t(
+                      'reports.areaDetailCard.developmentRecommendationsTitle',
+                      'Development Recommendations'
+                    )}
+                  </h4>
                 </div>
                 <div className="section-body">
                   <ol className="recommendations-list">
@@ -335,16 +385,10 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                           <strong>{rec.title}</strong>
                           <span className={`rec-priority ${rec.priority.toLowerCase()}`}>
                             {rec.priority === 'HIGH'
-                              ? isPolish
-                                ? 'Wysoki'
-                                : 'High'
+                              ? t('reports.areaDetailCard.priorityHigh', 'High')
                               : rec.priority === 'MEDIUM'
-                                ? isPolish
-                                  ? 'Średni'
-                                  : 'Medium'
-                                : isPolish
-                                  ? 'Niski'
-                                  : 'Low'}
+                                ? t('reports.areaDetailCard.priorityMedium', 'Medium')
+                                : t('reports.areaDetailCard.priorityLow', 'Low')}
                           </span>
                         </div>
                         {rec.description && <p className="rec-description">{rec.description}</p>}
@@ -367,7 +411,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
             {data.risks && data.risks.length > 0 && (
               <section className="content-section risks">
                 <div className="section-header">
-                  <h4>⚠️ {isPolish ? 'Ryzyka' : 'Risks'}</h4>
+                  <h4>⚠️ {t('reports.areaDetailCard.risksTitle', 'Risks')}</h4>
                 </div>
                 <div className="section-body">
                   <ul className="risks-list">
@@ -385,7 +429,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
             {data.kpis && data.kpis.length > 0 && (
               <section className="content-section kpis">
                 <div className="section-header">
-                  <h4>📈 {isPolish ? 'KPI do monitorowania' : 'KPIs to Monitor'}</h4>
+                  <h4>📈 {t('reports.areaDetailCard.kpisToMonitorTitle', 'KPIs to Monitor')}</h4>
                 </div>
                 <div className="section-body">
                   <div className="kpi-grid">

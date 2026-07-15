@@ -9532,6 +9532,31 @@
       "annualBenefitsAssumption": "Roczne korzyści z transformacji: 15% wartości inwestycji",
       "implementationPeriodAssumption": "Okres wdrożenia: 18-24 miesiące",
       "benefitsStartAssumption": "Korzyści zaczynają się od roku 2"
+    },
+    "areaDetailCard": {
+      "priorityCritical": "Krytyczny",
+      "priorityHigh": "Wysoki",
+      "priorityMedium": "Średni",
+      "priorityLow": "Niski",
+      "currentAbbrev": "Akt.",
+      "targetAbbrev": "Cel",
+      "gapLabel": "Luka",
+      "currentStateDescriptionTitle": "Opis stanu aktualnego",
+      "levelLabel": "Poziom",
+      "currentLevelCharacteristicsTitle": "Charakterystyki obecnego poziomu",
+      "toolsUsedTitle": "Używane narzędzia",
+      "interviewNotesTitle": "Notatki z wywiadu",
+      "intervieweeLabel": "Rozmówca",
+      "roleLabel": "Stanowisko",
+      "dateLabel": "Data",
+      "keyObservationsTitle": "Kluczowe obserwacje",
+      "toReachLevelPrefix": "Aby osiągnąć poziom",
+      "targetLabel": "Cel",
+      "requiredCharacteristicsTitle": "Wymagane charakterystyki",
+      "exampleToolsTitle": "Przykładowe narzędzia",
+      "developmentRecommendationsTitle": "Rekomendacje rozwojowe",
+      "risksTitle": "Ryzyka",
+      "kpisToMonitorTitle": "KPI do monitorowania"
     }
   },
   "auth": {
