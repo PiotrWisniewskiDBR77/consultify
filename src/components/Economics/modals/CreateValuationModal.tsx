@@ -21,8 +21,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
   onCreated,
   onClose,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState(initialTitle);
   const [sourceType, setSourceType] = useState<
@@ -70,7 +69,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         currency: 'PLN',
       });
       const created = result as any;
-      toast.success(t('finance.toast.valuationCreated', 'Wycena utworzona'));
+      toast.success(t('finance.toast.valuationCreated', 'Valuation created'));
       onCreated({
         id: String(created.id),
         title: String(created.title || title),
@@ -84,7 +83,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
       });
     } catch (e: any) {
       toast.error(
-        e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć')
+        e?.response?.data?.error || t('finance.toast.createFailed', 'Failed to create')
       );
     } finally {
       setCreating(false);
@@ -120,35 +119,29 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
             }}
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           >
-            <option value="manual">{isPl ? 'Ręczne dane' : 'Manual data'}</option>
-            <option value="financial_model">{isPl ? 'Model finansowy' : 'Financial model'}</option>
+            <option value="manual">{t('finance.preview.sourceManualData', 'Manual data')}</option>
+            <option value="financial_model">{t('finance.preview.financialModelLabel', 'Financial model')}</option>
             <option value="financial_analysis">
-              {isPl ? 'Analiza finansowa' : 'Financial analysis'}
+              {t('finance.preview.financialAnalysisLabel', 'Financial analysis')}
             </option>
-            <option value="budget">{isPl ? 'Budżet' : 'Budget'}</option>
+            <option value="budget">{t('finance.prediction.budget', 'Budget')}</option>
           </select>
         </div>
         {sourceType !== 'manual' && (
           <div>
             <label className="text-xs text-slate-500">
               {sourceType === 'financial_model'
-                ? isPl
-                  ? 'Wybierz model'
-                  : 'Select model'
+                ? t('finance.preview.selectModel', 'Select model')
                 : sourceType === 'financial_analysis'
-                  ? isPl
-                    ? 'Wybierz analizę'
-                    : 'Select analysis'
-                  : isPl
-                    ? 'Wybierz budżet'
-                    : 'Select budget'}
+                  ? t('finance.preview.selectAnalysis', 'Select analysis')
+                  : t('finance.preview.selectBudget', 'Select budget')}
             </label>
             <select
               value={sourceId}
               onChange={(e) => setSourceId(e.target.value)}
               className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
             >
-              <option value="">{isPl ? '— wybierz —' : '— select —'}</option>
+              <option value="">{t('finance.preview.selectPlaceholder', '— select —')}</option>
               {sourceType === 'financial_model'
                 ? sources.financialModels.map((m: any) => (
                     <option key={m.id} value={m.id}>

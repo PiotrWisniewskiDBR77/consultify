@@ -1458,7 +1458,14 @@
       "partial": "{{success}} done, {{failed}} failed"
     },
     "export": "Export",
-    "decision": "Decision"
+    "decision": "Decision",
+    "currency": "Currency",
+    "noRelations": "No relations",
+    "archive": "Archive",
+    "convertTo": "Convert to",
+    "openPreview": "Open preview",
+    "chatAbout": "Chat",
+    "comingSoonBackend": "Coming soon (backend)"
   },
   "superadmin": {
     "confirm": {
@@ -16436,7 +16443,11 @@
       "start": "Start",
       "period": "Period",
       "variants": "Variants",
-      "analyticalDepth": "Analytical depth"
+      "analyticalDepth": "Analytical depth",
+      "document": "Document",
+      "forecastWindow": "Forecast",
+      "scaling": "Scaling",
+      "type": "Type"
     },
     "empty": {
       "statements": "No statements in the current view. Ready items go to the working set, recoverable items go to Recovery Queue, and rejected ones stay outside downstream flows.",
@@ -16464,7 +16475,12 @@
       "reanalyze": "Recompute",
       "compute": "Compute",
       "computeDcf": "Compute DCF",
-      "generateProjections": "Generate projections"
+      "generateProjections": "Generate projections",
+      "confirmStatement": "Confirm",
+      "createAnalysisFromStatement": "Create analysis",
+      "createModelFromStatement": "Create model",
+      "createValuation": "Create valuation",
+      "needsRecovery": "Needs recovery"
     },
     "actions": {
       "approve": "Approve",
@@ -16473,14 +16489,35 @@
       "computeDcf": "Compute DCF",
       "compute": "Compute",
       "reanalyze": "Recompute",
-      "generateProjections": "Generate projections"
+      "generateProjections": "Generate projections",
+      "createAnalysis": "Create analysis",
+      "createModelFromStatement": "Create model",
+      "createValuation": "Create valuation",
+      "openRecoveryQueue": "Open recovery queue"
     },
     "toast": {
       "deleted": "Deleted",
       "deleteFailed": "Failed to delete",
       "duplicated": "Duplicated",
       "duplicateFailed": "Failed to duplicate",
-      "exportFailed": "Export failed"
+      "exportFailed": "Export failed",
+      "analysisApproved": "Analysis approved",
+      "approveFailed": "Approval failed",
+      "budgetApproved": "Budget approved",
+      "computeFailed": "Recalculation failed",
+      "computeDcfFailed": "DCF computation failed",
+      "computed": "Forecast computed",
+      "modelApproved": "Model approved",
+      "pptxExported": "PPTX generated",
+      "projected": "Projections generated",
+      "projectionFailed": "Generation failed",
+      "reanalyzeFailed": "Recalculation failed",
+      "reanalyzed": "Analysis recalculated",
+      "valuationApproved": "Valuation approved",
+      "valuationComputed": "Valuation computed",
+      "statementConfirmed": "Statement confirmed",
+      "valuationCreated": "Valuation created",
+      "createFailed": "Failed to create"
     },
     "prediction": {
       "budget": "Budget",
@@ -16567,7 +16604,11 @@
       "systemTables": "System data tables",
       "systemTablesHint": "Use these quick links to open loaded data sections and compare what the system already contains.",
       "validationSection": "Validation",
-      "status": "Status"
+      "status": "Status",
+      "mappedLines": "Mapped lines",
+      "previewTitle": "Pack health",
+      "ratios": "Statements",
+      "validation": "Pack status"
     },
     "counters": {
       "all": "All",
@@ -16605,6 +16646,129 @@
     },
     "ratios": {
       "missing": "missing"
+    },
+    "preview": {
+      "variantOptimistic": "Optimistic",
+      "variantConservative": "Conservative",
+      "statementBS": "Balance Sheet",
+      "sourceDocument": "Source document",
+      "sourceStatementsSuffix": "source statements",
+      "analyticalLevels": "Analytical levels",
+      "lineColumn": "Line",
+      "unmapped": "Unmapped",
+      "totalLines": "Total lines",
+      "missingPrefix": "Missing:",
+      "loadingPackPreview": "Loading pack preview…",
+      "loadingForecastLayout": "Loading forecast statement layout…",
+      "scenarioActive": "active",
+      "ratioCountSuffix": "ratios",
+      "notComputedDcf": "Not computed yet — click \"Compute DCF\"",
+      "sourceTypeManual": "Manual",
+      "viewAll": "View all",
+      "negotiationPackReady": "Negotiation Pack ready",
+      "readyForSeeding": "Ready for seeding",
+      "rejectedImport": "Rejected import",
+      "relationsSources": "Sources",
+      "relationsModelReadiness": "Model readiness",
+      "investmentCaseLabel": "Investment case",
+      "financialAnalysisLabel": "Financial analysis",
+      "ageJustNow": "Just now",
+      "ageHours": "{{hours}}h ago",
+      "ageDays": "{{days}}d ago",
+      "statementsDetails": "Statement pack\nEntity: {{entity}}\nPeriod: {{period}}\nStatus: {{status}}\nCurrency: {{currency}}\nDocuments: {{documents}}",
+      "statementsMappedLinesSuffix": "\nMapped lines: {{mapped}} • Completeness: {{completeness}}",
+      "modelsDetails": "Forecast model in P&L / BS / CF format.\nSource document: {{sourceDoc}}\nForecast window: {{window}}\nVariants: {{variants}}\nAnalytical depth: {{depth}}",
+      "analysisDetails": "{{kindLabel}}: {{analysisType}}\nCurrency: {{currency}}\nPeriods: {{periods}}",
+      "predictionBudgetDetails": "Budget / Forecast\nPeriod: {{start}} → {{end}}\nCurrency: {{currency}}\nScenarios: base / optimistic / conservative",
+      "predictionModelDetails": "Forecast / scenario: {{scenario}}\nCurrency: {{currency}}\nHorizon: {{horizon}} months",
+      "valuationDetails": "Enterprise valuation\nMethod: {{method}}\nSource: {{source}}\nCurrency: {{currency}}\nHorizon: {{horizon}} years",
+      "confirmDelete": "Are you sure you want to delete \"{{title}}\"?",
+      "copySuffix": "copy",
+      "aiHints": {
+        "reviewMapping": "Review mapping",
+        "createModel": "Create model",
+        "comparePeriods": "Compare periods",
+        "checkConsistency": "Check consistency",
+        "suggestScenario": "Suggest scenario",
+        "compareBaseline": "Compare to baseline",
+        "summarizeResults": "Summarize results",
+        "findAnomalies": "Find anomalies",
+        "suggestActions": "Suggest actions",
+        "evaluateNpvIrr": "Evaluate NPV and IRR",
+        "checkPayback": "Check payback",
+        "goNoGoRecommendation": "Go/no-go recommendation",
+        "evaluateAssumptions": "Evaluate assumptions",
+        "sensitivityAnalysis": "Sensitivity analysis",
+        "compareScenarios": "Compare scenarios",
+        "verifyWacc": "Verify WACC",
+        "compareMarket": "Compare to market",
+        "howToImprove": "How to improve?"
+      },
+      "ratioCategories": {
+        "liquidity": "Liquidity",
+        "profitability": "Profitability",
+        "leverage": "Leverage",
+        "efficiency": "Efficiency",
+        "investment": "Investment",
+        "growth": "Growth"
+      },
+      "financialModelLabel": "Financial model",
+      "documentIntro": "3-year forecast in P&L / Balance Sheet / Cash Flow layout. Source document: {{sourceDoc}}.",
+      "levelsLabel": "Levels",
+      "loadingDocumentLayout": "Loading 3-year forecast model layout...",
+      "sourceManualData": "Manual data",
+      "selectModel": "Select model",
+      "selectAnalysis": "Select analysis",
+      "selectBudget": "Select budget",
+      "selectPlaceholder": "— select —",
+      "suffixAnalysis": "analysis",
+      "suffixBudget": "budget",
+      "suffixFinancialAnalysis": "financial analysis",
+      "suffixValuation": "valuation",
+      "modelForecastFallback": "Forecast model",
+      "monthsAbbrev": "mo",
+      "periodsAbbrev": "per.",
+      "yearsAbbrev": "yr",
+      "requiresReadyStatementOrModel": "Requires a ready statement or model",
+      "confirmBulkDeleteStatements": "Are you sure you want to delete {{value}} statement(s)? This cannot be undone.",
+      "confirmBulkDeleteRows": "Are you sure you want to delete {{value}} item(s)? This cannot be undone."
+    },
+    "pack": {
+      "retry": "Retry",
+      "statusReady": "Ready",
+      "statusRecovery": "Recovery",
+      "statusDraft": "Draft",
+      "docsAbbrev": "docs",
+      "analysisLabel": "Analysis",
+      "notApplicable": "n/a",
+      "sourceLineageTooltip": "Source lineage (where this number comes from)",
+      "detailsPanelTooltip": "Details panel",
+      "detailsLabel": "Details",
+      "noValidations": "No pack validations.",
+      "loadingLineage": "Loading source lineage…",
+      "noLineage": "No lineage yet — this pack has no computed ratios/reconcile/valuation.",
+      "sourcePrefix": "Source: ",
+      "assumptionsPrefix": "Assumptions: ",
+      "sectionAssumptionsPrefix": "Section assumptions: ",
+      "lineItemLabel": "Line item",
+      "valueLabel": "Value",
+      "mappingLabel": "Mapping",
+      "originLabel": "Origin",
+      "couldNotLoadTable": "Could not load document table.",
+      "lineItemDetailsTitle": "Line item details",
+      "selectRowHint": "Select a row to see line item details.",
+      "confidenceLabel": "Confidence",
+      "sourceLabel": "Source",
+      "noEvidence": "No stored evidence for this value.",
+      "sourceFilesLabel": "Source files",
+      "addFile": "Add file",
+      "recalculateTooltip": "Recalculate",
+      "recalcShort": "Recalc",
+      "linesAbbrev": "lines",
+      "noSourceFiles": "No source files.",
+      "clickRowHint": "Click a table row to see line item details.",
+      "noDocumentSelected": "No document selected for this table.",
+      "notFound": "Statement pack not found"
     }
   },
   "portfolio": {
@@ -24371,9 +24535,22 @@
         "action": "Action",
         "appliesTo": "Applies to",
         "severity": "Severity",
-        "ruleTypeOptions": { "regex": "Regex", "keyword": "Keyword", "entity": "Entity" },
-        "actionOptions": { "block": "Block", "redact": "Redact", "warn": "Warn", "log": "Log" },
-        "appliesToOptions": { "input": "Input", "output": "Output", "both": "Both" },
+        "ruleTypeOptions": {
+          "regex": "Regex",
+          "keyword": "Keyword",
+          "entity": "Entity"
+        },
+        "actionOptions": {
+          "block": "Block",
+          "redact": "Redact",
+          "warn": "Warn",
+          "log": "Log"
+        },
+        "appliesToOptions": {
+          "input": "Input",
+          "output": "Output",
+          "both": "Both"
+        },
         "severityOptions": {
           "low": "Low",
           "medium": "Medium",
@@ -24399,7 +24576,10 @@
         "severity": "Severity",
         "status": "Status"
       },
-      "status": { "active": "Active", "inactive": "Inactive" },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
       "confirmDelete": {
         "title": "Delete DLP rule?",
         "description": "This rule will stop applying to new messages immediately. This cannot be undone."
@@ -24430,7 +24610,9 @@
         "allowedRegions": "Allowed regions (comma-separated)",
         "deniedRegions": "Denied regions (comma-separated)"
       },
-      "actions": { "save": "Save policy" },
+      "actions": {
+        "save": "Save policy"
+      },
       "toasts": {
         "saved": "Data residency policy updated",
         "loadError": "Failed to load data residency policy",
@@ -24457,7 +24639,10 @@
         "itemsDeleted": "Items deleted (total)",
         "status": "Status"
       },
-      "status": { "active": "Active", "inactive": "Inactive" },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
       "results": {
         "title": "Last execution result",
         "summary": "{{dataType}}: {{deleted}} deleted, {{preserved}} preserved"
@@ -24502,7 +24687,9 @@
         "description": "Read-only in this view — {{count}} rule(s) configured.",
         "empty": "No custom safety rules configured."
       },
-      "actions": { "save": "Save policy" },
+      "actions": {
+        "save": "Save policy"
+      },
       "toasts": {
         "saved": "AI policy updated",
         "loadError": "Failed to load AI policy",

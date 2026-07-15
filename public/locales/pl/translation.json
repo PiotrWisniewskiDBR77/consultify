@@ -143,7 +143,14 @@
       "partial": "Wykonano {{success}}, błędów: {{failed}}"
     },
     "export": "Eksportuj",
-    "decision": "Decyzja"
+    "decision": "Decyzja",
+    "currency": "Waluta",
+    "noRelations": "Brak powiązań",
+    "archive": "Archiwizuj",
+    "convertTo": "Konwertuj na",
+    "openPreview": "Otwórz podgląd",
+    "chatAbout": "Chat",
+    "comingSoonBackend": "Wkrótce (backend)"
   },
   "superadmin": {
     "confirm": {
@@ -16898,7 +16905,11 @@
       "start": "Start",
       "period": "Okres",
       "variants": "Warianty",
-      "analyticalDepth": "Głębokość analizy"
+      "analyticalDepth": "Głębokość analizy",
+      "document": "Dokument",
+      "forecastWindow": "Prognoza",
+      "scaling": "Skalowanie",
+      "type": "Typ"
     },
     "empty": {
       "statements": "Brak sprawozdań w bieżącym widoku. Gotowe pozycje trafiają do zestawu roboczego, naprawialne do Kolejki naprawczej, a odrzucone pozostają poza dalszymi przepływami.",
@@ -16926,7 +16937,12 @@
       "reanalyze": "Przelicz ponownie",
       "compute": "Przelicz",
       "computeDcf": "Oblicz DCF",
-      "generateProjections": "Generuj prognozy"
+      "generateProjections": "Generuj prognozy",
+      "confirmStatement": "Potwierdź",
+      "createAnalysisFromStatement": "Utwórz analizę",
+      "createModelFromStatement": "Utwórz model",
+      "createValuation": "Utwórz wycenę",
+      "needsRecovery": "Wymaga recovery"
     },
     "actions": {
       "approve": "Zatwierdź",
@@ -16935,14 +16951,35 @@
       "computeDcf": "Oblicz DCF",
       "compute": "Przelicz",
       "reanalyze": "Przelicz ponownie",
-      "generateProjections": "Generuj prognozy"
+      "generateProjections": "Generuj prognozy",
+      "createAnalysis": "Utwórz analizę",
+      "createModelFromStatement": "Utwórz model",
+      "createValuation": "Utwórz wycenę",
+      "openRecoveryQueue": "Otwórz recovery queue"
     },
     "toast": {
       "deleted": "Usunięto",
       "deleteFailed": "Nie udało się usunąć",
       "duplicated": "Zduplikowano",
       "duplicateFailed": "Nie udało się zduplikować",
-      "exportFailed": "Eksport nie powiódł się"
+      "exportFailed": "Eksport nie powiódł się",
+      "analysisApproved": "Analiza zatwierdzona",
+      "approveFailed": "Nie udało się zatwierdzić",
+      "budgetApproved": "Budżet zatwierdzony",
+      "computeFailed": "Nie udało się przeliczyć",
+      "computeDcfFailed": "Nie udało się obliczyć DCF",
+      "computed": "Prognoza przeliczona",
+      "modelApproved": "Model zatwierdzony",
+      "pptxExported": "PPTX wygenerowany",
+      "projected": "Prognozy wygenerowane",
+      "projectionFailed": "Nie udało się wygenerować",
+      "reanalyzeFailed": "Nie udało się przeliczyć",
+      "reanalyzed": "Analiza przeliczona",
+      "valuationApproved": "Wycena zatwierdzona",
+      "valuationComputed": "Wycena obliczona",
+      "statementConfirmed": "Statement potwierdzony",
+      "valuationCreated": "Wycena utworzona",
+      "createFailed": "Nie udało się utworzyć"
     },
     "prediction": {
       "budget": "Budżet",
@@ -17029,7 +17066,11 @@
       "systemTables": "Tabele danych w systemie",
       "systemTablesHint": "Tutaj użytkownik może szybko otworzyć sekcje z danymi i porównać, czy system ma dokładnie to, czego szukał.",
       "validationSection": "Walidacja",
-      "status": "Status"
+      "status": "Status",
+      "mappedLines": "Zmapowane linie",
+      "previewTitle": "Stan pakietu",
+      "ratios": "Sprawozdania",
+      "validation": "Status pakietu"
     },
     "counters": {
       "all": "Wszystkie",
@@ -17067,6 +17108,129 @@
     },
     "ratios": {
       "missing": "brak danych"
+    },
+    "preview": {
+      "variantOptimistic": "Optymistyczny",
+      "variantConservative": "Konserwatywny",
+      "statementBS": "Bilans",
+      "sourceDocument": "Dokument bazowy",
+      "sourceStatementsSuffix": "dokumenty składowe",
+      "analyticalLevels": "Poziomy analityczne",
+      "lineColumn": "Linia",
+      "unmapped": "Nieprzypisane",
+      "totalLines": "Wszystkie linie",
+      "missingPrefix": "Braki:",
+      "loadingPackPreview": "Ładowanie podglądu pakietu…",
+      "loadingForecastLayout": "Ładowanie prognozowanego układu sprawozdania…",
+      "scenarioActive": "aktywny",
+      "ratioCountSuffix": "wsk.",
+      "notComputedDcf": "Nie obliczono jeszcze — kliknij \"Oblicz DCF\"",
+      "sourceTypeManual": "Ręczne",
+      "viewAll": "Zobacz wszystkie",
+      "negotiationPackReady": "Negotiation Pack gotowy",
+      "readyForSeeding": "Gotowy do seedowania",
+      "rejectedImport": "Import odrzucony",
+      "relationsSources": "Źródła",
+      "relationsModelReadiness": "Gotowość do modelu",
+      "investmentCaseLabel": "Case inwestycyjny",
+      "financialAnalysisLabel": "Analiza finansowa",
+      "ageJustNow": "Przed chwilą",
+      "ageHours": "{{hours}} h temu",
+      "ageDays": "{{days}} dni temu",
+      "statementsDetails": "Pakiet sprawozdań\nFirma: {{entity}}\nOkres: {{period}}\nStatus: {{status}}\nWaluta: {{currency}}\nDokumenty: {{documents}}",
+      "statementsMappedLinesSuffix": "\nZmapowane linie: {{mapped}} • Kompletność: {{completeness}}",
+      "modelsDetails": "Model prognostyczny w układzie P&L / Bilans / CF.\nDokument bazowy: {{sourceDoc}}\nOkno prognozy: {{window}}\nWarianty: {{variants}}\nPoziomy analityczne: {{depth}}",
+      "analysisDetails": "{{kindLabel}}: {{analysisType}}\nWaluta: {{currency}}\nLiczba okresów: {{periods}}",
+      "predictionBudgetDetails": "Budżet / Prognoza\nOkres: {{start}} → {{end}}\nWaluta: {{currency}}\nScenarze: base / optimistic / conservative",
+      "predictionModelDetails": "Predykcja / scenariusz: {{scenario}}\nWaluta: {{currency}}\nHoryzont: {{horizon}} miesięcy",
+      "valuationDetails": "Wycena przedsiębiorstwa\nMetoda: {{method}}\nŹródło: {{source}}\nWaluta: {{currency}}\nHoryzont: {{horizon}} lat",
+      "confirmDelete": "Czy na pewno chcesz usunąć \"{{title}}\"?",
+      "copySuffix": "kopia",
+      "aiHints": {
+        "reviewMapping": "Sprawdź mapowanie",
+        "createModel": "Zbuduj model",
+        "comparePeriods": "Porównaj okresy",
+        "checkConsistency": "Sprawdź spójność",
+        "suggestScenario": "Zaproponuj scenariusz",
+        "compareBaseline": "Porównaj z baseline",
+        "summarizeResults": "Podsumuj wyniki",
+        "findAnomalies": "Znajdź anomalie",
+        "suggestActions": "Zaproponuj działania",
+        "evaluateNpvIrr": "Oceń NPV i IRR",
+        "checkPayback": "Sprawdź payback",
+        "goNoGoRecommendation": "Rekomendacja go/no-go",
+        "evaluateAssumptions": "Oceń założenia",
+        "sensitivityAnalysis": "Analiza wrażliwości",
+        "compareScenarios": "Porównaj scenariusze",
+        "verifyWacc": "Zweryfikuj WACC",
+        "compareMarket": "Porównaj z rynkiem",
+        "howToImprove": "Jak poprawić wycenę?"
+      },
+      "ratioCategories": {
+        "liquidity": "Płynność",
+        "profitability": "Rentowność",
+        "leverage": "Zadłużenie",
+        "efficiency": "Efektywność",
+        "investment": "Inwestycja",
+        "growth": "Wzrost"
+      },
+      "financialModelLabel": "Model finansowy",
+      "documentIntro": "Prognoza 3-letnia w układzie P&L / Bilans / Cash Flow. Dokument bazowy: {{sourceDoc}}.",
+      "levelsLabel": "Poziomy",
+      "loadingDocumentLayout": "Ładowanie układu modelu 3-letniej prognozy...",
+      "sourceManualData": "Ręczne dane",
+      "selectModel": "Wybierz model",
+      "selectAnalysis": "Wybierz analizę",
+      "selectBudget": "Wybierz budżet",
+      "selectPlaceholder": "— wybierz —",
+      "suffixAnalysis": "analiza",
+      "suffixBudget": "budżet",
+      "suffixFinancialAnalysis": "analiza finansowa",
+      "suffixValuation": "wycena",
+      "modelForecastFallback": "Model prognostyczny",
+      "monthsAbbrev": "mies.",
+      "periodsAbbrev": "okr.",
+      "yearsAbbrev": "lat",
+      "requiresReadyStatementOrModel": "Wymaga gotowego statementu lub modelu",
+      "confirmBulkDeleteStatements": "Czy na pewno chcesz usunąć {{value}} pozycji? Tej operacji nie można cofnąć.",
+      "confirmBulkDeleteRows": "Czy na pewno chcesz usunąć {{value}} pozycji? Tej operacji nie można cofnąć."
+    },
+    "pack": {
+      "retry": "Ponów",
+      "statusReady": "Gotowy",
+      "statusRecovery": "Do naprawy",
+      "statusDraft": "Szkic",
+      "docsAbbrev": "dok.",
+      "analysisLabel": "Analiza",
+      "notApplicable": "brak",
+      "sourceLineageTooltip": "Ślad źródła (skąd ta liczba)",
+      "detailsPanelTooltip": "Panel szczegółów",
+      "detailsLabel": "Szczegóły",
+      "noValidations": "Brak walidacji pakietu.",
+      "loadingLineage": "Ładowanie śladu źródła…",
+      "noLineage": "Brak śladu źródła — pakiet nie ma jeszcze przeliczonych wskaźników/reconcile/wyceny.",
+      "sourcePrefix": "Skąd: ",
+      "assumptionsPrefix": "Założenia: ",
+      "sectionAssumptionsPrefix": "Założenia sekcji: ",
+      "lineItemLabel": "Pozycja",
+      "valueLabel": "Wartość",
+      "mappingLabel": "Mapowanie",
+      "originLabel": "Pochodzenie",
+      "couldNotLoadTable": "Nie udało się załadować tabeli dokumentu.",
+      "lineItemDetailsTitle": "Szczegóły pozycji",
+      "selectRowHint": "Kliknij wiersz, aby zobaczyć szczegóły pozycji.",
+      "confidenceLabel": "Pewność",
+      "sourceLabel": "Źródło",
+      "noEvidence": "Brak zapisanych evidence dla tej pozycji.",
+      "sourceFilesLabel": "Pliki źródłowe",
+      "addFile": "Dodaj plik",
+      "recalculateTooltip": "Przelicz ponownie",
+      "recalcShort": "Przelicz",
+      "linesAbbrev": "linii",
+      "noSourceFiles": "Brak plików źródłowych.",
+      "clickRowHint": "Kliknij wiersz w tabeli, aby zobaczyć szczegóły pozycji.",
+      "noDocumentSelected": "Brak wybranego dokumentu dla tej tabeli.",
+      "notFound": "Nie znaleziono pakietu sprawozdań"
     }
   },
   "portfolio": {
@@ -25447,14 +25611,22 @@
         "action": "Akcja",
         "appliesTo": "Dotyczy",
         "severity": "Waga",
-        "ruleTypeOptions": { "regex": "Regex", "keyword": "Słowo kluczowe", "entity": "Encja" },
+        "ruleTypeOptions": {
+          "regex": "Regex",
+          "keyword": "Słowo kluczowe",
+          "entity": "Encja"
+        },
         "actionOptions": {
           "block": "Blokuj",
           "redact": "Zaczerń",
           "warn": "Ostrzeż",
           "log": "Zaloguj"
         },
-        "appliesToOptions": { "input": "Wejście", "output": "Wyjście", "both": "Oba" },
+        "appliesToOptions": {
+          "input": "Wejście",
+          "output": "Wyjście",
+          "both": "Oba"
+        },
         "severityOptions": {
           "low": "Niska",
           "medium": "Średnia",
@@ -25480,7 +25652,10 @@
         "severity": "Waga",
         "status": "Status"
       },
-      "status": { "active": "Aktywna", "inactive": "Nieaktywna" },
+      "status": {
+        "active": "Aktywna",
+        "inactive": "Nieaktywna"
+      },
       "confirmDelete": {
         "title": "Usunąć regułę DLP?",
         "description": "Reguła przestanie działać dla nowych wiadomości natychmiast. Tej operacji nie można cofnąć."
@@ -25511,7 +25686,9 @@
         "allowedRegions": "Dozwolone regiony (rozdzielone przecinkami)",
         "deniedRegions": "Zabronione regiony (rozdzielone przecinkami)"
       },
-      "actions": { "save": "Zapisz politykę" },
+      "actions": {
+        "save": "Zapisz politykę"
+      },
       "toasts": {
         "saved": "Polityka rezydencji danych zaktualizowana",
         "loadError": "Nie udało się wczytać polityki rezydencji danych",
@@ -25538,7 +25715,10 @@
         "itemsDeleted": "Usunięte pozycje (razem)",
         "status": "Status"
       },
-      "status": { "active": "Aktywny", "inactive": "Nieaktywny" },
+      "status": {
+        "active": "Aktywny",
+        "inactive": "Nieaktywny"
+      },
       "results": {
         "title": "Wynik ostatniego wykonania",
         "summary": "{{dataType}}: usunięto {{deleted}}, zachowano {{preserved}}"
@@ -25583,7 +25763,9 @@
         "description": "Tylko do odczytu w tym widoku — skonfigurowano {{count}} reguł(y).",
         "empty": "Brak skonfigurowanych niestandardowych reguł bezpieczeństwa."
       },
-      "actions": { "save": "Zapisz politykę" },
+      "actions": {
+        "save": "Zapisz politykę"
+      },
       "toasts": {
         "saved": "Polityka AI zaktualizowana",
         "loadError": "Nie udało się wczytać polityki AI",
