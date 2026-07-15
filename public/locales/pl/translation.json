@@ -10545,6 +10545,19 @@
       "admin": {
         "recent": "Ostatnie"
       }
+    },
+    "documentationRenderer": {
+      "contentNotFound": "Treść nie znaleziona",
+      "overview": "Przegląd",
+      "targetAudience": "Dla kogo",
+      "keyFeatures": "Kluczowe funkcje",
+      "workflowSteps": "Kroki pracy",
+      "tips": "Wskazówki",
+      "relatedModules": "Powiązane moduły",
+      "documentation": "Dokumentacja",
+      "features": "Funkcje",
+      "howToUse": "Jak używać",
+      "video": "Wideo"
     }
   },
   "settings": {

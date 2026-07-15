@@ -11399,6 +11399,19 @@
       "admin": {
         "recent": "Recent"
       }
+    },
+    "documentationRenderer": {
+      "contentNotFound": "Content not found",
+      "overview": "Overview",
+      "targetAudience": "Target Audience",
+      "keyFeatures": "Key Features",
+      "workflowSteps": "Workflow Steps",
+      "tips": "Tips",
+      "relatedModules": "Related Modules",
+      "documentation": "Documentation",
+      "features": "Features",
+      "howToUse": "How to Use",
+      "video": "Video"
     }
   },
   "settings": {
