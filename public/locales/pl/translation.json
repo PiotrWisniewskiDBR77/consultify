@@ -28282,6 +28282,45 @@
       "markAsSentExternally": "Oznacz jako wysłany zewnętrznie",
       "sentExternally": "Wysłany zewnętrznie",
       "reportHasBeenSentToThe": "Raport został wysłany do klienta. Cykl życia raportu został zakończony."
+    },
+    "reviewPanel": {
+      "sentForReview": "Wysłano do recenzji",
+      "approved": "Zatwierdzono",
+      "sentBack": "Odesłano",
+      "reason": "Powód:",
+      "rejected": "Odrzucono",
+      "review": "Do recenzji",
+      "approve": "Zatwierdź",
+      "send": "Wyślij",
+      "client": "Klient",
+      "close": "Zamknij",
+      "workflow": "Workflow",
+      "distribution": "Dystrybucja",
+      "revise": "Popraw",
+      "reject": "Odrzuć",
+      "revoke": "Cofnij",
+      "complete": "Cykl zakończony",
+      "sendForReview": "Wyślij do recenzji",
+      "search": "Szukaj...",
+      "message": "Wiadomość...",
+      "sendTo": "Wyślij do",
+      "comments": "Komentarze",
+      "general": "Ogólny",
+      "issue": "Problem",
+      "q": "Pytanie",
+      "suggest": "Sugestia",
+      "comment": "Komentarz...",
+      "add": "Dodaj",
+      "noCommentsYet": "Brak komentarzy",
+      "status": {
+        "DRAFT": "Szkic",
+        "GENERATED": "Wygenerowany",
+        "IN_REVIEW": "Recenzja",
+        "APPROVED": "Zatwierdzony",
+        "SENT_INTERNAL": "Wysłany wewn.",
+        "SENT_EXTERNAL": "Wysłany do klienta",
+        "UTILIZED": "Wykorzystany"
+      }
     }
   }
 }

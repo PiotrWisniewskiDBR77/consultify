@@ -27206,6 +27206,45 @@
       "markAsSentExternally": "Mark as Sent Externally",
       "sentExternally": "Sent Externally",
       "reportHasBeenSentToThe": "Report has been sent to the client. The report lifecycle is complete."
+    },
+    "reviewPanel": {
+      "sentForReview": "Sent for review",
+      "approved": "Approved",
+      "sentBack": "Sent back",
+      "reason": "Reason:",
+      "rejected": "Rejected",
+      "review": "Review",
+      "approve": "Approve",
+      "send": "Send",
+      "client": "Client",
+      "close": "Close",
+      "workflow": "Workflow",
+      "distribution": "Distribution",
+      "revise": "Revise",
+      "reject": "Reject",
+      "revoke": "Revoke",
+      "complete": "Complete",
+      "sendForReview": "Send for Review",
+      "search": "Search...",
+      "message": "Message...",
+      "sendTo": "Send to",
+      "comments": "Comments",
+      "general": "General",
+      "issue": "Issue",
+      "q": "Q",
+      "suggest": "Suggest",
+      "comment": "Comment...",
+      "add": "Add",
+      "noCommentsYet": "No comments yet",
+      "status": {
+        "DRAFT": "Draft",
+        "GENERATED": "Generated",
+        "IN_REVIEW": "In Review",
+        "APPROVED": "Approved",
+        "SENT_INTERNAL": "Sent internally",
+        "SENT_EXTERNAL": "Sent to client",
+        "UTILIZED": "Utilized"
+      }
     }
   }
 }
