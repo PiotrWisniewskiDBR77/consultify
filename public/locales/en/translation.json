@@ -10339,6 +10339,43 @@
       "impactLabel": "Impact",
       "probabilityLabel": "Probability",
       "removeRiskButton": "Remove risk"
+    },
+    "ganttChart": {
+      "monthNamesShort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
+      "roadmapTitle": "Transformation Roadmap",
+      "zoomYear": "Year",
+      "zoomQuarter": "Quarter",
+      "zoomMonth": "Month",
+      "hideCriticalPath": "Hide critical path",
+      "showCriticalPath": "Show critical path",
+      "askAiScheduleTooltip": "Ask AI about schedule sensibility",
+      "checkScheduleButton": "Check schedule",
+      "pmPerspectiveTooltip": "PM perspective check",
+      "pmCheckButton": "PM Check",
+      "chatScheduleTooltip": "Chat about schedule",
+      "scheduleWarningsTitle": "Schedule Warnings",
+      "milestoneLabel": "Milestone",
+      "criticalPathLabel": "Critical Path",
+      "phaseLabel": "Phase",
+      "moSuffix": "mo.",
+      "totalTransformationTime": "Total transformation time",
+      "monthsSuffix": "months",
+      "phasesSuffix": "phases",
+      "milestonesSuffix": "milestones",
+      "onCriticalPathSuffix": "on critical path"
     }
   },
   "auth": {

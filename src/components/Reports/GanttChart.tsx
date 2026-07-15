@@ -248,7 +248,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   onPMPerspectiveCheck,
   onOpenScheduleChat,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [zoom, setZoom] = useState<'month' | 'quarter' | 'year'>('quarter');
@@ -280,10 +280,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({
     const headers: Array<{ label: string; span: number; key: string }> = [];
 
     if (zoom === 'month') {
+      const monthNames = t('reports.ganttChart.monthNamesShort', {
+        returnObjects: true,
+      }) as string[];
       for (let m = 1; m <= totalMonths; m++) {
-        const monthNames = isPolish
-          ? ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-          : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const year = startYear + Math.floor((m - 1) / 12);
         const monthIndex = (m - 1) % 12;
         headers.push({
@@ -313,7 +313,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
     }
 
     return headers;
-  }, [zoom, totalMonths, startYear, isPolish]);
+  }, [zoom, totalMonths, startYear, t]);
 
   // Cell width based on zoom
   const cellWidth = zoom === 'month' ? 60 : zoom === 'quarter' ? 120 : 200;
@@ -398,7 +398,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle bg-c-surface-raised">
         <div className="flex items-center gap-3">
           <h3 className="font-semibold text-c-text">
-            {isPolish ? 'Roadmapa Transformacji' : 'Transformation Roadmap'}
+            {t('reports.ganttChart.roadmapTitle', 'Transformation Roadmap')}
           </h3>
           {scheduleWarnings.length > 0 && (
             <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
@@ -416,7 +416,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                 zoom === 'year' ? 'bg-c-info/15 text-c-info' : 'text-c-text-muted hover:text-c-text'
               }`}
             >
-              {isPolish ? 'Rok' : 'Year'}
+              {t('reports.ganttChart.zoomYear', 'Year')}
             </button>
             <button
               onClick={() => setZoom('quarter')}
@@ -426,7 +426,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   : 'text-c-text-muted hover:text-c-text'
               }`}
             >
-              {isPolish ? 'Kwartał' : 'Quarter'}
+              {t('reports.ganttChart.zoomQuarter', 'Quarter')}
             </button>
             <button
               onClick={() => setZoom('month')}
@@ -436,7 +436,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   : 'text-c-text-muted hover:text-c-text'
               }`}
             >
-              {isPolish ? 'Miesiąc' : 'Month'}
+              {t('reports.ganttChart.zoomMonth', 'Month')}
             </button>
           </div>
 
@@ -453,12 +453,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             }`}
             title={
               showCriticalPath
-                ? isPolish
-                  ? 'Ukryj ścieżkę krytyczną'
-                  : 'Hide critical path'
-                : isPolish
-                  ? 'Pokaż ścieżkę krytyczną'
-                  : 'Show critical path'
+                ? t('reports.ganttChart.hideCriticalPath', 'Hide critical path')
+                : t('reports.ganttChart.showCriticalPath', 'Show critical path')
             }
           >
             <Route size={16} />
@@ -470,14 +466,13 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <button
               onClick={onAskScheduleSensibility}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-accent-soft text-c-accent hover:bg-c-accent/15 transition-colors"
-              title={
-                isPolish
-                  ? 'Zapytaj AI o sensowność harmonogramu'
-                  : 'Ask AI about schedule sensibility'
-              }
+              title={t(
+                'reports.ganttChart.askAiScheduleTooltip',
+                'Ask AI about schedule sensibility'
+              )}
             >
               <Sparkles size={14} />
-              {isPolish ? 'Sprawdź harmonogram' : 'Check schedule'}
+              {t('reports.ganttChart.checkScheduleButton', 'Check schedule')}
             </button>
           )}
           {/* D4.4: PM Perspective schedule verification */}
@@ -485,10 +480,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <button
               onClick={onPMPerspectiveCheck}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-info/15 text-c-info hover:bg-c-info/25 transition-colors"
-              title={isPolish ? 'Weryfikacja z perspektywy PM' : 'PM perspective check'}
+              title={t('reports.ganttChart.pmPerspectiveTooltip', 'PM perspective check')}
             >
               <Shield size={14} />
-              {isPolish ? 'Perspektywa PM' : 'PM Check'}
+              {t('reports.ganttChart.pmCheckButton', 'PM Check')}
             </button>
           )}
           {/* D4.5: Chat in schedule context */}
@@ -496,10 +491,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <button
               onClick={onOpenScheduleChat}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-info/15 text-c-info hover:bg-c-info/25 transition-colors"
-              title={isPolish ? 'Otwórz chat o harmonogramie' : 'Chat about schedule'}
+              title={t('reports.ganttChart.chatScheduleTooltip', 'Chat about schedule')}
             >
               <MessageSquare size={14} />
-              {isPolish ? 'Chat' : 'Chat'}
+              Chat
             </button>
           )}
         </div>
@@ -512,7 +507,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-amber-800 dark:text-amber-300 mb-0.5">
-                {isPolish ? 'Ostrzeżenia harmonogramu' : 'Schedule Warnings'}
+                {t('reports.ganttChart.scheduleWarningsTitle', 'Schedule Warnings')}
               </p>
               {scheduleWarnings.slice(0, 3).map((w, i) => (
                 <p key={i} className="text-xs text-amber-700 dark:text-amber-400 truncate">
@@ -547,7 +542,9 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         ))}
         <div className="flex items-center gap-1.5">
           <Flag className="w-3 h-3 text-c-text-muted" />
-          <span className="text-c-text-secondary">{isPolish ? 'Kamień milowy' : 'Milestone'}</span>
+          <span className="text-c-text-secondary">
+            {t('reports.ganttChart.milestoneLabel', 'Milestone')}
+          </span>
         </div>
         {showCriticalPath && (
           <>
@@ -555,7 +552,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <div className="flex items-center gap-1.5">
               <Route className="w-3 h-3 text-c-danger" />
               <span className="text-c-text-secondary">
-                {isPolish ? 'Ścieżka krytyczna' : 'Critical Path'}
+                {t('reports.ganttChart.criticalPathLabel', 'Critical Path')}
               </span>
             </div>
           </>
@@ -568,7 +565,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           {/* Timeline header */}
           <div className="flex border-b border-c-border-subtle">
             <div className="w-48 flex-shrink-0 px-4 py-2 bg-c-surface-raised font-medium text-sm text-c-text-secondary border-r border-c-border-subtle">
-              {isPolish ? 'Faza' : 'Phase'}
+              {t('reports.ganttChart.phaseLabel', 'Phase')}
             </div>
             <div className="flex">
               {timelineHeaders.map((header) => (
@@ -700,7 +697,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                           {isPolish ? phase.namePl : phase.name}
                         </p>
                         <p className="text-xs text-c-text-muted">
-                          {phase.duration} {isPolish ? 'mies.' : 'mo.'}
+                          {phase.duration} {t('reports.ganttChart.moSuffix', 'mo.')}
                         </p>
                       </div>
                     </div>
@@ -787,21 +784,22 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       <div className="px-4 py-3 bg-c-surface-raised border-t border-c-border-subtle">
         <div className="flex items-center justify-between text-sm">
           <span className="text-c-text-secondary">
-            {isPolish ? 'Całkowity czas transformacji' : 'Total transformation time'}:{' '}
+            {t('reports.ganttChart.totalTransformationTime', 'Total transformation time')}:{' '}
             <strong className="text-c-text">
-              {maxMonth} {isPolish ? 'miesięcy' : 'months'}
+              {maxMonth} {t('reports.ganttChart.monthsSuffix', 'months')}
             </strong>
           </span>
           <span className="text-c-text-secondary">
-            {phases.length} {isPolish ? 'faz' : 'phases'} •{' '}
+            {phases.length} {t('reports.ganttChart.phasesSuffix', 'phases')} •{' '}
             {phases.reduce((sum, p) => sum + (p.milestones?.length || 0), 0)}{' '}
-            {isPolish ? 'kamieni milowych' : 'milestones'}
+            {t('reports.ganttChart.milestonesSuffix', 'milestones')}
             {showCriticalPath && criticalPathIds.size > 0 && (
               <>
                 {' '}
                 •{' '}
                 <span className="text-c-danger font-medium">
-                  {criticalPathIds.size} {isPolish ? 'na ścieżce krytycznej' : 'on critical path'}
+                  {criticalPathIds.size}{' '}
+                  {t('reports.ganttChart.onCriticalPathSuffix', 'on critical path')}
                 </span>
               </>
             )}

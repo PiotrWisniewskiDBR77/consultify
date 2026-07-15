@@ -9574,6 +9574,43 @@
       "impactLabel": "Wpływ",
       "probabilityLabel": "Prawdopodobieństwo",
       "removeRiskButton": "Usuń ryzyko"
+    },
+    "ganttChart": {
+      "monthNamesShort": [
+        "Sty",
+        "Lut",
+        "Mar",
+        "Kwi",
+        "Maj",
+        "Cze",
+        "Lip",
+        "Sie",
+        "Wrz",
+        "Paź",
+        "Lis",
+        "Gru"
+      ],
+      "roadmapTitle": "Roadmapa Transformacji",
+      "zoomYear": "Rok",
+      "zoomQuarter": "Kwartał",
+      "zoomMonth": "Miesiąc",
+      "hideCriticalPath": "Ukryj ścieżkę krytyczną",
+      "showCriticalPath": "Pokaż ścieżkę krytyczną",
+      "askAiScheduleTooltip": "Zapytaj AI o sensowność harmonogramu",
+      "checkScheduleButton": "Sprawdź harmonogram",
+      "pmPerspectiveTooltip": "Weryfikacja z perspektywy PM",
+      "pmCheckButton": "Perspektywa PM",
+      "chatScheduleTooltip": "Otwórz chat o harmonogramie",
+      "scheduleWarningsTitle": "Ostrzeżenia harmonogramu",
+      "milestoneLabel": "Kamień milowy",
+      "criticalPathLabel": "Ścieżka krytyczna",
+      "phaseLabel": "Faza",
+      "moSuffix": "mies.",
+      "totalTransformationTime": "Całkowity czas transformacji",
+      "monthsSuffix": "miesięcy",
+      "phasesSuffix": "faz",
+      "milestonesSuffix": "kamieni milowych",
+      "onCriticalPathSuffix": "na ścieżce krytycznej"
     }
   },
   "auth": {
