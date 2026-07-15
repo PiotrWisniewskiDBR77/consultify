@@ -26905,6 +26905,21 @@
       ],
       "insight": "The recommendation is not equal support for every topic, but deliberate allocation: invest, maintain, test, harvest, stop.",
       "output": "Source summary -> portfolio initiatives -> deck -> report"
+    },
+    "growthPathsLibraryGraphic": {
+      "titleProcess": "How Growth Paths moves from ambition to path selection",
+      "titleExample": "Example: from growth ambition to a move sequence",
+      "subtitle": "Ansoff is not an idea list. It frames ambition and evidence first, builds options across four fields, compares trade-offs, and only then moves into actions and initiatives.",
+      "missionProcess": "Growth mission, scope, success signal, and constraints",
+      "missionExample": "How do we grow premium-segment revenue without diluting margin?",
+      "quadrants": [
+        ["Market penetration", "Use the current segment and channels better"],
+        ["Market development", "Enter new segments or geographies"],
+        ["Product development", "New value propositions for current customers"],
+        ["Diversification", "New product and new market, highest risk"]
+      ],
+      "insight": "The recommendation does not come from the longest idea list, but from the best sequence: scale core, test the new segment, then increase risk.",
+      "output": "Source summary -> initiative -> deck -> report"
     }
   }
 }

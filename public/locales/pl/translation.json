@@ -27981,6 +27981,21 @@
       ],
       "insight": "Rekomendacja nie polega na równym wsparciu wszystkich tematów, tylko na świadomej alokacji: invest, maintain, test, harvest, stop.",
       "output": "Source summary -> inicjatywy portfolio -> deck -> raport"
+    },
+    "growthPathsLibraryGraphic": {
+      "titleProcess": "Jak Growth Paths prowadzi od ambicji do wyboru ścieżki",
+      "titleExample": "Przykład: od ambicji wzrostu do sekwencji ruchów",
+      "subtitle": "Ansoff nie jest listą pomysłów. Najpierw ustawia ambicję i sygnały, potem buduje opcje w czterech polach, porównuje trade-offy i dopiero wtedy przechodzi do ruchów oraz inicjatyw.",
+      "missionProcess": "Growth mission, scope, success signal i constraints",
+      "missionExample": "Jak zwiększyć przychód w segmencie premium bez rozmycia marży?",
+      "quadrants": [
+        ["Penetracja rynku", "Lepsze wykorzystanie obecnego segmentu i kanałów"],
+        ["Rozwój rynku", "Wejście do nowych segmentów lub geografii"],
+        ["Rozwój produktu", "Nowe propozycje wartości dla obecnych klientów"],
+        ["Dywersyfikacja", "Nowy produkt i nowy rynek, najwyższe ryzyko"]
+      ],
+      "insight": "Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.",
+      "output": "Source summary -> inicjatywa -> deck -> raport"
     }
   }
 }
