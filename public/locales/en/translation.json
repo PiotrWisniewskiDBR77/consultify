@@ -26880,7 +26880,19 @@
       "confidence": "Confidence",
       "firstStepColonSpace": "First step: ",
       "add": "Add",
-      "probability": "Probability"
+      "probability": "Probability",
+      "badge": {
+        "aiProposal": "AI proposal",
+        "rejected": "Rejected",
+        "rethinking": "Rethinking",
+        "accepted": "Accepted"
+      },
+      "userInput": "User input",
+      "manualEntry": "Manual entry",
+      "initiativeDrafts": "Initiative drafts",
+      "noInitiatives": "No initiatives yet.",
+      "evidence": "Evidence",
+      "untitled": "Untitled"
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -26994,6 +27006,42 @@
         "textPlaceholder": "Assumption text...",
         "hint": "Write assumptions so they can be verified (data/conditions).",
         "empty": "No assumptions yet"
+      }
+    },
+    "capabilityMapper": {
+      "sourcing": {
+        "buy": "Buy",
+        "partner": "Partner",
+        "sustain": "Sustain",
+        "build": "Build"
+      },
+      "signalsTitle": "Capability Signals & Evidence",
+      "signalsSubtitle": "Capture facts about people, processes, technology, and data before mapping capabilities.",
+      "addSignalPlaceholder": "Add a capability signal...",
+      "mapTitle": "Capability Map",
+      "mapSubtitle": "Each capability should have a current and target maturity, importance, sourcing strategy, drivers, and an implication.",
+      "addCapability": "Add capability",
+      "emptyCapabilities": "No capabilities yet. Add the first one or wait for AI proposals.",
+      "gapsTitle": "Capability Gaps & Moves",
+      "gapsSubtitle": "This is where the capability map turns into prioritized gaps and strategic moves (build/buy/partner).",
+      "acceptedCapabilities": "Accepted capabilities",
+      "noAcceptedCapabilities": "No accepted capabilities.",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on the approved diagnosis.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "namePlaceholder": "Capability name...",
+        "domainPlaceholder": "Domain (e.g. technology, talent)...",
+        "removeCapability": "Remove capability",
+        "currentMaturity": "Current maturity",
+        "targetMaturity": "Target maturity",
+        "strategicImportance": "Strategic importance",
+        "gapSize": "Gap size",
+        "sourcingStrategy": "Sourcing strategy",
+        "addDriverPlaceholder": "Add a driver...",
+        "noDrivers": "No drivers added",
+        "implicationPlaceholder": "Implication of the capability gap...",
+        "hint": "Judge the gap between current and target maturity and whether to build, buy, or partner."
       }
     }
   }

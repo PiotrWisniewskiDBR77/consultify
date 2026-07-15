@@ -27956,7 +27956,19 @@
       "confidence": "Pewność",
       "firstStepColonSpace": "Pierwszy krok: ",
       "add": "Dodaj",
-      "probability": "Prawdopodobieństwo"
+      "probability": "Prawdopodobieństwo",
+      "badge": {
+        "aiProposal": "Propozycja AI",
+        "rejected": "Odrzucone",
+        "rethinking": "Przemyślenie",
+        "accepted": "Zaakceptowane"
+      },
+      "userInput": "Wpis użytkownika",
+      "manualEntry": "Wpis ręczny",
+      "initiativeDrafts": "Drafty inicjatyw",
+      "noInitiatives": "Brak inicjatyw.",
+      "evidence": "Dowody",
+      "untitled": "Bez nazwy"
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -28070,6 +28082,42 @@
         "textPlaceholder": "Treść założenia...",
         "hint": "Zapisz założenia tak, aby dało się je zweryfikować (dane/warunki).",
         "empty": "Brak założeń"
+      }
+    },
+    "capabilityMapper": {
+      "sourcing": {
+        "buy": "Kup",
+        "partner": "Partneruj",
+        "sustain": "Utrzymaj",
+        "build": "Zbuduj"
+      },
+      "signalsTitle": "Sygnały i dowody kompetencji",
+      "signalsSubtitle": "Zbierz fakty o ludziach, procesach, technologii i danych zanim AI zmapuje kompetencje.",
+      "addSignalPlaceholder": "Dodaj sygnał...",
+      "mapTitle": "Mapa kompetencji",
+      "mapSubtitle": "Każda kompetencja powinna mieć dojrzałość obecną i docelową, znaczenie, strategię pozyskania, drivery i implikację.",
+      "addCapability": "Dodaj kompetencję",
+      "emptyCapabilities": "Brak kompetencji. Dodaj pierwszą lub poczekaj na propozycje AI.",
+      "gapsTitle": "Luki kompetencyjne i ruchy",
+      "gapsSubtitle": "Tu mapa kompetencji zamienia się w priorytetowe luki i ruchy strategiczne (zbuduj/kup/partneruj).",
+      "acceptedCapabilities": "Zaakceptowane kompetencje",
+      "noAcceptedCapabilities": "Brak zaakceptowanych kompetencji.",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "namePlaceholder": "Nazwa kompetencji...",
+        "domainPlaceholder": "Domena (np. technologia, talenty)...",
+        "removeCapability": "Usuń kompetencję",
+        "currentMaturity": "Dojrzałość obecna",
+        "targetMaturity": "Dojrzałość docelowa",
+        "strategicImportance": "Znaczenie strategiczne",
+        "gapSize": "Wielkość luki",
+        "sourcingStrategy": "Strategia pozyskania",
+        "addDriverPlaceholder": "Dodaj czynnik...",
+        "noDrivers": "Brak dodanych czynników",
+        "implicationPlaceholder": "Implikacja luki kompetencyjnej...",
+        "hint": "Oceń lukę między dojrzałością obecną a docelową i czy ją zbudować, kupić czy zlecić."
       }
     }
   }

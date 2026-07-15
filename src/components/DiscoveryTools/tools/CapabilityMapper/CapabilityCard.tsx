@@ -12,6 +12,7 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Capability,
@@ -74,6 +75,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [newDriver, setNewDriver] = useState('');
 
@@ -115,7 +117,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
             <input
               value={capability.name}
               onChange={(event) => updateCapability({ name: event.target.value })}
-              placeholder={isPolish ? 'Nazwa kompetencji...' : 'Capability name...'}
+              placeholder={t('discoveryToolsTools.capabilityMapper.card.namePlaceholder')}
               className="min-w-0 flex-1 border-0 border-b border-transparent bg-transparent p-0 font-semibold text-slate-900 focus:border-slate-300 focus:outline-none focus:ring-0 dark:text-slate-100"
             />
             {capability.domain && (
@@ -127,11 +129,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
           <input
             value={capability.domain}
             onChange={(event) => updateCapability({ domain: event.target.value })}
-            placeholder={
-              isPolish
-                ? 'Domena (np. technologia, talenty)...'
-                : 'Domain (e.g. technology, talent)...'
-            }
+            placeholder={t('discoveryToolsTools.capabilityMapper.card.domainPlaceholder')}
             className="w-full border-0 bg-transparent p-0 text-xs text-slate-500 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-400"
           />
         </div>
@@ -150,7 +148,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
               type="button"
               onClick={removeCapability}
               className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-              title={isPolish ? 'Usuń kompetencję' : 'Remove capability'}
+              title={t('discoveryToolsTools.capabilityMapper.card.removeCapability')}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -161,7 +159,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
       {/* Scoring grid */}
       <div className="mb-3 grid gap-2 sm:grid-cols-2">
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Dojrzałość obecna' : 'Current maturity'}
+          {t('discoveryToolsTools.capabilityMapper.card.currentMaturity')}
           <select
             value={capability.currentMaturity}
             onChange={(event) => updateCapability({ currentMaturity: Number(event.target.value) })}
@@ -175,7 +173,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Dojrzałość docelowa' : 'Target maturity'}
+          {t('discoveryToolsTools.capabilityMapper.card.targetMaturity')}
           <select
             value={capability.targetMaturity}
             onChange={(event) => updateCapability({ targetMaturity: Number(event.target.value) })}
@@ -189,7 +187,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Znaczenie strategiczne' : 'Strategic importance'}
+          {t('discoveryToolsTools.capabilityMapper.card.strategicImportance')}
           <select
             value={capability.importance}
             onChange={(event) =>
@@ -205,7 +203,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Wielkość luki' : 'Gap size'}
+          {t('discoveryToolsTools.capabilityMapper.card.gapSize')}
           <select
             value={capability.gapSize || 'moderate'}
             onChange={(event) =>
@@ -221,7 +219,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400 sm:col-span-2">
-          {isPolish ? 'Strategia pozyskania' : 'Sourcing strategy'}
+          {t('discoveryToolsTools.capabilityMapper.card.sourcingStrategy')}
           <select
             value={capability.sourcing || 'build'}
             onChange={(event) =>
@@ -245,7 +243,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
             type="text"
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
-            placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
+            placeholder={t('discoveryToolsTools.capabilityMapper.card.addDriverPlaceholder')}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
@@ -277,7 +275,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
             ))
           ) : (
             <p className="text-sm italic text-slate-600">
-              {isPolish ? 'Brak dodanych czynników' : 'No drivers added'}
+              {t('discoveryToolsTools.capabilityMapper.card.noDrivers')}
             </p>
           )}
         </div>
@@ -287,7 +285,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
       {(capability.evidence || []).length > 0 && (
         <div className="mb-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-            {isPolish ? 'Dowody' : 'Evidence'}
+            {t('discoveryToolsTools.common.evidence')}
           </div>
           <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
             {(capability.evidence || []).map((item, i) => (
@@ -302,19 +300,11 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
         value={capability.implication || ''}
         onChange={(event) => updateCapability({ implication: event.target.value })}
         rows={2}
-        placeholder={
-          isPolish ? 'Implikacja luki kompetencyjnej...' : 'Implication of the capability gap...'
-        }
+        placeholder={t('discoveryToolsTools.capabilityMapper.card.implicationPlaceholder')}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
       />
 
-      <InlineAssist
-        hint={
-          isPolish
-            ? 'Oceń lukę między dojrzałością obecną a docelową i czy ją zbudować, kupić czy zlecić.'
-            : 'Judge the gap between current and target maturity and whether to build, buy, or partner.'
-        }
-      />
+      <InlineAssist hint={t('discoveryToolsTools.capabilityMapper.card.hint')} />
     </div>
   );
 };
