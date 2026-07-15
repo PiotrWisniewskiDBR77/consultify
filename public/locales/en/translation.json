@@ -28433,6 +28433,29 @@
       "link": "Link",
       "openFullView": "Open full view",
       "searchPlaceholder": "Search..."
+    },
+    "nModeToolbar": {
+      "fork": "Fork",
+      "present": "Present"
+    },
+    "workspacePanelStrip": {
+      "ariaLabel": "Workspace tool strip",
+      "tools": "Tools",
+      "contextLinks": "Context / links",
+      "aiSuggestions": "AI suggestions (consider)"
+    },
+    "ownerPillEditor": {
+      "searchPlaceholder": "Search...",
+      "noResults": "No results"
+    },
+    "datePillEditor": {
+      "selectDate": "Select date"
+    },
+    "previewRelations": {
+      "noLinkedDocuments": "No linked documents"
+    },
+    "previewCompletenessRing": {
+      "missingFields": "Missing fields"
     }
   },
   "reportBuilder": {

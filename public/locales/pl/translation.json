@@ -29493,6 +29493,29 @@
       "link": "Połącz",
       "openFullView": "Otwórz pełny widok",
       "searchPlaceholder": "Szukaj..."
+    },
+    "nModeToolbar": {
+      "fork": "Forkuj",
+      "present": "Prezentuj"
+    },
+    "workspacePanelStrip": {
+      "ariaLabel": "Pasek narzędzi workspace",
+      "tools": "Narzędzia",
+      "contextLinks": "Kontekst / powiązania",
+      "aiSuggestions": "Sugestie AI (do rozważenia)"
+    },
+    "ownerPillEditor": {
+      "searchPlaceholder": "Szukaj...",
+      "noResults": "Brak wyników"
+    },
+    "datePillEditor": {
+      "selectDate": "Wybierz datę"
+    },
+    "previewRelations": {
+      "noLinkedDocuments": "Brak powiązań"
+    },
+    "previewCompletenessRing": {
+      "missingFields": "Brakujące pola"
     }
   },
   "reportBuilder": {

@@ -113,14 +113,13 @@ export const PreviewRelations: React.FC<PreviewRelationsProps> = ({
   emptyLabel,
   groupByType,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   if (!items.length) {
     return (
       <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
         <span className="text-xs text-slate-600 dark:text-slate-500 italic py-1.5">
-          {emptyLabel ?? (isPolish ? 'Brak powiązań' : 'No linked documents')}
+          {emptyLabel ?? t('sharedComponents.previewRelations.noLinkedDocuments')}
         </span>
       </div>
     );

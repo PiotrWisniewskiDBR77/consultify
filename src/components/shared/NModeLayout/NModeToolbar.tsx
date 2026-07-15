@@ -129,6 +129,7 @@ export const NModeToolbar: React.FC<NModeToolbarProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const pl = isPolish ?? i18n.language === 'pl';
+  const t = i18n.getFixedT(pl ? 'pl' : 'en');
 
   const hasLeft = sectionsDropdown || newButton || exportDropdown;
   const hasCenter = activeSectionLabel || aiSectionButton;
@@ -169,14 +170,14 @@ export const NModeToolbar: React.FC<NModeToolbarProps> = ({
           {onFork && (
             <ToolbarIconButton
               icon={<GitFork size={14} />}
-              tooltip={pl ? 'Forkuj' : 'Fork'}
+              tooltip={t('sharedComponents.nModeToolbar.fork')}
               onClick={onFork}
             />
           )}
           {onPresent && (
             <ToolbarIconButton
               icon={<Monitor size={14} />}
-              tooltip={pl ? 'Prezentuj' : 'Present'}
+              tooltip={t('sharedComponents.nModeToolbar.present')}
               onClick={onPresent}
             />
           )}
