@@ -27114,6 +27114,40 @@
         "implicationPlaceholder": "Implication of this pillar...",
         "hint": "Check that the pillar message is backed by proof and resonates with the audience."
       }
+    },
+    "focusTradeoff": {
+      "recommendation": {
+        "defer": "Defer",
+        "drop": "Drop",
+        "pursue": "Pursue"
+      },
+      "signalsTitle": "Priority Signals & Evidence",
+      "signalsSubtitle": "Capture facts about competing priorities and decision criteria before AI scores them.",
+      "addSignalPlaceholder": "Add a priority signal...",
+      "scoringTitle": "Priorities & Scoring",
+      "scoringSubtitle": "Each priority should have value, effort, and fit scores, a recommendation, drivers, and an implication.",
+      "addPriority": "Add priority",
+      "emptyPriorities": "No priorities yet. Add the first one or wait for AI proposals.",
+      "tradeoffsTitle": "Trade-offs & Moves",
+      "tradeoffsSubtitle": "This is where priority scoring turns into decision tensions and focus moves (commit/sequence/cut).",
+      "acceptedPriorities": "Accepted priorities",
+      "noAcceptedPriorities": "No accepted priorities.",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on the approved diagnosis.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "titlePlaceholder": "Priority title...",
+        "descPlaceholder": "Priority description...",
+        "removePriority": "Remove priority",
+        "strategicValue": "Strategic value",
+        "effortCost": "Effort / cost",
+        "strategicFit": "Strategic fit",
+        "recommendation": "Recommendation",
+        "addDriverPlaceholder": "Add a driver...",
+        "noDrivers": "No drivers added",
+        "implicationPlaceholder": "Implication of this priority...",
+        "hint": "Weigh value vs effort and fit, then decide whether to pursue, defer, or drop."
+      }
     }
   }
 }

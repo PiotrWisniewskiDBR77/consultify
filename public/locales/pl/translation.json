@@ -28190,6 +28190,40 @@
         "implicationPlaceholder": "Implikacja tego filaru...",
         "hint": "Sprawdź, czy przekaz filaru jest poparty dowodami i rezonuje z odbiorcą."
       }
+    },
+    "focusTradeoff": {
+      "recommendation": {
+        "defer": "Odłóż",
+        "drop": "Porzuć",
+        "pursue": "Realizuj"
+      },
+      "signalsTitle": "Sygnały i dowody priorytetów",
+      "signalsSubtitle": "Zbierz fakty o konkurujących priorytetach i kryteriach decyzji zanim AI je oceni.",
+      "addSignalPlaceholder": "Dodaj sygnał...",
+      "scoringTitle": "Priorytety i scoring",
+      "scoringSubtitle": "Każdy priorytet powinien mieć ocenę wartości, wysiłku i dopasowania, rekomendację, drivery i implikację.",
+      "addPriority": "Dodaj priorytet",
+      "emptyPriorities": "Brak priorytetów. Dodaj pierwszy lub poczekaj na propozycje AI.",
+      "tradeoffsTitle": "Trade-offy i ruchy",
+      "tradeoffsSubtitle": "Tu scoring priorytetów zamienia się w napięcia decyzyjne i ruchy fokusu (commit/sequence/cut).",
+      "acceptedPriorities": "Zaakceptowane priorytety",
+      "noAcceptedPriorities": "Brak zaakceptowanych priorytetów.",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "titlePlaceholder": "Nazwa priorytetu...",
+        "descPlaceholder": "Opis priorytetu...",
+        "removePriority": "Usuń priorytet",
+        "strategicValue": "Wartość strategiczna",
+        "effortCost": "Wysiłek / koszt",
+        "strategicFit": "Dopasowanie strategiczne",
+        "recommendation": "Rekomendacja",
+        "addDriverPlaceholder": "Dodaj czynnik...",
+        "noDrivers": "Brak dodanych czynników",
+        "implicationPlaceholder": "Implikacja tego priorytetu...",
+        "hint": "Oceń wartość vs wysiłek i dopasowanie, a następnie zdecyduj: realizuj, odłóż czy porzuć."
+      }
     }
   }
 }
