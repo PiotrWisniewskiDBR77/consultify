@@ -29483,6 +29483,16 @@
       "failed": "Nie udało się wyświetlić sekcji.",
       "restFine": "Reszta dokumentu działa. Możesz spróbować ponownie albo przejść do innej sekcji.",
       "tryAgain": "Spróbuj ponownie"
+    },
+    "nModeCBoard": {
+      "all": "Wszystko",
+      "noSectionsInGroup": "Brak sekcji w tej grupie."
+    },
+    "embeddedView": {
+      "add": "Dodaj",
+      "link": "Połącz",
+      "openFullView": "Otwórz pełny widok",
+      "searchPlaceholder": "Szukaj..."
     }
   },
   "reportBuilder": {

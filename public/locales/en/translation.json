@@ -28423,6 +28423,16 @@
       "failed": "This section couldn't be displayed.",
       "restFine": "The rest of the document is fine. Try again or switch to another section.",
       "tryAgain": "Try again"
+    },
+    "nModeCBoard": {
+      "all": "All",
+      "noSectionsInGroup": "No sections in this group."
+    },
+    "embeddedView": {
+      "add": "Add",
+      "link": "Link",
+      "openFullView": "Open full view",
+      "searchPlaceholder": "Search..."
     }
   },
   "reportBuilder": {

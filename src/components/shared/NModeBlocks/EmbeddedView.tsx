@@ -74,8 +74,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
   children,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [internalMode, setInternalMode] = useState<EmbeddedViewMode>(viewModes[0] || 'list');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,7 +169,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
           >
             <Plus size={11} />
-            {addLabel || (isPolish ? 'Dodaj' : 'Add')}
+            {addLabel || t('sharedComponents.embeddedView.add')}
           </button>
         )}
         {!readOnly && onLink && (
@@ -178,7 +177,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
             onClick={onLink}
             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            {isPolish ? 'Połącz' : 'Link'}
+            {t('sharedComponents.embeddedView.link')}
           </button>
         )}
 
@@ -187,7 +186,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
           <button
             onClick={onOpenFull}
             className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:text-slate-600 transition-colors"
-            title={isPolish ? 'Otwórz pełny widok' : 'Open full view'}
+            title={t('sharedComponents.embeddedView.openFullView')}
           >
             <ExternalLink size={13} />
           </button>
@@ -204,7 +203,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
               setSearchQuery(e.target.value);
               onSearch(e.target.value);
             }}
-            placeholder={isPolish ? 'Szukaj...' : 'Search...'}
+            placeholder={t('sharedComponents.embeddedView.searchPlaceholder')}
             className="w-full text-sm bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
             autoFocus
           />
