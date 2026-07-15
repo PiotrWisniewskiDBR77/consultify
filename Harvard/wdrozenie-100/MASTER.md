@@ -1,5 +1,17 @@
 # MASTER — Plan wdrożenia wszystkich modułów do stanu docelowego (100%)
 
+## STAN FAKTYCZNY 2026-07-15 (audyt żywego runtime trzech programów)
+
+| Program | Stan kodowy | Wąskie gardło | Uwagi |
+|---------|------------|---------------|-------|
+| **Oxford** | ~80% | Odbiór Piotra (sesja B6) | O3 (6 tooli + walidatory), O4/O5 (wiring), O6 (benchmark) na demo |
+| **Harvard** | ~72% | Grafika + UI Standard (czeka akceptacja) | 27 modułów, E2E funkcjonalne, tabele/kolory/artefakty ZAMROŻONE do odbioru |
+| **Harvey** | ~41% | Integracja silnika (Workflow + Evidence + Vault) | Teresa, agentRuntime, colaboracja — wiring w toku |
+
+⚠️ **Uwaga:** liczby M24 w tabelach poniżej i plik `A1-affiliate.md` są nieaktualne (A1 descoped 2026-07-15). Dokument ma ~2 tygodnie — sprawdzaj runtime na demo, nie deklaracje tekstowe poniżej.
+
+---
+
 **Data:** 2026-06-13 · **Branch:** `Londyn` · **Cel:** każdy moduł połączony przód z tyłem, w pełni gotowy (pełny szlif)
 **Podstawa:** 27 kart audytu (`Harvard/modules/*/KARTA_AUDYTU.md`) · 16 uwag z testów żywych właściciela (`Harvard/UWAGI_TESTY_2026-06-13.md`) · 3 spece systemowe (`SPEC_ZADANIE_01/07/13`) · świeża inwentaryzacja luk (2026-06-13)
 **Relacja do `MASTER_PLAN_DOKONCZENIA.md` (2026-06-11):** tamten dokument zamyka warstwę audytu (diagnoza + naprawy backendu, security). TEN dokument podnosi poprzeczkę z „Alpha/Beta-near" do **100% (front↔back spięte, zero fasad, pełne i18n, tokeny, §27, E2E w PR-gate)** i wplata 16 uwag z testów żywych, których audyt nie widział.
