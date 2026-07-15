@@ -6380,6 +6380,32 @@
       "partner": "Partner",
       "consultant": "Konsultant",
       "organizationColumn": "Organizacja"
+    },
+    "drdReport": {
+      "title": "Raport Diagnozy Gotowości Cyfrowej",
+      "subtitle": "DRD — 7 osi transformacji cyfrowej",
+      "maturityProfileHeading": "Profil dojrzałości cyfrowej",
+      "executiveSummaryHeading": "Podsumowanie wykonawcze",
+      "overallMaturityCard": "Dojrzałość ogólna (znormalizowana)",
+      "targetStateCard": "Cel docelowy (znormalizowany)",
+      "completionCard": "Pokrycie diagnozy",
+      "narrative": "Ogólna dojrzałość cyfrowa {{company}} wynosi {{current}}% (poziom: {{verdict}}), przy celu {{target}}%. Diagnoza objęła {{completion}}% obszarów w 7 osiach. Największe luki — i najszybsze efekty — wskazano w sekcji „Najważniejsze luki” poniżej.",
+      "maturityMapHeading": "Mapa dojrzałości — 7 osi",
+      "topGapsHeading": "Najważniejsze luki",
+      "currentLabel": "Obecnie",
+      "targetLabel": "Cel",
+      "noGapsMessage": "Brak istotnych luk — wszystkie osie osiągnęły lub przekroczyły cel.",
+      "initiativesHeading": "Inicjatywy",
+      "inPreparation": "w przygotowaniu",
+      "initiativesPlaceholder": "Rekomendowane inicjatywy transformacyjne zostaną wygenerowane na podstawie zidentyfikowanych luk.",
+      "roiHeading": "Efekty ekonomiczne (ROI)",
+      "roiPlaceholder": "Szacunkowy zwrot z inwestycji i efekty finansowe zostaną oszacowane dla rekomendowanych inicjatyw.",
+      "readOnlyMode": "Tryb tylko do odczytu.",
+      "footerGenerated": "Raport wygenerowany przez Consultify",
+      "verdictHigh": "wysoka",
+      "verdictModerate": "średnia",
+      "verdictBasic": "podstawowa",
+      "verdictInitial": "początkowa"
     }
   },
   "initiatives": {
