@@ -24,9 +24,6 @@ interface AICommandPromptProps {
   className?: string;
 }
 
-const PLACEHOLDER_PL = 'np. dopisz plan w 5 krokach jak wdrożyć…';
-const PLACEHOLDER_EN = 'e.g. write a 5-step plan to implement…';
-
 export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
   editor,
   pageId,
@@ -39,7 +36,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
   inputRef: inputRefProp,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
   const [command, setCommand] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -55,9 +52,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
     abortRef.current = new AbortController();
     let result = '';
 
-    const systemPrompt = isPl
-      ? 'Jesteś asystentem w notatniku. Użytkownik podaje polecenie dotyczące notatki. Wykonaj polecenie i zwróć TYLKO wygenerowany tekst — bez komentarzy, bez "Oto wynik:", bez markdown. Odpowiadaj w tym samym języku co polecenie.'
-      : 'You are a notebook assistant. The user gives a command about their note. Execute the command and return ONLY the generated text — no commentary, no "Here is the result:", no markdown. Respond in the same language as the command.';
+    const systemPrompt = t('myWorkNotebook.aiCommandPrompt.systemPrompt');
 
     const userMessage = `Command: ${cmd}\n\nNote context:\nTitle: ${noteTitle}\nTags: ${noteTags.join(', ') || 'none'}\nContent:\n${noteContent.slice(0, 2000)}`;
 
@@ -71,7 +66,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
         () => {
           const text = result.trim();
           if (text && editor && pageId) {
-            const aiLabel = isPl ? 'Komentarz AI' : 'AI comment';
+            const aiLabel = t('myWorkNotebook.aiCommandPrompt.aiCommentLabel');
             const paragraphs = text.split(/\n\n+/).filter(Boolean);
             const blockContent = {
               type: 'callout',
@@ -95,14 +90,10 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
               .then(() => {
                 trackFunnelEvent('notebook_ai_command_prompt_used', { commandLength: cmd.length });
                 onProposalCreated?.();
-                toast.success(
-                  isPl ? 'Propozycja AI gotowa do review' : 'AI proposal ready for review'
-                );
+                toast.success(t('myWorkNotebook.aiCommandPrompt.proposalReady'));
               })
               .catch(() => {
-                toast.error(
-                  isPl ? 'Nie udało się utworzyć propozycji AI' : 'Failed to create AI proposal'
-                );
+                toast.error(t('myWorkNotebook.aiCommandPrompt.proposalFailed'));
               });
           }
           setCommand('');
@@ -118,11 +109,11 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
       );
     } catch (err: any) {
       if (err?.name !== 'AbortError') {
-        toast.error(isPl ? 'Nie udało się wykonać polecenia' : 'Failed to execute command');
+        toast.error(t('myWorkNotebook.aiCommandPrompt.executeFailed'));
         setIsGenerating(false);
       }
     }
-  }, [command, editor, noteTitle, noteContent, noteTags, isPl, pageId, onProposalCreated]);
+  }, [command, editor, noteTitle, noteContent, noteTags, isPl, pageId, onProposalCreated, t]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -144,7 +135,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
         onKeyDown={handleKeyDown}
         onFocus={onFocus}
         onBlur={onBlur}
-        placeholder={isPl ? PLACEHOLDER_PL : PLACEHOLDER_EN}
+        placeholder={t('myWorkNotebook.aiCommandPrompt.placeholder')}
         disabled={isGenerating}
         className="flex-1 min-w-0 bg-transparent text-sm text-c-text placeholder:text-c-text-muted outline-none"
       />
@@ -152,7 +143,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
         onClick={execute}
         disabled={!command.trim() || isGenerating}
         className="p-1.5 rounded-md bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised0/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
-        title={isPl ? 'Wykonaj polecenie' : 'Execute command'}
+        title={t('myWorkNotebook.aiCommandPrompt.executeCommand')}
       >
         {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
       </button>
