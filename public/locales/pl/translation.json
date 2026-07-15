@@ -241,7 +241,39 @@
     "resetColumns": "Przywróć domyślne",
     "viewSettings": "Ustawienia widoku",
     "visibleColumns": "Widoczne kolumny",
-    "showRowDescription": "Pokaż opis / uzasadnienie"
+    "showRowDescription": "Pokaż opis / uzasadnienie",
+    "initiativeStatus": {
+      "draft": "Szkic",
+      "pendingReview": "Oczekuje na przegląd",
+      "review": "W przeglądzie",
+      "promoted": "Promowana",
+      "planning": "Planowanie",
+      "approved": "Zatwierdzona",
+      "scheduled": "Zaplanowana",
+      "executing": "W realizacji",
+      "blocked": "Zablokowana",
+      "done": "Ukończona",
+      "tracking": "Śledzenie",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana"
+    },
+    "assessmentStatus": {
+      "draft": "Szkic",
+      "inReview": "W przeglądzie",
+      "awaitingApproval": "Oczekuje na zatwierdzenie",
+      "approved": "Zatwierdzony",
+      "rejected": "Odrzucony",
+      "archived": "Zarchiwizowany"
+    },
+    "reportStatus": {
+      "draft": "Szkic",
+      "generating": "Generowanie",
+      "final": "Finalny",
+      "pendingApproval": "Oczekuje na zatwierdzenie",
+      "approved": "Zatwierdzony",
+      "rejected": "Odrzucony",
+      "utilized": "Wykorzystany"
+    }
   },
   "superadmin": {
     "confirm": {

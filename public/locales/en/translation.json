@@ -1663,7 +1663,39 @@
     "resetColumns": "Reset columns",
     "viewSettings": "View settings",
     "visibleColumns": "Visible columns",
-    "showRowDescription": "Show row description"
+    "showRowDescription": "Show row description",
+    "initiativeStatus": {
+      "draft": "Draft",
+      "pendingReview": "Pending Review",
+      "review": "In Review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "approved": "Approved",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
+    },
+    "assessmentStatus": {
+      "draft": "Draft",
+      "inReview": "In Review",
+      "awaitingApproval": "Awaiting Approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "archived": "Archived"
+    },
+    "reportStatus": {
+      "draft": "Draft",
+      "generating": "Generating",
+      "final": "Final",
+      "pendingApproval": "Pending Approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "utilized": "Utilized"
+    }
   },
   "superadmin": {
     "confirm": {
