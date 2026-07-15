@@ -4531,7 +4531,14 @@
       "failedToReadThe": "Failed to read the selected day load.",
       "calendarViewIsTemporarily": "Calendar view is temporarily unavailable.",
       "thisDoesNotMean": "This does not mean the day is empty. Refresh the data and try again.",
-      "label": "Retry"
+      "label": "Retry",
+      "helperConnected": "{{providerLabel}} is ready for calendar filtering.",
+      "helperPending": "{{providerLabel}} is on the governed path, but configuration or authorization is not complete yet.",
+      "helperReauth": "{{providerLabel}} needs reauthorization before it returns to a trustworthy sync state.",
+      "helperError": "{{providerLabel}} has an active error and should not be treated as a ready calendar source.",
+      "helperComingSoon": "{{providerLabel}} integration is in preparation — two-way connection is not available yet.",
+      "heavyLoadSuggestion": "You already have {{totalItems}} items here, including {{taskCount}} tasks and {{decisionCount}} decisions. Consider a reschedule or a planning adjustment.",
+      "partialLoadSuggestion": "The selected day already has {{totalItems}} items. This is a good moment to place new work deliberately."
     },
     "calendarCreateEvent": {
       "dayLoadPreviewIs": "Day-load preview is temporarily unavailable, but you can still create the task.",
@@ -4561,7 +4568,10 @@
       "theFormChecksExisting": "The form checks existing tasks and decisions for the selected day.",
       "task": "Task",
       "decision": "Decision",
-      "loadingConflicts": "Loading conflicts..."
+      "loadingConflicts": "Loading conflicts...",
+      "itemsOnThisDay": "You already have {{count}} items on this day.",
+      "dayPreviewLimited": "Day preview is limited",
+      "dayAlreadyBusy": "This day is already fairly busy"
     },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "en-US",
@@ -4571,14 +4581,27 @@
       "label": "Any",
       "label2": "Assigned to me",
       "label3": "Owned by me",
-      "today": "Today"
+      "today": "Today",
+      "weekdaysShort": [
+        "Mo",
+        "Tu",
+        "We",
+        "Th",
+        "Fr",
+        "Sa",
+        "Su"
+      ]
     },
     "calendarGrid": {
       "busy": "Busy",
       "today": "Today",
       "currentDateToLocaleDateString": "en-US",
       "locale": "en",
-      "allDayText": "all-day"
+      "allDayText": "all-day",
+      "viewMonth": "Month",
+      "viewWeek": "Week",
+      "viewDay": "Day",
+      "viewList": "List"
     },
     "commandDock": {
       "doThisNow": "Do this now",

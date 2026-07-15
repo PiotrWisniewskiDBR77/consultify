@@ -57,8 +57,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onDecisionClick,
   onInitiativeClick,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | undefined>();
@@ -114,18 +113,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           return {
             available: true,
             statusLabel: t('myWork.calendarView.statusLabel3', 'Active'),
-            helper: isPolish
-              ? `${providerLabel} jest gotowe do filtrowania w kalendarzu.`
-              : `${providerLabel} is ready for calendar filtering.`,
+            helper: t('myWork.calendarView.helperConnected', { providerLabel }),
             nextStep: null,
           };
         case 'pending':
           return {
             available: false,
             statusLabel: t('myWork.calendarView.statusLabel4', 'Setup in progress'),
-            helper: isPolish
-              ? `${providerLabel} jest już na ścieżce governed, ale konfiguracja lub autoryzacja nie jest jeszcze domknięta.`
-              : `${providerLabel} is on the governed path, but configuration or authorization is not complete yet.`,
+            helper: t('myWork.calendarView.helperPending', { providerLabel }),
             nextStep: t(
               'myWork.calendarView.nextStep3',
               'Finish configuration or authorization in Integrations.'
@@ -135,18 +130,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           return {
             available: false,
             statusLabel: t('myWork.calendarView.statusLabel5', 'Reauth required'),
-            helper: isPolish
-              ? `${providerLabel} wymaga ponownej autoryzacji zanim wróci do wiarygodnego syncu.`
-              : `${providerLabel} needs reauthorization before it returns to a trustworthy sync state.`,
+            helper: t('myWork.calendarView.helperReauth', { providerLabel }),
             nextStep: t('myWork.calendarView.nextStep4', 'Start reauthorization in Integrations.'),
           };
         case 'error':
           return {
             available: false,
             statusLabel: t('myWork.calendarView.statusLabel6', 'Sync error'),
-            helper: isPolish
-              ? `${providerLabel} ma aktywny błąd i nie powinno być traktowane jak gotowe źródło kalendarza.`
-              : `${providerLabel} has an active error and should not be treated as a ready calendar source.`,
+            helper: t('myWork.calendarView.helperError', { providerLabel }),
             nextStep: t(
               'myWork.calendarView.nextStep5',
               'Review the status and logs in Integrations.'
@@ -156,9 +147,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           return {
             available: false,
             statusLabel: t('myWork.calendarView.statusLabel7', 'Coming soon'),
-            helper: isPolish
-              ? `Integracja ${providerLabel} jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.`
-              : `${providerLabel} integration is in preparation — two-way connection is not available yet.`,
+            helper: t('myWork.calendarView.helperComingSoon', { providerLabel }),
             nextStep: t(
               'myWork.calendarView.nextStep6',
               'In the meantime, subscribe to the Consultify ICS feed in your calendar.'
@@ -166,7 +155,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           };
       }
     },
-    [isPolish]
+    [t]
   );
 
   const buildWorkloadSummary = useCallback(() => {
@@ -208,9 +197,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         title: t('myWork.calendarView.title4', 'Day is already heavily loaded'),
         body:
           dayLoad?.suggestion ||
-          (isPolish
-            ? `Masz tu ${totalItems} pozycji, w tym ${taskCount} zadań i ${decisionCount} decyzji. Warto rozważyć przesunięcie lub korektę planu.`
-            : `You already have ${totalItems} items here, including ${taskCount} tasks and ${decisionCount} decisions. Consider a reschedule or a planning adjustment.`),
+          t('myWork.calendarView.heavyLoadSuggestion', { totalItems, taskCount, decisionCount }),
       };
     }
 
@@ -218,12 +205,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       variant: 'info' as const,
       title: t('myWork.calendarView.title5', 'Day is partially loaded'),
       body:
-        dayLoad?.suggestion ||
-        (isPolish
-          ? `Wybrany dzień ma ${totalItems} pozycji. To dobry moment na świadome dopasowanie kolejnych zadań.`
-          : `The selected day already has ${totalItems} items. This is a good moment to place new work deliberately.`),
+        dayLoad?.suggestion || t('myWork.calendarView.partialLoadSuggestion', { totalItems }),
     };
-  }, [dayLoad, dayLoadError, dayLoadLoading, isPolish]);
+  }, [dayLoad, dayLoadError, dayLoadLoading, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -333,7 +317,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [currentDate, isPolish, toLocalDateKey]);
+  }, [currentDate, t, toLocalDateKey]);
 
   const handleEventClick = useCallback(
     (eventId: string, source: string) => {

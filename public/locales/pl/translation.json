@@ -3677,7 +3677,14 @@
       "failedToReadThe": "Nie udalo sie odczytac obciazenia wybranego dnia.",
       "calendarViewIsTemporarily": "Widok kalendarza jest chwilowo niedostępny.",
       "thisDoesNotMean": "To nie oznacza, że dzień jest pusty. Spróbuj odświeżyć dane i sprawdź ponownie.",
-      "label": "Ponów"
+      "label": "Ponów",
+      "helperConnected": "{{providerLabel}} jest gotowe do filtrowania w kalendarzu.",
+      "helperPending": "{{providerLabel}} jest już na ścieżce governed, ale konfiguracja lub autoryzacja nie jest jeszcze domknięta.",
+      "helperReauth": "{{providerLabel}} wymaga ponownej autoryzacji zanim wróci do wiarygodnego syncu.",
+      "helperError": "{{providerLabel}} ma aktywny błąd i nie powinno być traktowane jak gotowe źródło kalendarza.",
+      "helperComingSoon": "Integracja {{providerLabel}} jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.",
+      "heavyLoadSuggestion": "Masz tu {{totalItems}} pozycji, w tym {{taskCount}} zadań i {{decisionCount}} decyzji. Warto rozważyć przesunięcie lub korektę planu.",
+      "partialLoadSuggestion": "Wybrany dzień ma {{totalItems}} pozycji. To dobry moment na świadome dopasowanie kolejnych zadań."
     },
     "calendarCreateEvent": {
       "dayLoadPreviewIs": "Podglad obciazenia dnia jest chwilowo niedostepny, ale nadal mozesz zapisac zadanie.",
@@ -3707,7 +3714,10 @@
       "theFormChecksExisting": "Formularz sprawdza istniejące zadania i decyzje dla wybranego dnia.",
       "task": "Zadanie",
       "decision": "Decyzja",
-      "loadingConflicts": "Ładowanie konfliktów..."
+      "loadingConflicts": "Ładowanie konfliktów...",
+      "itemsOnThisDay": "Na ten dzień masz już {{count}} pozycji.",
+      "dayPreviewLimited": "Podgląd dnia jest ograniczony",
+      "dayAlreadyBusy": "Dzień jest już dość obciążony"
     },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "pl-PL",
@@ -3717,14 +3727,27 @@
       "label": "Dowolna",
       "label2": "Przypisane do mnie",
       "label3": "Jestem właścicielem",
-      "today": "Dzisiaj"
+      "today": "Dzisiaj",
+      "weekdaysShort": [
+        "Pn",
+        "Wt",
+        "Śr",
+        "Cz",
+        "Pt",
+        "So",
+        "Nd"
+      ]
     },
     "calendarGrid": {
       "busy": "Zajęte",
       "today": "Dziś",
       "currentDateToLocaleDateString": "pl-PL",
       "locale": "pl",
-      "allDayText": "cały dzień"
+      "allDayText": "cały dzień",
+      "viewMonth": "Miesiąc",
+      "viewWeek": "Tydzień",
+      "viewDay": "Dzień",
+      "viewList": "Lista"
     },
     "commandDock": {
       "doThisNow": "Zrób teraz",
