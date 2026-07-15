@@ -3005,7 +3005,8 @@
       "ariaLabel6": "View mode",
       "title4": "List",
       "title5": "Cards",
-      "ariaLabel7": "Ideas view mode"
+      "ariaLabel7": "Ideas view mode",
+      "unifiedCreateNew": "+ New"
     },
     "inboxContent": {
       "justNow": "Just now",
