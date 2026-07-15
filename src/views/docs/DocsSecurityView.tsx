@@ -55,20 +55,22 @@ interface SecurityFeature {
 
 const CERTIFICATIONS: Certification[] = [
   {
+    // ISO 27001 audit ~2026-08-10 — until certified, do not claim "Certified" (integrity)
     name: 'SOC 2 Type II',
-    status: 'certified',
+    status: 'in-progress',
     icon: ShieldCheck,
-    description: 'Independent audit of security, availability, and confidentiality controls.',
-    validUntil: '2027-01-15',
-    badge: 'Certified',
+    description:
+      'Security controls aligned with AICPA Trust Service Criteria (certification in progress).',
+    badge: 'In Progress',
   },
   {
+    // ISO 27001 audit ~2026-08-10 — until certified, do not claim "Certified" (integrity)
     name: 'ISO 27001',
-    status: 'certified',
+    status: 'in-progress',
     icon: Award,
-    description: 'International standard for information security management systems.',
-    validUntil: '2026-12-01',
-    badge: 'Certified',
+    description:
+      'Information security management system aligned with ISO 27001 (certification in progress).',
+    badge: 'In Progress',
   },
   {
     name: 'GDPR Compliant',

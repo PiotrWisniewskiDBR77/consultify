@@ -87,10 +87,13 @@ const DEFAULT_SCORE: SecurityScore = {
   recommendations: [],
 };
 
+// ISO 27001 audit ~2026-08-10 — until certified, do not claim "Certified" (integrity)
+// SOC 2 and ISO 27001 certifications are in progress (see Legal/security-overview.md §8);
+// they must not be shown as compliant/certified until the audit actually completes.
 const DEFAULT_COMPLIANCE: ComplianceStatus = {
   gdpr: { compliant: true, lastAudit: '2024-12-01' },
-  soc2: { compliant: true, certifiedUntil: '2025-12-31' },
-  iso27001: { compliant: true, certifiedUntil: '2025-06-30' },
+  soc2: { compliant: false },
+  iso27001: { compliant: false },
   hipaa: { compliant: false, applicable: false },
 };
 
