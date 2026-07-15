@@ -31138,7 +31138,568 @@
       "outputsFromTheSession": "Outputs from the session",
       "aIPhilosophy": "AI philosophy",
       "whyUseIt": "Why use it",
-      "approvedBCGPortfolioMatrix": "Approved BCG portfolio matrix"
+      "approvedBCGPortfolioMatrix": "Approved BCG portfolio matrix",
+      "sectionPendingExpansion": "This section will be expanded in upcoming iterations.",
+      "groupOverview": "Overview",
+      "groupHowItWorks": "How it works",
+      "groupExample": "Example"
+    },
+    "knownToolDetail": {
+      "dynamicSwot": {
+        "goal": {
+          "positioningHeadline": "Dynamic SWOT is not meant to fill a matrix. It is meant to turn a fragmented strategic conversation into a decision, tensions, and moves ready for downstream use.",
+          "positioningBody": "This is a conversation-first, structure-backed tool. It frames the strategic question and structures evidence from inside the company and the market first. Only then does it build the matrix, surface tensions, sequence recommended moves, and prepare material that can feed a report, presentation, initiatives, or further decision work.",
+          "whatItDoes": [
+            "separates the critical signals from noise, opinion, and generic statements",
+            "builds one shared picture of internal and external reality",
+            "turns classic SWOT into tension, trade-off, and decision logic",
+            "takes the user from diagnosis to a recommended move and downstream outputs"
+          ],
+          "whatItIsNot": [
+            "it is not a classroom exercise about filling four boxes",
+            "it is not a dump for everything without assessing evidence quality",
+            "it is not a way to fake a decision when the strategic question is still vague",
+            "it is not the final deliverable, but the source for deliverables and execution"
+          ],
+          "whenToUse": [
+            "when leadership has many signals but no single decision logic",
+            "when internal reality must be confronted with the market and translated into what truly changes the direction",
+            "when the decision matters but the situation still looks like disconnected observations",
+            "when the result must feed a report, deck, initiative, or decision brief"
+          ],
+          "whenNotToUse": [
+            "when the first job is to understand macro trends, context, or regulation: start with PESTEL",
+            "when the core question is industry structure and competitive pressure: start with Five Forces",
+            "when the decision has already been made and only execution planning is needed: use initiative planning instead",
+            "when the team wants only positive mobilization language without working through risk and weakness"
+          ],
+          "prepare": [
+            "a concrete strategic question that truly needs a decision",
+            "scope, time horizon, success signal, and the key constraints",
+            "known internal and external signals, even if still incomplete",
+            "files, links, benchmarks, interview notes, or prior analyses"
+          ],
+          "dynamicLabel": "What makes the SWOT dynamic here",
+          "dynamicBody": "The classical matrix is only the middle step. The dynamic version forces stronger framing first, then signal and evidence hygiene, and only then moves into TOWS-style connection logic, tensions, and strategic moves."
+        },
+        "process": {
+          "intro": "A strong Dynamic SWOT runs through five business steps. The flow is simple for the user but rigorous in substance: frame the decision first, clean the signals second, build a strong matrix third, and only then move into tensions, moves, and outputs.",
+          "steps": [
+            {
+              "oneLiner": "Frame the decision question, scope, and success signal",
+              "items": [
+                "name the decision that truly needs to be made",
+                "set the scope, time horizon, success signal, and constraints",
+                "separate the session topic from everything that is out of scope today"
+              ],
+              "note": "The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos."
+            },
+            {
+              "oneLiner": "Collect facts, observations, and hypotheses from inside and outside",
+              "items": [
+                "collect signals from interviews, materials, files, links, and benchmarks",
+                "mark whether an entry is a fact, observation, or hypothesis",
+                "separate internal from external signals and reduce each to one clear thesis"
+              ],
+              "note": "This is not the stage for conclusions yet. It builds the source layer from which the later conclusions can be defended."
+            },
+            {
+              "oneLiner": "Assign signals to S/W/O/T, remove noise, keep what moves the decision",
+              "items": [
+                "assign the signals to Strengths, Weaknesses, Opportunities, and Threats",
+                "remove duplicates, separate symptoms from causes, and challenge generic wording",
+                "keep only the cards that truly change the decision space"
+              ],
+              "note": "A strong matrix is not long. It is selective, concrete, and backed by sources."
+            },
+            {
+              "oneLiner": "Show where advantage collides with constraint or risk",
+              "items": [
+                "connect cards into decision situations: attack, repair, defend, reduce",
+                "show where advantage meets constraint or risk",
+                "name why this tension matters now rather than later"
+              ],
+              "note": "This is where consulting value appears. The card list stops being a table and starts becoming decision logic."
+            },
+            {
+              "oneLiner": "Translate tensions into recommended moves and downstream material",
+              "items": [
+                "translate the tensions into 2-4 recommended moves with a clear sequence",
+                "separate a quick win from a strategic move and from an item that still needs validation",
+                "close the session with a source summary ready for a report, deck, initiative, or further exploration"
+              ],
+              "note": "Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action."
+            }
+          ],
+          "sessionQualityLabel": "What a strong finished session looks like",
+          "sessionQualityItems": [
+            "a matrix with 6-12 selected factors across the 4 quadrants (S/W/O/T) — each with a marked source and evidence type, instead of a long list of everything",
+            "3-6 strategic tensions that genuinely explain the decision space",
+            "2-4 recommended moves with a clear sequence and first step",
+            "at least 1 output candidate ready for further decision or sponsor approval",
+            "a final source summary that can directly feed a report or deck"
+          ],
+          "decisionSituationsIntro": "In step 4 you connect internal factors with external ones. Each connection creates one of four decision situations. Recognizing the type helps quickly decide what move makes sense.",
+          "decisionSituationsCards": [
+            {
+              "label": "Strength + Opportunity",
+              "desc": "You have advantage and the market offers an opening. Play offensively — use what you have to capture the opportunity.",
+              "accent": "emerald"
+            },
+            {
+              "label": "Weakness + Opportunity",
+              "desc": "The opportunity exists, but an internal gap blocks it. Fix the gap first, then move in.",
+              "accent": "sky"
+            },
+            {
+              "label": "Strength + Threat",
+              "desc": "External risk is rising, but you have advantage. Use it to defend your position.",
+              "accent": "amber"
+            },
+            {
+              "label": "Weakness + Threat",
+              "desc": "A weakness increases exposure to risk. Reduce the weakness first to lower the threat.",
+              "accent": "rose"
+            }
+          ],
+          "workingNotesItems": [
+            "SWOT is not the goal, but a synthesis step on the way to a decision",
+            "the most common mistake is too many weak cards and too little selection",
+            "the quality of conclusions never exceeds the quality of source signals",
+            "a strong facilitator separates fact from hypothesis and symptom from cause",
+            "a strong session connects internal reality with the market instead of describing only one side",
+            "the output should be ready for management use, not only for the analyst to read"
+          ]
+        },
+        "outcomes": {
+          "intro": "A strong Dynamic SWOT ends with usable material: the decision question, evidence quality, key tensions, and a move sequence.",
+          "blocks": [
+            {
+              "title": "Decision frame",
+              "what": "The strategic question, scope, time horizon, and success signal. An explicit statement of what the analysis covers and what it does not.",
+              "why": "Without this frame even a strong matrix drifts away from the real decision.",
+              "next": "An executive summary with a clear decision frame for the sponsor or board."
+            },
+            {
+              "title": "Factor picture & evidence",
+              "what": "The strongest S/W/O/T cards with their sources. A clear separation of facts, observations, and hypotheses.",
+              "why": "Decision-makers see not only the conclusion, but the quality of the material underneath it.",
+              "next": "A defensible matrix and narrative for the next decision discussion."
+            },
+            {
+              "title": "Strategic tensions",
+              "what": "The most important connections between internal and external cards. Decision situations that change the move logic.",
+              "why": "Observations stop being a list and start explaining where the real trade-off sits.",
+              "next": "An interpretation layer for leadership discussion and priority choices."
+            },
+            {
+              "title": "Recommended moves",
+              "what": "2-4 moves emerging from tensions with a clear sequence. Quick win vs big bet vs defensive move vs capability build.",
+              "why": "The handoff from diagnosis to a move that makes business sense and can be defended logically.",
+              "next": "A shortlist of moves for the deck, sponsor decision, or initiative design."
+            },
+            {
+              "title": "Bridge to execution",
+              "what": "A source summary ready for the report or presentation. What goes to an initiative, what needs a deck, what stays an idea.",
+              "why": "SWOT without this step leaves the team with an interesting analysis but no move.",
+              "next": "A report, presentation, initiative push, or further exploration from the same source package."
+            }
+          ],
+          "qualityBody": "A strong result is selective, evidence-backed, and decision-oriented. It does not show everything that was collected, only what truly changes the choice logic and enables the next step."
+        },
+        "example": {
+          "intro": "This example shows a common transformation moment: pressure rises and technology looks like the quick answer, but the first job is to establish whether the real problem is the missing solution or the missing truth about the situation.",
+          "cases": [
+            {
+              "title": "Premium manufacturer before CAPEX",
+              "context": "Margin is falling, lead times are unstable, and leadership is considering automation.",
+              "question": "Should the company start with technology investment or diagnose losses and bottlenecks first?",
+              "evidence": [
+                "Interviews show strong brand trust and premium customer relationships, but operational decisions are still intuition-led.",
+                "Data points to flow losses, no shared bottleneck definition, and rising expediting costs."
+              ],
+              "aiDraft": "AI proposes SWOT cards around reputation and B2B trust, weak process visibility, a data-diagnosis opportunity, and the threat of automating the wrong problem.",
+              "approvedUse": "The user accepts only evidence-backed cards and rejects generic “implement AI” recommendations. Approved cards feed tensions and moves.",
+              "outcome": "The decision becomes: run loss diagnosis, bottleneck mapping, and a data layer before CAPEX, with automation as the second stage."
+            },
+            {
+              "title": "Software firm after losing a major client",
+              "context": "The team is strong, but the sales pipeline depends too heavily on referrals.",
+              "question": "Should it scale outbound sales or first sharpen offer positioning?",
+              "evidence": [
+                "CRM data shows long sales cycles outside referrals, while customer interviews reveal unclear offer differentiation.",
+                "The team has strong technical capability, but sales materials do not show measurable customer outcomes."
+              ],
+              "aiDraft": "AI proposes SWOT cards on expert delivery, weak value narrative, an opportunity to verticalize the offer, and the threat of continued key-account dependency.",
+              "approvedUse": "Approved cards create the tension between delivery quality and weak ICP clarity, then shape moves before outbound scale.",
+              "outcome": "The sequence is: narrow ICP, build a customer proof pack, test two segment campaigns, and only then expand sales effort."
+            },
+            {
+              "title": "Local services network before expansion",
+              "context": "Demand is growing, but operating quality varies across locations.",
+              "question": "Should the company open more sites or standardize the operating model first?",
+              "evidence": [
+                "Customer reviews are excellent in the best locations, but complaints cluster around repeatable service steps.",
+                "Local managers interpret quality standards differently, and onboarding new staff takes too long."
+              ],
+              "aiDraft": "AI proposes strengths in local brand and customer trust, weaknesses in operating standard, an expansion-playbook opportunity, and the threat of quality loss while scaling.",
+              "approvedUse": "Approved cards help decide whether the advantage is truly scalable or dependent on individual people and local habits.",
+              "outcome": "The recommendation is to build a service standard, quality dashboard, and training model before opening more sites."
+            }
+          ],
+          "situationLabel": "Situation & decision question",
+          "situationItems": [
+            "Ateliertoy is a premium company with in-house production and a strong B2B reputation",
+            "margin is under pressure, lead times are unstable, and leadership is considering expensive automation",
+            "the session question is whether the transformation should start with CAPEX or first with a diagnosis of losses, bottlenecks, and data blind spots"
+          ],
+          "signalsLabel": "Key input signals",
+          "signalsItems": [
+            "a strong brand and trusted premium customers are real advantages",
+            "operating decisions are still intuition-driven and there is no shared truth about losses and bottlenecks",
+            "the market increasingly expects faster delivery and higher predictability",
+            "there is a real risk of burning investment if automation starts before process diagnosis"
+          ],
+          "matrixLabel": "How the matrix looks",
+          "matrixItems": [
+            "Strengths: brand, B2B trust, in-house production, IP control",
+            "Weaknesses: no shared diagnosis, analog management, weak visibility into losses",
+            "Opportunities: digital diagnosis, stronger data layer, better sequencing of investments",
+            "Threats: price pressure, rising costs, and the risk of automating the wrong problem"
+          ],
+          "tensionLabel": "Tension & interpretation",
+          "tensionItems": [
+            "the company has real assets to scale, but still lacks truth about where value is leaking today",
+            "automation looks attractive, yet without diagnosis it may only accelerate chaos",
+            "the main conclusion is to first see what truly constrains margin and flow, and only then choose the technology response"
+          ],
+          "movesLabel": "Recommended moves",
+          "movesItems": [
+            "run a diagnosis of losses, bottlenecks, and data blind spots before CAPEX",
+            "build one shared view of the process and the transformation priorities for leadership",
+            "only then sequence the roadmap: data -> automation -> investment governance"
+          ],
+          "outputsLabel": "Outputs from the session",
+          "outputsItems": [
+            "board-ready material explaining why the transformation should begin with diagnosis instead of a technology purchase",
+            "a short list of priorities and risks for the next transformation decisions",
+            "a source package for the roadmap, deck, and initiative generation in the platform"
+          ],
+          "closingNote": "This is a strong case because it does not stop at describing four quadrants. It shows how signals turn into a decision about move sequence and into material that can immediately bridge into execution."
+        }
+      },
+      "marketForces": {
+        "goal": {
+          "positioningHeadline": "Market Forces is not a mechanical Five Forces scorecard. It turns market structure into a decision: where margin is pressured, where defensibility exists, and what move makes sense.",
+          "positioningBody": "This is an evidence-first, AI-assisted tool. It frames the industry, scope, company position, and decision question first. AI then helps capture signals from interviews and organization context, proposes the force scorecard, asks for user approval, and only then builds implications, moves, and initiatives from the approved diagnosis.",
+          "whatItDoes": [
+            "connects organization and interview context with market signals",
+            "turns signals into a Five Forces scorecard with drivers, evidence, and confidence",
+            "shows margin pressure, buyer power, entry barriers, and defensibility",
+            "moves from market diagnosis into recommended moves and initiatives"
+          ],
+          "whatItIsNot": [
+            "it is not a dry Porter checklist without decision context",
+            "it is not a place to score a market without sources and signals",
+            "it does not auto-generate strategy without user approval",
+            "it does not stop at a radar or scorecard, but bridges into outputs"
+          ],
+          "aiPhilosophyBody": "AI acts as an assisting consultant, not the source of truth. It proposes signals, force scores, implications, moves, and outputs, while the user accepts, rejects, or asks to rethink cards before they become initiative material."
+        },
+        "process": {
+          "intro": "Market Forces runs through five phases analogous to Dynamic SWOT: mission, input, forces, insights, and outputs. Each phase has a different decision level and a different AI job.",
+          "steps": [
+            {
+              "title": "Mission & Market Context",
+              "text": "Industry, geography, position, question, and success signal"
+            },
+            {
+              "title": "Input & Exploration",
+              "text": "Signals from interviews, benchmarks, files, and observations"
+            },
+            {
+              "title": "Five Forces Build",
+              "text": "Each force scored with trend, drivers, evidence, and confidence"
+            },
+            {
+              "title": "Strategic Implications",
+              "text": "Margin pressure, defensibility, market tensions, and recommendations"
+            },
+            {
+              "title": "Outputs & Actions",
+              "text": "Source summary, output candidates, and initiative drafts"
+            }
+          ]
+        },
+        "outcomes": {
+          "intro": "A strong outcome is decision-ready: it shows not only force scores, but also consequences for position, margin, and move sequence.",
+          "blocks": [
+            {
+              "title": "Five Forces scorecard",
+              "text": "Scores, trends, drivers, evidence, and confidence for each force."
+            },
+            {
+              "title": "Strategic implications",
+              "text": "What market structure means for margin, defensibility, and company position."
+            },
+            {
+              "title": "Recommended moves",
+              "text": "2-4 moves with rationale, effort, risk, and first step."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Material for an initiative, report, presentation, or follow-on exploration."
+            }
+          ]
+        },
+        "example": {
+          "intro": "A premium company is considering entering a new marketplace channel. Market Forces checks whether growth attractiveness will be consumed by buyer power, platform pressure, and easy offer imitation.",
+          "cases": [
+            {
+              "title": "Marketplace entry for a premium brand",
+              "context": "The company considers a high-reach channel with low control over customer relationship.",
+              "question": "Will volume growth be eaten by platform power and price pressure?",
+              "evidence": [
+                "Interviews show customers like the brand, but marketplace buying is driven by price and delivery comparison.",
+                "Channel data shows high commissions, promotion cost, and easy imitation of best-selling items."
+              ],
+              "aiDraft": "AI scores buyer and platform power high, new entrants medium, and substitutes high in cheaper segments.",
+              "approvedUse": "The user approves evidence-backed drivers, and AI turns them into margin implications and defensible-entry conditions.",
+              "outcome": "The decision becomes a controlled pilot with limited SKU, price discipline, and a unique bundle that is hard to compare directly."
+            },
+            {
+              "title": "New B2B segment for a services firm",
+              "context": "The company wants larger clients with longer and more formal buying processes.",
+              "question": "Does market attractiveness offset buyer power and sales cost?",
+              "evidence": [
+                "Sales interviews show larger contracts, but stronger procurement, longer RFPs, and higher reference requirements.",
+                "Competitive benchmarks show segment leaders with certifications, case studies, and heavier pre-sales."
+              ],
+              "aiDraft": "AI proposes high buyer power, high reputation barriers, and moderate rivalry in specialized niches.",
+              "approvedUse": "Approved cards identify which entry barriers must be built before broad sales scaling.",
+              "outcome": "The recommendation is to start with a B2B niche, build references and proof assets, then expand into enterprise."
+            },
+            {
+              "title": "Manufacturer before international entry",
+              "context": "The market is large, but local players own distribution and channel relationships.",
+              "question": "Can entry work without a partner or a distinct cost advantage?",
+              "evidence": [
+                "Market data shows strong demand, but a few distributors dominate access and shelf acquisition is expensive.",
+                "Interviews suggest local customers trust current suppliers and require local after-sales service."
+              ],
+              "aiDraft": "AI flags high channel supplier power, high entry barriers, and substitution risk from local brands.",
+              "approvedUse": "Accepted forces feed implications: without a partner, revenue may be bought at the expense of margin and control.",
+              "outcome": "The output is a test model: distribution partner, limited region, clear margin gates, and a 90-day scale/stop decision."
+            }
+          ]
+        }
+      },
+      "growthPaths": {
+        "goal": {
+          "positioningHeadline": "Growth Paths is not a list of growth ideas. It is a path-selection tool: what to scale, what to test, where to enter, and what not to do now.",
+          "positioningBody": "AI uses organization context, interview notes, and market signals to propose options across the four Ansoff fields. The user accepts or rejects cards, and only approved options feed comparison, moves, outputs, and initiatives."
+        },
+        "process": {
+          "steps": [
+            {
+              "title": "Mission",
+              "text": "Growth ambition, scope, success signal, and constraints"
+            },
+            {
+              "title": "Input",
+              "text": "Signals from interviews, market, customers, and organization context"
+            },
+            {
+              "title": "Options",
+              "text": "Ansoff options: core, market, product, and diversification"
+            },
+            {
+              "title": "Insights",
+              "text": "Trade-off comparison and recommended move sequence"
+            },
+            {
+              "title": "Outputs",
+              "text": "Final source summary, output candidates, and initiative drafts"
+            }
+          ]
+        },
+        "outcomes": {
+          "blocks": [
+            {
+              "title": "Option matrix",
+              "text": "Growth options with impact, effort, risk, evidence, and confidence."
+            },
+            {
+              "title": "Strategic comparison",
+              "text": "Trade-offs between scaling core, entering markets, product development, and diversification."
+            },
+            {
+              "title": "Recommended moves",
+              "text": "A sequence: what to do now, what to test, what to defer."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Material for an initiative, report, deck, or follow-on exploration."
+            }
+          ]
+        },
+        "example": {
+          "intro": "A premium company wants to grow without margin erosion. Growth Paths compares scaling the current segment, entering a new geography, building a new product, and diversification, then sequences the moves.",
+          "cases": [
+            {
+              "title": "Premium company seeking growth without margin erosion",
+              "context": "The core segment is profitable, but growth is slowing.",
+              "question": "Should it scale the current market, enter a new geography, or build a new product?",
+              "evidence": [
+                "Sales data shows stable margin in the current segment but a declining number of new leads.",
+                "Interviews surface demand from adjacent segments, but offer and channel fit are still unclear."
+              ],
+              "aiDraft": "AI proposes options across all four fields: deeper core penetration, a geography test, a lighter product version, and cautious diversification.",
+              "approvedUse": "The user approves options with a clear first step and rejects ideas that are just wishful expansion.",
+              "outcome": "The sequence becomes: grow share in core, test one adjacent segment in parallel, and only then commit to a bigger bet."
+            },
+            {
+              "title": "SaaS after current ICP saturation",
+              "context": "Retention is strong, but pipeline in the current segment is weakening.",
+              "question": "Should growth come from a new segment, product add-ons, or pricing?",
+              "evidence": [
+                "Retention and expansion revenue are healthy, but new-logo win rate has declined for three quarters.",
+                "Customer feedback shows demand for reporting features, while sales hears requests from larger companies."
+              ],
+              "aiDraft": "AI creates options around core pricing packaging, mid-market entry, an analytics module, and a riskier enterprise platform move.",
+              "approvedUse": "Approved cards move into impact/effort/risk comparison, and AI identifies what must be validated before roadmap commitment.",
+              "outcome": "The recommendation is to test a new pricing package and analytics module with current customers before an expensive enterprise move."
+            },
+            {
+              "title": "Services firm with strong client relationships",
+              "context": "Clients ask for adjacent services, but the team fears diluting specialization.",
+              "question": "Should it develop new offers for current clients or protect focus?",
+              "evidence": [
+                "Top clients request complementary services, but project profitability drops when scope becomes too broad.",
+                "The team reports expert overload and no repeatable delivery standard for new service lines."
+              ],
+              "aiDraft": "AI proposes product-development options for current clients, selective key-account penetration, and rejects broad diversification without proof.",
+              "approvedUse": "Only options with a clear ICP, delivery scope, and first commercial experiment are accepted.",
+              "outcome": "The plan is to create one productized service for current clients, test pricing, and then decide whether to add more offers."
+            }
+          ]
+        }
+      },
+      "portfolioPriority": {
+        "goal": {
+          "positioningBody": "Portfolio Priority helps decide which products, initiatives, or bets to fund, maintain, test, harvest, or stop. AI proposes the first draft from context and interview evidence, but decisions flow through user approval."
+        },
+        "process": {
+          "missionText": "Portfolio scope, constraints, and success signal.",
+          "evidenceText": "Interview, market, financial, and resource signals.",
+          "itemsText": "BCG cards scored on growth/share/investment.",
+          "outputsText": "Trade-offs, moves, initiatives, and final summary."
+        },
+        "outcomes": {
+          "tradeOffs": "Explicit resource allocation trade-offs",
+          "moves": "Recommended moves: invest, maintain, test, harvest, stop",
+          "candidates": "Downstream output and initiative candidates"
+        },
+        "example": {
+          "intro": "A company has several products and initiatives, but budget only supports a subset. Portfolio Priority organizes the BCG cards, exposes opportunity cost, and builds the recommended action portfolio.",
+          "cases": [
+            {
+              "title": "Investment budget for only 3 of 9 initiatives",
+              "context": "The project list is long and sponsors push their own priorities.",
+              "question": "Which initiatives should be funded, maintained, tested, or stopped?",
+              "evidence": [
+                "Each initiative has a different sponsor, but only some have evidence of growth or margin impact.",
+                "PMO data shows team overload and no clear stop/continue criteria."
+              ],
+              "aiDraft": "AI proposes portfolio cards with growth/share/investment scores, rationale, and an invest/maintain/test/harvest/stop recommendation.",
+              "approvedUse": "The user approves scoring only where evidence fits, then AI builds resource trade-offs.",
+              "outcome": "The portfolio decision funds three initiatives, tests two with gates, and stops or defers the rest."
+            },
+            {
+              "title": "Product portfolio after rapid growth",
+              "context": "Some products have volume but low margin; others are small but promising.",
+              "question": "Where should product and sales resources move?",
+              "evidence": [
+                "Sales reports show high-volume low-margin products and smaller products with faster growth.",
+                "Sales interviews show the team sells what is easiest, not always what is strategic."
+              ],
+              "aiDraft": "AI classifies products as stars, cash cows, question marks, and dogs, then proposes sales-focus shifts.",
+              "approvedUse": "Approved cards expose the opportunity cost of keeping the portfolio too broad.",
+              "outcome": "The recommendation maintains the cash cow, funds one question mark, harvests low-margin volume, and stops products without strategic role."
+            },
+            {
+              "title": "Transformation overloaded with projects",
+              "context": "PMO runs many parallel streams and loses delivery capacity.",
+              "question": "Which work is strategic and which only consumes throughput?",
+              "evidence": [
+                "Project statuses look green on paper, but dependencies block key milestones.",
+                "Leader interviews show the same people are critical to several initiatives at once."
+              ],
+              "aiDraft": "AI scores initiatives by strategic potential, position, investment level, and real organizational capacity.",
+              "approvedUse": "Approved cards feed synthesis: what to fund, minimally maintain, stop, or convert into a short test.",
+              "outcome": "The result is a PMO relief plan: fewer active streams, restart criteria, and a list of topics to close."
+            }
+          ]
+        }
+      },
+      "riskUncertainty": {
+        "goal": {
+          "positioningBody": "Risk & Uncertainty helps test which assumptions may fail, which risks are critical, and which resilience moves need to happen before the decision."
+        },
+        "process": {
+          "missionText": "Decision, uncertainty scope, and success signal.",
+          "evidenceText": "Interview, market, data, and operational signals.",
+          "riskMapText": "Assumptions, risks, and scenarios as AI cards.",
+          "outputsText": "Resilience moves, output candidates, and initiatives."
+        },
+        "outcomes": {
+          "map": "Approved assumption, risk, and scenario map",
+          "moves": "Moves: validate, mitigate, monitor, hedge, escalate",
+          "earlyWarnings": "Early warnings and resilience actions",
+          "candidates": "Downstream output and initiative candidates"
+        },
+        "example": {
+          "intro": "A company plans a transformation, but costs, adoption, and technology dependencies are uncertain. Risk & Uncertainty structures assumptions, risks, and scenarios, then recommends validation and mitigation moves.",
+          "cases": [
+            {
+              "title": "Transformation with uncertain user adoption",
+              "context": "The plan assumes fast rollout, but operating teams have uneven readiness.",
+              "question": "Which assumptions must be validated before budget commitment?",
+              "evidence": [
+                "Interviews show executive enthusiasm, but line-manager skepticism and limited training capacity.",
+                "Previous rollouts were delayed not by technology, but by lack of business ownership after go-live."
+              ],
+              "aiDraft": "AI proposes validation assumptions, adoption risks, a delay scenario, and validate/monitor/mitigate moves.",
+              "approvedUse": "The user accepts cards with real warning indicators such as training attendance, user activity, and workaround volume.",
+              "outcome": "The resilience plan includes an adoption pilot, line sponsors, early warnings, and escalation thresholds before full rollout."
+            },
+            {
+              "title": "Expansion under volatile demand",
+              "context": "Demand is growing, but market data is mixed and dependent on a few customers.",
+              "question": "Which base, downside, and stress scenarios should steer the decision?",
+              "evidence": [
+                "Sales sees large requests from a few customers, but pipeline is concentrated and not yet repeatable.",
+                "Market data shows category growth, but also seasonality and dependence on client investment budgets."
+              ],
+              "aiDraft": "AI proposes base/downside/stress scenarios, demand-concentration risks, and signals to monitor before scale.",
+              "approvedUse": "After scenario approval, the tool builds hedge and monitor moves and suggests thresholds that pause the decision.",
+              "outcome": "The expansion decision gets conditions: minimum independent customers, margin gate, and early warning for conversion decline."
+            },
+            {
+              "title": "Cost program under time pressure",
+              "context": "Leadership expects quick savings, but quality impact risk is high.",
+              "question": "How can the company avoid cutting critical capabilities?",
+              "evidence": [
+                "Finance sees fast savings potential, but operations points to dependencies between cost and SLA.",
+                "History of similar cuts shows complaints and rework costs rising several months later."
+              ],
+              "aiDraft": "AI proposes quality risks, a cost rebound scenario, assumptions to validate, and mitigate/escalate moves.",
+              "approvedUse": "Only mitigations with an owner, trigger, and clear escalation threshold are accepted.",
+              "outcome": "The cost program gets guardrails: what not to cut, what to test through a pilot, and when to stop reductions."
+            }
+          ]
+        }
+      }
     }
   },
   "discoveryToolsTools": {
@@ -31611,6 +32172,128 @@
         "namePlaceholder": "Item title...",
         "descPlaceholder": "Description / notes...",
         "empty": "No items yet"
+      }
+    },
+    "operational": {
+      "operationalSectionStep": {
+        "namePlaceholder": "Item title...",
+        "descPlaceholder": "Description / notes...",
+        "hint": "Add concrete operational items.",
+        "empty": "No items yet"
+      },
+      "dmsKpisStep": {
+        "title": "KPIs and thresholds",
+        "description": "Define KPIs, targets and owners.",
+        "kpiPlaceholder": "KPI...",
+        "targetPlaceholder": "Target...",
+        "frequencyPlaceholder": "Frequency...",
+        "ownerPlaceholder": "Owner...",
+        "addKpi": "Add KPI",
+        "hint": "Each KPI should have a target and owner.",
+        "empty": "No KPIs yet",
+        "targetLabel": "Target",
+        "frequencyLabel": "Frequency",
+        "ownerLabel": "Owner"
+      },
+      "smedStepsStep": {
+        "title": "Changeover steps",
+        "description": "Separate internal and external steps.",
+        "stepPlaceholder": "Changeover step...",
+        "internal": "Internal",
+        "external": "External",
+        "hint": "Mark type and duration for each step.",
+        "empty": "No steps yet",
+        "typeLabel": "Type",
+        "durationLabel": "Duration"
+      },
+      "smedImprovementsStep": {
+        "title": "SMED improvements",
+        "description": "Add quick wins and investments.",
+        "improvementPlaceholder": "Improvement...",
+        "descPlaceholder": "Description / ROI...",
+        "investment": "Investment",
+        "hint": "Label quick wins vs investments.",
+        "empty": "No improvements yet",
+        "typeLabel": "Type"
+      },
+      "inventoryReplenishmentStep": {
+        "title": "Replenishment policies",
+        "description": "Define thresholds and targets for replenishment.",
+        "policyPlaceholder": "Policy...",
+        "reorderPointPlaceholder": "Reorder point...",
+        "targetPlaceholder": "Target / service level...",
+        "addPolicy": "Add policy",
+        "hint": "Each policy should have threshold and target.",
+        "empty": "No policies yet",
+        "thresholdLabel": "Threshold",
+        "targetLabel": "Target"
+      },
+      "dmsEscalationStep": {
+        "title": "Escalation rules",
+        "description": "Define thresholds and escalation owners.",
+        "rulePlaceholder": "Rule...",
+        "thresholdPlaceholder": "Threshold...",
+        "ownerPlaceholder": "Owner...",
+        "addRule": "Add rule",
+        "hint": "Rules should have thresholds and owners.",
+        "empty": "No rules yet",
+        "thresholdLabel": "Threshold",
+        "ownerLabel": "Owner"
+      },
+      "a3CountermeasuresStep": {
+        "title": "Countermeasures",
+        "description": "Add actions and owners.",
+        "actionPlaceholder": "Action...",
+        "ownerPlaceholder": "Owner / role...",
+        "targetPlaceholder": "KPI / target...",
+        "hint": "Tie each action to a measurable KPI.",
+        "empty": "No countermeasures yet",
+        "ownerLabel": "Owner",
+        "targetLabel": "Target"
+      },
+      "sopStandardsStep": {
+        "title": "Standards & quality criteria",
+        "description": "Define operational standards and quality criteria.",
+        "namePlaceholder": "Standard name...",
+        "criteriaPlaceholder": "Quality criteria...",
+        "frequencyPlaceholder": "Audit frequency...",
+        "addStandard": "Add standard",
+        "hint": "Add measurable criteria and audit frequency.",
+        "empty": "No standards yet",
+        "frequencyLabel": "Frequency"
+      },
+      "sopChecklistsStep": {
+        "title": "Checklists & verification",
+        "description": "Define checklist steps and owners.",
+        "itemPlaceholder": "Checklist item...",
+        "descPlaceholder": "Step description...",
+        "ownerPlaceholder": "Owner / Role...",
+        "hint": "Each checklist item should have an owner role.",
+        "empty": "No checklists yet",
+        "ownerLabel": "Owner"
+      },
+      "inventoryClassificationStep": {
+        "title": "ABC/XYZ classification",
+        "description": "Define SKU groups and assign categories.",
+        "skuGroupPlaceholder": "SKU group...",
+        "notesPlaceholder": "Notes...",
+        "hint": "Classify by value and demand variability.",
+        "empty": "No classifications yet"
+      },
+      "a3ProblemStep": {
+        "title": "Problem statement",
+        "description": "Define the problem, impact, and scope.",
+        "problemPlaceholder": "Problem...",
+        "impactPlaceholder": "Business impact...",
+        "scopePlaceholder": "Scope / process...",
+        "hint": "Problem should be measurable and data-backed."
+      },
+      "a3RootCauseStep": {
+        "title": "Root cause (5 Why)",
+        "description": "List the main root causes.",
+        "causePlaceholder": "Cause...",
+        "hint": "Ensure the cause is measurable.",
+        "empty": "No causes yet"
       }
     }
   },

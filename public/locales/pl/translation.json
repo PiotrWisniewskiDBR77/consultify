@@ -32182,7 +32182,568 @@
       "outputsFromTheSession": "Outputy z sesji",
       "aIPhilosophy": "Filozofia AI",
       "whyUseIt": "Po co używać",
-      "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfolio BCG"
+      "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfolio BCG",
+      "sectionPendingExpansion": "Ta sekcja zostanie uzupełniona w kolejnych iteracjach.",
+      "groupOverview": "Przegląd",
+      "groupHowItWorks": "Jak to działa",
+      "groupExample": "Przykład"
+    },
+    "knownToolDetail": {
+      "dynamicSwot": {
+        "goal": {
+          "positioningHeadline": "Dynamic SWOT nie służy do wypełnienia macierzy. Służy do zamiany rozproszonej rozmowy strategicznej w decyzję, napięcia i ruchy gotowe do dalszego użycia.",
+          "positioningBody": "To narzędzie typu conversation-first, structure-backed. Najpierw ustawia pytanie strategiczne i porządkuje evidence z wnętrza firmy oraz z rynku. Dopiero potem buduje macierz, wyciąga napięcia, układa rekomendowane ruchy i przygotowuje materiał, który może przejść do raportu, prezentacji, inicjatyw lub dalszej pracy decyzyjnej.",
+          "whatItDoes": [
+            "oddziela sygnały ważne od szumu, opinii i marketingowych ogólników",
+            "ustawia wspólny obraz sytuacji wewnętrznej i zewnętrznej",
+            "zamienia klasyczny SWOT w logikę napięć, trade-offów i decyzji",
+            "prowadzi od diagnozy do rekomendowanego ruchu oraz outputów"
+          ],
+          "whatItIsNot": [
+            "nie jest szkolnym ćwiczeniem polegającym na zapełnieniu czterech pól",
+            "nie jest miejscem na wrzucenie wszystkiego bez oceny jakości evidence",
+            "nie jest narzędziem do udawania decyzji, gdy pytanie strategiczne nadal jest nieostre",
+            "nie jest końcowym artefaktem, tylko źródłem dla dalszych materiałów i przejścia do działania"
+          ],
+          "whenToUse": [
+            "gdy zarząd lub zespół ma dużo sygnałów, ale nie ma jednej logiki decyzji",
+            "gdy trzeba połączyć realia firmy z rynkiem i nazwać, co naprawdę zmienia kierunek",
+            "gdy decyzja jest ważna, ale sytuacja nadal wygląda jak zbiór luźnych obserwacji",
+            "gdy wynik ma przejść dalej do raportu, decka, inicjatywy albo materiału decyzyjnego"
+          ],
+          "whenNotToUse": [
+            "gdy najpierw trzeba zrozumieć makrootoczenie, trendy i regulacje: wtedy najpierw PESTEL",
+            "gdy główne pytanie dotyczy struktury branży i sił konkurencyjnych: wtedy najpierw Five Forces",
+            "gdy decyzja jest już podjęta i potrzeba jedynie planu wykonawczego: wtedy lepsze jest planowanie inicjatyw",
+            "gdy zespół chce wyłącznie pozytywnego języka mobilizacyjnego bez pracy na ryzykach i słabościach"
+          ],
+          "prepare": [
+            "konkretne pytanie strategiczne, które naprawdę wymaga decyzji",
+            "zakres, horyzont czasu, success signal i najważniejsze constraints",
+            "znane sygnały wewnętrzne i zewnętrzne, nawet jeśli są jeszcze niepełne",
+            "pliki, linki, benchmarki, notatki z rozmów albo wcześniejsze analizy"
+          ],
+          "dynamicLabel": "Co sprawia, że SWOT jest tutaj dynamiczny",
+          "dynamicBody": "Klasyczna macierz jest tylko etapem pośrodku. Dynamiczna wersja wymusza najpierw lepsze ustawienie pytania, potem higienę sygnałów i evidence, a następnie przejście do TOWS-owej logiki połączeń, napięć i ruchów strategicznych."
+        },
+        "process": {
+          "intro": "Dobry Dynamic SWOT prowadzi przez pięć kroków biznesowych. Flow jest prosty dla użytkownika, ale rygorystyczny merytorycznie: najpierw ustawienie decyzji, potem higiena sygnałów, potem porządna macierz, a dopiero na końcu napięcia, ruchy i outputy.",
+          "steps": [
+            {
+              "oneLiner": "Ustaw pytanie decyzyjne, zakres i success signal",
+              "items": [
+                "nazwij decyzję, która naprawdę ma zostać podjęta",
+                "ustal zakres, horyzont czasu, success signal i constraints",
+                "odróżnij temat sesji od wszystkiego, co jest dziś poza zakresem"
+              ],
+              "note": "Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem."
+            },
+            {
+              "oneLiner": "Zbierz fakty, obserwacje i hipotezy z wnętrza firmy i rynku",
+              "items": [
+                "zbierz sygnały z rozmów, materiałów, plików, linków i benchmarków",
+                "oznacz, czy wpis jest faktem, obserwacją czy hipotezą",
+                "rozdziel sygnały wewnętrzne od zewnętrznych i skróć je do jednej tezy"
+              ],
+              "note": "Na tym etapie nie wyciąga się jeszcze decyzji. Powstaje warstwa źródłowa, z której później da się obronić wnioski."
+            },
+            {
+              "oneLiner": "Przypisz sygnały do S/W/O/T, usuń szum, zostaw to co zmienia decyzję",
+              "items": [
+                "przypisz sygnały do Strengths, Weaknesses, Opportunities i Threats",
+                "usuń duplikaty, rozdziel objawy od przyczyn i podważaj ogólniki",
+                "zostaw tylko karty, które rzeczywiście zmieniają pole decyzji"
+              ],
+              "note": "Mocna macierz nie jest długa. Jest selektywna, konkretna i oparta na źródłach."
+            },
+            {
+              "oneLiner": "Pokaż, gdzie przewaga zderza się z ograniczeniem lub ryzykiem",
+              "items": [
+                "połącz karty w sytuacje decyzyjne: ofensywa, naprawa, obrona, ograniczanie",
+                "pokaż, gdzie przewaga zderza się z ograniczeniem albo ryzykiem",
+                "nazwij, dlaczego właśnie to napięcie ma znaczenie teraz, a nie później"
+              ],
+              "note": "To tutaj pojawia się wartość konsultingowa. Sama lista kart przestaje być tabelą i zaczyna tworzyć logikę decyzji."
+            },
+            {
+              "oneLiner": "Przełóż napięcia na rekomendowane ruchy i materiał do dalszego użycia",
+              "items": [
+                "przełóż napięcia na 2-4 rekomendowane ruchy z jasną sekwencją",
+                "odróżnij quick win od ruchu strategicznego i od elementu, który wymaga jeszcze walidacji",
+                "zamknij sesję source summary gotowym do raportu, decka, inicjatywy lub dalszej eksploracji"
+              ],
+              "note": "Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania."
+            }
+          ],
+          "sessionQualityLabel": "Jak wygląda dobra sesja końcowa",
+          "sessionQualityItems": [
+            "macierz z 6-12 wyselekcjonowanymi czynnikami rozłożonymi w 4 ćwiartkach (S/W/O/T) — każdy z oznaczonym źródłem i typem evidence, zamiast długiej listy wszystkiego",
+            "3-6 napięć strategicznych, które naprawdę tłumaczą pole decyzji",
+            "2-4 rekomendowane ruchy z jasną sekwencją i pierwszym krokiem",
+            "co najmniej 1 output candidate gotowy do dalszej decyzji lub akceptacji sponsora",
+            "final source summary, z którego da się bezpośrednio zbudować raport lub deck"
+          ],
+          "decisionSituationsIntro": "W kroku 4 łączysz czynniki wewnętrzne z zewnętrznymi. Każde takie połączenie tworzy jedną z czterech sytuacji decyzyjnych. Rozpoznanie typu sytuacji pomaga szybko zdecydować, jaki ruch jest logiczny.",
+          "decisionSituationsCards": [
+            {
+              "label": "Siła + Szansa",
+              "desc": "Masz przewagę i rynek daje okazję. Graj ofensywnie — wykorzystaj to, co masz, żeby wejść w szansę.",
+              "accent": "emerald"
+            },
+            {
+              "label": "Słabość + Szansa",
+              "desc": "Szansa jest, ale wewnętrzna luka ją blokuje. Najpierw napraw lukę, potem wejdź w szansę.",
+              "accent": "sky"
+            },
+            {
+              "label": "Siła + Zagrożenie",
+              "desc": "Zewnętrzne ryzyko rośnie, ale masz przewagę. Użyj jej, żeby obronić pozycję.",
+              "accent": "amber"
+            },
+            {
+              "label": "Słabość + Zagrożenie",
+              "desc": "Słabość zwiększa ekspozycję na ryzyko. Najpierw ogranicz słabość, żeby zmniejszyć zagrożenie.",
+              "accent": "rose"
+            }
+          ],
+          "workingNotesItems": [
+            "SWOT nie jest celem, tylko etapem syntezy prowadzącym do decyzji",
+            "najczęstszy błąd to zbyt wiele słabych kart i zbyt mało selekcji",
+            "jakość wniosków nigdy nie będzie wyższa niż jakość sygnałów źródłowych",
+            "dobry prowadzący oddziela fakt od hipotezy i symptom od przyczyny",
+            "mocna sesja łączy realia wewnętrzne z rynkiem, a nie tylko opisuje jedną stronę sytuacji",
+            "wynik powinien być gotowy do użycia przez management, nie tylko do przeczytania przez autora analizy"
+          ]
+        },
+        "outcomes": {
+          "intro": "Dobrze wykonany Dynamic SWOT kończy się materiałem gotowym do użycia: pytanie decyzyjne, jakość evidence, kluczowe napięcia i sekwencja ruchów.",
+          "blocks": [
+            {
+              "title": "Rama decyzji",
+              "what": "Pytanie strategiczne, zakres, horyzont czasu i success signal. Jasne przypomnienie, czego analiza dotyczy, a czego nie.",
+              "why": "Bez ramy nawet dobra macierz zamienia się w ogólny opis firmy oderwany od decyzji.",
+              "next": "Executive summary z logiką decyzji dla sponsora lub zarządu."
+            },
+            {
+              "title": "Obraz czynników i evidence",
+              "what": "Najmocniejsze karty S/W/O/T ze źródłami. Rozdzielenie faktów, obserwacji i hipotez.",
+              "why": "Decydent widzi nie tylko wniosek, ale też jakość materiału, na którym ten wniosek stoi.",
+              "next": "Uzasadniona macierz i defensible story do rozmowy decyzyjnej."
+            },
+            {
+              "title": "Napięcia strategiczne",
+              "what": "Najważniejsze połączenia między kartami wewnętrznymi i zewnętrznymi. Sytuacje decyzyjne, które zmieniają logikę ruchu.",
+              "why": "Obserwacje przestają być listą i zaczynają tłumaczyć, gdzie leży prawdziwy trade-off.",
+              "next": "Warstwa interpretacji do dyskusji z managementem i wyboru priorytetów."
+            },
+            {
+              "title": "Rekomendowane ruchy",
+              "what": "2-4 ruchy wynikające z napięć z jasną sekwencją. Rozróżnienie: quick win, big bet, ruch obronny, capability build.",
+              "why": "Przejście od diagnozy do ruchu, który ma sens biznesowy, ma pierwszy krok i da się obronić logicznie.",
+              "next": "Shortlista ruchów do decka, sponsor decision lub rozwinięcia w inicjatywę."
+            },
+            {
+              "title": "Most do działania",
+              "what": "Source summary gotowy do raportu lub prezentacji. Wybór: co na inicjatywę, co na deck, co zostaje ideą.",
+              "why": "SWOT bez tego etapu zostawia zespół z ciekawą analizą, ale bez ruchu.",
+              "next": "Raport, prezentacja, inicjatywa albo dalsza eksploracja z tego samego materiału."
+            }
+          ],
+          "qualityBody": "Dobry wynik jest selektywny, evidence-backed i decyzyjny. Nie pokazuje wszystkiego, co udało się zebrać, tylko to, co naprawdę zmienia logikę wyboru i pozwala przejść do kolejnego kroku."
+        },
+        "example": {
+          "intro": "Przykład pokazuje sytuację typową dla firm w transformacji: presja rośnie i technologia kusi jako szybka odpowiedź, ale najpierw trzeba ustalić, czy problemem jest naprawdę brak rozwiązania, czy brak prawdy o sytuacji.",
+          "cases": [
+            {
+              "title": "Premium producent przed CAPEX-em",
+              "context": "Marża spada, lead times są niestabilne, a zarząd rozważa automatyzację.",
+              "question": "Czy zaczynać od inwestycji technologicznej, czy od diagnozy strat i bottlenecków?",
+              "evidence": [
+                "Wywiady pokazują silną markę i zaufanie klientów premium, ale też decyzje operacyjne podejmowane intuicyjnie.",
+                "Dane wskazują straty w przepływie, brak wspólnej definicji bottlenecków i rosnące koszty ekspresowych dostaw."
+              ],
+              "aiDraft": "AI proponuje SWOT z mocnymi stronami w reputacji i relacjach B2B, słabościami w widoczności procesu, szansą w diagnostyce danych oraz zagrożeniem automatyzacji złego problemu.",
+              "approvedUse": "Użytkownik akceptuje tylko te karty, które mają evidence, a odrzuca ogólniki typu “wdrożyć AI”. Zaakceptowane elementy przechodzą do napięć i ruchów.",
+              "outcome": "Powstaje decyzja: przed CAPEX-em uruchomić diagnozę strat, mapę bottlenecków i warstwę danych, a automatyzację potraktować jako drugi etap."
+            },
+            {
+              "title": "Software house po utracie dużego klienta",
+              "context": "Firma ma mocny zespół ekspercki, ale pipeline sprzedażowy jest zbyt zależny od rekomendacji.",
+              "question": "Czy skalować sprzedaż outbound, czy najpierw zawęzić pozycjonowanie oferty?",
+              "evidence": [
+                "CRM pokazuje długi cykl sprzedaży poza rekomendacjami, a rozmowy z klientami wskazują niejasne rozróżnienie oferty.",
+                "Zespół ma mocne kompetencje techniczne, ale materiały sprzedażowe nie pokazują mierzalnych efektów projektów."
+              ],
+              "aiDraft": "AI proponuje czynniki SWOT dotyczące eksperckiego delivery, słabej narracji wartości, szansy w pionizacji oferty i zagrożenia dalszą zależnością od pojedynczych kont.",
+              "approvedUse": "Po akceptacji kart AI buduje napięcie między jakością delivery a brakiem ostrego ICP oraz proponuje ruchy przed skalowaniem outboundu.",
+              "outcome": "Powstaje sekwencja: zawęzić ICP, stworzyć proof pack z efektami klientów, przetestować 2 kampanie segmentowe i dopiero potem zwiększać sprzedaż."
+            },
+            {
+              "title": "Sieć usług lokalnych przed ekspansją",
+              "context": "Popyt rośnie, ale jakość operacyjna różni się między lokalizacjami.",
+              "question": "Czy otwierać kolejne punkty, czy najpierw standaryzować model działania?",
+              "evidence": [
+                "Opinie klientów są bardzo dobre w najlepszych lokalizacjach, ale reklamacje koncentrują się wokół kilku powtarzalnych etapów usługi.",
+                "Managerowie lokalni różnie rozumieją standard jakości, a onboarding nowych pracowników trwa zbyt długo."
+              ],
+              "aiDraft": "AI proponuje mocne strony w marce lokalnej i relacji z klientem, słabości w standardzie operacyjnym, szansę w playbooku ekspansji i zagrożenie utraty jakości przy skalowaniu.",
+              "approvedUse": "Zaakceptowane karty są używane do wyboru, czy przewaga jest naprawdę skalowalna, czy zależy od pojedynczych ludzi i lokalnych praktyk.",
+              "outcome": "Rekomendacja: najpierw stworzyć standard usługi, dashboard jakości i model szkolenia, a dopiero potem otwierać kolejne punkty."
+            }
+          ],
+          "situationLabel": "Sytuacja i pytanie decyzyjne",
+          "situationItems": [
+            "Ateliertoy to firma premium z własną produkcją i silną reputacją w B2B",
+            "marża spada, lead times są niestabilne, a zarząd rozważa wejście w kosztowną automatyzację",
+            "pytanie sesji brzmi: czy zaczynać transformację od CAPEX-u, czy najpierw od diagnozy strat, bottlenecków i blind spotów danych"
+          ],
+          "signalsLabel": "Kluczowe sygnały wejściowe",
+          "signalsItems": [
+            "mocna marka i zaufanie klientów premium są realną przewagą",
+            "decyzje operacyjne są nadal intuicyjne, a firma nie ma wspólnej prawdy o stratach i bottleneckach",
+            "na rynku rośnie oczekiwanie szybszych wdrożeń i większej przewidywalności",
+            "istnieje ryzyko przepalenia inwestycji, jeśli automatyzacja zostanie uruchomiona przed diagnozą procesu"
+          ],
+          "matrixLabel": "Jak wygląda macierz",
+          "matrixItems": [
+            "Strengths: marka, relacje B2B, własna produkcja, kontrola IP",
+            "Weaknesses: brak wspólnej diagnozy, analogowe zarządzanie, słaba widoczność strat",
+            "Opportunities: diagnoza cyfrowa, warstwa danych, lepsze sekwencjonowanie inwestycji",
+            "Threats: presja cenowa, rosnące koszty i ryzyko automatyzacji złego problemu"
+          ],
+          "tensionLabel": "Napięcie i interpretacja",
+          "tensionItems": [
+            "firma ma realne aktywa do skalowania, ale nie ma jeszcze prawdy o tym, gdzie dziś wycieka wartość",
+            "automatyzacja wygląda atrakcyjnie, lecz bez diagnozy może tylko przyspieszyć chaos",
+            "główny wniosek brzmi: najpierw zobaczyć, co naprawdę ogranicza marżę i przepływ, a dopiero potem wybierać technologię"
+          ],
+          "movesLabel": "Rekomendowane ruchy",
+          "movesItems": [
+            "uruchomić diagnozę strat, bottlenecków i blind spotów danych przed CAPEX-em",
+            "zbudować wspólny obraz procesu oraz priorytetów transformacyjnych dla zarządu",
+            "dopiero potem ułożyć sekwencję: dane -> automatyzacja -> governance inwestycji"
+          ],
+          "outputsLabel": "Outputy z sesji",
+          "outputsItems": [
+            "board-ready materiał tłumaczący, dlaczego transformację należy zacząć od diagnozy, a nie od zakupu technologii",
+            "krótka lista priorytetów i ryzyk do najbliższych decyzji transformacyjnych",
+            "materiał źródłowy do roadmapy, decka i wygenerowania inicjatyw w platformie"
+          ],
+          "closingNote": "To jest dobry case, bo nie kończy się na opisaniu czterech ćwiartek. Pokazuje, jak z sygnałów powstaje decyzja o kolejności ruchów oraz materiał, z którego można od razu przejść do działania."
+        }
+      },
+      "marketForces": {
+        "goal": {
+          "positioningHeadline": "Market Forces nie służy do mechanicznego ocenienia pięciu sił. Służy do zamiany struktury rynku w decyzję: gdzie naciska marża, gdzie jest defensibility i jaki ruch ma sens.",
+          "positioningBody": "To narzędzie jest evidence-first i AI-assisted. Najpierw ustawia branżę, zakres, pozycję firmy oraz pytanie decyzyjne. Potem AI pomaga zebrać sygnały z rozmów i kontekstu organizacji, proponuje scorecard sił, pyta użytkownika o akceptację i dopiero z zatwierdzonej diagnozy buduje implikacje, ruchy oraz inicjatywy.",
+          "whatItDoes": [
+            "łączy kontekst organizacji i wywiadu z sygnałami rynku",
+            "zamienia sygnały w ocenę pięciu sił z driverami, evidence i confidence",
+            "pokazuje presję marży, siłę nabywców, bariery wejścia i defensibility",
+            "prowadzi od diagnozy rynku do rekomendowanych ruchów i inicjatyw"
+          ],
+          "whatItIsNot": [
+            "nie jest suchą checklistą Portera bez kontekstu decyzji",
+            "nie jest miejscem na ocenę rynku bez źródeł i sygnałów",
+            "nie służy do automatycznego wygenerowania strategii bez akceptacji użytkownika",
+            "nie kończy się na radarze lub scorecardzie, tylko przechodzi do outputów"
+          ],
+          "aiPhilosophyBody": "AI jest konsultantem wspierającym, nie źródłem prawdy. Proponuje sygnały, oceny sił, implikacje, ruchy i outputy, ale użytkownik akceptuje, odrzuca albo prosi o przemyślenie kart przed przejściem do inicjatyw."
+        },
+        "process": {
+          "intro": "Market Forces działa w pięciu fazach analogicznych do Dynamic SWOT: mission, input, forces, insights i outputs. Każda faza ma inny poziom decyzji i inne zadanie dla AI.",
+          "steps": [
+            {
+              "title": "Mission & Market Context",
+              "text": "Branża, geografia, pozycja, pytanie i success signal"
+            },
+            {
+              "title": "Input & Exploration",
+              "text": "Sygnały z wywiadu, benchmarków, plików i obserwacji"
+            },
+            {
+              "title": "Five Forces Build",
+              "text": "Ocena każdej siły: score, trend, drivery, evidence i confidence"
+            },
+            {
+              "title": "Strategic Implications",
+              "text": "Presja marży, defensibility, napięcia rynkowe i rekomendacje"
+            },
+            {
+              "title": "Outputs & Actions",
+              "text": "Source summary, output candidates i drafty inicjatyw"
+            }
+          ]
+        },
+        "outcomes": {
+          "intro": "Dobry wynik jest gotowy do decyzji: pokazuje nie tylko ocenę sił, ale też konsekwencje dla pozycji, marży i kolejności ruchów.",
+          "blocks": [
+            {
+              "title": "Scorecard 5 sił",
+              "text": "Oceny, trendy, drivery, dowody i confidence dla każdej siły."
+            },
+            {
+              "title": "Implikacje strategiczne",
+              "text": "Co struktura rynku oznacza dla marży, defensibility i pozycji firmy."
+            },
+            {
+              "title": "Rekomendowane ruchy",
+              "text": "2-4 ruchy z uzasadnieniem, wysiłkiem, ryzykiem i pierwszym krokiem."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Materiał do inicjatywy, raportu, prezentacji lub dalszej eksploracji."
+            }
+          ]
+        },
+        "example": {
+          "intro": "Firma premium rozważa wejście w nowy kanał marketplace. Market Forces pomaga sprawdzić, czy atrakcyjność wzrostu nie zostanie zjedzona przez siłę kupujących, presję platform i łatwość kopiowania oferty.",
+          "cases": [
+            {
+              "title": "Marketplace dla marki premium",
+              "context": "Firma rozważa nowy kanał sprzedaży z dużym zasięgiem, ale niską kontrolą relacji.",
+              "question": "Czy wzrost wolumenu nie zostanie zjedzony przez siłę platformy i presję cenową?",
+              "evidence": [
+                "Wywiady wskazują, że klienci lubią markę, ale w marketplace porównują głównie cenę i czas dostawy.",
+                "Dane kanału pokazują wysokie prowizje, duży koszt promocji oraz łatwość kopiowania bestsellerów."
+              ],
+              "aiDraft": "AI ocenia wysoką siłę kupujących i platformy, średnią groźbę nowych wejść oraz dużą presję substytutów w tańszych segmentach.",
+              "approvedUse": "Użytkownik akceptuje drivery, które mają dowody, a AI buduje z nich implikacje marżowe i warunki defensible entry.",
+              "outcome": "Decyzja nie brzmi “wejść albo nie”, tylko: wejść pilotażowo z ograniczonym SKU, kontrolą ceny i unikalnym bundlem, którego nie da się łatwo porównać."
+            },
+            {
+              "title": "Nowy segment B2B w branży usług",
+              "context": "Firma chce wejść do większych klientów, gdzie proces zakupowy jest dłuższy i bardziej formalny.",
+              "question": "Czy atrakcyjność rynku równoważy siłę kupujących i koszt sprzedaży?",
+              "evidence": [
+                "Rozmowy z handlowcami pokazują większe kontrakty, ale też silniejsze procurement, dłuższe RFP i presję na referencje.",
+                "Benchmark konkurencji wskazuje, że liderzy segmentu mają certyfikacje, case studies i długi proces pre-sales."
+              ],
+              "aiDraft": "AI proponuje scorecard z wysoką siłą kupujących, wysokimi barierami reputacyjnymi i umiarkowaną rywalizacją w wyspecjalizowanych niszach.",
+              "approvedUse": "Po akceptacji kart narzędzie wskazuje, które bariery wejścia trzeba zbudować przed pełnym skalowaniem sprzedaży.",
+              "outcome": "Rekomendacja: zacząć od niszy B2B, przygotować referencje i proof assets, a dopiero potem wejść w szeroki segment enterprise."
+            },
+            {
+              "title": "Producent przed wejściem zagranicznym",
+              "context": "Rynek wygląda duży, ale lokalni gracze mają dystrybucję i relacje z kanałem.",
+              "question": "Czy wejście ma sens bez partnerstwa lub unikalnej przewagi kosztowej?",
+              "evidence": [
+                "Analiza rynku pokazuje duży popyt, ale także dominację kilku dystrybutorów i wysokie koszty pozyskania półki.",
+                "Wywiady sugerują, że lokalni klienci ufają obecnym dostawcom i wymagają serwisu posprzedażowego na miejscu."
+              ],
+              "aiDraft": "AI wskazuje wysoką siłę dostawców kanału, wysokie bariery wejścia oraz ryzyko substytucji przez lokalne marki.",
+              "approvedUse": "Zaakceptowane siły przechodzą do implikacji: bez partnera firma może kupić przychód kosztem marży i kontroli.",
+              "outcome": "Powstaje model testu: partner dystrybucyjny, ograniczony region, jasne progi marży i decyzja scale/stop po 90 dniach."
+            }
+          ]
+        }
+      },
+      "growthPaths": {
+        "goal": {
+          "positioningHeadline": "Growth Paths nie jest listą pomysłów wzrostowych. To narzędzie do wyboru ścieżki: co skalować, co testować, gdzie wejść i czego nie robić teraz.",
+          "positioningBody": "AI bierze kontekst organizacji, wywiad i sygnały rynku, proponuje opcje w czterech polach Ansoffa, a użytkownik zatwierdza albo odrzuca karty. Dopiero zaakceptowane opcje przechodzą do porównania, ruchów, outputów i inicjatyw."
+        },
+        "process": {
+          "steps": [
+            {
+              "title": "Mission",
+              "text": "Ambicja wzrostu, zakres, success signal i ograniczenia"
+            },
+            {
+              "title": "Input",
+              "text": "Sygnały z wywiadu, rynku, klientów i organizacji"
+            },
+            {
+              "title": "Options",
+              "text": "Opcje w macierzy Ansoffa: core, rynek, produkt, dywersyfikacja"
+            },
+            {
+              "title": "Insights",
+              "text": "Porównanie trade-offów i rekomendowana sekwencja ruchów"
+            },
+            {
+              "title": "Outputs",
+              "text": "Final source summary, output candidates i drafty inicjatyw"
+            }
+          ]
+        },
+        "outcomes": {
+          "blocks": [
+            {
+              "title": "Macierz opcji",
+              "text": "Opcje wzrostu z impact, effort, risk, evidence i confidence."
+            },
+            {
+              "title": "Porównanie strategiczne",
+              "text": "Trade-offy między skalowaniem core, wejściem w rynek, produktem i dywersyfikacją."
+            },
+            {
+              "title": "Rekomendowane ruchy",
+              "text": "Sekwencja: co robić teraz, co testować, co odłożyć."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Materiał do inicjatywy, raportu, decka lub dalszej eksploracji."
+            }
+          ]
+        },
+        "example": {
+          "intro": "Firma premium chce rosnąć bez erozji marży. Growth Paths porównuje skalowanie obecnego segmentu, wejście do nowej geografii, nowy produkt i dywersyfikację, a potem układa sekwencję działań.",
+          "cases": [
+            {
+              "title": "Premium firma szuka wzrostu bez erozji marży",
+              "context": "Core segment jest rentowny, ale tempo wzrostu spada.",
+              "question": "Czy skalować obecny rynek, wejść do nowej geografii, czy budować nowy produkt?",
+              "evidence": [
+                "Sprzedaż pokazuje stabilną marżę w obecnym segmencie, ale malejącą liczbę nowych leadów.",
+                "Wywiady wskazują zapytania z sąsiednich segmentów, lecz bez jasnego dopasowania oferty i kanałów."
+              ],
+              "aiDraft": "AI proponuje opcje w czterech polach: mocniejsza penetracja core, test nowej geografii, lekka wersja produktu i ostrożna dywersyfikacja.",
+              "approvedUse": "Użytkownik akceptuje opcje z jasnym pierwszym krokiem i odrzuca pomysły, które są tylko życzeniową ekspansją.",
+              "outcome": "Powstaje sekwencja: najpierw zwiększyć udział w core, równolegle przetestować jeden segment, a większy bet uruchomić dopiero po walidacji."
+            },
+            {
+              "title": "SaaS po nasyceniu obecnego ICP",
+              "context": "Produkt ma dobrą retencję, ale nowy pipeline w obecnym segmencie słabnie.",
+              "question": "Czy rosnąć przez nowy segment, dodatki produktowe, czy pricing?",
+              "evidence": [
+                "Retencja i expansion revenue są dobre, ale win-rate na nowych logo spada trzeci kwartał z rzędu.",
+                "Feedback klientów pokazuje popyt na funkcje raportowe, a sprzedaż słyszy zapytania z większych firm."
+              ],
+              "aiDraft": "AI tworzy opcje: pricing packaging w core, wejście w mid-market, moduł analityczny i ryzykowną platformę dla enterprise.",
+              "approvedUse": "Zaakceptowane karty trafiają do porównania impact/effort/risk, a AI wskazuje, które opcje wymagają walidacji przed roadmapą.",
+              "outcome": "Rekomendacja: przetestować nowy pakiet cenowy i moduł analityczny na obecnych klientach przed kosztownym ruchem enterprise."
+            },
+            {
+              "title": "Firma usługowa z silną relacją klienta",
+              "context": "Klienci proszą o dodatkowe usługi, ale zespół boi się rozmycia specjalizacji.",
+              "question": "Czy rozwijać produkt/usługę dla obecnych klientów, czy chronić focus?",
+              "evidence": [
+                "Najlepsi klienci proszą o usługi komplementarne, ale rentowność projektów spada, gdy zakres jest zbyt szeroki.",
+                "Zespół wskazuje przeciążenie ekspertów i brak powtarzalnych standardów delivery dla nowych usług."
+              ],
+              "aiDraft": "AI proponuje opcje rozwoju produktu dla obecnych klientów, selektywną penetrację key accounts i odrzuca szeroką dywersyfikację bez proofu.",
+              "approvedUse": "Akceptowane są tylko opcje z wyraźnym ICP, zakresem delivery i pierwszym eksperymentem komercyjnym.",
+              "outcome": "Powstaje plan: stworzyć jedną productized service dla obecnych klientów, przetestować cenę i dopiero potem rozwijać kolejne dodatki."
+            }
+          ]
+        }
+      },
+      "portfolioPriority": {
+        "goal": {
+          "positioningBody": "Portfolio Priority pomaga wybrać, które produkty, inicjatywy albo bety finansować, utrzymywać, testować, harvestować lub zatrzymać. AI proponuje pierwszy szkic na podstawie kontekstu i wywiadu, ale decyzje przechodzą przez akceptację użytkownika."
+        },
+        "process": {
+          "missionText": "Zakres portfolio, ograniczenia i sygnał sukcesu.",
+          "evidenceText": "Sygnały z wywiadu, rynku, finansów i zasobów.",
+          "itemsText": "Karty BCG z oceną growth/share/investment.",
+          "outputsText": "Trade-offy, ruchy, inicjatywy i final summary."
+        },
+        "outcomes": {
+          "tradeOffs": "Jawne trade-offy alokacji zasobów",
+          "moves": "Rekomendowane ruchy: invest, maintain, test, harvest, stop",
+          "candidates": "Kandydaci outputów i inicjatyw downstream"
+        },
+        "example": {
+          "intro": "Firma ma kilka produktów i inicjatyw, ale budżet pozwala sfinansować tylko część z nich. Portfolio Priority porządkuje karty BCG, pokazuje koszt alternatywny i buduje rekomendowany portfel działań.",
+          "cases": [
+            {
+              "title": "Budżet inwestycyjny tylko na 3 z 9 inicjatyw",
+              "context": "Lista projektów jest długa, a sponsorzy naciskają na swoje tematy.",
+              "question": "Które inicjatywy finansować, utrzymać, testować albo zatrzymać?",
+              "evidence": [
+                "Każda inicjatywa ma innego sponsora, ale tylko część ma dowody wpływu na wzrost lub marżę.",
+                "Dane PMO pokazują przeciążenie zespołów i brak jasnego kryterium stop/continue."
+              ],
+              "aiDraft": "AI proponuje karty portfolio z oceną growth/share/investment, uzasadnieniem oraz rekomendacją invest, maintain, test, harvest albo stop.",
+              "approvedUse": "Użytkownik akceptuje scoring tylko tam, gdzie zgadza się z evidence, a potem AI buduje trade-offy zasobów.",
+              "outcome": "Powstaje portfel decyzji: trzy inicjatywy do finansowania, dwie do testu z bramkami, reszta do zatrzymania lub odłożenia."
+            },
+            {
+              "title": "Portfolio produktów po szybkim wzroście",
+              "context": "Część produktów ma wolumen, ale niską marżę; inne są małe, lecz perspektywiczne.",
+              "question": "Gdzie przesunąć zasoby produktowe i sprzedażowe?",
+              "evidence": [
+                "Raport sprzedaży pokazuje produkty o wysokim wolumenie i niskiej marży oraz małe produkty z szybkim wzrostem.",
+                "Wywiady z sales wskazują, że zespół sprzedaje to, co łatwe, niekoniecznie to, co strategiczne."
+              ],
+              "aiDraft": "AI klasyfikuje produkty jako stars, cash cows, question marks i dogs oraz proponuje przesunięcia uwagi sprzedaży.",
+              "approvedUse": "Po akceptacji kart narzędzie pokazuje koszt alternatywny utrzymywania zbyt szerokiego portfolio.",
+              "outcome": "Rekomendacja: utrzymać cash cow, dofinansować jednego question marka, harvestować niskomarżowy wolumen i zatrzymać produkty bez strategicznej roli."
+            },
+            {
+              "title": "Transformacja z nadmiarem projektów",
+              "context": "PMO prowadzi wiele równoległych strumieni i traci zdolność dowożenia.",
+              "question": "Które prace są strategiczne, a które tylko zużywają przepustowość?",
+              "evidence": [
+                "Statusy projektów są zielone na papierze, ale zależności blokują kluczowe milestone’y.",
+                "Rozmowy z liderami pokazują, że te same osoby są krytyczne dla kilku inicjatyw jednocześnie."
+              ],
+              "aiDraft": "AI ocenia inicjatywy według strategicznego potencjału, pozycji, poziomu inwestycji i realnej przepustowości organizacji.",
+              "approvedUse": "Zaakceptowane karty przechodzą do syntezy: co finansować, co utrzymać minimalnie, co zakończyć, a co zamienić w krótki test.",
+              "outcome": "Powstaje plan odciążenia PMO: mniej aktywnych strumieni, jasne kryteria restartu i lista tematów do zamknięcia."
+            }
+          ]
+        }
+      },
+      "riskUncertainty": {
+        "goal": {
+          "positioningBody": "Risk & Uncertainty pomaga sprawdzić, jakie założenia mogą się nie sprawdzić, które ryzyka są krytyczne i jakie ruchy odporności trzeba uruchomić przed decyzją."
+        },
+        "process": {
+          "missionText": "Decyzja, zakres niepewności i sygnał sukcesu.",
+          "evidenceText": "Sygnały z wywiadu, rynku, danych i operacji.",
+          "riskMapText": "Założenia, ryzyka i scenariusze jako karty AI.",
+          "outputsText": "Ruchy odporności, output candidates i inicjatywy."
+        },
+        "outcomes": {
+          "map": "Zaakceptowana mapa założeń, ryzyk i scenariuszy",
+          "moves": "Ruchy: validate, mitigate, monitor, hedge, escalate",
+          "earlyWarnings": "Early warnings i działania odporności",
+          "candidates": "Kandydaci outputów i inicjatyw downstream"
+        },
+        "example": {
+          "intro": "Firma planuje transformację, ale niepewne są koszty, adopcja i zależności technologiczne. Risk & Uncertainty porządkuje założenia, ryzyka i scenariusze, a potem wskazuje ruchy walidacji i mitygacji.",
+          "cases": [
+            {
+              "title": "Transformacja z niepewną adopcją użytkowników",
+              "context": "Plan zakłada szybkie wdrożenie, ale zespoły operacyjne mają różne poziomy gotowości.",
+              "question": "Które założenia trzeba zwalidować przed commitmentem budżetu?",
+              "evidence": [
+                "Wywiady pokazują entuzjazm zarządu, ale sceptycyzm kierowników liniowych i brak czasu na szkolenia.",
+                "Poprzednie wdrożenia miały opóźnienia nie przez technologię, tylko przez brak ownershipu po stronie biznesu."
+              ],
+              "aiDraft": "AI proponuje założenia do walidacji, ryzyka adopcji, scenariusz opóźnienia oraz ruchy validate/monitor/mitigate.",
+              "approvedUse": "Użytkownik akceptuje karty, które mają realne wskaźniki ostrzegawcze, np. frekwencję szkoleń, aktywność użytkowników i liczbę workaroundów.",
+              "outcome": "Powstaje plan odporności: pilot adopcyjny, sponsorzy liniowi, early warnings i progi eskalacji przed pełnym rolloutem."
+            },
+            {
+              "title": "Ekspansja przy zmiennym popycie",
+              "context": "Popyt rośnie, ale dane rynkowe są rozbieżne i zależne od kilku klientów.",
+              "question": "Jaki scenariusz bazowy, downside i stress powinien sterować decyzją?",
+              "evidence": [
+                "Sprzedaż widzi duże zapytania od kilku klientów, ale pipeline jest skoncentrowany i ma niską powtarzalność.",
+                "Dane rynkowe pokazują wzrost kategorii, lecz też sezonowość i zależność od budżetów inwestycyjnych klientów."
+              ],
+              "aiDraft": "AI proponuje scenariusze base/downside/stress, ryzyka koncentracji popytu i sygnały do monitorowania przed decyzją scale.",
+              "approvedUse": "Po akceptacji scenariuszy narzędzie buduje ruchy hedge i monitor oraz sugeruje progi, przy których decyzja ma być zatrzymana.",
+              "outcome": "Decyzja ekspansyjna dostaje warunki: minimalna liczba niezależnych klientów, próg marży i early warning na spadek konwersji."
+            },
+            {
+              "title": "Program kosztowy pod presją czasu",
+              "context": "Zarząd oczekuje szybkich oszczędności, ale ryzyko wpływu na jakość jest wysokie.",
+              "question": "Jak ograniczyć ryzyko cięcia zdolności krytycznych?",
+              "evidence": [
+                "Finanse widzą szybki potencjał oszczędności, ale operacje wskazują zależności między kosztami a SLA.",
+                "Historia podobnych cięć pokazuje wzrost reklamacji i kosztów naprawczych po kilku miesiącach."
+              ],
+              "aiDraft": "AI proponuje ryzyka jakości, scenariusz odbicia kosztów, założenia do walidacji oraz ruchy mitigate/escalate.",
+              "approvedUse": "Akceptowane są tylko te mitygacje, które mają właściciela, trigger i jasny próg eskalacji.",
+              "outcome": "Powstaje program oszczędności z guardrailami: czego nie ciąć, co testować krótkim pilotażem i kiedy zatrzymać redukcję."
+            }
+          ]
+        }
+      }
     }
   },
   "discoveryToolsTools": {
@@ -32655,6 +33216,128 @@
         "namePlaceholder": "Nazwa pozycji...",
         "descPlaceholder": "Opis / notatka...",
         "empty": "Brak pozycji"
+      }
+    },
+    "operational": {
+      "operationalSectionStep": {
+        "namePlaceholder": "Nazwa elementu...",
+        "descPlaceholder": "Opis / notatka...",
+        "hint": "Dodaj konkretne elementy operacyjne.",
+        "empty": "Brak elementów"
+      },
+      "dmsKpisStep": {
+        "title": "KPI i progi",
+        "description": "Zdefiniuj KPI, targety i ownerów.",
+        "kpiPlaceholder": "KPI...",
+        "targetPlaceholder": "Target...",
+        "frequencyPlaceholder": "Częstotliwość...",
+        "ownerPlaceholder": "Owner...",
+        "addKpi": "Dodaj KPI",
+        "hint": "KPI powinny mieć jasny target i ownera.",
+        "empty": "Brak KPI",
+        "targetLabel": "Target",
+        "frequencyLabel": "Częstotliwość",
+        "ownerLabel": "Owner"
+      },
+      "smedStepsStep": {
+        "title": "Kroki przezbrojenia",
+        "description": "Rozdziel kroki na wewnętrzne i zewnętrzne.",
+        "stepPlaceholder": "Krok przezbrojenia...",
+        "internal": "Wewnętrzny",
+        "external": "Zewnętrzny",
+        "hint": "Oznacz typ i czas trwania każdego kroku.",
+        "empty": "Brak kroków",
+        "typeLabel": "Typ",
+        "durationLabel": "Czas"
+      },
+      "smedImprovementsStep": {
+        "title": "Usprawnienia SMED",
+        "description": "Dodaj quick wins oraz inwestycje.",
+        "improvementPlaceholder": "Usprawnienie...",
+        "descPlaceholder": "Opis / ROI...",
+        "investment": "Inwestycja",
+        "hint": "Oznacz czy to quick win czy większa inwestycja.",
+        "empty": "Brak usprawnień",
+        "typeLabel": "Typ"
+      },
+      "inventoryReplenishmentStep": {
+        "title": "Polityki uzupełniania",
+        "description": "Zdefiniuj progi i cele polityk uzupełniania.",
+        "policyPlaceholder": "Polityka...",
+        "reorderPointPlaceholder": "Punkt uzupełnienia...",
+        "targetPlaceholder": "Cel / service level...",
+        "addPolicy": "Dodaj politykę",
+        "hint": "Każda polityka powinna mieć próg i cel.",
+        "empty": "Brak polityk",
+        "thresholdLabel": "Próg",
+        "targetLabel": "Cel"
+      },
+      "dmsEscalationStep": {
+        "title": "Reguły eskalacji",
+        "description": "Zdefiniuj progi i właścicieli eskalacji.",
+        "rulePlaceholder": "Reguła...",
+        "thresholdPlaceholder": "Próg...",
+        "ownerPlaceholder": "Owner...",
+        "addRule": "Dodaj regułę",
+        "hint": "Reguły powinny mieć próg i właściciela eskalacji.",
+        "empty": "Brak reguł",
+        "thresholdLabel": "Próg",
+        "ownerLabel": "Owner"
+      },
+      "a3CountermeasuresStep": {
+        "title": "Środki zaradcze",
+        "description": "Dodaj działania i odpowiedzialnych.",
+        "actionPlaceholder": "Działanie...",
+        "ownerPlaceholder": "Owner / rola...",
+        "targetPlaceholder": "KPI / cel...",
+        "hint": "Powiąż działanie z mierzalnym KPI.",
+        "empty": "Brak działań",
+        "ownerLabel": "Owner",
+        "targetLabel": "Cel"
+      },
+      "sopStandardsStep": {
+        "title": "Standardy i kryteria jakości",
+        "description": "Zdefiniuj standardy operacyjne i kryteria jakości.",
+        "namePlaceholder": "Nazwa standardu...",
+        "criteriaPlaceholder": "Kryteria jakości...",
+        "frequencyPlaceholder": "Częstotliwość kontroli...",
+        "addStandard": "Dodaj standard",
+        "hint": "Dodaj mierzalne kryteria i częstotliwość kontroli.",
+        "empty": "Brak standardów",
+        "frequencyLabel": "Częstotliwość"
+      },
+      "sopChecklistsStep": {
+        "title": "Checklisty i weryfikacja",
+        "description": "Zdefiniuj kroki kontrolne i odpowiedzialnych.",
+        "itemPlaceholder": "Nazwa checklisty...",
+        "descPlaceholder": "Opis kroku...",
+        "ownerPlaceholder": "Owner / Rola...",
+        "hint": "Każdy punkt powinien mieć odpowiedzialną rolę.",
+        "empty": "Brak checklist",
+        "ownerLabel": "Owner"
+      },
+      "inventoryClassificationStep": {
+        "title": "Klasyfikacja ABC/XYZ",
+        "description": "Zdefiniuj grupy SKU i przypisz kategorię.",
+        "skuGroupPlaceholder": "Grupa SKU...",
+        "notesPlaceholder": "Notatki...",
+        "hint": "Klasyfikuj według wartości i zmienności popytu.",
+        "empty": "Brak klasyfikacji"
+      },
+      "a3ProblemStep": {
+        "title": "Opis problemu",
+        "description": "Zdefiniuj problem, wpływ i zakres.",
+        "problemPlaceholder": "Problem...",
+        "impactPlaceholder": "Wpływ biznesowy...",
+        "scopePlaceholder": "Zakres / proces...",
+        "hint": "Problem powinien być mierzalny i osadzony w danych."
+      },
+      "a3RootCauseStep": {
+        "title": "Przyczyna źródłowa (5 Why)",
+        "description": "Wypisz główne przyczyny problemu.",
+        "causePlaceholder": "Przyczyna...",
+        "hint": "Upewnij się, że przyczyna jest mierzalna.",
+        "empty": "Brak przyczyn"
       }
     }
   },

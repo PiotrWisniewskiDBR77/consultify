@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -24,6 +25,7 @@ export const A3CountermeasuresStep: React.FC<A3CountermeasuresStepProps> = ({
   session,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [title, setTitle] = useState('');
   const [owner, setOwner] = useState('');
@@ -67,10 +69,10 @@ export const A3CountermeasuresStep: React.FC<A3CountermeasuresStepProps> = ({
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Środki zaradcze' : 'Countermeasures'}
+          {t('discoveryToolsTools.operational.a3CountermeasuresStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Dodaj działania i odpowiedzialnych.' : 'Add actions and owners.'}
+          {t('discoveryToolsTools.operational.a3CountermeasuresStep.description')}
         </p>
       </div>
 
@@ -79,21 +81,21 @@ export const A3CountermeasuresStep: React.FC<A3CountermeasuresStepProps> = ({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'Działanie...' : 'Action...'}
+          placeholder={t('discoveryToolsTools.operational.a3CountermeasuresStep.actionPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <input
           type="text"
           value={owner}
           onChange={(e) => setOwner(e.target.value)}
-          placeholder={isPolish ? 'Owner / rola...' : 'Owner / role...'}
+          placeholder={t('discoveryToolsTools.operational.a3CountermeasuresStep.ownerPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <input
           type="text"
           value={target}
           onChange={(e) => setTarget(e.target.value)}
-          placeholder={isPolish ? 'KPI / cel...' : 'KPI / target...'}
+          placeholder={t('discoveryToolsTools.operational.a3CountermeasuresStep.targetPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <button
@@ -102,19 +104,15 @@ export const A3CountermeasuresStep: React.FC<A3CountermeasuresStepProps> = ({
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
-          {isPolish ? 'Dodaj' : 'Add'}
+          {t('discoveryToolsTools.common.add')}
         </button>
-        <InlineAssist
-          hint={
-            isPolish ? 'Powiąż działanie z mierzalnym KPI.' : 'Tie each action to a measurable KPI.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.a3CountermeasuresStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak działań' : 'No countermeasures yet'}
+            {t('discoveryToolsTools.operational.a3CountermeasuresStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -127,9 +125,11 @@ export const A3CountermeasuresStep: React.FC<A3CountermeasuresStepProps> = ({
                   <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
                   {(item.owner || item.target) && (
                     <div className="text-xs text-slate-500 mt-2">
-                      {item.owner && `${isPolish ? 'Owner' : 'Owner'}: ${item.owner}`}
+                      {item.owner &&
+                        `${t('discoveryToolsTools.operational.a3CountermeasuresStep.ownerLabel')}: ${item.owner}`}
                       {item.owner && item.target && ' • '}
-                      {item.target && `${isPolish ? 'Cel' : 'Target'}: ${item.target}`}
+                      {item.target &&
+                        `${t('discoveryToolsTools.operational.a3CountermeasuresStep.targetLabel')}: ${item.target}`}
                     </div>
                   )}
                 </div>
