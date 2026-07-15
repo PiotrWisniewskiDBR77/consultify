@@ -27,6 +27,8 @@ import {
 } from './deepeningLadder';
 
 export * from './automationEngine';
+export * from './automationInsightStaircase';
+export * from './automationQuestionBank';
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 
