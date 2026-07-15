@@ -241,7 +241,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
   graphEdges: currentEdges = [],
   selectedNodeId,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
@@ -420,8 +420,8 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
 
   return (
     <ToolsPanelShell
-      title={isPl ? 'Sugestie AI' : 'AI Suggestions'}
-      subtitle={isPl ? 'Kontekst firmy + AI' : 'Company context + AI'}
+      title={t('myWorkIdeas.aiSuggestionsPanel.aiSuggestions')}
+      subtitle={t('myWorkIdeas.aiSuggestionsPanel.companyContextAi')}
       icon={
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-c-info/20 to-c-info/15 flex items-center justify-center">
           <MessageSquareWarning size={14} className="text-c-info" />
@@ -432,25 +432,23 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
     >
       <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
         <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-          {title || (isPl ? 'Wyzwanie' : 'Idea')}
+          {title || t('myWorkIdeas.aiSuggestionsPanel.idea')}
         </div>
         {companyContextUsed && (
           <div className="mt-1.5 text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 rounded-lg px-2 py-1 flex items-center gap-1">
             <Sparkles size={10} />
-            {isPl ? 'Sugestie oparte na danych firmy' : 'Suggestions grounded in company data'}
+            {t('myWorkIdeas.aiSuggestionsPanel.suggestionsGroundedCompanyData')}
           </div>
         )}
         {isAccepted === false && (
           <div className="mt-1.5 text-[10px] text-amber-700 dark:text-amber-300 bg-amber-500/10 rounded-lg px-2 py-1">
-            {isPl
-              ? 'Zaakceptuj wyzwanie, aby odblokować pełne sugestie'
-              : 'Accept challenge to unlock full suggestions'}
+            {t('myWorkIdeas.aiSuggestionsPanel.acceptChallengeUnlockFullSuggestions')}
           </div>
         )}
         {isSnoozed && (
           <div className="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400 bg-slate-500/10 rounded-lg px-2 py-1 flex items-center gap-1">
             <BellOff size={10} />
-            {isPl ? 'Sugestie wstrzymane na 5 min' : 'Suggestions snoozed for 5 min'}
+            {t('myWorkIdeas.aiSuggestionsPanel.suggestionsSnoozed5Min')}
           </div>
         )}
         {!isSnoozed && suggestions.length > 0 && (
@@ -459,7 +457,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
             className="mt-1.5 text-[10px] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1 transition-colors"
           >
             <BellOff size={10} />
-            {isPl ? 'Wstrzymaj na 5 min' : 'Snooze 5 min'}
+            {t('myWorkIdeas.aiSuggestionsPanel.snooze5Min')}
           </button>
         )}
       </div>
@@ -468,9 +466,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
         {loading ? (
           <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 px-1 py-8 justify-center">
             <Loader2 size={14} className="animate-spin text-c-info" />
-            {isPl
-              ? 'Generuję sugestie z kontekstu firmy…'
-              : 'Generating suggestions from company context…'}
+            {t('myWorkIdeas.aiSuggestionsPanel.generatingSuggestionsFromCompanyContext')}
           </div>
         ) : (
           <div className="space-y-1">
@@ -541,7 +537,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-white/[0.04] hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors"
                             >
                               <MessageSquare size={9} />
-                              {isPl ? 'Do czatu' : 'To chat'}
+                              {t('myWorkIdeas.aiSuggestionsPanel.toChat')}
                             </button>
                             {onInsertToWorkspace && (
                               <button
@@ -549,13 +545,13 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors"
                               >
                                 <Download size={9} />
-                                {isPl ? 'Wstaw' : 'Insert'}
+                                {t('myWorkIdeas.aiSuggestionsPanel.insert')}
                               </button>
                             )}
                             <button
                               onClick={() => dismissSuggestion(sug.id)}
                               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors ml-auto"
-                              title={isPl ? 'Odrzuć' : 'Dismiss'}
+                              title={t('myWorkIdeas.aiSuggestionsPanel.dismiss')}
                             >
                               <XCircle size={9} />
                             </button>
@@ -570,9 +566,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
 
             {suggestions.length === 0 && !loading && (
               <div className="text-center py-8 text-[11px] text-slate-600">
-                {isPl
-                  ? 'Brak sugestii. Opisz wyzwanie i zaakceptuj.'
-                  : 'No suggestions. Describe and accept the challenge.'}
+                {t('myWorkIdeas.aiSuggestionsPanel.noSuggestionsDescribeAcceptChallenge')}
               </div>
             )}
           </div>
@@ -586,7 +580,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
             value={nlInput}
             onChange={(e) => setNlInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleNlSubmit()}
-            placeholder={isPl ? 'Zapytaj AI o ten pomysł…' : 'Ask AI about this idea…'}
+            placeholder={t('myWorkIdeas.aiSuggestionsPanel.askAiAboutIdea')}
             className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-c-focus"
           />
           <button
@@ -604,14 +598,14 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
             className="w-full rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3 py-2 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
           >
             <Sparkles size={12} />
-            {isPl ? 'Otwórz czat AI' : 'Open AI chat'}
+            {t('myWorkIdeas.aiSuggestionsPanel.openAiChat')}
           </button>
         )}
 
         {/* Deep AI generators (moved from IdeaWorkspaceTools) */}
         <div className="pt-3 border-t border-slate-200/30 dark:border-white/[0.04]">
           <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">
-            {isPl ? 'Generatory AI' : 'AI Generators'}
+            {t('myWorkIdeas.aiSuggestionsPanel.aiGenerators')}
           </div>
           <div className="space-y-1">
             {getGeneratorActions(activeTool).map((gen) => {

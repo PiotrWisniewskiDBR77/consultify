@@ -6,6 +6,7 @@
  */
 import { ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface IdeaUnifiedSearchProps {
   open: boolean;
@@ -69,8 +70,9 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
   onClose,
   nodes,
   onHighlightNode,
-  isPl,
+  isPl: _isPl,
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -158,12 +160,12 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
   if (!open) return null;
 
   const fieldLabel: Record<string, string> = {
-    label: isPl ? 'Nazwa' : 'Label',
-    description: isPl ? 'Opis' : 'Description',
-    owner: isPl ? 'Właściciel' : 'Owner',
-    tags: isPl ? 'Tagi' : 'Tags',
-    attachment: isPl ? 'Załącznik' : 'Attachment',
-    comment: isPl ? 'Komentarz' : 'Comment',
+    label: t('myWorkIdeas.unifiedSearch.label'),
+    description: t('myWorkIdeas.unifiedSearch.description'),
+    owner: t('myWorkIdeas.unifiedSearch.owner'),
+    tags: t('myWorkIdeas.unifiedSearch.tags'),
+    attachment: t('myWorkIdeas.unifiedSearch.attachment'),
+    comment: t('myWorkIdeas.unifiedSearch.comment'),
   };
 
   return (
@@ -179,7 +181,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={isPl ? 'Szukaj w węzłach…' : 'Search nodes…'}
+            placeholder={t('myWorkIdeas.unifiedSearch.searchNodes')}
             className="flex-1 bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 outline-none"
           />
           {hits.length > 0 && (
@@ -193,7 +195,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
                 type="button"
                 onClick={() => navigateToHit(Math.max(activeIndex - 1, 0))}
                 className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
-                aria-label={isPl ? 'Poprzedni' : 'Previous'}
+                aria-label={t('myWorkIdeas.unifiedSearch.previous')}
               >
                 <ChevronUp size={14} />
               </button>
@@ -201,7 +203,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
                 type="button"
                 onClick={() => navigateToHit(Math.min(activeIndex + 1, hits.length - 1))}
                 className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
-                aria-label={isPl ? 'Następny' : 'Next'}
+                aria-label={t('myWorkIdeas.unifiedSearch.next')}
               >
                 <ChevronDown size={14} />
               </button>
@@ -211,7 +213,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
             type="button"
             onClick={onClose}
             className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkIdeas.unifiedSearch.close')}
           >
             <X size={14} />
           </button>
@@ -222,7 +224,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
           <div ref={listRef} className="max-h-[50vh] overflow-y-auto">
             {hits.length === 0 ? (
               <div className="px-4 py-6 text-center text-xs text-slate-600 dark:text-slate-500">
-                {isPl ? 'Brak wyników' : 'No results'}
+                {t('myWorkIdeas.unifiedSearch.noResults')}
               </div>
             ) : (
               hits.map((hit, i) => (

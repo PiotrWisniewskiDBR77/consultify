@@ -166,7 +166,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   canvasContainerRef,
   onImportGraph,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [exporting, setExporting] = useState<string | null>(null);
   const [importFormat, setImportFormat] = useState<'drawio_xml' | 'bpmn_xml' | 'diagram_package'>(
@@ -204,7 +204,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     } catch (error: any) {
       return {
         ok: false,
-        error: error?.message || (isPl ? 'Import nie powiódł się' : 'Import failed'),
+        error: error?.message || t('myWorkIdeas.exportMenu.importFailed'),
       } as const;
     }
   }, [importFormat, importPayload, isPl]);
@@ -468,14 +468,15 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
             : parseDiagramPackage(importPayload);
       onImportGraph(parsed);
       setImportStatus(
-        isPl
-          ? `Zaimportowano ${parsed.nodes.length} węzłów i ${parsed.edges.length} połączeń`
-          : `Imported ${parsed.nodes.length} nodes and ${parsed.edges.length} edges`
+        t('myWorkIdeas.exportMenu.importedNodesEdges', {
+          nodes: parsed.nodes.length,
+          edges: parsed.edges.length,
+        })
       );
       setImportPayload('');
       onClose();
     } catch (err: any) {
-      setImportStatus(err?.message || (isPl ? 'Import nie powiódł się' : 'Import failed'));
+      setImportStatus(err?.message || t('myWorkIdeas.exportMenu.importFailed'));
     }
   }, [importFormat, importPayload, importPreview, isPl, onClose, onImportGraph]);
 
@@ -588,7 +589,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
           <div className="flex items-center gap-2">
             <Download size={16} className="text-slate-600 dark:text-slate-300" />
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-              {isPl ? 'Eksport mapy' : 'Export map'}
+              {t('myWorkIdeas.exportMenu.exportMap')}
             </h2>
           </div>
           <button
@@ -638,12 +639,10 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
           <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
             <div>
               <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
-                {isPl ? 'Import / Interop' : 'Import / Interop'}
+                {t('myWorkIdeas.exportMenu.importInterop')}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                {isPl
-                  ? 'Wklej `draw.io XML`, `BPMN XML` lub `diagram package`.'
-                  : 'Paste `draw.io XML`, `BPMN XML`, or a `diagram package`.'}
+                {t('myWorkIdeas.exportMenu.pasteDrawIoXmlBpmnXml')}
               </div>
             </div>
             <select
@@ -659,14 +658,15 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
               value={importPayload}
               onChange={(e) => setImportPayload(e.target.value)}
               rows={11}
-              placeholder={isPl ? 'Wklej payload do importu…' : 'Paste import payload…'}
+              placeholder={t('myWorkIdeas.exportMenu.pasteImportPayload')}
               className="w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-[11px] font-mono dark:border-navy-700/70 dark:bg-navy-950"
             />
             {importPreview?.ok && (
               <div className="rounded-lg bg-emerald-50 px-3 py-2 text-[10px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
-                {isPl
-                  ? `Gotowe do importu: ${importPreview.parsed.nodes.length} węzłów, ${importPreview.parsed.edges.length} połączeń`
-                  : `Ready to import: ${importPreview.parsed.nodes.length} nodes, ${importPreview.parsed.edges.length} edges`}
+                {t('myWorkIdeas.exportMenu.readyToImport', {
+                  nodes: importPreview.parsed.nodes.length,
+                  edges: importPreview.parsed.edges.length,
+                })}
               </div>
             )}
             {importPreview && !importPreview.ok && (
@@ -686,29 +686,26 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
               className="inline-flex items-center gap-2 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
             >
               <Download size={14} />
-              {isPl ? 'Importuj do workspace' : 'Import into workspace'}
+              {t('myWorkIdeas.exportMenu.importIntoWorkspace')}
             </button>
           </div>
         </div>
 
         <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
           <div className="text-[10px] text-slate-600 dark:text-slate-500">
-            {isPl
-              ? `${graphNodes.length} elementów, ${graphEdges.length} połączeń`
-              : `${graphNodes.length} elements, ${graphEdges.length} connections`}
+            {t('myWorkIdeas.exportMenu.elementsConnectionsCount', {
+              elements: graphNodes.length,
+              connections: graphEdges.length,
+            })}
           </div>
           {!exportAllowed && (
             <div className="mt-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-              {isPl
-                ? 'Eksport zablokowany przez governance whiteboard.'
-                : 'Export blocked by whiteboard governance.'}
+              {t('myWorkIdeas.exportMenu.exportBlockedWhiteboardGovernance')}
             </div>
           )}
           {exportAllowed && !shareAllowed && (
             <div className="mt-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-              {isPl
-                ? 'Udostępnianie zewnętrzne jest wyłączone: deck/report pozostają niedostępne.'
-                : 'External sharing is disabled: deck/report exports are unavailable.'}
+              {t('myWorkIdeas.exportMenu.externalSharingDisabledDeckReportExports')}
             </div>
           )}
         </div>

@@ -3175,12 +3175,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         onSetBoardMode={setBoardMode}
         onClearDrawings={async () => {
           const ok = await showConfirm({
-            title: isPl ? 'Wyczyścić rysunki?' : 'Clear drawings?',
-            description: isPl
-              ? 'Wszystkie ścieżki rysowania zostaną usunięte. Tej operacji nie można cofnąć.'
-              : 'All pen paths will be removed. This action cannot be undone.',
-            confirmLabel: isPl ? 'Wyczyść' : 'Clear',
-            cancelLabel: isPl ? 'Anuluj' : 'Cancel',
+            title: t('myWorkIdeas.whiteboardTool.clearDrawings'),
+            description: t('myWorkIdeas.whiteboardTool.allPenPathsWillRemovedThis'),
+            confirmLabel: t('myWorkIdeas.whiteboardTool.clear'),
+            cancelLabel: t('myWorkIdeas.whiteboardTool.cancel'),
             variant: 'danger',
           });
           if (!ok) return;
@@ -3260,7 +3258,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              {isPl ? 'Obserwator — tylko podgląd' : 'Observer — view only'}
+              {t('myWorkIdeas.whiteboardTool.observerViewOnly')}
             </div>
           )}
 

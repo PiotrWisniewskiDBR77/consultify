@@ -43,8 +43,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
   persistent = false,
   onVotesChange,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [votes, setVotes] = useState<Vote[]>([]);
   const [timeLeft, setTimeLeft] = useState(
     timerEndsAt ? Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000)) : timerSeconds || 0
@@ -175,7 +174,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             <div className="flex items-center gap-2">
               <Trophy size={14} className="text-amber-500" />
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                {isPl ? 'Tryb głosowania' : 'Voting Mode'}
+                {t('myWorkIdeas.votingMode.votingMode')}
               </span>
             </div>
             <button
@@ -263,7 +262,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             <div className="flex items-center gap-1.5">
               <Award size={12} className="text-amber-500" />
               <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
-                {isPl ? 'Czas minął! Wyniki powyżej.' : "Time's up! Results above."}
+                {t('myWorkIdeas.votingMode.timeSUpResultsAbove')}
               </span>
             </div>
           </div>

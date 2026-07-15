@@ -61,8 +61,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
   onPathsChange,
   viewportTransform,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
 
   const [tool, setTool] = useState<DrawTool>('pen');
@@ -276,19 +275,19 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
             active={tool === 'pen'}
             onClick={() => setTool('pen')}
             icon={Pen}
-            label={isPl ? 'Pióro' : 'Pen'}
+            label={t('myWorkIdeas.drawingLayer.pen')}
           />
           <ToolBtn
             active={tool === 'highlighter'}
             onClick={() => setTool('highlighter')}
             icon={Highlighter}
-            label={isPl ? 'Zakreślacz' : 'Highlighter'}
+            label={t('myWorkIdeas.drawingLayer.highlighter')}
           />
           <ToolBtn
             active={tool === 'eraser'}
             onClick={() => setTool('eraser')}
             icon={Eraser}
-            label={isPl ? 'Gumka' : 'Eraser'}
+            label={t('myWorkIdeas.drawingLayer.eraser')}
           />
 
           <div className="w-px h-6 bg-slate-200 dark:bg-navy-700 mx-1" />
@@ -299,7 +298,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
               <button
                 key={c}
                 onClick={() => setColor(c)}
-                aria-label={`${isPl ? 'Kolor' : 'Color'} ${c}`}
+                aria-label={`${t('myWorkIdeas.drawingLayer.color')} ${c}`}
                 aria-pressed={color === c}
                 title={c}
                 className={`w-4 h-4 rounded-full border transition-all ${
@@ -318,8 +317,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setStrokeWidth(Math.max(MIN_STROKE, strokeWidth - 1))}
-              aria-label={isPl ? 'Zmniejsz grubość' : 'Decrease stroke width'}
-              title={isPl ? 'Zmniejsz grubość' : 'Decrease stroke width'}
+              aria-label={t('myWorkIdeas.drawingLayer.decreaseStrokeWidth')}
+              title={t('myWorkIdeas.drawingLayer.decreaseStrokeWidth')}
               className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <Minus size={10} />
@@ -332,8 +331,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
             </div>
             <button
               onClick={() => setStrokeWidth(Math.min(MAX_STROKE, strokeWidth + 1))}
-              aria-label={isPl ? 'Zwiększ grubość' : 'Increase stroke width'}
-              title={isPl ? 'Zwiększ grubość' : 'Increase stroke width'}
+              aria-label={t('myWorkIdeas.drawingLayer.increaseStrokeWidth')}
+              title={t('myWorkIdeas.drawingLayer.increaseStrokeWidth')}
               className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <Plus size={10} />
@@ -346,8 +345,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <button
             onClick={handleUndo}
             disabled={undoStack.length === 0}
-            aria-label={isPl ? 'Cofnij' : 'Undo'}
-            title={isPl ? 'Cofnij' : 'Undo'}
+            aria-label={t('myWorkIdeas.drawingLayer.undo')}
+            title={t('myWorkIdeas.drawingLayer.undo')}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
           >
             <Undo2 size={14} />
@@ -355,8 +354,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <button
             onClick={handleRedo}
             disabled={redoStack.length === 0}
-            aria-label={isPl ? 'Ponów' : 'Redo'}
-            title={isPl ? 'Ponów' : 'Redo'}
+            aria-label={t('myWorkIdeas.drawingLayer.redo')}
+            title={t('myWorkIdeas.drawingLayer.redo')}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
           >
             <Redo2 size={14} />
@@ -364,8 +363,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <button
             onClick={handleClear}
             disabled={paths.length === 0}
-            aria-label={isPl ? 'Wyczyść rysunek' : 'Clear drawing'}
-            title={isPl ? 'Wyczyść rysunek' : 'Clear drawing'}
+            aria-label={t('myWorkIdeas.drawingLayer.clearDrawing')}
+            title={t('myWorkIdeas.drawingLayer.clearDrawing')}
             className="p-1.5 text-slate-600 hover:text-danger-500 disabled:opacity-30"
           >
             <Trash2 size={14} />
@@ -375,8 +374,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
 
           <button
             onClick={onClose}
-            aria-label={isPl ? 'Zamknij rysowanie' : 'Close drawing'}
-            title={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkIdeas.drawingLayer.closeDrawing')}
+            title={t('myWorkIdeas.drawingLayer.close')}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <X size={14} />

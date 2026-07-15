@@ -49,7 +49,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
   onRejectAll,
   onDismiss,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -96,10 +96,10 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
           </div>
           <div>
             <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
-              {isPl ? 'Propozycje AI' : 'AI Proposals'}
+              {t('myWorkIdeas.proposalReview.aiProposals')}
             </div>
             <div className="text-[9px] text-slate-500 dark:text-slate-400">
-              {isPl ? `${pending.length} do przeglądu` : `${pending.length} to review`}
+              {t('myWorkIdeas.proposalReview.pendingCount', { value: pending.length })}
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
             className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
           >
             <Check size={10} />
-            {isPl ? 'Akceptuj wszystkie' : 'Accept all'}
+            {t('myWorkIdeas.proposalReview.acceptAll')}
           </button>
           <button
             onClick={() => {
@@ -131,12 +131,12 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
             className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-danger-600 dark:text-danger-400 bg-danger-500/10 hover:bg-danger-500/20 transition-colors"
           >
             <X size={10} />
-            {isPl ? 'Odrzuć' : 'Reject all'}
+            {t('myWorkIdeas.proposalReview.rejectAll')}
           </button>
           <button
             onClick={onDismiss}
             className="ml-1 p-1 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPl ? 'Zamknij' : 'Dismiss'}
+            title={t('myWorkIdeas.proposalReview.dismiss')}
           >
             <X size={12} />
           </button>
@@ -144,9 +144,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
       </div>
       {rolloutGateBlocked && (
         <div className="px-3 py-2 text-[10px] text-amber-600 dark:text-amber-300 bg-amber-500/5 border-b border-amber-500/10">
-          {isPl
-            ? 'Rollout gate: co najmniej jedna propozycja ma niską pewność i brak cytowań. Przejrzyj ją ręcznie.'
-            : 'Rollout gate: at least one proposal has low confidence and no citations. Review it manually.'}
+          {t('myWorkIdeas.proposalReview.rolloutGateLeastOneProposalHas')}
         </div>
       )}
 
@@ -178,6 +176,7 @@ const ProposalItem: React.FC<{
   onReject: () => void;
   isPl: boolean;
 }> = ({ proposal, expanded, onToggle, onAccept, onReject, isPl }) => {
+  const { t } = useTranslation();
   const confidencePercent = Math.round(proposal.confidence * 100);
   const confidenceColor =
     proposal.confidence >= 0.7
@@ -189,26 +188,32 @@ const ProposalItem: React.FC<{
   const patchSummary = useMemo(() => {
     const p = proposal.patch;
     const parts: string[] = [];
-    if (p.addNodes?.length) parts.push(`+${p.addNodes.length} ${isPl ? 'węzłów' : 'nodes'}`);
-    if (p.addEdges?.length) parts.push(`+${p.addEdges.length} ${isPl ? 'połączeń' : 'edges'}`);
+    if (p.addNodes?.length)
+      parts.push(`+${p.addNodes.length} ${t('myWorkIdeas.proposalReview.nodes')}`);
+    if (p.addEdges?.length)
+      parts.push(`+${p.addEdges.length} ${t('myWorkIdeas.proposalReview.edges')}`);
     if (p.removeNodeIds?.length)
-      parts.push(`-${p.removeNodeIds.length} ${isPl ? 'węzłów' : 'nodes'}`);
+      parts.push(`-${p.removeNodeIds.length} ${t('myWorkIdeas.proposalReview.nodes')}`);
     if (p.removeEdgeIds?.length)
-      parts.push(`-${p.removeEdgeIds.length} ${isPl ? 'połączeń' : 'edges'}`);
-    if (p.updateNodes?.length) parts.push(`~${p.updateNodes.length} ${isPl ? 'zmian' : 'updates'}`);
-    if (p.moveNodes?.length) parts.push(`↔${p.moveNodes.length} ${isPl ? 'przesunięć' : 'moves'}`);
+      parts.push(`-${p.removeEdgeIds.length} ${t('myWorkIdeas.proposalReview.edges')}`);
+    if (p.updateNodes?.length)
+      parts.push(`~${p.updateNodes.length} ${t('myWorkIdeas.proposalReview.updates')}`);
+    if (p.moveNodes?.length)
+      parts.push(`↔${p.moveNodes.length} ${t('myWorkIdeas.proposalReview.moves')}`);
     if ((p.extensions as any)?.table?.columns?.length) {
       parts.push(
-        `${(p.extensions as any).table.columns.length} ${isPl ? 'kolumn tabeli' : 'table columns'}`
+        `${(p.extensions as any).table.columns.length} ${t('myWorkIdeas.proposalReview.tableColumns')}`
       );
     }
     if ((p.extensions as any)?.table?.rows?.length) {
-      parts.push(`${(p.extensions as any).table.rows.length} ${isPl ? 'wierszy' : 'rows'}`);
+      parts.push(
+        `${(p.extensions as any).table.rows.length} ${t('myWorkIdeas.proposalReview.rows')}`
+      );
     }
     if (proposal.targetTool) {
       parts.push(`→ ${proposal.targetTool}`);
     }
-    return parts.join(', ') || (isPl ? 'Zmiana konfiguracji' : 'Config change');
+    return parts.join(', ') || t('myWorkIdeas.proposalReview.configChange');
   }, [isPl, proposal.patch, proposal.targetTool]);
   const statusLabel = getProposalStatusLabel(proposal, isPl);
 
@@ -338,14 +343,14 @@ const ProposalItem: React.FC<{
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/10 transition-colors"
             >
               <Check size={10} />
-              {isPl ? 'Akceptuj' : 'Accept'}
+              {t('myWorkIdeas.proposalReview.accept')}
             </button>
             <button
               onClick={onReject}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-danger-600 dark:text-danger-400 bg-danger-500/10 hover:bg-danger-500/20 border border-danger-500/10 transition-colors"
             >
               <X size={10} />
-              {isPl ? 'Odrzuć' : 'Reject'}
+              {t('myWorkIdeas.proposalReview.reject')}
             </button>
           </div>
         </div>

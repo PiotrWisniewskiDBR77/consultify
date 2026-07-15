@@ -213,7 +213,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   whiteboardSession,
   whiteboardOutcomes,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
   const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
@@ -248,20 +248,20 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
   const toolLabel = useMemo(() => {
     const labels: Record<CanvasToolType, string> = {
-      mindmap: isPl ? 'Mapa rekomendacji' : 'Recommendation map',
-      process_flow: isPl ? 'Przepływ' : 'Process Flow',
-      table: isPl ? 'Tabela' : 'Table',
-      whiteboard: isPl ? 'Tablica' : 'Whiteboard',
+      mindmap: t('myWorkIdeas.workspaceTools.recommendationMap'),
+      process_flow: t('myWorkIdeas.workspaceTools.processFlow'),
+      table: t('myWorkIdeas.workspaceTools.table'),
+      whiteboard: t('myWorkIdeas.workspaceTools.whiteboard'),
     };
     return labels[activeTool] || activeTool;
   }, [activeTool, isPl]);
 
   const normalizedPriority = Math.max(25, Math.min(100, Math.round(priority / 25) * 25)) || 25;
   const priorityOptions = [
-    { value: 25, label: isPl ? 'Niski' : 'Low' },
-    { value: 50, label: isPl ? 'Średni' : 'Medium' },
-    { value: 75, label: isPl ? 'Wysoki' : 'High' },
-    { value: 100, label: isPl ? 'Krytyczny' : 'Critical' },
+    { value: 25, label: t('myWorkIdeas.workspaceTools.low') },
+    { value: 50, label: t('myWorkIdeas.workspaceTools.medium') },
+    { value: 75, label: t('myWorkIdeas.workspaceTools.high') },
+    { value: 100, label: t('myWorkIdeas.workspaceTools.critical') },
   ];
   const currentPriorityLabel =
     priorityOptions.find((o) => o.value === normalizedPriority)?.label ?? 'Medium';
@@ -356,7 +356,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
   return (
     <ToolsPanelShell
-      title={title || (isPl ? 'Bez tytułu' : 'Untitled')}
+      title={title || t('myWorkIdeas.workspaceTools.untitled')}
       subtitle={toolLabel}
       embedded={embedded}
       icon={
@@ -367,13 +367,17 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       onClose={onClose}
     >
       {/* ── 1. Problem ── */}
-      <Section title={isPl ? 'Problem' : 'Problem'} icon={<Pencil size={12} />} defaultOpen>
+      <Section
+        title={t('myWorkIdeas.workspaceTools.problem')}
+        icon={<Pencil size={12} />}
+        defaultOpen
+      >
         <div className="space-y-2.5">
           <div>
             <input
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
-              placeholder={isPl ? 'Tytuł wyzwania…' : 'Challenge title…'}
+              placeholder={t('myWorkIdeas.workspaceTools.challengeTitle')}
               className={`${FIELD_CLASS} font-semibold`}
             />
           </div>
@@ -382,7 +386,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               value={seedText}
               onChange={(e) => onSeedTextChange(e.target.value)}
               rows={4}
-              placeholder={isPl ? 'Opisz problem lub pomysł…' : 'Describe the problem or idea…'}
+              placeholder={t('myWorkIdeas.workspaceTools.describeProblemIdea')}
               className={`${FIELD_CLASS} h-auto py-2 resize-none`}
             />
           </div>
@@ -393,7 +397,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-colors hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-40"
             >
               <Save size={12} />
-              {isPl ? 'Zapisz' : 'Save'}
+              {t('myWorkIdeas.workspaceTools.save')}
             </button>
             {!isAccepted && (
               <button
@@ -402,13 +406,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-sm transition-all hover:shadow-md disabled:opacity-40"
               >
                 <CheckCircle2 size={12} />
-                {isPl ? 'Akceptuj' : 'Accept'}
+                {t('myWorkIdeas.workspaceTools.accept')}
               </button>
             )}
             {isAccepted && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 size={12} />
-                {isPl ? 'Zaakceptowane' : 'Accepted'}
+                {t('myWorkIdeas.workspaceTools.accepted')}
               </span>
             )}
           </div>
@@ -417,7 +421,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
       {/* ── 2. Status ── */}
       <Section
-        title={isPl ? 'Status' : 'Status'}
+        title={t('myWorkIdeas.workspaceTools.status')}
         icon={<CheckCircle2 size={12} />}
         defaultOpen
         badge={
@@ -433,7 +437,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           {/* Stage selector */}
           <div>
             <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5">
-              {isPl ? 'Etap' : 'Stage'}
+              {t('myWorkIdeas.workspaceTools.stage')}
             </div>
             <div className="relative">
               <button
@@ -494,7 +498,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {evidenceCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500">
                 <FileText size={10} />
-                {evidenceCount} {isPl ? 'dowodów' : 'evidence'}
+                {evidenceCount} {t('myWorkIdeas.workspaceTools.evidence')}
               </span>
             )}
           </div>
@@ -507,7 +511,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-c-info hover:text-c-info/80 hover:bg-c-info/5 transition-colors"
               >
                 <Sparkles size={10} />
-                {isPl ? 'AI podsumuj' : 'AI summarize'}
+                {t('myWorkIdeas.workspaceTools.aiSummarize')}
               </button>
             )}
             {onAIExpand && (
@@ -516,7 +520,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-c-info/10 text-c-info hover:bg-c-info/15 transition-colors"
               >
                 <Sparkles size={10} />
-                {isPl ? 'AI rozbuduj' : 'AI expand'}
+                {t('myWorkIdeas.workspaceTools.aiExpand')}
               </button>
             )}
           </div>
@@ -538,7 +542,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
            */}
           <div className="pt-1 border-t border-slate-200/50 dark:border-white/[0.04]">
             <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5">
-              {isPl ? 'Metadane' : 'Metadata'}
+              {t('myWorkIdeas.workspaceTools.metadata')}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {/* Branch pill */}
@@ -549,7 +553,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   onChange={(e) => onBranchChange(e.target.value)}
                   onBlur={handleBranchBlur}
                   onKeyDown={(e) => e.key === 'Enter' && handleBranchBlur()}
-                  placeholder={isPl ? 'Gałąź…' : 'Branch…'}
+                  placeholder={t('myWorkIdeas.workspaceTools.branch')}
                   autoFocus
                   className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none w-28"
                 />
@@ -559,7 +563,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                 >
                   <GitBranch size={11} className="text-slate-600 shrink-0" />
-                  {branch || (isPl ? 'Gałąź' : 'Branch')}
+                  {branch || t('myWorkIdeas.workspaceTools.branch2')}
                 </button>
               )}
 
@@ -571,7 +575,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   onChange={(e) => onAreaChange(e.target.value)}
                   onBlur={handleAreaBlur}
                   onKeyDown={(e) => e.key === 'Enter' && handleAreaBlur()}
-                  placeholder={isPl ? 'Obszar…' : 'Area…'}
+                  placeholder={t('myWorkIdeas.workspaceTools.area')}
                   autoFocus
                   className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none w-28"
                 />
@@ -580,7 +584,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   onClick={() => setAreaEditing(true)}
                   className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                 >
-                  {area || (isPl ? 'Obszar' : 'Area')}
+                  {area || t('myWorkIdeas.workspaceTools.area2')}
                 </button>
               )}
 
@@ -620,12 +624,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       </Section>
 
       {/* ── 3. Convert ── */}
-      <Section title={isPl ? 'Konwertuj' : 'Convert'} icon={<Rocket size={12} />}>
+      <Section title={t('myWorkIdeas.workspaceTools.convert')} icon={<Rocket size={12} />}>
         {selection.type !== 'none' && selection.count > 0 && (
           <div className="mb-2 text-[10px] font-medium text-c-info bg-c-info/5 rounded-lg px-2 py-1.5">
-            {isPl
-              ? `Konwertuj zaznaczenie (${selection.count})`
-              : `Convert selection (${selection.count})`}
+            {t('myWorkIdeas.workspaceTools.convertSelectionCount', { value: selection.count })}
           </div>
         )}
         <div className="space-y-3">
@@ -660,7 +662,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                         onClick={() => !isSoon && onConvert(id)}
                         disabled={isDraft || isSoon}
                         aria-disabled={isDraft || isSoon}
-                        title={isSoon ? (isPl ? 'Wkrótce' : 'Coming soon') : undefined}
+                        title={isSoon ? t('myWorkIdeas.workspaceTools.comingSoon') : undefined}
                         className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <div
@@ -678,7 +680,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                             {isPl ? labelPl : labelEn}
                             {isSoon && (
                               <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-navy-700 rounded px-1 py-px">
-                                {isPl ? 'Wkrótce' : 'Soon'}
+                                {t('myWorkIdeas.workspaceTools.soon')}
                               </span>
                             )}
                           </div>
@@ -698,7 +700,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
       {activeTool === 'whiteboard' && (
         <Section
-          title={isPl ? 'Inspektor tablicy' : 'Whiteboard inspector'}
+          title={t('myWorkIdeas.workspaceTools.whiteboardInspector')}
           icon={<Activity size={12} />}
           defaultOpen
         >
@@ -712,10 +714,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 return (
                   <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
                     <div className="font-semibold text-slate-700 dark:text-slate-200">
-                      {isPl ? 'Zaznaczony element' : 'Selected element'}
+                      {t('myWorkIdeas.workspaceTools.selectedElement')}
                     </div>
                     <div className="text-slate-600 dark:text-slate-300 truncate">
-                      {node.data?.label || (isPl ? '(bez etykiety)' : '(no label)')}
+                      {node.data?.label || t('myWorkIdeas.workspaceTools.noLabel')}
                     </div>
                     {node.data?.semanticType && (
                       <div className="text-[9px] font-bold uppercase tracking-wide text-c-info">
@@ -724,7 +726,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                     )}
                     {node.data?.locked && (
                       <div className="text-[9px] text-amber-600 dark:text-amber-400">
-                        {isPl ? 'Zablokowany' : 'Locked'}
+                        {t('myWorkIdeas.workspaceTools.locked')}
                       </div>
                     )}
                   </div>
@@ -735,12 +737,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {whiteboardSession && (
               <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
                 <div className="font-semibold text-slate-700 dark:text-slate-200">
-                  {isPl ? 'Sesja' : 'Session'}
+                  {t('myWorkIdeas.workspaceTools.session')}
                 </div>
                 {whiteboardSession.role && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-slate-500 dark:text-slate-400">
-                      {isPl ? 'Rola:' : 'Role:'}
+                      {t('myWorkIdeas.workspaceTools.role')}
                     </span>
                     <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
                       {whiteboardSession.role}
@@ -750,7 +752,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 {whiteboardSession.phase && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-slate-500 dark:text-slate-400">
-                      {isPl ? 'Faza:' : 'Phase:'}
+                      {t('myWorkIdeas.workspaceTools.phase')}
                     </span>
                     <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
                       {whiteboardSession.phase}
@@ -760,7 +762,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 {(whiteboardSession.participantCount ?? 0) > 0 && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-slate-500 dark:text-slate-400">
-                      {isPl ? 'Uczestnicy:' : 'Participants:'}
+                      {t('myWorkIdeas.workspaceTools.participants')}
                     </span>
                     <span className="font-medium text-slate-700 dark:text-slate-200">
                       {whiteboardSession.participantCount}
@@ -774,7 +776,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {whiteboardOutcomes && whiteboardOutcomes.length > 0 && (
               <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
                 <div className="font-semibold text-slate-700 dark:text-slate-200">
-                  {isPl ? 'Wyniki' : 'Outcomes'} ({whiteboardOutcomes.length})
+                  {t('myWorkIdeas.workspaceTools.outcomes')} ({whiteboardOutcomes.length})
                 </div>
                 <div className="space-y-1 max-h-32 overflow-auto">
                   {whiteboardOutcomes.slice(0, 8).map((o, i) => (
@@ -788,7 +790,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   ))}
                   {whiteboardOutcomes.length > 8 && (
                     <div className="text-[9px] text-slate-600">
-                      +{whiteboardOutcomes.length - 8} {isPl ? 'więcej' : 'more'}
+                      +{whiteboardOutcomes.length - 8} {t('myWorkIdeas.workspaceTools.more')}
                     </div>
                   )}
                 </div>
@@ -800,7 +802,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
       {activeTool === 'process_flow' && (
         <Section
-          title={isPl ? 'Inspektor procesu' : 'Process inspector'}
+          title={t('myWorkIdeas.workspaceTools.processInspector')}
           icon={<Activity size={12} />}
           defaultOpen
         >
@@ -830,7 +832,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       )}
 
       {activeTool === 'process_flow' && (
-        <Section title={isPl ? 'Zdrowie procesu' : 'Process health'} icon={<Activity size={13} />}>
+        <Section
+          title={t('myWorkIdeas.workspaceTools.processHealth')}
+          icon={<Activity size={13} />}
+        >
           <ProcessFlowHealthScore nodes={graphNodes ?? []} edges={graphEdges ?? []} isPl={isPl} />
         </Section>
       )}
@@ -839,7 +844,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         <>
           {/* ── 5. Mindmap Inspector (Style / Layout / Theme) ── */}
           <Section
-            title={isPl ? 'Inspektor mapy' : 'Map inspector'}
+            title={t('myWorkIdeas.workspaceTools.mapInspector')}
             icon={<Sparkles size={12} />}
             defaultOpen
           >
@@ -860,7 +865,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </Section>
 
           {/* ── 6. Map Health ── */}
-          <Section title={isPl ? 'Zdrowie mapy' : 'Map health'} icon={<Activity size={13} />}>
+          <Section title={t('myWorkIdeas.workspaceTools.mapHealth')} icon={<Activity size={13} />}>
             <MapHealthScore
               nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}
               edges={graphEdges.map((e: any) => ({ source: e.source, target: e.target }))}

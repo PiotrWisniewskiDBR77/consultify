@@ -63,7 +63,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
   onStageChange,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [expanded, setExpanded] = useState(false);
 
@@ -92,10 +92,10 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
   const canRevert = stageIdx > 0;
 
   const advanceBlocked = useMemo(() => {
-    if (v5Stage === 'spark' && !data.title?.trim()) return isPl ? 'Dodaj tytuł' : 'Add a title';
-    if (v5Stage === 'exploring' && nodeCount < 2) return isPl ? 'Dodaj węzły' : 'Add nodes first';
+    if (v5Stage === 'spark' && !data.title?.trim()) return t('myWorkIdeas.pinnedCard.addTitle');
+    if (v5Stage === 'exploring' && nodeCount < 2) return t('myWorkIdeas.pinnedCard.addNodesFirst');
     if (v5Stage === 'validating' && evidenceCount < 1)
-      return isPl ? 'Dodaj dowody' : 'Add evidence';
+      return t('myWorkIdeas.pinnedCard.addEvidence');
     return null;
   }, [v5Stage, data.title, nodeCount, evidenceCount, isPl]);
 
@@ -140,7 +140,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <div className="flex-1 min-w-0">
             <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-snug truncate">
-              {data.title || (isPl ? 'Bez tytułu' : 'Untitled')}
+              {data.title || t('myWorkIdeas.pinnedCard.untitled')}
             </h3>
             {data.summary && (
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5 line-clamp-2">
@@ -161,7 +161,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
           {evidenceCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500">
               <FileText size={10} />
-              {evidenceCount} {isPl ? 'dowodów' : 'evidence'}
+              {evidenceCount} {t('myWorkIdeas.pinnedCard.evidence')}
             </span>
           )}
           {data.nextBestAction && (
@@ -180,7 +180,9 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
           aria-expanded={expanded}
           className="w-full flex items-center justify-center gap-1 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors border-t border-slate-200/40 dark:border-white/[0.04]"
         >
-          {expanded ? (isPl ? 'Zwiń' : 'Collapse') : isPl ? 'Pokaż szczegóły' : 'Show details'}
+          {expanded
+            ? t('myWorkIdeas.pinnedCard.collapse')
+            : t('myWorkIdeas.pinnedCard.showDetails')}
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </button>
       )}
@@ -189,32 +191,32 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
       {expanded && hasDetails && (
         <div className="px-4 pb-3 space-y-0.5 border-t border-slate-200/40 dark:border-white/[0.04]">
           <DetailRow
-            label={isPl ? 'Problem / Szansa' : 'Problem / Opportunity'}
+            label={t('myWorkIdeas.pinnedCard.problemOpportunity')}
             value={data.problem || data.opportunity}
             icon={<Lightbulb size={12} />}
           />
           <DetailRow
-            label={isPl ? 'Stan obecny' : 'Current state'}
+            label={t('myWorkIdeas.pinnedCard.currentState')}
             value={data.currentState}
             icon={<FileText size={12} />}
           />
           <DetailRow
-            label={isPl ? 'Pożądany wynik' : 'Desired outcome'}
+            label={t('myWorkIdeas.pinnedCard.desiredOutcome')}
             value={data.desiredOutcome}
             icon={<Target size={12} />}
           />
           <DetailRow
-            label={isPl ? 'Dlaczego teraz' : 'Why now'}
+            label={t('myWorkIdeas.pinnedCard.whyNow')}
             value={data.whyNow}
             icon={<Sparkles size={12} />}
           />
           <DetailRow
-            label={isPl ? 'Założenia' : 'Assumptions'}
+            label={t('myWorkIdeas.pinnedCard.assumptions')}
             value={data.assumptions}
             icon={<FileText size={12} />}
           />
           <DetailRow
-            label={isPl ? 'Ryzyka' : 'Risks'}
+            label={t('myWorkIdeas.pinnedCard.risks')}
             value={data.risks}
             icon={<AlertTriangle size={12} />}
           />
@@ -264,7 +266,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
               onClick={onEdit}
               className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 hover:text-c-info transition-colors"
             >
-              {isPl ? 'Edytuj kartę' : 'Edit card'}
+              {t('myWorkIdeas.pinnedCard.editCard')}
             </button>
           )}
           {onAISummarize && (
@@ -273,7 +275,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
               className="inline-flex items-center gap-1 text-[10px] font-semibold text-c-info hover:text-c-info/80 transition-colors"
             >
               <Sparkles size={10} />
-              {isPl ? 'AI podsumowanie' : 'AI summarize'}
+              {t('myWorkIdeas.pinnedCard.aiSummarize')}
             </button>
           )}
         </div>
