@@ -32248,5 +32248,71 @@
         "empty": "Brak pozycji"
       }
     }
+  },
+  "scimGroupSync": {
+    "title": "Mapowania grup (Entra / Okta → rola)",
+    "loading": "Wczytywanie mapowań grup…",
+    "fields": {
+      "groupName": "Nazwa grupy IdP",
+      "groupId": "ID grupy IdP (opcjonalnie)",
+      "role": "Rola wewnętrzna",
+      "project": "Projekt (opcjonalnie — cała organizacja jeśli puste)",
+      "orgWide": "Cała organizacja"
+    },
+    "actions": {
+      "add": "Dodaj mapowanie grupy",
+      "retry": "Ponów",
+      "remove": "Usuń"
+    },
+    "list": {
+      "heading": "Istniejące mapowania",
+      "empty": "Brak mapowań grup.",
+      "projectScoped": "Zakres projektu",
+      "orgWide": "Cała organizacja"
+    },
+    "toasts": {
+      "created": "Dodano mapowanie grupy",
+      "deleted": "Usunięto mapowanie grupy"
+    },
+    "errors": {
+      "load": "Nie udało się wczytać mapowań grup",
+      "loadTitle": "Mapowania grup niedostępne",
+      "groupRequired": "Podaj nazwę lub ID grupy IdP",
+      "create": "Nie udało się dodać mapowania grupy",
+      "delete": "Nie udało się usunąć mapowania grupy"
+    }
+  },
+  "agentPlan": {
+    "loading": "Wczytywanie planu",
+    "loadingBody": "Wczytywanie planu…",
+    "section": {
+      "plan": "Plan",
+      "progress": "Postęp",
+      "approvals": "Aprobaty",
+      "report": "Raport"
+    },
+    "step": {
+      "requiresApproval": "wymaga akceptu"
+    },
+    "status": {
+      "planning": "Planowanie…",
+      "awaitingApproval": "Oczekuje na akceptację",
+      "executing": "Wykonywanie…",
+      "paused": "Wstrzymano",
+      "completed": "Zakończono",
+      "failed": "Nieudane",
+      "cancelled": "Anulowano"
+    },
+    "action": {
+      "cancel": "Zatrzymaj",
+      "close": "Zamknij",
+      "approveStep": "Zatwierdź krok"
+    },
+    "approvals": {
+      "empty": "Brak kroków oczekujących na akceptację"
+    },
+    "report": {
+      "empty": "Raport dostępny po zakończeniu"
+    }
   }
 }

@@ -18,7 +18,7 @@
  *  - Brak Headless UI w projekcie → własny collapsible (useState).
  */
 import { ChevronDown, type LucideIcon } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface ArtifactRightPanelSection {
   /** Stabilny id sekcji (np. 'actions' | 'properties' | 'relations' | 'comments' | 'history'). */
@@ -133,6 +133,40 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(sections.filter((s) => s.defaultOpen ?? true).map((s) => s.id))
   );
+
+  // Fix (fotograf HP-4): gdy wołający podmienia CAŁY zestaw sekcji między
+  // renderami bez remountu (np. AgentPlanPanel: placeholder {id:'loading'} ->
+  // {plan, progress, approvals, report} po dociągnięciu danych), `openIds`
+  // liczone raz w leniwym inicjalizatorze useState zostawało z id, które już
+  // nie istnieją, a nowe id (nawet defaultOpen) startowały jako domknięte.
+  // Ten efekt dogania: gdy w sections pojawi się id nieobecne poprzednio,
+  // dopisuje je do openIds (jeśli defaultOpen), NIE ruszając id ręcznie
+  // zwiniętych/rozwiniętych przez usera. Dla konsumentów ze stałym zestawem
+  // id (Insight/Decision/Task — sections budowane ze stałej listy kluczy)
+  // zbiór id nigdy się nie zmienia między renderami, więc efekt nic nie robi.
+  const sectionIdSetRef = useRef<Set<string>>(new Set(sections.map((s) => s.id)));
+
+  useEffect(() => {
+    const prevIds = sectionIdSetRef.current;
+    const newlyAppeared = sections.filter((s) => !prevIds.has(s.id));
+    if (newlyAppeared.length > 0) {
+      const toOpen = newlyAppeared.filter((s) => s.defaultOpen ?? true);
+      if (toOpen.length > 0) {
+        setOpenIds((prev) => {
+          const next = new Set(prev);
+          let changed = false;
+          toOpen.forEach((s) => {
+            if (!next.has(s.id)) {
+              next.add(s.id);
+              changed = true;
+            }
+          });
+          return changed ? next : prev;
+        });
+      }
+    }
+    sectionIdSetRef.current = new Set(sections.map((s) => s.id));
+  }, [sections]);
 
   const toggle = useCallback((id: string) => {
     setOpenIds((prev) => {
