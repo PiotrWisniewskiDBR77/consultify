@@ -390,6 +390,17 @@ class RealtimePlatformService {
     );
   }
 
+  // Security gate for POST .../roles: lets the caller find out whether THEY already
+  // hold the 'facilitator' role in this session, so an existing facilitator can grant
+  // or reassign roles for other participants. Defense-in-depth: scoped to the org.
+  async getRoleForUser(orgId: string, sessionId: string, userId: string) {
+    return queryHelpers.queryFirst<{ role_name: string }>(
+      `SELECT role_name FROM tool_facilitation_roles WHERE facilitation_session_id=$1 AND user_id=$2
+         AND facilitation_session_id IN (SELECT id FROM tool_facilitation_sessions WHERE id=$1 AND organization_id=$3)`,
+      [sessionId, userId, orgId]
+    );
+  }
+
   async createOutcome(
     sessionId: string,
     data: {

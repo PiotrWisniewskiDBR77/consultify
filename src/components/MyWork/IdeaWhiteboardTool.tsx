@@ -1314,7 +1314,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const whiteboardShortcuts = useMemo(() => getWhiteboardShortcuts(isPl), [isPl]);
 
   const cycleSessionRole = useCallback(() => {
-    const nextRole = cycleWhiteboardRole(sessionState.role);
+    const previousRole = sessionState.role;
+    const nextRole = cycleWhiteboardRole(previousRole);
     setSessionState((prev) => ({
       ...prev,
       active: true,
@@ -1336,7 +1337,20 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           permissions: nextRole === 'facilitator' ? ['timer', 'voting', 'follow'] : [],
         })
       )
-      .catch(() => toast.error(t('myWork.whiteboard.errors.roleChangeFailed')));
+      .catch((error: unknown) => {
+        // Server rejected the role change (e.g. 403 — backend authz gate: only the
+        // session owner, an existing facilitator, or an org admin may assign roles).
+        // Revert the optimistic local role so the UI doesn't show a role the
+        // server never persisted.
+        if ((error as { status?: number } | null)?.status === 403) {
+          setSessionState((prev) => ({
+            ...prev,
+            role: previousRole,
+            updatedAt: Date.now(),
+          }));
+        }
+        toast.error(t('myWork.whiteboard.errors.roleChangeFailed'));
+      });
   }, [appendActivity, currentUserId, ensureFacilitationSession, isPl, sessionState.role]);
 
   const toggleSessionTimer = useCallback(() => {

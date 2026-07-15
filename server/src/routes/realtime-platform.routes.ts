@@ -37,6 +37,23 @@ const isRealtimeSubstrateUnavailableError = (error: unknown): boolean => {
   );
 };
 
+// Roles that may grant/reassign facilitation roles org-wide even without being the
+// session owner or an existing facilitator (mirrors the requireRole/admin-data pattern
+// used elsewhere: normalized, case-insensitive match against org membership roles).
+const ORG_ADMIN_ROLES = new Set([
+  'owner',
+  'admin',
+  'administrator',
+  'super_admin',
+  'superadmin',
+]);
+
+const isOrgAdminRequester = (req: AuthRequest): boolean => {
+  const role = (req.userRole || req.user?.role || '').toString().trim().toLowerCase();
+  if (ORG_ADMIN_ROLES.has(role)) return true;
+  return Boolean(req.user?.isSuperAdmin === true);
+};
+
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
   const orgId =
@@ -782,6 +799,33 @@ router.post(
         });
         return;
       }
+
+      // AUTHZ GATE (security fix): assigning a facilitation role is a privilege
+      // grant — without this check any authenticated org member could hand
+      // themselves (or anyone else) the 'facilitator' role and its permissions
+      // (timer/voting/follow control) on someone else's session. Allowed only if
+      // the requester is (a) the session creator/owner, (b) already holds the
+      // 'facilitator' role in THIS session, or (c) an org admin/owner/superadmin.
+      const isSessionOwner = (session as { facilitator_id?: string }).facilitator_id === id.userId;
+      const isOrgAdmin = isOrgAdminRequester(req);
+      let isExistingFacilitator = false;
+      if (!isSessionOwner && !isOrgAdmin) {
+        const existingRole = await realtimePlatformService.getRoleForUser(
+          id.orgId,
+          req.params.sessionId,
+          id.userId
+        );
+        isExistingFacilitator = existingRole?.role_name === 'facilitator';
+      }
+
+      if (!isSessionOwner && !isOrgAdmin && !isExistingFacilitator) {
+        res.status(403).json({
+          error: 'Only the session facilitator, its creator, or an org admin can assign facilitation roles',
+          code: 'REALTIME_FACILITATION_ROLE_FORBIDDEN',
+        });
+        return;
+      }
+
       const r = await realtimePlatformService.assignRole(req.params.sessionId, p.data);
       res.status(201).json(r);
     } catch (error) {
