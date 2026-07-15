@@ -669,8 +669,7 @@ export const LLMObservatoryTab: React.FC = () => {
                 </h3>
               </div>
               <div className="overflow-x-auto">
-                <table
-                  /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-sm"
+                <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-sm"
                 >
                   <thead>
                     <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
