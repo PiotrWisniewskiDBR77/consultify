@@ -26920,6 +26920,46 @@
       ],
       "insight": "The recommendation does not come from the longest idea list, but from the best sequence: scale core, test the new segment, then increase risk.",
       "output": "Source summary -> initiative -> deck -> report"
+    },
+    "marketForcesLibraryGraphic": {
+      "titleProcess": "How Market Forces moves from market structure to decision",
+      "titleExample": "Example: from market pressure to a move sequence",
+      "subtitleProcess": "This is not a static Five Forces checklist. First we frame the market and decision, then collect evidence, score competitive pressure, and translate it into moves and initiatives.",
+      "subtitleExample": "This case shows that a strong Porter session does not stop at a scorecard. It captures signals first, scores the forces next, and only then builds implications, moves, and outputs.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with industry, geography, company position, and the decision question. Without that, the force scorecard becomes abstract.",
+      "scenarioValueExample": "Ateliertoy is considering entering a B2B marketplace segment. The real question is whether the market offers a defensible position or whether platform and buyer pressure will consume margin faster than growth rebuilds it.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "A market attractiveness read, margin pressure logic, strategic levers, and outputs ready for downstream work.",
+      "decisionValueExample": "Enter the marketplace now, or first build a partner channel and data advantage?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stage1Value": "Industry, geography, position, decision",
+      "stage2Value": "Interviews, benchmarks, observations, and hypotheses",
+      "stage3Value": "Score, trend, drivers, evidence, and confidence",
+      "stage4Value": "Margin pressure, defensibility, strategic levers",
+      "stage5Value": "Moves, initiatives, report, deck, or idea",
+      "forcesTitle": "Market pressure scorecard",
+      "implicationsTitle": "Strategic implications",
+      "movesTitle": "Bridge to initiatives",
+      "forces": [
+        ["Rivalry", "4/5", "High price pressure and easily copied offers"],
+        ["New entrants", "3/5", "Entry is possible, but requires channel and trust"],
+        ["Substitutes", "2/5", "Alternatives exist but do not solve the full job"],
+        ["Buyer power", "5/5", "Large customers force discounts and SLA terms"],
+        ["Supplier power", "3/5", "Input costs move, but can be diversified"]
+      ],
+      "implicationItems": [
+        "The market may grow, but advantage without data and channel will be fragile.",
+        "The biggest risk sits in buyer power and offer comparability."
+      ],
+      "moveItems": [
+        "Build partner channel and demand data first.",
+        "Treat marketplace entry as a step after margin validation.",
+        "Close the result as an initiative brief and board deck."
+      ]
     }
   }
 }

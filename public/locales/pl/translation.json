@@ -27996,6 +27996,46 @@
       ],
       "insight": "Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.",
       "output": "Source summary -> inicjatywa -> deck -> raport"
+    },
+    "marketForcesLibraryGraphic": {
+      "titleProcess": "Jak Market Forces prowadzi od rynku do decyzji",
+      "titleExample": "Przykład: od presji rynku do sekwencji ruchów",
+      "subtitleProcess": "To nie jest statyczna ocena pięciu sił. Najpierw ustawiamy rynek i pytanie, potem zbieramy evidence, oceniamy presję konkurencyjną i zamieniamy ją w ruchy oraz inicjatywy.",
+      "subtitleExample": "Ten case pokazuje, że analiza Portera nie kończy się na scorecardzie. Najpierw zbiera sygnały, potem ocenia siły, a dopiero na końcu buduje implikacje, ruchy i outputy.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od branży, zakresu geograficznego, pozycji firmy i pytania decyzyjnego. Bez tego scorecard sił staje się abstrakcyjny.",
+      "scenarioValueExample": "Ateliertoy rozważa wejście w segment B2B marketplace. Pytanie brzmi: czy rynek daje przestrzeń na defensible pozycję, czy presja platform i kupujących zje marżę szybciej niż wzrost ją odbuduje.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena atrakcyjności rynku, presji marży, strategicznych dźwigni i outputów gotowych do dalszej pracy.",
+      "decisionValueExample": "Czy wejść w marketplace teraz, czy najpierw zbudować kanał partnerski i przewagę danych?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stage1Value": "Branża, geografia, pozycja, decyzja",
+      "stage2Value": "Wywiady, benchmarki, obserwacje i hipotezy",
+      "stage3Value": "Score, trend, drivery, evidence i confidence",
+      "stage4Value": "Presja marży, defensibility, dźwignie strategiczne",
+      "stage5Value": "Ruchy, inicjatywy, raport, deck lub idea",
+      "forcesTitle": "Scorecard presji rynkowej",
+      "implicationsTitle": "Implikacje strategiczne",
+      "movesTitle": "Most do inicjatyw",
+      "forces": [
+        ["Rywalizacja", "4/5", "Wysoka presja cenowa i szybko kopiowane oferty"],
+        ["Nowi gracze", "3/5", "Wejście możliwe, ale wymaga kanału i zaufania"],
+        ["Substytuty", "2/5", "Alternatywy istnieją, lecz nie rozwiązują całego problemu"],
+        ["Siła kupujących", "5/5", "Duzi klienci wymuszają rabaty i warunki SLA"],
+        ["Siła dostawców", "3/5", "Koszty komponentów są zmienne, ale dywersyfikowalne"]
+      ],
+      "implicationItems": [
+        "Rynek może rosnąć, ale przewaga bez danych i kanału będzie krucha.",
+        "Największe ryzyko leży w sile kupujących i presji porównywalności ofert."
+      ],
+      "moveItems": [
+        "Najpierw zbudować partner channel i dane o popycie.",
+        "Wejście w marketplace traktować jako etap po walidacji marży.",
+        "Zamknąć wynik jako brief inicjatywy i deck dla zarządu."
+      ]
     }
   }
 }
