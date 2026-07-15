@@ -20,6 +20,14 @@ export class InvitationTokenService {
   }
 
   /**
+   * Update dependencies after construction (e.g. test DI injecting a mock crypto).
+   * See InvitationDataService.setDependencies for why this is needed.
+   */
+  setDependencies(newDeps: Partial<InvitationTokenDependencies>): void {
+    this.deps = { ...this.deps, ...newDeps };
+  }
+
+  /**
    * Generate a cryptographically secure token
    */
   generateSecureToken(): string {

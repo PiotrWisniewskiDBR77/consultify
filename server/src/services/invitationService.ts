@@ -98,8 +98,21 @@ export class InvitationServiceClass {
 
   setDependencies(newDeps: Partial<InvitationServiceDependencies>): void {
     this.deps = { ...this.deps, ...newDeps };
-    // Propagate to sub-services if they were not explicitly passed
-    // Note: Ideally, we should recreate sub-services or have them support setDeps
+
+    // Propagate to already-constructed sub-services. The constructor builds
+    // tokenService/dataService once and each captures its own db/crypto
+    // reference at that time — a later setDependencies() call (e.g. test DI
+    // injecting a mock db) would otherwise silently have no effect on what
+    // those sub-services actually use (they'd keep hitting the real DB).
+    if ((newDeps.db || newDeps.uuidv4) && typeof this.deps.dataService?.setDependencies === 'function') {
+      this.deps.dataService.setDependencies({
+        ...(newDeps.db ? { db: newDeps.db } : {}),
+        ...(newDeps.uuidv4 ? { uuidv4: newDeps.uuidv4 } : {}),
+      });
+    }
+    if (newDeps.crypto && typeof this.deps.tokenService?.setDependencies === 'function') {
+      this.deps.tokenService.setDependencies({ crypto: newDeps.crypto });
+    }
   }
 
   // --- Delegation to Sub-Services (or Orchestration) ---

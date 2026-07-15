@@ -331,25 +331,15 @@ describe('InvitationService', () => {
     });
 
     describe('validateToken()', () => {
-        // TODO(bug, found 2026-07-15 reviving orphaned test): InvitationServiceClass's
-        // constructor builds its sub-services (tokenService/dataService/sendingService)
-        // ONCE, each capturing its own db/crypto reference at construction time (e.g.
-        // `dataService = new InvitationDataService({ db: deps?.db, ... })`). But
-        // setDependencies() in server/src/services/invitationService.ts (right after
-        // the constructor) does only `this.deps = { ...this.deps, ...newDeps }` — a
-        // shallow merge that never reconstructs or re-injects into those already-built
-        // sub-services. The method's own comment admits this:
-        // "Note: Ideally, we should recreate sub-services or have them support setDeps".
-        // So `InvitationService.setDependencies({ db: mocks.db, crypto: mockCrypto, ... })`
-        // silently has NO effect on what dataService/tokenService actually use — every
-        // real query still goes to the original getDatabase()/real crypto from module
-        // load, not the test's mocks. In this env that hits an empty/real sqlite test
-        // DB, so lookups return null and every test below that depends on a mocked row
-        // fails. Not fixed here (invitationService.ts is product code, out of scope) —
-        // this affects all 7 skipped tests in this file: validateToken() x3,
-        // acceptInvitation() x2, revokeInvitation() x1, Multi-Tenant Isolation x1.
-        it.skip('should validate correct token', async () => {
-            const token = 'valid-token-123';
+        // FIXED 2026-07-15: InvitationServiceClass.setDependencies() now propagates
+        // db/uuidv4/crypto into the already-constructed dataService/tokenService
+        // sub-services (see setDependencies() in invitationService.ts and the new
+        // setDependencies() setters on InvitationDataService/InvitationTokenService).
+        it('should validate correct token', async () => {
+            // Must be a canonical 64-char hex token (isCanonicalInvitationRawToken
+            // guard, added after this test was originally written) or getByToken()
+            // short-circuits to null before ever reaching the DB lookup.
+            const token = 'a'.repeat(64);
             const tokenHash = InvitationService.hashToken(token);
 
             mocks.db.get.mockImplementation(async (query, params) => {
@@ -381,9 +371,9 @@ describe('InvitationService', () => {
             expect(invitation).toBeNull();
         });
 
-        // See setDependencies TODO above (validateToken describe block).
-        it.skip('should reject expired invitation', async () => {
-            const token = 'expired-token';
+        it('should reject expired invitation', async () => {
+            // Must be a canonical 64-char hex token — see note above.
+            const token = 'b'.repeat(64);
             const tokenHash = InvitationService.hashToken(token);
             const expiredDate = new Date(Date.now() - 86400000).toISOString();
 
@@ -401,9 +391,9 @@ describe('InvitationService', () => {
             expect(new Date(invitation.expires_at) < new Date()).toBe(true);
         });
 
-        // See setDependencies TODO above (validateToken describe block).
-        it.skip('should reject already accepted invitation', async () => {
-            const token = 'accepted-token';
+        it('should reject already accepted invitation', async () => {
+            // Must be a canonical 64-char hex token — see note above.
+            const token = 'c'.repeat(64);
             const tokenHash = InvitationService.hashToken(token);
 
             mocks.db.get.mockResolvedValue({
@@ -422,8 +412,7 @@ describe('InvitationService', () => {
     });
 
     describe('acceptInvitation()', () => {
-        // See setDependencies TODO above (validateToken describe block).
-        it.skip('should accept valid invitation', async () => {
+        it('should accept valid invitation', async () => {
             const token = InvitationService.generateSecureToken();
             const tokenHash = InvitationService.hashToken(token);
             const invitationId = 'inv-123';
@@ -468,8 +457,7 @@ describe('InvitationService', () => {
             expect(result.organizationId).toBe(testOrganizations.org1.id);
         });
 
-        // See setDependencies TODO above (validateToken describe block).
-        it.skip('should reject invitation with mismatched email', async () => {
+        it('should reject invitation with mismatched email', async () => {
             const token = InvitationService.generateSecureToken();
             const tokenHash = InvitationService.hashToken(token);
 
@@ -493,8 +481,7 @@ describe('InvitationService', () => {
     });
 
     describe('revokeInvitation()', () => {
-        // See setDependencies TODO above (validateToken describe block).
-        it.skip('should revoke pending invitation', async () => {
+        it('should revoke pending invitation', async () => {
             const invitationId = 'inv-123';
             const userId = testUsers.admin.id;
 
@@ -513,8 +500,7 @@ describe('InvitationService', () => {
     });
 
     describe('Multi-Tenant Isolation', () => {
-        // See setDependencies TODO above (validateToken describe block).
-        it.skip('should only return invitations for specified organization', async () => {
+        it('should only return invitations for specified organization', async () => {
             const org1Id = testOrganizations.org1.id;
             const org2Id = testOrganizations.org2.id;
 

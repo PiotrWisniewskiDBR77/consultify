@@ -15,11 +15,46 @@
  * - generateComplianceReport (DB-backed summary; no degraded PDF fallback)
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4Default } from 'uuid';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import {
+  all as dbAllDefault,
+  get as dbGetDefault,
+  run as dbRunDefault,
+} from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+
+// Mutable bindings so tests can inject a mock db (see setDependencies below).
+// The single-arg DbPromise overloads used throughout this file (dbAll(sql,
+// params), dbGet(sql, params), dbRun(sql, params)) resolve the db via the
+// production getDatabase() singleton internally — there was previously no
+// way to point them at a test double at all. Every call site in this file
+// already calls these as free functions (not imports fixed at load time), so
+// rebinding them here is a drop-in fix with no call-site changes needed.
+let dbAll = dbAllDefault;
+let dbGet = dbGetDefault;
+let dbRun = dbRunDefault;
+let uuidv4 = uuidv4Default;
+
+/**
+ * Inject test dependencies. Without this, mocks.db passed by tests had zero
+ * effect — every method kept hitting the real database singleton.
+ */
+const setDependencies = (newDeps: { db?: any; uuidv4?: () => string } = {}): void => {
+  if (newDeps.db) {
+    const injectedDb = newDeps.db;
+    dbAll = ((sql: string, params?: unknown[], options?: any) =>
+      dbAllDefault(injectedDb, sql, params, options)) as typeof dbAllDefault;
+    dbGet = ((sql: string, params?: unknown[], options?: any) =>
+      dbGetDefault(injectedDb, sql, params, options)) as typeof dbGetDefault;
+    dbRun = ((sql: string, params?: unknown[], options?: any) =>
+      dbRunDefault(injectedDb, sql, params, options)) as typeof dbRunDefault;
+  }
+  if (newDeps.uuidv4) {
+    uuidv4 = newDeps.uuidv4;
+  }
+};
 
 const dateWindowSql = (days: number) => `CURRENT_TIMESTAMP - INTERVAL '${days} days'`;
 
@@ -139,6 +174,8 @@ const ensureUserTiersTable = async () => {
 };
 
 class AISettingsService {
+  static setDependencies = setDependencies;
+
   // SUPERADMIN
   static async getSuperAdminSettings() {
     try {
