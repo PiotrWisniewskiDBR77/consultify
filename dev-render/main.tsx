@@ -20,6 +20,8 @@ import { createRoot } from 'react-dom/client';
 
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
+import AdminCommandCenterPanelScreen from './screens/admin-command-center-panel';
+import AdminSsoSelfServiceCardScreen from './screens/admin-sso-self-service-card';
 import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
 import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
 import AssessmentListScreen from './screens/assessment-list';
@@ -65,6 +67,15 @@ import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'admin-command-center-panel': {
+    label:
+      'F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&tab=)',
+    render: () => <AdminCommandCenterPanelScreen />,
+  },
+  'admin-sso-self-service-card': {
+    label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
+    render: () => <AdminSsoSelfServiceCardScreen />,
+  },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',
     render: () => <CapabilityGateDemoScreen />,
