@@ -608,9 +608,7 @@ export const LLMManagementView: React.FC = () => {
         id: 'name',
         label: 'Name',
         render: (row: TableRow) => (
-          <span className="text-sm font-medium text-slate-900 dark:text-slate-200">
-            {row.name}
-          </span>
+          <span className="text-sm font-medium text-slate-900 dark:text-slate-200">{row.name}</span>
         ),
       },
       {
@@ -777,7 +775,12 @@ export const LLMManagementView: React.FC = () => {
                 label="Clone Model"
                 size="sm"
               />
-              <IconButton icon={Edit} onClick={() => handleEditProvider(p)} label="Edit" size="sm" />
+              <IconButton
+                icon={Edit}
+                onClick={() => handleEditProvider(p)}
+                label="Edit"
+                size="sm"
+              />
               <IconButton
                 icon={Trash2}
                 onClick={() => handleDeleteProvider(p.id)}

@@ -151,9 +151,7 @@ const buildWorkflowColumns = (formatDate: (value: string) => string): TableColum
     label: 'Status',
     render: (row: TableRow) =>
       (row as unknown as ApprovalWorkflow).isActive ? (
-        <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
-          Active
-        </span>
+        <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">Active</span>
       ) : (
         <span className="px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded text-xs">
           Inactive
@@ -182,7 +180,8 @@ const buildRequestColumns = (
     id: 'workflow_name',
     label: 'Workflow',
     sortable: true,
-    sortAccessor: (row: TableRow) => String((row as unknown as ApprovalRequest).workflow_name || ''),
+    sortAccessor: (row: TableRow) =>
+      String((row as unknown as ApprovalRequest).workflow_name || ''),
     render: (row: TableRow) => (
       <p className="font-medium">{(row as unknown as ApprovalRequest).workflow_name}</p>
     ),

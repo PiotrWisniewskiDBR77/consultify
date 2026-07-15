@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
-import { StandardTable } from '../../components/standard/StandardTable';
 import type {
   StandardRowMenu,
   TableColumn,
   TableRow,
 } from '../../components/standard/StandardTable';
+import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 

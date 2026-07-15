@@ -39,16 +39,16 @@ import toast from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import {
-  StandardTable,
-  type TableColumn,
-  type TableRow,
-} from '../../components/standard/StandardTable';
-import {
   CreditNotesPanel,
   InvoiceTemplateEditor,
   TaxSettingsPanel,
 } from '../../components/billing';
 import { InfoButton } from '../../components/shared/InfoButton';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 
 interface Invoice {
@@ -1132,7 +1132,9 @@ export const InvoiceCenterView: React.FC = () => {
               </div>
             </div>
 
-            <table /* §27-exempt: sub-tabela w widoku szczegolow (pozycje faktury w modalu), tabela dokumentowa, nie samodzielna lista */ className="w-full mb-6">
+            <table
+              /* §27-exempt: sub-tabela w widoku szczegolow (pozycje faktury w modalu), tabela dokumentowa, nie samodzielna lista */ className="w-full mb-6"
+            >
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700">
                   <th className="text-left py-3 text-sm text-slate-500 dark:text-slate-400">

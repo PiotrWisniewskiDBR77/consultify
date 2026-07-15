@@ -315,10 +315,7 @@ const AdminSessionsView: React.FC = () => {
     return !Number.isNaN(date.getTime()) && date < new Date();
   };
 
-  const columns = useMemo(
-    () => buildColumns(getDeviceIcon, formatDate, isExpired),
-    []
-  );
+  const columns = useMemo(() => buildColumns(getDeviceIcon, formatDate, isExpired), []);
 
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;

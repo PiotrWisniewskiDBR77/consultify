@@ -2,9 +2,13 @@ import { CheckCircle2, KeyRound, RefreshCw, ShieldCheck, UserRound } from 'lucid
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import { Api } from '@/services/api';
 import { apiGet, apiPost } from '@/services/api/baseClient';
-import { StandardTable, type TableColumn, type TableRow } from '@/components/standard/StandardTable';
 
 type ScopeType = 'organization' | 'user';
 type ModuleKey = 'wordy' | 'excele' | 'prezentacje';

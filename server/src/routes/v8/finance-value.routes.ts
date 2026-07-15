@@ -36,37 +36,37 @@ import { Router } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
-  type Benefit,
   bankBenefit,
   bankingStatus,
+  type Benefit,
   portfolioBanked,
 } from '../../services/bankingValueService.js';
 import {
-  type ExtendedFinancials,
-  type IndustryBenchmark,
   benchmarkStatus,
   computeExtendedRatios,
   dupontDecomposition,
+  type ExtendedFinancials,
+  type IndustryBenchmark,
 } from '../../services/extendedRatiosService.js';
-import { type KpiLineagePair, detectEarlyWarnings } from '../../services/kpiLineageService.js';
+import { detectEarlyWarnings, type KpiLineagePair } from '../../services/kpiLineageService.js';
 import {
-  type ReconcileRow,
   reconcile,
   reconcileOrganization,
   reconcilePortfolio,
+  type ReconcileRow,
 } from '../../services/realizedValueReconciliationService.js';
 import {
-  type ValueCaptureGate,
+  rollupPortfolioValue,
+  valueByInitiative,
+  type ValueContribution,
+} from '../../services/valueAttributionRollupService.js';
+import {
   advanceGate,
   createGate,
   listGates,
   pipelineFunnel,
+  type ValueCaptureGate,
 } from '../../services/valueCapturePipelineService.js';
-import {
-  type ValueContribution,
-  rollupPortfolioValue,
-  valueByInitiative,
-} from '../../services/valueAttributionRollupService.js';
 import {
   appendLedgerEntry,
   currentValueFromLedger,
@@ -225,7 +225,9 @@ router.get(
       getLedger(organizationId, initiativeId),
     ]);
     const result = currentValueFromLedger(
-      baseline ? { frozen_value: baseline.frozen_value, id: baseline.id, frozen_at: baseline.frozen_at } : null,
+      baseline
+        ? { frozen_value: baseline.frozen_value, id: baseline.id, frozen_at: baseline.frozen_at }
+        : null,
       entries.map((e) => ({
         id: e.id,
         entry_type: e.entry_type,
@@ -469,9 +471,10 @@ router.post(
     const benefit = req.body?.benefit as Benefit;
     const targetBudgetPeriod = String(req.body?.targetBudgetPeriod || '').trim();
     if (!benefit || !targetBudgetPeriod) {
-      return res
-        .status(400)
-        .json({ error: 'benefit and targetBudgetPeriod are required', code: 'VALUE_BANKING_BAD_INPUT' });
+      return res.status(400).json({
+        error: 'benefit and targetBudgetPeriod are required',
+        code: 'VALUE_BANKING_BAD_INPUT',
+      });
     }
     const result = bankBenefit(benefit, targetBudgetPeriod);
     return res.json({ data: result, meta: meta() });
@@ -489,7 +492,9 @@ router.post(
     if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
     const benefit = req.body?.benefit as Benefit;
     if (!benefit) {
-      return res.status(400).json({ error: 'benefit is required', code: 'VALUE_BANKING_BAD_INPUT' });
+      return res
+        .status(400)
+        .json({ error: 'benefit is required', code: 'VALUE_BANKING_BAD_INPUT' });
     }
     const actual =
       req.body?.actual === undefined || req.body?.actual === null

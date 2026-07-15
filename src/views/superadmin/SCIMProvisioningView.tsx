@@ -22,12 +22,12 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { StandardTable } from '../../components/standard/StandardTable';
 import type {
   StandardRowMenu,
   TableColumn,
   TableRow,
 } from '../../components/standard/StandardTable';
+import { StandardTable } from '../../components/standard/StandardTable';
 import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';

@@ -9,12 +9,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Trash2, XCircle } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { StandardTable } from '../../components/standard/StandardTable';
 import type {
   StandardRowMenu,
   TableColumn,
   TableRow,
 } from '../../components/standard/StandardTable';
+import { StandardTable } from '../../components/standard/StandardTable';
 import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
 import { useToast } from '../../components/ui/use-toast';
 import api from '../../services/api';
@@ -217,9 +217,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       id: 'name',
       label: 'Plan Name',
       sortable: true,
-      render: (row: TableRow) => (
-        <span className="font-medium text-c-text">{row.name}</span>
-      ),
+      render: (row: TableRow) => <span className="font-medium text-c-text">{row.name}</span>,
     },
     {
       id: 'price_monthly',
@@ -227,9 +225,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-c-text-secondary">
-          ${(row.price_monthly as number).toFixed(2)}
-        </span>
+        <span className="text-c-text-secondary">${(row.price_monthly as number).toFixed(2)}</span>
       ),
     },
     {
@@ -276,9 +272,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row: TableRow) => (
-        <span className="text-c-text-secondary">
-          {row.max_concurrent_ai_jobs || 0}
-        </span>
+        <span className="text-c-text-secondary">{row.max_concurrent_ai_jobs || 0}</span>
       ),
     },
     {

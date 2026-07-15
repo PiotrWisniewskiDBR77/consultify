@@ -39,27 +39,31 @@ import { Router } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
-  hurdleRate,
   evaluateAgainstHurdle,
+  hurdleRate,
+  type RankableItem,
   rankByRiskAdjusted,
   riskAdjustedNpv,
-  type RankableItem,
   type RiskClass,
 } from '../../services/capitalDecisionService.js';
 import {
-  frontier,
-  portfolioRiskValue,
   type CorrelationMatrix,
+  frontier,
   type FrontierInitiative,
+  portfolioRiskValue,
 } from '../../services/efficientFrontierService.js';
-import { histogram, simulateNpv, type Drivers as NpvDrivers } from '../../services/monteCarloNpvService.js';
+import {
+  type Drivers as NpvDrivers,
+  histogram,
+  simulateNpv,
+} from '../../services/monteCarloNpvService.js';
 import {
   abandonOption,
-  deferOption,
-  stagedInvestment,
   type AbandonOptionInput,
+  deferOption,
   type DeferOptionInput,
   type InvestmentStage,
+  stagedInvestment,
 } from '../../services/realOptionsService.js';
 import {
   applyScenario,
@@ -69,16 +73,16 @@ import {
 } from '../../services/scenarioComputeService.js';
 import {
   portfolioVaR,
+  type PortfolioVarItem,
   valueAtRisk,
   varHeatmapCells,
-  type PortfolioVarItem,
 } from '../../services/valueAtRiskService.js';
 import {
   breakEven,
   dataTable2D,
+  type Drivers as SensitivityDrivers,
   oneWaySensitivity,
   tornado,
-  type Drivers as SensitivityDrivers,
 } from '../../services/whatIfSensitivityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -418,7 +422,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     getV8Context(req);
     const body = req.body ?? {};
-    const assumptions = body.assumptions && typeof body.assumptions === 'object' ? body.assumptions : {};
+    const assumptions =
+      body.assumptions && typeof body.assumptions === 'object' ? body.assumptions : {};
     const scenario = String(body.scenario || 'base') as ScenarioName;
     if (!['base', 'optimistic', 'conservative'].includes(scenario)) {
       return res.status(400).json({ error: "scenario must be 'base'|'optimistic'|'conservative'" });
@@ -443,7 +448,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     getV8Context(req);
     const body = req.body ?? {};
-    const assumptions = body.assumptions && typeof body.assumptions === 'object' ? body.assumptions : {};
+    const assumptions =
+      body.assumptions && typeof body.assumptions === 'object' ? body.assumptions : {};
     const metricKeys = Array.isArray(body.metricKeys) ? (body.metricKeys as string[]) : [];
     if (metricKeys.length === 0) {
       return res.status(400).json({ error: 'metricKeys (non-empty array) required' });

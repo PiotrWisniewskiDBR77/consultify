@@ -21,12 +21,12 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
-import { StandardTable } from '../../components/standard/StandardTable';
 import type {
   StandardRowMenu,
   TableColumn,
   TableRow,
 } from '../../components/standard/StandardTable';
+import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -750,9 +750,10 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   };
 
   // ── Pending requests tab: kanon §27 — StandardTable ──────────────────────
-  const requestRows = useMemo<TableRow[]>(() => requests.map((r) => ({ ...r, id: r.id })), [
-    requests,
-  ]);
+  const requestRows = useMemo<TableRow[]>(
+    () => requests.map((r) => ({ ...r, id: r.id })),
+    [requests]
+  );
 
   const requestRowMenu = (row: TableRow): StandardRowMenu => {
     const req = row as unknown as AccessRequest;

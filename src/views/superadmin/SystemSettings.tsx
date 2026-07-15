@@ -21,12 +21,12 @@ import { toast } from 'react-hot-toast';
 
 import { ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
-import { StandardTable } from '../../components/standard/StandardTable';
 import type {
   StandardRowMenu,
   TableColumn,
   TableRow,
 } from '../../components/standard/StandardTable';
+import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { User, UserRole } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';

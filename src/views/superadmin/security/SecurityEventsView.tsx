@@ -145,7 +145,8 @@ export const SecurityEventsView: React.FC = () => {
         id: 'created_at',
         label: 'Time',
         sortable: true,
-        sortAccessor: (row: TableRow) => String((row as unknown as SecurityEventRow).created_at || ''),
+        sortAccessor: (row: TableRow) =>
+          String((row as unknown as SecurityEventRow).created_at || ''),
         render: (row: TableRow) => (
           <span className="text-slate-700 dark:text-slate-300">
             {formatSecurityEventDate((row as unknown as SecurityEventRow).created_at)}
@@ -167,9 +168,7 @@ export const SecurityEventsView: React.FC = () => {
         render: (row: TableRow) => {
           const severity = asText((row as unknown as SecurityEventRow).severity, 'unknown');
           return (
-            <span
-              className={`px-2 py-1 rounded text-xs border ${getSeverityColor(severity)}`}
-            >
+            <span className={`px-2 py-1 rounded text-xs border ${getSeverityColor(severity)}`}>
               {severity}
             </span>
           );

@@ -17,12 +17,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { StandardTable } from '../../components/standard/StandardTable';
 import type {
   StandardRowMenu,
   TableColumn,
   TableRow,
 } from '../../components/standard/StandardTable';
+import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
 import { PlaybookEditorView } from './PlaybookEditorView';

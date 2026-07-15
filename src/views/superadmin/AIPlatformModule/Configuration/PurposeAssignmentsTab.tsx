@@ -551,9 +551,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
           row.organization_id ? (
             <span className="px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 text-xs">org</span>
           ) : (
-            <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-500 text-xs">
-              global
-            </span>
+            <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-500 text-xs">global</span>
           ),
       },
       {
@@ -562,9 +560,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
         render: (row: TableRow) => (
           <div>
             <div className="font-medium">{row.provider_name || row.provider_id}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {row.provider || '—'}
-            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{row.provider || '—'}</div>
           </div>
         ),
       },

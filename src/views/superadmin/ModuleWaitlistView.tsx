@@ -8,8 +8,12 @@
 import { Bell, Brain, Calendar, Download, Package, RefreshCw, Search, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { apiGet } from '../../services/api/baseClient';
-import { StandardTable, type TableColumn, type TableRow } from '../../components/standard/StandardTable';
 
 interface InterestRecord {
   id: string;
@@ -136,9 +140,7 @@ export const ModuleWaitlistView: React.FC = () => {
         id: 'user',
         label: 'User',
         render: (row: TableRow) => (
-          <span className="text-slate-900 dark:text-white font-medium">
-            {row.user_name || '—'}
-          </span>
+          <span className="text-slate-900 dark:text-white font-medium">{row.user_name || '—'}</span>
         ),
       },
       {

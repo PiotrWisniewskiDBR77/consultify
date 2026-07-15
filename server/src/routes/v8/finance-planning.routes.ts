@@ -32,8 +32,8 @@ import { Router } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
-  type CashForecastInput,
   cashCurve,
+  type CashForecastInput,
   directCashForecast,
   minCashAlerts,
   runway,
@@ -46,9 +46,9 @@ import {
   treeToChartData,
 } from '../../services/driverTreeService.js';
 import {
-  type HeadcountRole,
   costPerHire,
   headcountOpex,
+  type HeadcountRole,
   headcountToCash,
   roleCost,
 } from '../../services/headcountPlannerService.js';
@@ -58,15 +58,15 @@ import {
   specToAssumptions,
 } from '../../services/nlToModelService.js';
 import {
-  type PeriodValue,
   fyBridge,
+  type PeriodValue,
   reforecast,
   rollForward,
   snapshotForecast,
 } from '../../services/rollingForecastService.js';
 import {
-  type BenefitInput,
   bankableValue,
+  type BenefitInput,
   inYearVsFullYear,
   phasingCurve,
   splitBenefit,
@@ -203,7 +203,11 @@ router.post(
       label?: string;
       createdPeriod?: string;
     };
-    if (!Array.isArray(forecast) || typeof label !== 'string' || typeof createdPeriod !== 'string') {
+    if (
+      !Array.isArray(forecast) ||
+      typeof label !== 'string' ||
+      typeof createdPeriod !== 'string'
+    ) {
       return badRequest(
         res,
         '"forecast" (array), "label" and "createdPeriod" (strings) are required',
@@ -229,11 +233,7 @@ router.post(
     getV8Context(req);
     const { roles, periods } = (req.body ?? {}) as { roles?: HeadcountRole[]; periods?: string[] };
     if (!Array.isArray(roles) || !Array.isArray(periods)) {
-      return badRequest(
-        res,
-        '"roles" and "periods" must be arrays',
-        'HEADCOUNT_INVALID_INPUT'
-      );
+      return badRequest(res, '"roles" and "periods" must be arrays', 'HEADCOUNT_INVALID_INPUT');
     }
     const rows = headcountOpex(roles, periods);
     return res.json({ data: { rows }, meta: planningMeta() });
@@ -254,11 +254,7 @@ router.post(
       payLagPeriods?: number;
     };
     if (!Array.isArray(roles) || !Array.isArray(periods)) {
-      return badRequest(
-        res,
-        '"roles" and "periods" must be arrays',
-        'HEADCOUNT_INVALID_INPUT'
-      );
+      return badRequest(res, '"roles" and "periods" must be arrays', 'HEADCOUNT_INVALID_INPUT');
     }
     const rows = headcountToCash(roles, periods, payLagPeriods);
     return res.json({ data: { rows }, meta: planningMeta() });

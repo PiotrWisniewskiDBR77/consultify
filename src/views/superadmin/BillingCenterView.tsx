@@ -26,12 +26,12 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { SubscriptionAnalytics } from '../../components/billing';
+import { InfoButton } from '../../components/shared/InfoButton';
 import {
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '../../components/standard/StandardTable';
-import { InfoButton } from '../../components/shared/InfoButton';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { EMPTY_VALUE, safeDate, safeMoney, safeNumber, safePercent } from '../../utils/safeFormat';
@@ -487,7 +487,9 @@ const OverviewTab: React.FC = () => {
             </p>
 
             <div className="overflow-x-auto">
-              <table /* §27-exempt: data-viz/render analityczny read-only (koszty operacyjne z sumą tfoot), nie lista encji */ className="w-full">
+              <table
+                /* §27-exempt: data-viz/render analityczny read-only (koszty operacyjne z sumą tfoot), nie lista encji */ className="w-full"
+              >
                 <thead>
                   <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                     <th className="pb-3 font-medium">Provider</th>

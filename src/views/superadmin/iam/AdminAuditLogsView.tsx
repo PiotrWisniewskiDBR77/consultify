@@ -424,7 +424,9 @@ const AdminAuditLogsView: React.FC = () => {
         id: 'ip_address',
         label: 'IP Address',
         render: (row: TableRow) => (
-          <span className="text-sm">{asText((row as unknown as AuditLog).ip_address, 'Unknown')}</span>
+          <span className="text-sm">
+            {asText((row as unknown as AuditLog).ip_address, 'Unknown')}
+          </span>
         ),
       },
       {

@@ -21,13 +21,13 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { EmailTemplateEditor } from '../../components/SuperAdmin/EmailTemplateEditor';
 import {
-  StandardTable,
   type RowActionSection,
+  StandardTable,
   type TableColumn,
   type TableRow,
 } from '../../components/standard/StandardTable';
+import { EmailTemplateEditor } from '../../components/SuperAdmin/EmailTemplateEditor';
 import { Api } from '../../services/api';
 import type { ContentCategory, ContentTag, EmailTemplate, EmailTemplateStatus } from '../../types';
 
