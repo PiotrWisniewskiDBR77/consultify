@@ -27430,6 +27430,22 @@
       "add": "Add",
       "noAssumptions": "No assumptions yet.",
       "remove": "Remove"
+    },
+    "proposalCardGovernance": {
+      "status": {
+        "aiProposed": "AI proposal",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "rethinking": "Rethinking"
+      },
+      "accept": "Accept",
+      "acceptAiCard": "Accept AI card",
+      "rethink": "Rethink",
+      "askAiToRethink": "Ask AI to rethink",
+      "reject": "Reject",
+      "rejectAiCard": "Reject AI card",
+      "rethinkPlaceholder": "What should AI improve?",
+      "send": "Send"
     }
   }
 }

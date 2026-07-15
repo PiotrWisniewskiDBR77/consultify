@@ -1,22 +1,23 @@
 import { Check, RefreshCw, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ProposalCardType, ProposalStatus } from '@/store/useToolStore';
 
 export function ProposalStatusBadge({
   status,
-  isPolish,
   suffix,
 }: {
   status?: ProposalStatus | string;
   isPolish: boolean;
   suffix?: string;
 }) {
+  const { t } = useTranslation();
   const labels: Record<ProposalStatus, string> = {
-    'ai-proposed': isPolish ? 'Propozycja AI' : 'AI proposal',
-    accepted: isPolish ? 'Zaakceptowane' : 'Accepted',
-    rejected: isPolish ? 'Odrzucone' : 'Rejected',
-    rethinking: isPolish ? 'Przemyślenie' : 'Rethinking',
+    'ai-proposed': t('discoveryToolsSteps.proposalCardGovernance.status.aiProposed'),
+    accepted: t('discoveryToolsSteps.proposalCardGovernance.status.accepted'),
+    rejected: t('discoveryToolsSteps.proposalCardGovernance.status.rejected'),
+    rethinking: t('discoveryToolsSteps.proposalCardGovernance.status.rethinking'),
   };
   const tone =
     status === 'ai-proposed'
@@ -38,7 +39,6 @@ export function ProposalStatusBadge({
 export function ProposalCardActions({
   cardType,
   cardId,
-  isPolish,
   onAcceptCard,
   onRejectCard,
   onRethinkCard,
@@ -50,6 +50,7 @@ export function ProposalCardActions({
   onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
+  const { t } = useTranslation();
   const [isCommenting, setIsCommenting] = useState(false);
   const [comment, setComment] = useState('');
 
@@ -66,8 +67,8 @@ export function ProposalCardActions({
           type="button"
           onClick={() => onAcceptCard?.(cardType, cardId)}
           className="rounded-lg bg-emerald-50 p-1.5 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
-          aria-label={isPolish ? 'Akceptuj' : 'Accept'}
-          title={isPolish ? 'Akceptuj kartę AI' : 'Accept AI card'}
+          aria-label={t('discoveryToolsSteps.proposalCardGovernance.accept')}
+          title={t('discoveryToolsSteps.proposalCardGovernance.acceptAiCard')}
         >
           <Check className="h-4 w-4" />
         </button>
@@ -75,8 +76,8 @@ export function ProposalCardActions({
           type="button"
           onClick={() => setIsCommenting((value) => !value)}
           className="rounded-lg bg-primary-50 p-1.5 text-primary-700 hover:bg-primary-100 dark:bg-primary-950/30 dark:text-primary-300"
-          aria-label={isPolish ? 'Przemyśl ponownie' : 'Rethink'}
-          title={isPolish ? 'Poproś AI o ponowne przemyślenie' : 'Ask AI to rethink'}
+          aria-label={t('discoveryToolsSteps.proposalCardGovernance.rethink')}
+          title={t('discoveryToolsSteps.proposalCardGovernance.askAiToRethink')}
         >
           <RefreshCw className="h-4 w-4" />
         </button>
@@ -84,8 +85,8 @@ export function ProposalCardActions({
           type="button"
           onClick={() => onRejectCard?.(cardType, cardId)}
           className="rounded-lg bg-danger-50 p-1.5 text-danger-700 hover:bg-danger-100 dark:bg-danger-900/30 dark:text-danger-300"
-          aria-label={isPolish ? 'Odrzuć' : 'Reject'}
-          title={isPolish ? 'Odrzuć kartę AI' : 'Reject AI card'}
+          aria-label={t('discoveryToolsSteps.proposalCardGovernance.reject')}
+          title={t('discoveryToolsSteps.proposalCardGovernance.rejectAiCard')}
         >
           <X className="h-4 w-4" />
         </button>
@@ -97,14 +98,14 @@ export function ProposalCardActions({
             onChange={(event) => setComment(event.target.value)}
             rows={2}
             className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
-            placeholder={isPolish ? 'Co AI ma poprawić?' : 'What should AI improve?'}
+            placeholder={t('discoveryToolsSteps.proposalCardGovernance.rethinkPlaceholder')}
           />
           <button
             type="button"
             onClick={submitRethink}
             className="self-end rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-2 py-1 text-xs text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
           >
-            {isPolish ? 'Wyślij' : 'Send'}
+            {t('discoveryToolsSteps.proposalCardGovernance.send')}
           </button>
         </div>
       ) : null}

@@ -28506,6 +28506,22 @@
       "add": "Dodaj",
       "noAssumptions": "Brak założeń.",
       "remove": "Usuń"
+    },
+    "proposalCardGovernance": {
+      "status": {
+        "aiProposed": "Propozycja AI",
+        "accepted": "Zaakceptowane",
+        "rejected": "Odrzucone",
+        "rethinking": "Przemyślenie"
+      },
+      "accept": "Akceptuj",
+      "acceptAiCard": "Akceptuj kartę AI",
+      "rethink": "Przemyśl ponownie",
+      "askAiToRethink": "Poproś AI o ponowne przemyślenie",
+      "reject": "Odrzuć",
+      "rejectAiCard": "Odrzuć kartę AI",
+      "rethinkPlaceholder": "Co AI ma poprawić?",
+      "send": "Wyślij"
     }
   }
 }
