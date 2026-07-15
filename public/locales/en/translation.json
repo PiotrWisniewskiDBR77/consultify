@@ -10394,6 +10394,27 @@
       "strategicInitiativesTitle": "Strategic Initiatives",
       "otherInitiativesTitle": "Other Initiatives",
       "moreInitiativesSuffix": "+ {{count}} more initiatives"
+    },
+    "axisReportSection": {
+      "keyTakeawaysTitle": "Key Takeaways",
+      "positionBelowLabel": "Below average",
+      "positionAverageLabel": "Industry average",
+      "positionAboveLabel": "Above average",
+      "industryPositionTitle": "Industry Position",
+      "avgLabel": "Avg",
+      "leadersLabel": "Leaders",
+      "benchmarkTargetLabel": "Target",
+      "assessedInsight": "Assessed {{count}}/9 areas in this axis",
+      "urgentAttentionInsight": "{{count}} areas require urgent attention (gap ≥3)",
+      "noCriticalGapsInsight": "No critical transformation gaps",
+      "avgGapInsight": "Average transformation gap: {{avgGap}} levels",
+      "currentLabel": "Current",
+      "targetLabel": "Target",
+      "gapLabel": "Gap",
+      "axisSummaryTitle": "Axis Summary",
+      "detailedAnalysisTitle": "Detailed Area Analysis",
+      "sectionIntroText": "Below is a detailed analysis of each of the 9 business areas in the context of this digital transformation axis. Click on an area header to expand details.",
+      "priorityOrderNote": "Areas sorted by priority (largest gap first)"
     }
   },
   "auth": {

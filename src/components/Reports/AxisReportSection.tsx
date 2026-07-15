@@ -16,6 +16,7 @@
 
 import { motion } from 'framer-motion';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AreaDetailCard, AreaDetailData, InterviewData } from './AreaDetailCard';
 import { AreaAssessment, AreaMatrixTable, BUSINESS_AREAS } from './AreaMatrixTable';
@@ -64,13 +65,13 @@ const KeyTakeawaysBox: React.FC<{
   insights: string[];
   language: 'pl' | 'en';
 }> = ({ insights, language }) => {
-  const isPolish = language === 'pl';
+  const { t } = useTranslation();
 
   return (
     <div className="key-takeaways">
       <div className="takeaways-header">
         <span className="icon">💡</span>
-        <h4>{isPolish ? 'Kluczowe wnioski' : 'Key Takeaways'}</h4>
+        <h4>{t('reports.axisReportSection.keyTakeawaysTitle', 'Key Takeaways')}</h4>
       </div>
       <ul>
         {insights.map((insight, i) => (
@@ -128,13 +129,13 @@ const BenchmarkComparison: React.FC<{
   axisName: string;
   language: 'pl' | 'en';
 }> = ({ current, target, benchmark, axisName, language }) => {
-  const isPolish = language === 'pl';
+  const { t } = useTranslation();
   const maxLevel = 7;
 
   const positionLabel = {
-    below: isPolish ? 'Poniżej średniej' : 'Below average',
-    average: isPolish ? 'Na poziomie branży' : 'Industry average',
-    above: isPolish ? 'Powyżej średniej' : 'Above average',
+    below: t('reports.axisReportSection.positionBelowLabel', 'Below average'),
+    average: t('reports.axisReportSection.positionAverageLabel', 'Industry average'),
+    above: t('reports.axisReportSection.positionAboveLabel', 'Above average'),
   }[benchmark.position];
 
   const positionColor = {
@@ -145,7 +146,7 @@ const BenchmarkComparison: React.FC<{
 
   return (
     <div className="benchmark-comparison">
-      <h4>🏭 {isPolish ? 'Pozycja względem branży' : 'Industry Position'}</h4>
+      <h4>🏭 {t('reports.axisReportSection.industryPositionTitle', 'Industry Position')}</h4>
 
       <div className="benchmark-bar-container">
         <div className="benchmark-bar">
@@ -156,7 +157,7 @@ const BenchmarkComparison: React.FC<{
           >
             <div className="marker-line"></div>
             <div className="marker-label">
-              {isPolish ? 'Średnia' : 'Avg'}: {benchmark.industryAvg}
+              {t('reports.axisReportSection.avgLabel', 'Avg')}: {benchmark.industryAvg}
             </div>
           </div>
 
@@ -167,7 +168,7 @@ const BenchmarkComparison: React.FC<{
           >
             <div className="marker-line"></div>
             <div className="marker-label">
-              {isPolish ? 'Liderzy' : 'Leaders'}: {benchmark.topPerformers}
+              {t('reports.axisReportSection.leadersLabel', 'Leaders')}: {benchmark.topPerformers}
             </div>
           </div>
 
@@ -180,7 +181,7 @@ const BenchmarkComparison: React.FC<{
           <div className="target-marker" style={{ left: `${(target / maxLevel) * 100}%` }}>
             <div className="target-line"></div>
             <div className="target-label">
-              {isPolish ? 'Cel' : 'Target'}: {target}
+              {t('reports.axisReportSection.benchmarkTargetLabel', 'Target')}: {target}
             </div>
           </div>
         </div>
@@ -341,6 +342,7 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
   onAreaSelect,
   expandAllAreas = false,
 }) => {
+  const { t } = useTranslation();
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const isPolish = language === 'pl';
 
@@ -362,11 +364,19 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
 
   // Generate key insights if not provided
   const insights = data.keyInsights || [
-    `${isPolish ? 'Oceniono' : 'Assessed'} ${stats.assessedCount}/9 ${isPolish ? 'obszarów' : 'areas'} ${isPolish ? 'w tej osi' : 'in this axis'}`,
+    t('reports.axisReportSection.assessedInsight', 'Assessed {{count}}/9 areas in this axis', {
+      count: stats.assessedCount,
+    }),
     stats.criticalAreas > 0
-      ? `${stats.criticalAreas} ${isPolish ? 'obszarów wymaga pilnej uwagi (luka ≥3)' : 'areas require urgent attention (gap ≥3)'}`
-      : `${isPolish ? 'Brak krytycznych luk transformacyjnych' : 'No critical transformation gaps'}`,
-    `${isPolish ? 'Średnia luka transformacyjna' : 'Average transformation gap'}: ${stats.avgGap} ${isPolish ? 'poziomów' : 'levels'}`,
+      ? t(
+          'reports.axisReportSection.urgentAttentionInsight',
+          '{{count}} areas require urgent attention (gap ≥3)',
+          { count: stats.criticalAreas }
+        )
+      : t('reports.axisReportSection.noCriticalGapsInsight', 'No critical transformation gaps'),
+    t('reports.axisReportSection.avgGapInsight', 'Average transformation gap: {{avgGap}} levels', {
+      avgGap: stats.avgGap,
+    }),
   ];
 
   const handleAreaClick = (areaId: string) => {
@@ -405,18 +415,18 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
         <div className="level-summary">
           <div className="level-card current">
             <span className="value">{data.overallCurrentLevel.toFixed(1)}</span>
-            <span className="label">{isPolish ? 'Aktualny' : 'Current'}</span>
+            <span className="label">{t('reports.axisReportSection.currentLabel', 'Current')}</span>
           </div>
           <span className="arrow">→</span>
           <div className="level-card target">
             <span className="value">{data.overallTargetLevel.toFixed(1)}</span>
-            <span className="label">{isPolish ? 'Docelowy' : 'Target'}</span>
+            <span className="label">{t('reports.axisReportSection.targetLabel', 'Target')}</span>
           </div>
           <div className="level-card gap">
             <span className="value">
               +{(data.overallTargetLevel - data.overallCurrentLevel).toFixed(1)}
             </span>
-            <span className="label">{isPolish ? 'Luka' : 'Gap'}</span>
+            <span className="label">{t('reports.axisReportSection.gapLabel', 'Gap')}</span>
           </div>
         </div>
       </div>
@@ -449,27 +459,31 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
       {/* Summary */}
       {data.summary && (
         <div className="axis-summary">
-          <h4>{isPolish ? 'Podsumowanie osi' : 'Axis Summary'}</h4>
+          <h4>{t('reports.axisReportSection.axisSummaryTitle', 'Axis Summary')}</h4>
           <p>{data.summary}</p>
         </div>
       )}
 
       {/* Detailed Area Analysis */}
       <div className="area-details-section">
-        <h3>📋 {isPolish ? 'Szczegółowa analiza obszarów' : 'Detailed Area Analysis'}</h3>
+        <h3>
+          📋 {t('reports.axisReportSection.detailedAnalysisTitle', 'Detailed Area Analysis')}
+        </h3>
         <p className="section-intro">
-          {isPolish
-            ? 'Poniżej znajduje się szczegółowa analiza każdego z 9 obszarów biznesowych w kontekście tej osi transformacji cyfrowej. Kliknij na nagłówek obszaru, aby rozwinąć szczegóły.'
-            : 'Below is a detailed analysis of each of the 9 business areas in the context of this digital transformation axis. Click on an area header to expand details.'}
+          {t(
+            'reports.axisReportSection.sectionIntroText',
+            'Below is a detailed analysis of each of the 9 business areas in the context of this digital transformation axis. Click on an area header to expand details.'
+          )}
         </p>
 
         {/* Priority order indicator */}
         <div className="priority-order-note">
           <span className="icon">⚡</span>
           <span>
-            {isPolish
-              ? 'Obszary posortowane według priorytetu (największa luka najpierw)'
-              : 'Areas sorted by priority (largest gap first)'}
+            {t(
+              'reports.axisReportSection.priorityOrderNote',
+              'Areas sorted by priority (largest gap first)'
+            )}
           </span>
         </div>
 
