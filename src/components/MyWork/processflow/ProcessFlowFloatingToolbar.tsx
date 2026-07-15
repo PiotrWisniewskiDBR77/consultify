@@ -1,5 +1,6 @@
 import { Copy, Edit3, GitMerge, Link2, MessageCircle, MessageSquare, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
@@ -29,7 +30,6 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
   nodeData,
   position,
   locked,
-  isPl,
   onRename,
   onDuplicate,
   onDelete,
@@ -40,6 +40,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
   onOpenComments,
   commentCount = 0,
 }) => {
+  const { t } = useTranslation();
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [showLinks, setShowLinks] = useState(false);
 
@@ -70,8 +71,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           className={BTN}
           onClick={onRename}
           disabled={locked}
-          title={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
-          aria-label={isPl ? 'Zmień nazwę' : 'Rename'}
+          title={t('processFlow.floatingToolbar.renameTitle', 'Rename (F2)')}
+          aria-label={t('processFlow.floatingToolbar.rename', 'Rename')}
         >
           <Edit3 size={14} />
         </button>
@@ -83,8 +84,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           className={BTN}
           onClick={onDuplicate}
           disabled={locked}
-          title={isPl ? 'Duplikuj' : 'Duplicate'}
-          aria-label={isPl ? 'Duplikuj' : 'Duplicate'}
+          title={t('processFlow.floatingToolbar.duplicate', 'Duplicate')}
+          aria-label={t('processFlow.floatingToolbar.duplicate', 'Duplicate')}
         >
           <Copy size={14} />
         </button>
@@ -96,8 +97,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           className={BTN}
           onClick={onInsertBetween}
           disabled={locked}
-          title={isPl ? 'Wstaw między' : 'Insert between'}
-          aria-label={isPl ? 'Wstaw między' : 'Insert between'}
+          title={t('processFlow.floatingToolbar.insertBetween', 'Insert between')}
+          aria-label={t('processFlow.floatingToolbar.insertBetween', 'Insert between')}
         >
           <GitMerge size={14} />
         </button>
@@ -108,8 +109,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           type="button"
           className={`${BTN} relative`}
           onClick={() => setShowLinks((v) => !v)}
-          title={isPl ? 'Powiązania' : 'Artifact links'}
-          aria-label={isPl ? 'Powiązania' : 'Artifact links'}
+          title={t('processFlow.floatingToolbar.artifactLinks', 'Artifact links')}
+          aria-label={t('processFlow.floatingToolbar.artifactLinks', 'Artifact links')}
         >
           <Link2 size={14} />
           {linkCount > 0 && (
@@ -125,8 +126,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           type="button"
           className={`${BTN} relative`}
           onClick={onOpenComments}
-          title={isPl ? 'Komentarze' : 'Comments'}
-          aria-label={isPl ? 'Komentarze' : 'Comments'}
+          title={t('processFlow.floatingToolbar.comments', 'Comments')}
+          aria-label={t('processFlow.floatingToolbar.comments', 'Comments')}
         >
           <MessageCircle size={14} />
           {commentCount > 0 && (
@@ -142,8 +143,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           type="button"
           className={BTN}
           onClick={onOpenChat}
-          title={isPl ? 'Zapytaj AI' : 'Ask AI'}
-          aria-label={isPl ? 'Zapytaj AI' : 'Ask AI'}
+          title={t('processFlow.floatingToolbar.askAi', 'Ask AI')}
+          aria-label={t('processFlow.floatingToolbar.askAi', 'Ask AI')}
         >
           <MessageSquare size={14} />
         </button>
@@ -157,8 +158,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           className={`${BTN} hover:text-danger-500 dark:hover:text-danger-400`}
           onClick={onDelete}
           disabled={locked}
-          title={isPl ? 'Usuń' : 'Delete'}
-          aria-label={isPl ? 'Usuń' : 'Delete'}
+          title={t('processFlow.floatingToolbar.delete', 'Delete')}
+          aria-label={t('processFlow.floatingToolbar.delete', 'Delete')}
         >
           <Trash2 size={14} />
         </button>
@@ -170,11 +171,11 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           onKeyDown={handleKeyDown}
         >
           <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
-            {isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+            {t('processFlow.floatingToolbar.linkedArtifacts', 'Linked artifacts')}
           </div>
           {linkCount === 0 ? (
             <div className="text-[10px] text-c-text-muted">
-              {isPl ? 'Brak powiązań' : 'No links yet'}
+              {t('processFlow.floatingToolbar.noLinksYet', 'No links yet')}
             </div>
           ) : (
             <ul className="space-y-1">

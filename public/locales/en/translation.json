@@ -24284,6 +24284,18 @@
       "lifecycle": "Proposal lifecycle",
       "orgContextActive": "Organization context active",
       "promptPlaceholder": "Describe the process changes…"
+    },
+    "floatingToolbar": {
+      "renameTitle": "Rename (F2)",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "insertBetween": "Insert between",
+      "artifactLinks": "Artifact links",
+      "comments": "Comments",
+      "askAi": "Ask AI",
+      "delete": "Delete",
+      "linkedArtifacts": "Linked artifacts",
+      "noLinksYet": "No links yet"
     }
   }
 }

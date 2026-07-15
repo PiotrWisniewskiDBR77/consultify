@@ -25360,6 +25360,18 @@
       "lifecycle": "Cykl życia propozycji",
       "orgContextActive": "Kontekst organizacji aktywny",
       "promptPlaceholder": "Opisz zmiany w procesie…"
+    },
+    "floatingToolbar": {
+      "renameTitle": "Zmień nazwę (F2)",
+      "rename": "Zmień nazwę",
+      "duplicate": "Duplikuj",
+      "insertBetween": "Wstaw między",
+      "artifactLinks": "Powiązania",
+      "comments": "Komentarze",
+      "askAi": "Zapytaj AI",
+      "delete": "Usuń",
+      "linkedArtifacts": "Powiązane artefakty",
+      "noLinksYet": "Brak powiązań"
     }
   }
 }
