@@ -10,6 +10,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
@@ -200,6 +205,40 @@ export const PricingRegistryTab: React.FC = () => {
 
   const controlsDisabled = !!loadError;
 
+  const snapshotColumns: TableColumn[] = useMemo(
+    () => [
+      { id: 'provider', label: 'Provider', render: (row: TableRow) => row.provider },
+      {
+        id: 'model_id',
+        label: 'Model',
+        render: (row: TableRow) => <span className="font-mono text-xs">{row.model_id}</span>,
+      },
+      { id: 'source', label: 'Source', render: (row: TableRow) => row.source },
+      { id: 'currency', label: 'Currency', render: (row: TableRow) => row.currency },
+      {
+        id: 'effective_from',
+        label: 'Effective',
+        render: (row: TableRow) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {formatDateTime(row.effective_from)}
+          </span>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: 'Created',
+        render: (row: TableRow) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {formatDateTime(row.created_at)}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const snapshotRows: TableRow[] = useMemo(() => rows.map((row) => ({ ...row })), [rows]);
+
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between gap-4">
@@ -257,70 +296,20 @@ export const PricingRegistryTab: React.FC = () => {
           <div className="text-sm font-semibold text-slate-900 dark:text-white">Snapshots</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">{rows.length} rows</div>
         </div>
-        <div className="overflow-x-auto">
-          <table
-            /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="min-w-full text-sm"
-          >
-            <thead className="bg-slate-50 dark:bg-navy-900/60">
-              <tr className="text-left text-slate-600 dark:text-slate-300">
-                <th className="px-4 py-3">Provider</th>
-                <th className="px-4 py-3">Model</th>
-                <th className="px-4 py-3">Source</th>
-                <th className="px-4 py-3">Currency</th>
-                <th className="px-4 py-3">Effective</th>
-                <th className="px-4 py-3">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && rows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-10 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <RefreshCw size={16} className="text-indigo-500 animate-spin" />
-                      Loading snapshots…
-                    </span>
-                  </td>
-                </tr>
-              ) : null}
-              {loadError ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8">
-                    <DegradedState title="Pricing snapshots unavailable" description={loadError} />
-                  </td>
-                </tr>
-              ) : null}
-              {!loadError
-                ? rows.map((r) => (
-                    <tr key={r.id} className="border-t border-slate-200 dark:border-navy-700">
-                      <td className="px-4 py-3">{r.provider}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{r.model_id}</td>
-                      <td className="px-4 py-3">{r.source}</td>
-                      <td className="px-4 py-3">{r.currency}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                        {formatDateTime(r.effective_from)}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                        {formatDateTime(r.created_at)}
-                      </td>
-                    </tr>
-                  ))
-                : null}
-              {!loading && !loadError && rows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    No snapshots.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        {loadError ? (
+          <div className="p-4">
+            <DegradedState title="Pricing snapshots unavailable" description={loadError} />
+          </div>
+        ) : (
+          <StandardTable
+            columns={snapshotColumns}
+            data={snapshotRows}
+            loading={loading && rows.length === 0}
+            empty={{ title: 'No snapshots.' }}
+            persistKey="superadmin.aiPlatform.pricingRegistry"
+            canvasClassName="p-0"
+          />
+        )}
       </div>
 
       <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
