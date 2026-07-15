@@ -10525,6 +10525,10 @@
     },
     "reportSection": {
       "noContentPlaceholder": "*No content*"
+    },
+    "keyTakeaways": {
+      "defaultTitle": "Key Takeaways",
+      "pointsSuffix": "points"
     }
   },
   "auth": {

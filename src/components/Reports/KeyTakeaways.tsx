@@ -92,13 +92,12 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
   defaultExpanded = true,
   className = '',
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const colors = ACCENT_COLORS[accentColor];
 
-  const defaultTitle = isPolish ? 'Kluczowe wnioski' : 'Key Takeaways';
+  const defaultTitle = t('reports.keyTakeaways.defaultTitle', 'Key Takeaways');
 
   if (variant === 'compact') {
     return (
@@ -188,7 +187,7 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
           </div>
           <h4 className={`font-semibold ${colors.textColor}`}>{title || defaultTitle}</h4>
           <span className="text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-white/10 px-2 py-0.5 rounded-full">
-            {takeaways.length} {isPolish ? 'punktów' : 'points'}
+            {takeaways.length} {t('reports.keyTakeaways.pointsSuffix', 'points')}
           </span>
         </div>
 

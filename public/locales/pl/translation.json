@@ -9760,6 +9760,10 @@
     },
     "reportSection": {
       "noContentPlaceholder": "*Brak treści*"
+    },
+    "keyTakeaways": {
+      "defaultTitle": "Kluczowe wnioski",
+      "pointsSuffix": "punktów"
     }
   },
   "auth": {
