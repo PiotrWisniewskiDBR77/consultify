@@ -1,7 +1,8 @@
 import { type Response, Router } from 'express';
 
-import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import adminAuditService from '../services/adminAuditService.js';
 import {
   computeScore,
@@ -15,6 +16,17 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+
+// Wiring (2026-07-15): router was defined but had NO auth middleware at all —
+// exposes cross-org ranking (ALL orgs' readiness scores) and per-org deal
+// scoring, so it must be super-admin only (matches analytics-superadmin.routes.ts
+// / admin/ai-observability.routes.ts pattern). Added here rather than only at
+// the Gateway mount point because this router's own paths mix two unrelated
+// top-level segments ('/organizations/:id/...' and '/transaction-readiness/...'),
+// which makes a single narrow Gateway-level path-prefix guard impossible without
+// risking over-broad '/api' matching.
+router.use(verifyToken);
+router.use(verifySuperAdmin);
 
 router.get(
   '/organizations/:id/transaction-readiness',
