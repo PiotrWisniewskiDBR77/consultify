@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -21,6 +22,7 @@ interface DMSKPIsStepProps {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export const DMSKPIsStep: React.FC<DMSKPIsStepProps> = ({ session, isPolish }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState('');
@@ -67,10 +69,10 @@ export const DMSKPIsStep: React.FC<DMSKPIsStepProps> = ({ session, isPolish }) =
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'KPI i progi' : 'KPIs and thresholds'}
+          {t('discoveryToolsTools.operational.dmsKpisStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Zdefiniuj KPI, targety i ownerów.' : 'Define KPIs, targets and owners.'}
+          {t('discoveryToolsTools.operational.dmsKpisStep.description')}
         </p>
       </div>
 
@@ -79,7 +81,7 @@ export const DMSKPIsStep: React.FC<DMSKPIsStepProps> = ({ session, isPolish }) =
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'KPI...' : 'KPI...'}
+          placeholder={t('discoveryToolsTools.operational.dmsKpisStep.kpiPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -87,21 +89,21 @@ export const DMSKPIsStep: React.FC<DMSKPIsStepProps> = ({ session, isPolish }) =
             type="text"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            placeholder={isPolish ? 'Target...' : 'Target...'}
+            placeholder={t('discoveryToolsTools.operational.dmsKpisStep.targetPlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
           <input
             type="text"
             value={frequency}
             onChange={(e) => setFrequency(e.target.value)}
-            placeholder={isPolish ? 'Częstotliwość...' : 'Frequency...'}
+            placeholder={t('discoveryToolsTools.operational.dmsKpisStep.frequencyPlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
           <input
             type="text"
             value={owner}
             onChange={(e) => setOwner(e.target.value)}
-            placeholder={isPolish ? 'Owner...' : 'Owner...'}
+            placeholder={t('discoveryToolsTools.operational.dmsKpisStep.ownerPlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
@@ -111,21 +113,15 @@ export const DMSKPIsStep: React.FC<DMSKPIsStepProps> = ({ session, isPolish }) =
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
-          {isPolish ? 'Dodaj KPI' : 'Add KPI'}
+          {t('discoveryToolsTools.operational.dmsKpisStep.addKpi')}
         </button>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'KPI powinny mieć jasny target i ownera.'
-              : 'Each KPI should have a target and owner.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.dmsKpisStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak KPI' : 'No KPIs yet'}
+            {t('discoveryToolsTools.operational.dmsKpisStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -137,10 +133,12 @@ export const DMSKPIsStep: React.FC<DMSKPIsStepProps> = ({ session, isPolish }) =
                 <div>
                   <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
                   <div className="text-xs text-slate-500 mt-2">
-                    {item.target && `${isPolish ? 'Target' : 'Target'}: ${item.target}`}
+                    {item.target &&
+                      `${t('discoveryToolsTools.operational.dmsKpisStep.targetLabel')}: ${item.target}`}
                     {item.frequency &&
-                      ` • ${isPolish ? 'Częstotliwość' : 'Frequency'}: ${item.frequency}`}
-                    {item.owner && ` • ${isPolish ? 'Owner' : 'Owner'}: ${item.owner}`}
+                      ` • ${t('discoveryToolsTools.operational.dmsKpisStep.frequencyLabel')}: ${item.frequency}`}
+                    {item.owner &&
+                      ` • ${t('discoveryToolsTools.operational.dmsKpisStep.ownerLabel')}: ${item.owner}`}
                   </div>
                 </div>
                 <button

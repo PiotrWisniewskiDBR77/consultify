@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -24,6 +25,7 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
   session,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -66,10 +68,10 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Usprawnienia SMED' : 'SMED improvements'}
+          {t('discoveryToolsTools.operational.smedImprovementsStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Dodaj quick wins oraz inwestycje.' : 'Add quick wins and investments.'}
+          {t('discoveryToolsTools.operational.smedImprovementsStep.description')}
         </p>
       </div>
 
@@ -78,13 +80,15 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'Usprawnienie...' : 'Improvement...'}
+          placeholder={t(
+            'discoveryToolsTools.operational.smedImprovementsStep.improvementPlaceholder'
+          )}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={isPolish ? 'Opis / ROI...' : 'Description / ROI...'}
+          placeholder={t('discoveryToolsTools.operational.smedImprovementsStep.descPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
@@ -94,8 +98,10 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
             onChange={(e) => setCategory(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="quick-win">{isPolish ? 'Quick win' : 'Quick win'}</option>
-            <option value="investment">{isPolish ? 'Inwestycja' : 'Investment'}</option>
+            <option value="quick-win">Quick win</option>
+            <option value="investment">
+              {t('discoveryToolsTools.operational.smedImprovementsStep.investment')}
+            </option>
           </select>
           <button
             onClick={handleAdd}
@@ -103,22 +109,16 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Oznacz czy to quick win czy większa inwestycja.'
-              : 'Label quick wins vs investments.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.smedImprovementsStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak usprawnień' : 'No improvements yet'}
+            {t('discoveryToolsTools.operational.smedImprovementsStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -136,7 +136,8 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
                   )}
                   {item.category && (
                     <div className="text-xs text-slate-500 mt-2">
-                      {isPolish ? 'Typ' : 'Type'}: {item.category}
+                      {t('discoveryToolsTools.operational.smedImprovementsStep.typeLabel')}:{' '}
+                      {item.category}
                     </div>
                   )}
                 </div>
