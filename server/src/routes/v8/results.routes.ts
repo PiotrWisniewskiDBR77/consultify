@@ -13,7 +13,19 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
+import {
+  type RcaSuggestInput,
+  suggestActions,
+  suggestRca,
+} from '../../services/results/deviationRcaSuggestService.js';
+import { detectAnomalies } from '../../services/results/kpiAnomalyService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
+import {
+  type KpiDirection as KpiForecastDirection,
+  leadingAlert,
+  linearTrend,
+  projectToTarget,
+} from '../../services/results/kpiForecastService.js';
 import {
   createKpiReportSnapshot,
   getKpiReportSnapshot,
@@ -1059,6 +1071,134 @@ router.put(
 );
 
 /**
+ * GET /api/v8/results/deviation-cases/:caseId/rca-suggest
+ * Heuristic RCA hypotheses + recommended actions for a deviation case. Wires the
+ * previously orphaned `deviationRcaSuggestService` into the V8 Results drawer
+ * surface. Read-only — does NOT write `rca_text`; pair with
+ * PUT /deviation-cases/:caseId/rca to persist the chosen hypothesis text.
+ *
+ * Signals are derived from the case + KPI's recorded time-series where
+ * possible (deviationPct, trend, staleData). adoptionScore/scopeChanged/
+ * capacityOverloaded are not represented in the schema — pass them as query
+ * overrides when the caller (consultant/UI) has that judgment available.
+ * Any derived signal can also be overridden via query string.
+ */
+router.get(
+  '/deviation-cases/:caseId/rca-suggest',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId } = getV8Context(req);
+    const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
+    if (!caseId) {
+      return res.status(400).json({
+        error: 'caseId is required',
+        code: 'RESULTS_DEVIATION_CASE_ID_REQUIRED',
+      });
+    }
+
+    const kase = await dbGet<{
+      id: string;
+      kpi_id: string;
+      period_start: string;
+    }>(
+      `SELECT id, kpi_id, period_start FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, organizationId]
+    );
+    if (!kase?.id) {
+      return res.status(404).json({
+        error: 'Deviation case not found',
+        code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
+      });
+    }
+
+    const kpi = await dbGet<{
+      target_value: number | string | null;
+      measurement_frequency: string | null;
+    }>(
+      `SELECT target_value, measurement_frequency FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
+      [kase.kpi_id, organizationId]
+    );
+
+    const measurement = await dbGet<{ value: number | string }>(
+      `SELECT value FROM kpi_time_series
+       WHERE kpi_id = ? AND organization_id = ? AND period_start <= ?
+       ORDER BY period_start DESC LIMIT 1`,
+      [kase.kpi_id, organizationId, kase.period_start]
+    );
+
+    const recent = await dbAll<{
+      value: number | string;
+      period_start: string | null;
+      measured_at: string | null;
+    }>(
+      `SELECT value, period_start, measured_at
+       FROM kpi_time_series
+       WHERE kpi_id = ? AND organization_id = ?
+       ORDER BY COALESCE(period_start, measured_at) DESC LIMIT 6`,
+      [kase.kpi_id, organizationId]
+    );
+
+    const target = kpi?.target_value != null ? Number(kpi.target_value) : null;
+    let deviationPct: number | undefined;
+    if (
+      measurement?.value != null &&
+      target != null &&
+      Number.isFinite(target) &&
+      target !== 0
+    ) {
+      deviationPct = (Number(measurement.value) - target) / Math.abs(target);
+    }
+
+    // Same "raw value delta" convention as GET /workflow/kpi/:kpiId/inspect's
+    // KpiTrend.direction — improving/declining reflect the number moving up/down,
+    // not goodness relative to KPI direction (kept consistent across surfaces).
+    let trend: 'improving' | 'flat' | 'declining' | undefined;
+    if (recent.length >= 2) {
+      const last = Number(recent[0].value);
+      const first = Number(recent[recent.length - 1].value);
+      const delta = last - first;
+      if (Number.isFinite(delta)) {
+        trend = Math.abs(delta) < 1e-9 ? 'flat' : delta > 0 ? 'improving' : 'declining';
+      }
+    }
+
+    let staleData: boolean | undefined;
+    const lastMeasuredIso = recent[0]?.period_start || recent[0]?.measured_at || null;
+    if (lastMeasuredIso) {
+      const daysSince = (Date.now() - new Date(lastMeasuredIso).getTime()) / 86400000;
+      const freq = String(kpi?.measurement_frequency || '').toLowerCase();
+      const staleDays = freq === 'daily' ? 3 : freq === 'weekly' ? 14 : 60;
+      if (Number.isFinite(daysSince)) staleData = daysSince > staleDays;
+    }
+
+    const q = req.query;
+    const overrideBool = (v: unknown): boolean | undefined =>
+      v == null ? undefined : String(v).toLowerCase() === 'true';
+    const overrideNum = (v: unknown): number | undefined =>
+      v != null && Number.isFinite(Number(v)) ? Number(v) : undefined;
+    const overrideTrend = (v: unknown): 'improving' | 'flat' | 'declining' | undefined =>
+      v === 'improving' || v === 'flat' || v === 'declining' ? v : undefined;
+
+    const input: RcaSuggestInput = {
+      deviationPct: overrideNum(q.deviationPct) ?? deviationPct,
+      trend: overrideTrend(q.trend) ?? trend,
+      adoptionScore: overrideNum(q.adoptionScore),
+      staleData: overrideBool(q.staleData) ?? staleData,
+      scopeChanged: overrideBool(q.scopeChanged),
+      capacityOverloaded: overrideBool(q.capacityOverloaded),
+    };
+
+    const hypotheses = suggestRca(input);
+    const actions = suggestActions(hypotheses);
+
+    return res.json({
+      data: { caseId, kpiId: kase.kpi_id, signals: input, hypotheses, actions },
+      meta: resultsMeta(),
+    });
+  })
+);
+
+/**
  * POST /api/v8/results/deviation-cases/:caseId/actions
  * Bounded deviation-case action-create seam for the active Results drawer surface.
  */
@@ -1518,6 +1658,167 @@ router.post(
         notes: notes || null,
       },
       meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/results/kpis/:kpiId/anomalies
+ * Anomaly detection (z-score + IQR) over a KPI's recorded time-series. Wires the
+ * previously orphaned `kpiAnomalyService` into the V8 Results surface — read-only,
+ * org-scoped, no side effects. Optional query overrides: zThreshold, iqrK,
+ * severeZThreshold (see kpiAnomalyService.detectAnomalies for defaults).
+ */
+router.get(
+  '/kpis/:kpiId/anomalies',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
+    if (!kpiId) {
+      return res.status(400).json({
+        error: 'kpiId is required',
+        code: 'RESULTS_KPI_ID_REQUIRED',
+      });
+    }
+
+    const kpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [kpiId, organizationId]
+    );
+    if (!kpi?.id) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+
+    const rows = await dbAll<{
+      value: number | string;
+      period_start: string | null;
+      measured_at: string | null;
+    }>(
+      `SELECT value, period_start, measured_at
+       FROM kpi_time_series
+       WHERE kpi_id = ? AND organization_id = ?
+       ORDER BY COALESCE(period_start, measured_at) ASC`,
+      [kpiId, organizationId]
+    );
+
+    const values = (rows || []).map((r) => Number(r.value));
+    const zThresholdRaw = req.query.zThreshold;
+    const iqrKRaw = req.query.iqrK;
+    const severeZThresholdRaw = req.query.severeZThreshold;
+    const zThreshold =
+      zThresholdRaw != null && Number.isFinite(Number(zThresholdRaw))
+        ? Number(zThresholdRaw)
+        : undefined;
+    const iqrK =
+      iqrKRaw != null && Number.isFinite(Number(iqrKRaw)) ? Number(iqrKRaw) : undefined;
+    const severeZThreshold =
+      severeZThresholdRaw != null && Number.isFinite(Number(severeZThresholdRaw))
+        ? Number(severeZThresholdRaw)
+        : undefined;
+
+    const result = detectAnomalies(values, { zThreshold, iqrK, severeZThreshold });
+    const anomalies = result.anomalies.map((a) => ({
+      ...a,
+      periodIso: rows[a.index]?.period_start || rows[a.index]?.measured_at || null,
+    }));
+
+    return res.json({
+      data: { kpiId, anomalies, summary: result.summary },
+      meta: resultsMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/results/kpis/:kpiId/forecast
+ * Linear-trend forecast + target-hit projection over a KPI's time-series. Wires
+ * the previously orphaned `kpiForecastService` into the V8 Results surface —
+ * read-only, org-scoped, no side effects. Optional query override: deadlineT
+ * (numeric time index — see kpiForecastService.leadingAlert).
+ */
+router.get(
+  '/kpis/:kpiId/forecast',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
+    if (!kpiId) {
+      return res.status(400).json({
+        error: 'kpiId is required',
+        code: 'RESULTS_KPI_ID_REQUIRED',
+      });
+    }
+
+    const kpi = await dbGet<{
+      id: string;
+      target_value: number | string | null;
+      direction: string | null;
+    }>(
+      `SELECT k.id, k.target_value, k.direction
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [kpiId, organizationId]
+    );
+    if (!kpi?.id) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+
+    const rows = await dbAll<{
+      value: number | string;
+      period_start: string | null;
+      measured_at: string | null;
+    }>(
+      `SELECT value, period_start, measured_at
+       FROM kpi_time_series
+       WHERE kpi_id = ? AND organization_id = ?
+       ORDER BY COALESCE(period_start, measured_at) ASC`,
+      [kpiId, organizationId]
+    );
+
+    // t = ordinal index over the (chronologically sorted) recorded periods —
+    // the service is time-unit-agnostic, so an ordinal index keeps callers from
+    // having to pass timestamps while still supporting the deadlineT query override.
+    const points = (rows || [])
+      .map((r, i) => ({ t: i, value: Number(r.value), periodIso: r.period_start || r.measured_at || null }))
+      .filter((p) => Number.isFinite(p.value));
+
+    const trend = linearTrend(points);
+    const target = kpi.target_value != null ? Number(kpi.target_value) : null;
+    const direction: KpiForecastDirection =
+      kpi.direction === 'LOWER_IS_BETTER' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
+
+    let projection: ReturnType<typeof projectToTarget> | null = null;
+    let alert: ReturnType<typeof leadingAlert> | null = null;
+    if (target != null && Number.isFinite(target)) {
+      projection = projectToTarget({ points, target, direction });
+      const deadlineTRaw = req.query.deadlineT;
+      const deadlineT =
+        deadlineTRaw != null && Number.isFinite(Number(deadlineTRaw))
+          ? Number(deadlineTRaw)
+          : undefined;
+      alert = leadingAlert(projection, deadlineT);
+    }
+
+    return res.json({
+      data: {
+        kpiId,
+        target,
+        direction,
+        trend,
+        points: points.map(({ t, value, periodIso }) => ({ t, value, periodIso })),
+        projection,
+        alert,
+      },
+      meta: resultsMeta(),
     });
   })
 );
