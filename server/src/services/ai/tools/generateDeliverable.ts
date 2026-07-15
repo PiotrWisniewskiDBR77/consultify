@@ -23,9 +23,12 @@ import {
   plan as planGeneration,
   start as startGeneration,
 } from '../../deliverables/deliverablesGenerationService.js';
+import type { EvidenceContract } from '../../evidence/evidenceContract.js';
 import { createNote } from '../../notebookService.js';
 import { hasPresentationCapability } from '../../presentationAccessPolicyService.js';
 import {
+  buildMindmapEvidenceContract,
+  buildProcessFlowEvidenceContract,
   generateMindmapGraph,
   generateNoteContent,
   generateProcessFlowGraph,
@@ -96,6 +99,15 @@ export type DeliverableEmit = (payload: {
    * actionability reflect the ARTIFACT scope, not the confirmation sentence.
    */
   scorerContent?: string;
+  /**
+   * HP-16 (7/8, 8/8) — only present for `kind:'mindmap'|'process_flow'` — the
+   * real `EvidenceContract` built from the FINAL graph (LLM or skeleton
+   * fallback), see `buildMindmapEvidenceContract`/`buildProcessFlowEvidenceContract`
+   * in `canvasGraphLlm.ts`. FE render (ArtifactRightPanel) is out of scope here
+   * (HP-16 doctrine — mirrors the other 6 wired tools); this is the backend
+   * contract surface only.
+   */
+  evidence?: EvidenceContract;
 }) => void;
 
 type GenerateDeliverableContext = {
@@ -209,7 +221,14 @@ export async function generateDeliverable(
     );
     const graph: MindmapSkeletonGraph | LlmGraph =
       llmGraph ?? buildMindmapSkeleton(intent, params.title);
-    logger.info(`[generate_deliverable] mindmap graph source=${llmGraph ? 'llm' : 'skeleton'}`);
+    const graphSource: 'llm' | 'skeleton' = llmGraph ? 'llm' : 'skeleton';
+    logger.info(`[generate_deliverable] mindmap graph source=${graphSource}`);
+    // HP-16 (7/8) — realny EvidenceContract z FINALNEGO grafu (LLM lub skeleton
+    // fallback), zero LLM-zgadywania — patrz `buildMindmapEvidenceContract`.
+    const evidence = buildMindmapEvidenceContract(graph, {
+      source: graphSource,
+      seedText: intent || title,
+    });
     // Materialize a REAL my_ideas/my_idea_maps row server-side (mirrors the
     // note branch below) so persistence is not FE-contingent — the FE mount
     // path (IdeaMapWorkspace.hydrate) simply loads this id instead of creating
@@ -233,7 +252,10 @@ export async function generateDeliverable(
           graph: {
             nodes: graph.nodes,
             edges: graph.edges,
-            extensions: (graph as LlmGraph).extensions,
+            // HP-16 (7/8) — evidence rides along in extensions so it survives
+            // reload (my_idea_maps.extensions_json), same slot other canvas
+            // metadata (source/draftId) already uses.
+            extensions: { ...(graph as LlmGraph).extensions, evidence },
           },
           preferredTool: 'mindmap',
           sourceType: 'teresa_chat',
@@ -259,6 +281,7 @@ export async function generateDeliverable(
         graph,
         seedText: intent || title,
         scorerContent: `${title}\n\n${intent || ''}`.trim(),
+        evidence,
       });
     } catch (emitErr) {
       logger.warn(
@@ -269,7 +292,7 @@ export async function generateDeliverable(
     }
 
     logger.info(
-      `[generate_deliverable] mindmap skeleton id=${mindmapId} nodes=${graph.nodes.length} title="${title.slice(0, 80)}"`
+      `[generate_deliverable] mindmap skeleton id=${mindmapId} nodes=${graph.nodes.length} title="${title.slice(0, 80)}" evidence=${evidence.confidence}`
     );
 
     return {
@@ -279,6 +302,7 @@ export async function generateDeliverable(
       title,
       generationId: mindmapId,
       draftId: mindmapId,
+      evidence,
       message:
         language === 'en'
           ? `A mind map titled "${title}" was created and opened in the Ideas workspace on the right. You can expand any branch with AI.`
@@ -323,9 +347,16 @@ export async function generateDeliverable(
         : preferredSystem === 'table'
           ? buildIdeasTableSkeleton(intent, params.title, isPolish)
           : buildWhiteboardSkeleton(intent, params.title, isPolish));
-    logger.info(
-      `[generate_deliverable] ${preferredSystem} graph source=${llmGraph ? 'llm' : 'skeleton'}`
-    );
+    const graphSource: 'llm' | 'skeleton' = llmGraph ? 'llm' : 'skeleton';
+    logger.info(`[generate_deliverable] ${preferredSystem} graph source=${graphSource}`);
+
+    // HP-16 (8/8) — realny EvidenceContract dla Process Flow, TYLKO to
+    // narzędzie (z 8 oficjalnych) — table/whiteboard poza zakresem HP-16.
+    // Zero LLM-zgadywania — patrz `buildProcessFlowEvidenceContract`.
+    const evidence: EvidenceContract | undefined =
+      preferredSystem === 'process_flow'
+        ? buildProcessFlowEvidenceContract(graph, { source: graphSource, seedText: intent || title })
+        : undefined;
 
     // Materialize a REAL my_ideas/my_idea_maps row server-side — identical
     // contract to the mindmap branch above (fail-soft to the old
@@ -347,7 +378,11 @@ export async function generateDeliverable(
           graph: {
             nodes: graph.nodes,
             edges: graph.edges,
-            extensions: (graph as LlmGraph).extensions,
+            // HP-16 (8/8) — process_flow evidence rides along in extensions
+            // (survives reload via my_idea_maps.extensions_json), mirrors mindmap.
+            extensions: evidence
+              ? { ...(graph as LlmGraph).extensions, evidence }
+              : (graph as LlmGraph).extensions,
           },
           preferredTool: preferredSystem,
           sourceType: 'teresa_chat',
@@ -374,6 +409,7 @@ export async function generateDeliverable(
         seedText: intent || title,
         preferredSystem,
         scorerContent: `${title}\n\n${intent || ''}`.trim(),
+        evidence,
       });
     } catch (emitErr) {
       logger.warn(
@@ -384,7 +420,9 @@ export async function generateDeliverable(
     }
 
     logger.info(
-      `[generate_deliverable] ${preferredSystem} skeleton id=${draftId} nodes=${graph.nodes.length} title="${title.slice(0, 80)}"`
+      `[generate_deliverable] ${preferredSystem} skeleton id=${draftId} nodes=${graph.nodes.length} title="${title.slice(0, 80)}"${
+        evidence ? ` evidence=${evidence.confidence}` : ''
+      }`
     );
 
     const kindLabelPl =
@@ -407,6 +445,7 @@ export async function generateDeliverable(
       title,
       generationId: draftId,
       draftId,
+      ...(evidence ? { evidence } : {}),
       message:
         language === 'en'
           ? `A ${kindLabelEn} titled "${title}" was created and opened in the Ideas workspace on the right.`

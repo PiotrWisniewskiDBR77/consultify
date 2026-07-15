@@ -34,6 +34,11 @@
 import { z } from 'zod';
 
 import logger from '../../utils/Logger.js';
+import {
+  deriveConfidence,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from '../evidence/evidenceContract.js';
 
 // ── Provider access (lazy, mirrors initiativeGenerationService.ts) ───────────
 let _llmServiceInstance: any = null;
@@ -1078,6 +1083,174 @@ export async function generateNoteContent(
   }
 }
 
+// ── EVIDENCE CONTRACT (HP-16 7/8, 8/8) ───────────────────────────────────────
+/**
+ * HP-16: buduje `EvidenceContract` DLA Mind Map / Process Flow — DETERMINISTYCZNIE,
+ * zero LLM, zero I/O. Zastępuje domyślny brak evidence na JEDYNYM realnym
+ * choke-poincie (`generateDeliverable.ts`, jedyny caller `generateMindmapGraph`/
+ * `generateProcessFlowGraph` w produkcji — patrz `grep generateMindmapGraph
+ * server/src`), wywoływanym po ustaleniu ostatecznego `graph` (LLM lub fallback
+ * skeleton).
+ *
+ * TE DWA NARZĘDZIA NIE MAJĄ zewnętrznych dokumentów/cytowań (w odróżnieniu od
+ * Insight/Finance/Assessment — te syntetyzują strukturę z SUROWEGO tekstu czatu,
+ * bez retrievalu). Dlatego "sources" tutaj = realne WEJŚCIA grafu: sam tekst
+ * prośby (`chat_intent`, jeśli niepusty) + faktycznie wygenerowane węzły
+ * strukturalne (filary mapy / kroki procesu) — a NIE zmyślone cytowania. Gdy
+ * prośba jest pusta I generator nie wyprodukował żadnego węzła treści,
+ * `sources` jest puste → `deriveConfidence` wymusza 'low' (bramka
+ * "Deklaracja—niepotwierdzone").
+ *
+ * Sygnały pewności są REALNE:
+ *   - `sourceCount` = liczba realnych węzłów wejściowych (intent + filary/kroki).
+ *   - `source==='skeleton'` (LLM zwrócił null / odrzucony przez anti-fragment gate,
+ *     patrz `generateDeliverable.ts`) → `qualityScore` twardo ograniczony do 20,
+ *     dokumentowana historyczna ocena panelu adwersaryjnego dla deterministycznego
+ *     splittera (~21/100 — patrz nagłówek tego pliku) — NIE zgadywanie.
+ *   - `unresolvedGaps` = puste filary/gałęzie (mapa) lub niepełne gałęzie decyzji
+ *     tak/nie (proces) + 1 gdy fallback skeleton.
+ *   - dla generacji LLM bez luk `qualityScore` = 100 (pełne pokrycie) — realny
+ *     licznik kompletności, nie ocena treści przez model.
+ */
+export interface CanvasGraphEvidenceOptions {
+  /** Skąd pochodzi finalny graf: 'llm' (strukturalna generacja) czy 'skeleton'
+   * (deterministyczny fallback — patrz `mindmapSkeleton.ts`/`canvasToolSkeletons.ts`). */
+  source: 'llm' | 'skeleton';
+  /** Surowy tekst prośby (intent||title) — jedyny realny "input" tych narzędzi. */
+  seedText: string;
+}
+
+interface EvidenceGraphNode {
+  id: string;
+  type: string;
+  data: { label: string; shape?: string; [key: string]: unknown };
+  parentId?: string;
+}
+interface EvidenceGraphEdge {
+  source: string;
+  target: string;
+  label?: string;
+}
+
+/** Mind Map — filary (branch bez parentId) = sources; gałęzie bez dzieci = luka. */
+export function buildMindmapEvidenceContract(
+  graph: { nodes: EvidenceGraphNode[]; edges?: EvidenceGraphEdge[] },
+  opts: CanvasGraphEvidenceOptions
+): EvidenceContract {
+  const seed = String(opts.seedText || '').trim();
+  const pillars = (graph.nodes || []).filter((n) => n.type === 'branch' && !n.parentId);
+  const children = (graph.nodes || []).filter((n) => n.type === 'branch' && n.parentId);
+
+  const sources: EvidenceContractSource[] = [];
+  if (seed) sources.push({ type: 'chat_intent', title: seed.slice(0, 120) });
+  pillars.forEach((p) => sources.push({ type: 'graph_branch', ref: p.id, title: p.data.label }));
+
+  const risks: string[] = [];
+  const toVerify: string[] = [];
+
+  if (opts.source === 'skeleton') {
+    risks.push(
+      'Mapa zbudowana deterministycznym fallbackiem (LLM niedostępny/odrzucony) — jakość strukturalna historycznie niska (~21/100 w audycie adwersaryjnym), brak 2. poziomu (cel/ryzyko).'
+    );
+    toVerify.push(
+      'Zweryfikuj strukturę mapy — powstała bez LLM, może zawierać fragmenty zdań zamiast właściwych węzłów.'
+    );
+  }
+
+  const emptyPillars = pillars.filter((p) => !children.some((c) => c.parentId === p.id));
+  emptyPillars.forEach((p) => {
+    risks.push(`Filar "${p.data.label}" nie ma rozwiniętych podpunktów — gałąź niepełna.`);
+    toVerify.push(`Uzupełnij podpunkty filaru "${p.data.label}".`);
+  });
+
+  if (pillars.length === 0) {
+    toVerify.push(
+      'Mapa nie ma żadnych filarów (tylko centrum) — rozbuduj ręcznie lub wygeneruj ponownie z bardziej szczegółową prośbą.'
+    );
+  }
+
+  const qualityScore =
+    opts.source === 'skeleton'
+      ? 20
+      : pillars.length > 0
+        ? Math.round(((pillars.length - emptyPillars.length) / pillars.length) * 100)
+        : 0;
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps: emptyPillars.length + (opts.source === 'skeleton' ? 1 : 0),
+    qualityScore,
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
+}
+
+/** Process Flow — kroki treści (nie start/end) = sources; niepełne gałęzie
+ * decyzji tak/nie = luka. `data.shape` (LLM) lub `type` (skeleton) rozpoznaje rodzaj kroku. */
+export function buildProcessFlowEvidenceContract(
+  graph: { nodes: EvidenceGraphNode[]; edges?: EvidenceGraphEdge[] },
+  opts: CanvasGraphEvidenceOptions
+): EvidenceContract {
+  const seed = String(opts.seedText || '').trim();
+  const kindOf = (n: EvidenceGraphNode) => n.data?.shape || n.type;
+  const nodes = graph.nodes || [];
+  const edges = graph.edges || [];
+  const contentSteps = nodes.filter((n) => {
+    const k = kindOf(n);
+    return k !== 'start' && k !== 'end';
+  });
+  const decisionSteps = nodes.filter((n) => kindOf(n) === 'decision');
+
+  const sources: EvidenceContractSource[] = [];
+  if (seed) sources.push({ type: 'chat_intent', title: seed.slice(0, 120) });
+  contentSteps.forEach((s) => sources.push({ type: 'graph_step', ref: s.id, title: s.data.label }));
+
+  const risks: string[] = [];
+  const toVerify: string[] = [];
+
+  if (opts.source === 'skeleton') {
+    risks.push(
+      'Przepływ zbudowany deterministycznym fallbackiem (LLM niedostępny/odrzucony) — brak diamentów decyzyjnych, jakość strukturalna historycznie niska (~21/100 w audycie adwersaryjnym).'
+    );
+    toVerify.push(
+      'Zweryfikuj kroki procesu — powstały bez LLM (prosty podział tekstu), mogą nie odzwierciedlać realnych decyzji/warunków.'
+    );
+  }
+
+  const edgesFrom = (id: string) => edges.filter((e) => e.source === id);
+  const incompleteDecisions = decisionSteps.filter((d) => {
+    const out = edgesFrom(d.id);
+    return out.length < 2 || out.some((e) => !e.label);
+  });
+  incompleteDecisions.forEach((d) => {
+    risks.push(`Decyzja "${d.data.label}" nie ma pełnych gałęzi tak/nie — logika niepełna.`);
+    toVerify.push(`Uzupełnij gałęzie decyzji "${d.data.label}".`);
+  });
+
+  if (contentSteps.length === 0) {
+    toVerify.push(
+      'Przepływ nie ma żadnych kroków poza Start/Koniec — uzupełnij ręcznie lub wygeneruj ponownie z bardziej szczegółową prośbą.'
+    );
+  }
+
+  const qualityScore =
+    opts.source === 'skeleton'
+      ? 20
+      : contentSteps.length > 0
+        ? Math.round(
+            ((contentSteps.length - incompleteDecisions.length) / contentSteps.length) * 100
+          )
+        : 0;
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps: incompleteDecisions.length + (opts.source === 'skeleton' ? 1 : 0),
+    qualityScore,
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
+}
+
 export default {
   generateMindmapGraph,
   generateProcessFlowGraph,
@@ -1085,4 +1258,6 @@ export default {
   generateTableGraph,
   generateNoteContent,
   isFragmentLabel,
+  buildMindmapEvidenceContract,
+  buildProcessFlowEvidenceContract,
 };
