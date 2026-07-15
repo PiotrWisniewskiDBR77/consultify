@@ -4298,7 +4298,11 @@
       "title2": "Reset",
       "history": "History",
       "entryStartTimeToLocaleTimeString": "en-US",
-      "entryEndTimeToLocaleTimeString": "en-US"
+      "entryEndTimeToLocaleTimeString": "en-US",
+      "durationHoursMinutes": "{{hrs}}h {{mins}}m",
+      "durationMinutes": "{{mins}}m",
+      "durationUnderOneMinute": "<1m",
+      "loggedDuration": "⏱️ Logged {{duration}}"
     },
     "linkedItems": {
       "toastSuccess": "Link added",
