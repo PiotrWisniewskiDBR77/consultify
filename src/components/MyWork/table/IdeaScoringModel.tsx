@@ -54,7 +54,6 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
   onApplyScores,
 }) => {
   const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
 
   const scorableColumns = useMemo(
     () => columns.filter((c) => SCORABLE_TYPES.has(c.type) && c.visible),
@@ -185,7 +184,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Trophy size={16} className="text-amber-500" />
           <span className="text-sm font-bold text-c-text">
-            {isPl ? 'Model scoringowy pomysłów' : 'Idea Scoring Model'}
+            {t('myWorkTable.ideaScoringModel.title')}
           </span>
           <div className="flex-1" />
           <button
@@ -201,7 +200,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           <div className="flex items-center gap-2 mb-3">
             <Sliders size={12} className="text-c-text-muted" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-              {isPl ? 'Wagi kryteriów' : 'Criteria Weights'}
+              {t('myWorkTable.ideaScoringModel.criteriaWeights')}
             </span>
             <div className="flex-1" />
             <button
@@ -217,13 +216,13 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors disabled:opacity-50"
             >
               {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-              {isPl ? 'AI kalibracja' : 'AI calibrate'}
+              {t('myWorkTable.ideaScoringModel.aiCalibrate')}
             </button>
           </div>
 
           {scorableColumns.length === 0 ? (
             <p className="text-xs text-c-text-secondary text-center py-3">
-              {isPl ? 'Brak kolumn numerycznych do scoringu' : 'No numeric columns for scoring'}
+              {t('myWorkTable.ideaScoringModel.noNumericColumns')}
             </p>
           ) : (
             <div className="space-y-2.5">
@@ -246,7 +245,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                   <button
                     onClick={() => handleToggleInvert(w.colKey)}
                     className={`text-[8px] font-bold px-1.5 py-0.5 rounded transition-colors ${w.invert ? 'bg-amber-500/10 text-amber-600' : 'bg-c-surface-raised text-c-text-secondary'}`}
-                    title={isPl ? 'Odwróć (niższe = lepsze)' : 'Invert (lower = better)'}
+                    title={t('myWorkTable.ideaScoringModel.invertHint')}
                   >
                     {w.invert ? '↓' : '↑'}
                   </button>
@@ -274,13 +273,13 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 size={12} className="text-c-text-muted" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-              {isPl ? 'Ranking' : 'Rankings'} ({scoredNodes.length})
+              {t('myWorkTable.ideaScoringModel.rankings')} ({scoredNodes.length})
             </span>
           </div>
 
           {scoredNodes.length === 0 ? (
             <p className="text-xs text-c-text-secondary text-center py-4">
-              {isPl ? 'Brak danych do scoringu' : 'No data to score'}
+              {t('myWorkTable.ideaScoringModel.noDataToScore')}
             </p>
           ) : (
             <div className="space-y-1.5">
@@ -333,7 +332,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 rounded-xl text-xs font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkTable.ideaScoringModel.cancel')}
           </button>
           <div className="flex-1" />
           <button
@@ -342,7 +341,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
           >
             <Save size={12} />
-            {isPl ? 'Zastosuj ranking' : 'Apply ranking'}
+            {t('myWorkTable.ideaScoringModel.applyRanking')}
           </button>
         </div>
       </div>

@@ -26987,6 +26987,17 @@
       "selectedCount": "selected",
       "cancel": "Cancel",
       "confirm": "Confirm"
+    },
+    "ideaScoringModel": {
+      "title": "Idea Scoring Model",
+      "criteriaWeights": "Criteria Weights",
+      "aiCalibrate": "AI calibrate",
+      "noNumericColumns": "No numeric columns for scoring",
+      "invertHint": "Invert (lower = better)",
+      "rankings": "Rankings",
+      "noDataToScore": "No data to score",
+      "cancel": "Cancel",
+      "applyRanking": "Apply ranking"
     }
   },
   "myWorkNotebook": {
