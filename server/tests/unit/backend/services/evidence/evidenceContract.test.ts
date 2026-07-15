@@ -8,6 +8,10 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import {
+  buildMindmapEvidenceContract,
+  buildProcessFlowEvidenceContract,
+} from '../../../../../src/services/ai/canvasGraphLlm.js';
 import type { VerificationReport } from '../../../../../src/services/ai/citationVerifier.js';
 import {
   adaptRuntimeCitation,
@@ -635,5 +639,158 @@ describe('HP-16 serwis #6 (documentContentGenerator / Word) zwraca wypełniony E
     expect(contract.toVerify.some((v) => v.includes('Brak podpiętych źródeł'))).toBe(true);
     expect(contract.toVerify.some((v) => v.includes('Risks'))).toBe(true);
     expect(contract.risks.some((r) => r.includes('isAssumption'))).toBe(true);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// HP-16 8/8 — ostatnie 2 narzędzia: Mind Map + Process Flow (6/8→8/8).
+// Oba syntetyzują strukturę z surowego tekstu czatu (bez retrievalu/cytowań) —
+// "sources" = realne wejścia grafu (intent + faktycznie wygenerowane węzły),
+// NIE zmyślone cytowania. Patrz `buildMindmapEvidenceContract`/
+// `buildProcessFlowEvidenceContract` w canvasGraphLlm.ts.
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('HP-16 serwis #7 (Mind Map / canvasGraphLlm) zwraca wypełniony EvidenceContract', () => {
+  it('graf LLM z 3 pełnymi filarami (mają dzieci) → high, sources = intent + filary', () => {
+    const graph = {
+      nodes: [
+        { id: 'center', type: 'center', data: { label: 'Cel' } },
+        { id: 'branch-1', type: 'branch', data: { label: 'Filar A' } },
+        { id: 'branch-1-1', type: 'branch', data: { label: 'Cel: x' }, parentId: 'branch-1' },
+        { id: 'branch-2', type: 'branch', data: { label: 'Filar B' } },
+        { id: 'branch-2-1', type: 'branch', data: { label: 'Cel: y' }, parentId: 'branch-2' },
+        { id: 'branch-3', type: 'branch', data: { label: 'Filar C' } },
+        { id: 'branch-3-1', type: 'branch', data: { label: 'Cel: z' }, parentId: 'branch-3' },
+      ],
+      edges: [],
+    };
+    const contract = buildMindmapEvidenceContract(graph, {
+      source: 'llm',
+      seedText: 'Zrób mapę myśli o transformacji cyfrowej',
+    });
+    expect(validateEvidenceContract(contract).valid).toBe(true);
+    expect(contract.sources).toHaveLength(4); // intent + 3 filary
+    expect(contract.risks).toHaveLength(0);
+    expect(contract.confidence).toBe('high');
+  });
+
+  it('filar bez rozwiniętych podpunktów → ryzyko jawne + luka blokuje high', () => {
+    const graph = {
+      nodes: [
+        { id: 'center', type: 'center', data: { label: 'Cel' } },
+        { id: 'branch-1', type: 'branch', data: { label: 'Filar A' } },
+        { id: 'branch-1-1', type: 'branch', data: { label: 'x' }, parentId: 'branch-1' },
+        { id: 'branch-2', type: 'branch', data: { label: 'Filar B' } }, // brak dzieci
+        { id: 'branch-3', type: 'branch', data: { label: 'Filar C' } },
+        { id: 'branch-3-1', type: 'branch', data: { label: 'z' }, parentId: 'branch-3' },
+      ],
+      edges: [],
+    };
+    const contract = buildMindmapEvidenceContract(graph, { source: 'llm', seedText: 'intent' });
+    expect(contract.risks.some((r) => r.includes('Filar B'))).toBe(true);
+    expect(contract.confidence).not.toBe('high');
+  });
+
+  it('fallback deterministyczny (skeleton) → ryzyko fallbacku + confidence low (sufit jakości ~21/100)', () => {
+    const graph = {
+      nodes: [
+        { id: 'center', type: 'center', data: { label: 'Temat' } },
+        { id: 'branch-1', type: 'branch', data: { label: 'A' } },
+        { id: 'branch-2', type: 'branch', data: { label: 'B' } },
+        { id: 'branch-3', type: 'branch', data: { label: 'C' } },
+      ],
+      edges: [],
+    };
+    const contract = buildMindmapEvidenceContract(graph, { source: 'skeleton', seedText: 'intent' });
+    expect(contract.risks.some((r) => r.includes('fallbackiem'))).toBe(true);
+    expect(contract.confidence).toBe('low');
+  });
+
+  it('0 filarów (tylko centrum) i pusty intent → 0 źródeł → confidence low + toVerify jawny (bramka "Deklaracja—niepotwierdzone")', () => {
+    const graph = { nodes: [{ id: 'center', type: 'center', data: { label: 'X' } }], edges: [] };
+    const contract = buildMindmapEvidenceContract(graph, { source: 'skeleton', seedText: '' });
+    expect(contract.sources).toHaveLength(0);
+    expect(contract.confidence).toBe('low');
+    expect(contract.toVerify.some((v) => v.includes('nie ma żadnych filarów'))).toBe(true);
+  });
+});
+
+describe('HP-16 serwis #8 (Process Flow / canvasGraphLlm) zwraca wypełniony EvidenceContract', () => {
+  it('graf LLM z pełną decyzją (gałęzie tak/nie) → high, sources = intent + kroki treści', () => {
+    const graph = {
+      nodes: [
+        { id: 'step-0', type: 'flowNode', data: { label: 'Start', shape: 'start' } },
+        { id: 'step-1', type: 'flowNode', data: { label: 'Zweryfikuj dane', shape: 'action' } },
+        { id: 'step-2', type: 'flowNode', data: { label: 'Czy OK?', shape: 'decision' } },
+        { id: 'step-3', type: 'flowNode', data: { label: 'Zatwierdź', shape: 'action' } },
+        { id: 'step-4', type: 'flowNode', data: { label: 'Koniec', shape: 'end' } },
+      ],
+      edges: [
+        { source: 'step-0', target: 'step-1' },
+        { source: 'step-1', target: 'step-2' },
+        { source: 'step-2', target: 'step-3', label: 'tak' },
+        { source: 'step-2', target: 'step-4', label: 'nie' },
+        { source: 'step-3', target: 'step-4' },
+      ],
+    };
+    const contract = buildProcessFlowEvidenceContract(graph, {
+      source: 'llm',
+      seedText: 'Opisz proces weryfikacji zamówienia',
+    });
+    expect(validateEvidenceContract(contract).valid).toBe(true);
+    expect(contract.sources).toHaveLength(4); // intent + 3 kroki treści (bez start/end)
+    expect(contract.risks).toHaveLength(0);
+    expect(contract.confidence).toBe('high');
+  });
+
+  it('decyzja bez pełnych gałęzi tak/nie → ryzyko jawne + luka blokuje high', () => {
+    const graph = {
+      nodes: [
+        { id: 'step-0', type: 'flowNode', data: { label: 'Start', shape: 'start' } },
+        { id: 'step-1', type: 'flowNode', data: { label: 'Czy OK?', shape: 'decision' } },
+        { id: 'step-2', type: 'flowNode', data: { label: 'Koniec', shape: 'end' } },
+      ],
+      edges: [
+        { source: 'step-0', target: 'step-1' },
+        { source: 'step-1', target: 'step-2' }, // 1 gałąź, brak etykiety
+      ],
+    };
+    const contract = buildProcessFlowEvidenceContract(graph, { source: 'llm', seedText: 'intent' });
+    expect(contract.risks.some((r) => r.includes('Czy OK?'))).toBe(true);
+    expect(contract.confidence).not.toBe('high');
+  });
+
+  it('fallback deterministyczny (skeleton) → ryzyko fallbacku + confidence low (sufit jakości ~21/100)', () => {
+    const graph = {
+      nodes: [
+        { id: 'start', type: 'start', data: { label: 'Start' } },
+        { id: 'step-1', type: 'step', data: { label: 'Krok 1' } },
+        { id: 'end', type: 'end', data: { label: 'Koniec' } },
+      ],
+      edges: [
+        { source: 'start', target: 'step-1' },
+        { source: 'step-1', target: 'end' },
+      ],
+    };
+    const contract = buildProcessFlowEvidenceContract(graph, {
+      source: 'skeleton',
+      seedText: 'intent',
+    });
+    expect(contract.risks.some((r) => r.includes('fallbackiem'))).toBe(true);
+    expect(contract.confidence).toBe('low');
+  });
+
+  it('0 kroków treści (Start→Koniec) i pusty intent → 0 źródeł → confidence low + toVerify jawny (bramka "Deklaracja—niepotwierdzone")', () => {
+    const graph = {
+      nodes: [
+        { id: 'start', type: 'start', data: { label: 'Start' } },
+        { id: 'end', type: 'end', data: { label: 'Koniec' } },
+      ],
+      edges: [{ source: 'start', target: 'end' }],
+    };
+    const contract = buildProcessFlowEvidenceContract(graph, { source: 'skeleton', seedText: '' });
+    expect(contract.sources).toHaveLength(0);
+    expect(contract.confidence).toBe('low');
+    expect(contract.toVerify.some((v) => v.includes('nie ma żadnych kroków'))).toBe(true);
   });
 });

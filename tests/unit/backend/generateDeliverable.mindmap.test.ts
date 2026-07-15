@@ -39,13 +39,23 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
 
 // naprawa-c1Graph: this test asserts the DETERMINISTIC skeleton mind-map path.
 // Force the LLM generator to null (fail-soft) so the skeleton fallback runs.
-vi.mock('../../../server/src/services/ai/canvasGraphLlm.js', () => ({
-  generateMindmapGraph: vi.fn().mockResolvedValue(null),
-  generateProcessFlowGraph: vi.fn().mockResolvedValue(null),
-  generateWhiteboardGraph: vi.fn().mockResolvedValue(null),
-  generateTableGraph: vi.fn().mockResolvedValue(null),
-  generateNoteContent: vi.fn().mockResolvedValue(null),
-}));
+vi.mock('../../../server/src/services/ai/canvasGraphLlm.js', async () => {
+  const actual = await vi.importActual<typeof import('../../../server/src/services/ai/canvasGraphLlm.js')>(
+    '../../../server/src/services/ai/canvasGraphLlm.js'
+  );
+  return {
+    generateMindmapGraph: vi.fn().mockResolvedValue(null),
+    generateProcessFlowGraph: vi.fn().mockResolvedValue(null),
+    generateWhiteboardGraph: vi.fn().mockResolvedValue(null),
+    generateTableGraph: vi.fn().mockResolvedValue(null),
+    generateNoteContent: vi.fn().mockResolvedValue(null),
+    // HP-16 (7/8, 8/8) — real (unmocked) pure evidence builders: deterministic,
+    // zero I/O, safe to run for real in tests (mirrors how the other 6 wired
+    // tools' builders are exercised directly, not stubbed).
+    buildMindmapEvidenceContract: actual.buildMindmapEvidenceContract,
+    buildProcessFlowEvidenceContract: actual.buildProcessFlowEvidenceContract,
+  };
+});
 
 import { generateDeliverable } from '../../../server/src/services/ai/tools/generateDeliverable.js';
 
