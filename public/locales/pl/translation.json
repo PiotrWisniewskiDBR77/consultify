@@ -25338,6 +25338,28 @@
       "unitDay": "dni",
       "costField": "Koszt",
       "fteField": "Liczba FTE"
+    },
+    "aiProposalPanel": {
+      "title": "Propozycja AI",
+      "promptLabel": "Instrukcja dla AI",
+      "generate": "Generuj",
+      "generating": "Generowanie propozycji…",
+      "summary": "Podsumowanie",
+      "ops": "Operacje",
+      "risks": "Flagi ryzyka",
+      "destructive": "Operacje destrukcyjne",
+      "before": "Przed",
+      "after": "Po",
+      "validation": "Wpływ na walidację",
+      "issuesCount": "{{value}} problemów",
+      "improved": "Poprawa",
+      "accept": "Akceptuj",
+      "reject": "Odrzuć",
+      "editPrompt": "Edytuj prompt",
+      "dismiss": "Zamknij",
+      "lifecycle": "Cykl życia propozycji",
+      "orgContextActive": "Kontekst organizacji aktywny",
+      "promptPlaceholder": "Opisz zmiany w procesie…"
     }
   }
 }

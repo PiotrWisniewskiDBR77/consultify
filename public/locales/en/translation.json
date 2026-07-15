@@ -24262,6 +24262,28 @@
       "unitDay": "d",
       "costField": "Cost",
       "fteField": "FTE count"
+    },
+    "aiProposalPanel": {
+      "title": "AI proposal",
+      "promptLabel": "AI prompt",
+      "generate": "Generate",
+      "generating": "Generating proposal…",
+      "summary": "Summary",
+      "ops": "Operations",
+      "risks": "Risk flags",
+      "destructive": "Destructive ops",
+      "before": "Before",
+      "after": "After",
+      "validation": "Validation impact",
+      "issuesCount": "{{value}} issues",
+      "improved": "Improved",
+      "accept": "Accept",
+      "reject": "Reject",
+      "editPrompt": "Edit prompt",
+      "dismiss": "Dismiss",
+      "lifecycle": "Proposal lifecycle",
+      "orgContextActive": "Organization context active",
+      "promptPlaceholder": "Describe the process changes…"
     }
   }
 }
