@@ -5,12 +5,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock database - use hoisted to ensure mock is applied before imports
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn()
-};
+// Mock the Promise-style dbRun(sql, params) => Promise<{success, lastID, changes, error}>
+// used by server/src/utils/AssessmentAuditLogger.ts (via DbPromise.run) — the real
+// module's Dependencies shape is { dbRun, uuidv4 }, not a callback-style `db` object.
+const mockDbRun = vi.fn();
 
 // Mock dependencies
 vi.mock('uuid', () => ({ v4: () => 'mock-audit-uuid' }));
@@ -23,25 +21,19 @@ describe('AssessmentAuditLogger', () => {
         vi.clearAllMocks();
 
         // Reset the mock before each test
-        mockDb.run.mockReset();
-        mockDb.get.mockReset();
-        mockDb.all.mockReset();
+        mockDbRun.mockReset();
 
-        // Default implementation - simulate successful db.run
-        mockDb.run.mockImplementation((sql, params, callback) => {
-            if (typeof callback === 'function') {
-                callback.call({ lastID: 1, changes: 1 }, null);
-            }
-        });
+        // Default implementation - simulate successful dbRun
+        mockDbRun.mockResolvedValue({ success: true, lastID: 1, changes: 1 });
 
         // Import fresh module
-        const module = await import('../../../server/utils/assessmentAuditLogger.js');
+        const module = await import('../../../server/src/utils/AssessmentAuditLogger.js');
         AssessmentAuditLogger = module.default;
 
         // Inject dependencies directly
         if (AssessmentAuditLogger.setDependencies) {
             AssessmentAuditLogger.setDependencies({
-                db: mockDb,
+                dbRun: mockDbRun,
                 uuidv4: () => 'mock-audit-uuid'
             });
         }
@@ -57,9 +49,6 @@ describe('AssessmentAuditLogger', () => {
 
     describe('log', () => {
         it('should log audit event with all required fields', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             const auditData = {
                 userId: 'user-123',
@@ -74,8 +63,8 @@ describe('AssessmentAuditLogger', () => {
 
             await AssessmentAuditLogger.log(auditData);
 
-            expect(mockDb.run).toHaveBeenCalled();
-            const [sql, params] = mockDb.run.mock.calls[0];
+            expect(mockDbRun).toHaveBeenCalled();
+            const [sql, params] = mockDbRun.mock.calls[0];
 
             expect(sql).toContain('INSERT INTO');
             expect(params).toContain('user-123');
@@ -86,9 +75,6 @@ describe('AssessmentAuditLogger', () => {
         });
 
         it('should handle missing optional fields', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             const auditData = {
                 userId: 'user-123',
@@ -99,13 +85,10 @@ describe('AssessmentAuditLogger', () => {
 
             await AssessmentAuditLogger.log(auditData);
 
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mockDbRun).toHaveBeenCalled();
         });
 
         it('should stringify details object', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             const details = { axis: 'processes', oldScore: 3, newScore: 4 };
 
@@ -117,7 +100,7 @@ describe('AssessmentAuditLogger', () => {
                 details
             });
 
-            const params = mockDb.run.mock.calls[0][1];
+            const params = mockDbRun.mock.calls[0][1];
             const detailsParam = params.find(p => typeof p === 'string' && p.includes('axis'));
 
             expect(JSON.parse(detailsParam)).toMatchObject(details);
@@ -126,9 +109,6 @@ describe('AssessmentAuditLogger', () => {
         it.todo('should reject on database error (implementation currently catches errors silently)');
 
         it('should include timestamp in log', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             await AssessmentAuditLogger.log({
                 userId: 'user-123',
@@ -137,7 +117,7 @@ describe('AssessmentAuditLogger', () => {
                 resourceId: 'assessment-789'
             });
 
-            const sql = mockDb.run.mock.calls[0][0];
+            const sql = mockDbRun.mock.calls[0][0];
             expect(sql).toContain('datetime');
         });
     });
@@ -163,9 +143,6 @@ describe('AssessmentAuditLogger', () => {
 
         actionTypes.forEach(action => {
             it(`should log ${action} action`, async () => {
-                mockDb.run.mockImplementation((sql, params, callback) => {
-                    callback.call({ lastID: 1 }, null);
-                });
 
                 await AssessmentAuditLogger.log({
                     userId: 'user-123',
@@ -175,7 +152,7 @@ describe('AssessmentAuditLogger', () => {
                     resourceId: 'assessment-789'
                 });
 
-                const params = mockDb.run.mock.calls[0][1];
+                const params = mockDbRun.mock.calls[0][1];
                 expect(params).toContain(action);
             });
         });
@@ -197,9 +174,6 @@ describe('AssessmentAuditLogger', () => {
 
         resourceTypes.forEach(resourceType => {
             it(`should log ${resourceType} resource type`, async () => {
-                mockDb.run.mockImplementation((sql, params, callback) => {
-                    callback.call({ lastID: 1 }, null);
-                });
 
                 await AssessmentAuditLogger.log({
                     userId: 'user-123',
@@ -208,7 +182,7 @@ describe('AssessmentAuditLogger', () => {
                     resourceId: 'resource-789'
                 });
 
-                const params = mockDb.run.mock.calls[0][1];
+                const params = mockDbRun.mock.calls[0][1];
                 expect(params).toContain(resourceType);
             });
         });
@@ -252,9 +226,6 @@ describe('AssessmentAuditLogger', () => {
 
     describe('Edge Cases', () => {
         it('should handle null details', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             await AssessmentAuditLogger.log({
                 userId: 'user-123',
@@ -264,13 +235,10 @@ describe('AssessmentAuditLogger', () => {
                 details: null
             });
 
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mockDbRun).toHaveBeenCalled();
         });
 
         it('should handle empty string values', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             await AssessmentAuditLogger.log({
                 userId: 'user-123',
@@ -281,13 +249,10 @@ describe('AssessmentAuditLogger', () => {
                 userAgent: ''
             });
 
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mockDbRun).toHaveBeenCalled();
         });
 
         it('should handle special characters in details', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             const details = {
                 message: "User's \"comment\" with special <characters> & symbols"
@@ -301,13 +266,10 @@ describe('AssessmentAuditLogger', () => {
                 details
             });
 
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mockDbRun).toHaveBeenCalled();
         });
 
         it('should handle very long details', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call({ lastID: 1 }, null);
-            });
 
             const details = {
                 longText: 'A'.repeat(10000)
@@ -321,7 +283,7 @@ describe('AssessmentAuditLogger', () => {
                 details
             });
 
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mockDbRun).toHaveBeenCalled();
         });
     });
 
@@ -333,11 +295,13 @@ describe('AssessmentAuditLogger', () => {
         it('should handle multiple simultaneous log writes', async () => {
             let writeCount = 0;
 
-            mockDb.run.mockImplementation((sql, params, callback) => {
+            mockDbRun.mockImplementation(() => {
                 writeCount++;
-                setTimeout(() => {
-                    callback.call({ lastID: writeCount }, null);
-                }, Math.random() * 10);
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({ success: true, lastID: writeCount });
+                    }, Math.random() * 10);
+                });
             });
 
             const promises = [];
