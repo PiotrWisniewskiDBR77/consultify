@@ -27008,6 +27008,17 @@
       "bg": "BG",
       "text": "Text",
       "preview": "Formatting preview"
+    },
+    "aiTableProposal": {
+      "defaultTitle": "Table Structure Proposal",
+      "contextSources": "Context sources",
+      "columns": "Columns",
+      "views": "Views",
+      "starterRows": "Starter rows",
+      "aiContext": "AI Context",
+      "itemsSelected": "items selected",
+      "reject": "Reject",
+      "applySelected": "Apply selected"
     }
   },
   "myWorkNotebook": {
