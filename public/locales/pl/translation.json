@@ -28322,6 +28322,11 @@
       ],
       "outputItems": ["Executive summary sytuacji", "Priorytety na 90 dni", "Raport / deck / inicjatywa"],
       "legend": "Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output"
+    },
+    "toolSessionPreviewV3": {
+      "intentExecBrief": "Executive brief",
+      "intentKeyRisks": "Kluczowe ryzyka",
+      "intentInitiativeAngles": "Kąty inicjatyw"
     }
   }
 }

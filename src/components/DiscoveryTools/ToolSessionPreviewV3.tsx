@@ -94,23 +94,18 @@ const safeJsonString = (value: unknown, maxChars = 8000) => {
 async function runToolSessionAi(params: {
   intent: ToolSessionPreviewAiIntent;
   isPolish: boolean;
+  t: TFunction;
   details: ToolSessionPreviewDetails;
 }): Promise<string> {
-  const { intent, isPolish, details } = params;
+  const { intent, isPolish, t, details } = params;
   const language = isPolish ? 'pl' : 'en';
 
   const intentLabel =
     intent === 'exec_brief'
-      ? isPolish
-        ? 'Executive brief'
-        : 'Executive brief'
+      ? t('discoveryToolsMain.toolSessionPreviewV3.intentExecBrief', 'Executive brief')
       : intent === 'key_risks'
-        ? isPolish
-          ? 'Kluczowe ryzyka'
-          : 'Key risks'
-        : isPolish
-          ? 'Kąty inicjatyw'
-          : 'Initiative angles';
+        ? t('discoveryToolsMain.toolSessionPreviewV3.intentKeyRisks', 'Key risks')
+        : t('discoveryToolsMain.toolSessionPreviewV3.intentInitiativeAngles', 'Initiative angles');
 
   const systemInstruction = [
     `You are a senior transformation consultant.`,
@@ -335,7 +330,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
       try {
         setAiLoading(true);
         setAiError(null);
-        const text = await runToolSessionAi({ intent, isPolish, details });
+        const text = await runToolSessionAi({ intent, isPolish, t, details });
         if (!text) throw new Error('empty');
         setAiText(text);
       } catch (e: any) {
