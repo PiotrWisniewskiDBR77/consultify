@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-6C3-032",
+  "prompt": "You are advising this client on their digital maturity in \"Data Security\". Do you accept the level 3 claim in the context at face value? What must you verify before confirming it, and what is the single highest-leverage next step?",
+  "context": "Cybersecurity — Data Security — excerpt from a client diagnostic interview:\n\"Kontrola dostępu — role i audyt.\"\n\nThe team says this reflects digital maturity level 3 of 6 (\"Kontrola dostępu\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a role and permissions matrix (RBAC matrix) with the date of the last review. Q1 2025 access review minutes with a list of permission changes. Confirmation of access log retention = 90 days (configuration or S…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Is data access managed through roles (RBAC) with a least-privilege principle, and is every role documented? | Is an access review conducted quarterly with a documented outcome and a list of revoked permissions? | Are access logs for sensitive data collected and retained for at least 90 days?\nWhat satisfies the evidence bar: Evidence: a role and permissions matrix (RBAC matrix) with the date of the last review. Q1 2025 access review minutes with a list of permission changes. Confirmation of access log retention = 90 days (configuration or SIEM report).\nNext level (4, \"Backup i DR\"): Backup oraz disaster recovery.\nRelevant technology categories: IAM (Role-Based Access Control), Data Access Governance (Varonis, Netwrix), SIEM (audit logging)",
+  "archetype": "diagnostic",
+  "domain": "Cybersecurity — Data Security",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "6C#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

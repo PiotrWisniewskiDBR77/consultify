@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1E4-005",
+  "prompt": "A client's \"Logistics Processes\" lead just gave you the description in the context during a diagnostic interview. Write your consultant response: what would you probe before signing off on level 4, and what should they prioritize next?",
+  "context": "Digital Processes — Logistics Processes — excerpt from a client diagnostic interview:\n\"We use Automated Guided Vehicles (AGVs) that can independently move goods within the warehouse. Meanwhile, robotized order-picking and other robotic operations automate or assist in many logistics operations, such as loading and unloading.\"\n\nThe team says this reflects digital maturity level 4 of 7 (\"Automation\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: an AGV dashboard with KPIs (cycles/hour, availability %, downtime); a WMS ↔ AGV integration diagram of the order flow; a report comparing throughput with AGVs versus before deployment. Signal: AGVs handle ≥50%…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: How many AGVs or warehouse robots are active day to day, and what % of internal transport is automated? | Show us AGV availability and throughput data from last week — how many cycles, how many breakdowns, how much downtime? | How does a robot/AGV work with the WMS: does the WMS automatically generate a transport order when an AGV becomes available?\nWhat satisfies the evidence bar: Evidence: an AGV dashboard with KPIs (cycles/hour, availability %, downtime); a WMS ↔ AGV integration diagram of the order flow; a report comparing throughput with AGVs versus before deployment. Signal: AGVs handle ≥50% of internal transport without manual dispatch.\nNext level (5, \"MES\"): MES-class systems and an advanced Warehouse Management System (WMS) integrated with Milkrun or Kanban systems monitor and optimize logistics processes. The MES system integrates production and warehouse management, while the WMS system, combined with Milkrun and Kanban, helps optimize inventory management and internal transport services.\nRelevant technology categories: AGV, Warehouse Robotics, Route Optimization, WMS",
+  "archetype": "diagnostic",
+  "domain": "Digital Processes — Logistics Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1E#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

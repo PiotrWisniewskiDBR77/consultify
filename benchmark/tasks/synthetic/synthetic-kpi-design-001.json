@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-kpi-design-001",
+  "prompt": "A B2B SaaS company is standing up a new Customer Success function for the first time. Design a scorecard of 4-6 KPIs, and explain what each one is meant to catch that the others would miss.",
+  "context": "Business context: the company has historically tracked only lagging indicators (logo churn, revenue churn) at the finance level, with no function-level, leading operational metrics owned by Customer Success. Sales has separately noted that renewal conversations often surface product-adoption problems that nobody flagged earlier. The company has a single, all-purpose product (not multiple tiers), and the CS team will be organized by account-size segment (enterprise / mid-market / SMB), consistent with the segmentation used elsewhere in the company (as referenced in other internal analyses of this same customer base).",
+  "binaryCriteria": [
+    {
+      "id": "includes-leading-adoption-metric-to-catch-renewal-surprises",
+      "description": "Includes a leading, adoption/usage-based metric explicitly justified as catching the \"renewal surprise\" problem Sales flagged (adoption problems surfacing only at renewal).",
+      "guidance": "Fail if the scorecard consists only of lagging metrics (churn) with no adoption/usage-based leading indicator."
+    },
+    {
+      "id": "segments-by-account-size-not-single-blended-metric",
+      "description": "Recommends viewing KPIs cut by account segment (enterprise/mid-market/SMB), consistent with how the CS team itself is organized, rather than only a single company-wide blended figure.",
+      "guidance": "Fail if the scorecard is presented only as blended, unsegmented company-wide numbers."
+    },
+    {
+      "id": "justifies-each-kpi-blind-spot",
+      "description": "For each proposed KPI, explains what specific blind spot it catches relative to the others (not just a generic definition of the metric).",
+      "guidance": "Fail if KPIs are listed with definitions but no explanation of what unique gap each closes."
+    }
+  ],
+  "goldNotes": "A strong scorecard is MECE and includes both leading and lagging indicators, not just repeating the two lagging metrics (logo churn, revenue churn) the company already has — those two should likely still appear (continuity with existing tracking) but the design should add leading indicators such as product-adoption/usage depth (to catch the specific \"renewal surprise\" problem Sales flagged, since adoption problems currently go undetected until renewal), a \"health score\" or expansion-readiness style leading indicator, and a segment-cut view (enterprise/mid-market/SMB) given the team is explicitly organized by segment, since a single blended number would hide segment-specific problems (as the earlier variance-analysis pattern in this domain would suggest — e.g., a segment with severe problems could be masked by a healthy blended average). Each KPI's justification should explain what blind spot it closes relative to the others (e.g., \"adoption depth catches renewal risk before it shows up in churn numbers\"), not just list generic SaaS metrics without connecting them to this company's specific gaps.",
+  "archetype": "synthetic",
+  "domain": "KPI & Scorecard Design",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/kpi-design/customer-success-function-kpis",
+  "consultingArchetype": "kpi-design"
+}

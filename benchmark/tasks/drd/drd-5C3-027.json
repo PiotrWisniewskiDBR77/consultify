@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-5C3-027",
+  "prompt": "Doradzasz klientowi w temacie dojrzałości cyfrowej w obszarze \"Ciągły rozwój kompetencji\". Czy przyjmujesz deklarację poziomu 3 z kontekstu bez weryfikacji? Co musisz sprawdzić, zanim potwierdzisz ten poziom, i jaki jest najważniejszy kolejny krok?",
+  "context": "Kultura Transformacji — Ciągły rozwój kompetencji — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Organizacja korzysta ze szkoleń zewnętrznych.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 6 (\"Szkolenia zewnętrzne\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: wyciąg z budżetu z pozycją \"szkolenia zewnętrzne 2025\" z kwotą. Lista certyfikatów uzyskanych przez pracowników w ostatnich 2 latach. Polityka szkoleniowa zatwierdzana przez HR."
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Czy pracownicy uczestniczą w certyfikowanych szkoleniach zewnętrznych min. raz w roku, a organizacja pokrywa koszty? | Czy budżet na szkolenia zewnętrzne jest ujęty w planie finansowym jako odrębna pozycja, nie \"jak zostanie\"? | Czy istnieje polityka szkoleniowa definiująca kto, jak często i na jakie szkolenia może się zapisać?\nCo spełnia próg dowodowy: Dowód: wyciąg z budżetu z pozycją \"szkolenia zewnętrzne 2025\" z kwotą. Lista certyfikatów uzyskanych przez pracowników w ostatnich 2 latach. Polityka szkoleniowa zatwierdzana przez HR.\nKolejny poziom (4, \"Self-learning\"): Wspierany jest self-learning — platformy, książki, kursy.\nPowiązane kategorie technologii: LMS, HR Policy Management, Finance/ERP (budget tracking)",
+  "archetype": "diagnostic",
+  "domain": "Kultura Transformacji — Ciągły rozwój kompetencji",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "5C#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-board-storyline-004",
+  "prompt": "You must recommend the board fund a flagship AI investment program. Write the storyline, leading with the recommendation.",
+  "context": "Three internal AI use cases have been scoped with preliminary business cases: (1) demand-forecasting AI, estimated $2.1M/year value, requires a data-foundation investment not yet made; (2) customer-service AI copilot, estimated $900K/year value, can launch on existing data infrastructure within 2 quarters; (3) AI-assisted pricing optimization, estimated $3.4M/year value, but the underlying pricing data is fragmented across 4 disconnected systems with a 12-18 month remediation estimate before the use case is even feasible. The board previously funded (18 months ago) a data-quality initiative that was cancelled halfway through due to competing priorities.",
+  "binaryCriteria": [
+    {
+      "id": "recommends-fastest-feasible-use-case-first",
+      "description": "Recommends the customer-service AI copilot (fastest to value, no blocking data-foundation dependency) as the first-funded use case.",
+      "guidance": "Fail if the pricing-optimization use case ($3.4M) is recommended as the first/flagship investment without addressing its 12-18 month feasibility blocker."
+    },
+    {
+      "id": "references-prior-cancelled-data-initiative",
+      "description": "Explicitly references the previously cancelled data-quality initiative as a relevant precedent/risk when discussing the data-foundation-dependent use cases.",
+      "guidance": "Fail if this specific precedent is omitted."
+    },
+    {
+      "id": "does-not-rank-purely-by-dollar-value",
+      "description": "Does not simply rank the three use cases by their dollar-value estimate while ignoring feasibility and dependency differences.",
+      "guidance": "Fail if the storyline treats all three use cases as equally ready to fund based only on their value estimates."
+    }
+  ],
+  "goldNotes": "A strong storyline leads with a recommendation to fund the customer-service AI copilot first (fastest to value, no new data-foundation dependency) while treating the higher-value pricing-optimization use case as gated behind a data-remediation investment the board must also decide on explicitly, given the prior cancelled data-quality initiative — a direct, named precedent the board should be reminded of, since it means data-foundation work has a real execution-risk history at this company, not just an abstract dependency. It should not recommend the highest-dollar-value use case (pricing optimization, $3.4M) as the flagship program without addressing that it is not currently feasible (12-18 month data remediation required) — doing so would ignore a stated blocking constraint. A weak storyline ranks the three use cases purely by dollar value without addressing feasibility/dependencies or the prior cancelled-initiative precedent.",
+  "archetype": "synthetic",
+  "domain": "Executive Storylining",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/board-storyline/ai-investment-funding-recommendation",
+  "consultingArchetype": "board-storyline"
+}

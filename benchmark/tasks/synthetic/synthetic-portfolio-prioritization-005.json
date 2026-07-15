@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-portfolio-prioritization-005",
+  "prompt": "A telecom operator has 7 candidate customer-experience initiatives but only enough delivery capacity for roughly 3-4 this year. Recommend a prioritized shortlist.",
+  "context": "Initiatives with estimated impact on the annual churn rate (currently 1.8%/month) and estimated delivery effort (in delivery-team-quarters, DTQ): (1) Self-service billing dispute tool — -0.15pp churn, 3 DTQ. (2) AI chat support expansion — -0.10pp churn, 4 DTQ. (3) Proactive outage notifications — -0.25pp churn, 2 DTQ. (4) Loyalty rewards redesign — -0.05pp churn, 5 DTQ. (5) Faster device-upgrade process — -0.08pp churn, 3 DTQ. (6) Network-quality dashboard for customers — -0.12pp churn, 2 DTQ. (7) Call-center IVR overhaul — -0.20pp churn, 6 DTQ. Total available capacity: 9 delivery-team-quarters.",
+  "binaryCriteria": [
+    {
+      "id": "uses-impact-per-effort-not-raw-impact",
+      "description": "Prioritizes using churn-reduction-per-delivery-effort (efficiency), not simply the largest raw churn-reduction percentage.",
+      "guidance": "Fail if the shortlist is built purely by sorting on raw churn-reduction magnitude (e.g., picking IVR overhaul at -0.20pp) while ignoring its 6 DTQ cost relative to cheaper high-efficiency options."
+    },
+    {
+      "id": "fits-recommendation-within-9-dtq",
+      "description": "The recommended shortlist of initiatives sums to at or under the 9 delivery-team-quarter capacity constraint.",
+      "guidance": "Fail if the recommended combination requires materially more than 9 DTQ."
+    },
+    {
+      "id": "includes-outage-notifications-as-top-pick",
+      "description": "Includes proactive outage notifications in the recommended shortlist, since it has by far the best churn-impact-per-effort ratio in the given data.",
+      "guidance": "Fail if this initiative is omitted from the top picks with no justification."
+    }
+  ],
+  "goldNotes": "A strong answer computes churn-reduction-per-DTQ efficiency: proactive outage notifications (-0.25pp / 2 DTQ = 0.125pp per DTQ, the best), network-quality dashboard (0.06pp/DTQ), billing dispute tool (0.05pp/DTQ), IVR overhaul (0.033pp/DTQ), AI chat expansion (0.025pp/DTQ), device-upgrade process (0.027pp/DTQ), loyalty redesign (0.01pp/DTQ, worst). Within the 9 DTQ budget, the best combination by this logic is proactive outage notifications (2) + network-quality dashboard (2) + billing dispute tool (3) = 7 DTQ for a combined ~-0.52pp churn impact, with 2 DTQ left over insufficient for most remaining items alone — a rigorous answer should reach a similar efficiency-based shortlist (not necessarily identical) and explicitly reject the highest-single-impact-but-expensive IVR overhaul (-0.20pp for 6 DTQ) or loyalty redesign (worst efficiency) as the anchor of the portfolio, explaining the reasoning rather than just picking the initiatives with the largest raw churn-reduction numbers.",
+  "archetype": "synthetic",
+  "domain": "Portfolio Prioritization",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/portfolio-prioritization/telco-cx-initiatives",
+  "consultingArchetype": "portfolio-prioritization"
+}

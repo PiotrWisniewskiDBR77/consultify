@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-portfolio-prioritization-002",
+  "prompt": "A bank's technology team has 5 compliance/tech projects competing for a fixed pool of 12 engineer-months this quarter. Recommend a prioritized sequence.",
+  "context": "Projects (engineer-months required / regulatory deadline / business value): (1) AML transaction-monitoring rule update — 4 eng-months, hard regulatory deadline in 10 weeks, no direct revenue but avoids a known regulatory finding. (2) Core banking API modernization — 6 eng-months, no deadline, enables 3 other future initiatives. (3) Customer data deletion/right-to-erasure automation — 3 eng-months, regulatory deadline in 14 weeks. (4) Fraud-detection model retraining — 5 eng-months, no deadline, estimated to reduce fraud losses by $600K/year. (5) Internal reporting dashboard refresh — 2 eng-months, no deadline, convenience improvement only. Total capacity: 12 engineer-months.",
+  "binaryCriteria": [
+    {
+      "id": "treats-regulatory-deadlines-as-mandatory",
+      "description": "Treats the two regulatory-deadline projects (AML rule update, data-deletion automation) as must-fund regardless of relative \"business value\", given the confirmed compliance exposure.",
+      "guidance": "Fail if either regulatory-deadline project is deferred or deprioritized below a non-deadline project."
+    },
+    {
+      "id": "fits-recommendation-within-12-eng-months",
+      "description": "The recommended set of funded projects sums to at or under the 12 engineer-month capacity constraint.",
+      "guidance": "Fail if the recommended set requires materially more than 12 engineer-months without explicit descoping."
+    },
+    {
+      "id": "uses-remaining-capacity-on-highest-value-fit",
+      "description": "Allocates the ~5 eng-months remaining after the two mandatory projects to the fraud-model retraining (best value-per-cost fit) rather than the dashboard refresh or an initiative that does not fit.",
+      "guidance": "Fail if the dashboard refresh is prioritized over fraud-model retraining with the remaining capacity."
+    }
+  ],
+  "goldNotes": "A strong answer treats the two hard regulatory deadlines (AML rule update, 4 eng-months, 10-week deadline; data-deletion automation, 3 eng-months, 14-week deadline) as non-negotiable must-dos — together 7 eng-months — since missing them carries confirmed regulatory/compliance exposure, not just opportunity cost. With 5 eng-months of capacity remaining, it should prioritize fraud-model retraining ($600K/year value, 5 eng-months) over the dashboard refresh (2 eng-months, convenience-only) or the API modernization (6 eng-months — does not fit remaining capacity anyway). A weak answer ranks purely by \"business value\" and defers a hard-deadline regulatory item, or tries to fit all 5 projects (26 eng-months of work) into 12 eng-months of capacity without acknowledging the gap.",
+  "archetype": "synthetic",
+  "domain": "Portfolio Prioritization",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/portfolio-prioritization/bank-compliance-tech-projects",
+  "consultingArchetype": "portfolio-prioritization"
+}

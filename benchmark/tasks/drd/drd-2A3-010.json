@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-2A3-010",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 3 for \"Digital Products\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "Digital Products — Digital Products — excerpt from a client diagnostic interview:\n\"Electronic products with additional features, such as mobile apps, games or software offer added functionality like personalization, user interaction or artificial intelligence. A mobile app allows users to customize settings and engage with other users.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Advanced\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a description of the advanced features in the product (not in a sales deck — in the live product); an engagement-metrics report for the last 30 days; an A/B test of personalization with a result. Signal: users…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: What advanced features do your digital products have beyond the content itself — personalization, AI, interaction with other users? | Show us an example of personalization in the product (e.g. recommendations based on usage history, adaptive content) — how does it work, and what data does it collect? | How do you measure user engagement with the digital features (completion rate, time in app, return visits)?\nWhat satisfies the evidence bar: Evidence: a description of the advanced features in the product (not in a sales deck — in the live product); an engagement-metrics report for the last 30 days; an A/B test of personalization with a result. Signal: users come back to the product because of the digital features, not just the content.\nNext level (4, \"Interactive\"): Products that offer interactivity, such as many video games, virtual reality, educational apps or design tools that enable users to actively collaborate or modify the product. Many video games allow users to interact with a virtual environment and make decisions that affect the game's progress.\nRelevant technology categories: Mobile App, Personalization Engine, Analytics SDK, AI Features",
+  "archetype": "diagnostic",
+  "domain": "Digital Products — Digital Products",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "2A#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

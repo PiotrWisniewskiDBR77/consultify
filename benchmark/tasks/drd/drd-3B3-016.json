@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-3B3-016",
+  "prompt": "You are advising this client on their digital maturity in \"Platform Solutions\". Do you accept the level 3 claim in the context at face value? What must you verify before confirming it, and what is the single highest-leverage next step?",
+  "context": "Digital Business Models — Platform Solutions — excerpt from a client diagnostic interview:\n\"A company or institution creates and manages an ecosystem, connecting suppliers, partners and customers to create added value and synergy. They offer market analysis tools, joint promotions and loyalty programmes. An example might be an e-commerce platform integrating suppliers, partners and customers while also offering market analysis.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Advanced\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: an ecosystem report (GMV, number of active participants, supplier retention) from the last 90 days; an example of a joint promotion or analytics tool for participants; supplier and customer NPS from the last q…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: How does the platform connect suppliers, partners, and customers into an ecosystem that creates synergy — show us a concrete example of value that no single participant could create alone. | What market-analysis tools or joint-promotion features do you offer ecosystem participants — show us an example of a platform-wide campaign. | How do you measure ecosystem health — GMV, supplier retention, participant NPS — and how often do you review these metrics?\nWhat satisfies the evidence bar: Evidence: an ecosystem report (GMV, number of active participants, supplier retention) from the last 90 days; an example of a joint promotion or analytics tool for participants; supplier and customer NPS from the last quarter. Signal: the ecosystem grows without active recruiting by the company — the network effect is visible in the data.\nNext level (4, \"Advanced SEM\"): In addition to facilitating transactional relationships, the owner provides Software-as-a-Service solutions on its platform, enabling access to various online applications and tools. This type of platform organization is referred to as a Software-as-a-Service Enabled Marketplace (SEM). SEM platforms offer diverse applications, from project management to data analysis, with the option for customization and integration.\nRelevant technology categories: Ecosystem Platform, Partner Portal, Loyalty Programme, Market Analytics, Co-marketing Tools",
+  "archetype": "diagnostic",
+  "domain": "Digital Business Models — Platform Solutions",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "3B#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

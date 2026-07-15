@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-interview-synthesis-004",
+  "prompt": "Synthesize the leadership interview notes below into root-cause findings for rising talent attrition, and recommend the priority fix.",
+  "context": "CFO: \"Compensation benchmarking shows we're within 5% of market median across most roles — I don't think it's pay.\" VP Engineering: \"My best engineers keep telling me in exit interviews that they don't see a path to senior/staff roles here — we only have a management-track promotion ladder.\" VP Product: \"Same pattern on my side — two strong product managers left this year for individual-contributor-track senior titles elsewhere.\" Head of HR: \"Exit interview data (last 12 months, 34 departures) shows 'lack of growth path' cited by 21 of 34 as a top-2 reason for leaving; 'compensation' was cited by only 6 of 34.\"",
+  "binaryCriteria": [
+    {
+      "id": "rules-out-compensation-using-both-data-sources",
+      "description": "Explicitly uses both the CFO's benchmarking data and the HR exit-interview data (6 of 34) to rule out compensation as the primary driver of attrition.",
+      "guidance": "Fail if compensation is recommended as a top fix, or if only one of the two data sources is used to address it."
+    },
+    {
+      "id": "identifies-missing-ic-track-as-specific-root-cause",
+      "description": "Identifies the absence of an individual-contributor career track as the specific root cause, using the VP Engineering and VP Product examples plus the HR \"growth path\" data.",
+      "guidance": "Fail if the root cause is stated generically as \"lack of growth opportunities\" without the specific IC-track diagnosis."
+    },
+    {
+      "id": "recommends-dual-track-career-ladder",
+      "description": "Recommends building a dual-track (management + individual-contributor) career ladder as the priority fix.",
+      "guidance": "Fail if the recommendation is generic (e.g., \"improve culture\" or \"increase pay\") rather than the specific dual-track fix supported by the data."
+    }
+  ],
+  "goldNotes": "A strong synthesis correctly deprioritizes compensation as the root cause, using both the CFO's benchmarking data (within 5% of market) and the HR exit-interview data (compensation cited by only 6 of 34, versus 21 of 34 for lack of growth path) — this convergence across two independent data sources (benchmarking and exit interviews) should be explicitly used to rule out pay as the driver. It should identify the absence of an individual-contributor (IC) career track as the specific root cause, directly evidenced by both the VP Engineering and VP Product examples of strong performers leaving specifically for IC-track senior titles elsewhere, and the HR data's \"growth path\" category. The priority fix should be building a dual-track (management + IC) career ladder, not a generic \"improve engagement\" or \"increase pay\" recommendation, since the data specifically rules out pay and specifically implicates the missing IC track.",
+  "archetype": "synthetic",
+  "domain": "Stakeholder Interview Synthesis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/interview-synthesis/leadership-culture-attrition",
+  "consultingArchetype": "interview-synthesis"
+}

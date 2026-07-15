@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-7D3-038",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 3 for \"Governance, Security and Ethics\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "AI Maturity — Governance, Security and Ethics — excerpt from a client diagnostic interview:\n\"The company formalizes its AI approach. Project approval processes, risk assessment criteria, and dedicated roles (AI Officer/Committee) are introduced. Models are versioned and audited. AI is not deployed without formal approval.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Organization-Wide AI Governance Framework\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: an AI project register with columns: description, risk assessment, decision-maker, approval date, status. An AI Committee charter or a description of the AI Officer role. A model repository (MLflow) with versi…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does the organization have formal AI project approval processes — with a use-case register, risk assessment and required approval before deployment? | Is there a dedicated role or committee (AI Officer, AI Committee) responsible for AI governance in the company? | Are AI models versioned and audited — i.e. is it known which model version is running in production and when it was last checked?\nWhat satisfies the evidence bar: Evidence: an AI project register with columns: description, risk assessment, decision-maker, approval date, status. An AI Committee charter or a description of the AI Officer role. A model repository (MLflow) with version history for production models.\nNext level (4, \"Continuous AI Risk Management & Monitoring\"): The organization has a structured, continuous AI control system. This includes real-time model monitoring, drift detection, and security testing. AI is treated as seriously as mission-critical systems.\nRelevant technology categories: AI Governance Platform (IBM OpenScale, Fiddler AI), MLflow Model Registry, GRC Tool (AI risk), AI Committee Charter Template",
+  "archetype": "diagnostic",
+  "domain": "AI Maturity — Governance, Security and Ethics",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "7D#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

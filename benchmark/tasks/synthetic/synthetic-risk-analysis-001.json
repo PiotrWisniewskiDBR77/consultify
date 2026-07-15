@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-risk-analysis-001",
+  "prompt": "A mid-size consumer electronics company is considering entering a new international market. Identify the top 3 risks using the data given, and the single risk that should be resolved before any other planning proceeds.",
+  "context": "Market research (commissioned, internal) shows a large addressable market and receptive consumer sentiment. Legal counsel has flagged that the target country requires a local joint-venture partner holding at least 30% ownership for the company's product category, and that finding a suitable, trustworthy partner has historically taken competitors 9-18 months. Currency has been volatile (a named 22% depreciation against the dollar in the last 18 months, per public FX data). Two named competitors already operate in-market with an estimated combined 45% share.",
+  "binaryCriteria": [
+    {
+      "id": "identifies-jv-partner-as-gating-precondition",
+      "description": "Identifies the mandatory local joint-venture partner requirement as the risk that must be resolved before any other planning proceeds, since it is a legal precondition, not a discretionary consideration.",
+      "guidance": "Fail if the JV requirement is treated as just one risk among several rather than the gating precondition."
+    },
+    {
+      "id": "names-currency-and-competition-as-real-but-non-gating",
+      "description": "Names currency volatility and competitive intensity as material risks to the economics/strategy, while distinguishing them from the gating JV-partner risk.",
+      "guidance": "Fail if these risks are omitted entirely, or are ranked above the JV requirement as the top priority."
+    },
+    {
+      "id": "uses-given-jv-lead-time-in-reasoning",
+      "description": "References the 9-18 month historical lead time for finding a JV partner when explaining why this risk must be addressed first / why it affects the overall entry timeline.",
+      "guidance": "Fail if the answer does not connect the JV search timeline to the overall market-entry planning horizon."
+    }
+  ],
+  "goldNotes": "A strong answer identifies the mandatory joint-venture partner requirement as the risk that must be resolved before any other market-entry planning proceeds — it is a legal precondition (not just a business preference) and has a long, uncertain lead time (9-18 months per the given precedent), meaning it gates the entire timeline. Currency volatility (22% depreciation) and competitive intensity (45% combined share held by 2 incumbents) are real risks but are not gating preconditions — they affect the economics and go-to-market strategy, not whether entry is legally possible at all. A weak answer treats all risks as equally prioritized, or picks currency/competition as the \"must resolve first\" risk instead of the structural JV requirement.",
+  "archetype": "synthetic",
+  "domain": "Risk Analysis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/risk-analysis/international-market-entry",
+  "consultingArchetype": "risk-analysis"
+}

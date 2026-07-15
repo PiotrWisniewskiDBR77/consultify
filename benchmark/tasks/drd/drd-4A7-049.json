@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4A7-049",
+  "prompt": "In \"Data Collection\", the team says they are already at the most advanced level (7) in the context. Do you take this at face value? What evidence would you require, and what's the highest-value move to keep this from eroding into a commodity capability?",
+  "context": "Data Management — Data Collection — excerpt from a client diagnostic interview:\n\"This advanced approach to collecting data from physical objects uses cameras and other optical devices to monitor and assess the state of physical objects. Optical devices capture images of objects, which are then meticulously analysed for potential damages or other irregularities.\"\n\nThe team says this reflects digital maturity level 7 of 7 (\"Optical Control\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a defect-detection report from the vision system for the last month (count, types, TP/FP); a flow diagram from detection to action (line stop, logging, segregation); a comparison of detection effectiveness: ca…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Where do you use optical inspection systems (cameras, machine vision) to collect data on quality or the condition of objects — what exactly is being analysed? | How quickly does the vision system analyse an image and what decision does it make — what triggers a \"defect detected\" state, and what happens in the following 10 seconds? | Show us data on the effectiveness of the vision system: how many defects did it detect last month, what was the false-positive rate, and how does it compare with manual inspection?\nWhat satisfies the evidence bar: Evidence: a defect-detection report from the vision system for the last month (count, types, TP/FP); a flow diagram from detection to action (line stop, logging, segregation); a comparison of detection effectiveness: camera vs inspector. Signal: the vision system is in production and replaces or supports manual inspection on at least one line.\nThis is the highest defined level in this area — there is no \"level 8\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: Machine Vision, Industrial Cameras, Computer Vision AI, Defect Detection System",
+  "archetype": "diagnostic",
+  "domain": "Data Management — Data Collection",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4A#7",
+  "consultingArchetype": "maturity-defend-advantage"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-3D3-018",
+  "prompt": "Assess whether the evidence in the context is sufficient to confirm maturity level 3 for \"Asset Sharing Models\". Identify the gap (if any) and recommend the next concrete step.",
+  "context": "Digital Business Models — Asset Sharing Models — excerpt from a client diagnostic interview:\n\"The platform allows users to share knowledge, skills, experience or the product of intellectual work. Users can offer their services, conduct training or share educational materials with other platform users.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Advanced\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a screenshot of the knowledge-sharing platform with expert profiles and reviews; a report of expert-customer matches from the last 30 days; the quality-rating mechanism with examples. Signal: the platform has …"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Do you make knowledge, competencies, or intellectual work available to other parties under a sharing model — show us an example and the settlement model. | How does the platform connect \"knowledge providers\" (experts, freelancers) with \"recipients\" (companies, learners) — what is your role in this model? | How do you verify the quality of the knowledge or competencies offered on the platform — ratings, certificates, work samples?\nWhat satisfies the evidence bar: Evidence: a screenshot of the knowledge-sharing platform with expert profiles and reviews; a report of expert-customer matches from the last 30 days; the quality-rating mechanism with examples. Signal: the platform has active knowledge providers with documented results — not just a base of empty profiles.\nNext level (4, \"Advanced Personalization\"): The customer pays the service provider for the time they use available assets or resources. The service provider focuses on managing and maintaining assets for the customer's needs in order to increase the customer's flexibility.\nRelevant technology categories: Knowledge Marketplace, Expert Matching, Skill Verification, Learning Platform",
+  "archetype": "diagnostic",
+  "domain": "Digital Business Models — Asset Sharing Models",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "3D#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

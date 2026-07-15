@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1D4-004",
+  "prompt": "You are advising this client on their digital maturity in \"Purchasing Processes\". Do you accept the level 4 claim in the context at face value? What must you verify before confirming it, and what is the single highest-leverage next step?",
+  "context": "Digital Processes — Purchasing Processes — excerpt from a client diagnostic interview:\n\"We utilize B2B procurement and auction platforms that enable electronic order placement, price negotiations, supplier offer comparisons and the efficient management of procurement relationships. This level provides more efficient procurement processes that are better integrated with suppliers.\"\n\nThe team says this reflects digital maturity level 4 of 7 (\"Automation\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a transaction report from the procurement platform (number of tenders, suppliers, savings %); a screenshot of the supplier panel in the portal; a comparison of platform-sourced purchase cost vs. traditional pu…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Do you use B2B platforms for tenders, auctions, or supplier-offer comparisons? Show us your last tender — how many bids came in, and how were they compared? | What % of last year's purchases went through an electronic platform (not email/phone)? What cost savings do you see on those purchases versus the traditional route? | How does a supplier submit a bid or confirm an order — through a portal/platform, or by emailing the buyer?\nWhat satisfies the evidence bar: Evidence: a transaction report from the procurement platform (number of tenders, suppliers, savings %); a screenshot of the supplier panel in the portal; a comparison of platform-sourced purchase cost vs. traditional purchases over the last 12 months. Signal: the B2B platform handles ≥30% of purchase value.\nNext level (5, \"MES\"): MES-class systems enable the monitoring of purchasing-related KPIs. Metrics such as procurement costs, delivery times, delivery quality and the effectiveness of price negotiations are closely monitored. This level makes procurement processes more transparent and controlled.\nRelevant technology categories: B2B Procurement Platform, e-Auctions, Supplier Portal, EDI",
+  "archetype": "diagnostic",
+  "domain": "Digital Processes — Purchasing Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1D#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

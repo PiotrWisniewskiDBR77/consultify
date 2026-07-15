@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1A7-040",
+  "prompt": "The client claims their \"Sales Processes\" practice has reached the top maturity level (7) described in the context — the most advanced stage in this area. As their advisor, what would you check before accepting that claim, and how would you recommend they defend and extend this advantage over the next 12 months?",
+  "context": "Digital Processes — Sales Processes — excerpt from a client diagnostic interview:\n\"We harness advanced algorithms within the sales process to personalize offerings and provide other advanced features. Of note here are offer-personalization algorithms to analyse customer preferences and generate personalized purchase suggestions. We also employ natural language processing technology for customer service and tools for the automated operation of sales bots.\"\n\nThe team says this reflects digital maturity level 7 of 7 (\"AI Support\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: last week's chatbot interaction log with a resolution rate; A/B test report for the recommendation algorithm (AI group vs. no-AI group); a sample personalized offer with the algorithm's metadata. Level VII sig…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Show us an example of an AI-generated personalized offer for a specific customer — where did the recommendations come from, and how did the customer react? | Does a chatbot or sales bot handle any commercial inquiries? How many interactions per month, and what % close without escalating to a human? | How do you measure the recommendation algorithm's effectiveness — what conversion uplift or average order value do you see versus a group without recommendations?\nWhat satisfies the evidence bar: Evidence: last week's chatbot interaction log with a resolution rate; A/B test report for the recommendation algorithm (AI group vs. no-AI group); a sample personalized offer with the algorithm's metadata. Level VII signal: AI recommends, a human approves or reviews the exceptions.\nThis is the highest defined level in this area — there is no \"level 8\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: NLP, Chatbots, ML Models, CRM, Personalization Engine, Customer Service Automation",
+  "archetype": "diagnostic",
+  "domain": "Digital Processes — Sales Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1A#7",
+  "consultingArchetype": "maturity-defend-advantage"
+}

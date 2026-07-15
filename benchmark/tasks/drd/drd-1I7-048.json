@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1I7-048",
+  "prompt": "The client claims their \"HR Processes\" practice has reached the top maturity level (7) described in the context — the most advanced stage in this area. As their advisor, what would you check before accepting that claim, and how would you recommend they defend and extend this advantage over the next 12 months?",
+  "context": "Digital Processes — HR Processes — excerpt from a client diagnostic interview:\n\"AI algorithms support recruitment processes, talent management, HR data analysis and employee development planning.\"\n\nThe team says this reflects digital maturity level 7 of 7 (\"AI Support\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: an AI CV-screening report (precision of candidates reaching the first interview vs. manual review); turnover-prediction accuracy over the last 6 months; a sample AI-generated personalized training plan versus …"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: How does AI support recruitment: CV screening, candidate matching, interview scheduling — how much time does it save the recruiter, and how do you measure the quality of the matches? | Does the HR system analyze employee data to predict turnover or identify talent — show us an example of that analysis. | How does AI personalize employee development plans based on competency data, performance, and other employees' career paths?\nWhat satisfies the evidence bar: Evidence: an AI CV-screening report (precision of candidates reaching the first interview vs. manual review); turnover-prediction accuracy over the last 6 months; a sample AI-generated personalized training plan versus a standard one. Signal: time-to-hire dropped by ≥20% after adopting AI in recruitment.\nThis is the highest defined level in this area — there is no \"level 8\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: ML Models, HRM, NLP, Training Planning, Performance Reviews",
+  "archetype": "diagnostic",
+  "domain": "Digital Processes — HR Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1I#7",
+  "consultingArchetype": "maturity-defend-advantage"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-board-storyline-002",
+  "prompt": "You must recommend a market-entry decision to the board. Write the storyline (governing thought + supporting pillars), leading with the recommendation.",
+  "context": "Analysis completed: (1) the addressable market is large and growing (given as a qualitative finding: \"significant, growing demand\", no further quantification available yet), (2) entry requires a mandatory local joint-venture partner (legal precondition, typical search time 9-18 months per precedent), (3) two incumbent competitors hold an estimated combined 45% share, (4) the company's balance sheet can support the estimated entry investment without new financing. The recommendation on the table is to proceed with entry, starting the JV partner search immediately, while deferring the full go-to-market investment decision until a partner is secured.",
+  "binaryCriteria": [
+    {
+      "id": "leads-with-sequenced-recommendation-not-flat-yes-no",
+      "description": "Leads with the actual sequenced recommendation (start JV search now, defer go-to-market spend decision) rather than a flat unconditional \"enter\" or \"do not enter\".",
+      "guidance": "Fail if the storyline presents a simple yes/no without the sequencing nuance given in the context."
+    },
+    {
+      "id": "does-not-fabricate-market-size-figure",
+      "description": "Does not invent a specific market-size (TAM) number, since the context explicitly states quantification is not yet available.",
+      "guidance": "Fail if the answer states a specific market-size dollar figure or percentage that is not present in the context."
+    },
+    {
+      "id": "uses-jv-lead-time-and-balance-sheet-as-pillars",
+      "description": "Uses the JV partner lead-time precedent and balance-sheet capacity as concrete supporting pillars for why the company can and should start the JV search now.",
+      "guidance": "Fail if these two specific facts are not used to support the recommendation."
+    }
+  ],
+  "goldNotes": "A strong storyline leads with the actual recommendation on the table — proceed, but sequenced (start the JV search now, defer the go-to-market spend decision) — rather than a flat \"yes, enter\" or \"no, don't enter\" framing that ignores the sequencing nuance given. It should be honest that market-size quantification is not yet available (the context explicitly states this), rather than inventing a market-size number to sound more rigorous — fabricating a TAM figure not present in the context should be marked down. It should use the JV lead-time precedent and the balance-sheet capacity as the two concrete pillars supporting \"we can afford to start now, and starting now is the critical-path item\", with competitive intensity (45% incumbent share) framed as a reason the entry strategy (not the entry decision itself) needs to be differentiated.",
+  "archetype": "synthetic",
+  "domain": "Executive Storylining",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/board-storyline/market-entry-decision",
+  "consultingArchetype": "board-storyline"
+}

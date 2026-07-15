@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-business-case-004",
+  "prompt": "A regional bank's consumer loan operations team wants to invest in RPA (robotic process automation) for loan document processing. Build the business case, including whether this is the right first automation target.",
+  "context": "Loan processing team: 35 FTEs, average fully-loaded cost $68,000/year each. Process time study (internal, 200-loan sample) shows document intake/verification takes 42 minutes per loan on average, of which an estimated 60% is described by the team as \"rule-based data entry and checklist verification\" and 40% as \"judgment calls requiring an underwriter\". Loan volume: ~14,000 loans/year. RPA vendor quote: $310,000 implementation, $45,000/year licensing, typical vendor-cited automation coverage of 50-70% of rule-based sub-tasks in comparable financial-services deployments.",
+  "binaryCriteria": [
+    {
+      "id": "respects-rule-based-vs-judgment-split",
+      "description": "Correctly limits the automatable scope to the rule-based ~60% of the 42-minute process, not the full process or the judgment-call portion.",
+      "guidance": "Fail if the answer implies RPA will automate the entire 42-minute process or the judgment-call steps."
+    },
+    {
+      "id": "quantifies-savings-from-given-data",
+      "description": "Derives an estimate of time or cost saved using the 14,000 loans/year, ~25-minute rule-based slice, and vendor coverage range, rather than asserting savings qualitatively.",
+      "guidance": "Pass if a concrete calculation or clearly stated estimate appears, using the given figures."
+    },
+    {
+      "id": "recommends-validation-before-full-rollout",
+      "description": "Recommends validating the rule-based/judgment split (e.g., a proof-of-concept) before committing to a full $310k rollout.",
+      "guidance": "Fail if the answer commits to full rollout with no validation step given how thin the process-time evidence is."
+    }
+  ],
+  "goldNotes": "A strong answer should reason about whether loan document processing is the RIGHT first target — the context gives a 60/40 split between rule-based and judgment work, meaning at best ~60% of the 42 minutes (about 25 minutes) is automatable, and even the vendor's own 50-70% coverage range applies only to that rule-based slice, not the whole process. The answer should compute an illustrative time/cost saved (e.g., ~14,000 loans x ~25 min x some coverage rate, converted to FTE-equivalent hours, compared to the $310k+$45k/year cost) and should NOT assume the RPA tool automates the full 42 minutes or the judgment-call portion. It should also flag that judgment-call steps are not RPA-suitable and would need a different intervention (e.g., decision-support tooling), and ideally recommend validating the 60/40 split with a proof-of-concept on one loan type before a full rollout.",
+  "archetype": "synthetic",
+  "domain": "Business Case & Investment Justification",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/business-case/bank-rpa-loan-processing",
+  "consultingArchetype": "business-case"
+}

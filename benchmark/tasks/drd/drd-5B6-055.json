@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-5B6-055",
+  "prompt": "In \"Readiness for Change\", the team says they are already at the most advanced level (6) in the context. Do you take this at face value? What evidence would you require, and what's the highest-value move to keep this from eroding into a commodity capability?",
+  "context": "Culture of Transformation — Readiness for Change — excerpt from a client diagnostic interview:\n\"Zmiana jest zinstytucjonalizowana — zakorzeniona w kulturze i sposobie pracy.\"\n\nThe team says this reflects digital maturity level 6 of 6 (\"Instytucjonalizacja\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: an organizational values charter with an explicit \"continuous transformation\" element. An annual review form asking about the employee's contribution to change. Lessons learned from 2 completed transformation …"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Is change embedded in permanent elements of the company culture — e.g. in performance review criteria, onboarding programs, organizational values? | Do change mechanisms work without a \"hero sponsor\" — i.e. do institutions (processes, roles, KPIs) drive change independently? | Has the organization completed at least two full successful change cycles, from which lessons were drawn and implemented in subsequent initiatives?\nWhat satisfies the evidence bar: Evidence: an organizational values charter with an explicit \"continuous transformation\" element. An annual review form asking about the employee's contribution to change. Lessons learned from 2 completed transformation projects implemented in subsequent ones.\nThis is the highest defined level in this area — there is no \"level 7\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: Performance Management System, Knowledge Management (Confluence), HR Onboarding Platform",
+  "archetype": "diagnostic",
+  "domain": "Culture of Transformation — Readiness for Change",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "5B#6",
+  "consultingArchetype": "maturity-defend-advantage"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4E4-024",
+  "prompt": "You are advising this client on their digital maturity in \"Computing\". Do you accept the level 4 claim in the context at face value? What must you verify before confirming it, and what is the single highest-leverage next step?",
+  "context": "Data Management — Computing — excerpt from a client diagnostic interview:\n\"Computing resources from multiple locations are combined to tackle complex computational tasks. Grid computing enables the sharing of resources across organizational boundaries.\"\n\nThe team says this reflects digital maturity level 4 of 7 (\"Grid Computing\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: documentation of grid-computing participation (provider, scope, SLA); a report of computational jobs run on external infrastructure from the last 90 days; a cost calculation of grid vs owned infrastructure. Si…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Do you participate in grid computing or shared compute capacity with other organisations — why, and how? | How do you manage access to compute resources in a grid model — priorities, limits, cost settlement? | What computational tasks use external or shared resources — what would not fit on your own infrastructure?\nWhat satisfies the evidence bar: Evidence: documentation of grid-computing participation (provider, scope, SLA); a report of computational jobs run on external infrastructure from the last 90 days; a cost calculation of grid vs owned infrastructure. Signal: grid computing is used for specific computational tasks — not just as a theoretical option.\nNext level (5, \"Cloud Computing\"): Computing resources are provided as a service over the internet. Cloud computing offers scalability, flexibility, and pay-per-use pricing models. Resources can be provisioned on-demand.\nRelevant technology categories: Grid Computing, HPC Clusters, Distributed Workloads, Research Computing",
+  "archetype": "diagnostic",
+  "domain": "Data Management — Computing",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4E#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

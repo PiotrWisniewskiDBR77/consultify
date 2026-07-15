@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-1I4-009",
+  "prompt": "Doradzasz klientowi w temacie dojrzałości cyfrowej w obszarze \"Procesy HR\". Czy przyjmujesz deklarację poziomu 4 z kontekstu bez weryfikacji? Co musisz sprawdzić, zanim potwierdzisz ten poziom, i jaki jest najważniejszy kolejny krok?",
+  "context": "Procesy Cyfrowe — Procesy HR — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Procesy HR są zautomatyzowane dzięki e-kioskom i aplikacjom webowym, które pozwalają pracownikom samodzielnie zarządzać swoimi danymi, składać wnioski urlopowe, mieć dostęp do dokumentów i realizować zadania związane z HR.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 4 z 7 (\"Automatyzacja\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: zrzut panelu samoobsługowego pracownika; czas cyklu wniosku urlopowego (złożenie → zatwierdzenie → naliczenie) z logu; % wniosków elektronicznych vs papierowych z ostatnich 30 dni. Sygnał: >90% wniosków pracownic…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Czy pracownicy mogą samodzielnie złożyć wniosek urlopowy, zmienić dane osobowe lub pobrać dokumenty przez system/kiosk/aplikację mobilną? | Pokaż ścieżkę wniosku urlopowego od złożenia do zatwierdzenia i naliczenia w systemie płacowym — ile trwa i ile kroków jest automatycznych? | Ile wniosków pracowniczych (urlop, nadgodziny, delegacja) z ostatniego miesiąca przeszło przez system vs wiadomości e-mail/papier?\nCo spełnia próg dowodowy: Dowód: zrzut panelu samoobsługowego pracownika; czas cyklu wniosku urlopowego (złożenie → zatwierdzenie → naliczenie) z logu; % wniosków elektronicznych vs papierowych z ostatnich 30 dni. Sygnał: >90% wniosków pracowniczych składanych przez system, nie e-mailem do HR.\nKolejny poziom (5, \"MES\"): Comprehensive Human Resource Management (HRM) software records personal data and employee assessments, and it is used in planning training, monitoring salaries and benefits, and career management.\nPowiązane kategorie technologii: Employee Kiosk, Self-Service HR Portal, Digital Forms, HRM",
+  "archetype": "diagnostic",
+  "domain": "Procesy Cyfrowe — Procesy HR",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "1I#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

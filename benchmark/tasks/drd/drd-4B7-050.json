@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4B7-050",
+  "prompt": "The client claims their \"Data Storage Methodology\" practice has reached the top maturity level (7) described in the context — the most advanced stage in this area. As their advisor, what would you check before accepting that claim, and how would you recommend they defend and extend this advantage over the next 12 months?",
+  "context": "Data Management — Data Storage Methodology — excerpt from a client diagnostic interview:\n\"Companies strategically manage their data storage by utilizing a mix of solutions tailored to the specific needs of different types of data. For instance, operational data critical for production processes are stored on edge devices for immediate access, while sensitive information like technical drawings is kept in private clouds to enhance security.\"\n\nThe team says this reflects digital maturity level 7 of 7 (\"Hybrid Approaches\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a hybrid architecture diagram (edge/on-prem/private cloud/public cloud) with the rationale for each tier; the tiering policy with rules for automatic data migration; a cost-and-performance report per tier from…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Show us a data-storage strategy spanning edge, private cloud, and public cloud simultaneously — what goes where, and why? | How do you optimise storage cost and performance: which data is hot (access <ms), warm (minutes), cold (hours-days)? | When was the storage architecture last reviewed, and who decided to change the tier or environment for a specific dataset?\nWhat satisfies the evidence bar: Evidence: a hybrid architecture diagram (edge/on-prem/private cloud/public cloud) with the rationale for each tier; the tiering policy with rules for automatic data migration; a cost-and-performance report per tier from the last 90 days. Signal: the hybrid architecture is actively managed — it is not an accidental sum of historical decisions.\nThis is the highest defined level in this area — there is no \"level 8\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: Hybrid Cloud, Edge Computing, Data Tiering, Storage Orchestration, FinOps",
+  "archetype": "diagnostic",
+  "domain": "Data Management — Data Storage Methodology",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4B#7",
+  "consultingArchetype": "maturity-defend-advantage"
+}

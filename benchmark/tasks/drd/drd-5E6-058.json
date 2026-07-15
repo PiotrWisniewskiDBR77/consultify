@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-5E6-058",
+  "prompt": "The client claims their \"Resource Availability\" practice has reached the top maturity level (6) described in the context — the most advanced stage in this area. As their advisor, what would you check before accepting that claim, and how would you recommend they defend and extend this advantage over the next 12 months?",
+  "context": "Culture of Transformation — Resource Availability — excerpt from a client diagnostic interview:\n\"Dostęp do partnerów — ekosystem i współpraca.\"\n\nThe team says this reflects digital maturity level 6 of 6 (\"Partnerzy\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a list of active partnership agreements with validity dates and result KPIs. Minutes of the annual partner-ecosystem review by the board. A project delivered jointly with an external partner, describing the sp…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does the organization have active business partnerships (technological, research or market) managed by a dedicated role with KPIs? | Was at least one transformation project in the last 2 years carried out jointly with an external partner (startup, vendor, university) — with a contract and benefit-sharing arrangement? | Is the partner ecosystem evaluated for effectiveness at least once a year?\nWhat satisfies the evidence bar: Evidence: a list of active partnership agreements with validity dates and result KPIs. Minutes of the annual partner-ecosystem review by the board. A project delivered jointly with an external partner, describing the split of investment and benefits.\nThis is the highest defined level in this area — there is no \"level 7\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: CRM (partner management), Contract Management System, Partnership Portal",
+  "archetype": "diagnostic",
+  "domain": "Culture of Transformation — Resource Availability",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "5E#6",
+  "consultingArchetype": "maturity-defend-advantage"
+}

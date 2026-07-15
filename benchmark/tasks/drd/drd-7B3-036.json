@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-7B3-036",
+  "prompt": "You are advising this client on their digital maturity in \"AI-Supported Processes\". Do you accept the level 3 claim in the context at face value? What must you verify before confirming it, and what is the single highest-leverage next step?",
+  "context": "AI Maturity — AI-Supported Processes — excerpt from a client diagnostic interview:\n\"AI becomes part of the process, not an add-on. AI models provide operational recommendations (forecasts, scoring). Employees make decisions based on AI suggestions. Processes are designed to incorporate data and algorithms — but accountability remains with humans.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Integrated AI Decision Support\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a screenshot from a business tool showing an AI recommendation (e.g. \"Demand forecasting model: recommended order quantity X units\") plus a report of decision history based on that recommendation. A model accu…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Does AI provide operational recommendations (e.g. demand forecasting, credit risk scoring, maintenance action recommendation) embedded in at least one key process? | Do employees make decisions based on AI recommendations, and is this documented (not just \"they know the model exists\")? | Are the AI models providing recommendations validated and monitored (is the accuracy they operate at known)?\nWhat satisfies the evidence bar: Evidence: a screenshot from a business tool showing an AI recommendation (e.g. \"Demand forecasting model: recommended order quantity X units\") plus a report of decision history based on that recommendation. A model accuracy metric (accuracy/MAE).\nNext level (4, \"Semi-Autonomous Processes\"): AI performs part of the process activities autonomously. A human acts as a supervisor or approver. Examples: automated planning, dynamic inventory control. In many processes, humans no longer decide — they mainly oversee the system.\nRelevant technology categories: ML Models in Production (Azure ML, SageMaker), Decision Intelligence Platform, Demand Forecasting (Anaplan, O9), Predictive Maintenance (Uptake, SparkCognition)",
+  "archetype": "diagnostic",
+  "domain": "AI Maturity — AI-Supported Processes",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "7B#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

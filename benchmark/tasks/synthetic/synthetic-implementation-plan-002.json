@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-implementation-plan-002",
+  "prompt": "A 220-person sales organization is adopting a new CRM after years on spreadsheets and email. Draft a phased adoption plan and name the biggest adoption risk.",
+  "context": "Sales org structure: 8 regional teams, each led by a regional sales director; historically each region built its own tracking spreadsheets with inconsistent fields. A survey of reps (internal, 74% response) shows the top concern is \"another system I have to update on top of my existing tools\" and the second is \"will my manager use this to micromanage me\". Two regions (out of 8) have directors who are enthusiastic early-adopter volunteers. Leadership wants full adoption within 2 quarters and has approved sunsetting the old spreadsheets on a hard date.",
+  "binaryCriteria": [
+    {
+      "id": "uses-two-volunteer-regions-as-early-adopters",
+      "description": "Sequences the plan to start with the 2 volunteer regions as an early-adopter/pilot cohort before a company-wide mandate.",
+      "guidance": "Fail if the plan proposes a simultaneous company-wide rollout across all 8 regions with no early-adopter phase."
+    },
+    {
+      "id": "addresses-both-named-rep-concerns",
+      "description": "Explicitly addresses both survey concerns: (1) CRM replacing rather than adding to existing tracking work, and (2) manager guardrails against using CRM data for micromanagement.",
+      "guidance": "Fail if either of the two specific concerns from the survey is not addressed in the plan."
+    },
+    {
+      "id": "names-shadow-spreadsheet-reversion-as-key-risk",
+      "description": "Names reps reverting to old spreadsheets after cutover (shadow-system risk) as the primary adoption risk, and proposes a way to detect or prevent it.",
+      "guidance": "Fail if the plan does not address the risk of reps continuing to use their old tracking methods post-cutover."
+    }
+  ],
+  "goldNotes": "A strong plan starts with the 2 volunteer regions as an early-adopter cohort to generate internal champions and proof of value before a hard company-wide mandate, rather than announcing a single company-wide switch-over. It should directly address the top-2 rep concerns from the survey: the \"another system\" concern implies the plan should emphasize CRM as replacing (not adding to) existing tracking work, and the \"micromanagement\" concern implies managers need explicit guidance/guardrails on how CRM data will (and will not) be used in performance conversations — a plan that is silent on these two named concerns is not grounded in the given data. The single biggest adoption risk to name: reps quietly reverting to their old spreadsheets after the official cutover (shadow-system risk), especially given 8 regions with historically inconsistent, deeply habitual tracking practices — the plan should include a mechanism to detect this (e.g., monitoring CRM usage rates per region) not just a training rollout.",
+  "archetype": "synthetic",
+  "domain": "Implementation Planning",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/implementation-plan/crm-adoption-sales-org",
+  "consultingArchetype": "implementation-plan"
+}

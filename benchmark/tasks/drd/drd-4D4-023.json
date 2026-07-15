@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4D4-023",
+  "prompt": "Oceń, czy dowody w kontekście wystarczają, by potwierdzić poziom dojrzałości 4 dla obszaru \"Analiza Big Data\". Wskaż lukę (jeśli jest) i zarekomenduj konkretny następny krok.",
+  "context": "Zarządzanie Danymi — Analiza Big Data — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Kluczowym elementem analizy Big Data są zaawansowane aplikacje i platformy, takie jak Apache, które umożliwiają przetwarzanie i analizę ogromnych ilości danych w sposób rozproszony. Oznacza to, że dane są przetwarzane jednocześnie na wielu serwerach, co zapewnia skalowalność i istotną wydajność obliczeniową.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 4 z 7 (\"Narzędzia do analizy dużych baz danych\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: architektura platformy big data z technologiami i wolumenami danych; raport z analizy big data z decyzją biznesową i datą; czas przetwarzania 1TB danych w danym pipeline (benchmark). Sygnał: firma analizuje dane,…"
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Jakie platformy big data (Hadoop, Spark, Databricks, Snowflake) lub ich odpowiedniki stosujecie do przetwarzania dużych wolumenów danych? | Pokaż pipeline analizy big data — jak duże dane (> 100GB) są przetwarzane, ile trwa i jak skalujecie obliczenia przy większym obciążeniu? | Do jakich decyzji biznesowych używacie wyników analiz big data — pokaż ostatni przypadek decyzji opartej na analizie dużego zbioru.\nCo spełnia próg dowodowy: Dowód: architektura platformy big data z technologiami i wolumenami danych; raport z analizy big data z decyzją biznesową i datą; czas przetwarzania 1TB danych w danym pipeline (benchmark). Sygnał: firma analizuje dane, których objętości nie pomieści Excel — i robi to regularnie w procesach decyzyjnych.\nKolejny poziom (5, \"Data Quality Management\"): Data quality can be checked, improved and maintained through the automated detection and elimination of data errors, standardization of data, verification of information from external sources, and completion of missing data.\nPowiązane kategorie technologii: Apache Spark, Databricks, Snowflake, BigQuery, Distributed Computing",
+  "archetype": "diagnostic",
+  "domain": "Zarządzanie Danymi — Analiza Big Data",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4D#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

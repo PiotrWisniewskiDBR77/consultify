@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-board-storyline-003",
+  "prompt": "You must recommend whether the board should divest a non-core business unit. Write the storyline, leading with the recommendation.",
+  "context": "The unit generates $18M revenue/year (4% of company total) at an 11% operating margin, roughly in line with the corporate average. It requires disproportionate management attention: the CEO estimates roughly 20% of the executive team's time goes to this unit despite its 4% revenue contribution. Three potential acquirers have expressed informal interest (unsolicited) in the past year. No formal valuation or sale process has been run yet.",
+  "binaryCriteria": [
+    {
+      "id": "does-not-claim-margin-underperformance",
+      "description": "Does not claim the unit is a financial underperformer on margin, since the context states its margin (11%) is roughly in line with the corporate average.",
+      "guidance": "Fail if the answer justifies divestiture primarily on the basis of poor margin/profitability."
+    },
+    {
+      "id": "centers-attention-mismatch-as-core-argument",
+      "description": "Uses the mismatch between 4% revenue contribution and 20% of executive attention as the central strategic rationale.",
+      "guidance": "Fail if this specific opportunity-cost argument is absent from the storyline."
+    },
+    {
+      "id": "recommends-process-not-assumed-outcome",
+      "description": "Recommends running a formal sale/valuation process rather than asserting a specific sale outcome or price, since none has been established yet.",
+      "guidance": "Fail if the answer asserts a specific valuation or guarantees a sale will happen, rather than recommending a process to test the market."
+    }
+  ],
+  "goldNotes": "A strong storyline leads with a recommendation to explore a sale process (not a flat \"divest now\" or \"keep forever\" claim, since no valuation exists yet — the honest recommendation is to run a process to find out), and should explicitly note the mismatch between the unit's 4% revenue contribution and its 20% share of executive attention as the central strategic argument (a real opportunity-cost problem, not primarily a financial-performance problem, since the unit's margin is in line with the corporate average, not underperforming). It should treat the unsolicited acquirer interest as a signal worth testing via a process, not as a reason to skip valuation and accept an assumed price. A weak answer treats this as a straightforward \"sell because margin is bad\" case — that framing is not supported by the data (margin is in line with the average) and would be a factual misuse of the context.",
+  "archetype": "synthetic",
+  "domain": "Executive Storylining",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/board-storyline/divestiture-recommendation",
+  "consultingArchetype": "board-storyline"
+}

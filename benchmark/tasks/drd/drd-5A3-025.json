@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-5A3-025",
+  "prompt": "Lider obszaru \"Postawy przywódcze\" opisał wam swoją praktykę tak, jak w kontekście, podczas wywiadu diagnostycznego. Napisz odpowiedź konsultanta: o co dopytasz, zanim zatwierdzisz poziom 3, i co powinni zrobić w pierwszej kolejności?",
+  "context": "Kultura Transformacji — Postawy przywódcze — fragment wypowiedzi klienta z wywiadu diagnostycznego:\n\"Typ przywództwa wg książki: wysokie wymagania połączone z zapewnieniem narzędzi i zasobów do ich realizacji.\"\n\nZespół twierdzi, że to odpowiada poziomowi dojrzałości 3 z 6 (\"Dyrektywny\").",
+  "binaryCriteria": [
+    {
+      "id": "wymaga-weryfikowalnego-dowodu",
+      "description": "Nie przyjmuje deklaracji klienta bezkrytycznie; wprost prosi o konkretny, sprawdzalny artefakt przed potwierdzeniem poziomu dojrzałości.",
+      "guidance": "Kryterium spełnione, jeśli odpowiedź prosi o coś w rodzaju: Dowód: karta projektu lub OKR/KPI z przypisanym właścicielem, terminem i budżetem. Screenshot dashboardu BI używanego przez menedżera na codziennej bazie."
+    },
+    {
+      "id": "wskazuje-kolejny-krok",
+      "description": "Wskazuje konkretny, poprawny następny krok zgodny z kolejnym poziomem dojrzałości — nie ogólnikowe „więcej cyfryzacji\".",
+      "guidance": "Musi wskazać konkretny mechanizm, system lub praktykę, nie ogólnik."
+    },
+    {
+      "id": "osadzone-w-opisanej-praktyce",
+      "description": "Rekomendacja jest osadzona w konkretach opisanej praktyki klienta, a nie jest uniwersalną odpowiedzią o dojrzałości, którą dałoby się wkleić gdziekolwiek.",
+      "guidance": "Odrzuć, jeśli odpowiedź dałoby się bez zmian wkleić do innego obszaru."
+    }
+  ],
+  "goldNotes": "Pytania weryfikujące eksperta: Czy kierownictwo wyznacza mierzalne cele cyfrowe z terminem i przekazuje team-leaderom uprawnienia do ich realizacji? | Czy istnieje dokumentacja wskazująca zasoby (budżet, czas, narzędzia) przypisane do konkretnych projektów transformacyjnych? | Czy przełożony sam korzysta z narzędzi cyfrowych (CRM, BI, platforma projektowa) i wymaga tego od swoich zespołów?\nCo spełnia próg dowodowy: Dowód: karta projektu lub OKR/KPI z przypisanym właścicielem, terminem i budżetem. Screenshot dashboardu BI używanego przez menedżera na codziennej bazie.\nKolejny poziom (4, \"Wspierający\"): Typ przywództwa wg książki: budowanie bezpieczeństwa psychologicznego i motywowanie zespołu.\nPowiązane kategorie technologii: OKR/KPI Tool, BI Dashboard, Project Management (Jira/Asana)",
+  "archetype": "diagnostic",
+  "domain": "Kultura Transformacji — Postawy przywódcze",
+  "lang": "pl",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "5A#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

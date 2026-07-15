@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-interview-synthesis-005",
+  "prompt": "Synthesize the customer interview notes below into root-cause findings for product churn, and recommend the priority fix.",
+  "context": "Customer 1 (churned): \"We loved the core product but the reporting features never quite matched what our finance team needed, so we ended up exporting to Excel anyway.\" Customer 2 (churned): \"Onboarding took almost 3 months before we saw real value — by the time we did, budget renewal conversations had already started and it was hard to justify.\" Customer 3 (still active, at-risk per usage data): \"We use it daily for the core workflow, but our finance team has basically stopped logging in — they just ask our ops team for exports.\" Customer success lead: \"Time-to-first-value has been trending up, not down, over the last 3 quarters as the product has added more configuration options during onboarding.\"",
+  "binaryCriteria": [
+    {
+      "id": "converges-finance-persona-signal-across-customers",
+      "description": "Connects Customer 1's and Customer 3's comments as evidence of a specific finance-team-persona reporting gap, rather than treating them as two unrelated complaints.",
+      "guidance": "Fail if the finance-team-specific pattern across the two customers is not identified as a single converging finding."
+    },
+    {
+      "id": "identifies-configuration-driven-time-to-value-regression",
+      "description": "Identifies that time-to-first-value has gotten worse (not better) specifically because of added configuration options during onboarding, using the customer success lead's trend data.",
+      "guidance": "Fail if the answer does not connect the added configuration options to the worsening time-to-value trend."
+    },
+    {
+      "id": "proposes-distinct-fixes-for-each-root-cause",
+      "description": "Proposes a specific fix for the onboarding/time-to-value issue (e.g., streamlining configuration) distinct from a fix/roadmap item for the finance-persona reporting gap, rather than one generic catch-all recommendation.",
+      "guidance": "Fail if a single generic fix (e.g., \"improve customer experience\") is offered without addressing the two distinct root causes separately."
+    }
+  ],
+  "goldNotes": "A strong synthesis connects Customer 1's and Customer 3's comments (both point to the finance-team persona specifically disengaging due to reporting gaps, one already churned and one at-risk) as one converging finding — a specific persona-level (finance team) product gap, not a general \"reporting could be better\" statement. It should separately identify slow time-to-value (Customer 2's 3-month onboarding, and the customer success lead's data showing time-to-first-value trending up, not down, over 3 quarters, specifically BECAUSE of added configuration options) as a second, distinct root cause with a clear causal mechanism given (more configuration options added -> longer onboarding -> slower time-to-value) — this is a case where a well-intentioned product change (more configuration) is shown by internal data to have made a KPI worse, which the synthesis should flag explicitly rather than assuming more features are always positive. The priority fix should address whichever finding is best supported as most immediately actionable — most likely simplifying/streamlining onboarding configuration to reverse the time-to-value trend, since it has a clear internal trend metric to validate improvement against, while flagging the finance-persona reporting gap as a second, longer-term product-roadmap item.",
+  "archetype": "synthetic",
+  "domain": "Stakeholder Interview Synthesis",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/interview-synthesis/customer-churn-reasons-synthesis",
+  "consultingArchetype": "interview-synthesis"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-business-case-005",
+  "prompt": "A logistics company (280-truck fleet) is deciding whether to install telematics (GPS + driver-behavior sensors) fleet-wide or pilot first. Write the business case and recommend a rollout sequencing.",
+  "context": "Fuel cost is the largest controllable operating cost at $2.10M/year across the fleet (internal finance data). Telematics vendor claims (published case studies, comparable fleet sizes) 6-12% fuel savings from route optimization and reduced idling/harsh-braking, achieved over 6-9 months as drivers adjust behavior. Hardware + install cost: $650/truck one-time; software subscription $22/truck/month. A driver-relations survey last year (internal, response rate 61%) showed meaningful concern about being \"monitored\", with several drivers citing a prior GPS pilot at a competitor that led to a union grievance.",
+  "binaryCriteria": [
+    {
+      "id": "derives-savings-range-from-fuel-baseline",
+      "description": "Uses the $2.10M fuel baseline and the 6-12% claimed savings range to produce an illustrative dollar savings range, and compares it to the stated hardware/subscription costs.",
+      "guidance": "Pass if a $ range (roughly $126k-$252k/year) or equivalent derived figure appears and is weighed against the ~$182k one-time + ~$74k/year cost."
+    },
+    {
+      "id": "flags-labor-relations-risk",
+      "description": "Explicitly treats the driver survey / union-grievance precedent as a material risk requiring a specific mitigation (e.g., driver communication plan, phased/opt-in rollout), not a footnote.",
+      "guidance": "Fail if the labor-relations signal in the context is ignored or only mentioned in passing without a mitigation."
+    },
+    {
+      "id": "recommends-phased-rollout-not-bigbang",
+      "description": "Recommends piloting in a subset of the fleet/depots before a fleet-wide rollout.",
+      "guidance": "Fail if the recommendation is an immediate fleet-wide (all 280 trucks) rollout with no phasing."
+    }
+  ],
+  "goldNotes": "A strong answer computes the potential savings range from the $2.10M fuel baseline (6-12% => roughly $126k-$252k/year, illustrative) against the cost (280 x $650 = $182,000 one-time + 280 x $22 x 12 = $73,920/year), showing payback is plausible even at the low end, but should not assume the full 6-12% is captured immediately (the vendor's own timeline is 6-9 months of behavior change). Given the driver-relations survey and the competitor union grievance precedent, a strong answer recommends piloting on a subset (e.g., one depot/region) with proactive driver communication before fleet-wide rollout, rather than a fleet-wide \"big bang\" install — the labor-relations risk is the standout signal in the context that a generic ROI-only answer would miss.",
+  "archetype": "synthetic",
+  "domain": "Business Case & Investment Justification",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/business-case/logistics-fleet-telematics",
+  "consultingArchetype": "business-case"
+}

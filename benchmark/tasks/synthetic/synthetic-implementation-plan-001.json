@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-implementation-plan-001",
+  "prompt": "A manufacturer is rolling out a new ERP system across 3 plants over the next 12 months. Draft an implementation sequencing plan with named phases, owners, and the single biggest sequencing risk.",
+  "context": "Plant A (largest, 400 employees, most complex custom workflows) is HQ and has the most engaged sponsor (COO). Plant B (150 employees) has the simplest processes and volunteered to go first in a stakeholder survey. Plant C (220 employees) has a plant manager who has publicly expressed skepticism about the project. The vendor recommends a \"pilot then scale\" approach; internal IT has capacity to support one plant's go-live at a time, with a mandatory 6-week stabilization period after each go-live before starting the next.",
+  "binaryCriteria": [
+    {
+      "id": "sequences-pilot-plant-b-first",
+      "description": "Recommends Plant B (simplest processes, willing stakeholders) as the first go-live/pilot site, not Plant A or Plant C.",
+      "guidance": "Fail if Plant A (largest/most complex) or Plant C (skeptical) is recommended to go first."
+    },
+    {
+      "id": "addresses-skeptical-plant-c-explicitly",
+      "description": "Explicitly addresses Plant C's skeptical plant manager with a change-management approach (e.g., using Plant B's proof points), rather than ignoring the stated skepticism.",
+      "guidance": "Fail if Plant C's skepticism is not mentioned or addressed in the sequencing rationale."
+    },
+    {
+      "id": "names-concurrent-golive-as-key-risk",
+      "description": "Identifies attempting concurrent go-lives across plants (violating the stated one-at-a-time IT capacity constraint) as the single biggest sequencing risk.",
+      "guidance": "Fail if the plan proposes or fails to warn against running two plants' go-lives at the same time."
+    }
+  ],
+  "goldNotes": "A strong plan sequences Plant B first as the pilot (simplest processes, most willing stakeholders — lowest risk to prove the model), followed by stabilization, then either Plant C or Plant A next. It should recommend Plant C before Plant A specifically to convert the skeptical plant manager using early proof points from the Plant B pilot (a change-management rationale), saving the largest/most complex site (Plant A) for last when the implementation team has the most experience — rather than naively sequencing by size or sponsor enthusiasm alone. Given the 6-week mandatory stabilization period after each go-live and 3 plants, the plan should show a realistic timeline (roughly go-live-stabilize-go-live-stabilize-go-live, easily consuming most of the 12 months when including pre-go-live prep) and name owners per phase (e.g., project sponsor, plant-level change lead). The single biggest sequencing risk to flag: attempting to run two plants' go-lives concurrently to save time, which the context explicitly states IT capacity does not support.",
+  "archetype": "synthetic",
+  "domain": "Implementation Planning",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/implementation-plan/erp-rollout-3-plants",
+  "consultingArchetype": "implementation-plan"
+}

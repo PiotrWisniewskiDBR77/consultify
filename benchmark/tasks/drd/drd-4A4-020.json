@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-4A4-020",
+  "prompt": "You are advising this client on their digital maturity in \"Data Collection\". Do you accept the level 4 claim in the context at face value? What must you verify before confirming it, and what is the single highest-leverage next step?",
+  "context": "Data Management — Data Collection — excerpt from a client diagnostic interview:\n\"A key source of information is machines and devices equipped with various sensors that measure a range of process parameters, such as temperature, humidity, pressure, speed, rotations, vibrations and more. These data are collected in real-time and processed in IT systems, enabling continuous monitoring and analysis of production processes.\"\n\nThe team says this reflects digital maturity level 4 of 7 (\"Data from Machines and Devices\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a list of machines with sensors and measured parameters (OT inventory); the data-flow architecture (sensor → PLC → SCADA → MES); a log of a parameter deviation from the last 30 days with the action taken. Sign…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Which machines or devices collect data automatically via sensors (temperature, pressure, speed, vibration) — how many are there, and what do they measure? | How does data from machines reach the IT system — direct integration, PLC-to-SCADA-to-MES, or manual re-keying from a display? | When did a machine sensor last detect a parameter deviation before a failure or defect occurred — describe the instance.\nWhat satisfies the evidence bar: Evidence: a list of machines with sensors and measured parameters (OT inventory); the data-flow architecture (sensor → PLC → SCADA → MES); a log of a parameter deviation from the last 30 days with the action taken. Signal: at least one critical machine sends data automatically to the analysis system without a manual reading.\nNext level (5, \"Mobile Data Collection\"): Crucial information can be gathered regarding employees' interactions with mobile applications and devices used to monitor their work. These data may include information about employees' location, behaviours and preferences, and other relevant factors.\nRelevant technology categories: Industrial IoT Sensors, PLC, SCADA, Machine Data Integration, MES",
+  "archetype": "diagnostic",
+  "domain": "Data Management — Data Collection",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "4A#4",
+  "consultingArchetype": "maturity-validate-and-advance"
+}

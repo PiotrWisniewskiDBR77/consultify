@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-6B6-060",
+  "prompt": "The client claims their \"Network and System Protection\" practice has reached the top maturity level (6) described in the context — the most advanced stage in this area. As their advisor, what would you check before accepting that claim, and how would you recommend they defend and extend this advantage over the next 12 months?",
+  "context": "Cybersecurity — Network and System Protection — excerpt from a client diagnostic interview:\n\"VPN — bezpieczne kanały i segmentacja połączeń.\"\n\nThe team says this reflects digital maturity level 6 of 6 (\"VPN i segmentacja\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: a network diagram marking zones/segments and traffic-flow rules. A pentest report on segmentation testing with a date and result. VPN logs from the last 30 days confirming MFA was required for every session."
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: Is the network segmented (at minimum: DMZ zone, production/OT network separated from office network, isolated guest network)? | Do remote connections (remote employees, partners) go through a VPN with enforced MFA and session logging? | Was a network segmentation test (e.g. a pentest) conducted in the last 12 months, confirming no unauthorized traffic between segments?\nWhat satisfies the evidence bar: Evidence: a network diagram marking zones/segments and traffic-flow rules. A pentest report on segmentation testing with a date and result. VPN logs from the last 30 days confirming MFA was required for every session.\nThis is the highest defined level in this area — there is no \"level 7\"; the expected answer is about defending/deepening the advantage, not another checklist deployment.\nRelevant technology categories: Next-Gen Firewall (segmentation), VPN (Cisco AnyConnect, Palo Alto GlobalProtect), Network Access Control (NAC), Pentest Tools",
+  "archetype": "diagnostic",
+  "domain": "Cybersecurity — Network and System Protection",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "6B#6",
+  "consultingArchetype": "maturity-defend-advantage"
+}

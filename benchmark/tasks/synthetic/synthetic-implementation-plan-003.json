@@ -1,0 +1,30 @@
+{
+  "taskId": "synthetic-implementation-plan-003",
+  "prompt": "Following a third-party security audit, a company must remediate 14 findings within 6 months. Draft an implementation plan sequencing the work and flag the biggest execution risk.",
+  "context": "Findings are rated by the auditor: 3 Critical (e.g., unpatched internet-facing systems, weak admin credential policy, no MFA on a key system), 6 High, 5 Medium. Estimated remediation effort: Critical findings average 3 person-weeks each; High findings average 1.5 person-weeks each; Medium findings average 0.5 person-weeks each. The security team has 2 dedicated engineers plus can borrow 1 engineer from infrastructure for at most 8 weeks total this year. Cyber-insurance renewal (in 5 months) is contingent on the 3 Critical findings being remediated.",
+  "binaryCriteria": [
+    {
+      "id": "sequences-critical-findings-first-tied-to-insurance-deadline",
+      "description": "Sequences the 3 Critical findings first and explicitly ties this to the 5-month cyber-insurance renewal deadline.",
+      "guidance": "Fail if Critical findings are not prioritized first, or the insurance-renewal linkage is not mentioned."
+    },
+    {
+      "id": "sequences-by-severity-not-effort",
+      "description": "Sequences High findings ahead of Medium findings by severity rather than prioritizing Medium findings as \"quick wins\" first.",
+      "guidance": "Fail if Medium findings are scheduled before High findings without justification tied to the insurance deadline."
+    },
+    {
+      "id": "flags-bau-capacity-contention-as-risk",
+      "description": "Flags that the given engineer capacity may be consumed by ongoing business-as-usual security work not accounted for in the remediation estimate, as the key execution risk.",
+      "guidance": "Fail if the plan assumes the 2 engineers are 100% available for remediation with no acknowledgment of competing priorities."
+    }
+  ],
+  "goldNotes": "A strong plan sequences the 3 Critical findings first and explicitly ties this to the 5-month cyber-insurance renewal deadline (9 person-weeks of Critical work, achievable well within 5 months with the given team). It should then sequence High findings (9 person-weeks) ahead of Medium (2.5 person-weeks) by severity, and should do basic capacity math: 2 dedicated engineers over 6 months is roughly 52 person-weeks of capacity, plus up to 8 borrowed person-weeks = 60 person-weeks against a total remediation need of about 9+9+2.5 = 20.5 person-weeks — meaning capacity is not the binding constraint here, but the insurance deadline sequencing is still the key structural decision. A weak answer either ignores the insurance-renewal linkage to the Critical findings or fails to sequence by severity (e.g., tackling Medium findings first because they are \"quick wins\"). The biggest execution risk to flag: BAU (business-as-usual) security work competing for the same 2 engineers' time was not accounted for in the given capacity, so the plan should recommend confirming dedicated (not just theoretical) capacity.",
+  "archetype": "synthetic",
+  "domain": "Implementation Planning",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "synthetic",
+  "sourceRef": "synthetic/implementation-plan/cyber-remediation-program",
+  "consultingArchetype": "implementation-plan"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "drd-3E3-019",
+  "prompt": "The client's board is asking whether \"Data Monetization Models\" is \"mature enough\". Using only what's in the context, tell them what's still unverified about the level 3 claim and what to do next.",
+  "context": "Digital Business Models — Data Monetization Models — excerpt from a client diagnostic interview:\n\"The company employs the gathered data to personalize offerings to individual customers. This allows it to deliver customized products, services and content that align more closely with individual customer needs and preferences.\"\n\nThe team says this reflects digital maturity level 3 of 5 (\"Advanced\").",
+  "binaryCriteria": [
+    {
+      "id": "demands-verifiable-evidence",
+      "description": "Does not accept the client self-report at face value; explicitly asks for a concrete, checkable artifact before confirming the maturity level.",
+      "guidance": "Satisfied if the answer requests something like: Evidence: an A/B test report on personalisation with a control group and results (conversion, CLV, NPS); a description of the personalisation rule or model with inputs and outputs; a personalisation log for 3 specific c…"
+    },
+    {
+      "id": "names-next-level-lever",
+      "description": "Identifies a concrete, correct next step or defensive move consistent with the next maturity stage (or, for a top-level claim, a concrete way to defend/extend it) — not a generic \"digitize more\" platitude.",
+      "guidance": "Must name a specific mechanism, system, or practice, not a vague call to \"improve digitally\"."
+    },
+    {
+      "id": "grounded-in-current-practice",
+      "description": "The recommendation is grounded in the specifics of the client's described current practice, not a copy-paste generic maturity answer that ignores the actual tools/process mentioned in the context.",
+      "guidance": "Fail if the answer could be pasted unchanged into any other maturity area without modification."
+    }
+  ],
+  "goldNotes": "Expert verification probes: How do you personalise the offer based on the data you collect — what exactly changes for customer A vs customer B on the site/in communications? | Show us a personalisation algorithm or rule that runs in production — where does the \"signal\" come from, and what does it trigger on the offer side? | How do you measure the effectiveness of personalisation — what is the conversion or loyalty uplift for the personalised group vs the control group?\nWhat satisfies the evidence bar: Evidence: an A/B test report on personalisation with a control group and results (conversion, CLV, NPS); a description of the personalisation rule or model with inputs and outputs; a personalisation log for 3 specific customers from the last 7 days. Signal: personalisation has a proven business effect — it is not just the marketer's \"intuition\".\nNext level (4, \"Advanced Personalization\"): The company uses the accumulated data as a valuable resource that can be sold, shared or used to generate additional revenue. This may involve sharing data with business partners, offering paid analytical services, or using data for advertising purposes.\nRelevant technology categories: Personalization Engine, Recommendation System, A/B Testing Platform, Real-time Decisioning",
+  "archetype": "diagnostic",
+  "domain": "Digital Business Models — Data Monetization Models",
+  "lang": "en",
+  "version": "1.0",
+  "provenance": "drd",
+  "sourceRef": "3E#3",
+  "consultingArchetype": "maturity-validate-and-advance"
+}
