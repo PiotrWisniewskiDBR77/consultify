@@ -30714,7 +30714,10 @@
       "aIPhilosophy": "AI philosophy",
       "whyUseIt": "Why use it",
       "approvedBCGPortfolioMatrix": "Approved BCG portfolio matrix",
-      "sectionPendingExpansion": "This section will be expanded in upcoming iterations."
+      "sectionPendingExpansion": "This section will be expanded in upcoming iterations.",
+      "groupOverview": "Overview",
+      "groupHowItWorks": "How it works",
+      "groupExample": "Example"
     },
     "knownToolDetail": {
       "dynamicSwot": {
@@ -31210,6 +31213,64 @@
               "aiDraft": "AI scores initiatives by strategic potential, position, investment level, and real organizational capacity.",
               "approvedUse": "Approved cards feed synthesis: what to fund, minimally maintain, stop, or convert into a short test.",
               "outcome": "The result is a PMO relief plan: fewer active streams, restart criteria, and a list of topics to close."
+            }
+          ]
+        }
+      },
+      "riskUncertainty": {
+        "goal": {
+          "positioningBody": "Risk & Uncertainty helps test which assumptions may fail, which risks are critical, and which resilience moves need to happen before the decision."
+        },
+        "process": {
+          "missionText": "Decision, uncertainty scope, and success signal.",
+          "evidenceText": "Interview, market, data, and operational signals.",
+          "riskMapText": "Assumptions, risks, and scenarios as AI cards.",
+          "outputsText": "Resilience moves, output candidates, and initiatives."
+        },
+        "outcomes": {
+          "map": "Approved assumption, risk, and scenario map",
+          "moves": "Moves: validate, mitigate, monitor, hedge, escalate",
+          "earlyWarnings": "Early warnings and resilience actions",
+          "candidates": "Downstream output and initiative candidates"
+        },
+        "example": {
+          "intro": "A company plans a transformation, but costs, adoption, and technology dependencies are uncertain. Risk & Uncertainty structures assumptions, risks, and scenarios, then recommends validation and mitigation moves.",
+          "cases": [
+            {
+              "title": "Transformation with uncertain user adoption",
+              "context": "The plan assumes fast rollout, but operating teams have uneven readiness.",
+              "question": "Which assumptions must be validated before budget commitment?",
+              "evidence": [
+                "Interviews show executive enthusiasm, but line-manager skepticism and limited training capacity.",
+                "Previous rollouts were delayed not by technology, but by lack of business ownership after go-live."
+              ],
+              "aiDraft": "AI proposes validation assumptions, adoption risks, a delay scenario, and validate/monitor/mitigate moves.",
+              "approvedUse": "The user accepts cards with real warning indicators such as training attendance, user activity, and workaround volume.",
+              "outcome": "The resilience plan includes an adoption pilot, line sponsors, early warnings, and escalation thresholds before full rollout."
+            },
+            {
+              "title": "Expansion under volatile demand",
+              "context": "Demand is growing, but market data is mixed and dependent on a few customers.",
+              "question": "Which base, downside, and stress scenarios should steer the decision?",
+              "evidence": [
+                "Sales sees large requests from a few customers, but pipeline is concentrated and not yet repeatable.",
+                "Market data shows category growth, but also seasonality and dependence on client investment budgets."
+              ],
+              "aiDraft": "AI proposes base/downside/stress scenarios, demand-concentration risks, and signals to monitor before scale.",
+              "approvedUse": "After scenario approval, the tool builds hedge and monitor moves and suggests thresholds that pause the decision.",
+              "outcome": "The expansion decision gets conditions: minimum independent customers, margin gate, and early warning for conversion decline."
+            },
+            {
+              "title": "Cost program under time pressure",
+              "context": "Leadership expects quick savings, but quality impact risk is high.",
+              "question": "How can the company avoid cutting critical capabilities?",
+              "evidence": [
+                "Finance sees fast savings potential, but operations points to dependencies between cost and SLA.",
+                "History of similar cuts shows complaints and rework costs rising several months later."
+              ],
+              "aiDraft": "AI proposes quality risks, a cost rebound scenario, assumptions to validate, and mitigate/escalate moves.",
+              "approvedUse": "Only mitigations with an owner, trigger, and clear escalation threshold are accepted.",
+              "outcome": "The cost program gets guardrails: what not to cut, what to test through a pilot, and when to stop reductions."
             }
           ]
         }

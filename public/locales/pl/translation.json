@@ -31774,7 +31774,10 @@
       "aIPhilosophy": "Filozofia AI",
       "whyUseIt": "Po co używać",
       "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfolio BCG",
-      "sectionPendingExpansion": "Ta sekcja zostanie uzupełniona w kolejnych iteracjach."
+      "sectionPendingExpansion": "Ta sekcja zostanie uzupełniona w kolejnych iteracjach.",
+      "groupOverview": "Przegląd",
+      "groupHowItWorks": "Jak to działa",
+      "groupExample": "Przykład"
     },
     "knownToolDetail": {
       "dynamicSwot": {
@@ -32270,6 +32273,64 @@
               "aiDraft": "AI ocenia inicjatywy według strategicznego potencjału, pozycji, poziomu inwestycji i realnej przepustowości organizacji.",
               "approvedUse": "Zaakceptowane karty przechodzą do syntezy: co finansować, co utrzymać minimalnie, co zakończyć, a co zamienić w krótki test.",
               "outcome": "Powstaje plan odciążenia PMO: mniej aktywnych strumieni, jasne kryteria restartu i lista tematów do zamknięcia."
+            }
+          ]
+        }
+      },
+      "riskUncertainty": {
+        "goal": {
+          "positioningBody": "Risk & Uncertainty pomaga sprawdzić, jakie założenia mogą się nie sprawdzić, które ryzyka są krytyczne i jakie ruchy odporności trzeba uruchomić przed decyzją."
+        },
+        "process": {
+          "missionText": "Decyzja, zakres niepewności i sygnał sukcesu.",
+          "evidenceText": "Sygnały z wywiadu, rynku, danych i operacji.",
+          "riskMapText": "Założenia, ryzyka i scenariusze jako karty AI.",
+          "outputsText": "Ruchy odporności, output candidates i inicjatywy."
+        },
+        "outcomes": {
+          "map": "Zaakceptowana mapa założeń, ryzyk i scenariuszy",
+          "moves": "Ruchy: validate, mitigate, monitor, hedge, escalate",
+          "earlyWarnings": "Early warnings i działania odporności",
+          "candidates": "Kandydaci outputów i inicjatyw downstream"
+        },
+        "example": {
+          "intro": "Firma planuje transformację, ale niepewne są koszty, adopcja i zależności technologiczne. Risk & Uncertainty porządkuje założenia, ryzyka i scenariusze, a potem wskazuje ruchy walidacji i mitygacji.",
+          "cases": [
+            {
+              "title": "Transformacja z niepewną adopcją użytkowników",
+              "context": "Plan zakłada szybkie wdrożenie, ale zespoły operacyjne mają różne poziomy gotowości.",
+              "question": "Które założenia trzeba zwalidować przed commitmentem budżetu?",
+              "evidence": [
+                "Wywiady pokazują entuzjazm zarządu, ale sceptycyzm kierowników liniowych i brak czasu na szkolenia.",
+                "Poprzednie wdrożenia miały opóźnienia nie przez technologię, tylko przez brak ownershipu po stronie biznesu."
+              ],
+              "aiDraft": "AI proponuje założenia do walidacji, ryzyka adopcji, scenariusz opóźnienia oraz ruchy validate/monitor/mitigate.",
+              "approvedUse": "Użytkownik akceptuje karty, które mają realne wskaźniki ostrzegawcze, np. frekwencję szkoleń, aktywność użytkowników i liczbę workaroundów.",
+              "outcome": "Powstaje plan odporności: pilot adopcyjny, sponsorzy liniowi, early warnings i progi eskalacji przed pełnym rolloutem."
+            },
+            {
+              "title": "Ekspansja przy zmiennym popycie",
+              "context": "Popyt rośnie, ale dane rynkowe są rozbieżne i zależne od kilku klientów.",
+              "question": "Jaki scenariusz bazowy, downside i stress powinien sterować decyzją?",
+              "evidence": [
+                "Sprzedaż widzi duże zapytania od kilku klientów, ale pipeline jest skoncentrowany i ma niską powtarzalność.",
+                "Dane rynkowe pokazują wzrost kategorii, lecz też sezonowość i zależność od budżetów inwestycyjnych klientów."
+              ],
+              "aiDraft": "AI proponuje scenariusze base/downside/stress, ryzyka koncentracji popytu i sygnały do monitorowania przed decyzją scale.",
+              "approvedUse": "Po akceptacji scenariuszy narzędzie buduje ruchy hedge i monitor oraz sugeruje progi, przy których decyzja ma być zatrzymana.",
+              "outcome": "Decyzja ekspansyjna dostaje warunki: minimalna liczba niezależnych klientów, próg marży i early warning na spadek konwersji."
+            },
+            {
+              "title": "Program kosztowy pod presją czasu",
+              "context": "Zarząd oczekuje szybkich oszczędności, ale ryzyko wpływu na jakość jest wysokie.",
+              "question": "Jak ograniczyć ryzyko cięcia zdolności krytycznych?",
+              "evidence": [
+                "Finanse widzą szybki potencjał oszczędności, ale operacje wskazują zależności między kosztami a SLA.",
+                "Historia podobnych cięć pokazuje wzrost reklamacji i kosztów naprawczych po kilku miesiącach."
+              ],
+              "aiDraft": "AI proponuje ryzyka jakości, scenariusz odbicia kosztów, założenia do walidacji oraz ruchy mitigate/escalate.",
+              "approvedUse": "Akceptowane są tylko te mitygacje, które mają właściciela, trigger i jasny próg eskalacji.",
+              "outcome": "Powstaje program oszczędności z guardrailami: czego nie ciąć, co testować krótkim pilotażem i kiedy zatrzymać redukcję."
             }
           ]
         }

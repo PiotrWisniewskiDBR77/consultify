@@ -1140,9 +1140,7 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {isPolish
-              ? 'Risk & Uncertainty pomaga sprawdzić, jakie założenia mogą się nie sprawdzić, które ryzyka są krytyczne i jakie ruchy odporności trzeba uruchomić przed decyzją.'
-              : 'Risk & Uncertainty helps test which assumptions may fail, which risks are critical, and which resilience moves need to happen before the decision.'}
+            {t('discoveryToolsMain.knownToolDetail.riskUncertainty.goal.positioningBody')}
           </div>
         </div>
         <RiskUncertaintyLibraryGraphic isPolish={isPolish} variant="process" />
@@ -1152,29 +1150,15 @@ export function KnownToolDetailView(props: {
     const riskProcessSection = (
       <div className="grid gap-4 md:grid-cols-2">
         {[
-          [
-            'Mission',
-            isPolish
-              ? 'Decyzja, zakres niepewności i sygnał sukcesu.'
-              : 'Decision, uncertainty scope, and success signal.',
-          ],
+          ['Mission', t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.missionText')],
           [
             'Evidence',
-            isPolish
-              ? 'Sygnały z wywiadu, rynku, danych i operacji.'
-              : 'Interview, market, data, and operational signals.',
+            t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.evidenceText'),
           ],
-          [
-            'Risk map',
-            isPolish
-              ? 'Założenia, ryzyka i scenariusze jako karty AI.'
-              : 'Assumptions, risks, and scenarios as AI cards.',
-          ],
+          ['Risk map', t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.riskMapText')],
           [
             'Outputs',
-            isPolish
-              ? 'Ruchy odporności, output candidates i inicjatywy.'
-              : 'Resilience moves, output candidates, and initiatives.',
+            t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.outputsText'),
           ],
         ].map(([title, text]) => (
           <div
@@ -1193,18 +1177,10 @@ export function KnownToolDetailView(props: {
     const riskOutcomesSection = (
       <div className="space-y-3">
         {[
-          isPolish
-            ? 'Zaakceptowana mapa założeń, ryzyk i scenariuszy'
-            : 'Approved assumption, risk, and scenario map',
-          isPolish
-            ? 'Ruchy: validate, mitigate, monitor, hedge, escalate'
-            : 'Moves: validate, mitigate, monitor, hedge, escalate',
-          isPolish
-            ? 'Early warnings i działania odporności'
-            : 'Early warnings and resilience actions',
-          isPolish
-            ? 'Kandydaci outputów i inicjatyw downstream'
-            : 'Downstream output and initiative candidates',
+          t('discoveryToolsMain.knownToolDetail.riskUncertainty.outcomes.map'),
+          t('discoveryToolsMain.knownToolDetail.riskUncertainty.outcomes.moves'),
+          t('discoveryToolsMain.knownToolDetail.riskUncertainty.outcomes.earlyWarnings'),
+          t('discoveryToolsMain.knownToolDetail.riskUncertainty.outcomes.candidates'),
         ].map((text) => (
           <div
             key={text}
@@ -1219,111 +1195,20 @@ export function KnownToolDetailView(props: {
     const riskExampleSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-sm leading-relaxed text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
-          {isPolish
-            ? 'Firma planuje transformację, ale niepewne są koszty, adopcja i zależności technologiczne. Risk & Uncertainty porządkuje założenia, ryzyka i scenariusze, a potem wskazuje ruchy walidacji i mitygacji.'
-            : 'A company plans a transformation, but costs, adoption, and technology dependencies are uncertain. Risk & Uncertainty structures assumptions, risks, and scenarios, then recommends validation and mitigation moves.'}
+          {t('discoveryToolsMain.knownToolDetail.riskUncertainty.example.intro')}
         </div>
         {caseGrid(
-          isPolish
-            ? [
-                {
-                  title: 'Transformacja z niepewną adopcją użytkowników',
-                  context:
-                    'Plan zakłada szybkie wdrożenie, ale zespoły operacyjne mają różne poziomy gotowości.',
-                  question: 'Które założenia trzeba zwalidować przed commitmentem budżetu?',
-                  evidence: [
-                    'Wywiady pokazują entuzjazm zarządu, ale sceptycyzm kierowników liniowych i brak czasu na szkolenia.',
-                    'Poprzednie wdrożenia miały opóźnienia nie przez technologię, tylko przez brak ownershipu po stronie biznesu.',
-                  ],
-                  aiDraft:
-                    'AI proponuje założenia do walidacji, ryzyka adopcji, scenariusz opóźnienia oraz ruchy validate/monitor/mitigate.',
-                  approvedUse:
-                    'Użytkownik akceptuje karty, które mają realne wskaźniki ostrzegawcze, np. frekwencję szkoleń, aktywność użytkowników i liczbę workaroundów.',
-                  outcome:
-                    'Powstaje plan odporności: pilot adopcyjny, sponsorzy liniowi, early warnings i progi eskalacji przed pełnym rolloutem.',
-                },
-                {
-                  title: 'Ekspansja przy zmiennym popycie',
-                  context:
-                    'Popyt rośnie, ale dane rynkowe są rozbieżne i zależne od kilku klientów.',
-                  question: 'Jaki scenariusz bazowy, downside i stress powinien sterować decyzją?',
-                  evidence: [
-                    'Sprzedaż widzi duże zapytania od kilku klientów, ale pipeline jest skoncentrowany i ma niską powtarzalność.',
-                    'Dane rynkowe pokazują wzrost kategorii, lecz też sezonowość i zależność od budżetów inwestycyjnych klientów.',
-                  ],
-                  aiDraft:
-                    'AI proponuje scenariusze base/downside/stress, ryzyka koncentracji popytu i sygnały do monitorowania przed decyzją scale.',
-                  approvedUse:
-                    'Po akceptacji scenariuszy narzędzie buduje ruchy hedge i monitor oraz sugeruje progi, przy których decyzja ma być zatrzymana.',
-                  outcome:
-                    'Decyzja ekspansyjna dostaje warunki: minimalna liczba niezależnych klientów, próg marży i early warning na spadek konwersji.',
-                },
-                {
-                  title: 'Program kosztowy pod presją czasu',
-                  context:
-                    'Zarząd oczekuje szybkich oszczędności, ale ryzyko wpływu na jakość jest wysokie.',
-                  question: 'Jak ograniczyć ryzyko cięcia zdolności krytycznych?',
-                  evidence: [
-                    'Finanse widzą szybki potencjał oszczędności, ale operacje wskazują zależności między kosztami a SLA.',
-                    'Historia podobnych cięć pokazuje wzrost reklamacji i kosztów naprawczych po kilku miesiącach.',
-                  ],
-                  aiDraft:
-                    'AI proponuje ryzyka jakości, scenariusz odbicia kosztów, założenia do walidacji oraz ruchy mitigate/escalate.',
-                  approvedUse:
-                    'Akceptowane są tylko te mitygacje, które mają właściciela, trigger i jasny próg eskalacji.',
-                  outcome:
-                    'Powstaje program oszczędności z guardrailami: czego nie ciąć, co testować krótkim pilotażem i kiedy zatrzymać redukcję.',
-                },
-              ]
-            : [
-                {
-                  title: 'Transformation with uncertain user adoption',
-                  context:
-                    'The plan assumes fast rollout, but operating teams have uneven readiness.',
-                  question: 'Which assumptions must be validated before budget commitment?',
-                  evidence: [
-                    'Interviews show executive enthusiasm, but line-manager skepticism and limited training capacity.',
-                    'Previous rollouts were delayed not by technology, but by lack of business ownership after go-live.',
-                  ],
-                  aiDraft:
-                    'AI proposes validation assumptions, adoption risks, a delay scenario, and validate/monitor/mitigate moves.',
-                  approvedUse:
-                    'The user accepts cards with real warning indicators such as training attendance, user activity, and workaround volume.',
-                  outcome:
-                    'The resilience plan includes an adoption pilot, line sponsors, early warnings, and escalation thresholds before full rollout.',
-                },
-                {
-                  title: 'Expansion under volatile demand',
-                  context:
-                    'Demand is growing, but market data is mixed and dependent on a few customers.',
-                  question: 'Which base, downside, and stress scenarios should steer the decision?',
-                  evidence: [
-                    'Sales sees large requests from a few customers, but pipeline is concentrated and not yet repeatable.',
-                    'Market data shows category growth, but also seasonality and dependence on client investment budgets.',
-                  ],
-                  aiDraft:
-                    'AI proposes base/downside/stress scenarios, demand-concentration risks, and signals to monitor before scale.',
-                  approvedUse:
-                    'After scenario approval, the tool builds hedge and monitor moves and suggests thresholds that pause the decision.',
-                  outcome:
-                    'The expansion decision gets conditions: minimum independent customers, margin gate, and early warning for conversion decline.',
-                },
-                {
-                  title: 'Cost program under time pressure',
-                  context: 'Leadership expects quick savings, but quality impact risk is high.',
-                  question: 'How can the company avoid cutting critical capabilities?',
-                  evidence: [
-                    'Finance sees fast savings potential, but operations points to dependencies between cost and SLA.',
-                    'History of similar cuts shows complaints and rework costs rising several months later.',
-                  ],
-                  aiDraft:
-                    'AI proposes quality risks, a cost rebound scenario, assumptions to validate, and mitigate/escalate moves.',
-                  approvedUse:
-                    'Only mitigations with an owner, trigger, and clear escalation threshold are accepted.',
-                  outcome:
-                    'The cost program gets guardrails: what not to cut, what to test through a pilot, and when to stop reductions.',
-                },
-              ]
+          t('discoveryToolsMain.knownToolDetail.riskUncertainty.example.cases', {
+            returnObjects: true,
+          }) as Array<{
+            title: string;
+            context: string;
+            question: string;
+            evidence: string[];
+            aiDraft: string;
+            approvedUse: string;
+            outcome: string;
+          }>
         )}
         <RiskUncertaintyLibraryGraphic isPolish={isPolish} variant="example" />
       </div>
@@ -1331,13 +1216,15 @@ export function KnownToolDetailView(props: {
 
     // ── Standard-C group tabs (mirrors InsightViewer/InitiativeDocumentView) ──
     // Every per-tool branch below returns the same 4 sections (goal / process /
-    // outcomes / example). A bilingual groupLabels array switched on isPolish +
+    // outcomes / example). A localized groupLabels array +
     // a per-section group assignment makes NModeShell's C-board render top group
     // tabs; wide narrative sections get cSpan: 2 so they breathe in the dense
     // 3-column grid. N-mode uses the same group fields for sidebar headers.
-    const groupLabels = isPolish
-      ? ['Przegląd', 'Jak to działa', 'Przykład']
-      : ['Overview', 'How it works', 'Example'];
+    const groupLabels = [
+      t('discoveryToolsMain.knownToolDetailView.groupOverview'),
+      t('discoveryToolsMain.knownToolDetailView.groupHowItWorks'),
+      t('discoveryToolsMain.knownToolDetailView.groupExample'),
+    ];
     const groupIndexById: Record<string, number> = {
       goal: 0, // Overview / Przegląd
       process: 1, // How it works / Jak to działa
