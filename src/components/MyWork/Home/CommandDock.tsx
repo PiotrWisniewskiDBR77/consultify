@@ -63,24 +63,16 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
         {runtimeSummary ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <div className="rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-blue-100">
-              {isPolish
-                ? `Inbox oczekuje ${runtimeSummary.inboxPending}`
-                : `Inbox pending ${runtimeSummary.inboxPending}`}
+              {t('myWork.commandDock.inboxPending', { count: runtimeSummary.inboxPending })}
             </div>
             <div className="rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-amber-100">
-              {isPolish
-                ? `SLA zagrozone ${runtimeSummary.inboxAtRisk}`
-                : `SLA at risk ${runtimeSummary.inboxAtRisk}`}
+              {t('myWork.commandDock.slaAtRisk', { count: runtimeSummary.inboxAtRisk })}
             </div>
             <div className="rounded-full border border-primary-400/20 bg-primary-500/10 px-3 py-1 text-primary-100">
-              {isPolish
-                ? `Ostatnie outputy ${runtimeSummary.recentOutputs}`
-                : `Recent outputs ${runtimeSummary.recentOutputs}`}
+              {t('myWork.commandDock.recentOutputs', { count: runtimeSummary.recentOutputs })}
             </div>
             <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-emerald-100">
-              {isPolish
-                ? `Do review ${runtimeSummary.reviewSharedOutputs}`
-                : `Needs review ${runtimeSummary.reviewSharedOutputs}`}
+              {t('myWork.commandDock.needsReview', { count: runtimeSummary.reviewSharedOutputs })}
             </div>
           </div>
         ) : null}

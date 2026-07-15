@@ -2151,7 +2151,8 @@
       "ariaLabel6": "Tryb widoku",
       "title4": "Lista",
       "title5": "Karty",
-      "ariaLabel7": "Tryb widoku pomyslow"
+      "ariaLabel7": "Tryb widoku pomyslow",
+      "unifiedCreateNew": "+ Nowy"
     },
     "inboxContent": {
       "justNow": "Przed chwilą",
@@ -2441,7 +2442,10 @@
       "assignee": "Przypisany",
       "decider": "Decydent",
       "noStakeholdersAssigned": "Brak przypisanych interesariuszy",
-      "whyYouGotIt": "Dlaczego to dostałeś"
+      "whyYouGotIt": "Dlaczego to dostałeś",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
@@ -2653,7 +2657,14 @@
         "bulkPriorityPrompt": "Ustaw priorytet dla zaznaczonych decyzji (LOW / MEDIUM / HIGH / CRITICAL):",
         "bulkPrioritySet": "Ustawiono priorytet {{priority}} dla {{count}} decyzji",
         "bulkPriorityFailed": "Nie udało się zaktualizować priorytetu"
-      }
+      },
+      "daysWaiting": "{{days}}d oczekiwania",
+      "delayDays_one": "+{{count}} dzień",
+      "delayDays_few": "+{{count}} dni",
+      "delayDays_many": "+{{count}} dni",
+      "delayDays_other": "+{{count}} dni",
+      "escalateUrgent": "Eskaluj",
+      "escalate": "Eskaluj"
     },
     "decisionPreview": {
       "en": "pl",
@@ -2711,7 +2722,11 @@
       "decision": "Decyzja",
       "title2": "Otwórz pełny widok",
       "open": "Otwórz",
-      "loading": "Ładowanie…"
+      "loading": "Ładowanie…",
+      "priorityCritical": "Krytyczne",
+      "priorityHigh": "Wysoki",
+      "priorityMedium": "Średni",
+      "priorityLow": "Niski"
     },
     "tasksList": {
       "you": "Ty",
@@ -2869,7 +2884,10 @@
       "emptyState": {
         "title": "Brak powiadomień",
         "description": "Wszystko na bieżąco!"
-      }
+      },
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
     },
     "decisionDetail": {
       "language": "pl",
@@ -3293,7 +3311,11 @@
       "quickAdd": "szybkie dodawanie",
       "changesWillBeSaved": "Zmiany zostaną zapisane natychmiast",
       "cancel": "Anuluj",
-      "saveChanges": "Zapisz zmiany"
+      "saveChanges": "Zapisz zmiany",
+      "lagDays_one": "{{count}} dzień",
+      "lagDays_few": "{{count}} dni",
+      "lagDays_many": "{{count}} dni",
+      "lagDays_other": "{{count}} dni"
     },
     "taskTemplates": {
       "toastError": "Nazwa szablonu jest wymagana",
@@ -3407,7 +3429,14 @@
       "noCommentsYet": "Brak komentarzy",
       "startTheConversation": "Rozpocznij dyskusję...",
       "placeholder2": "Napisz komentarz...",
-      "send": "Wyślij"
+      "send": "Wyślij",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu",
+      "repliesCount_one": "{{count}} odpowiedź",
+      "repliesCount_few": "{{count}} odpowiedzi",
+      "repliesCount_many": "{{count}} odpowiedzi",
+      "repliesCount_other": "{{count}} odpowiedzi"
     },
     "taskTimer": {
       "toastSuccess": "⏱️ Timer uruchomiony",
@@ -3426,7 +3455,11 @@
       "title2": "Resetuj",
       "history": "Historia",
       "entryStartTimeToLocaleTimeString": "pl-PL",
-      "entryEndTimeToLocaleTimeString": "pl-PL"
+      "entryEndTimeToLocaleTimeString": "pl-PL",
+      "durationHoursMinutes": "{{hrs}}h {{mins}}min",
+      "durationMinutes": "{{mins}}min",
+      "durationUnderOneMinute": "<1min",
+      "loggedDuration": "⏱️ Zapisano {{duration}}"
     },
     "linkedItems": {
       "toastSuccess": "Powiązanie dodane",
@@ -3677,7 +3710,14 @@
       "failedToReadThe": "Nie udalo sie odczytac obciazenia wybranego dnia.",
       "calendarViewIsTemporarily": "Widok kalendarza jest chwilowo niedostępny.",
       "thisDoesNotMean": "To nie oznacza, że dzień jest pusty. Spróbuj odświeżyć dane i sprawdź ponownie.",
-      "label": "Ponów"
+      "label": "Ponów",
+      "helperConnected": "{{providerLabel}} jest gotowe do filtrowania w kalendarzu.",
+      "helperPending": "{{providerLabel}} jest już na ścieżce governed, ale konfiguracja lub autoryzacja nie jest jeszcze domknięta.",
+      "helperReauth": "{{providerLabel}} wymaga ponownej autoryzacji zanim wróci do wiarygodnego syncu.",
+      "helperError": "{{providerLabel}} ma aktywny błąd i nie powinno być traktowane jak gotowe źródło kalendarza.",
+      "helperComingSoon": "Integracja {{providerLabel}} jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.",
+      "heavyLoadSuggestion": "Masz tu {{totalItems}} pozycji, w tym {{taskCount}} zadań i {{decisionCount}} decyzji. Warto rozważyć przesunięcie lub korektę planu.",
+      "partialLoadSuggestion": "Wybrany dzień ma {{totalItems}} pozycji. To dobry moment na świadome dopasowanie kolejnych zadań."
     },
     "calendarCreateEvent": {
       "dayLoadPreviewIs": "Podglad obciazenia dnia jest chwilowo niedostepny, ale nadal mozesz zapisac zadanie.",
@@ -3707,7 +3747,10 @@
       "theFormChecksExisting": "Formularz sprawdza istniejące zadania i decyzje dla wybranego dnia.",
       "task": "Zadanie",
       "decision": "Decyzja",
-      "loadingConflicts": "Ładowanie konfliktów..."
+      "loadingConflicts": "Ładowanie konfliktów...",
+      "itemsOnThisDay": "Na ten dzień masz już {{count}} pozycji.",
+      "dayPreviewLimited": "Podgląd dnia jest ograniczony",
+      "dayAlreadyBusy": "Dzień jest już dość obciążony"
     },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "pl-PL",
@@ -3717,14 +3760,27 @@
       "label": "Dowolna",
       "label2": "Przypisane do mnie",
       "label3": "Jestem właścicielem",
-      "today": "Dzisiaj"
+      "today": "Dzisiaj",
+      "weekdaysShort": [
+        "Pn",
+        "Wt",
+        "Śr",
+        "Cz",
+        "Pt",
+        "So",
+        "Nd"
+      ]
     },
     "calendarGrid": {
       "busy": "Zajęte",
       "today": "Dziś",
       "currentDateToLocaleDateString": "pl-PL",
       "locale": "pl",
-      "allDayText": "cały dzień"
+      "allDayText": "cały dzień",
+      "viewMonth": "Miesiąc",
+      "viewWeek": "Tydzień",
+      "viewDay": "Dzień",
+      "viewList": "Lista"
     },
     "commandDock": {
       "doThisNow": "Zrób teraz",
@@ -3734,7 +3790,11 @@
       "create": "Utwórz",
       "goThere": "Przejdź",
       "askAI": "Zapytaj AI",
-      "open2": "Otwórz"
+      "open2": "Otwórz",
+      "inboxPending": "Inbox oczekuje {{count}}",
+      "slaAtRisk": "SLA zagrożone {{count}}",
+      "recentOutputs": "Ostatnie outputy {{count}}",
+      "needsReview": "Do review {{count}}"
     },
     "worldPulse": {
       "whatSHappeningIn": "Co się dzieje w Twoim świecie",
@@ -3758,7 +3818,15 @@
       "letSTalkAbout": "Porozmawiajmy o tym"
     },
     "gentleNudge": {
-      "view": "Zobacz"
+      "view": "Zobacz",
+      "decisionsWaiting_one": "{{count}} decyzja czeka od wczoraj",
+      "decisionsWaiting_few": "{{count}} decyzje czekają od wczoraj",
+      "decisionsWaiting_many": "{{count}} decyzji czeka od wczoraj",
+      "decisionsWaiting_other": "{{count}} decyzji czeka od wczoraj",
+      "tasksOverdue_one": "{{count}} zadanie po terminie",
+      "tasksOverdue_few": "{{count}} zadania po terminie",
+      "tasksOverdue_many": "{{count}} zadań po terminie",
+      "tasksOverdue_other": "{{count}} zadań po terminie"
     },
     "aiPlanView": {
       "aIDayPlan": "Plan dnia AI",
@@ -8324,7 +8392,8 @@
       "noChangesSuggested": "Brak propozycji zmian.",
       "rolesLookConsistent": "Role wyglądają spójnie.",
       "cancel": "Anuluj",
-      "apply": "Zastosuj"
+      "apply": "Zastosuj",
+      "autoCreatedProjectDescription": "Projekt automatycznie utworzony dla inicjatywy \"{{name}}\""
     },
     "financialAnalysisSection": {
       "financialAnalysis": "Analiza finansowa",
@@ -8910,7 +8979,10 @@
     },
     "financeShortcut": "Finanse",
     "copyLinkAction": "Kopiuj link",
-    "newButton": "Nowy"
+    "newButton": "Nowy",
+    "initiativeFullView": {
+      "viewSource": "Zobacz źródło"
+    }
   },
   "execution": {
     "title": "Centrum Realizacji",
@@ -9672,7 +9744,9 @@
       "ready": "PDF gotowy do pobrania!",
       "download": "Pobierz",
       "generating": "Generowanie...",
-      "generate": "Generuj PDF"
+      "generate": "Generuj PDF",
+      "generatedSuccess": "PDF wygenerowany pomyślnie",
+      "generateFailed": "Nie udało się wygenerować PDF"
     }
   },
   "reports": {
@@ -22231,7 +22305,11 @@
     "notGeneratedUseGenerateSurveys": "Niewygenerowane. Użyj „Generuj ankiety”, aby rozłożyć szablony × osoby na przydziały wywiadów.",
     "surveysCompletedOfTotal": "{{done}} z {{total}} ankiet ukończonych",
     "completionUnavailable": "Postęp niedostępny.",
-    "suggestedPlan": "Sugerowany plan"
+    "suggestedPlan": "Sugerowany plan",
+    "confirmDeleteBulk": "Usunąć {{count}} program(ów) audytowych?",
+    "aiHintSummarize": "Podsumuj audyt",
+    "aiHintNextSteps": "Następne kroki",
+    "noSuggestedPlan": "Brak sugerowanego planu"
   },
   "aios": {
     "wave5ArtifactRuntimePanel": {

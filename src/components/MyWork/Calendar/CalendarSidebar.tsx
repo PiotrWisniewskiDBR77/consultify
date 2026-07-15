@@ -115,9 +115,10 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         </div>
 
         <div className="grid grid-cols-7 gap-0.5 text-center">
-          {(isPolish
-            ? ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd']
-            : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+          {(
+            t('myWork.calendarSidebar.weekdaysShort', {
+              returnObjects: true,
+            }) as string[]
           ).map((d) => (
             <div
               key={d}

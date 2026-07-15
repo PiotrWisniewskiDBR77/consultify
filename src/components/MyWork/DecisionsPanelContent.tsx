@@ -29,6 +29,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import { type RowActionSection } from '@/components/shared/RowActionsMenu';
@@ -184,7 +185,7 @@ const getDecisionTypeIcon = (type?: string): LucideIcon => {
 
 const statusLabel = (
   status: string | undefined,
-  t: (key: string, defaultValue: string) => string
+  t: TFunction
 ): string => {
   switch (status?.toUpperCase()) {
     case 'APPROVED':
@@ -254,7 +255,7 @@ const getInitials = (name?: string) => {
 // the badge itself still renders from the real (case-preserved) field.
 // Kebab (actions) and select checkbox are auto-appended by StandardTable.
 const buildDecisionColumns = (
-  t: (key: string, defaultValue: string) => string,
+  t: TFunction,
   isPolish: boolean,
   viewMode: ViewMode
 ): TableColumn[] => [
@@ -325,7 +326,7 @@ const buildDecisionColumns = (
       ) : (
         <MetaChip
           icon={Clock}
-          label={isPolish ? `${daysWaiting}d oczekiwania` : `${daysWaiting}d waiting`}
+          label={t('myWork.decisionsPanel.daysWaiting', { days: daysWaiting })}
         />
       );
     },
@@ -392,7 +393,7 @@ interface DecisionRowHandlers {
 const buildDecisionKebabSections = (
   decision: Decision,
   h: DecisionRowHandlers,
-  t: (key: string, defaultValue: string) => string,
+  t: TFunction,
   isPolish: boolean
 ): RowActionSection[] => {
   const dueDate = decision.dueDate || decision.deadline;
@@ -470,7 +471,7 @@ const buildDecisionKebabSections = (
                 onClick: () => {},
                 submenu: [1, 3, 7].map((d) => ({
                   id: `delay-${d}`,
-                  label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                  label: t('myWork.decisionsPanel.delayDays', { count: d }),
                   icon: Clock,
                   disabled: true,
                   description: t('myWork.decisionsPanel.description', 'Coming soon (backend)'),
@@ -523,7 +524,7 @@ const buildDecisionKebabSections = (
 const buildAwaitingKebabSections = (
   decision: Decision,
   h: DecisionRowHandlers,
-  t: (key: string, defaultValue: string) => string,
+  t: TFunction,
   isPolish: boolean
 ): RowActionSection[] => {
   const dueDate = decision.dueDate || decision.deadline;
@@ -551,7 +552,7 @@ const buildAwaitingKebabSections = (
               },
               {
                 id: 'escalate',
-                label: isPolish ? 'Eskaluj' : overdue ? 'Escalate (urgent)' : 'Escalate',
+                label: overdue ? t('myWork.decisionsPanel.escalateUrgent') : t('myWork.decisionsPanel.escalate'),
                 icon: TrendingUp,
                 variant: (overdue ? 'danger' : 'default') as 'danger' | 'default',
                 onClick: () => h.onEscalate(decision.id),
@@ -602,7 +603,7 @@ const buildAwaitingKebabSections = (
                 onClick: () => {},
                 submenu: [1, 3, 7].map((d) => ({
                   id: `delay-${d}`,
-                  label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                  label: t('myWork.decisionsPanel.delayDays', { count: d }),
                   icon: Clock,
                   disabled: true,
                   description: t('myWork.decisionsPanel.description3', 'Coming soon (backend)'),

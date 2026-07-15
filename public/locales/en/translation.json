@@ -3005,7 +3005,8 @@
       "ariaLabel6": "View mode",
       "title4": "List",
       "title5": "Cards",
-      "ariaLabel7": "Ideas view mode"
+      "ariaLabel7": "Ideas view mode",
+      "unifiedCreateNew": "+ New"
     },
     "inboxContent": {
       "justNow": "Just now",
@@ -3295,7 +3296,10 @@
       "assignee": "Assignee",
       "decider": "Decider",
       "noStakeholdersAssigned": "No stakeholders assigned",
-      "whyYouGotIt": "Why you got it"
+      "whyYouGotIt": "Why you got it",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     },
     "projects": {
       "failedToLoadProjects": "Failed to load projects",
@@ -3507,7 +3511,14 @@
         "bulkPriorityPrompt": "Set priority for selected decisions (LOW / MEDIUM / HIGH / CRITICAL):",
         "bulkPrioritySet": "Priority set to {{priority}} for {{count}} decisions",
         "bulkPriorityFailed": "Failed to update priority"
-      }
+      },
+      "daysWaiting": "{{days}}d waiting",
+      "delayDays_one": "+{{count}}d",
+      "delayDays_few": "+{{count}}d",
+      "delayDays_many": "+{{count}}d",
+      "delayDays_other": "+{{count}}d",
+      "escalateUrgent": "Escalate (urgent)",
+      "escalate": "Escalate"
     },
     "decisionPreview": {
       "en": "en",
@@ -3565,7 +3576,11 @@
       "decision": "Decision",
       "title2": "Open full detail",
       "open": "Open",
-      "loading": "Loading…"
+      "loading": "Loading…",
+      "priorityCritical": "Critical",
+      "priorityHigh": "High",
+      "priorityMedium": "Medium",
+      "priorityLow": "Low"
     },
     "tasksList": {
       "you": "You",
@@ -3723,7 +3738,10 @@
       "emptyState": {
         "title": "No notifications",
         "description": "You're all caught up!"
-      }
+      },
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     },
     "decisionDetail": {
       "language": "en",
@@ -4147,7 +4165,9 @@
       "quickAdd": "quick add",
       "changesWillBeSaved": "Changes will be saved immediately",
       "cancel": "Cancel",
-      "saveChanges": "Save Changes"
+      "saveChanges": "Save Changes",
+      "lagDays_one": "{{count}} day",
+      "lagDays_other": "{{count}} days"
     },
     "taskTemplates": {
       "toastError": "Template name is required",
@@ -4261,7 +4281,12 @@
       "noCommentsYet": "No comments yet",
       "startTheConversation": "Start the conversation...",
       "placeholder2": "Write a comment...",
-      "send": "Send"
+      "send": "Send",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago",
+      "repliesCount_one": "{{count}} reply",
+      "repliesCount_other": "{{count}} replies"
     },
     "taskTimer": {
       "toastSuccess": "⏱️ Timer started",
@@ -4280,7 +4305,11 @@
       "title2": "Reset",
       "history": "History",
       "entryStartTimeToLocaleTimeString": "en-US",
-      "entryEndTimeToLocaleTimeString": "en-US"
+      "entryEndTimeToLocaleTimeString": "en-US",
+      "durationHoursMinutes": "{{hrs}}h {{mins}}m",
+      "durationMinutes": "{{mins}}m",
+      "durationUnderOneMinute": "<1m",
+      "loggedDuration": "⏱️ Logged {{duration}}"
     },
     "linkedItems": {
       "toastSuccess": "Link added",
@@ -4531,7 +4560,14 @@
       "failedToReadThe": "Failed to read the selected day load.",
       "calendarViewIsTemporarily": "Calendar view is temporarily unavailable.",
       "thisDoesNotMean": "This does not mean the day is empty. Refresh the data and try again.",
-      "label": "Retry"
+      "label": "Retry",
+      "helperConnected": "{{providerLabel}} is ready for calendar filtering.",
+      "helperPending": "{{providerLabel}} is on the governed path, but configuration or authorization is not complete yet.",
+      "helperReauth": "{{providerLabel}} needs reauthorization before it returns to a trustworthy sync state.",
+      "helperError": "{{providerLabel}} has an active error and should not be treated as a ready calendar source.",
+      "helperComingSoon": "{{providerLabel}} integration is in preparation — two-way connection is not available yet.",
+      "heavyLoadSuggestion": "You already have {{totalItems}} items here, including {{taskCount}} tasks and {{decisionCount}} decisions. Consider a reschedule or a planning adjustment.",
+      "partialLoadSuggestion": "The selected day already has {{totalItems}} items. This is a good moment to place new work deliberately."
     },
     "calendarCreateEvent": {
       "dayLoadPreviewIs": "Day-load preview is temporarily unavailable, but you can still create the task.",
@@ -4561,7 +4597,10 @@
       "theFormChecksExisting": "The form checks existing tasks and decisions for the selected day.",
       "task": "Task",
       "decision": "Decision",
-      "loadingConflicts": "Loading conflicts..."
+      "loadingConflicts": "Loading conflicts...",
+      "itemsOnThisDay": "You already have {{count}} items on this day.",
+      "dayPreviewLimited": "Day preview is limited",
+      "dayAlreadyBusy": "This day is already fairly busy"
     },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "en-US",
@@ -4571,14 +4610,27 @@
       "label": "Any",
       "label2": "Assigned to me",
       "label3": "Owned by me",
-      "today": "Today"
+      "today": "Today",
+      "weekdaysShort": [
+        "Mo",
+        "Tu",
+        "We",
+        "Th",
+        "Fr",
+        "Sa",
+        "Su"
+      ]
     },
     "calendarGrid": {
       "busy": "Busy",
       "today": "Today",
       "currentDateToLocaleDateString": "en-US",
       "locale": "en",
-      "allDayText": "all-day"
+      "allDayText": "all-day",
+      "viewMonth": "Month",
+      "viewWeek": "Week",
+      "viewDay": "Day",
+      "viewList": "List"
     },
     "commandDock": {
       "doThisNow": "Do this now",
@@ -4588,7 +4640,11 @@
       "create": "Create",
       "goThere": "Go there",
       "askAI": "Ask AI",
-      "open2": "Open"
+      "open2": "Open",
+      "inboxPending": "Inbox pending {{count}}",
+      "slaAtRisk": "SLA at risk {{count}}",
+      "recentOutputs": "Recent outputs {{count}}",
+      "needsReview": "Needs review {{count}}"
     },
     "worldPulse": {
       "whatSHappeningIn": "What's happening in your world",
@@ -4612,7 +4668,11 @@
       "letSTalkAbout": "Let's talk about this"
     },
     "gentleNudge": {
-      "view": "View"
+      "view": "View",
+      "decisionsWaiting_one": "{{count}} decision waiting since yesterday",
+      "decisionsWaiting_other": "{{count}} decisions waiting since yesterday",
+      "tasksOverdue_one": "{{count}} task overdue",
+      "tasksOverdue_other": "{{count}} tasks overdue"
     },
     "aiPlanView": {
       "aIDayPlan": "AI Day Plan",
@@ -9178,7 +9238,8 @@
       "noChangesSuggested": "No changes suggested.",
       "rolesLookConsistent": "Roles look consistent.",
       "cancel": "Cancel",
-      "apply": "Apply"
+      "apply": "Apply",
+      "autoCreatedProjectDescription": "Project auto-created for initiative \"{{name}}\""
     },
     "financialAnalysisSection": {
       "financialAnalysis": "Financial Analysis",
@@ -9764,7 +9825,10 @@
     },
     "financeShortcut": "Finance",
     "copyLinkAction": "Copy link",
-    "newButton": "New"
+    "newButton": "New",
+    "initiativeFullView": {
+      "viewSource": "View source"
+    }
   },
   "execution": {
     "title": "Execution Center",
@@ -10526,7 +10590,9 @@
       "ready": "PDF ready for download!",
       "download": "Download",
       "generating": "Generating...",
-      "generate": "Generate PDF"
+      "generate": "Generate PDF",
+      "generatedSuccess": "PDF generated successfully",
+      "generateFailed": "Failed to generate PDF"
     }
   },
   "reports": {
@@ -21213,7 +21279,11 @@
     "notGeneratedUseGenerateSurveys": "Not generated. Use \"Generate surveys\" to fan out templates × assignees into interview assignments.",
     "surveysCompletedOfTotal": "{{done}} of {{total}} surveys completed",
     "completionUnavailable": "Completion unavailable.",
-    "suggestedPlan": "Suggested plan"
+    "suggestedPlan": "Suggested plan",
+    "confirmDeleteBulk": "Delete {{count}} audit program(s)?",
+    "aiHintSummarize": "Summarize audit",
+    "aiHintNextSteps": "Next steps",
+    "noSuggestedPlan": "No suggested plan"
   },
   "aios": {
     "wave5ArtifactRuntimePanel": {

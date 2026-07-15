@@ -61,20 +61,12 @@ interface EntryFooterProps {
 export const EntryFooter: React.FC<EntryFooterProps> = () => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
-  const legalOperatorLine =
-    lang === 'pl'
-      ? 'Operatorem platformy Consultify jest'
-      : lang === 'de'
-        ? 'Betreiber der Consultify-Plattform ist'
-        : 'Consultify platform operator';
-  const localizedPricingLabel =
-    lang === 'pl' ? 'Cennik' : lang === 'de' ? 'Preise' : t('pricing.badge', 'Pricing');
-  const localizedBusinessCasesLabel =
-    lang === 'pl'
-      ? 'Przypadki biznesowe'
-      : lang === 'de'
-        ? 'Business Cases'
-        : t('landing.footer.caseStudies.businessCases', 'Business Cases');
+  const legalOperatorLine = t('landing.footer.legalOperator');
+  const localizedPricingLabel = t('pricing.badge', 'Pricing');
+  const localizedBusinessCasesLabel = t(
+    'landing.footer.caseStudies.businessCases',
+    'Business Cases'
+  );
 
   const sections = useMemo(
     () => [

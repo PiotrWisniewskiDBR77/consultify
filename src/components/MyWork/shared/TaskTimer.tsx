@@ -39,8 +39,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
   compact = false,
   showHistory = true,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(initialTime);
@@ -70,14 +69,14 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
       const mins = Math.floor((seconds % 3600) / 60);
 
       if (hrs > 0) {
-        return isPolish ? `${hrs}h ${mins}min` : `${hrs}h ${mins}m`;
+        return t('myWork.taskTimer.durationHoursMinutes', { hrs, mins });
       }
       if (mins > 0) {
-        return isPolish ? `${mins}min` : `${mins}m`;
+        return t('myWork.taskTimer.durationMinutes', { mins });
       }
-      return isPolish ? `<1min` : `<1m`;
+      return t('myWork.taskTimer.durationUnderOneMinute');
     },
-    [isPolish]
+    [t]
   );
 
   // Start timer
@@ -98,7 +97,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     }, 1000);
 
     toast.success(t('myWork.taskTimer.toastSuccess', '⏱️ Timer started'), { duration: 2000 });
-  }, [isRunning, isPolish, onTimerStart, onTimeUpdate]);
+  }, [isRunning, onTimerStart, onTimeUpdate]);
 
   // Pause timer
   const pauseTimer = useCallback(() => {
@@ -111,7 +110,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     }
 
     toast.success(t('myWork.taskTimer.toastSuccess2', '⏸️ Timer paused'), { duration: 2000 });
-  }, [isRunning, isPolish]);
+  }, [isRunning]);
 
   // Stop timer and save entry
   const stopTimer = useCallback(() => {
@@ -135,15 +134,13 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     onTimerStop?.(sessionTime);
 
     toast.success(
-      isPolish
-        ? `⏱️ Zapisano ${formatDuration(sessionTime)}`
-        : `⏱️ Logged ${formatDuration(sessionTime)}`,
+      t('myWork.taskTimer.loggedDuration', { duration: formatDuration(sessionTime) }),
       { duration: 3000 }
     );
 
     setSessionTime(0);
     startTimeRef.current = null;
-  }, [sessionTime, formatDuration, isPolish, onTimerStop]);
+  }, [sessionTime, formatDuration, onTimerStop]);
 
   // Reset timer
   const resetTimer = useCallback(() => {
@@ -154,7 +151,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     startTimeRef.current = null;
 
     toast.success(t('myWork.taskTimer.toastSuccess3', '🔄 Timer reset'), { duration: 2000 });
-  }, [isRunning, pauseTimer, isPolish]);
+  }, [isRunning, pauseTimer]);
 
   // Cleanup on unmount
   useEffect(() => {

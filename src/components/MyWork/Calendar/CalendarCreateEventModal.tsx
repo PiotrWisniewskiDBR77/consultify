@@ -45,8 +45,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   onClose,
   onCreated,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -98,7 +97,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     return () => {
       cancelled = true;
     };
-  }, [date, isPolish, open]);
+  }, [date, open]);
 
   const totalExistingItems = Number(conflicts?.totalItems ?? 0);
   const hasBusyDay = Boolean(conflicts?.hasConflicts);
@@ -115,10 +114,8 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     if (totalExistingItems === 0) {
       return t('myWork.calendarCreateEvent.thisDayLooksClear', 'This day looks clear.');
     }
-    return isPolish
-      ? `Na ten dzień masz już ${totalExistingItems} pozycji.`
-      : `You already have ${totalExistingItems} items on this day.`;
-  }, [conflicts, conflictsError, conflictsLoading, isPolish, totalExistingItems]);
+    return t('myWork.calendarCreateEvent.itemsOnThisDay', { count: totalExistingItems });
+  }, [conflicts, conflictsError, conflictsLoading, t, totalExistingItems]);
 
   const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -268,13 +265,9 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium">
                 {hasCalendarWarning
-                  ? isPolish
-                    ? conflictsError
-                      ? 'Podglad dnia jest ograniczony'
-                      : 'Dzień jest już dość obciążony'
-                    : conflictsError
-                      ? 'Day preview is limited'
-                      : 'This day is already fairly busy'
+                  ? conflictsError
+                    ? t('myWork.calendarCreateEvent.dayPreviewLimited')
+                    : t('myWork.calendarCreateEvent.dayAlreadyBusy')
                   : t('myWork.calendarCreateEvent.dayLoadPreview', 'Day load preview')}
               </div>
               <div className="mt-1 text-xs opacity-80">

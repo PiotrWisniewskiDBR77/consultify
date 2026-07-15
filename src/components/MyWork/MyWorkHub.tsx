@@ -4032,7 +4032,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 className={`${CTA_BASE} ${CTA_TONE.neutral}`}
                 data-testid="mywork-unified-create-launcher-trigger"
               >
-                <span>{isPolish ? '+ Nowy' : '+ New'}</span>
+                <span>{t('myWork.hub.unifiedCreateNew')}</span>
               </button>
             )}
 

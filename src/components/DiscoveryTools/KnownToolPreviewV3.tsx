@@ -281,8 +281,8 @@ export const KnownToolPreviewV3Body: React.FC<{
     },
     {
       label: tool.isLicensed
-        ? t('tools.hub.license.licensed', isPolish ? 'Licencja' : 'Licensed')
-        : t('tools.hub.license.free', isPolish ? 'Darmowe' : 'Free'),
+        ? t('tools.hub.license.licensed')
+        : t('tools.hub.license.free'),
       className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
     },
     {
@@ -296,7 +296,7 @@ export const KnownToolPreviewV3Body: React.FC<{
     ...(tool.isComingSoon
       ? [
           {
-            label: t('common.comingSoon', isPolish ? 'Wkrótce' : 'Coming soon'),
+            label: t('common.comingSoon'),
             className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
           },
         ]

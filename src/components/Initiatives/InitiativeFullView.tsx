@@ -721,7 +721,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   {initiative.sourceType && (
                     <span className="text-xs text-slate-500 flex items-center gap-1">
                       <Zap size={10} />
-                      from {getSourceDisplayLabel(initiative.sourceType, i18n.language === 'pl')}
+                      from {getSourceDisplayLabel(initiative.sourceType)}
                     </span>
                   )}
                 </div>
@@ -907,7 +907,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     <span>
                       Generated from:{' '}
                       <span className="text-slate-900 dark:text-white capitalize">
-                        {getSourceDisplayLabel(initiative.sourceType, i18n.language === 'pl')}
+                        {getSourceDisplayLabel(initiative.sourceType)}
                       </span>
                     </span>
                     {initiative.sourceId && (
@@ -924,7 +924,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                         className="inline-flex items-center gap-1 text-c-info dark:text-c-info hover:underline ml-1"
                       >
                         <ExternalLink size={10} />
-                        {i18n.language === 'pl' ? 'View source' : 'View source'}
+                        {t('initiatives.initiativeFullView.viewSource')}
                       </a>
                     )}
                   </div>

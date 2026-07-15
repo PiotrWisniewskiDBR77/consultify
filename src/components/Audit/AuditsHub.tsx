@@ -522,9 +522,7 @@ export const AuditsHub: React.FC = () => {
     if (selectedListIds.size === 0) return;
     if (
       !window.confirm(
-        isPolish
-          ? `Usunąć ${selectedListIds.size} program(ów) audytowych?`
-          : `Delete ${selectedListIds.size} audit program(s)?`
+        t('audit.confirmDeleteBulk', { count: selectedListIds.size })
       )
     ) {
       return;
@@ -548,13 +546,13 @@ export const AuditsHub: React.FC = () => {
       <div className={MENU_3_LEFT_CLASS + ' w-full justify-between flex'}>
         <div className={MENU_3_LEFT_CLASS}>
           <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-            {`${selectedListIds.size} ${t('common.selected', isPolish ? 'zaznaczono' : 'selected')}`}
+            {`${selectedListIds.size} ${t('common.selected')}`}
           </span>
           <Menu3Chip onClick={() => setSelectedListIds(new Set(rows.map((r) => r.id)))}>
             {t('common.selectAll', 'Select all')}
           </Menu3Chip>
           <Menu3Chip onClick={() => setSelectedListIds(new Set())}>
-            {t('common.clear', isPolish ? 'Wyczyść' : 'Clear')}
+            {t('common.clear')}
           </Menu3Chip>
         </div>
         <div className={MENU_3_RIGHT_CLASS}>
@@ -747,8 +745,8 @@ export const AuditsHub: React.FC = () => {
                       }}
                       ai={{
                         hints: [
-                          isPolish ? 'Podsumuj audyt' : 'Summarize audit',
-                          isPolish ? 'Następne kroki' : 'Next steps',
+                          t('audit.aiHintSummarize'),
+                          t('audit.aiHintNextSteps'),
                         ],
                         disabled: true,
                         disabledTooltip: t('common.comingSoon', 'Coming soon'),
@@ -764,9 +762,7 @@ export const AuditsHub: React.FC = () => {
                             }))
                           : []
                       }
-                      relationsEmptyLabel={
-                        isPolish ? 'Brak sugerowanego planu' : 'No suggested plan'
-                      }
+                      relationsEmptyLabel={t('audit.noSuggestedPlan')}
                       actions={previewActions}
                     />
                   </aside>

@@ -193,6 +193,7 @@ export const DecisionPreviewBody: React.FC<{
   onCloseDetailsMenu,
   onDetailsAction,
 }) => {
+  const { t } = useTranslation();
   // canon §4.1 — status color driven by statusChipTone() on neutral shell, no hardcoded fills.
   const status = String(decision?.status || 'PENDING').toUpperCase();
   const statusTone = statusChipTone(decision?.status || 'pending');
@@ -204,12 +205,12 @@ export const DecisionPreviewBody: React.FC<{
 
   const priLabel = isPolish
     ? pri === 'CRITICAL'
-      ? 'Krytyczne'
+      ? t('myWork.decisionPreview.priorityCritical')
       : pri === 'HIGH'
-        ? 'Wysoki'
+        ? t('myWork.decisionPreview.priorityHigh')
         : pri === 'MEDIUM'
-          ? 'Średni'
-          : 'Niski'
+          ? t('myWork.decisionPreview.priorityMedium')
+          : t('myWork.decisionPreview.priorityLow')
     : pri[0] + pri.slice(1).toLowerCase();
 
   const pills: MetaPill[] = [

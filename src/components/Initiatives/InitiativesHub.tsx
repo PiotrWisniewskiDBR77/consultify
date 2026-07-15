@@ -2107,10 +2107,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     selectedTableRow.sourceType && selectedTableRow.sourceId
                       ? [
                           {
-                            label: getSourceDisplayLabel(
-                              selectedTableRow.sourceType,
-                              i18n.language === 'pl'
-                            ),
+                            label: getSourceDisplayLabel(selectedTableRow.sourceType),
                             onClick: () =>
                               navigate(
                                 buildInitiativeDeepLink(selectedTableRow.id, { mode: 'doc' })

@@ -60,8 +60,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   onDateRangeChange,
   onEventMove,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const calendarRef = useRef<FullCalendar>(null);
 
   const fcEvents = useMemo(
@@ -103,7 +102,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           },
         };
       }),
-    [events, isPolish]
+    [events, t]
   );
 
   const handleEventClick = useCallback(
@@ -189,11 +188,11 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   }, []);
 
-  const viewButtons: { id: CalendarViewMode; label: string; labelPl: string }[] = [
-    { id: 'month', label: 'Month', labelPl: 'Miesiąc' },
-    { id: 'week', label: 'Week', labelPl: 'Tydzień' },
-    { id: 'day', label: 'Day', labelPl: 'Dzień' },
-    { id: 'list', label: 'List', labelPl: 'Lista' },
+  const viewButtons: { id: CalendarViewMode; label: string }[] = [
+    { id: 'month', label: t('myWork.calendarGrid.viewMonth') },
+    { id: 'week', label: t('myWork.calendarGrid.viewWeek') },
+    { id: 'day', label: t('myWork.calendarGrid.viewDay') },
+    { id: 'list', label: t('myWork.calendarGrid.viewList') },
   ];
 
   const goToday = () => {
@@ -250,7 +249,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
         <div className="flex items-center gap-2">
           <div className="inline-flex items-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-navy-700 dark:bg-navy-900">
-            {viewButtons.map(({ id, label, labelPl }) => (
+            {viewButtons.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => {
@@ -264,7 +263,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >
-                {isPolish ? labelPl : label}
+                {label}
               </button>
             ))}
           </div>
