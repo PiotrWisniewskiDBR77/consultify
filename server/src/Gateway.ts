@@ -51,6 +51,7 @@ import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
 import artifactConversionsRoutes from './routes/artifact-conversions.routes.js';
 import artifactRunsRoutes from './routes/artifact-runs.routes.js';
+import artifactApprovalsRoutes from './routes/artifactApprovals.routes.js';
 import artifactsRoutes from './routes/artifacts.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
 import assessmentAIRoutes from './routes/assessment/assessment-ai.routes.js';
@@ -896,6 +897,12 @@ export class ApiGateway {
       // Evidence Layer (H1 Harvey-gap, kontrakt nr 1) — SSOT _KONCEPT_RDZEN_2026-07-10.md §3
       app.use('/api/evidence', evidenceRoutes);
       app.use('/api/stage-gates', stageGatesRoutes);
+      // HP-7 (Harvey-Parity §Blok B, Workflow Engine) — REST wiring for
+      // artifactApprovalService.ts (draft->review->approved/rejected on
+      // approval_assignments, assignment_kind='artifact'). Separate prefix
+      // from '/api/artifacts' (v8 canvas-artifact registry, different gating)
+      // by design — see artifactApprovals.routes.ts header comment.
+      app.use('/api/artifact-approvals', artifactApprovalsRoutes);
       app.use('/api/pmo-analysis', pmoAnalysisRoutes);
       app.use('/api/pmo-context', pmoContextRoutes);
       app.use('/api/pmo', pmoRoutes);
