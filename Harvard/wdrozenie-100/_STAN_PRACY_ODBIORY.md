@@ -724,7 +724,7 @@ DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M27-superadmin.md](M27-superadm
 | 1 | Usuń orphan-plik view | ⬜ | |
 | ✔ | **ZAMKNIĘTY** | ⬜ | |
 
-📁 [A1-affiliate.md](A1-affiliate.md)
+📁 [A1-affiliate.md](A1-affiliate.md) (descoped 07-15)
 
 ---
 
