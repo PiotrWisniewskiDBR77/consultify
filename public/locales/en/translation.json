@@ -31188,5 +31188,71 @@
         "empty": "No items yet"
       }
     }
+  },
+  "scimGroupSync": {
+    "title": "Group mappings (Entra / Okta → role)",
+    "loading": "Loading group mappings…",
+    "fields": {
+      "groupName": "IdP group name",
+      "groupId": "IdP group ID (optional)",
+      "role": "Internal role",
+      "project": "Project (optional — org-wide if empty)",
+      "orgWide": "Organization-wide"
+    },
+    "actions": {
+      "add": "Add group mapping",
+      "retry": "Retry",
+      "remove": "Remove"
+    },
+    "list": {
+      "heading": "Existing mappings",
+      "empty": "No group mappings yet.",
+      "projectScoped": "Project-scoped",
+      "orgWide": "Organization-wide"
+    },
+    "toasts": {
+      "created": "Group mapping added",
+      "deleted": "Group mapping removed"
+    },
+    "errors": {
+      "load": "Failed to load group mappings",
+      "loadTitle": "Group mappings unavailable",
+      "groupRequired": "Enter an IdP group name or ID",
+      "create": "Failed to add group mapping",
+      "delete": "Failed to remove group mapping"
+    }
+  },
+  "agentPlan": {
+    "loading": "Loading plan",
+    "loadingBody": "Loading plan…",
+    "section": {
+      "plan": "Plan",
+      "progress": "Progress",
+      "approvals": "Approvals",
+      "report": "Report"
+    },
+    "step": {
+      "requiresApproval": "approval"
+    },
+    "status": {
+      "planning": "Planning…",
+      "awaitingApproval": "Awaiting approval",
+      "executing": "Executing…",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "action": {
+      "cancel": "Stop",
+      "close": "Close",
+      "approveStep": "Approve step"
+    },
+    "approvals": {
+      "empty": "No steps awaiting approval"
+    },
+    "report": {
+      "empty": "Report available after completion"
+    }
   }
 }
