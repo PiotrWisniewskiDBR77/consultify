@@ -1,5 +1,6 @@
 import { AlertCircle, AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/Button';
 
@@ -17,9 +18,9 @@ interface ValidationResultsPanelProps {
 
 const LAYER_ORDER: ValidationIssue['layer'][] = ['semantic_first', 'structural_bounded'];
 
-const LAYER_LABEL: Record<ValidationIssue['layer'], { en: string; pl: string }> = {
-  semantic_first: { en: 'Semantic', pl: 'Semantyka' },
-  structural_bounded: { en: 'Structure', pl: 'Struktura' },
+const LAYER_LABEL_KEY: Record<ValidationIssue['layer'], string> = {
+  semantic_first: 'semantic',
+  structural_bounded: 'structure',
 };
 
 export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
@@ -29,6 +30,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
   onClickIssue,
   onValidate,
 }) => {
+  const { t } = useTranslation();
   const grouped = useMemo(() => {
     const issues = result?.issues ?? [];
     const map = new Map<ValidationIssue['layer'], ValidationIssue[]>();
@@ -43,15 +45,15 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
   const validBadge =
     result && result.valid ? (
       <span className="rounded-full bg-success-100 px-2 py-0.5 text-xs font-semibold text-success-800 dark:bg-success-900/40 dark:text-success-200">
-        {isPl ? 'Poprawny' : 'Valid'}
+        {t('processFlow.validationPanel.valid', 'Valid')}
       </span>
     ) : result && !result.valid ? (
       <span className="rounded-full bg-danger-100 px-2 py-0.5 text-xs font-semibold text-danger-800 dark:bg-danger-900/40 dark:text-danger-200">
-        {isPl ? 'Błędy' : 'Invalid'}
+        {t('processFlow.validationPanel.invalid', 'Invalid')}
       </span>
     ) : (
       <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-xs font-semibold text-c-text-secondary">
-        {isPl ? 'Brak wyniku' : 'No result'}
+        {t('processFlow.validationPanel.noResult', 'No result')}
       </span>
     );
 
@@ -59,11 +61,13 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
     <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm text-c-text shadow-sm">
       <div className="flex items-center justify-between gap-2 border-b border-c-border-subtle px-4 py-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-c-text">{isPl ? 'Walidacja' : 'Validation'}</h2>
+          <h2 className="text-sm font-semibold text-c-text">
+            {t('processFlow.validationPanel.title', 'Validation')}
+          </h2>
           {validBadge}
         </div>
         <Button variant="outline" size="sm" onClick={onValidate} disabled={isValidating}>
-          {isPl ? 'Uruchom walidację' : 'Run validation'}
+          {t('processFlow.validationPanel.runValidation', 'Run validation')}
         </Button>
       </div>
 
@@ -73,18 +77,22 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
             <div
               className="h-8 w-8 animate-spin rounded-full border-2 border-c-border-subtle border-t-c-info"
               role="status"
-              aria-label={isPl ? 'Ładowanie' : 'Loading'}
+              aria-label={t('processFlow.validationPanel.loading', 'Loading')}
             />
-            <span className="text-xs">{isPl ? 'Sprawdzanie…' : 'Validating…'}</span>
+            <span className="text-xs">
+              {t('processFlow.validationPanel.validating', 'Validating…')}
+            </span>
           </div>
         ) : !result ? (
           <p className="py-6 text-center text-xs text-c-text-muted">
-            {isPl ? 'Uruchom walidację, aby zobaczyć wyniki.' : 'Run validation to see results.'}
+            {t('processFlow.validationPanel.runToSeeResults', 'Run validation to see results.')}
           </p>
         ) : result.issues.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-success-600 dark:text-success-400">
             <CheckCircle2 className="h-10 w-10" strokeWidth={1.5} />
-            <p className="text-sm font-medium">{isPl ? 'Brak problemów' : 'No issues found'}</p>
+            <p className="text-sm font-medium">
+              {t('processFlow.validationPanel.noIssuesFound', 'No issues found')}
+            </p>
             {result.validated_at && (
               <p className="text-xs text-c-text-muted">
                 {new Date(result.validated_at).toLocaleString(isPl ? 'pl-PL' : 'en-US')}
@@ -95,7 +103,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
           <div className="space-y-4">
             {result.validated_at && (
               <p className="text-xs text-c-text-muted">
-                {isPl ? 'Ostatnia walidacja: ' : 'Last validated: '}
+                {t('processFlow.validationPanel.lastValidated', 'Last validated: ')}
                 {new Date(result.validated_at).toLocaleString(isPl ? 'pl-PL' : 'en-US')}
               </p>
             )}
@@ -106,7 +114,10 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                 <div key={layer}>
                   <div className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                     <ChevronRight size={14} className="text-c-text-secondary" aria-hidden />
-                    {LAYER_LABEL[layer][isPl ? 'pl' : 'en']}
+                    {t(
+                      `processFlow.validationPanel.layer.${LAYER_LABEL_KEY[layer]}`,
+                      layer === 'semantic_first' ? 'Semantic' : 'Structure'
+                    )}
                   </div>
                   <ul className="space-y-1">
                     {list.map((issue, idx) => {

@@ -25372,6 +25372,35 @@
       "delete": "Usuń",
       "linkedArtifacts": "Powiązane artefakty",
       "noLinksYet": "Brak powiązań"
+    },
+    "validationPanel": {
+      "valid": "Poprawny",
+      "invalid": "Błędy",
+      "noResult": "Brak wyniku",
+      "title": "Walidacja",
+      "runValidation": "Uruchom walidację",
+      "loading": "Ładowanie",
+      "validating": "Sprawdzanie…",
+      "runToSeeResults": "Uruchom walidację, aby zobaczyć wyniki.",
+      "noIssuesFound": "Brak problemów",
+      "lastValidated": "Ostatnia walidacja: ",
+      "layer": {
+        "semantic": "Semantyka",
+        "structure": "Struktura"
+      }
+    },
+    "edgeStylePopover": {
+      "arrowNone": "Brak",
+      "arrowEnd": "Koniec",
+      "arrowStart": "Start",
+      "arrowBoth": "Obie strony",
+      "label": "Etykieta",
+      "color": "Kolor",
+      "autoColor": "Automatyczny",
+      "style": "Styl",
+      "styleSolid": "Ciągła",
+      "styleDashed": "Przerywana",
+      "arrow": "Strzałka"
     }
   }
 }

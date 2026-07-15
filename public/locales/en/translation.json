@@ -24296,6 +24296,35 @@
       "delete": "Delete",
       "linkedArtifacts": "Linked artifacts",
       "noLinksYet": "No links yet"
+    },
+    "validationPanel": {
+      "valid": "Valid",
+      "invalid": "Invalid",
+      "noResult": "No result",
+      "title": "Validation",
+      "runValidation": "Run validation",
+      "loading": "Loading",
+      "validating": "Validating…",
+      "runToSeeResults": "Run validation to see results.",
+      "noIssuesFound": "No issues found",
+      "lastValidated": "Last validated: ",
+      "layer": {
+        "semantic": "Semantic",
+        "structure": "Structure"
+      }
+    },
+    "edgeStylePopover": {
+      "arrowNone": "None",
+      "arrowEnd": "End",
+      "arrowStart": "Start",
+      "arrowBoth": "Both",
+      "label": "Label",
+      "color": "Color",
+      "autoColor": "Auto",
+      "style": "Style",
+      "styleSolid": "Solid",
+      "styleDashed": "Dashed",
+      "arrow": "Arrow"
     }
   }
 }
