@@ -3768,7 +3768,11 @@
       "create": "Utwórz",
       "goThere": "Przejdź",
       "askAI": "Zapytaj AI",
-      "open2": "Otwórz"
+      "open2": "Otwórz",
+      "inboxPending": "Inbox oczekuje {{count}}",
+      "slaAtRisk": "SLA zagrożone {{count}}",
+      "recentOutputs": "Ostatnie outputy {{count}}",
+      "needsReview": "Do review {{count}}"
     },
     "worldPulse": {
       "whatSHappeningIn": "Co się dzieje w Twoim świecie",
@@ -3792,7 +3796,15 @@
       "letSTalkAbout": "Porozmawiajmy o tym"
     },
     "gentleNudge": {
-      "view": "Zobacz"
+      "view": "Zobacz",
+      "decisionsWaiting_one": "{{count}} decyzja czeka od wczoraj",
+      "decisionsWaiting_few": "{{count}} decyzje czekają od wczoraj",
+      "decisionsWaiting_many": "{{count}} decyzji czeka od wczoraj",
+      "decisionsWaiting_other": "{{count}} decyzji czeka od wczoraj",
+      "tasksOverdue_one": "{{count}} zadanie po terminie",
+      "tasksOverdue_few": "{{count}} zadania po terminie",
+      "tasksOverdue_many": "{{count}} zadań po terminie",
+      "tasksOverdue_other": "{{count}} zadań po terminie"
     },
     "aiPlanView": {
       "aIDayPlan": "Plan dnia AI",

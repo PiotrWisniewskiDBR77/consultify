@@ -10,26 +10,17 @@ interface GentleNudgeProps {
 }
 
 export const GentleNudge: React.FC<GentleNudgeProps> = ({ data, onViewDetails }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const hasContent = data.pendingDecisions > 0 || data.overdueTasks > 0 || data.message;
   if (!hasContent) return null;
 
   const parts: string[] = [];
   if (data.pendingDecisions > 0) {
-    parts.push(
-      isPolish
-        ? `${data.pendingDecisions} ${data.pendingDecisions === 1 ? 'decyzja czeka' : 'decyzje czekają'} od wczoraj`
-        : `${data.pendingDecisions} ${data.pendingDecisions === 1 ? 'decision' : 'decisions'} waiting since yesterday`
-    );
+    parts.push(t('myWork.gentleNudge.decisionsWaiting', { count: data.pendingDecisions }));
   }
   if (data.overdueTasks > 0) {
-    parts.push(
-      isPolish
-        ? `${data.overdueTasks} ${data.overdueTasks === 1 ? 'zadanie' : 'zadania'} po terminie`
-        : `${data.overdueTasks} ${data.overdueTasks === 1 ? 'task' : 'tasks'} overdue`
-    );
+    parts.push(t('myWork.gentleNudge.tasksOverdue', { count: data.overdueTasks }));
   }
 
   const text = data.message || parts.join(' · ');

@@ -4622,7 +4622,11 @@
       "create": "Create",
       "goThere": "Go there",
       "askAI": "Ask AI",
-      "open2": "Open"
+      "open2": "Open",
+      "inboxPending": "Inbox pending {{count}}",
+      "slaAtRisk": "SLA at risk {{count}}",
+      "recentOutputs": "Recent outputs {{count}}",
+      "needsReview": "Needs review {{count}}"
     },
     "worldPulse": {
       "whatSHappeningIn": "What's happening in your world",
@@ -4646,7 +4650,11 @@
       "letSTalkAbout": "Let's talk about this"
     },
     "gentleNudge": {
-      "view": "View"
+      "view": "View",
+      "decisionsWaiting_one": "{{count}} decision waiting since yesterday",
+      "decisionsWaiting_other": "{{count}} decisions waiting since yesterday",
+      "tasksOverdue_one": "{{count}} task overdue",
+      "tasksOverdue_other": "{{count}} tasks overdue"
     },
     "aiPlanView": {
       "aIDayPlan": "AI Day Plan",
