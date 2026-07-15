@@ -16,13 +16,13 @@ import {
   RefreshCw,
   Search,
   Shield,
-  Trash2,
   Unlock,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -418,6 +418,92 @@ const ThreatIntelligenceView: React.FC = () => {
     return THREAT_TYPES.find((t) => t.value === type)?.label || type;
   };
 
+  const threatColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'threatType',
+        label: 'Type',
+        filterable: true,
+        filterOptions: THREAT_TYPES,
+        render: (row: TableRow) => (
+          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs font-mono">
+            {getThreatTypeLabel((row as unknown as Threat).threatType)}
+          </span>
+        ),
+      },
+      {
+        id: 'ipDomain',
+        label: 'IP / Domain',
+        render: (row: TableRow) => {
+          const threat = row as unknown as Threat;
+          return (
+            <div className="flex items-center gap-2">
+              {threat.ipAddress && (
+                <span className="flex items-center gap-1 text-sm">
+                  <Monitor className="w-3 h-3 text-slate-500 dark:text-slate-500" />
+                  {threat.ipAddress}
+                </span>
+              )}
+              {threat.domain && (
+                <span className="flex items-center gap-1 text-sm">
+                  <Globe className="w-3 h-3 text-slate-500 dark:text-slate-500" />
+                  {threat.domain}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'threatLevel',
+        label: 'Level',
+        filterable: true,
+        filterOptions: THREAT_LEVELS.map((l) => ({ value: l, label: l })),
+        render: (row: TableRow) => getThreatLevelBadge((row as unknown as Threat).threatLevel),
+      },
+      {
+        id: 'reputationScore',
+        label: 'Reputation',
+        sortable: true,
+        sortAccessor: (row: TableRow) => safeNumber((row as unknown as Threat).reputationScore),
+        render: (row: TableRow) => {
+          const score = (row as unknown as Threat).reputationScore;
+          return (
+            <span className={`font-semibold ${getReputationColor(score)}`}>
+              {safeNumber(score)}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'isBlocked',
+        label: 'Status',
+        render: (row: TableRow) =>
+          (row as unknown as Threat).isBlocked ? (
+            <span className="px-2 py-1 bg-danger-500/10 text-danger-400 rounded text-xs">
+              Blocked
+            </span>
+          ) : (
+            <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
+              Active
+            </span>
+          ),
+      },
+      {
+        id: 'lastSeen',
+        label: 'Last Seen',
+        sortable: true,
+        sortAccessor: (row: TableRow) => (row as unknown as Threat).lastSeen,
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-600">
+            {formatDateTime((row as unknown as Threat).lastSeen)}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
   if (loading && threats.length === 0) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -655,128 +741,34 @@ const ThreatIntelligenceView: React.FC = () => {
             <DegradedState title="Threat list unavailable" description={loadError} />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-            >
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Type
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    IP / Domain
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Level
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Reputation
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Last Seen
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {threats.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                      No threats found
-                    </td>
-                  </tr>
-                ) : (
-                  threats.map((threat) => (
-                    <tr
-                      key={threat.id}
-                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                    >
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-c-surface-raised rounded text-xs font-mono">
-                          {getThreatTypeLabel(threat.threatType)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          {threat.ipAddress && (
-                            <span className="flex items-center gap-1 text-sm">
-                              <Monitor className="w-3 h-3 text-slate-500 dark:text-slate-500" />
-                              {threat.ipAddress}
-                            </span>
-                          )}
-                          {threat.domain && (
-                            <span className="flex items-center gap-1 text-sm">
-                              <Globe className="w-3 h-3 text-slate-500 dark:text-slate-500" />
-                              {threat.domain}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">{getThreatLevelBadge(threat.threatLevel)}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`font-semibold ${getReputationColor(threat.reputationScore)}`}
-                        >
-                          {safeNumber(threat.reputationScore)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {threat.isBlocked ? (
-                          <span className="px-2 py-1 bg-danger-500/10 text-danger-400 rounded text-xs">
-                            Blocked
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
-                            Active
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-slate-600">
-                        {formatDateTime(threat.lastSeen)}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {threat.isBlocked ? (
-                            <button
-                              onClick={() => handleUnblock(threat.id)}
-                              aria-label={`Unblock threat ${threat.id}`}
-                              className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                              title="Unblock"
-                            >
-                              <Unlock className="w-4 h-4" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleBlock(threat.id)}
-                              aria-label={`Block threat ${threat.id}`}
-                              className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
-                              title="Block"
-                            >
-                              <Lock className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDelete(threat.id)}
-                            aria-label={`Delete threat ${threat.id}`}
-                            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={threatColumns}
+            data={threats as unknown as TableRow[]}
+            empty={{ title: 'No threats found' }}
+            rowMenu={(row) => {
+              const threat = row as unknown as Threat;
+              return {
+                primary: [
+                  threat.isBlocked
+                    ? {
+                        id: 'unblock',
+                        label: 'Unblock',
+                        icon: Unlock,
+                        onClick: () => void handleUnblock(threat.id),
+                      }
+                    : {
+                        id: 'block',
+                        label: 'Block',
+                        icon: Lock,
+                        onClick: () => void handleBlock(threat.id),
+                      },
+                ],
+                destructive: {
+                  onClick: () => void handleDelete(threat.id),
+                },
+              };
+            }}
+          />
         )}
       </CardWithHeader>
 
