@@ -27109,6 +27109,131 @@
         },
         "helpText": "💡 A clearly defined goal will help AI generate more relevant suggestions in the following steps."
       }
+    },
+    "summaryStep": {
+      "selectContent": "Select content",
+      "dynamicSwot": {
+        "sections": {
+          "executiveSummary": {
+            "label": "Executive Summary",
+            "description": "Full analysis summary"
+          },
+          "swotMatrix": {
+            "label": "SWOT Matrix",
+            "description": "Factors in 4 quadrants"
+          },
+          "insights": {
+            "label": "Strategic Insights",
+            "description": "Key insights and observations"
+          },
+          "correlations": {
+            "label": "Correlations",
+            "description": "Cross-factor correlations"
+          },
+          "recommendations": {
+            "label": "Recommendations",
+            "description": "Recommended strategic moves"
+          },
+          "initiatives": {
+            "label": "Initiatives",
+            "description": "Initiative drafts for execution"
+          }
+        },
+        "readiness": {
+          "missionBrief": "Mission brief is clear",
+          "swotFactors": "SWOT factors defined",
+          "strategicInsights": "Strategic insights exist",
+          "recommendationsOrMoves": "Recommendations or moves",
+          "initiativesDefined": "Initiatives defined"
+        },
+        "outputsActions": {
+          "title": "Outputs & Actions",
+          "badge": "Output management",
+          "description": "Turn analysis results into concrete deliverables: initiatives for execution, reports, presentations, and ideas for further exploration."
+        },
+        "analysisReadiness": "Analysis readiness",
+        "metricPills": {
+          "factors": "Factors",
+          "tensions": "Tensions",
+          "moves": "Moves",
+          "initiatives": "Initiatives"
+        },
+        "initiativesTable": {
+          "title": "Initiatives — decision table",
+          "badge": "Initiatives",
+          "description": "Decide which initiatives to develop, which to defer, and which to keep as ideas.",
+          "empty": "No initiatives yet. Go back to \"Synthesis & Insights\" step and create initiatives from recommendations."
+        },
+        "counters": {
+          "toDevelop": "to develop",
+          "deferred": "deferred",
+          "asIdeas": "as ideas"
+        },
+        "impactLabel": "Impact",
+        "effortLabel": "Effort",
+        "rationaleLabel": "Rationale",
+        "collapse": "Collapse",
+        "details": "Details",
+        "develop": "Develop",
+        "defer": "Defer",
+        "asIdea": "As idea",
+        "createReport": {
+          "title": "Create report",
+          "badge": "Report",
+          "description": "Select which analysis elements to include in the consulting report."
+        },
+        "sectionsSelected": "sections selected",
+        "reportCreated": "Report created",
+        "generateReport": "Generate report",
+        "createPresentation": {
+          "title": "Create presentation",
+          "badge": "Presentation",
+          "description": "Select which analysis elements to include in the stakeholder presentation."
+        },
+        "presentationCreated": "Presentation created",
+        "generatePresentation": "Generate presentation",
+        "ideasBank": {
+          "title": "Ideas bank",
+          "badge": "Ideas",
+          "description": "Ideas and observations for further exploration — no immediate action required.",
+          "empty": "Mark initiatives as \"As idea\" in the table above to add them here."
+        }
+      },
+      "generic": {
+        "title": "Final Summary & Initiatives",
+        "finalSourceSummaryProposal": "Final source summary (AI proposal)",
+        "finalSourceSummary": "Final source summary",
+        "generateAnalysisHint": "Click \"Generate Analysis\" to get an AI summary.",
+        "metrics": {
+          "industryAttractiveness": "Industry Attractiveness",
+          "avgForceScore": "Avg. Force Score",
+          "penetration": "Penetration",
+          "marketDev": "Market dev.",
+          "productDev": "Product dev.",
+          "diversification": "Diversification",
+          "stars": "Stars",
+          "cashCows": "Cash Cows",
+          "questionMarks": "Question Marks",
+          "dogs": "Dogs",
+          "assumptions": "Assumptions",
+          "risks": "Risks",
+          "scenarios": "Scenarios",
+          "items": "Items",
+          "sections": "Sections"
+        },
+        "visualization": "Visualization",
+        "visualizationNote": {
+          "growthPaths": "Growth paths summary is reflected in the metrics above.",
+          "portfolioPriority": "BCG matrix is available in the Portfolio Matrix step.",
+          "riskUncertainty": "Risk summary is reflected in the metrics above.",
+          "operational": "Operational summary is reflected in the metrics above."
+        },
+        "keyInsights": "Key Insights",
+        "appliedConclusions": "Applied Conclusions",
+        "refineConclusionsHint": "If anything here feels too vague, go back to the AI conversation and refine the conclusions before generating outputs.",
+        "recommendedInitiatives": "Recommended Initiatives",
+        "generateInitiativesHint": "Click \"Generate Analysis\" to get initiative recommendations."
+      }
     }
   }
 }

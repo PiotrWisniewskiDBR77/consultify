@@ -28185,6 +28185,131 @@
         },
         "helpText": "💡 Jasno zdefiniowany cel pomoże AI generować bardziej trafne sugestie w kolejnych krokach."
       }
+    },
+    "summaryStep": {
+      "selectContent": "Wybierz zawartość",
+      "dynamicSwot": {
+        "sections": {
+          "executiveSummary": {
+            "label": "Executive Summary",
+            "description": "Podsumowanie całej analizy"
+          },
+          "swotMatrix": {
+            "label": "Macierz SWOT",
+            "description": "Czynniki w 4 kwadrantach"
+          },
+          "insights": {
+            "label": "Wnioski strategiczne",
+            "description": "Kluczowe wnioski i obserwacje"
+          },
+          "correlations": {
+            "label": "Korelacje",
+            "description": "Powiązania między czynnikami"
+          },
+          "recommendations": {
+            "label": "Rekomendacje",
+            "description": "Rekomendowane ruchy strategiczne"
+          },
+          "initiatives": {
+            "label": "Inicjatywy",
+            "description": "Drafty inicjatyw do realizacji"
+          }
+        },
+        "readiness": {
+          "missionBrief": "Mission brief jest jasny",
+          "swotFactors": "Czynniki SWOT zdefiniowane",
+          "strategicInsights": "Wnioski strategiczne",
+          "recommendationsOrMoves": "Rekomendacje lub ruchy",
+          "initiativesDefined": "Inicjatywy zdefiniowane"
+        },
+        "outputsActions": {
+          "title": "Outputs & Actions",
+          "badge": "Zarządzanie wynikami",
+          "description": "Zamień wyniki analizy w konkretne deliverables: inicjatywy do realizacji, raporty, prezentacje i idee do dalszej eksploracji."
+        },
+        "analysisReadiness": "Gotowość analizy",
+        "metricPills": {
+          "factors": "Czynniki",
+          "tensions": "Napięcia",
+          "moves": "Ruchy",
+          "initiatives": "Inicjatywy"
+        },
+        "initiativesTable": {
+          "title": "Inicjatywy — tabela decyzyjna",
+          "badge": "Inicjatywy",
+          "description": "Zdecyduj, które inicjatywy chcesz opracować, które odłożyć, a które zachować jako idee.",
+          "empty": "Brak inicjatyw. Wróć do kroku \"Synthesis & Insights\" i utwórz inicjatywy z rekomendacji."
+        },
+        "counters": {
+          "toDevelop": "do realizacji",
+          "deferred": "odłożone",
+          "asIdeas": "jako idee"
+        },
+        "impactLabel": "Wpływ",
+        "effortLabel": "Wysiłek",
+        "rationaleLabel": "Uzasadnienie",
+        "collapse": "Zwiń",
+        "details": "Szczegóły",
+        "develop": "Realizuj",
+        "defer": "Odłóż",
+        "asIdea": "Jako idea",
+        "createReport": {
+          "title": "Utwórz raport",
+          "badge": "Raport",
+          "description": "Wybierz, które elementy analizy chcesz zawrzeć w raporcie konsultingowym."
+        },
+        "sectionsSelected": "sekcji wybranych",
+        "reportCreated": "Raport utworzony",
+        "generateReport": "Generuj raport",
+        "createPresentation": {
+          "title": "Utwórz prezentację",
+          "badge": "Prezentacja",
+          "description": "Wybierz, które elementy analizy chcesz zawrzeć w prezentacji dla stakeholderów."
+        },
+        "presentationCreated": "Prezentacja utworzona",
+        "generatePresentation": "Generuj prezentację",
+        "ideasBank": {
+          "title": "Bank idei",
+          "badge": "Idee",
+          "description": "Idee i obserwacje do dalszej eksploracji — nie wymagają natychmiastowego działania.",
+          "empty": "Oznacz inicjatywy jako \"Jako idea\" w tabeli powyżej, aby dodać je tutaj."
+        }
+      },
+      "generic": {
+        "title": "Final Summary i inicjatywy",
+        "finalSourceSummaryProposal": "Final source summary (AI proposal)",
+        "finalSourceSummary": "Final source summary",
+        "generateAnalysisHint": "Kliknij \"Generuj analizę\" aby otrzymać podsumowanie AI.",
+        "metrics": {
+          "industryAttractiveness": "Atrakcyjność branży",
+          "avgForceScore": "Śr. siła konkurencji",
+          "penetration": "Penetracja",
+          "marketDev": "Rozwój rynku",
+          "productDev": "Rozwój produktu",
+          "diversification": "Dywersyfikacja",
+          "stars": "Stars",
+          "cashCows": "Cash Cows",
+          "questionMarks": "Question Marks",
+          "dogs": "Dogs",
+          "assumptions": "Założenia",
+          "risks": "Ryzyka",
+          "scenarios": "Scenariusze",
+          "items": "Elementy",
+          "sections": "Sekcje"
+        },
+        "visualization": "Wizualizacja",
+        "visualizationNote": {
+          "growthPaths": "Podsumowanie ścieżek wzrostu znajduje się w metrykach powyżej.",
+          "portfolioPriority": "Macierz BCG jest dostępna w kroku Portfolio Matrix.",
+          "riskUncertainty": "Podsumowanie ryzyk jest widoczne w metrykach powyżej.",
+          "operational": "Podsumowanie operacyjne jest widoczne w metrykach powyżej."
+        },
+        "keyInsights": "Kluczowe wnioski",
+        "appliedConclusions": "Wnioski aplikowane",
+        "refineConclusionsHint": "Jeśli coś tu jest nieprecyzyjne, wróć do rozmowy z AI i doprecyzuj wnioski przed generowaniem outputów.",
+        "recommendedInitiatives": "Rekomendowane inicjatywy",
+        "generateInitiativesHint": "Kliknij \"Generuj analizę\" aby otrzymać rekomendacje inicjatyw."
+      }
     }
   }
 }
