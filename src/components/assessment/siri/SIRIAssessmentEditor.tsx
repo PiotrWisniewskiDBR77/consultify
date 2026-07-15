@@ -168,6 +168,7 @@ const BlockTab: React.FC<{
   onClick: () => void;
   isPolish: boolean;
 }> = ({ block, isActive, score, onClick, isPolish }) => {
+  const { t } = useTranslation();
   const config = SIRI_BUILDING_BLOCKS[block];
   const Icon = BLOCK_ICONS[block];
   const color = BLOCK_COLORS[block];
@@ -191,7 +192,7 @@ const BlockTab: React.FC<{
           {isPolish ? config.namePL : config.name}
         </div>
         <div className="text-xs text-c-text-muted">
-          {isPolish ? 'Wynik' : 'Score'}: {score.toFixed(1)}/5
+          {t('assessment.siri.editor.score', 'Score')}: {score.toFixed(1)}/5
         </div>
       </div>
     </button>
@@ -248,14 +249,14 @@ const LevelSelector: React.FC<{
   onChange: (level: number) => void;
   onTargetChange: (level: number | undefined) => void;
   readOnly?: boolean;
-  isPolish: boolean;
-}> = ({ currentLevel, targetLevel, onChange, onTargetChange, readOnly, isPolish }) => {
+}> = ({ currentLevel, targetLevel, onChange, onTargetChange, readOnly }) => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {/* Current Level */}
       <div>
         <label className="block text-sm font-medium text-c-text-secondary mb-2">
-          {isPolish ? 'Aktualny poziom' : 'Current Level'}
+          {t('assessment.siri.editor.currentLevel', 'Current Level')}
         </label>
         <div className="flex gap-2">
           {SIRI_MATURITY_LEVELS.map((level) => (
@@ -281,7 +282,7 @@ const LevelSelector: React.FC<{
       {/* Target Level */}
       <div>
         <label className="block text-sm font-medium text-c-text-secondary mb-2">
-          {isPolish ? 'Poziom docelowy' : 'Target Level'}
+          {t('assessment.siri.editor.targetLevel', 'Target Level')}
         </label>
         <div className="flex gap-2">
           {SIRI_MATURITY_LEVELS.map((level) => (
@@ -374,6 +375,7 @@ const ScoreSummaryPanel: React.FC<{
   answers: SIRIEditorAnswers | undefined;
   isPolish: boolean;
 }> = ({ answers, isPolish }) => {
+  const { t } = useTranslation();
   const dimensionScores: Record<string, number> = {};
   SIRI_DIMENSIONS.forEach((dim) => {
     const state = getDimensionState(answers, dim.id);
@@ -393,7 +395,7 @@ const ScoreSummaryPanel: React.FC<{
       <div className="text-center">
         <div className="text-4xl font-bold text-c-text">{overallScore.toFixed(1)}</div>
         <div className="text-sm text-c-text-muted">
-          {isPolish ? 'Wynik ogólny' : 'Overall Score'} / 5
+          {t('assessment.siri.editor.overallScore', 'Overall Score')} / 5
         </div>
       </div>
 
@@ -432,7 +434,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
   onDimensionChange,
   currentDimensionId,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // State
@@ -594,7 +596,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               }`}
             >
               <List size={16} className="inline mr-1" />
-              {isPolish ? 'Wymiary' : 'Dimensions'}
+              {t('assessment.siri.editor.viewDimensions', 'Dimensions')}
             </button>
             <button
               onClick={() => setViewMode('prioritisation')}
@@ -605,7 +607,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               }`}
             >
               <Target size={16} className="inline mr-1" />
-              {isPolish ? 'Priorytetyzacja' : 'Prioritisation'}
+              {t('assessment.siri.editor.viewPrioritisation', 'Prioritisation')}
             </button>
             <button
               onClick={() => setViewMode('matrix')}
@@ -616,7 +618,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               }`}
             >
               <Grid2X2 size={16} className="inline mr-1" />
-              {isPolish ? 'Macierz' : 'Matrix'}
+              {t('assessment.siri.editor.viewMatrix', 'Matrix')}
             </button>
           </div>
         </div>
@@ -643,7 +645,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
           {viewMode === 'dimensions' && (
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-c-text-muted uppercase tracking-wider">
-                {isPolish ? 'Wymiary' : 'Dimensions'}
+                {t('assessment.siri.editor.viewDimensions', 'Dimensions')}
               </h3>
               {blockDimensions.map((dim) => (
                 <DimensionCard
@@ -661,7 +663,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
           {viewMode === 'prioritisation' && (
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-c-text-muted uppercase tracking-wider">
-                {isPolish ? 'Obszary priorytetyzacji' : 'Prioritisation Areas'}
+                {t('assessment.siri.editor.prioritisationAreas', 'Prioritisation Areas')}
               </h3>
               {SIRI_PRIORITISATION_AREAS.filter((a) => a.buildingBlock === activeBlock).map(
                 (area) => (
@@ -700,7 +702,6 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                 onChange={handleLevelChange}
                 onTargetChange={handleTargetChange}
                 readOnly={readOnly}
-                isPolish={isPolish}
               />
 
               {/* Gap Analysis */}
@@ -710,13 +711,13 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                     <div className="flex items-center gap-2 mb-2">
                       <AlertTriangle className="w-5 h-5 text-c-warning" />
                       <span className="font-medium text-c-warning">
-                        {isPolish ? 'Analiza luki' : 'Gap Analysis'}
+                        {t('assessment.siri.editor.gapAnalysis', 'Gap Analysis')}
                       </span>
                     </div>
                     <p className="text-sm text-c-warning">
-                      {isPolish
-                        ? `Luka: ${currentDimensionState.target - currentDimensionState.current} poziomów do osiągnięcia celu`
-                        : `Gap: ${currentDimensionState.target - currentDimensionState.current} levels to reach target`}
+                      {t('assessment.siri.editor.gapMessage', 'Gap: {{gap}} levels to reach target', {
+                        gap: currentDimensionState.target - currentDimensionState.current,
+                      })}
                     </p>
                   </div>
                 )}
@@ -735,16 +736,17 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-c-info hover:underline"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        {isPolish
-                          ? 'Podpowiedź AI (dlaczego to ważne + jak oceniać)'
-                          : 'AI guidance (why it matters + how to score)'}
+                        {t(
+                          'assessment.siri.editor.aiGuidanceCta',
+                          'AI guidance (why it matters + how to score)'
+                        )}
                       </button>
                     );
                   }
                   if (g.loading) {
                     return (
                       <div className="text-xs text-c-text-muted">
-                        {isPolish ? 'Generuję podpowiedź…' : 'Generating guidance…'}
+                        {t('assessment.siri.editor.generatingGuidance', 'Generating guidance…')}
                       </div>
                     );
                   }
@@ -753,31 +755,35 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                     <div className="rounded-lg border border-c-border-subtle bg-[color-mix(in_srgb,var(--c-info)_6%,transparent)] p-3 space-y-2 text-sm">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-info">
                         <Sparkles className="w-3 h-3" />
-                        {isPolish ? 'Podpowiedź konsultanta' : 'Consultant guidance'}
+                        {t('assessment.siri.editor.consultantGuidance', 'Consultant guidance')}
                         <span className="ml-auto font-normal normal-case text-c-text-muted">
-                          {g.data.source === 'llm' ? 'AI' : isPolish ? 'kanon' : 'canon'}
+                          {g.data.source === 'llm'
+                            ? 'AI'
+                            : t('assessment.siri.editor.canonSource', 'canon')}
                         </span>
                       </div>
                       <p className="text-c-text">
                         <span className="font-semibold">
-                          {isPolish ? 'Dlaczego to ważne: ' : 'Why it matters: '}
+                          {t('assessment.siri.editor.whyItMatters', 'Why it matters: ')}
                         </span>
                         {g.data.whyItMatters}
                       </p>
                       <p className="text-c-text-secondary dark:text-c-text-muted">
                         <span className="font-semibold">
-                          {isPolish ? 'Jak oceniać poziom: ' : 'How to score this level: '}
+                          {t('assessment.siri.editor.howToScore', 'How to score this level: ')}
                         </span>
                         {g.data.levelInterpretation}
                       </p>
                       <p className="text-xs text-c-text-muted">
-                        <span className="font-semibold">{isPolish ? 'Kanon: ' : 'Canon: '}</span>
+                        <span className="font-semibold">
+                          {t('assessment.siri.editor.canonLabel', 'Canon: ')}
+                        </span>
                         {g.data.canonContext}
                       </p>
                       {g.data.pitfalls.length > 0 && (
                         <p className="text-xs text-c-text-muted">
                           <span className="font-semibold">
-                            {isPolish ? 'Uważaj na: ' : 'Watch out for: '}
+                            {t('assessment.siri.editor.watchOutFor', 'Watch out for: ')}
                           </span>
                           {g.data.pitfalls.join(' · ')}
                         </p>
@@ -794,7 +800,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                   className="flex items-center gap-2 text-sm text-c-text-secondary dark:text-c-text-muted hover:text-c-text dark:hover:text-c-text"
                 >
                   <MessageSquare size={16} />
-                  {isPolish ? 'Notatki i dowody' : 'Notes & Evidence'}
+                  {t('assessment.siri.editor.notesAndEvidence', 'Notes & Evidence')}
                   <ChevronDown
                     size={16}
                     className={`transition-transform ${showNotes ? 'rotate-180' : ''}`}
@@ -805,9 +811,10 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                     value={currentDimensionState.notes || ''}
                     onChange={(e) => handleNotesChange(e.target.value)}
                     disabled={readOnly}
-                    placeholder={
-                      isPolish ? 'Dodaj notatki lub dowody...' : 'Add notes or evidence...'
-                    }
+                    placeholder={t(
+                      'assessment.siri.editor.notesPlaceholder',
+                      'Add notes or evidence...'
+                    )}
                     className="mt-2 w-full h-32 p-3 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface dark:bg-c-bg text-c-text resize-none disabled:opacity-60"
                   />
                 )}
@@ -817,9 +824,10 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               {dimensionPrioritisationAreas.length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-c-text-muted uppercase tracking-wider mb-3">
-                    {isPolish
-                      ? 'Powiązane obszary priorytetyzacji'
-                      : 'Related Prioritisation Areas'}
+                    {t(
+                      'assessment.siri.editor.relatedPrioritisationAreas',
+                      'Related Prioritisation Areas'
+                    )}
                   </h4>
                   <div className="space-y-3">
                     {dimensionPrioritisationAreas.map((area) => (
@@ -841,7 +849,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
           {viewMode === 'matrix' && (
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-c-text">
-                {isPolish ? 'Macierz dojrzałości SIRI' : 'SIRI Maturity Matrix'}
+                {t('assessment.siri.editor.matrixTitle', 'SIRI Maturity Matrix')}
               </h3>
 
               {/* Matrix Table */}
@@ -852,7 +860,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                   <thead>
                     <tr>
                       <th className="p-3 text-left bg-c-surface-raised border border-c-border-subtle">
-                        {isPolish ? 'Wymiar' : 'Dimension'}
+                        {t('assessment.siri.editor.dimensionColumn', 'Dimension')}
                       </th>
                       {SIRI_MATURITY_LEVELS.map((level) => (
                         <th

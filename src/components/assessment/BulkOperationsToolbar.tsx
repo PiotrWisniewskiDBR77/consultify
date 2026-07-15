@@ -78,8 +78,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
   minLevel = 1,
   readOnly = false,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [batchLevel, setBatchLevel] = useState<number>(3);
@@ -329,12 +328,13 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                 {t('assessment.bulk.avgLevel', 'Avg level:')} {selectionStats.avgLevel}
               </span>
               <span>
-                {isPolish ? 'Zakres:' : 'Range:'} {selectionStats.minLevel}-
+                {t('assessment.bulk.range', 'Range:')} {selectionStats.minLevel}-
                 {selectionStats.maxLevel}
               </span>
               {selectionStats.categories.length > 0 && (
                 <span>
-                  {isPolish ? 'Kategorie:' : 'Categories:'} {selectionStats.categories.length}
+                  {t('assessment.bulk.categories', 'Categories:')}{' '}
+                  {selectionStats.categories.length}
                 </span>
               )}
             </div>
@@ -351,9 +351,9 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                 {t('assessment.bulk.batchEdit', 'Batch Edit')}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? `Edytuj ${selectionStats.count} zaznaczonych elementów`
-                  : `Edit ${selectionStats.count} selected items`}
+                {t('assessment.bulk.editSelectedItems', 'Edit {{count}} selected items', {
+                  count: selectionStats.count,
+                })}
               </p>
             </div>
 
@@ -361,7 +361,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
               {/* Current Level */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Aktualny poziom' : 'Current Level'}
+                  {t('assessment.bulk.currentLevel', 'Current Level')}
                 </label>
                 <div className="flex gap-2">
                   {Array.from({ length: maxLevel }, (_, i) => i + minLevel).map((level) => (
@@ -383,7 +383,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
               {/* Target Level */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Poziom docelowy (opcjonalnie)' : 'Target Level (optional)'}
+                  {t('assessment.bulk.targetLevelOptional', 'Target Level (optional)')}
                 </label>
                 <div className="flex gap-2">
                   <button
@@ -394,7 +394,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                         : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                     }`}
                   >
-                    {isPolish ? 'Brak' : 'None'}
+                    {t('assessment.bulk.none', 'None')}
                   </button>
                   {Array.from({ length: maxLevel }, (_, i) => i + minLevel).map((level) => (
                     <button
@@ -415,12 +415,12 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Notatki (dopisz do istniejących)' : 'Notes (append to existing)'}
+                  {t('assessment.bulk.notesAppend', 'Notes (append to existing)')}
                 </label>
                 <textarea
                   value={batchNotes}
                   onChange={(e) => setBatchNotes(e.target.value)}
-                  placeholder={isPolish ? 'Dodatkowe notatki...' : 'Additional notes...'}
+                  placeholder={t('assessment.bulk.notesPlaceholder', 'Additional notes...')}
                   className="w-full h-24 p-3 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-navy-900 dark:text-white resize-none"
                 />
               </div>
@@ -430,9 +430,10 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
                   <p className="text-sm text-amber-700 dark:text-amber-400">
-                    {isPolish
-                      ? 'Ta operacja zaktualizuje wszystkie zaznaczone elementy. Tej akcji nie można cofnąć.'
-                      : 'This will update all selected items. This action cannot be undone.'}
+                    {t(
+                      'assessment.bulk.warningMessage',
+                      'This will update all selected items. This action cannot be undone.'
+                    )}
                   </p>
                 </div>
               </div>
@@ -443,14 +444,14 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                 onClick={() => setShowBatchDialog(false)}
                 className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('assessment.bulk.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleBatchApply}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
               >
                 <Check size={16} />
-                {isPolish ? 'Zastosuj' : 'Apply'}
+                {t('assessment.bulk.apply', 'Apply')}
               </button>
             </div>
           </div>

@@ -5924,7 +5924,23 @@
       "saveFailed": "Nie udało się zapisać",
       "loadingData": "Ładowanie danych assessmentu...",
       "progress": "Postęp:",
-      "saving": "Zapisuję..."
+      "saving": "Zapisuję...",
+      "table": {
+        "author": "Autor"
+      },
+      "editNoteImported": "Edycja przez przegląd zaimportowanego PDF",
+      "triagePrompt": "Zrób wstępną ocenę AI listy „{{lane}}\" ({{count}} pozycji): co wymaga uwagi najpierw i dlaczego?",
+      "statusFilterTooltip": "Filtruj listę po statusie „{{status}}\".",
+      "activeTabTooltip": "Aktualnie otwarta zakładka i liczba pozycji na liście.",
+      "statusFilterAppliedTooltip": "Filtr statusu zastosowany do listy (kliknij status w tabeli, by go ustawić).",
+      "documentsTooltip": "Liczba otwartych dokumentów (assessment/raport/inicjatywa) w tym module.",
+      "generateReportTooltip": "Wygeneruj nowy raport z ukończonego assessmentu.",
+      "initiativePackTooltip": "Wygeneruj paczkę inicjatyw AI na podstawie wniosków z assessmentu.",
+      "resumeLatestLabel": "Wznów ostatni assessment",
+      "resumeLatestTooltip": "Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.",
+      "aiTriageTooltip": "Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.",
+      "chatTooltip": "Otwiera pusty czat AI dla tego huba.",
+      "connectionError": "Błąd połączenia"
     },
     "notes": "Notatki",
     "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
@@ -6036,7 +6052,30 @@
       "assessment": "Ocena",
       "status": "Status",
       "updated": "Data",
-      "actions": "Akcje"
+      "actions": "Akcje",
+      "loadError": "Nie udało się wczytać",
+      "editInMap": "Edytuj w mapie",
+      "viewInMap": "Otwórz w mapie",
+      "openInMap": "Otwórz w mapie",
+      "progress": "Postęp",
+      "createReport": "Utwórz raport",
+      "title": "Assessmenty",
+      "new": "Nowy assessment",
+      "selectedCount": "Zaznaczono: {{count}}",
+      "selectAll": "Zaznacz wszystko",
+      "clearSelection": "Wyczyść",
+      "axesCompleted": "{{completed}}/{{total}} osi ukończonych",
+      "projectLabel": "Projekt",
+      "createdLabel": "Utworzono",
+      "aiHintSummarize": "Podsumuj assessment",
+      "aiHintNextSteps": "Zaproponuj następne kroki",
+      "comingSoon": "Wkrótce",
+      "confirmDeleteTitle": "Potwierdź usunięcie",
+      "confirmDeleteMessage": "Usunąć {{target}}? Tej operacji nie można cofnąć.",
+      "deleteTargetPlural": "{{count}} assessmenty",
+      "deleteTargetSingular": "ten assessment",
+      "cancel": "Anuluj",
+      "deleting": "Usuwanie…"
     },
     "aiSuggestions": {
       "title": "Sugestie AI",
@@ -6067,7 +6106,19 @@
       "technologiesCount": "technologii",
       "noLevelSuggestions": "Brak sugestii poziomów do wyświetlenia",
       "noTechSuggestions": "Brak sugestii technologii do wyświetlenia",
-      "noGaps": "Brak luk do wyświetlenia"
+      "noGaps": "Brak luk do wyświetlenia",
+      "topPerformers": "Top performers:",
+      "quickWins": "Quick Wins",
+      "complexityLevels": {
+        "low": "Niska",
+        "medium": "Średnia",
+        "high": "Wysoka"
+      },
+      "costLevels": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki"
+      }
     },
     "reportBuilder": {
       "sectionSaved": "Sekcja zapisana",
@@ -6125,7 +6176,15 @@
       "initiativeAngles": "Kąty inicjatyw",
       "runAiPrompt": "Uruchom jeden z promptów AI aby uzyskać insighty.",
       "selectSession": "Wybierz sesję, aby zobaczyć szczegóły.",
-      "openSessionHint": "Otwórz sesję assessment aby kontynuować."
+      "openSessionHint": "Otwórz sesję assessment aby kontynuować.",
+      "execBrief": "Executive brief",
+      "title": "Sesja assessmentu",
+      "aiHints": "Podpowiedzi AI",
+      "frameworkLabel": "Framework",
+      "assessmentLabel": "Assessment",
+      "descriptionLabel": "Opis",
+      "whatYouGet": "Co dostajesz",
+      "startAssessment": "Start assessment"
     },
     "form": {
       "current": "Aktualny",
@@ -6150,7 +6209,8 @@
       "dimensions": "Wymiary",
       "previousBlock": "Poprzedni blok",
       "completeAssessment": "Zakończ ocenę",
-      "nextBlock": "Następny blok"
+      "nextBlock": "Następny blok",
+      "nextAxis": "Następna oś"
     },
     "initiatives": {
       "submitted": "Inicjatywa przesłana do przeglądu",
@@ -6160,7 +6220,8 @@
       "title": "Inicjatywy",
       "relatedHint": "Powiązane z aktualnym assessmentem",
       "goAfterPlanning": "Przejdź do Inicjatyw po PLANNING",
-      "goTo": "Idź do Inicjatyw"
+      "goTo": "Idź do Inicjatyw",
+      "sourceReport": "Raport źródłowy"
     },
     "drd": {
       "whyThisMatters": {
@@ -6169,15 +6230,219 @@
       },
       "glossary": {
         "button": "Słownik"
+      },
+      "matrix": {
+        "overviewTitle": "Podgląd macierzy",
+        "overviewSubtitle": "Kolor komórki = osiągnięty poziom dojrzałości. Kliknij oś, aby ją otworzyć.",
+        "levelRamp": "Skala poziomów",
+        "areasAssessed": "Ocenione obszary"
       }
     },
     "glossary": {
-      "title": "Słownik konsultingowy"
+      "title": "Słownik konsultingowy",
+      "heading": "Słownik terminów konsultingowych",
+      "subtitle": "Zrozumiały język zamiast żargonu",
+      "searchPlaceholder": "Szukaj terminu (np. SWOT, WACC)...",
+      "all": "Wszystkie",
+      "noResults": "Brak wyników."
     },
     "bulk": {
       "confirmDeleteTitle": "Usunąć zaznaczone pozycje?",
       "confirmDeleteDesc": "Trwale usuniesz {{count}} pozycji. Tej operacji nie można cofnąć.",
-      "deletedNoun": "usunięto"
+      "deletedNoun": "usunięto",
+      "selectAll": "Zaznacz wszystko (Ctrl+A)",
+      "selected": "zaznaczonych",
+      "clearSelection": "Wyczyść zaznaczenie (Esc)",
+      "decreaseLevel": "Zmniejsz poziom (-1)",
+      "increaseLevel": "Zwiększ poziom (+1)",
+      "setLevel": "Ustaw poziom",
+      "copy": "Kopiuj (Ctrl+C)",
+      "paste": "Wklej (Ctrl+V)",
+      "batchEdit": "Edycja zbiorcza",
+      "avgLevel": "Śr. poziom:",
+      "range": "Zakres:",
+      "categories": "Kategorie:",
+      "editSelectedItems": "Edytuj {{count}} zaznaczonych elementów",
+      "currentLevel": "Aktualny poziom",
+      "targetLevelOptional": "Poziom docelowy (opcjonalnie)",
+      "none": "Brak",
+      "notesAppend": "Notatki (dopisz do istniejących)",
+      "notesPlaceholder": "Dodatkowe notatki...",
+      "warningMessage": "Ta operacja zaktualizuje wszystkie zaznaczone elementy. Tej akcji nie można cofnąć.",
+      "cancel": "Anuluj",
+      "apply": "Zastosuj"
+    },
+    "reportsTable": {
+      "toastApproved": "Raport zatwierdzony",
+      "toastApproveFailed": "Nie udało się zatwierdzić raportu",
+      "toastSentInternal": "Oznaczono jako wysłany wewnętrznie",
+      "toastSentInternalFailed": "Nie udało się oznaczyć jako wysłany",
+      "toastSentExternal": "Oznaczono jako wysłany zewnętrznie",
+      "toastSentExternalFailed": "Nie udało się oznaczyć jako wysłany",
+      "toastSentBack": "Raport odesłany do edycji",
+      "toastSendBackFailed": "Nie udało się odesłać raportu",
+      "toastExportCompleted": "Eksport {{format}} zakończony",
+      "toastExportFailed": "Nie udało się wyeksportować",
+      "toastExportError": "Błąd eksportu",
+      "toastLinkCopied": "Link skopiowany",
+      "toastLinkCreated": "Link utworzony",
+      "toastLinkFailed": "Błąd tworzenia linku",
+      "toastImported": "Raport zaimportowany pomyślnie",
+      "columns": {
+        "report": "Raport",
+        "author": "Autor",
+        "context": "Kontekst",
+        "updated": "Zaktualizowany"
+      },
+      "menu": {
+        "view": "Podgląd raportu",
+        "exportPdf": "Eksportuj PDF",
+        "exportPptx": "Eksportuj PPTX",
+        "exportWord": "Eksportuj Word",
+        "shareLink": "Utwórz link",
+        "generateInitiatives": "Generuj inicjatywy",
+        "approve": "Zatwierdź",
+        "sendBack": "Odeślij do edycji",
+        "sendInternal": "Wyślij wewn.",
+        "sendExternal": "Wyślij zewn."
+      },
+      "header": {
+        "creatorTitle": "Kreator raportów",
+        "title": "Raporty",
+        "creatorSubtitle": "Wszystkie raporty (wszystkie źródła i statusy) oraz szybki dostęp do edytora.",
+        "subtitle": "Raporty z ocen w statusie przeglądu i wyższych",
+        "settingsTitle": "Ustawienia kreatora (bloki/szablony/profile)",
+        "settings": "Ustawienia",
+        "importTitle": "Importuj raport zewnętrzny",
+        "import": "Importuj",
+        "newTemplateTitle": "Utwórz nowy szablon raportu",
+        "newTemplate": "Nowy Szablon",
+        "newReportTitle": "Utwórz raport z pomocą AI",
+        "newReport": "Nowy Raport"
+      },
+      "stats": {
+        "all": "Wszystkie",
+        "drafts": "Szkice",
+        "generated": "Wygenerowane",
+        "inReview": "W przeglądzie",
+        "approved": "Zatwierdzone",
+        "sent": "Wysłane"
+      },
+      "search": {
+        "placeholder": "Szukaj raportów..."
+      },
+      "empty": {
+        "noMatchTitle": "Brak raportów pasujących do wyszukiwania",
+        "noneInReviewTitle": "Brak raportów w przeglądzie",
+        "noneTitle": "Brak raportów",
+        "creatorDesc": "Utwórz nowy raport lub otwórz istniejący z listy.",
+        "reviewDesc": "Raporty pojawią się tutaj po przesłaniu do przeglądu"
+      }
+    },
+    "adma": {
+      "editor": {
+        "viewDimensions": "Wymiary",
+        "viewRadar": "Radar",
+        "viewMatrix": "Macierz",
+        "currentMaturityLevel": "Aktualny poziom dojrzałości",
+        "targetLevel": "Poziom docelowy",
+        "characteristics": "Charakterystyki",
+        "overallMaturity": "Dojrzałość ogólna",
+        "gapAnalysis": "Analiza luki",
+        "gapMessage": "Luka: {{gap}} poziomów do osiągnięcia celu",
+        "aiGuidanceCta": "Podpowiedź AI (dlaczego to ważne + jak oceniać)",
+        "generatingGuidance": "Generuję podpowiedź…",
+        "consultantGuidance": "Podpowiedź konsultanta",
+        "canonSource": "kanon",
+        "whyItMatters": "Dlaczego to ważne: ",
+        "howToScore": "Jak oceniać poziom: ",
+        "canonLabel": "Kanon: ",
+        "watchOutFor": "Uważaj na: ",
+        "notesAndEvidence": "Notatki i dowody",
+        "notesPlaceholder": "Dodaj notatki lub dowody...",
+        "matrixTitle": "Macierz dojrzałości ADMA",
+        "dimensionColumn": "Wymiar"
+      }
+    },
+    "siri": {
+      "editor": {
+        "score": "Wynik",
+        "viewDimensions": "Wymiary",
+        "viewPrioritisation": "Priorytetyzacja",
+        "viewMatrix": "Macierz",
+        "currentLevel": "Aktualny poziom",
+        "targetLevel": "Poziom docelowy",
+        "prioritisationAreas": "Obszary priorytetyzacji",
+        "overallScore": "Wynik ogólny",
+        "gapAnalysis": "Analiza luki",
+        "gapMessage": "Luka: {{gap}} poziomów do osiągnięcia celu",
+        "aiGuidanceCta": "Podpowiedź AI (dlaczego to ważne + jak oceniać)",
+        "generatingGuidance": "Generuję podpowiedź…",
+        "consultantGuidance": "Podpowiedź konsultanta",
+        "canonSource": "kanon",
+        "whyItMatters": "Dlaczego to ważne: ",
+        "howToScore": "Jak oceniać poziom: ",
+        "canonLabel": "Kanon: ",
+        "watchOutFor": "Uważaj na: ",
+        "notesAndEvidence": "Notatki i dowody",
+        "notesPlaceholder": "Dodaj notatki lub dowody...",
+        "relatedPrioritisationAreas": "Powiązane obszary priorytetyzacji",
+        "matrixTitle": "Macierz dojrzałości SIRI",
+        "dimensionColumn": "Wymiar"
+      }
+    },
+    "reports": {
+      "source": "Assessment źródłowy"
+    },
+    "emptyState": {
+      "title": "Brak assessmentów",
+      "createFirst": "Utwórz pierwszy assessment",
+      "description": "Utwórz pierwszy assessment, aby rozpocząć diagnozę."
+    },
+    "team": {
+      "addModal": {
+        "title": "Dodaj osobę do zespołu",
+        "subtitle": "Wyszukaj i dodaj użytkowników do zespołu",
+        "searchLabel": "Szukaj użytkowników",
+        "searchPlaceholder": "Szukaj po nazwie lub email…",
+        "selectRole": "Wybierz rolę",
+        "adding": "Dodaję…",
+        "add": "Dodaj"
+      },
+      "outsideOrg": "Poza organizacją",
+      "inOrg": "W organizacji",
+      "partner": "Partner",
+      "consultant": "Konsultant",
+      "organizationColumn": "Organizacja"
+    },
+    "drdReport": {
+      "title": "Raport Diagnozy Gotowości Cyfrowej",
+      "subtitle": "DRD — 7 osi transformacji cyfrowej",
+      "maturityProfileHeading": "Profil dojrzałości cyfrowej",
+      "executiveSummaryHeading": "Podsumowanie wykonawcze",
+      "overallMaturityCard": "Dojrzałość ogólna (znormalizowana)",
+      "targetStateCard": "Cel docelowy (znormalizowany)",
+      "completionCard": "Pokrycie diagnozy",
+      "narrative": "Ogólna dojrzałość cyfrowa {{company}} wynosi {{current}}% (poziom: {{verdict}}), przy celu {{target}}%. Diagnoza objęła {{completion}}% obszarów w 7 osiach. Największe luki — i najszybsze efekty — wskazano w sekcji „Najważniejsze luki” poniżej.",
+      "maturityMapHeading": "Mapa dojrzałości — 7 osi",
+      "topGapsHeading": "Najważniejsze luki",
+      "currentLabel": "Obecnie",
+      "targetLabel": "Cel",
+      "noGapsMessage": "Brak istotnych luk — wszystkie osie osiągnęły lub przekroczyły cel.",
+      "initiativesHeading": "Inicjatywy",
+      "inPreparation": "w przygotowaniu",
+      "initiativesPlaceholder": "Rekomendowane inicjatywy transformacyjne zostaną wygenerowane na podstawie zidentyfikowanych luk.",
+      "roiHeading": "Efekty ekonomiczne (ROI)",
+      "roiPlaceholder": "Szacunkowy zwrot z inwestycji i efekty finansowe zostaną oszacowane dla rekomendowanych inicjatyw.",
+      "readOnlyMode": "Tryb tylko do odczytu.",
+      "footerGenerated": "Raport wygenerowany przez Consultify",
+      "verdictHigh": "wysoka",
+      "verdictModerate": "średnia",
+      "verdictBasic": "podstawowa",
+      "verdictInitial": "początkowa"
+    },
+    "itemPreview": {
+      "defaultLabel": "Ocena"
     }
   },
   "initiatives": {
@@ -17061,7 +17326,8 @@
       "noFramework": "Nie udało się wykryć frameworka. Wybierz ręcznie.",
       "lowConfidence": "Niska pewność — przejrzyj i popraw wyodrębnione wartości.",
       "supportedFrameworks": "Obsługiwane frameworki"
-    }
+    },
+    "breadcrumb": "Licencjonowane"
   },
   "tools": {
     "hub": {
@@ -18288,7 +18554,8 @@
     "pricing": "Cennik",
     "partners": "Partnerzy",
     "vector": "Vector AI",
-    "security": "Bezpieczeństwo"
+    "security": "Bezpieczeństwo",
+    "tools": "Narzędzia"
   },
   "navigation": {
     "sidebar": {

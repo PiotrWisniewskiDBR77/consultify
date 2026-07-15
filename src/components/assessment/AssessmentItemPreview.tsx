@@ -46,18 +46,18 @@ export interface AssessmentItemPreviewProps {
   onClose?: () => void;
 }
 
-const getFrameworkLabel = (framework?: string, isPolish?: boolean): string => {
-  if (!framework) return isPolish ? 'Ocena' : 'Assessment';
+const getFrameworkLabel = (framework: string | undefined, defaultLabel: string): string => {
+  if (!framework) return defaultLabel;
   const upper = String(framework).toUpperCase();
-  const labels: Record<string, { en: string; pl: string }> = {
-    DRD: { en: 'DRD', pl: 'DRD' },
-    SIRI: { en: 'SIRI', pl: 'SIRI' },
-    ADMA: { en: 'ADMA', pl: 'ADMA' },
-    CMMI: { en: 'CMMI', pl: 'CMMI' },
-    LEAN: { en: 'Lean 4.0', pl: 'Lean 4.0' },
+  // Framework display labels are language-agnostic (proper nouns / acronyms).
+  const labels: Record<string, string> = {
+    DRD: 'DRD',
+    SIRI: 'SIRI',
+    ADMA: 'ADMA',
+    CMMI: 'CMMI',
+    LEAN: 'Lean 4.0',
   };
-  const entry = labels[upper];
-  return entry ? (isPolish ? entry.pl : entry.en) : framework;
+  return labels[upper] ?? framework;
 };
 
 export const AssessmentItemPreview: React.FC<AssessmentItemPreviewProps> = ({
@@ -66,10 +66,11 @@ export const AssessmentItemPreview: React.FC<AssessmentItemPreviewProps> = ({
   onAddEvidence,
   onClose,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
-  const kicker = item.area ?? getFrameworkLabel(item.framework, isPolish);
+  const kicker =
+    item.area ??
+    getFrameworkLabel(item.framework, t('assessment.itemPreview.defaultLabel', 'Assessment'));
   const title = item.name || '—';
   const gap =
     item.gap ??

@@ -676,7 +676,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     // resolve row.createdBy against org users, fall back to raw id, then '—'.
     const authorCol: TableColumn = {
       id: 'createdBy',
-      label: t('assessment.hub.table.author', isPolish ? 'Autor' : 'Author'),
+      label: t('assessment.hub.table.author', 'Author'),
       width: '140px',
       render: (row) => {
         const label = getAuthorLabel(row?.createdBy);
@@ -803,7 +803,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       authorCol,
       updatedCol,
     ];
-  }, [activeTab, t, isPolish, getAuthorLabel]);
+  }, [activeTab, t, getAuthorLabel]);
 
   // Handlers
   const handleOpenDocument = useCallback(
@@ -1311,14 +1311,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         conversationId: convId,
         role: 'user',
         messageType: 'text',
-        content: isPolish
-          ? `Zrób wstępną ocenę AI listy „${laneLabel}" (${currentData.length} pozycji): co wymaga uwagi najpierw i dlaczego?`
-          : `Give me an AI pre-screen of the "${laneLabel}" list (${currentData.length} items): what needs attention first, and why?`,
+        content: t(
+          'assessment.hub.triagePrompt',
+          'Give me an AI pre-screen of the "{{lane}}" list ({{count}} items): what needs attention first, and why?',
+          { lane: laneLabel, count: currentData.length }
+        ),
       });
     } catch (error: any) {
       toast.error(error?.message || 'Failed to open AI pre-screen');
     }
-  }, [ensureHubChatOpen, tabs, activeTab, addChatMessage, isPolish, currentData.length]);
+  }, [ensureHubChatOpen, tabs, activeTab, addChatMessage, t, currentData.length]);
 
   // #71: Tools-parity — behind ff assessmentMenu3StatusChips (default OFF).
   // DiscoveryToolsHub's CommandRowContent renders Menu 3 LEFT as a clickable
@@ -1340,11 +1342,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         active: statusFilter === opt.id,
         icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
         onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
-        title: isPolish
-          ? `Filtruj listę po statusie „${opt.labelPL}".`
-          : `Filter the list by status "${opt.label}".`,
+        title: t('assessment.hub.statusFilterTooltip', 'Filter the list by status "{{status}}".', {
+          status: isPolish ? opt.labelPL : opt.label,
+        }),
       })),
-    [isPolish, statusChipOptions, statusCounts, statusFilter]
+    [isPolish, statusChipOptions, statusCounts, statusFilter, t]
   );
 
   const hubMenu3InfoChips = useMemo(
@@ -1363,27 +1365,30 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               : 'Assessment',
         badge: currentData.length,
         active: true,
-        title: isPolish
-          ? 'Aktualnie otwarta zakładka i liczba pozycji na liście.'
-          : 'Currently open tab and the number of items in its list.',
+        title: t(
+          'assessment.hub.activeTabTooltip',
+          'Currently open tab and the number of items in its list.'
+        ),
       },
       {
         id: 'status-filter',
         label: statusFilter === 'all' ? 'All statuses' : `Status ${statusFilter}`,
-        title: isPolish
-          ? 'Filtr statusu zastosowany do listy (kliknij status w tabeli, by go ustawić).'
-          : 'Status filter applied to the list (click a status in the table to set it).',
+        title: t(
+          'assessment.hub.statusFilterAppliedTooltip',
+          'Status filter applied to the list (click a status in the table to set it).'
+        ),
       },
       {
         id: 'documents',
         label: openDocuments.length > 0 ? 'Focused documents' : 'List workspace',
         badge: openDocuments.length || null,
-        title: isPolish
-          ? 'Liczba otwartych dokumentów (assessment/raport/inicjatywa) w tym module.'
-          : 'Number of documents (assessment/report/initiative) currently open in this module.',
+        title: t(
+          'assessment.hub.documentsTooltip',
+          'Number of documents (assessment/report/initiative) currently open in this module.'
+        ),
       },
     ],
-    [activeTab, currentData.length, isPolish, openDocuments.length, statusFilter]
+    [activeTab, currentData.length, openDocuments.length, statusFilter, t]
   );
 
   const hubMenu3Chips = menu3StatusChipsEnabled ? statusFilterChips : hubMenu3InfoChips;
@@ -1397,9 +1402,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => setShowNewReportModal(true),
         active: false,
         disabled: assessments.length === 0,
-        title: isPolish
-          ? 'Wygeneruj nowy raport z ukończonego assessmentu.'
-          : 'Generate a new report from a completed assessment.',
+        title: t(
+          'assessment.hub.generateReportTooltip',
+          'Generate a new report from a completed assessment.'
+        ),
       };
     }
 
@@ -1411,9 +1417,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => setShowInitiativesWizard(true),
         active: false,
         disabled: assessments.length === 0,
-        title: isPolish
-          ? 'Wygeneruj paczkę inicjatyw AI na podstawie wniosków z assessmentu.'
-          : 'Generate an AI initiative pack from the assessment findings.',
+        title: t(
+          'assessment.hub.initiativePackTooltip',
+          'Generate an AI initiative pack from the assessment findings.'
+        ),
       };
     }
 
@@ -1423,16 +1430,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     // the last-visited axis/area/level for DRD. Renamed to say that plainly.
     return {
       id: 'interpretation',
-      label: isPolish ? 'Wznów ostatni assessment' : 'Resume latest assessment',
+      label: t('assessment.hub.resumeLatestLabel', 'Resume latest assessment'),
       icon: Lightbulb,
       onClick: openInterpretationDraft,
       active: false,
       disabled: assessments.length === 0,
-      title: isPolish
-        ? 'Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.'
-        : 'Opens the editor for your most recently updated assessment, back where you left off.',
+      title: t(
+        'assessment.hub.resumeLatestTooltip',
+        'Opens the editor for your most recently updated assessment, back where you left off.'
+      ),
     };
-  }, [activeTab, assessments.length, isPolish, openInterpretationDraft]);
+  }, [activeTab, assessments.length, openInterpretationDraft, t]);
 
   const hubMenu3Actions = useMemo(
     () => [
@@ -1449,9 +1457,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => void handleOpenHubTriage(),
         active: isHubChatActive,
         disabled: isLoading,
-        title: isPolish
-          ? 'Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.'
-          : 'Opens AI chat with a ready-made prompt: what in this list needs attention first.',
+        title: t(
+          'assessment.hub.aiTriageTooltip',
+          'Opens AI chat with a ready-made prompt: what in this list needs attention first.'
+        ),
       },
       {
         id: 'chat',
@@ -1460,13 +1469,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => void handleOpenHubChat(),
         active: isHubChatActive,
         disabled: isLoading,
-        title: isPolish
-          ? 'Otwiera pusty czat AI dla tego huba.'
-          : 'Opens a blank AI chat for this hub.',
+        title: t('assessment.hub.chatTooltip', 'Opens a blank AI chat for this hub.'),
       },
       thirdHubAction,
     ],
-    [handleOpenHubChat, handleOpenHubTriage, isHubChatActive, isLoading, isPolish, thirdHubAction]
+    [handleOpenHubChat, handleOpenHubTriage, isHubChatActive, isLoading, t, thirdHubAction]
   );
 
   // Triada standard (canon A3/A6): checkbox selection on the 'list' tab
@@ -2028,9 +2035,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                       ? undefined
                       : () => navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`),
                     editNote: isImported
-                      ? isPolish
-                        ? 'Edycja przez przegląd zaimportowanego PDF'
-                        : 'Edit via the imported-PDF review flow'
+                      ? t(
+                          'assessment.hub.editNoteImported',
+                          'Edit via the imported-PDF review flow'
+                        )
                       : undefined,
                   },
                   destructive: isImported
@@ -2074,9 +2082,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                       '—'
                     }`,
                     selectedRow.assessmentName
-                      ? `${t('assessment.reports.source', isPolish ? 'Assessment źródłowy' : 'Source assessment')}: ${selectedRow.assessmentName}`
+                      ? `${t('assessment.reports.source', 'Source assessment')}: ${selectedRow.assessmentName}`
                       : null,
-                    `${t('assessment.hub.table.author', isPolish ? 'Autor' : 'Author')}: ${
+                    `${t('assessment.hub.table.author', 'Author')}: ${
                       getAuthorLabel(selectedRow.createdBy) || '—'
                     }`,
                   ]
@@ -2198,9 +2206,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                       '—'
                     }`,
                     selectedRow.sourceReport
-                      ? `${t('assessment.initiatives.sourceReport', isPolish ? 'Raport źródłowy' : 'Source report')}: ${selectedRow.sourceReport}`
+                      ? `${t('assessment.initiatives.sourceReport', 'Source report')}: ${selectedRow.sourceReport}`
                       : null,
-                    `${t('assessment.hub.table.author', isPolish ? 'Autor' : 'Author')}: ${
+                    `${t('assessment.hub.table.author', 'Author')}: ${
                       getAuthorLabel(selectedRow.createdBy) || '—'
                     }`,
                   ]

@@ -62,7 +62,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
   companyName = 'Organizacja',
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const vizData = useMemo(
@@ -110,13 +110,11 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
   );
 
   const maturityVerdict = useMemo(() => {
-    if (normalizedMaturityPercent >= 75) return isPolish ? 'wysoka' : 'high';
-    if (normalizedMaturityPercent >= 50) return isPolish ? 'średnia' : 'moderate';
-    if (normalizedMaturityPercent >= 25) return isPolish ? 'podstawowa' : 'basic';
-    return isPolish ? 'początkowa' : 'initial';
-  }, [normalizedMaturityPercent, isPolish]);
-
-  const label = (pl: string, en: string) => (isPolish ? pl : en);
+    if (normalizedMaturityPercent >= 75) return t('assessment.drdReport.verdictHigh', 'high');
+    if (normalizedMaturityPercent >= 50) return t('assessment.drdReport.verdictModerate', 'moderate');
+    if (normalizedMaturityPercent >= 25) return t('assessment.drdReport.verdictBasic', 'basic');
+    return t('assessment.drdReport.verdictInitial', 'initial');
+  }, [normalizedMaturityPercent, t]);
 
   return (
     <div className="bg-white dark:bg-navy-950 min-h-full p-8 print:p-0">
@@ -127,13 +125,10 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
         <div className="flex items-start justify-between gap-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-              {label('Raport Diagnozy Gotowości Cyfrowej', 'Digital Readiness Diagnosis Report')}
+              {t('assessment.drdReport.title', 'Digital Readiness Diagnosis Report')}
             </h1>
             <p className="text-lg text-slate-500 dark:text-slate-400">
-              {label(
-                'DRD — 7 osi transformacji cyfrowej',
-                'DRD — 7 axes of digital transformation'
-              )}
+              {t('assessment.drdReport.subtitle', 'DRD — 7 axes of digital transformation')}
             </p>
           </div>
           <div className="text-right shrink-0">
@@ -155,7 +150,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 size={20} className="text-blue-600 dark:text-blue-400" />
-          {label('Profil dojrzałości cyfrowej', 'Digital maturity profile')}
+          {t('assessment.drdReport.maturityProfileHeading', 'Digital maturity profile')}
         </h2>
         <AssessmentRadarChart data={vizData} height={460} />
       </section>
@@ -163,7 +158,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={20} className="text-blue-600 dark:text-blue-400" />
-          {label('Podsumowanie wykonawcze', 'Executive Summary')}
+          {t('assessment.drdReport.executiveSummaryHeading', 'Executive Summary')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-xl p-5 text-center">
@@ -171,7 +166,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
               {normalizedMaturityPercent}%
             </div>
             <div className="text-sm text-blue-700/80 dark:text-blue-300/80 mt-1">
-              {label('Dojrzałość ogólna (znormalizowana)', 'Overall maturity (normalized)')}
+              {t('assessment.drdReport.overallMaturityCard', 'Overall maturity (normalized)')}
             </div>
           </div>
           <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-500/30 rounded-xl p-5 text-center">
@@ -179,7 +174,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
               {normalizedTargetPercent}%
             </div>
             <div className="text-sm text-teal-700/80 dark:text-teal-300/80 mt-1">
-              {label('Cel docelowy (znormalizowany)', 'Target state (normalized)')}
+              {t('assessment.drdReport.targetStateCard', 'Target state (normalized)')}
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-5 text-center">
@@ -187,14 +182,21 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
               {vizData.completionPercent}%
             </div>
             <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {label('Pokrycie diagnozy', 'Assessment completion')}
+              {t('assessment.drdReport.completionCard', 'Assessment completion')}
             </div>
           </div>
         </div>
         <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 mt-4">
-          {label(
-            `Ogólna dojrzałość cyfrowa ${companyName} wynosi ${normalizedMaturityPercent}% (poziom: ${maturityVerdict}), przy celu ${normalizedTargetPercent}%. Diagnoza objęła ${vizData.completionPercent}% obszarów w 7 osiach. Największe luki — i najszybsze efekty — wskazano w sekcji „Najważniejsze luki” poniżej.`,
-            `${companyName}'s overall digital maturity stands at ${normalizedMaturityPercent}% (level: ${maturityVerdict}), against a ${normalizedTargetPercent}% target. The diagnosis covered ${vizData.completionPercent}% of areas across 7 axes. The largest gaps — and quickest wins — are listed in the "Top gaps" section below.`
+          {t(
+            'assessment.drdReport.narrative',
+            '{{company}}\'s overall digital maturity stands at {{current}}% (level: {{verdict}}), against a {{target}}% target. The diagnosis covered {{completion}}% of areas across 7 axes. The largest gaps — and quickest wins — are listed in the "Top gaps" section below.',
+            {
+              company: companyName,
+              current: normalizedMaturityPercent,
+              verdict: maturityVerdict,
+              target: normalizedTargetPercent,
+              completion: vizData.completionPercent,
+            }
           )}
         </p>
       </section>
@@ -205,7 +207,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 size={20} className="text-blue-600 dark:text-blue-400" />
-          {label('Mapa dojrzałości — 7 osi', 'Maturity map — 7 axes')}
+          {t('assessment.drdReport.maturityMapHeading', 'Maturity map — 7 axes')}
         </h2>
         <div className="space-y-6">
           <ScoreCardsGrid data={vizData} />
@@ -221,7 +223,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp size={20} className="text-amber-600 dark:text-amber-400" />
-          {label('Najważniejsze luki', 'Top gaps')}
+          {t('assessment.drdReport.topGapsHeading', 'Top gaps')}
         </h2>
         {topGaps.length > 0 ? (
           <div className="space-y-3">
@@ -254,11 +256,11 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
                     </div>
                     <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       <span>
-                        {label('Obecnie', 'Current')}: {dim.current}
+                        {t('assessment.drdReport.currentLabel', 'Current')}: {dim.current}
                       </span>
                       <ArrowRight size={12} />
                       <span>
-                        {label('Cel', 'Target')}: {dim.target}
+                        {t('assessment.drdReport.targetLabel', 'Target')}: {dim.target}
                       </span>
                       <span className="text-slate-400 dark:text-slate-600">/ {dim.maxLevel}</span>
                     </div>
@@ -272,8 +274,8 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
           </div>
         ) : (
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-5 text-sm text-emerald-700 dark:text-emerald-300">
-            {label(
-              'Brak istotnych luk — wszystkie osie osiągnęły lub przekroczyły cel.',
+            {t(
+              'assessment.drdReport.noGapsMessage',
               'No significant gaps — every axis meets or exceeds its target.'
             )}
           </div>
@@ -296,15 +298,15 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
         <div className="bg-slate-50 dark:bg-navy-800 border border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
             <Target size={18} className="text-teal-600 dark:text-teal-400" />
-            {label('Inicjatywy', 'Initiatives')}
+            {t('assessment.drdReport.initiativesHeading', 'Initiatives')}
           </h3>
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Clock size={14} />
-            <span>{label('w przygotowaniu', 'in preparation')}</span>
+            <span>{t('assessment.drdReport.inPreparation', 'in preparation')}</span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">
-            {label(
-              'Rekomendowane inicjatywy transformacyjne zostaną wygenerowane na podstawie zidentyfikowanych luk.',
+            {t(
+              'assessment.drdReport.initiativesPlaceholder',
               'Recommended transformation initiatives will be generated from the identified gaps.'
             )}
           </p>
@@ -312,15 +314,15 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
         <div className="bg-slate-50 dark:bg-navy-800 border border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
             <TrendingUp size={18} className="text-blue-600 dark:text-blue-400" />
-            {label('Efekty ekonomiczne (ROI)', 'Economic effects (ROI)')}
+            {t('assessment.drdReport.roiHeading', 'Economic effects (ROI)')}
           </h3>
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Clock size={14} />
-            <span>{label('w przygotowaniu', 'in preparation')}</span>
+            <span>{t('assessment.drdReport.inPreparation', 'in preparation')}</span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">
-            {label(
-              'Szacunkowy zwrot z inwestycji i efekty finansowe zostaną oszacowane dla rekomendowanych inicjatyw.',
+            {t(
+              'assessment.drdReport.roiPlaceholder',
               'Estimated return on investment and financial effects will be modelled for the recommended initiatives.'
             )}
           </p>
@@ -330,14 +332,14 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
       {readOnly && (
         <div className="mb-8 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>{label('Tryb tylko do odczytu.', 'Read-only mode.')}</span>
+          <span>{t('assessment.drdReport.readOnlyMode', 'Read-only mode.')}</span>
         </div>
       )}
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400">
         <p>
-          {label('Raport wygenerowany przez Consultify', 'Report generated by Consultify')} •{' '}
+          {t('assessment.drdReport.footerGenerated', 'Report generated by Consultify')} •{' '}
           {new Date().toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB')}
         </p>
         <p className="mt-1">DRD • {companyName}</p>

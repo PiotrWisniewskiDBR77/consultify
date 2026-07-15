@@ -92,7 +92,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
   currentAreaId,
   onAreaChange,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = (i18n.language || '').toLowerCase().startsWith('pl');
 
   const axis = getAxisById(currentAxisId) || DRD_STRUCTURE[0];
@@ -141,12 +141,13 @@ export const DRDMatrixSession: React.FC<Props> = ({
       {/* LEFT: color-graded matrix overview across ALL axes (the "changes colors" heart) */}
       <aside className="w-72 shrink-0 border-r border-c-border bg-c-surface overflow-y-auto p-4">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-c-text-muted mb-1">
-          {isPl ? 'Podgląd macierzy' : 'Matrix overview'}
+          {t('assessment.drd.matrix.overviewTitle', 'Matrix overview')}
         </h2>
         <p className="text-[11px] text-c-text-secondary mb-3 leading-relaxed">
-          {isPl
-            ? 'Kolor komórki = osiągnięty poziom dojrzałości. Kliknij oś, aby ją otworzyć.'
-            : 'Cell color = achieved maturity level. Click an axis to open it.'}
+          {t(
+            'assessment.drd.matrix.overviewSubtitle',
+            'Cell color = achieved maturity level. Click an axis to open it.'
+          )}
         </p>
 
         <div className="space-y-2">
@@ -233,7 +234,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
         {/* Level ramp legend */}
         <div className="mt-5">
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-c-text-muted mb-2">
-            {isPl ? 'Skala poziomów' : 'Level ramp'}
+            {t('assessment.drd.matrix.levelRamp', 'Level ramp')}
           </h3>
           <div className="flex items-center gap-1 flex-wrap">
             {Array.from({ length: axis.levelCount || 7 }, (_, i) => i + 1).map((l) => (
@@ -247,7 +248,8 @@ export const DRDMatrixSession: React.FC<Props> = ({
             ))}
           </div>
           <div className="mt-3 text-[11px] text-c-text-muted tabular-nums">
-            {isPl ? 'Ocenione obszary' : 'Areas assessed'}: {assessedAreas}/{totalAreas}
+            {t('assessment.drd.matrix.areasAssessed', 'Areas assessed')}: {assessedAreas}/
+            {totalAreas}
           </div>
         </div>
       </aside>

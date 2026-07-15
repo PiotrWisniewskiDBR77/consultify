@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { ElementType, FC, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -392,8 +393,8 @@ const AddMemberModal: FC<{
   onSearchUsers: (query: string) => Promise<OrgUser[]>;
   existingMemberIds: Set<string>;
   availableRoles: TeamRole[];
-  isPolish?: boolean;
-}> = ({ isOpen, onClose, onAdd, onSearchUsers, existingMemberIds, availableRoles, isPolish }) => {
+}> = ({ isOpen, onClose, onAdd, onSearchUsers, existingMemberIds, availableRoles }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<OrgUser | null>(null);
@@ -469,12 +470,10 @@ const AddMemberModal: FC<{
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {isPolish ? 'Dodaj osobę do zespołu' : 'Add Team Member'}
+                  {t('assessment.team.addModal.title', 'Add Team Member')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Wyszukaj i dodaj użytkowników do zespołu'
-                    : 'Search and add users to the team'}
+                  {t('assessment.team.addModal.subtitle', 'Search and add users to the team')}
                 </p>
               </div>
             </div>
@@ -492,7 +491,7 @@ const AddMemberModal: FC<{
           {/* Search */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Szukaj użytkowników' : 'Search Users'}
+              {t('assessment.team.addModal.searchLabel', 'Search Users')}
             </label>
             <div className="relative">
               <Search
@@ -503,9 +502,10 @@ const AddMemberModal: FC<{
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={
-                  isPolish ? 'Szukaj po nazwie lub email…' : 'Search by name or email...'
-                }
+                placeholder={t(
+                  'assessment.team.addModal.searchPlaceholder',
+                  'Search by name or email...'
+                )}
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -599,7 +599,7 @@ const AddMemberModal: FC<{
           {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Wybierz rolę' : 'Select Role'}
+              {t('assessment.team.addModal.selectRole', 'Select Role')}
             </label>
             <div className="grid grid-cols-2 gap-2">
               {availableRoles.map((role) => {
@@ -653,12 +653,12 @@ const AddMemberModal: FC<{
             {adding ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                {isPolish ? 'Dodaję…' : 'Adding...'}
+                {t('assessment.team.addModal.adding', 'Adding...')}
               </>
             ) : (
               <>
                 <UserPlus size={16} />
-                {isPolish ? 'Dodaj' : 'Add Member'}
+                {t('assessment.team.addModal.add', 'Add Member')}
               </>
             )}
           </button>
@@ -678,15 +678,8 @@ const TeamMemberRow: FC<{
   onUpdateRole: (userId: string, role: TeamRole) => Promise<void>;
   onRemove: (userId: string) => Promise<void>;
   isInitiative?: boolean;
-  isPolish?: boolean;
-}> = ({
-  member,
-  canManageTeam,
-  onUpdateRole,
-  onRemove,
-  isInitiative = false,
-  isPolish = false,
-}) => {
+}> = ({ member, canManageTeam, onUpdateRole, onRemove, isInitiative = false }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedRole, setSelectedRole] = useState<TeamRole>(member.role);
   const [busy, setBusy] = useState(false);
@@ -837,25 +830,21 @@ const TeamMemberRow: FC<{
           member.isExternal ? (
             <div className="flex flex-col gap-1">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-200">
-                {isPolish ? 'Poza organizacją' : 'Outside org'}
+                {t('assessment.team.outsideOrg', 'Outside org')}
               </span>
               {(member.externalOrgName || member.externalType) && (
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                   {member.externalOrgName ||
                     (member.externalType === 'PARTNER'
-                      ? isPolish
-                        ? 'Partner'
-                        : 'Partner'
-                      : isPolish
-                        ? 'Konsultant'
-                        : 'Consultant')}
+                      ? t('assessment.team.partner', 'Partner')
+                      : t('assessment.team.consultant', 'Consultant'))}
                 </span>
               )}
             </div>
           ) : (
             <div className="flex flex-col gap-1">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-                {isPolish ? 'W organizacji' : 'In org'}
+                {t('assessment.team.inOrg', 'In org')}
               </span>
               <span className="text-[11px] text-slate-600 dark:text-slate-500 truncate">
                 {member.userEmail ? String(member.userEmail).split('@')[1] || '' : '—'}
@@ -920,7 +909,9 @@ const TeamMemberRow: FC<{
 export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
   assessmentId,
   assessmentType,
-  uiLanguage,
+  // uiLanguage: kept in the public prop type for caller compatibility, but the
+  // panel now sources its language from the app-wide i18n context via t()
+  // (matches the rest of the assessment/ i18n sweep) instead of this prop.
   members,
   assignments,
   canManageTeam,
@@ -933,6 +924,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
   onRemoveAssignment,
   drdStructure,
 }) => {
+  const { t } = useTranslation();
   const [showAddModal, setShowAddModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'members' | 'assignments'>('members');
@@ -951,7 +943,6 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
   const typeKey = String(assessmentType || '').toUpperCase();
   const isDRD = typeKey === 'DRD';
   const isInitiative = typeKey === 'INITIATIVE';
-  const isPolish = (uiLanguage || 'en') === 'pl';
   const addRoleOptions = useMemo(
     () => (isInitiative ? INITIATIVE_ROLE_ORDER : ASSESSMENT_ROLE_ORDER),
     [isInitiative]
@@ -1094,7 +1085,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                     Permissions
                   </th>
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
-                    {isInitiative ? (isPolish ? 'Organizacja' : 'Organization') : 'Areas'}
+                    {isInitiative ? t('assessment.team.organizationColumn', 'Organization') : 'Areas'}
                   </th>
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
                     Added
@@ -1142,7 +1133,6 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                         onUpdateRole={onUpdateMember}
                         onRemove={onRemoveMember}
                         isInitiative={isInitiative}
-                        isPolish={isPolish}
                       />
                     ))
                   )}
@@ -1260,7 +1250,6 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
             onSearchUsers={onSearchUsers}
             existingMemberIds={existingMemberIds}
             availableRoles={addRoleOptions}
-            isPolish={isPolish}
           />
         )}
       </AnimatePresence>

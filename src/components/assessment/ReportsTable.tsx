@@ -192,8 +192,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   showAllStatuses = false,
   onCreateTemplate,
 }) => {
-  const { i18n, t } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // State
@@ -251,11 +250,11 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleApproveReport = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/approve`, {});
-      toast.success(isPolish ? 'Raport zatwierdzony' : 'Report approved');
+      toast.success(t('assessment.reportsTable.toastApproved', 'Report approved'));
       await fetchReports();
     } catch (err) {
       console.error('[ReportsTable] Approve error:', err);
-      toast.error(isPolish ? 'Nie udało się zatwierdzić raportu' : 'Failed to approve report');
+      toast.error(t('assessment.reportsTable.toastApproveFailed', 'Failed to approve report'));
     }
   };
 
@@ -263,12 +262,17 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleMarkSentInternal = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/mark-sent-internal`, {});
-      toast.success(isPolish ? 'Oznaczono jako wysłany wewnętrznie' : 'Marked as sent internally');
+      toast.success(
+        t('assessment.reportsTable.toastSentInternal', 'Marked as sent internally')
+      );
       await fetchReports();
     } catch (err) {
       console.error('[ReportsTable] Mark sent internal error:', err);
       toast.error(
-        isPolish ? 'Nie udało się oznaczyć jako wysłany' : 'Failed to mark as sent internally'
+        t(
+          'assessment.reportsTable.toastSentInternalFailed',
+          'Failed to mark as sent internally'
+        )
       );
     }
   };
@@ -277,12 +281,17 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleMarkSentExternal = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/mark-sent-external`, {});
-      toast.success(isPolish ? 'Oznaczono jako wysłany zewnętrznie' : 'Marked as sent externally');
+      toast.success(
+        t('assessment.reportsTable.toastSentExternal', 'Marked as sent externally')
+      );
       await fetchReports();
     } catch (err) {
       console.error('[ReportsTable] Mark sent external error:', err);
       toast.error(
-        isPolish ? 'Nie udało się oznaczyć jako wysłany' : 'Failed to mark as sent externally'
+        t(
+          'assessment.reportsTable.toastSentExternalFailed',
+          'Failed to mark as sent externally'
+        )
       );
     }
   };
@@ -291,11 +300,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleSendBack = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/send-back`, {});
-      toast.success(isPolish ? 'Raport odesłany do edycji' : 'Report sent back for editing');
+      toast.success(
+        t('assessment.reportsTable.toastSentBack', 'Report sent back for editing')
+      );
       await fetchReports();
     } catch (err) {
       console.error('[ReportsTable] Send back error:', err);
-      toast.error(isPolish ? 'Nie udało się odesłać raportu' : 'Failed to send report back');
+      toast.error(t('assessment.reportsTable.toastSendBackFailed', 'Failed to send report back'));
     }
   };
 
@@ -323,17 +334,17 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         toast.success(
-          isPolish
-            ? `Eksport ${format.toUpperCase()} zakończony`
-            : `${format.toUpperCase()} export completed`
+          t('assessment.reportsTable.toastExportCompleted', '{{format}} export completed', {
+            format: format.toUpperCase(),
+          })
         );
       } else {
         console.error('Export failed');
-        toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
+        toast.error(t('assessment.reportsTable.toastExportFailed', 'Failed to export'));
       }
     } catch (err) {
       console.error('[ReportsTable] Export error:', err);
-      toast.error(isPolish ? 'Błąd eksportu' : 'Export error');
+      toast.error(t('assessment.reportsTable.toastExportError', 'Export error'));
     }
   };
 
@@ -354,12 +365,14 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       const url = link?.url ? `${window.location.origin}${String(link.url)}` : '';
       if (url) {
         await navigator.clipboard.writeText(url);
-        toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
+        toast.success(t('assessment.reportsTable.toastLinkCopied', 'Link copied'));
       } else {
-        toast.success(isPolish ? 'Link utworzony' : 'Link created');
+        toast.success(t('assessment.reportsTable.toastLinkCreated', 'Link created'));
       }
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Błąd tworzenia linku' : 'Failed to create link'));
+      toast.error(
+        e?.message || t('assessment.reportsTable.toastLinkFailed', 'Failed to create link')
+      );
     }
   };
 
@@ -433,7 +446,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     () => [
       {
         id: 'name',
-        label: isPolish ? 'Raport' : 'Report',
+        label: t('assessment.reportsTable.columns.report', 'Report'),
         width: '260px',
         render: (row) => {
           const report = row as unknown as Report;
@@ -454,7 +467,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       },
       {
         id: 'author',
-        label: isPolish ? 'Autor' : 'Author',
+        label: t('assessment.reportsTable.columns.author', 'Author'),
         width: '110px',
         render: (row) => {
           const report = row as unknown as Report;
@@ -478,7 +491,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       },
       {
         id: 'context',
-        label: isPolish ? 'Kontekst' : 'Context',
+        label: t('assessment.reportsTable.columns.context', 'Context'),
         width: '160px',
         render: (row) => {
           const report = row as unknown as Report;
@@ -516,7 +529,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       },
       {
         id: 'updatedAt',
-        label: isPolish ? 'Zaktualizowany' : 'Updated',
+        label: t('assessment.reportsTable.columns.updated', 'Updated'),
         width: '110px',
         sortable: true,
         render: (row) => {
@@ -529,7 +542,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         },
       },
     ],
-    [isPolish]
+    [t]
   );
 
   // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
@@ -553,7 +566,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       const primary: NonNullable<StandardRowMenu['primary']> = [
         {
           id: 'view',
-          label: isPolish ? 'Podgląd raportu' : 'View Report',
+          label: t('assessment.reportsTable.menu.view', 'View Report'),
           icon: Eye,
           onClick: openReport,
         },
@@ -562,19 +575,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         primary.push(
           {
             id: 'export-pdf',
-            label: isPolish ? 'Eksportuj PDF' : 'Export PDF',
+            label: t('assessment.reportsTable.menu.exportPdf', 'Export PDF'),
             icon: FileText,
             onClick: () => handleExportPDF(report.id, report.name),
           },
           {
             id: 'export-pptx',
-            label: isPolish ? 'Eksportuj PPTX' : 'Export PPTX',
+            label: t('assessment.reportsTable.menu.exportPptx', 'Export PPTX'),
             icon: FileOutput,
             onClick: () => handleExportPPTX(report.id, report.name),
           },
           {
             id: 'export-word',
-            label: isPolish ? 'Eksportuj Word' : 'Export Word',
+            label: t('assessment.reportsTable.menu.exportWord', 'Export Word'),
             icon: FileText,
             onClick: () => handleExportWord(report.id, report.name),
           }
@@ -583,7 +596,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       if (['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(report.status)) {
         primary.push({
           id: 'share',
-          label: isPolish ? 'Utwórz link' : 'Share link',
+          label: t('assessment.reportsTable.menu.shareLink', 'Share link'),
           icon: Link2,
           onClick: () => handleCreateShareLink(report.id),
         });
@@ -591,7 +604,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       if (report.canGenerateInitiatives && !report.initiativesGenerated) {
         primary.push({
           id: 'initiatives',
-          label: isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives',
+          label: t('assessment.reportsTable.menu.generateInitiatives', 'Generate Initiatives'),
           icon: Lightbulb,
           onClick: () => onCreateInitiatives(report.id),
         });
@@ -602,13 +615,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         statusTransitions.push(
           {
             id: 'approve',
-            label: isPolish ? 'Zatwierdź' : 'Approve',
+            label: t('assessment.reportsTable.menu.approve', 'Approve'),
             icon: CheckCircle2,
             onClick: () => handleApproveReport(report.id),
           },
           {
             id: 'send-back',
-            label: isPolish ? 'Odeślij do edycji' : 'Send Back',
+            label: t('assessment.reportsTable.menu.sendBack', 'Send Back'),
             icon: ArrowRight,
             onClick: () => handleSendBack(report.id),
           }
@@ -617,7 +630,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       if (report.status === 'APPROVED') {
         statusTransitions.push({
           id: 'send-int',
-          label: isPolish ? 'Wyślij wewn.' : 'Send Internal',
+          label: t('assessment.reportsTable.menu.sendInternal', 'Send Internal'),
           icon: Send,
           onClick: () => handleMarkSentInternal(report.id),
         });
@@ -625,7 +638,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       if (report.status === 'SENT_INTERNAL') {
         statusTransitions.push({
           id: 'send-ext',
-          label: isPolish ? 'Wyślij zewn.' : 'Send External',
+          label: t('assessment.reportsTable.menu.sendExternal', 'Send External'),
           icon: ArrowRight,
           onClick: () => handleMarkSentExternal(report.id),
         });
@@ -645,7 +658,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         destructive: {},
       };
     },
-    [isPolish, onCreateInitiatives]
+    [t, onCreateInitiatives]
   );
 
   return (
@@ -656,21 +669,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white">
               {showAllStatuses
-                ? isPolish
-                  ? 'Kreator raportów'
-                  : 'Report creator'
-                : isPolish
-                  ? 'Raporty'
-                  : 'Reports'}
+                ? t('assessment.reportsTable.header.creatorTitle', 'Report creator')
+                : t('assessment.reportsTable.header.title', 'Reports')}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {showAllStatuses
-                ? isPolish
-                  ? 'Wszystkie raporty (wszystkie źródła i statusy) oraz szybki dostęp do edytora.'
-                  : 'All reports (all sources and statuses) with quick access to the editor.'
-                : isPolish
-                  ? 'Raporty z ocen w statusie przeglądu i wyższych'
-                  : 'Assessment reports in review status and above'}
+                ? t(
+                    'assessment.reportsTable.header.creatorSubtitle',
+                    'All reports (all sources and statuses) with quick access to the editor.'
+                  )
+                : t(
+                    'assessment.reportsTable.header.subtitle',
+                    'Assessment reports in review status and above'
+                  )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -678,41 +689,43 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               <button
                 onClick={() => navigate('/reports/builder?tab=composer')}
                 className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                title={
-                  isPolish
-                    ? 'Ustawienia kreatora (bloki/szablony/profile)'
-                    : 'Creator settings (blocks/templates/profiles)'
-                }
+                title={t(
+                  'assessment.reportsTable.header.settingsTitle',
+                  'Creator settings (blocks/templates/profiles)'
+                )}
               >
                 <Settings2 size={18} />
-                {isPolish ? 'Ustawienia' : 'Settings'}
+                {t('assessment.reportsTable.header.settings', 'Settings')}
               </button>
             )}
             <button
               onClick={() => setShowImportModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-              title={isPolish ? 'Importuj raport zewnętrzny' : 'Import external report'}
+              title={t('assessment.reportsTable.header.importTitle', 'Import external report')}
             >
               <Upload size={18} />
-              {isPolish ? 'Importuj' : 'Import'}
+              {t('assessment.reportsTable.header.import', 'Import')}
             </button>
             {showAllStatuses && onCreateTemplate && (
               <button
                 onClick={onCreateTemplate}
                 className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                title={isPolish ? 'Utwórz nowy szablon raportu' : 'Create new report template'}
+                title={t(
+                  'assessment.reportsTable.header.newTemplateTitle',
+                  'Create new report template'
+                )}
               >
                 <FileText size={18} />
-                {isPolish ? 'Nowy Szablon' : 'New Template'}
+                {t('assessment.reportsTable.header.newTemplate', 'New Template')}
               </button>
             )}
             <button
               onClick={() => navigate('/reports/builder?new=true')}
               className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white font-medium rounded-lg transition-colors"
-              title={isPolish ? 'Utwórz raport z pomocą AI' : 'Create AI-powered report'}
+              title={t('assessment.reportsTable.header.newReportTitle', 'Create AI-powered report')}
             >
               <Sparkles size={18} />
-              {isPolish ? 'Nowy Raport' : 'New Report'}
+              {t('assessment.reportsTable.header.newReport', 'New Report')}
             </button>
           </div>
         </div>
@@ -723,7 +736,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             onClick={() => setFilterStatus('all')}
             className={`text-sm ${filterStatus === 'all' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
-            {isPolish ? 'Wszystkie' : 'All'} ({stats.total})
+            {t('assessment.reportsTable.stats.all', 'All')} ({stats.total})
           </button>
           {showAllStatuses && (
             <>
@@ -731,13 +744,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 onClick={() => setFilterStatus('draft')}
                 className={`text-sm ${filterStatus === 'draft' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
               >
-                {isPolish ? 'Szkice' : 'Drafts'} ({stats.draft})
+                {t('assessment.reportsTable.stats.drafts', 'Drafts')} ({stats.draft})
               </button>
               <button
                 onClick={() => setFilterStatus('generated')}
                 className={`text-sm ${filterStatus === 'generated' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
               >
-                {isPolish ? 'Wygenerowane' : 'Generated'} ({stats.generated})
+                {t('assessment.reportsTable.stats.generated', 'Generated')} ({stats.generated})
               </button>
             </>
           )}
@@ -745,19 +758,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             onClick={() => setFilterStatus('in_review')}
             className={`text-sm ${filterStatus === 'in_review' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
-            {isPolish ? 'W przeglądzie' : 'In Review'} ({stats.inReview})
+            {t('assessment.reportsTable.stats.inReview', 'In Review')} ({stats.inReview})
           </button>
           <button
             onClick={() => setFilterStatus('approved')}
             className={`text-sm ${filterStatus === 'approved' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
-            {isPolish ? 'Zatwierdzone' : 'Approved'} ({stats.approved})
+            {t('assessment.reportsTable.stats.approved', 'Approved')} ({stats.approved})
           </button>
           <button
             onClick={() => setFilterStatus('sent')}
             className={`text-sm ${filterStatus === 'sent' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
-            {isPolish ? 'Wysłane' : 'Sent'} ({stats.sent})
+            {t('assessment.reportsTable.stats.sent', 'Sent')} ({stats.sent})
           </button>
         </div>
 
@@ -772,7 +785,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isPolish ? 'Szukaj raportów...' : 'Search reports...'}
+              placeholder={t('assessment.reportsTable.search.placeholder', 'Search reports...')}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
             />
           </div>
@@ -794,23 +807,25 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             loading={isLoading}
             empty={{
               title: searchQuery
-                ? isPolish
-                  ? 'Brak raportów pasujących do wyszukiwania'
-                  : 'No reports match your search'
-                : isPolish
-                  ? showAllStatuses
-                    ? 'Brak raportów'
-                    : 'Brak raportów w przeglądzie'
-                  : showAllStatuses
-                    ? 'No reports yet'
-                    : 'No reports in review yet',
-              description: isPolish
-                ? showAllStatuses
-                  ? 'Utwórz nowy raport lub otwórz istniejący z listy.'
-                  : 'Raporty pojawią się tutaj po przesłaniu do przeglądu'
+                ? t(
+                    'assessment.reportsTable.empty.noMatchTitle',
+                    'No reports match your search'
+                  )
                 : showAllStatuses
-                  ? 'Create a new report or open an existing one from the list.'
-                  : 'Reports will appear here after being submitted for review',
+                  ? t('assessment.reportsTable.empty.noneTitle', 'No reports yet')
+                  : t(
+                      'assessment.reportsTable.empty.noneInReviewTitle',
+                      'No reports in review yet'
+                    ),
+              description: showAllStatuses
+                ? t(
+                    'assessment.reportsTable.empty.creatorDesc',
+                    'Create a new report or open an existing one from the list.'
+                  )
+                : t(
+                    'assessment.reportsTable.empty.reviewDesc',
+                    'Reports will appear here after being submitted for review'
+                  ),
               icon: FileOutput,
             }}
             onRowDoubleClick={(row) => {
@@ -834,7 +849,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             fetchReports();
             setShowImportModal(false);
             toast.success(
-              isPolish ? 'Raport zaimportowany pomyślnie' : 'Report imported successfully'
+              t('assessment.reportsTable.toastImported', 'Report imported successfully')
             );
           }}
         />

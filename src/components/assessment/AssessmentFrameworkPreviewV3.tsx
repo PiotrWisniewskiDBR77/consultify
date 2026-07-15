@@ -14,28 +14,27 @@ export type AssessmentFrameworkPreviewModel = {
 export const AssessmentFrameworkPreviewV3Body: React.FC<{
   item: AssessmentFrameworkPreviewModel;
 }> = ({ item }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          {isPolish ? 'Framework' : 'Framework'}
+          {t('assessment.preview.frameworkLabel', 'Framework')}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center h-6 px-2 rounded-full text-[11px] border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 font-mono">
             {String(item.framework || '').toUpperCase()}
           </span>
           <span className="inline-flex items-center h-6 px-2 rounded-full text-[11px] border border-danger-500/30 bg-danger-500/10 text-danger-600 dark:text-danger-300">
-            {isPolish ? 'Assessment' : 'Assessment'}
+            {t('assessment.preview.assessmentLabel', 'Assessment')}
           </span>
         </div>
       </div>
 
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          {isPolish ? 'Opis' : 'Description'}
+          {t('assessment.preview.descriptionLabel', 'Description')}
         </div>
         <div className="mt-2 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
           {item.description || '—'}
@@ -44,7 +43,7 @@ export const AssessmentFrameworkPreviewV3Body: React.FC<{
 
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          {isPolish ? 'Co dostajesz' : 'What you get'}
+          {t('assessment.preview.whatYouGet', 'What you get')}
         </div>
         <ul className="mt-2 space-y-1 text-sm text-slate-700 dark:text-slate-200">
           {(item.whatYouGet || []).slice(0, 8).map((x) => (
@@ -65,8 +64,7 @@ export const AssessmentFrameworkPreviewV3Footer: React.FC<{
   onStart: () => void;
   onChat: () => void;
 }> = ({ onOpenFull, onStart, onChat }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -86,7 +84,7 @@ export const AssessmentFrameworkPreviewV3Footer: React.FC<{
         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25 transition-colors"
       >
         <Play size={14} />
-        {isPolish ? 'Start assessment' : 'Start assessment'}
+        {t('assessment.preview.startAssessment', 'Start assessment')}
       </button>
 
       <button

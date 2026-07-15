@@ -232,9 +232,8 @@ const RadarTooltip: React.FC<{
   payload?: Array<{ payload: RadarPoint }>;
   colors: AssessmentChartColors;
   framework: AssessmentFramework;
-  isPolish: boolean;
   t: (key: string, opts?: Record<string, unknown>) => string;
-}> = ({ active, payload, colors, framework, isPolish, t }) => {
+}> = ({ active, payload, colors, framework, t }) => {
   if (!active || !payload || payload.length === 0) return null;
   const p = payload[0]?.payload;
   if (!p) return null;
@@ -389,7 +388,7 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
           />
           <Tooltip
             content={
-              <RadarTooltip colors={colors} framework={data.framework} isPolish={isPolish} t={t} />
+              <RadarTooltip colors={colors} framework={data.framework} t={t} />
             }
           />
         </RechartsRadar>

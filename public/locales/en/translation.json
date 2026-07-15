@@ -6765,7 +6765,23 @@
       "saveFailed": "Failed to save assessment",
       "loadingData": "Loading assessment data...",
       "progress": "Progress:",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "table": {
+        "author": "Author"
+      },
+      "editNoteImported": "Edit via the imported-PDF review flow",
+      "triagePrompt": "Give me an AI pre-screen of the \"{{lane}}\" list ({{count}} items): what needs attention first, and why?",
+      "statusFilterTooltip": "Filter the list by status \"{{status}}\".",
+      "activeTabTooltip": "Currently open tab and the number of items in its list.",
+      "statusFilterAppliedTooltip": "Status filter applied to the list (click a status in the table to set it).",
+      "documentsTooltip": "Number of documents (assessment/report/initiative) currently open in this module.",
+      "generateReportTooltip": "Generate a new report from a completed assessment.",
+      "initiativePackTooltip": "Generate an AI initiative pack from the assessment findings.",
+      "resumeLatestLabel": "Resume latest assessment",
+      "resumeLatestTooltip": "Opens the editor for your most recently updated assessment, back where you left off.",
+      "aiTriageTooltip": "Opens AI chat with a ready-made prompt: what in this list needs attention first.",
+      "chatTooltip": "Opens a blank AI chat for this hub.",
+      "connectionError": "Connection error"
     },
     "notes": "Notes",
     "notesPlaceholder": "Key observations, context, rationale for the score...",
@@ -6877,7 +6893,30 @@
       "assessment": "Assessment",
       "status": "Status",
       "updated": "Updated",
-      "actions": "Actions"
+      "actions": "Actions",
+      "loadError": "Failed to load",
+      "editInMap": "Edit in Map",
+      "viewInMap": "View in Map",
+      "openInMap": "Open in Map",
+      "progress": "Progress",
+      "createReport": "Create Report",
+      "title": "Assessments",
+      "new": "New Assessment",
+      "selectedCount": "{{count}} selected",
+      "selectAll": "Select all",
+      "clearSelection": "Clear",
+      "axesCompleted": "{{completed}}/{{total}} axes completed",
+      "projectLabel": "Project",
+      "createdLabel": "Created",
+      "aiHintSummarize": "Summarize assessment",
+      "aiHintNextSteps": "Suggest next steps",
+      "comingSoon": "Coming soon",
+      "confirmDeleteTitle": "Confirm Deletion",
+      "confirmDeleteMessage": "Delete {{target}}? This action cannot be undone.",
+      "deleteTargetPlural": "{{count}} assessments",
+      "deleteTargetSingular": "this assessment",
+      "cancel": "Cancel",
+      "deleting": "Deleting…"
     },
     "aiSuggestions": {
       "title": "AI Suggestions",
@@ -6908,7 +6947,19 @@
       "technologiesCount": "technologies",
       "noLevelSuggestions": "No level suggestions to display",
       "noTechSuggestions": "No technology suggestions to display",
-      "noGaps": "No gaps to display"
+      "noGaps": "No gaps to display",
+      "topPerformers": "Top performers:",
+      "quickWins": "Quick Wins",
+      "complexityLevels": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "costLevels": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
     },
     "reportBuilder": {
       "sectionSaved": "Section saved",
@@ -6966,7 +7017,15 @@
       "initiativeAngles": "Initiative angles",
       "runAiPrompt": "Run one of the AI prompts to get insights.",
       "selectSession": "Select a session to see details.",
-      "openSessionHint": "Open assessment session to continue."
+      "openSessionHint": "Open assessment session to continue.",
+      "execBrief": "Executive brief",
+      "title": "Assessment session",
+      "aiHints": "AI hints",
+      "frameworkLabel": "Framework",
+      "assessmentLabel": "Assessment",
+      "descriptionLabel": "Description",
+      "whatYouGet": "What you get",
+      "startAssessment": "Start assessment"
     },
     "form": {
       "current": "Current",
@@ -6991,7 +7050,8 @@
       "dimensions": "Dimensions",
       "previousBlock": "Previous Block",
       "completeAssessment": "Complete Assessment",
-      "nextBlock": "Next Block"
+      "nextBlock": "Next Block",
+      "nextAxis": "Next Axis"
     },
     "initiatives": {
       "submitted": "Initiative submitted for review",
@@ -7001,7 +7061,8 @@
       "title": "Initiatives",
       "relatedHint": "Related to the current assessment",
       "goAfterPlanning": "Go to Initiatives after PLANNING",
-      "goTo": "Go to Initiatives"
+      "goTo": "Go to Initiatives",
+      "sourceReport": "Source report"
     },
     "drd": {
       "whyThisMatters": {
@@ -7010,15 +7071,219 @@
       },
       "glossary": {
         "button": "Glossary"
+      },
+      "matrix": {
+        "overviewTitle": "Matrix overview",
+        "overviewSubtitle": "Cell color = achieved maturity level. Click an axis to open it.",
+        "levelRamp": "Level ramp",
+        "areasAssessed": "Areas assessed"
       }
     },
     "glossary": {
-      "title": "Consulting Glossary"
+      "title": "Consulting Glossary",
+      "heading": "Consulting Terms Glossary",
+      "subtitle": "Plain language, no jargon left unexplained",
+      "searchPlaceholder": "Search a term (e.g. SWOT, WACC)...",
+      "all": "All",
+      "noResults": "No results."
     },
     "bulk": {
       "confirmDeleteTitle": "Delete selected items?",
       "confirmDeleteDesc": "You will permanently delete {{count}} item(s). This cannot be undone.",
-      "deletedNoun": "deleted"
+      "deletedNoun": "deleted",
+      "selectAll": "Select all (Ctrl+A)",
+      "selected": "selected",
+      "clearSelection": "Clear selection (Esc)",
+      "decreaseLevel": "Decrease level (-1)",
+      "increaseLevel": "Increase level (+1)",
+      "setLevel": "Set level",
+      "copy": "Copy (Ctrl+C)",
+      "paste": "Paste (Ctrl+V)",
+      "batchEdit": "Batch Edit",
+      "avgLevel": "Avg level:",
+      "range": "Range:",
+      "categories": "Categories:",
+      "editSelectedItems": "Edit {{count}} selected items",
+      "currentLevel": "Current Level",
+      "targetLevelOptional": "Target Level (optional)",
+      "none": "None",
+      "notesAppend": "Notes (append to existing)",
+      "notesPlaceholder": "Additional notes...",
+      "warningMessage": "This will update all selected items. This action cannot be undone.",
+      "cancel": "Cancel",
+      "apply": "Apply"
+    },
+    "reportsTable": {
+      "toastApproved": "Report approved",
+      "toastApproveFailed": "Failed to approve report",
+      "toastSentInternal": "Marked as sent internally",
+      "toastSentInternalFailed": "Failed to mark as sent internally",
+      "toastSentExternal": "Marked as sent externally",
+      "toastSentExternalFailed": "Failed to mark as sent externally",
+      "toastSentBack": "Report sent back for editing",
+      "toastSendBackFailed": "Failed to send report back",
+      "toastExportCompleted": "{{format}} export completed",
+      "toastExportFailed": "Failed to export",
+      "toastExportError": "Export error",
+      "toastLinkCopied": "Link copied",
+      "toastLinkCreated": "Link created",
+      "toastLinkFailed": "Failed to create link",
+      "toastImported": "Report imported successfully",
+      "columns": {
+        "report": "Report",
+        "author": "Author",
+        "context": "Context",
+        "updated": "Updated"
+      },
+      "menu": {
+        "view": "View Report",
+        "exportPdf": "Export PDF",
+        "exportPptx": "Export PPTX",
+        "exportWord": "Export Word",
+        "shareLink": "Share link",
+        "generateInitiatives": "Generate Initiatives",
+        "approve": "Approve",
+        "sendBack": "Send Back",
+        "sendInternal": "Send Internal",
+        "sendExternal": "Send External"
+      },
+      "header": {
+        "creatorTitle": "Report creator",
+        "title": "Reports",
+        "creatorSubtitle": "All reports (all sources and statuses) with quick access to the editor.",
+        "subtitle": "Assessment reports in review status and above",
+        "settingsTitle": "Creator settings (blocks/templates/profiles)",
+        "settings": "Settings",
+        "importTitle": "Import external report",
+        "import": "Import",
+        "newTemplateTitle": "Create new report template",
+        "newTemplate": "New Template",
+        "newReportTitle": "Create AI-powered report",
+        "newReport": "New Report"
+      },
+      "stats": {
+        "all": "All",
+        "drafts": "Drafts",
+        "generated": "Generated",
+        "inReview": "In Review",
+        "approved": "Approved",
+        "sent": "Sent"
+      },
+      "search": {
+        "placeholder": "Search reports..."
+      },
+      "empty": {
+        "noMatchTitle": "No reports match your search",
+        "noneInReviewTitle": "No reports in review yet",
+        "noneTitle": "No reports yet",
+        "creatorDesc": "Create a new report or open an existing one from the list.",
+        "reviewDesc": "Reports will appear here after being submitted for review"
+      }
+    },
+    "adma": {
+      "editor": {
+        "viewDimensions": "Dimensions",
+        "viewRadar": "Radar",
+        "viewMatrix": "Matrix",
+        "currentMaturityLevel": "Current Maturity Level",
+        "targetLevel": "Target Level",
+        "characteristics": "Characteristics",
+        "overallMaturity": "Overall Maturity",
+        "gapAnalysis": "Gap Analysis",
+        "gapMessage": "Gap: {{gap}} levels to reach target",
+        "aiGuidanceCta": "AI guidance (why it matters + how to score)",
+        "generatingGuidance": "Generating guidance…",
+        "consultantGuidance": "Consultant guidance",
+        "canonSource": "canon",
+        "whyItMatters": "Why it matters: ",
+        "howToScore": "How to score this level: ",
+        "canonLabel": "Canon: ",
+        "watchOutFor": "Watch out for: ",
+        "notesAndEvidence": "Notes & Evidence",
+        "notesPlaceholder": "Add notes or evidence...",
+        "matrixTitle": "ADMA Maturity Matrix",
+        "dimensionColumn": "Dimension"
+      }
+    },
+    "siri": {
+      "editor": {
+        "score": "Score",
+        "viewDimensions": "Dimensions",
+        "viewPrioritisation": "Prioritisation",
+        "viewMatrix": "Matrix",
+        "currentLevel": "Current Level",
+        "targetLevel": "Target Level",
+        "prioritisationAreas": "Prioritisation Areas",
+        "overallScore": "Overall Score",
+        "gapAnalysis": "Gap Analysis",
+        "gapMessage": "Gap: {{gap}} levels to reach target",
+        "aiGuidanceCta": "AI guidance (why it matters + how to score)",
+        "generatingGuidance": "Generating guidance…",
+        "consultantGuidance": "Consultant guidance",
+        "canonSource": "canon",
+        "whyItMatters": "Why it matters: ",
+        "howToScore": "How to score this level: ",
+        "canonLabel": "Canon: ",
+        "watchOutFor": "Watch out for: ",
+        "notesAndEvidence": "Notes & Evidence",
+        "notesPlaceholder": "Add notes or evidence...",
+        "relatedPrioritisationAreas": "Related Prioritisation Areas",
+        "matrixTitle": "SIRI Maturity Matrix",
+        "dimensionColumn": "Dimension"
+      }
+    },
+    "reports": {
+      "source": "Source assessment"
+    },
+    "emptyState": {
+      "title": "No assessments yet",
+      "createFirst": "Create First Assessment",
+      "description": "Create your first assessment to start the diagnosis."
+    },
+    "team": {
+      "addModal": {
+        "title": "Add Team Member",
+        "subtitle": "Search and add users to the team",
+        "searchLabel": "Search Users",
+        "searchPlaceholder": "Search by name or email...",
+        "selectRole": "Select Role",
+        "adding": "Adding...",
+        "add": "Add Member"
+      },
+      "outsideOrg": "Outside org",
+      "inOrg": "In org",
+      "partner": "Partner",
+      "consultant": "Consultant",
+      "organizationColumn": "Organization"
+    },
+    "drdReport": {
+      "title": "Digital Readiness Diagnosis Report",
+      "subtitle": "DRD — 7 axes of digital transformation",
+      "maturityProfileHeading": "Digital maturity profile",
+      "executiveSummaryHeading": "Executive Summary",
+      "overallMaturityCard": "Overall maturity (normalized)",
+      "targetStateCard": "Target state (normalized)",
+      "completionCard": "Assessment completion",
+      "narrative": "{{company}}'s overall digital maturity stands at {{current}}% (level: {{verdict}}), against a {{target}}% target. The diagnosis covered {{completion}}% of areas across 7 axes. The largest gaps — and quickest wins — are listed in the \"Top gaps\" section below.",
+      "maturityMapHeading": "Maturity map — 7 axes",
+      "topGapsHeading": "Top gaps",
+      "currentLabel": "Current",
+      "targetLabel": "Target",
+      "noGapsMessage": "No significant gaps — every axis meets or exceeds its target.",
+      "initiativesHeading": "Initiatives",
+      "inPreparation": "in preparation",
+      "initiativesPlaceholder": "Recommended transformation initiatives will be generated from the identified gaps.",
+      "roiHeading": "Economic effects (ROI)",
+      "roiPlaceholder": "Estimated return on investment and financial effects will be modelled for the recommended initiatives.",
+      "readOnlyMode": "Read-only mode.",
+      "footerGenerated": "Report generated by Consultify",
+      "verdictHigh": "high",
+      "verdictModerate": "moderate",
+      "verdictBasic": "basic",
+      "verdictInitial": "initial"
+    },
+    "itemPreview": {
+      "defaultLabel": "Assessment"
     }
   },
   "initiatives": {
@@ -16404,7 +16669,8 @@
       "noFramework": "Could not detect framework. Please select manually.",
       "lowConfidence": "Low confidence — please review and correct extracted values.",
       "supportedFrameworks": "Supported Frameworks"
-    }
+    },
+    "breadcrumb": "Licensed"
   },
   "tools": {
     "hub": {
@@ -20344,7 +20610,8 @@
     "pricing": "Pricing",
     "partners": "Partners",
     "vector": "Vector AI",
-    "security": "Security"
+    "security": "Security",
+    "tools": "Tools"
   },
   "trial": {
     "modal": {

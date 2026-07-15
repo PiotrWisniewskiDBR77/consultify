@@ -57,24 +57,11 @@ async function refineText(params: {
 
 async function runAssessmentAi(params: {
   intent: AssessmentPreviewAiIntent;
-  isPolish: boolean;
+  intentLabel: string;
+  language: 'pl' | 'en';
   details: AssessmentSessionPreviewDetails;
 }): Promise<string> {
-  const { intent, isPolish, details } = params;
-  const language: 'pl' | 'en' = isPolish ? 'pl' : 'en';
-
-  const intentLabel =
-    intent === 'exec_brief'
-      ? isPolish
-        ? 'Executive brief'
-        : 'Executive brief'
-      : intent === 'top_gaps'
-        ? isPolish
-          ? 'Top luki'
-          : 'Top gaps'
-        : isPolish
-          ? 'Kąty inicjatyw'
-          : 'Initiative angles';
+  const { intentLabel, language, details } = params;
 
   const systemInstruction = [
     `You are a senior transformation consultant.`,
@@ -164,14 +151,28 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
     } finally {
       setDetailsMenuOpen(false);
     }
-  }, [bestDetails?.contextSnapshot, bestDetails?.scoreSummary, isPolish, itemName]);
+  }, [bestDetails?.contextSnapshot, bestDetails?.scoreSummary, itemName, t]);
+
+  const intentLabels = useMemo<Record<AssessmentPreviewAiIntent, string>>(
+    () => ({
+      exec_brief: t('assessment.preview.execBrief', 'Executive brief'),
+      top_gaps: t('assessment.preview.topGaps', 'Top gaps'),
+      initiative_angles: t('assessment.preview.initiativeAngles', 'Initiative angles'),
+    }),
+    [t]
+  );
 
   const runAi = useCallback(
     async (intent: AssessmentPreviewAiIntent) => {
       if (!bestDetails) return;
       try {
         setAiLoading(true);
-        const txt = await runAssessmentAi({ intent, isPolish, details: bestDetails });
+        const txt = await runAssessmentAi({
+          intent,
+          intentLabel: intentLabels[intent],
+          language: isPolish ? 'pl' : 'en',
+          details: bestDetails,
+        });
         setAiText(txt);
       } catch {
         toast.error(t('assessment.preview.aiUnavailable', 'AI unavailable'));
@@ -179,7 +180,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
         setAiLoading(false);
       }
     },
-    [bestDetails, isPolish]
+    [bestDetails, intentLabels, isPolish, t]
   );
 
   return (
@@ -188,7 +189,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wide text-danger-400">
-              {'Assessment session'}
+              {t('assessment.preview.title', 'Assessment session')}
             </div>
             <div
               className="mt-1 text-lg font-semibold text-slate-900 dark:text-white truncate"
@@ -236,7 +237,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {'AI hints'}
+              {t('assessment.preview.aiHints', 'AI hints')}
             </div>
             {aiLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-600" /> : null}
           </div>
@@ -249,7 +250,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] disabled:opacity-50"
             >
               <Sparkles size={14} />
-              {'Executive brief'}
+              {t('assessment.preview.execBrief', 'Executive brief')}
             </button>
             <button
               type="button"
@@ -296,8 +297,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
 export const AssessmentSessionPreviewV3Footer: React.FC<{
   onOpenFull: () => void;
 }> = ({ onOpenFull }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="text-xs text-slate-500 dark:text-slate-400">
