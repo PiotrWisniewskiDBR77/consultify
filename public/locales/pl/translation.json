@@ -29383,6 +29383,24 @@
       "justNow": "Przed chwilą",
       "hoursAgo": "{{count}} h temu",
       "daysAgo": "{{count}} dni temu"
+    },
+    "nModeLeftNav": {
+      "dragSection": "Przeciąganie zakładki",
+      "sectionComplete": "Sekcja ukończona",
+      "hideEmptySections": "Ukryj puste sekcje",
+      "showAllSections": "Pokaż wszystkie sekcje ({{count}})",
+      "sectionsComplete": "Sekcje gotowe"
+    },
+    "artifactPreviewCard": {
+      "metaStatus": "Status",
+      "metaOwner": "Właściciel",
+      "metaUpdated": "Zmieniono",
+      "metaDue": "Termin",
+      "metaProgress": "Postęp",
+      "metaValue": "Wartość",
+      "metaStage": "Etap",
+      "openArtifact": "Otwórz artefakt",
+      "removeLink": "Usuń link"
     }
   },
   "reportBuilder": {

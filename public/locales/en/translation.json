@@ -28323,6 +28323,24 @@
       "justNow": "Just now",
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago"
+    },
+    "nModeLeftNav": {
+      "dragSection": "Drag section",
+      "sectionComplete": "Section complete",
+      "hideEmptySections": "Hide empty sections",
+      "showAllSections": "Show all sections ({{count}})",
+      "sectionsComplete": "Sections complete"
+    },
+    "artifactPreviewCard": {
+      "metaStatus": "Status",
+      "metaOwner": "Owner",
+      "metaUpdated": "Updated",
+      "metaDue": "Due",
+      "metaProgress": "Progress",
+      "metaValue": "Value",
+      "metaStage": "Stage",
+      "openArtifact": "Open artifact",
+      "removeLink": "Remove link"
     }
   },
   "reportBuilder": {
