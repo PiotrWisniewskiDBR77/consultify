@@ -264,60 +264,90 @@ async function updateModelWithFallback(modelId: string, body: Record<string, unk
 // ---------------------------------------------------------------------------
 
 const EVENT_TYPES = [
-  { value: 'revenue', label: 'Revenue', labelPl: 'Przychody', cf: 'operating', icon: '📈' },
-  { value: 'cogs', label: 'COGS', labelPl: 'Koszt sprzedaży', cf: 'operating', icon: '📦' },
+  {
+    value: 'revenue',
+    i18nKey: 'finance.model.eventTypes.revenue',
+    fallback: 'Revenue',
+    cf: 'operating',
+    icon: '📈',
+  },
+  {
+    value: 'cogs',
+    i18nKey: 'finance.model.eventTypes.cogs',
+    fallback: 'COGS',
+    cf: 'operating',
+    icon: '📦',
+  },
   {
     value: 'opex',
-    label: 'Operating Expenses',
-    labelPl: 'Koszty operacyjne',
+    i18nKey: 'finance.model.eventTypes.opex',
+    fallback: 'Operating Expenses',
     cf: 'operating',
     icon: '💼',
   },
   {
     value: 'capex_purchase',
-    label: 'CAPEX Purchase',
-    labelPl: 'Zakup środków trwałych',
+    i18nKey: 'finance.model.eventTypes.capexPurchase',
+    fallback: 'CAPEX Purchase',
     cf: 'investing',
     icon: '🏗️',
   },
   {
     value: 'depreciation_run',
-    label: 'Depreciation',
-    labelPl: 'Amortyzacja',
+    i18nKey: 'finance.model.eventTypes.depreciationRun',
+    fallback: 'Depreciation',
     cf: 'none',
     icon: '📉',
   },
   {
     value: 'debt_drawdown',
-    label: 'Debt Drawdown',
-    labelPl: 'Zaciągnięcie długu',
+    i18nKey: 'finance.model.eventTypes.debtDrawdown',
+    fallback: 'Debt Drawdown',
     cf: 'financing',
     icon: '🏦',
   },
   {
     value: 'debt_repayment',
-    label: 'Debt Repayment',
-    labelPl: 'Spłata długu',
+    i18nKey: 'finance.model.eventTypes.debtRepayment',
+    fallback: 'Debt Repayment',
     cf: 'financing',
     icon: '💳',
   },
-  { value: 'interest_accrual', label: 'Interest', labelPl: 'Odsetki', cf: 'operating', icon: '📊' },
-  { value: 'tax_accrual', label: 'Tax', labelPl: 'Podatek', cf: 'operating', icon: '🏛️' },
+  {
+    value: 'interest_accrual',
+    i18nKey: 'finance.model.eventTypes.interestAccrual',
+    fallback: 'Interest',
+    cf: 'operating',
+    icon: '📊',
+  },
+  {
+    value: 'tax_accrual',
+    i18nKey: 'finance.model.eventTypes.taxAccrual',
+    fallback: 'Tax',
+    cf: 'operating',
+    icon: '🏛️',
+  },
   {
     value: 'wc_change',
-    label: 'Working Capital Change',
-    labelPl: 'Zmiana kapitału obrotowego',
+    i18nKey: 'finance.model.eventTypes.wcChange',
+    fallback: 'Working Capital Change',
     cf: 'operating',
     icon: '🔄',
   },
   {
     value: 'equity_injection',
-    label: 'Equity Injection',
-    labelPl: 'Dokapitalizowanie',
+    i18nKey: 'finance.model.eventTypes.equityInjection',
+    fallback: 'Equity Injection',
     cf: 'financing',
     icon: '💰',
   },
-  { value: 'dividend', label: 'Dividend', labelPl: 'Dywidenda', cf: 'financing', icon: '🎯' },
+  {
+    value: 'dividend',
+    i18nKey: 'finance.model.eventTypes.dividend',
+    fallback: 'Dividend',
+    cf: 'financing',
+    icon: '🎯',
+  },
 ];
 
 const STATUS_CONFIG: Record<string, { badgeClass: string; icon: React.ReactNode }> = {
@@ -638,10 +668,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     const row = assumptionsStatus[driverKey];
     if (!row) return null;
     const labels: Record<string, string> = {
-      sourced: isPl ? 'Ze źródła' : 'Sourced',
-      edited: isPl ? 'Edytowane' : 'Edited',
-      assumed: isPl ? 'Założenie AI — do przeglądu' : 'AI assumed — needs review',
-      missing: isPl ? 'Brak wartości' : 'Missing',
+      sourced: t('finance.modelWorkspace.assumptionStatus.sourced', 'Sourced'),
+      edited: t('finance.modelWorkspace.assumptionStatus.edited', 'Edited'),
+      assumed: t(
+        'finance.modelWorkspace.assumptionStatus.assumed',
+        'AI assumed — needs review'
+      ),
+      missing: t('finance.modelWorkspace.assumptionStatus.missing', 'Missing'),
     };
     const cls = ASSUMPTION_STATUS_LABEL_CLASS[row.status] || ASSUMPTION_STATUS_LABEL_CLASS.missing;
     return (
@@ -1080,18 +1113,46 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       {t('finance.model.initialBalances', 'Initial Balance Sheet')}
                     </h3>
                     {[
-                      { key: 'initialCash', label: 'Cash', labelPl: 'Gotówka' },
-                      { key: 'initialEquity', label: 'Equity', labelPl: 'Kapitał własny' },
-                      { key: 'initialDebt', label: 'Debt', labelPl: 'Dług' },
-                      { key: 'initialPPE', label: 'PPE (Net)', labelPl: 'Środki trwałe (netto)' },
-                      { key: 'initialAR', label: 'Accounts Receivable', labelPl: 'Należności' },
-                      { key: 'initialInventory', label: 'Inventory', labelPl: 'Zapasy' },
-                      { key: 'initialAP', label: 'Accounts Payable', labelPl: 'Zobowiązania' },
-                    ].map(({ key, label, labelPl }) => (
+                      {
+                        key: 'initialCash',
+                        i18nKey: 'finance.model.initialFields.cash',
+                        fallback: 'Cash',
+                      },
+                      {
+                        key: 'initialEquity',
+                        i18nKey: 'finance.model.initialFields.equity',
+                        fallback: 'Equity',
+                      },
+                      {
+                        key: 'initialDebt',
+                        i18nKey: 'finance.model.initialFields.debt',
+                        fallback: 'Debt',
+                      },
+                      {
+                        key: 'initialPPE',
+                        i18nKey: 'finance.model.initialFields.ppe',
+                        fallback: 'PPE (Net)',
+                      },
+                      {
+                        key: 'initialAR',
+                        i18nKey: 'finance.model.initialFields.accountsReceivable',
+                        fallback: 'Accounts Receivable',
+                      },
+                      {
+                        key: 'initialInventory',
+                        i18nKey: 'finance.model.initialFields.inventory',
+                        fallback: 'Inventory',
+                      },
+                      {
+                        key: 'initialAP',
+                        i18nKey: 'finance.model.initialFields.accountsPayable',
+                        fallback: 'Accounts Payable',
+                      },
+                    ].map(({ key, i18nKey, fallback }) => (
                       <div key={key} className="flex items-center justify-between gap-4">
                         <div className="w-48">
                           <label className="text-sm text-slate-700 dark:text-slate-300">
-                            {isPl ? labelPl : label}
+                            {t(i18nKey, fallback)}
                           </label>
                           {seededInputKeys.has(key) ? (
                             <div className="mt-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300">
@@ -1170,7 +1231,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                               {ev.name}
                             </p>
                             <div className="flex items-center gap-3 text-xs text-slate-600 mt-0.5">
-                              <span>{isPl ? cfg?.labelPl : cfg?.label}</span>
+                              <span>{cfg ? t(cfg.i18nKey, cfg.fallback) : ''}</span>
                               <span className="font-mono">{formatCurrency(ev.amount)}</span>
                               <span>{ev.recurrence}</span>
                               {ev.growth_rate !== 0 && (
@@ -1223,7 +1284,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             >
                               {EVENT_TYPES.map((et) => (
                                 <option key={et.value} value={et.value}>
-                                  {et.icon} {isPl ? et.labelPl : et.label}
+                                  {et.icon} {t(et.i18nKey, et.fallback)}
                                 </option>
                               ))}
                             </select>

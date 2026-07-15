@@ -797,7 +797,19 @@
       "use": "Użyj",
       "clone": "Sklonuj",
       "cloned": "Szablon sklonowany do Twojej organizacji",
-      "cloneFailed": "Nie udało się sklonować"
+      "cloneFailed": "Nie udało się sklonować",
+      "audience": {
+        "sponsor": "Sponsor",
+        "executive": "Zarząd",
+        "investor": "Inwestor / VC",
+        "internal": "Zespół wewnętrzny"
+      },
+      "goal": {
+        "inform": "Informuj",
+        "decide": "Decyduj",
+        "sell": "Sprzedaj",
+        "align": "Alignuj"
+      }
     },
     "brandKit": {
       "title": "Kit marki",
@@ -9601,6 +9613,16 @@
     "toast": {
       "excelGenerated": "Excel wygenerowany",
       "exportFailed": "Nie udało się wyeksportować"
+    },
+    "pdfExport": {
+      "title": "Eksport do PDF",
+      "reportLanguage": "Język raportu",
+      "reportTemplate": "Szablon raportu",
+      "includeRecommendations": "Uwzględnij rekomendacje",
+      "ready": "PDF gotowy do pobrania!",
+      "download": "Pobierz",
+      "generating": "Generowanie...",
+      "generate": "Generuj PDF"
     }
   },
   "reports": {
@@ -12686,7 +12708,61 @@
     },
     "sectionNotFoundHint": "Ta sekcja ustawień nie istnieje. Wybierz inną z paska bocznego.",
     "unsavedChanges": "Niezapisane zmiany",
-    "allChangesSaved": "Wszystkie zmiany zapisane"
+    "allChangesSaved": "Wszystkie zmiany zapisane",
+    "inboxAI": {
+      "saveThresholdFailed": "Nie udało się zapisać progu auto-triage",
+      "autoTriagedToast": "{{count}} elementów automatycznie przetriage'owano",
+      "manualWaitingToast": "{{count}} sugestii czeka na ręczny przegląd",
+      "noItemsMatched": "Brak pozycji spełniających warunki auto-triage",
+      "autoTriageFailed": "Auto-triage nieudany",
+      "title": "Automatyzacja inboxu AI",
+      "subtitle": "Sterowanie auto-triage i diagnostyką inboxu zostało przeniesione z widoku Inbox do ustawień AI użytkownika.",
+      "thresholdLabel": "Próg auto-apply",
+      "thresholdHelp": "Po przekroczeniu tego progu AI może automatycznie wykonać sugerowaną akcję dla pozycji z inboxu.",
+      "runAutoTriage": "Uruchom auto-triage",
+      "currentThreshold": "Bieżący próg",
+      "manualReviewFromLatest": "{{count}} sugestii z ostatniego uruchomienia czeka na ręczną decyzję.",
+      "evalsAndCost": "Ewale i koszt",
+      "latestEvalAccuracy": "ostatni eval accuracy",
+      "cost30Days": "koszt 30 dni",
+      "loadingDiagnostics": "Ładowanie diagnostyki AI...",
+      "callsAndRuns": "{{calls}} wywołań, {{runs}} ostatnich runów",
+      "canonicalInbox": "Canonical inbox",
+      "totalItems": "łączna liczba pozycji",
+      "actionRequired": "wymaga akcji",
+      "canonicalHelp": "Inbox materializuje canonical items przed odświeżeniem tych statystyk.",
+      "quickContext": "Szybki kontekst",
+      "recentEvalRuns": "Ostatnie runy eval",
+      "costWindow": "Koszt okna",
+      "manualReview": "Manual review"
+    },
+    "orgContext": {
+      "rebuiltToast": "Snapshot kontekstu został przebudowany.",
+      "rebuildFailedToast": "Nie udało się przebudować snapshotu kontekstu.",
+      "title": "Organization Context OS",
+      "loading": "Ładowanie aktualnego stanu kontekstu organizacji...",
+      "countsSummary": "Aktywnych wpisów: {{items}}, claimów: {{claims}}, konfliktów: {{conflicts}}.",
+      "contextHealth": "Context Health",
+      "rebuildSnapshot": "Rebuild snapshot",
+      "entries": "Entries",
+      "claims": "Claims",
+      "conflicts": "Conflicts",
+      "claimsNeedingReview": "Claims wymagające przeglądu",
+      "noConflicts": "Brak wykrytych konfliktów w aktualnym snapshotcie.",
+      "recentClaims": "Recent Claims",
+      "colClaim": "Claim",
+      "colValue": "Value",
+      "colReview": "Review",
+      "colType": "Type",
+      "noClaims": "Brak claimów.",
+      "recentSources": "Recent Sources",
+      "colSource": "Source",
+      "colChannel": "Channel",
+      "colUpdated": "Updated",
+      "noTimelineEntries": "Brak wpisów w timeline kontekstu.",
+      "sourceProvenance": "Source Provenance",
+      "provenanceHelp": "Każdy zapis do Context OS zachowuje źródło, kanał i explicitness, dzięki czemu AI może pracować na trwałym kontekście zamiast na pojedynczym prompt snapshot."
+    }
   },
   "showcase": {
     "common": {
@@ -17799,7 +17875,30 @@
       "horizon": "Horyzont (miesiące)",
       "granularity": "Granulacja",
       "currency": "Waluta",
-      "valuateModel": "Wycen model"
+      "valuateModel": "Wycen model",
+      "eventTypes": {
+        "revenue": "Przychody",
+        "cogs": "Koszt sprzedaży",
+        "opex": "Koszty operacyjne",
+        "capexPurchase": "Zakup środków trwałych",
+        "depreciationRun": "Amortyzacja",
+        "debtDrawdown": "Zaciągnięcie długu",
+        "debtRepayment": "Spłata długu",
+        "interestAccrual": "Odsetki",
+        "taxAccrual": "Podatek",
+        "wcChange": "Zmiana kapitału obrotowego",
+        "equityInjection": "Dokapitalizowanie",
+        "dividend": "Dywidenda"
+      },
+      "initialFields": {
+        "cash": "Gotówka",
+        "equity": "Kapitał własny",
+        "debt": "Dług",
+        "ppe": "Środki trwałe (netto)",
+        "accountsReceivable": "Należności",
+        "inventory": "Zapasy",
+        "accountsPayable": "Zobowiązania"
+      }
     },
     "tabs": {
       "models": "Modele",
@@ -18045,7 +18144,27 @@
       "completed": "Zakończony",
       "confidence": "pewność",
       "rejected": "Import zakończony, ale plik został odrzucony i wymaga ponownego podejścia.",
-      "requiresReview": "Import zakończony. Sprawozdanie trafiło do kolejki odzyskiwania i wymaga domknięcia jakości."
+      "requiresReview": "Import zakończony. Sprawozdanie trafiło do kolejki odzyskiwania i wymaga domknięcia jakości.",
+      "smartStepUpload": "Wgraj",
+      "smartStepAnalysis": "Analiza AI",
+      "smartStepDone": "Gotowe",
+      "ariaCloseImport": "Zamknij import",
+      "ariaImportSteps": "Kroki importu",
+      "ariaDropZone": "Upuść plik lub kliknij aby wybrać",
+      "ariaRemoveFile": "Usuń plik",
+      "analyzing": "AI analizuje dokument...",
+      "uploadAndAnalyze": "Wgraj i analizuj",
+      "aiAnalyzedTitle": "Dokument przeanalizowany przez AI",
+      "analysisCompletedDefault": "Analiza zakończona pomyślnie",
+      "sectionsFound": "Znalezione sekcje",
+      "linesUnit": "pozycji",
+      "entity": "Podmiot",
+      "scaling": "Skala",
+      "totalLines": "Łącznie pozycji",
+      "sourceFile": "Plik źródłowy",
+      "doneGoToReview": "Gotowe — przejdź do przeglądu",
+      "errorsLabel": "błędów",
+      "warningsLabel": "ostrzeżeń"
     },
     "lane": {
       "kpi": {
@@ -18177,6 +18296,53 @@
       "clickRowHint": "Kliknij wiersz w tabeli, aby zobaczyć szczegóły pozycji.",
       "noDocumentSelected": "Brak wybranego dokumentu dla tej tabeli.",
       "notFound": "Nie znaleziono pakietu sprawozdań"
+    },
+    "mappingEditor": {
+      "tierReview": "do weryfikacji",
+      "tierExcluded": "wykluczone",
+      "searchLines": "Szukaj pozycji...",
+      "noResults": "Brak wyników",
+      "mapped": "zmapowane",
+      "unmappedCount": "do uzupełnienia",
+      "toReview": "do weryfikacji"
+    },
+    "explainPanel": {
+      "evidenceType": {
+        "direct": "Bezpośrednie dopasowanie",
+        "aggregated": "Zagregowane",
+        "split": "Rozdzielone/Scalone",
+        "derived": "Obliczone",
+        "manualNote": "Notatka ręczna"
+      },
+      "mappingStatus": {
+        "auto": "Auto",
+        "manual": "Ręczne",
+        "computed": "Obliczone",
+        "unmapped": "Brak",
+        "mapped": "Zmapowane"
+      },
+      "contribution": "Wkład",
+      "priorPeriod": "Poprzedni",
+      "currentPeriod": "Bieżący",
+      "addAnalystComment": "Kliknij, aby dodać komentarz analityka...",
+      "technicalDetails": "Szczegóły techniczne",
+      "lineCode": "Kod linii",
+      "selectedCandidate": "Wybrany kandydat"
+    },
+    "canonicalTable": {
+      "ariaLabel": "Tabela sprawozdania finansowego",
+      "priorPeriod": "Poprzedni",
+      "currentPeriod": "Bieżący",
+      "valueColumn": "Wartość",
+      "currency": "Waluta"
+    },
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "Ze źródła",
+        "edited": "Edytowane",
+        "assumed": "Założenie AI — do przeglądu",
+        "missing": "Brak wartości"
+      }
     }
   },
   "portfolio": {

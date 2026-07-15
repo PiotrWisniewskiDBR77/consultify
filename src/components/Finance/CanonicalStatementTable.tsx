@@ -43,7 +43,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
   lineLabel,
   currency,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const visiblePeriods = periods.slice(0, 2);
@@ -95,7 +95,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
     <div
       className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface"
       role="grid"
-      aria-label={isPl ? 'Tabela sprawozdania finansowego' : 'Financial statement table'}
+      aria-label={t('finance.canonicalTable.ariaLabel', 'Financial statement table')}
     >
       {/* Header */}
       <div
@@ -110,10 +110,10 @@ export const CanonicalStatementTable: React.FC<Props> = ({
         {hasTwoPeriods ? (
           <>
             <div role="columnheader" className="text-right">
-              {olderPeriod?.label || (isPl ? 'Poprzedni' : 'Prior')}
+              {olderPeriod?.label || t('finance.canonicalTable.priorPeriod', 'Prior')}
             </div>
             <div role="columnheader" className="text-right">
-              {newerPeriod?.label || (isPl ? 'Bieżący' : 'Current')}
+              {newerPeriod?.label || t('finance.canonicalTable.currentPeriod', 'Current')}
             </div>
             <div role="columnheader" className="text-right">
               %
@@ -121,14 +121,15 @@ export const CanonicalStatementTable: React.FC<Props> = ({
           </>
         ) : (
           <div role="columnheader" className="text-right">
-            {olderPeriod?.label || (isPl ? 'Wartość' : 'Value')}
+            {olderPeriod?.label || t('finance.canonicalTable.valueColumn', 'Value')}
           </div>
         )}
       </div>
 
       {/* Currency bar */}
       <div className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-1 text-[10px] text-c-text-muted">
-        {isPl ? 'Waluta' : 'Currency'}: <span className="font-semibold">{currencyDisplay}</span>
+        {t('finance.canonicalTable.currency', 'Currency')}:{' '}
+        <span className="font-semibold">{currencyDisplay}</span>
       </div>
 
       {/* Body */}

@@ -22,8 +22,7 @@ interface InboxAICostSummary {
 }
 
 export const AIInboxAutomationSettings: React.FC = () => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const { emitMyWorkEvent } = useAppStore();
 
   const didLoadThreshold = useRef(false);
@@ -56,15 +55,13 @@ export const AIInboxAutomationSettings: React.FC = () => {
     const timeout = window.setTimeout(() => {
       Api.put('/settings/preferences/inbox-ai', { threshold }).catch(() => {
         toast.error(
-          isPolish
-            ? 'Nie udało się zapisać progu auto-triage'
-            : 'Failed to save auto-triage threshold'
+          t('settings.inboxAI.saveThresholdFailed', 'Failed to save auto-triage threshold')
         );
       });
     }, 400);
 
     return () => window.clearTimeout(timeout);
-  }, [isPolish, threshold]);
+  }, [t, threshold]);
 
   const fetchDiagnostics = useCallback(async () => {
     try {
@@ -113,28 +110,26 @@ export const AIInboxAutomationSettings: React.FC = () => {
 
       if (autoApplyItems.length > 0) {
         toast.success(
-          isPolish
-            ? `${autoApplyItems.length} elementów automatycznie przetriage'owano`
-            : `${autoApplyItems.length} items were auto-triaged`
+          t('settings.inboxAI.autoTriagedToast', {
+            count: autoApplyItems.length,
+            defaultValue: '{{count}} items were auto-triaged',
+          })
         );
         emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: 'bulk' });
       } else if (manualItems.length > 0) {
         toast.success(
-          isPolish
-            ? `${manualItems.length} sugestii czeka na ręczny przegląd`
-            : `${manualItems.length} suggestions are waiting for manual review`
+          t('settings.inboxAI.manualWaitingToast', {
+            count: manualItems.length,
+            defaultValue: '{{count}} suggestions are waiting for manual review',
+          })
         );
       } else {
-        toast.success(
-          isPolish
-            ? 'Brak pozycji spełniających warunki auto-triage'
-            : 'No items matched auto-triage'
-        );
+        toast.success(t('settings.inboxAI.noItemsMatched', 'No items matched auto-triage'));
       }
 
       await fetchDiagnostics();
     } catch {
-      toast.error(isPolish ? 'Auto-triage nieudany' : 'Auto-triage failed');
+      toast.error(t('settings.inboxAI.autoTriageFailed', 'Auto-triage failed'));
     } finally {
       setRunning(false);
     }
@@ -145,12 +140,13 @@ export const AIInboxAutomationSettings: React.FC = () => {
       <div className="mx-auto max-w-5xl space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-c-text">
-            {isPolish ? 'Automatyzacja inboxu AI' : 'AI inbox automation'}
+            {t('settings.inboxAI.title', 'AI inbox automation')}
           </h3>
           <p className="mt-1 text-sm text-c-text-muted">
-            {isPolish
-              ? 'Sterowanie auto-triage i diagnostyką inboxu zostało przeniesione z widoku Inbox do ustawień AI użytkownika.'
-              : 'Auto-triage controls and inbox diagnostics were moved from Inbox into user AI settings.'}
+            {t(
+              'settings.inboxAI.subtitle',
+              'Auto-triage controls and inbox diagnostics were moved from Inbox into user AI settings.'
+            )}
           </p>
         </div>
 
@@ -159,12 +155,13 @@ export const AIInboxAutomationSettings: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
                 <Brain size={18} className="text-blue-500" />
-                {isPolish ? 'Próg auto-apply' : 'Auto-apply threshold'}
+                {t('settings.inboxAI.thresholdLabel', 'Auto-apply threshold')}
               </div>
               <p className="mt-1 text-sm text-c-text-muted">
-                {isPolish
-                  ? 'Po przekroczeniu tego progu AI może automatycznie wykonać sugerowaną akcję dla pozycji z inboxu.'
-                  : 'Above this threshold, AI can automatically apply its suggested inbox action.'}
+                {t(
+                  'settings.inboxAI.thresholdHelp',
+                  'Above this threshold, AI can automatically apply its suggested inbox action.'
+                )}
               </p>
             </div>
             <button
@@ -173,13 +170,13 @@ export const AIInboxAutomationSettings: React.FC = () => {
               className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-blue-300/40 bg-blue-50 px-4 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100/70 disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-blue-500/15"
             >
               {running ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {isPolish ? 'Uruchom auto-triage' : 'Run auto-triage'}
+              {t('settings.inboxAI.runAutoTriage', 'Run auto-triage')}
             </button>
           </div>
 
           <div className="mt-4 flex items-center justify-between text-sm">
             <span className="text-c-text-secondary">
-              {isPolish ? 'Bieżący próg' : 'Current threshold'}
+              {t('settings.inboxAI.currentThreshold', 'Current threshold')}
             </span>
             <span className="font-semibold text-c-text">{Math.round(threshold * 100)}%</span>
           </div>
@@ -193,9 +190,11 @@ export const AIInboxAutomationSettings: React.FC = () => {
             className="mt-3 w-full accent-blue-600"
           />
           <p className="mt-3 text-xs text-c-text-muted">
-            {isPolish
-              ? `${manualReviewCount} sugestii z ostatniego uruchomienia czeka na ręczną decyzję.`
-              : `${manualReviewCount} suggestions from the latest run are waiting for manual review.`}
+            {t('settings.inboxAI.manualReviewFromLatest', {
+              count: manualReviewCount,
+              defaultValue:
+                '{{count}} suggestions from the latest run are waiting for manual review.',
+            })}
           </p>
         </div>
 
@@ -203,7 +202,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
           <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <Sparkles size={16} className="text-c-accent" />
-              {isPolish ? 'Ewale i koszt' : 'Evals and cost'}
+              {t('settings.inboxAI.evalsAndCost', 'Evals and cost')}
             </div>
             <div className="mt-4 flex items-center gap-6">
               <div>
@@ -211,7 +210,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
                   {aiEvalRuns[0] ? `${Math.round((aiEvalRuns[0].accuracy || 0) * 100)}%` : '—'}
                 </div>
                 <div className="text-xs text-c-text-muted">
-                  {isPolish ? 'ostatni eval accuracy' : 'latest eval accuracy'}
+                  {t('settings.inboxAI.latestEvalAccuracy', 'latest eval accuracy')}
                 </div>
               </div>
               <div>
@@ -219,25 +218,25 @@ export const AIInboxAutomationSettings: React.FC = () => {
                   {aiCostSummary ? `$${(aiCostSummary.totalCostUsd || 0).toFixed(2)}` : '—'}
                 </div>
                 <div className="text-xs text-c-text-muted">
-                  {isPolish ? 'koszt 30 dni' : '30-day cost'}
+                  {t('settings.inboxAI.cost30Days', '30-day cost')}
                 </div>
               </div>
             </div>
             <p className="mt-3 text-xs text-c-text-muted">
               {loading
-                ? isPolish
-                  ? 'Ładowanie diagnostyki AI...'
-                  : 'Loading AI diagnostics...'
-                : isPolish
-                  ? `${aiCostSummary?.callCount || 0} wywołań, ${aiEvalRuns.length} ostatnich runów`
-                  : `${aiCostSummary?.callCount || 0} calls, ${aiEvalRuns.length} recent runs`}
+                ? t('settings.inboxAI.loadingDiagnostics', 'Loading AI diagnostics...')
+                : t('settings.inboxAI.callsAndRuns', {
+                    calls: aiCostSummary?.callCount || 0,
+                    runs: aiEvalRuns.length,
+                    defaultValue: '{{calls}} calls, {{runs}} recent runs',
+                  })}
             </p>
           </div>
 
           <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <Inbox size={16} className="text-emerald-500" />
-              {isPolish ? 'Canonical inbox' : 'Canonical inbox'}
+              {t('settings.inboxAI.canonicalInbox', 'Canonical inbox')}
             </div>
             <div className="mt-4 flex items-center gap-6">
               <div>
@@ -245,7 +244,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
                   {canonicalStats?.total ?? 0}
                 </div>
                 <div className="text-xs text-c-text-muted">
-                  {isPolish ? 'łączna liczba pozycji' : 'total items'}
+                  {t('settings.inboxAI.totalItems', 'total items')}
                 </div>
               </div>
               <div>
@@ -253,33 +252,34 @@ export const AIInboxAutomationSettings: React.FC = () => {
                   {canonicalStats?.actionRequired ?? 0}
                 </div>
                 <div className="text-xs text-c-text-muted">
-                  {isPolish ? 'wymaga akcji' : 'action required'}
+                  {t('settings.inboxAI.actionRequired', 'action required')}
                 </div>
               </div>
             </div>
             <p className="mt-3 text-xs text-c-text-muted">
-              {isPolish
-                ? 'Inbox materializuje canonical items przed odświeżeniem tych statystyk.'
-                : 'Inbox materializes canonical items before refreshing these stats.'}
+              {t(
+                'settings.inboxAI.canonicalHelp',
+                'Inbox materializes canonical items before refreshing these stats.'
+              )}
             </p>
           </div>
 
           <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <DollarSign size={16} className="text-amber-500" />
-              {isPolish ? 'Szybki kontekst' : 'Quick context'}
+              {t('settings.inboxAI.quickContext', 'Quick context')}
             </div>
             <div className="mt-4 space-y-3 text-sm text-c-text-secondary">
               <div className="flex items-center justify-between">
-                <span>{isPolish ? 'Ostatnie runy eval' : 'Recent eval runs'}</span>
+                <span>{t('settings.inboxAI.recentEvalRuns', 'Recent eval runs')}</span>
                 <span className="font-semibold text-c-text">{aiEvalRuns.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>{isPolish ? 'Koszt okna' : 'Cost window'}</span>
+                <span>{t('settings.inboxAI.costWindow', 'Cost window')}</span>
                 <span className="font-semibold text-c-text">{aiCostSummary?.days ?? 30}d</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>{isPolish ? 'Manual review' : 'Manual review'}</span>
+                <span>{t('settings.inboxAI.manualReview', 'Manual review')}</span>
                 <span className="font-semibold text-c-text">{manualReviewCount}</span>
               </div>
             </div>

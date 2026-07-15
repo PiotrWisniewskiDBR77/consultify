@@ -50,8 +50,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
   organizationId,
   canRebuild = false,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [context, setContext] = useState<ContextResponse | null>(null);
   const [timeline, setTimeline] = useState<TimelineResponse['timeline']>([]);
   const [claims, setClaims] = useState<ClaimsResponse['claims']>([]);
@@ -127,15 +126,11 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
       await Api.organizationContextRebuild();
       await loadContext();
       toast.success(
-        isPolish
-          ? 'Snapshot kontekstu został przebudowany.'
-          : 'Organization context snapshot rebuilt.'
+        t('settings.orgContext.rebuiltToast', 'Organization context snapshot rebuilt.')
       );
     } catch {
       toast.error(
-        isPolish
-          ? 'Nie udało się przebudować snapshotu kontekstu.'
-          : 'Failed to rebuild organization context snapshot.'
+        t('settings.orgContext.rebuildFailedToast', 'Failed to rebuild organization context snapshot.')
       );
     } finally {
       setRebuilding(false);
@@ -148,20 +143,22 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
     <div className="space-y-4">
       <Callout
         variant={context?.counts?.conflicts ? 'warning' : 'purple'}
-        title={isPolish ? 'Organization Context OS' : 'Organization Context OS'}
+        title={t('settings.orgContext.title', 'Organization Context OS')}
         compact
       >
         {loading
-          ? isPolish
-            ? 'Ładowanie aktualnego stanu kontekstu organizacji...'
-            : 'Loading organization context status...'
-          : isPolish
-            ? `Aktywnych wpisów: ${context?.counts?.items || 0}, claimów: ${context?.counts?.claims || 0}, konfliktów: ${context?.counts?.conflicts || 0}.`
-            : `Active entries: ${context?.counts?.items || 0}, claims: ${context?.counts?.claims || 0}, conflicts: ${context?.counts?.conflicts || 0}.`}
+          ? t('settings.orgContext.loading', 'Loading organization context status...')
+          : t('settings.orgContext.countsSummary', {
+              items: context?.counts?.items || 0,
+              claims: context?.counts?.claims || 0,
+              conflicts: context?.counts?.conflicts || 0,
+              defaultValue:
+                'Active entries: {{items}}, claims: {{claims}}, conflicts: {{conflicts}}.',
+            })}
       </Callout>
 
       <ToggleBlock
-        title={isPolish ? 'Context Health' : 'Context Health'}
+        title={t('settings.orgContext.contextHealth', 'Context Health')}
         badge={context?.counts?.claims || 0}
         icon={<Database size={14} />}
         defaultOpen
@@ -176,22 +173,22 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
                 className="inline-flex items-center gap-2 rounded-lg border border-c-border-subtle dark:border-navy-700/60 bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 disabled:opacity-50"
               >
                 <RefreshCw size={12} className={rebuilding ? 'animate-spin' : ''} />
-                {isPolish ? 'Rebuild snapshot' : 'Rebuild snapshot'}
+                {t('settings.orgContext.rebuildSnapshot', 'Rebuild snapshot')}
               </button>
             </div>
           )}
           <div className="grid grid-cols-3 gap-3">
             {[
               {
-                label: isPolish ? 'Entries' : 'Entries',
+                label: t('settings.orgContext.entries', 'Entries'),
                 value: context?.counts?.items || 0,
               },
               {
-                label: isPolish ? 'Claims' : 'Claims',
+                label: t('settings.orgContext.claims', 'Claims'),
                 value: context?.counts?.claims || 0,
               },
               {
-                label: isPolish ? 'Conflicts' : 'Conflicts',
+                label: t('settings.orgContext.conflicts', 'Conflicts'),
                 value: context?.counts?.conflicts || 0,
               },
             ].map((item) => (
@@ -210,7 +207,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
           {context?.conflicts?.length ? (
             <Callout
               variant="warning"
-              title={isPolish ? 'Claims wymagające przeglądu' : 'Claims needing review'}
+              title={t('settings.orgContext.claimsNeedingReview', 'Claims needing review')}
               compact
               icon={AlertTriangle}
             >
@@ -221,16 +218,17 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
             </Callout>
           ) : (
             <Callout variant="success" compact>
-              {isPolish
-                ? 'Brak wykrytych konfliktów w aktualnym snapshotcie.'
-                : 'No conflicts detected in the current snapshot.'}
+              {t(
+                'settings.orgContext.noConflicts',
+                'No conflicts detected in the current snapshot.'
+              )}
             </Callout>
           )}
         </div>
       </ToggleBlock>
 
       <ToggleBlock
-        title={isPolish ? 'Recent Claims' : 'Recent Claims'}
+        title={t('settings.orgContext.recentClaims', 'Recent Claims')}
         badge={claimRows.length}
         icon={<GitBranch size={14} />}
         defaultOpen={false}
@@ -240,7 +238,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
           columns={[
             {
               key: 'claimPath',
-              header: isPolish ? 'Claim' : 'Claim',
+              header: t('settings.orgContext.colClaim', 'Claim'),
               render: (row) => (
                 <div>
                   <div className="text-sm text-c-text-secondary">{row.claimPath}</div>
@@ -252,32 +250,32 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
             },
             {
               key: 'valuePreview',
-              header: isPolish ? 'Value' : 'Value',
+              header: t('settings.orgContext.colValue', 'Value'),
               render: (row) => (
                 <span className="text-xs text-c-text-secondary">{row.valuePreview}</span>
               ),
             },
             {
               key: 'reviewStatus',
-              header: isPolish ? 'Review' : 'Review',
+              header: t('settings.orgContext.colReview', 'Review'),
               width: 'w-28',
               render: (row) => row.reviewStatus,
             },
             {
               key: 'explicit',
-              header: isPolish ? 'Type' : 'Type',
+              header: t('settings.orgContext.colType', 'Type'),
               width: 'w-24',
               render: (row) => (row.isExplicit ? 'explicit' : 'inferred'),
             },
           ]}
           data={claimRows}
           rowKey={(row) => row.id}
-          emptyMessage={isPolish ? 'Brak claimów.' : 'No claims yet.'}
+          emptyMessage={t('settings.orgContext.noClaims', 'No claims yet.')}
         />
       </ToggleBlock>
 
       <ToggleBlock
-        title={isPolish ? 'Recent Sources' : 'Recent Sources'}
+        title={t('settings.orgContext.recentSources', 'Recent Sources')}
         badge={timelineRows.length}
         icon={<History size={14} />}
         defaultOpen={false}
@@ -287,7 +285,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
           columns={[
             {
               key: 'summary',
-              header: isPolish ? 'Source' : 'Source',
+              header: t('settings.orgContext.colSource', 'Source'),
               render: (row) => (
                 <div>
                   <div className="text-sm text-c-text-secondary">{row.summary}</div>
@@ -297,35 +295,37 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
             },
             {
               key: 'channel',
-              header: isPolish ? 'Channel' : 'Channel',
+              header: t('settings.orgContext.colChannel', 'Channel'),
               width: 'w-28',
               render: (row) => row.channel,
             },
             {
               key: 'createdAtLabel',
-              header: isPolish ? 'Updated' : 'Updated',
+              header: t('settings.orgContext.colUpdated', 'Updated'),
               width: 'w-40',
               render: (row) => row.createdAtLabel,
             },
           ]}
           data={timelineRows}
           rowKey={(row) => row.id}
-          emptyMessage={
-            isPolish ? 'Brak wpisów w timeline kontekstu.' : 'No entries in the context timeline.'
-          }
+          emptyMessage={t(
+            'settings.orgContext.noTimelineEntries',
+            'No entries in the context timeline.'
+          )}
         />
       </ToggleBlock>
 
       <ToggleBlock
-        title={isPolish ? 'Source Provenance' : 'Source Provenance'}
+        title={t('settings.orgContext.sourceProvenance', 'Source Provenance')}
         badge={context?.counts?.items || 0}
         icon={<GitBranch size={14} />}
         defaultOpen={false}
       >
         <p className="text-sm text-c-text-secondary">
-          {isPolish
-            ? 'Każdy zapis do Context OS zachowuje źródło, kanał i explicitness, dzięki czemu AI może pracować na trwałym kontekście zamiast na pojedynczym prompt snapshot.'
-            : 'Every Context OS write keeps source, channel, and explicitness so AI can work on durable context instead of a single prompt snapshot.'}
+          {t(
+            'settings.orgContext.provenanceHelp',
+            'Every Context OS write keeps source, channel, and explicitness so AI can work on durable context instead of a single prompt snapshot.'
+          )}
         </p>
       </ToggleBlock>
     </div>

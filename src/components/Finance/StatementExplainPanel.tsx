@@ -47,36 +47,53 @@ const EVIDENCE_ICONS: Record<string, React.ReactNode> = {
   manual_note: <PenLine size={12} className="text-blue-500" />,
 };
 
-const EVIDENCE_LABELS: Record<string, { en: string; pl: string }> = {
-  direct: { en: 'Direct match', pl: 'Bezpośrednie dopasowanie' },
-  aggregated: { en: 'Aggregated', pl: 'Zagregowane' },
-  split: { en: 'Split/Merged', pl: 'Rozdzielone/Scalone' },
-  derived: { en: 'Derived', pl: 'Obliczone' },
-  manual_note: { en: 'Manual note', pl: 'Notatka ręczna' },
+const EVIDENCE_TYPE_I18N_KEYS: Record<string, string> = {
+  direct: 'finance.explainPanel.evidenceType.direct',
+  aggregated: 'finance.explainPanel.evidenceType.aggregated',
+  split: 'finance.explainPanel.evidenceType.split',
+  derived: 'finance.explainPanel.evidenceType.derived',
+  manual_note: 'finance.explainPanel.evidenceType.manualNote',
+};
+
+const EVIDENCE_TYPE_FALLBACKS: Record<string, string> = {
+  direct: 'Direct match',
+  aggregated: 'Aggregated',
+  split: 'Split/Merged',
+  derived: 'Derived',
+  manual_note: 'Manual note',
 };
 
 const MAPPING_STATUS_CONFIG: Record<
   string,
-  { label: { en: string; pl: string }; icon: React.ReactNode; dotColor: string }
+  { i18nKey: string; fallback: string; icon: React.ReactNode; dotColor: string }
 > = {
-  auto: { label: { en: 'Auto', pl: 'Auto' }, icon: <Zap size={10} />, dotColor: 'bg-slate-400' },
+  auto: {
+    i18nKey: 'finance.explainPanel.mappingStatus.auto',
+    fallback: 'Auto',
+    icon: <Zap size={10} />,
+    dotColor: 'bg-slate-400',
+  },
   manual: {
-    label: { en: 'Manual', pl: 'Ręczne' },
+    i18nKey: 'finance.explainPanel.mappingStatus.manual',
+    fallback: 'Manual',
     icon: <PenLine size={10} />,
     dotColor: 'bg-blue-400',
   },
   computed: {
-    label: { en: 'Computed', pl: 'Obliczone' },
+    i18nKey: 'finance.explainPanel.mappingStatus.computed',
+    fallback: 'Computed',
     icon: <Sparkles size={10} />,
-    dotColor: 'bg-primary-400',
+    dotColor: 'bg-violet-400',
   },
   unmapped: {
-    label: { en: 'Unmapped', pl: 'Brak' },
+    i18nKey: 'finance.explainPanel.mappingStatus.unmapped',
+    fallback: 'Unmapped',
     icon: <Minus size={10} />,
     dotColor: 'bg-amber-400',
   },
   mapped: {
-    label: { en: 'Mapped', pl: 'Zmapowane' },
+    i18nKey: 'finance.explainPanel.mappingStatus.mapped',
+    fallback: 'Mapped',
     icon: <Link2 size={10} />,
     dotColor: 'bg-emerald-400',
   },
@@ -114,17 +131,18 @@ function EvidenceCard({
   evidence,
   index,
   sourceLabel,
-  isPl,
 }: {
   evidence: FinanceStatementExplainEvidence;
   index: number;
   sourceLabel: string;
-  isPl: boolean;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(index === 0);
   const icon = EVIDENCE_ICONS[evidence.evidenceType] || EVIDENCE_ICONS.direct;
-  const typeLabel =
-    EVIDENCE_LABELS[evidence.evidenceType]?.[isPl ? 'pl' : 'en'] || evidence.evidenceType;
+  const evidenceTypeI18nKey = EVIDENCE_TYPE_I18N_KEYS[evidence.evidenceType];
+  const typeLabel = evidenceTypeI18nKey
+    ? t(evidenceTypeI18nKey, EVIDENCE_TYPE_FALLBACKS[evidence.evidenceType])
+    : evidence.evidenceType;
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200/50 dark:border-white/[0.05]">
@@ -155,7 +173,7 @@ function EvidenceCard({
             {evidence.contributionValue != null && (
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Wkład' : 'Contribution'}
+                  {t('finance.explainPanel.contribution', 'Contribution')}
                 </span>
                 <span className="font-mono font-semibold tabular-nums">
                   {Number(evidence.contributionValue).toLocaleString()}
@@ -213,8 +231,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
   sourceLabel,
   noEvidenceLabel,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [animKey, setAnimKey] = useState(0);
@@ -335,7 +352,9 @@ export const StatementExplainPanel: React.FC<Props> = ({
                     >
                       <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                         {pv.periodLabel ||
-                          (i === 0 ? (isPl ? 'Poprzedni' : 'Prior') : isPl ? 'Bieżący' : 'Current')}
+                          (i === 0
+                            ? t('finance.explainPanel.priorPeriod', 'Prior')
+                            : t('finance.explainPanel.currentPeriod', 'Current'))}
                       </div>
                       <div
                         className={`font-mono text-[13px] tabular-nums ${
@@ -358,9 +377,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
               <div className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-500">
                 <MessageSquare size={11} />
                 <span className="italic">
-                  {isPl
-                    ? 'Kliknij, aby dodać komentarz analityka...'
-                    : 'Click to add analyst comment...'}
+                  {t('finance.explainPanel.addAnalystComment', 'Click to add analyst comment...')}
                 </span>
               </div>
             </div>
@@ -377,7 +394,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
             >
               <Cog size={12} className="text-slate-600 dark:text-slate-500" />
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-                {isPl ? 'Szczegóły techniczne' : 'Technical details'}
+                {t('finance.explainPanel.technicalDetails', 'Technical details')}
               </span>
               {techOpen ? (
                 <ChevronDown size={11} className="ml-auto text-slate-600" />
@@ -410,12 +427,12 @@ export const StatementExplainPanel: React.FC<Props> = ({
                     <MetaRow label="Status">
                       <span className="inline-flex items-center gap-1">
                         <span className={`h-1.5 w-1.5 rounded-full ${mappingCfg.dotColor}`} />
-                        {isPl ? mappingCfg.label.pl : mappingCfg.label.en}
+                        {t(mappingCfg.i18nKey, mappingCfg.fallback)}
                       </span>
                     </MetaRow>
                     <MetaRow label={originLabel}>{explain.valueOrigin || 'source'}</MetaRow>
                     {explain.lineCode && (
-                      <MetaRow label={isPl ? 'Kod linii' : 'Line code'}>
+                      <MetaRow label={t('finance.explainPanel.lineCode', 'Line code')}>
                         <span className="inline-flex items-center gap-1 font-mono text-[10px]">
                           <Hash size={9} className="text-slate-600" />
                           {explain.lineCode}
@@ -445,7 +462,6 @@ export const StatementExplainPanel: React.FC<Props> = ({
                             evidence={evidence}
                             index={index}
                             sourceLabel={sourceLabel}
-                            isPl={isPl}
                           />
                         ))}
                       </div>
@@ -460,7 +476,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                   {explain.selectedMappingCandidate && (
                     <div className="rounded-lg bg-slate-50/60 p-2.5 dark:bg-white/[0.02]">
                       <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1">
-                        {isPl ? 'Wybrany kandydat' : 'Selected candidate'}
+                        {t('finance.explainPanel.selectedCandidate', 'Selected candidate')}
                       </div>
                       <div className="text-[11px] text-slate-700 dark:text-slate-200">
                         Score:{' '}

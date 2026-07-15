@@ -10467,6 +10467,16 @@
     "toast": {
       "excelGenerated": "Excel generated",
       "exportFailed": "Failed to export"
+    },
+    "pdfExport": {
+      "title": "Export to PDF",
+      "reportLanguage": "Report Language",
+      "reportTemplate": "Report Template",
+      "includeRecommendations": "Include recommendations",
+      "ready": "PDF ready for download!",
+      "download": "Download",
+      "generating": "Generating...",
+      "generate": "Generate PDF"
     }
   },
   "reports": {
@@ -13495,7 +13505,61 @@
     },
     "sectionNotFoundHint": "This settings section does not exist. Pick another from the sidebar.",
     "unsavedChanges": "Unsaved changes",
-    "allChangesSaved": "All changes saved"
+    "allChangesSaved": "All changes saved",
+    "inboxAI": {
+      "saveThresholdFailed": "Failed to save auto-triage threshold",
+      "autoTriagedToast": "{{count}} items were auto-triaged",
+      "manualWaitingToast": "{{count}} suggestions are waiting for manual review",
+      "noItemsMatched": "No items matched auto-triage",
+      "autoTriageFailed": "Auto-triage failed",
+      "title": "AI inbox automation",
+      "subtitle": "Auto-triage controls and inbox diagnostics were moved from Inbox into user AI settings.",
+      "thresholdLabel": "Auto-apply threshold",
+      "thresholdHelp": "Above this threshold, AI can automatically apply its suggested inbox action.",
+      "runAutoTriage": "Run auto-triage",
+      "currentThreshold": "Current threshold",
+      "manualReviewFromLatest": "{{count}} suggestions from the latest run are waiting for manual review.",
+      "evalsAndCost": "Evals and cost",
+      "latestEvalAccuracy": "latest eval accuracy",
+      "cost30Days": "30-day cost",
+      "loadingDiagnostics": "Loading AI diagnostics...",
+      "callsAndRuns": "{{calls}} calls, {{runs}} recent runs",
+      "canonicalInbox": "Canonical inbox",
+      "totalItems": "total items",
+      "actionRequired": "action required",
+      "canonicalHelp": "Inbox materializes canonical items before refreshing these stats.",
+      "quickContext": "Quick context",
+      "recentEvalRuns": "Recent eval runs",
+      "costWindow": "Cost window",
+      "manualReview": "Manual review"
+    },
+    "orgContext": {
+      "rebuiltToast": "Organization context snapshot rebuilt.",
+      "rebuildFailedToast": "Failed to rebuild organization context snapshot.",
+      "title": "Organization Context OS",
+      "loading": "Loading organization context status...",
+      "countsSummary": "Active entries: {{items}}, claims: {{claims}}, conflicts: {{conflicts}}.",
+      "contextHealth": "Context Health",
+      "rebuildSnapshot": "Rebuild snapshot",
+      "entries": "Entries",
+      "claims": "Claims",
+      "conflicts": "Conflicts",
+      "claimsNeedingReview": "Claims needing review",
+      "noConflicts": "No conflicts detected in the current snapshot.",
+      "recentClaims": "Recent Claims",
+      "colClaim": "Claim",
+      "colValue": "Value",
+      "colReview": "Review",
+      "colType": "Type",
+      "noClaims": "No claims yet.",
+      "recentSources": "Recent Sources",
+      "colSource": "Source",
+      "colChannel": "Channel",
+      "colUpdated": "Updated",
+      "noTimelineEntries": "No entries in the context timeline.",
+      "sourceProvenance": "Source Provenance",
+      "provenanceHelp": "Every Context OS write keeps source, channel, and explicitness so AI can work on durable context instead of a single prompt snapshot."
+    }
   },
   "showcase": {
     "common": {
@@ -17234,7 +17298,8 @@
       "contentDepth": "Content Depth"
     },
     "outline": {
-      "keyMessagePlaceholder": "Key message for this slide..."
+      "keyMessagePlaceholder": "Key message for this slide...",
+      "slides": "slides"
     },
     "versionConflictDetected": "This deck was changed in another session. Choose how to resolve it.",
     "versionConflictReloaded": "Reloaded the latest version of this deck.",
@@ -17249,6 +17314,27 @@
       "jumpTo": "Jump to artifact",
       "subtitle": "All sources linked to this presentation — click to jump to the artifact.",
       "title": "Relations"
+    },
+    "templates": {
+      "systemTemplates": "System Templates",
+      "orgTemplates": "Organization Templates",
+      "viewOutline": "View outline",
+      "use": "Use",
+      "clone": "Clone",
+      "cloned": "Template cloned to your organization",
+      "cloneFailed": "Failed to clone",
+      "audience": {
+        "sponsor": "Sponsor",
+        "executive": "Executive",
+        "investor": "Investor / VC",
+        "internal": "Internal Team"
+      },
+      "goal": {
+        "inform": "Inform",
+        "decide": "Decide",
+        "sell": "Sell",
+        "align": "Align"
+      }
     }
   },
   "finance": {
@@ -17337,7 +17423,30 @@
       "horizon": "Horizon (months)",
       "granularity": "Granularity",
       "currency": "Currency",
-      "valuateModel": "Valuate model"
+      "valuateModel": "Valuate model",
+      "eventTypes": {
+        "revenue": "Revenue",
+        "cogs": "COGS",
+        "opex": "Operating Expenses",
+        "capexPurchase": "CAPEX Purchase",
+        "depreciationRun": "Depreciation",
+        "debtDrawdown": "Debt Drawdown",
+        "debtRepayment": "Debt Repayment",
+        "interestAccrual": "Interest",
+        "taxAccrual": "Tax",
+        "wcChange": "Working Capital Change",
+        "equityInjection": "Equity Injection",
+        "dividend": "Dividend"
+      },
+      "initialFields": {
+        "cash": "Cash",
+        "equity": "Equity",
+        "debt": "Debt",
+        "ppe": "PPE (Net)",
+        "accountsReceivable": "Accounts Receivable",
+        "inventory": "Inventory",
+        "accountsPayable": "Accounts Payable"
+      }
     },
     "tabs": {
       "models": "Models",
@@ -17583,7 +17692,27 @@
       "completed": "Completed",
       "confidence": "confidence",
       "rejected": "Import finished, but the file was rejected and requires another attempt.",
-      "requiresReview": "Import finished. The statement went to the recovery queue and requires quality closure."
+      "requiresReview": "Import finished. The statement went to the recovery queue and requires quality closure.",
+      "smartStepUpload": "Upload",
+      "smartStepAnalysis": "AI Analysis",
+      "smartStepDone": "Done",
+      "ariaCloseImport": "Close import",
+      "ariaImportSteps": "Import steps",
+      "ariaDropZone": "Drop file or click to browse",
+      "ariaRemoveFile": "Remove file",
+      "analyzing": "AI is analyzing document...",
+      "uploadAndAnalyze": "Upload & Analyze",
+      "aiAnalyzedTitle": "Document analyzed by AI",
+      "analysisCompletedDefault": "Analysis completed successfully",
+      "sectionsFound": "Sections found",
+      "linesUnit": "lines",
+      "entity": "Entity",
+      "scaling": "Scaling",
+      "totalLines": "Total lines",
+      "sourceFile": "Source file",
+      "doneGoToReview": "Done — go to review",
+      "errorsLabel": "errors",
+      "warningsLabel": "warnings"
     },
     "lane": {
       "kpi": {
@@ -17715,6 +17844,53 @@
       "clickRowHint": "Click a table row to see line item details.",
       "noDocumentSelected": "No document selected for this table.",
       "notFound": "Statement pack not found"
+    },
+    "mappingEditor": {
+      "tierReview": "review",
+      "tierExcluded": "excluded",
+      "searchLines": "Search lines...",
+      "noResults": "No results",
+      "mapped": "mapped",
+      "unmappedCount": "unmapped",
+      "toReview": "to review"
+    },
+    "explainPanel": {
+      "evidenceType": {
+        "direct": "Direct match",
+        "aggregated": "Aggregated",
+        "split": "Split/Merged",
+        "derived": "Derived",
+        "manualNote": "Manual note"
+      },
+      "mappingStatus": {
+        "auto": "Auto",
+        "manual": "Manual",
+        "computed": "Computed",
+        "unmapped": "Unmapped",
+        "mapped": "Mapped"
+      },
+      "contribution": "Contribution",
+      "priorPeriod": "Prior",
+      "currentPeriod": "Current",
+      "addAnalystComment": "Click to add analyst comment...",
+      "technicalDetails": "Technical details",
+      "lineCode": "Line code",
+      "selectedCandidate": "Selected candidate"
+    },
+    "canonicalTable": {
+      "ariaLabel": "Financial statement table",
+      "priorPeriod": "Prior",
+      "currentPeriod": "Current",
+      "valueColumn": "Value",
+      "currency": "Currency"
+    },
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "Sourced",
+        "edited": "Edited",
+        "assumed": "AI assumed — needs review",
+        "missing": "Missing"
+      }
     }
   },
   "portfolio": {
