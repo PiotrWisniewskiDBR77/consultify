@@ -58,22 +58,27 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
   typeMeta,
   customStats,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const defaultStatCards = [
-    { label: { en: 'Entries', pl: 'Wpisy' }, value: stats.total },
-    { label: { en: 'Changes', pl: 'Zmiany' }, value: stats.edited },
-    { label: { en: 'Escalations', pl: 'Eskalacje' }, value: stats.escalations },
-    { label: { en: 'Collaboration', pl: 'Współpraca' }, value: stats.collaboration },
+    { label: t('sharedComponents.activityLogCanvas.entries'), value: stats.total },
+    { label: t('sharedComponents.activityLogCanvas.changes'), value: stats.edited },
+    { label: t('sharedComponents.activityLogCanvas.escalations'), value: stats.escalations },
+    { label: t('sharedComponents.activityLogCanvas.collaboration'), value: stats.collaboration },
   ];
 
-  const statCards = customStats || defaultStatCards;
+  const statCards = customStats
+    ? customStats.map((c) => ({
+        label: isPolish ? c.label.pl : c.label.en,
+        value: c.value,
+      }))
+    : defaultStatCards;
 
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-        {isPolish ? 'Logi aktywności' : 'Activity Log'}
+        {t('sharedComponents.activityLogCanvas.title')}
       </h2>
 
       {/* Stat cards */}
@@ -81,11 +86,11 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
         <div className={`grid grid-cols-1 md:grid-cols-${statCards.length} gap-2`}>
           {statCards.map((card) => (
             <div
-              key={isPolish ? card.label.pl : card.label.en}
+              key={card.label}
               className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2"
             >
               <p className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                {isPolish ? card.label.pl : card.label.en}
+                {card.label}
               </p>
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {card.value}
@@ -97,7 +102,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
         {/* Activity feed */}
         {entries.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-600 dark:text-slate-500">
-            {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
+            {t('sharedComponents.activityLogCanvas.noEntries')}
           </div>
         ) : (
           <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
@@ -127,9 +132,13 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                       </div>
                       {(entry.oldValue || entry.newValue) && (
                         <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          {entry.oldValue ? `${isPolish ? 'Było' : 'From'}: ${entry.oldValue}` : ''}
+                          {entry.oldValue
+                            ? `${t('sharedComponents.activityLogCanvas.from')}: ${entry.oldValue}`
+                            : ''}
                           {entry.oldValue && entry.newValue ? '  ->  ' : ''}
-                          {entry.newValue ? `${isPolish ? 'Jest' : 'To'}: ${entry.newValue}` : ''}
+                          {entry.newValue
+                            ? `${t('sharedComponents.activityLogCanvas.to')}: ${entry.newValue}`
+                            : ''}
                         </div>
                       )}
                     </div>

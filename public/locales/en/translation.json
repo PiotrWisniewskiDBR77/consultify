@@ -28367,6 +28367,30 @@
       "nextWeek": "Next week",
       "previousMonth": "Previous month",
       "nextMonth": "Next month"
+    },
+    "previewActivityStrip": {
+      "justNow": "just now",
+      "activity": "Activity",
+      "showLess": "Show less",
+      "showMore": "Show more ({{count}})"
+    },
+    "previewAIHintStrip": {
+      "copied": "Copied",
+      "copyFailed": "Copy failed",
+      "regenerate": "Regenerate",
+      "copy": "Copy",
+      "clear": "Clear",
+      "askPlaceholder": "Ask about this..."
+    },
+    "activityLogCanvas": {
+      "title": "Activity Log",
+      "entries": "Entries",
+      "changes": "Changes",
+      "escalations": "Escalations",
+      "collaboration": "Collaboration",
+      "noEntries": "No activity entries yet.",
+      "from": "From",
+      "to": "To"
     }
   },
   "reportBuilder": {

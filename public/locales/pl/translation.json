@@ -29427,6 +29427,30 @@
       "nextWeek": "Za tydzień",
       "previousMonth": "Poprzedni miesiąc",
       "nextMonth": "Następny miesiąc"
+    },
+    "previewActivityStrip": {
+      "justNow": "teraz",
+      "activity": "Aktywność",
+      "showLess": "Pokaż mniej",
+      "showMore": "Pokaż więcej ({{count}})"
+    },
+    "previewAIHintStrip": {
+      "copied": "Skopiowano",
+      "copyFailed": "Nie udało się skopiować",
+      "regenerate": "Regeneruj",
+      "copy": "Kopiuj",
+      "clear": "Wyczyść",
+      "askPlaceholder": "Zapytaj o to..."
+    },
+    "activityLogCanvas": {
+      "title": "Logi aktywności",
+      "entries": "Wpisy",
+      "changes": "Zmiany",
+      "escalations": "Eskalacje",
+      "collaboration": "Współpraca",
+      "noEntries": "Brak wpisów w logu.",
+      "from": "Było",
+      "to": "Jest"
     }
   },
   "reportBuilder": {
