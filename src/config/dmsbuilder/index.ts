@@ -4,7 +4,10 @@
  * SSOT for the DMS methodology content and its deterministic synthesis engine.
  * Cloned from the Ansoff config pattern (src/config/ansoff):
  *   - deepeningLadder.ts           : per-layer depth staircase + partner-grade proposal bank (PL/EN)
- *   - managementSystemEngine.ts    : control-loop maturity scoring + W2 move sequencing
+ *   - dmsBuilderQuestionBank.ts    : laddered, branching q-bank — KPI claim -> forced cadence ->
+ *                                    escalation -> response closure (OXFORD O3)
+ *   - managementSystemEngine.ts    : control-loop maturity scoring, coverage-gap detection, and
+ *                                    W2 move sequencing
  *   - conclusionPrompts.ts         : AI prompt builders grounded in the engine output
  *
  * Self-contained: the engine reads a minimal DmsSession, and this barrel offers
@@ -22,6 +25,7 @@ import type { DmsSession, EscalationRule, KpiItem } from './managementSystemEngi
 
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
+export * from './dmsBuilderQuestionBank';
 export * from './managementSystemEngine';
 
 /** A ladder rung with strings resolved to a single language. */

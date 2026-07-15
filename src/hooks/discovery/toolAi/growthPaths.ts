@@ -1,4 +1,4 @@
-import { buildAnsoffConclusionPrompt } from '@/config/ansoff';
+import { buildAnsoffConclusionPrompt, buildAnsoffQuestionBankPromptRules } from '@/config/ansoff';
 import type {
   GrowthPathsData,
   GrowthQuadrantId,
@@ -52,6 +52,7 @@ Produce a COMPLETE first-draft Growth Paths session. Everything is a proposal fo
 ${orgContext}
 === END CONTEXT ===
 
+${buildAnsoffQuestionBankPromptRules('en')}
 
 ${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:

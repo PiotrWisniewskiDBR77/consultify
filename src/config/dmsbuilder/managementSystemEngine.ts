@@ -202,6 +202,37 @@ export function rankDmsLayers(session: DmsSession): LayerRanking {
 }
 
 // ---------------------------------------------------------------------------
+// Coverage gap detection (OXFORD O3 discipline — "loop that controls nothing")
+// ---------------------------------------------------------------------------
+
+export type DmsGapKind = 'layer-absent' | 'layer-weak';
+
+export interface DmsGap {
+  layer: DmsLayerId;
+  kind: DmsGapKind;
+  message: Bilingual;
+}
+
+/**
+ * Names the control-loop layers a DMS must not silently carry as broken,
+ * reusing the same per-layer `gap` fact `rankDmsLayers()` already computes so
+ * the two never disagree: a layer with zero elements is absent; a layer with
+ * elements but low maturity (< 1.5/3) is present but too weak to control.
+ */
+export function detectDmsGaps(session: DmsSession): DmsGap[] {
+  const { scores } = rankDmsLayers(session);
+  const gaps: DmsGap[] = [];
+  scores.forEach((s) => {
+    if (!s.present) {
+      gaps.push({ layer: s.layer, kind: 'layer-absent', message: s.gap });
+    } else if (s.maturity < 1.5) {
+      gaps.push({ layer: s.layer, kind: 'layer-weak', message: s.gap });
+    }
+  });
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
 // W2 move validator
 // ---------------------------------------------------------------------------
 

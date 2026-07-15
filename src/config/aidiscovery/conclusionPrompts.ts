@@ -14,11 +14,13 @@
 
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 
+import { buildAiDiscoveryQuestionBankPromptRules } from './aiDiscoveryQuestionBank';
 import { type AiPhaseId } from './deepeningLadder';
 import { localizeLadder } from './index';
 import {
   buildW2MoveSequence,
   computeBaseline,
+  detectDiscoveryGaps,
   type DiscoverySession,
   rankPhases,
 } from './useCaseEngine';
@@ -66,6 +68,11 @@ export function buildAiDiscoveryConclusionPrompt(
     )
     .join('\n');
 
+  const gaps = detectDiscoveryGaps(session);
+  const gapLines = gaps
+    .map((g) => `- ${localize(g.message.pl, g.message.en, isPolish)}`)
+    .join('\n');
+
   const header = isPolish
     ? 'Działaj jako partner ds. AI i transformacji cyfrowej. Poniżej masz ugruntowaną na danych bazę odkrywania przypadków użycia AI, ranking faz i sekwencję ruchów W2. Dopracuj sformułowania i uzupełnij luki, ale NIE wymyślaj wartości ani przypadków niepopartych danymi sesji.'
     : 'Act as an AI and digital-transformation partner. Below is a data-grounded AI use-case discovery baseline, a phase ranking and a W2 move sequence. Refine the wording and fill gaps, but do NOT invent value or use cases the session facts do not support.';
@@ -94,6 +101,8 @@ ${scoreLines}
 
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
+${gapLines ? `\n=== COVERAGE GAPS ===\n${gapLines}\n` : ''}
+${buildAiDiscoveryQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}

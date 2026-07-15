@@ -250,6 +250,73 @@ export function rankPainStages(session: PainSession): StageRanking {
 }
 
 // ---------------------------------------------------------------------------
+// Coverage gap detection (OXFORD O3 discipline — "solved symptom, surviving root")
+// ---------------------------------------------------------------------------
+
+export type PainGapKind = 'no-pains' | 'unmeasured-top-pain' | 'root-with-no-solution';
+
+export interface PainGap {
+  painId: string | null;
+  kind: PainGapKind;
+  message: Bilingual;
+}
+
+/**
+ * Names the pain-portfolio gaps a session must not silently carry:
+ *   - no pains discovered at all
+ *   - the single most expensive pain has no measured cost figures (ranking is
+ *     still a guess for the pain that matters most)
+ *   - a pain flagged as a removable root has zero solution candidates aimed at
+ *     it (the diagnosis exists but nothing acts on it)
+ */
+export function detectPainGaps(session: PainSession): PainGap[] {
+  const gaps: PainGap[] = [];
+  if (session.pains.length === 0) {
+    gaps.push({
+      painId: null,
+      kind: 'no-pains',
+      message: {
+        pl: 'Brak zidentyfikowanych bólów — portfel odkrywania jest pusty.',
+        en: 'No pain points identified yet — the discovery portfolio is empty.',
+      },
+    });
+    return gaps;
+  }
+
+  const topPain = session.pains.reduce((top, p) =>
+    painAnnualMinutes(p) > painAnnualMinutes(top) ? p : top
+  );
+  if (!topPain.measured) {
+    gaps.push({
+      painId: topPain.id,
+      kind: 'unmeasured-top-pain',
+      message: {
+        pl: `Najdroższy ból (${painAnnualMinutes(topPain)} min/rok) nie ma zmierzonego kosztu — ranking bólów wciąż jest zgadywaniem dla tego, który waży najwięcej.`,
+        en: `The costliest pain (${painAnnualMinutes(topPain)} min/yr) has no measured cost — the ranking is still a guess for the one that weighs most.`,
+      },
+    });
+  }
+
+  session.pains
+    .filter((p) => p.nature === 'root')
+    .forEach((p) => {
+      const hasSolution = session.solutions.some((s) => s.painId === p.id);
+      if (!hasSolution) {
+        gaps.push({
+          painId: p.id,
+          kind: 'root-with-no-solution',
+          message: {
+            pl: `Ból „${p.id}" jest oznaczony jako usuwalny root, ale nie ma ani jednej propozycji rozwiązania — diagnoza istnieje, ale nic na nią nie działa.`,
+            en: `Pain "${p.id}" is flagged as a removable root but has zero solution candidates — the diagnosis exists but nothing acts on it.`,
+          },
+        });
+      }
+    });
+
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
 // W2 move validator
 // ---------------------------------------------------------------------------
 

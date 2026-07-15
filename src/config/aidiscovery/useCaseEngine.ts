@@ -250,6 +250,73 @@ export function rankPhases(session: DiscoverySession): PhaseRanking {
 }
 
 // ---------------------------------------------------------------------------
+// Coverage gap detection (OXFORD O3 discipline — "value with no path to ship")
+// ---------------------------------------------------------------------------
+
+export type DiscoveryGapKind = 'no-use-cases' | 'unowned-ready-value' | 'phase-empty-with-value';
+
+export interface DiscoveryGap {
+  phase: AiPhaseId | null;
+  kind: DiscoveryGapKind;
+  message: Bilingual;
+}
+
+/**
+ * Names the discovery-portfolio gaps a session must not silently carry:
+ *   - no use cases at all (nothing to discover)
+ *   - use cases whose data is ready and shippable but have no named owner
+ *     (value at stake with no one accountable to ship it)
+ *   - a phase that governs real value but has zero move candidates attributed
+ *     to it (the phase is a blind spot in the plan)
+ */
+export function detectDiscoveryGaps(session: DiscoverySession): DiscoveryGap[] {
+  const gaps: DiscoveryGap[] = [];
+  if (session.useCases.length === 0) {
+    gaps.push({
+      phase: null,
+      kind: 'no-use-cases',
+      message: {
+        pl: 'Brak kandydatów na przypadki użycia AI — portfel discovery jest pusty.',
+        en: 'No candidate AI use cases yet — the discovery portfolio is empty.',
+      },
+    });
+    return gaps;
+  }
+
+  const unownedReady = session.useCases.filter(
+    (u) => u.dataReadiness === 'ready' && !u.hasOwner && (u.annualValue || 0) > 0
+  );
+  if (unownedReady.length > 0) {
+    const value = round1(unownedReady.reduce((acc, u) => acc + (u.annualValue || 0), 0));
+    gaps.push({
+      phase: null,
+      kind: 'unowned-ready-value',
+      message: {
+        pl: `${unownedReady.length} przypadków użycia z gotowymi danymi i wartością ${value} nie ma nazwanego właściciela — wartość, której nikt nie wdroży.`,
+        en: `${unownedReady.length} use case(s) with ready data and ${value} of value have no named owner — value nobody will ship.`,
+      },
+    });
+  }
+
+  const { scores } = rankPhases(session);
+  scores.forEach((s) => {
+    if (s.moveCount === 0 && s.valueInScope > 0) {
+      const label = aiPhaseLabel(s.phase);
+      gaps.push({
+        phase: s.phase,
+        kind: 'phase-empty-with-value',
+        message: {
+          pl: `Faza „${label.pl.toLowerCase()}" obejmuje ${s.valueInScope} wartości, ale nie ma ani jednego kandydata na ruch — ślepa plama planu.`,
+          en: `The "${label.en.toLowerCase()}" phase governs ${s.valueInScope} of value but has zero move candidates — a blind spot in the plan.`,
+        },
+      });
+    }
+  });
+
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
 // W2 move validator
 // ---------------------------------------------------------------------------
 

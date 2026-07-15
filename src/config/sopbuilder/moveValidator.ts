@@ -170,6 +170,84 @@ export function assessSop(data: OperationalToolData): SopReadiness {
 }
 
 // ---------------------------------------------------------------------------
+// Coverage gap detection (OXFORD O3 discipline — "SOP that enforces nothing")
+// ---------------------------------------------------------------------------
+
+export type SopGapKind =
+  | 'no-standards'
+  | 'no-checklists'
+  | 'unmeasurable-standards'
+  | 'coverage-gap';
+
+export interface SopGap {
+  section: SopSectionId | null;
+  kind: SopGapKind;
+  message: Bilingual;
+}
+
+/**
+ * Names the coverage gaps an SOP must not silently carry, reusing the same
+ * facts `assessSop()` already computes so the two never disagree:
+ *   - no standards at all (nothing to enforce)
+ *   - no checklists at all (nothing verifies the standards)
+ *   - standards that lack a measurable threshold (judged "by eye")
+ *   - fewer checklist items than standards (partial verification coverage)
+ */
+export function detectSopGaps(data: OperationalToolData): SopGap[] {
+  const readiness = assessSop(data);
+  const gaps: SopGap[] = [];
+  const standards = readiness.scores.find((s) => s.section === 'standards')!;
+  const checklists = readiness.scores.find((s) => s.section === 'checklists')!;
+
+  if (standards.itemCount === 0) {
+    gaps.push({
+      section: 'standards',
+      kind: 'no-standards',
+      message: {
+        pl: 'Brak zdefiniowanych standardów — nie ma czego egzekwować.',
+        en: 'No standards defined yet — there is nothing to enforce.',
+      },
+    });
+    return gaps;
+  }
+
+  if (checklists.itemCount === 0) {
+    gaps.push({
+      section: 'checklists',
+      kind: 'no-checklists',
+      message: {
+        pl: `${standards.itemCount} standard(ów) bez ani jednej checklisty — standard bez punktu weryfikacji jest fikcją zgodności.`,
+        en: `${standards.itemCount} standard(s) with zero checklists — a standard with no verification point is a compliance fiction.`,
+      },
+    });
+  }
+
+  if (readiness.unmeasurableStandards > 0) {
+    gaps.push({
+      section: 'standards',
+      kind: 'unmeasurable-standards',
+      message: {
+        pl: `${readiness.unmeasurableStandards}/${standards.itemCount} standardów bez mierzalnego progu — oceniane "na oko".`,
+        en: `${readiness.unmeasurableStandards}/${standards.itemCount} standards lack a measurable threshold — judged "by eye".`,
+      },
+    });
+  }
+
+  if (readiness.coverageGap && checklists.itemCount > 0) {
+    gaps.push({
+      section: 'checklists',
+      kind: 'coverage-gap',
+      message: {
+        pl: `Checklisty (${checklists.itemCount}) nie pokrywają wszystkich standardów (${standards.itemCount}) — część zgodności nie jest weryfikowana.`,
+        en: `Checklists (${checklists.itemCount}) do not cover all standards (${standards.itemCount}) — part of compliance goes unverified.`,
+      },
+    });
+  }
+
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
 // W2 move validator
 // ---------------------------------------------------------------------------
 

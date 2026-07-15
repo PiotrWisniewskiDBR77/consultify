@@ -260,6 +260,85 @@ export function rankLevers(session: InventorySession): LeverRanking {
 }
 
 // ---------------------------------------------------------------------------
+// Coverage gap detection (OXFORD O3 discipline — "capital nobody is acting on")
+// ---------------------------------------------------------------------------
+
+export type InventoryGapKind =
+  | 'no-segments'
+  | 'below-service-unaddressed'
+  | 'trapped-cash-unaddressed'
+  | 'unmeasured-segments';
+
+export interface InventoryGap {
+  segmentId: string | null;
+  kind: InventoryGapKind;
+  message: Bilingual;
+}
+
+/**
+ * Names the inventory-portfolio gaps a session must not silently carry:
+ *   - no segments at all
+ *   - segments below their service-level target with zero policy moves aimed
+ *     at the `service` lever (a stock-out risk nobody is acting on)
+ *   - trapped cash in dead/tail stock with zero moves aimed at `deadstock`
+ *   - a majority-unmeasured book (policy would optimize a guess)
+ */
+export function detectInventoryGaps(session: InventorySession): InventoryGap[] {
+  const gaps: InventoryGap[] = [];
+  if (session.segments.length === 0) {
+    gaps.push({
+      segmentId: null,
+      kind: 'no-segments',
+      message: {
+        pl: 'Brak zdefiniowanych segmentów SKU — księga zapasów jest pusta.',
+        en: 'No SKU segments defined yet — the inventory book is empty.',
+      },
+    });
+    return gaps;
+  }
+
+  const belowService = session.segments.filter((s) => s.belowService);
+  const hasServiceMove = session.moves.some((m) => m.lever === 'service');
+  if (belowService.length > 0 && !hasServiceMove) {
+    gaps.push({
+      segmentId: belowService[0].id,
+      kind: 'below-service-unaddressed',
+      message: {
+        pl: `${belowService.length} segment(ów) poniżej celu poziomu obsługi, ale brak ani jednego ruchu w dźwigni "service" — ryzyko braków, na które nikt nie działa.`,
+        en: `${belowService.length} segment(s) below their service-level target but zero moves in the "service" lever — a stock-out risk nobody is acting on.`,
+      },
+    });
+  }
+
+  const baseline = computeBaseline(session);
+  const trappedCash = baseline.deadStockValue + baseline.tailStockValue;
+  const hasDeadstockMove = session.moves.some((m) => m.lever === 'deadstock');
+  if (trappedCash > 0 && !hasDeadstockMove) {
+    gaps.push({
+      segmentId: null,
+      kind: 'trapped-cash-unaddressed',
+      message: {
+        pl: `${round1(trappedCash)} kapitału uwięzione w martwym/ogonowym zapasie, ale brak ani jednego ruchu w dźwigni "deadstock" — łatwa gotówka, po którą nikt nie sięga.`,
+        en: `${round1(trappedCash)} of capital sits trapped in dead/tail stock but zero moves in the "deadstock" lever — easy cash nobody is reaching for.`,
+      },
+    });
+  }
+
+  if (baseline.measuredRatio < 0.5) {
+    gaps.push({
+      segmentId: null,
+      kind: 'unmeasured-segments',
+      message: {
+        pl: `Tylko ${Math.round(baseline.measuredRatio * 100)}% segmentów jest zmierzonych — każda polityka na tej bazie optymalizuje zgadywankę, nie realny rozkład.`,
+        en: `Only ${Math.round(baseline.measuredRatio * 100)}% of segments are measured — any policy on this base optimizes a guess, not the real distribution.`,
+      },
+    });
+  }
+
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
 // W2 move validator
 // ---------------------------------------------------------------------------
 

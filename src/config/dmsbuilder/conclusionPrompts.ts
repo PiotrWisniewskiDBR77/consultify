@@ -14,8 +14,14 @@
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 
 import { type DmsLayerId } from './deepeningLadder';
+import { buildDmsQuestionBankPromptRules } from './dmsBuilderQuestionBank';
 import { localizeLadder } from './index';
-import { buildW2MoveSequence, type DmsSession, rankDmsLayers } from './managementSystemEngine';
+import {
+  buildW2MoveSequence,
+  detectDmsGaps,
+  type DmsSession,
+  rankDmsLayers,
+} from './managementSystemEngine';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -58,6 +64,11 @@ export function buildDmsConclusionPrompt(session: DmsSession, isPolish: boolean)
     )
     .join('\n');
 
+  const gaps = detectDmsGaps(session);
+  const gapLines = gaps
+    .map((g) => `- ${localize(g.message.pl, g.message.en, isPolish)}`)
+    .join('\n');
+
   const header = isPolish
     ? 'Działaj jako partner ds. operacji (Daily Management System, Lean). Poniżej masz ugruntowaną na faktach mapę dojrzałości pętli kontroli, ranking warstw (najsłabsza-pierwsza) i sekwencję ruchów W2. Dopracuj sformułowania i uzupełnij luki, ale NIE zawyżaj dojrzałości ponad to, co pokazują fakty sesji.'
     : 'Act as an operations partner (Daily Management System, Lean). Below is a fact-grounded control-loop maturity map, a weakest-first layer ranking and a W2 move sequence. Refine the wording and fill gaps, but do NOT inflate maturity beyond what the session facts show.';
@@ -84,6 +95,8 @@ ${scoreLines}
 
 === W2 MOVE SEQUENCE (grounded draft, weakest-first in loop order) ===
 ${seqLines}
+${gapLines ? `\n=== COVERAGE GAPS ===\n${gapLines}\n` : ''}
+${buildDmsQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}

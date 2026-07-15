@@ -183,6 +183,80 @@ export function rankGrowthPaths(data: GrowthPathsData): PathRanking {
 }
 
 // ---------------------------------------------------------------------------
+// Coverage gap detection (OXFORD O3 discipline — "growth without a base")
+// ---------------------------------------------------------------------------
+
+export type GrowthPathGapKind = 'no-evidence' | 'unbalanced-risk' | 'no-options-anywhere';
+
+export interface GrowthPathGap {
+  quadrant: GrowthQuadrantId | null;
+  kind: GrowthPathGapKind;
+  message: Bilingual;
+}
+
+/**
+ * Names the coverage gaps a growth portfolio must not silently carry:
+ *   - a quadrant with accepted options but zero evidence behind any of them
+ *     (a bet dressed as a plan)
+ *   - a portfolio that has NO options in any of the three safer quadrants
+ *     (penetration/development) yet bets everything on diversification — the
+ *     riskiest quadrant with no stable base underneath it
+ *   - an entirely empty session (nothing to rank at all)
+ */
+export function detectGrowthPathGaps(data: GrowthPathsData): GrowthPathGap[] {
+  const gaps: GrowthPathGap[] = [];
+  const { scores } = rankGrowthPaths(data);
+
+  const anyOptions = scores.some((s) => s.optionCount > 0);
+  if (!anyOptions) {
+    gaps.push({
+      quadrant: null,
+      kind: 'no-options-anywhere',
+      message: {
+        pl: 'Brak zaakceptowanych opcji wzrostu w jakiejkolwiek ćwiartce — portfel wzrostu jest pusty.',
+        en: 'No accepted growth options in any quadrant — the growth portfolio is empty.',
+      },
+    });
+    return gaps;
+  }
+
+  scores.forEach((s) => {
+    if (s.optionCount > 0 && s.evidenceBacked === 0) {
+      gaps.push({
+        quadrant: s.quadrant,
+        kind: 'no-evidence',
+        message: {
+          pl: `„${QUADRANT_LABEL[s.quadrant].pl}" ma ${s.optionCount} opcji, ale ani jedna nie ma dowodu — to zakład ubrany w plan.`,
+          en: `"${QUADRANT_LABEL[s.quadrant].en}" has ${s.optionCount} option(s) but not one carries evidence — a bet dressed as a plan.`,
+        },
+      });
+    }
+  });
+
+  const safeQuadrants: GrowthQuadrantId[] = [
+    'marketPenetration',
+    'marketDevelopment',
+    'productDevelopment',
+  ];
+  const safeAllEmpty = scores
+    .filter((s) => safeQuadrants.includes(s.quadrant))
+    .every((s) => s.optionCount === 0);
+  const diversificationScore = scores.find((s) => s.quadrant === 'diversification')!;
+  if (safeAllEmpty && diversificationScore.optionCount > 0) {
+    gaps.push({
+      quadrant: 'diversification',
+      kind: 'unbalanced-risk',
+      message: {
+        pl: 'Penetracja, rozwój rynku i rozwój produktu są puste, a portfel opiera się wyłącznie na dywersyfikacji — najwyższym ryzyku bez stabilnej bazy pod spodem.',
+        en: 'Penetration, market development and product development are all empty, and the portfolio rests entirely on diversification — the highest-risk quadrant with no stable base underneath it.',
+      },
+    });
+  }
+
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
 // W2 move validator
 // ---------------------------------------------------------------------------
 

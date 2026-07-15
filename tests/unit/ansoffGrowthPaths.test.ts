@@ -5,8 +5,15 @@ import {
   ANSOFF_LADDER_RUNG_ORDER,
   ANSOFF_PROPOSAL_BANK,
   ANSOFF_QUADRANTS,
+  ANSOFF_QUESTION_BANK,
+  ANSOFF_QUESTION_ROOT_ID,
   buildAnsoffConclusionPrompt,
+  buildAnsoffQuestionBankPromptRules,
   buildW2MoveSequence,
+  detectGrowthPathGaps,
+  getAnsoffQuestion,
+  getNextAnsoffQuestionId,
+  isForcedLoopAnsoffQuestion,
   localizeLadder,
   rankGrowthPaths,
   synthesizeGrowthPaths,
@@ -266,6 +273,16 @@ describe('Ansoff engine — bridges', () => {
     // the JSON contract must expose the W2 fields
     expect(prompt).toContain('"tradeOff"');
     expect(prompt).toContain('"rejectedVariant"');
+    // OXFORD O3: the grounded conclusion prompt also carries coverage gaps + the q-bank contract.
+    expect(prompt).toContain('ans-evidence-force');
+  });
+
+  it('buildAnsoffConclusionPrompt surfaces coverage gaps when present', () => {
+    const prompt = buildAnsoffConclusionPrompt(
+      buildData({ diversification: [opt('d1', { impact: 'high', evidence: ['x'] })] }),
+      false
+    )!;
+    expect(prompt).toContain('COVERAGE GAPS');
   });
 
   it('synthesizeGrowthPaths returns a consistent ranking + sequence', () => {
@@ -275,5 +292,83 @@ describe('Ansoff engine — bridges', () => {
     });
     const { ranking, sequence } = synthesizeGrowthPaths(data);
     expect(ranking.ordered[0]).toBe(sequence[0].quadrant);
+  });
+});
+
+describe('Ansoff engine — coverage gap detection (OXFORD O3)', () => {
+  it('flags an entirely empty portfolio', () => {
+    const gaps = detectGrowthPathGaps(buildData({}));
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0].kind).toBe('no-options-anywhere');
+  });
+
+  it('flags a quadrant with options but zero evidence', () => {
+    const gaps = detectGrowthPathGaps(
+      buildData({
+        marketPenetration: [opt('p1', { impact: 'high', evidence: [] })],
+      })
+    );
+    expect(gaps.some((g) => g.kind === 'no-evidence' && g.quadrant === 'marketPenetration')).toBe(
+      true
+    );
+  });
+
+  it('flags an all-in diversification bet with no safe base', () => {
+    const gaps = detectGrowthPathGaps(
+      buildData({
+        diversification: [opt('d1', { impact: 'high', evidence: ['x'] })],
+      })
+    );
+    expect(gaps.some((g) => g.kind === 'unbalanced-risk')).toBe(true);
+  });
+
+  it('reports no gaps for a well-evidenced, balanced portfolio', () => {
+    const gaps = detectGrowthPathGaps(
+      buildData({
+        marketPenetration: [opt('p1', { impact: 'high', evidence: ['a'] })],
+        diversification: [opt('d1', { impact: 'medium', evidence: ['b'] })],
+      })
+    );
+    expect(gaps).toHaveLength(0);
+  });
+});
+
+describe('Ansoff branching question bank (OXFORD O3)', () => {
+  it('starts at the surface question and has 4 laddered levels', () => {
+    const root = getAnsoffQuestion(ANSOFF_QUESTION_ROOT_ID);
+    expect(root).toBeTruthy();
+    expect(root!.level).toBe(1);
+    const levels = new Set(ANSOFF_QUESTION_BANK.map((q) => q.level));
+    expect(levels).toEqual(new Set([1, 2, 3, 4]));
+  });
+
+  it('forces the evidence loop until a concrete signal is named', () => {
+    expect(isForcedLoopAnsoffQuestion('ans-evidence-force')).toBe(true);
+    expect(getNextAnsoffQuestionId('ans-evidence-force', 'still-nothing')).toBe(
+      'ans-evidence-force'
+    );
+    expect(getNextAnsoffQuestionId('ans-evidence-force', 'signal-named')).toBe(
+      'ans-quant-headroom'
+    );
+  });
+
+  it('every node has at least two answer options with matching branch keys', () => {
+    ANSOFF_QUESTION_BANK.forEach((node) => {
+      expect(node.answerOptions.length).toBeGreaterThanOrEqual(2);
+      node.answerOptions.forEach((opt) => {
+        expect(opt.key in node.branches || node.defaultNextId !== undefined).toBe(true);
+      });
+    });
+  });
+
+  it('unknown answer keys fall back to defaultNextId', () => {
+    expect(getNextAnsoffQuestionId('ans-surface', 'unknown-key')).toBe(
+      getAnsoffQuestion('ans-surface')!.defaultNextId
+    );
+  });
+
+  it('buildAnsoffQuestionBankPromptRules mentions the forced-loop discipline in both languages', () => {
+    expect(buildAnsoffQuestionBankPromptRules('en')).toContain('ans-evidence-force');
+    expect(buildAnsoffQuestionBankPromptRules('pl')).toContain('ans-evidence-force');
   });
 });

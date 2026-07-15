@@ -5,9 +5,16 @@ import {
   DMS_LADDER_RUNG_ORDER,
   DMS_LAYERS,
   DMS_PROPOSAL_BANK,
+  DMS_QUESTION_BANK,
+  DMS_QUESTION_ROOT_ID,
   buildDmsConclusionPrompt,
   buildDmsDeepenPrompt,
+  buildDmsQuestionBankPromptRules,
   buildW2MoveSequence,
+  detectDmsGaps,
+  getDmsQuestion,
+  getNextDmsQuestionId,
+  isForcedLoopDmsQuestion,
   localizeLadder,
   localizeMove,
   rankDmsLayers,
@@ -245,5 +252,69 @@ describe('DMS engine — bridges', () => {
     );
     expect(ranking.scores).toHaveLength(4);
     expect(sequence.length).toBeGreaterThan(0);
+  });
+});
+
+describe('DMS engine — coverage gap detection (OXFORD O3)', () => {
+  it('flags every layer as absent for an empty session', () => {
+    const gaps = detectDmsGaps(session({}));
+    expect(gaps).toHaveLength(4);
+    gaps.forEach((g) => expect(g.kind).toBe('layer-absent'));
+  });
+
+  it('flags a weak-but-present layer distinctly from an absent one', () => {
+    const gaps = detectDmsGaps(
+      session({
+        kpis: [kpi('k1', { hasTarget: false, hasOwner: false, frequency: undefined })],
+        escalationRules: [],
+      })
+    );
+    const visibility = gaps.find((g) => g.layer === 'visibility');
+    expect(visibility).toBeTruthy();
+    expect(visibility!.kind).toBe('layer-weak');
+    expect(gaps.find((g) => g.layer === 'escalation')!.kind).toBe('layer-absent');
+  });
+
+  it('reports no gaps once every layer is mature', () => {
+    const gaps = detectDmsGaps(
+      session({
+        kpis: [kpi('k1'), kpi('k2'), kpi('k3')],
+        escalationRules: [rule('r1'), rule('r2')],
+      })
+    );
+    expect(gaps).toHaveLength(0);
+  });
+});
+
+describe('DMS branching question bank (OXFORD O3)', () => {
+  it('starts at the surface question and has 4 laddered levels', () => {
+    const root = getDmsQuestion(DMS_QUESTION_ROOT_ID);
+    expect(root).toBeTruthy();
+    expect(root!.level).toBe(1);
+    const levels = new Set(DMS_QUESTION_BANK.map((q) => q.level));
+    expect(levels).toEqual(new Set([1, 2, 3, 4]));
+  });
+
+  it('forces the cadence loop until a fixed rhythm is named', () => {
+    expect(isForcedLoopDmsQuestion('dms-cadence-force')).toBe(true);
+    expect(getNextDmsQuestionId('dms-cadence-force', 'still-no-rhythm')).toBe('dms-cadence-force');
+    expect(getNextDmsQuestionId('dms-cadence-force', 'cadence-named')).toBe('dms-escalation');
+  });
+
+  it('every node has at least two answer options', () => {
+    DMS_QUESTION_BANK.forEach((node) => {
+      expect(node.answerOptions.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('unknown answer keys fall back to defaultNextId', () => {
+    expect(getNextDmsQuestionId('dms-surface', 'unknown-key')).toBe(
+      getDmsQuestion('dms-surface')!.defaultNextId
+    );
+  });
+
+  it('buildDmsQuestionBankPromptRules mentions the forced-loop discipline in both languages', () => {
+    expect(buildDmsQuestionBankPromptRules('en')).toContain('dms-cadence-force');
+    expect(buildDmsQuestionBankPromptRules('pl')).toContain('dms-cadence-force');
   });
 });

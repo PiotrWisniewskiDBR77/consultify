@@ -15,7 +15,8 @@ import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { OperationalToolData } from '@/store/useToolStore';
 
 import { localizeLadder } from './index';
-import { assessSop, buildW2MoveSequence } from './moveValidator';
+import { assessSop, buildW2MoveSequence, detectSopGaps } from './moveValidator';
+import { buildSopQuestionBankPromptRules } from './sopBuilderQuestionBank';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -54,6 +55,11 @@ export function buildSopConclusionPrompt(
     )
     .join('\n');
 
+  const gaps = detectSopGaps(data);
+  const gapLines = gaps
+    .map((g) => `- ${localize(g.message.pl, g.message.en, isPolish)}`)
+    .join('\n');
+
   const header = isPolish
     ? 'Działaj jako partner ds. doskonalenia operacyjnego budujący SOP. Poniżej masz ugruntowaną na faktach ocenę egzekwowalności SOP (standardy mierzalne + pokrycie weryfikacją) i sekwencję wdrożenia W2. Dopracuj sformułowania i uzupełnij luki, ale NIE wymyślaj standardów ani punktów kontroli niepopartych pozycjami sesji.'
     : 'Act as an operational-excellence partner building an SOP. Below is a fact-grounded SOP enforceability assessment (measurable standards + verification coverage) and a W2 rollout sequence. Refine the wording and fill gaps, but do NOT invent standards or checks the session items do not support.';
@@ -82,6 +88,8 @@ ${scoreLines}
 
 === W2 ROLLOUT SEQUENCE (grounded draft) ===
 ${seqLines}
+${gapLines ? `\n=== COVERAGE GAPS ===\n${gapLines}\n` : ''}
+${buildSopQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}

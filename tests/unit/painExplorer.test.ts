@@ -4,11 +4,18 @@ import {
   PAIN_DEEPENING_LADDER,
   PAIN_LADDER_RUNG_ORDER,
   PAIN_PROPOSAL_BANK,
+  PAIN_QUESTION_BANK,
+  PAIN_QUESTION_ROOT_ID,
   PAIN_STAGES,
   buildPainConclusionPrompt,
   buildPainDeepenPrompt,
+  buildPainQuestionBankPromptRules,
   buildW2MoveSequence,
   computeBaseline,
+  detectPainGaps,
+  getNextPainQuestionId,
+  getPainQuestion,
+  isForcedLoopPainQuestion,
   localizeLadder,
   localizeMove,
   rankPainStages,
@@ -270,5 +277,82 @@ describe('Pain Explorer engine — bridges', () => {
     expect(baseline.annualMinutesLost).toBe(1000);
     expect(ranking.ordered[0]).toBe('diagnose');
     expect(sequence.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Pain Explorer engine — coverage gap detection (OXFORD O3)', () => {
+  it('flags an empty portfolio', () => {
+    const gaps = detectPainGaps(session({}));
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0].kind).toBe('no-pains');
+  });
+
+  it('flags the costliest pain when it is unmeasured', () => {
+    const gaps = detectPainGaps(
+      session({
+        pains: [
+          pain('p1', { minutesPerOccurrence: 5, occurrencesPerYear: 10, measured: true }),
+          pain('p2', { minutesPerOccurrence: 500, occurrencesPerYear: 500, measured: false }),
+        ],
+      })
+    );
+    expect(gaps.some((g) => g.kind === 'unmeasured-top-pain' && g.painId === 'p2')).toBe(true);
+  });
+
+  it('flags a root-flagged pain with zero solutions aimed at it', () => {
+    const gaps = detectPainGaps(
+      session({
+        pains: [pain('p1', { nature: 'root' })],
+        solutions: [],
+      })
+    );
+    expect(gaps.some((g) => g.kind === 'root-with-no-solution' && g.painId === 'p1')).toBe(true);
+  });
+
+  it('reports no gaps for a measured, solved, root-diagnosed portfolio', () => {
+    const gaps = detectPainGaps(
+      session({
+        pains: [pain('p1', { nature: 'root', measured: true })],
+        solutions: [sol('s1', { painId: 'p1' })],
+      })
+    );
+    expect(gaps).toHaveLength(0);
+  });
+});
+
+describe('Pain Explorer branching question bank (OXFORD O3)', () => {
+  it('starts at the surface question and has 4 laddered levels', () => {
+    const root = getPainQuestion(PAIN_QUESTION_ROOT_ID);
+    expect(root).toBeTruthy();
+    expect(root!.level).toBe(1);
+    const levels = new Set(PAIN_QUESTION_BANK.map((q) => q.level));
+    expect(levels).toEqual(new Set([1, 2, 3, 4]));
+  });
+
+  it('forces the qualification loop until a second source is found', () => {
+    expect(isForcedLoopPainQuestion('pain-qualify-force')).toBe(true);
+    expect(getNextPainQuestionId('pain-qualify-force', 'still-single-voice')).toBe(
+      'pain-qualify-force'
+    );
+    expect(getNextPainQuestionId('pain-qualify-force', 'second-source-found')).toBe(
+      'pain-quant-check'
+    );
+  });
+
+  it('every node has at least two answer options', () => {
+    PAIN_QUESTION_BANK.forEach((node) => {
+      expect(node.answerOptions.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('unknown answer keys fall back to defaultNextId', () => {
+    expect(getNextPainQuestionId('pain-surface', 'unknown-key')).toBe(
+      getPainQuestion('pain-surface')!.defaultNextId
+    );
+  });
+
+  it('buildPainQuestionBankPromptRules mentions the forced-loop discipline in both languages', () => {
+    expect(buildPainQuestionBankPromptRules('en')).toContain('pain-qualify-force');
+    expect(buildPainQuestionBankPromptRules('pl')).toContain('pain-qualify-force');
   });
 });

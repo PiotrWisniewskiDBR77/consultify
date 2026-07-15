@@ -16,8 +16,9 @@
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { GrowthPathsData } from '@/store/useToolStore';
 
+import { buildAnsoffQuestionBankPromptRules } from './ansoffQuestionBank';
 import { localizeLadder } from './index';
-import { buildW2MoveSequence, rankGrowthPaths } from './moveValidator';
+import { buildW2MoveSequence, detectGrowthPathGaps, rankGrowthPaths } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -56,6 +57,11 @@ export function buildAnsoffConclusionPrompt(
     )
     .join('\n');
 
+  const gaps = detectGrowthPathGaps(data);
+  const gapLines = gaps
+    .map((g) => `- ${localize(g.message.pl, g.message.en, isPolish)}`)
+    .join('\n');
+
   const header = isPolish
     ? 'Działaj jako partner ds. strategii wzrostu. Poniżej masz ugruntowany na faktach ranking ścieżek Ansoffa i sekwencję ruchów W2. Dopracuj sformułowania i uzupełnij luki, ale NIE wymyślaj ścieżek niepopartych opcjami.'
     : 'Act as a growth strategy partner. Below is a fact-grounded Ansoff path ranking and a W2 move sequence. Refine the wording and fill gaps, but do NOT invent paths the options do not support.';
@@ -79,6 +85,8 @@ ${scoreLines}
 
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
+${gapLines ? `\n=== COVERAGE GAPS ===\n${gapLines}\n` : ''}
+${buildAnsoffQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}

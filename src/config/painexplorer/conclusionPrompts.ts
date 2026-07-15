@@ -15,9 +15,11 @@ import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 
 import { type PainStageId } from './deepeningLadder';
 import { localizeLadder } from './index';
+import { buildPainQuestionBankPromptRules } from './painExplorerQuestionBank';
 import {
   buildW2MoveSequence,
   computeBaseline,
+  detectPainGaps,
   type PainSession,
   rankPainStages,
 } from './painSynthesisEngine';
@@ -62,6 +64,11 @@ export function buildPainConclusionPrompt(session: PainSession, isPolish: boolea
     )
     .join('\n');
 
+  const gaps = detectPainGaps(session);
+  const gapLines = gaps
+    .map((g) => `- ${localize(g.message.pl, g.message.en, isPolish)}`)
+    .join('\n');
+
   const header = isPolish
     ? 'Działaj jako partner ds. doskonałości operacyjnej prowadzący odkrywanie bólu. Poniżej masz ugruntowany na danych portfel bólu, ranking etapów odkrywania i sekwencję ruchów W2. Dopracuj sformułowania i uzupełnij luki, ale NIE wymyślaj minut ani bólów niepopartych danymi sesji.'
     : 'Act as an operational-excellence partner running pain discovery. Below is a data-grounded pain portfolio, a discovery-stage ranking and a W2 move sequence. Refine the wording and fill gaps, but do NOT invent minutes or pains the session facts do not support.';
@@ -90,6 +97,8 @@ ${scoreLines}
 
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
+${gapLines ? `\n=== COVERAGE GAPS ===\n${gapLines}\n` : ''}
+${buildPainQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}

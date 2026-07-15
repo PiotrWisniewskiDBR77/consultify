@@ -4,7 +4,10 @@
  * SSOT for the pain-discovery methodology content and its deterministic
  * synthesis engine. Cloned from the SMED config pattern (src/config/smedplanner):
  *   - deepeningLadder.ts       : per-stage depth staircase + partner-grade proposal bank (PL/EN)
- *   - painSynthesisEngine.ts   : baseline + scoring + W2 move sequencing (rationale/trade-off/rejected variant)
+ *   - painExplorerQuestionBank.ts: laddered, branching q-bank — pain claim -> forced
+ *                              qualification -> quantification -> diagnosis (OXFORD O3)
+ *   - painSynthesisEngine.ts   : baseline + scoring + coverage-gap detection + W2 move
+ *                              sequencing (rationale/trade-off/rejected variant)
  *   - conclusionPrompts.ts     : AI prompt builders grounded in the engine output
  *
  * Self-contained: the engine reads a minimal PainSession, and this barrel offers
@@ -22,6 +25,7 @@ import type { PainNature, PainPoint, PainSession, SolutionCandidate } from './pa
 
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
+export * from './painExplorerQuestionBank';
 export * from './painSynthesisEngine';
 
 /** A ladder rung with strings resolved to a single language. */

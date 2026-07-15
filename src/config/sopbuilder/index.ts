@@ -3,9 +3,12 @@
  *
  * SSOT for the SOP methodology content and its deterministic synthesis engine.
  * Cloned from the Ansoff config pattern (src/config/ansoff):
- *   - deepeningLadder.ts  : per-section depth staircase + partner-grade proposal bank (PL/EN)
- *   - moveValidator.ts    : enforceability scoring + W2 rollout sequencing (rationale/trade-off/rejected variant)
- *   - conclusionPrompts.ts: AI prompt builders grounded in the engine output
+ *   - deepeningLadder.ts     : per-section depth staircase + partner-grade proposal bank (PL/EN)
+ *   - sopBuilderQuestionBank.ts: laddered, branching q-bank — standard claim -> forced
+ *                              measurement -> verification -> rollout (OXFORD O3)
+ *   - moveValidator.ts       : enforceability scoring, coverage-gap detection, and W2 rollout
+ *                              sequencing (rationale/trade-off/rejected variant)
+ *   - conclusionPrompts.ts   : AI prompt builders grounded in the engine output
  */
 
 import {
@@ -18,6 +21,7 @@ import {
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
+export * from './sopBuilderQuestionBank';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
