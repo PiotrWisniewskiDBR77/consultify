@@ -8749,6 +8749,30 @@ export const Api = {
     return handleResponse(res, 'Failed to save admin security policy');
   },
 
+  // HP-24: SSO self-service (org-admin configures own org's SAML/OIDC metadata)
+  getAdminSsoSelfConfig: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/sso-self`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load SSO configuration');
+  },
+
+  updateAdminSsoSelfConfig: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/sso-self`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to save SSO configuration');
+  },
+
+  validateAdminSsoSelfConfig: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/sso-self/validate`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to validate SSO configuration');
+  },
+
   getAdminCollaborationControls: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/admin/collaboration`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to load collaboration controls');

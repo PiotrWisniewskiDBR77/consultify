@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
+import { isSsoSelfServiceEnabled } from '../../utils/ssoSelfServiceFlag';
+import { AdminSsoSelfServiceCard } from './AdminSsoSelfServiceCard';
 
 type SecurityPolicyState = {
   mfaRequired: boolean;
@@ -296,6 +298,10 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
           {t('admin.security.policyPanel.actions.save', 'Save security policy')}
         </button>
       </div>
+
+      {/* HP-24: SSO self-service metadata (SAML/OIDC) — dobudowane do istniejącej
+          karty "SSO posture" powyżej. Za flagą, default OFF (reguła #7/#9). */}
+      {isSsoSelfServiceEnabled() && <AdminSsoSelfServiceCard />}
     </div>
   );
 };

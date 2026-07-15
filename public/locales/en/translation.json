@@ -24940,5 +24940,55 @@
       "taskWordSingular": "task",
       "taskWordPlural": "tasks"
     }
+  },
+  "ssoSelfService": {
+    "loading": "Loading SSO configuration…",
+    "title": "SSO configuration (SAML / OIDC)",
+    "description": "Connect your own identity provider. This writes the metadata the login flow actually reads — separate from the toggle above.",
+    "status": {
+      "configured": "Configured",
+      "notConfigured": "Not configured"
+    },
+    "fields": {
+      "protocol": "Protocol",
+      "providerName": "Provider name",
+      "domains": "Mapped domains (comma-separated)",
+      "isEnabled": "Enable this configuration"
+    },
+    "saml": {
+      "heading": "Identity provider (SAML)",
+      "entityId": "IdP entity ID",
+      "ssoUrl": "SSO URL",
+      "certificate": "X.509 certificate",
+      "certificatePlaceholderSet": "Certificate on file — paste a new one to replace it"
+    },
+    "oidc": {
+      "heading": "Identity provider (OIDC)",
+      "issuer": "Issuer URL",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "clientSecretPlaceholder": "Enter client secret",
+      "clientSecretPlaceholderSet": "Secret on file — enter a new one to replace it",
+      "authorizationUrl": "Authorization URL (optional)",
+      "tokenUrl": "Token URL (optional)"
+    },
+    "test": {
+      "valid": "Configuration is complete and ready to enable."
+    },
+    "toasts": {
+      "validConfig": "Configuration looks complete",
+      "saved": "SSO configuration saved"
+    },
+    "errors": {
+      "load": "Failed to load SSO configuration",
+      "loadTitle": "SSO configuration unavailable",
+      "test": "Failed to validate SSO configuration",
+      "save": "Failed to save SSO configuration"
+    },
+    "actions": {
+      "retry": "Retry",
+      "testConnection": "Test connection",
+      "save": "Save SSO configuration"
+    }
   }
 }
