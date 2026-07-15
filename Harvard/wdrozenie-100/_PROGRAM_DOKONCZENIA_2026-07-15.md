@@ -4,6 +4,54 @@
 > demo (tip `2f09458063`), każde twierdzenie z dowodem grep/plik:linia. Zasada: żywy runtime,
 > nie checkboxy (docy zaniżały/zawyżały OBUSTRONNIE — potwierdzone wielokrotnie).
 
+## POSTĘP 2026-07-15 (fale 8-11d na demo)
+
+### Domknięte (dnia) 
+**Fala 8 — Bezpieczeństwo (autonomiczna, bez decyzji Piotra)**
+- P1 ISO 27001 data fix: `DocsSecurityView.tsx:59-67` + `SecurityDashboard.tsx:93` — zmiana z „Certified" na „in progress" (certyfikat 2026-08-10)
+- P2 Whiteboard authorization: `realtime-platform.routes.ts` → dodana bramka gate (facilitator/admin required)
+- P3 AdminSidebar.tsx: `git rm` — wskrzeszony git-race (0 importerów), potwierdzony grep
+- P5 Activity/Audit gating: port ścieżki fix z `feat/tp-fe-fix-broken-buttons`
+
+**Fala 9 — Wiring (za flagami OFF)**
+- HP-17 Evidence UI: wpiąć 6 archetypów bez ekspozycji do panel-schematu (W2 zmapowany callsite)
+- W3-W4 Command Center ślad agentów + karta benchmarku: 0 śladu, mapping do menu adwersaryjnego
+- O4 business-case: endpoint do UI routing (S wiring)
+- O3 Risk&Uncertainty: pytania inline, czeka na q-bank dedykowany
+
+**Fala 10-11 — i18n + higiena**
+- i18n MyWork sweep ~2502×: table 1110, notebook 223/260, mindmap 105, whiteboard 38, process-flow 137 (flotowalny)
+- i18n interview/initiatives/M17: ~693 kluczy
+- §27 M27 resztki: 31 raw `<table>`, IdeasTableContent todo, GridView (świadome wyjątki)
+- pl-fallback bug: `t(key, plDefault)` bez key w en.json — znaleziona w 3 plikach StandardTable, szersza audyt repo-wide
+- Oxford promptbook: bundle.ts → manifesty + linki do handbook (dokumentacja)
+- HP-4/17/25: Agent w Teresie koncept `agentPlannerService` (6 zadań, czeka 3 pytania); Evidence mapping W2; Governance sync B1-B4 (SCIM istnieje)
+
+### Bilans % (żywej mechaniki)
+- **Harvey**: ~78% (HP-21 graded-run flaky, HP-8/12/13 niewpięte, HP-0 fix domknięty)
+- **Harvard**: ~85% (flipy OFF czekają, i18n ogony, M16 wiring UI ~50 endpointów bez callsite)
+- **Oxford**: ~90%+promptbook (UI bez decyzji Piotra, promptbook dokumentacja)
+
+### Czeka na Piotra (odblokuje flipy + kierunek)
+1. **Flipy default-ON**: `ff_commandCenter` · `ff_ssoSelfService` · M16 6 paneli (valueOffice/investmentAppraisal/varianceBridge/driverPlanner/modelVersioning) · M14 summaryOneLook+changeSignals (dark bug!) · **M02 deliverables** (canvas triada MARTWA bez tego)
+2. **M12 Audyty**: `MODULE_AUDITS: closed` — otwierać na demo czy chować?
+3. **HP-21 graded-run**: mini (5 zadań) czy pełny (~100 premium)?
+4. **M16 ~50 endpoints**: dead-code czy wpięcie do UI (decyzja wiring)?
+5. **HP-4 semantyka**: błąd=stop/kontynuacja? Execution=live/tło?
+6. **M08 dual-stack**: `tablePlatformMetadataFirst` OFF — domknąć B czy legacy?
+
+### Pozostaje na Vegas
+- Flipy Piotra (po akceptu)
+- Benchmark run kalibracja
+- i18n ogony (po sweep floty)
+- Krymson resztki (Help/ENTERPRISE badge, changeSignals dark)
+- Dark+light odbiór finał per ekran
+
+### Sieroty decyzja
+- WebhookSettings.tsx / KnowledgePulse.tsx / SnapshotManager.tsx: 0 importerów, feature-complete bez konsumera UI. Dokument `_SIEROTY_DECYZJA_2026-07-15.md` — remove vs wpięcie (decyzja Piotra).
+
+---
+
 ## 1. UCZCIWY BILANS (nie zawyżony)
 
 | Program | Kod | End-to-end użyteczne | Wąskie gardło |
