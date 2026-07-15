@@ -9672,6 +9672,21 @@
       "highLegend": "Wysoki (2)",
       "mediumLegend": "Średni (1)",
       "lowLegend": "Niski (0)"
+    },
+    "industryBenchmark": {
+      "title": "Benchmarki Branżowe",
+      "comparedToPrefix": "Porównanie z",
+      "yourScoreLabel": "Twój wynik",
+      "industryAvgLabel": "Średnia branży",
+      "differenceLabel": "Różnica",
+      "levelsSuffix": "poziomów",
+      "percentileLabel": "Percentyl",
+      "belowAverageLabel": "Poniżej średniej",
+      "yourOrganizationSeries": "Twoja organizacja",
+      "industryAverageSeries": "Średnia branży",
+      "topPerformersSeries": "Top Performerzy",
+      "youLabel": "Ty",
+      "industryLabel": "Branża"
     }
   },
   "auth": {

@@ -10437,6 +10437,21 @@
       "highLegend": "High (2)",
       "mediumLegend": "Medium (1)",
       "lowLegend": "Low (0)"
+    },
+    "industryBenchmark": {
+      "title": "Industry Benchmarks",
+      "comparedToPrefix": "Compared to",
+      "yourScoreLabel": "Your Score",
+      "industryAvgLabel": "Industry Avg",
+      "differenceLabel": "Difference",
+      "levelsSuffix": "levels",
+      "percentileLabel": "Percentile",
+      "belowAverageLabel": "Below Average",
+      "yourOrganizationSeries": "Your Organization",
+      "industryAverageSeries": "Industry Average",
+      "topPerformersSeries": "Top Performers",
+      "youLabel": "You",
+      "industryLabel": "Industry"
     }
   },
   "auth": {
