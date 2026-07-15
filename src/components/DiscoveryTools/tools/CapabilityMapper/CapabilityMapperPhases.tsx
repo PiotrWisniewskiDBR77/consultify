@@ -19,7 +19,9 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   CapabilityMapperData,
   ProposalCardType,
@@ -40,27 +42,26 @@ type PhaseProps = {
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
-const sourcingBadge = (
-  sourcing: 'build' | 'buy' | 'partner' | 'sustain' | undefined,
-  isPolish: boolean
-) => {
+const sourcingBadge = (sourcing: 'build' | 'buy' | 'partner' | 'sustain' | undefined) => {
+  const s = 'discoveryToolsTools.capabilityMapper.sourcing';
   switch (sourcing) {
     case 'buy':
-      return isPolish ? 'Kup' : 'Buy';
+      return i18n.t(`${s}.buy`);
     case 'partner':
-      return isPolish ? 'Partneruj' : 'Partner';
+      return i18n.t(`${s}.partner`);
     case 'sustain':
-      return isPolish ? 'Utrzymaj' : 'Sustain';
+      return i18n.t(`${s}.sustain`);
     case 'build':
     default:
-      return isPolish ? 'Zbuduj' : 'Build';
+      return i18n.t(`${s}.build`);
   }
 };
 
@@ -73,6 +74,7 @@ export function CapabilityMapperInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as CapabilityMapperData;
   const [draft, setDraft] = useState('');
@@ -86,12 +88,12 @@ export function CapabilityMapperInputPhase({
           id: `signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -109,12 +111,10 @@ export function CapabilityMapperInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały i dowody kompetencji' : 'Capability Signals & Evidence'}
+          {t('discoveryToolsTools.capabilityMapper.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz fakty o ludziach, procesach, technologii i danych zanim AI zmapuje kompetencje.'
-            : 'Capture facts about people, processes, technology, and data before mapping capabilities.'}
+          {t('discoveryToolsTools.capabilityMapper.signalsSubtitle')}
         </p>
       </div>
 
@@ -128,7 +128,7 @@ export function CapabilityMapperInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał...' : 'Add a capability signal...'}
+          placeholder={t('discoveryToolsTools.capabilityMapper.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -149,7 +149,7 @@ export function CapabilityMapperInputPhase({
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -192,6 +192,7 @@ export function CapabilityMapperBuildPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as CapabilityMapperData;
   const capabilities = data.capabilities || [];
@@ -223,12 +224,10 @@ export function CapabilityMapperBuildPhase({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Mapa kompetencji' : 'Capability Map'}
+            {t('discoveryToolsTools.capabilityMapper.mapTitle')}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Każda kompetencja powinna mieć dojrzałość obecną i docelową, znaczenie, strategię pozyskania, drivery i implikację.'
-              : 'Each capability should have a current and target maturity, importance, sourcing strategy, drivers, and an implication.'}
+            {t('discoveryToolsTools.capabilityMapper.mapSubtitle')}
           </p>
         </div>
         <button
@@ -237,7 +236,7 @@ export function CapabilityMapperBuildPhase({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
         >
           <Plus className="h-4 w-4" />
-          {isPolish ? 'Dodaj kompetencję' : 'Add capability'}
+          {t('discoveryToolsTools.capabilityMapper.addCapability')}
         </button>
       </div>
 
@@ -257,7 +256,7 @@ export function CapabilityMapperBuildPhase({
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
           >
             <Plus className="h-4 w-4" />
-            {isPolish ? 'Dodaj kompetencję' : 'Add capability'}
+            {t('discoveryToolsTools.capabilityMapper.addCapability')}
           </button>
         </div>
       ) : (
@@ -288,6 +287,7 @@ export function CapabilityMapperInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as CapabilityMapperData;
   const acceptedCapabilities = useMemo(
     () => (data.capabilities || []).filter((c) => c.proposalStatus !== 'rejected'),
@@ -298,34 +298,32 @@ export function CapabilityMapperInsightsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Luki kompetencyjne i ruchy' : 'Capability Gaps & Moves'}
+          {t('discoveryToolsTools.capabilityMapper.gapsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu mapa kompetencji zamienia się w priorytetowe luki i ruchy strategiczne (zbuduj/kup/partneruj).'
-            : 'This is where the capability map turns into prioritized gaps and strategic moves (build/buy/partner).'}
+          {t('discoveryToolsTools.capabilityMapper.gapsSubtitle')}
         </p>
       </div>
 
       {/* Accepted capabilities snapshot */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Zaakceptowane kompetencje' : 'Accepted capabilities'}
+          {t('discoveryToolsTools.capabilityMapper.acceptedCapabilities')}
         </div>
         {acceptedCapabilities.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak zaakceptowanych kompetencji.' : 'No accepted capabilities.'}
+            {t('discoveryToolsTools.capabilityMapper.noAcceptedCapabilities')}
           </div>
         ) : (
           <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-4">
             {acceptedCapabilities.map((capability) => (
               <div key={capability.id} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
                 <div className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {capability.name || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                  {capability.name || t('discoveryToolsTools.common.untitled')}
                 </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
                   {capability.currentMaturity} → {capability.targetMaturity} ·{' '}
-                  {sourcingBadge(capability.sourcing, isPolish)}
+                  {sourcingBadge(capability.sourcing)}
                 </div>
               </div>
             ))}
@@ -343,7 +341,7 @@ export function CapabilityMapperInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(gap.proposalStatus, isPolish)} · {gap.priority}
+                  {proposalBadge(gap.proposalStatus)} · {gap.priority}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {gap.title}
@@ -402,7 +400,7 @@ export function CapabilityMapperInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -425,6 +423,7 @@ export function CapabilityMapperOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as CapabilityMapperData;
   const summary = data.summary;
   const initiatives = [
@@ -436,12 +435,10 @@ export function CapabilityMapperOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.capabilityMapper.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.'
-            : 'The final source summary and output candidates are based on the approved diagnosis.'}
+          {t('discoveryToolsTools.capabilityMapper.outputsSubtitle')}
         </p>
       </div>
 
@@ -450,7 +447,7 @@ export function CapabilityMapperOutputsPhase({
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                {isPolish ? 'Final source summary' : 'Final source summary'}
+                {t('discoveryToolsTools.capabilityMapper.finalSourceSummary')}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                 {summary.executiveSummary}
@@ -505,11 +502,11 @@ export function CapabilityMapperOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

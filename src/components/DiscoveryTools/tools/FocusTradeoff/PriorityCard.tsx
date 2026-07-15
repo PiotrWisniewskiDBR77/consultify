@@ -12,6 +12,7 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   FocusPriority,
@@ -65,6 +66,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [newDriver, setNewDriver] = useState('');
 
@@ -105,14 +107,14 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
           <input
             value={priority.title}
             onChange={(event) => updatePriority({ title: event.target.value })}
-            placeholder={isPolish ? 'Nazwa priorytetu...' : 'Priority title...'}
+            placeholder={t('discoveryToolsTools.focusTradeoff.card.titlePlaceholder')}
             className="min-w-0 flex-1 border-0 border-b border-transparent bg-transparent p-0 font-semibold text-slate-900 focus:border-slate-300 focus:outline-none focus:ring-0 dark:text-slate-100"
           />
           <textarea
             value={priority.description}
             onChange={(event) => updatePriority({ description: event.target.value })}
             rows={2}
-            placeholder={isPolish ? 'Opis priorytetu...' : 'Priority description...'}
+            placeholder={t('discoveryToolsTools.focusTradeoff.card.descPlaceholder')}
             className="mt-2 w-full border-0 bg-transparent p-0 text-xs text-slate-500 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-400"
           />
         </div>
@@ -131,7 +133,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
               type="button"
               onClick={removePriority}
               className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-              title={isPolish ? 'Usuń priorytet' : 'Remove priority'}
+              title={t('discoveryToolsTools.focusTradeoff.card.removePriority')}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -142,7 +144,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
       {/* Scoring grid */}
       <div className="mb-3 grid gap-2 sm:grid-cols-2">
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Wartość strategiczna' : 'Strategic value'}
+          {t('discoveryToolsTools.focusTradeoff.card.strategicValue')}
           <select
             value={priority.valueScore}
             onChange={(event) => updatePriority({ valueScore: Number(event.target.value) })}
@@ -156,7 +158,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Wysiłek / koszt' : 'Effort / cost'}
+          {t('discoveryToolsTools.focusTradeoff.card.effortCost')}
           <select
             value={priority.effortScore}
             onChange={(event) => updatePriority({ effortScore: Number(event.target.value) })}
@@ -170,7 +172,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Dopasowanie strategiczne' : 'Strategic fit'}
+          {t('discoveryToolsTools.focusTradeoff.card.strategicFit')}
           <select
             value={priority.strategicFit}
             onChange={(event) => updatePriority({ strategicFit: Number(event.target.value) })}
@@ -184,7 +186,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Rekomendacja' : 'Recommendation'}
+          {t('discoveryToolsTools.focusTradeoff.card.recommendation')}
           <select
             value={priority.recommendation}
             onChange={(event) =>
@@ -210,7 +212,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
             type="text"
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
-            placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
+            placeholder={t('discoveryToolsTools.focusTradeoff.card.addDriverPlaceholder')}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
@@ -242,7 +244,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
             ))
           ) : (
             <p className="text-sm italic text-slate-600">
-              {isPolish ? 'Brak dodanych czynników' : 'No drivers added'}
+              {t('discoveryToolsTools.focusTradeoff.card.noDrivers')}
             </p>
           )}
         </div>
@@ -252,7 +254,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
       {(priority.evidence || []).length > 0 && (
         <div className="mb-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-            {isPolish ? 'Dowody' : 'Evidence'}
+            {t('discoveryToolsTools.common.evidence')}
           </div>
           <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
             {(priority.evidence || []).map((item, i) => (
@@ -267,17 +269,11 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
         value={priority.implication || ''}
         onChange={(event) => updatePriority({ implication: event.target.value })}
         rows={2}
-        placeholder={isPolish ? 'Implikacja tego priorytetu...' : 'Implication of this priority...'}
+        placeholder={t('discoveryToolsTools.focusTradeoff.card.implicationPlaceholder')}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
       />
 
-      <InlineAssist
-        hint={
-          isPolish
-            ? 'Oceń wartość vs wysiłek i dopasowanie, a następnie zdecyduj: realizuj, odłóż czy porzuć.'
-            : 'Weigh value vs effort and fit, then decide whether to pursue, defer, or drop.'
-        }
-      />
+      <InlineAssist hint={t('discoveryToolsTools.focusTradeoff.card.hint')} />
     </div>
   );
 };

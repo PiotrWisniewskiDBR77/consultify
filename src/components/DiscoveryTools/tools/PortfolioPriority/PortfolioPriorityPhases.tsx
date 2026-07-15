@@ -1,6 +1,8 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   PortfolioItem,
   PortfolioPriorityData,
@@ -41,11 +43,12 @@ const getCategory = (growth: number, share: number): PortfolioItem['category'] =
   return 'dog';
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
 export function PortfolioInputPhase({
@@ -55,6 +58,7 @@ export function PortfolioInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as PortfolioPriorityData;
   const [draft, setDraft] = useState('');
@@ -68,12 +72,12 @@ export function PortfolioInputPhase({
           id: `portfolio-signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -91,12 +95,10 @@ export function PortfolioInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały portfolio i evidence' : 'Portfolio Signals & Evidence'}
+          {t('discoveryToolsTools.portfolioPriority.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz dane z wywiadu, finansów, rynku i ograniczeń zasobowych zanim AI zaproponuje portfel.'
-            : 'Capture interview, financial, market, and resource signals before AI proposes the portfolio.'}
+          {t('discoveryToolsTools.portfolioPriority.signalsSubtitle')}
         </p>
       </div>
 
@@ -110,7 +112,7 @@ export function PortfolioInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał portfolio...' : 'Add a portfolio signal...'}
+          placeholder={t('discoveryToolsTools.portfolioPriority.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -131,7 +133,7 @@ export function PortfolioInputPhase({
           >
             <div className="mb-2 flex items-start justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -172,6 +174,7 @@ export function PortfolioItemsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as PortfolioPriorityData;
   const [title, setTitle] = useState('');
@@ -226,12 +229,10 @@ export function PortfolioItemsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Macierz portfolio BCG' : 'BCG Portfolio Matrix'}
+          {t('discoveryToolsTools.portfolioPriority.matrixTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'AI i użytkownik oceniają elementy według wzrostu rynku, udziału i poziomu inwestycji.'
-            : 'AI and the user score items by market growth, share, and investment level.'}
+          {t('discoveryToolsTools.portfolioPriority.matrixSubtitle')}
         </p>
       </div>
 
@@ -240,15 +241,13 @@ export function PortfolioItemsPhase({
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder={
-              isPolish ? 'Nazwa inicjatywy / produktu...' : 'Initiative / product name...'
-            }
+            placeholder={t('discoveryToolsTools.portfolioPriority.namePlaceholder')}
             className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
           />
           <input
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder={isPolish ? 'Krótki opis...' : 'Short description...'}
+            placeholder={t('discoveryToolsTools.portfolioPriority.descPlaceholder')}
             className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
           />
           <button
@@ -258,26 +257,26 @@ export function PortfolioItemsPhase({
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
           >
             <Plus className="h-4 w-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           {[
             [
               'marketGrowth',
-              isPolish ? 'Wzrost rynku' : 'Market growth',
+              t('discoveryToolsTools.portfolioPriority.marketGrowth'),
               marketGrowth,
               setMarketGrowth,
             ],
             [
               'marketShare',
-              isPolish ? 'Udział / pozycja' : 'Share / position',
+              t('discoveryToolsTools.portfolioPriority.sharePosition'),
               marketShare,
               setMarketShare,
             ],
             [
               'investmentLevel',
-              isPolish ? 'Poziom inwestycji' : 'Investment level',
+              t('discoveryToolsTools.portfolioPriority.investmentLevel'),
               investmentLevel,
               setInvestmentLevel,
             ],
@@ -326,7 +325,7 @@ export function PortfolioItemsPhase({
                     <div className="mb-2 flex items-start justify-between gap-3">
                       <div>
                         <div className="text-[10px] font-bold uppercase tracking-wide text-pink-500">
-                          {proposalBadge(item.proposalStatus, isPolish)}
+                          {proposalBadge(item.proposalStatus)}
                         </div>
                         <h4 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                           {item.title}
@@ -359,16 +358,10 @@ export function PortfolioItemsPhase({
                         (field) => (
                           <label key={field} className="text-xs font-medium text-slate-500">
                             {field === 'marketGrowth'
-                              ? isPolish
-                                ? 'Wzrost'
-                                : 'Growth'
+                              ? t('discoveryToolsTools.common.growth')
                               : field === 'marketShare'
-                                ? isPolish
-                                  ? 'Udział'
-                                  : 'Share'
-                                : isPolish
-                                  ? 'Inwestycje'
-                                  : 'Investment'}
+                                ? t('discoveryToolsTools.common.share')
+                                : t('discoveryToolsTools.common.investment')}
                             <select
                               value={item[field]}
                               onChange={(event) =>
@@ -408,18 +401,17 @@ export function PortfolioInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as PortfolioPriorityData;
 
   return (
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Trade-offy i priorytety' : 'Trade-offs & Priorities'}
+          {t('discoveryToolsTools.portfolioPriority.tradeoffsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu portfolio zamienia się w decyzje o alokacji zasobów.'
-            : 'This is where the portfolio becomes resource allocation decisions.'}
+          {t('discoveryToolsTools.portfolioPriority.tradeoffsSubtitle')}
         </p>
       </div>
 
@@ -432,7 +424,7 @@ export function PortfolioInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(tradeOff.proposalStatus, isPolish)}
+                  {proposalBadge(tradeOff.proposalStatus)}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {tradeOff.title}
@@ -490,7 +482,7 @@ export function PortfolioInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -511,6 +503,7 @@ export function PortfolioOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as PortfolioPriorityData;
   const summary = data.summary;
   const initiatives = [
@@ -522,12 +515,10 @@ export function PortfolioOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.portfolioPriority.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów bazują na zaakceptowanych decyzjach portfolio.'
-            : 'The final source summary and output candidates are based on approved portfolio decisions.'}
+          {t('discoveryToolsTools.portfolioPriority.outputsSubtitle')}
         </p>
       </div>
 
@@ -591,11 +582,11 @@ export function PortfolioOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

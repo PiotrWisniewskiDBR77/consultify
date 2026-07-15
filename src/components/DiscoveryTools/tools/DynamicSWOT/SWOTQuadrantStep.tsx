@@ -6,6 +6,7 @@
 
 import { Plus, Sparkles, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SWOTData, SWOTItem, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -59,6 +60,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
   session,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
   const [newItemText, setNewItemText] = useState('');
 
@@ -129,13 +131,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
           <Plus className="w-5 h-5" />
         </button>
       </div>
-      <InlineAssist
-        hint={
-          isPolish
-            ? 'Dodaj konkretne, mierzalne elementy, nie ogolniki.'
-            : 'Add concrete, measurable items, avoid general statements.'
-        }
-      />
+      <InlineAssist hint={t('discoveryToolsTools.dynamicSwot.quadrantStep.hint')} />
 
       {/* Items list */}
       <div className="space-y-3">
@@ -165,9 +161,9 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
                     }
                     className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   >
-                    <option value="high">{isPolish ? 'Wysoki wpływ' : 'High impact'}</option>
-                    <option value="medium">{isPolish ? 'Średni wpływ' : 'Medium impact'}</option>
-                    <option value="low">{isPolish ? 'Niski wpływ' : 'Low impact'}</option>
+                    <option value="high">{t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}</option>
+                    <option value="medium">{t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}</option>
+                    <option value="low">{t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}</option>
                   </select>
 
                   {/* Delete button */}
@@ -184,9 +180,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
         ) : (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center">
             <p className="text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'Dodaj elementy lub poproś AI o sugestie'
-                : 'Add items or ask AI for suggestions'}
+              {t('discoveryToolsTools.dynamicSwot.quadrantStep.emptyItems')}
             </p>
           </div>
         )}
@@ -194,9 +188,9 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
 
       {/* Item count */}
       <div className="text-sm text-slate-500 dark:text-slate-400">
-        {items.length} {isPolish ? 'elementów' : 'items'} •{' '}
+        {items.length} {t('discoveryToolsTools.dynamicSwot.quadrantStep.items')} •{' '}
         {items.filter((i) => i.impact === 'high').length}{' '}
-        {isPolish ? 'wysokiego wpływu' : 'high impact'}
+        {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpactShort')}
       </div>
     </div>
   );

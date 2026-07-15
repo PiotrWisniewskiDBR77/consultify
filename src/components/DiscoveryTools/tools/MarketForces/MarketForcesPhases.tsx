@@ -1,6 +1,8 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   PorterData,
   PorterForceId,
@@ -57,11 +59,12 @@ const FORCE_LABELS: Record<PorterForceId, { en: string; pl: string; hint: string
   },
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
 export function MarketForcesInputPhase({
@@ -71,6 +74,7 @@ export function MarketForcesInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as PorterData;
   const [draft, setDraft] = useState('');
@@ -84,12 +88,12 @@ export function MarketForcesInputPhase({
           id: `signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -107,12 +111,10 @@ export function MarketForcesInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały rynkowe i dowody' : 'Market Signals & Evidence'}
+          {t('discoveryToolsTools.marketForces.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz fakty z wywiadu, benchmarków i obserwacji rynku zanim AI oceni siły.'
-            : 'Capture interview notes, benchmarks, and market observations before scoring forces.'}
+          {t('discoveryToolsTools.marketForces.signalsSubtitle')}
         </p>
       </div>
 
@@ -126,7 +128,7 @@ export function MarketForcesInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał...' : 'Add a market signal...'}
+          placeholder={t('discoveryToolsTools.marketForces.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -147,7 +149,7 @@ export function MarketForcesInputPhase({
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -188,6 +190,7 @@ export function MarketForcesBuildPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as PorterData;
 
@@ -210,12 +213,10 @@ export function MarketForcesBuildPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Scorecard 5 sił Portera' : "Porter's Five Forces Scorecard"}
+          {t('discoveryToolsTools.marketForces.scorecardTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Każda siła powinna mieć ocenę, drivery, dowody i implikację dla strategii.'
-            : 'Each force should have a score, drivers, evidence, and a strategy implication.'}
+          {t('discoveryToolsTools.marketForces.scorecardSubtitle')}
         </p>
       </div>
 
@@ -251,7 +252,7 @@ export function MarketForcesBuildPhase({
 
               <div className="mb-3 grid gap-2 sm:grid-cols-2">
                 <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Ocena siły' : 'Force score'}
+                  {t('discoveryToolsTools.marketForces.forceScore')}
                   <select
                     value={force.score}
                     onChange={(event) =>
@@ -267,7 +268,7 @@ export function MarketForcesBuildPhase({
                   </select>
                 </label>
                 <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Trend' : 'Trend'}
+                  {t('discoveryToolsTools.marketForces.trend')}
                   <select
                     value={force.trend}
                     onChange={(event) =>
@@ -277,9 +278,9 @@ export function MarketForcesBuildPhase({
                     }
                     className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm dark:border-navy-700 dark:bg-navy-900"
                   >
-                    <option value="increasing">{isPolish ? 'Rosnący' : 'Increasing'}</option>
-                    <option value="stable">{isPolish ? 'Stabilny' : 'Stable'}</option>
-                    <option value="decreasing">{isPolish ? 'Malejący' : 'Decreasing'}</option>
+                    <option value="increasing">{t('discoveryToolsTools.marketForces.trendIncreasing')}</option>
+                    <option value="stable">{t('discoveryToolsTools.marketForces.trendStable')}</option>
+                    <option value="decreasing">{t('discoveryToolsTools.marketForces.trendDecreasing')}</option>
                   </select>
                 </label>
               </div>
@@ -295,7 +296,7 @@ export function MarketForcesBuildPhase({
                   })
                 }
                 rows={4}
-                placeholder={isPolish ? 'Drivery, po jednym w linii' : 'Drivers, one per line'}
+                placeholder={t('discoveryToolsTools.marketForces.driversPlaceholder')}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900/60"
               />
 
@@ -303,7 +304,7 @@ export function MarketForcesBuildPhase({
                 value={force.implication || ''}
                 onChange={(event) => updateForce(forceId, { implication: event.target.value })}
                 rows={2}
-                placeholder={isPolish ? 'Implikacja strategiczna...' : 'Strategic implication...'}
+                placeholder={t('discoveryToolsTools.marketForces.implicationPlaceholder')}
                 className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
               />
             </div>
@@ -323,6 +324,7 @@ export function MarketForcesInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as PorterData;
   const acceptedForces = useMemo(
     () => FORCE_ORDER.filter((forceId) => data.forces[forceId]?.proposalStatus !== 'rejected'),
@@ -333,18 +335,16 @@ export function MarketForcesInsightsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Implikacje strategiczne' : 'Strategic Implications'}
+          {t('discoveryToolsTools.marketForces.implicationsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu analiza rynku zamienia się w napięcia, presję marży i ruchy strategiczne.'
-            : 'This is where market structure turns into margin pressure, levers, and moves.'}
+          {t('discoveryToolsTools.marketForces.implicationsSubtitle')}
         </p>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Zaakceptowane siły' : 'Accepted forces'}
+          {t('discoveryToolsTools.marketForces.acceptedForces')}
         </div>
         <div className="grid gap-2 md:grid-cols-5">
           {acceptedForces.map((forceId) => (
@@ -369,7 +369,7 @@ export function MarketForcesInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(implication.proposalStatus, isPolish)}
+                  {proposalBadge(implication.proposalStatus)}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {implication.title}
@@ -427,7 +427,7 @@ export function MarketForcesInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -448,6 +448,7 @@ export function MarketForcesOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as PorterData;
   const summary = data.summary;
   const initiatives = [
@@ -459,12 +460,10 @@ export function MarketForcesOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.marketForces.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.'
-            : 'The final source summary and output candidates are based on the approved diagnosis.'}
+          {t('discoveryToolsTools.marketForces.outputsSubtitle')}
         </p>
       </div>
 
@@ -473,7 +472,7 @@ export function MarketForcesOutputsPhase({
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                {isPolish ? 'Final source summary' : 'Final source summary'}
+                {t('discoveryToolsTools.marketForces.finalSourceSummary')}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                 {summary.executiveSummary}
@@ -528,11 +527,11 @@ export function MarketForcesOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

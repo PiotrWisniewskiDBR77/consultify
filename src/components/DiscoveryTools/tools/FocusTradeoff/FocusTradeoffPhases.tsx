@@ -18,7 +18,9 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   FocusPriority,
   FocusTradeoffData,
@@ -40,25 +42,24 @@ type PhaseProps = {
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
-const recommendationBadge = (
-  recommendation: FocusPriority['recommendation'] | undefined,
-  isPolish: boolean
-) => {
+const recommendationBadge = (recommendation: FocusPriority['recommendation'] | undefined) => {
+  const r = 'discoveryToolsTools.focusTradeoff.recommendation';
   switch (recommendation) {
     case 'defer':
-      return isPolish ? 'Odłóż' : 'Defer';
+      return i18n.t(`${r}.defer`);
     case 'drop':
-      return isPolish ? 'Porzuć' : 'Drop';
+      return i18n.t(`${r}.drop`);
     case 'pursue':
     default:
-      return isPolish ? 'Realizuj' : 'Pursue';
+      return i18n.t(`${r}.pursue`);
   }
 };
 
@@ -71,6 +72,7 @@ export function FocusTradeoffInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as FocusTradeoffData;
   const [draft, setDraft] = useState('');
@@ -84,12 +86,12 @@ export function FocusTradeoffInputPhase({
           id: `signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -107,12 +109,10 @@ export function FocusTradeoffInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały i dowody priorytetów' : 'Priority Signals & Evidence'}
+          {t('discoveryToolsTools.focusTradeoff.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz fakty o konkurujących priorytetach i kryteriach decyzji zanim AI je oceni.'
-            : 'Capture facts about competing priorities and decision criteria before AI scores them.'}
+          {t('discoveryToolsTools.focusTradeoff.signalsSubtitle')}
         </p>
       </div>
 
@@ -126,7 +126,7 @@ export function FocusTradeoffInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał...' : 'Add a priority signal...'}
+          placeholder={t('discoveryToolsTools.focusTradeoff.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -147,7 +147,7 @@ export function FocusTradeoffInputPhase({
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -190,6 +190,7 @@ export function FocusTradeoffBuildPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as FocusTradeoffData;
   const priorities = data.priorities || [];
@@ -220,12 +221,10 @@ export function FocusTradeoffBuildPhase({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Priorytety i scoring' : 'Priorities & Scoring'}
+            {t('discoveryToolsTools.focusTradeoff.scoringTitle')}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Każdy priorytet powinien mieć ocenę wartości, wysiłku i dopasowania, rekomendację, drivery i implikację.'
-              : 'Each priority should have value, effort, and fit scores, a recommendation, drivers, and an implication.'}
+            {t('discoveryToolsTools.focusTradeoff.scoringSubtitle')}
           </p>
         </div>
         <button
@@ -234,7 +233,7 @@ export function FocusTradeoffBuildPhase({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
         >
           <Plus className="h-4 w-4" />
-          {isPolish ? 'Dodaj priorytet' : 'Add priority'}
+          {t('discoveryToolsTools.focusTradeoff.addPriority')}
         </button>
       </div>
 
@@ -244,9 +243,7 @@ export function FocusTradeoffBuildPhase({
       {priorities.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-navy-700 dark:bg-navy-900/40">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Brak priorytetów. Dodaj pierwszy lub poczekaj na propozycje AI.'
-              : 'No priorities yet. Add the first one or wait for AI proposals.'}
+            {t('discoveryToolsTools.focusTradeoff.emptyPriorities')}
           </p>
           <button
             type="button"
@@ -254,7 +251,7 @@ export function FocusTradeoffBuildPhase({
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
           >
             <Plus className="h-4 w-4" />
-            {isPolish ? 'Dodaj priorytet' : 'Add priority'}
+            {t('discoveryToolsTools.focusTradeoff.addPriority')}
           </button>
         </div>
       ) : (
@@ -285,6 +282,7 @@ export function FocusTradeoffInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as FocusTradeoffData;
   const acceptedPriorities = useMemo(
     () => (data.priorities || []).filter((p) => p.proposalStatus !== 'rejected'),
@@ -295,34 +293,32 @@ export function FocusTradeoffInsightsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Trade-offy i ruchy' : 'Trade-offs & Moves'}
+          {t('discoveryToolsTools.focusTradeoff.tradeoffsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu scoring priorytetów zamienia się w napięcia decyzyjne i ruchy fokusu (commit/sequence/cut).'
-            : 'This is where priority scoring turns into decision tensions and focus moves (commit/sequence/cut).'}
+          {t('discoveryToolsTools.focusTradeoff.tradeoffsSubtitle')}
         </p>
       </div>
 
       {/* Accepted priorities snapshot */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Zaakceptowane priorytety' : 'Accepted priorities'}
+          {t('discoveryToolsTools.focusTradeoff.acceptedPriorities')}
         </div>
         {acceptedPriorities.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak zaakceptowanych priorytetów.' : 'No accepted priorities.'}
+            {t('discoveryToolsTools.focusTradeoff.noAcceptedPriorities')}
           </div>
         ) : (
           <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-4">
             {acceptedPriorities.map((priority) => (
               <div key={priority.id} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
                 <div className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {priority.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                  {priority.title || t('discoveryToolsTools.common.untitled')}
                 </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
                   V{priority.valueScore} · E{priority.effortScore} · F{priority.strategicFit} ·{' '}
-                  {recommendationBadge(priority.recommendation, isPolish)}
+                  {recommendationBadge(priority.recommendation)}
                 </div>
               </div>
             ))}
@@ -340,7 +336,7 @@ export function FocusTradeoffInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(tradeoff.proposalStatus, isPolish)} · {tradeoff.priority}
+                  {proposalBadge(tradeoff.proposalStatus)} · {tradeoff.priority}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {tradeoff.title}
@@ -399,7 +395,7 @@ export function FocusTradeoffInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -422,6 +418,7 @@ export function FocusTradeoffOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as FocusTradeoffData;
   const summary = data.summary;
   const initiatives = [
@@ -433,12 +430,10 @@ export function FocusTradeoffOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.focusTradeoff.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.'
-            : 'The final source summary and output candidates are based on the approved diagnosis.'}
+          {t('discoveryToolsTools.focusTradeoff.outputsSubtitle')}
         </p>
       </div>
 
@@ -447,7 +442,7 @@ export function FocusTradeoffOutputsPhase({
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                {isPolish ? 'Final source summary' : 'Final source summary'}
+                {t('discoveryToolsTools.focusTradeoff.finalSourceSummary')}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                 {summary.executiveSummary}
@@ -502,11 +497,11 @@ export function FocusTradeoffOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

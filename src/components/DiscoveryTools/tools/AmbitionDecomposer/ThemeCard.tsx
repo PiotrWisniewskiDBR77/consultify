@@ -12,6 +12,7 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   AmbitionDecomposerData,
@@ -59,6 +60,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
+  const { t: translate } = useTranslation();
   const { updateInputData } = useToolStore();
   const [newDriver, setNewDriver] = useState('');
 
@@ -97,14 +99,14 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
           <input
             value={theme.title}
             onChange={(event) => updateTheme({ title: event.target.value })}
-            placeholder={isPolish ? 'Nazwa tematu...' : 'Theme title...'}
+            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.titlePlaceholder')}
             className="min-w-0 w-full border-0 border-b border-transparent bg-transparent p-0 font-semibold text-slate-900 focus:border-slate-300 focus:outline-none focus:ring-0 dark:text-slate-100"
           />
           <textarea
             value={theme.description}
             onChange={(event) => updateTheme({ description: event.target.value })}
             rows={2}
-            placeholder={isPolish ? 'Krótki opis tematu...' : 'Short description of the theme...'}
+            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.descPlaceholder')}
             className="mt-1 w-full resize-none border-0 bg-transparent p-0 text-xs text-slate-500 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-400"
           />
         </div>
@@ -123,7 +125,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
               type="button"
               onClick={removeTheme}
               className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-              title={isPolish ? 'Usuń temat' : 'Remove theme'}
+              title={translate('discoveryToolsTools.ambitionDecomposer.card.removeTheme')}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -134,20 +136,20 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
       {/* Target metric + value */}
       <div className="mb-3 grid gap-2 sm:grid-cols-2">
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Miara docelowa' : 'Target metric'}
+          {translate('discoveryToolsTools.ambitionDecomposer.card.targetMetric')}
           <input
             value={theme.targetMetric}
             onChange={(event) => updateTheme({ targetMetric: event.target.value })}
-            placeholder={isPolish ? 'Co mierzymy...' : 'What to measure...'}
+            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.targetMetricPlaceholder')}
             className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm dark:border-navy-700 dark:bg-navy-900"
           />
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Wartość docelowa' : 'Target value'}
+          {translate('discoveryToolsTools.ambitionDecomposer.card.targetValue')}
           <input
             value={theme.targetValue}
             onChange={(event) => updateTheme({ targetValue: event.target.value })}
-            placeholder={isPolish ? 'Wartość celu...' : 'Goal value...'}
+            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.targetValuePlaceholder')}
             className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm dark:border-navy-700 dark:bg-navy-900"
           />
         </label>
@@ -156,7 +158,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
       {/* Scoring grid */}
       <div className="mb-3 grid gap-2 sm:grid-cols-2">
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Horyzont czasowy' : 'Time horizon'}
+          {translate('discoveryToolsTools.ambitionDecomposer.card.timeHorizon')}
           <select
             value={theme.horizon}
             onChange={(event) =>
@@ -172,7 +174,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Znaczenie strategiczne' : 'Strategic importance'}
+          {translate('discoveryToolsTools.ambitionDecomposer.card.strategicImportance')}
           <select
             value={theme.importance}
             onChange={(event) =>
@@ -196,7 +198,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
             type="text"
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
-            placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
+            placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.addDriverPlaceholder')}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
@@ -228,7 +230,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
             ))
           ) : (
             <p className="text-sm italic text-slate-600">
-              {isPolish ? 'Brak dodanych czynników' : 'No drivers added'}
+              {translate('discoveryToolsTools.ambitionDecomposer.card.noDrivers')}
             </p>
           )}
         </div>
@@ -238,7 +240,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
       {(theme.evidence || []).length > 0 && (
         <div className="mb-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-            {isPolish ? 'Dowody' : 'Evidence'}
+            {translate('discoveryToolsTools.common.evidence')}
           </div>
           <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
             {(theme.evidence || []).map((item, i) => (
@@ -253,17 +255,11 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
         value={theme.implication || ''}
         onChange={(event) => updateTheme({ implication: event.target.value })}
         rows={2}
-        placeholder={isPolish ? 'Implikacja tego tematu...' : 'Implication of this theme...'}
+        placeholder={translate('discoveryToolsTools.ambitionDecomposer.card.implicationPlaceholder')}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
       />
 
-      <InlineAssist
-        hint={
-          isPolish
-            ? 'Powiąż temat z konkretną miarą i wartością docelową oraz horyzontem, w którym ambicja staje się mierzalna.'
-            : 'Tie the theme to a concrete metric and target value, and the horizon over which the ambition becomes measurable.'
-        }
-      />
+      <InlineAssist hint={translate('discoveryToolsTools.ambitionDecomposer.card.hint')} />
     </div>
   );
 };

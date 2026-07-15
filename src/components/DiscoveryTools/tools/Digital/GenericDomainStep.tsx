@@ -7,6 +7,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -38,6 +39,7 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
   isPolish,
   assistHint,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [itemTitle, setItemTitle] = useState('');
   const [itemDescription, setItemDescription] = useState('');
@@ -86,9 +88,7 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
     });
   };
 
-  const defaultHint = isPolish
-    ? 'Teresa: dodaj konkretne, mierzalne pozycje — jakość wejść poprawia rekomendacje.'
-    : 'Teresa: add concrete, measurable items — better inputs sharpen the recommendations.';
+  const defaultHint = t('discoveryToolsTools.digital.genericDomainStep.defaultHint');
 
   return (
     <div className="space-y-6">
@@ -102,13 +102,13 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
           type="text"
           value={itemTitle}
           onChange={(e) => setItemTitle(e.target.value)}
-          placeholder={isPolish ? 'Nazwa pozycji...' : 'Item title...'}
+          placeholder={t('discoveryToolsTools.digital.genericDomainStep.namePlaceholder')}
           className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <textarea
           value={itemDescription}
           onChange={(e) => setItemDescription(e.target.value)}
-          placeholder={isPolish ? 'Opis / notatka...' : 'Description / notes...'}
+          placeholder={t('discoveryToolsTools.digital.genericDomainStep.descPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
@@ -118,18 +118,18 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
             onChange={(e) => setImpact(e.target.value as 'high' | 'medium' | 'low')}
             className="px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="high">{isPolish ? 'Wysoki wpływ' : 'High impact'}</option>
-            <option value="medium">{isPolish ? 'Średni wpływ' : 'Medium impact'}</option>
-            <option value="low">{isPolish ? 'Niski wpływ' : 'Low impact'}</option>
+            <option value="high">{t('discoveryToolsTools.growthPaths.step.highImpact')}</option>
+            <option value="medium">{t('discoveryToolsTools.growthPaths.step.mediumImpact')}</option>
+            <option value="low">{t('discoveryToolsTools.growthPaths.step.lowImpact')}</option>
           </select>
           <select
             value={effort}
             onChange={(e) => setEffort(e.target.value as 'high' | 'medium' | 'low')}
             className="px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="high">{isPolish ? 'Wysoki wysiłek' : 'High effort'}</option>
-            <option value="medium">{isPolish ? 'Średni wysiłek' : 'Medium effort'}</option>
-            <option value="low">{isPolish ? 'Niski wysiłek' : 'Low effort'}</option>
+            <option value="high">{t('discoveryToolsTools.growthPaths.step.highEffort')}</option>
+            <option value="medium">{t('discoveryToolsTools.growthPaths.step.mediumEffort')}</option>
+            <option value="low">{t('discoveryToolsTools.growthPaths.step.lowEffort')}</option>
           </select>
           <button
             type="button"
@@ -138,7 +138,7 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-crimson text-white hover:bg-crimson-700 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
         <InlineAssist hint={assistHint || defaultHint} />
@@ -147,7 +147,7 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-2xl border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak pozycji' : 'No items yet'}
+            {t('discoveryToolsTools.digital.genericDomainStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -164,8 +164,8 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
                     </p>
                   )}
                   <div className="mt-2 text-xs text-slate-500">
-                    {isPolish ? 'Wpływ' : 'Impact'}: {item.impact} •{' '}
-                    {isPolish ? 'Wysiłek' : 'Effort'}: {item.effort}
+                    {t('discoveryToolsTools.common.impact')}: {item.impact} •{' '}
+                    {t('discoveryToolsTools.common.effort')}: {item.effort}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
                     type="button"
                     onClick={() => handleRemove(item.id)}
                     className="p-1 rounded-lg hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500"
-                    aria-label={isPolish ? 'Usuń' : 'Remove'}
+                    aria-label={t('discoveryToolsTools.common.remove')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

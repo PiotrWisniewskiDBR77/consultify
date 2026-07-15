@@ -2,6 +2,7 @@
  * PortfolioMatrixStep - Simple BCG summary view
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PortfolioPriorityData, ToolSession } from '@/store/useToolStore';
 
@@ -18,6 +19,7 @@ const CATEGORIES = [
 ];
 
 export const PortfolioMatrixStep: React.FC<PortfolioMatrixStepProps> = ({ session, isPolish }) => {
+  const { t } = useTranslation();
   const data = session.inputData as PortfolioPriorityData;
   const lang = isPolish ? 'pl' : 'en';
 
@@ -30,12 +32,10 @@ export const PortfolioMatrixStep: React.FC<PortfolioMatrixStepProps> = ({ sessio
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Macierz BCG' : 'BCG Matrix'}
+          {t('discoveryToolsTools.portfolioPriority.matrixStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Podsumowanie kategorii na podstawie wzrostu i udziału.'
-            : 'Category summary based on growth and share.'}
+          {t('discoveryToolsTools.portfolioPriority.matrixStep.subtitle')}
         </p>
       </div>
 
@@ -56,7 +56,7 @@ export const PortfolioMatrixStep: React.FC<PortfolioMatrixStepProps> = ({ sessio
       {data.initiatives.length > 0 && (
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-3">
-            {isPolish ? 'Inicjatywy i kategorie' : 'Initiatives and categories'}
+            {t('discoveryToolsTools.portfolioPriority.matrixStep.initiativesAndCategories')}
           </h3>
           <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
             {data.initiatives.map((item) => (

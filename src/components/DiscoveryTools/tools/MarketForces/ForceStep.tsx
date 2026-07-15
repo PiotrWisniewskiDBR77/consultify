@@ -6,6 +6,7 @@
 
 import { Minus, Plus, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ForceData, PorterData, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -92,6 +93,7 @@ const FORCE_CONFIG = {
 // ==================== COMPONENT ====================
 
 export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [newDriver, setNewDriver] = useState('');
 
@@ -162,7 +164,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
       {/* Score selector */}
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white mb-3">
-          {isPolish ? 'Intensywność siły' : 'Force Intensity'}
+          {t('discoveryToolsTools.marketForces.step.forceIntensity')}
         </h3>
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((score) => (
@@ -185,41 +187,25 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
               </div>
               <div className="text-xs text-slate-600">
                 {score === 1
-                  ? isPolish
-                    ? 'Bardzo niska'
-                    : 'Very Low'
+                  ? t('discoveryToolsTools.marketForces.step.scoreVeryLow')
                   : score === 2
-                    ? isPolish
-                      ? 'Niska'
-                      : 'Low'
+                    ? t('discoveryToolsTools.marketForces.step.scoreLow')
                     : score === 3
-                      ? isPolish
-                        ? 'Umiarkowana'
-                        : 'Moderate'
+                      ? t('discoveryToolsTools.marketForces.step.scoreModerate')
                       : score === 4
-                        ? isPolish
-                          ? 'Wysoka'
-                          : 'High'
-                        : isPolish
-                          ? 'Bardzo wysoka'
-                          : 'Very High'}
+                        ? t('discoveryToolsTools.marketForces.step.scoreHigh')
+                        : t('discoveryToolsTools.marketForces.step.scoreVeryHigh')}
               </div>
             </button>
           ))}
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Ocena powinna byc oparta o dane rynkowe.'
-              : 'Score should be grounded in market data.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.marketForces.step.scoreHint')} />
       </div>
 
       {/* Trend selector */}
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white mb-3">
-          {isPolish ? 'Trend' : 'Trend'}
+          {t('discoveryToolsTools.marketForces.step.trend')}
         </h3>
         <div className="flex gap-2">
           <button
@@ -234,7 +220,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             `}
           >
             <TrendingUp className="w-4 h-4" />
-            {isPolish ? 'Rosnący' : 'Increasing'}
+            {t('discoveryToolsTools.marketForces.step.increasing')}
           </button>
           <button
             onClick={() => handleTrendChange('stable')}
@@ -248,7 +234,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             `}
           >
             <Minus className="w-4 h-4" />
-            {isPolish ? 'Stabilny' : 'Stable'}
+            {t('discoveryToolsTools.marketForces.step.stable')}
           </button>
           <button
             onClick={() => handleTrendChange('decreasing')}
@@ -262,22 +248,16 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             `}
           >
             <TrendingDown className="w-4 h-4" />
-            {isPolish ? 'Malejący' : 'Decreasing'}
+            {t('discoveryToolsTools.marketForces.step.decreasing')}
           </button>
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Wskaz czy sila rosnie czy maleje i dlaczego.'
-              : 'Indicate if the force is increasing or decreasing and why.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.marketForces.step.trendHint')} />
       </div>
 
       {/* Drivers */}
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white mb-3">
-          {isPolish ? 'Kluczowe czynniki' : 'Key Drivers'}
+          {t('discoveryToolsTools.marketForces.step.keyDrivers')}
         </h3>
 
         {/* Add driver */}
@@ -286,7 +266,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             type="text"
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
-            placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
+            placeholder={t('discoveryToolsTools.marketForces.step.addDriverPlaceholder')}
             className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
@@ -318,23 +298,17 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             ))
           ) : (
             <p className="text-sm text-slate-600 italic">
-              {isPolish ? 'Brak dodanych czynników' : 'No drivers added'}
+              {t('discoveryToolsTools.marketForces.step.noDrivers')}
             </p>
           )}
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Dodaj 2-4 konkretne czynniki dla kazdej sily.'
-              : 'Add 2-4 concrete drivers for each force.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.marketForces.step.driversHint')} />
       </div>
 
       {/* Guiding questions */}
       <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
         <h4 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-          {isPolish ? 'Pytania pomocnicze' : 'Guiding Questions'}
+          {t('discoveryToolsTools.marketForces.step.guidingQuestions')}
         </h4>
         <ul className="space-y-1 text-sm text-blue-600 dark:text-blue-400">
           {config.questions.map((q, i) => (

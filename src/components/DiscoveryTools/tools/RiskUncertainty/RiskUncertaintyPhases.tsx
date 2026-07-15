@@ -1,6 +1,8 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   ProposalCardType,
   RiskAssumption,
@@ -23,11 +25,12 @@ type PhaseProps = {
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.riskUncertainty.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
 export function RiskInputPhase({
@@ -37,6 +40,7 @@ export function RiskInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as RiskUncertaintyData;
   const [draft, setDraft] = useState('');
@@ -50,12 +54,12 @@ export function RiskInputPhase({
           id: `risk-signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.riskUncertainty.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.riskUncertainty.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -73,12 +77,10 @@ export function RiskInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały ryzyka i niepewności' : 'Risk & Uncertainty Signals'}
+          {t('discoveryToolsTools.riskUncertainty.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz sygnały z wywiadu, rynku, danych i organizacji zanim AI zbuduje mapę ryzyka.'
-            : 'Capture interview, market, data, and organization signals before AI builds the risk map.'}
+          {t('discoveryToolsTools.riskUncertainty.signalsSubtitle')}
         </p>
       </div>
 
@@ -92,7 +94,7 @@ export function RiskInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał ryzyka...' : 'Add a risk signal...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -113,7 +115,7 @@ export function RiskInputPhase({
           >
             <div className="mb-2 flex items-start justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -154,6 +156,7 @@ export function RiskMapPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as RiskUncertaintyData;
   const [assumption, setAssumption] = useState('');
@@ -246,12 +249,10 @@ export function RiskMapPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Mapa założeń, ryzyk i scenariuszy' : 'Assumption, Risk & Scenario Map'}
+          {t('discoveryToolsTools.riskUncertainty.mapTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Karty AI są propozycjami. Akceptowane elementy przechodzą dalej do syntezy.'
-            : 'AI cards are proposals. Accepted elements feed the synthesis.'}
+          {t('discoveryToolsTools.riskUncertainty.mapSubtitle')}
         </p>
       </div>
 
@@ -259,17 +260,17 @@ export function RiskMapPhase({
 
       <div className="grid gap-4 xl:grid-cols-3">
         <RiskColumn
-          title={isPolish ? 'Założenia' : 'Assumptions'}
+          title={t('discoveryToolsTools.riskUncertainty.assumptions')}
           value={assumption}
           setValue={setAssumption}
           onAdd={addAssumption}
-          placeholder={isPolish ? 'Dodaj założenie...' : 'Add assumption...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.addAssumptionPlaceholder')}
         >
           {(data.assumptions || []).map((item) => (
             <RiskCard
               key={item.id}
               title={item.text}
-              badge={`${proposalBadge(item.proposalStatus, isPolish)} · C${item.confidence}/5`}
+              badge={`${proposalBadge(item.proposalStatus)} · C${item.confidence}/5`}
               isAi={item.proposalStatus === 'ai-proposed'}
               onRemove={() => removeFrom('assumptions', item.id)}
               cardId={item.id}
@@ -288,7 +289,7 @@ export function RiskMapPhase({
               >
                 {[1, 2, 3, 4, 5].map((score) => (
                   <option key={score} value={score}>
-                    {isPolish ? 'Pewność' : 'Confidence'} {score}/5
+                    {t('discoveryToolsTools.common.confidence')} {score}/5
                   </option>
                 ))}
               </select>
@@ -297,18 +298,18 @@ export function RiskMapPhase({
         </RiskColumn>
 
         <RiskColumn
-          title={isPolish ? 'Ryzyka' : 'Risks'}
+          title={t('discoveryToolsTools.riskUncertainty.risks')}
           value={risk}
           setValue={setRisk}
           onAdd={addRisk}
-          placeholder={isPolish ? 'Dodaj ryzyko...' : 'Add risk...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.addRiskPlaceholder')}
         >
           {(data.risks || []).map((item) => (
             <RiskCard
               key={item.id}
               title={item.title || item.description}
               text={item.description}
-              badge={`${proposalBadge(item.proposalStatus, isPolish)} · P${item.probability}/I${item.impact}`}
+              badge={`${proposalBadge(item.proposalStatus)} · P${item.probability}/I${item.impact}`}
               isAi={item.proposalStatus === 'ai-proposed'}
               onRemove={() => removeFrom('risks', item.id)}
               cardId={item.id}
@@ -342,18 +343,18 @@ export function RiskMapPhase({
         </RiskColumn>
 
         <RiskColumn
-          title={isPolish ? 'Scenariusze' : 'Scenarios'}
+          title={t('discoveryToolsTools.riskUncertainty.scenarios')}
           value={scenario}
           setValue={setScenario}
           onAdd={addScenario}
-          placeholder={isPolish ? 'Dodaj scenariusz...' : 'Add scenario...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.addScenarioPlaceholder')}
         >
           {(data.scenarios || []).map((item) => (
             <RiskCard
               key={item.id}
               title={item.title}
               text={item.notes}
-              badge={`${proposalBadge(item.proposalStatus, isPolish)} · ${item.posture || 'base'}`}
+              badge={`${proposalBadge(item.proposalStatus)} · ${item.posture || 'base'}`}
               isAi={item.proposalStatus === 'ai-proposed'}
               onRemove={() => removeFrom('scenarios', item.id)}
               cardId={item.id}
@@ -372,7 +373,7 @@ export function RiskMapPhase({
               >
                 {[1, 2, 3, 4, 5].map((score) => (
                   <option key={score} value={score}>
-                    {isPolish ? 'Prawdopodobieństwo' : 'Likelihood'} {score}/5
+                    {t('discoveryToolsTools.riskUncertainty.likelihood')} {score}/5
                   </option>
                 ))}
               </select>
@@ -491,18 +492,17 @@ export function RiskInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as RiskUncertaintyData;
 
   return (
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Synteza ryzyka i rekomendowane ruchy' : 'Risk Synthesis & Recommended Moves'}
+          {t('discoveryToolsTools.riskUncertainty.insightsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'AI zamienia zaakceptowaną mapę w ruchy walidacji, mitygacji, monitoringu i eskalacji.'
-            : 'AI turns the approved map into validation, mitigation, monitoring, and escalation moves.'}
+          {t('discoveryToolsTools.riskUncertainty.insightsSubtitle')}
         </p>
       </div>
 
@@ -537,7 +537,7 @@ export function RiskInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -558,6 +558,7 @@ export function RiskOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as RiskUncertaintyData;
   const summary = data.summary;
   const initiatives = [
@@ -569,12 +570,10 @@ export function RiskOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy odporności' : 'Outputs & Resilience Initiatives'}
+          {t('discoveryToolsTools.riskUncertainty.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i output candidates bazują na zaakceptowanych ryzykach i scenariuszach.'
-            : 'The final source summary and output candidates are based on approved risks and scenarios.'}
+          {t('discoveryToolsTools.riskUncertainty.outputsSubtitle')}
         </p>
       </div>
 
@@ -638,11 +637,11 @@ export function RiskOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.riskUncertainty.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.riskUncertainty.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

@@ -18,7 +18,9 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   NarrativeEngineData,
   ProposalCardType,
@@ -39,22 +41,24 @@ type PhaseProps = {
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
-const resonanceBadge = (resonance: 'high' | 'medium' | 'low' | undefined, isPolish: boolean) => {
+const resonanceBadge = (resonance: 'high' | 'medium' | 'low' | undefined) => {
+  const l = 'discoveryToolsTools.common.level';
   switch (resonance) {
     case 'high':
-      return isPolish ? 'Wysoki' : 'High';
+      return i18n.t(`${l}.high`);
     case 'low':
-      return isPolish ? 'Niski' : 'Low';
+      return i18n.t(`${l}.low`);
     case 'medium':
     default:
-      return isPolish ? 'Średni' : 'Medium';
+      return i18n.t(`${l}.medium`);
   }
 };
 
@@ -67,6 +71,7 @@ export function NarrativeEngineInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as NarrativeEngineData;
   const [draft, setDraft] = useState('');
@@ -80,12 +85,12 @@ export function NarrativeEngineInputPhase({
           id: `signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -103,12 +108,10 @@ export function NarrativeEngineInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały i dowody narracji' : 'Narrative Signals & Evidence'}
+          {t('discoveryToolsTools.narrativeEngine.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz fakty, cytaty i dane o odbiorcy zanim AI zbuduje filary narracji.'
-            : 'Capture facts, quotes, and audience insights before building the narrative pillars.'}
+          {t('discoveryToolsTools.narrativeEngine.signalsSubtitle')}
         </p>
       </div>
 
@@ -122,7 +125,7 @@ export function NarrativeEngineInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał...' : 'Add a narrative signal...'}
+          placeholder={t('discoveryToolsTools.narrativeEngine.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -143,7 +146,7 @@ export function NarrativeEngineInputPhase({
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -186,6 +189,7 @@ export function NarrativeEngineBuildPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as NarrativeEngineData;
   const pillars = data.pillars || [];
@@ -214,12 +218,10 @@ export function NarrativeEngineBuildPhase({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Filary narracji' : 'Narrative Pillars'}
+            {t('discoveryToolsTools.narrativeEngine.pillarsTitle')}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Każdy filar powinien mieć przekaz, dowody, poziom rezonansu z odbiorcą, czynniki i implikację.'
-              : 'Each pillar should have a message, proof points, audience resonance, drivers, and an implication.'}
+            {t('discoveryToolsTools.narrativeEngine.pillarsSubtitle')}
           </p>
         </div>
         <button
@@ -228,7 +230,7 @@ export function NarrativeEngineBuildPhase({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
         >
           <Plus className="h-4 w-4" />
-          {isPolish ? 'Dodaj filar' : 'Add pillar'}
+          {t('discoveryToolsTools.narrativeEngine.addPillar')}
         </button>
       </div>
 
@@ -242,9 +244,7 @@ export function NarrativeEngineBuildPhase({
       {pillars.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-navy-700 dark:bg-navy-900/40">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Brak filarów. Dodaj pierwszy lub poczekaj na propozycje AI.'
-              : 'No pillars yet. Add the first one or wait for AI proposals.'}
+            {t('discoveryToolsTools.narrativeEngine.emptyPillars')}
           </p>
           <button
             type="button"
@@ -252,7 +252,7 @@ export function NarrativeEngineBuildPhase({
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
           >
             <Plus className="h-4 w-4" />
-            {isPolish ? 'Dodaj filar' : 'Add pillar'}
+            {t('discoveryToolsTools.narrativeEngine.addPillar')}
           </button>
         </div>
       ) : (
@@ -283,6 +283,7 @@ export function NarrativeEngineInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as NarrativeEngineData;
   const acceptedPillars = useMemo(
     () => (data.pillars || []).filter((p) => p.proposalStatus !== 'rejected'),
@@ -293,34 +294,32 @@ export function NarrativeEngineInsightsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Wątki narracji i ruchy' : 'Narrative Threads & Moves'}
+          {t('discoveryToolsTools.narrativeEngine.threadsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu filary narracji zamieniają się w wątki (napięcia) i ruchy retoryczne (otwarcie/dowód/CTA).'
-            : 'This is where the pillars turn into threads (tensions) and rhetorical moves (open/prove/CTA).'}
+          {t('discoveryToolsTools.narrativeEngine.threadsSubtitle')}
         </p>
       </div>
 
       {/* Accepted pillars snapshot */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Zaakceptowane filary' : 'Accepted pillars'}
+          {t('discoveryToolsTools.narrativeEngine.acceptedPillars')}
         </div>
         {acceptedPillars.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak zaakceptowanych filarów.' : 'No accepted pillars.'}
+            {t('discoveryToolsTools.narrativeEngine.noAcceptedPillars')}
           </div>
         ) : (
           <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-4">
             {acceptedPillars.map((pillar) => (
               <div key={pillar.id} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
                 <div className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {pillar.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                  {pillar.title || t('discoveryToolsTools.common.untitled')}
                 </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
                   {(pillar.proofPoints || []).length} ·{' '}
-                  {resonanceBadge(pillar.audienceResonance, isPolish)}
+                  {resonanceBadge(pillar.audienceResonance)}
                 </div>
               </div>
             ))}
@@ -338,7 +337,7 @@ export function NarrativeEngineInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(thread.proposalStatus, isPolish)} · {thread.priority}
+                  {proposalBadge(thread.proposalStatus)} · {thread.priority}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {thread.title}
@@ -397,7 +396,7 @@ export function NarrativeEngineInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -420,6 +419,7 @@ export function NarrativeEngineOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as NarrativeEngineData;
   const summary = data.summary;
   const initiatives = [
@@ -431,12 +431,10 @@ export function NarrativeEngineOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.narrativeEngine.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów powstają z zatwierdzonej narracji.'
-            : 'The final source summary and output candidates are based on the approved narrative.'}
+          {t('discoveryToolsTools.narrativeEngine.outputsSubtitle')}
         </p>
       </div>
 
@@ -445,7 +443,7 @@ export function NarrativeEngineOutputsPhase({
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                {isPolish ? 'Final source summary' : 'Final source summary'}
+                {t('discoveryToolsTools.narrativeEngine.finalSourceSummary')}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                 {summary.executiveSummary}
@@ -500,11 +498,11 @@ export function NarrativeEngineOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

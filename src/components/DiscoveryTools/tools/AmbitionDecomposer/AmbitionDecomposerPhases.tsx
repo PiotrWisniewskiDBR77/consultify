@@ -20,7 +20,9 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   AmbitionDecomposerData,
   AmbitionTheme,
@@ -42,22 +44,24 @@ type PhaseProps = {
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
-const horizonBadge = (horizon: AmbitionTheme['horizon'] | undefined, isPolish: boolean) => {
+const horizonBadge = (horizon: AmbitionTheme['horizon'] | undefined) => {
+  const h = 'discoveryToolsTools.ambitionDecomposer.horizon';
   switch (horizon) {
     case 'medium':
-      return isPolish ? 'Średni' : 'Medium';
+      return i18n.t(`${h}.medium`);
     case 'long':
-      return isPolish ? 'Długi' : 'Long';
+      return i18n.t(`${h}.long`);
     case 'short':
     default:
-      return isPolish ? 'Krótki' : 'Short';
+      return i18n.t(`${h}.short`);
   }
 };
 
@@ -70,6 +74,7 @@ export function AmbitionDecomposerInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as AmbitionDecomposerData;
   const [draft, setDraft] = useState('');
@@ -83,12 +88,12 @@ export function AmbitionDecomposerInputPhase({
           id: `signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -106,12 +111,10 @@ export function AmbitionDecomposerInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały i dowody ambicji' : 'Ambition Signals & Evidence'}
+          {t('discoveryToolsTools.ambitionDecomposer.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz fakty o celu, zakresie i sygnałach sukcesu zanim AI rozłoży ambicję na tematy.'
-            : 'Capture facts about the goal, scope, and success signals before AI decomposes the ambition into themes.'}
+          {t('discoveryToolsTools.ambitionDecomposer.signalsSubtitle')}
         </p>
       </div>
 
@@ -125,7 +128,7 @@ export function AmbitionDecomposerInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał...' : 'Add an ambition signal...'}
+          placeholder={t('discoveryToolsTools.ambitionDecomposer.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -146,7 +149,7 @@ export function AmbitionDecomposerInputPhase({
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -189,6 +192,7 @@ export function AmbitionDecomposerBuildPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as AmbitionDecomposerData;
   const themes = data.themes || [];
@@ -219,12 +223,10 @@ export function AmbitionDecomposerBuildPhase({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Dekompozycja ambicji' : 'Ambition Decomposition'}
+            {t('discoveryToolsTools.ambitionDecomposer.decompositionTitle')}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Każdy temat powinien mieć miarę i wartość docelową, horyzont, znaczenie, drivery i implikację.'
-              : 'Each theme should have a target metric and value, time horizon, importance, drivers, and an implication.'}
+            {t('discoveryToolsTools.ambitionDecomposer.decompositionSubtitle')}
           </p>
         </div>
         <button
@@ -233,7 +235,7 @@ export function AmbitionDecomposerBuildPhase({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
         >
           <Plus className="h-4 w-4" />
-          {isPolish ? 'Dodaj temat' : 'Add theme'}
+          {t('discoveryToolsTools.ambitionDecomposer.addTheme')}
         </button>
       </div>
 
@@ -247,9 +249,7 @@ export function AmbitionDecomposerBuildPhase({
       {themes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-navy-700 dark:bg-navy-900/40">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Brak tematów. Dodaj pierwszy lub poczekaj na propozycje AI.'
-              : 'No themes yet. Add the first one or wait for AI proposals.'}
+            {t('discoveryToolsTools.ambitionDecomposer.emptyThemes')}
           </p>
           <button
             type="button"
@@ -257,7 +257,7 @@ export function AmbitionDecomposerBuildPhase({
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
           >
             <Plus className="h-4 w-4" />
-            {isPolish ? 'Dodaj temat' : 'Add theme'}
+            {t('discoveryToolsTools.ambitionDecomposer.addTheme')}
           </button>
         </div>
       ) : (
@@ -288,6 +288,7 @@ export function AmbitionDecomposerInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as AmbitionDecomposerData;
   const acceptedThemes = useMemo(
     () => (data.themes || []).filter((t) => t.proposalStatus !== 'rejected'),
@@ -298,33 +299,31 @@ export function AmbitionDecomposerInsightsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Priorytety i ruchy' : 'Priorities & Moves'}
+          {t('discoveryToolsTools.ambitionDecomposer.prioritiesTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu dekompozycja ambicji zamienia się w priorytety i rekomendowane ruchy strategiczne.'
-            : 'This is where the ambition decomposition turns into prioritized priorities and recommended strategic moves.'}
+          {t('discoveryToolsTools.ambitionDecomposer.prioritiesSubtitle')}
         </p>
       </div>
 
       {/* Accepted themes snapshot */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Zaakceptowane tematy' : 'Accepted themes'}
+          {t('discoveryToolsTools.ambitionDecomposer.acceptedThemes')}
         </div>
         {acceptedThemes.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak zaakceptowanych tematów.' : 'No accepted themes.'}
+            {t('discoveryToolsTools.ambitionDecomposer.noAcceptedThemes')}
           </div>
         ) : (
           <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-4">
             {acceptedThemes.map((theme) => (
               <div key={theme.id} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
                 <div className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {theme.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                  {theme.title || t('discoveryToolsTools.common.untitled')}
                 </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {theme.targetValue || '—'} · {horizonBadge(theme.horizon, isPolish)}
+                  {theme.targetValue || '—'} · {horizonBadge(theme.horizon)}
                 </div>
               </div>
             ))}
@@ -342,7 +341,7 @@ export function AmbitionDecomposerInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(priority.proposalStatus, isPolish)} · {priority.priority}
+                  {proposalBadge(priority.proposalStatus)} · {priority.priority}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {priority.title}
@@ -401,7 +400,7 @@ export function AmbitionDecomposerInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -424,6 +423,7 @@ export function AmbitionDecomposerOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as AmbitionDecomposerData;
   const summary = data.summary;
   const initiatives = [
@@ -435,12 +435,10 @@ export function AmbitionDecomposerOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.ambitionDecomposer.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.'
-            : 'The final source summary and output candidates are based on the approved diagnosis.'}
+          {t('discoveryToolsTools.ambitionDecomposer.outputsSubtitle')}
         </p>
       </div>
 
@@ -449,7 +447,7 @@ export function AmbitionDecomposerOutputsPhase({
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                {isPolish ? 'Final source summary' : 'Final source summary'}
+                {t('discoveryToolsTools.ambitionDecomposer.finalSourceSummary')}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                 {summary.executiveSummary}
@@ -504,11 +502,11 @@ export function AmbitionDecomposerOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

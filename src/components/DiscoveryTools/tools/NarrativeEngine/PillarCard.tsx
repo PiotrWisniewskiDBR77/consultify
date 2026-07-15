@@ -12,6 +12,7 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   NarrativeEngineData,
@@ -57,6 +58,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [newProof, setNewProof] = useState('');
   const [newDriver, setNewDriver] = useState('');
@@ -106,7 +108,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
           <input
             value={pillar.title}
             onChange={(event) => updatePillar({ title: event.target.value })}
-            placeholder={isPolish ? 'Nazwa filaru...' : 'Pillar title...'}
+            placeholder={t('discoveryToolsTools.narrativeEngine.card.titlePlaceholder')}
             className="min-w-0 flex-1 border-0 border-b border-transparent bg-transparent p-0 font-semibold text-slate-900 focus:border-slate-300 focus:outline-none focus:ring-0 dark:text-slate-100"
           />
         </div>
@@ -125,7 +127,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
               type="button"
               onClick={removePillar}
               className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-              title={isPolish ? 'Usuń filar' : 'Remove pillar'}
+              title={t('discoveryToolsTools.narrativeEngine.card.removePillar')}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -135,21 +137,19 @@ export const PillarCard: React.FC<PillarCardProps> = ({
 
       {/* Message (the claim) */}
       <label className="mb-3 block text-xs font-medium text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Przekaz (teza filaru)' : 'Message (the claim)'}
+        {t('discoveryToolsTools.narrativeEngine.card.message')}
         <textarea
           value={pillar.message}
           onChange={(event) => updatePillar({ message: event.target.value })}
           rows={2}
-          placeholder={
-            isPolish ? 'Jaką tezę stawia ten filar...' : 'The claim this pillar makes...'
-          }
+          placeholder={t('discoveryToolsTools.narrativeEngine.card.messagePlaceholder')}
           className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
       </label>
 
       {/* Audience resonance */}
       <label className="mb-3 block text-xs font-medium text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Rezonans z odbiorcą' : 'Audience resonance'}
+        {t('discoveryToolsTools.narrativeEngine.card.audienceResonance')}
         <select
           value={pillar.audienceResonance || 'medium'}
           onChange={(event) =>
@@ -170,14 +170,14 @@ export const PillarCard: React.FC<PillarCardProps> = ({
       {/* Proof points */}
       <div className="mb-3">
         <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-          {isPolish ? 'Dowody (proof points)' : 'Proof points'}
+          {t('discoveryToolsTools.narrativeEngine.card.proofPoints')}
         </div>
         <div className="mb-2 flex gap-2">
           <input
             type="text"
             value={newProof}
             onChange={(e) => setNewProof(e.target.value)}
-            placeholder={isPolish ? 'Dodaj dowód...' : 'Add a proof point...'}
+            placeholder={t('discoveryToolsTools.narrativeEngine.card.addProofPlaceholder')}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddProof()}
           />
@@ -209,7 +209,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
             ))
           ) : (
             <p className="text-sm italic text-slate-600">
-              {isPolish ? 'Brak dodanych dowodów' : 'No proof points added'}
+              {t('discoveryToolsTools.narrativeEngine.card.noProofPoints')}
             </p>
           )}
         </div>
@@ -218,14 +218,14 @@ export const PillarCard: React.FC<PillarCardProps> = ({
       {/* Drivers */}
       <div className="mb-2">
         <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-          {isPolish ? 'Czynniki' : 'Drivers'}
+          {t('discoveryToolsTools.narrativeEngine.card.drivers')}
         </div>
         <div className="mb-2 flex gap-2">
           <input
             type="text"
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
-            placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
+            placeholder={t('discoveryToolsTools.narrativeEngine.card.addDriverPlaceholder')}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
@@ -257,7 +257,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
             ))
           ) : (
             <p className="text-sm italic text-slate-600">
-              {isPolish ? 'Brak dodanych czynników' : 'No drivers added'}
+              {t('discoveryToolsTools.narrativeEngine.card.noDrivers')}
             </p>
           )}
         </div>
@@ -267,7 +267,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
       {(pillar.evidence || []).length > 0 && (
         <div className="mb-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-            {isPolish ? 'Dowody' : 'Evidence'}
+            {t('discoveryToolsTools.common.evidence')}
           </div>
           <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
             {(pillar.evidence || []).map((item, i) => (
@@ -282,17 +282,11 @@ export const PillarCard: React.FC<PillarCardProps> = ({
         value={pillar.implication || ''}
         onChange={(event) => updatePillar({ implication: event.target.value })}
         rows={2}
-        placeholder={isPolish ? 'Implikacja tego filaru...' : 'Implication of this pillar...'}
+        placeholder={t('discoveryToolsTools.narrativeEngine.card.implicationPlaceholder')}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
       />
 
-      <InlineAssist
-        hint={
-          isPolish
-            ? 'Sprawdź, czy przekaz filaru jest poparty dowodami i rezonuje z odbiorcą.'
-            : 'Check that the pillar message is backed by proof and resonates with the audience.'
-        }
-      />
+      <InlineAssist hint={t('discoveryToolsTools.narrativeEngine.card.hint')} />
     </div>
   );
 };

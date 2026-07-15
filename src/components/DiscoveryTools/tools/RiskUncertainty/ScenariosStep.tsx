@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { RiskUncertaintyData, ScenarioItem, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -15,7 +16,8 @@ interface ScenariosStepProps {
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-export const ScenariosStep: React.FC<ScenariosStepProps> = ({ session, isPolish }) => {
+export const ScenariosStep: React.FC<ScenariosStepProps> = ({ session }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as RiskUncertaintyData;
   const scenarios = data.scenarios || [];
@@ -52,12 +54,10 @@ export const ScenariosStep: React.FC<ScenariosStepProps> = ({ session, isPolish 
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Scenariusze' : 'Scenarios'}
+          {t('discoveryToolsTools.riskUncertainty.scenariosStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Opisz możliwe scenariusze i oceń prawdopodobieństwo (1–5).'
-            : 'Describe plausible scenarios and rate likelihood (1–5).'}
+          {t('discoveryToolsTools.riskUncertainty.scenariosStep.subtitle')}
         </p>
       </div>
 
@@ -65,19 +65,19 @@ export const ScenariosStep: React.FC<ScenariosStepProps> = ({ session, isPolish 
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'Tytuł scenariusza...' : 'Scenario title...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.scenariosStep.titlePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder={isPolish ? 'Notatki / implikacje...' : 'Notes / implications...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.scenariosStep.notesPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <div className="flex flex-wrap gap-3 items-center">
           <label className="text-xs text-slate-500">
-            {isPolish ? 'Prawdopodobieństwo' : 'Likelihood'}
+            {t('discoveryToolsTools.riskUncertainty.likelihood')}
             <select
               value={likelihood}
               onChange={(e) => setLikelihood(Number(e.target.value))}
@@ -96,22 +96,16 @@ export const ScenariosStep: React.FC<ScenariosStepProps> = ({ session, isPolish 
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Scenariusze powinny być rozłączne i obejmować istotne niepewności (np. popyt, koszty, regulacje).'
-              : 'Scenarios should be distinct and cover key uncertainties (e.g. demand, costs, regulation).'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.riskUncertainty.scenariosStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {scenarios.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak scenariuszy' : 'No scenarios yet'}
+            {t('discoveryToolsTools.riskUncertainty.scenariosStep.empty')}
           </div>
         ) : (
           scenarios.map((s) => (

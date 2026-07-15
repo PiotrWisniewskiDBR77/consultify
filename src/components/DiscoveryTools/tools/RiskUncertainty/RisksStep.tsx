@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { RiskItem, RiskUncertaintyData, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -15,7 +16,8 @@ interface RisksStepProps {
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-export const RisksStep: React.FC<RisksStepProps> = ({ session, isPolish }) => {
+export const RisksStep: React.FC<RisksStepProps> = ({ session }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [description, setDescription] = useState('');
   const [probability, setProbability] = useState(3);
@@ -59,12 +61,10 @@ export const RisksStep: React.FC<RisksStepProps> = ({ session, isPolish }) => {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Ryzyka strategiczne' : 'Strategic risks'}
+          {t('discoveryToolsTools.riskUncertainty.risksStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zidentyfikuj ryzyka i dodaj działania mitygujące.'
-            : 'Identify risks and mitigation actions.'}
+          {t('discoveryToolsTools.riskUncertainty.risksStep.subtitle')}
         </p>
       </div>
 
@@ -72,20 +72,20 @@ export const RisksStep: React.FC<RisksStepProps> = ({ session, isPolish }) => {
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={isPolish ? 'Opis ryzyka...' : 'Risk description...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.risksStep.descPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <textarea
           value={mitigation}
           onChange={(e) => setMitigation(e.target.value)}
-          placeholder={isPolish ? 'Mitigacja / plan reakcji...' : 'Mitigation / response plan...'}
+          placeholder={t('discoveryToolsTools.riskUncertainty.risksStep.mitigationPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <div className="flex flex-wrap gap-3">
           <label className="text-xs text-slate-500">
-            {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
+            {t('discoveryToolsTools.common.probability')}
             <select
               value={probability}
               onChange={(e) => setProbability(Number(e.target.value))}
@@ -99,7 +99,7 @@ export const RisksStep: React.FC<RisksStepProps> = ({ session, isPolish }) => {
             </select>
           </label>
           <label className="text-xs text-slate-500">
-            {isPolish ? 'Wpływ' : 'Impact'}
+            {t('discoveryToolsTools.common.impact')}
             <select
               value={impact}
               onChange={(e) => setImpact(Number(e.target.value))}
@@ -118,22 +118,16 @@ export const RisksStep: React.FC<RisksStepProps> = ({ session, isPolish }) => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsTools.common.add')}
           </button>
         </div>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Opisz konkretne ryzyko i plan reakcji.'
-              : 'Describe a concrete risk and mitigation plan.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.riskUncertainty.risksStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {risks.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak ryzyk' : 'No risks yet'}
+            {t('discoveryToolsTools.riskUncertainty.risksStep.empty')}
           </div>
         ) : (
           risks.map((item) => (

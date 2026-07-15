@@ -1,6 +1,8 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   GrowthPathsData,
   GrowthQuadrantId,
@@ -51,11 +53,12 @@ const QUADRANT_META: Record<GrowthQuadrantId, { en: string; pl: string; hint: st
   },
 };
 
-const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
-  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
-  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
-  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
-  return isPolish ? 'Zaakceptowane' : 'Accepted';
+const proposalBadge = (proposalStatus?: string) => {
+  const b = 'discoveryToolsTools.common.badge';
+  if (proposalStatus === 'ai-proposed') return i18n.t(`${b}.aiProposal`);
+  if (proposalStatus === 'rejected') return i18n.t(`${b}.rejected`);
+  if (proposalStatus === 'rethinking') return i18n.t(`${b}.rethinking`);
+  return i18n.t(`${b}.accepted`);
 };
 
 export function GrowthPathsInputPhase({
@@ -65,6 +68,7 @@ export function GrowthPathsInputPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as GrowthPathsData;
   const [draft, setDraft] = useState('');
@@ -78,12 +82,12 @@ export function GrowthPathsInputPhase({
           id: `growth-signal-${Date.now()}`,
           type: 'interview',
           content: draft.trim(),
-          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          sourceLabel: t('discoveryToolsTools.common.userInput'),
           confidence: 4,
           tags: [],
           evidenceType: 'observation',
           state: 'accepted',
-          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          provenance: t('discoveryToolsTools.common.manualEntry'),
           proposalStatus: 'accepted',
         },
       ],
@@ -101,12 +105,10 @@ export function GrowthPathsInputPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Sygnały wzrostu i evidence' : 'Growth Signals & Evidence'}
+          {t('discoveryToolsTools.growthPaths.signalsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbierz obserwacje z wywiadu, rynku i organizacji zanim AI zaproponuje opcje Ansoffa.'
-            : 'Capture interview, market, and organization signals before AI proposes Ansoff options.'}
+          {t('discoveryToolsTools.growthPaths.signalsSubtitle')}
         </p>
       </div>
 
@@ -120,7 +122,7 @@ export function GrowthPathsInputPhase({
               addSignal();
             }
           }}
-          placeholder={isPolish ? 'Dodaj sygnał wzrostu...' : 'Add a growth signal...'}
+          placeholder={t('discoveryToolsTools.growthPaths.addSignalPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -141,7 +143,7 @@ export function GrowthPathsInputPhase({
           >
             <div className="mb-2 flex items-start justify-between gap-3">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {proposalBadge(signal.proposalStatus, isPolish)}
+                {proposalBadge(signal.proposalStatus)}
               </span>
               {signal.proposalStatus === 'ai-proposed' ? (
                 <CardActions
@@ -182,6 +184,7 @@ export function GrowthPathsOptionsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const data = session.inputData as GrowthPathsData;
 
@@ -204,12 +207,10 @@ export function GrowthPathsOptionsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Macierz opcji wzrostu Ansoffa' : 'Ansoff Growth Option Matrix'}
+          {t('discoveryToolsTools.growthPaths.matrixTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Każda karta powinna mieć hipotezę wzrostu, uzasadnienie, ryzyko i pierwszy krok.'
-            : 'Each card should carry a growth hypothesis, rationale, risk, and first step.'}
+          {t('discoveryToolsTools.growthPaths.matrixSubtitle')}
         </p>
       </div>
 
@@ -236,7 +237,7 @@ export function GrowthPathsOptionsPhase({
                   <div className="mb-2 flex items-start justify-between gap-3">
                     <div>
                       <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                        {proposalBadge(option.proposalStatus, isPolish)}
+                        {proposalBadge(option.proposalStatus)}
                       </div>
                       <h4 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {option.title}
@@ -260,16 +261,10 @@ export function GrowthPathsOptionsPhase({
                     {(['impact', 'effort', 'riskLevel'] as const).map((field) => (
                       <label key={field} className="text-xs font-medium text-slate-500">
                         {field === 'riskLevel'
-                          ? isPolish
-                            ? 'Ryzyko'
-                            : 'Risk'
+                          ? t('discoveryToolsTools.growthPaths.risk')
                           : field === 'impact'
-                            ? isPolish
-                              ? 'Wpływ'
-                              : 'Impact'
-                            : isPolish
-                              ? 'Wysiłek'
-                              : 'Effort'}
+                            ? t('discoveryToolsTools.common.impact')
+                            : t('discoveryToolsTools.common.effort')}
                         <select
                           value={option[field] || 'medium'}
                           onChange={(event) =>
@@ -279,16 +274,16 @@ export function GrowthPathsOptionsPhase({
                           }
                           className="mt-1 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
                         >
-                          <option value="high">{isPolish ? 'Wysoki' : 'High'}</option>
-                          <option value="medium">{isPolish ? 'Średni' : 'Medium'}</option>
-                          <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
+                          <option value="high">{t('discoveryToolsTools.common.level.high')}</option>
+                          <option value="medium">{t('discoveryToolsTools.common.level.medium')}</option>
+                          <option value="low">{t('discoveryToolsTools.common.level.low')}</option>
                         </select>
                       </label>
                     ))}
                   </div>
                   {option.firstStep && (
                     <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                      {t('discoveryToolsTools.common.firstStepColonSpace')}
                       {option.firstStep}
                     </div>
                   )}
@@ -309,18 +304,17 @@ export function GrowthPathsInsightsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as GrowthPathsData;
 
   return (
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Porównanie strategiczne' : 'Strategic Comparison'}
+          {t('discoveryToolsTools.growthPaths.comparisonTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tu opcje wzrostu zamieniają się w trade-offy, priorytety i rekomendowane ruchy.'
-            : 'This is where growth options become trade-offs, priorities, and recommended moves.'}
+          {t('discoveryToolsTools.growthPaths.comparisonSubtitle')}
         </p>
       </div>
 
@@ -333,7 +327,7 @@ export function GrowthPathsInsightsPhase({
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(comparison.proposalStatus, isPolish)}
+                  {proposalBadge(comparison.proposalStatus)}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                   {comparison.title}
@@ -391,7 +385,7 @@ export function GrowthPathsInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {t('discoveryToolsTools.common.firstStepColonSpace')}
                 {move.firstStep}
               </div>
             )}
@@ -412,6 +406,7 @@ export function GrowthPathsOutputsPhase({
   onRejectCard,
   onRethinkCard,
 }: PhaseProps) {
+  const { t } = useTranslation();
   const data = session.inputData as GrowthPathsData;
   const summary = data.summary;
   const initiatives = [
@@ -423,12 +418,10 @@ export function GrowthPathsOutputsPhase({
     <div className="space-y-5 p-5">
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+          {t('discoveryToolsTools.growthPaths.outputsTitle')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Final source summary i kandydaci outputów powstają z zaakceptowanych opcji wzrostu.'
-            : 'The final source summary and output candidates are based on approved growth options.'}
+          {t('discoveryToolsTools.growthPaths.outputsSubtitle')}
         </p>
       </div>
 
@@ -492,11 +485,11 @@ export function GrowthPathsOutputsPhase({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+          {t('discoveryToolsTools.common.initiativeDrafts')}
         </div>
         {initiatives.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+            {t('discoveryToolsTools.common.noInitiatives')}
           </div>
         ) : (
           <div className="space-y-2">

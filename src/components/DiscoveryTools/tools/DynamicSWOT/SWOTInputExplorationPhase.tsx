@@ -1,5 +1,6 @@
 import { Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   ProposalCardType,
@@ -548,6 +549,7 @@ export function SWOTInputExplorationPhase({
   onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
+  const { t } = useTranslation();
   const { addSWOTSignal, removeSWOTSignal, updateSWOTSignal } = useToolStore();
   const swotData = session.inputData as SWOTData;
   const signals = React.useMemo(() => swotData.signals || [], [swotData.signals]);
@@ -600,42 +602,35 @@ export function SWOTInputExplorationPhase({
     );
   }, [isPolish, proposalPointerByStream]);
 
+  const P = 'discoveryToolsTools.dynamicSwot.inputExplorationPhase';
   const labels = {
-    consultantProposal: isPolish ? 'Propozycja konsultanta' : 'Consultant proposal',
-    draft: isPolish ? 'Draft' : 'Draft',
-    totalAccepted: isPolish ? 'Zaakceptowane punkty' : 'Accepted points',
-    confirmedAreas: isPolish ? 'Potwierdzone obszary' : 'Confirmed areas',
-    activeDialogue: isPolish ? 'Aktywne dialogi' : 'Active dialogues',
-    maxTarget: isPolish ? 'Maksymalny target' : 'Maximum target',
-    aiProposal: isPolish ? 'Aktualna propozycja AI' : 'Current AI proposal',
-    acceptedList: isPolish
-      ? 'Zaakceptowane punkty dla tego obszaru'
-      : 'Accepted points for this area',
-    accept: isPolish ? 'Akceptuj ten punkt' : 'Accept this point',
-    nextProposal: isPolish ? 'Kolejna propozycja' : 'Another proposal',
-    comment: isPolish ? 'Komentarz' : 'Comment',
-    deepen: isPolish ? 'Pogłęb' : 'Think deeper',
-    apply: isPolish ? 'Zastosuj' : 'Apply',
-    close: isPolish ? 'Zamknij' : 'Close',
-    confirmSet: isPolish ? 'Potwierdź ten zestaw' : 'Confirm this set',
-    keepGoing: isPolish ? 'Szukaj dalej do 5' : 'Keep exploring to 5',
-    readyEnough: isPolish ? 'To już może wystarczyć' : 'This may already be enough',
-    attempts: isPolish ? 'Próby' : 'Attempts',
-    accepted: isPolish ? 'Zaakceptowane' : 'Accepted',
-    confirmed: isPolish ? 'Potwierdzone' : 'Confirmed',
-    confirmedToMatrix: isPolish
-      ? 'Ten zestaw jest już potwierdzony do macierzy.'
-      : 'This set is already confirmed for the matrix.',
-    confirmedButOpen: isPolish
-      ? 'Ten zestaw jest już potwierdzony do macierzy, ale możesz dalej dodawać kolejne punkty do limitu 5.'
-      : 'This set is already confirmed for the matrix, but you can still add more points up to the limit of 5.',
-    continueAdding: isPolish ? 'Dodawaj dalej' : 'Continue adding',
-    emptyAccepted: isPolish
-      ? 'Na razie nie masz jeszcze zaakceptowanych punktów w tym obszarze.'
-      : 'You do not have any accepted points in this area yet.',
-    showExplanation: isPolish ? 'Pokaż wyjaśnienie' : 'Show explanation',
-    hideExplanation: isPolish ? 'Ukryj wyjaśnienie' : 'Hide explanation',
-    remove: isPolish ? 'Usuń' : 'Remove',
+    consultantProposal: t(`${P}.consultantProposal`),
+    draft: t(`${P}.draft`),
+    totalAccepted: t(`${P}.totalAccepted`),
+    confirmedAreas: t(`${P}.confirmedAreas`),
+    activeDialogue: t(`${P}.activeDialogue`),
+    maxTarget: t(`${P}.maxTarget`),
+    aiProposal: t(`${P}.aiProposal`),
+    acceptedList: t(`${P}.acceptedList`),
+    accept: t(`${P}.accept`),
+    nextProposal: t(`${P}.nextProposal`),
+    comment: t('discoveryToolsTools.common.comment'),
+    deepen: t(`${P}.deepen`),
+    apply: t('discoveryToolsTools.common.apply'),
+    close: t('discoveryToolsTools.common.close'),
+    confirmSet: t(`${P}.confirmSet`),
+    keepGoing: t(`${P}.keepGoing`),
+    readyEnough: t(`${P}.readyEnough`),
+    attempts: t(`${P}.attempts`),
+    accepted: t(`${P}.accepted`),
+    confirmed: t(`${P}.confirmed`),
+    confirmedToMatrix: t(`${P}.confirmedToMatrix`),
+    confirmedButOpen: t(`${P}.confirmedButOpen`),
+    continueAdding: t(`${P}.continueAdding`),
+    emptyAccepted: t(`${P}.emptyAccepted`),
+    showExplanation: t(`${P}.showExplanation`),
+    hideExplanation: t(`${P}.hideExplanation`),
+    remove: t('discoveryToolsTools.common.remove'),
   };
 
   const acceptedSignalsByStream = React.useMemo(
@@ -825,14 +820,10 @@ export function SWOTInputExplorationPhase({
             </span>
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-white">
-            {isPolish
-              ? 'Tutaj AI będzie proponować kolejne punkty do czterech obszarów SWOT, aż ustalicie minimalnie 2 i maksymalnie 5 zaakceptowanych punktów na obszar.'
-              : 'Here AI will keep proposing candidate points for the four SWOT areas until you settle on at least 2 and at most 5 accepted points per area.'}
+            {t(`${P}.introTitle`)}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {isPolish
-              ? 'Każda propozycja składa się z tytułu i rozwinięcia. Możesz ją zaakceptować, odrzucić przez przejście do kolejnej propozycji, albo przepisać przez komentarz i pogłębienie.'
-              : 'Each proposal is made of a title and an explanation. You can accept it, skip to another proposal, or rewrite it through comment and a deeper framing.'}
+            {t(`${P}.introSubtitle`)}
           </div>
         </div>
 
@@ -1037,11 +1028,7 @@ export function SWOTInputExplorationPhase({
                                     value={feedbackInput}
                                     onChange={(e) => setFeedbackInput(e.target.value)}
                                     rows={3}
-                                    placeholder={
-                                      isPolish
-                                        ? 'Wpisz komentarz, który ma dopracować ten zaakceptowany punkt.'
-                                        : 'Write the comment that should refine this accepted point.'
-                                    }
+                                    placeholder={t(`${P}.refineAcceptedPlaceholder`)}
                                     className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
                                   />
                                 ) : (
@@ -1228,11 +1215,7 @@ export function SWOTInputExplorationPhase({
                             value={feedbackInput}
                             onChange={(e) => setFeedbackInput(e.target.value)}
                             rows={3}
-                            placeholder={
-                              isPolish
-                                ? 'Wpisz komentarz, który ma przepisać tę propozycję.'
-                                : 'Write the comment that should rewrite this proposal.'
-                            }
+                            placeholder={t(`${P}.rewriteProposalPlaceholder`)}
                             className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
                           />
                         ) : (

@@ -8,7 +8,9 @@
 
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import {
   ProposalCardType,
   ToolSession,
@@ -100,8 +102,10 @@ const MATURITY_OPTIONS: { value: 'strong' | 'adequate' | 'weak'; en: string; pl:
   { value: 'weak', en: 'Weak', pl: 'Słaba' },
 ];
 
-const kindBadge = (kind: ValueActivity['kind'], isPolish: boolean) =>
-  kind === 'primary' ? (isPolish ? 'Podstawowa' : 'Primary') : isPolish ? 'Wspierająca' : 'Support';
+const kindBadge = (kind: ValueActivity['kind']) =>
+  kind === 'primary'
+    ? i18n.t('discoveryToolsTools.valueChain.kind.primary')
+    : i18n.t('discoveryToolsTools.valueChain.kind.support');
 
 // ==================== COMPONENT ====================
 
@@ -113,6 +117,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [newDriver, setNewDriver] = useState('');
 
@@ -149,7 +154,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               {isPolish ? labels.pl : labels.en}
             </h3>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-              {kindBadge(activity.kind, isPolish)}
+              {kindBadge(activity.kind)}
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">{labels.hint}</p>
@@ -169,7 +174,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       {/* Scoring grid */}
       <div className="mb-3 grid gap-2 sm:grid-cols-2">
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Udział w kosztach' : 'Cost contribution'}
+          {t('discoveryToolsTools.valueChain.card.costContribution')}
           <select
             value={activity.costContribution}
             onChange={(event) =>
@@ -187,7 +192,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Wkład w wartość' : 'Value contribution'}
+          {t('discoveryToolsTools.valueChain.card.valueContribution')}
           <select
             value={activity.valueContribution}
             onChange={(event) =>
@@ -205,7 +210,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Rola w marży' : 'Margin role'}
+          {t('discoveryToolsTools.valueChain.card.marginRole')}
           <select
             value={activity.marginRole}
             onChange={(event) =>
@@ -221,7 +226,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </select>
         </label>
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Dojrzałość' : 'Maturity'}
+          {t('discoveryToolsTools.valueChain.card.maturity')}
           <select
             value={activity.maturity || 'adequate'}
             onChange={(event) =>
@@ -245,7 +250,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             type="text"
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
-            placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
+            placeholder={t('discoveryToolsTools.valueChain.card.addDriverPlaceholder')}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
@@ -277,7 +282,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             ))
           ) : (
             <p className="text-sm italic text-slate-600">
-              {isPolish ? 'Brak dodanych czynników' : 'No drivers added'}
+              {t('discoveryToolsTools.valueChain.card.noDrivers')}
             </p>
           )}
         </div>
@@ -287,7 +292,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       {(activity.evidence || []).length > 0 && (
         <div className="mb-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-            {isPolish ? 'Dowody' : 'Evidence'}
+            {t('discoveryToolsTools.common.evidence')}
           </div>
           <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
             {(activity.evidence || []).map((item, i) => (
@@ -302,17 +307,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         value={activity.implication || ''}
         onChange={(event) => updateActivity({ implication: event.target.value })}
         rows={2}
-        placeholder={isPolish ? 'Implikacja dla marży...' : 'Implication for margin...'}
+        placeholder={t('discoveryToolsTools.valueChain.card.implicationPlaceholder')}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
       />
 
-      <InlineAssist
-        hint={
-          isPolish
-            ? 'Oceń, czy ta aktywność tworzy czy drenuje marżę i dlaczego.'
-            : 'Judge whether this activity creates or drains margin, and why.'
-        }
-      />
+      <InlineAssist hint={t('discoveryToolsTools.valueChain.card.hint')} />
     </div>
   );
 };
