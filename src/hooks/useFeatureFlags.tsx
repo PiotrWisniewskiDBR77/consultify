@@ -232,6 +232,20 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'promptRegistryUi',
+    name: 'SuperAdmin: Prompt Registry UI (Oxford O5.5)',
+    description:
+      'AI Platform > Development > Prompt Registry tab — read-only StandardTable inventory of ' +
+      'the code-level prompt registry (server/src/ai/promptRegistry.ts) with checksum-drift ' +
+      'status, sourced from GET /api/admin/prompts/registry (gated ai_ops capability). ' +
+      'OFF = today’s Development tab list (no Prompt Registry sub-tab). Ships plain/kanoniczny ' +
+      '(StandardTable/StandardModuleBar) per rule #7 — Vegas polishes visuals after screenshot ' +
+      'acceptance.',
+    defaultValue: false,
+    category: 'ui',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapDrawerUnified',
     name: 'Mind Map: Unified Node Detail Drawer (Fala 4.1b)',
     description:
