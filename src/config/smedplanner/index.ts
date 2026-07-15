@@ -23,6 +23,8 @@ import {
 export * from './changeoverEngine';
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
+export * from './smedInsightStaircase';
+export * from './smedQuestionBank';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
