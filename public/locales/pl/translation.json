@@ -28480,6 +28480,18 @@
         "Co dalej?"
       ],
       "chatUnavailableMessage": "Czat AI jest chwilowo niedostępny. Skorzystaj z akcji powyżej."
+    },
+    "nModeCardManager": {
+      "newCardLabel": "Nowa karta",
+      "allCardsAdded": "Wszystkie karty są już dodane.",
+      "sectionsLabel": "Sekcje",
+      "defaultSetLabel": "Zestaw domyślny",
+      "hideSectionTooltip": "Ukryj sekcję",
+      "showSectionTooltip": "Pokaż sekcję",
+      "moveUpTooltip": "W górę",
+      "moveDownTooltip": "W dół",
+      "removeCardTooltip": "Usuń kartę",
+      "restoreDefaultsLabel": "Przywróć domyślne"
     }
   }
 }

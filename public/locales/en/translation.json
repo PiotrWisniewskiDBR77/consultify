@@ -27404,6 +27404,18 @@
         "What's next?"
       ],
       "chatUnavailableMessage": "AI chat is temporarily unavailable. Use the actions above."
+    },
+    "nModeCardManager": {
+      "newCardLabel": "New card",
+      "allCardsAdded": "All cards are already added.",
+      "sectionsLabel": "Sections",
+      "defaultSetLabel": "Default set",
+      "hideSectionTooltip": "Hide section",
+      "showSectionTooltip": "Show section",
+      "moveUpTooltip": "Move up",
+      "moveDownTooltip": "Move down",
+      "removeCardTooltip": "Remove card",
+      "restoreDefaultsLabel": "Restore defaults"
     }
   }
 }
