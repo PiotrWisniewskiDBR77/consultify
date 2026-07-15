@@ -894,7 +894,22 @@ export async function startSheet(params: {
       let tableSchemaB4: unknown = null;
       try {
         const { generateTableSchema } = await import('../tableSchemaGeneratorService.js');
-        const b4 = await generateTableSchema(stored.intent, {
+        // Grounding gap fix: `sheetFacts` (buildGroundingFacts, computed above for the
+        // legacy markdown path) was NOT reaching the B4 premium generator — it received
+        // only the bare intent, so its §0.3 guard had nothing to ground seed rows in even
+        // when real org facts were available. tableSchemaGeneratorService has no separate
+        // facts param (intent is the only channel — see materialDataBinding.
+        // datasetToTableIntent / bundleOrchestrator.spineToTableIntent for the same
+        // pattern), so we embed the facts into the intent text with an explicit
+        // "use verbatim, do not invent" instruction the §0.3 guard recognizes.
+        const b4Intent = sheetFacts
+          ? `${stored.intent}\n\n${sheetFacts}\n\n${
+              pl
+                ? 'Powyższe to realne fakty organizacji — ZASIAĆ realnymi danymi (nie zmyślaj); nie mieszaj ich ze zmyślonymi liczbami.'
+                : 'The above are real organisation facts — seed rows with these real values (do not invent); do not mix them with fabricated numbers.'
+            }`
+          : stored.intent;
+        const b4 = await generateTableSchema(b4Intent, {
           orgId: params.organizationId,
           userId: params.userId,
           preferPremium: true,

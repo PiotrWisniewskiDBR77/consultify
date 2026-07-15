@@ -14,9 +14,19 @@
  *     jakość zostanie udowodniona.
  *   - FAIL-OPEN ZAWSZE: każdy błąd (resolver, LLM, walidacja) → prosty fallback,
  *     NIGDY nie rzuca w ścieżkę generacji.
+ *   - INTEGRALNOŚĆ DANYCH (§0.3 parity z docGenerationRuntime.startSheet /
+ *     narrativeEngine — patrz commit 0868a37b09): systemPrompt w generateViaLlm
+ *     ZAKAZUJE prezentowania zmyślonych precyzyjnych metryk jako realnych danych
+ *     org. Gdy `intent` niesie konkretne fakty (caller je osadza w tekście —
+ *     patrz `materialDataBinding.datasetToTableIntent` / `bundleOrchestrator.
+ *     spineToTableIntent`) — LLM MUSI użyć wyłącznie tych wartości. Gdy faktów
+ *     brak — seed rows muszą być jawnie oznaczone jako przykładowe (round
+ *     numbers + etykieta "(example)"), NIGDY nie fabrykowane jako realne.
  *
- * NIE wpięty w żywy `generateTableAction` — serwis gotowy do wpięcia gdy premium
- * zostanie aktywowane (patrz komentarz `// B4 ready` w ideaAISuggestionsService).
+ * WPIĘTY w żywy `generateTableAction` (`ideaAISuggestionsService.ts`, komentarz
+ * "B4 WIRED (W4)") — ten moduł-level komentarz był stale (mówił "NIE wpięty").
+ * Wołany też z `bundleGenerationRuntime.generateBundleFromSpine` i
+ * `docGenerationRuntime.startSheet` (patrz groundingFacts wiring tamże).
  *
  * Typy pól pochodzą z RZECZYWISTEGO katalogu Table Platform
  * (`server/src/services/tablePlatform/SchemaValidationService.ts` ALLOWED_FIELD_TYPES /
@@ -380,7 +390,31 @@ async function generateViaLlm(
 
   const typeList = GENERATABLE_FIELD_TYPES.join(', ');
 
+  // §0.3 parity (docGenerationRuntime.startSheet / narrativeEngine, commit
+  // 0868a37b09): without grounded facts the model must NEVER present fabricated
+  // precise-looking business metrics as real organisation data. The `intent`
+  // string is the ONLY channel callers have to ground this generator (no
+  // separate facts param) — some callers already embed real records into it
+  // (materialDataBinding.datasetToTableIntent: "ZASIAĆ realnymi danymi (nie
+  // zmyślaj)"; bundleOrchestrator.spineToTableIntent: "Wiersze dokładnie wg
+  // danych"). This guard tells the model to honor that embedded data verbatim,
+  // and to mark fabricated rows as illustrative when no such data is present.
+  const dataIntegrityGuard =
+    'DATA INTEGRITY (§0.3 — no fabricated numbers presented as real org data): the table ' +
+    'intent may already contain concrete organisation facts embedded by the caller (explicit ' +
+    'row data, a dataset sample, financial figures — e.g. "Wiersze dokładnie wg danych: [...]" ' +
+    'or "ZASIAĆ realnymi danymi (nie zmyślaj)"). If it does, seed rows MUST reproduce EXACTLY ' +
+    'those values, unmodified — never round, invent, or extrapolate beyond what is given. If the ' +
+    'intent contains NO concrete organisation data, every seed row is an ILLUSTRATIVE EXAMPLE, not ' +
+    'a real record: mark it explicitly — append " (example)" to the first text/name-like field of ' +
+    'the row (or use "Example 1", "Example 2", … when there is no natural name field), and use ' +
+    'round, obviously illustrative numbers (10/20/50/100 — never precise-looking figures like ' +
+    '27.4% or $183,450). NEVER invent a precise-looking business metric, date, or named entity and ' +
+    'present it as real organisation data — an obviously illustrative number is required whenever ' +
+    'facts are not given; a plausible-looking fabricated one is a data-integrity violation.\n';
+
   const systemPrompt =
+    dataIntegrityGuard +
     'You are a table schema architect (Airtable-quality). From the user intent, design a ' +
     'TYPED field schema. Pick the RIGHT type per column: singleSelect with colored options for ' +
     'status/category/priority, number for counts, currency for money, percent for ratios, date ' +
@@ -446,12 +480,14 @@ async function generateViaLlm(
         'at the end with sum/average formulas (e.g. "=SUM(C2:C9)"). Omit for log-style tables ' +
         '(events, tickets, contacts) where a totals row makes no sense. '
       : '') +
-    'CRITICAL — COMPLETE ROWS: every seed row object MUST include EVERY field key with a plausible ' +
-    'value. This includes ANALYTICAL columns — scores/indices (e.g. a 0–100 readiness index), dates, ' +
-    'single-select categories, ratings — fill them with realistic ESTIMATES; do NOT skip a column ' +
-    'just because it needs judgment. This applies to "optional-feeling" columns too — notes, comments, ' +
-    'resolved/closed dates, secondary fields: fill them with a realistic value (a short note, a plausible ' +
-    'date) rather than leaving them blank. A row that omits any field key is INVALID and unusable. ' +
+    'CRITICAL — COMPLETE ROWS: every seed row object MUST include EVERY field key with a value ' +
+    '(never blank), subject to the DATA INTEGRITY rule above. This includes ANALYTICAL columns — ' +
+    'scores/indices (e.g. a 0–100 readiness index), dates, single-select categories, ratings — do ' +
+    'NOT skip a column just because it needs judgment; fill it with the grounded value when the ' +
+    'intent gives one, else an obviously illustrative one (round number / clearly-marked example). ' +
+    'This applies to "optional-feeling" columns too — notes, comments, resolved/closed dates, ' +
+    'secondary fields: fill them (a short note, a plausible-but-marked-illustrative date) rather ' +
+    'than leaving them blank. A row that omits any field key is INVALID and unusable. ' +
     'Example — risk table: Risk(singleLineText), Likelihood(singleSelect: Low #16A34A / Med #D97706 / High #DC2626), ' +
     'Impact(singleSelect same colors), Owner(singleLineText), Status(singleSelect).\n' +
     'CONDITIONAL FORMATTING (encouraged for numeric columns): in ' +
