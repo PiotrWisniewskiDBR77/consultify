@@ -60,9 +60,7 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
 
   const handleGenerate = useCallback(async () => {
     if (brief.trim().length < 10) {
-      toast.error(
-        isPolish ? 'Opis musi mieć min. 10 znaków' : 'Brief must be at least 10 characters'
-      );
+      toast.error(t('aiAuthoring.briefTooShort', 'Brief must be at least 10 characters'));
       return;
     }
 
@@ -103,7 +101,7 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
       }
     }
     if (Object.keys(applied).length === 0) {
-      toast.error(isPolish ? 'Zaznacz pola do zastosowania' : 'Select fields to apply');
+      toast.error(t('aiAuthoring.selectFieldsToApply', 'Select fields to apply'));
       return;
     }
 
@@ -252,7 +250,7 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
-              {isPolish ? 'Zamknij' : 'Close'}
+              {t('aiAuthoring.close', 'Close')}
             </button>
             <button
               onClick={handleApply}

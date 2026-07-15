@@ -17495,7 +17495,10 @@
     "draftGenerated": "Szkic wygenerowany przez AI",
     "draftFailed": "Nie udało się wygenerować szkicu",
     "auditLogTitle": "Historia autorstwa AI",
-    "undoAi": "Cofnij AI"
+    "undoAi": "Cofnij AI",
+    "briefTooShort": "Opis musi mieć min. 10 znaków",
+    "selectFieldsToApply": "Zaznacz pola do zastosowania",
+    "close": "Zamknij"
   },
   "kpi": {
     "attribution": {
