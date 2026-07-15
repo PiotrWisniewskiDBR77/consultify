@@ -152,22 +152,25 @@ describe('Assessment RBAC Middleware', () => {
                 expect(hasPermission(user, 'read', 'assessment')).toBe(true);
             });
 
-            // TODO(bug/security, found 2026-07-15 reviving orphaned test): hasPermission()
-            // in server/src/middleware/assessmentRBAC.ts does
-            // `permissions[normalizedRole] || permissions['VIEWER'] || []` — the code
-            // comment says this fallback is for "blank/missing" roles, but it actually
-            // fires for ANY unrecognized role string. A user whose role is a typo, a
-            // stale/renamed role, or garbage data (e.g. 'UNKNOWN_ROLE') silently gets
-            // VIEWER read access to assessments instead of being denied — fail-open
-            // rather than fail-closed. This test (and 'should handle numeric role'
-            // below) expect strict deny-by-default for any non-recognized role. Not
-            // fixing here per instructions — flagging for a deliberate decision on
-            // whether unrecognized-role handling should deny outright.
-            it.skip('should handle unknown role', () => {
+            // FIXED (2026-07-15, security): hasPermission() used to do
+            // `permissions[normalizedRole] || permissions['VIEWER'] || []` — a
+            // present-but-unrecognized role (typo, stale/renamed role, garbage
+            // data like 'UNKNOWN_ROLE') silently fell through to VIEWER read
+            // access instead of being denied. That was fail-open. It is now
+            // fail-closed: any non-blank role string that doesn't match a
+            // known role name gets ZERO permissions.
+            it('should handle unknown role', () => {
                 const user = { role: 'UNKNOWN_ROLE' };
 
                 expect(hasPermission(user, 'read', 'assessment')).toBe(false);
                 expect(hasPermission(user, 'create', 'assessment')).toBe(false);
+            });
+
+            it('should handle a role that is a typo of a real role', () => {
+                const user = { role: 'ORG_ADMN' };
+
+                expect(hasPermission(user, 'read', 'assessment')).toBe(false);
+                expect(hasPermission(user, 'update', 'assessment')).toBe(false);
             });
         });
     });
@@ -305,18 +308,34 @@ describe('Assessment RBAC Middleware', () => {
         // - 'should handle case sensitivity in role names'
         // - 'should handle whitespace in role names'
 
-        // See TODO above 'should handle unknown role' — same fail-open-to-VIEWER
-        // behavior for any unrecognized role string, including '' and non-string
-        // values like a bare number.
-        it.skip('should handle empty string role', () => {
+        // RECONCILED (2026-07-15): the numeric-role case is the same
+        // fail-open-to-VIEWER bug as 'should handle unknown role' above — a
+        // non-string role is never legitimate and now fails closed (zero
+        // permissions), see hasPermission() in assessmentRBAC.ts.
+        //
+        // The empty-string case is intentionally NOT changed to deny-all
+        // here. An empty/whitespace-only role string is treated the same as
+        // a genuinely missing role (blank/no role assigned yet) and defaults
+        // to VIEWER — this is deliberate, pre-existing behavior that is
+        // actively asserted elsewhere (see
+        // tests/unit/backend/middleware/assessmentRBAC.middleware.test.ts,
+        // 'maps messy role strings to permission keys in hasPermission',
+        // which asserts `{ role: '   ' }` → read: true). Forcing empty
+        // string to deny-all would contradict that active test. Flagged for
+        // Piotr: do we want blank-role-as-VIEWER removed entirely, or kept
+        // as the "no role assigned" default? Until decided, blank stays
+        // VIEWER; only *unrecognized, non-blank* roles (typos/garbage/wrong
+        // type) fail closed.
+        it('should handle empty string role as blank/missing (VIEWER default, by design)', () => {
             const user = { role: '' };
             expect(hasPermission(user, 'create', 'assessment')).toBe(false);
-            expect(hasPermission(user, 'read', 'assessment')).toBe(false);
+            expect(hasPermission(user, 'read', 'assessment')).toBe(true);
         });
 
-        it.skip('should handle numeric role', () => {
+        it('should handle numeric role', () => {
             const user = { role: 123 };
             expect(hasPermission(user, 'read', 'assessment')).toBe(false);
+            expect(hasPermission(user, 'create', 'assessment')).toBe(false);
         });
     });
 

@@ -34,17 +34,45 @@ const hasPermission = (user, action, resource) => {
     VIEWER: ['assessment:read'],
   };
 
-  // Normalize role: trim whitespace, uppercase; blank/missing → VIEWER
+  // Normalize role: trim whitespace, uppercase.
+  // Missing/null/blank role (no role assigned at all) is treated as the
+  // lowest-privilege default: VIEWER. This is a deliberate default for users
+  // without an explicit role, NOT a catch-all.
+  //
+  // SECURITY FIX (2026-07-15): a *present but unrecognized* role — a typo, a
+  // stale/renamed role, garbage/attacker-controlled data, or a non-string
+  // value — used to fall through to the same VIEWER default via
+  // `permissions[normalizedRole] || permissions['VIEWER']`. That is fail-open:
+  // any role string that doesn't match a known key silently got read access.
+  // It now fails CLOSED (zero permissions) instead. Only the genuinely
+  // blank/missing case still resolves to VIEWER.
   const rawRole = user.role;
   let normalizedRole: string;
+  let isBlankOrMissing = false;
+
   if (rawRole === undefined || rawRole === null) {
     normalizedRole = 'VIEWER';
+    isBlankOrMissing = true;
+  } else if (typeof rawRole === 'string') {
+    const trimmed = rawRole.trim();
+    if (trimmed === '') {
+      normalizedRole = 'VIEWER';
+      isBlankOrMissing = true;
+    } else {
+      normalizedRole = trimmed.toUpperCase();
+    }
   } else {
-    const trimmed = String(rawRole).trim();
-    normalizedRole = trimmed === '' ? 'VIEWER' : trimmed.toUpperCase();
+    // Non-string role (number, boolean, object, array, ...) is never
+    // legitimate — fail closed rather than coercing it into a lookup key.
+    normalizedRole = '';
   }
 
-  const userPermissions = permissions[normalizedRole] || permissions['VIEWER'] || [];
+  const recognizedPermissions = permissions[normalizedRole];
+  const userPermissions = recognizedPermissions
+    ? recognizedPermissions
+    : isBlankOrMissing
+      ? permissions['VIEWER']
+      : []; // unrecognized/garbage role → fail-closed, zero permissions
 
   // Super admin has all permissions
   if (userPermissions.includes('*')) return true;
