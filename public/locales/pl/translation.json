@@ -17627,7 +17627,30 @@
       "horizon": "Horyzont (miesiące)",
       "granularity": "Granulacja",
       "currency": "Waluta",
-      "valuateModel": "Wycen model"
+      "valuateModel": "Wycen model",
+      "eventTypes": {
+        "revenue": "Przychody",
+        "cogs": "Koszt sprzedaży",
+        "opex": "Koszty operacyjne",
+        "capexPurchase": "Zakup środków trwałych",
+        "depreciationRun": "Amortyzacja",
+        "debtDrawdown": "Zaciągnięcie długu",
+        "debtRepayment": "Spłata długu",
+        "interestAccrual": "Odsetki",
+        "taxAccrual": "Podatek",
+        "wcChange": "Zmiana kapitału obrotowego",
+        "equityInjection": "Dokapitalizowanie",
+        "dividend": "Dywidenda"
+      },
+      "initialFields": {
+        "cash": "Gotówka",
+        "equity": "Kapitał własny",
+        "debt": "Dług",
+        "ppe": "Środki trwałe (netto)",
+        "accountsReceivable": "Należności",
+        "inventory": "Zapasy",
+        "accountsPayable": "Zobowiązania"
+      }
     },
     "tabs": {
       "models": "Modele",
@@ -18051,6 +18074,21 @@
       "technicalDetails": "Szczegóły techniczne",
       "lineCode": "Kod linii",
       "selectedCandidate": "Wybrany kandydat"
+    },
+    "canonicalTable": {
+      "ariaLabel": "Tabela sprawozdania finansowego",
+      "priorPeriod": "Poprzedni",
+      "currentPeriod": "Bieżący",
+      "valueColumn": "Wartość",
+      "currency": "Waluta"
+    },
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "Ze źródła",
+        "edited": "Edytowane",
+        "assumed": "Założenie AI — do przeglądu",
+        "missing": "Brak wartości"
+      }
     }
   },
   "portfolio": {

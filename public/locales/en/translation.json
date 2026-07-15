@@ -17165,7 +17165,30 @@
       "horizon": "Horizon (months)",
       "granularity": "Granularity",
       "currency": "Currency",
-      "valuateModel": "Valuate model"
+      "valuateModel": "Valuate model",
+      "eventTypes": {
+        "revenue": "Revenue",
+        "cogs": "COGS",
+        "opex": "Operating Expenses",
+        "capexPurchase": "CAPEX Purchase",
+        "depreciationRun": "Depreciation",
+        "debtDrawdown": "Debt Drawdown",
+        "debtRepayment": "Debt Repayment",
+        "interestAccrual": "Interest",
+        "taxAccrual": "Tax",
+        "wcChange": "Working Capital Change",
+        "equityInjection": "Equity Injection",
+        "dividend": "Dividend"
+      },
+      "initialFields": {
+        "cash": "Cash",
+        "equity": "Equity",
+        "debt": "Debt",
+        "ppe": "PPE (Net)",
+        "accountsReceivable": "Accounts Receivable",
+        "inventory": "Inventory",
+        "accountsPayable": "Accounts Payable"
+      }
     },
     "tabs": {
       "models": "Models",
@@ -17589,6 +17612,21 @@
       "technicalDetails": "Technical details",
       "lineCode": "Line code",
       "selectedCandidate": "Selected candidate"
+    },
+    "canonicalTable": {
+      "ariaLabel": "Financial statement table",
+      "priorPeriod": "Prior",
+      "currentPeriod": "Current",
+      "valueColumn": "Value",
+      "currency": "Currency"
+    },
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "Sourced",
+        "edited": "Edited",
+        "assumed": "AI assumed — needs review",
+        "missing": "Missing"
+      }
     }
   },
   "portfolio": {
