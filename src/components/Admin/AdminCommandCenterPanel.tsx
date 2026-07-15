@@ -1,19 +1,18 @@
 /**
- * Admin Command Center Panel (F-CC1 fundament + F-CC2 pierwsze wiring,
- * blok Harvey-Parity HP-10…13).
+ * Admin Command Center Panel (F-CC1 fundament + F-CC2 pierwsze wiring +
+ * F-CC3/F-CC4 domknięcie zakładek, blok Harvey-Parity HP-10…13).
  *
  * Sekcja `command` w hubie org-admina (`AdminSettingsModule`) — "Trust &
  * Control": przegląd posture spinający istniejące panele (role/SSO/audyt,
- * reużyte 1:1, NIE przepisane) + docelowo wiring 16 endpointów
+ * reużyte 1:1, NIE przepisane) + wiring 16 endpointów
  * `/api/admin/enterprise-compliance/*` (SOC2 export, DLP, data residency,
  * retencja, polityka AI).
  *
- * Zakres TEJ dostawy (F-CC1+F-CC2): zakładka "Przegląd" z kaflami-linkami
- * do people/security/audit (reuse, bez przepisywania) + dwa read-only kafle
- * podpięte pod realne endpointy (`GET /ai-policy`, `GET /data-residency`)
- * z jawnym stanem loading/error. Pozostałe zakładki (Audyt SOC2 / DLP /
- * Residency / Retencja / AI-policy) = szkielet z pustym stanem — pełny
- * wiring (tabele, formularze zapisu) to F-CC3/F-CC4.
+ * Zakładka "Przegląd": kafle-linki do people/security/audit (reuse) + 5
+ * read-only kafli podpiętych pod realne endpointy (residency, AI policy,
+ * DLP count, retention count, ostatni eksport SOC2). Pozostałe zakładki
+ * (Audyt SOC2 / DLP / Residency / Retencja / AI-policy) mają pełny wiring —
+ * patrz `./commandCenter/*Tab.tsx`.
  */
 import {
   AlertTriangle,
@@ -32,14 +31,23 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import {
+  type AuditExportResult,
   type DataResidencyPolicy,
   getAiPolicy,
+  getComplianceAuditExport,
   getDataResidency,
+  getDlpRules,
+  getRetentionSchedules,
   type OrgAiPolicy,
+  type RetentionSchedule,
 } from '../../services/enterpriseComplianceApi';
 import { cn } from '../../utils/cn';
 import type { AdminSettingsSection } from './AdminSettingsSidebar';
-import { UnavailableState } from './AdminState';
+import { CommandCenterAiPolicyTab } from './commandCenter/CommandCenterAiPolicyTab';
+import { CommandCenterAuditTab } from './commandCenter/CommandCenterAuditTab';
+import { CommandCenterDlpTab } from './commandCenter/CommandCenterDlpTab';
+import { CommandCenterResidencyTab } from './commandCenter/CommandCenterResidencyTab';
+import { CommandCenterRetentionTab } from './commandCenter/CommandCenterRetentionTab';
 
 type TabId = 'overview' | 'audit' | 'dlp' | 'residency' | 'retention' | 'ai-policy';
 
@@ -169,6 +177,23 @@ const CommandCenterOverviewTab: React.FC<{
     error: null,
     value: null,
   });
+  const [dlp, setDlp] = useState<DataTileState<{ active: number; total: number }>>({
+    loading: true,
+    error: null,
+    value: null,
+  });
+  const [retention, setRetention] = useState<
+    DataTileState<{ count: number; nextCleanupAt: string | null }>
+  >({
+    loading: true,
+    error: null,
+    value: null,
+  });
+  const [auditExport, setAuditExport] = useState<DataTileState<AuditExportResult>>({
+    loading: true,
+    error: null,
+    value: null,
+  });
 
   const loadResidency = useCallback(async () => {
     setResidency((prev) => ({ ...prev, loading: true, error: null }));
@@ -202,10 +227,72 @@ const CommandCenterOverviewTab: React.FC<{
     }
   }, [t]);
 
+  const loadDlp = useCallback(async () => {
+    setDlp((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const rules = await getDlpRules();
+      setDlp({
+        loading: false,
+        error: null,
+        value: { active: rules.filter((r) => r.isActive).length, total: rules.length },
+      });
+    } catch (error: any) {
+      setDlp({
+        loading: false,
+        error:
+          error?.message || t('commandCenter.overview.tiles.dlp.error', 'Failed to load DLP rules'),
+        value: null,
+      });
+    }
+  }, [t]);
+
+  const loadRetention = useCallback(async () => {
+    setRetention((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const schedules = await getRetentionSchedules();
+      const upcoming = schedules
+        .map((s: RetentionSchedule) => s.nextCleanupAt)
+        .filter((d): d is string => !!d)
+        .sort();
+      setRetention({
+        loading: false,
+        error: null,
+        value: { count: schedules.length, nextCleanupAt: upcoming[0] || null },
+      });
+    } catch (error: any) {
+      setRetention({
+        loading: false,
+        error:
+          error?.message ||
+          t('commandCenter.overview.tiles.retention.error', 'Failed to load retention schedules'),
+        value: null,
+      });
+    }
+  }, [t]);
+
+  const loadAuditExport = useCallback(async () => {
+    setAuditExport((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const value = await getComplianceAuditExport({});
+      setAuditExport({ loading: false, error: null, value });
+    } catch (error: any) {
+      setAuditExport({
+        loading: false,
+        error:
+          error?.message ||
+          t('commandCenter.overview.tiles.auditExport.error', 'Failed to load audit export'),
+        value: null,
+      });
+    }
+  }, [t]);
+
   useEffect(() => {
     void loadResidency();
     void loadAiPolicy();
-  }, [loadResidency, loadAiPolicy]);
+    void loadDlp();
+    void loadRetention();
+    void loadAuditExport();
+  }, [loadResidency, loadAiPolicy, loadDlp, loadRetention, loadAuditExport]);
 
   return (
     <div className="space-y-6">
@@ -287,48 +374,95 @@ const CommandCenterOverviewTab: React.FC<{
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-3">
         <DataTileShell
           icon={Lock}
           label={t('commandCenter.overview.tiles.dlp.label', 'DLP rules')}
-          loading={false}
-          error={null}
+          loading={dlp.loading}
+          error={dlp.error}
         >
-          <p className="text-sm text-c-text-secondary">
-            {t('commandCenter.overview.tiles.dlp.comingSoon', 'Wired in a follow-up step (F-CC3).')}
-          </p>
+          {dlp.value &&
+            (dlp.value.total === 0 ? (
+              <p className="text-sm text-c-text-secondary">
+                {t('commandCenter.overview.tiles.dlp.empty', 'No DLP rules configured')}
+              </p>
+            ) : (
+              <p className="text-lg font-semibold text-c-text">
+                {t(
+                  'commandCenter.overview.tiles.dlp.activeCount',
+                  '{{active}} active / {{total}} total',
+                  {
+                    active: dlp.value.active,
+                    total: dlp.value.total,
+                  }
+                )}
+              </p>
+            ))}
         </DataTileShell>
+
         <DataTileShell
           icon={Clock}
           label={t('commandCenter.overview.tiles.retention.label', 'Retention')}
-          loading={false}
-          error={null}
+          loading={retention.loading}
+          error={retention.error}
         >
-          <p className="text-sm text-c-text-secondary">
-            {t(
-              'commandCenter.overview.tiles.retention.comingSoon',
-              'Wired in a follow-up step (F-CC4).'
-            )}
-          </p>
+          {retention.value &&
+            (retention.value.count === 0 ? (
+              <p className="text-sm text-c-text-secondary">
+                {t(
+                  'commandCenter.overview.tiles.retention.empty',
+                  'No retention schedules configured'
+                )}
+              </p>
+            ) : (
+              <div>
+                <p className="text-lg font-semibold text-c-text">
+                  {t(
+                    'commandCenter.overview.tiles.retention.scheduleCount',
+                    '{{count}} schedule(s)',
+                    {
+                      count: retention.value.count,
+                    }
+                  )}
+                </p>
+                {retention.value.nextCleanupAt && (
+                  <p className="mt-1 text-xs text-c-text-secondary">
+                    {t(
+                      'commandCenter.overview.tiles.retention.nextCleanup',
+                      'Next cleanup {{date}}',
+                      {
+                        date: new Date(retention.value.nextCleanupAt).toLocaleDateString(),
+                      }
+                    )}
+                  </p>
+                )}
+              </div>
+            ))}
+        </DataTileShell>
+
+        <DataTileShell
+          icon={ScrollText}
+          label={t('commandCenter.overview.tiles.auditExport.label', 'Last SOC2 export')}
+          loading={auditExport.loading}
+          error={auditExport.error}
+        >
+          {auditExport.value && (
+            <div>
+              <p className="text-lg font-semibold text-c-text">
+                {t('commandCenter.overview.tiles.auditExport.entries', '{{count}} entries (30d)', {
+                  count: auditExport.value.totalCount,
+                })}
+              </p>
+              <p className="mt-1 text-xs text-c-text-secondary">
+                {t('commandCenter.overview.tiles.auditExport.generatedAt', 'as of {{time}}', {
+                  time: new Date(auditExport.value.exportedAt).toLocaleString(),
+                })}
+              </p>
+            </div>
+          )}
         </DataTileShell>
       </div>
     </div>
-  );
-};
-
-const PlaceholderTab: React.FC<{ titleKey: string; titleDefault: string }> = ({
-  titleKey,
-  titleDefault,
-}) => {
-  const { t } = useTranslation();
-  return (
-    <UnavailableState
-      title={t(titleKey, { defaultValue: titleDefault })}
-      description={t(
-        'commandCenter.placeholder.description',
-        'This tab is scheduled for a follow-up delivery step and is not wired yet.'
-      )}
-    />
   );
 };
 
@@ -428,21 +562,11 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
       </div>
 
       {activeTab === 'overview' && <CommandCenterOverviewTab onSectionChange={onSectionChange} />}
-      {activeTab === 'audit' && (
-        <PlaceholderTab titleKey="commandCenter.tabs.audit" titleDefault="SOC2 audit" />
-      )}
-      {activeTab === 'dlp' && (
-        <PlaceholderTab titleKey="commandCenter.tabs.dlp" titleDefault="DLP" />
-      )}
-      {activeTab === 'residency' && (
-        <PlaceholderTab titleKey="commandCenter.tabs.residency" titleDefault="Data residency" />
-      )}
-      {activeTab === 'retention' && (
-        <PlaceholderTab titleKey="commandCenter.tabs.retention" titleDefault="Retention" />
-      )}
-      {activeTab === 'ai-policy' && (
-        <PlaceholderTab titleKey="commandCenter.tabs.aiPolicy" titleDefault="AI policy" />
-      )}
+      {activeTab === 'audit' && <CommandCenterAuditTab />}
+      {activeTab === 'dlp' && <CommandCenterDlpTab />}
+      {activeTab === 'residency' && <CommandCenterResidencyTab />}
+      {activeTab === 'retention' && <CommandCenterRetentionTab />}
+      {activeTab === 'ai-policy' && <CommandCenterAiPolicyTab />}
     </div>
   );
 };

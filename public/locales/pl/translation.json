@@ -25376,12 +25376,218 @@
         },
         "dlp": {
           "label": "Reguły DLP",
-          "comingSoon": "Podpięcie w kolejnym kroku (F-CC3)."
+          "activeCount": "{{active}} aktywnych / {{total}} razem",
+          "empty": "Brak skonfigurowanych reguł DLP",
+          "error": "Nie udało się wczytać reguł DLP"
         },
         "retention": {
           "label": "Retencja",
-          "comingSoon": "Podpięcie w kolejnym kroku (F-CC4)."
+          "scheduleCount": "{{count}} harmonogram(ów)",
+          "nextCleanup": "Następne czyszczenie {{date}}",
+          "empty": "Brak skonfigurowanych harmonogramów retencji",
+          "error": "Nie udało się wczytać harmonogramów retencji"
+        },
+        "auditExport": {
+          "label": "Ostatni eksport SOC2",
+          "entries": "{{count}} wpisów (30 dni)",
+          "generatedAt": "stan na {{time}}",
+          "error": "Nie udało się wczytać eksportu audytu"
         }
+      }
+    },
+    "audit": {
+      "title": "Ślad audytowy SOC2",
+      "description": "Eksport hashy żądań/odpowiedzi, kosztów i decyzji polityk dla zakresu dat. Dane w zakresie organizacji z tokenu.",
+      "filters": {
+        "from": "Od",
+        "to": "Do",
+        "userId": "ID użytkownika",
+        "eventType": "Typ zdarzenia",
+        "apply": "Zastosuj filtry"
+      },
+      "actions": {
+        "download": "Pobierz JSON",
+        "refresh": "Odśwież"
+      },
+      "columns": {
+        "createdAt": "Data",
+        "eventType": "Zdarzenie",
+        "model": "Model",
+        "tokens": "Tokeny (we/wy)",
+        "cost": "Koszt",
+        "latency": "Opóźnienie",
+        "policy": "Decyzje polityk"
+      },
+      "summary": "{{count}} wpisów — wygenerowano {{time}}",
+      "empty": {
+        "title": "Brak wpisów audytu w tym zakresie",
+        "description": "Rozszerz zakres dat lub wyczyść filtry."
+      },
+      "toasts": {
+        "downloaded": "Eksport audytu pobrany",
+        "loadError": "Nie udało się wczytać eksportu audytu SOC2"
+      }
+    },
+    "dlp": {
+      "title": "Reguły ochrony przed wyciekiem danych",
+      "description": "Reguły regex, słów kluczowych i encji stosowane do wejścia/wyjścia modelu.",
+      "actions": {
+        "addRule": "Dodaj regułę",
+        "cancel": "Anuluj",
+        "create": "Utwórz regułę",
+        "scan": "Uruchom skan",
+        "toggleEnable": "Włącz",
+        "toggleDisable": "Wyłącz",
+        "delete": "Usuń"
+      },
+      "form": {
+        "ruleName": "Nazwa reguły",
+        "ruleType": "Typ",
+        "pattern": "Wzorzec",
+        "action": "Akcja",
+        "appliesTo": "Dotyczy",
+        "severity": "Waga",
+        "ruleTypeOptions": { "regex": "Regex", "keyword": "Słowo kluczowe", "entity": "Encja" },
+        "actionOptions": {
+          "block": "Blokuj",
+          "redact": "Zaczerń",
+          "warn": "Ostrzeż",
+          "log": "Zaloguj"
+        },
+        "appliesToOptions": { "input": "Wejście", "output": "Wyjście", "both": "Oba" },
+        "severityOptions": {
+          "low": "Niska",
+          "medium": "Średnia",
+          "high": "Wysoka",
+          "critical": "Krytyczna"
+        }
+      },
+      "scan": {
+        "title": "Skan testowy",
+        "description": "Uruchom aktywny zestaw reguł na przykładowej treści bez zapisywania jej.",
+        "contentPlaceholder": "Wklej treść do skanowania…",
+        "direction": "Kierunek",
+        "clean": "Czysto — brak naruszeń",
+        "blocked": "Zablokowane przez {{count}} reguł(y)",
+        "violations": "Znaleziono {{count}} naruszeń"
+      },
+      "columns": {
+        "ruleName": "Reguła",
+        "ruleType": "Typ",
+        "pattern": "Wzorzec",
+        "action": "Akcja",
+        "appliesTo": "Dotyczy",
+        "severity": "Waga",
+        "status": "Status"
+      },
+      "status": { "active": "Aktywna", "inactive": "Nieaktywna" },
+      "confirmDelete": {
+        "title": "Usunąć regułę DLP?",
+        "description": "Reguła przestanie działać dla nowych wiadomości natychmiast. Tej operacji nie można cofnąć."
+      },
+      "empty": {
+        "title": "Brak skonfigurowanych reguł DLP",
+        "description": "Dodaj regułę, aby zacząć skanować treść wejścia i wyjścia."
+      },
+      "toasts": {
+        "created": "Reguła DLP utworzona",
+        "toggledOn": "Reguła włączona",
+        "toggledOff": "Reguła wyłączona",
+        "deleted": "Reguła DLP usunięta",
+        "loadError": "Nie udało się wczytać reguł DLP",
+        "createError": "Nie udało się utworzyć reguły DLP",
+        "toggleError": "Nie udało się zaktualizować reguły DLP",
+        "deleteError": "Nie udało się usunąć reguły DLP",
+        "scanError": "Nie udało się uruchomić skanu DLP"
+      }
+    },
+    "residency": {
+      "title": "Rezydencja danych",
+      "description": "Region przetwarzania i przechowywania danych organizacji oraz czy wymuszone jest przetwarzanie tylko w UE.",
+      "fields": {
+        "region": "Region rezydencji danych",
+        "regionPlaceholder": "np. eu, us, uk",
+        "enforceEuOnly": "Wymuś przetwarzanie tylko w UE",
+        "allowedRegions": "Dozwolone regiony (rozdzielone przecinkami)",
+        "deniedRegions": "Zabronione regiony (rozdzielone przecinkami)"
+      },
+      "actions": { "save": "Zapisz politykę" },
+      "toasts": {
+        "saved": "Polityka rezydencji danych zaktualizowana",
+        "loadError": "Nie udało się wczytać polityki rezydencji danych",
+        "saveError": "Nie udało się zaktualizować polityki rezydencji danych"
+      }
+    },
+    "retention": {
+      "title": "Automatyzacja retencji",
+      "description": "Harmonogramy retencji per typ danych z automatycznym czyszczeniem.",
+      "actions": {
+        "initialize": "Zainicjuj harmonogramy",
+        "execute": "Wykonaj retencję teraz",
+        "save": "Zapisz"
+      },
+      "confirmExecute": {
+        "title": "Wykonać retencję teraz?",
+        "description": "Trwale usunie dane przekraczające okno retencji dla każdego aktywnego harmonogramu w tej organizacji. Tej operacji nie można cofnąć."
+      },
+      "columns": {
+        "dataType": "Typ danych",
+        "retentionDays": "Retencja (dni)",
+        "nextCleanup": "Następne czyszczenie",
+        "lastCleanup": "Ostatnie czyszczenie",
+        "itemsDeleted": "Usunięte pozycje (razem)",
+        "status": "Status"
+      },
+      "status": { "active": "Aktywny", "inactive": "Nieaktywny" },
+      "results": {
+        "title": "Wynik ostatniego wykonania",
+        "summary": "{{dataType}}: usunięto {{deleted}}, zachowano {{preserved}}"
+      },
+      "empty": {
+        "title": "Brak skonfigurowanych harmonogramów retencji",
+        "description": "Zainicjuj domyślne harmonogramy, aby uruchomić automatyczne czyszczenie."
+      },
+      "toasts": {
+        "initialized": "Harmonogramy retencji zainicjowane",
+        "updated": "Harmonogram retencji zaktualizowany",
+        "executed": "Retencja wykonana",
+        "loadError": "Nie udało się wczytać harmonogramów retencji",
+        "initializeError": "Nie udało się zainicjować harmonogramów retencji",
+        "updateError": "Nie udało się zaktualizować harmonogramu retencji",
+        "executeError": "Nie udało się wykonać retencji"
+      }
+    },
+    "aiPolicy": {
+      "title": "Polityka AI organizacji",
+      "description": "Wymagania cytowań, limity tokenów i kontrole bezpieczeństwa stosowane do każdej rozmowy w tej organizacji.",
+      "fields": {
+        "citationMode": "Wymagany tryb cytowania",
+        "maxTokensPerMessage": "Maks. tokenów na wiadomość",
+        "maxTokensPerConversation": "Maks. tokenów na rozmowę",
+        "allowedTopics": "Dozwolone tematy (rozdzielone przecinkami)",
+        "blockedTopics": "Zablokowane tematy (rozdzielone przecinkami)",
+        "mandatoryDisclaimers": "Obowiązkowe zastrzeżenia (jedno na linię)",
+        "blockedTools": "Zablokowane narzędzia (rozdzielone przecinkami)",
+        "allowedModels": "Dozwolone modele (rozdzielone przecinkami)",
+        "dataResidencyRegion": "Region rezydencji danych",
+        "enforceEuOnly": "Wymuś przetwarzanie tylko w UE",
+        "citationModeOptions": {
+          "none": "Brak",
+          "recommended": "Zalecane",
+          "required": "Wymagane",
+          "strict": "Ścisłe"
+        }
+      },
+      "customSafetyRules": {
+        "title": "Niestandardowe reguły bezpieczeństwa",
+        "description": "Tylko do odczytu w tym widoku — skonfigurowano {{count}} reguł(y).",
+        "empty": "Brak skonfigurowanych niestandardowych reguł bezpieczeństwa."
+      },
+      "actions": { "save": "Zapisz politykę" },
+      "toasts": {
+        "saved": "Polityka AI zaktualizowana",
+        "loadError": "Nie udało się wczytać polityki AI",
+        "saveError": "Nie udało się zaktualizować polityki AI"
       }
     },
     "placeholder": {
