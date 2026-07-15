@@ -344,16 +344,30 @@ describe('financeReportSectionService — lineage (#82g jawny ślad źródeł)',
 });
 
 describe('financeReportSectionService — renderFinanceReportMarkdown', () => {
-  it('renders all five sections, degrading gracefully when reconcile/valuation are unavailable', () => {
+  it('renders all eight sections, degrading gracefully when reconcile/valuation are unavailable', () => {
     const section = composeFinanceReportSection(baseInput());
     const md = renderFinanceReportMarkdown(section);
     expect(Object.keys(md).sort()).toEqual(
-      ['ev_football_field', 'header', 'narrative', 'ratio_table', 'reconcile_result'].sort()
+      [
+        'ev_football_field',
+        'header',
+        'narrative',
+        'portfolio_advisory',
+        'ratio_table',
+        'reconcile_result',
+        'scenario_levers',
+        'value_tree',
+      ].sort()
     );
     expect(md.header).toContain('FY2025');
     expect(md.ratio_table).toContain('Wskaźniki');
     expect(md.reconcile_result).toContain('nie przeszedł jeszcze przeliczenia');
     expect(md.ev_football_field).toContain('Brak wyceny');
+    // O4.2/O4.3 — COMPLETE_LINES carries REVENUE+NET_INCOME, so scenarios/value tree compute.
+    expect(md.scenario_levers).toContain('Scenariusze-dźwignie');
+    expect(md.value_tree).toContain('Drzewo wartości korzyści');
+    // O4.4 — no portfolioItems supplied in this fixture → honest empty state.
+    expect(md.portfolio_advisory).toContain('Brak inicjatyw organizacji');
   });
 
   it('renders the reconcile findings and football-field table when data is available', () => {
@@ -452,5 +466,87 @@ describe('financeReportSectionService — evaluateReconcileEnforcement (RECONCIL
     // uses. Must be a no-op today: RECONCILE_ENFORCE is a hardcoded `false` until DBR77
     // calibration flips it (see reconciliationService.ts).
     expect(evaluateReconcileEnforcement('pack-1', dirtySummary)).toBeNull();
+  });
+});
+
+describe('financeReportSectionService — O4.2/O4.3/O4.4 advisory wiring', () => {
+  it('O4.2 scenarios: computes a risk-adjusted lever recommendation from REVENUE/NET_INCOME', () => {
+    const section = composeFinanceReportSection(baseInput());
+    expect(section.scenarios.available).toBe(true);
+    expect(section.scenarios.outcomes).toHaveLength(5); // status_quo + 4 named levers
+    const statusQuo = section.scenarios.outcomes.find((o) => o.leverId === 'status_quo');
+    expect(statusQuo?.metric).toBe(COMPLETE_LINES.NET_INCOME); // 1.0/1.0 multiplier = unchanged
+    expect(statusQuo?.deltaVsStatusQuo).toBe(0);
+    expect(section.scenarios.recommendation).not.toBeNull();
+    expect(section.scenarios.recommendation?.chosenId).toBeTruthy();
+  });
+
+  it('O4.2 scenarios: honestly unavailable when REVENUE/NET_INCOME are missing (no guessing)', () => {
+    const section = composeFinanceReportSection(baseInput({ lineValues: { REVENUE: 1000 } }));
+    expect(section.scenarios.available).toBe(false);
+    expect(section.scenarios.outcomes).toEqual([]);
+    expect(section.scenarios.recommendation).toBeNull();
+  });
+
+  it('O4.3 value tree: decomposes the recommended lever into real growth/savings components', () => {
+    const section = composeFinanceReportSection(baseInput());
+    expect(section.scenarios.recommendation).not.toBeNull();
+    const chosenId = section.scenarios.recommendation!.chosenId;
+    // aggressive_automation/growth_bet/defensive_cost all imply a real (non-status-quo) swing;
+    // only status_quo itself produces zero components — assert consistency with whichever lever
+    // the deterministic risk-adjusted ranking actually chose.
+    if (chosenId === 'status_quo') {
+      expect(section.valueTree.available).toBe(false);
+    } else {
+      expect(section.valueTree.available).toBe(true);
+      expect(section.valueTree.forLeverId).toBe(chosenId);
+      expect(section.valueTree.tree).not.toBeNull();
+      expect(section.valueTree.tree!.gross).toBeGreaterThan(0);
+      expect(section.valueTree.narrative).toContain('do zaksięgowania');
+    }
+  });
+
+  it('O4.3 value tree: honestly unavailable when scenarios are unavailable', () => {
+    const section = composeFinanceReportSection(baseInput({ lineValues: { REVENUE: 1000 } }));
+    expect(section.valueTree.available).toBe(false);
+    expect(section.valueTree.tree).toBeNull();
+    expect(section.valueTree.narrative).toBeNull();
+  });
+
+  it('O4.4 portfolio advisory: empty path is honest (no fabricated sequence) when no items supplied', () => {
+    const section = composeFinanceReportSection(baseInput());
+    expect(section.portfolioAdvisory.available).toBe(false);
+    expect(section.portfolioAdvisory.itemCount).toBe(0);
+    expect(section.portfolioAdvisory.advisory).toBeNull();
+  });
+
+  it('O4.4 portfolio advisory: sequences real initiative items when supplied by the caller', () => {
+    const section = composeFinanceReportSection(
+      baseInput({
+        portfolioItems: [
+          { id: 'a', name: 'Wspólny model danych', npv: 400_000, capex: 200_000, effort: 2, risk: 0.2 },
+          {
+            id: 'b',
+            name: 'Automatyzacja raportów',
+            npv: 600_000,
+            capex: 150_000,
+            effort: 2,
+            risk: 0.3,
+            dependsOn: ['a'],
+          },
+        ],
+      })
+    );
+    expect(section.portfolioAdvisory.available).toBe(true);
+    expect(section.portfolioAdvisory.itemCount).toBe(2);
+    const order = section.portfolioAdvisory.advisory!.sequence.map((s) => s.id);
+    expect(order.indexOf('a')).toBeLessThan(order.indexOf('b'));
+  });
+
+  it('renderFinanceScenarioMarkdown / renderFinanceValueTreeMarkdown degrade honestly for the empty section fixture', () => {
+    const md = renderFinanceReportMarkdown(composeFinanceReportSection({ organizationId: 'org-1', pack: null } as unknown as RawFinanceReportInputs));
+    expect(md.scenario_levers).toContain('no guessing');
+    expect(md.value_tree).toContain('Brak rekomendowanej dźwigni');
+    expect(md.portfolio_advisory).toContain('Brak inicjatyw organizacji');
   });
 });
