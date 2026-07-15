@@ -422,10 +422,10 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                         : 'text-c-text-secondary'
                   }`}
                 >
-                  {isPl ? step.titlePl : step.title}
+                  {t(`reportBuilder.wizard.stepMeta.${step.id}.title`, step.title)}
                 </div>
                 <div className="hidden md:block text-[10px] text-c-text-secondary mt-0.5 max-w-[120px]">
-                  {isPl ? step.descriptionPl : step.description}
+                  {t(`reportBuilder.wizard.stepMeta.${step.id}.description`, step.description)}
                 </div>
               </div>
             </div>
@@ -591,21 +591,17 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     const nextLabel = (() => {
       switch (activeStepId) {
         case 0:
-          return isPl ? 'Zapisz definicję' : 'Save definition';
+          return t('reportBuilder.wizard.saveDefinition', 'Save definition');
         case 1:
-          return isPl ? 'Zaakceptuj strukturę' : 'Accept outline';
+          return t('reportBuilder.wizard.acceptOutline', 'Accept outline');
         case 2:
-          return isPl ? 'Przejdź do generowania' : 'Proceed to generation';
+          return t('reportBuilder.wizard.proceedToGeneration', 'Proceed to generation');
         case 3:
           return report?.status === 'GENERATED'
-            ? isPl
-              ? 'Wyślij do weryfikacji'
-              : 'Submit for review'
-            : isPl
-              ? 'Generuj'
-              : 'Generate';
+            ? t('reportBuilder.wizard.submitForReview', 'Submit for review')
+            : t('reportBuilder.wizard.generate', 'Generate');
         default:
-          return isPl ? 'Dalej' : 'Next';
+          return t('reportBuilder.wizard.next', 'Next');
       }
     })();
 
@@ -636,7 +632,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               className="flex items-center gap-2 px-4 py-2.5 text-c-text-secondary hover:opacity-90 rounded-lg transition-colors border border-transparent hover:border-c-border-subtle"
             >
               <ArrowLeft className="w-4 h-4" />
-              {isPl ? 'Wstecz' : 'Back'}
+              {t('reportBuilder.wizard.back', 'Back')}
             </button>
           )}
         </div>
@@ -646,7 +642,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
             onClick={handleCancel}
             className="px-4 py-2.5 text-c-text-secondary hover:opacity-90 rounded-lg transition-colors text-sm"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('reportBuilder.wizard.cancel', 'Cancel')}
           </button>
 
           <button
@@ -695,14 +691,12 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
             <div className="p-2 rounded-xl bg-c-accent-soft0">
               <Sparkles className="w-6 h-6 text-c-accent" />
             </div>
-            {isPl ? 'Kreator Raportów' : 'Report Builder'}
+            {t('reportBuilder.wizard.reportBuilder', 'Report Builder')}
           </h1>
           <p className="mt-1 text-c-text-secondary ml-[52px]">
             {report
               ? report.title
-              : isPl
-                ? 'Utwórz profesjonalny raport na podstawie danych z oceny'
-                : 'Create a professional report based on assessment data'}
+              : t('reportBuilder.wizard.createAProfessionalReportBasedOn', 'Create a professional report based on assessment data')}
           </p>
         </div>
         {report?.id && (
@@ -731,7 +725,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
           <XCircle className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <div className="font-medium text-danger-800 dark:text-danger-200">
-              {isPl ? 'Wystąpił błąd' : 'An error occurred'}
+              {t('reportBuilder.wizard.anErrorOccurred', 'An error occurred')}
             </div>
             <div className="text-sm text-danger-600 dark:text-danger-300 mt-1">{error}</div>
           </div>
@@ -751,14 +745,20 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
           <div>
             <h2 className="text-lg font-bold text-c-text">
               <span className="text-c-accent mr-2">{currentStep + 1}.</span>
-              {isPl ? STEPS[currentStep].titlePl : STEPS[currentStep].title}
+              {t(
+                `reportBuilder.wizard.stepMeta.${STEPS[currentStep].id}.title`,
+                STEPS[currentStep].title
+              )}
             </h2>
             <p className="text-sm text-c-text-secondary mt-0.5">
-              {isPl ? STEPS[currentStep].descriptionPl : STEPS[currentStep].description}
+              {t(
+                `reportBuilder.wizard.stepMeta.${STEPS[currentStep].id}.description`,
+                STEPS[currentStep].description
+              )}
             </p>
           </div>
           <div className="text-xs text-c-text-secondary">
-            {isPl ? 'Krok' : 'Step'} {currentStep + 1}/{STEPS.length}
+            {t('reportBuilder.wizard.step', 'Step')} {currentStep + 1}/{STEPS.length}
           </div>
         </div>
 

@@ -28476,6 +28476,66 @@
           "description": "Utwórz draft raportu z wrzuconych dokumentów"
         }
       }
+    },
+    "inlineEditor": {
+      "editContentCtrlClick": "Edytuj treść (Ctrl+Click)",
+      "edit": "Edytuj",
+      "editMode": "Tryb edycji",
+      "words": "słów",
+      "changedLines": "zm. linii",
+      "undoCtrlZ": "Cofnij (Ctrl+Z)",
+      "redoCtrlShiftZ": "Ponów (Ctrl+Shift+Z)",
+      "preview": "Podgląd",
+      "cancelEsc": "Anuluj (Esc)",
+      "saveCtrlS": "Zapisz (Ctrl+S)",
+      "save": "Zapisz",
+      "save2": "zapisz",
+      "undo": "cofnij",
+      "cancel": "anuluj",
+      "doubleClickToEdit": "Podwójne kliknięcie aby edytować"
+    },
+    "blockPalette": {
+      "all": "Wszystkie",
+      "content": "Treść",
+      "data": "Dane",
+      "visual": "Wizualne",
+      "addBlock": "Dodaj blok",
+      "searchBlocks": "Szukaj bloków...",
+      "notAvailableForThisContext": "Niedostępny dla tego kontekstu",
+      "noBlocksFound": "Nie znaleziono bloków",
+      "loadingBlockLibrary": "Ładowanie biblioteki bloków…"
+    },
+    "wizard": {
+      "saveDefinition": "Zapisz definicję",
+      "acceptOutline": "Zaakceptuj strukturę",
+      "proceedToGeneration": "Przejdź do generowania",
+      "submitForReview": "Wyślij do weryfikacji",
+      "generate": "Generuj",
+      "next": "Dalej",
+      "back": "Wstecz",
+      "cancel": "Anuluj",
+      "reportBuilder": "Kreator Raportów",
+      "createAProfessionalReportBasedOn": "Utwórz profesjonalny raport na podstawie danych z oceny",
+      "anErrorOccurred": "Wystąpił błąd",
+      "step": "Krok",
+      "stepMeta": {
+        "0": {
+          "title": "Definicja raportu",
+          "description": "Ustal typ raportu, intencję i warstwę definicji"
+        },
+        "1": {
+          "title": "Propozycja AI",
+          "description": "AI proponuje strukturę raportu do akceptacji"
+        },
+        "2": {
+          "title": "Konfiguracja",
+          "description": "Edytuj bloki, kolejność i ustawienia sekcji"
+        },
+        "3": {
+          "title": "Generuj i Edytuj",
+          "description": "Wygeneruj treść, przejrzyj i wyślij"
+        }
+      }
     }
   }
 }

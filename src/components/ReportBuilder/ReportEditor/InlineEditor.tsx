@@ -8,6 +8,7 @@
 
 import { Check, Eye, Pencil, RotateCcw, RotateCw, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
 // ==========================================
@@ -96,6 +97,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
   previewRenderer,
   maxHeight = 500,
 }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [originalContent] = useState(content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -153,10 +155,10 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
             bg-c-surface border border-c-border-subtle 
             rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600
             text-c-text-secondary hover:text-blue-600 dark:hover:text-blue-400"
-          title={isPl ? 'Edytuj treść (Ctrl+Click)' : 'Edit content (Ctrl+Click)'}
+          title={t('reportBuilder.inlineEditor.editContentCtrlClick', 'Edit content (Ctrl+Click)')}
         >
           <Pencil className="w-3 h-3" />
-          {isPl ? 'Edytuj' : 'Edit'}
+          {t('reportBuilder.inlineEditor.edit', 'Edit')}
         </button>
 
         {/* Content preview */}
@@ -185,13 +187,13 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-blue-700 dark:text-blue-300 flex items-center gap-1">
             <Pencil className="w-3 h-3" />
-            {isPl ? 'Tryb edycji' : 'Edit Mode'}
+            {t('reportBuilder.inlineEditor.editMode', 'Edit Mode')}
           </span>
           <span className="text-[10px] text-blue-500 dark:text-blue-400">
-            {wordCount} {isPl ? 'słów' : 'words'}
+            {wordCount} {t('reportBuilder.inlineEditor.words', 'words')}
             {changedLines > 0 && (
               <span className="ml-1 text-amber-600 dark:text-amber-400">
-                · {changedLines} {isPl ? 'zm. linii' : 'changed lines'}
+                · {changedLines} {t('reportBuilder.inlineEditor.changedLines', 'changed lines')}
               </span>
             )}
           </span>
@@ -203,7 +205,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
             onClick={undo}
             disabled={!canUndo}
             className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded disabled:opacity-30"
-            title={isPl ? 'Cofnij (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
+            title={t('reportBuilder.inlineEditor.undoCtrlZ', 'Undo (Ctrl+Z)')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
@@ -211,7 +213,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
             onClick={redo}
             disabled={!canRedo}
             className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded disabled:opacity-30"
-            title={isPl ? 'Ponów (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
+            title={t('reportBuilder.inlineEditor.redoCtrlShiftZ', 'Redo (Ctrl+Shift+Z)')}
           >
             <RotateCw className="w-3.5 h-3.5" />
           </button>
@@ -222,7 +224,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
           <button
             onClick={() => setIsEditing(false)}
             className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded"
-            title={isPl ? 'Podgląd' : 'Preview'}
+            title={t('reportBuilder.inlineEditor.preview', 'Preview')}
           >
             <Eye className="w-3.5 h-3.5" />
           </button>
@@ -234,7 +236,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
               setIsEditing(false);
             }}
             className="p-1 text-c-text-secondary hover:bg-c-border-subtle rounded"
-            title={isPl ? 'Anuluj (Esc)' : 'Cancel (Esc)'}
+            title={t('reportBuilder.inlineEditor.cancelEsc', 'Cancel (Esc)')}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -251,10 +253,10 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
                 ? 'bg-blue-600 text-c-text hover:bg-blue-700 shadow-sm'
                 : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
             }`}
-            title={isPl ? 'Zapisz (Ctrl+S)' : 'Save (Ctrl+S)'}
+            title={t('reportBuilder.inlineEditor.saveCtrlS', 'Save (Ctrl+S)')}
           >
             <Check className="w-3 h-3" />
-            {isPl ? 'Zapisz' : 'Save'}
+            {t('reportBuilder.inlineEditor.save', 'Save')}
           </button>
         </div>
       </div>
@@ -276,18 +278,18 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
       <div className="flex items-center gap-3 mt-1 px-1">
         <span className="text-[10px] text-c-text-secondary">
           <kbd className="px-1 py-0.5 bg-c-surface-raised rounded text-[9px]">Ctrl+S</kbd>{' '}
-          {isPl ? 'zapisz' : 'save'}
+          {t('reportBuilder.inlineEditor.save2', 'save')}
         </span>
         <span className="text-[10px] text-c-text-secondary">
           <kbd className="px-1 py-0.5 bg-c-surface-raised rounded text-[9px]">Ctrl+Z</kbd>{' '}
-          {isPl ? 'cofnij' : 'undo'}
+          {t('reportBuilder.inlineEditor.undo', 'undo')}
         </span>
         <span className="text-[10px] text-c-text-secondary">
           <kbd className="px-1 py-0.5 bg-c-surface-raised rounded text-[9px]">Esc</kbd>{' '}
-          {isPl ? 'anuluj' : 'cancel'}
+          {t('reportBuilder.inlineEditor.cancel', 'cancel')}
         </span>
         <span className="text-[10px] text-c-text-secondary">
-          {isPl ? 'Podwójne kliknięcie aby edytować' : 'Double-click to edit'}
+          {t('reportBuilder.inlineEditor.doubleClickToEdit', 'Double-click to edit')}
         </span>
       </div>
     </div>

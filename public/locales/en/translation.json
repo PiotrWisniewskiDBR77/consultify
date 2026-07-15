@@ -27400,6 +27400,66 @@
           "description": "Create draft report from uploaded documents"
         }
       }
+    },
+    "inlineEditor": {
+      "editContentCtrlClick": "Edit content (Ctrl+Click)",
+      "edit": "Edit",
+      "editMode": "Edit Mode",
+      "words": "words",
+      "changedLines": "changed lines",
+      "undoCtrlZ": "Undo (Ctrl+Z)",
+      "redoCtrlShiftZ": "Redo (Ctrl+Shift+Z)",
+      "preview": "Preview",
+      "cancelEsc": "Cancel (Esc)",
+      "saveCtrlS": "Save (Ctrl+S)",
+      "save": "Save",
+      "save2": "save",
+      "undo": "undo",
+      "cancel": "cancel",
+      "doubleClickToEdit": "Double-click to edit"
+    },
+    "blockPalette": {
+      "all": "All",
+      "content": "Content",
+      "data": "Data",
+      "visual": "Visual",
+      "addBlock": "Add Block",
+      "searchBlocks": "Search blocks...",
+      "notAvailableForThisContext": "Not available for this context",
+      "noBlocksFound": "No blocks found",
+      "loadingBlockLibrary": "Loading block library…"
+    },
+    "wizard": {
+      "saveDefinition": "Save definition",
+      "acceptOutline": "Accept outline",
+      "proceedToGeneration": "Proceed to generation",
+      "submitForReview": "Submit for review",
+      "generate": "Generate",
+      "next": "Next",
+      "back": "Back",
+      "cancel": "Cancel",
+      "reportBuilder": "Report Builder",
+      "createAProfessionalReportBasedOn": "Create a professional report based on assessment data",
+      "anErrorOccurred": "An error occurred",
+      "step": "Step",
+      "stepMeta": {
+        "0": {
+          "title": "Report Definition",
+          "description": "Set report type, intent, and definition layer"
+        },
+        "1": {
+          "title": "AI Outline",
+          "description": "AI proposes report outline for your approval"
+        },
+        "2": {
+          "title": "Configure",
+          "description": "Edit blocks, order, and section options"
+        },
+        "3": {
+          "title": "Generate & Edit",
+          "description": "Generate content, review, and submit"
+        }
+      }
     }
   }
 }
