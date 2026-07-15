@@ -17072,7 +17072,8 @@
       "contentDepth": "Content Depth"
     },
     "outline": {
-      "keyMessagePlaceholder": "Key message for this slide..."
+      "keyMessagePlaceholder": "Key message for this slide...",
+      "slides": "slides"
     },
     "versionConflictDetected": "This deck was changed in another session. Choose how to resolve it.",
     "versionConflictReloaded": "Reloaded the latest version of this deck.",
@@ -17087,6 +17088,27 @@
       "jumpTo": "Jump to artifact",
       "subtitle": "All sources linked to this presentation — click to jump to the artifact.",
       "title": "Relations"
+    },
+    "templates": {
+      "systemTemplates": "System Templates",
+      "orgTemplates": "Organization Templates",
+      "viewOutline": "View outline",
+      "use": "Use",
+      "clone": "Clone",
+      "cloned": "Template cloned to your organization",
+      "cloneFailed": "Failed to clone",
+      "audience": {
+        "sponsor": "Sponsor",
+        "executive": "Executive",
+        "investor": "Investor / VC",
+        "internal": "Internal Team"
+      },
+      "goal": {
+        "inform": "Inform",
+        "decide": "Decide",
+        "sell": "Sell",
+        "align": "Align"
+      }
     }
   },
   "finance": {

@@ -57,23 +57,22 @@ const DECK_TYPE_COLORS: Record<string, string> = {
   assessment_summary: 'from-blue-500 to-blue-500',
 };
 
-const AUDIENCE_LABELS: Record<string, { en: string; pl: string }> = {
-  sponsor: { en: 'Sponsor', pl: 'Sponsor' },
-  executive: { en: 'Executive', pl: 'Zarząd' },
-  investor: { en: 'Investor / VC', pl: 'Inwestor / VC' },
-  internal: { en: 'Internal Team', pl: 'Zespół wewnętrzny' },
+const AUDIENCE_I18N: Record<string, { key: string; fallback: string }> = {
+  sponsor: { key: 'presentations.templates.audience.sponsor', fallback: 'Sponsor' },
+  executive: { key: 'presentations.templates.audience.executive', fallback: 'Executive' },
+  investor: { key: 'presentations.templates.audience.investor', fallback: 'Investor / VC' },
+  internal: { key: 'presentations.templates.audience.internal', fallback: 'Internal Team' },
 };
 
-const GOAL_LABELS: Record<string, { en: string; pl: string }> = {
-  inform: { en: 'Inform', pl: 'Informuj' },
-  decide: { en: 'Decide', pl: 'Decyduj' },
-  sell: { en: 'Sell', pl: 'Sprzedaj' },
-  align: { en: 'Align', pl: 'Alignuj' },
+const GOAL_I18N: Record<string, { key: string; fallback: string }> = {
+  inform: { key: 'presentations.templates.goal.inform', fallback: 'Inform' },
+  decide: { key: 'presentations.templates.goal.decide', fallback: 'Decide' },
+  sell: { key: 'presentations.templates.goal.sell', fallback: 'Sell' },
+  align: { key: 'presentations.templates.goal.align', fallback: 'Align' },
 };
 
 export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSelectTemplate }) => {
-  const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [templates, setTemplates] = useState<DeckTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +133,6 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
             <TemplateCard
               key={tmpl.id}
               template={tmpl}
-              isPl={isPl}
               isExpanded={expandedId === tmpl.id}
               onToggle={() => setExpandedId(expandedId === tmpl.id ? null : tmpl.id)}
               onSelect={onSelectTemplate ? () => onSelectTemplate(tmpl.id) : undefined}
@@ -157,7 +155,6 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
               <TemplateCard
                 key={tmpl.id}
                 template={tmpl}
-                isPl={isPl}
                 isExpanded={expandedId === tmpl.id}
                 onToggle={() => setExpandedId(expandedId === tmpl.id ? null : tmpl.id)}
                 onSelect={onSelectTemplate ? () => onSelectTemplate(tmpl.id) : undefined}
@@ -173,19 +170,18 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
 
 const TemplateCard: React.FC<{
   template: DeckTemplate;
-  isPl: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   onSelect?: () => void;
   onClone?: () => void;
   cloning: boolean;
-}> = ({ template, isPl, isExpanded, onToggle, onSelect, onClone, cloning }) => {
+}> = ({ template, isExpanded, onToggle, onSelect, onClone, cloning }) => {
   const { t } = useTranslation();
   const gradientClass = DECK_TYPE_COLORS[template.deck_type] || 'from-slate-500 to-slate-600';
-  const audience = isPl
-    ? AUDIENCE_LABELS[template.audience]?.pl
-    : AUDIENCE_LABELS[template.audience]?.en;
-  const goal = isPl ? GOAL_LABELS[template.goal]?.pl : GOAL_LABELS[template.goal]?.en;
+  const audienceI18n = AUDIENCE_I18N[template.audience];
+  const audience = audienceI18n ? t(audienceI18n.key, audienceI18n.fallback) : undefined;
+  const goalI18n = GOAL_I18N[template.goal];
+  const goal = goalI18n ? t(goalI18n.key, goalI18n.fallback) : undefined;
 
   return (
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden hover:shadow-md transition-shadow">

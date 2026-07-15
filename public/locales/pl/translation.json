@@ -714,7 +714,19 @@
       "use": "Użyj",
       "clone": "Sklonuj",
       "cloned": "Szablon sklonowany do Twojej organizacji",
-      "cloneFailed": "Nie udało się sklonować"
+      "cloneFailed": "Nie udało się sklonować",
+      "audience": {
+        "sponsor": "Sponsor",
+        "executive": "Zarząd",
+        "investor": "Inwestor / VC",
+        "internal": "Zespół wewnętrzny"
+      },
+      "goal": {
+        "inform": "Informuj",
+        "decide": "Decyduj",
+        "sell": "Sprzedaj",
+        "align": "Alignuj"
+      }
     },
     "brandKit": {
       "title": "Kit marki",
