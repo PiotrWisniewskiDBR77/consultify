@@ -39,6 +39,7 @@ import {
 import React from 'react';
 
 import { AppView, UserRole } from '../../../types';
+import { isClientVaultEnabled } from '../../../utils/clientVaultFlag';
 import { MenuItem } from './types';
 
 type TranslationFn = (key: string, options?: any) => any;
@@ -59,6 +60,21 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       icon: React.createElement(Briefcase, { size: 20 }),
       viewId: AppView.MY_WORK,
     },
+    // 2.5 Client Vault (HP-22, Harvey-Parity) — org-scoped client document
+    // vault. Wizualnie nowa powierzchnia → gated OFF by default (clientVaultFlag,
+    // reguła #7/#9). Nav entry is omitted entirely when the flag is off, so
+    // the sidebar is byte-for-byte unchanged for everyone until Piotr
+    // accepts the screenshot.
+    ...(isClientVaultEnabled()
+      ? [
+          {
+            id: 'CLIENT_VAULT',
+            label: t('sidebar.clientVault', 'Client Vault'),
+            icon: React.createElement(Database, { size: 20 }),
+            viewId: AppView.CLIENT_VAULT,
+          },
+        ]
+      : []),
     // 3. Wywiad - ustrukturyzowana rozmowa z AI konsultantem (Discovery Consultant)
     {
       id: 'INTERVIEW',
@@ -284,6 +300,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.PORTFOLIO_ROADMAP]: t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap'),
     [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
+    [AppView.CLIENT_VAULT]: t('sidebar.clientVault', 'Client Vault'),
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
     [AppView.CONCLUSIONS]: t('sidebar.conclusions', 'Conclusions'),
