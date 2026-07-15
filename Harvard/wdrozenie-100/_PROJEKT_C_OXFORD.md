@@ -1,5 +1,20 @@
 # PROJEKT C — OXFORD · filar KOMPETENTNI („myśli jak konsultant")
 
+## STAN FAKTYCZNY 2026-07-15 (audyt żywego runtime)
+
+**Oxford ~80% kodowo** — wąskie gardło = odbiór Piotra (sesja B6, prompt-book `_ODBIOR_HARVARD_B6_PROMPTBOOK.md` gotowy). Nocne bundle na demo (commit e8cc969e2d):
+- **O3**: 6 tooli pogłębionych (SWOT, Porter, Value Chain, Ansoff, Portfolio Priority, Growth Paths)
+- **O2**: 12 walidatorów wniosków
+- **O4**: finance-advisory (liniaria, założenia)
+- **O5**: rejestr promptów (25 sekcji inicjatyw)
+- **O6**: benchmark branżowy (9 branż, profile referencyjne)
+
+Fala 1 wiringu O4/O5 (commit a4c479aa09), fala 2 O5 guidance parity (commit 3fbef633c4).
+
+⚠️ **Uwaga:** sekcje poniżej mogą zaniżać stan faktyczny — dotyczy to zwłaszcza O1 (raport DRD istnieje, czeka merge) i O3 (seria tooli już zbudowana). Weryfikuj runtime w demo, nie checkboxy poniżej.
+
+---
+
 > **Nadrzędny:** `_FINISZ_MASTER_PLAN.md` · **Misja:** wypełnić aplikację wiedzą konsultingową DBR77 — serce przewagi („Harvey wygrał nie interfejsem, tylko tym, że zna prawo").
 > **Miara ✅ (jedyna):** dokument/output, który **Piotr podpisałby własnym nazwiskiem przed klientem** — oceniany przez pryzmat **Zasady Konsultanta HBS** (absolwent HBS, MBA, 10 lat praktyki: „czy tak pracowałby z klientem, żeby klient był zadowolony, a skuteczność zagwarantowana?"). Ocena na sesji odbiorowej, nie deklaracja agenta.
 > **Wolność technologii:** prezentacja wyników NIE jest przywiązana do obecnego canvasu/wykresów — HTML klasy wydawniczej, profesjonalne biblioteki wizualizacji, programowy PPTX, dedykowane widoki per metodyka. Najlepsze narzędzie do zadania.
