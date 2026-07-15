@@ -3,9 +3,12 @@
  *
  * SSOT for the AI use-case discovery methodology content and its deterministic
  * synthesis engine. Cloned from the SMED config pattern (src/config/smedplanner):
- *   - deepeningLadder.ts   : per-phase depth staircase + partner-grade proposal bank (PL/EN)
- *   - useCaseEngine.ts     : baseline + scoring + W2 move sequencing (rationale/trade-off/rejected variant)
- *   - conclusionPrompts.ts : AI prompt builders grounded in the engine output
+ *   - deepeningLadder.ts      : per-phase depth staircase + partner-grade proposal bank (PL/EN)
+ *   - aiDiscoveryQuestionBank.ts: laddered, branching q-bank — use case claim -> forced data
+ *                              proof -> quantification -> sequencing (OXFORD O3)
+ *   - useCaseEngine.ts        : baseline + scoring + coverage-gap detection + W2 move
+ *                              sequencing (rationale/trade-off/rejected variant)
+ *   - conclusionPrompts.ts    : AI prompt builders grounded in the engine output
  *
  * Self-contained: the engine reads a minimal DiscoverySession, and this barrel
  * offers a defensive adapter from the store's OperationalToolData sections so
@@ -25,6 +28,7 @@ import type {
   DiscoverySession,
 } from './useCaseEngine';
 
+export * from './aiDiscoveryQuestionBank';
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './useCaseEngine';

@@ -2,13 +2,20 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AI_DEEPENING_LADDER,
+  AI_DISCOVERY_QUESTION_BANK,
+  AI_DISCOVERY_QUESTION_ROOT_ID,
   AI_LADDER_RUNG_ORDER,
   AI_PHASES,
   AI_PROPOSAL_BANK,
   buildAiDiscoveryConclusionPrompt,
   buildAiDiscoveryDeepenPrompt,
+  buildAiDiscoveryQuestionBankPromptRules,
   buildW2MoveSequence,
   computeBaseline,
+  detectDiscoveryGaps,
+  getAiDiscoveryQuestion,
+  getNextAiDiscoveryQuestionId,
+  isForcedLoopAiDiscoveryQuestion,
   localizeLadder,
   localizeMove,
   rankPhases,
@@ -270,5 +277,80 @@ describe('AI Discovery engine — bridges', () => {
     expect(baseline.totalValueAtStake).toBe(400);
     expect(ranking.ordered[0]).toBe('sequence');
     expect(sequence.length).toBeGreaterThan(0);
+  });
+});
+
+describe('AI Discovery engine — coverage gap detection (OXFORD O3)', () => {
+  it('flags an empty portfolio', () => {
+    const gaps = detectDiscoveryGaps(session({}));
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0].kind).toBe('no-use-cases');
+  });
+
+  it('flags ready, valuable use cases with no named owner', () => {
+    const gaps = detectDiscoveryGaps(
+      session({ useCases: [uc('u1', { hasOwner: false, annualValue: 500 })] })
+    );
+    expect(gaps.some((g) => g.kind === 'unowned-ready-value')).toBe(true);
+  });
+
+  it('flags a phase that governs value but has zero move candidates', () => {
+    const gaps = detectDiscoveryGaps(
+      session({
+        useCases: [uc('u1', { dataReadiness: 'partial', annualValue: 300 })],
+        moves: [],
+      })
+    );
+    expect(gaps.some((g) => g.kind === 'phase-empty-with-value' && g.phase === 'feasibility')).toBe(
+      true
+    );
+  });
+
+  it('reports no gaps for a fully owned, fully sequenced portfolio', () => {
+    const gaps = detectDiscoveryGaps(
+      session({
+        useCases: [uc('u1', { hasOwner: true, dataReadiness: 'ready', annualValue: 200 })],
+        moves: [
+          move('m1', { phase: 'discover' }),
+          move('m2', { phase: 'sequence' }),
+          move('m3', { phase: 'value' }),
+          move('m4', { phase: 'feasibility' }),
+        ],
+      })
+    );
+    expect(gaps).toHaveLength(0);
+  });
+});
+
+describe('AI Discovery branching question bank (OXFORD O3)', () => {
+  it('starts at the surface question and has 4 laddered levels', () => {
+    const root = getAiDiscoveryQuestion(AI_DISCOVERY_QUESTION_ROOT_ID);
+    expect(root).toBeTruthy();
+    expect(root!.level).toBe(1);
+    const levels = new Set(AI_DISCOVERY_QUESTION_BANK.map((q) => q.level));
+    expect(levels).toEqual(new Set([1, 2, 3, 4]));
+  });
+
+  it('forces the data-proof loop until a real sample is named', () => {
+    expect(isForcedLoopAiDiscoveryQuestion('aid-data-force')).toBe(true);
+    expect(getNextAiDiscoveryQuestionId('aid-data-force', 'still-assumed')).toBe('aid-data-force');
+    expect(getNextAiDiscoveryQuestionId('aid-data-force', 'sample-found')).toBe('aid-quantify');
+  });
+
+  it('every node has at least two answer options', () => {
+    AI_DISCOVERY_QUESTION_BANK.forEach((node) => {
+      expect(node.answerOptions.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('unknown answer keys fall back to defaultNextId', () => {
+    expect(getNextAiDiscoveryQuestionId('aid-surface', 'unknown-key')).toBe(
+      getAiDiscoveryQuestion('aid-surface')!.defaultNextId
+    );
+  });
+
+  it('buildAiDiscoveryQuestionBankPromptRules mentions the forced-loop discipline in both languages', () => {
+    expect(buildAiDiscoveryQuestionBankPromptRules('en')).toContain('aid-data-force');
+    expect(buildAiDiscoveryQuestionBankPromptRules('pl')).toContain('aid-data-force');
   });
 });
