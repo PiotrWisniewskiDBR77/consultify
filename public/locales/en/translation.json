@@ -26892,7 +26892,12 @@
       "initiativeDrafts": "Initiative drafts",
       "noInitiatives": "No initiatives yet.",
       "evidence": "Evidence",
-      "untitled": "Untitled"
+      "untitled": "Untitled",
+      "level": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      }
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -27077,6 +27082,37 @@
         "noDrivers": "No drivers added",
         "implicationPlaceholder": "Implication for margin...",
         "hint": "Judge whether this activity creates or drains margin, and why."
+      }
+    },
+    "narrativeEngine": {
+      "signalsTitle": "Narrative Signals & Evidence",
+      "signalsSubtitle": "Capture facts, quotes, and audience insights before building the narrative pillars.",
+      "addSignalPlaceholder": "Add a narrative signal...",
+      "pillarsTitle": "Narrative Pillars",
+      "pillarsSubtitle": "Each pillar should have a message, proof points, audience resonance, drivers, and an implication.",
+      "addPillar": "Add pillar",
+      "emptyPillars": "No pillars yet. Add the first one or wait for AI proposals.",
+      "threadsTitle": "Narrative Threads & Moves",
+      "threadsSubtitle": "This is where the pillars turn into threads (tensions) and rhetorical moves (open/prove/CTA).",
+      "acceptedPillars": "Accepted pillars",
+      "noAcceptedPillars": "No accepted pillars.",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on the approved narrative.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "titlePlaceholder": "Pillar title...",
+        "removePillar": "Remove pillar",
+        "message": "Message (the claim)",
+        "messagePlaceholder": "The claim this pillar makes...",
+        "audienceResonance": "Audience resonance",
+        "proofPoints": "Proof points",
+        "addProofPlaceholder": "Add a proof point...",
+        "noProofPoints": "No proof points added",
+        "drivers": "Drivers",
+        "addDriverPlaceholder": "Add a driver...",
+        "noDrivers": "No drivers added",
+        "implicationPlaceholder": "Implication of this pillar...",
+        "hint": "Check that the pillar message is backed by proof and resonates with the audience."
       }
     }
   }

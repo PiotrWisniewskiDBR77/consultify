@@ -27968,7 +27968,12 @@
       "initiativeDrafts": "Drafty inicjatyw",
       "noInitiatives": "Brak inicjatyw.",
       "evidence": "Dowody",
-      "untitled": "Bez nazwy"
+      "untitled": "Bez nazwy",
+      "level": {
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski"
+      }
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -28153,6 +28158,37 @@
         "noDrivers": "Brak dodanych czynników",
         "implicationPlaceholder": "Implikacja dla marży...",
         "hint": "Oceń, czy ta aktywność tworzy czy drenuje marżę i dlaczego."
+      }
+    },
+    "narrativeEngine": {
+      "signalsTitle": "Sygnały i dowody narracji",
+      "signalsSubtitle": "Zbierz fakty, cytaty i dane o odbiorcy zanim AI zbuduje filary narracji.",
+      "addSignalPlaceholder": "Dodaj sygnał...",
+      "pillarsTitle": "Filary narracji",
+      "pillarsSubtitle": "Każdy filar powinien mieć przekaz, dowody, poziom rezonansu z odbiorcą, czynniki i implikację.",
+      "addPillar": "Dodaj filar",
+      "emptyPillars": "Brak filarów. Dodaj pierwszy lub poczekaj na propozycje AI.",
+      "threadsTitle": "Wątki narracji i ruchy",
+      "threadsSubtitle": "Tu filary narracji zamieniają się w wątki (napięcia) i ruchy retoryczne (otwarcie/dowód/CTA).",
+      "acceptedPillars": "Zaakceptowane filary",
+      "noAcceptedPillars": "Brak zaakceptowanych filarów.",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej narracji.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "titlePlaceholder": "Nazwa filaru...",
+        "removePillar": "Usuń filar",
+        "message": "Przekaz (teza filaru)",
+        "messagePlaceholder": "Jaką tezę stawia ten filar...",
+        "audienceResonance": "Rezonans z odbiorcą",
+        "proofPoints": "Dowody (proof points)",
+        "addProofPlaceholder": "Dodaj dowód...",
+        "noProofPoints": "Brak dodanych dowodów",
+        "drivers": "Czynniki",
+        "addDriverPlaceholder": "Dodaj czynnik...",
+        "noDrivers": "Brak dodanych czynników",
+        "implicationPlaceholder": "Implikacja tego filaru...",
+        "hint": "Sprawdź, czy przekaz filaru jest poparty dowodami i rezonuje z odbiorcą."
       }
     }
   }
