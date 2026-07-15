@@ -1,5 +1,6 @@
 import { Check, Plus, Trash2, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   ProposalCardType,
@@ -90,6 +91,7 @@ function QuadrantCard({
   onRejectProposal: (proposalId: string) => void;
   isPolish: boolean;
 }) {
+  const { t } = useTranslation();
   const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
   const [draft, setDraft] = useState('');
   const meta = QUADRANT_META[quadrant];
@@ -134,7 +136,7 @@ function QuadrantCard({
               addItem();
             }
           }}
-          placeholder={isPolish ? 'Dodaj punkt...' : 'Add point...'}
+          placeholder={t('discoveryToolsTools.dynamicSwot.buildPhase.addPointPlaceholder')}
           className="h-10 flex-1 rounded-lg border border-white/70 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
@@ -150,7 +152,7 @@ function QuadrantCard({
       <div className="space-y-2">
         {items.length === 0 ? (
           <div className="rounded-xl border-2 border-dashed border-white/70 bg-white/40 p-5 text-center text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-950/30 dark:text-slate-400">
-            {isPolish ? 'Brak punktów w tej ćwiartce.' : 'No points in this quadrant yet.'}
+            {t('discoveryToolsTools.dynamicSwot.buildPhase.noPoints')}
           </div>
         ) : (
           items.map((item) => (
@@ -160,7 +162,7 @@ function QuadrantCard({
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                  {isPolish ? 'Punkt SWOT' : 'SWOT point'}
+                  {t('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')}
                 </div>
                 <button
                   type="button"
@@ -184,7 +186,7 @@ function QuadrantCard({
       {proposals.length > 0 ? (
         <div className="mt-4 space-y-2 border-t border-white/60 pt-4 dark:border-white/10">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-            {isPolish ? 'Propozycje AI' : 'AI proposals'}
+            {t('discoveryToolsTools.dynamicSwot.buildPhase.aiProposals')}
           </div>
           {proposals.map((proposal) => (
             <div
@@ -193,7 +195,7 @@ function QuadrantCard({
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-300">
-                  {isPolish ? 'Propozycja AI' : 'AI proposal'}
+                  {t('discoveryToolsTools.dynamicSwot.buildPhase.aiProposal')}
                 </div>
                 <div className="rounded-full border border-primary-200/70 bg-primary-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-300">
                   AI
@@ -214,9 +216,7 @@ function QuadrantCard({
                   className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
                 >
                   <option value="">
-                    {isPolish
-                      ? 'Akceptuj jako nowy lub wybierz punkt do podmiany'
-                      : 'Accept as new or select point to replace'}
+                    {t('discoveryToolsTools.dynamicSwot.buildPhase.acceptAsNewOrReplace')}
                   </option>
                   {items.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -232,7 +232,7 @@ function QuadrantCard({
                   className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/50 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
                 >
                   <Check className="h-3.5 w-3.5" />
-                  {isPolish ? 'Akceptuj' : 'Accept'}
+                  {t('discoveryToolsTools.dynamicSwot.buildPhase.accept')}
                 </button>
                 <button
                   type="button"
@@ -240,7 +240,7 @@ function QuadrantCard({
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
                 >
                   <X className="h-3.5 w-3.5" />
-                  {isPolish ? 'Odrzuć' : 'Reject'}
+                  {t('discoveryToolsTools.dynamicSwot.buildPhase.reject')}
                 </button>
               </div>
             </div>
@@ -252,6 +252,7 @@ function QuadrantCard({
 }
 
 export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: BuildPhaseProps) {
+  const { t } = useTranslation();
   const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
   const swotData = session.inputData as SWOTData;
   const signals = swotData.signals || [];
@@ -398,23 +399,15 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
             <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-              {isPolish
-                ? 'Tutaj pracujesz tylko na jednej klasycznej macierzy SWOT. AI może zaproponować nowe punkty, ale wszystkie decyzje zapadają bezpośrednio w tych czterech polach.'
-                : 'This step uses one classic SWOT matrix only. AI can propose new points, but every decision is made directly inside these four fields.'}
+              {t('discoveryToolsTools.dynamicSwot.buildPhase.oneMatrixNote')}
             </div>
-            <InlineAssist
-              hint={
-                isPolish
-                  ? 'Akceptacja propozycji doda punkt do ćwiartki albo podmieni wybrany istniejący punkt, jeśli wskażesz go na liście.'
-                  : 'Accepting a proposal adds it to the quadrant or replaces a selected existing point if you choose one from the list.'
-              }
-            />
+            <InlineAssist hint={t('discoveryToolsTools.dynamicSwot.buildPhase.acceptHint')} />
           </div>
 
           {isGeneratingAI ? (
             <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              {isPolish ? 'AI przygotowuje propozycje...' : 'AI is preparing proposals...'}
+              {t('discoveryToolsTools.dynamicSwot.buildPhase.aiPreparing')}
             </div>
           ) : null}
         </div>

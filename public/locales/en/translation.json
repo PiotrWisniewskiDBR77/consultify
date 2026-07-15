@@ -26960,6 +26960,38 @@
         "introSubtitle": "Each proposal is made of a title and an explanation. You can accept it, skip to another proposal, or rewrite it through comment and a deeper framing.",
         "refineAcceptedPlaceholder": "Write the comment that should refine this accepted point.",
         "rewriteProposalPlaceholder": "Write the comment that should rewrite this proposal."
+      },
+      "buildPhase": {
+        "addPointPlaceholder": "Add point...",
+        "noPoints": "No points in this quadrant yet.",
+        "swotPoint": "SWOT point",
+        "aiProposals": "AI proposals",
+        "aiProposal": "AI proposal",
+        "acceptAsNewOrReplace": "Accept as new or select point to replace",
+        "accept": "Accept",
+        "reject": "Reject",
+        "oneMatrixNote": "This step uses one classic SWOT matrix only. AI can propose new points, but every decision is made directly inside these four fields.",
+        "acceptHint": "Accepting a proposal adds it to the quadrant or replaces a selected existing point if you choose one from the list.",
+        "aiPreparing": "AI is preparing proposals..."
+      },
+      "correlationsStep": {
+        "proposedInitiative": "Proposed Initiative",
+        "title": "Strategic Correlations",
+        "subtitle": "Connections between SWOT elements",
+        "whyNow": "Why now:",
+        "empty": "No correlations generated yet",
+        "emptyHint": "Click \"Generate Analysis\" to let AI analyze connections",
+        "correlations": "correlations",
+        "initiativeProposals": "initiative proposals"
+      },
+      "quadrantStep": {
+        "highImpact": "High impact",
+        "mediumImpact": "Medium impact",
+        "lowImpact": "Low impact",
+        "items": "items",
+        "highImpactShort": "high impact",
+        "hint": "Add concrete, measurable items, avoid general statements.",
+        "emptyItems": "Add items or ask AI for suggestions"
       }
     },
     "riskUncertainty": {

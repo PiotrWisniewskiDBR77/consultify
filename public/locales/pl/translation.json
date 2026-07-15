@@ -28036,6 +28036,38 @@
         "introSubtitle": "Każda propozycja składa się z tytułu i rozwinięcia. Możesz ją zaakceptować, odrzucić przez przejście do kolejnej propozycji, albo przepisać przez komentarz i pogłębienie.",
         "refineAcceptedPlaceholder": "Wpisz komentarz, który ma dopracować ten zaakceptowany punkt.",
         "rewriteProposalPlaceholder": "Wpisz komentarz, który ma przepisać tę propozycję."
+      },
+      "buildPhase": {
+        "addPointPlaceholder": "Dodaj punkt...",
+        "noPoints": "Brak punktów w tej ćwiartce.",
+        "swotPoint": "Punkt SWOT",
+        "aiProposals": "Propozycje AI",
+        "aiProposal": "Propozycja AI",
+        "acceptAsNewOrReplace": "Akceptuj jako nowy lub wybierz punkt do podmiany",
+        "accept": "Akceptuj",
+        "reject": "Odrzuć",
+        "oneMatrixNote": "Tutaj pracujesz tylko na jednej klasycznej macierzy SWOT. AI może zaproponować nowe punkty, ale wszystkie decyzje zapadają bezpośrednio w tych czterech polach.",
+        "acceptHint": "Akceptacja propozycji doda punkt do ćwiartki albo podmieni wybrany istniejący punkt, jeśli wskażesz go na liście.",
+        "aiPreparing": "AI przygotowuje propozycje..."
+      },
+      "correlationsStep": {
+        "proposedInitiative": "Proponowana inicjatywa",
+        "title": "Korelacje strategiczne",
+        "subtitle": "Powiązania między elementami SWOT",
+        "whyNow": "Dlaczego teraz:",
+        "empty": "Brak wygenerowanych korelacji",
+        "emptyHint": "Kliknij \"Generuj analizę\" aby AI przeanalizował powiązania",
+        "correlations": "korelacji",
+        "initiativeProposals": "propozycji inicjatyw"
+      },
+      "quadrantStep": {
+        "highImpact": "Wysoki wpływ",
+        "mediumImpact": "Średni wpływ",
+        "lowImpact": "Niski wpływ",
+        "items": "elementów",
+        "highImpactShort": "wysokiego wpływu",
+        "hint": "Dodaj konkretne, mierzalne elementy, nie ogolniki.",
+        "emptyItems": "Dodaj elementy lub poproś AI o sugestie"
       }
     },
     "riskUncertainty": {

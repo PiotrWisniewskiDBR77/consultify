@@ -6,6 +6,7 @@
 
 import { ArrowRight, Lightbulb, Link2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SWOTCorrelation, SWOTData, ToolSession } from '@/store/useToolStore';
 
@@ -47,6 +48,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
   session,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const lang = isPolish ? 'pl' : 'en';
   const swotData = session.inputData as SWOTData;
   const correlations = swotData.correlations || [];
@@ -135,7 +137,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
                 <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5" />
                 <div>
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                    {isPolish ? 'Proponowana inicjatywa' : 'Proposed Initiative'}
+                    {t('discoveryToolsTools.dynamicSwot.correlationsStep.proposedInitiative')}
                   </p>
                   <p className="text-sm text-slate-800 dark:text-slate-200">
                     {corr.initiativeProposal}
@@ -158,10 +160,10 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
         </div>
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {isPolish ? 'Korelacje strategiczne' : 'Strategic Correlations'}
+            {t('discoveryToolsTools.dynamicSwot.correlationsStep.title')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Powiązania między elementami SWOT' : 'Connections between SWOT elements'}
+            {t('discoveryToolsTools.dynamicSwot.correlationsStep.subtitle')}
           </p>
         </div>
       </div>
@@ -184,7 +186,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
               </div>
               {tension.whyNow && (
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Dlaczego teraz:' : 'Why now:'} {tension.whyNow}
+                  {t('discoveryToolsTools.dynamicSwot.correlationsStep.whyNow')} {tension.whyNow}
                 </div>
               )}
             </div>
@@ -204,12 +206,10 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
         <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center">
           <Link2 className="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400 mb-2">
-            {isPolish ? 'Brak wygenerowanych korelacji' : 'No correlations generated yet'}
+            {t('discoveryToolsTools.dynamicSwot.correlationsStep.empty')}
           </p>
           <p className="text-sm text-slate-600">
-            {isPolish
-              ? 'Kliknij "Generuj analizę" aby AI przeanalizował powiązania'
-              : 'Click "Generate Analysis" to let AI analyze connections'}
+            {t('discoveryToolsTools.dynamicSwot.correlationsStep.emptyHint')}
           </p>
         </div>
       )}
@@ -218,12 +218,12 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
       {correlations.length > 0 && (
         <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
           <span>
-            {correlations.length} {isPolish ? 'korelacji' : 'correlations'}
+            {correlations.length} {t('discoveryToolsTools.dynamicSwot.correlationsStep.correlations')}
           </span>
           <span>•</span>
           <span>
             {correlations.filter((c) => c.initiativeProposal).length}{' '}
-            {isPolish ? 'propozycji inicjatyw' : 'initiative proposals'}
+            {t('discoveryToolsTools.dynamicSwot.correlationsStep.initiativeProposals')}
           </span>
         </div>
       )}
