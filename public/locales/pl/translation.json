@@ -28036,6 +28036,47 @@
         "Wejście w marketplace traktować jako etap po walidacji marży.",
         "Zamknąć wynik jako brief inicjatywy i deck dla zarządu."
       ]
+    },
+    "narrativeEngineLibraryGraphic": {
+      "titleProcess": "Jak Narrative Engine układa dom komunikatu wokół jednej myśli",
+      "titleExample": "Przykład: od jednej myśli przewodniej do domu komunikatu z filarami",
+      "subtitleProcess": "To nie luźny zestaw wiadomości. Najpierw ustawiamy odbiorcę i myśl przewodnią (dach), potem 3-4 filary (kolumny), każdy z własnym twierdzeniem i dowodami, a kolor pokazuje rezonans u odbiorcy.",
+      "subtitleExample": "Ten case pokazuje, że narracja to nie zbiór slajdów. Najpierw ustala jedną myśl przewodnią (dach), potem filary (kolumny), które ją utrzymują, i dowody, które każdy filar dźwigają.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od odbiorcy, celu i myśli przewodniej. Bez dachu filary nie mają czego trzymać, a dowody są oderwane od decyzji.",
+      "scenarioValueExample": "Zarząd słyszy dziesięć argumentów naraz i żaden nie zostaje w głowie. Pytanie brzmi: jaka jest jedna myśl, którą mają zapamiętać, i które trzy filary realnie ją utrzymują.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Jedna myśl przewodnia jako dach, 3-4 filary z twierdzeniem i dowodami, oznaczone rezonansem u odbiorcy, gotowe do narracji, raportu i decka.",
+      "decisionValueExample": "Która jedna myśl ma zostać w głowie i które filary z dowodami ją utrzymają?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        ["Brief", "Odbiorca, cel, sygnał sukcesu", "bg-sky-500"],
+        ["Myśl przewodnia", "Jedno zdanie, które ma zostać", "bg-sky-500"],
+        ["Filary", "Kolumny, które utrzymują dach", "bg-blue-500"],
+        ["Dowody", "Czym każdy filar jest poparty", "bg-amber-500"],
+        ["Narracja & outputy", "Wątki, ruchy, raport, deck", "bg-emerald-500"]
+      ],
+      "houseTitle": "Dom komunikatu",
+      "houseHint": "Dach + filary",
+      "coreLabel": "Myśl przewodnia",
+      "coreValue": "Bez AI tracimy rynek w 18 miesięcy",
+      "proofWord": "dowody",
+      "legendTitle": "Rezonans u odbiorcy",
+      "legend": [
+        ["high", "Wysoki rezonans"],
+        ["medium", "Średni rezonans"],
+        ["low", "Niski rezonans"]
+      ],
+      "footer": "Narrative Engine = brief -> myśl przewodnia -> filary -> dowody -> narracja -> outputy",
+      "pillars": [
+        { "title": "Tempo rynku", "message": "Konkurenci już wdrażają", "proofs": 3, "resonance": "high" },
+        { "title": "Marża", "message": "Automatyzacja podnosi marżę", "proofs": 2, "resonance": "high" },
+        { "title": "Talent", "message": "Zespół jest gotowy", "proofs": 2, "resonance": "medium" },
+        { "title": "Ryzyko", "message": "Pilot ogranicza ryzyko", "proofs": 1, "resonance": "low" }
+      ]
     }
   }
 }

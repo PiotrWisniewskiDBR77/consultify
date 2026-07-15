@@ -26960,6 +26960,47 @@
         "Treat marketplace entry as a step after margin validation.",
         "Close the result as an initiative brief and board deck."
       ]
+    },
+    "narrativeEngineLibraryGraphic": {
+      "titleProcess": "How Narrative Engine builds a message house around one idea",
+      "titleExample": "Example: from one core message to a message house with pillars",
+      "subtitleProcess": "This is not a loose set of messages. First we frame the audience and core message (the roof), then 3-4 pillars (columns), each with its own claim and proof, with color showing audience resonance.",
+      "subtitleExample": "This case shows that a narrative is not a pile of slides. It sets one core message first (the roof), then the pillars (columns) that hold it up, and the proof points each pillar carries.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with the audience, goal, and core message. Without a roof the pillars have nothing to hold, and proof points are detached from the decision.",
+      "scenarioValueExample": "The board hears ten arguments at once and none of them sticks. The real question is which single idea they should remember and which three pillars actually hold it up.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "One core message as the roof, 3-4 pillars with a claim and proof points, tagged by audience resonance, ready for narrative, report, and deck.",
+      "decisionValueExample": "Which single idea should stick, and which pillars with proof points hold it up?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        ["Brief", "Audience, goal, success signal", "bg-sky-500"],
+        ["Core message", "One sentence that should stick", "bg-sky-500"],
+        ["Pillars", "Columns that hold the roof", "bg-blue-500"],
+        ["Proof", "What backs each pillar", "bg-amber-500"],
+        ["Narrative & outputs", "Threads, moves, report, deck", "bg-emerald-500"]
+      ],
+      "houseTitle": "Message house",
+      "houseHint": "Roof + pillars",
+      "coreLabel": "Core message",
+      "coreValue": "Without AI we lose the market in 18 months",
+      "proofWord": "proof",
+      "legendTitle": "Audience resonance",
+      "legend": [
+        ["high", "High resonance"],
+        ["medium", "Medium resonance"],
+        ["low", "Low resonance"]
+      ],
+      "footer": "Narrative Engine = brief -> core message -> pillars -> proof -> narrative -> outputs",
+      "pillars": [
+        { "title": "Market pace", "message": "Competitors already shipping", "proofs": 3, "resonance": "high" },
+        { "title": "Margin", "message": "Automation lifts margin", "proofs": 2, "resonance": "high" },
+        { "title": "Talent", "message": "The team is ready", "proofs": 2, "resonance": "medium" },
+        { "title": "Risk", "message": "A pilot caps the risk", "proofs": 1, "resonance": "low" }
+      ]
     }
   }
 }
