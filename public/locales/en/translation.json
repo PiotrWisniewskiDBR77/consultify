@@ -14212,6 +14212,10 @@
       "audit": {
         "label": "Audit Log",
         "description": "High-risk admin events and compliance evidence"
+      },
+      "command": {
+        "label": "Command Center",
+        "description": "Trust & control posture — SOC2, DLP, residency, retention, AI policy"
       }
     },
     "shell": {
@@ -14238,6 +14242,10 @@
       "audit": {
         "title": "Audit Log",
         "subtitle": "High-risk admin events, risk posture, and compliance evidence."
+      },
+      "command": {
+        "title": "Command Center",
+        "subtitle": "Trust & control posture — SOC2 audit export, DLP, data residency, retention, and org AI policy."
       }
     },
     "billing": {
@@ -24241,6 +24249,63 @@
     },
     "reminderSummary": {
       "prefix": "Reminder"
+    }
+  },
+  "commandCenter": {
+    "title": "Command Center",
+    "description": "One trust & control surface — SOC2 audit export, DLP, data residency, retention, and org AI policy. Roles, SSO, and the audit log live in their own sections and are only linked from here.",
+    "tabs": {
+      "overview": "Overview",
+      "audit": "SOC2 audit",
+      "dlp": "DLP",
+      "residency": "Data residency",
+      "retention": "Retention",
+      "aiPolicy": "AI policy"
+    },
+    "overview": {
+      "linksTitle": "Trust surfaces",
+      "linksSubtitle": "These live in their own sections — Command Center only links to them.",
+      "complianceTitle": "Compliance posture",
+      "complianceSubtitle": "Live from /api/admin/enterprise-compliance — org-scoped by token.",
+      "tiles": {
+        "open": "Open",
+        "people": {
+          "label": "Team & Access",
+          "description": "Roles, ownership, and permissions for this organization."
+        },
+        "security": {
+          "label": "SSO & Identity",
+          "description": "Authentication policy, SCIM lifecycle, and delegated IAM."
+        },
+        "audit": {
+          "label": "Audit Log",
+          "description": "High-risk admin events and compliance evidence."
+        },
+        "residency": {
+          "label": "Data residency",
+          "notSet": "Not set",
+          "euEnforced": "EU-only enforced",
+          "euNotEnforced": "EU-only not enforced",
+          "error": "Failed to load data residency policy"
+        },
+        "aiPolicy": {
+          "label": "Org AI policy",
+          "citationMode": "Citations: {{mode}}",
+          "maxTokens": "Max {{tokens}} tokens / message",
+          "error": "Failed to load AI policy"
+        },
+        "dlp": {
+          "label": "DLP rules",
+          "comingSoon": "Wired in a follow-up step (F-CC3)."
+        },
+        "retention": {
+          "label": "Retention",
+          "comingSoon": "Wired in a follow-up step (F-CC4)."
+        }
+      }
+    },
+    "placeholder": {
+      "description": "This tab is scheduled for a follow-up delivery step and is not wired yet."
     }
   }
 }

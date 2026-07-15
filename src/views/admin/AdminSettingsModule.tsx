@@ -1,11 +1,12 @@
 import { Menu, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
 import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
+import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
@@ -19,6 +20,7 @@ import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
+import { isCommandCenterEnabled } from '../../utils/commandCenterFlag';
 
 interface AdminSettingsModuleProps {
   initialTab?: AdminSettingsSection;
@@ -31,6 +33,7 @@ const PRIMARY_SECTIONS: AdminSettingsSection[] = [
   'ai',
   'security',
   'audit',
+  'command',
   'health',
 ];
 
@@ -71,6 +74,13 @@ const SECTION_META: Record<
     subtitleKey: 'admin.section.audit.subtitle',
     subtitleDefault: 'High-risk admin events, risk posture, and compliance evidence.',
   },
+  command: {
+    titleKey: 'admin.section.command.title',
+    titleDefault: 'Command Center',
+    subtitleKey: 'admin.section.command.subtitle',
+    subtitleDefault:
+      'Trust & control posture — SOC2 audit export, DLP, data residency, retention, and org AI policy.',
+  },
   health: {
     titleKey: 'admin.section.health.title',
     titleDefault: 'Health',
@@ -104,6 +114,10 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   audit: 'audit',
   'audit-log': 'audit',
   compliance: 'audit',
+  command: 'command',
+  'command-center': 'command',
+  'trust-control': 'command',
+  posture: 'command',
   health: 'health',
   probes: 'health',
   diagnostics: 'health',
@@ -139,10 +153,26 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const resolvedState = useMemo(
+  const rawResolvedState = useMemo(
     () => resolveAdminState(location.pathname, location.search, initialTab),
     [initialTab, location.pathname, location.search]
   );
+
+  // Flaga OFF → sekcja 'command' nie istnieje dla tego org-admina; bezpośrednie
+  // wejście /admin/command przekierowuje na 'people' (plan §3, F-CC1 odbiór).
+  const commandCenterEnabled = isCommandCenterEnabled();
+  const resolvedState = useMemo(() => {
+    if (rawResolvedState.section === 'command' && !commandCenterEnabled) {
+      return { section: 'people' as AdminSettingsSection };
+    }
+    return rawResolvedState;
+  }, [rawResolvedState, commandCenterEnabled]);
+
+  useEffect(() => {
+    if (rawResolvedState.section === 'command' && !commandCenterEnabled) {
+      navigate('/admin/people', { replace: true });
+    }
+  }, [rawResolvedState.section, commandCenterEnabled, navigate]);
 
   const handleSectionChange = useCallback(
     (section: AdminSettingsSection) => {
@@ -169,12 +199,14 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <AdminSecurityIdentityPanel />;
       case 'audit':
         return <AdminAuditLogPanel />;
+      case 'command':
+        return <AdminCommandCenterPanel onSectionChange={handleSectionChange} />;
       case 'health':
         return <AdminHealthPanel />;
       default:
         return <AdminMembersRolesPanel />;
     }
-  }, [resolvedState]);
+  }, [resolvedState, handleSectionChange]);
 
   const meta = SECTION_META[resolvedState.section];
   void currentUser;
