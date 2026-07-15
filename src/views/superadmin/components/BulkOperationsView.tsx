@@ -28,11 +28,12 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { InfoButton } from '../../../components/shared/InfoButton';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { EntityStatusChip } from '../../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../../services/api';
 
@@ -58,6 +59,68 @@ type ImportStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'complete';
 const CSV_TEMPLATE = `email,firstName,lastName,role
 john.doe@example.com,John,Doe,USER
 jane.smith@example.com,Jane,Smith,ADMIN`;
+
+// canon TRIADA §27 — StandardTable columns for the Bulk Roles user list.
+// Selection checkbox is auto-prepended by StandardTable (MUST #7); it is
+// intentionally NOT declared here.
+const buildUserColumns = (): TableColumn[] => [
+  {
+    id: 'user',
+    label: 'User',
+    sortable: true,
+    sortAccessor: (row: TableRow) => {
+      const user = row as unknown as User;
+      return `${user.firstName} ${user.lastName}`.trim() || user.email;
+    },
+    render: (row: TableRow) => {
+      const user = row as unknown as User;
+      return (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-medium text-sm">
+            {user.firstName?.charAt(0) || user.email.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div className="font-medium text-c-text">
+              {user.firstName} {user.lastName}
+            </div>
+            <div className="text-sm text-c-text-muted">{user.email}</div>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    id: 'role',
+    label: 'Role',
+    filterable: true,
+    filterOptions: [
+      { value: 'USER', label: 'User' },
+      { value: 'ADMIN', label: 'Admin' },
+      { value: 'OWNER', label: 'Owner' },
+    ],
+    render: (row: TableRow) => {
+      const role = (row as unknown as User).role;
+      return (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+            role === 'ADMIN'
+              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+              : role === 'OWNER'
+                ? 'bg-c-accent-soft text-c-accent'
+                : 'bg-slate-500/10 text-c-text-secondary'
+          }`}
+        >
+          {role}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    render: (row: TableRow) => <EntityStatusChip status={(row as unknown as User).status} />,
+  },
+];
 
 export const BulkOperationsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('import');
@@ -87,6 +150,8 @@ export const BulkOperationsView: React.FC = () => {
 
   // Export
   const [exportingKey, setExportingKey] = useState<string | null>(null);
+
+  const userColumns = useMemo(() => buildUserColumns(), []);
 
   const REQUIRED_FIELDS = ['email'];
   const OPTIONAL_FIELDS = ['firstName', 'lastName', 'role'];
@@ -195,20 +260,6 @@ export const BulkOperationsView: React.FC = () => {
       setLoadingUsers(false);
     }
   }, []);
-
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
-    );
-  };
-
-  const selectAllUsers = () => {
-    if (selectedUsers.length === users.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(users.map((u) => u.id));
-    }
-  };
 
   const handleBulkRoleAssignment = async (newRole: string) => {
     try {
@@ -449,7 +500,7 @@ export const BulkOperationsView: React.FC = () => {
 
           <div className="max-h-64 overflow-auto border border-c-border-subtle rounded-lg mb-6">
             <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+              /* §27-exempt: podgląd surowych wierszy CSV w kreatorze importu (krok wizard, 10 pierwszych wierszy, kolumny dynamiczne wg mappingu, brak id/akcji) — nie kolekcja encji (kanon §2 def.1), formularz/podgląd danych */ className="w-full"
             >
               <thead className="sticky top-0 bg-c-surface-raised">
                 <tr>
@@ -616,94 +667,23 @@ export const BulkOperationsView: React.FC = () => {
       )}
 
       <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-c-border-subtle">
-              <th className="text-left px-6 py-4">
-                <input
-                  type="checkbox"
-                  checked={selectedUsers.length === users.length && users.length > 0}
-                  onChange={selectAllUsers}
-                  disabled={!!usersLoadError}
-                  className="w-4 h-4 rounded border-c-border text-primary-600"
-                />
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-c-text-muted uppercase">
-                User
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-c-text-muted uppercase">
-                Role
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-c-text-muted uppercase">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-c-bg dark:hover:bg-c-surface/5">
-                <td className="px-6 py-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(user.id)}
-                    onChange={() => toggleUserSelection(user.id)}
-                    className="w-4 h-4 rounded border-c-border text-primary-600"
-                  />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-medium text-sm">
-                      {user.firstName?.charAt(0) || user.email.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-medium text-c-text">
-                        {user.firstName} {user.lastName}
-                      </div>
-                      <div className="text-sm text-c-text-muted">{user.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      user.role === 'ADMIN'
-                        ? 'bg-primary-500/10 text-primary-600'
-                        : user.role === 'OWNER'
-                          ? 'bg-amber-500/10 text-amber-600'
-                          : 'bg-slate-500/10 text-c-text-secondary'
-                    }`}
-                  >
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <EntityStatusChip status={user.status} />
-                </td>
-              </tr>
-            ))}
-            {usersLoadError && !loadingUsers && (
-              <tr>
-                <td colSpan={4} className="px-6 py-6">
-                  <DegradedState title="Users unavailable" description={usersLoadError} />
-                </td>
-              </tr>
-            )}
-            {!usersLoadError && users.length === 0 && !loadingUsers && (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center">
-                  <Users size={40} className="mx-auto mb-3 text-c-text-secondary" />
-                  <p className="text-c-text-muted">No users found</p>
-                  <button
-                    onClick={fetchUsers}
-                    className="mt-2 text-sm text-primary-600 hover:text-primary-700"
-                  >
-                    Load users
-                  </button>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <StandardTable
+          columns={userColumns}
+          data={users as unknown as TableRow[]}
+          loading={loadingUsers}
+          error={usersLoadError}
+          onRetry={fetchUsers}
+          empty={{
+            icon: Users,
+            title: 'No users found',
+            actionLabel: 'Load users',
+            onAction: fetchUsers,
+          }}
+          selection={{
+            selectedIds: new Set(selectedUsers),
+            onChange: (ids) => setSelectedUsers(Array.from(ids)),
+          }}
+        />
       </div>
     </div>
   );
