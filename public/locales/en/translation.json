@@ -948,7 +948,8 @@
           "time": "~2 minutes",
           "cta": "Add Payment Info"
         }
-      }
+      },
+      "pricingBonus": "Current tier: {{tier}}"
     },
     "calculator": {
       "badge": "Commission Calculator",
@@ -1192,7 +1193,9 @@
       "certificates": "Certificates",
       "certificatesDesc": "Your earned certificates",
       "noCourses": "No courses available",
-      "certificatesEmpty": "No certificates earned yet"
+      "certificatesEmpty": "No certificates earned yet",
+      "examTitle": "Certification exam",
+      "deadline": "Deadline"
     },
     "clients": {
       "organizations": "Organizations",
@@ -1242,31 +1245,45 @@
         "quote": "I'm here to help you grow your business with Consultify. Whether you have questions about the program, need help with a client proposal, or want to discuss co-marketing opportunities — reach out!",
         "responseTime": "Average response time: {{time}}",
         "sendEmail": "Send email",
-        "subtitle": "Your dedicated Partner Manager will help you succeed"
+        "subtitle": "Your dedicated Partner Manager will help you succeed",
+        "title": "Have questions? Let's talk!"
       },
       "academy": {
         "badgeFree": "FREE",
         "boundaryText": "Partner help and documentation explain processes while you work. Partner Academy is a separate training layer for structured growth, repeatable enablement and certification signals.",
         "courses": {
           "drd": {
-            "description": "In-depth mastery of the Digital Readiness Diagnostic methodology."
+            "description": "In-depth mastery of the Digital Readiness Diagnostic methodology.",
+            "title": "DRD framework certification",
+            "duration": "2 hours"
           },
           "fundamentals": {
-            "description": "Get to know the Consultify platform inside out. Master assessments, reporting and client management."
+            "description": "Get to know the Consultify platform inside out. Master assessments, reporting and client management.",
+            "title": "Platform fundamentals",
+            "duration": "45 min"
           },
           "selling": {
             "description": "A proven methodology for selling transformation services.",
-            "title": "How to sell digital transformation"
+            "title": "How to sell digital transformation",
+            "duration": "60 min"
           },
           "success": {
-            "description": "Maximize client retention and satisfaction rates."
+            "description": "Maximize client retention and satisfaction rates.",
+            "title": "Client Success best practices",
+            "duration": "30 min"
           }
         },
         "openCertGuide": "Open certification guide",
         "openLearningPath": "Open learning path",
         "pillarRolePath": "Role path",
         "subtitle": "Structured partner enablement beyond the documentation: fundamentals, role paths and certification readiness.",
-        "title": "Grow your skills with Partner Academy"
+        "title": "Grow your skills with Partner Academy",
+        "boundaryLabel": "Academy scope",
+        "pillarFoundations": "Foundations",
+        "pillarCertification": "Certification",
+        "badgeAdvanced": "ADVANCED",
+        "certIncluded": "Certificate included",
+        "startCourse": "Start course"
       },
       "calculator": {
         "avgValueLabel": "Average client value (€/month)",
@@ -1275,7 +1292,10 @@
         "cta": "Start earning — generate your code",
         "subtitle": "See how much you can earn as a Consultify Partner",
         "title": "Calculate your earning potential",
-        "yourTier": "Your tier:"
+        "yourTier": "Your tier:",
+        "badge": "Commission calculator",
+        "commissionSuffix": "({{rate}}% commission)",
+        "estimatedAnnual": "Estimated annual earnings"
       },
       "faq": {
         "cancel": {
@@ -1283,7 +1303,8 @@
           "q": "What happens if a referred client cancels?"
         },
         "certification": {
-          "a": "The Platform Fundamentals certification takes about 45 minutes. Advanced certifications, such as the DRD framework, take 2-3 hours. All certifications are self-paced, so you can complete them at your convenience."
+          "a": "The Platform Fundamentals certification takes about 45 minutes. Advanced certifications, such as the DRD framework, take 2-3 hours. All certifications are self-paced, so you can complete them at your convenience.",
+          "q": "How long does it take to get certified?"
         },
         "countries": {
           "a": "Yes! Consultify operates globally and you can refer clients from any country. Your partner directory listing can highlight your regional expertise, helping local clients find you. Commission payouts can be made in EUR, USD or GBP.",
@@ -1302,14 +1323,18 @@
           "a": "All partners get access to Partner Academy training, marketing materials and the partner community. From the Bronze tier upward, priority support and dedicated training are available. Gold and Platinum partners receive a dedicated Partner Manager, co-marketing opportunities and early access to new features.",
           "q": "What support do I get as a partner?"
         },
-        "title": "Frequently asked questions"
+        "title": "Frequently asked questions",
+        "badge": "FAQ"
       },
       "onboarding": {
         "customTerms": "Discuss custom terms",
         "openGuide": "Open the application guide",
         "reviewCase": "See the proof case",
         "secureNote": "Your data is encrypted and secure",
-        "sharedFlow": "This is the same shared application flow used from the public site and from inside the product. Review the application guide, check the proof case, or jump straight to a conversation about custom terms when self-serve isn't enough."
+        "sharedFlow": "This is the same shared application flow used from the public site and from inside the product. Review the application guide, check the proof case, or jump straight to a conversation about custom terms when self-serve isn't enough.",
+        "stepLabel": "Step {{n}}",
+        "whyLabel": "Why?",
+        "bonusLabel": "Bonus"
       }
     },
     "earnings": {
@@ -1551,7 +1576,8 @@
     "delay": "Delay",
     "dismiss": "Dismiss",
     "restore": "Restore",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "apply": "Apply"
   },
   "superadmin": {
     "confirm": {
@@ -2007,7 +2033,8 @@
         "delegate": "Delegate",
         "delay": "Reschedule",
         "edit": "Edit",
-        "openPreview": "Open preview"
+        "openPreview": "Open preview",
+        "archive": "Archive"
       },
       "delegateTitle": "Delegate Task",
       "completed": "Marked as done!",
@@ -9571,11 +9598,16 @@
       "dismiss": "Dismiss",
       "empty": "No candidates. Run a scan so AI can propose initiatives from discovery.",
       "error": "Couldn't fetch candidates.",
-      "source": "Source"
+      "source": "Source",
+      "title": "AI candidates",
+      "subtitle": "AI proposes initiatives based on discovery (insights, assessments, audits).",
+      "scan": "Scan discovery",
+      "accept": "Accept"
     },
     "proposedCards": {
       "core": "core",
-      "proposedHeading": "Proposed cards (AI)"
+      "proposedHeading": "Proposed cards (AI)",
+      "coreHeading": "Core cards (always)"
     }
   },
   "execution": {
@@ -9712,7 +9744,8 @@
       "decisions": "Decisions",
       "team": "Team",
       "reports": "Reporting",
-      "peopleChange": "Management"
+      "peopleChange": "Management",
+      "summary": "Dashboard"
     },
     "manager": {
       "noInitiatives": "No executing initiatives",
@@ -9841,7 +9874,8 @@
       "backlogBody": "Timeline change proposals and workout plans (propose→accept) are tracked as an R1 backlog (V3-G02)."
     },
     "summary": {
-      "summarizePrompt": "Summarize this initiative in 5 bullets and propose 3 next steps."
+      "summarizePrompt": "Summarize this initiative in 5 bullets and propose 3 next steps.",
+      "blockedInitiative": "Blocked initiative"
     },
     "reports": {
       "preset": {
@@ -11020,7 +11054,8 @@
       "successTitle": "Email verified",
       "verifying": "Verifying your email…"
     },
-    "privacyLink": "Privacy Policy"
+    "privacyLink": "Privacy Policy",
+    "termsLink": "Terms of Service"
   },
   "help": {
     "onboarding": {
@@ -13903,7 +13938,8 @@
       "idea": "Idea",
       "note": "Note",
       "ideasTable": "Ideas Table",
-      "processFlow": "Process Flow"
+      "processFlow": "Process Flow",
+      "whiteboard": "Whiteboard"
     },
     "deliverable": {
       "sheetTitle": "Sheet from chat",
@@ -14585,8 +14621,10 @@
       "uploadFailed": "Couldn't process file \"{{name}}\".",
       "uploadSuccess": "Attachment \"{{name}}\" processed.",
       "urlError": "Error processing link: {{error}}",
-      "urlIngestFailed": "Couldn't process the link."
-    }
+      "urlIngestFailed": "Couldn't process the link.",
+      "urlReady": "Link processed."
+    },
+    "stopTTS": "Stop reading"
   },
   "agentAudit": {
     "title": "Agent Audit Layer",
@@ -15057,7 +15095,8 @@
     "refresh": "Refresh",
     "desktopOnly": {
       "body": "{{surface}} is optimized for desktop. On a phone, part of the layout (tables, side preview) may be hard to use.",
-      "title": "Best viewed on a larger screen"
+      "title": "Best viewed on a larger screen",
+      "continue": "Continue anyway"
     },
     "select": "Select…",
     "initiativeCreator": {
@@ -17273,7 +17312,8 @@
       "valuationCreated": "Valuation created",
       "createFailed": "Failed to create",
       "budgetCreated": "Budget created",
-      "statementDuplicateUnsupported": "Statement duplication is not supported"
+      "statementDuplicateUnsupported": "Statement duplication is not supported",
+      "analysisCreated": "Analysis created"
     },
     "prediction": {
       "budget": "Budget",
@@ -17289,7 +17329,9 @@
       "namePlaceholder": "e.g., Budget 2026 Q1-Q4",
       "periodStart": "Period from",
       "periodEnd": "Period to",
-      "monthly": "Monthly"
+      "monthly": "Monthly",
+      "granularity": "Granularity",
+      "annual": "Annual"
     },
     "analysis": {
       "ratioSummary": "Financial Ratios",
@@ -17365,7 +17407,8 @@
       "mappedLines": "Mapped lines",
       "previewTitle": "Pack health",
       "ratios": "Statements",
-      "validation": "Pack status"
+      "validation": "Pack status",
+      "computeRatios": "Compute ratios"
     },
     "counters": {
       "all": "All",
@@ -17399,7 +17442,9 @@
       "valuationFromAnalysisHint": "Go to Valuation and create an item based on the current analysis.",
       "valuationFromModelHint": "Go to Valuation and create an item based on the current model.",
       "valuationFromPredictionHint": "Go to Valuation and create an item based on the current model or budget.",
-      "valuationFromStatementsHint": "Valuation is available after creating a model, budget or financial analysis."
+      "valuationFromStatementsHint": "Valuation is available after creating a model, budget or financial analysis.",
+      "modeling": "Modeling",
+      "financialAnalysis": "Financial analysis"
     },
     "importWizard": {
       "completed": "Completed",
@@ -18512,7 +18557,8 @@
       "screenshot": "Attach a screenshot of the current view (optional)",
       "tooLarge": "Screenshot is too large (max ~1.4 MB). Use a compression tool or crop the image.",
       "uploaded": "Screenshot added to the report.",
-      "uploadHint": "Upload your own screenshot (PNG/JPG, max ~1.4 MB) or paste an image from the clipboard (Ctrl/Cmd+V)."
+      "uploadHint": "Upload your own screenshot (PNG/JPG, max ~1.4 MB) or paste an image from the clipboard (Ctrl/Cmd+V).",
+      "title": "Cursor-ready evidence"
     },
     "backlog": {
       "empty": "No presentations yet."
@@ -18530,11 +18576,13 @@
     },
     "feature": {
       "categories": {
-        "missing": "Missing feature"
+        "missing": "Missing feature",
+        "improvement": "Improvement"
       },
       "impactLevels": {
         "low": "Nice to have",
-        "medium": "Important"
+        "medium": "Important",
+        "high": "Critical"
       }
     },
     "floatingButton": {
@@ -18547,12 +18595,19 @@
     "overdueHint": "Show only reports past the response deadline (SLA)",
     "overdueOnly": "Overdue (SLA)",
     "severity": {
-      "medium": "Medium"
+      "medium": "Medium",
+      "low": "Low",
+      "high": "High",
+      "critical": "Critical"
     },
     "success": {
       "reference": "Report number",
       "referenceHint": "We'll notify you here when the status changes."
-    }
+    },
+    "anonymous": "Anonymously",
+    "sortBy": "Sort by",
+    "sortRecent": "Most recent",
+    "sortSeverity": "Weight (severity)"
   },
   "behaviorIntelligence": {
     "journeyTracked": "Journey event tracked",
@@ -19374,7 +19429,8 @@
       "redownload": "Re-download",
       "redownloadUnavailable": "Re-download unavailable (brief not stored)",
       "showHistory": "AI Bundle generation history",
-      "hideHistory": "Hide history"
+      "hideHistory": "Hide history",
+      "sectionTitle": "AI bundle — generation history"
     },
     "errors": {
       "realReportsTitle": "Real reports source needs attention",
@@ -19407,6 +19463,9 @@
       "confirmArchiveReportsDesc": "You will archive {{count}} report(s). This is reversible.",
       "confirmArchiveDecksTitle": "Archive selected presentations?",
       "confirmArchiveDecksDesc": "You will archive {{count}} presentation(s). This is reversible."
+    },
+    "templateBuilder": {
+      "saved": "Template saved"
     }
   },
   "rbHub": {
@@ -19617,7 +19676,12 @@
         "subtitle": "Join a network of partners using Consultify for digital transformation. Professional PMO standards combined with the power of AI.",
         "applyBtn": "Apply for Partnership",
         "learnMore": "Discover Consultify",
-        "existingPartner": "I already have a partner account"
+        "existingPartner": "I already have a partner account",
+        "stat": {
+          "commission": "up to {{pct}}% commission",
+          "tiers": "4 partnership tiers",
+          "academy": "Partner Academy + certification"
+        }
       },
       "benefits": {
         "heading": "What You Get as a Partner",
@@ -19689,7 +19753,8 @@
               "Early access to new features"
             ]
           }
-        }
+        },
+        "commissionLabel": "commission"
       },
       "process": {
         "heading": "How to Join?",
@@ -21307,7 +21372,11 @@
     "pendingActions": "Proposed actions",
     "proposedActions": "Proposed actions",
     "showLess": "Show less",
-    "showMore": "Show more"
+    "showMore": "Show more",
+    "highRisk": "High risk",
+    "executing": "Executing...",
+    "executed": "Executed",
+    "dismissed": "dismissed"
   },
   "artifacts": {
     "next": "next",
@@ -21384,7 +21453,8 @@
       "failed": "Failed",
       "generating": "Generating…",
       "generatingBody": "Teresa is generating slides — they will appear here automatically.",
-      "openInBuilder": "Open in Deck Builder"
+      "openInBuilder": "Open in Deck Builder",
+      "title": "Presentation"
     },
     "panel": {
       "common": {
@@ -21569,7 +21639,14 @@
         "capability": "Capability",
         "researchSession": "ResearchSession"
       },
-      "workflowTemplate": "Workflow template"
+      "workflowTemplate": "Workflow template",
+      "groups": {
+        "view": "View",
+        "edit": "Edit & AI",
+        "file": "File, export & workspace",
+        "diagnostics": "Diagnostics & workflow",
+        "advanced": "Advanced"
+      }
     },
     "aiStream": {
       "resolvePendingSuggestion": "Resolve the previous AI suggestion (accept or reject) before starting a new edit.",
@@ -21751,7 +21828,9 @@
     "projectDataDesc": "Context of the current project",
     "researchDesc": "Deep analysis mode",
     "selectSource": "Select sources",
-    "projectData": "Project"
+    "projectData": "Project",
+    "research": "Research",
+    "webDesc": "Real-time search"
   },
   "trust": {
     "badge": {
@@ -23186,7 +23265,9 @@
       "completeError": "Couldn't complete onboarding",
       "selectTier": "Select a pricing plan",
       "termsError": "Couldn't accept the terms",
-      "tierError": "Couldn't select the plan"
+      "tierError": "Couldn't select the plan",
+      "termsAccepted": "Terms accepted",
+      "tierSelected": "Pricing plan selected"
     }
   },
   "editor": {
@@ -27668,7 +27749,8 @@
   "roadmap": {
     "toast": {
       "clickToCreateDependency": "Click another initiative to create a dependency",
-      "dependencyCreated": "Dependency created"
+      "dependencyCreated": "Dependency created",
+      "initiativeMoved": "Initiative moved"
     }
   },
   "sharedComponents": {
@@ -31187,6 +31269,12 @@
         "descPlaceholder": "Description / notes...",
         "empty": "No items yet"
       }
+    }
+  },
+  "agentPlan": {
+    "section": {
+      "progress": "Progress",
+      "approvals": "Approvals"
     }
   }
 }

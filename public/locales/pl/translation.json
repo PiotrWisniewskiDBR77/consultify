@@ -154,7 +154,8 @@
     "delay": "Opóźnij",
     "dismiss": "Zamknij",
     "restore": "Przywróć",
-    "showLess": "Pokaż mniej"
+    "showLess": "Pokaż mniej",
+    "apply": "Zastosuj"
   },
   "superadmin": {
     "confirm": {
@@ -1166,7 +1167,8 @@
         "delegate": "Deleguj",
         "delay": "Przesuń termin",
         "edit": "Edytuj",
-        "openPreview": "Otwórz podgląd"
+        "openPreview": "Otwórz podgląd",
+        "archive": "Archiwizuj"
       },
       "delegateTitle": "Deleguj zadanie",
       "completed": "Oznaczono jako gotowe!",
@@ -8730,11 +8732,16 @@
       "dismiss": "Odrzuć",
       "empty": "Brak kandydatów. Uruchom skan, aby AI zaproponowało inicjatywy z rozpoznania.",
       "error": "Nie udało się pobrać kandydatów.",
-      "source": "Źródło"
+      "source": "Źródło",
+      "title": "Kandydaci AI",
+      "subtitle": "AI proponuje inicjatywy na podstawie rozpoznania (insighty, assessmenty, audyty).",
+      "scan": "Przeskanuj rozpoznanie",
+      "accept": "Akceptuj"
     },
     "proposedCards": {
       "core": "rdzeń",
-      "proposedHeading": "Proponowane karty (AI)"
+      "proposedHeading": "Proponowane karty (AI)",
+      "coreHeading": "Karty rdzenia (zawsze)"
     }
   },
   "execution": {
@@ -8871,7 +8878,8 @@
       "decisions": "Decyzje",
       "team": "Zespół",
       "reports": "Raportowanie",
-      "peopleChange": "Zarządzanie"
+      "peopleChange": "Zarządzanie",
+      "summary": "Kokpit"
     },
     "manager": {
       "noInitiatives": "Brak inicjatyw w realizacji",
@@ -9000,7 +9008,8 @@
       "backlogBody": "Propozycje zmian w timeline i plany naprawcze (propose→accept) są na backlogu R1 (V3-G02)."
     },
     "summary": {
-      "summarizePrompt": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki."
+      "summarizePrompt": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.",
+      "blockedInitiative": "Zablokowana inicjatywa"
     },
     "reports": {
       "preset": {
@@ -10179,7 +10188,8 @@
       "successTitle": "E-mail zweryfikowany",
       "verifying": "Weryfikujemy Twój adres e-mail…"
     },
-    "privacyLink": "Polityka prywatności"
+    "privacyLink": "Polityka prywatności",
+    "termsLink": "Regulamin"
   },
   "help": {
     "onboarding": {
@@ -13841,7 +13851,8 @@
           "time": "~2 minuty",
           "cta": "Dodaj dane płatności"
         }
-      }
+      },
+      "pricingBonus": "Aktualny poziom: {{tier}}"
     },
     "calculator": {
       "badge": "Kalkulator prowizji",
@@ -14085,7 +14096,9 @@
       "certificates": "Certyfikaty",
       "certificatesDesc": "Twoje zdobyte certyfikaty",
       "noCourses": "Brak dostępnych kursów",
-      "certificatesEmpty": "Brak zdobytych certyfikatów"
+      "certificatesEmpty": "Brak zdobytych certyfikatów",
+      "examTitle": "Egzamin certyfikacyjny",
+      "deadline": "Termin"
     },
     "clients": {
       "organizations": "Organizacje",
@@ -14135,31 +14148,45 @@
         "quote": "Jestem tu, aby pomóc Ci rozwijać biznes z Consultify. Niezależnie od tego, czy masz pytania o program, potrzebujesz wsparcia przy ofercie dla klienta, czy chcesz omówić możliwości co-marketingu — odezwij się!",
         "responseTime": "Średni czas odpowiedzi: {{time}}",
         "sendEmail": "Wyślij e-mail",
-        "subtitle": "Twój dedykowany Partner Manager pomoże Ci osiągnąć sukces"
+        "subtitle": "Twój dedykowany Partner Manager pomoże Ci osiągnąć sukces",
+        "title": "Masz pytania? Porozmawiajmy!"
       },
       "academy": {
         "badgeFree": "BEZPŁATNY",
         "boundaryText": "Pomoc i dokumentacja partnera wyjaśniają procesy podczas pracy. Partner Academy to oddzielna warstwa szkoleniowa do ustrukturyzowanego rozwoju, powtarzalnego enablementu i sygnałów certyfikacji.",
         "courses": {
           "drd": {
-            "description": "Dogłębne poznanie metodologii Digital Readiness Diagnostic."
+            "description": "Dogłębne poznanie metodologii Digital Readiness Diagnostic.",
+            "title": "Certyfikacja frameworku DRD",
+            "duration": "2 godziny"
           },
           "fundamentals": {
-            "description": "Poznaj platformę Consultify od podszewki. Opanuj oceny, raportowanie i zarządzanie klientami."
+            "description": "Poznaj platformę Consultify od podszewki. Opanuj oceny, raportowanie i zarządzanie klientami.",
+            "title": "Podstawy platformy",
+            "duration": "45 min"
           },
           "selling": {
             "description": "Sprawdzona metodologia sprzedaży usług transformacyjnych.",
-            "title": "Jak sprzedawać transformację cyfrową"
+            "title": "Jak sprzedawać transformację cyfrową",
+            "duration": "60 min"
           },
           "success": {
-            "description": "Maksymalizuj retencję i wskaźniki satysfakcji klientów."
+            "description": "Maksymalizuj retencję i wskaźniki satysfakcji klientów.",
+            "title": "Najlepsze praktyki Client Success",
+            "duration": "30 min"
           }
         },
         "openCertGuide": "Otwórz przewodnik certyfikacji",
         "openLearningPath": "Otwórz ścieżkę nauki",
         "pillarRolePath": "Ścieżka roli",
         "subtitle": "Ustrukturyzowane wsparcie partnera wykraczające poza dokumentację: podstawy, ścieżki dla ról i gotowość do certyfikacji.",
-        "title": "Rozwijaj umiejętności z Partner Academy"
+        "title": "Rozwijaj umiejętności z Partner Academy",
+        "boundaryLabel": "Zakres Academy",
+        "pillarFoundations": "Podstawy",
+        "pillarCertification": "Certyfikacja",
+        "badgeAdvanced": "ZAAWANSOWANY",
+        "certIncluded": "Certyfikat w cenie",
+        "startCourse": "Rozpocznij kurs"
       },
       "calculator": {
         "avgValueLabel": "Średnia wartość klienta (€/miesiąc)",
@@ -14168,7 +14195,10 @@
         "cta": "Zacznij zarabiać — wygeneruj swój kod",
         "subtitle": "Zobacz, ile możesz zarobić jako Partner Consultify",
         "title": "Oblicz swój potencjał zarobkowy",
-        "yourTier": "Twój poziom:"
+        "yourTier": "Twój poziom:",
+        "badge": "Kalkulator prowizji",
+        "commissionSuffix": "({{rate}}% prowizji)",
+        "estimatedAnnual": "Szacowane roczne zarobki"
       },
       "faq": {
         "cancel": {
@@ -14176,7 +14206,8 @@
           "q": "Co się dzieje, gdy polecony klient zrezygnuje?"
         },
         "certification": {
-          "a": "Certyfikacja Podstawy platformy trwa około 45 minut. Zaawansowane certyfikacje, takie jak framework DRD, zajmują 2-3 godziny. Wszystkie certyfikacje są samodzielne, więc możesz je ukończyć w dogodnym dla siebie czasie."
+          "a": "Certyfikacja Podstawy platformy trwa około 45 minut. Zaawansowane certyfikacje, takie jak framework DRD, zajmują 2-3 godziny. Wszystkie certyfikacje są samodzielne, więc możesz je ukończyć w dogodnym dla siebie czasie.",
+          "q": "Ile czasu zajmuje uzyskanie certyfikatu?"
         },
         "countries": {
           "a": "Tak! Consultify działa globalnie i możesz polecać klientów z dowolnego kraju. Twój wpis w katalogu partnerów może wyróżniać Twoją wiedzę regionalną, pomagając lokalnym klientom Cię znaleźć. Wypłaty prowizji mogą być realizowane w EUR, USD lub GBP.",
@@ -14195,14 +14226,18 @@
           "a": "Wszyscy partnerzy otrzymują dostęp do szkoleń Partner Academy, materiałów marketingowych i społeczności partnerskiej. Od poziomu Bronze wzwyż dostępne są priorytetowe wsparcie i dedykowane szkolenia. Partnerzy Gold i Platinum otrzymują dedykowanego Partner Managera, możliwości co-marketingu i wczesny dostęp do nowych funkcji.",
           "q": "Jakie wsparcie otrzymuję jako partner?"
         },
-        "title": "Najczęściej zadawane pytania"
+        "title": "Najczęściej zadawane pytania",
+        "badge": "FAQ"
       },
       "onboarding": {
         "customTerms": "Omów niestandardowe warunki",
         "openGuide": "Otwórz przewodnik aplikacji",
         "reviewCase": "Zobacz case potwierdzający",
         "secureNote": "Twoje dane są szyfrowane i bezpieczne",
-        "sharedFlow": "To ten sam wspólny proces aplikacyjny używany ze strony publicznej i z wnętrza produktu. Przejrzyj przewodnik aplikacji, sprawdź case potwierdzający lub od razu przejdź do rozmowy o niestandardowych warunkach, gdy self-serve to za mało."
+        "sharedFlow": "To ten sam wspólny proces aplikacyjny używany ze strony publicznej i z wnętrza produktu. Przejrzyj przewodnik aplikacji, sprawdź case potwierdzający lub od razu przejdź do rozmowy o niestandardowych warunkach, gdy self-serve to za mało.",
+        "stepLabel": "Krok {{n}}",
+        "whyLabel": "Dlaczego?",
+        "bonusLabel": "Bonus"
       }
     },
     "earnings": {
@@ -14560,7 +14595,8 @@
       "idea": "Pomysł",
       "note": "Notatka",
       "ideasTable": "Tabela pomysłów",
-      "processFlow": "Przepływ procesu"
+      "processFlow": "Przepływ procesu",
+      "whiteboard": "Tablica"
     },
     "deliverable": {
       "sheetTitle": "Arkusz z czatu",
@@ -15242,8 +15278,10 @@
       "uploadFailed": "Nie udało się przetworzyć pliku \"{{name}}\".",
       "uploadSuccess": "Załącznik \"{{name}}\" przetworzony.",
       "urlError": "Błąd przetwarzania linku: {{error}}",
-      "urlIngestFailed": "Nie udało się przetworzyć linku."
-    }
+      "urlIngestFailed": "Nie udało się przetworzyć linku.",
+      "urlReady": "Link przetworzony."
+    },
+    "stopTTS": "Zatrzymaj czytanie"
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
@@ -15714,7 +15752,8 @@
     "refresh": "Odśwież",
     "desktopOnly": {
       "body": "{{surface}} jest zoptymalizowany na desktop. Na telefonie część układu (tabele, podgląd boczny) może być trudna w obsłudze.",
-      "title": "Najlepiej na większym ekranie"
+      "title": "Najlepiej na większym ekranie",
+      "continue": "Kontynuuj mimo to"
     },
     "select": "Wybierz…",
     "initiativeCreator": {
@@ -17735,7 +17774,8 @@
       "valuationCreated": "Wycena utworzona",
       "createFailed": "Nie udało się utworzyć",
       "budgetCreated": "Budżet utworzony",
-      "statementDuplicateUnsupported": "Duplikacja statementu nie jest wspierana"
+      "statementDuplicateUnsupported": "Duplikacja statementu nie jest wspierana",
+      "analysisCreated": "Analiza utworzona"
     },
     "prediction": {
       "budget": "Budżet",
@@ -17751,7 +17791,9 @@
       "namePlaceholder": "np. Budżet 2026 Q1-Q4",
       "periodStart": "Okres od",
       "periodEnd": "Okres do",
-      "monthly": "Miesięczna"
+      "monthly": "Miesięczna",
+      "granularity": "Granulacja",
+      "annual": "Roczna"
     },
     "analysis": {
       "ratioSummary": "Wskaźniki finansowe",
@@ -17827,7 +17869,8 @@
       "mappedLines": "Zmapowane linie",
       "previewTitle": "Stan pakietu",
       "ratios": "Sprawozdania",
-      "validation": "Status pakietu"
+      "validation": "Status pakietu",
+      "computeRatios": "Przelicz ratios"
     },
     "counters": {
       "all": "Wszystkie",
@@ -17861,7 +17904,9 @@
       "valuationFromAnalysisHint": "Przejdź do Wyceny i utwórz pozycję na bazie bieżącej analizy.",
       "valuationFromModelHint": "Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu.",
       "valuationFromPredictionHint": "Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu lub budżetu.",
-      "valuationFromStatementsHint": "Wycena jest dostępna po utworzeniu modelu, budżetu lub analizy finansowej."
+      "valuationFromStatementsHint": "Wycena jest dostępna po utworzeniu modelu, budżetu lub analizy finansowej.",
+      "modeling": "Modelowanie",
+      "financialAnalysis": "Analiza finansowa"
     },
     "importWizard": {
       "completed": "Zakończony",
@@ -19104,7 +19149,8 @@
       "screenshot": "Dołącz screenshot bieżącego widoku (opcjonalnie)",
       "tooLarge": "Zrzut ekranu jest za duży (max ~1.4 MB). Użyj narzędzia do kompresji lub przytnij obraz.",
       "uploaded": "Screenshot dodany do zgłoszenia.",
-      "uploadHint": "Wgraj własny zrzut ekranu (PNG/JPG, max ~1.4 MB) lub wklej obraz ze schowka (Ctrl/Cmd+V)."
+      "uploadHint": "Wgraj własny zrzut ekranu (PNG/JPG, max ~1.4 MB) lub wklej obraz ze schowka (Ctrl/Cmd+V).",
+      "title": "Cursor-ready dowody"
     },
     "backlog": {
       "empty": "Brak prezentacji."
@@ -19126,7 +19172,10 @@
     },
     "hasDiagnostics": "Zgłoszenie zawiera logi konsoli / sieci / breadcrumbs",
     "overdueHint": "Pokaż tylko zgłoszenia po terminie odpowiedzi (SLA)",
-    "overdueOnly": "Zaległe (SLA)"
+    "overdueOnly": "Zaległe (SLA)",
+    "sortBy": "Sortowanie",
+    "sortRecent": "Najnowsze",
+    "sortSeverity": "Waga (severity)"
   },
   "behaviorIntelligence": {
     "journeyTracked": "Zdarzenie ścieżki zarejestrowane",
@@ -19948,7 +19997,8 @@
       "redownload": "Pobierz ponownie",
       "redownloadUnavailable": "Ponowne pobranie niedostępne (brak zapisanego briefu)",
       "showHistory": "Historia generacji Komplet AI",
-      "hideHistory": "Ukryj historię"
+      "hideHistory": "Ukryj historię",
+      "sectionTitle": "Komplet AI — historia generacji"
     },
     "errors": {
       "realReportsTitle": "Źródło rzeczywistych raportów wymaga uwagi",
@@ -19981,6 +20031,9 @@
       "confirmArchiveReportsDesc": "Zarchiwizujesz {{count}} raportów. Operacja jest odwracalna.",
       "confirmArchiveDecksTitle": "Zarchiwizować zaznaczone prezentacje?",
       "confirmArchiveDecksDesc": "Zarchiwizujesz {{count}} prezentacji. Operacja jest odwracalna."
+    },
+    "templateBuilder": {
+      "saved": "Szablon zapisany"
     }
   },
   "rbHub": {
@@ -20231,7 +20284,12 @@
         "subtitle": "Dołącz do sieci partnerów wykorzystujących Consultify do transformacji cyfrowej organizacji. Profesjonalne standardy PMO połączone z mocą sztucznej inteligencji.",
         "applyBtn": "Aplikuj o partnerstwo",
         "learnMore": "Poznaj Consultify",
-        "existingPartner": "Mam już konto partnera"
+        "existingPartner": "Mam już konto partnera",
+        "stat": {
+          "commission": "do {{pct}}% prowizji",
+          "tiers": "4 poziomy partnerstwa",
+          "academy": "Partner Academy + certyfikacja"
+        }
       },
       "benefits": {
         "heading": "Co zyskujesz jako partner",
@@ -20303,7 +20361,8 @@
               "Wczesny dostęp do nowości"
             ]
           }
-        }
+        },
+        "commissionLabel": "prowizji"
       },
       "process": {
         "heading": "Jak dołączyć?",
@@ -22341,7 +22400,11 @@
     "pendingActions": "Proponowane akcje",
     "proposedActions": "Proponowane akcje",
     "showLess": "Pokaż mniej",
-    "showMore": "Pokaż więcej"
+    "showMore": "Pokaż więcej",
+    "highRisk": "Wysokie ryzyko",
+    "executing": "Wykonywanie...",
+    "executed": "Wykonano",
+    "dismissed": "odrzucone"
   },
   "artifacts": {
     "next": "następne",
@@ -22418,7 +22481,8 @@
       "failed": "Błąd",
       "generating": "Generuję…",
       "generatingBody": "Teresa generuje slajdy — pojawią się tutaj automatycznie.",
-      "openInBuilder": "Otwórz w Deck Builder"
+      "openInBuilder": "Otwórz w Deck Builder",
+      "title": "Prezentacja"
     },
     "panel": {
       "common": {
@@ -22609,7 +22673,14 @@
         "capability": "Możliwość",
         "researchSession": "ResearchSession"
       },
-      "workflowTemplate": "Szablon przepływu pracy"
+      "workflowTemplate": "Szablon przepływu pracy",
+      "groups": {
+        "view": "Widok",
+        "edit": "Edycja i AI",
+        "file": "Plik, eksport i workspace",
+        "diagnostics": "Diagnostyka i workflow",
+        "advanced": "Zaawansowane"
+      }
     },
     "aiStream": {
       "resolvePendingSuggestion": "Rozstrzygnij poprzednią propozycję AI (zaakceptuj lub odrzuć), zanim rozpoczniesz nową edycję.",
@@ -22791,7 +22862,9 @@
     "projectDataDesc": "Kontekst bieżącego projektu",
     "researchDesc": "Tryb głębokiej analizy",
     "selectSource": "Wybierz źródła",
-    "projectData": "Projekt"
+    "projectData": "Projekt",
+    "research": "Analiza",
+    "webDesc": "Wyszukiwanie w czasie rzeczywistym"
   },
   "trust": {
     "badge": {
@@ -24248,7 +24321,9 @@
       "completeError": "Nie udało się zakończyć onboardingu",
       "selectTier": "Wybierz plan cenowy",
       "termsError": "Nie udało się zaakceptować regulaminu",
-      "tierError": "Nie udało się wybrać planu"
+      "tierError": "Nie udało się wybrać planu",
+      "termsAccepted": "Regulamin zaakceptowany",
+      "tierSelected": "Plan cenowy wybrany"
     }
   },
   "editor": {
@@ -28728,7 +28803,8 @@
   "roadmap": {
     "toast": {
       "clickToCreateDependency": "Kliknij inną inicjatywę, aby utworzyć zależność",
-      "dependencyCreated": "Zależność utworzona"
+      "dependencyCreated": "Zależność utworzona",
+      "initiativeMoved": "Inicjatywa przeniesiona"
     }
   },
   "sharedComponents": {
@@ -32247,6 +32323,12 @@
         "descPlaceholder": "Opis / notatka...",
         "empty": "Brak pozycji"
       }
+    }
+  },
+  "agentPlan": {
+    "section": {
+      "progress": "Postęp",
+      "approvals": "Aprobaty"
     }
   }
 }
