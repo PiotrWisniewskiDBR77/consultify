@@ -6054,7 +6054,19 @@
       "technologiesCount": "technologii",
       "noLevelSuggestions": "Brak sugestii poziomów do wyświetlenia",
       "noTechSuggestions": "Brak sugestii technologii do wyświetlenia",
-      "noGaps": "Brak luk do wyświetlenia"
+      "noGaps": "Brak luk do wyświetlenia",
+      "topPerformers": "Top performers:",
+      "quickWins": "Quick Wins",
+      "complexityLevels": {
+        "low": "Niska",
+        "medium": "Średnia",
+        "high": "Wysoka"
+      },
+      "costLevels": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki"
+      }
     },
     "reportBuilder": {
       "sectionSaved": "Sekcja zapisana",
