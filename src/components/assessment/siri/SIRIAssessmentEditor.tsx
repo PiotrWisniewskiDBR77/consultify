@@ -19,6 +19,7 @@ import {
   List,
   MessageSquare,
   Settings,
+  Sparkles,
   Target,
   Users,
   X,
@@ -26,6 +27,8 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getAssessmentGuidanceLive } from '@/services/assessmentKnowledge/assessmentGuidanceRuntime';
+import type { AssessmentGuidanceOutput } from '@/services/assessmentKnowledge/assessmentGuidanceService';
 import {
   calculateBlockScore,
   calculateOverallSIRIScore,
@@ -442,6 +445,11 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
   );
   const [showNotes, setShowNotes] = useState(false);
 
+  // Per-dimension×level AI guidance (canon-grounded; keyed by "dimensionId#level").
+  const [guidance, setGuidance] = useState<
+    Record<string, { loading: boolean; data?: AssessmentGuidanceOutput }>
+  >({});
+
   // Computed
   const blockDimensions = useMemo(() => getDimensionsForBlock(activeBlock), [activeBlock]);
   const activeDimension = useMemo(
@@ -540,6 +548,27 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
     },
     [value, onChange, activeDimensionId, readOnly]
   );
+
+  // Fetch canon-grounded AI guidance for one dimension×level (cached, non-blocking).
+  const requestGuidance = useCallback((dimension: SIRIDimension, level: number) => {
+    const key = `${dimension.id}#${level}`;
+    setGuidance((prev) => {
+      if (prev[key]?.loading || prev[key]?.data) return prev;
+      return { ...prev, [key]: { loading: true } };
+    });
+    const levelInfo = SIRI_MATURITY_LEVELS.find((l) => l.level === level);
+    void getAssessmentGuidanceLive({
+      framework: 'SIRI',
+      dimensionId: dimension.id,
+      dimensionName: dimension.name,
+      levelNumber: level,
+      levelTitle: levelInfo?.title,
+      levelDescription: levelInfo?.description,
+      language: 'pl',
+    })
+      .then((data) => setGuidance((prev) => ({ ...prev, [key]: { loading: false, data } })))
+      .catch(() => setGuidance((prev) => ({ ...prev, [key]: { loading: false } })));
+  }, []);
 
   const currentDimensionState = activeDimensionId
     ? getDimensionState(value, activeDimensionId)
@@ -691,6 +720,72 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                     </p>
                   </div>
                 )}
+
+              {/* Per-dimension AI guidance (canon-grounded, non-blocking) */}
+              <div>
+                {(() => {
+                  const gLevel = currentDimensionState.current;
+                  const gKey = `${activeDimension.id}#${gLevel}`;
+                  const g = guidance[gKey];
+                  if (!g) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => requestGuidance(activeDimension, gLevel)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-c-info hover:underline"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {isPolish
+                          ? 'Podpowiedź AI (dlaczego to ważne + jak oceniać)'
+                          : 'AI guidance (why it matters + how to score)'}
+                      </button>
+                    );
+                  }
+                  if (g.loading) {
+                    return (
+                      <div className="text-xs text-c-text-muted">
+                        {isPolish ? 'Generuję podpowiedź…' : 'Generating guidance…'}
+                      </div>
+                    );
+                  }
+                  if (!g.data) return null;
+                  return (
+                    <div className="rounded-lg border border-c-border-subtle bg-[color-mix(in_srgb,var(--c-info)_6%,transparent)] p-3 space-y-2 text-sm">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-info">
+                        <Sparkles className="w-3 h-3" />
+                        {isPolish ? 'Podpowiedź konsultanta' : 'Consultant guidance'}
+                        <span className="ml-auto font-normal normal-case text-c-text-muted">
+                          {g.data.source === 'llm' ? 'AI' : isPolish ? 'kanon' : 'canon'}
+                        </span>
+                      </div>
+                      <p className="text-c-text">
+                        <span className="font-semibold">
+                          {isPolish ? 'Dlaczego to ważne: ' : 'Why it matters: '}
+                        </span>
+                        {g.data.whyItMatters}
+                      </p>
+                      <p className="text-c-text-secondary dark:text-c-text-muted">
+                        <span className="font-semibold">
+                          {isPolish ? 'Jak oceniać poziom: ' : 'How to score this level: '}
+                        </span>
+                        {g.data.levelInterpretation}
+                      </p>
+                      <p className="text-xs text-c-text-muted">
+                        <span className="font-semibold">{isPolish ? 'Kanon: ' : 'Canon: '}</span>
+                        {g.data.canonContext}
+                      </p>
+                      {g.data.pitfalls.length > 0 && (
+                        <p className="text-xs text-c-text-muted">
+                          <span className="font-semibold">
+                            {isPolish ? 'Uważaj na: ' : 'Watch out for: '}
+                          </span>
+                          {g.data.pitfalls.join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
 
               {/* Notes */}
               <div>
