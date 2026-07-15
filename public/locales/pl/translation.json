@@ -28224,6 +28224,42 @@
         "implicationPlaceholder": "Implikacja tego priorytetu...",
         "hint": "Oceń wartość vs wysiłek i dopasowanie, a następnie zdecyduj: realizuj, odłóż czy porzuć."
       }
+    },
+    "ambitionDecomposer": {
+      "horizon": {
+        "short": "Krótki",
+        "medium": "Średni",
+        "long": "Długi"
+      },
+      "signalsTitle": "Sygnały i dowody ambicji",
+      "signalsSubtitle": "Zbierz fakty o celu, zakresie i sygnałach sukcesu zanim AI rozłoży ambicję na tematy.",
+      "addSignalPlaceholder": "Dodaj sygnał...",
+      "decompositionTitle": "Dekompozycja ambicji",
+      "decompositionSubtitle": "Każdy temat powinien mieć miarę i wartość docelową, horyzont, znaczenie, drivery i implikację.",
+      "addTheme": "Dodaj temat",
+      "emptyThemes": "Brak tematów. Dodaj pierwszy lub poczekaj na propozycje AI.",
+      "prioritiesTitle": "Priorytety i ruchy",
+      "prioritiesSubtitle": "Tu dekompozycja ambicji zamienia się w priorytety i rekomendowane ruchy strategiczne.",
+      "acceptedThemes": "Zaakceptowane tematy",
+      "noAcceptedThemes": "Brak zaakceptowanych tematów.",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "titlePlaceholder": "Nazwa tematu...",
+        "descPlaceholder": "Krótki opis tematu...",
+        "removeTheme": "Usuń temat",
+        "targetMetric": "Miara docelowa",
+        "targetMetricPlaceholder": "Co mierzymy...",
+        "targetValue": "Wartość docelowa",
+        "targetValuePlaceholder": "Wartość celu...",
+        "timeHorizon": "Horyzont czasowy",
+        "strategicImportance": "Znaczenie strategiczne",
+        "addDriverPlaceholder": "Dodaj czynnik...",
+        "noDrivers": "Brak dodanych czynników",
+        "implicationPlaceholder": "Implikacja tego tematu...",
+        "hint": "Powiąż temat z konkretną miarą i wartością docelową oraz horyzontem, w którym ambicja staje się mierzalna."
+      }
     }
   }
 }

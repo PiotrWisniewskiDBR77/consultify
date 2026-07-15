@@ -27148,6 +27148,42 @@
         "implicationPlaceholder": "Implication of this priority...",
         "hint": "Weigh value vs effort and fit, then decide whether to pursue, defer, or drop."
       }
+    },
+    "ambitionDecomposer": {
+      "horizon": {
+        "short": "Short",
+        "medium": "Medium",
+        "long": "Long"
+      },
+      "signalsTitle": "Ambition Signals & Evidence",
+      "signalsSubtitle": "Capture facts about the goal, scope, and success signals before AI decomposes the ambition into themes.",
+      "addSignalPlaceholder": "Add an ambition signal...",
+      "decompositionTitle": "Ambition Decomposition",
+      "decompositionSubtitle": "Each theme should have a metric and target value, a horizon, importance, drivers, and an implication.",
+      "addTheme": "Add theme",
+      "emptyThemes": "No themes yet. Add the first one or wait for AI proposals.",
+      "prioritiesTitle": "Priorities & Moves",
+      "prioritiesSubtitle": "This is where the ambition decomposition turns into priorities and recommended strategic moves.",
+      "acceptedThemes": "Accepted themes",
+      "noAcceptedThemes": "No accepted themes.",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on the approved diagnosis.",
+      "finalSourceSummary": "Final source summary",
+      "card": {
+        "titlePlaceholder": "Theme title...",
+        "descPlaceholder": "Short description of the theme...",
+        "removeTheme": "Remove theme",
+        "targetMetric": "Target metric",
+        "targetMetricPlaceholder": "What to measure...",
+        "targetValue": "Target value",
+        "targetValuePlaceholder": "Goal value...",
+        "timeHorizon": "Time horizon",
+        "strategicImportance": "Strategic importance",
+        "addDriverPlaceholder": "Add a driver...",
+        "noDrivers": "No drivers added",
+        "implicationPlaceholder": "Implication of this theme...",
+        "hint": "Tie the theme to a concrete metric, target value, and horizon in which the ambition becomes measurable."
+      }
     }
   }
 }
