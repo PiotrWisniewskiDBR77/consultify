@@ -130,6 +130,13 @@ interface FilterableTableProps {
     columnsHeading?: string;
     settingsLabel?: string;
   };
+  /**
+   * Opt-in extra class(es) appended to a row's `<tr>` — e.g. group-header
+   * styling for grouped-rows layouts (Inbox). Purely additive: the base
+   * selected/hover classes are always applied first, this is appended after.
+   * Omit for zero visual change (default undefined → no-op).
+   */
+  rowClassName?: string | ((row: TableRow) => string);
 }
 
 // True when a regular cell value should render as an em-dash placeholder
@@ -257,6 +264,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   selection,
   defaultSort = null,
   rowDescription,
+  rowClassName,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -802,7 +810,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       row.id === selectedRowId
                         ? 'bg-slate-50 dark:bg-white/[0.06]'
                         : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
-                    ].join(' ')}
+                      typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
                   >
                     {visibleColumns.map((column) => (
                       <td

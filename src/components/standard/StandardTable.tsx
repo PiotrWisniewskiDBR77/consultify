@@ -149,6 +149,12 @@ export interface StandardTableProps {
   /** MUST #3 — treść opisu wiersza (default: `row.description`). */
   rowDescription?: (row: TableRow) => React.ReactNode;
 
+  /**
+   * Opcjonalny dodatkowy CSS-class per wiersz (np. group-header w layoutach
+   * grouped-rows jak Inbox). Addytywne — bez propa ZERO zmian wizualnych.
+   */
+  rowClassName?: string | ((row: TableRow) => string);
+
   /** Lejki kolumn — kontrolowane z zewnątrz lub stan wewnętrzny fasady. */
   activeFilters?: FilterChip[];
   onFilterChange?: (filters: FilterChip[]) => void;
@@ -186,6 +192,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   rowMenu,
   rowActions,
   rowDescription,
+  rowClassName,
   activeFilters,
   onFilterChange,
   defaultSort,
@@ -416,6 +423,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
       defaultSort={defaultSort ?? null}
       persistKey={persistKey}
       selection={selectionDriver}
+      rowClassName={rowClassName}
     />
   );
 };
