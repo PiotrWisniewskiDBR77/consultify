@@ -28077,6 +28077,47 @@
         { "title": "Talent", "message": "Zespół jest gotowy", "proofs": 2, "resonance": "medium" },
         { "title": "Ryzyko", "message": "Pilot ogranicza ryzyko", "proofs": 1, "resonance": "low" }
       ]
+    },
+    "capabilityMapperLibraryGraphic": {
+      "titleProcess": "Jak Capability Mapper prowadzi od dojrzałości do priorytetów",
+      "titleExample": "Przykład: od dojrzałości zdolności do ruchów build/buy/partner",
+      "subtitleProcess": "To nie statyczna inwentaryzacja kompetencji. Najpierw ustawiamy strategię i domeny, oceniamy dojrzałość obecną vs docelową na skali 1-5, ważymy wagą strategiczną i zamieniamy luki w ruchy oraz inicjatywy.",
+      "subtitleExample": "Ten case pokazuje, że mapa zdolności to nie lista kompetencji. Najpierw ocenia dojrzałość obecną i docelową, waży wagę strategiczną, a dopiero potem wyłania luki i ruchy.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od branży, domen zdolności, priorytetów strategicznych i pytania decyzyjnego. Bez tego ocena dojrzałości jest oderwana od strategii.",
+      "scenarioValueExample": "Firma chce wejść w AI, ale nie wie, których zdolności realnie jej brakuje. Pytanie brzmi: gdzie luka między stanem obecnym a celem jest największa tam, gdzie waga strategiczna jest najwyższa.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena dojrzałości obecnej vs docelowej każdej zdolności, priorytetyzowane luki oraz ruchy build/buy/partner gotowe do dalszej pracy.",
+      "decisionValueExample": "Które zdolności trzeba podnieść najpierw, żeby strategia w ogóle ruszyła?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        ["Brief", "Branża, domeny, priorytety, decyzja", "bg-sky-500"],
+        ["Zdolności", "Mapa zdolności wg domen", "bg-sky-500"],
+        ["Dojrzałość", "Obecna vs docelowa 1-5 + waga", "bg-blue-500"],
+        ["Luki", "Gdzie luka × waga jest największa", "bg-amber-500"],
+        ["Ruchy & outputy", "Build/buy/partner, inicjatywy, raport, deck", "bg-emerald-500"]
+      ],
+      "ladderTitle": "Drabina dojrzałości",
+      "scaleHint": "Skala dojrzałości 1-5",
+      "legendTitle": "Rozmiar luki",
+      "legend": [
+        ["critical", "Krytyczna luka"],
+        ["moderate", "Umiarkowana luka"],
+        ["minor", "Drobna luka"]
+      ],
+      "currentLabel": "Obecna",
+      "targetLabel": "Docelowa",
+      "footer": "Capability Mapper = brief -> zdolności -> dojrzałość -> luki -> ruchy -> outputy",
+      "rows": [
+        { "name": "Dane i analityka", "current": 2, "target": 5, "gap": "critical" },
+        { "name": "Talenty AI", "current": 1, "target": 4, "gap": "critical" },
+        { "name": "Procesy", "current": 3, "target": 4, "gap": "moderate" },
+        { "name": "Technologia", "current": 3, "target": 5, "gap": "moderate" },
+        { "name": "Partnerstwa", "current": 4, "target": 5, "gap": "minor" }
+      ]
     }
   }
 }

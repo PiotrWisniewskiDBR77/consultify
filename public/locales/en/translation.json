@@ -27001,6 +27001,47 @@
         { "title": "Talent", "message": "The team is ready", "proofs": 2, "resonance": "medium" },
         { "title": "Risk", "message": "A pilot caps the risk", "proofs": 1, "resonance": "low" }
       ]
+    },
+    "capabilityMapperLibraryGraphic": {
+      "titleProcess": "How Capability Mapper moves from maturity to priorities",
+      "titleExample": "Example: from capability maturity to build/buy/partner moves",
+      "subtitleProcess": "This is not a static competency inventory. First we frame strategy and domains, score current vs target maturity on a 1-5 scale, weight by strategic importance, and translate gaps into moves and initiatives.",
+      "subtitleExample": "This case shows that a capability map is not a competency checklist. It scores current and target maturity first, weighs strategic importance, and only then surfaces gaps and moves.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with industry, capability domains, strategic priorities, and the decision question. Without that, maturity scoring is detached from strategy.",
+      "scenarioValueExample": "A company wants to move into AI but does not know which capabilities it truly lacks. The real question is where the gap between current and target is widest exactly where strategic importance is highest.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "Each capability's current vs target maturity, prioritized gaps, and build/buy/partner moves ready for downstream work.",
+      "decisionValueExample": "Which capabilities must be raised first for the strategy to move at all?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        ["Brief", "Industry, domains, priorities, decision", "bg-sky-500"],
+        ["Capabilities", "Map capabilities by domain", "bg-sky-500"],
+        ["Maturity", "Current vs target 1-5 + weight", "bg-blue-500"],
+        ["Gaps", "Where gap × weight is widest", "bg-amber-500"],
+        ["Moves & outputs", "Build/buy/partner, initiatives, report, deck", "bg-emerald-500"]
+      ],
+      "ladderTitle": "Maturity ladder",
+      "scaleHint": "Maturity scale 1-5",
+      "legendTitle": "Gap size",
+      "legend": [
+        ["critical", "Critical gap"],
+        ["moderate", "Moderate gap"],
+        ["minor", "Minor gap"]
+      ],
+      "currentLabel": "Current",
+      "targetLabel": "Target",
+      "footer": "Capability Mapper = brief -> capabilities -> maturity -> gaps -> moves -> outputs",
+      "rows": [
+        { "name": "Data & analytics", "current": 2, "target": 5, "gap": "critical" },
+        { "name": "AI talent", "current": 1, "target": 4, "gap": "critical" },
+        { "name": "Processes", "current": 3, "target": 4, "gap": "moderate" },
+        { "name": "Technology", "current": 3, "target": 5, "gap": "moderate" },
+        { "name": "Partnerships", "current": 4, "target": 5, "gap": "minor" }
+      ]
     }
   }
 }
