@@ -352,7 +352,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
   onClose,
   onApply,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [selected, setSelected] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
@@ -362,16 +362,14 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
     if (!fw) return;
     setApplying(true);
 
+    const columnHeaderKeys: Record<string, string> = {
+      Item: 'myWorkTable.frameworkGenerator.columnHeaderItem',
+      Action: 'myWorkTable.frameworkGenerator.columnHeaderAction',
+      Owner: 'myWorkTable.frameworkGenerator.columnHeaderOwner',
+    };
     const cols = fw.columns.map((c) => ({
       ...c,
-      header:
-        isPl && c.header === 'Item'
-          ? 'Element'
-          : isPl && c.header === 'Action'
-            ? 'Działanie'
-            : isPl && c.header === 'Owner'
-              ? 'Właściciel'
-              : c.header,
+      header: columnHeaderKeys[c.header] ? t(columnHeaderKeys[c.header]) : c.header,
     }));
 
     const rows: TableNode[] = fw.sampleRows.map((r, idx) => ({
@@ -387,12 +385,12 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
       setSelected(null);
       onClose();
       toast.success(
-        isPl
-          ? `Framework "${isPl ? fw.namePl : fw.nameEn}" zastosowany`
-          : `Framework "${fw.nameEn}" applied`
+        t('myWorkTable.frameworkGenerator.frameworkApplied', {
+          name: isPl ? fw.namePl : fw.nameEn,
+        })
       );
     }, 300);
-  }, [isPl, onApply, onClose, selected]);
+  }, [isPl, onApply, onClose, selected, t]);
 
   if (!open) return null;
 
@@ -405,7 +403,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-c-accent" />
             <h3 className="text-sm font-bold text-c-text">
-              {isPl ? 'Generator frameworków' : 'Framework Generator'}
+              {t('myWorkTable.frameworkGenerator.frameworkGenerator')}
             </h3>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-c-surface-raised">
@@ -415,9 +413,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
 
         <div className="px-5 py-4">
           <p className="text-[11px] text-c-text-muted mb-4">
-            {isPl
-              ? 'Wybierz framework konsultingowy. Tabela zostanie wypełniona odpowiednimi kolumnami i przykładowymi danymi.'
-              : 'Choose a consulting framework. The table will be populated with appropriate columns and sample data.'}
+            {t('myWorkTable.frameworkGenerator.chooseAConsultingFrameworkThe')}
           </p>
 
           <div className="grid grid-cols-2 gap-2">
@@ -443,8 +439,8 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
                       {isPl ? fw.descPl : fw.descEn}
                     </div>
                     <div className="text-[9px] text-c-text-secondary mt-1">
-                      {fw.columns.length} {isPl ? 'kolumn' : 'columns'} · {fw.sampleRows.length}{' '}
-                      {isPl ? 'wierszy' : 'rows'}
+                      {fw.columns.length} {t('myWorkTable.frameworkGenerator.columns')} · {fw.sampleRows.length}{' '}
+                      {t('myWorkTable.frameworkGenerator.rows')}
                     </div>
                   </div>
                 </button>
@@ -455,7 +451,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
           {selectedFw && (
             <div className="mt-4 p-3 rounded-xl bg-c-surface-raised border border-c-border-subtle">
               <div className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
-                {isPl ? 'Podgląd kolumn' : 'Column preview'}
+                {t('myWorkTable.frameworkGenerator.columnPreview')}
               </div>
               <div className="flex flex-wrap gap-1">
                 {selectedFw.columns.map((col) => (
@@ -477,7 +473,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkTable.frameworkGenerator.cancel')}
           </button>
           <button
             onClick={handleApply}
@@ -485,7 +481,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {applying ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            {isPl ? 'Zastosuj framework' : 'Apply framework'}
+            {t('myWorkTable.frameworkGenerator.applyFramework')}
           </button>
         </div>
       </div>

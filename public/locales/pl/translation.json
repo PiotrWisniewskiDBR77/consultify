@@ -27118,6 +27118,44 @@
       "month": "Miesiąc",
       "zoomOut": "Oddal",
       "record": "Rekord"
+    },
+    "connectorList": {
+      "noConnectorsConfigured": "Brak skonfigurowanych konektorów",
+      "connectExternalDataSourcesTo": "Połącz zewnętrzne źródła danych, aby automatycznie importować dane do tabeli.",
+      "addConnector": "Dodaj konektor",
+      "connectors": "Konektory",
+      "add": "Dodaj",
+      "last": "Ostatni:",
+      "runNow": "Uruchom teraz",
+      "history": "Historia",
+      "edit": "Edytuj",
+      "delete": "Usuń"
+    },
+    "schemaProposalCard": {
+      "withFieldsCount": "z {{value}} polami",
+      "optionsWord": "opcji",
+      "impactBases": "baz",
+      "impactTables": "tabel",
+      "impactFields": "pól",
+      "impactViews": "widoków",
+      "impactFieldUpdates": "aktualizacji pól",
+      "impactFieldDeletions": "usunięć pól",
+      "impactRecords": "rekordów",
+      "noOperations": "Brak operacji",
+      "willCreate": "Utworzy"
+    },
+    "frameworkGenerator": {
+      "frameworkGenerator": "Generator frameworków",
+      "chooseAConsultingFrameworkThe": "Wybierz framework konsultingowy. Tabela zostanie wypełniona odpowiednimi kolumnami i przykładowymi danymi.",
+      "columns": "kolumn",
+      "rows": "wierszy",
+      "columnPreview": "Podgląd kolumn",
+      "cancel": "Anuluj",
+      "applyFramework": "Zastosuj framework",
+      "columnHeaderItem": "Element",
+      "columnHeaderAction": "Działanie",
+      "columnHeaderOwner": "Właściciel",
+      "frameworkApplied": "Framework \"{{name}}\" zastosowany"
     }
   }
 }

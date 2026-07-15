@@ -21,6 +21,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -175,7 +176,7 @@ export interface SchemaProposalCardProps {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatOperationDescription(op: SchemaProposalOperation, isPl: boolean): string {
+function formatOperationDescription(op: SchemaProposalOperation, t: TFunction): string {
   const { target, payload } = op;
   const parts: string[] = [];
 
@@ -194,18 +195,30 @@ function formatOperationDescription(op: SchemaProposalOperation, isPl: boolean):
 
   if (payload?.fields && Array.isArray(payload.fields)) {
     const count = payload.fields.length;
-    parts.push(isPl ? `z ${count} polami` : `with ${count} fields`);
+    parts.push(t('myWorkTable.schemaProposalCard.withFieldsCount', { value: count }));
   }
 
   const options = payload?.options;
   if (Array.isArray(options) && options.length > 0) {
-    parts.push(`[${options.length} ${isPl ? 'opcji' : 'options'}]`);
+    parts.push(
+      `[${options.length} ${t('myWorkTable.schemaProposalCard.optionsWord')}]`
+    );
   }
 
   return parts.join(' ');
 }
 
-function computeImpactSummary(operations: SchemaProposalOperation[], isPl: boolean): string {
+const IMPACT_LABEL_KEYS: Record<string, string> = {
+  create_base: 'myWorkTable.schemaProposalCard.impactBases',
+  create_table: 'myWorkTable.schemaProposalCard.impactTables',
+  create_field: 'myWorkTable.schemaProposalCard.impactFields',
+  create_view: 'myWorkTable.schemaProposalCard.impactViews',
+  update_field: 'myWorkTable.schemaProposalCard.impactFieldUpdates',
+  delete_field: 'myWorkTable.schemaProposalCard.impactFieldDeletions',
+  create_record: 'myWorkTable.schemaProposalCard.impactRecords',
+};
+
+function computeImpactSummary(operations: SchemaProposalOperation[], t: TFunction): string {
   const counts: Record<string, number> = {};
   for (const op of operations) {
     const key = op.operationType.replace(/^add_/, 'create_');
@@ -213,33 +226,14 @@ function computeImpactSummary(operations: SchemaProposalOperation[], isPl: boole
   }
 
   const parts: string[] = [];
-  const labels = isPl
-    ? {
-        create_base: 'baz',
-        create_table: 'tabel',
-        create_field: 'pól',
-        create_view: 'widoków',
-        update_field: 'aktualizacji pól',
-        delete_field: 'usunięć pól',
-        create_record: 'rekordów',
-      }
-    : {
-        create_base: 'bases',
-        create_table: 'tables',
-        create_field: 'fields',
-        create_view: 'views',
-        update_field: 'field updates',
-        delete_field: 'field deletions',
-        create_record: 'records',
-      };
-
   for (const [key, count] of Object.entries(counts)) {
-    const label = labels[key as keyof typeof labels] ?? key.replace(/_/g, ' ');
+    const labelKey = IMPACT_LABEL_KEYS[key];
+    const label = labelKey ? t(labelKey) : key.replace(/_/g, ' ');
     parts.push(`${count} ${label}`);
   }
 
-  if (parts.length === 0) return isPl ? 'Brak operacji' : 'No operations';
-  const prefix = isPl ? 'Utworzy' : 'Will create';
+  if (parts.length === 0) return t('myWorkTable.schemaProposalCard.noOperations');
+  const prefix = t('myWorkTable.schemaProposalCard.willCreate');
   return `${prefix}: ${parts.join(', ')}`;
 }
 
@@ -268,7 +262,7 @@ const OperationItem: React.FC<{
 }> = ({ op, isPl, selected, expanded, onToggleSelect, onToggleExpand, warning }) => {
   const { t } = useTranslation();
   const { label, icon: Icon, color } = getOpMeta(op.operationType, isPl);
-  const description = formatOperationDescription(op, isPl);
+  const description = formatOperationDescription(op, t);
 
   return (
     <div
@@ -444,7 +438,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
     : proposal.intent.replace(/_/g, ' ');
 
   // Impact summary
-  const impactText = computeImpactSummary(proposal.operations, isPl);
+  const impactText = computeImpactSummary(proposal.operations, t);
 
   // Timestamp
   const timeStr = formatTimestamp(proposal.created_at);

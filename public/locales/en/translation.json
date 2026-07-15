@@ -26042,6 +26042,44 @@
       "month": "Month",
       "zoomOut": "Zoom out",
       "record": "Record"
+    },
+    "connectorList": {
+      "noConnectorsConfigured": "No connectors configured",
+      "connectExternalDataSourcesTo": "Connect external data sources to automatically import data into your table.",
+      "addConnector": "Add connector",
+      "connectors": "Connectors",
+      "add": "Add",
+      "last": "Last:",
+      "runNow": "Run now",
+      "history": "History",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "schemaProposalCard": {
+      "withFieldsCount": "with {{value}} fields",
+      "optionsWord": "options",
+      "impactBases": "bases",
+      "impactTables": "tables",
+      "impactFields": "fields",
+      "impactViews": "views",
+      "impactFieldUpdates": "field updates",
+      "impactFieldDeletions": "field deletions",
+      "impactRecords": "records",
+      "noOperations": "No operations",
+      "willCreate": "Will create"
+    },
+    "frameworkGenerator": {
+      "frameworkGenerator": "Framework Generator",
+      "chooseAConsultingFrameworkThe": "Choose a consulting framework. The table will be populated with appropriate columns and sample data.",
+      "columns": "columns",
+      "rows": "rows",
+      "columnPreview": "Column preview",
+      "cancel": "Cancel",
+      "applyFramework": "Apply framework",
+      "columnHeaderItem": "Item",
+      "columnHeaderAction": "Action",
+      "columnHeaderOwner": "Owner",
+      "frameworkApplied": "Framework \"{{name}}\" applied"
     }
   }
 }
