@@ -129,8 +129,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   noteConvertedTo = [],
 }) => {
   type LinkedOutputRow = UnifiedOutputRow | AssessmentOriginOutputRow;
-  const { i18n } = useTranslation();
-  const pl = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [backlinksLoading, setBacklinksLoading] = useState(false);
@@ -424,7 +423,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       context: { containerType: 'notebook_embed', containerId: noteId },
     }).catch(() => undefined);
     trackFunnelEvent('my_idea_used', { source: 'notebook_context_panel', ideaId: idea.id });
-    toast.success(pl ? 'Wstawiono pomysł' : 'Idea inserted');
+    toast.success(t('myWorkNotebook.contextPanel.ideaInserted'));
   };
 
   const handleInsertPulseRef = (item: PulseItem) => {
@@ -442,15 +441,15 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       relation: 'ref',
       context: { containerType: 'notebook_embed', containerId: noteId },
     }).catch(() => undefined);
-    toast.success(pl ? 'Wstawiono odniesienie' : 'Reference inserted');
+    toast.success(t('myWorkNotebook.contextPanel.referenceInserted'));
   };
 
   const handleInsertNoteRef = (n: NotebookPage) => {
     insertEmbeddedRef({
       artifactType: 'notebook_page',
       artifactId: n.id,
-      title: n.title || (pl ? 'Bez tytułu' : 'Untitled'),
-      label: `📄 ${n.title || (pl ? 'Bez tytułu' : 'Untitled')}`,
+      title: n.title || t('myWorkNotebook.contextPanel.untitled'),
+      label: `📄 ${n.title || t('myWorkNotebook.contextPanel.untitled')}`,
       snippet: n.summary || undefined,
       status: n.status,
       updatedAt: n.updatedAt || undefined,
@@ -461,7 +460,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       relation: 'ref',
       context: { containerType: 'notebook_embed', containerId: noteId },
     }).catch(() => undefined);
-    toast.success(pl ? 'Wstawiono odniesienie do notatki' : 'Note reference inserted');
+    toast.success(t('myWorkNotebook.contextPanel.noteReferenceInserted'));
   };
 
   const openItem = (
@@ -498,7 +497,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className={`flex items-center gap-2 text-xs font-semibold ${cfg.color}`}>
             <Icon size={14} />
-            <span>{pl ? cfg.labelPl : cfg.label}</span>
+            <span>{t(`myWorkNotebook.contextPanel.section_${k}`, cfg.label)}</span>
             <span className={`${cfg.bg} px-1.5 py-0.5 rounded-full text-[10px]`}>{count}</span>
           </div>
           <div className="flex items-center gap-1">
@@ -506,18 +505,18 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               <button
                 onClick={() => setExpanded((p) => ({ ...p, [k]: !p[k] }))}
                 className="text-[10px] font-semibold text-c-text-muted hover:text-c-text-secondary px-2 py-1 rounded-md hover:bg-c-surface-raised transition-colors"
-                title={pl ? 'Więcej/mniej' : 'More/Less'}
+                title={t('myWorkNotebook.contextPanel.moreLess')}
               >
-                {expanded[k] ? (pl ? 'Mniej' : 'Less') : pl ? 'Więcej' : 'More'}
+                {expanded[k] ? t('myWorkNotebook.contextPanel.less') : t('myWorkNotebook.contextPanel.more')}
               </button>
             )}
             {onMore && (
               <button
                 onClick={onMore}
                 className="text-[10px] font-semibold text-c-text-muted hover:text-c-text-secondary px-2 py-1 rounded-md hover:bg-c-surface-raised transition-colors"
-                title={pl ? 'Przeglądaj wszystkie' : 'Browse all'}
+                title={t('myWorkNotebook.contextPanel.browseAll')}
               >
-                {pl ? 'Wszystkie' : 'All'}
+                {t('myWorkNotebook.contextPanel.all')}
               </button>
             )}
           </div>
@@ -547,7 +546,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
         </div>
         <button
           className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
-          title={pl ? 'Akcje' : 'Actions'}
+          title={t('myWorkNotebook.contextPanel.actions')}
           onClick={onInsert}
         >
           <MoreHorizontal size={14} />
@@ -559,7 +558,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
           className="flex-1 flex items-center justify-center gap-1 rounded-md bg-c-surface border border-c-border-subtle text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
         >
           <ArrowRight size={12} />
-          {pl ? 'Wstaw' : 'Insert'}
+          {t('myWorkNotebook.contextPanel.insert')}
         </button>
         {onOpen ? (
           <button
@@ -567,7 +566,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
           >
             <ExternalLink size={12} />
-            {pl ? 'Otwórz' : 'Open'}
+            {t('myWorkNotebook.contextPanel.open')}
           </button>
         ) : null}
       </div>
@@ -579,12 +578,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2 text-sm font-semibold text-c-warning">
           <Lightbulb size={16} />
-          <span>{pl ? 'Kontekst notatki' : 'Note context'}</span>
+          <span>{t('myWorkNotebook.contextPanel.noteContext')}</span>
         </div>
         <button
           onClick={onClose}
           className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
-          title={pl ? 'Zamknij' : 'Close'}
+          title={t('myWorkNotebook.contextPanel.close')}
         >
           <X size={14} />
         </button>
@@ -599,7 +598,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
           <>
             <div className="px-3 py-3 border-b border-c-border-subtle">
               <EmbeddedView
-                title={pl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
+                title={t('myWorkNotebook.contextPanel.usedIn')}
                 count={usedIn.length}
                 loading={backlinksLoading}
                 readOnly
@@ -607,7 +606,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               >
                 {usedIn.length === 0 && !backlinksLoading ? (
                   <div className="text-[11px] text-c-text-muted px-1">
-                    {pl ? 'Brak powiązań' : 'No links yet'}
+                    {t('myWorkNotebook.contextPanel.noLinks')}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -622,30 +621,10 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                             <div className="min-w-0">
                               <div className="text-xs font-medium text-c-text truncate">
                                 {chip?.title ||
-                                  (() => {
-                                    const TL: Record<string, string> = pl
-                                      ? {
-                                          task: 'Zadanie',
-                                          decision: 'Decyzja',
-                                          idea: 'Pomysł',
-                                          initiative: 'Inicjatywa',
-                                          notebook: 'Notatka',
-                                          note: 'Notatka',
-                                          report: 'Raport',
-                                          presentation: 'Prezentacja',
-                                        }
-                                      : {
-                                          task: 'Task',
-                                          decision: 'Decision',
-                                          idea: 'Idea',
-                                          initiative: 'Initiative',
-                                          notebook: 'Note',
-                                          note: 'Note',
-                                          report: 'Report',
-                                          presentation: 'Presentation',
-                                        };
-                                    return TL[x.sourceType] || x.sourceType;
-                                  })()}
+                                  t(
+                                    `myWorkNotebook.contextPanel.sourceType_${x.sourceType}`,
+                                    x.sourceType
+                                  )}
                               </div>
                               {chip?.snippet ? (
                                 <div className="mt-0.5 text-[11px] text-c-text-muted truncate">
@@ -678,7 +657,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                 className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
                               >
                                 <ExternalLink size={12} />
-                                {pl ? 'Otwórz' : 'Open'}
+                                {t('myWorkNotebook.contextPanel.open')}
                               </button>
                             ) : null}
                           </div>
@@ -695,12 +674,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             !linkedOutputsErrorMessage ? (
               <div className="flex items-center gap-2 px-3 py-2 border-b border-c-border-subtle text-[11px] text-c-text-muted">
                 <Link2 size={12} />
-                <span>{pl ? 'Brak powiązanych outputów' : 'No linked outputs'}</span>
+                <span>{t('myWorkNotebook.contextPanel.noLinkedOutputs')}</span>
               </div>
             ) : (
               <div className="px-3 py-3 border-b border-c-border-subtle">
                 <EmbeddedView
-                  title={pl ? 'Powiązane outputy' : 'Linked outputs'}
+                  title={t('myWorkNotebook.contextPanel.linkedOutputs')}
                   count={allLinkedOutputRows.length}
                   loading={linkedOutputsBusy}
                   readOnly
@@ -744,7 +723,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                               className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
                             >
                               <ExternalLink size={12} />
-                              {pl ? 'Otwórz' : 'Open'}
+                              {t('myWorkNotebook.contextPanel.open')}
                             </button>
                           </div>
                         </div>
@@ -776,7 +755,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             >
               {take('initiative', initiatives).length === 0 ? (
                 <div className="text-[11px] text-c-text-muted px-1">
-                  {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
+                  {t('myWorkNotebook.contextPanel.noneAddViaAll')}
                 </div>
               ) : (
                 take('initiative', initiatives).map((item) => (
@@ -794,7 +773,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             <Section k="task" count={tasks.length} onMore={() => setPickerType('task')}>
               {take('task', tasks).length === 0 ? (
                 <div className="text-[11px] text-c-text-muted px-1">
-                  {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
+                  {t('myWorkNotebook.contextPanel.noneAddViaAll')}
                 </div>
               ) : (
                 take('task', tasks).map((item) => (
@@ -812,7 +791,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             <Section k="decision" count={decisions.length} onMore={() => setPickerType('decision')}>
               {take('decision', decisions).length === 0 ? (
                 <div className="text-[11px] text-c-text-muted px-1">
-                  {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
+                  {t('myWorkNotebook.contextPanel.noneAddViaAll')}
                 </div>
               ) : (
                 take('decision', decisions).map((item) => (
@@ -832,7 +811,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                 {take('note', noteSuggestions).map((n) => (
                   <Row
                     key={n.id}
-                    title={n.title || (pl ? 'Bez tytułu' : 'Untitled')}
+                    title={n.title || t('myWorkNotebook.contextPanel.untitled')}
                     subtitle={n.summary || null}
                     onInsert={() => handleInsertNoteRef(n)}
                     onOpen={() => openItem('notebook', n.id, n.title || 'Note')}

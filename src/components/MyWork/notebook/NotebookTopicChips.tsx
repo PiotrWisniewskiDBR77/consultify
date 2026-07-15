@@ -38,7 +38,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
   onOpenTopic,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
 
   const [topics, setTopics] = useState<NotebookTopicChip[]>([]);
@@ -78,38 +78,38 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
       const topic = res?.topic;
       if (topic) {
         setTopics((prev) =>
-          prev.some((t) => t.id === topic.id) ? prev : [...prev, { ...topic, source: 'manual' }]
+          prev.some((tp) => tp.id === topic.id) ? prev : [...prev, { ...topic, source: 'manual' }]
         );
       }
       setNewName('');
       setAdding(false);
-      toast.success(isPl ? 'Przypięto temat' : 'Topic pinned');
+      toast.success(t('myWorkNotebook.topicChips.topicPinned'));
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się przypiąć' : 'Pin failed'));
+      toast.error(err?.message || t('myWorkNotebook.topicChips.pinFailed'));
     } finally {
       setBusy(false);
     }
-  }, [newName, noteId, isPl]);
+  }, [newName, noteId, isPl, t]);
 
   const handleRemove = useCallback(
     async (topicId: string) => {
       const prev = topics;
-      setTopics((cur) => cur.filter((t) => t.id !== topicId));
+      setTopics((cur) => cur.filter((tp) => tp.id !== topicId));
       try {
         await v8Delete(`/notebook/pages/${noteId}/topics/${topicId}`);
       } catch (err: any) {
         setTopics(prev); // rollback
-        toast.error(err?.message || (isPl ? 'Nie udało się odpiąć' : 'Unpin failed'));
+        toast.error(err?.message || t('myWorkNotebook.topicChips.unpinFailed'));
       }
     },
-    [topics, noteId, isPl]
+    [topics, noteId, isPl, t]
   );
 
   if (loading && topics.length === 0) {
     return (
       <div className={`flex items-center gap-1.5 text-xs text-c-text-muted ${className}`}>
         <Loader2 size={12} className="animate-spin" />
-        <span>{isPl ? 'Tematy…' : 'Topics…'}</span>
+        <span>{t('myWorkNotebook.topicChips.topicsLoading')}</span>
       </div>
     );
   }
@@ -118,30 +118,30 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
 
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
-      {topics.map((t) => (
+      {topics.map((tp) => (
         <span
-          key={t.id}
+          key={tp.id}
           className="group inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised pl-2 pr-1.5 py-0.5 text-[11px] font-medium text-c-text-secondary"
         >
           <button
             type="button"
-            onClick={() => onOpenTopic?.(t.id)}
+            onClick={() => onOpenTopic?.(tp.id)}
             className="inline-flex items-center gap-1 hover:text-c-text"
-            title={isPl ? 'Otwórz temat' : 'Open topic'}
+            title={t('myWorkNotebook.topicChips.openTopic')}
           >
-            {t.source === 'ai' ? (
+            {tp.source === 'ai' ? (
               <Sparkles size={11} className="text-c-text-muted" />
             ) : (
               <Hash size={11} className="text-c-text-muted" />
             )}
-            {t.name}
+            {tp.name}
           </button>
           {canEdit && (
             <button
               type="button"
-              onClick={() => handleRemove(t.id)}
+              onClick={() => handleRemove(tp.id)}
               className="rounded-full p-0.5 text-c-text-muted opacity-0 group-hover:opacity-100 hover:bg-c-surface-raised hover:text-c-text transition-opacity"
-              aria-label={isPl ? 'Odepnij' : 'Unpin'}
+              aria-label={t('myWorkNotebook.topicChips.unpin')}
             >
               <X size={10} />
             </button>
@@ -164,7 +164,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
                 }
               }}
               disabled={busy}
-              placeholder={isPl ? 'Nowy temat…' : 'New topic…'}
+              placeholder={t('myWorkNotebook.topicChips.newTopicPlaceholder')}
               className="w-32 rounded-full border border-c-border-subtle bg-c-surface px-2 py-0.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
             />
             <button
@@ -172,7 +172,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
               onClick={handleAdd}
               disabled={busy || !newName.trim()}
               className="rounded-full p-1 text-c-text-secondary hover:bg-c-surface-raised0/10 disabled:opacity-40"
-              aria-label={isPl ? 'Dodaj' : 'Add'}
+              aria-label={t('myWorkNotebook.topicChips.add')}
             >
               {busy ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
             </button>
@@ -184,7 +184,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
             className="inline-flex items-center gap-1 rounded-full border border-dashed border-c-border-subtle px-2 py-0.5 text-[11px] text-c-text-muted hover:text-c-text hover:border-c-border-strong transition-colors"
           >
             <Plus size={11} />
-            {isPl ? 'Temat' : 'Topic'}
+            {t('myWorkNotebook.topicChips.topic')}
           </button>
         ))}
     </div>

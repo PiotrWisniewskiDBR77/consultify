@@ -28,9 +28,9 @@ interface NotebookQuickCaptureProps {
 
 const URL_RE = /^https?:\/\/\S+$/i;
 
-function deriveTitle(raw: string, isPl: boolean): string {
+function deriveTitle(raw: string, fallbackTitle: string): string {
   const text = raw.trim();
-  if (!text) return isPl ? 'Szybka notatka' : 'Quick note';
+  if (!text) return fallbackTitle;
   if (URL_RE.test(text)) {
     try {
       const u = new URL(text);
@@ -49,7 +49,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
   notebookId = null,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
 
   const [value, setValue] = useState('');
@@ -62,7 +62,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
     if (!raw || busy) return;
     setBusy(true);
     try {
-      const title = deriveTitle(raw, isPl);
+      const title = deriveTitle(raw, t('myWorkNotebook.quickCapture.quickNote'));
       const page = await Api.createNotebookPage({
         title,
         contentText: raw,
@@ -76,14 +76,14 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
         captureSource: 'quick',
       } as any);
       setValue('');
-      toast.success(isPl ? 'Wrzucono do notatnika' : 'Captured to notebook');
+      toast.success(t('myWorkNotebook.quickCapture.captured'));
       onCreated?.(page);
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się wrzucić' : 'Capture failed'));
+      toast.error(err?.message || t('myWorkNotebook.quickCapture.captureFailed'));
     } finally {
       setBusy(false);
     }
-  }, [value, busy, isPl, notebookId, onCreated]);
+  }, [value, busy, isPl, notebookId, onCreated, t]);
 
   return (
     <div
@@ -100,7 +100,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
           }
         }}
         disabled={busy}
-        placeholder={isPl ? 'Wrzuć myśl lub link…' : 'Drop a thought or a link…'}
+        placeholder={t('myWorkNotebook.quickCapture.placeholder')}
         className="min-w-0 flex-1 bg-transparent text-sm text-c-text placeholder:text-c-text-muted outline-none"
       />
       <button
@@ -109,16 +109,8 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
         disabled={busy || !value.trim()}
         // #12a — "Capture" alone didn't explain what it does; add a tooltip/aria-label
         // spelling out that it drops this into a new quick note in the notebook.
-        title={
-          isPl
-            ? 'Zapisz jako nową szybką notatkę w notatniku'
-            : 'Save as a new quick note in the notebook'
-        }
-        aria-label={
-          isPl
-            ? 'Zapisz jako nową szybką notatkę w notatniku'
-            : 'Save as a new quick note in the notebook'
-        }
+        title={t('myWorkNotebook.quickCapture.saveTooltip')}
+        aria-label={t('myWorkNotebook.quickCapture.saveTooltip')}
         // #12a follow-up — bg-c-accent is the SOLE brand crimson token (index.css);
         // a full-fill CTA violates CLAUDE.md UI-rule #3 (crimson = critical semantics
         // only, CTAs must be neutral). bg-c-text/text-c-surface self-invert per theme
@@ -129,7 +121,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
         className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-c-text px-3 py-1.5 text-xs font-medium text-c-surface transition-colors hover:brightness-110 disabled:opacity-40"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : null}
-        {isPl ? 'Wrzuć' : 'Capture'}
+        {t('myWorkNotebook.quickCapture.capture')}
       </button>
     </div>
   );

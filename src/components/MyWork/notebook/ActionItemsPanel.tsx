@@ -26,7 +26,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
   noteId,
   noteTitle,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
 
   const [items, setItems] = useState<ActionItem[]>([]);
@@ -38,7 +38,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
   const extractActions = useCallback(async () => {
     setLoading(true);
     setItems([]);
-    setStageLabel(isPl ? 'Analizuję...' : 'Analyzing...');
+    setStageLabel(t('myWorkNotebook.actionItemsPanel.analyzing'));
     setCreatedIds(new Set());
 
     try {
@@ -56,11 +56,11 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         },
       });
     } catch (err: any) {
-      toast.error(err?.message || 'Extraction failed');
+      toast.error(err?.message || t('myWorkNotebook.actionItemsPanel.extractionFailed'));
     } finally {
       setLoading(false);
     }
-  }, [noteId, isPl]);
+  }, [noteId, isPl, t]);
 
   useEffect(() => {
     if (open && noteId) extractActions();
@@ -72,7 +72,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
       try {
         await Api.createPersonalTask({
           title: item.title,
-          description: `${isPl ? 'Z notatki' : 'From note'}: ${noteTitle}`,
+          description: `${t('myWorkNotebook.actionItemsPanel.fromNote')}: ${noteTitle}`,
           status: 'todo',
           priority: item.priority || 'medium',
           tags: ['from-notebook', 'ai-extracted'],
@@ -81,14 +81,14 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         });
         setCreatedIds((prev) => new Set(prev).add(idx));
         trackFunnelEvent('notebook_action_item_created', { noteId, idx });
-        toast.success(isPl ? 'Task utworzony' : 'Task created');
+        toast.success(t('myWorkNotebook.actionItemsPanel.taskCreated'));
       } catch (err: any) {
-        toast.error(err?.message || 'Failed');
+        toast.error(err?.message || t('myWorkNotebook.actionItemsPanel.failed'));
       } finally {
         setCreatingIdx(null);
       }
     },
-    [noteId, noteTitle, isPl]
+    [noteId, noteTitle, isPl, t]
   );
 
   const handleCreateAll = useCallback(async () => {
@@ -101,7 +101,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         if (createdIds.has(i)) continue;
         await Api.createPersonalTask({
           title: items[i].title,
-          description: `${isPl ? 'Z notatki' : 'From note'}: ${noteTitle}`,
+          description: `${t('myWorkNotebook.actionItemsPanel.fromNote')}: ${noteTitle}`,
           status: 'todo',
           priority: items[i].priority || 'medium',
           tags: ['from-notebook', 'ai-extracted'],
@@ -112,13 +112,13 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         count++;
       }
       trackFunnelEvent('notebook_action_items_bulk_created', { noteId, count });
-      toast.success(isPl ? `Utworzono ${count} tasków` : `Created ${count} tasks`);
+      toast.success(t('myWorkNotebook.actionItemsPanel.tasksCreated', { count }));
     } catch (err: any) {
-      toast.error(err?.message || 'Failed');
+      toast.error(err?.message || t('myWorkNotebook.actionItemsPanel.failed'));
     } finally {
       setCreatingIdx(null);
     }
-  }, [items, createdIds, noteId, noteTitle, isPl]);
+  }, [items, createdIds, noteId, noteTitle, isPl, t]);
 
   if (!open) return null;
 
@@ -135,13 +135,13 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         <div className="flex items-center gap-1.5">
           <Sparkles size={14} className="text-c-warning" />
           <span className="text-xs font-semibold text-c-text">
-            {isPl ? 'Akcje AI' : 'AI Actions'}
+            {t('myWorkNotebook.actionItemsPanel.aiActions')}
           </span>
         </div>
         <button
           onClick={onClose}
           className="p-1 rounded text-c-text-secondary hover:text-c-text transition-colors"
-          aria-label={isPl ? 'Zamknij' : 'Close'}
+          aria-label={t('myWorkNotebook.actionItemsPanel.close')}
         >
           <X size={14} />
         </button>
@@ -158,7 +158,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <Zap size={20} className="text-c-text-secondary" />
             <span className="text-xs text-c-text-muted">
-              {isPl ? 'Brak akcji do wyodrębnienia' : 'No action items found'}
+              {t('myWorkNotebook.actionItemsPanel.noActions')}
             </span>
           </div>
         ) : (
@@ -195,7 +195,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
                       onClick={() => handleCreateTask(item, idx)}
                       disabled={creatingIdx !== null}
                       className="shrink-0 p-1 rounded-md bg-c-success/10 text-c-success hover:bg-c-success/20 disabled:opacity-50 transition-colors"
-                      title={isPl ? 'Utwórz task' : 'Create task'}
+                      title={t('myWorkNotebook.actionItemsPanel.createTask')}
                     >
                       {creatingIdx === idx ? (
                         <Loader2 size={12} className="animate-spin" />
@@ -220,9 +220,9 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
             className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-success text-white text-xs font-semibold hover:brightness-110 disabled:opacity-50 transition-all"
           >
             {creatingIdx === -1 && <Loader2 size={12} className="animate-spin" />}
-            {isPl
-              ? `Utwórz wszystkie (${items.length - createdIds.size})`
-              : `Create all (${items.length - createdIds.size})`}
+            {t('myWorkNotebook.actionItemsPanel.createAll', {
+              count: items.length - createdIds.size,
+            })}
           </button>
         </div>
       )}

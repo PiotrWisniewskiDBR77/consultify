@@ -66,7 +66,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
   refreshKey = 0,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
 
   const [data, setData] = useState<NotebookTodayData>(EMPTY);
@@ -106,7 +106,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
     >
       <span className="text-base leading-none">{page.icon || '📝'}</span>
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-c-text-secondary group-hover:text-c-text">
-        {page.title || (isPl ? 'Bez tytułu' : 'Untitled')}
+        {page.title || t('myWorkNotebook.todayView.untitled')}
       </span>
       {page.verificationStatus === 'disputed' && (
         <AlertTriangle size={12} className="shrink-0 text-c-warning" />
@@ -157,7 +157,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
         className={`flex items-center justify-center gap-2 py-16 text-c-text-muted ${className}`}
       >
         <Loader2 size={16} className="animate-spin" />
-        <span className="text-sm">{isPl ? 'Ładuję „Dziś”…' : 'Loading Today…'}</span>
+        <span className="text-sm">{t('myWorkNotebook.todayView.loadingToday')}</span>
       </div>
     );
   }
@@ -165,23 +165,23 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-c-text">{isPl ? 'Dziś' : 'Today'}</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('myWorkNotebook.todayView.today')}
+        </h2>
         <button
           type="button"
           onClick={load}
           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-c-text-muted hover:bg-c-surface-raised"
-          title={isPl ? 'Odśwież' : 'Refresh'}
+          title={t('myWorkNotebook.todayView.refresh')}
         >
           <RefreshCw size={12} />
-          {isPl ? 'Odśwież' : 'Refresh'}
+          {t('myWorkNotebook.todayView.refresh')}
         </button>
       </div>
 
       {failed && (
         <p className="rounded-lg bg-c-warning/10 px-3 py-2 text-xs text-c-warning">
-          {isPl
-            ? 'Nie udało się załadować kokpitu „Dziś”. Notatnik działa dalej.'
-            : 'Could not load the Today cockpit. The notebook still works.'}
+          {t('myWorkNotebook.todayView.loadFailedHint')}
         </p>
       )}
 
@@ -190,27 +190,27 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {renderSection(
           'pinned',
-          isPl ? 'Przypięte' : 'Pinned',
+          t('myWorkNotebook.todayView.pinned'),
           <Pin size={13} />,
-          isPl ? 'Brak przypiętych notatek.' : 'No pinned notes yet.'
+          t('myWorkNotebook.todayView.pinnedEmpty')
         )}
         {renderSection(
           'recent',
-          isPl ? 'Ostatnie' : 'Recent',
+          t('myWorkNotebook.todayView.recent'),
           <Clock size={13} />,
-          isPl ? 'Brak ostatnich notatek.' : 'No recent notes.'
+          t('myWorkNotebook.todayView.recentEmpty')
         )}
         {renderSection(
           'toReview',
-          isPl ? 'Do przeglądu' : 'To review',
+          t('myWorkNotebook.todayView.toReview'),
           <Hash size={13} />,
-          isPl ? 'Nic nie czeka na przegląd.' : 'Nothing waiting for review.'
+          t('myWorkNotebook.todayView.toReviewEmpty')
         )}
         {renderSection(
           'freshCaptures',
-          isPl ? 'Świeże captures' : 'Fresh captures',
+          t('myWorkNotebook.todayView.freshCaptures'),
           <Inbox size={13} />,
-          isPl ? 'Brak nowych wrzutek.' : 'No fresh captures.'
+          t('myWorkNotebook.todayView.freshCapturesEmpty')
         )}
       </div>
     </div>

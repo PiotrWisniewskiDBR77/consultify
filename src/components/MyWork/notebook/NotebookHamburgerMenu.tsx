@@ -114,7 +114,6 @@ const CONVERT_META: Record<
 /** Build the flat, grouped action list from the props (skips any item with no handler). */
 function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   const {
-    isPolish: pl,
     onExport,
     onSources,
     onVerification,
@@ -179,7 +178,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
       const meta = CONVERT_META[target];
       items.push({
         id: `convert-${target}`,
-        label: pl ? meta.pl : meta.en,
+        label: i18n.t(`myWorkNotebook.hamburgerMenu.convert_${target}`, meta.en),
         icon: meta.icon,
         onClick: () => onConvert(target),
         // First convert item opens the group with a separator + heading-like first entry.

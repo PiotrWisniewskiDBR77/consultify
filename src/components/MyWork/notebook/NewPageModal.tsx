@@ -283,8 +283,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
   onSelectTemplate,
   onUploadComplete,
 }) => {
-  const { i18n } = useTranslation();
-  const pl = i18n.language === 'pl';
+  const { t } = useTranslation();
   const overlayRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -311,8 +310,8 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
 
             const winsContent: any[] = [];
             winsContent.push(p(`Completed ${completedCount} tasks this week.`));
-            for (const t of completedItems) {
-              winsContent.push(todo(`${t.title}`));
+            for (const item of completedItems) {
+              winsContent.push(todo(`${item.title}`));
             }
             winsContent.push(p(`Made ${decisionsCount} decisions.`));
 
@@ -412,12 +411,12 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
       <div className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <h2 className="text-base font-semibold text-c-text">
-            {pl ? 'Nowa notatka' : 'New Note'}
+            {t('myWorkNotebook.newPageModal.title')}
           </h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
-            aria-label={pl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkNotebook.newPageModal.close')}
           >
             <X size={18} />
           </button>
@@ -444,16 +443,12 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
                 </div>
                 <div className="text-left">
                   <div className="font-medium text-sm text-c-text">
-                    {pl ? 'Wgraj plik (PDF, XLSX, TXT)' : 'Upload file (PDF, XLSX, TXT)'}
+                    {t('myWorkNotebook.newPageModal.uploadFile')}
                   </div>
                   <div className="text-[11px] text-c-text-muted">
                     {uploading
-                      ? pl
-                        ? 'Przetwarzam…'
-                        : 'Processing…'
-                      : pl
-                        ? 'Tekst zostanie wyekstrahowany do nowej notatki'
-                        : 'Text will be extracted into a new note'}
+                      ? t('myWorkNotebook.newPageModal.processing')
+                      : t('myWorkNotebook.newPageModal.uploadHint')}
                   </div>
                 </div>
               </button>
@@ -461,9 +456,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
           )}
 
           <p className="text-sm text-c-text-muted mb-4">
-            {pl
-              ? 'Wybierz szablon, aby szybciej zacząć pisać'
-              : 'Pick a template to get started faster'}
+            {t('myWorkNotebook.newPageModal.pickTemplate')}
           </p>
 
           <div className="grid grid-cols-2 gap-3">
@@ -480,10 +473,10 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-sm text-c-text">
-                    {pl ? tmpl.labelPl : tmpl.label}
+                    {t(`myWorkNotebook.newPageModal.tmpl_${tmpl.id}_label`, tmpl.label)}
                   </div>
                   <div className="text-[11px] text-c-text-muted mt-0.5 line-clamp-2">
-                    {pl ? tmpl.descriptionPl : tmpl.description}
+                    {t(`myWorkNotebook.newPageModal.tmpl_${tmpl.id}_desc`, tmpl.description)}
                   </div>
                 </div>
               </button>

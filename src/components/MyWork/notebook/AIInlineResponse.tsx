@@ -19,32 +19,6 @@ interface AIInlineResponseProps {
   onDismiss: () => void;
 }
 
-const SYSTEM_PROMPTS: Record<AICommandType, { en: string; pl: string }> = {
-  ask: {
-    en: "You are a helpful assistant embedded in a notebook. Answer the user's question using the context of the note provided. Be concise and actionable. Respond in the same language as the note.",
-    pl: 'Jesteś asystentem wbudowanym w notatnik. Odpowiedz na pytanie użytkownika, korzystając z kontekstu notatki. Bądź zwięzły i praktyczny. Odpowiadaj w tym samym języku co notatka.',
-  },
-  expand: {
-    en: 'You are a writing assistant. Expand and elaborate on the paragraph provided. Keep the same style, tone and language. Add depth, examples, or supporting arguments. Do NOT repeat the original text, only provide the expansion.',
-    pl: 'Jesteś asystentem pisania. Rozwiń podany akapit. Zachowaj ten sam styl, ton i język. Dodaj głębię, przykłady lub argumenty wspierające. NIE powtarzaj oryginalnego tekstu, podaj tylko rozszerzenie.',
-  },
-  challenge: {
-    en: 'You are a critical thinking advisor. Read the note and ask 3-5 pointed, critical questions that challenge the assumptions, identify blind spots, and provoke deeper thinking. Be constructive but tough. Format as a numbered list.',
-    pl: 'Jesteś doradcą krytycznego myślenia. Przeczytaj notatkę i zadaj 3-5 celnych, krytycznych pytań, które podważają założenia, identyfikują martwe pola i prowokują głębsze myślenie. Bądź konstruktywny ale wymagający. Sformatuj jako listę numerowaną.',
-  },
-  action: {
-    en: 'You are a strategic action advisor. Based on the note content, propose 3-5 concrete, actionable next steps. Each should include: what to do, who should own it, and a suggested timeline. Format as a numbered list.',
-    pl: 'Jesteś doradcą strategicznym. Na podstawie treści notatki zaproponuj 3-5 konkretnych, wykonalnych następnych kroków. Każdy powinien zawierać: co zrobić, kto powinien to prowadzić i sugerowany termin. Sformatuj jako listę numerowaną.',
-  },
-};
-
-const COMMAND_LABELS: Record<AICommandType, { en: string; pl: string }> = {
-  ask: { en: 'AI Answer', pl: 'Odpowiedź AI' },
-  expand: { en: 'AI Expansion', pl: 'Rozwinięcie AI' },
-  challenge: { en: 'AI Challenge', pl: 'Pytania krytyczne AI' },
-  action: { en: 'AI Action Plan', pl: 'Plan działań AI' },
-};
-
 export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
   pageId: _pageId,
   commandType,
@@ -54,7 +28,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
   onInsert,
   onDismiss,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const pl = i18n.language === 'pl';
   const [response, setResponse] = useState('');
   const [isStreaming, setIsStreaming] = useState(true);
@@ -70,7 +44,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
     setResponse('');
     responseRef.current = '';
 
-    const systemPrompt = pl ? SYSTEM_PROMPTS[commandType].pl : SYSTEM_PROMPTS[commandType].en;
+    const systemPrompt = t(`myWorkNotebook.aiInlineResponse.systemPrompt_${commandType}`);
 
     let message: string;
     switch (commandType) {
@@ -111,13 +85,13 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
       );
     } catch (err: any) {
       if (err?.name !== 'AbortError') {
-        setError(pl ? 'Nie udało się uzyskać odpowiedzi AI' : 'Failed to get AI response');
+        setError(t('myWorkNotebook.aiInlineResponse.failed'));
         setIsStreaming(false);
       }
     }
 
     trackFunnelEvent('notebook_ai_command_used', { command: commandType });
-  }, [commandType, noteContent, noteTitle, userQuery, pl]);
+  }, [commandType, noteContent, noteTitle, userQuery, pl, t]);
 
   useEffect(() => {
     startStream();
@@ -128,10 +102,10 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
 
   const handleCopy = () => {
     navigator.clipboard.writeText(response);
-    toast.success(pl ? 'Skopiowano' : 'Copied');
+    toast.success(t('myWorkNotebook.aiInlineResponse.copied'));
   };
 
-  const label = pl ? COMMAND_LABELS[commandType].pl : COMMAND_LABELS[commandType].en;
+  const label = t(`myWorkNotebook.aiInlineResponse.label_${commandType}`);
 
   return (
     <div className="mx-auto max-w-5xl px-6 pb-3">
@@ -148,7 +122,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
               onDismiss();
             }}
             className="p-1 rounded-md text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
-            aria-label={pl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkNotebook.aiInlineResponse.close')}
           >
             <X size={14} />
           </button>
@@ -161,7 +135,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
             response
           ) : (
             <span className="text-c-text-muted">
-              {pl ? 'Generowanie odpowiedzi…' : 'Generating response…'}
+              {t('myWorkNotebook.aiInlineResponse.generating')}
             </span>
           )}
         </div>
@@ -173,14 +147,14 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-text hover:brightness-110 text-c-surface text-xs font-medium transition-colors"
             >
               <Check size={12} />
-              {pl ? 'Zaproponuj do notatki' : 'Propose for note'}
+              {t('myWorkNotebook.aiInlineResponse.proposeForNote')}
             </button>
             <button
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-surface hover:bg-c-surface-raised text-c-text border border-c-border-subtle text-xs font-medium transition-colors"
             >
               <Copy size={12} />
-              {pl ? 'Kopiuj' : 'Copy'}
+              {t('myWorkNotebook.aiInlineResponse.copy')}
             </button>
             <button
               onClick={() => {
@@ -189,7 +163,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
               }}
               className="px-3 py-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised text-xs font-medium transition-colors"
             >
-              {pl ? 'Odrzuć' : 'Dismiss'}
+              {t('myWorkNotebook.aiInlineResponse.dismiss')}
             </button>
           </div>
         )}

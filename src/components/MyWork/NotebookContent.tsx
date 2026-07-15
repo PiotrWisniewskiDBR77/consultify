@@ -2628,7 +2628,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           <div className="mt-1.5 flex items-center gap-1 flex-wrap">
                             <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
                               <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
-                              {isPolish ? matCfg.labelPl : matCfg.label}
+                              {t(`myWorkNotebook.notebookContent.maturity_${mat}`, matCfg.label)}
                             </span>
                             {(p as any).verificationStatus === 'verified' && (
                               <Badge
