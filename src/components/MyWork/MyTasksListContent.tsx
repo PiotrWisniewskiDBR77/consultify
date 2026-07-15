@@ -66,6 +66,7 @@ import {
   SELECTED_ROW_CLASS,
 } from '@/components/shared/selectionTokens';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { ErrorState } from '@/components/ui/primitives';
 import { deriveDueRisk, DueChip } from '@/components/ui/primitives/chips/DueChip';
 import {
@@ -87,6 +88,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { isM03TasksStandardTableEnabled } from '@/utils/m03TasksStandardTableFlag';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
@@ -586,6 +588,193 @@ const InlineCellDropdown: React.FC<{
   );
 };
 
+// ── StandardTable kebab (kanon TRIADA §27, decyzja Piotra #5) ───────────────
+// Plain function (not a hook) — StandardTable calls `rowActions(row)` directly,
+// same pattern as `buildDecisionKebabSections` in DecisionsPanelContent.tsx.
+// Sections 1:1 z legacy `TaskTableRow`'s "Actions" kebab (§6.4 5-grup: open+stan /
+// manipulacja / relacje-wyjście / AI / destrukcyjne) — no redesign of grouping.
+interface TaskRowHandlers {
+  onPreview: (taskId: string, taskData?: Task) => void;
+  onOpenFull: (taskId: string, taskData?: Task) => void;
+  onToggleComplete: (taskId: string, completed: boolean) => void;
+  onSetStatus: (taskId: string, status: 'todo' | 'in_progress' | 'blocked' | 'completed') => void;
+  onInlineEdit?: (taskId: string, field: string, value: string) => void;
+  onTriageAccept?: (taskId: string) => void;
+  onTriageSnooze?: (taskId: string) => void;
+  onTriageArchive?: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
+}
+
+const buildTaskKebabSections = (
+  task: Task,
+  isNew: boolean,
+  h: TaskRowHandlers,
+  t: (key: string, defaultValue: string) => string,
+  isPolish: boolean
+): RowActionSection[] => {
+  const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
+  return [
+    // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu ────────
+    {
+      id: 'open',
+      kind: 'open',
+      actions: [
+        {
+          id: 'open-preview',
+          label: t('myWork.tasksList.label', 'Open preview'),
+          icon: ChevronRight,
+          onClick: () => h.onPreview(task.id, task),
+        },
+        {
+          id: 'view',
+          label: t('common.view', 'View'),
+          icon: Eye,
+          onClick: () => h.onOpenFull(task.id, task),
+        },
+        {
+          id: 'complete',
+          label: isCompleted
+            ? t('myWork.personalTasks.reopen', 'Reopen')
+            : t('myWork.personalTasks.complete', 'Complete'),
+          icon: CheckCircle2,
+          onClick: () => h.onToggleComplete(task.id, !isCompleted),
+          divider: true,
+        },
+        {
+          id: 'status_todo',
+          label: t('myWork.personalTasks.status.todo', 'To do'),
+          icon: CheckSquare,
+          onClick: () => h.onSetStatus(task.id, 'todo'),
+        },
+        {
+          id: 'status_in_progress',
+          label: t('myWork.personalTasks.status.inProgress', 'In progress'),
+          icon: Clock,
+          onClick: () => h.onSetStatus(task.id, 'in_progress'),
+        },
+        {
+          id: 'status_blocked',
+          label: t('myWork.personalTasks.status.blocked', 'Blocked'),
+          icon: AlertCircle,
+          onClick: () => h.onSetStatus(task.id, 'blocked'),
+        },
+        ...(isNew && h.onTriageAccept
+          ? [
+              {
+                id: 'triage_accept',
+                label: t('myWork.triage.acceptToday', 'Accept (Today)'),
+                icon: Zap,
+                onClick: () => h.onTriageAccept?.(task.id),
+                divider: true,
+              },
+              {
+                id: 'triage_snooze',
+                label: t('myWork.triage.snooze', 'Snooze 2 days'),
+                icon: Pause,
+                onClick: () => h.onTriageSnooze?.(task.id),
+              },
+            ]
+          : []),
+      ],
+    },
+    // ── §6.4 grupa 2: MANIPULACJA (Edytuj) ────────────────────────────
+    {
+      id: 'manage',
+      kind: 'manage',
+      actions: [
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edit'),
+          icon: Edit,
+          onClick: () => h.onOpenFull(task.id, task),
+        },
+      ],
+    },
+    // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────
+    {
+      id: 'output',
+      kind: 'output',
+      actions: [
+        {
+          id: 'copy-link',
+          label: t('myWork.tasksList.label2', 'Copy link'),
+          icon: Link2,
+          onClick: () => {
+            try {
+              const url = `${window.location.origin}${getArtifactPath('task', task.id)}`;
+              void navigator.clipboard?.writeText(url);
+              toast.success(t('myWork.tasksList.toastSuccess', 'Link copied'));
+            } catch {
+              /* clipboard unavailable */
+            }
+          },
+        },
+        // Delay ▸ — tasks have a due date, so the slot is present.
+        ...(h.onInlineEdit
+          ? [
+              {
+                id: 'delay',
+                label: t('myWork.tasksList.label3', 'Delay'),
+                icon: Clock,
+                onClick: () => {},
+                submenu: [1, 3, 7].map((d) => ({
+                  id: `delay-${d}`,
+                  label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                  icon: Clock,
+                  onClick: () => {
+                    const base =
+                      task.dueDate && !Number.isNaN(new Date(task.dueDate).getTime())
+                        ? new Date(task.dueDate)
+                        : new Date();
+                    base.setDate(base.getDate() + d);
+                    h.onInlineEdit?.(task.id, 'dueDate', base.toISOString().split('T')[0]);
+                  },
+                })),
+              } satisfies RowAction,
+            ]
+          : []),
+      ],
+    },
+    // ── §6.4 grupa 4: AI ──────────────────────────────────────────────
+    {
+      id: 'ai',
+      kind: 'ai',
+      actions: [
+        {
+          id: 'ai-open',
+          label: t('myWork.tasksList.label4', '✨ AI: open & fill'),
+          icon: Sparkles,
+          onClick: () => h.onOpenFull(task.id, task),
+        },
+      ],
+    },
+    // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ─
+    {
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'archive',
+          label: t('myWork.triage.archive', 'Archive'),
+          icon: Archive,
+          disabled: !h.onTriageArchive,
+          description: h.onTriageArchive
+            ? undefined
+            : t('myWork.tasksList.comingSoonBackend', 'Coming soon (backend)'),
+          onClick: () => h.onTriageArchive?.(task.id),
+        },
+        {
+          id: 'delete',
+          label: t('common.delete', 'Delete'),
+          icon: Trash2,
+          onClick: () => h.onDelete(task.id),
+          variant: 'danger',
+        },
+      ],
+    },
+  ] satisfies RowActionSection[];
+};
+
 // Task Row Component with inline editing
 const TaskTableRow: React.FC<{
   task: Task;
@@ -1062,6 +1251,18 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  // kanon TRIADA §27 (decyzja Piotra #5) — ZA FLAGĄ, default OFF. Gdy ON,
+  // renderuje StandardTable zamiast bespoke <table> poniżej (patrz `useStandardTable`
+  // branch przy końcu pliku); dane/filtrowanie/sort NIE zmieniają się.
+  const useStandardTable = isM03TasksStandardTableEnabled();
+  // Inline-editable cell (status/priority/date) otwarty w widoku StandardTable —
+  // odpowiednik lokalnego `inlineDropdown` z legacy `TaskTableRow`, tu na
+  // poziomie tabeli (StandardTable renderuje kolumny jako render(row), nie
+  // per-wiersz komponent z własnym stanem).
+  const [openInlineCell, setOpenInlineCell] = useState<{
+    taskId: string;
+    field: 'status' | 'priority' | 'date';
+  } | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -1997,6 +2198,239 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     [detailsOverride, isPolish, runTaskAi]
   );
 
+  // ── StandardTable columns (kanon TRIADA §27, decyzja Piotra #5) ──────────
+  // Cell markup 1:1 z legacy `TaskTableRow` (title/status/priority/date/
+  // assignee); status/priority/date inline-edit dropdowns keyed via
+  // `openInlineCell` (table-level, patrz wyżej) zamiast per-row local state.
+  // statusFilter/priorityFilter = syntetyczne lowercase mirrory (jak w
+  // DecisionsPanelContent) tak, by FilterableTable's `row[column.id]` filter
+  // matching zgadzał się z lowercase TASK_STATUS_FILTER_OPTIONS/PRIORITY_FILTER_OPTIONS.
+  const taskStandardColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'title',
+        label: t('myWork.tasksList.columns.task', 'Task'),
+        width: '360px',
+        sortable: true,
+        render: (row: TableRow) => {
+          const task = row as unknown as Task;
+          const isCompleted = ['done', 'completed', 'validated'].includes(
+            task.status?.toLowerCase() || ''
+          );
+          return (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span
+                className={`text-sm font-semibold ${
+                  isCompleted ? 'line-through text-c-text-muted' : 'text-c-text'
+                } truncate`}
+                title={task.title}
+              >
+                {task.title}
+              </span>
+              {focusState[task.id] && (
+                <span className="ml-1.5 shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-c-border bg-c-surface-raised text-c-text-secondary">
+                  {focusState[task.id] === 'today'
+                    ? '📌 Today'
+                    : focusState[task.id] === 'thisWeek'
+                      ? 'This Week'
+                      : 'Later'}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'statusFilter',
+        label: t('myWork.tasksList.columns.status', 'Status'),
+        width: '150px',
+        filterable: true,
+        filterOptions: TASK_STATUS_FILTER_OPTIONS,
+        sortable: true,
+        sortAccessor: (row: any) => TASK_STATUS_SORT_ORDER[row.statusFilter as string] ?? 99,
+        render: (row: TableRow) => {
+          const task = row as unknown as Task;
+          const statusConfig = getStatusConfig(task.status);
+          const isOpen = openInlineCell?.taskId === task.id && openInlineCell?.field === 'status';
+          return (
+            <div
+              className="relative inline-block"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenInlineCell(isOpen ? null : { taskId: task.id, field: 'status' });
+              }}
+            >
+              <EntityStatusChip
+                status={task.status}
+                label={statusConfig.label}
+                className="cursor-pointer hover:ring-2 hover:ring-c-focus transition-all"
+              />
+              <AnimatePresence>
+                {isOpen && (
+                  <InlineCellDropdown
+                    options={INLINE_STATUS_OPTIONS}
+                    onSelect={(val) => handleInlineEdit(task.id, 'status', val)}
+                    onClose={() => setOpenInlineCell(null)}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'priorityFilter',
+        label: t('myWork.tasksList.columns.priority', 'Priority'),
+        width: '130px',
+        filterable: true,
+        filterOptions: PRIORITY_FILTER_OPTIONS,
+        sortable: true,
+        sortAccessor: (row: any) => TASK_PRIORITY_SORT_ORDER[row.priorityFilter as string] ?? 2,
+        render: (row: TableRow) => {
+          const task = row as unknown as Task;
+          const priorityConfig = getPriorityConfig(task.priority);
+          const overdue = isOverdue(task.dueDate, task.status);
+          const isOpen = openInlineCell?.taskId === task.id && openInlineCell?.field === 'priority';
+          return (
+            <div
+              className="relative inline-block"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenInlineCell(isOpen ? null : { taskId: task.id, field: 'priority' });
+              }}
+            >
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer ${priorityConfig.badgeClass ? '' : 'hover:underline decoration-dotted'} ${priorityConfig.color} ${priorityConfig.badgeClass}`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
+                  aria-hidden="true"
+                />
+                {priorityConfig.label}
+              </span>
+              <AnimatePresence>
+                {isOpen && (
+                  <InlineCellDropdown
+                    options={INLINE_PRIORITY_OPTIONS}
+                    onSelect={(val) => handleInlineEdit(task.id, 'priority', val)}
+                    onClose={() => setOpenInlineCell(null)}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'date',
+        label: t('myWork.tasksList.columns.dueDate', 'Due Date'),
+        width: '140px',
+        sortable: true,
+        sortAccessor: (row: any) => (row.dueDate ? new Date(row.dueDate).getTime() : Infinity),
+        render: (row: TableRow) => {
+          const task = row as unknown as Task;
+          const overdue = isOverdue(task.dueDate, task.status);
+          const isOpen = openInlineCell?.taskId === task.id && openInlineCell?.field === 'date';
+          return (
+            <div
+              className="relative inline-block"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenInlineCell(isOpen ? null : { taskId: task.id, field: 'date' });
+              }}
+            >
+              {!task.dueDate ? (
+                <span className="text-xs italic text-c-text-muted cursor-pointer hover:underline decoration-dotted">
+                  {formatDueDate(task.dueDate)}
+                </span>
+              ) : (
+                <DueChip
+                  label={formatDueDate(task.dueDate)}
+                  risk={overdue ? 'overdue' : deriveDueRisk(task.dueDate)}
+                  showIcon
+                  className="cursor-pointer hover:ring-2 hover:ring-c-focus transition-all"
+                />
+              )}
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute top-full left-0 mt-1 z-50 bg-c-surface-raised border border-c-border rounded-lg shadow-xl overflow-hidden p-2"
+                  >
+                    <input
+                      type="date"
+                      autoFocus
+                      defaultValue={
+                        task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
+                      }
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleInlineEdit(task.id, 'dueDate', e.target.value);
+                          setOpenInlineCell(null);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setOpenInlineCell(null);
+                      }}
+                      className="h-8 px-2 text-sm rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'assignee',
+        label: t('myWork.tasksList.columns.assignee', 'Assignee'),
+        width: '160px',
+        sortable: true,
+        sortAccessor: (row: any) => taskAssigneeName(row as unknown as Task),
+        render: (row: TableRow) => {
+          const task = row as unknown as Task;
+          const assigneeName = taskAssigneeName(task) || 'Unassigned';
+          const assigneeInitial = assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
+          return (
+            <div className="flex items-center gap-2">
+              {assigneeInitial ? (
+                <div className="w-6 h-6 rounded-full border border-c-border-subtle bg-c-surface-raised flex items-center justify-center text-[10px] font-semibold text-c-text-secondary">
+                  {assigneeInitial}
+                </div>
+              ) : (
+                <User size={14} className="text-c-text-muted" />
+              )}
+              <span
+                className={`text-xs truncate max-w-[120px] ${
+                  assigneeName === 'Unassigned' ? 'text-c-text-muted italic' : 'text-c-text-secondary'
+                }`}
+              >
+                {assigneeName}
+              </span>
+            </div>
+          );
+        },
+      },
+    ],
+    [t, focusState, openInlineCell, handleInlineEdit]
+  );
+
+  // StandardTable `data` — allFilteredTasks (SAME pipeline: legacy tableFilters
+  // + smartSort/sortConfig już zaaplikowane) plus syntetyczne lowercase
+  // statusFilter/priorityFilter (patrz komentarz kolumn wyżej).
+  const taskStandardRows = useMemo<TableRow[]>(
+    () =>
+      allFilteredTasks.map((task) => ({
+        ...task,
+        statusFilter: (task.status || 'todo').toLowerCase(),
+        priorityFilter: (task.priority || 'medium').toLowerCase(),
+      })) as unknown as TableRow[],
+    [allFilteredTasks]
+  );
+
   if (loading) {
     return (
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
@@ -2259,6 +2693,83 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   {t('myWork.personalTasks.create', 'Create task')}
                 </button>
               </div>
+            ) : useStandardTable ? (
+              // kanon TRIADA §27 (decyzja Piotra #5) — ZA FLAGĄ ff_m03TasksStandardTable,
+              // default OFF. StandardTable zastępuje CAŁY bespoke <table> poniżej
+              // (legacy branch zostaje nietknięty jako default render).
+              <StandardTable
+                columns={taskStandardColumns}
+                data={taskStandardRows}
+                onRowClick={(row) => setPreviewTaskId(String(row.id))}
+                onRowDoubleClick={(row) => {
+                  const full = tasks.find((x) => x.id === row.id);
+                  onTaskClick(String(row.id), full);
+                }}
+                rowActions={(row) => {
+                  const task = row as unknown as Task;
+                  const handlers: TaskRowHandlers = {
+                    onPreview: (id, data) => setPreviewTaskId(id),
+                    onOpenFull: (id, data) => onTaskClick(id, data),
+                    onToggleComplete: handleToggleComplete,
+                    onSetStatus: handleSetStatus,
+                    onInlineEdit: handleInlineEdit,
+                    onTriageAccept: handleTriageAcceptToday,
+                    onTriageSnooze: handleTriageSnooze,
+                    onTriageArchive: handleTriageArchive,
+                    onDelete: async (id) => {
+                      const confirmed = await showConfirm({
+                        title: t('myWork.personalTasks.deleteTitle', 'Delete task?'),
+                        description: t(
+                          'myWork.personalTasks.deleteDesc',
+                          'This task will be permanently deleted.'
+                        ),
+                        confirmLabel: t('common.delete', 'Delete'),
+                        variant: 'danger',
+                      });
+                      if (confirmed) handleDelete(id);
+                    },
+                  };
+                  return buildTaskKebabSections(task, isNewTask(task), handlers, t, !!isPolish);
+                }}
+                rowDescription={(row) => {
+                  const task = row as unknown as Task;
+                  return task.description || task.projectName || null;
+                }}
+                // Ta gałąź to powód dla którego StandardTable dostał `rowClassName`
+                // (decyzja Piotra #5): bulk-select/preview/focus/completed to TU
+                // 4 niezależne stany warstwowane na jednym wierszu — StandardTable
+                // sam obsługuje tylko `selectedRowId` (pojedynczy stan), więc reszta
+                // (SELECTED/PREVIEW/FOCUSED tokens z selectionTokens.ts + opacity
+                // dla completed) idzie przez rowClassName, 1:1 z legacy TaskTableRow.
+                rowClassName={(row) => {
+                  const task = row as unknown as Task;
+                  const isCompleted = ['done', 'completed', 'validated'].includes(
+                    task.status?.toLowerCase() || ''
+                  );
+                  const isSelected = selectedIds.has(task.id);
+                  const isPreviewed = previewTaskId === task.id;
+                  const isFocused = focusedTask?.id === task.id;
+                  return [
+                    isCompleted ? 'opacity-60' : '',
+                    isSelected ? SELECTED_ROW_CLASS : '',
+                    isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : '',
+                    isFocused && !isPreviewed && !isSelected ? FOCUSED_ROW_CLASS : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+                }}
+                selection={{ selectedIds, onChange: setSelectedIds }}
+                empty={{
+                  title: t('myWork.personalTasks.empty.title', 'No personal tasks in the current scope'),
+                  description: t(
+                    'myWork.personalTasks.empty.description',
+                    'This view shows only personal tasks assigned in the active organization.'
+                  ),
+                  actionLabel: t('myWork.personalTasks.create', 'Create task'),
+                  onAction: onCreateTask,
+                }}
+                persistKey="mywork.tasks.list"
+              />
             ) : (
               <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
                 <table
