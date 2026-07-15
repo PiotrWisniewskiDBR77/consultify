@@ -99,7 +99,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
   fields = [],
   onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [view, setView] = useState<ManagerView>('list');
@@ -120,7 +120,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       const data = await TablePlatformApi.listAutomations(tableId);
       setAutomations(Array.isArray(data) ? data : []);
     } catch {
-      toast.error(isPl ? 'Nie udało się pobrać automatyzacji' : 'Failed to load automations');
+      toast.error(t('myWorkTable.automationsManager.failedToLoadAutomations'));
     } finally {
       setLoading(false);
     }
@@ -138,15 +138,11 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       );
       toast.success(
         auto.enabled
-          ? isPl
-            ? 'Automatyzacja wstrzymana'
-            : 'Automation paused'
-          : isPl
-            ? 'Automatyzacja aktywowana'
-            : 'Automation activated'
+          ? t('myWorkTable.automationsManager.automationPaused')
+          : t('myWorkTable.automationsManager.automationActivated')
       );
     } catch {
-      toast.error(isPl ? 'Nie udało się zmienić statusu' : 'Failed to toggle');
+      toast.error(t('myWorkTable.automationsManager.failedToToggle'));
     }
   };
 
@@ -154,18 +150,18 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
     try {
       await TablePlatformApi.deleteAutomation(id);
       setAutomations((prev) => prev.filter((a) => a.id !== id));
-      toast.success(isPl ? 'Automatyzacja usunięta' : 'Automation deleted');
+      toast.success(t('myWorkTable.automationsManager.automationDeleted'));
     } catch {
-      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+      toast.error(t('myWorkTable.automationsManager.failedToDelete'));
     }
   };
 
   const handleRunNow = async (auto: Automation) => {
     try {
       await TablePlatformApi.runAutomationNow(auto.id);
-      toast.success(isPl ? 'Uruchomiono' : 'Triggered');
+      toast.success(t('myWorkTable.automationsManager.triggered'));
     } catch {
-      toast.error(isPl ? 'Nie udało się uruchomić' : 'Failed to trigger');
+      toast.error(t('myWorkTable.automationsManager.failedToTrigger'));
     }
   };
 
@@ -182,11 +178,11 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
           actionConfig: a.actionConfig,
         })),
       });
-      toast.success(isPl ? 'Automatyzacja utworzona' : 'Automation created');
+      toast.success(t('myWorkTable.automationsManager.automationCreated'));
       setView('list');
       await fetchAutomations();
     } catch {
-      toast.error(isPl ? 'Nie udało się utworzyć' : 'Failed to create');
+      toast.error(t('myWorkTable.automationsManager.failedToCreate'));
     } finally {
       setSaving(false);
     }
@@ -207,12 +203,12 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
           actionConfig: a.actionConfig,
         })),
       });
-      toast.success(isPl ? 'Automatyzacja zaktualizowana' : 'Automation updated');
+      toast.success(t('myWorkTable.automationsManager.automationUpdated'));
       setView('list');
       setEditTarget(null);
       await fetchAutomations();
     } catch {
-      toast.error(isPl ? 'Nie udało się zaktualizować' : 'Failed to update');
+      toast.error(t('myWorkTable.automationsManager.failedToUpdate'));
     } finally {
       setSaving(false);
     }
@@ -226,7 +222,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       const data = await TablePlatformApi.getAutomationRuns(auto.id, 50);
       setRuns(Array.isArray(data) ? data : []);
     } catch {
-      toast.error(isPl ? 'Nie udało się pobrać historii' : 'Failed to load history');
+      toast.error(t('myWorkTable.automationsManager.failedToLoadHistory'));
     } finally {
       setRunsLoading(false);
     }
@@ -263,12 +259,8 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
           <Zap size={16} className="text-c-warning" />
           <h3 className="text-sm font-semibold text-c-text">
             {view === 'edit'
-              ? isPl
-                ? 'Edytuj automatyzację'
-                : 'Edit Automation'
-              : isPl
-                ? 'Nowa automatyzacja'
-                : 'New Automation'}
+              ? t('myWorkTable.automationsManager.editAutomation')
+              : t('myWorkTable.automationsManager.newAutomation')}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
@@ -318,7 +310,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
           </button>
           <Clock size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Historia uruchomień' : 'Run History'}
+            {t('myWorkTable.automationsManager.runHistory')}
             <span className="ml-1 font-normal text-c-text-secondary">— {historyTarget.name}</span>
           </h3>
         </div>
@@ -329,7 +321,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
             </div>
           ) : runs.length === 0 ? (
             <div className="py-12 text-center text-xs text-c-text-secondary">
-              {isPl ? 'Brak historii uruchomień.' : 'No run history yet.'}
+              {t('myWorkTable.automationsManager.noRunHistoryYet')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -351,16 +343,10 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-c-text">
                         {run.status === 'completed'
-                          ? isPl
-                            ? 'Sukces'
-                            : 'Success'
+                          ? t('myWorkTable.automationsManager.success')
                           : run.status === 'failed'
-                            ? isPl
-                              ? 'Błąd'
-                              : 'Error'
-                            : isPl
-                              ? 'W toku'
-                              : 'Running'}
+                            ? t('myWorkTable.automationsManager.error')
+                            : t('myWorkTable.automationsManager.running')}
                       </span>
                       {run.duration_ms != null && (
                         <span className="text-[10px] text-c-text-secondary">
@@ -401,7 +387,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
           </button>
           <Zap size={18} className="text-c-warning" />
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Automatyzacje' : 'Automations'}
+            {t('myWorkTable.automationsManager.automations')}
             {automations.length > 0 && (
               <span className="ml-1 font-normal text-c-text-secondary">({automations.length})</span>
             )}
@@ -412,7 +398,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
           className="inline-flex items-center gap-1 rounded-lg bg-c-warning px-2.5 py-1.5 text-xs font-medium text-c-warning transition-colors hover:bg-c-warning text-c-warning hover:bg-c-warning"
         >
           <Plus size={12} />
-          {isPl ? 'Nowa' : 'New'}
+          {t('myWorkTable.automationsManager.new')}
         </button>
       </div>
 
@@ -428,19 +414,17 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
               <Zap size={28} className="text-c-text-muted" />
             </div>
             <p className="mb-1 text-sm font-medium text-c-text-muted">
-              {isPl ? 'Brak automatyzacji' : 'No automations yet'}
+              {t('myWorkTable.automationsManager.noAutomationsYet')}
             </p>
             <p className="mb-4 max-w-xs text-xs text-c-text-muted">
-              {isPl
-                ? 'Automatyzuj powtarzalne zadania — aktualizuj rekordy, wysyłaj powiadomienia i więcej.'
-                : 'Automate repetitive tasks — update records, send notifications, and more.'}
+              {t('myWorkTable.automationsManager.automateRepetitiveTasksUpdateRecords')}
             </p>
             <button
               onClick={() => setView('create')}
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-warning px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-warning"
             >
               <Plus size={14} />
-              {isPl ? 'Utwórz automatyzację' : 'Create automation'}
+              {t('myWorkTable.automationsManager.createAutomation')}
             </button>
           </div>
         ) : (
@@ -465,14 +449,14 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                     <span className="truncate text-sm font-medium text-c-text">{auto.name}</span>
                     {!auto.enabled && (
                       <span className="rounded bg-c-surface-raised px-1.5 py-0.5 text-[10px] text-c-text-secondary bg-c-surface-raised">
-                        {isPl ? 'Wstrzymana' : 'Paused'}
+                        {t('myWorkTable.automationsManager.paused')}
                       </span>
                     )}
                   </div>
                   <div className="mt-0.5 text-[11px] text-c-text-muted">
                     {triggerDescription(auto, !!isPl)}
                     <span className="ml-2 text-c-text-secondary">
-                      → {auto.actions.length} {isPl ? 'akcji' : 'action(s)'}
+                      → {auto.actions.length} {t('myWorkTable.automationsManager.actionS')}
                     </span>
                   </div>
                 </div>
@@ -483,7 +467,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                   className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${
                     auto.enabled ? 'bg-c-success' : 'bg-c-surface-raised'
                   }`}
-                  title={auto.enabled ? (isPl ? 'Wyłącz' : 'Disable') : isPl ? 'Włącz' : 'Enable'}
+                  title={auto.enabled ? (t('myWorkTable.automationsManager.disable')) : t('myWorkTable.automationsManager.enable')}
                 >
                   <span
                     className={`absolute top-0.5 h-4 w-4 rounded-full bg-c-surface shadow transition-transform ${
@@ -507,7 +491,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                       <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-1 shadow-xl border-c-border-subtle bg-c-surface">
                         <MenuBtn
                           icon={<Play size={13} />}
-                          label={isPl ? 'Uruchom teraz' : 'Run now'}
+                          label={t('myWorkTable.automationsManager.runNow')}
                           onClick={() => {
                             setMenuOpen(null);
                             handleRunNow(auto);
@@ -515,7 +499,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                         />
                         <MenuBtn
                           icon={<Clock size={13} />}
-                          label={isPl ? 'Historia' : 'History'}
+                          label={t('myWorkTable.automationsManager.history')}
                           onClick={() => {
                             setMenuOpen(null);
                             openHistory(auto);
@@ -523,7 +507,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                         />
                         <MenuBtn
                           icon={<Pencil size={13} />}
-                          label={isPl ? 'Edytuj' : 'Edit'}
+                          label={t('myWorkTable.automationsManager.edit')}
                           onClick={() => {
                             setMenuOpen(null);
                             setEditTarget(auto);
@@ -533,7 +517,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                         <div className="my-1 border-t border-c-border-subtle" />
                         <MenuBtn
                           icon={<Trash2 size={13} />}
-                          label={isPl ? 'Usuń' : 'Delete'}
+                          label={t('myWorkTable.automationsManager.delete')}
                           danger
                           onClick={() => {
                             setMenuOpen(null);

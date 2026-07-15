@@ -220,7 +220,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
       await TablePlatformApi.reorderFields(tableId, newOrder);
       onFieldsChanged();
     } catch {
-      toast.error(isPl ? 'Nie udało się zmienić kolejności' : 'Failed to reorder fields');
+      toast.error(t('myWorkTable.fieldManager.failedToReorderFields'));
     }
   }, [dragIdx, overIdx, sortedFields, tableId, onFieldsChanged, isPl]);
 
@@ -242,7 +242,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Pola' : 'Fields'}</h3>
+          <h3 className="text-sm font-bold text-c-text">{t('myWorkTable.fieldManager.fields')}</h3>
           <div className="flex items-center gap-1">
             {!locked && (
               <button
@@ -250,7 +250,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
               >
                 <Plus size={12} />
-                {isPl ? 'Dodaj' : 'Add'}
+                {t('myWorkTable.fieldManager.add')}
               </button>
             )}
             <button
@@ -272,7 +272,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isPl ? 'Szukaj pola...' : 'Search fields...'}
+              placeholder={t('myWorkTable.fieldManager.searchFields')}
               className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
@@ -345,10 +345,10 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                       try {
                         await TablePlatformApi.updateField(field.id, updates);
                         onFieldsChanged();
-                        toast.success(isPl ? 'Pole zaktualizowane' : 'Field updated');
+                        toast.success(t('myWorkTable.fieldManager.fieldUpdated'));
                       } catch {
                         toast.error(
-                          isPl ? 'Nie udało się zaktualizować pola' : 'Failed to update field'
+                          t('myWorkTable.fieldManager.failedToUpdateField')
                         );
                       }
                     }}
@@ -357,9 +357,9 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                         await TablePlatformApi.deleteField(field.id);
                         onFieldsChanged();
                         setExpandedFieldId(null);
-                        toast.success(isPl ? 'Pole usunięte' : 'Field deleted');
+                        toast.success(t('myWorkTable.fieldManager.fieldDeleted'));
                       } catch {
-                        toast.error(isPl ? 'Nie udało się usunąć pola' : 'Failed to delete field');
+                        toast.error(t('myWorkTable.fieldManager.failedToDeleteField'));
                       }
                     }}
                   />
@@ -370,7 +370,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
 
           {sortedFields.length === 0 && (
             <div className="text-center py-8 text-[11px] text-c-text-secondary">
-              {isPl ? 'Brak pól' : 'No fields'}
+              {t('myWorkTable.fieldManager.noFields')}
             </div>
           )}
 
@@ -387,7 +387,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                 />
                 <Calendar size={12} className="text-c-text-muted" />
                 <span className="text-[11px] font-semibold text-c-text">
-                  {isPl ? 'Zależności dat' : 'Date Dependencies'}
+                  {t('myWorkTable.fieldManager.dateDependencies')}
                 </span>
               </button>
               {dateDepsExpanded && (
@@ -416,9 +416,9 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
               await TablePlatformApi.createField(tableId, name, fieldType, options);
               onFieldsChanged();
               setShowAddField(false);
-              toast.success(isPl ? 'Pole dodane' : 'Field added');
+              toast.success(t('myWorkTable.fieldManager.fieldAdded'));
             } catch {
-              toast.error(isPl ? 'Nie udało się dodać pola' : 'Failed to add field');
+              toast.error(t('myWorkTable.fieldManager.failedToAddField'));
             }
           }}
         />
@@ -448,6 +448,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
   onSave,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(field.name);
   const [description, setDescription] = useState(
     ((field.options as Record<string, unknown>)?.description as string) ?? ''
@@ -476,7 +477,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
       {/* Name */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Nazwa' : 'Name'}
+          {t('myWorkTable.fieldManager.name')}
         </label>
         <input
           value={name}
@@ -489,14 +490,14 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
       {/* Description */}
       <div>
         <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
-          {isPl ? 'Opis' : 'Description'}
+          {t('myWorkTable.fieldManager.description')}
         </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           disabled={locked}
           rows={2}
-          placeholder={isPl ? 'Opcjonalny opis pola...' : 'Optional field description...'}
+          placeholder={t('myWorkTable.fieldManager.optionalFieldDescription')}
           className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none disabled:opacity-50"
         />
       </div>
@@ -511,19 +512,19 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
             {showDeleteConfirm ? (
               <div className="flex items-center gap-1">
                 <span className="text-[10px] text-danger-500 font-medium">
-                  {isPl ? 'Na pewno?' : 'Are you sure?'}
+                  {t('myWorkTable.fieldManager.areYouSure')}
                 </span>
                 <button
                   onClick={onDelete}
                   className="px-2 py-0.5 rounded text-[10px] font-semibold text-white bg-danger-500 hover:bg-danger-600 transition-colors"
                 >
-                  {isPl ? 'Tak' : 'Yes'}
+                  {t('myWorkTable.fieldManager.yes')}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="px-2 py-0.5 rounded text-[10px] font-semibold text-c-text-muted hover:bg-c-surface-raised transition-colors"
                 >
-                  {isPl ? 'Nie' : 'No'}
+                  {t('myWorkTable.fieldManager.no')}
                 </button>
               </div>
             ) : (
@@ -532,14 +533,14 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
                 className="inline-flex items-center gap-1 text-[10px] font-medium text-danger-500 hover:text-danger-600 transition-colors"
               >
                 <Trash2 size={10} />
-                {isPl ? 'Usuń' : 'Delete'}
+                {t('myWorkTable.fieldManager.delete')}
               </button>
             )}
           </>
         )}
         {isPrimary && (
           <span className="text-[9px] text-c-text-secondary italic">
-            {isPl ? 'Pole główne nie może być usunięte' : 'Primary field cannot be deleted'}
+            {t('myWorkTable.fieldManager.primaryFieldCannotBeDeleted')}
           </span>
         )}
         <button
@@ -547,7 +548,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           disabled={!hasChanges || locked || saving}
           className="ml-auto px-3 py-1 rounded-lg text-[10px] font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
         >
-          {saving ? <Loader2 size={10} className="animate-spin" /> : isPl ? 'Zapisz' : 'Save'}
+          {saving ? <Loader2 size={10} className="animate-spin" /> : t('myWorkTable.fieldManager.save')}
         </button>
       </div>
     </div>
@@ -562,6 +563,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
   field,
   isPl,
 }) => {
+  const { t } = useTranslation();
   const opts = field.options as Record<string, unknown>;
   if (!opts || Object.keys(opts).length === 0) return null;
 
@@ -571,7 +573,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
     const options = (opts.options as Array<{ name?: string; value?: string }>) ?? [];
     if (options.length > 0) {
       items.push({
-        label: isPl ? 'Opcje' : 'Options',
+        label: t('myWorkTable.fieldManager.options'),
         value: options.map((o) => o.name ?? o.value ?? '').join(', '),
       });
     }
@@ -580,7 +582,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
   if (field.fieldType === 'linkedRecord') {
     if (opts.linkedTableId) {
       items.push({
-        label: isPl ? 'Tabela docelowa' : 'Linked table',
+        label: t('myWorkTable.fieldManager.linkedTable'),
         value: String(opts.linkedTableId),
       });
     }
@@ -589,7 +591,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
   if (field.fieldType === 'formula') {
     if (opts.expression || opts.formula) {
       items.push({
-        label: isPl ? 'Formuła' : 'Formula',
+        label: t('myWorkTable.fieldManager.formula'),
         value: String(opts.expression ?? opts.formula),
       });
     }
@@ -597,7 +599,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
 
   if (field.fieldType === 'currency') {
     if (opts.currencySymbol) {
-      items.push({ label: isPl ? 'Symbol' : 'Symbol', value: String(opts.currencySymbol) });
+      items.push({ label: t('myWorkTable.fieldManager.symbol'), value: String(opts.currencySymbol) });
     }
   }
 
@@ -607,7 +609,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
 
   if (field.fieldType === 'duration') {
     if (opts.format) {
-      items.push({ label: isPl ? 'Format' : 'Format', value: String(opts.format) });
+      items.push({ label: t('myWorkTable.fieldManager.format'), value: String(opts.format) });
     }
   }
 
@@ -689,7 +691,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Nowe pole' : 'New Field'}</h3>
+          <h3 className="text-sm font-bold text-c-text">{t('myWorkTable.fieldManager.newField')}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
@@ -702,12 +704,12 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {/* Name */}
           <div>
             <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-              {isPl ? 'Nazwa' : 'Name'}
+              {t('myWorkTable.fieldManager.name')}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
+              placeholder={t('myWorkTable.fieldManager.eGStatusPriority')}
               className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               autoFocus
             />
@@ -716,7 +718,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {/* Type selector */}
           <div>
             <label className="block text-[11px] font-bold text-c-text-secondary mb-1.5">
-              {isPl ? 'Typ' : 'Type'}
+              {t('myWorkTable.fieldManager.type')}
             </label>
             <div className="grid grid-cols-4 gap-1 max-h-[200px] overflow-y-auto">
               {CREATABLE_FIELD_TYPES.map((ft) => {
@@ -745,7 +747,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {(fieldType === 'singleSelect' || fieldType === 'multiSelect') && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Opcje (oddzielone przecinkiem)' : 'Options (comma-separated)'}
+                {t('myWorkTable.fieldManager.optionsCommaSeparated')}
               </label>
               <input
                 value={selectOptions}
@@ -762,7 +764,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {fieldType === 'linkedRecord' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'ID tabeli docelowej' : 'Linked table ID'}
+                {t('myWorkTable.fieldManager.linkedTableId')}
               </label>
               <input
                 value={linkedTableId}
@@ -776,7 +778,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {fieldType === 'formula' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Wyrażenie formuły' : 'Formula expression'}
+                {t('myWorkTable.fieldManager.formulaExpression')}
               </label>
               <input
                 value={formulaExpr}
@@ -806,7 +808,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {fieldType === 'currency' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Symbol waluty' : 'Currency symbol'}
+                {t('myWorkTable.fieldManager.currencySymbol')}
               </label>
               <select
                 value={currencySymbol}
@@ -829,7 +831,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkTable.fieldManager.cancel')}
           </button>
           <button
             onClick={handleCreate}
@@ -838,10 +840,8 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           >
             {adding ? (
               <Loader2 size={12} className="animate-spin" />
-            ) : isPl ? (
-              'Utwórz pole'
             ) : (
-              'Create Field'
+              t('myWorkTable.fieldManager.createField')
             )}
           </button>
         </div>
