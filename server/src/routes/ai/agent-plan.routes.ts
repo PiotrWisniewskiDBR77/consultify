@@ -86,7 +86,9 @@ async function tryDispatchBackgroundExecution(payload: {
   userId: string;
 }): Promise<'enqueued' | 'unavailable'> {
   try {
-    const { default: aiQueue } = await import('../../queues/aiQueue.js');
+    const { default: aiQueue } = (await import('../../queues/aiQueue.js')) as {
+      default: { add: (name: string, data: unknown) => Promise<unknown> };
+    };
     await aiQueue.add('AGENT_BACKGROUND_TASK', {
       taskType: 'AGENT_BACKGROUND_TASK',
       payload,
