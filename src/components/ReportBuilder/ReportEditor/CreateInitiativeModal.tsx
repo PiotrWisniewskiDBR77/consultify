@@ -7,6 +7,7 @@
 
 import { Check, Loader2, Target, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
@@ -38,6 +39,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
   sectionContent,
   isPl,
 }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +58,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
 
   const handleSubmit = useCallback(async () => {
     if (!title.trim()) {
-      toast.error(isPl ? 'Tytuł jest wymagany' : 'Title is required');
+      toast.error(t('reportBuilder.createInitiativeModal.titleIsRequired', 'Title is required'));
       return;
     }
     try {
@@ -66,14 +68,14 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
         description: description.trim(),
       });
       setSuccess(true);
-      toast.success(isPl ? 'Inicjatywa utworzona' : 'Initiative created');
+      toast.success(t('reportBuilder.createInitiativeModal.initiativeCreated', 'Initiative created'));
       setTimeout(() => onClose(), 800);
     } catch {
-      toast.error(isPl ? 'Nie udało się utworzyć inicjatywy' : 'Failed to create initiative');
+      toast.error(t('reportBuilder.createInitiativeModal.failedToCreateInitiative', 'Failed to create initiative'));
     } finally {
       setSubmitting(false);
     }
-  }, [title, description, reportId, sectionKey, isPl, onClose]);
+  }, [title, description, reportId, sectionKey, t, onClose]);
 
   if (!isOpen) return null;
 
@@ -90,7 +92,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
             <Target className="h-5 w-5 text-c-accent" />
           </div>
           <h2 className="text-base font-semibold text-c-text flex-1">
-            {isPl ? 'Utwórz inicjatywę' : 'Create Initiative'}
+            {t('reportBuilder.createInitiativeModal.createInitiative', 'Create Initiative')}
           </h2>
           <button
             onClick={onClose}
@@ -105,14 +107,14 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
           {/* Title */}
           <div>
             <label className="block text-xs font-medium text-c-text-secondary mb-1.5">
-              {isPl ? 'Tytuł' : 'Title'}
+              {t('reportBuilder.createInitiativeModal.title', 'Title')}
             </label>
             <input
               ref={titleRef}
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={isPl ? 'Nazwa inicjatywy…' : 'Initiative name…'}
+              placeholder={t('reportBuilder.createInitiativeModal.initiativeName', 'Initiative name…')}
               disabled={submitting || success}
               className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 transition-colors"
             />
@@ -121,12 +123,12 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
           {/* Description */}
           <div>
             <label className="block text-xs font-medium text-c-text-secondary mb-1.5">
-              {isPl ? 'Opis' : 'Description'}
+              {t('reportBuilder.createInitiativeModal.description', 'Description')}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={isPl ? 'Opis inicjatywy…' : 'Initiative description…'}
+              placeholder={t('reportBuilder.createInitiativeModal.initiativeDescription', 'Initiative description…')}
               rows={5}
               disabled={submitting || success}
               className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 resize-none transition-colors"
@@ -134,9 +136,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
           </div>
 
           <p className="text-xs text-c-text-secondary">
-            {isPl
-              ? 'Inicjatywa zostanie powiązana z tym raportem i pojawi się w module Wykonanie.'
-              : 'The initiative will be linked to this report and appear in the Execution module.'}
+            {t('reportBuilder.createInitiativeModal.theInitiativeWillBeLinkedTo', 'The initiative will be linked to this report and appear in the Execution module.')}
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
             disabled={submitting}
             className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text hover:bg-c-surface rounded-lg transition-colors disabled:opacity-50"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('reportBuilder.createInitiativeModal.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -163,12 +163,8 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
               <Target className="h-4 w-4" />
             )}
             {success
-              ? isPl
-                ? 'Utworzono!'
-                : 'Created!'
-              : isPl
-                ? 'Utwórz inicjatywę'
-                : 'Create Initiative'}
+              ? t('reportBuilder.createInitiativeModal.created', 'Created!')
+              : t('reportBuilder.createInitiativeModal.createInitiative', 'Create Initiative')}
           </button>
         </div>
       </div>

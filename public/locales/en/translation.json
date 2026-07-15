@@ -27504,6 +27504,41 @@
       "regenerate": "Regenerate",
       "youCanRegenerateIndividualSectionsAfter": "You can regenerate individual sections after the report is generated. In the next step, you'll be able to edit content and add additional AI guidance.",
       "aiWillGenerateForNSections": "AI will generate content for {{count}} report sections"
+    },
+    "createInitiativeModal": {
+      "titleIsRequired": "Title is required",
+      "initiativeCreated": "Initiative created",
+      "failedToCreateInitiative": "Failed to create initiative",
+      "createInitiative": "Create Initiative",
+      "title": "Title",
+      "initiativeName": "Initiative name…",
+      "description": "Description",
+      "initiativeDescription": "Initiative description…",
+      "theInitiativeWillBeLinkedTo": "The initiative will be linked to this report and appear in the Execution module.",
+      "cancel": "Cancel",
+      "created": "Created!"
+    },
+    "entityLinksPanel": {
+      "failedToLoadEntityLinks": "Failed to load entity links",
+      "loading": "Loading…",
+      "tryAgain": "Try again",
+      "noLinkedEntities": "No linked entities",
+      "createAnInitiativeFromAReport": "Create an initiative from a report section to see links here",
+      "initiatives": "Initiatives",
+      "tasks": "Tasks",
+      "decisions": "Decisions",
+      "none": "None"
+    },
+    "blockAIActions": {
+      "aiActions": "AI Actions",
+      "regenerateCompletely": "Regenerate Completely",
+      "customInstruction": "Custom instruction..."
+    },
+    "staleDataBadge": {
+      "refreshing": "Refreshing…",
+      "dataMayBeStaleClickTo": "Data may be stale. Click to refresh.",
+      "staleData": "Stale data",
+      "upToDate": "Up to date"
     }
   }
 }

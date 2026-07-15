@@ -28580,6 +28580,41 @@
       "regenerate": "Regeneruj",
       "youCanRegenerateIndividualSectionsAfter": "Możesz regenerować pojedyncze sekcje po wygenerowaniu raportu. W następnym kroku będziesz mógł edytować treść i dodać dodatkowe wskazówki dla AI.",
       "aiWillGenerateForNSections": "AI wygeneruje treść dla {{count}} sekcji raportu"
+    },
+    "createInitiativeModal": {
+      "titleIsRequired": "Tytuł jest wymagany",
+      "initiativeCreated": "Inicjatywa utworzona",
+      "failedToCreateInitiative": "Nie udało się utworzyć inicjatywy",
+      "createInitiative": "Utwórz inicjatywę",
+      "title": "Tytuł",
+      "initiativeName": "Nazwa inicjatywy…",
+      "description": "Opis",
+      "initiativeDescription": "Opis inicjatywy…",
+      "theInitiativeWillBeLinkedTo": "Inicjatywa zostanie powiązana z tym raportem i pojawi się w module Wykonanie.",
+      "cancel": "Anuluj",
+      "created": "Utworzono!"
+    },
+    "entityLinksPanel": {
+      "failedToLoadEntityLinks": "Nie udało się pobrać powiązań",
+      "loading": "Ładowanie…",
+      "tryAgain": "Spróbuj ponownie",
+      "noLinkedEntities": "Brak powiązanych elementów",
+      "createAnInitiativeFromAReport": "Utwórz inicjatywę z sekcji raportu, aby zobaczyć powiązania",
+      "initiatives": "Inicjatywy",
+      "tasks": "Zadania",
+      "decisions": "Decyzje",
+      "none": "Brak"
+    },
+    "blockAIActions": {
+      "aiActions": "Akcje AI",
+      "regenerateCompletely": "Wygeneruj od nowa",
+      "customInstruction": "Własna instrukcja..."
+    },
+    "staleDataBadge": {
+      "refreshing": "Odświeżanie…",
+      "dataMayBeStaleClickTo": "Dane mogą być nieaktualne. Kliknij aby odświeżyć.",
+      "staleData": "Nieaktualne dane",
+      "upToDate": "Aktualne"
     }
   }
 }
