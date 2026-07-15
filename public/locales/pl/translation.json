@@ -28124,6 +28124,17 @@
       "month": "Miesiąc",
       "week": "Tydzień",
       "more": "więcej"
+    },
+    "inlineAIFill": {
+      "returnedNoValue": "AI nie zwróciło wartości",
+      "failedToFillCell": "Nie udało się wypełnić komórki",
+      "aiFillTitle": "AI wypełnij",
+      "filledCells": "Wypełniono {{count}} komórek",
+      "returnedNoValues": "AI nie zwróciło żadnych wartości",
+      "fillFailed": "Wypełnianie nie powiodło się",
+      "fillFailedWithCount": "Wypełnianie nie powiodło się (wypełniono {{count}})",
+      "batchTitle": "AI wypełnij {{count}} pustych komórek",
+      "aiFillButton": "AI Fill ({{count}})"
     }
   },
   "myWorkNotebook": {
