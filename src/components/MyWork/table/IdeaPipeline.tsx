@@ -133,7 +133,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
   onStageChange,
   onConvertToInitiative,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [promotingId, setPromotingId] = useState<string | null>(null);
@@ -195,13 +195,13 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Rocket size={16} className="text-c-accent" />
           <span className="text-sm font-bold text-c-text">
-            {isPl ? 'Pipeline: Pomysł → Inicjatywa' : 'Pipeline: Idea → Initiative'}
+            {t('myWorkTable.ideaPipeline.title')}
           </span>
           <div className="flex-1" />
           <div className="flex items-center gap-1.5 mr-3">
             <TrendingUp size={11} className="text-emerald-500" />
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-              {conversionRate}% {isPl ? 'konwersja' : 'conversion'}
+              {conversionRate}% {t('myWorkTable.ideaPipeline.conversion')}
             </span>
           </div>
           <button
@@ -273,7 +273,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                   {/* Criteria */}
                   <div className="mb-4 p-3 rounded-xl bg-c-surface-raised border border-c-border-subtle">
                     <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-muted">
-                      {isPl ? 'Kryteria przejścia' : 'Stage gate criteria'}
+                      {t('myWorkTable.ideaPipeline.stageGateCriteria')}
                     </span>
                     <div className="mt-1.5 space-y-1">
                       {(isPl ? stage.criteriaPl : stage.criteria).map((c, i) => (
@@ -294,7 +294,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                   {/* Items */}
                   {stageNodes.length === 0 ? (
                     <p className="text-xs text-c-text-secondary text-center py-4">
-                      {isPl ? 'Brak pomysłów na tym etapie' : 'No ideas at this stage'}
+                      {t('myWorkTable.ideaPipeline.noIdeasAtStage')}
                     </p>
                   ) : (
                     <div className="space-y-1.5">
@@ -347,12 +347,10 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                                 }
                                 title={
                                   canPromote
-                                    ? isPl
-                                      ? `Promuj do: ${nextStage.labelPl}`
-                                      : `Promote to: ${nextStage.label}`
-                                    : isPl
-                                      ? 'Spełnij wszystkie kryteria'
-                                      : 'Meet all criteria first'
+                                    ? t('myWorkTable.ideaPipeline.promoteTo', {
+                                        stage: isPl ? nextStage.labelPl : nextStage.label,
+                                      })
+                                    : t('myWorkTable.ideaPipeline.meetCriteriaFirst')
                                 }
                               >
                                 {promotingId === node.id ? (
@@ -375,9 +373,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
             <div className="text-center py-8">
               <Target size={24} className="text-c-text-secondary mx-auto mb-2" />
               <p className="text-xs text-c-text-secondary">
-                {isPl
-                  ? 'Kliknij etap aby zobaczyć pomysły i kryteria'
-                  : 'Click a stage to see ideas and criteria'}
+                {t('myWorkTable.ideaPipeline.clickStageHint')}
               </p>
             </div>
           )}

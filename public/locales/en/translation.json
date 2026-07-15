@@ -27075,6 +27075,15 @@
       "fillFailedWithCount": "AI fill failed (filled {{count}})",
       "batchTitle": "AI fill {{count}} empty cells",
       "aiFillButton": "AI Fill ({{count}})"
+    },
+    "ideaPipeline": {
+      "title": "Pipeline: Idea → Initiative",
+      "conversion": "conversion",
+      "stageGateCriteria": "Stage gate criteria",
+      "noIdeasAtStage": "No ideas at this stage",
+      "promoteTo": "Promote to: {{stage}}",
+      "meetCriteriaFirst": "Meet all criteria first",
+      "clickStageHint": "Click a stage to see ideas and criteria"
     }
   },
   "myWorkNotebook": {

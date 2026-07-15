@@ -28135,6 +28135,15 @@
       "fillFailedWithCount": "Wypełnianie nie powiodło się (wypełniono {{count}})",
       "batchTitle": "AI wypełnij {{count}} pustych komórek",
       "aiFillButton": "AI Fill ({{count}})"
+    },
+    "ideaPipeline": {
+      "title": "Pipeline: Pomysł → Inicjatywa",
+      "conversion": "konwersja",
+      "stageGateCriteria": "Kryteria przejścia",
+      "noIdeasAtStage": "Brak pomysłów na tym etapie",
+      "promoteTo": "Promuj do: {{stage}}",
+      "meetCriteriaFirst": "Spełnij wszystkie kryteria",
+      "clickStageHint": "Kliknij etap aby zobaczyć pomysły i kryteria"
     }
   },
   "myWorkNotebook": {
