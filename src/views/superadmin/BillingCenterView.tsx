@@ -26,6 +26,11 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { SubscriptionAnalytics } from '../../components/billing';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
@@ -427,7 +432,7 @@ const OverviewTab: React.FC = () => {
 
             <div className="overflow-x-auto">
               <table
-                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+                /* §27-exempt: data-viz/render analityczny read-only (agregat przychodu per plan), nie lista encji */ className="w-full"
               >
                 <thead>
                   <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
@@ -482,7 +487,7 @@ const OverviewTab: React.FC = () => {
             </p>
 
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table /* §27-exempt: data-viz/render analityczny read-only (koszty operacyjne z sumą tfoot), nie lista encji */ className="w-full">
                 <thead>
                   <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                     <th className="pb-3 font-medium">Provider</th>
@@ -1278,6 +1283,89 @@ const TransactionsTab: React.FC = () => {
     }
   };
 
+  const transactionColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'date',
+        label: 'Date',
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 text-sm">
+            {safeDate(row.created_at)}
+          </span>
+        ),
+      },
+      {
+        id: 'organization',
+        label: 'Organization',
+        render: (row: TableRow) => (
+          <span className="text-slate-900 dark:text-white font-medium text-sm">
+            {row.organization_name || row.organization_id?.slice(0, 8) || EMPTY_VALUE}
+          </span>
+        ),
+      },
+      {
+        id: 'type',
+        label: 'Type',
+        render: (row: TableRow) => (
+          <span
+            className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getTypeColor(row.type)}`}
+          >
+            {row.type}
+          </span>
+        ),
+      },
+      {
+        id: 'description',
+        label: 'Description',
+        render: (row: TableRow) => (
+          <span className="text-slate-600 dark:text-slate-500 text-sm max-w-xs truncate block">
+            {row.description || EMPTY_VALUE}
+          </span>
+        ),
+      },
+      {
+        id: 'amount',
+        label: 'Amount',
+        align: 'right',
+        render: (row: TableRow) =>
+          Number.isFinite(safeNumber(row.amount_usd, Number.NaN)) ? (
+            <span
+              className={safeNumber(row.amount_usd) > 0 ? 'text-emerald-400' : 'text-danger-400'}
+            >
+              {safeNumber(row.amount_usd) > 0 ? '+' : ''}
+              {safeMoney(row.amount_usd, 'USD')}
+            </span>
+          ) : (
+            <span className="text-slate-600 dark:text-slate-400">{EMPTY_VALUE}</span>
+          ),
+      },
+      {
+        id: 'tokens',
+        label: 'Tokens',
+        align: 'right',
+        render: (row: TableRow) => (
+          <span
+            className={`font-mono text-sm ${safeNumber(row.tokens) > 0 ? 'text-emerald-400' : 'text-danger-400'}`}
+          >
+            {safeNumber(row.tokens) > 0 ? '+' : ''}
+            {formatNumber(row.tokens)}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const transactionRows: TableRow[] = React.useMemo(
+    () =>
+      filteredTransactions.map((tx, idx) => ({
+        ...tx,
+        id: String(tx.id || idx),
+      })),
+    [filteredTransactions]
+  );
+
   return (
     <div className="space-y-6">
       {notice && (
@@ -1316,86 +1404,20 @@ const TransactionsTab: React.FC = () => {
 
       {/* Transactions Table */}
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-slate-50 dark:bg-navy-950 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              <th className="py-4 px-6 text-left font-medium">Date</th>
-              <th className="py-4 px-6 text-left font-medium">Organization</th>
-              <th className="py-4 px-6 text-left font-medium">Type</th>
-              <th className="py-4 px-6 text-left font-medium">Description</th>
-              <th className="py-4 px-6 text-right font-medium">Amount</th>
-              <th className="py-4 px-6 text-right font-medium">Tokens</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                  <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-                  Loading transactions...
-                </td>
-              </tr>
-            ) : loadError ? (
-              <tr>
-                <td colSpan={6} className="p-6">
-                  <DegradedState title="Billing transactions unavailable" description={loadError} />
-                </td>
-              </tr>
-            ) : filteredTransactions.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                  No transactions found
-                </td>
-              </tr>
-            ) : (
-              filteredTransactions.map((tx, idx) => (
-                <tr
-                  key={tx.id || idx}
-                  className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                >
-                  <td className="py-4 px-6 text-slate-500 dark:text-slate-400 text-sm">
-                    {safeDate(tx.created_at)}
-                  </td>
-                  <td className="py-4 px-6 text-slate-900 dark:text-white font-medium text-sm">
-                    {tx.organization_name || tx.organization_id?.slice(0, 8) || EMPTY_VALUE}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getTypeColor(tx.type)}`}
-                    >
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-slate-600 dark:text-slate-500 text-sm max-w-xs truncate">
-                    {tx.description || EMPTY_VALUE}
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    {Number.isFinite(safeNumber(tx.amount_usd, Number.NaN)) ? (
-                      <span
-                        className={
-                          safeNumber(tx.amount_usd) > 0 ? 'text-emerald-400' : 'text-danger-400'
-                        }
-                      >
-                        {safeNumber(tx.amount_usd) > 0 ? '+' : ''}
-                        {safeMoney(tx.amount_usd, 'USD')}
-                      </span>
-                    ) : (
-                      <span className="text-slate-600 dark:text-slate-400">{EMPTY_VALUE}</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-6 text-right font-mono text-sm">
-                    <span
-                      className={safeNumber(tx.tokens) > 0 ? 'text-emerald-400' : 'text-danger-400'}
-                    >
-                      {safeNumber(tx.tokens) > 0 ? '+' : ''}
-                      {formatNumber(tx.tokens)}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Billing transactions unavailable" description={loadError} />
+          </div>
+        ) : (
+          <StandardTable
+            columns={transactionColumns}
+            data={transactionRows}
+            loading={loading}
+            empty={{ title: 'No transactions found' }}
+            persistKey="superadmin.billing.transactions"
+            canvasClassName="p-0"
+          />
+        )}
       </div>
     </div>
   );
