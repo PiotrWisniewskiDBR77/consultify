@@ -1,88 +1,38 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function AmbitionDecomposerLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Ambition Decomposer',
-        title: isExample
-          ? 'Przykład: jedna ambicja rozłożona na motywy strategiczne z celami i horyzontem'
-          : 'Jak Ambition Decomposer rozkłada ambicję na mierzalne motywy',
-        subtitle: isExample
-          ? 'Ten case pokazuje, że ambicja to nie slogan. Najpierw nazywamy ją jednym zdaniem, a potem rozkładamy na motywy strategiczne, każdy z mierzalnym celem i horyzontem czasowym.'
-          : 'To nie deklaracja na slajdzie. Najpierw ostro formułujemy ambicję, potem rozkładamy ją na motywy strategiczne, nadajemy każdemu mierzalny cel oraz horyzont i ważymy je istotnością.',
-        scenario: isExample ? 'Sytuacja' : 'Punkt wyjścia',
-        scenarioValue: isExample
-          ? 'Zarząd chce „być liderem AI w branży", ale nikt nie wie, co to znaczy w liczbach ani kiedy. Ambicja jest zbyt ogólna, by ją zaplanować.'
-          : 'Sesja startuje od jednego zdania ambicji, zakresu i sygnału sukcesu. Bez tego motywy są oderwane od tego, co naprawdę chcemy osiągnąć.',
-        decision: isExample ? 'Pytanie decyzyjne' : 'Efekt sesji',
-        decisionValue: isExample
-          ? 'Na jakie mierzalne motywy musimy rozłożyć ambicję, żeby dało się ją zaplanować i rozliczyć?'
-          : 'Ambicja rozłożona na motywy strategiczne, każdy z celem, metryką i horyzontem, posortowane wg istotności i gotowe do dalszej pracy.',
-        stagesTitle: '5 kroków pracy',
-        stages: [
-          ['Ambicja', 'Jedno zdanie + zakres + sygnał sukcesu', 'bg-violet-500'],
-          ['Sygnały', 'Co napędza i ogranicza ambicję', 'bg-violet-500'],
-          ['Motywy', 'Rozkład na motywy strategiczne', 'bg-indigo-500'],
-          ['Cele & horyzont', 'Metryka, cel i okno czasowe', 'bg-sky-500'],
-          ['Ruchy & outputy', 'Priorytety, inicjatywy, raport, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        cascadeTitle: 'Kaskada ambicji',
-        cascadeHint: 'Motywy wg horyzontu',
-        legendTitle: 'Istotność motywu',
-        legend: [
-          ['high', 'Wysoka istotność'],
-          ['medium', 'Średnia istotność'],
-          ['low', 'Niska istotność'],
-        ] as Array<[string, string]>,
-        horizonLabels: { short: 'Krótki', medium: 'Średni', long: 'Długi' },
-        ambition: 'Lider AI w branży do 2028',
-        footer:
-          'Ambition Decomposer = ambicja -> sygnały -> motywy -> cele & horyzont -> ruchy -> outputy',
-      }
-    : {
-        eyebrow: 'Ambition Decomposer',
-        title: isExample
-          ? 'Example: one ambition decomposed into strategic themes with targets and horizon'
-          : 'How Ambition Decomposer breaks an ambition into measurable themes',
-        subtitle: isExample
-          ? 'This case shows that an ambition is not a slogan. We first name it in a single sentence, then decompose it into strategic themes, each with a measurable target and a time horizon.'
-          : 'This is not a statement on a slide. We sharpen the ambition first, decompose it into strategic themes, give each a measurable target and horizon, and weight them by importance.',
-        scenario: isExample ? 'Situation' : 'Starting point',
-        scenarioValue: isExample
-          ? 'The board wants to "be the AI leader in the industry," but nobody knows what that means in numbers or by when. The ambition is too vague to plan.'
-          : 'The session starts from a single ambition sentence, scope, and success signal. Without that, themes are detached from what we actually want to achieve.',
-        decision: isExample ? 'Decision question' : 'Session outcome',
-        decisionValue: isExample
-          ? 'Into which measurable themes must we decompose the ambition so it can be planned and held accountable?'
-          : 'The ambition decomposed into strategic themes, each with a target, metric, and horizon, sorted by importance and ready for downstream work.',
-        stagesTitle: '5 working steps',
-        stages: [
-          ['Ambition', 'One sentence + scope + success signal', 'bg-violet-500'],
-          ['Signals', 'What drives and constrains the ambition', 'bg-violet-500'],
-          ['Themes', 'Decompose into strategic themes', 'bg-indigo-500'],
-          ['Targets & horizon', 'Metric, target value, and time window', 'bg-sky-500'],
-          ['Moves & outputs', 'Priorities, initiatives, report, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        cascadeTitle: 'Ambition cascade',
-        cascadeHint: 'Themes by horizon',
-        legendTitle: 'Theme importance',
-        legend: [
-          ['high', 'High importance'],
-          ['medium', 'Medium importance'],
-          ['low', 'Low importance'],
-        ] as Array<[string, string]>,
-        horizonLabels: { short: 'Short', medium: 'Medium', long: 'Long' },
-        ambition: 'AI leader in the industry by 2028',
-        footer:
-          'Ambition Decomposer = ambition -> signals -> themes -> targets & horizon -> moves -> outputs',
-      };
+  const ns = 'discoveryToolsMain.ambitionDecomposerLibraryGraphic';
+  const labels = {
+    eyebrow: 'Ambition Decomposer',
+    title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
+    subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
+    scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
+    scenarioValue: isExample ? t(`${ns}.scenarioValueExample`) : t(`${ns}.scenarioValueProcess`),
+    decision: isExample ? t(`${ns}.decisionLabelExample`) : t(`${ns}.decisionLabelProcess`),
+    decisionValue: isExample ? t(`${ns}.decisionValueExample`) : t(`${ns}.decisionValueProcess`),
+    stagesTitle: isExample ? t(`${ns}.stagesTitleExample`) : t(`${ns}.stagesTitleProcess`),
+    stages: t(`${ns}.stages`, { returnObjects: true }) as Array<[string, string, string]>,
+    cascadeTitle: t(`${ns}.cascadeTitle`),
+    cascadeHint: t(`${ns}.cascadeHint`),
+    legendTitle: t(`${ns}.legendTitle`),
+    legend: t(`${ns}.legend`, { returnObjects: true }) as Array<[string, string]>,
+    horizonLabels: t(`${ns}.horizonLabels`, { returnObjects: true }) as {
+      short: string;
+      medium: string;
+      long: string;
+    },
+    ambition: t(`${ns}.ambition`),
+    ambitionWord: t(`${ns}.ambitionWord`),
+    footer: t(`${ns}.footer`),
+  };
 
   // Static decorative themes for the cascade, grouped by horizon (short → medium → long).
   type DecoTheme = {
@@ -91,83 +41,7 @@ export function AmbitionDecomposerLibraryGraphic({
     horizon: 'short' | 'medium' | 'long';
     importance: 'high' | 'medium' | 'low';
   };
-  const themes: DecoTheme[] = isPolish
-    ? [
-        {
-          title: 'Dane gotowe pod AI',
-          target: '90% danych skatalogowanych',
-          horizon: 'short',
-          importance: 'high',
-        },
-        {
-          title: 'Kompetencje zespołu',
-          target: '40 przeszkolonych osób',
-          horizon: 'short',
-          importance: 'medium',
-        },
-        {
-          title: 'Produkty wsparte AI',
-          target: '3 wdrożone use-case',
-          horizon: 'medium',
-          importance: 'high',
-        },
-        {
-          title: 'Automatyzacja procesów',
-          target: '25% kosztów operacji',
-          horizon: 'medium',
-          importance: 'medium',
-        },
-        {
-          title: 'Nowe modele przychodu',
-          target: '15% przychodu z AI',
-          horizon: 'long',
-          importance: 'high',
-        },
-        {
-          title: 'Ekosystem partnerów',
-          target: '2 alianse strategiczne',
-          horizon: 'long',
-          importance: 'low',
-        },
-      ]
-    : [
-        {
-          title: 'AI-ready data',
-          target: '90% data cataloged',
-          horizon: 'short',
-          importance: 'high',
-        },
-        {
-          title: 'Team capability',
-          target: '40 people upskilled',
-          horizon: 'short',
-          importance: 'medium',
-        },
-        {
-          title: 'AI-powered products',
-          target: '3 use-cases live',
-          horizon: 'medium',
-          importance: 'high',
-        },
-        {
-          title: 'Process automation',
-          target: '25% ops cost cut',
-          horizon: 'medium',
-          importance: 'medium',
-        },
-        {
-          title: 'New revenue models',
-          target: '15% revenue from AI',
-          horizon: 'long',
-          importance: 'high',
-        },
-        {
-          title: 'Partner ecosystem',
-          target: '2 strategic alliances',
-          horizon: 'long',
-          importance: 'low',
-        },
-      ];
+  const themes = t(`${ns}.themes`, { returnObjects: true }) as DecoTheme[];
 
   const importanceTone: Record<'high' | 'medium' | 'low', string> = {
     high: 'border-violet-300/70 bg-violet-500/10 dark:border-violet-700/50',
@@ -260,7 +134,7 @@ export function AmbitionDecomposerLibraryGraphic({
             {/* Central ambition node at the top of the cascade */}
             <div className="mt-3 rounded-xl border border-violet-300/70 bg-violet-500/10 px-3 py-2.5 text-center dark:border-violet-700/50">
               <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">
-                {isPolish ? 'Ambicja' : 'Ambition'}
+                {labels.ambitionWord}
               </div>
               <div className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">
                 {labels.ambition}

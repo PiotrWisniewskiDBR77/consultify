@@ -30677,5 +30677,1103 @@
       "creating": "Tworzenie…",
       "createFromMove": "Utwórz inicjatywę z tego ruchu"
     }
+  },
+  "discoveryToolsMain": {
+    "toolActionBar": {
+      "previous": "Poprzedni",
+      "stepOf": "Krok {{current}}/{{total}}",
+      "finish": "Zakończ",
+      "next": "Następny"
+    },
+    "toolHeader": {
+      "help": "Pomoc",
+      "requestReview": "Request review",
+      "export": "Eksportuj",
+      "createInitiative": "Utwórz inicjatywę"
+    },
+    "generateInitiativesModal": {
+      "title": "Generate initiatives",
+      "initiativesCount": "Liczba inicjatyw",
+      "customPlaceholder": "Custom (1-7)",
+      "methodology": "Metodyka",
+      "decisionOwner": "Decision Owner",
+      "optional": "(opcjonalnie)",
+      "selectPlaceholder": "-- Wybierz --",
+      "includeChatContext": "Include AI chat context",
+      "previewList": "Preview list",
+      "cancel": "Anuluj",
+      "generateDrafts": "Generate drafts"
+    },
+    "riskUncertaintyLibraryGraphic": {
+      "titleProcess": "Jak Risk & Uncertainty prowadzi od sygnałów do zabezpieczeń",
+      "titleExample": "Przykład: od niepewności do ruchów odporności",
+      "subtitle": "Narzędzie nie tworzy listy strachów. Zbiera sygnały, buduje założenia, ryzyka i scenariusze, wymaga akceptacji kart i dopiero potem rekomenduje walidację, mitygację, monitoring i eskalację.",
+      "missionProcess": "Risk mission, scope, success signal i constraints",
+      "missionExample": "Jak zabezpieczyć transformację przed opóźnieniami, presją kosztów i zmianą popytu?",
+      "cards": [
+        [
+          "Assumptions",
+          "Co musi być prawdą, żeby strategia działała"
+        ],
+        [
+          "Risks",
+          "Co może uderzyć w wynik, koszt, czas lub reputację"
+        ],
+        [
+          "Scenarios",
+          "Jak różne przyszłości zmieniają decyzję"
+        ],
+        [
+          "Moves",
+          "Validate, mitigate, monitor, hedge, escalate"
+        ]
+      ]
+    },
+    "portfolioPriorityLibraryGraphic": {
+      "titleProcess": "Jak Portfolio Priority prowadzi od evidence do decyzji",
+      "titleExample": "Przykład: od listy inicjatyw do alokacji zasobów",
+      "subtitle": "BCG nie jest dekoracyjną macierzą. Narzędzie zbiera sygnały, proponuje karty portfolio, wymusza akceptację użytkownika i dopiero potem buduje trade-offy, ruchy oraz inicjatywy.",
+      "missionProcess": "Portfolio mission, scope, constraints i success signal",
+      "missionExample": "Które produkty i inicjatywy finansować w kolejnym kwartale przy ograniczonym budżecie?",
+      "quadrants": [
+        [
+          "Stars",
+          "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"
+        ],
+        [
+          "Question Marks",
+          "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"
+        ],
+        [
+          "Cash Cows",
+          "Stabilna pozycja: utrzymuj i finansuj wzrost"
+        ],
+        [
+          "Dogs",
+          "Słaba pozycja: ogranicz, wygasz lub przebuduj"
+        ]
+      ],
+      "insight": "Rekomendacja nie polega na równym wsparciu wszystkich tematów, tylko na świadomej alokacji: invest, maintain, test, harvest, stop.",
+      "output": "Source summary -> inicjatywy portfolio -> deck -> raport"
+    },
+    "growthPathsLibraryGraphic": {
+      "titleProcess": "Jak Growth Paths prowadzi od ambicji do wyboru ścieżki",
+      "titleExample": "Przykład: od ambicji wzrostu do sekwencji ruchów",
+      "subtitle": "Ansoff nie jest listą pomysłów. Najpierw ustawia ambicję i sygnały, potem buduje opcje w czterech polach, porównuje trade-offy i dopiero wtedy przechodzi do ruchów oraz inicjatyw.",
+      "missionProcess": "Growth mission, scope, success signal i constraints",
+      "missionExample": "Jak zwiększyć przychód w segmencie premium bez rozmycia marży?",
+      "quadrants": [
+        [
+          "Penetracja rynku",
+          "Lepsze wykorzystanie obecnego segmentu i kanałów"
+        ],
+        [
+          "Rozwój rynku",
+          "Wejście do nowych segmentów lub geografii"
+        ],
+        [
+          "Rozwój produktu",
+          "Nowe propozycje wartości dla obecnych klientów"
+        ],
+        [
+          "Dywersyfikacja",
+          "Nowy produkt i nowy rynek, najwyższe ryzyko"
+        ]
+      ],
+      "insight": "Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.",
+      "output": "Source summary -> inicjatywa -> deck -> raport"
+    },
+    "marketForcesLibraryGraphic": {
+      "titleProcess": "Jak Market Forces prowadzi od rynku do decyzji",
+      "titleExample": "Przykład: od presji rynku do sekwencji ruchów",
+      "subtitleProcess": "To nie jest statyczna ocena pięciu sił. Najpierw ustawiamy rynek i pytanie, potem zbieramy evidence, oceniamy presję konkurencyjną i zamieniamy ją w ruchy oraz inicjatywy.",
+      "subtitleExample": "Ten case pokazuje, że analiza Portera nie kończy się na scorecardzie. Najpierw zbiera sygnały, potem ocenia siły, a dopiero na końcu buduje implikacje, ruchy i outputy.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od branży, zakresu geograficznego, pozycji firmy i pytania decyzyjnego. Bez tego scorecard sił staje się abstrakcyjny.",
+      "scenarioValueExample": "Ateliertoy rozważa wejście w segment B2B marketplace. Pytanie brzmi: czy rynek daje przestrzeń na defensible pozycję, czy presja platform i kupujących zje marżę szybciej niż wzrost ją odbuduje.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena atrakcyjności rynku, presji marży, strategicznych dźwigni i outputów gotowych do dalszej pracy.",
+      "decisionValueExample": "Czy wejść w marketplace teraz, czy najpierw zbudować kanał partnerski i przewagę danych?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stage1Value": "Branża, geografia, pozycja, decyzja",
+      "stage2Value": "Wywiady, benchmarki, obserwacje i hipotezy",
+      "stage3Value": "Score, trend, drivery, evidence i confidence",
+      "stage4Value": "Presja marży, defensibility, dźwignie strategiczne",
+      "stage5Value": "Ruchy, inicjatywy, raport, deck lub idea",
+      "forcesTitle": "Scorecard presji rynkowej",
+      "implicationsTitle": "Implikacje strategiczne",
+      "movesTitle": "Most do inicjatyw",
+      "forces": [
+        [
+          "Rywalizacja",
+          "4/5",
+          "Wysoka presja cenowa i szybko kopiowane oferty"
+        ],
+        [
+          "Nowi gracze",
+          "3/5",
+          "Wejście możliwe, ale wymaga kanału i zaufania"
+        ],
+        [
+          "Substytuty",
+          "2/5",
+          "Alternatywy istnieją, lecz nie rozwiązują całego problemu"
+        ],
+        [
+          "Siła kupujących",
+          "5/5",
+          "Duzi klienci wymuszają rabaty i warunki SLA"
+        ],
+        [
+          "Siła dostawców",
+          "3/5",
+          "Koszty komponentów są zmienne, ale dywersyfikowalne"
+        ]
+      ],
+      "implicationItems": [
+        "Rynek może rosnąć, ale przewaga bez danych i kanału będzie krucha.",
+        "Największe ryzyko leży w sile kupujących i presji porównywalności ofert."
+      ],
+      "moveItems": [
+        "Najpierw zbudować partner channel i dane o popycie.",
+        "Wejście w marketplace traktować jako etap po walidacji marży.",
+        "Zamknąć wynik jako brief inicjatywy i deck dla zarządu."
+      ]
+    },
+    "narrativeEngineLibraryGraphic": {
+      "titleProcess": "Jak Narrative Engine układa dom komunikatu wokół jednej myśli",
+      "titleExample": "Przykład: od jednej myśli przewodniej do domu komunikatu z filarami",
+      "subtitleProcess": "To nie luźny zestaw wiadomości. Najpierw ustawiamy odbiorcę i myśl przewodnią (dach), potem 3-4 filary (kolumny), każdy z własnym twierdzeniem i dowodami, a kolor pokazuje rezonans u odbiorcy.",
+      "subtitleExample": "Ten case pokazuje, że narracja to nie zbiór slajdów. Najpierw ustala jedną myśl przewodnią (dach), potem filary (kolumny), które ją utrzymują, i dowody, które każdy filar dźwigają.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od odbiorcy, celu i myśli przewodniej. Bez dachu filary nie mają czego trzymać, a dowody są oderwane od decyzji.",
+      "scenarioValueExample": "Zarząd słyszy dziesięć argumentów naraz i żaden nie zostaje w głowie. Pytanie brzmi: jaka jest jedna myśl, którą mają zapamiętać, i które trzy filary realnie ją utrzymują.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Jedna myśl przewodnia jako dach, 3-4 filary z twierdzeniem i dowodami, oznaczone rezonansem u odbiorcy, gotowe do narracji, raportu i decka.",
+      "decisionValueExample": "Która jedna myśl ma zostać w głowie i które filary z dowodami ją utrzymają?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        [
+          "Brief",
+          "Odbiorca, cel, sygnał sukcesu",
+          "bg-sky-500"
+        ],
+        [
+          "Myśl przewodnia",
+          "Jedno zdanie, które ma zostać",
+          "bg-sky-500"
+        ],
+        [
+          "Filary",
+          "Kolumny, które utrzymują dach",
+          "bg-blue-500"
+        ],
+        [
+          "Dowody",
+          "Czym każdy filar jest poparty",
+          "bg-amber-500"
+        ],
+        [
+          "Narracja & outputy",
+          "Wątki, ruchy, raport, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "houseTitle": "Dom komunikatu",
+      "houseHint": "Dach + filary",
+      "coreLabel": "Myśl przewodnia",
+      "coreValue": "Bez AI tracimy rynek w 18 miesięcy",
+      "proofWord": "dowody",
+      "legendTitle": "Rezonans u odbiorcy",
+      "legend": [
+        [
+          "high",
+          "Wysoki rezonans"
+        ],
+        [
+          "medium",
+          "Średni rezonans"
+        ],
+        [
+          "low",
+          "Niski rezonans"
+        ]
+      ],
+      "footer": "Narrative Engine = brief -> myśl przewodnia -> filary -> dowody -> narracja -> outputy",
+      "pillars": [
+        {
+          "title": "Tempo rynku",
+          "message": "Konkurenci już wdrażają",
+          "proofs": 3,
+          "resonance": "high"
+        },
+        {
+          "title": "Marża",
+          "message": "Automatyzacja podnosi marżę",
+          "proofs": 2,
+          "resonance": "high"
+        },
+        {
+          "title": "Talent",
+          "message": "Zespół jest gotowy",
+          "proofs": 2,
+          "resonance": "medium"
+        },
+        {
+          "title": "Ryzyko",
+          "message": "Pilot ogranicza ryzyko",
+          "proofs": 1,
+          "resonance": "low"
+        }
+      ]
+    },
+    "capabilityMapperLibraryGraphic": {
+      "titleProcess": "Jak Capability Mapper prowadzi od dojrzałości do priorytetów",
+      "titleExample": "Przykład: od dojrzałości zdolności do ruchów build/buy/partner",
+      "subtitleProcess": "To nie statyczna inwentaryzacja kompetencji. Najpierw ustawiamy strategię i domeny, oceniamy dojrzałość obecną vs docelową na skali 1-5, ważymy wagą strategiczną i zamieniamy luki w ruchy oraz inicjatywy.",
+      "subtitleExample": "Ten case pokazuje, że mapa zdolności to nie lista kompetencji. Najpierw ocenia dojrzałość obecną i docelową, waży wagę strategiczną, a dopiero potem wyłania luki i ruchy.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od branży, domen zdolności, priorytetów strategicznych i pytania decyzyjnego. Bez tego ocena dojrzałości jest oderwana od strategii.",
+      "scenarioValueExample": "Firma chce wejść w AI, ale nie wie, których zdolności realnie jej brakuje. Pytanie brzmi: gdzie luka między stanem obecnym a celem jest największa tam, gdzie waga strategiczna jest najwyższa.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena dojrzałości obecnej vs docelowej każdej zdolności, priorytetyzowane luki oraz ruchy build/buy/partner gotowe do dalszej pracy.",
+      "decisionValueExample": "Które zdolności trzeba podnieść najpierw, żeby strategia w ogóle ruszyła?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        [
+          "Brief",
+          "Branża, domeny, priorytety, decyzja",
+          "bg-sky-500"
+        ],
+        [
+          "Zdolności",
+          "Mapa zdolności wg domen",
+          "bg-sky-500"
+        ],
+        [
+          "Dojrzałość",
+          "Obecna vs docelowa 1-5 + waga",
+          "bg-blue-500"
+        ],
+        [
+          "Luki",
+          "Gdzie luka × waga jest największa",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Build/buy/partner, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "ladderTitle": "Drabina dojrzałości",
+      "scaleHint": "Skala dojrzałości 1-5",
+      "legendTitle": "Rozmiar luki",
+      "legend": [
+        [
+          "critical",
+          "Krytyczna luka"
+        ],
+        [
+          "moderate",
+          "Umiarkowana luka"
+        ],
+        [
+          "minor",
+          "Drobna luka"
+        ]
+      ],
+      "currentLabel": "Obecna",
+      "targetLabel": "Docelowa",
+      "footer": "Capability Mapper = brief -> zdolności -> dojrzałość -> luki -> ruchy -> outputy",
+      "rows": [
+        {
+          "name": "Dane i analityka",
+          "current": 2,
+          "target": 5,
+          "gap": "critical"
+        },
+        {
+          "name": "Talenty AI",
+          "current": 1,
+          "target": 4,
+          "gap": "critical"
+        },
+        {
+          "name": "Procesy",
+          "current": 3,
+          "target": 4,
+          "gap": "moderate"
+        },
+        {
+          "name": "Technologia",
+          "current": 3,
+          "target": 5,
+          "gap": "moderate"
+        },
+        {
+          "name": "Partnerstwa",
+          "current": 4,
+          "target": 5,
+          "gap": "minor"
+        }
+      ]
+    },
+    "focusTradeoffLibraryGraphic": {
+      "titleProcess": "Jak Focus & Trade-offs prowadzi od wartości i wysiłku do decyzji",
+      "titleExample": "Przykład: od konkurujących priorytetów do ruchów pursue/defer/drop",
+      "subtitleProcess": "To nie lista życzeń posortowana intuicją. Najpierw ustawiamy konkurujące priorytety i kryteria decyzji, oceniamy wartość vs wysiłek na skali 1-5, mapujemy je na macierz i zamieniamy pozycje w ruchy pursue/defer/drop.",
+      "subtitleExample": "Ten case pokazuje, że priorytetyzacja to nie ranking życzeń. Najpierw waży wartość i wysiłek każdej opcji, mapuje je na macierz, a dopiero potem rekomenduje, co realizować, co odłożyć, a co odpuścić.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od konkurujących priorytetów, kryteriów decyzji, celu i ograniczeń. Bez tego ocena wartości i wysiłku jest oderwana od strategii.",
+      "scenarioValueExample": "Zespół ma więcej inicjatyw niż mocy przerobowych i każdy broni swojej. Pytanie brzmi: które dają najwięcej wartości przy najmniejszym wysiłku, a które tylko drenują zespół.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena wartości vs wysiłku każdego priorytetu, pozycja na macierzy 2x2 oraz ruchy pursue/defer/drop gotowe do dalszej pracy.",
+      "decisionValueExample": "Które priorytety realizować teraz, a które świadomie odłożyć lub odpuścić?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        [
+          "Brief",
+          "Priorytety, kryteria, cel, ograniczenia",
+          "bg-sky-500"
+        ],
+        [
+          "Priorytety",
+          "Lista konkurujących opcji",
+          "bg-sky-500"
+        ],
+        [
+          "Ocena",
+          "Wartość vs wysiłek 1-5 + dopasowanie",
+          "bg-blue-500"
+        ],
+        [
+          "Macierz",
+          "Quick wins, big bets, fill-ins, money pit",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Pursue/defer/drop, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "matrixTitle": "Macierz wartość x wysiłek",
+      "scaleHint": "Skala 1-5",
+      "axisValue": "Wartość",
+      "axisEffort": "Wysiłek",
+      "quadrants": [
+        [
+          "Quick wins",
+          "Wys. wartość, niski wysiłek"
+        ],
+        [
+          "Big bets",
+          "Wys. wartość, wysoki wysiłek"
+        ],
+        [
+          "Fill-ins",
+          "Nis. wartość, niski wysiłek"
+        ],
+        [
+          "Money pit",
+          "Nis. wartość, wysoki wysiłek"
+        ]
+      ],
+      "legendTitle": "Rekomendacja",
+      "legend": [
+        [
+          "pursue",
+          "Realizuj (pursue)"
+        ],
+        [
+          "defer",
+          "Odłóż (defer)"
+        ],
+        [
+          "drop",
+          "Odpuść (drop)"
+        ]
+      ],
+      "footer": "Focus & Trade-offs = brief -> priorytety -> wartość vs wysiłek -> macierz -> ruchy -> outputy",
+      "bubbles": [
+        {
+          "label": "Pilot AI w obsłudze",
+          "value": 5,
+          "effort": 2,
+          "recommendation": "pursue"
+        },
+        {
+          "label": "Nowa platforma danych",
+          "value": 5,
+          "effort": 5,
+          "recommendation": "pursue"
+        },
+        {
+          "label": "Porządki w raportach",
+          "value": 2,
+          "effort": 2,
+          "recommendation": "defer"
+        },
+        {
+          "label": "Pełna migracja ERP",
+          "value": 2,
+          "effort": 5,
+          "recommendation": "drop"
+        }
+      ]
+    },
+    "ambitionDecomposerLibraryGraphic": {
+      "titleProcess": "Jak Ambition Decomposer rozkłada ambicję na mierzalne motywy",
+      "titleExample": "Przykład: jedna ambicja rozłożona na motywy strategiczne z celami i horyzontem",
+      "subtitleProcess": "To nie deklaracja na slajdzie. Najpierw ostro formułujemy ambicję, potem rozkładamy ją na motywy strategiczne, nadajemy każdemu mierzalny cel oraz horyzont i ważymy je istotnością.",
+      "subtitleExample": "Ten case pokazuje, że ambicja to nie slogan. Najpierw nazywamy ją jednym zdaniem, a potem rozkładamy na motywy strategiczne, każdy z mierzalnym celem i horyzontem czasowym.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od jednego zdania ambicji, zakresu i sygnału sukcesu. Bez tego motywy są oderwane od tego, co naprawdę chcemy osiągnąć.",
+      "scenarioValueExample": "Zarząd chce „być liderem AI w branży\", ale nikt nie wie, co to znaczy w liczbach ani kiedy. Ambicja jest zbyt ogólna, by ją zaplanować.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ambicja rozłożona na motywy strategiczne, każdy z celem, metryką i horyzontem, posortowane wg istotności i gotowe do dalszej pracy.",
+      "decisionValueExample": "Na jakie mierzalne motywy musimy rozłożyć ambicję, żeby dało się ją zaplanować i rozliczyć?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        [
+          "Ambicja",
+          "Jedno zdanie + zakres + sygnał sukcesu",
+          "bg-violet-500"
+        ],
+        [
+          "Sygnały",
+          "Co napędza i ogranicza ambicję",
+          "bg-violet-500"
+        ],
+        [
+          "Motywy",
+          "Rozkład na motywy strategiczne",
+          "bg-indigo-500"
+        ],
+        [
+          "Cele & horyzont",
+          "Metryka, cel i okno czasowe",
+          "bg-sky-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Priorytety, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "cascadeTitle": "Kaskada ambicji",
+      "cascadeHint": "Motywy wg horyzontu",
+      "legendTitle": "Istotność motywu",
+      "legend": [
+        [
+          "high",
+          "Wysoka istotność"
+        ],
+        [
+          "medium",
+          "Średnia istotność"
+        ],
+        [
+          "low",
+          "Niska istotność"
+        ]
+      ],
+      "horizonLabels": {
+        "short": "Krótki",
+        "medium": "Średni",
+        "long": "Długi"
+      },
+      "ambition": "Lider AI w branży do 2028",
+      "ambitionWord": "Ambicja",
+      "footer": "Ambition Decomposer = ambicja -> sygnały -> motywy -> cele & horyzont -> ruchy -> outputy",
+      "themes": [
+        {
+          "title": "Dane gotowe pod AI",
+          "target": "90% danych skatalogowanych",
+          "horizon": "short",
+          "importance": "high"
+        },
+        {
+          "title": "Kompetencje zespołu",
+          "target": "40 przeszkolonych osób",
+          "horizon": "short",
+          "importance": "medium"
+        },
+        {
+          "title": "Produkty wsparte AI",
+          "target": "3 wdrożone use-case",
+          "horizon": "medium",
+          "importance": "high"
+        },
+        {
+          "title": "Automatyzacja procesów",
+          "target": "25% kosztów operacji",
+          "horizon": "medium",
+          "importance": "medium"
+        },
+        {
+          "title": "Nowe modele przychodu",
+          "target": "15% przychodu z AI",
+          "horizon": "long",
+          "importance": "high"
+        },
+        {
+          "title": "Ekosystem partnerów",
+          "target": "2 alianse strategiczne",
+          "horizon": "long",
+          "importance": "low"
+        }
+      ]
+    },
+    "valueChainLibraryGraphic": {
+      "titleProcess": "Jak Value Chain prowadzi od aktywności do marży",
+      "titleExample": "Przykład: od łańcucha wartości do dźwigni marży",
+      "subtitleProcess": "To nie statyczny schemat dziewięciu pól. Najpierw ustawiamy zakres i pozycję, mapujemy aktywności pierwotne i wspierające, oceniamy ich rolę w marży i zamieniamy to w dźwignie oraz inicjatywy.",
+      "subtitleExample": "Ten case pokazuje, że łańcuch wartości Portera to nie diagram dla ozdoby. Najpierw mapuje aktywności, ocenia ich wkład w koszt i wartość, a dopiero potem buduje dźwignie marży i ruchy.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od branży, zakresu łańcucha, pozycji firmy (koszt vs różnicowanie) i pytania decyzyjnego. Bez tego mapa aktywności jest abstrakcyjna.",
+      "scenarioValueExample": "Producent komponentów chce poprawić marżę bez podnoszenia cen. Pytanie brzmi: które aktywności tworzą wartość, a które ją drenują szybciej niż dokłada różnicowanie.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena roli każdej aktywności w marży, dźwignie kosztowe i różnicujące oraz outputy gotowe do dalszej pracy.",
+      "decisionValueExample": "Gdzie naprawdę powstaje i ginie marża wzdłuż łańcucha wartości?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        [
+          "Brief",
+          "Branża, zakres łańcucha, pozycja, decyzja",
+          "bg-sky-500"
+        ],
+        [
+          "Aktywności",
+          "Mapa 5 pierwotnych + 4 wspierających",
+          "bg-sky-500"
+        ],
+        [
+          "Wkład",
+          "Koszt, wartość i rola w marży na aktywność",
+          "bg-blue-500"
+        ],
+        [
+          "Dźwignie",
+          "Gdzie redukować koszt, gdzie wzmacniać wartość",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Ruchy, inicjatywy, raport, deck lub idea",
+          "bg-emerald-500"
+        ]
+      ],
+      "chainTitle": "Łańcuch wartości",
+      "support": "Aktywności wspierające",
+      "primary": "Aktywności pierwotne",
+      "supportItems": [
+        "Infrastruktura",
+        "Zasoby ludzkie",
+        "Technologia",
+        "Zaopatrzenie"
+      ],
+      "primaryItems": [
+        "Logistyka wejściowa",
+        "Operacje",
+        "Logistyka wyjściowa",
+        "Marketing i sprzedaż",
+        "Serwis"
+      ],
+      "margin": "Marża",
+      "legendTitle": "Rola w marży",
+      "legend": [
+        [
+          "creator",
+          "Tworzy marżę"
+        ],
+        [
+          "neutral",
+          "Neutralna"
+        ],
+        [
+          "drain",
+          "Drenuje marżę"
+        ]
+      ],
+      "footer": "Value Chain = brief -> aktywności -> wkład -> dźwignie -> ruchy -> outputy",
+      "legendHint": "kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość."
+    },
+    "dynamicSwotLibraryGraphic": {
+      "titleProcess": "Jak Dynamic SWOT prowadzi od pytania do decyzji",
+      "titleExample": "Przykład: od pytania zarządu do logicznej sekwencji ruchów",
+      "subtitleProcess": "To nie jest zwykła tabela 2x2. Najpierw ustawiamy decyzję i porządkujemy evidence, potem budujemy macierz, interpretujemy napięcia i dopiero wtedy przechodzimy do ruchów oraz outputów.",
+      "subtitleExample": "Ten case pokazuje, że dobra sesja SWOT nie kończy się na nazwaniu czterech ćwiartek. Najpierw ustawia decyzję, potem porządkuje evidence, a dopiero później buduje napięcie, ruch i materiał dla zarządu.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Dynamic SWOT startuje od pytania strategicznego, zakresu, success signal i ograniczeń. Bez tego kolejne kroki zamieniają się w zbiór luźnych opinii.",
+      "scenarioValueExample": "Ateliertoy po spadku marży rozważa automatyzację. Prawdziwe pytanie brzmi: czy kupować technologię już teraz, czy najpierw zrozumieć, gdzie naprawdę wycieka wartość i które procesy blokują skalę.",
+      "flow": "Oś pracy",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Wspólna diagnoza, logiczne napięcia, rekomendowane ruchy i materiał gotowy do raportu, decka oraz inicjatyw.",
+      "decisionValueExample": "Od czego zacząć transformację: od CAPEX-u czy od diagnozy?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stagesSubtitle": "Każdy krok ma inny poziom decyzji: od ustawienia pytania po ruch i output.",
+      "signals": "Macierz czynników",
+      "matrixLead": "Macierz porządkuje sygnały, ale nie jest finałem. Każda karta powinna być krótka, konkretna, mieć źródło i wpływać na logikę decyzji.",
+      "matrixNote": "Dobra macierz nie zbiera wszystkiego. Zostawia tylko te czynniki, które naprawdę przesuwają wybór strategiczny.",
+      "tensionPanel": "Napięcie strategiczne",
+      "tensionLead": "Najważniejsze miejsce, w którym przewaga zderza się z ograniczeniem albo ryzykiem.",
+      "moves": "Rekomendowany ruch",
+      "movesLead": "Ruch musi wynikać z napięcia, a nie z intuicji autora.",
+      "outputsPanelTitle": "Most do outputów",
+      "outputsLead": "Wynik sesji musi nadawać się do dalszego użycia przez management i execution.",
+      "stage1": "Mission brief",
+      "stage1Value": "Cel, zakres, success signal, constraints",
+      "stage2": "Evidence map",
+      "stage2Value": "Fakty, obserwacje, hipotezy z wnętrza firmy i rynku",
+      "stage3": "SWOT build",
+      "stage3Value": "Karty S/W/O/T z confidence i source",
+      "stage4": "Strategic tensions",
+      "stage4Value": "Gdzie przewaga zderza się z ograniczeniem lub ryzykiem",
+      "stage5": "Recommended moves",
+      "stage5Value": "Co zrobić teraz, co odłożyć, co jeszcze sprawdzić",
+      "stage4Badge": "Insight",
+      "stage5Badge": "Decision",
+      "strengths": "Mocne strony",
+      "weaknesses": "Słabe strony",
+      "opportunities": "Szanse",
+      "threats": "Zagrożenia",
+      "strengthsHint": "Przewagi wewnętrzne",
+      "weaknessesHint": "Luki wewnętrzne",
+      "opportunitiesHint": "Upside zewnętrzny",
+      "threatsHint": "Ryzyko zewnętrzne",
+      "strengthItemsExample": [
+        "Silna marka i zaufanie rynku B2B",
+        "Własna produkcja i kontrola IP"
+      ],
+      "strengthItemsProcess": [
+        "czynniki wewnętrzne, które wzmacniają pozycję firmy i pomagają osiągnąć cel decyzji",
+        "to, co organizacja już posiada, potrafi albo kontroluje i na czym można świadomie budować ruch"
+      ],
+      "weaknessItemsExample": [
+        "Decyzje oparte na intuicji",
+        "Brak wspólnego obrazu strat i priorytetów"
+      ],
+      "weaknessItemsProcess": [
+        "czynniki wewnętrzne, które obniżają sprawność, jakość wyniku albo siłę wykonania",
+        "braki, niespójności lub ograniczenia, które utrudniają realizację celu i osłabiają decyzję"
+      ],
+      "opportunityItemsExample": [
+        "Diagnoza cyfrowa przed inwestycjami",
+        "Warstwa danych i software jako nowa dźwignia"
+      ],
+      "opportunityItemsProcess": [
+        "czynniki zewnętrzne, które mogą otworzyć przestrzeń wzrostu, poprawy pozycji albo nowej przewagi",
+        "zmiany w rynku i otoczeniu, które warto wykorzystać zanim zrobi to konkurencja"
+      ],
+      "threatItemsExample": [
+        "Presja cenowa i wzrost kosztów",
+        "Ryzyko przepalenia CAPEX-u na zły problem"
+      ],
+      "threatItemsProcess": [
+        "czynniki zewnętrzne, które mogą pogorszyć wynik, ograniczyć wybór albo podważyć plan działania",
+        "presje i ryzyka z otoczenia, wobec których firma musi się zabezpieczyć, zareagować albo zmienić tempo"
+      ],
+      "tensionItems": [
+        "Firma ma realne aktywa, ale nie ma wspólnej diagnozy, gdzie dziś traci pieniądze.",
+        "Automatyzacja wydaje się atrakcyjna, ale bez prawdy o procesie może tylko przyspieszyć chaos."
+      ],
+      "moveItems": [
+        "Najpierw zmapować wycieki wartości, bottlenecks i luki danych.",
+        "Dopiero potem układać kolejność: dane -> automatyzacja -> governance inwestycji.",
+        "Zamknąć wynik w materiale dla zarządu, a nie w długiej liście obserwacji."
+      ],
+      "outputItems": [
+        "Executive summary sytuacji",
+        "Priorytety na 90 dni",
+        "Raport / deck / inicjatywa"
+      ],
+      "legend": "Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output"
+    },
+    "toolSessionPreviewV3": {
+      "intentExecBrief": "Executive brief",
+      "intentKeyRisks": "Kluczowe ryzyka",
+      "intentInitiativeAngles": "Kąty inicjatyw"
+    },
+    "toolWorkspace": {
+      "dodNotSatisfied": "Brak wymagan DoD",
+      "reviewRequested": "Review requested",
+      "toolApproved": "Tool approved",
+      "sentBackToDraft": "Sent back to draft",
+      "permissionDenied": "Brak uprawnien",
+      "generatedInitiatives": "Generated initiatives",
+      "loadingTool": "Ładowanie narzędzia…",
+      "requestReviewTitle": "Request review",
+      "requestReviewSubtitle": "Sprawdz kompletność i potwierdz wysłanie do review.",
+      "noDodGaps": "Brak braków w DoD.",
+      "gapsLabel": "Braki",
+      "decisionOwner": "Decision Owner",
+      "optional": "(opcjonalnie)",
+      "selectPlaceholder": "-- Wybierz --",
+      "dueDate": "Due date",
+      "priority": "Priorytet",
+      "priorityLow": "Niski",
+      "priorityMedium": "Sredni",
+      "priorityHigh": "Wysoki",
+      "priorityCritical": "Krytyczny",
+      "cancel": "Anuluj",
+      "sendToReview": "Wyślij do review"
+    },
+    "toolReviewPanel": {
+      "strengths": "Mocne strony",
+      "weaknesses": "Slabe strony",
+      "opportunities": "Szanse",
+      "threats": "Zagrozenia",
+      "correlations": "Korelacje",
+      "attractiveness": "Atrakcyjnosc",
+      "competitiveIntensity": "Sila konkurencji",
+      "penetration": "Penetracja",
+      "marketDev": "Rozwój rynku",
+      "productDev": "Rozwój produktu",
+      "diversification": "Dywersyfikacja",
+      "initiatives": "Inicjatywy",
+      "signals": "Sygnały",
+      "assumptions": "Założenia",
+      "risks": "Ryzyka",
+      "scenarios": "Scenariusze",
+      "moves": "Ruchy",
+      "sections": "Sekcje",
+      "items": "Elementy",
+      "reviewTitle": "Review",
+      "summaryTitle": "Podsumowanie",
+      "gapsTitle": "Braki (gaps)",
+      "noGapsReady": "Brak brakow. Gotowe do zatwierdzenia.",
+      "generateInitiativesTitle": "Generate initiatives",
+      "methodology": "Metodyka",
+      "count": "Liczba",
+      "configure": "Konfiguruj",
+      "decisionGatesTitle": "Decision gates",
+      "comment": "Komentarz",
+      "sendBackReasonPlaceholder": "Powod odeslania do Draft",
+      "confirmApproval": "Potwierdzam zatwierdzenie",
+      "approve": "Approve",
+      "sendBackToDraft": "Send back to Draft"
+    },
+    "knownToolPreviewV3": {
+      "intentWhenToUse": "Kiedy użyć",
+      "intentFirstSteps": "Pierwsze kroki",
+      "intentCommonMistakes": "Typowe błędy",
+      "hintMistakes": "Błędy",
+      "toolInPreparation": "Narzędzie w przygotowaniu.",
+      "dependsOnTool": "Zależy od narzędzia",
+      "sessionAssistantModerator": "Asystent i moderator sesji",
+      "dependsOnScope": "Zależy od zakresu",
+      "goal": "Cel",
+      "outcome": "Rezultat",
+      "aiRole": "Rola AI",
+      "duration": "Czas",
+      "aiUnavailable": "AI niedostępne",
+      "categoryStrategy": "Strategia",
+      "categoryOperations": "Operacje",
+      "categoryDigital": "Digital",
+      "categoryTool": "Narzędzie",
+      "statusActive": "Aktywny",
+      "statusInactive": "Nieaktywny",
+      "startSession": "Start sesji",
+      "chat": "Czat",
+      "loadingEllipsis": "Ładowanie…",
+      "toolNotActiveYet": "To narzędzie jest jeszcze nieaktywne. Możesz zobaczyć opis, ale nie otworzysz pełnego widoku ani sesji.",
+      "snippets": {
+        "dynamic-swot": {
+          "goal": "Zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę opartą na evidence.",
+          "outcome": "Rama decyzji, napięcia strategiczne, rekomendowane ruchy i materiał źródłowy.",
+          "team": "C-level / właściciele, lider strategii lub dyrektor operacyjny",
+          "aiRole": "Moderator sesji, analityk evidence, generator napięć i rekomendacji",
+          "duration": "60-90 min"
+        },
+        "market-forces": {
+          "goal": "Zamienia kontekst rynku i wywiadu w ocenę presji konkurencyjnej, defensibility i presji marży.",
+          "outcome": "Scorecard 5 sił, implikacje strategiczne, rekomendowane ruchy i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, commercial lead lub właściciel rynku",
+          "aiRole": "Analityk rynku, moderator evidence i generator propozycji do akceptacji",
+          "duration": "60-90 min"
+        },
+        "growth-paths": {
+          "goal": "Zamienia ambicję wzrostu i sygnały z wywiadu w opcje Ansoffa oraz sekwencję decyzji.",
+          "outcome": "Macierz opcji, porównanie trade-offów, rekomendowane ruchy i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, commercial lead lub właściciel wzrostu",
+          "aiRole": "Moderator growth evidence, generator opcji i konsultant sekwencji ruchów",
+          "duration": "60-90 min"
+        },
+        "portfolio-priority": {
+          "goal": "Zamienia kontekst organizacji i wywiadu w decyzje, które elementy portfolio finansować, testować, utrzymać lub wygasić.",
+          "outcome": "Macierz BCG, trade-offy alokacji zasobów, rekomendowane ruchy i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, product lead, CFO lub właściciel portfolio",
+          "aiRole": "Analityk portfolio, generator kart do akceptacji i konsultant alokacji zasobów",
+          "duration": "60-90 min"
+        },
+        "risk-uncertainty": {
+          "goal": "Zamienia kontekst decyzji i sygnały z wywiadu w mapę założeń, ryzyk i scenariuszy.",
+          "outcome": "Założenia do walidacji, ryzyka, scenariusze, ruchy odporności i kandydaci na inicjatywy.",
+          "team": "Zarząd, strategy lead, transformation lead, PMO lub właściciel ryzyka",
+          "aiRole": "Analityk ryzyka, generator kart do akceptacji i konsultant odporności",
+          "duration": "60-90 min"
+        }
+      }
+    },
+    "toolContextPanel": {
+      "coach": {
+        "mission": {
+          "nextQuestion": "Jaka decyzja naprawdę ma zostać podjęta po tej sesji?",
+          "whyNow": "Bez ostrego pytania AI będzie generować ogólniki zamiast materiału do decyzji."
+        },
+        "input": {
+          "nextQuestion": "Jakich dowodów jeszcze brakuje, żeby nie budować SWOT-u na opiniach?",
+          "whyNow": "To jest moment na higienę sygnałów: źródło, typ dowodu, pewność i luki."
+        },
+        "swot": {
+          "nextQuestion": "Które karty są już akceptowalne, a które nadal są tylko propozycją AI?",
+          "whyNow": "Macierz ma być warstwą syntezy, nie zrzutem wszystkich notatek."
+        },
+        "insights": {
+          "nextQuestion": "Jakie napięcie lub trade-off naprawdę wymaga ruchu strategicznego teraz?",
+          "whyNow": "To tutaj narzędzie przestaje być tabelą, a staje się materiałem decyzyjnym."
+        },
+        "outputs": {
+          "nextQuestion": "Co z tej sesji jest gotowe na inicjatywę, a co wymaga jeszcze decku lub dowodów?",
+          "whyNow": "Końcowa wartość narzędzia zależy od jakości mostu do outputów."
+        },
+        "fallback": {
+          "nextQuestion": "Co jest teraz najważniejszą luką?",
+          "whyNow": "Panel AI pokazuje następny najlepszy ruch."
+        }
+      },
+      "aiReviewingPhase": "AI analizuje bieżącą fazę narzędzia, kompletność danych i gotowość do przejścia w outputy.",
+      "reviewGeneratedInitiatives": "Sprawdź, które wygenerowane inicjatywy powinny przejść do portfela wykonawczego.",
+      "aiWorkspaceTitle": "Centrum pracy AI dla tej sesji",
+      "aiWorkspaceSubtitle": "Tu trafiają wszystkie podpowiedzi, rekomendacje i uzasadnienia AI. Panel nie zabiera już szerokości canvasowi narzędzia.",
+      "openChat": "Otwórz chat",
+      "clarifyMissingInputs": "Doprecyzuj brakujące dane wejściowe, zaakceptuj wartościowe karty AI i przejdź do syntezy outputów.",
+      "organizationContext": "Organization context",
+      "noOrganizationProfile": "Brak profilu organizacji",
+      "aiRationale": "Uzasadnienie AI: rekomendacje powinny być interpretowane przez pryzmat organizacji, jej aktualnego kontekstu i celu sesji, a nie jako generyczna lista dobrych praktyk.",
+      "aiProposalQueue": "Kolejka propozycji AI",
+      "signals": "Sygnały",
+      "cards": "Karty",
+      "tensions": "Napięcia",
+      "outputs": "Outputy",
+      "qualityGaps": "Luki jakościowe",
+      "noCriticalInputGaps": "Brak krytycznych luk wejściowych.",
+      "sessionState": "Stan sesji",
+      "missingIndustry": "Brak branży",
+      "missingGeographicScope": "Brak zakresu geograficznego",
+      "workWithAi": "Praca z AI",
+      "workingMode": "Tryb pracy",
+      "workingModeDescription": "Po lewej stronie widzisz pierwszą wersję framingu przygotowaną przez konsultanta. Tutaj możesz skorygować kierunek, doprecyzować akcent albo przejść dalej do wygenerowania całej sesji.",
+      "workingNoteForAi": "Komentarz roboczy dla AI",
+      "workingNotePlaceholder": "Np. za mocno akcentujemy marżę; dodaj perspektywę rynku niemieckiego i pokaż to bardziej jak decyzję zarządczą.",
+      "takeToAiChat": "Przenieś to do czatu AI",
+      "quickRefinementAngles": "Szybkie kierunki korekty",
+      "refinementAngleOptions": [
+        "Zaostrz tezę strategiczną",
+        "Dodaj kontekst rynku",
+        "Pokaż większe ryzyka",
+        "Napisz to bardziej zarządczo"
+      ],
+      "moveToFullSession": "Przejście do pełnej sesji",
+      "moveToFullSessionDescription": "Jeśli framing po lewej stronie jest wystarczająco dobry, AI przygotuje dalsze części sesji: input map, macierz SWOT, napięcia, ruchy i outputy.",
+      "aiBuildingSession": "AI buduje pełną sesję...",
+      "acceptFramingGenerate": "Akceptuj ten framing i generuj dalej",
+      "aiCollaborationPanel": "AI Collaboration Panel",
+      "aiPreparingSession": "AI przygotowuje sesję...",
+      "aiPreparingSessionDescription": "Konsultant AI generuje pełną propozycję: sygnały, macierz SWOT, napięcia, ruchy strategiczne i propozycje outputów.",
+      "aiProposals": "Propozycje AI",
+      "toReview": "do przeglądu",
+      "swotCards": "Karty SWOT",
+      "moves": "Ruchy",
+      "accepted": "zaakceptowanych",
+      "readiness": "Readiness",
+      "ready": "gotowe",
+      "needsWork": "wymaga pracy",
+      "aiCoachBrief": "AI coach brief",
+      "panelShowsNextMove": "Panel pokazuje następny najlepszy ruch i luki jakościowe dla bieżącej fazy.",
+      "nextQuestion": "Next question",
+      "whyNow": "Dlaczego teraz:",
+      "proposalQueue": "Proposal queue",
+      "noUnacceptedProposals": "Brak niezaakceptowanych propozycji AI.",
+      "missingEvidence": "Missing evidence",
+      "sessionCounters": "Session counters",
+      "acceptedCards": "Akceptowane karty",
+      "proposals": "Propozycje",
+      "readyOutputs": "Gotowe outputy",
+      "outputRoutes": "Output routes",
+      "open": "Otwórz",
+      "noOutputCandidates": "Brak kandydatów do outputów.",
+      "generatedFromThisTool": "Generated from this tool",
+      "recentInitiatives": "Recent initiatives"
+    },
+    "toolCanvas": {
+      "stepBeingPrepared": "Ten krok jest w przygotowaniu",
+      "stepBeingPreparedDescription": "Wróć do podsumowania, aby kontynuować i wygenerować inicjatywy."
+    },
+    "toolDocumentView": {
+      "priorityHintHigh": "Wymaga natychmiastowej uwagi",
+      "priorityHintLow": "Komentarz informacyjny",
+      "priorityHintNormal": "Komentarz standardowy",
+      "pDFExported": "Wyeksportowano PDF",
+      "pDFExportFailed": "Nie udało się wyeksportować PDF",
+      "failedToLoadSession": "Błąd ładowania sesji",
+      "failedToCreateSession": "Nie udało się utworzyć sesji",
+      "saved": "Zapisano",
+      "saveFailed": "Błąd zapisu",
+      "completeAllRequiredItemsFirst": "Wypełnij wszystkie wymagane elementy",
+      "sentToReview": "Wysłano do review",
+      "approved": "Zatwierdzono",
+      "reasonForSendingBack": "Powód odesłania:",
+      "sentBackToDraft": "Odesłano do draftu",
+      "permissionDenied": "Brak uprawnień",
+      "initiativesGenerated": "Wygenerowano inicjatywy",
+      "aIGenerationFinished": "AI zakończyło generowanie",
+      "aIGenerationFailed": "Błąd generowania AI",
+      "commentAdded": "Dodano komentarz",
+      "failedToAddComment": "Nie udało się dodać komentarza",
+      "commentDeleted": "Usunięto komentarz",
+      "failedToDeleteComment": "Nie udało się usunąć komentarza",
+      "created": "Utworzono",
+      "comment": "Komentarz",
+      "review": "Review",
+      "entryPurpose": "Wejście i cel",
+      "conversationCapture": "Rozmowa i zbieranie",
+      "analysis": "Analiza",
+      "conclusionsSummary": "Wnioski i summary",
+      "visibleHumanAILoop": "Visible human + AI loop",
+      "currentStage": "Aktualny etap",
+      "analysisBenchmarking": "Analiza i benchmarking",
+      "conclusionsFinalSummary": "Wnioski i final summary",
+      "noSessionData": "Brak danych sesji",
+      "previous": "Previous",
+      "step": "Krok",
+      "next": "Next",
+      "appliedConclusionsReadiness": "Applied conclusions i gotowość",
+      "status": "Status",
+      "progress": "Progress",
+      "created2": "Created",
+      "lastModified": "Last modified",
+      "appliedConclusions": "Applied conclusions",
+      "finalSourceSummary": "Final source summary",
+      "missingItems": "Brakujące elementy",
+      "generationSettings": "Generation settings",
+      "methodology": "Methodology",
+      "initiativesCount": "Initiatives count",
+      "includeChatContext": "Include chat context",
+      "gateDecisions": "Gate decisions",
+      "sourceArtifact": "Source artifact",
+      "outputContract": "Kontrakt outputów",
+      "initiativesFromThisSession": "Inicjatywy z tej sesji",
+      "generatedInitiatives": "Generated initiatives",
+      "noInitiativesGeneratedYet": "Brak wygenerowanych inicjatyw",
+      "recommendedMoves": "Recommended moves",
+      "noMovesGeneratedYet": "Brak wygenerowanych ruchów.",
+      "outputCandidates": "Output candidates",
+      "noOutputCandidatesYet": "Brak kandydatów outputów.",
+      "aIConsultantFlow": "AI consultant flow",
+      "previous2": "Poprzedni",
+      "backlinks": "Powiązania",
+      "noLinksYet": "Brak powiązań",
+      "requestReview": "Request Review",
+      "approveThisSession": "Zatwierdź sesję",
+      "approve": "Approve",
+      "sendBackToDraftWithAComment": "Odeślij do draftu z komentarzem",
+      "sendBack": "Send back",
+      "generateInitiatives": "Generate initiatives",
+      "loading": "Ładowanie...",
+      "requestReview2": "Request review",
+      "decisionOwner": "Decision owner",
+      "select": "-- Wybierz --",
+      "dueDate": "Due date",
+      "priority": "Priority",
+      "cancel": "Cancel",
+      "sendReview": "Send review",
+      "sessionVisibilityDescription": "Sesja ma pokazywać pytanie decyzyjne, jakość dowodów, warstwę syntezy i gotowość outputów bez ukrywania pracy AI.",
+      "readyStatus": "Gotowe",
+      "needsWorkStatus": "Wymaga pracy",
+      "appliedConclusionsSectionDescription": "Ta sekcja zamienia analizę w praktyczne wnioski i sprawdza, czy sesja ma już jakość źródła do raportu, prezentacji, inicjatywy lub idei.",
+      "lifecycleActionsHint": "Akcje lifecycle tej sesji są w Menu 3 po prawej: Request Review, Approve, Send back i Generate initiatives.",
+      "outputHintInitiative": "Dla ruchów lub wniosków gotowych do wdrożenia.",
+      "outputHintReport": "Dla final source summary gotowego do pokazania.",
+      "outputHintPresentation": "Dla komunikacji wizualnej bez ponownego składania narracji.",
+      "outputHintIdea": "Dla obiecujących hipotez lub kierunków do dalszej pracy.",
+      "groupLabels": [
+        "Sesja",
+        "Analiza",
+        "Outputs",
+        "Współpraca",
+        "Zapisy"
+      ],
+      "finish": "Zakończ",
+      "nextStep": "Następny",
+      "requestReviewTitleReady": "Wyślij sesję do review",
+      "requestReviewTitleNotReady": "Uzupełnij wymagane elementy przed review",
+      "generateInitiativesTitle": "Wygeneruj inicjatywy z zatwierdzonej sesji",
+      "configureDecisionOwnerHint": "Skonfiguruj właściciela decyzji i termin review."
+    },
+    "knownToolDetailView": {
+      "thisToolIsNotActiveYet": "To narzędzie nie jest jeszcze aktywne.",
+      "toolSessionCreated": "Sesja narzędzia utworzona",
+      "learnTheTool": "Poznanie narzędzia",
+      "case": "Case",
+      "context": "Kontekst: ",
+      "question": "Pytanie: ",
+      "evidence": "Evidence: ",
+      "aIDraft": "AI draft: ",
+      "afterApproval": "Po akceptacji: ",
+      "outcome": "Rezultat: ",
+      "toolPositioning": "Pozycjonowanie narzędzia",
+      "whatTheToolActuallyDoes": "Co to narzędzie naprawdę robi",
+      "whatThisToolIsNot": "Czym to narzędzie nie jest",
+      "whenToUse": "Kiedy użyć",
+      "whenNotToStartWithSWOT": "Kiedy nie zaczynać od SWOT",
+      "whatToPrepareBeforeStarting": "Co przygotować przed startem",
+      "missionBrief": "Mission Brief",
+      "signalsEvidence": "Sygnały i evidence",
+      "matrixBuild": "Budowa macierzy",
+      "strategicTensions": "Napięcia strategiczne",
+      "movesOutputs": "Ruchy i outputy",
+      "workLogic": "Logika pracy",
+      "4CommonDecisionSituations": "4 typowe sytuacje decyzyjne",
+      "workingNotes": "Uwagi do pracy",
+      "whatTheSessionProduces": "Co wychodzi z sesji",
+      "contains": "Co zawiera",
+      "whyItMatters": "Dlaczego ważne",
+      "enablesNext": "Co uruchamia dalej",
+      "whatAStrongOutcomeLooksLike": "Jak wygląda dobry wynik",
+      "example": "Przykład",
+      "situationAndDecisionQuestion": "Sytuacja i pytanie decyzyjne",
+      "keyInputSignals": "Kluczowe sygnały wejściowe",
+      "howTheMatrixLooks": "Jak wygląda macierz",
+      "tensionAndInterpretation": "Napięcie i interpretacja",
+      "recommendedMoves": "Rekomendowane ruchy",
+      "outputsFromTheSession": "Outputy z sesji",
+      "aIPhilosophy": "Filozofia AI",
+      "whyUseIt": "Po co używać",
+      "approvedBCGPortfolioMatrix": "Zaakceptowana macierz portfolio BCG"
+    }
   }
 }

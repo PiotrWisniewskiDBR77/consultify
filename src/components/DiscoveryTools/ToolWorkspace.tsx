@@ -156,7 +156,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   onBack,
   onCreateInitiative,
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const {
     setOpen: setHelpOpen,
@@ -587,7 +587,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const handleRequestReview = async () => {
     if (!toolSessionId) return;
     if (!completionReady) {
-      toast.error(isPolish ? 'Brak wymagan DoD' : 'DoD not satisfied');
+      toast.error(t('discoveryToolsMain.toolWorkspace.dodNotSatisfied'));
       return;
     }
     setShowRequestReviewModal(true);
@@ -602,7 +602,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         priority: reviewPriority,
       });
       setToolStatus(result.status || 'REVIEW');
-      toast.success(isPolish ? 'Review requested' : 'Review requested');
+      toast.success(t('discoveryToolsMain.toolWorkspace.reviewRequested'));
       await refreshToolSession();
       setShowRequestReviewModal(false);
       // Reset form
@@ -620,7 +620,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       const result = await Api.approveTool(toolSessionId);
       setToolStatus(result.status || 'APPROVED');
       setShowGenerateModal(true);
-      toast.success(isPolish ? 'Tool approved' : 'Tool approved');
+      toast.success(t('discoveryToolsMain.toolWorkspace.toolApproved'));
       await refreshToolSession();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to approve tool');
@@ -632,7 +632,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     try {
       const result = await Api.sendToolBackToDraft(toolSessionId, comment);
       setToolStatus(result.status || 'DRAFT');
-      toast.success(isPolish ? 'Sent back to draft' : 'Sent back to draft');
+      toast.success(t('discoveryToolsMain.toolWorkspace.sentBackToDraft'));
       await refreshToolSession();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to send back');
@@ -647,7 +647,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   }) => {
     if (!toolSessionId) return;
     if (toolPermissions.canGenerate === false) {
-      toast.error(isPolish ? 'Brak uprawnien' : 'Permission denied');
+      toast.error(t('discoveryToolsMain.toolWorkspace.permissionDenied'));
       return;
     }
     try {
@@ -657,7 +657,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       setGeneratedInitiatives(updated.initiatives || []);
       await refreshToolSession();
       setShowGenerateModal(false);
-      toast.success(isPolish ? 'Generated initiatives' : 'Generated initiatives');
+      toast.success(t('discoveryToolsMain.toolWorkspace.generatedInitiatives'));
     } catch (err: any) {
       toast.error(err?.message || 'Failed to generate initiatives');
     }
@@ -668,7 +668,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       <div className="p-6">
         <LoadingState
           template="panel"
-          label={isPolish ? 'Ładowanie narzędzia…' : 'Loading tool…'}
+          label={t('discoveryToolsMain.toolWorkspace.loadingTool')}
         />
       </div>
     );
@@ -794,33 +794,29 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           <div className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
             <div className="p-6 border-b border-c-border-subtle">
               <h3 className="text-lg font-semibold text-c-text">
-                {isPolish ? 'Request review' : 'Request review'}
+                {t('discoveryToolsMain.toolWorkspace.requestReviewTitle')}
               </h3>
               <p className="text-sm text-c-text-muted mt-1">
-                {isPolish
-                  ? 'Sprawdz kompletność i potwierdz wysłanie do review.'
-                  : 'Check completeness and confirm sending to review.'}
+                {t('discoveryToolsMain.toolWorkspace.requestReviewSubtitle')}
               </p>
             </div>
             <div className="p-6 space-y-4">
               <div className="text-sm text-c-text-secondary">
                 {reviewGaps.length === 0
-                  ? isPolish
-                    ? 'Brak braków w DoD.'
-                    : 'No DoD gaps.'
-                  : `${isPolish ? 'Braki' : 'Gaps'}: ${reviewGaps.join(', ')}`}
+                  ? t('discoveryToolsMain.toolWorkspace.noDodGaps')
+                  : `${t('discoveryToolsMain.toolWorkspace.gapsLabel')}: ${reviewGaps.join(', ')}`}
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                  {isPolish ? 'Decision Owner' : 'Decision Owner'}{' '}
-                  {isPolish ? '(opcjonalnie)' : '(optional)'}
+                  {t('discoveryToolsMain.toolWorkspace.decisionOwner')}{' '}
+                  {t('discoveryToolsMain.toolWorkspace.optional')}
                 </label>
                 <select
                   value={reviewDecisionOwnerId}
                   onChange={(e) => setReviewDecisionOwnerId(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
-                  <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
+                  <option value="">{t('discoveryToolsMain.toolWorkspace.selectPlaceholder')}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name || user.email || user.id}
@@ -830,7 +826,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                  {isPolish ? 'Due date' : 'Due date'}
+                  {t('discoveryToolsMain.toolWorkspace.dueDate')}
                 </label>
                 <input
                   type="date"
@@ -841,7 +837,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                  {isPolish ? 'Priorytet' : 'Priority'}
+                  {t('discoveryToolsMain.toolWorkspace.priority')}
                 </label>
                 <select
                   value={reviewPriority}
@@ -850,10 +846,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   }
                   className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
-                  <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
-                  <option value="medium">{isPolish ? 'Sredni' : 'Medium'}</option>
-                  <option value="high">{isPolish ? 'Wysoki' : 'High'}</option>
-                  <option value="critical">{isPolish ? 'Krytyczny' : 'Critical'}</option>
+                  <option value="low">{t('discoveryToolsMain.toolWorkspace.priorityLow')}</option>
+                  <option value="medium">{t('discoveryToolsMain.toolWorkspace.priorityMedium')}</option>
+                  <option value="high">{t('discoveryToolsMain.toolWorkspace.priorityHigh')}</option>
+                  <option value="critical">{t('discoveryToolsMain.toolWorkspace.priorityCritical')}</option>
                 </select>
               </div>
             </div>
@@ -862,13 +858,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 onClick={() => setShowRequestReviewModal(false)}
                 className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('discoveryToolsMain.toolWorkspace.cancel')}
               </button>
               <button
                 onClick={handleConfirmRequestReview}
                 className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
               >
-                {isPolish ? 'Wyślij do review' : 'Send to review'}
+                {t('discoveryToolsMain.toolWorkspace.sendToReview')}
               </button>
             </div>
           </div>

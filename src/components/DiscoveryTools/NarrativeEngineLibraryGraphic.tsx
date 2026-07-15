@@ -1,137 +1,40 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function NarrativeEngineLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Narrative Engine',
-        title: isExample
-          ? 'Przykład: od jednej myśli przewodniej do domu komunikatu z filarami'
-          : 'Jak Narrative Engine układa dom komunikatu wokół jednej myśli',
-        subtitle: isExample
-          ? 'Ten case pokazuje, że narracja to nie zbiór slajdów. Najpierw ustala jedną myśl przewodnią (dach), potem filary (kolumny), które ją utrzymują, i dowody, które każdy filar dźwigają.'
-          : 'To nie luźny zestaw wiadomości. Najpierw ustawiamy odbiorcę i myśl przewodnią (dach), potem 3-4 filary (kolumny), każdy z własnym twierdzeniem i dowodami, a kolor pokazuje rezonans u odbiorcy.',
-        scenario: isExample ? 'Sytuacja' : 'Punkt wyjścia',
-        scenarioValue: isExample
-          ? 'Zarząd słyszy dziesięć argumentów naraz i żaden nie zostaje w głowie. Pytanie brzmi: jaka jest jedna myśl, którą mają zapamiętać, i które trzy filary realnie ją utrzymują.'
-          : 'Sesja startuje od odbiorcy, celu i myśli przewodniej. Bez dachu filary nie mają czego trzymać, a dowody są oderwane od decyzji.',
-        decision: isExample ? 'Pytanie decyzyjne' : 'Efekt sesji',
-        decisionValue: isExample
-          ? 'Która jedna myśl ma zostać w głowie i które filary z dowodami ją utrzymają?'
-          : 'Jedna myśl przewodnia jako dach, 3-4 filary z twierdzeniem i dowodami, oznaczone rezonansem u odbiorcy, gotowe do narracji, raportu i decka.',
-        stagesTitle: '5 kroków pracy',
-        stages: [
-          ['Brief', 'Odbiorca, cel, sygnał sukcesu', 'bg-sky-500'],
-          ['Myśl przewodnia', 'Jedno zdanie, które ma zostać', 'bg-sky-500'],
-          ['Filary', 'Kolumny, które utrzymują dach', 'bg-blue-500'],
-          ['Dowody', 'Czym każdy filar jest poparty', 'bg-amber-500'],
-          ['Narracja & outputy', 'Wątki, ruchy, raport, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        houseTitle: 'Dom komunikatu',
-        houseHint: 'Dach + filary',
-        coreLabel: 'Myśl przewodnia',
-        coreValue: 'Bez AI tracimy rynek w 18 miesięcy',
-        proofWord: 'dowody',
-        legendTitle: 'Rezonans u odbiorcy',
-        legend: [
-          ['high', 'Wysoki rezonans'],
-          ['medium', 'Średni rezonans'],
-          ['low', 'Niski rezonans'],
-        ] as Array<[string, string]>,
-        footer:
-          'Narrative Engine = brief -> myśl przewodnia -> filary -> dowody -> narracja -> outputy',
-        pillars: [
-          {
-            title: 'Tempo rynku',
-            message: 'Konkurenci już wdrażają',
-            proofs: 3,
-            resonance: 'high' as const,
-          },
-          {
-            title: 'Marża',
-            message: 'Automatyzacja podnosi marżę',
-            proofs: 2,
-            resonance: 'high' as const,
-          },
-          {
-            title: 'Talent',
-            message: 'Zespół jest gotowy',
-            proofs: 2,
-            resonance: 'medium' as const,
-          },
-          {
-            title: 'Ryzyko',
-            message: 'Pilot ogranicza ryzyko',
-            proofs: 1,
-            resonance: 'low' as const,
-          },
-        ],
-      }
-    : {
-        eyebrow: 'Narrative Engine',
-        title: isExample
-          ? 'Example: from one core message to a message house with pillars'
-          : 'How Narrative Engine builds a message house around one idea',
-        subtitle: isExample
-          ? 'This case shows that a narrative is not a pile of slides. It sets one core message first (the roof), then the pillars (columns) that hold it up, and the proof points each pillar carries.'
-          : 'This is not a loose set of messages. First we frame the audience and core message (the roof), then 3-4 pillars (columns), each with its own claim and proof, with color showing audience resonance.',
-        scenario: isExample ? 'Situation' : 'Starting point',
-        scenarioValue: isExample
-          ? 'The board hears ten arguments at once and none of them sticks. The real question is which single idea they should remember and which three pillars actually hold it up.'
-          : 'The session starts with the audience, goal, and core message. Without a roof the pillars have nothing to hold, and proof points are detached from the decision.',
-        decision: isExample ? 'Decision question' : 'Session outcome',
-        decisionValue: isExample
-          ? 'Which single idea should stick, and which pillars with proof points hold it up?'
-          : 'One core message as the roof, 3-4 pillars with a claim and proof points, tagged by audience resonance, ready for narrative, report, and deck.',
-        stagesTitle: '5 working steps',
-        stages: [
-          ['Brief', 'Audience, goal, success signal', 'bg-sky-500'],
-          ['Core message', 'One sentence that should stick', 'bg-sky-500'],
-          ['Pillars', 'Columns that hold the roof', 'bg-blue-500'],
-          ['Proof', 'What backs each pillar', 'bg-amber-500'],
-          ['Narrative & outputs', 'Threads, moves, report, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        houseTitle: 'Message house',
-        houseHint: 'Roof + pillars',
-        coreLabel: 'Core message',
-        coreValue: 'Without AI we lose the market in 18 months',
-        proofWord: 'proof',
-        legendTitle: 'Audience resonance',
-        legend: [
-          ['high', 'High resonance'],
-          ['medium', 'Medium resonance'],
-          ['low', 'Low resonance'],
-        ] as Array<[string, string]>,
-        footer:
-          'Narrative Engine = brief -> core message -> pillars -> proof -> narrative -> outputs',
-        pillars: [
-          {
-            title: 'Market pace',
-            message: 'Competitors already shipping',
-            proofs: 3,
-            resonance: 'high' as const,
-          },
-          {
-            title: 'Margin',
-            message: 'Automation lifts margin',
-            proofs: 2,
-            resonance: 'high' as const,
-          },
-          {
-            title: 'Talent',
-            message: 'The team is ready',
-            proofs: 2,
-            resonance: 'medium' as const,
-          },
-          { title: 'Risk', message: 'A pilot caps the risk', proofs: 1, resonance: 'low' as const },
-        ],
-      };
+  const ns = 'discoveryToolsMain.narrativeEngineLibraryGraphic';
+  const labels = {
+    eyebrow: 'Narrative Engine',
+    title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
+    subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
+    scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
+    scenarioValue: isExample ? t(`${ns}.scenarioValueExample`) : t(`${ns}.scenarioValueProcess`),
+    decision: isExample ? t(`${ns}.decisionLabelExample`) : t(`${ns}.decisionLabelProcess`),
+    decisionValue: isExample ? t(`${ns}.decisionValueExample`) : t(`${ns}.decisionValueProcess`),
+    stagesTitle: isExample ? t(`${ns}.stagesTitleExample`) : t(`${ns}.stagesTitleProcess`),
+    stages: t(`${ns}.stages`, { returnObjects: true }) as Array<[string, string, string]>,
+    houseTitle: t(`${ns}.houseTitle`),
+    houseHint: t(`${ns}.houseHint`),
+    coreLabel: t(`${ns}.coreLabel`),
+    coreValue: t(`${ns}.coreValue`),
+    proofWord: t(`${ns}.proofWord`),
+    legendTitle: t(`${ns}.legendTitle`),
+    legend: t(`${ns}.legend`, { returnObjects: true }) as Array<[string, string]>,
+    footer: t(`${ns}.footer`),
+    pillars: t(`${ns}.pillars`, { returnObjects: true }) as Array<{
+      title: string;
+      message: string;
+      proofs: number;
+      resonance: 'high' | 'medium' | 'low';
+    }>,
+  };
 
   // Resonance drives the column accent: high = emerald, medium = slate, low = muted.
   const resonanceColumn: Record<'high' | 'medium' | 'low', string> = {

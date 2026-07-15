@@ -30,7 +30,7 @@ export function KnownToolDetailView(props: {
   onSessionCreated: (sessionId: string, toolType: string, name: string) => void;
 }) {
   const { toolType, onClose, onSessionCreated } = props;
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
   const isPolish = lang === 'pl';
   const { currentProjectId } = useAppStore();
@@ -80,7 +80,7 @@ export function KnownToolDetailView(props: {
     if (!tool) return;
     if (!tool.isActive) {
       toast.error(
-        isPolish ? 'To narzędzie nie jest jeszcze aktywne.' : 'This tool is not active yet.'
+        t('discoveryToolsMain.knownToolDetailView.thisToolIsNotActiveYet')
       );
       return;
     }
@@ -93,7 +93,7 @@ export function KnownToolDetailView(props: {
         projectId: currentProjectId || null,
       });
       onSessionCreated(created.id, tool.toolType, tool.name);
-      toast.success(isPolish ? 'Sesja narzędzia utworzona' : 'Tool session created');
+      toast.success(t('discoveryToolsMain.knownToolDetailView.toolSessionCreated'));
     } catch (e: any) {
       toast.error(e?.message || 'Failed to start tool session');
     } finally {
@@ -124,7 +124,7 @@ export function KnownToolDetailView(props: {
         id: 'stage',
         label: { en: 'Consulting stage', pl: 'Etap konsultingowy' },
         type: 'text',
-        value: isPolish ? 'Poznanie narzędzia' : 'Learn the tool',
+        value: t('discoveryToolsMain.knownToolDetailView.learnTheTool'),
         onChange: () => {},
         readOnly: true,
       },
@@ -216,44 +216,44 @@ export function KnownToolDetailView(props: {
             key={item.title}
             className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30"
           >
-            <div className={TEXT_L1}>{isPolish ? 'Case' : 'Case'}</div>
+            <div className={TEXT_L1}>{t('discoveryToolsMain.knownToolDetailView.case')}</div>
             <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
               {item.title}
             </h3>
             <div className="mt-3 space-y-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               <div>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {isPolish ? 'Kontekst: ' : 'Context: '}
+                  {t('discoveryToolsMain.knownToolDetailView.context')}
                 </span>
                 {item.context}
               </div>
               <div>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {isPolish ? 'Pytanie: ' : 'Question: '}
+                  {t('discoveryToolsMain.knownToolDetailView.question')}
                 </span>
                 {item.question}
               </div>
               <div>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {isPolish ? 'Evidence: ' : 'Evidence: '}
+                  {t('discoveryToolsMain.knownToolDetailView.evidence')}
                 </span>
                 {item.evidence.join(' ')}
               </div>
               <div>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {isPolish ? 'AI draft: ' : 'AI draft: '}
+                  {t('discoveryToolsMain.knownToolDetailView.aIDraft')}
                 </span>
                 {item.aiDraft}
               </div>
               <div>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {isPolish ? 'Po akceptacji: ' : 'After approval: '}
+                  {t('discoveryToolsMain.knownToolDetailView.afterApproval')}
                 </span>
                 {item.approvedUse}
               </div>
               <div>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {isPolish ? 'Rezultat: ' : 'Outcome: '}
+                  {t('discoveryToolsMain.knownToolDetailView.outcome')}
                 </span>
                 {item.outcome}
               </div>
@@ -267,7 +267,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
           <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
-            {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
+            {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
             {isPolish
@@ -284,7 +284,7 @@ export function KnownToolDetailView(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-              {isPolish ? 'Co to narzędzie naprawdę robi' : 'What the tool actually does'}
+              {t('discoveryToolsMain.knownToolDetailView.whatTheToolActuallyDoes')}
             </div>
             {bullets(
               isPolish
@@ -304,7 +304,7 @@ export function KnownToolDetailView(props: {
           </div>
           <div className="rounded-2xl border border-danger-200/70 bg-danger-500/5 p-4 dark:border-danger-900/40">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
-              {isPolish ? 'Czym to narzędzie nie jest' : 'What this tool is not'}
+              {t('discoveryToolsMain.knownToolDetailView.whatThisToolIsNot')}
             </div>
             {bullets(
               isPolish
@@ -327,7 +327,7 @@ export function KnownToolDetailView(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-              {isPolish ? 'Kiedy użyć' : 'When to use'}
+              {t('discoveryToolsMain.knownToolDetailView.whenToUse')}
             </div>
             {bullets(
               isPolish
@@ -347,7 +347,7 @@ export function KnownToolDetailView(props: {
           </div>
           <div className="rounded-2xl border border-danger-200/70 bg-danger-500/5 p-4 dark:border-danger-900/40">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
-              {isPolish ? 'Kiedy nie zaczynać od SWOT' : 'When not to start with SWOT'}
+              {t('discoveryToolsMain.knownToolDetailView.whenNotToStartWithSWOT')}
             </div>
             {bullets(
               isPolish
@@ -370,7 +370,7 @@ export function KnownToolDetailView(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Co przygotować przed startem' : 'What to prepare before starting'}
+              {t('discoveryToolsMain.knownToolDetailView.whatToPrepareBeforeStarting')}
             </div>
             {bullets(
               isPolish
@@ -414,7 +414,7 @@ export function KnownToolDetailView(props: {
     const processSteps = [
       {
         id: 1,
-        title: isPolish ? 'Mission Brief' : 'Mission Brief',
+        title: t('discoveryToolsMain.knownToolDetailView.missionBrief'),
         oneLiner: isPolish
           ? 'Ustaw pytanie decyzyjne, zakres i success signal'
           : 'Frame the decision question, scope, and success signal',
@@ -437,7 +437,7 @@ export function KnownToolDetailView(props: {
       },
       {
         id: 2,
-        title: isPolish ? 'Sygnały i evidence' : 'Signals & evidence',
+        title: t('discoveryToolsMain.knownToolDetailView.signalsEvidence'),
         oneLiner: isPolish
           ? 'Zbierz fakty, obserwacje i hipotezy z wnętrza firmy i rynku'
           : 'Collect facts, observations, and hypotheses from inside and outside',
@@ -460,7 +460,7 @@ export function KnownToolDetailView(props: {
       },
       {
         id: 3,
-        title: isPolish ? 'Budowa macierzy' : 'Matrix build',
+        title: t('discoveryToolsMain.knownToolDetailView.matrixBuild'),
         oneLiner: isPolish
           ? 'Przypisz sygnały do S/W/O/T, usuń szum, zostaw to co zmienia decyzję'
           : 'Assign signals to S/W/O/T, remove noise, keep what moves the decision',
@@ -483,7 +483,7 @@ export function KnownToolDetailView(props: {
       },
       {
         id: 4,
-        title: isPolish ? 'Napięcia strategiczne' : 'Strategic tensions',
+        title: t('discoveryToolsMain.knownToolDetailView.strategicTensions'),
         oneLiner: isPolish
           ? 'Pokaż, gdzie przewaga zderza się z ograniczeniem lub ryzykiem'
           : 'Show where advantage collides with constraint or risk',
@@ -506,7 +506,7 @@ export function KnownToolDetailView(props: {
       },
       {
         id: 5,
-        title: isPolish ? 'Ruchy i outputy' : 'Moves & outputs',
+        title: t('discoveryToolsMain.knownToolDetailView.movesOutputs'),
         oneLiner: isPolish
           ? 'Przełóż napięcia na rekomendowane ruchy i materiał do dalszego użycia'
           : 'Translate tensions into recommended moves and downstream material',
@@ -603,7 +603,7 @@ export function KnownToolDetailView(props: {
         <div>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {isPolish ? 'Logika pracy' : 'Work logic'}
+              {t('discoveryToolsMain.knownToolDetailView.workLogic')}
             </h2>
             <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
               Process
@@ -657,7 +657,7 @@ export function KnownToolDetailView(props: {
         <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
           <div className="flex items-center justify-between gap-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
-              {isPolish ? '4 typowe sytuacje decyzyjne' : '4 common decision situations'}
+              {t('discoveryToolsMain.knownToolDetailView.4CommonDecisionSituations')}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
               Insight
@@ -760,7 +760,7 @@ export function KnownToolDetailView(props: {
         <div className="rounded-2xl border border-amber-200/70 bg-amber-500/5 p-4 dark:border-amber-900/40">
           <div className="flex items-center justify-between gap-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
-              {isPolish ? 'Uwagi do pracy' : 'Working notes'}
+              {t('discoveryToolsMain.knownToolDetailView.workingNotes')}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
               Tips
@@ -934,7 +934,7 @@ export function KnownToolDetailView(props: {
         <div>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {isPolish ? 'Co wychodzi z sesji' : 'What the session produces'}
+              {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
             </h2>
             <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
               Output
@@ -968,7 +968,7 @@ export function KnownToolDetailView(props: {
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   <div>
                     <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
-                      {isPolish ? 'Co zawiera' : 'Contains'}
+                      {t('discoveryToolsMain.knownToolDetailView.contains')}
                     </div>
                     <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                       {block.what}
@@ -976,7 +976,7 @@ export function KnownToolDetailView(props: {
                   </div>
                   <div>
                     <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
-                      {isPolish ? 'Dlaczego ważne' : 'Why it matters'}
+                      {t('discoveryToolsMain.knownToolDetailView.whyItMatters')}
                     </div>
                     <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                       {block.why}
@@ -984,7 +984,7 @@ export function KnownToolDetailView(props: {
                   </div>
                   <div>
                     <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
-                      {isPolish ? 'Co uruchamia dalej' : 'Enables next'}
+                      {t('discoveryToolsMain.knownToolDetailView.enablesNext')}
                     </div>
                     <div className="text-sm leading-relaxed text-slate-900 dark:text-white">
                       {block.next}
@@ -999,7 +999,7 @@ export function KnownToolDetailView(props: {
         <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
           <div className="flex items-center justify-between gap-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-              {isPolish ? 'Jak wygląda dobry wynik' : 'What a strong outcome looks like'}
+              {t('discoveryToolsMain.knownToolDetailView.whatAStrongOutcomeLooksLike')}
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
               Quality
@@ -1018,7 +1018,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Przykład' : 'Example'}
+            {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
@@ -1137,7 +1137,7 @@ export function KnownToolDetailView(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
-              {isPolish ? 'Sytuacja i pytanie decyzyjne' : 'Situation and decision question'}
+              {t('discoveryToolsMain.knownToolDetailView.situationAndDecisionQuestion')}
             </div>
             {bullets(
               isPolish
@@ -1155,7 +1155,7 @@ export function KnownToolDetailView(props: {
           </div>
           <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
-              {isPolish ? 'Kluczowe sygnały wejściowe' : 'Key input signals'}
+              {t('discoveryToolsMain.knownToolDetailView.keyInputSignals')}
             </div>
             {bullets(
               isPolish
@@ -1178,7 +1178,7 @@ export function KnownToolDetailView(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
-              {isPolish ? 'Jak wygląda macierz' : 'How the matrix looks'}
+              {t('discoveryToolsMain.knownToolDetailView.howTheMatrixLooks')}
             </div>
             {bullets(
               isPolish
@@ -1198,7 +1198,7 @@ export function KnownToolDetailView(props: {
           </div>
           <div className="rounded-2xl border border-amber-200/70 bg-amber-500/5 p-4 dark:border-amber-900/40">
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-              {isPolish ? 'Napięcie i interpretacja' : 'Tension and interpretation'}
+              {t('discoveryToolsMain.knownToolDetailView.tensionAndInterpretation')}
             </div>
             {bullets(
               isPolish
@@ -1220,7 +1220,7 @@ export function KnownToolDetailView(props: {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Rekomendowane ruchy' : 'Recommended moves'}
+                {t('discoveryToolsMain.knownToolDetailView.recommendedMoves')}
               </div>
               {bullets(
                 isPolish
@@ -1238,7 +1238,7 @@ export function KnownToolDetailView(props: {
             </div>
             <div>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Outputy z sesji' : 'Outputs from the session'}
+                {t('discoveryToolsMain.knownToolDetailView.outputsFromTheSession')}
               </div>
               {bullets(
                 isPolish
@@ -1271,7 +1271,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
           <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
-            {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
+            {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
             {isPolish
@@ -1288,7 +1288,7 @@ export function KnownToolDetailView(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-blue-200/70 bg-blue-500/5 p-4 dark:border-blue-900/40">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
-              {isPolish ? 'Co to narzędzie naprawdę robi' : 'What the tool actually does'}
+              {t('discoveryToolsMain.knownToolDetailView.whatTheToolActuallyDoes')}
             </div>
             {bullets(
               isPolish
@@ -1308,7 +1308,7 @@ export function KnownToolDetailView(props: {
           </div>
           <div className="rounded-2xl border border-danger-200/70 bg-danger-500/5 p-4 dark:border-danger-900/40">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
-              {isPolish ? 'Czym to narzędzie nie jest' : 'What this tool is not'}
+              {t('discoveryToolsMain.knownToolDetailView.whatThisToolIsNot')}
             </div>
             {bullets(
               isPolish
@@ -1330,7 +1330,7 @@ export function KnownToolDetailView(props: {
 
         <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
-            {isPolish ? 'Filozofia AI' : 'AI philosophy'}
+            {t('discoveryToolsMain.knownToolDetailView.aIPhilosophy')}
           </div>
           {chipRow(
             isPolish
@@ -1352,7 +1352,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div>
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Logika pracy' : 'Work logic'}
+            {t('discoveryToolsMain.knownToolDetailView.workLogic')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
@@ -1423,7 +1423,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div>
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Co wychodzi z sesji' : 'What the session produces'}
+            {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
@@ -1484,7 +1484,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Przykład' : 'Example'}
+            {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
@@ -1604,7 +1604,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
           <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
-            {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
+            {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
             {isPolish
@@ -1624,7 +1624,7 @@ export function KnownToolDetailView(props: {
     const growthProcessSection = (
       <div className="space-y-6">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-          {isPolish ? 'Logika pracy' : 'Work logic'}
+          {t('discoveryToolsMain.knownToolDetailView.workLogic')}
         </h2>
         <div className="grid gap-3">
           {(isPolish
@@ -1667,7 +1667,7 @@ export function KnownToolDetailView(props: {
     const growthOutcomesSection = (
       <div className="space-y-6">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-          {isPolish ? 'Co wychodzi z sesji' : 'What the session produces'}
+          {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
           {(isPolish
@@ -1719,7 +1719,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Przykład' : 'Example'}
+            {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
@@ -1837,7 +1837,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
           <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
-            {isPolish ? 'Po co używać' : 'Why use it'}
+            {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             {isPolish
@@ -1893,7 +1893,7 @@ export function KnownToolDetailView(props: {
     const portfolioOutcomesSection = (
       <div className="space-y-3">
         {[
-          isPolish ? 'Zaakceptowana macierz portfolio BCG' : 'Approved BCG portfolio matrix',
+          t('discoveryToolsMain.knownToolDetailView.approvedBCGPortfolioMatrix'),
           isPolish
             ? 'Jawne trade-offy alokacji zasobów'
             : 'Explicit resource allocation trade-offs',
@@ -2028,7 +2028,7 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
           <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
-            {isPolish ? 'Po co używać' : 'Why use it'}
+            {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             {isPolish

@@ -1,108 +1,41 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function CapabilityMapperLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Capability Mapper',
-        title: isExample
-          ? 'Przykład: od dojrzałości zdolności do ruchów build/buy/partner'
-          : 'Jak Capability Mapper prowadzi od dojrzałości do priorytetów',
-        subtitle: isExample
-          ? 'Ten case pokazuje, że mapa zdolności to nie lista kompetencji. Najpierw ocenia dojrzałość obecną i docelową, waży wagę strategiczną, a dopiero potem wyłania luki i ruchy.'
-          : 'To nie statyczna inwentaryzacja kompetencji. Najpierw ustawiamy strategię i domeny, oceniamy dojrzałość obecną vs docelową na skali 1-5, ważymy wagą strategiczną i zamieniamy luki w ruchy oraz inicjatywy.',
-        scenario: isExample ? 'Sytuacja' : 'Punkt wyjścia',
-        scenarioValue: isExample
-          ? 'Firma chce wejść w AI, ale nie wie, których zdolności realnie jej brakuje. Pytanie brzmi: gdzie luka między stanem obecnym a celem jest największa tam, gdzie waga strategiczna jest najwyższa.'
-          : 'Sesja startuje od branży, domen zdolności, priorytetów strategicznych i pytania decyzyjnego. Bez tego ocena dojrzałości jest oderwana od strategii.',
-        decision: isExample ? 'Pytanie decyzyjne' : 'Efekt sesji',
-        decisionValue: isExample
-          ? 'Które zdolności trzeba podnieść najpierw, żeby strategia w ogóle ruszyła?'
-          : 'Ocena dojrzałości obecnej vs docelowej każdej zdolności, priorytetyzowane luki oraz ruchy build/buy/partner gotowe do dalszej pracy.',
-        stagesTitle: '5 kroków pracy',
-        stages: [
-          ['Brief', 'Branża, domeny, priorytety, decyzja', 'bg-sky-500'],
-          ['Zdolności', 'Mapa zdolności wg domen', 'bg-sky-500'],
-          ['Dojrzałość', 'Obecna vs docelowa 1-5 + waga', 'bg-blue-500'],
-          ['Luki', 'Gdzie luka × waga jest największa', 'bg-amber-500'],
-          ['Ruchy & outputy', 'Build/buy/partner, inicjatywy, raport, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        ladderTitle: 'Drabina dojrzałości',
-        scaleHint: 'Skala dojrzałości 1-5',
-        legendTitle: 'Rozmiar luki',
-        legend: [
-          ['critical', 'Krytyczna luka'],
-          ['moderate', 'Umiarkowana luka'],
-          ['minor', 'Drobna luka'],
-        ] as Array<[string, string]>,
-        currentLabel: 'Obecna',
-        targetLabel: 'Docelowa',
-        footer: 'Capability Mapper = brief -> zdolności -> dojrzałość -> luki -> ruchy -> outputy',
-      }
-    : {
-        eyebrow: 'Capability Mapper',
-        title: isExample
-          ? 'Example: from capability maturity to build/buy/partner moves'
-          : 'How Capability Mapper moves from maturity to priorities',
-        subtitle: isExample
-          ? 'This case shows that a capability map is not a competency checklist. It scores current and target maturity first, weighs strategic importance, and only then surfaces gaps and moves.'
-          : 'This is not a static competency inventory. First we frame strategy and domains, score current vs target maturity on a 1-5 scale, weight by strategic importance, and translate gaps into moves and initiatives.',
-        scenario: isExample ? 'Situation' : 'Starting point',
-        scenarioValue: isExample
-          ? 'A company wants to move into AI but does not know which capabilities it truly lacks. The real question is where the gap between current and target is widest exactly where strategic importance is highest.'
-          : 'The session starts with industry, capability domains, strategic priorities, and the decision question. Without that, maturity scoring is detached from strategy.',
-        decision: isExample ? 'Decision question' : 'Session outcome',
-        decisionValue: isExample
-          ? 'Which capabilities must be raised first for the strategy to move at all?'
-          : "Each capability's current vs target maturity, prioritized gaps, and build/buy/partner moves ready for downstream work.",
-        stagesTitle: '5 working steps',
-        stages: [
-          ['Brief', 'Industry, domains, priorities, decision', 'bg-sky-500'],
-          ['Capabilities', 'Map capabilities by domain', 'bg-sky-500'],
-          ['Maturity', 'Current vs target 1-5 + weight', 'bg-blue-500'],
-          ['Gaps', 'Where gap × weight is widest', 'bg-amber-500'],
-          ['Moves & outputs', 'Build/buy/partner, initiatives, report, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        ladderTitle: 'Maturity ladder',
-        scaleHint: 'Maturity scale 1-5',
-        legendTitle: 'Gap size',
-        legend: [
-          ['critical', 'Critical gap'],
-          ['moderate', 'Moderate gap'],
-          ['minor', 'Minor gap'],
-        ] as Array<[string, string]>,
-        currentLabel: 'Current',
-        targetLabel: 'Target',
-        footer: 'Capability Mapper = brief -> capabilities -> maturity -> gaps -> moves -> outputs',
-      };
+  const ns = 'discoveryToolsMain.capabilityMapperLibraryGraphic';
+  const labels = {
+    eyebrow: 'Capability Mapper',
+    title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
+    subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
+    scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
+    scenarioValue: isExample ? t(`${ns}.scenarioValueExample`) : t(`${ns}.scenarioValueProcess`),
+    decision: isExample ? t(`${ns}.decisionLabelExample`) : t(`${ns}.decisionLabelProcess`),
+    decisionValue: isExample ? t(`${ns}.decisionValueExample`) : t(`${ns}.decisionValueProcess`),
+    stagesTitle: isExample ? t(`${ns}.stagesTitleExample`) : t(`${ns}.stagesTitleProcess`),
+    stages: t(`${ns}.stages`, { returnObjects: true }) as Array<[string, string, string]>,
+    ladderTitle: t(`${ns}.ladderTitle`),
+    scaleHint: t(`${ns}.scaleHint`),
+    legendTitle: t(`${ns}.legendTitle`),
+    legend: t(`${ns}.legend`, { returnObjects: true }) as Array<[string, string]>,
+    currentLabel: t(`${ns}.currentLabel`),
+    targetLabel: t(`${ns}.targetLabel`),
+    footer: t(`${ns}.footer`),
+  };
 
   // Static decorative capability rows for the maturity ladder (current → target on a 1-5 scale).
-  const rows: Array<{
+  const rows = t(`${ns}.rows`, { returnObjects: true }) as Array<{
     name: string;
     current: number;
     target: number;
     gap: 'critical' | 'moderate' | 'minor';
-  }> = isPolish
-    ? [
-        { name: 'Dane i analityka', current: 2, target: 5, gap: 'critical' },
-        { name: 'Talenty AI', current: 1, target: 4, gap: 'critical' },
-        { name: 'Procesy', current: 3, target: 4, gap: 'moderate' },
-        { name: 'Technologia', current: 3, target: 5, gap: 'moderate' },
-        { name: 'Partnerstwa', current: 4, target: 5, gap: 'minor' },
-      ]
-    : [
-        { name: 'Data & analytics', current: 2, target: 5, gap: 'critical' },
-        { name: 'AI talent', current: 1, target: 4, gap: 'critical' },
-        { name: 'Processes', current: 3, target: 4, gap: 'moderate' },
-        { name: 'Technology', current: 3, target: 5, gap: 'moderate' },
-        { name: 'Partnerships', current: 4, target: 5, gap: 'minor' },
-      ];
+  }>;
 
   const gapTone: Record<'critical' | 'moderate' | 'minor', string> = {
     critical: 'bg-amber-500',

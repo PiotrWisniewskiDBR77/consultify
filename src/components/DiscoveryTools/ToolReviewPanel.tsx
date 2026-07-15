@@ -5,6 +5,7 @@
 
 import { AlertTriangle, CheckCircle2, ClipboardList } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   GrowthPathsData,
@@ -49,25 +50,21 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
   canApprove = true,
   canGenerate = true,
 }) => {
+  const { t } = useTranslation();
   const inputData = session.inputData;
+  const tr = (key: string) => t(`discoveryToolsMain.toolReviewPanel.${key}`);
 
   const summary = (() => {
     if (toolType === 'dynamic-swot') {
       const swot = inputData as SWOTData;
       return [
-        `${isPolish ? 'Mocne strony' : 'Strengths'}: ${
-          swot.items.filter((i) => i.quadrant === 'strengths').length
-        }`,
-        `${isPolish ? 'Slabe strony' : 'Weaknesses'}: ${
-          swot.items.filter((i) => i.quadrant === 'weaknesses').length
-        }`,
-        `${isPolish ? 'Szanse' : 'Opportunities'}: ${
+        `${tr('strengths')}: ${swot.items.filter((i) => i.quadrant === 'strengths').length}`,
+        `${tr('weaknesses')}: ${swot.items.filter((i) => i.quadrant === 'weaknesses').length}`,
+        `${tr('opportunities')}: ${
           swot.items.filter((i) => i.quadrant === 'opportunities').length
         }`,
-        `${isPolish ? 'Zagrozenia' : 'Threats'}: ${
-          swot.items.filter((i) => i.quadrant === 'threats').length
-        }`,
-        `${isPolish ? 'Korelacje' : 'Correlations'}: ${swot.correlations.length}`,
+        `${tr('threats')}: ${swot.items.filter((i) => i.quadrant === 'threats').length}`,
+        `${tr('correlations')}: ${swot.correlations.length}`,
       ];
     }
     if (toolType === 'market-forces') {
@@ -75,29 +72,23 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
       const scores = Object.values(porter.forces || {}).map((f) => f.score || 0);
       const avg = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
       return [
-        `${isPolish ? 'Atrakcyjnosc' : 'Attractiveness'}: ${avg.toFixed(1)}/5`,
-        `${isPolish ? 'Sila konkurencji' : 'Competitive intensity'}: ${scores.length}`,
+        `${tr('attractiveness')}: ${avg.toFixed(1)}/5`,
+        `${tr('competitiveIntensity')}: ${scores.length}`,
       ];
     }
     if (toolType === 'growth-paths') {
       const growth = inputData as GrowthPathsData;
       return [
-        `${isPolish ? 'Penetracja' : 'Penetration'}: ${growth.quadrants.marketPenetration.length}`,
-        `${isPolish ? 'Rozwój rynku' : 'Market dev.'}: ${
-          growth.quadrants.marketDevelopment.length
-        }`,
-        `${isPolish ? 'Rozwój produktu' : 'Product dev.'}: ${
-          growth.quadrants.productDevelopment.length
-        }`,
-        `${isPolish ? 'Dywersyfikacja' : 'Diversification'}: ${
-          growth.quadrants.diversification.length
-        }`,
+        `${tr('penetration')}: ${growth.quadrants.marketPenetration.length}`,
+        `${tr('marketDev')}: ${growth.quadrants.marketDevelopment.length}`,
+        `${tr('productDev')}: ${growth.quadrants.productDevelopment.length}`,
+        `${tr('diversification')}: ${growth.quadrants.diversification.length}`,
       ];
     }
     if (toolType === 'portfolio-priority') {
       const portfolio = inputData as PortfolioPriorityData;
       return [
-        `${isPolish ? 'Inicjatywy' : 'Initiatives'}: ${portfolio.initiatives.length}`,
+        `${tr('initiatives')}: ${portfolio.initiatives.length}`,
         `Stars: ${portfolio.initiatives.filter((i) => i.category === 'star').length}`,
         `Cash Cows: ${portfolio.initiatives.filter((i) => i.category === 'cash-cow').length}`,
         `Question Marks: ${portfolio.initiatives.filter((i) => i.category === 'question-mark').length}`,
@@ -107,11 +98,11 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
     if (toolType === 'risk-uncertainty') {
       const risk = inputData as RiskUncertaintyData;
       return [
-        `${isPolish ? 'Sygnały' : 'Signals'}: ${risk.signals?.length || 0}`,
-        `${isPolish ? 'Założenia' : 'Assumptions'}: ${risk.assumptions.length}`,
-        `${isPolish ? 'Ryzyka' : 'Risks'}: ${risk.risks.length}`,
-        `${isPolish ? 'Scenariusze' : 'Scenarios'}: ${risk.scenarios.length}`,
-        `${isPolish ? 'Ruchy' : 'Moves'}: ${risk.recommendedMoves?.length || 0}`,
+        `${tr('signals')}: ${risk.signals?.length || 0}`,
+        `${tr('assumptions')}: ${risk.assumptions.length}`,
+        `${tr('risks')}: ${risk.risks.length}`,
+        `${tr('scenarios')}: ${risk.scenarios.length}`,
+        `${tr('moves')}: ${risk.recommendedMoves?.length || 0}`,
       ];
     }
     if (
@@ -127,16 +118,16 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
       const sections = operational.sections || {};
       const totalItems = Object.values(sections).reduce((sum, items) => sum + items.length, 0);
       return [
-        `${isPolish ? 'Sekcje' : 'Sections'}: ${Object.keys(sections).length}`,
-        `${isPolish ? 'Elementy' : 'Items'}: ${totalItems}`,
+        `${tr('sections')}: ${Object.keys(sections).length}`,
+        `${tr('items')}: ${totalItems}`,
       ];
     }
     const porter = inputData as PorterData;
     const scores = Object.values(porter.forces || {}).map((f) => f.score || 0);
     const avg = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
     return [
-      `${isPolish ? 'Atrakcyjnosc' : 'Attractiveness'}: ${avg.toFixed(1)}/5`,
-      `${isPolish ? 'Sila konkurencji' : 'Competitive intensity'}: ${scores.length}`,
+      `${tr('attractiveness')}: ${avg.toFixed(1)}/5`,
+      `${tr('competitiveIntensity')}: ${scores.length}`,
     ];
   })();
 
@@ -155,13 +146,13 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
         <div className="flex items-center gap-3">
           <ClipboardList className="w-5 h-5 text-primary-500" />
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {isPolish ? 'Review' : 'Review'}
+            {t('discoveryToolsMain.toolReviewPanel.reviewTitle')}
           </h2>
         </div>
 
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-            {isPolish ? 'Podsumowanie' : 'Summary'}
+            {t('discoveryToolsMain.toolReviewPanel.summaryTitle')}
           </h3>
           <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
             {summary.map((item, idx) => (
@@ -178,12 +169,12 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
               <AlertTriangle className="w-4 h-4 text-amber-500" />
             )}
             <h3 className="font-medium text-slate-900 dark:text-white">
-              {isPolish ? 'Braki (gaps)' : 'Gaps'}
+              {t('discoveryToolsMain.toolReviewPanel.gapsTitle')}
             </h3>
           </div>
           {ready ? (
             <p className="text-sm text-emerald-600">
-              {isPolish ? 'Brak brakow. Gotowe do zatwierdzenia.' : 'No gaps. Ready to approve.'}
+              {t('discoveryToolsMain.toolReviewPanel.noGapsReady')}
             </p>
           ) : (
             <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
@@ -196,13 +187,13 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
 
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-            {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
+            {t('discoveryToolsMain.toolReviewPanel.generateInitiativesTitle')}
           </h3>
           <div className="text-sm text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Metodyka' : 'Methodology'}: {generationDefaults.methodologyId}
+            {t('discoveryToolsMain.toolReviewPanel.methodology')}: {generationDefaults.methodologyId}
           </div>
           <div className="text-sm text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Liczba' : 'Count'}: {generationDefaults.count}
+            {t('discoveryToolsMain.toolReviewPanel.count')}: {generationDefaults.count}
           </div>
           <button
             onClick={onConfigureGenerate}
@@ -213,13 +204,13 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
                 : 'text-slate-600 cursor-not-allowed'
             }`}
           >
-            {isPolish ? 'Konfiguruj' : 'Configure'}
+            {t('discoveryToolsMain.toolReviewPanel.configure')}
           </button>
         </div>
 
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-            {isPolish ? 'Decision gates' : 'Decision gates'}
+            {t('discoveryToolsMain.toolReviewPanel.decisionGatesTitle')}
           </h3>
           <div className="text-sm text-slate-600 dark:text-slate-400">
             Request Review: {decisionStatus('REQUEST_REVIEW')}
@@ -234,14 +225,14 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
 
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {isPolish ? 'Komentarz' : 'Comment'}
+            {t('discoveryToolsMain.toolReviewPanel.comment')}
           </label>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={3}
             className="w-full text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 resize-none"
-            placeholder={isPolish ? 'Powod odeslania do Draft' : 'Reason for sending back'}
+            placeholder={t('discoveryToolsMain.toolReviewPanel.sendBackReasonPlaceholder')}
           />
         </div>
       </div>
@@ -253,7 +244,7 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
             checked={confirmApprove}
             onChange={(e) => setConfirmApprove(e.target.checked)}
           />
-          {isPolish ? 'Potwierdzam zatwierdzenie' : 'I confirm approval'}
+          {t('discoveryToolsMain.toolReviewPanel.confirmApproval')}
         </label>
         <button
           onClick={onApprove}
@@ -264,7 +255,7 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
               : 'bg-slate-200 dark:bg-navy-800 text-slate-600 cursor-not-allowed'
           }`}
         >
-          {isPolish ? 'Approve' : 'Approve'}
+          {t('discoveryToolsMain.toolReviewPanel.approve')}
         </button>
         <button
           onClick={() => onSendBack(comment)}
@@ -275,7 +266,7 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
               : 'bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 cursor-not-allowed'
           }`}
         >
-          {isPolish ? 'Send back to Draft' : 'Send back to Draft'}
+          {t('discoveryToolsMain.toolReviewPanel.sendBackToDraft')}
         </button>
       </div>
     </div>

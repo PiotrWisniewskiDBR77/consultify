@@ -1,110 +1,42 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function MarketForcesLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Market Forces',
-        title: isExample
-          ? 'Przykład: od presji rynku do sekwencji ruchów'
-          : 'Jak Market Forces prowadzi od rynku do decyzji',
-        subtitle: isExample
-          ? 'Ten case pokazuje, że analiza Portera nie kończy się na scorecardzie. Najpierw zbiera sygnały, potem ocenia siły, a dopiero na końcu buduje implikacje, ruchy i outputy.'
-          : 'To nie jest statyczna ocena pięciu sił. Najpierw ustawiamy rynek i pytanie, potem zbieramy evidence, oceniamy presję konkurencyjną i zamieniamy ją w ruchy oraz inicjatywy.',
-        scenario: isExample ? 'Sytuacja' : 'Punkt wyjścia',
-        scenarioValue: isExample
-          ? 'Ateliertoy rozważa wejście w segment B2B marketplace. Pytanie brzmi: czy rynek daje przestrzeń na defensible pozycję, czy presja platform i kupujących zje marżę szybciej niż wzrost ją odbuduje.'
-          : 'Sesja startuje od branży, zakresu geograficznego, pozycji firmy i pytania decyzyjnego. Bez tego scorecard sił staje się abstrakcyjny.',
-        decision: isExample ? 'Pytanie decyzyjne' : 'Efekt sesji',
-        decisionValue: isExample
-          ? 'Czy wejść w marketplace teraz, czy najpierw zbudować kanał partnerski i przewagę danych?'
-          : 'Ocena atrakcyjności rynku, presji marży, strategicznych dźwigni i outputów gotowych do dalszej pracy.',
-        stagesTitle: '5 kroków pracy',
-        stage1: 'Market brief',
-        stage1Value: 'Branża, geografia, pozycja, decyzja',
-        stage2: 'Market signals',
-        stage2Value: 'Wywiady, benchmarki, obserwacje i hipotezy',
-        stage3: 'Five Forces',
-        stage3Value: 'Score, trend, drivery, evidence i confidence',
-        stage4: 'Implications',
-        stage4Value: 'Presja marży, defensibility, dźwignie strategiczne',
-        stage5: 'Moves & outputs',
-        stage5Value: 'Ruchy, inicjatywy, raport, deck lub idea',
-        forcesTitle: 'Scorecard presji rynkowej',
-        implicationsTitle: 'Implikacje strategiczne',
-        movesTitle: 'Most do inicjatyw',
-        forces: [
-          ['Rywalizacja', '4/5', 'Wysoka presja cenowa i szybko kopiowane oferty'],
-          ['Nowi gracze', '3/5', 'Wejście możliwe, ale wymaga kanału i zaufania'],
-          ['Substytuty', '2/5', 'Alternatywy istnieją, lecz nie rozwiązują całego problemu'],
-          ['Siła kupujących', '5/5', 'Duzi klienci wymuszają rabaty i warunki SLA'],
-          ['Siła dostawców', '3/5', 'Koszty komponentów są zmienne, ale dywersyfikowalne'],
-        ],
-        implicationItems: [
-          'Rynek może rosnąć, ale przewaga bez danych i kanału będzie krucha.',
-          'Największe ryzyko leży w sile kupujących i presji porównywalności ofert.',
-        ],
-        moveItems: [
-          'Najpierw zbudować partner channel i dane o popycie.',
-          'Wejście w marketplace traktować jako etap po walidacji marży.',
-          'Zamknąć wynik jako brief inicjatywy i deck dla zarządu.',
-        ],
-        legend: 'Market Forces = brief -> signals -> forces -> implications -> moves -> outputs',
-      }
-    : {
-        eyebrow: 'Market Forces',
-        title: isExample
-          ? 'Example: from market pressure to a move sequence'
-          : 'How Market Forces moves from market structure to decision',
-        subtitle: isExample
-          ? 'This case shows that a strong Porter session does not stop at a scorecard. It captures signals first, scores the forces next, and only then builds implications, moves, and outputs.'
-          : 'This is not a static Five Forces checklist. First we frame the market and decision, then collect evidence, score competitive pressure, and translate it into moves and initiatives.',
-        scenario: isExample ? 'Situation' : 'Starting point',
-        scenarioValue: isExample
-          ? 'Ateliertoy is considering entering a B2B marketplace segment. The real question is whether the market offers a defensible position or whether platform and buyer pressure will consume margin faster than growth rebuilds it.'
-          : 'The session starts with industry, geography, company position, and the decision question. Without that, the force scorecard becomes abstract.',
-        decision: isExample ? 'Decision question' : 'Session outcome',
-        decisionValue: isExample
-          ? 'Enter the marketplace now, or first build a partner channel and data advantage?'
-          : 'A market attractiveness read, margin pressure logic, strategic levers, and outputs ready for downstream work.',
-        stagesTitle: '5 working steps',
-        stage1: 'Market brief',
-        stage1Value: 'Industry, geography, position, decision',
-        stage2: 'Market signals',
-        stage2Value: 'Interviews, benchmarks, observations, and hypotheses',
-        stage3: 'Five Forces',
-        stage3Value: 'Score, trend, drivers, evidence, and confidence',
-        stage4: 'Implications',
-        stage4Value: 'Margin pressure, defensibility, strategic levers',
-        stage5: 'Moves & outputs',
-        stage5Value: 'Moves, initiatives, report, deck, or idea',
-        forcesTitle: 'Market pressure scorecard',
-        implicationsTitle: 'Strategic implications',
-        movesTitle: 'Bridge to initiatives',
-        forces: [
-          ['Rivalry', '4/5', 'High price pressure and easily copied offers'],
-          ['New entrants', '3/5', 'Entry is possible, but requires channel and trust'],
-          ['Substitutes', '2/5', 'Alternatives exist but do not solve the full job'],
-          ['Buyer power', '5/5', 'Large customers force discounts and SLA terms'],
-          ['Supplier power', '3/5', 'Input costs move, but can be diversified'],
-        ],
-        implicationItems: [
-          'The market may grow, but advantage without data and channel will be fragile.',
-          'The biggest risk sits in buyer power and offer comparability.',
-        ],
-        moveItems: [
-          'Build partner channel and demand data first.',
-          'Treat marketplace entry as a step after margin validation.',
-          'Close the result as an initiative brief and board deck.',
-        ],
-        legend: 'Market Forces = brief -> signals -> forces -> implications -> moves -> outputs',
-      };
+  const ns = 'discoveryToolsMain.marketForcesLibraryGraphic';
+  const labels = {
+    eyebrow: 'Market Forces',
+    title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
+    subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
+    scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
+    scenarioValue: isExample ? t(`${ns}.scenarioValueExample`) : t(`${ns}.scenarioValueProcess`),
+    decision: isExample ? t(`${ns}.decisionLabelExample`) : t(`${ns}.decisionLabelProcess`),
+    decisionValue: isExample ? t(`${ns}.decisionValueExample`) : t(`${ns}.decisionValueProcess`),
+    stagesTitle: isExample ? t(`${ns}.stagesTitleExample`) : t(`${ns}.stagesTitleProcess`),
+    stage1: 'Market brief',
+    stage1Value: t(`${ns}.stage1Value`),
+    stage2: 'Market signals',
+    stage2Value: t(`${ns}.stage2Value`),
+    stage3: 'Five Forces',
+    stage3Value: t(`${ns}.stage3Value`),
+    stage4: 'Implications',
+    stage4Value: t(`${ns}.stage4Value`),
+    stage5: 'Moves & outputs',
+    stage5Value: t(`${ns}.stage5Value`),
+    forcesTitle: t(`${ns}.forcesTitle`),
+    implicationsTitle: t(`${ns}.implicationsTitle`),
+    movesTitle: t(`${ns}.movesTitle`),
+    forces: t(`${ns}.forces`, { returnObjects: true }) as Array<[string, string, string]>,
+    implicationItems: t(`${ns}.implicationItems`, { returnObjects: true }) as string[],
+    moveItems: t(`${ns}.moveItems`, { returnObjects: true }) as string[],
+    legend: 'Market Forces = brief -> signals -> forces -> implications -> moves -> outputs',
+  };
 
   const stages = [
     [labels.stage1, labels.stage1Value, 'bg-sky-500'],

@@ -1,56 +1,30 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function GrowthPathsLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Growth Paths',
-        title: isExample
-          ? 'Przykład: od ambicji wzrostu do sekwencji ruchów'
-          : 'Jak Growth Paths prowadzi od ambicji do wyboru ścieżki',
-        subtitle:
-          'Ansoff nie jest listą pomysłów. Najpierw ustawia ambicję i sygnały, potem buduje opcje w czterech polach, porównuje trade-offy i dopiero wtedy przechodzi do ruchów oraz inicjatyw.',
-        mission: isExample
-          ? 'Jak zwiększyć przychód w segmencie premium bez rozmycia marży?'
-          : 'Growth mission, scope, success signal i constraints',
-        stages: ['Mission', 'Evidence', 'Options', 'Comparison', 'Outputs'],
-        quadrants: [
-          ['Penetracja rynku', 'Lepsze wykorzystanie obecnego segmentu i kanałów'],
-          ['Rozwój rynku', 'Wejście do nowych segmentów lub geografii'],
-          ['Rozwój produktu', 'Nowe propozycje wartości dla obecnych klientów'],
-          ['Dywersyfikacja', 'Nowy produkt i nowy rynek, najwyższe ryzyko'],
-        ],
-        insight:
-          'Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.',
-        output: 'Source summary -> inicjatywa -> deck -> raport',
-      }
-    : {
-        eyebrow: 'Growth Paths',
-        title: isExample
-          ? 'Example: from growth ambition to a move sequence'
-          : 'How Growth Paths moves from ambition to path selection',
-        subtitle:
-          'Ansoff is not an idea list. It frames ambition and evidence first, builds options across four fields, compares trade-offs, and only then moves into actions and initiatives.',
-        mission: isExample
-          ? 'How do we grow premium-segment revenue without diluting margin?'
-          : 'Growth mission, scope, success signal, and constraints',
-        stages: ['Mission', 'Evidence', 'Options', 'Comparison', 'Outputs'],
-        quadrants: [
-          ['Market penetration', 'Use the current segment and channels better'],
-          ['Market development', 'Enter new segments or geographies'],
-          ['Product development', 'New value propositions for current customers'],
-          ['Diversification', 'New product and new market, highest risk'],
-        ],
-        insight:
-          'The recommendation does not come from the longest idea list, but from the best sequence: scale core, test the new segment, then increase risk.',
-        output: 'Source summary -> initiative -> deck -> report',
-      };
+  const labels = {
+    eyebrow: 'Growth Paths',
+    title: isExample
+      ? t('discoveryToolsMain.growthPathsLibraryGraphic.titleExample')
+      : t('discoveryToolsMain.growthPathsLibraryGraphic.titleProcess'),
+    subtitle: t('discoveryToolsMain.growthPathsLibraryGraphic.subtitle'),
+    mission: isExample
+      ? t('discoveryToolsMain.growthPathsLibraryGraphic.missionExample')
+      : t('discoveryToolsMain.growthPathsLibraryGraphic.missionProcess'),
+    stages: ['Mission', 'Evidence', 'Options', 'Comparison', 'Outputs'],
+    quadrants: t('discoveryToolsMain.growthPathsLibraryGraphic.quadrants', {
+      returnObjects: true,
+    }) as Array<[string, string]>,
+    insight: t('discoveryToolsMain.growthPathsLibraryGraphic.insight'),
+    output: t('discoveryToolsMain.growthPathsLibraryGraphic.output'),
+  };
 
   return (
     <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.14),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(14,165,233,0.1),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.18),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(14,165,233,0.12),transparent_22%),linear-gradient(180deg,#0b1020,#0a0f1b)]">

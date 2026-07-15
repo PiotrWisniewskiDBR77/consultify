@@ -1,201 +1,77 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function DynamicSwotLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const outputs = isPolish
-    ? ['Initiative', 'Report', 'Presentation', 'Idea']
-    : ['Initiative', 'Report', 'Presentation', 'Idea'];
-  const labels = isPolish
-    ? {
-        eyebrow: 'Dynamic SWOT',
-        title: isExample
-          ? 'Przykład: od pytania zarządu do logicznej sekwencji ruchów'
-          : 'Jak Dynamic SWOT prowadzi od pytania do decyzji',
-        subtitle: isExample
-          ? 'Ten case pokazuje, że dobra sesja SWOT nie kończy się na nazwaniu czterech ćwiartek. Najpierw ustawia decyzję, potem porządkuje evidence, a dopiero później buduje napięcie, ruch i materiał dla zarządu.'
-          : 'To nie jest zwykła tabela 2x2. Najpierw ustawiamy decyzję i porządkujemy evidence, potem budujemy macierz, interpretujemy napięcia i dopiero wtedy przechodzimy do ruchów oraz outputów.',
-        scenario: isExample ? 'Sytuacja' : 'Punkt wyjścia',
-        scenarioValue: isExample
-          ? 'Ateliertoy po spadku marży rozważa automatyzację. Prawdziwe pytanie brzmi: czy kupować technologię już teraz, czy najpierw zrozumieć, gdzie naprawdę wycieka wartość i które procesy blokują skalę.'
-          : 'Dynamic SWOT startuje od pytania strategicznego, zakresu, success signal i ograniczeń. Bez tego kolejne kroki zamieniają się w zbiór luźnych opinii.',
-        flow: 'Oś pracy',
-        decision: isExample ? 'Pytanie decyzyjne' : 'Efekt sesji',
-        decisionValue: isExample
-          ? 'Od czego zacząć transformację: od CAPEX-u czy od diagnozy?'
-          : 'Wspólna diagnoza, logiczne napięcia, rekomendowane ruchy i materiał gotowy do raportu, decka oraz inicjatyw.',
-        stagesTitle: '5 kroków pracy',
-        stagesSubtitle:
-          'Każdy krok ma inny poziom decyzji: od ustawienia pytania po ruch i output.',
-        signals: 'Macierz czynników',
-        matrixLead:
-          'Macierz porządkuje sygnały, ale nie jest finałem. Każda karta powinna być krótka, konkretna, mieć źródło i wpływać na logikę decyzji.',
-        matrixNote:
-          'Dobra macierz nie zbiera wszystkiego. Zostawia tylko te czynniki, które naprawdę przesuwają wybór strategiczny.',
-        tensionPanel: 'Napięcie strategiczne',
-        tensionLead:
-          'Najważniejsze miejsce, w którym przewaga zderza się z ograniczeniem albo ryzykiem.',
-        moves: 'Rekomendowany ruch',
-        movesLead: 'Ruch musi wynikać z napięcia, a nie z intuicji autora.',
-        outputs: 'Most do outputów',
-        outputsLead:
-          'Wynik sesji musi nadawać się do dalszego użycia przez management i execution.',
-        stage1: 'Mission brief',
-        stage1Value: 'Cel, zakres, success signal, constraints',
-        stage2: 'Evidence map',
-        stage2Value: 'Fakty, obserwacje, hipotezy z wnętrza firmy i rynku',
-        stage3: 'SWOT build',
-        stage3Value: 'Karty S/W/O/T z confidence i source',
-        stage4: 'Strategic tensions',
-        stage4Value: 'Gdzie przewaga zderza się z ograniczeniem lub ryzykiem',
-        stage5: 'Recommended moves',
-        stage5Value: 'Co zrobić teraz, co odłożyć, co jeszcze sprawdzić',
-        stage4Badge: 'Insight',
-        stage5Badge: 'Decision',
-        strengths: 'Mocne strony',
-        weaknesses: 'Słabe strony',
-        opportunities: 'Szanse',
-        threats: 'Zagrożenia',
-        strengthsHint: 'Przewagi wewnętrzne',
-        weaknessesHint: 'Luki wewnętrzne',
-        opportunitiesHint: 'Upside zewnętrzny',
-        threatsHint: 'Ryzyko zewnętrzne',
-        strengthItems: isExample
-          ? ['Silna marka i zaufanie rynku B2B', 'Własna produkcja i kontrola IP']
-          : [
-              'czynniki wewnętrzne, które wzmacniają pozycję firmy i pomagają osiągnąć cel decyzji',
-              'to, co organizacja już posiada, potrafi albo kontroluje i na czym można świadomie budować ruch',
-            ],
-        weaknessItems: isExample
-          ? ['Decyzje oparte na intuicji', 'Brak wspólnego obrazu strat i priorytetów']
-          : [
-              'czynniki wewnętrzne, które obniżają sprawność, jakość wyniku albo siłę wykonania',
-              'braki, niespójności lub ograniczenia, które utrudniają realizację celu i osłabiają decyzję',
-            ],
-        opportunityItems: isExample
-          ? ['Diagnoza cyfrowa przed inwestycjami', 'Warstwa danych i software jako nowa dźwignia']
-          : [
-              'czynniki zewnętrzne, które mogą otworzyć przestrzeń wzrostu, poprawy pozycji albo nowej przewagi',
-              'zmiany w rynku i otoczeniu, które warto wykorzystać zanim zrobi to konkurencja',
-            ],
-        threatItems: isExample
-          ? ['Presja cenowa i wzrost kosztów', 'Ryzyko przepalenia CAPEX-u na zły problem']
-          : [
-              'czynniki zewnętrzne, które mogą pogorszyć wynik, ograniczyć wybór albo podważyć plan działania',
-              'presje i ryzyka z otoczenia, wobec których firma musi się zabezpieczyć, zareagować albo zmienić tempo',
-            ],
-        tensionItems: [
-          'Firma ma realne aktywa, ale nie ma wspólnej diagnozy, gdzie dziś traci pieniądze.',
-          'Automatyzacja wydaje się atrakcyjna, ale bez prawdy o procesie może tylko przyspieszyć chaos.',
-        ],
-        moveItems: [
-          'Najpierw zmapować wycieki wartości, bottlenecks i luki danych.',
-          'Dopiero potem układać kolejność: dane -> automatyzacja -> governance inwestycji.',
-          'Zamknąć wynik w materiale dla zarządu, a nie w długiej liście obserwacji.',
-        ],
-        outputItems: [
-          'Executive summary sytuacji',
-          'Priorytety na 90 dni',
-          'Raport / deck / inicjatywa',
-        ],
-        legend: 'Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output',
-      }
-    : {
-        eyebrow: 'Dynamic SWOT',
-        title: isExample
-          ? 'Example: from a leadership question to a logical move sequence'
-          : 'How Dynamic SWOT moves from question to decision',
-        subtitle: isExample
-          ? 'This case shows that a strong SWOT session does not stop at naming four quadrants. It frames the decision first, structures the evidence next, and only then builds tension, moves, and board-ready material.'
-          : 'This is not a standard 2x2 table. First we frame the decision and structure evidence, then build the matrix, interpret the tensions, and only then move into actions and outputs.',
-        scenario: isExample ? 'Situation' : 'Starting point',
-        scenarioValue: isExample
-          ? 'After a margin decline, Ateliertoy is considering automation. The real question is whether to buy technology now or first understand where value is leaking and which processes block scale.'
-          : 'Dynamic SWOT starts with the strategic question, scope, success signal, and constraints. Without that, the next steps collapse into disconnected opinions.',
-        flow: 'Work spine',
-        decision: isExample ? 'Decision question' : 'Session outcome',
-        decisionValue: isExample
-          ? 'Where should the transformation start: CAPEX first or diagnosis first?'
-          : 'A shared diagnosis, strategic tensions, recommended moves, and material ready for reports, decks, and initiatives.',
-        stagesTitle: '5 working steps',
-        stagesSubtitle: 'Each step moves the user to a different level of decision quality.',
-        signals: 'Factor matrix',
-        matrixLead:
-          'The matrix organizes the signals, but it is not the finish line. Each card should be short, concrete, sourced, and relevant to the strategic choice.',
-        matrixNote:
-          'A strong matrix does not collect everything. It keeps only the factors that truly move the strategic choice.',
-        tensionPanel: 'Strategic tension',
-        tensionLead: 'The key point where advantage collides with a constraint or a risk.',
-        moves: 'Recommended move',
-        movesLead: 'A move must emerge from the tension, not from analyst instinct.',
-        outputs: 'Bridge to outputs',
-        outputsLead:
-          'The result of the session must be usable by management and by downstream execution.',
-        stage1: 'Mission brief',
-        stage1Value: 'Goal, scope, success signal, constraints',
-        stage2: 'Evidence map',
-        stage2Value: 'Facts, observations, and hypotheses from inside the company and the market',
-        stage3: 'SWOT build',
-        stage3Value: 'S/W/O/T cards with confidence and source',
-        stage4: 'Strategic tensions',
-        stage4Value: 'Where advantage collides with constraint or risk',
-        stage5: 'Recommended moves',
-        stage5Value: 'What to do now, what to delay, what to validate next',
-        stage4Badge: 'Insight',
-        stage5Badge: 'Decision',
-        strengths: 'Strengths',
-        weaknesses: 'Weaknesses',
-        opportunities: 'Opportunities',
-        threats: 'Threats',
-        strengthsHint: 'Internal advantage',
-        weaknessesHint: 'Internal gap',
-        opportunitiesHint: 'External upside',
-        threatsHint: 'External risk',
-        strengthItems: isExample
-          ? ['Strong brand and trusted B2B position', 'In-house manufacturing and IP control']
-          : [
-              'internal factors that strengthen the company position and support the decision objective',
-              'what the organization already has, knows, or controls and can deliberately build on',
-            ],
-        weaknessItems: isExample
-          ? ['Intuition-driven decisions', 'No shared view of losses and priorities']
-          : [
-              'internal factors that reduce execution quality, business performance, or decision strength',
-              'gaps, inconsistencies, or constraints that make the objective harder to achieve',
-            ],
-        opportunityItems: isExample
-          ? ['Digital diagnosis before investments', 'Data and software layer as a new lever']
-          : [
-              'external factors that may create room for growth, stronger positioning, or new advantage',
-              'changes in the market or environment that should be captured before competitors do',
-            ],
-        threatItems: isExample
-          ? ['Price pressure and rising costs', 'Risk of burning CAPEX on the wrong problem']
-          : [
-              'external factors that may weaken the result, narrow the choice, or undermine the plan',
-              'pressures and risks in the environment that require protection, response, or a change of pace',
-            ],
-        tensionItems: [
-          'The company has real assets, but no shared diagnosis of where money is leaking today.',
-          'Automation looks attractive, but without process truth it may only accelerate chaos.',
-        ],
-        moveItems: [
-          'First map value leakage, bottlenecks, and data blind spots.',
-          'Only then sequence the roadmap: data -> automation -> investment governance.',
-          'Close the result in board-ready material, not in a long list of observations.',
-        ],
-        outputItems: [
-          'Executive summary of the situation',
-          '90-day priorities',
-          'Report / deck / initiative',
-        ],
-        legend: 'Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output',
-      };
+  const ns = 'discoveryToolsMain.dynamicSwotLibraryGraphic';
+  const outputs = ['Initiative', 'Report', 'Presentation', 'Idea'];
+  const strengthItems = isExample
+    ? (t(`${ns}.strengthItemsExample`, { returnObjects: true }) as string[])
+    : (t(`${ns}.strengthItemsProcess`, { returnObjects: true }) as string[]);
+  const weaknessItems = isExample
+    ? (t(`${ns}.weaknessItemsExample`, { returnObjects: true }) as string[])
+    : (t(`${ns}.weaknessItemsProcess`, { returnObjects: true }) as string[]);
+  const opportunityItems = isExample
+    ? (t(`${ns}.opportunityItemsExample`, { returnObjects: true }) as string[])
+    : (t(`${ns}.opportunityItemsProcess`, { returnObjects: true }) as string[]);
+  const threatItems = isExample
+    ? (t(`${ns}.threatItemsExample`, { returnObjects: true }) as string[])
+    : (t(`${ns}.threatItemsProcess`, { returnObjects: true }) as string[]);
+  const labels = {
+    eyebrow: 'Dynamic SWOT',
+    title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
+    subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
+    scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
+    scenarioValue: isExample ? t(`${ns}.scenarioValueExample`) : t(`${ns}.scenarioValueProcess`),
+    flow: t(`${ns}.flow`),
+    decision: isExample ? t(`${ns}.decisionLabelExample`) : t(`${ns}.decisionLabelProcess`),
+    decisionValue: isExample ? t(`${ns}.decisionValueExample`) : t(`${ns}.decisionValueProcess`),
+    stagesTitle: isExample ? t(`${ns}.stagesTitleExample`) : t(`${ns}.stagesTitleProcess`),
+    stagesSubtitle: t(`${ns}.stagesSubtitle`),
+    signals: t(`${ns}.signals`),
+    matrixLead: t(`${ns}.matrixLead`),
+    matrixNote: t(`${ns}.matrixNote`),
+    tensionPanel: t(`${ns}.tensionPanel`),
+    tensionLead: t(`${ns}.tensionLead`),
+    moves: t(`${ns}.moves`),
+    movesLead: t(`${ns}.movesLead`),
+    outputs: t(`${ns}.outputsPanelTitle`),
+    outputsLead: t(`${ns}.outputsLead`),
+    stage1: t(`${ns}.stage1`),
+    stage1Value: t(`${ns}.stage1Value`),
+    stage2: t(`${ns}.stage2`),
+    stage2Value: t(`${ns}.stage2Value`),
+    stage3: t(`${ns}.stage3`),
+    stage3Value: t(`${ns}.stage3Value`),
+    stage4: t(`${ns}.stage4`),
+    stage4Value: t(`${ns}.stage4Value`),
+    stage5: t(`${ns}.stage5`),
+    stage5Value: t(`${ns}.stage5Value`),
+    stage4Badge: t(`${ns}.stage4Badge`),
+    stage5Badge: t(`${ns}.stage5Badge`),
+    strengths: t(`${ns}.strengths`),
+    weaknesses: t(`${ns}.weaknesses`),
+    opportunities: t(`${ns}.opportunities`),
+    threats: t(`${ns}.threats`),
+    strengthsHint: t(`${ns}.strengthsHint`),
+    weaknessesHint: t(`${ns}.weaknessesHint`),
+    opportunitiesHint: t(`${ns}.opportunitiesHint`),
+    threatsHint: t(`${ns}.threatsHint`),
+    strengthItems,
+    weaknessItems,
+    opportunityItems,
+    threatItems,
+    tensionItems: t(`${ns}.tensionItems`, { returnObjects: true }) as string[],
+    moveItems: t(`${ns}.moveItems`, { returnObjects: true }) as string[],
+    outputItems: t(`${ns}.outputItems`, { returnObjects: true }) as string[],
+    legend: t(`${ns}.legend`),
+  };
 
   const stages = [
     {

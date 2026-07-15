@@ -29617,5 +29617,1103 @@
       "creating": "Creating…",
       "createFromMove": "Create initiative from this move"
     }
+  },
+  "discoveryToolsMain": {
+    "toolActionBar": {
+      "previous": "Previous",
+      "stepOf": "Step {{current}}/{{total}}",
+      "finish": "Finish",
+      "next": "Next"
+    },
+    "toolHeader": {
+      "help": "Help",
+      "requestReview": "Request review",
+      "export": "Export",
+      "createInitiative": "Create Initiative"
+    },
+    "generateInitiativesModal": {
+      "title": "Generate initiatives",
+      "initiativesCount": "Initiatives count",
+      "customPlaceholder": "Custom (1-7)",
+      "methodology": "Methodology",
+      "decisionOwner": "Decision Owner",
+      "optional": "(optional)",
+      "selectPlaceholder": "-- Select --",
+      "includeChatContext": "Include AI chat context",
+      "previewList": "Preview list",
+      "cancel": "Cancel",
+      "generateDrafts": "Generate drafts"
+    },
+    "riskUncertaintyLibraryGraphic": {
+      "titleProcess": "How Risk & Uncertainty moves from signals to safeguards",
+      "titleExample": "Example: from uncertainty to resilience moves",
+      "subtitle": "The tool does not produce a fear list. It captures signals, builds assumptions, risks, and scenarios, requires card approval, and only then recommends validation, mitigation, monitoring, and escalation.",
+      "missionProcess": "Risk mission, scope, success signal, and constraints",
+      "missionExample": "How do we protect a transformation from delays, cost pressure, and demand shifts?",
+      "cards": [
+        [
+          "Assumptions",
+          "What must be true for the strategy to work"
+        ],
+        [
+          "Risks",
+          "What can hit outcome, cost, timing, or reputation"
+        ],
+        [
+          "Scenarios",
+          "How different futures change the decision"
+        ],
+        [
+          "Moves",
+          "Validate, mitigate, monitor, hedge, escalate"
+        ]
+      ]
+    },
+    "portfolioPriorityLibraryGraphic": {
+      "titleProcess": "How Portfolio Priority moves from evidence to decisions",
+      "titleExample": "Example: from initiative list to resource allocation",
+      "subtitle": "BCG is not a decorative matrix. The tool captures signals, proposes portfolio cards, asks for user approval, and only then builds trade-offs, moves, and initiatives.",
+      "missionProcess": "Portfolio mission, scope, constraints, and success signal",
+      "missionExample": "Which products and initiatives should receive funding next quarter under a constrained budget?",
+      "quadrants": [
+        [
+          "Stars",
+          "High growth and strong position: invest selectively"
+        ],
+        [
+          "Question Marks",
+          "High growth and weak position: test or choose the bet"
+        ],
+        [
+          "Cash Cows",
+          "Stable position: maintain and fund growth"
+        ],
+        [
+          "Dogs",
+          "Weak position: reduce, harvest, or redesign"
+        ]
+      ],
+      "insight": "The recommendation is not equal support for every topic, but deliberate allocation: invest, maintain, test, harvest, stop.",
+      "output": "Source summary -> portfolio initiatives -> deck -> report"
+    },
+    "growthPathsLibraryGraphic": {
+      "titleProcess": "How Growth Paths moves from ambition to path selection",
+      "titleExample": "Example: from growth ambition to a move sequence",
+      "subtitle": "Ansoff is not an idea list. It frames ambition and evidence first, builds options across four fields, compares trade-offs, and only then moves into actions and initiatives.",
+      "missionProcess": "Growth mission, scope, success signal, and constraints",
+      "missionExample": "How do we grow premium-segment revenue without diluting margin?",
+      "quadrants": [
+        [
+          "Market penetration",
+          "Use the current segment and channels better"
+        ],
+        [
+          "Market development",
+          "Enter new segments or geographies"
+        ],
+        [
+          "Product development",
+          "New value propositions for current customers"
+        ],
+        [
+          "Diversification",
+          "New product and new market, highest risk"
+        ]
+      ],
+      "insight": "The recommendation does not come from the longest idea list, but from the best sequence: scale core, test the new segment, then increase risk.",
+      "output": "Source summary -> initiative -> deck -> report"
+    },
+    "marketForcesLibraryGraphic": {
+      "titleProcess": "How Market Forces moves from market structure to decision",
+      "titleExample": "Example: from market pressure to a move sequence",
+      "subtitleProcess": "This is not a static Five Forces checklist. First we frame the market and decision, then collect evidence, score competitive pressure, and translate it into moves and initiatives.",
+      "subtitleExample": "This case shows that a strong Porter session does not stop at a scorecard. It captures signals first, scores the forces next, and only then builds implications, moves, and outputs.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with industry, geography, company position, and the decision question. Without that, the force scorecard becomes abstract.",
+      "scenarioValueExample": "Ateliertoy is considering entering a B2B marketplace segment. The real question is whether the market offers a defensible position or whether platform and buyer pressure will consume margin faster than growth rebuilds it.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "A market attractiveness read, margin pressure logic, strategic levers, and outputs ready for downstream work.",
+      "decisionValueExample": "Enter the marketplace now, or first build a partner channel and data advantage?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stage1Value": "Industry, geography, position, decision",
+      "stage2Value": "Interviews, benchmarks, observations, and hypotheses",
+      "stage3Value": "Score, trend, drivers, evidence, and confidence",
+      "stage4Value": "Margin pressure, defensibility, strategic levers",
+      "stage5Value": "Moves, initiatives, report, deck, or idea",
+      "forcesTitle": "Market pressure scorecard",
+      "implicationsTitle": "Strategic implications",
+      "movesTitle": "Bridge to initiatives",
+      "forces": [
+        [
+          "Rivalry",
+          "4/5",
+          "High price pressure and easily copied offers"
+        ],
+        [
+          "New entrants",
+          "3/5",
+          "Entry is possible, but requires channel and trust"
+        ],
+        [
+          "Substitutes",
+          "2/5",
+          "Alternatives exist but do not solve the full job"
+        ],
+        [
+          "Buyer power",
+          "5/5",
+          "Large customers force discounts and SLA terms"
+        ],
+        [
+          "Supplier power",
+          "3/5",
+          "Input costs move, but can be diversified"
+        ]
+      ],
+      "implicationItems": [
+        "The market may grow, but advantage without data and channel will be fragile.",
+        "The biggest risk sits in buyer power and offer comparability."
+      ],
+      "moveItems": [
+        "Build partner channel and demand data first.",
+        "Treat marketplace entry as a step after margin validation.",
+        "Close the result as an initiative brief and board deck."
+      ]
+    },
+    "narrativeEngineLibraryGraphic": {
+      "titleProcess": "How Narrative Engine builds a message house around one idea",
+      "titleExample": "Example: from one core message to a message house with pillars",
+      "subtitleProcess": "This is not a loose set of messages. First we frame the audience and core message (the roof), then 3-4 pillars (columns), each with its own claim and proof, with color showing audience resonance.",
+      "subtitleExample": "This case shows that a narrative is not a pile of slides. It sets one core message first (the roof), then the pillars (columns) that hold it up, and the proof points each pillar carries.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with the audience, goal, and core message. Without a roof the pillars have nothing to hold, and proof points are detached from the decision.",
+      "scenarioValueExample": "The board hears ten arguments at once and none of them sticks. The real question is which single idea they should remember and which three pillars actually hold it up.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "One core message as the roof, 3-4 pillars with a claim and proof points, tagged by audience resonance, ready for narrative, report, and deck.",
+      "decisionValueExample": "Which single idea should stick, and which pillars with proof points hold it up?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        [
+          "Brief",
+          "Audience, goal, success signal",
+          "bg-sky-500"
+        ],
+        [
+          "Core message",
+          "One sentence that should stick",
+          "bg-sky-500"
+        ],
+        [
+          "Pillars",
+          "Columns that hold the roof",
+          "bg-blue-500"
+        ],
+        [
+          "Proof",
+          "What backs each pillar",
+          "bg-amber-500"
+        ],
+        [
+          "Narrative & outputs",
+          "Threads, moves, report, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "houseTitle": "Message house",
+      "houseHint": "Roof + pillars",
+      "coreLabel": "Core message",
+      "coreValue": "Without AI we lose the market in 18 months",
+      "proofWord": "proof",
+      "legendTitle": "Audience resonance",
+      "legend": [
+        [
+          "high",
+          "High resonance"
+        ],
+        [
+          "medium",
+          "Medium resonance"
+        ],
+        [
+          "low",
+          "Low resonance"
+        ]
+      ],
+      "footer": "Narrative Engine = brief -> core message -> pillars -> proof -> narrative -> outputs",
+      "pillars": [
+        {
+          "title": "Market pace",
+          "message": "Competitors already shipping",
+          "proofs": 3,
+          "resonance": "high"
+        },
+        {
+          "title": "Margin",
+          "message": "Automation lifts margin",
+          "proofs": 2,
+          "resonance": "high"
+        },
+        {
+          "title": "Talent",
+          "message": "The team is ready",
+          "proofs": 2,
+          "resonance": "medium"
+        },
+        {
+          "title": "Risk",
+          "message": "A pilot caps the risk",
+          "proofs": 1,
+          "resonance": "low"
+        }
+      ]
+    },
+    "capabilityMapperLibraryGraphic": {
+      "titleProcess": "How Capability Mapper moves from maturity to priorities",
+      "titleExample": "Example: from capability maturity to build/buy/partner moves",
+      "subtitleProcess": "This is not a static competency inventory. First we frame strategy and domains, score current vs target maturity on a 1-5 scale, weight by strategic importance, and translate gaps into moves and initiatives.",
+      "subtitleExample": "This case shows that a capability map is not a competency checklist. It scores current and target maturity first, weighs strategic importance, and only then surfaces gaps and moves.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with industry, capability domains, strategic priorities, and the decision question. Without that, maturity scoring is detached from strategy.",
+      "scenarioValueExample": "A company wants to move into AI but does not know which capabilities it truly lacks. The real question is where the gap between current and target is widest exactly where strategic importance is highest.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "Each capability's current vs target maturity, prioritized gaps, and build/buy/partner moves ready for downstream work.",
+      "decisionValueExample": "Which capabilities must be raised first for the strategy to move at all?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        [
+          "Brief",
+          "Industry, domains, priorities, decision",
+          "bg-sky-500"
+        ],
+        [
+          "Capabilities",
+          "Map capabilities by domain",
+          "bg-sky-500"
+        ],
+        [
+          "Maturity",
+          "Current vs target 1-5 + weight",
+          "bg-blue-500"
+        ],
+        [
+          "Gaps",
+          "Where gap × weight is widest",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Build/buy/partner, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "ladderTitle": "Maturity ladder",
+      "scaleHint": "Maturity scale 1-5",
+      "legendTitle": "Gap size",
+      "legend": [
+        [
+          "critical",
+          "Critical gap"
+        ],
+        [
+          "moderate",
+          "Moderate gap"
+        ],
+        [
+          "minor",
+          "Minor gap"
+        ]
+      ],
+      "currentLabel": "Current",
+      "targetLabel": "Target",
+      "footer": "Capability Mapper = brief -> capabilities -> maturity -> gaps -> moves -> outputs",
+      "rows": [
+        {
+          "name": "Data & analytics",
+          "current": 2,
+          "target": 5,
+          "gap": "critical"
+        },
+        {
+          "name": "AI talent",
+          "current": 1,
+          "target": 4,
+          "gap": "critical"
+        },
+        {
+          "name": "Processes",
+          "current": 3,
+          "target": 4,
+          "gap": "moderate"
+        },
+        {
+          "name": "Technology",
+          "current": 3,
+          "target": 5,
+          "gap": "moderate"
+        },
+        {
+          "name": "Partnerships",
+          "current": 4,
+          "target": 5,
+          "gap": "minor"
+        }
+      ]
+    },
+    "focusTradeoffLibraryGraphic": {
+      "titleProcess": "How Focus & Trade-offs moves from value and effort to decisions",
+      "titleExample": "Example: from competing priorities to pursue/defer/drop moves",
+      "subtitleProcess": "This is not a wishlist sorted by gut feel. First we frame competing priorities and decision criteria, score value vs effort on a 1-5 scale, map them onto a matrix, and translate positions into pursue/defer/drop moves.",
+      "subtitleExample": "This case shows that prioritization is not a wishlist ranking. It weighs the value and effort of each option first, maps them onto a matrix, and only then recommends what to pursue, defer, or drop.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with competing priorities, decision criteria, the goal, and constraints. Without that, value and effort scoring is detached from strategy.",
+      "scenarioValueExample": "A team has more initiatives than capacity and everyone defends their own. The real question is which deliver the most value for the least effort and which only drain the team.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "Each priority's value vs effort score, its position on the 2x2 matrix, and pursue/defer/drop moves ready for downstream work.",
+      "decisionValueExample": "Which priorities do we pursue now, and which do we deliberately defer or drop?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        [
+          "Brief",
+          "Priorities, criteria, goal, constraints",
+          "bg-sky-500"
+        ],
+        [
+          "Priorities",
+          "List of competing options",
+          "bg-sky-500"
+        ],
+        [
+          "Scoring",
+          "Value vs effort 1-5 + fit",
+          "bg-blue-500"
+        ],
+        [
+          "Matrix",
+          "Quick wins, big bets, fill-ins, money pit",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Pursue/defer/drop, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "matrixTitle": "Value x effort matrix",
+      "scaleHint": "Scale 1-5",
+      "axisValue": "Value",
+      "axisEffort": "Effort",
+      "quadrants": [
+        [
+          "Quick wins",
+          "High value, low effort"
+        ],
+        [
+          "Big bets",
+          "High value, high effort"
+        ],
+        [
+          "Fill-ins",
+          "Low value, low effort"
+        ],
+        [
+          "Money pit",
+          "Low value, high effort"
+        ]
+      ],
+      "legendTitle": "Recommendation",
+      "legend": [
+        [
+          "pursue",
+          "Pursue"
+        ],
+        [
+          "defer",
+          "Defer"
+        ],
+        [
+          "drop",
+          "Drop"
+        ]
+      ],
+      "footer": "Focus & Trade-offs = brief -> priorities -> value vs effort -> matrix -> moves -> outputs",
+      "bubbles": [
+        {
+          "label": "AI support pilot",
+          "value": 5,
+          "effort": 2,
+          "recommendation": "pursue"
+        },
+        {
+          "label": "New data platform",
+          "value": 5,
+          "effort": 5,
+          "recommendation": "pursue"
+        },
+        {
+          "label": "Report cleanup",
+          "value": 2,
+          "effort": 2,
+          "recommendation": "defer"
+        },
+        {
+          "label": "Full ERP migration",
+          "value": 2,
+          "effort": 5,
+          "recommendation": "drop"
+        }
+      ]
+    },
+    "ambitionDecomposerLibraryGraphic": {
+      "titleProcess": "How Ambition Decomposer breaks an ambition into measurable themes",
+      "titleExample": "Example: one ambition decomposed into strategic themes with targets and horizon",
+      "subtitleProcess": "This is not a statement on a slide. We sharpen the ambition first, decompose it into strategic themes, give each a measurable target and horizon, and weight them by importance.",
+      "subtitleExample": "This case shows that an ambition is not a slogan. We first name it in a single sentence, then decompose it into strategic themes, each with a measurable target and a time horizon.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts from a single ambition sentence, scope, and success signal. Without that, themes are detached from what we actually want to achieve.",
+      "scenarioValueExample": "The board wants to \"be the AI leader in the industry,\" but nobody knows what that means in numbers or by when. The ambition is too vague to plan.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "The ambition decomposed into strategic themes, each with a target, metric, and horizon, sorted by importance and ready for downstream work.",
+      "decisionValueExample": "Into which measurable themes must we decompose the ambition so it can be planned and held accountable?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        [
+          "Ambition",
+          "One sentence + scope + success signal",
+          "bg-violet-500"
+        ],
+        [
+          "Signals",
+          "What drives and constrains the ambition",
+          "bg-violet-500"
+        ],
+        [
+          "Themes",
+          "Decompose into strategic themes",
+          "bg-indigo-500"
+        ],
+        [
+          "Targets & horizon",
+          "Metric, target value, and time window",
+          "bg-sky-500"
+        ],
+        [
+          "Moves & outputs",
+          "Priorities, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
+      ],
+      "cascadeTitle": "Ambition cascade",
+      "cascadeHint": "Themes by horizon",
+      "legendTitle": "Theme importance",
+      "legend": [
+        [
+          "high",
+          "High importance"
+        ],
+        [
+          "medium",
+          "Medium importance"
+        ],
+        [
+          "low",
+          "Low importance"
+        ]
+      ],
+      "horizonLabels": {
+        "short": "Short",
+        "medium": "Medium",
+        "long": "Long"
+      },
+      "ambition": "AI leader in the industry by 2028",
+      "ambitionWord": "Ambition",
+      "footer": "Ambition Decomposer = ambition -> signals -> themes -> targets & horizon -> moves -> outputs",
+      "themes": [
+        {
+          "title": "AI-ready data",
+          "target": "90% data cataloged",
+          "horizon": "short",
+          "importance": "high"
+        },
+        {
+          "title": "Team capability",
+          "target": "40 people upskilled",
+          "horizon": "short",
+          "importance": "medium"
+        },
+        {
+          "title": "AI-powered products",
+          "target": "3 use-cases live",
+          "horizon": "medium",
+          "importance": "high"
+        },
+        {
+          "title": "Process automation",
+          "target": "25% ops cost cut",
+          "horizon": "medium",
+          "importance": "medium"
+        },
+        {
+          "title": "New revenue models",
+          "target": "15% revenue from AI",
+          "horizon": "long",
+          "importance": "high"
+        },
+        {
+          "title": "Partner ecosystem",
+          "target": "2 strategic alliances",
+          "horizon": "long",
+          "importance": "low"
+        }
+      ]
+    },
+    "valueChainLibraryGraphic": {
+      "titleProcess": "How Value Chain moves from activities to margin",
+      "titleExample": "Example: from value chain to margin levers",
+      "subtitleProcess": "This is not a static nine-box schema. First we frame the scope and position, map primary and support activities, score their role in margin, and translate it into levers and initiatives.",
+      "subtitleExample": "This case shows that a Porter value chain is not a decorative diagram. It maps activities first, scores their cost and value contribution, and only then builds margin levers and moves.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with industry, chain scope, company position (cost vs differentiation), and the decision question. Without that, the activity map stays abstract.",
+      "scenarioValueExample": "A component manufacturer wants to improve margin without raising prices. The real question is which activities create value and which drain it faster than differentiation can add it.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "Each activity's role in margin, cost and differentiation levers, and outputs ready for downstream work.",
+      "decisionValueExample": "Where does margin truly get created and lost along the value chain?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        [
+          "Brief",
+          "Industry, chain scope, position, decision",
+          "bg-sky-500"
+        ],
+        [
+          "Activities",
+          "Map 5 primary + 4 support",
+          "bg-sky-500"
+        ],
+        [
+          "Contribution",
+          "Cost, value, and margin role per activity",
+          "bg-blue-500"
+        ],
+        [
+          "Levers",
+          "Where to cut cost, where to raise value",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Moves, initiatives, report, deck, or idea",
+          "bg-emerald-500"
+        ]
+      ],
+      "chainTitle": "Value chain",
+      "support": "Support activities",
+      "primary": "Primary activities",
+      "supportItems": [
+        "Firm infrastructure",
+        "HR management",
+        "Technology",
+        "Procurement"
+      ],
+      "primaryItems": [
+        "Inbound logistics",
+        "Operations",
+        "Outbound logistics",
+        "Marketing & sales",
+        "Service"
+      ],
+      "margin": "Margin",
+      "legendTitle": "Margin role",
+      "legend": [
+        [
+          "creator",
+          "Creates margin"
+        ],
+        [
+          "neutral",
+          "Neutral"
+        ],
+        [
+          "drain",
+          "Drains margin"
+        ]
+      ],
+      "footer": "Value Chain = brief -> activities -> contribution -> levers -> moves -> outputs",
+      "legendHint": "each activity's color shows whether it creates, is neutral to, or drains margin. Size and annotations follow cost and value contribution."
+    },
+    "dynamicSwotLibraryGraphic": {
+      "titleProcess": "How Dynamic SWOT moves from question to decision",
+      "titleExample": "Example: from a leadership question to a logical move sequence",
+      "subtitleProcess": "This is not a standard 2x2 table. First we frame the decision and structure evidence, then build the matrix, interpret the tensions, and only then move into actions and outputs.",
+      "subtitleExample": "This case shows that a strong SWOT session does not stop at naming four quadrants. It frames the decision first, structures the evidence next, and only then builds tension, moves, and board-ready material.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "Dynamic SWOT starts with the strategic question, scope, success signal, and constraints. Without that, the next steps collapse into disconnected opinions.",
+      "scenarioValueExample": "After a margin decline, Ateliertoy is considering automation. The real question is whether to buy technology now or first understand where value is leaking and which processes block scale.",
+      "flow": "Work spine",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "A shared diagnosis, strategic tensions, recommended moves, and material ready for reports, decks, and initiatives.",
+      "decisionValueExample": "Where should the transformation start: CAPEX first or diagnosis first?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stagesSubtitle": "Each step moves the user to a different level of decision quality.",
+      "signals": "Factor matrix",
+      "matrixLead": "The matrix organizes the signals, but it is not the finish line. Each card should be short, concrete, sourced, and relevant to the strategic choice.",
+      "matrixNote": "A strong matrix does not collect everything. It keeps only the factors that truly move the strategic choice.",
+      "tensionPanel": "Strategic tension",
+      "tensionLead": "The key point where advantage collides with a constraint or a risk.",
+      "moves": "Recommended move",
+      "movesLead": "A move must emerge from the tension, not from analyst instinct.",
+      "outputsPanelTitle": "Bridge to outputs",
+      "outputsLead": "The result of the session must be usable by management and by downstream execution.",
+      "stage1": "Mission brief",
+      "stage1Value": "Goal, scope, success signal, constraints",
+      "stage2": "Evidence map",
+      "stage2Value": "Facts, observations, and hypotheses from inside the company and the market",
+      "stage3": "SWOT build",
+      "stage3Value": "S/W/O/T cards with confidence and source",
+      "stage4": "Strategic tensions",
+      "stage4Value": "Where advantage collides with constraint or risk",
+      "stage5": "Recommended moves",
+      "stage5Value": "What to do now, what to delay, what to validate next",
+      "stage4Badge": "Insight",
+      "stage5Badge": "Decision",
+      "strengths": "Strengths",
+      "weaknesses": "Weaknesses",
+      "opportunities": "Opportunities",
+      "threats": "Threats",
+      "strengthsHint": "Internal advantage",
+      "weaknessesHint": "Internal gap",
+      "opportunitiesHint": "External upside",
+      "threatsHint": "External risk",
+      "strengthItemsExample": [
+        "Strong brand and trusted B2B position",
+        "In-house manufacturing and IP control"
+      ],
+      "strengthItemsProcess": [
+        "internal factors that strengthen the company position and support the decision objective",
+        "what the organization already has, knows, or controls and can deliberately build on"
+      ],
+      "weaknessItemsExample": [
+        "Intuition-driven decisions",
+        "No shared view of losses and priorities"
+      ],
+      "weaknessItemsProcess": [
+        "internal factors that reduce execution quality, business performance, or decision strength",
+        "gaps, inconsistencies, or constraints that make the objective harder to achieve"
+      ],
+      "opportunityItemsExample": [
+        "Digital diagnosis before investments",
+        "Data and software layer as a new lever"
+      ],
+      "opportunityItemsProcess": [
+        "external factors that may create room for growth, stronger positioning, or new advantage",
+        "changes in the market or environment that should be captured before competitors do"
+      ],
+      "threatItemsExample": [
+        "Price pressure and rising costs",
+        "Risk of burning CAPEX on the wrong problem"
+      ],
+      "threatItemsProcess": [
+        "external factors that may weaken the result, narrow the choice, or undermine the plan",
+        "pressures and risks in the environment that require protection, response, or a change of pace"
+      ],
+      "tensionItems": [
+        "The company has real assets, but no shared diagnosis of where money is leaking today.",
+        "Automation looks attractive, but without process truth it may only accelerate chaos."
+      ],
+      "moveItems": [
+        "First map value leakage, bottlenecks, and data blind spots.",
+        "Only then sequence the roadmap: data -> automation -> investment governance.",
+        "Close the result in board-ready material, not in a long list of observations."
+      ],
+      "outputItems": [
+        "Executive summary of the situation",
+        "90-day priorities",
+        "Report / deck / initiative"
+      ],
+      "legend": "Dynamic SWOT = brief -> evidence -> matrix -> tension -> move -> output"
+    },
+    "toolSessionPreviewV3": {
+      "intentExecBrief": "Executive brief",
+      "intentKeyRisks": "Key risks",
+      "intentInitiativeAngles": "Initiative angles"
+    },
+    "toolWorkspace": {
+      "dodNotSatisfied": "DoD not satisfied",
+      "reviewRequested": "Review requested",
+      "toolApproved": "Tool approved",
+      "sentBackToDraft": "Sent back to draft",
+      "permissionDenied": "Permission denied",
+      "generatedInitiatives": "Generated initiatives",
+      "loadingTool": "Loading tool…",
+      "requestReviewTitle": "Request review",
+      "requestReviewSubtitle": "Check completeness and confirm sending to review.",
+      "noDodGaps": "No DoD gaps.",
+      "gapsLabel": "Gaps",
+      "decisionOwner": "Decision Owner",
+      "optional": "(optional)",
+      "selectPlaceholder": "-- Select --",
+      "dueDate": "Due date",
+      "priority": "Priority",
+      "priorityLow": "Low",
+      "priorityMedium": "Medium",
+      "priorityHigh": "High",
+      "priorityCritical": "Critical",
+      "cancel": "Cancel",
+      "sendToReview": "Send to review"
+    },
+    "toolReviewPanel": {
+      "strengths": "Strengths",
+      "weaknesses": "Weaknesses",
+      "opportunities": "Opportunities",
+      "threats": "Threats",
+      "correlations": "Correlations",
+      "attractiveness": "Attractiveness",
+      "competitiveIntensity": "Competitive intensity",
+      "penetration": "Penetration",
+      "marketDev": "Market dev.",
+      "productDev": "Product dev.",
+      "diversification": "Diversification",
+      "initiatives": "Initiatives",
+      "signals": "Signals",
+      "assumptions": "Assumptions",
+      "risks": "Risks",
+      "scenarios": "Scenarios",
+      "moves": "Moves",
+      "sections": "Sections",
+      "items": "Items",
+      "reviewTitle": "Review",
+      "summaryTitle": "Summary",
+      "gapsTitle": "Gaps",
+      "noGapsReady": "No gaps. Ready to approve.",
+      "generateInitiativesTitle": "Generate initiatives",
+      "methodology": "Methodology",
+      "count": "Count",
+      "configure": "Configure",
+      "decisionGatesTitle": "Decision gates",
+      "comment": "Comment",
+      "sendBackReasonPlaceholder": "Reason for sending back",
+      "confirmApproval": "I confirm approval",
+      "approve": "Approve",
+      "sendBackToDraft": "Send back to Draft"
+    },
+    "knownToolPreviewV3": {
+      "intentWhenToUse": "When to use",
+      "intentFirstSteps": "First steps",
+      "intentCommonMistakes": "Common mistakes",
+      "hintMistakes": "Mistakes",
+      "toolInPreparation": "Tool in preparation.",
+      "dependsOnTool": "Depends on the tool",
+      "sessionAssistantModerator": "Session assistant and moderator",
+      "dependsOnScope": "Depends on scope",
+      "goal": "Goal",
+      "outcome": "Outcome",
+      "aiRole": "AI Role",
+      "duration": "Duration",
+      "aiUnavailable": "AI unavailable",
+      "categoryStrategy": "Strategy",
+      "categoryOperations": "Operations",
+      "categoryDigital": "Digital",
+      "categoryTool": "Tool",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "startSession": "Start session",
+      "chat": "Chat",
+      "loadingEllipsis": "Loading…",
+      "toolNotActiveYet": "This tool is not active yet. You can see the description, but cannot open the full view or start a session.",
+      "snippets": {
+        "dynamic-swot": {
+          "goal": "Turns a fragmented strategic conversation into a decision-grade diagnosis backed by evidence.",
+          "outcome": "Decision frame, strategic tensions, recommended moves, and source material.",
+          "team": "C-level / owners, strategy lead or COO",
+          "aiRole": "Session moderator, evidence analyst, tension & recommendation generator",
+          "duration": "60-90 min"
+        },
+        "market-forces": {
+          "goal": "Turns market and interview context into a read on competitive pressure, defensibility, and margin pressure.",
+          "outcome": "Five Forces scorecard, strategic implications, recommended moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, commercial lead, or market owner",
+          "aiRole": "Market analyst, evidence moderator, and proposal generator for approval",
+          "duration": "60-90 min"
+        },
+        "growth-paths": {
+          "goal": "Turns growth ambition and interview signals into Ansoff options and a decision sequence.",
+          "outcome": "Option matrix, trade-off comparison, recommended moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, commercial lead, or growth owner",
+          "aiRole": "Growth evidence moderator, option generator, and move-sequencing consultant",
+          "duration": "60-90 min"
+        },
+        "portfolio-priority": {
+          "goal": "Turns organization and interview context into decisions on which portfolio items to fund, test, maintain, or stop.",
+          "outcome": "BCG matrix, resource allocation trade-offs, recommended moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, product lead, CFO, or portfolio owner",
+          "aiRole": "Portfolio analyst, card proposal generator, and resource allocation consultant",
+          "duration": "60-90 min"
+        },
+        "risk-uncertainty": {
+          "goal": "Turns decision context and interview signals into an assumption, risk, and scenario map.",
+          "outcome": "Assumptions to validate, risks, scenarios, resilience moves, and initiative candidates.",
+          "team": "Leadership, strategy lead, transformation lead, PMO, or risk owner",
+          "aiRole": "Risk analyst, card proposal generator, and resilience consultant",
+          "duration": "60-90 min"
+        }
+      }
+    },
+    "toolContextPanel": {
+      "coach": {
+        "mission": {
+          "nextQuestion": "What concrete decision should this session unlock?",
+          "whyNow": "Without a sharp question, AI will produce generic guidance instead of decision support."
+        },
+        "input": {
+          "nextQuestion": "Which evidence is still missing so the SWOT is not built on opinions?",
+          "whyNow": "This is the moment for signal hygiene: source, evidence type, confidence, and gaps."
+        },
+        "swot": {
+          "nextQuestion": "Which cards are accepted, and which ones are still only AI proposals?",
+          "whyNow": "The matrix should be a synthesis layer, not a dump of all notes."
+        },
+        "insights": {
+          "nextQuestion": "Which tension or trade-off truly requires a strategic move now?",
+          "whyNow": "This is where the tool stops being a table and becomes decision material."
+        },
+        "outputs": {
+          "nextQuestion": "What is ready for an initiative, and what still needs a deck or more evidence?",
+          "whyNow": "The tool’s final value depends on the quality of the bridge to outputs."
+        },
+        "fallback": {
+          "nextQuestion": "What is the most important gap right now?",
+          "whyNow": "The AI panel shows the next best move."
+        }
+      },
+      "aiReviewingPhase": "AI reviews the current tool phase, data completeness, and readiness to move into outputs.",
+      "reviewGeneratedInitiatives": "Review which generated initiatives should move into the execution portfolio.",
+      "aiWorkspaceTitle": "AI workspace for this session",
+      "aiWorkspaceSubtitle": "All AI hints, recommendations, and rationale live here. The panel no longer takes width away from the tool canvas.",
+      "openChat": "Open chat",
+      "clarifyMissingInputs": "Clarify missing inputs, accept useful AI cards, and move into output synthesis.",
+      "organizationContext": "Organization context",
+      "noOrganizationProfile": "No organization profile",
+      "aiRationale": "AI rationale: recommendations should be interpreted through the organization, current context, and session goal, not as a generic best-practice list.",
+      "aiProposalQueue": "AI proposal queue",
+      "signals": "Signals",
+      "cards": "Cards",
+      "tensions": "Tensions",
+      "outputs": "Outputs",
+      "qualityGaps": "Quality gaps",
+      "noCriticalInputGaps": "No critical input gaps.",
+      "sessionState": "Session state",
+      "missingIndustry": "Missing industry",
+      "missingGeographicScope": "Missing geographic scope",
+      "workWithAi": "Work with AI",
+      "workingMode": "Working mode",
+      "workingModeDescription": "On the left you see the first framing draft prepared by the consultant. Here you can redirect the angle, sharpen the emphasis, or move forward to generate the full session.",
+      "workingNoteForAi": "Working note for AI",
+      "workingNotePlaceholder": "E.g. we are over-weighting margin; add the German market perspective and frame this more like a leadership decision.",
+      "takeToAiChat": "Take this to AI chat",
+      "quickRefinementAngles": "Quick refinement angles",
+      "refinementAngleOptions": [
+        "Sharpen the strategic thesis",
+        "Add market context",
+        "Show bigger risks",
+        "Make it more board-ready"
+      ],
+      "moveToFullSession": "Move to full session",
+      "moveToFullSessionDescription": "If the framing on the left is strong enough, AI will prepare the remaining parts of the session: input map, SWOT matrix, tensions, moves, and outputs.",
+      "aiBuildingSession": "AI is building the full session...",
+      "acceptFramingGenerate": "Accept this framing and generate next",
+      "aiCollaborationPanel": "AI Collaboration Panel",
+      "aiPreparingSession": "AI is preparing your session...",
+      "aiPreparingSessionDescription": "AI consultant is generating a full proposal: signals, SWOT matrix, tensions, strategic moves, and output proposals.",
+      "aiProposals": "AI Proposals",
+      "toReview": "to review",
+      "swotCards": "SWOT cards",
+      "moves": "Moves",
+      "accepted": "accepted",
+      "readiness": "Readiness",
+      "ready": "ready",
+      "needsWork": "needs work",
+      "aiCoachBrief": "AI coach brief",
+      "panelShowsNextMove": "This panel shows the next best move and quality gaps for the current phase.",
+      "nextQuestion": "Next question",
+      "whyNow": "Why now:",
+      "proposalQueue": "Proposal queue",
+      "noUnacceptedProposals": "No unaccepted AI proposals.",
+      "missingEvidence": "Missing evidence",
+      "sessionCounters": "Session counters",
+      "acceptedCards": "Accepted cards",
+      "proposals": "Proposals",
+      "readyOutputs": "Ready outputs",
+      "outputRoutes": "Output routes",
+      "open": "Open",
+      "noOutputCandidates": "No output candidates yet.",
+      "generatedFromThisTool": "Generated from this tool",
+      "recentInitiatives": "Recent initiatives"
+    },
+    "toolCanvas": {
+      "stepBeingPrepared": "This step is being prepared",
+      "stepBeingPreparedDescription": "Head back to the summary to continue and generate initiatives."
+    },
+    "toolDocumentView": {
+      "priorityHintHigh": "Requires immediate attention",
+      "priorityHintLow": "Informational comment",
+      "priorityHintNormal": "Standard comment",
+      "pDFExported": "PDF exported",
+      "pDFExportFailed": "PDF export failed",
+      "failedToLoadSession": "Failed to load session",
+      "failedToCreateSession": "Failed to create session",
+      "saved": "Saved",
+      "saveFailed": "Save failed",
+      "completeAllRequiredItemsFirst": "Complete all required items first",
+      "sentToReview": "Sent to review",
+      "approved": "Approved",
+      "reasonForSendingBack": "Reason for sending back:",
+      "sentBackToDraft": "Sent back to draft",
+      "permissionDenied": "Permission denied",
+      "initiativesGenerated": "Initiatives generated",
+      "aIGenerationFinished": "AI generation finished",
+      "aIGenerationFailed": "AI generation failed",
+      "commentAdded": "Comment added",
+      "failedToAddComment": "Failed to add comment",
+      "commentDeleted": "Comment deleted",
+      "failedToDeleteComment": "Failed to delete comment",
+      "created": "Created",
+      "comment": "Comment",
+      "review": "Review",
+      "entryPurpose": "Entry & purpose",
+      "conversationCapture": "Conversation & capture",
+      "analysis": "Analysis",
+      "conclusionsSummary": "Conclusions & summary",
+      "visibleHumanAILoop": "Visible human + AI loop",
+      "currentStage": "Current stage",
+      "analysisBenchmarking": "Analysis & benchmarking",
+      "conclusionsFinalSummary": "Conclusions & final summary",
+      "noSessionData": "No session data",
+      "previous": "Previous",
+      "step": "Step",
+      "next": "Next",
+      "appliedConclusionsReadiness": "Applied conclusions & readiness",
+      "status": "Status",
+      "progress": "Progress",
+      "created2": "Created",
+      "lastModified": "Last modified",
+      "appliedConclusions": "Applied conclusions",
+      "finalSourceSummary": "Final source summary",
+      "missingItems": "Missing items",
+      "generationSettings": "Generation settings",
+      "methodology": "Methodology",
+      "initiativesCount": "Initiatives count",
+      "includeChatContext": "Include chat context",
+      "gateDecisions": "Gate decisions",
+      "sourceArtifact": "Source artifact",
+      "outputContract": "Output contract",
+      "initiativesFromThisSession": "Initiatives from this session",
+      "generatedInitiatives": "Generated initiatives",
+      "noInitiativesGeneratedYet": "No initiatives generated yet",
+      "recommendedMoves": "Recommended moves",
+      "noMovesGeneratedYet": "No moves generated yet.",
+      "outputCandidates": "Output candidates",
+      "noOutputCandidatesYet": "No output candidates yet.",
+      "aIConsultantFlow": "AI consultant flow",
+      "previous2": "Previous",
+      "backlinks": "Backlinks",
+      "noLinksYet": "No links yet",
+      "requestReview": "Request Review",
+      "approveThisSession": "Approve this session",
+      "approve": "Approve",
+      "sendBackToDraftWithAComment": "Send back to draft with a comment",
+      "sendBack": "Send back",
+      "generateInitiatives": "Generate initiatives",
+      "loading": "Loading...",
+      "requestReview2": "Request review",
+      "decisionOwner": "Decision owner",
+      "select": "-- Select --",
+      "dueDate": "Due date",
+      "priority": "Priority",
+      "cancel": "Cancel",
+      "sendReview": "Send review",
+      "sessionVisibilityDescription": "The session should keep the decision question, evidence quality, synthesis layer, and output readiness visible without hiding AI work.",
+      "readyStatus": "Ready",
+      "needsWorkStatus": "Needs work",
+      "appliedConclusionsSectionDescription": "This section turns analysis into applied conclusions and checks whether the session is source-grade enough for a report, presentation, initiative, or idea.",
+      "lifecycleActionsHint": "Session lifecycle actions live in Menu 3 on the right: Request Review, Approve, Send back, and Generate initiatives.",
+      "outputHintInitiative": "For moves or conclusions ready for execution.",
+      "outputHintReport": "For a final source summary ready to be reviewed.",
+      "outputHintPresentation": "For visual communication without rebuilding the narrative.",
+      "outputHintIdea": "For promising hypotheses or directions that need further work.",
+      "groupLabels": [
+        "Session",
+        "Analysis",
+        "Outputs",
+        "Collaboration",
+        "Records"
+      ],
+      "finish": "Finish",
+      "nextStep": "Next",
+      "requestReviewTitleReady": "Request review for this session",
+      "requestReviewTitleNotReady": "Complete required items before review",
+      "generateInitiativesTitle": "Generate initiatives from approved session",
+      "configureDecisionOwnerHint": "Configure decision owner and review due date."
+    },
+    "knownToolDetailView": {
+      "thisToolIsNotActiveYet": "This tool is not active yet.",
+      "toolSessionCreated": "Tool session created",
+      "learnTheTool": "Learn the tool",
+      "case": "Case",
+      "context": "Context: ",
+      "question": "Question: ",
+      "evidence": "Evidence: ",
+      "aIDraft": "AI draft: ",
+      "afterApproval": "After approval: ",
+      "outcome": "Outcome: ",
+      "toolPositioning": "Tool positioning",
+      "whatTheToolActuallyDoes": "What the tool actually does",
+      "whatThisToolIsNot": "What this tool is not",
+      "whenToUse": "When to use",
+      "whenNotToStartWithSWOT": "When not to start with SWOT",
+      "whatToPrepareBeforeStarting": "What to prepare before starting",
+      "missionBrief": "Mission Brief",
+      "signalsEvidence": "Signals & evidence",
+      "matrixBuild": "Matrix build",
+      "strategicTensions": "Strategic tensions",
+      "movesOutputs": "Moves & outputs",
+      "workLogic": "Work logic",
+      "4CommonDecisionSituations": "4 common decision situations",
+      "workingNotes": "Working notes",
+      "whatTheSessionProduces": "What the session produces",
+      "contains": "Contains",
+      "whyItMatters": "Why it matters",
+      "enablesNext": "Enables next",
+      "whatAStrongOutcomeLooksLike": "What a strong outcome looks like",
+      "example": "Example",
+      "situationAndDecisionQuestion": "Situation and decision question",
+      "keyInputSignals": "Key input signals",
+      "howTheMatrixLooks": "How the matrix looks",
+      "tensionAndInterpretation": "Tension and interpretation",
+      "recommendedMoves": "Recommended moves",
+      "outputsFromTheSession": "Outputs from the session",
+      "aIPhilosophy": "AI philosophy",
+      "whyUseIt": "Why use it",
+      "approvedBCGPortfolioMatrix": "Approved BCG portfolio matrix"
+    }
   }
 }
