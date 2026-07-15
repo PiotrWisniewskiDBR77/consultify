@@ -2442,7 +2442,10 @@
       "assignee": "Przypisany",
       "decider": "Decydent",
       "noStakeholdersAssigned": "Brak przypisanych interesariuszy",
-      "whyYouGotIt": "Dlaczego to dostałeś"
+      "whyYouGotIt": "Dlaczego to dostałeś",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
@@ -2881,7 +2884,10 @@
       "emptyState": {
         "title": "Brak powiadomień",
         "description": "Wszystko na bieżąco!"
-      }
+      },
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
     },
     "decisionDetail": {
       "language": "pl",

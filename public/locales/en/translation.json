@@ -3296,7 +3296,10 @@
       "assignee": "Assignee",
       "decider": "Decider",
       "noStakeholdersAssigned": "No stakeholders assigned",
-      "whyYouGotIt": "Why you got it"
+      "whyYouGotIt": "Why you got it",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     },
     "projects": {
       "failedToLoadProjects": "Failed to load projects",
@@ -3735,7 +3738,10 @@
       "emptyState": {
         "title": "No notifications",
         "description": "You're all caught up!"
-      }
+      },
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     },
     "decisionDetail": {
       "language": "en",

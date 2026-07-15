@@ -104,7 +104,7 @@ interface NotificationsContentProps {
 }
 
 // Format relative time
-const formatRelativeTime = (dateString: string, isPolish: boolean = false): string => {
+const formatRelativeTime = (dateString: string, _isPolish: boolean = false): string => {
   if (!dateString) return i18n.t('myWork.notificationsContent.recently', 'Recently');
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return i18n.t('myWork.notificationsContent.recently2', 'Recently');
@@ -116,9 +116,10 @@ const formatRelativeTime = (dateString: string, isPolish: boolean = false): stri
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffMins < 1) return i18n.t('myWork.notificationsContent.justNow', 'Just now');
-  if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
-  if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
-  if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
+  if (diffMins < 60) return i18n.t('myWork.notificationsContent.minutesAgo', { count: diffMins });
+  if (diffHours < 24)
+    return i18n.t('myWork.notificationsContent.hoursAgo', { count: diffHours });
+  if (diffDays < 7) return i18n.t('myWork.notificationsContent.daysAgo', { count: diffDays });
   return date.toLocaleDateString(
     i18n.t('myWork.notificationsContent.dateToLocaleDateString', 'en-US')
   );

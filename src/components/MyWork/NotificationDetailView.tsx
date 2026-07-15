@@ -973,9 +973,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return t('myWork.notificationDetail.justNow', 'Just now');
-    if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
-    if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
-    if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
+    if (diffMins < 60) return t('myWork.notificationDetail.minutesAgo', { count: diffMins });
+    if (diffHours < 24) return t('myWork.notificationDetail.hoursAgo', { count: diffHours });
+    if (diffDays < 7) return t('myWork.notificationDetail.daysAgo', { count: diffDays });
 
     return date.toLocaleDateString(t('myWork.notificationDetail.dateToLocaleDateString', 'en-US'), {
       year: 'numeric',
