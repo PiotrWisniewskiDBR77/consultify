@@ -30,6 +30,11 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
@@ -610,6 +615,168 @@ export const APIManagementView: React.FC = () => {
     totalUsage: apiKeys.reduce((sum, k) => sum + k.usageCount, 0),
   };
 
+  const keyColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'key',
+        label: 'Key',
+        render: (row: TableRow) => {
+          const key = row.__key as APIKey;
+          return (
+            <div>
+              <div className="font-medium text-slate-900 dark:text-white">{key.name}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <code className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                  {key.keyPrefix}...
+                </code>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    key.keyType === 'org'
+                      ? 'bg-primary-500/10 text-primary-600'
+                      : key.keyType === 'service'
+                        ? 'bg-blue-500/10 text-blue-600'
+                        : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  {(key.keyType || 'org').toUpperCase()}
+                </span>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'organization',
+        label: 'Organization',
+        render: (row: TableRow) => {
+          const key = row.__key as APIKey;
+          return (
+            <span className="text-sm text-slate-700 dark:text-slate-300">
+              {key.organizationName ||
+                organizations.find((o) => o.id === key.organizationId)?.name ||
+                'Unknown'}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'scopes',
+        label: 'Scopes',
+        render: (row: TableRow) => {
+          const key = row.__key as APIKey;
+          return (
+            <div className="flex flex-wrap gap-1 max-w-xs">
+              {key.scopes.slice(0, 3).map((scope) => (
+                <span
+                  key={scope}
+                  className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400"
+                >
+                  {scope}
+                </span>
+              ))}
+              {key.scopes.length > 3 && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
+                  +{key.scopes.length - 3} more
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'usage',
+        label: 'Usage',
+        render: (row: TableRow) => {
+          const key = row.__key as APIKey;
+          return (
+            <div className="text-sm">
+              <div className="font-medium text-slate-900 dark:text-white">
+                {key.usageCount.toLocaleString()}
+              </div>
+              {key.lastUsedAt && (
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Last: {formatDate(key.lastUsedAt)}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => {
+          const key = row.__key as APIKey;
+          return (
+            <>
+              {key.isActive ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600">
+                  <CheckCircle2 size={12} />
+                  Active
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-danger-500/10 text-danger-600">
+                  <XCircle size={12} />
+                  Revoked
+                </span>
+              )}
+              {key.expiresAt &&
+                !Number.isNaN(new Date(key.expiresAt).getTime()) &&
+                new Date(key.expiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 ml-1">
+                    <Clock size={12} />
+                    Expiring soon
+                  </span>
+                )}
+            </>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => {
+          const key = row.__key as APIKey;
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => handleViewUsage(key.id)}
+                aria-label={`View usage for API key ${key.id}`}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                title="View Usage"
+              >
+                <BarChart3 size={16} className="text-slate-600 dark:text-slate-500" />
+              </button>
+              {key.isActive && (
+                <button
+                  onClick={() => setKeyPendingRevoke(key)}
+                  aria-label={`Revoke API key ${key.id}`}
+                  className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
+                  title="Revoke Key"
+                >
+                  <Trash2 size={16} className="text-danger-400" />
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [organizations]
+  );
+
+  const keyRows: TableRow[] = React.useMemo(
+    () =>
+      apiKeys.map((key) => ({
+        id: key.id,
+        name: key.name,
+        __key: key,
+      })),
+    [apiKeys]
+  );
+
   const renderKeysTab = () => (
     <div className="space-y-6">
       {/* Newly Created Key Alert */}
@@ -728,152 +895,17 @@ export const APIManagementView: React.FC = () => {
 
           {/* Keys Table */}
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-            >
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700">
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Key
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Organization
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Scopes
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Usage
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-                {apiKeys.map((key) => (
-                  <tr key={key.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-medium text-slate-900 dark:text-white">{key.name}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <code className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                            {key.keyPrefix}...
-                          </code>
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                              key.keyType === 'org'
-                                ? 'bg-primary-500/10 text-primary-600'
-                                : key.keyType === 'service'
-                                  ? 'bg-blue-500/10 text-blue-600'
-                                  : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
-                            }`}
-                          >
-                            {(key.keyType || 'org').toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {key.organizationName ||
-                          organizations.find((o) => o.id === key.organizationId)?.name ||
-                          'Unknown'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {key.scopes.slice(0, 3).map((scope) => (
-                          <span
-                            key={scope}
-                            className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400"
-                          >
-                            {scope}
-                          </span>
-                        ))}
-                        {key.scopes.length > 3 && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
-                            +{key.scopes.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="font-medium text-slate-900 dark:text-white">
-                          {key.usageCount.toLocaleString()}
-                        </div>
-                        {key.lastUsedAt && (
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
-                            Last: {formatDate(key.lastUsedAt)}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {key.isActive ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600">
-                          <CheckCircle2 size={12} />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-danger-500/10 text-danger-600">
-                          <XCircle size={12} />
-                          Revoked
-                        </span>
-                      )}
-                      {key.expiresAt &&
-                        !Number.isNaN(new Date(key.expiresAt).getTime()) &&
-                        new Date(key.expiresAt) <
-                          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 ml-1">
-                            <Clock size={12} />
-                            Expiring soon
-                          </span>
-                        )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleViewUsage(key.id)}
-                          aria-label={`View usage for API key ${key.id}`}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                          title="View Usage"
-                        >
-                          <BarChart3 size={16} className="text-slate-600 dark:text-slate-500" />
-                        </button>
-                        {key.isActive && (
-                          <button
-                            onClick={() => setKeyPendingRevoke(key)}
-                            aria-label={`Revoke API key ${key.id}`}
-                            className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
-                            title="Revoke Key"
-                          >
-                            <Trash2 size={16} className="text-danger-400" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {apiKeys.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="text-slate-500 dark:text-slate-400">
-                        <KeyRound size={40} className="mx-auto mb-3 opacity-30" />
-                        <p className="font-medium">No API keys created yet</p>
-                        <p className="text-sm">
-                          Create your first API key to enable programmatic access
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <StandardTable
+              columns={keyColumns}
+              data={keyRows}
+              empty={{
+                title: 'No API keys created yet',
+                description: 'Create your first API key to enable programmatic access',
+                icon: KeyRound,
+              }}
+              persistKey="superadmin.apiKeys"
+              canvasClassName="p-0"
+            />
           </div>
         </>
       )}
