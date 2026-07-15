@@ -1,0 +1,309 @@
+/**
+ * Agent Plan Routes Unit Tests (HP-4 fundament — "Uruchom agenta z Teresy").
+ *
+ * Router: server/src/routes/ai/agent-plan.routes.ts. Thin delegation layer
+ * over the existing `agentPlannerService` (kręgosłup, migracja 672) — this
+ * test mocks that service + the background queue + the manifest catalog so
+ * it verifies ROUTING/AUTH/ORG-SCOPE behaviour without touching a live DB,
+ * consistent with `tests/unit/backend/agentManifests.routes.test.ts`.
+ */
+import express, { type Express } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req: any, _res: any, next: any) => {
+    req.userId = 'test-user';
+    req.organizationId = 'test-org';
+    req.user = { id: 'test-user', organizationId: 'test-org', role: 'member' };
+    next();
+  },
+  isAuthenticated: (_req: any, _res: any, next: any) => next(),
+}));
+
+const createPlan = vi.fn();
+const getPlan = vi.fn();
+const approveStep = vi.fn();
+const cancelPlan = vi.fn();
+const listPlans = vi.fn();
+
+vi.mock('../../../server/src/services/ai/agentPlannerService.js', () => ({
+  agentPlannerService: { createPlan, getPlan, approveStep, cancelPlan, listPlans },
+}));
+
+const getDiscoveryAgentManifest = vi.fn();
+vi.mock('../../../server/src/services/ai/agentRuntime/discoveryAgentManifestCatalog.js', () => ({
+  getDiscoveryAgentManifest,
+}));
+
+const queueAdd = vi.fn();
+vi.mock('../../../server/src/queues/aiQueue.js', () => ({
+  default: { add: queueAdd },
+}));
+
+const { default: agentPlanRoutes } = await import(
+  '../../../server/src/routes/ai/agent-plan.routes.js'
+);
+
+function createApp(): Express {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/ai/agent-plan', agentPlanRoutes);
+  return app;
+}
+
+const basePlan = (overrides: Partial<Record<string, unknown>> = {}) => ({
+  id: 'plan-1',
+  organizationId: 'test-org',
+  userId: 'test-user',
+  title: 'Test plan',
+  status: 'planning',
+  steps: [
+    { id: 's1', stepIndex: 0, toolName: 'search_web', toolInput: {}, status: 'pending', requiresApproval: false },
+  ],
+  totalSteps: 1,
+  completedSteps: 0,
+  currentStepIndex: 0,
+  isBackground: true,
+  createdAt: new Date().toISOString(),
+  ...overrides,
+});
+
+describe('Agent Plan Routes (HP-4 fundament)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('POST /', () => {
+    it('creates a plan via agentPlannerService and attempts background dispatch', async () => {
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({
+          title: 'Test plan',
+          steps: [{ toolName: 'search_web', toolInput: { query: 'x' } }],
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.plan).toEqual(plan);
+      expect(res.body.dispatch).toBe('enqueued');
+      expect(createPlan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'test-org',
+          userId: 'test-user',
+          title: 'Test plan',
+          isBackground: true,
+          steps: [{ toolName: 'search_web', toolInput: { query: 'x' } }],
+        })
+      );
+      expect(queueAdd).toHaveBeenCalledWith(
+        'AGENT_BACKGROUND_TASK',
+        expect.objectContaining({
+          taskType: 'AGENT_BACKGROUND_TASK',
+          payload: { planId: 'plan-1', organizationId: 'test-org', userId: 'test-user' },
+        })
+      );
+    });
+
+    it('does not fail the request when the background queue is unavailable', async () => {
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockRejectedValue(new Error('AI queue unavailable: MOCK_REDIS=true'));
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Test plan', steps: [{ toolName: 'search_web', toolInput: {} }] });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.dispatch).toBe('unavailable');
+    });
+
+    it('rejects an empty steps array (400)', async () => {
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Test plan', steps: [] });
+
+      expect(res.status).toBe(400);
+      expect(createPlan).not.toHaveBeenCalled();
+    });
+
+    it('rejects more than 12 steps (hard limit from concept §1)', async () => {
+      const steps = Array.from({ length: 13 }, () => ({ toolName: 'search_web', toolInput: {} }));
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Test plan', steps });
+
+      expect(res.status).toBe(400);
+      expect(createPlan).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unknown manifestId (400)', async () => {
+      getDiscoveryAgentManifest.mockReturnValue(null);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({
+          title: 'Test plan',
+          manifestId: 'does-not-exist',
+          steps: [{ toolName: 'search_web', toolInput: {} }],
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Unknown manifestId');
+      expect(createPlan).not.toHaveBeenCalled();
+    });
+
+    it('accepts a known built manifestId', async () => {
+      getDiscoveryAgentManifest.mockReturnValue({
+        id: 'market-forces',
+        status: 'built',
+        sourceType: 'discovery_tool',
+        displayName: { pl: 'x', en: 'x' },
+        wave: 'wave-1',
+        configDir: 'x',
+      });
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({
+          title: 'Test plan',
+          manifestId: 'market-forces',
+          steps: [{ toolName: 'search_web', toolInput: {} }],
+        });
+
+      expect(res.status).toBe(201);
+      expect(createPlan).toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /:id', () => {
+    it('returns the plan when it belongs to the caller org', async () => {
+      const plan = basePlan();
+      getPlan.mockResolvedValue(plan);
+
+      const res = await request(createApp()).get('/api/ai/agent-plan/plan-1');
+
+      expect(res.status).toBe(200);
+      expect(res.body.plan).toEqual(plan);
+    });
+
+    it('returns 404 (not 403) for a plan belonging to another org', async () => {
+      getPlan.mockResolvedValue(basePlan({ organizationId: 'other-org' }));
+
+      const res = await request(createApp()).get('/api/ai/agent-plan/plan-1');
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 404 for a non-existent plan', async () => {
+      getPlan.mockResolvedValue(null);
+
+      const res = await request(createApp()).get('/api/ai/agent-plan/does-not-exist');
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /', () => {
+    it('lists plans scoped to the org', async () => {
+      listPlans.mockResolvedValue([basePlan()]);
+
+      const res = await request(createApp()).get('/api/ai/agent-plan');
+
+      expect(res.status).toBe(200);
+      expect(res.body.total).toBe(1);
+      expect(listPlans).toHaveBeenCalledWith('test-org', undefined);
+    });
+
+    it('narrows to the current user when ?mine=1', async () => {
+      listPlans.mockResolvedValue([]);
+
+      const res = await request(createApp()).get('/api/ai/agent-plan?mine=1');
+
+      expect(res.status).toBe(200);
+      expect(listPlans).toHaveBeenCalledWith('test-org', 'test-user');
+    });
+  });
+
+  describe('POST /:id/approve-step', () => {
+    it('approves a step and re-dispatches background execution', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'awaiting_approval' }));
+      approveStep.mockResolvedValue(undefined);
+      queueAdd.mockResolvedValue(undefined);
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'executing' }));
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan/plan-1/approve-step')
+        .send({ stepIndex: 0 });
+
+      expect(res.status).toBe(200);
+      expect(approveStep).toHaveBeenCalledWith('plan-1', 0, 'test-user');
+      expect(res.body.plan.status).toBe('executing');
+      expect(res.body.dispatch).toBe('enqueued');
+    });
+
+    it('returns 404 for a plan in another org (no approveStep call)', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ organizationId: 'other-org' }));
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan/plan-1/approve-step')
+        .send({ stepIndex: 0 });
+
+      expect(res.status).toBe(404);
+      expect(approveStep).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when the step is not awaiting approval', async () => {
+      getPlan.mockResolvedValueOnce(basePlan());
+      approveStep.mockRejectedValue(new Error('Step not found or not awaiting approval'));
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan/plan-1/approve-step')
+        .send({ stepIndex: 0 });
+
+      expect(res.status).toBe(409);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('rejects a missing stepIndex (400)', async () => {
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan/plan-1/approve-step')
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(getPlan).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /:id/cancel', () => {
+    it('cancels a plan owned by the caller org', async () => {
+      getPlan.mockResolvedValueOnce(basePlan());
+      cancelPlan.mockResolvedValue(undefined);
+      getPlan.mockResolvedValueOnce(basePlan({ status: 'cancelled' }));
+
+      const res = await request(createApp()).post('/api/ai/agent-plan/plan-1/cancel');
+
+      expect(res.status).toBe(200);
+      expect(cancelPlan).toHaveBeenCalledWith('plan-1');
+      expect(res.body.plan.status).toBe('cancelled');
+    });
+
+    it('returns 404 for a plan in another org (no cancelPlan call)', async () => {
+      getPlan.mockResolvedValueOnce(basePlan({ organizationId: 'other-org' }));
+
+      const res = await request(createApp()).post('/api/ai/agent-plan/plan-1/cancel');
+
+      expect(res.status).toBe(404);
+      expect(cancelPlan).not.toHaveBeenCalled();
+    });
+  });
+});
