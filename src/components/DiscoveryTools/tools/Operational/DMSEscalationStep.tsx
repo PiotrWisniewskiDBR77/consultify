@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -21,6 +22,7 @@ interface DMSEscalationStepProps {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export const DMSEscalationStep: React.FC<DMSEscalationStepProps> = ({ session, isPolish }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [rule, setRule] = useState('');
   const [threshold, setThreshold] = useState('');
@@ -64,12 +66,10 @@ export const DMSEscalationStep: React.FC<DMSEscalationStepProps> = ({ session, i
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Reguły eskalacji' : 'Escalation rules'}
+          {t('discoveryToolsTools.operational.dmsEscalationStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zdefiniuj progi i właścicieli eskalacji.'
-            : 'Define thresholds and escalation owners.'}
+          {t('discoveryToolsTools.operational.dmsEscalationStep.description')}
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export const DMSEscalationStep: React.FC<DMSEscalationStepProps> = ({ session, i
           type="text"
           value={rule}
           onChange={(e) => setRule(e.target.value)}
-          placeholder={isPolish ? 'Reguła...' : 'Rule...'}
+          placeholder={t('discoveryToolsTools.operational.dmsEscalationStep.rulePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -86,14 +86,16 @@ export const DMSEscalationStep: React.FC<DMSEscalationStepProps> = ({ session, i
             type="text"
             value={threshold}
             onChange={(e) => setThreshold(e.target.value)}
-            placeholder={isPolish ? 'Próg...' : 'Threshold...'}
+            placeholder={t(
+              'discoveryToolsTools.operational.dmsEscalationStep.thresholdPlaceholder'
+            )}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
           <input
             type="text"
             value={owner}
             onChange={(e) => setOwner(e.target.value)}
-            placeholder={isPolish ? 'Owner...' : 'Owner...'}
+            placeholder={t('discoveryToolsTools.operational.dmsEscalationStep.ownerPlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
@@ -103,21 +105,15 @@ export const DMSEscalationStep: React.FC<DMSEscalationStepProps> = ({ session, i
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
-          {isPolish ? 'Dodaj regułę' : 'Add rule'}
+          {t('discoveryToolsTools.operational.dmsEscalationStep.addRule')}
         </button>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Reguły powinny mieć próg i właściciela eskalacji.'
-              : 'Rules should have thresholds and owners.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.dmsEscalationStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak reguł' : 'No rules yet'}
+            {t('discoveryToolsTools.operational.dmsEscalationStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -129,8 +125,10 @@ export const DMSEscalationStep: React.FC<DMSEscalationStepProps> = ({ session, i
                 <div>
                   <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
                   <div className="text-xs text-slate-500 mt-2">
-                    {item.threshold && `${isPolish ? 'Próg' : 'Threshold'}: ${item.threshold}`}
-                    {item.owner && ` • ${isPolish ? 'Owner' : 'Owner'}: ${item.owner}`}
+                    {item.threshold &&
+                      `${t('discoveryToolsTools.operational.dmsEscalationStep.thresholdLabel')}: ${item.threshold}`}
+                    {item.owner &&
+                      ` • ${t('discoveryToolsTools.operational.dmsEscalationStep.ownerLabel')}: ${item.owner}`}
                   </div>
                 </div>
                 <button
