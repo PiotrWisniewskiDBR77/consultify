@@ -28366,6 +28366,53 @@
       "generationFailedMessage": "Nie udało się wygenerować tej karty.",
       "errorNotYourFaultHint": "To był błąd po naszej stronie — nie Twoja wina.",
       "tryAgainAction": "Spróbuj ponownie"
+    },
+    "workspaceTools": {
+      "commandLabel": "Polecenie",
+      "aiChatLabel": "Czat AI",
+      "transformTextLabel": "Transformuj tekst",
+      "translateAction": "Przetłumacz",
+      "translateTargetHint": "→ English",
+      "otherLanguageName": "English",
+      "translatePrompt": "Przetłumacz poniższą {{entityLabel}} na język {{targetLang}}. Zachowaj formatowanie i styl.\n\nTytuł: \"{{title}}\"\n\nTreść:\n{{excerpt}}",
+      "sentToChatWithTarget": "Wysłano do czata → {{targetLang}}",
+      "sentToChat": "Wysłano do czata",
+      "changeStyleAction": "Zmień styl",
+      "changeStyleHint": "Formalny, swobodny, zwięzły…",
+      "changeStylePrompt": "Przepisz poniższą {{entityLabel}} w stylu: {{styleDescription}}. Zachowaj treść, zmień formę.\n\nTytuł: \"{{title}}\"\nTagi: {{tags}}\n\nTreść:\n{{excerpt}}",
+      "noTags": "brak",
+      "shorterAction": "Skróć",
+      "longerAction": "Rozwiń",
+      "polishAction": "Popraw całość",
+      "polishHint": "Styl, gramatyka, struktura",
+      "polishPrompt": "Popraw i ulepsz poniższą {{entityLabel}}. Popraw styl, gramatykę, strukturę. Zasugeruj lepsze nagłówki i formatowanie.\n\nTytuł: \"{{title}}\"\n\nTreść:\n{{excerpt}}",
+      "noteDefaultSubject": "Notatka",
+      "sentFromConsultify": "Wysłano z Consultify",
+      "emailClientOpened": "Otwarto klienta email",
+      "shareLabel": "Udostępnij",
+      "sendViaEmailLabel": "Wyślij mailem",
+      "opensEmailClientHint": "Otwiera klienta email z treścią",
+      "entityLabel": {
+        "notebook": "notatkę",
+        "idea": "opis wyzwania",
+        "default": "treść"
+      },
+      "styleDescription": {
+        "formal": "formalny, profesjonalny",
+        "casual": "swobodny, konwersacyjny",
+        "concise": "zwięzły, skrócony do esencji",
+        "creative": "kreatywny, barwny, inspirujący"
+      },
+      "styleOptionLabel": {
+        "formal": "Formalny",
+        "casual": "Swobodny",
+        "concise": "Zwięzły",
+        "creative": "Kreatywny"
+      },
+      "changeLengthPrompt": {
+        "shorter": "Skróć poniższą {{entityLabel}}. Zachowaj kluczowe punkty, usuń powtórzenia.\n\nTytuł: \"{{title}}\"\n\nTreść:\n{{excerpt}}",
+        "longer": "Rozwiń poniższą {{entityLabel}}. Dodaj szczegóły, przykłady i kontekst.\n\nTytuł: \"{{title}}\"\n\nTreść:\n{{excerpt}}"
+      }
     }
   }
 }

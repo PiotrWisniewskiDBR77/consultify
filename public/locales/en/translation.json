@@ -27290,6 +27290,53 @@
       "generationFailedMessage": "This card couldn't be generated.",
       "errorNotYourFaultHint": "That was an error on our side — not your fault.",
       "tryAgainAction": "Try again"
+    },
+    "workspaceTools": {
+      "commandLabel": "Command",
+      "aiChatLabel": "AI Chat",
+      "transformTextLabel": "Transform text",
+      "translateAction": "Translate",
+      "translateTargetHint": "→ Polski",
+      "otherLanguageName": "Polish",
+      "translatePrompt": "Translate the following {{entityLabel}} into {{targetLang}}. Preserve formatting and style.\n\nTitle: \"{{title}}\"\n\nContent:\n{{excerpt}}",
+      "sentToChatWithTarget": "Sent to chat → {{targetLang}}",
+      "sentToChat": "Sent to chat",
+      "changeStyleAction": "Change style",
+      "changeStyleHint": "Formal, casual, concise…",
+      "changeStylePrompt": "Rewrite the following {{entityLabel}} in {{styleDescription}} style. Keep the content, change the form.\n\nTitle: \"{{title}}\"\nTags: {{tags}}\n\nContent:\n{{excerpt}}",
+      "noTags": "none",
+      "shorterAction": "Shorter",
+      "longerAction": "Expand",
+      "polishAction": "Polish & improve",
+      "polishHint": "Style, grammar, structure",
+      "polishPrompt": "Improve and polish the following {{entityLabel}}. Fix style, grammar, structure. Suggest better headings and formatting.\n\nTitle: \"{{title}}\"\n\nContent:\n{{excerpt}}",
+      "noteDefaultSubject": "Note",
+      "sentFromConsultify": "Sent from Consultify",
+      "emailClientOpened": "Email client opened",
+      "shareLabel": "Share",
+      "sendViaEmailLabel": "Send via email",
+      "opensEmailClientHint": "Opens email client with content",
+      "entityLabel": {
+        "notebook": "note",
+        "idea": "challenge description",
+        "default": "content"
+      },
+      "styleDescription": {
+        "formal": "formal, professional",
+        "casual": "casual, conversational",
+        "concise": "concise, distilled to essentials",
+        "creative": "creative, colorful, inspiring"
+      },
+      "styleOptionLabel": {
+        "formal": "Formal",
+        "casual": "Casual",
+        "concise": "Concise",
+        "creative": "Creative"
+      },
+      "changeLengthPrompt": {
+        "shorter": "Shorten the following {{entityLabel}}. Keep key points, remove repetition.\n\nTitle: \"{{title}}\"\n\nContent:\n{{excerpt}}",
+        "longer": "Expand the following {{entityLabel}}. Add details, examples and context.\n\nTitle: \"{{title}}\"\n\nContent:\n{{excerpt}}"
+      }
     }
   }
 }
