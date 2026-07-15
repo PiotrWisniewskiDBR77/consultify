@@ -27131,6 +27131,43 @@
         { "title": "New revenue models", "target": "15% revenue from AI", "horizon": "long", "importance": "high" },
         { "title": "Partner ecosystem", "target": "2 strategic alliances", "horizon": "long", "importance": "low" }
       ]
+    },
+    "valueChainLibraryGraphic": {
+      "titleProcess": "How Value Chain moves from activities to margin",
+      "titleExample": "Example: from value chain to margin levers",
+      "subtitleProcess": "This is not a static nine-box schema. First we frame the scope and position, map primary and support activities, score their role in margin, and translate it into levers and initiatives.",
+      "subtitleExample": "This case shows that a Porter value chain is not a decorative diagram. It maps activities first, scores their cost and value contribution, and only then builds margin levers and moves.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with industry, chain scope, company position (cost vs differentiation), and the decision question. Without that, the activity map stays abstract.",
+      "scenarioValueExample": "A component manufacturer wants to improve margin without raising prices. The real question is which activities create value and which drain it faster than differentiation can add it.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "Each activity's role in margin, cost and differentiation levers, and outputs ready for downstream work.",
+      "decisionValueExample": "Where does margin truly get created and lost along the value chain?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        ["Brief", "Industry, chain scope, position, decision", "bg-sky-500"],
+        ["Activities", "Map 5 primary + 4 support", "bg-sky-500"],
+        ["Contribution", "Cost, value, and margin role per activity", "bg-blue-500"],
+        ["Levers", "Where to cut cost, where to raise value", "bg-amber-500"],
+        ["Moves & outputs", "Moves, initiatives, report, deck, or idea", "bg-emerald-500"]
+      ],
+      "chainTitle": "Value chain",
+      "support": "Support activities",
+      "primary": "Primary activities",
+      "supportItems": ["Firm infrastructure", "HR management", "Technology", "Procurement"],
+      "primaryItems": ["Inbound logistics", "Operations", "Outbound logistics", "Marketing & sales", "Service"],
+      "margin": "Margin",
+      "legendTitle": "Margin role",
+      "legend": [
+        ["creator", "Creates margin"],
+        ["neutral", "Neutral"],
+        ["drain", "Drains margin"]
+      ],
+      "footer": "Value Chain = brief -> activities -> contribution -> levers -> moves -> outputs",
+      "legendHint": "each activity's color shows whether it creates, is neutral to, or drains margin. Size and annotations follow cost and value contribution."
     }
   }
 }

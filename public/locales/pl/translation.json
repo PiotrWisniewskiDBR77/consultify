@@ -28207,6 +28207,43 @@
         { "title": "Nowe modele przychodu", "target": "15% przychodu z AI", "horizon": "long", "importance": "high" },
         { "title": "Ekosystem partnerów", "target": "2 alianse strategiczne", "horizon": "long", "importance": "low" }
       ]
+    },
+    "valueChainLibraryGraphic": {
+      "titleProcess": "Jak Value Chain prowadzi od aktywności do marży",
+      "titleExample": "Przykład: od łańcucha wartości do dźwigni marży",
+      "subtitleProcess": "To nie statyczny schemat dziewięciu pól. Najpierw ustawiamy zakres i pozycję, mapujemy aktywności pierwotne i wspierające, oceniamy ich rolę w marży i zamieniamy to w dźwignie oraz inicjatywy.",
+      "subtitleExample": "Ten case pokazuje, że łańcuch wartości Portera to nie diagram dla ozdoby. Najpierw mapuje aktywności, ocenia ich wkład w koszt i wartość, a dopiero potem buduje dźwignie marży i ruchy.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od branży, zakresu łańcucha, pozycji firmy (koszt vs różnicowanie) i pytania decyzyjnego. Bez tego mapa aktywności jest abstrakcyjna.",
+      "scenarioValueExample": "Producent komponentów chce poprawić marżę bez podnoszenia cen. Pytanie brzmi: które aktywności tworzą wartość, a które ją drenują szybciej niż dokłada różnicowanie.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena roli każdej aktywności w marży, dźwignie kosztowe i różnicujące oraz outputy gotowe do dalszej pracy.",
+      "decisionValueExample": "Gdzie naprawdę powstaje i ginie marża wzdłuż łańcucha wartości?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        ["Brief", "Branża, zakres łańcucha, pozycja, decyzja", "bg-sky-500"],
+        ["Aktywności", "Mapa 5 pierwotnych + 4 wspierających", "bg-sky-500"],
+        ["Wkład", "Koszt, wartość i rola w marży na aktywność", "bg-blue-500"],
+        ["Dźwignie", "Gdzie redukować koszt, gdzie wzmacniać wartość", "bg-amber-500"],
+        ["Ruchy & outputy", "Ruchy, inicjatywy, raport, deck lub idea", "bg-emerald-500"]
+      ],
+      "chainTitle": "Łańcuch wartości",
+      "support": "Aktywności wspierające",
+      "primary": "Aktywności pierwotne",
+      "supportItems": ["Infrastruktura", "Zasoby ludzkie", "Technologia", "Zaopatrzenie"],
+      "primaryItems": ["Logistyka wejściowa", "Operacje", "Logistyka wyjściowa", "Marketing i sprzedaż", "Serwis"],
+      "margin": "Marża",
+      "legendTitle": "Rola w marży",
+      "legend": [
+        ["creator", "Tworzy marżę"],
+        ["neutral", "Neutralna"],
+        ["drain", "Drenuje marżę"]
+      ],
+      "footer": "Value Chain = brief -> aktywności -> wkład -> dźwignie -> ruchy -> outputy",
+      "legendHint": "kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość."
     }
   }
 }

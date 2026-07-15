@@ -1,102 +1,36 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function ValueChainLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Value Chain',
-        title: isExample
-          ? 'Przykład: od łańcucha wartości do dźwigni marży'
-          : 'Jak Value Chain prowadzi od aktywności do marży',
-        subtitle: isExample
-          ? 'Ten case pokazuje, że łańcuch wartości Portera to nie diagram dla ozdoby. Najpierw mapuje aktywności, ocenia ich wkład w koszt i wartość, a dopiero potem buduje dźwignie marży i ruchy.'
-          : 'To nie statyczny schemat dziewięciu pól. Najpierw ustawiamy zakres i pozycję, mapujemy aktywności pierwotne i wspierające, oceniamy ich rolę w marży i zamieniamy to w dźwignie oraz inicjatywy.',
-        scenario: isExample ? 'Sytuacja' : 'Punkt wyjścia',
-        scenarioValue: isExample
-          ? 'Producent komponentów chce poprawić marżę bez podnoszenia cen. Pytanie brzmi: które aktywności tworzą wartość, a które ją drenują szybciej niż dokłada różnicowanie.'
-          : 'Sesja startuje od branży, zakresu łańcucha, pozycji firmy (koszt vs różnicowanie) i pytania decyzyjnego. Bez tego mapa aktywności jest abstrakcyjna.',
-        decision: isExample ? 'Pytanie decyzyjne' : 'Efekt sesji',
-        decisionValue: isExample
-          ? 'Gdzie naprawdę powstaje i ginie marża wzdłuż łańcucha wartości?'
-          : 'Ocena roli każdej aktywności w marży, dźwignie kosztowe i różnicujące oraz outputy gotowe do dalszej pracy.',
-        stagesTitle: '5 kroków pracy',
-        stages: [
-          ['Brief', 'Branża, zakres łańcucha, pozycja, decyzja', 'bg-sky-500'],
-          ['Aktywności', 'Mapa 5 pierwotnych + 4 wspierających', 'bg-sky-500'],
-          ['Wkład', 'Koszt, wartość i rola w marży na aktywność', 'bg-blue-500'],
-          ['Dźwignie', 'Gdzie redukować koszt, gdzie wzmacniać wartość', 'bg-amber-500'],
-          ['Ruchy & outputy', 'Ruchy, inicjatywy, raport, deck lub idea', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        chainTitle: 'Łańcuch wartości',
-        support: 'Aktywności wspierające',
-        primary: 'Aktywności pierwotne',
-        supportItems: ['Infrastruktura', 'Zasoby ludzkie', 'Technologia', 'Zaopatrzenie'],
-        primaryItems: [
-          'Logistyka wejściowa',
-          'Operacje',
-          'Logistyka wyjściowa',
-          'Marketing i sprzedaż',
-          'Serwis',
-        ],
-        margin: 'Marża',
-        legendTitle: 'Rola w marży',
-        legend: [
-          ['creator', 'Tworzy marżę'],
-          ['neutral', 'Neutralna'],
-          ['drain', 'Drenuje marżę'],
-        ] as Array<[string, string]>,
-        footer: 'Value Chain = brief -> aktywności -> wkład -> dźwignie -> ruchy -> outputy',
-      }
-    : {
-        eyebrow: 'Value Chain',
-        title: isExample
-          ? 'Example: from value chain to margin levers'
-          : 'How Value Chain moves from activities to margin',
-        subtitle: isExample
-          ? 'This case shows that a Porter value chain is not a decorative diagram. It maps activities first, scores their cost and value contribution, and only then builds margin levers and moves.'
-          : 'This is not a static nine-box schema. First we frame the scope and position, map primary and support activities, score their role in margin, and translate it into levers and initiatives.',
-        scenario: isExample ? 'Situation' : 'Starting point',
-        scenarioValue: isExample
-          ? 'A component manufacturer wants to improve margin without raising prices. The real question is which activities create value and which drain it faster than differentiation can add it.'
-          : 'The session starts with industry, chain scope, company position (cost vs differentiation), and the decision question. Without that, the activity map stays abstract.',
-        decision: isExample ? 'Decision question' : 'Session outcome',
-        decisionValue: isExample
-          ? 'Where does margin truly get created and lost along the value chain?'
-          : "Each activity's role in margin, cost and differentiation levers, and outputs ready for downstream work.",
-        stagesTitle: '5 working steps',
-        stages: [
-          ['Brief', 'Industry, chain scope, position, decision', 'bg-sky-500'],
-          ['Activities', 'Map 5 primary + 4 support', 'bg-sky-500'],
-          ['Contribution', 'Cost, value, and margin role per activity', 'bg-blue-500'],
-          ['Levers', 'Where to cut cost, where to raise value', 'bg-amber-500'],
-          ['Moves & outputs', 'Moves, initiatives, report, deck, or idea', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        chainTitle: 'Value chain',
-        support: 'Support activities',
-        primary: 'Primary activities',
-        supportItems: ['Firm infrastructure', 'HR management', 'Technology', 'Procurement'],
-        primaryItems: [
-          'Inbound logistics',
-          'Operations',
-          'Outbound logistics',
-          'Marketing & sales',
-          'Service',
-        ],
-        margin: 'Margin',
-        legendTitle: 'Margin role',
-        legend: [
-          ['creator', 'Creates margin'],
-          ['neutral', 'Neutral'],
-          ['drain', 'Drains margin'],
-        ] as Array<[string, string]>,
-        footer: 'Value Chain = brief -> activities -> contribution -> levers -> moves -> outputs',
-      };
+  const ns = 'discoveryToolsMain.valueChainLibraryGraphic';
+  const labels = {
+    eyebrow: 'Value Chain',
+    title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
+    subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
+    scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
+    scenarioValue: isExample ? t(`${ns}.scenarioValueExample`) : t(`${ns}.scenarioValueProcess`),
+    decision: isExample ? t(`${ns}.decisionLabelExample`) : t(`${ns}.decisionLabelProcess`),
+    decisionValue: isExample ? t(`${ns}.decisionValueExample`) : t(`${ns}.decisionValueProcess`),
+    stagesTitle: isExample ? t(`${ns}.stagesTitleExample`) : t(`${ns}.stagesTitleProcess`),
+    stages: t(`${ns}.stages`, { returnObjects: true }) as Array<[string, string, string]>,
+    chainTitle: t(`${ns}.chainTitle`),
+    support: t(`${ns}.support`),
+    primary: t(`${ns}.primary`),
+    supportItems: t(`${ns}.supportItems`, { returnObjects: true }) as string[],
+    primaryItems: t(`${ns}.primaryItems`, { returnObjects: true }) as string[],
+    margin: t(`${ns}.margin`),
+    legendTitle: t(`${ns}.legendTitle`),
+    legend: t(`${ns}.legend`, { returnObjects: true }) as Array<[string, string]>,
+    footer: t(`${ns}.footer`),
+    legendHint: t(`${ns}.legendHint`),
+  };
 
   // Static decorative margin-role pattern for the 5 primary chevrons (creator/neutral/drain).
   const primaryRoles: Array<'creator' | 'neutral' | 'drain'> = [
@@ -251,9 +185,7 @@ export function ValueChainLibraryGraphic({
             <span className="font-semibold text-amber-700 dark:text-amber-300">
               {labels.legendTitle}:{' '}
             </span>
-            {isPolish
-              ? 'kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość.'
-              : "each activity's color shows whether it creates, is neutral to, or drains margin. Size and annotations follow cost and value contribution."}
+            {labels.legendHint}
           </div>
 
           <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 text-sm font-medium text-emerald-800 dark:border-emerald-900/40 dark:text-emerald-200">
