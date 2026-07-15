@@ -200,70 +200,63 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                 {
                   m: 'align-left',
                   Icon: AlignStartVertical,
-                  pl: 'Wyrównaj do lewej',
                   en: 'Align left',
                   dist: false,
                 },
                 {
                   m: 'align-center-h',
                   Icon: AlignCenterVertical,
-                  pl: 'Wyśrodkuj w poziomie',
                   en: 'Align center',
                   dist: false,
                 },
                 {
                   m: 'align-right',
                   Icon: AlignEndVertical,
-                  pl: 'Wyrównaj do prawej',
                   en: 'Align right',
                   dist: false,
                 },
                 {
                   m: 'align-top',
                   Icon: AlignStartHorizontal,
-                  pl: 'Wyrównaj do góry',
                   en: 'Align top',
                   dist: false,
                 },
                 {
                   m: 'align-middle-v',
                   Icon: AlignCenterHorizontal,
-                  pl: 'Wyśrodkuj w pionie',
                   en: 'Align middle',
                   dist: false,
                 },
                 {
                   m: 'align-bottom',
                   Icon: AlignEndHorizontal,
-                  pl: 'Wyrównaj do dołu',
                   en: 'Align bottom',
                   dist: false,
                 },
                 {
                   m: 'distribute-h',
                   Icon: AlignHorizontalDistributeCenter,
-                  pl: 'Rozłóż poziomo',
                   en: 'Distribute horizontally',
                   dist: true,
                 },
                 {
                   m: 'distribute-v',
                   Icon: AlignVerticalDistributeCenter,
-                  pl: 'Rozłóż pionowo',
                   en: 'Distribute vertically',
                   dist: true,
                 },
               ] as const
-            ).map(({ m, Icon, pl, en, dist }) => {
+            ).map(({ m, Icon, en, dist }) => {
               const disabledBtn = dist && !canDistribute;
+              const label = t(`myWorkMindmap.align.${m}`, en);
               return (
                 <button
                   key={m}
                   type="button"
                   onClick={() => onAlignDistribute(m as AlignMode)}
                   disabled={disabledBtn}
-                  title={isPl ? pl : en}
-                  aria-label={isPl ? pl : en}
+                  title={label}
+                  aria-label={label}
                   className={`${btnClass(false)} ${disabledBtn ? 'opacity-40 pointer-events-none' : ''}`}
                 >
                   <Icon size={13} />
@@ -320,13 +313,9 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               <button
                 onClick={() => onAction('mm_toggle_collapse')}
                 title={
-                  isPl
-                    ? nodeData?._collapsed
-                      ? 'Rozwiń (Space)'
-                      : 'Zwiń (Space)'
-                    : nodeData?._collapsed
-                      ? 'Expand (Space)'
-                      : 'Collapse (Space)'
+                  nodeData?._collapsed
+                    ? t('myWorkMindmap.expandSpace', 'Expand (Space)')
+                    : t('myWorkMindmap.collapseSpace', 'Collapse (Space)')
                 }
                 aria-label={t('ideas.mindmap.collapseExpand', 'Collapse/Expand')}
                 className={btnClass(false)}

@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface BranchThemeDropdownProps {
-  isPl: boolean;
+  isPl?: boolean;
   current?: string;
   onSelect: (theme: string) => void;
   onClose: () => void;
@@ -11,27 +11,24 @@ interface BranchThemeDropdownProps {
 const LINE_STYLES = [
   {
     id: 'curved',
-    labelPl: 'Łuk (domyślny)',
     labelEn: 'Curved (default)',
     preview: 'M 4 12 Q 16 4 28 12',
   },
   {
     id: 'orthogonal',
-    labelPl: 'Kątowy',
     labelEn: 'Orthogonal',
     preview: 'M 4 12 L 16 12 L 16 6 L 28 6',
   },
-  { id: 'straight', labelPl: 'Prosty', labelEn: 'Straight', preview: 'M 4 12 L 28 6' },
+  { id: 'straight', labelEn: 'Straight', preview: 'M 4 12 L 28 6' },
   {
     id: 'step',
-    labelPl: 'Schodkowy',
     labelEn: 'Step',
     preview: 'M 4 12 L 12 12 L 12 6 L 20 6 L 20 12 L 28 12',
   },
 ];
 
 export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
-  isPl,
+  isPl: _isPl,
   current,
   onSelect,
   onClose,
@@ -66,7 +63,7 @@ export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
                 strokeLinecap="round"
               />
             </svg>
-            {isPl ? s.labelPl : s.labelEn}
+            {t(`myWorkMindmap.lineStyle.${s.id}`, s.labelEn)}
           </button>
         );
       })}
