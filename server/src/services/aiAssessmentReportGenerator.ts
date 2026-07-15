@@ -108,7 +108,7 @@ function extractScores(assessment: any): Array<{
  *    niedostępny/błąd → sekcja to szablon, nie analiza AI. To realny sygnał, nie LLM-owa
  *    samoocena.
  */
-function buildScoreBasedEvidenceContract(
+export function buildScoreBasedEvidenceContract(
   assessment: Record<string, any>,
   scores: Array<{ axis: string; name: string; actual: number; target?: number; gap?: number }>,
   opts: {

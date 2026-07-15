@@ -53,7 +53,8 @@ import { createInitiative as funnelCreateInitiative } from './initiative/createI
 // Types
 type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
-interface AssessmentRow {
+// Exported (HP-16) so `buildInitiativeEvidenceContract` is unit-testable without `as any` casts.
+export interface AssessmentRow {
   id: string;
   organization_id: string;
   project_id?: string | null;
@@ -67,7 +68,8 @@ interface AssessmentRow {
   score_summary?: string | null;
 }
 
-interface GeneratedInitiative {
+// Exported (HP-16) so `buildInitiativeEvidenceContract` is unit-testable without `as any` casts.
+export interface GeneratedInitiative {
   title: string;
   description: string;
   category: string;
