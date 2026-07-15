@@ -366,9 +366,11 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                   <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
                     <Lightbulb size={12} />
                     <span>
-                      {isPolish
-                        ? `${selectedCount} pomysł(ów) wybranych do realizacji`
-                        : `${selectedCount} idea(s) selected for implementation`}
+                      {t(
+                        'myWork.implementationIdeas.selectedForImplementation',
+                        '{{count}} idea(s) selected for implementation',
+                        { count: selectedCount }
+                      )}
                     </span>
                   </div>
                 </div>

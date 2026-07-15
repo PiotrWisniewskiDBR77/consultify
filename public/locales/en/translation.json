@@ -4293,7 +4293,11 @@
       "title2": "Reset",
       "history": "History",
       "entryStartTimeToLocaleTimeString": "en-US",
-      "entryEndTimeToLocaleTimeString": "en-US"
+      "entryEndTimeToLocaleTimeString": "en-US",
+      "durationHoursMinutes": "{{hrs}}h {{mins}}m",
+      "durationMinutes": "{{mins}}m",
+      "durationLessThanMinute": "<1m",
+      "loggedDuration": "⏱️ Logged {{duration}}"
     },
     "linkedItems": {
       "toastSuccess": "Link added",
@@ -4457,7 +4461,9 @@
       "title3": "More actions",
       "edit": "Edit",
       "duplicate": "Duplicate",
-      "delete": "Delete"
+      "delete": "Delete",
+      "markIncomplete": "Mark incomplete",
+      "markComplete": "Mark complete"
     },
     "implementationIdeas": {
       "implementationIdeas": "Implementation Ideas",
@@ -4467,7 +4473,9 @@
       "placeholder": "Idea name...",
       "description": "Description",
       "describeTheIdeaDetails": "Describe the idea details...",
-      "addIdea": "Add idea"
+      "addIdea": "Add idea",
+      "selectedForImplementation_one": "{{count}} idea selected for implementation",
+      "selectedForImplementation_other": "{{count}} ideas selected for implementation"
     },
     "aiInsight": {
       "aIInsights": "AI Insights",

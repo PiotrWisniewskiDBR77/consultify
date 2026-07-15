@@ -3445,7 +3445,11 @@
       "title2": "Resetuj",
       "history": "Historia",
       "entryStartTimeToLocaleTimeString": "pl-PL",
-      "entryEndTimeToLocaleTimeString": "pl-PL"
+      "entryEndTimeToLocaleTimeString": "pl-PL",
+      "durationHoursMinutes": "{{hrs}}h {{mins}}min",
+      "durationMinutes": "{{mins}}min",
+      "durationLessThanMinute": "<1min",
+      "loggedDuration": "⏱️ Zapisano {{duration}}"
     },
     "linkedItems": {
       "toastSuccess": "Powiązanie dodane",
@@ -3609,7 +3613,9 @@
       "title3": "Więcej akcji",
       "edit": "Edytuj",
       "duplicate": "Duplikuj",
-      "delete": "Usuń"
+      "delete": "Usuń",
+      "markIncomplete": "Oznacz jako nieukończone",
+      "markComplete": "Oznacz jako ukończone"
     },
     "implementationIdeas": {
       "implementationIdeas": "Pomysły realizacji",
@@ -3619,7 +3625,11 @@
       "placeholder": "Nazwa pomysłu...",
       "description": "Opis",
       "describeTheIdeaDetails": "Opisz szczegóły pomysłu...",
-      "addIdea": "Dodaj pomysł"
+      "addIdea": "Dodaj pomysł",
+      "selectedForImplementation_one": "{{count}} pomysł wybrany do realizacji",
+      "selectedForImplementation_few": "{{count}} pomysły wybrane do realizacji",
+      "selectedForImplementation_many": "{{count}} pomysłów wybranych do realizacji",
+      "selectedForImplementation_other": "{{count}} pomysłów wybranych do realizacji"
     },
     "aiInsight": {
       "aIInsights": "Wskazówki AI",

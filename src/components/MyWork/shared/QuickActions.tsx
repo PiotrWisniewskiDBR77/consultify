@@ -196,13 +196,9 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             }
           `}
           title={
-            isPolish
-              ? isComplete
-                ? 'Oznacz jako nieukończone'
-                : 'Oznacz jako ukończone'
-              : isComplete
-                ? 'Mark incomplete'
-                : 'Mark complete'
+            isComplete
+              ? t('myWork.quickActions.markIncomplete', 'Mark incomplete')
+              : t('myWork.quickActions.markComplete', 'Mark complete')
           }
         >
           {isComplete ? <CheckCircle2 size={16} /> : <Check size={16} />}

@@ -22,8 +22,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
   onClose,
   shortcuts = SHORTCUTS_HELP,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const categories = {
     navigation: {
