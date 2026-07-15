@@ -10,6 +10,8 @@
  * engines are deliberately out of scope.
  */
 
+import i18n from '@/i18n';
+
 /** Stable ids matching the Reporting screen catalog (ExecutionHub reportCatalog). */
 export type ReportTypeId =
   | 'weekly-exec'
@@ -333,17 +335,29 @@ export const resolveCadenceLabel = (
   unit: RecurrenceUnit | undefined,
   isPolish: boolean
 ): string => {
-  if (mode === 'on_demand') return isPolish ? 'Na żądanie' : 'On demand';
+  const lng = isPolish ? 'pl' : 'en';
+  if (mode === 'on_demand') {
+    return i18n.t('reports.reportWizardTypes.cadenceOnDemand', { lng, defaultValue: 'On demand' });
+  }
   switch (unit) {
     case 'weekly':
-      return isPolish ? 'Tygodniowo' : 'Weekly';
+      return i18n.t('reports.reportWizardTypes.cadenceWeekly', { lng, defaultValue: 'Weekly' });
     case 'bi_weekly':
-      return isPolish ? 'Co dwa tygodnie' : 'Bi-weekly';
+      return i18n.t('reports.reportWizardTypes.cadenceBiWeekly', {
+        lng,
+        defaultValue: 'Bi-weekly',
+      });
     case 'monthly':
-      return isPolish ? 'Miesięcznie' : 'Monthly';
+      return i18n.t('reports.reportWizardTypes.cadenceMonthly', { lng, defaultValue: 'Monthly' });
     case 'quarterly':
-      return isPolish ? 'Kwartalnie' : 'Quarterly';
+      return i18n.t('reports.reportWizardTypes.cadenceQuarterly', {
+        lng,
+        defaultValue: 'Quarterly',
+      });
     default:
-      return isPolish ? 'Cyklicznie' : 'Recurring';
+      return i18n.t('reports.reportWizardTypes.cadenceRecurring', {
+        lng,
+        defaultValue: 'Recurring',
+      });
   }
 };

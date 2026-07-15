@@ -10492,6 +10492,14 @@
       "printButton": "Print",
       "fullscreenButton": "Fullscreen",
       "readingModeTooltip": "Reading mode"
+    },
+    "reportWizardTypes": {
+      "cadenceOnDemand": "On demand",
+      "cadenceWeekly": "Weekly",
+      "cadenceBiWeekly": "Bi-weekly",
+      "cadenceMonthly": "Monthly",
+      "cadenceQuarterly": "Quarterly",
+      "cadenceRecurring": "Recurring"
     }
   },
   "auth": {

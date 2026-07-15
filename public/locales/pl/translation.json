@@ -9727,6 +9727,14 @@
       "printButton": "Drukuj",
       "fullscreenButton": "Pełny ekran",
       "readingModeTooltip": "Tryb czytania"
+    },
+    "reportWizardTypes": {
+      "cadenceOnDemand": "Na żądanie",
+      "cadenceWeekly": "Tygodniowo",
+      "cadenceBiWeekly": "Co dwa tygodnie",
+      "cadenceMonthly": "Miesięcznie",
+      "cadenceQuarterly": "Kwartalnie",
+      "cadenceRecurring": "Cyklicznie"
     }
   },
   "auth": {
