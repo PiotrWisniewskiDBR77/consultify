@@ -144,7 +144,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
   onDeleteComment,
   onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [newComment, setNewComment] = useState('');
@@ -234,7 +234,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-c-accent" />
             <div>
-              <h3 className="font-semibold text-c-text">{isPl ? 'Komentarze' : 'Comments'}</h3>
+              <h3 className="font-semibold text-c-text">{t('reportBuilder.commentPanel.comments', 'Comments')}</h3>
               {sectionName && <p className="text-xs text-c-text-secondary">{sectionName}</p>}
             </div>
           </div>
@@ -249,15 +249,15 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
         {/* Stats */}
         <div className="flex items-center gap-4 mt-3 text-xs">
           <span className="text-c-text-secondary">
-            {filteredComments.length} {isPl ? 'komentarzy' : 'comments'}
+            {filteredComments.length} {t('reportBuilder.commentPanel.comments2', 'comments')}
           </span>
           <span className="flex items-center gap-1 text-amber-500">
             <Clock size={12} />
-            {openCount} {isPl ? 'otwartych' : 'open'}
+            {openCount} {t('reportBuilder.commentPanel.open', 'open')}
           </span>
           <span className="flex items-center gap-1 text-green-500">
             <CheckCircle2 size={12} />
-            {resolvedCount} {isPl ? 'rozwiązanych' : 'resolved'}
+            {resolvedCount} {t('reportBuilder.commentPanel.resolved', 'resolved')}
           </span>
         </div>
 
@@ -267,9 +267,10 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
               <p className="text-xs text-amber-700 dark:text-amber-300">
-                {isPl
-                  ? `Raport nie może być zatwierdzony dopóki ${openCount} komentarz(y) pozostaje otwartych.`
-                  : `Report cannot be approved until ${openCount} open comment(s) are resolved.`}
+                {t('reportBuilder.commentPanel.cannotApproveUntilResolved', {
+                  defaultValue: `Report cannot be approved until ${openCount} open comment(s) are resolved.`,
+                  count: openCount,
+                })}
               </p>
             </div>
           </div>
@@ -290,16 +291,10 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                 }`}
               >
                 {f === 'all'
-                  ? isPl
-                    ? 'Wszystkie'
-                    : 'All'
+                  ? t('reportBuilder.commentPanel.all', 'All')
                   : f === 'open'
-                    ? isPl
-                      ? 'Otwarte'
-                      : 'Open'
-                    : isPl
-                      ? 'Rozwiązane'
-                      : 'Resolved'}
+                    ? t('reportBuilder.commentPanel.open2', 'Open')
+                    : t('reportBuilder.commentPanel.resolved2', 'Resolved')}
               </button>
             ))}
           </div>
@@ -316,12 +311,10 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           <div className="text-center py-8">
             <MessageCircle className="w-10 h-10 text-c-text-secondary mx-auto mb-2" />
             <p className="text-sm text-c-text-secondary">
-              {isPl ? 'Brak komentarzy' : 'No comments yet'}
+              {t('reportBuilder.commentPanel.noCommentsYet', 'No comments yet')}
             </p>
             <p className="text-xs text-c-text-secondary">
-              {isPl
-                ? 'Dodaj komentarz, aby rozpocząć dyskusję'
-                : 'Add a comment to start the discussion'}
+              {t('reportBuilder.commentPanel.addACommentToStartThe', 'Add a comment to start the discussion')}
             </p>
           </div>
         ) : (
@@ -341,7 +334,10 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                 <div className="px-3 py-2 flex items-center justify-between border-b border-c-border-subtle">
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${typeConfig.color}`}>
-                      {isPl ? typeConfig.labelPl : typeConfig.label}
+                      {t(
+                        `reportBuilder.commentPanel.commentType.${comment.commentType}`,
+                        typeConfig.label
+                      )}
                     </span>
                     <span className="text-xs text-c-text-secondary">
                       {comment.userName || 'Unknown'}
@@ -362,7 +358,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                   {/* Section indicator */}
                   {comment.sectionKey && sectionKey === undefined && (
                     <div className="mt-2 text-xs text-c-text-secondary">
-                      {isPl ? 'Sekcja:' : 'Section:'} {comment.sectionKey}
+                      {t('reportBuilder.commentPanel.section', 'Section:')} {comment.sectionKey}
                     </div>
                   )}
 
@@ -370,7 +366,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                   {comment.resolutionNotes && isExpanded && (
                     <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-700">
                       <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                        {isPl ? 'Rozwiązanie:' : 'Resolution:'}
+                        {t('reportBuilder.commentPanel.resolution', 'Resolution:')}
                       </p>
                       <p className="text-sm text-green-700 dark:text-green-300">
                         {comment.resolutionNotes}
@@ -389,14 +385,14 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                           className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 px-2 py-1 rounded transition-colors"
                         >
                           <RefreshCw size={12} />
-                          {isPl ? 'W trakcie' : 'In Progress'}
+                          {t('reportBuilder.commentPanel.inProgress', 'In Progress')}
                         </button>
                         <button
                           onClick={() => onResolveComment(comment.id)}
                           className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 px-2 py-1 rounded transition-colors"
                         >
                           <CheckCircle2 size={12} />
-                          {isPl ? 'Rozwiąż' : 'Resolve'}
+                          {t('reportBuilder.commentPanel.resolve', 'Resolve')}
                         </button>
                       </>
                     )}
@@ -406,7 +402,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                         className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 px-2 py-1 rounded transition-colors"
                       >
                         <CheckCircle2 size={12} />
-                        {isPl ? 'Rozwiąż' : 'Resolve'}
+                        {t('reportBuilder.commentPanel.resolve', 'Resolve')}
                       </button>
                     )}
                   </div>
@@ -441,9 +437,10 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
               onClick={() => setShowTypeSelector(!showTypeSelector)}
               className={`px-2 py-1.5 text-xs rounded-lg ${COMMENT_TYPE_CONFIG[commentType].color}`}
             >
-              {isPl
-                ? COMMENT_TYPE_CONFIG[commentType].labelPl
-                : COMMENT_TYPE_CONFIG[commentType].label}
+              {t(
+                `reportBuilder.commentPanel.commentType.${commentType}`,
+                COMMENT_TYPE_CONFIG[commentType].label
+              )}
               <ChevronDown size={12} className="inline ml-1" />
             </button>
             {showTypeSelector && (
@@ -460,7 +457,10 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                         commentType === type ? 'bg-c-surface-raised' : ''
                       }`}
                     >
-                      {isPl ? COMMENT_TYPE_CONFIG[type].labelPl : COMMENT_TYPE_CONFIG[type].label}
+                      {t(
+                        `reportBuilder.commentPanel.commentType.${type}`,
+                        COMMENT_TYPE_CONFIG[type].label
+                      )}
                     </button>
                   )
                 )}
@@ -471,7 +471,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder={isPl ? 'Dodaj komentarz...' : 'Add a comment...'}
+              placeholder={t('reportBuilder.commentPanel.addAComment', 'Add a comment...')}
               rows={2}
               className="w-full px-3 py-2 text-sm rounded-lg border border-c-border-subtle bg-c-text text-c-bg resize-none focus:ring-2 focus:ring-c-focus focus:border-transparent"
               onKeyDown={(e) => {
@@ -494,7 +494,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           </button>
         </div>
         <p className="text-xs text-c-text-secondary mt-2">
-          {isPl ? 'Cmd+Enter aby wysłać' : 'Cmd+Enter to submit'}
+          {t('reportBuilder.commentPanel.cmdEnterToSubmit', 'Cmd+Enter to submit')}
         </p>
       </div>
     </div>

@@ -28376,6 +28376,32 @@
       "close": "Zamknij",
       "nBlocksWithoutContent": "{{count}} blok(ów) bez treści: {{titles}}",
       "nBlocksNotGenerated": "{{count}} blok(ów) nie wygenerowanych"
+    },
+    "commentPanel": {
+      "comments": "Komentarze",
+      "comments2": "komentarzy",
+      "open": "otwartych",
+      "resolved": "rozwiązanych",
+      "all": "Wszystkie",
+      "open2": "Otwarte",
+      "resolved2": "Rozwiązane",
+      "noCommentsYet": "Brak komentarzy",
+      "addACommentToStartThe": "Dodaj komentarz, aby rozpocząć dyskusję",
+      "section": "Sekcja:",
+      "resolution": "Rozwiązanie:",
+      "inProgress": "W trakcie",
+      "resolve": "Rozwiąż",
+      "addAComment": "Dodaj komentarz...",
+      "cmdEnterToSubmit": "Cmd+Enter aby wysłać",
+      "cannotApproveUntilResolved": "Raport nie może być zatwierdzony dopóki {{count}} komentarz(y) pozostaje otwartych.",
+      "commentType": {
+        "FEEDBACK": "Uwaga",
+        "SUGGESTION": "Sugestia",
+        "QUESTION": "Pytanie",
+        "APPROVAL": "Zatwierdzenie",
+        "REJECTION": "Odrzucenie",
+        "CHANGE_REQUEST": "Prośba o zmianę"
+      }
     }
   }
 }

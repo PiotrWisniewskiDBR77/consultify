@@ -27300,6 +27300,32 @@
       "close": "Close",
       "nBlocksWithoutContent": "{{count}} block(s) without content: {{titles}}",
       "nBlocksNotGenerated": "{{count}} block(s) not generated"
+    },
+    "commentPanel": {
+      "comments": "Comments",
+      "comments2": "comments",
+      "open": "open",
+      "resolved": "resolved",
+      "all": "All",
+      "open2": "Open",
+      "resolved2": "Resolved",
+      "noCommentsYet": "No comments yet",
+      "addACommentToStartThe": "Add a comment to start the discussion",
+      "section": "Section:",
+      "resolution": "Resolution:",
+      "inProgress": "In Progress",
+      "resolve": "Resolve",
+      "addAComment": "Add a comment...",
+      "cmdEnterToSubmit": "Cmd+Enter to submit",
+      "cannotApproveUntilResolved": "Report cannot be approved until {{count}} open comment(s) are resolved.",
+      "commentType": {
+        "FEEDBACK": "Feedback",
+        "SUGGESTION": "Suggestion",
+        "QUESTION": "Question",
+        "APPROVAL": "Approval",
+        "REJECTION": "Rejection",
+        "CHANGE_REQUEST": "Change Request"
+      }
     }
   }
 }
