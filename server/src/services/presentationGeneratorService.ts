@@ -12,6 +12,7 @@ import logger from '../utils/Logger.js';
 import { materializePlannedVisual } from './ai/deckVisualsService.js';
 import {
   buildContextPack,
+  type ContextPack,
   getContextPackSnapshot,
   saveContextPackSnapshot,
 } from './contextPackBuilder.js';
@@ -21,6 +22,11 @@ import {
 } from './deliverableContentGuard.js';
 import { resolveDeliverableTier } from './deliverableGenerationTier.js';
 import { runBundleContentGate } from './deliverables/bundleContentGate.js';
+import {
+  deriveConfidence,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from './evidence/evidenceContract.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
@@ -163,6 +169,67 @@ export interface GenerationResult {
   slideCount: number;
   warnings: string[];
   exportPath?: string;
+  /** HP-16: realny EvidenceContract — patrz `buildDeckEvidenceContract`. */
+  evidence?: EvidenceContract;
+}
+
+/**
+ * HP-16: buduje `EvidenceContract` decka — DETERMINISTYCZNIE, zero LLM, zero I/O.
+ * REUŻYWA sygnały już policzone przez pipeline (nie liczy drugiego zestawu):
+ *   - `sources` = `sourceRefs` (mapowanie 1:1 `setup.sourceArtifacts` → artifact_id/type/label,
+ *     dokładnie to, co poszło do `buildContextPack`).
+ *   - `qualityScore` = `contextPack.metadata.confidence_score` (0..1, ContextPackBuilder
+ *     odejmuje 0.1 za każdy zdegradowany/brakujący input — realny licznik, nie zgadywanie).
+ *   - `unresolvedGaps` = źródła ze statusem `insufficient_evidence`/`missing_sales_data`/
+ *     `policy_blocked` + `sourcePackPreflight.missingInputs` (te same sygnały już blokujące
+ *     `source_pack_preflight_failed` wyżej w pipeline).
+ * `risks`/`toVerify` cytują te same realne braki — nie zgadywanie modelu.
+ */
+export function buildDeckEvidenceContract(
+  sourceRefs: Array<{
+    artifact_id: string;
+    artifact_type: string;
+    artifact_name: string;
+    confidence: number | null;
+    readiness: string;
+    lineage: unknown;
+  }>,
+  contextPack: ContextPack,
+  sourcePackPreflight: { missingInputs: string[]; warnings: string[] },
+  narrativePlanWarnings: string[] = []
+): EvidenceContract {
+  const sources: EvidenceContractSource[] = sourceRefs
+    .filter((r) => r.artifact_id)
+    .map((r) => ({ type: r.artifact_type, ref: r.artifact_id, title: r.artifact_name }));
+
+  const risks: string[] = [];
+  const degradedReadiness = new Set([
+    'insufficient_evidence',
+    'missing_sales_data',
+    'policy_blocked',
+  ]);
+  const degradedSources = sourceRefs.filter((r) => degradedReadiness.has(r.readiness));
+  degradedSources.forEach((r) =>
+    risks.push(`Źródło "${r.artifact_name}" ma status ${r.readiness} — dane niepełne/zablokowane.`)
+  );
+
+  const toVerify: string[] = [
+    ...sourcePackPreflight.missingInputs.map((m) => `Brakujący input źródła: ${m}`),
+    ...sourcePackPreflight.warnings,
+    ...narrativePlanWarnings,
+  ];
+
+  const qualityScore = Math.round(
+    Math.max(0, Math.min(1, contextPack?.metadata?.confidence_score ?? 1)) * 100
+  );
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps: degradedSources.length + sourcePackPreflight.missingInputs.length,
+    qualityScore,
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
 }
 
 // ============================================================
@@ -1784,6 +1851,12 @@ export async function generateDeck(
         ...narrativePlan.warnings,
       ],
       exportPath,
+      evidence: buildDeckEvidenceContract(
+        sourceRefs,
+        contextPack,
+        sourcePackPreflight,
+        narrativePlan.warnings
+      ),
     };
   } catch (err: any) {
     logger.error(`[PresentationGen] Generation failed for ${deckId}: ${err.message}`);

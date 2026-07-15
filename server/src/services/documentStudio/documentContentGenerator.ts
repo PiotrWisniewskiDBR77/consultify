@@ -15,6 +15,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { resolveDeliverableTier } from '../deliverableGenerationTier.js';
+import {
+  deriveConfidence,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from '../evidence/evidenceContract.js';
 import type { ContentBlock, ContentBlockType } from './documentBlockContentGenerator.js';
 import type {
   DocumentBlock,
@@ -26,6 +31,55 @@ import type {
   DocumentSourceRef,
 } from './documentStudioTypes.js';
 import { DEFAULT_CONSULTING_FORMATTING_SCHEMA } from './documentStudioTypes.js';
+
+/**
+ * HP-16: buduje `EvidenceContract` dokumentu — DETERMINISTYCZNIE, zero LLM, zero I/O.
+ * REUŻYWA sygnały już obecne na schemacie (nie liczy drugiego zestawu):
+ *   - `sources` = `sourceRefs` dokumentu (1:1 sourceType/sourceId/sourceTitle).
+ *   - `unresolvedGaps`/`risks`/`toVerify` = bloki oznaczone `isAssumption: true` — dokładnie
+ *     ten sam znacznik, który `buildSectionBlocks` ustawia, gdy `!hasSources`
+ *     (doktryna Document Studio §5.4 "Deklaracja—niepotwierdzone"). To NIE jest LLM-owa
+ *     samoocena — to deterministyczna flaga ustawiona w tej samej funkcji, która tworzy blok.
+ */
+export function buildDocumentEvidenceContract(
+  sourceRefs: DocumentSourceRef[],
+  sections: DocumentSection[]
+): EvidenceContract {
+  const sources: EvidenceContractSource[] = sourceRefs.map((r) => ({
+    type: r.sourceType,
+    ref: r.sourceId,
+    title: r.sourceTitle,
+  }));
+
+  const allBlocks = sections.flatMap((s) => s.blocks);
+  const assumptionBlocks = allBlocks.filter((b) => b.isAssumption === true);
+
+  const risks: string[] = [];
+  if (assumptionBlocks.length > 0) {
+    risks.push(
+      `${assumptionBlocks.length}/${allBlocks.length} bloków oznaczonych jako założenie (isAssumption) — brak podpiętego źródła.`
+    );
+  }
+
+  const toVerify: string[] = [];
+  if (sourceRefs.length === 0) {
+    toVerify.push(
+      'Brak podpiętych źródeł — treść oparta wyłącznie na deklaracji intake (bez cytowań).'
+    );
+  }
+  sections
+    .filter((section) => section.blocks.some((b) => b.isAssumption === true))
+    .forEach((section) => {
+      toVerify.push(`Sekcja "${section.title}" wymaga treści/źródeł (obecnie założenie/stub).`);
+    });
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps: assumptionBlocks.length,
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
+}
 
 interface BuildSchemaInput {
   artifactId: string;
@@ -237,6 +291,7 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
     sourceRefs,
     createdAt: now,
     updatedAt: now,
+    evidence: buildDocumentEvidenceContract(sourceRefs, sections),
   };
 }
 
@@ -406,10 +461,20 @@ export async function buildDocumentSchemaPremium(
     });
 
     // Reuse the deterministic envelope (document metadata is identical); only
-    // the section blocks differ.
+    // the section blocks differ — recompute evidence against the PREMIUM
+    // sections. NOTE: `contentBlockToDocumentBlock` does not carry an
+    // `isAssumption` flag (the content-gen service doesn't emit one per block),
+    // so the assumption-count signal only reflects sections that fell back to
+    // the deterministic stub. Flagged explicitly below rather than silently
+    // presenting a higher confidence than warranted.
+    const premiumEvidence = buildDocumentEvidenceContract(input.sourceRefs, sections);
+    premiumEvidence.toVerify.push(
+      'Treść PREMIUM (LLM, contentBlockContentGenerator) — brak per-blokowego znacznika założenia (isAssumption); pewność oparta wyłącznie na liczbie podpiętych źródeł.'
+    );
     return {
       ...deterministic,
       sections,
+      evidence: premiumEvidence,
     };
   } catch {
     // FAIL-OPEN: any premium failure (LLM, mapping, import) degrades silently

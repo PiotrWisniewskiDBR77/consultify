@@ -699,6 +699,14 @@ export interface DocumentSchema {
   sourcePackId?: string;
   clientId?: string;
   owner?: string;
+
+  /**
+   * HP-16 — realny EvidenceContract (`server/src/services/evidence/evidenceContract.ts`),
+   * DETERMINISTYCZNIE wyprowadzony z `sourceRefs` + `isAssumption` flag na blokach (doktryna
+   * §5.4 "Deklaracja—niepotwierdzone"). Populated by `documentContentGenerator.buildDocumentSchema`
+   * / `buildDocumentSchemaPremium`. Optional for backwards compatibility with pre-HP-16 artifacts.
+   */
+  evidence?: import('../evidence/evidenceContract.js').EvidenceContract;
 }
 
 /**

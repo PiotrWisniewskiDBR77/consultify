@@ -14,7 +14,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import { validateInitiativeCard } from './cardContentFormulaValidator.js';
-import { emptyEvidenceContract } from './evidence/evidenceContract.js';
+import {
+  deriveConfidence,
+  emptyEvidenceContract,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from './evidence/evidenceContract.js';
 import {
   type MaterializationOutcome,
   type MaterializationSourceItem,
@@ -48,7 +53,8 @@ import { createInitiative as funnelCreateInitiative } from './initiative/createI
 // Types
 type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
-interface AssessmentRow {
+// Exported (HP-16) so `buildInitiativeEvidenceContract` is unit-testable without `as any` casts.
+export interface AssessmentRow {
   id: string;
   organization_id: string;
   project_id?: string | null;
@@ -62,7 +68,8 @@ interface AssessmentRow {
   score_summary?: string | null;
 }
 
-interface GeneratedInitiative {
+// Exported (HP-16) so `buildInitiativeEvidenceContract` is unit-testable without `as any` casts.
+export interface GeneratedInitiative {
   title: string;
   description: string;
   category: string;
@@ -222,6 +229,92 @@ function buildAssessmentSourceItems(
       return { id: key, label: key, text: text.trim() };
     })
     .filter((item) => item.text.length > 0);
+}
+
+/**
+ * HP-16: buduje `EvidenceContract` DLA POJEDYNCZEJ wygenerowanej inicjatywy —
+ * DETERMINISTYCZNIE, zero LLM, zero I/O. Zastępuje `emptyEvidenceContract()`
+ * na jedynym realnym choke-poincie (`persistInitiatives`, wołanym przez
+ * `generateInitiatives`, `AssessmentController.generateInitiatives` i
+ * `assessmentInitiativeGenerationRunService` — WSZYSTKIE ścieżki produkcji
+ * inicjatyw z oceny).
+ *
+ * Sygnały pewności są REALNE, nie zgadywane:
+ *   - `sources` = sam rekord oceny + (jeśli inicjatywa ma `relatedAxis`/
+ *     `relatedDimension`) wymiar `score_summary`, na którym się opiera —
+ *     dokładnie ten sam klucz, którego fallback-generator (DRD/SIRI) użył do
+ *     policzenia gap = target - actual.
+ *   - `qualityScore` = `assessment.completion_percent` (realne pole na
+ *     rekordzie, to samo, którego `AssessmentController.isReadyForFinal`
+ *     używa jako progu gotowości).
+ *   - `unresolvedGaps` liczy: (a) brak powiązanej osi (inicjatywa
+ *     nieprześledzalna do wymiaru oceny), (b) `confidence_avg` < 3/5 — ten
+ *     sam próg co `ToolController`/`AssessmentController` "gotowość do
+ *     finalizacji" (linia `completion >= 100 && confidence_avg >= 3`).
+ * `risks`/`toVerify` cytują te same realne braki — nie zgadywanie modelu.
+ */
+export function buildInitiativeEvidenceContract(
+  assessment: AssessmentRow,
+  scoreSummary: Record<string, unknown>,
+  initiative: GeneratedInitiative
+): EvidenceContract {
+  const axisRef = (initiative.relatedAxis || initiative.relatedDimension || '').trim();
+  const axisKnown =
+    axisRef.length > 0 && Object.prototype.hasOwnProperty.call(scoreSummary, axisRef);
+
+  const sources: EvidenceContractSource[] = [
+    {
+      type: 'assessment',
+      ref: assessment.id,
+      title: `${assessment.assessment_type} — ${assessment.name}`,
+    },
+  ];
+  if (axisRef) {
+    sources.push({
+      type: 'assessment_axis',
+      ref: axisRef,
+      title: axisKnown ? undefined : `${axisRef} (brak w score_summary)`,
+    });
+  }
+
+  const completion = Number(assessment.completion_percent || 0);
+  const confidenceAvg = Number(assessment.confidence_avg || 0);
+
+  const risks: string[] = [];
+  if (!axisRef) {
+    risks.push(
+      'Inicjatywa nie ma powiązanej osi/wymiaru oceny — podstawa nieprześledzalna do konkretnego wymiaru.'
+    );
+  }
+  if (completion < 100) {
+    risks.push(`Ocena ukończona w ${completion}% — część odpowiedzi może brakować.`);
+  }
+  if (confidenceAvg > 0 && confidenceAvg < 3) {
+    risks.push(
+      `Średnia pewność odpowiedzi ${confidenceAvg.toFixed(1)}/5 — poniżej progu gotowości (3/5).`
+    );
+  }
+
+  const toVerify: string[] = [];
+  if (axisRef && !axisKnown) {
+    toVerify.push(
+      `Powiązana oś/wymiar "${axisRef}" nie występuje w wynikach oceny (score_summary) — zweryfikuj.`
+    );
+  }
+  if (completion < 100) {
+    toVerify.push('Dokończ ocenę — brakujące odpowiedzi mogą zmienić priorytety inicjatywy.');
+  }
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps:
+      (axisRef ? 0 : 1) +
+      (confidenceAvg > 0 && confidenceAvg < 3 ? 1 : 0) +
+      (axisRef && !axisKnown ? 1 : 0),
+    qualityScore: completion > 0 ? completion : undefined,
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
 }
 
 class AssessmentInitiativeService {
@@ -803,10 +896,21 @@ Return a JSON array with exactly ${count} initiatives in this format:
    */
   static async persistInitiatives(
     params: PersistParams
-  ): Promise<{ id: string; title: string; status: string }[]> {
+  ): Promise<{ id: string; title: string; status: string; evidence: EvidenceContract }[]> {
     const { assessment, batchId, initiatives, userId, reportId } = params;
     const now = new Date().toISOString();
-    const created: { id: string; title: string; status: string }[] = [];
+    const created: { id: string; title: string; status: string; evidence: EvidenceContract }[] = [];
+    // HP-16: parsed once — feeds `buildInitiativeEvidenceContract` per initiative below.
+    // Tolerant of malformed/absent JSON (matches the safeParseJson pattern used elsewhere
+    // in this file); never throws.
+    let scoreSummaryForEvidence: Record<string, unknown> = {};
+    try {
+      scoreSummaryForEvidence = assessment.score_summary
+        ? (JSON.parse(assessment.score_summary) as Record<string, unknown>)
+        : {};
+    } catch {
+      scoreSummaryForEvidence = {};
+    }
 
     // Some deployments may have different initiatives table schemas.
     // Detect available columns once (cached in-memory).
@@ -950,6 +1054,10 @@ Return a JSON array with exactly ${count} initiatives in this format:
         id,
         title: initiative.title,
         status: 'DRAFT',
+        // HP-16: realny EvidenceContract (nie emptyEvidenceContract()) — źródło = ocena +
+        // (jeśli obecna) oś/wymiar, na którym inicjatywa się opiera; pewność wyprowadzona
+        // deterministycznie z completion_percent/confidence_avg realnie zapisanych na ocenie.
+        evidence: buildInitiativeEvidenceContract(assessment, scoreSummaryForEvidence, initiative),
       });
     }
 

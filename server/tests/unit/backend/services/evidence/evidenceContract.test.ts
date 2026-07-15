@@ -15,6 +15,18 @@ import {
   confidenceFromVerification,
   numericConfidenceFromVerification,
 } from '../../../../../src/services/ai/runtimeCitationVerification.js';
+import { buildScoreBasedEvidenceContract } from '../../../../../src/services/aiAssessmentReportGenerator.js';
+import {
+  type AssessmentRow,
+  buildInitiativeEvidenceContract,
+  type GeneratedInitiative,
+} from '../../../../../src/services/assessmentInitiativeService.js';
+import type { ContextPack } from '../../../../../src/services/contextPackBuilder.js';
+import { buildDocumentEvidenceContract } from '../../../../../src/services/documentStudio/documentContentGenerator.js';
+import type {
+  DocumentSection,
+  DocumentSourceRef,
+} from '../../../../../src/services/documentStudio/documentStudioTypes.js';
 import {
   deriveConfidence,
   emptyEvidenceContract,
@@ -24,6 +36,7 @@ import {
 } from '../../../../../src/services/evidence/evidenceContract.js';
 import { buildFinanceEvidenceContract } from '../../../../../src/services/financeReportSectionService.js';
 import { buildEvidenceContractFromCandidate } from '../../../../../src/services/insightMaterializationService.js';
+import { buildDeckEvidenceContract } from '../../../../../src/services/presentationGeneratorService.js';
 
 describe('HP-14 EvidenceContract — walidator kształtu', () => {
   it('akceptuje pełny, poprawny kontrakt', () => {
@@ -350,5 +363,277 @@ describe('HP-14 serwis #2 (Finance) zwraca wypełniony EvidenceContract', () => 
       []
     );
     expect(contract.toVerify.some((v) => v.includes('Reconcile R1-R8 nie policzony'))).toBe(true);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// HP-16 — rozszerzenie kontraktu na kolejne narzędzia (3/8→6/8 w tej sesji).
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('HP-16 serwis #3 (AssessmentInitiativeService) zwraca wypełniony EvidenceContract', () => {
+  const baseAssessment: AssessmentRow = {
+    id: 'assess_1',
+    organization_id: 'org_1',
+    project_id: 'proj_1',
+    assessment_type: 'DRD',
+    name: 'Q3 DRD Assessment',
+    status: 'COMPLETED',
+    completion_percent: 100,
+    confidence_avg: 4,
+  };
+
+  const initiative: GeneratedInitiative = {
+    title: 'Improve data management maturity',
+    description: 'desc',
+    category: 'data_management',
+    priority: 'high',
+    risk: 'medium',
+    relatedAxis: 'dataManagement',
+  };
+
+  it('inicjatywa z powiązaną osią obecną w score_summary → source dla osi + brak ryzyka nieprześledzalności', () => {
+    const contract = buildInitiativeEvidenceContract(
+      baseAssessment,
+      { dataManagement: { actual: 2, target: 4 } },
+      initiative
+    );
+    expect(validateEvidenceContract(contract).valid).toBe(true);
+    expect(contract.sources).toHaveLength(2); // assessment + oś
+    expect(contract.sources[1]!.ref).toBe('dataManagement');
+    expect(contract.risks.some((r) => r.includes('nieprześledzalna'))).toBe(false);
+    expect(contract.toVerify.some((v) => v.includes('nie występuje w wynikach oceny'))).toBe(false);
+  });
+
+  it('inicjatywa BEZ relatedAxis/relatedDimension → ryzyko nieprześledzalności + luka liczona w confidence', () => {
+    const noAxisInitiative: GeneratedInitiative = { ...initiative, relatedAxis: undefined };
+    const contract = buildInitiativeEvidenceContract(baseAssessment, {}, noAxisInitiative);
+    expect(contract.sources).toHaveLength(1); // tylko assessment, brak osi
+    expect(contract.risks.some((r) => r.includes('nieprześledzalna'))).toBe(true);
+  });
+
+  it('relatedAxis wskazuje na klucz NIEobecny w score_summary → toVerify sygnalizuje rozbieżność', () => {
+    const contract = buildInitiativeEvidenceContract(baseAssessment, { otherAxis: {} }, initiative);
+    expect(contract.toVerify.some((v) => v.includes('nie występuje w wynikach oceny'))).toBe(true);
+  });
+
+  it('ocena niekompletna (completion_percent < 40) → confidence low (sufit jakości, bramka dowodowa)', () => {
+    const thinAssessment: AssessmentRow = { ...baseAssessment, completion_percent: 20 };
+    const contract = buildInitiativeEvidenceContract(
+      thinAssessment,
+      { dataManagement: { actual: 1 } },
+      initiative
+    );
+    expect(contract.risks.some((r) => r.includes('ukończona w 20%'))).toBe(true);
+    expect(contract.confidence).toBe('low');
+  });
+
+  it('confidence_avg < 3 → ryzyko niskiej pewności odpowiedzi', () => {
+    const lowConfAssessment: AssessmentRow = { ...baseAssessment, confidence_avg: 2 };
+    const contract = buildInitiativeEvidenceContract(
+      lowConfAssessment,
+      { dataManagement: { actual: 1 } },
+      initiative
+    );
+    expect(contract.risks.some((r) => r.includes('poniżej progu gotowości'))).toBe(true);
+  });
+});
+
+describe('HP-16 serwis #4 (aiAssessmentReportGenerator) zwraca wypełniony EvidenceContract', () => {
+  const assessment = { projectId: 'proj_1', id: 'assess_1', name: 'Q3 DRD' };
+  const scores = [
+    { axis: 'dataManagement', name: 'Data Management', actual: 3, target: 5, gap: 2 },
+    { axis: 'culture', name: 'Culture', actual: 4, target: 5, gap: 1 },
+  ];
+
+  it('mode AI_GENERATED, brak extra sygnałów → brak ryzyka fallbacku', () => {
+    const contract = buildScoreBasedEvidenceContract(assessment, scores, { mode: 'AI_GENERATED' });
+    expect(validateEvidenceContract(contract).valid).toBe(true);
+    expect(contract.sources).toHaveLength(3); // assessment + 2 osie
+    expect(contract.risks.some((r) => r.includes('fallbackiem'))).toBe(false);
+  });
+
+  it('mode FALLBACK → ryzyko + luka liczona w confidence', () => {
+    const contract = buildScoreBasedEvidenceContract(assessment, scores, { mode: 'FALLBACK' });
+    expect(contract.risks.some((r) => r.includes('fallbackiem'))).toBe(true);
+  });
+
+  it('extraRisks/extraToVerify/extraUnresolvedGaps przechodzą 1:1 (np. osie bez gap-analizy)', () => {
+    const contract = buildScoreBasedEvidenceContract(assessment, scores, {
+      mode: 'AI_GENERATED',
+      extraRisks: ['1 analiz(y) luki bez rekomendacji AI.'],
+      extraToVerify: ['1/2 osi bez szczegółowej analizy luki.'],
+      extraUnresolvedGaps: 1,
+    });
+    expect(contract.risks).toContain('1 analiz(y) luki bez rekomendacji AI.');
+    expect(contract.toVerify).toContain('1/2 osi bez szczegółowej analizy luki.');
+    expect(contract.confidence).not.toBe('high'); // luka blokuje high
+  });
+});
+
+describe('HP-16 serwis #5 (presentationGeneratorService / Deck) zwraca wypełniony EvidenceContract', () => {
+  const contextPack = (confidenceScore: number): ContextPack => ({
+    pack_id: 'cp_1',
+    created_at: '2026-07-15T00:00:00.000Z',
+    organization_id: 'org_1',
+    language: 'pl',
+    sources: [],
+    headings: [],
+    key_points: [],
+    data_points: [],
+    charts_available: [],
+    images_available: [],
+    metadata: {
+      total_source_artifacts: 3,
+      confidence_score: confidenceScore,
+      extraction_warnings: [],
+    },
+  });
+
+  it('3 źródła ready + confidence_score wysoki + brak braków → high', () => {
+    const sourceRefs = [
+      {
+        artifact_id: 'a1',
+        artifact_type: 'kpi_roi',
+        artifact_name: 'KPI',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a2',
+        artifact_type: 'raid',
+        artifact_name: 'RAID',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a3',
+        artifact_type: 'assessment',
+        artifact_name: 'Assessment',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+    ];
+    const contract = buildDeckEvidenceContract(sourceRefs, contextPack(1.0), {
+      missingInputs: [],
+      warnings: [],
+    });
+    expect(validateEvidenceContract(contract).valid).toBe(true);
+    expect(contract.sources).toHaveLength(3);
+    expect(contract.confidence).toBe('high');
+  });
+
+  it('źródło insufficient_evidence → ryzyko jawne + luka blokuje high', () => {
+    const sourceRefs = [
+      {
+        artifact_id: 'a1',
+        artifact_type: 'kpi_roi',
+        artifact_name: 'KPI',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a2',
+        artifact_type: 'raid',
+        artifact_name: 'RAID',
+        confidence: 0,
+        readiness: 'insufficient_evidence',
+        lineage: null,
+      },
+      {
+        artifact_id: 'a3',
+        artifact_type: 'assessment',
+        artifact_name: 'Assessment',
+        confidence: 1,
+        readiness: 'ready',
+        lineage: null,
+      },
+    ];
+    const contract = buildDeckEvidenceContract(sourceRefs, contextPack(0.8), {
+      missingInputs: [],
+      warnings: [],
+    });
+    expect(contract.risks.some((r) => r.includes('insufficient_evidence'))).toBe(true);
+    expect(contract.confidence).not.toBe('high');
+  });
+
+  it('sourcePackPreflight.missingInputs → toVerify jawny', () => {
+    const contract = buildDeckEvidenceContract(
+      [
+        {
+          artifact_id: 'a1',
+          artifact_type: 'kpi_roi',
+          artifact_name: 'KPI',
+          confidence: 1,
+          readiness: 'ready',
+          lineage: null,
+        },
+      ],
+      contextPack(0.9),
+      { missingInputs: ['financial_analysis'], warnings: [] }
+    );
+    expect(contract.toVerify.some((v) => v.includes('financial_analysis'))).toBe(true);
+  });
+
+  it('0 źródeł → confidence low (bramka dowodowa, niezależnie od confidence_score)', () => {
+    const contract = buildDeckEvidenceContract([], contextPack(1.0), {
+      missingInputs: [],
+      warnings: [],
+    });
+    expect(contract.sources).toHaveLength(0);
+    expect(contract.confidence).toBe('low');
+  });
+});
+
+describe('HP-16 serwis #6 (documentContentGenerator / Word) zwraca wypełniony EvidenceContract', () => {
+  const sourceRefs: DocumentSourceRef[] = [
+    { sourceType: 'interview', sourceId: 'src_1', sourceTitle: 'Interview A' },
+  ];
+
+  const groundedSections: DocumentSection[] = [
+    {
+      sectionId: 's1',
+      orderIndex: 0,
+      level: 1,
+      title: 'Executive Summary',
+      blocks: [
+        {
+          blockId: 'b1',
+          type: 'paragraph',
+          content: { text: 'Real content' },
+          isAssumption: false,
+        },
+      ],
+    },
+  ];
+
+  const stubSections: DocumentSection[] = [
+    {
+      sectionId: 's1',
+      orderIndex: 0,
+      level: 1,
+      title: 'Risks',
+      blocks: [{ blockId: 'b1', type: 'risk_table', content: {}, isAssumption: true }],
+    },
+  ];
+
+  it('źródła podpięte + bloki bez isAssumption → brak ryzyka, brak toVerify o braku źródeł', () => {
+    const contract = buildDocumentEvidenceContract(sourceRefs, groundedSections);
+    expect(validateEvidenceContract(contract).valid).toBe(true);
+    expect(contract.sources).toHaveLength(1);
+    expect(contract.risks).toHaveLength(0);
+    expect(contract.toVerify.some((v) => v.includes('Brak podpiętych źródeł'))).toBe(false);
+  });
+
+  it('0 źródeł + blok isAssumption:true → confidence low + toVerify jawny (bramka "Deklaracja—niepotwierdzone")', () => {
+    const contract = buildDocumentEvidenceContract([], stubSections);
+    expect(contract.sources).toHaveLength(0);
+    expect(contract.confidence).toBe('low');
+    expect(contract.toVerify.some((v) => v.includes('Brak podpiętych źródeł'))).toBe(true);
+    expect(contract.toVerify.some((v) => v.includes('Risks'))).toBe(true);
+    expect(contract.risks.some((r) => r.includes('isAssumption'))).toBe(true);
   });
 });
