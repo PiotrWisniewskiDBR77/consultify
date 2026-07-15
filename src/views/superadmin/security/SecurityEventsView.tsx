@@ -4,10 +4,11 @@
  */
 
 import { CheckCircle } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { StandardTable, type TableColumn, type TableRow } from '../../../components/standard';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -136,6 +137,86 @@ export const SecurityEventsView: React.FC = () => {
     }
   };
 
+  // canon TRIADA §27 — StandardTable columns. Kebab (actions) is auto-appended
+  // by StandardTable itself; it is intentionally NOT declared here.
+  const buildColumns = useCallback((): TableColumn[] => {
+    return [
+      {
+        id: 'created_at',
+        label: 'Time',
+        sortable: true,
+        sortAccessor: (row: TableRow) => String((row as unknown as SecurityEventRow).created_at || ''),
+        render: (row: TableRow) => (
+          <span className="text-slate-700 dark:text-slate-300">
+            {formatSecurityEventDate((row as unknown as SecurityEventRow).created_at)}
+          </span>
+        ),
+      },
+      {
+        id: 'event_type',
+        label: 'Event Type',
+        render: (row: TableRow) => (
+          <span className="text-slate-900 dark:text-white">
+            {asText((row as unknown as SecurityEventRow).event_type, 'Unknown event')}
+          </span>
+        ),
+      },
+      {
+        id: 'severity',
+        label: 'Severity',
+        render: (row: TableRow) => {
+          const severity = asText((row as unknown as SecurityEventRow).severity, 'unknown');
+          return (
+            <span
+              className={`px-2 py-1 rounded text-xs border ${getSeverityColor(severity)}`}
+            >
+              {severity}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'ip_address',
+        label: 'IP Address',
+        render: (row: TableRow) => (
+          <span className="text-slate-700 dark:text-slate-300">
+            {asText((row as unknown as SecurityEventRow).ip_address, '-')}
+          </span>
+        ),
+      },
+      {
+        id: 'location',
+        label: 'Location',
+        render: (row: TableRow) => {
+          const event = row as unknown as SecurityEventRow;
+          return (
+            <span className="text-slate-700 dark:text-slate-300">
+              {event.location_city
+                ? `${asText(event.location_city, '-')}, ${asText(event.location_country, '-')}`
+                : '-'}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) =>
+          (row as unknown as SecurityEventRow).resolved ? (
+            <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400">
+              Resolved
+            </span>
+          ) : (
+            <span className="px-2 py-1 rounded text-xs bg-yellow-500/10 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400">
+              Open
+            </span>
+          ),
+      },
+    ];
+  }, []);
+
+  const columns = useMemo(() => buildColumns(), [buildColumns]);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -192,100 +273,29 @@ export const SecurityEventsView: React.FC = () => {
         </div>
       )}
 
-      {loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : loadError ? null : (
+      {loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-          >
-            <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Time
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Event Type
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Severity
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  IP Address
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Location
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {events.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    No security events found
-                  </td>
-                </tr>
-              ) : (
-                events.map((event) => (
-                  <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {formatSecurityEventDate(event.created_at)}
-                    </td>
-                    <td className="px-6 py-4 text-slate-900 dark:text-white">
-                      {asText(event.event_type, 'Unknown event')}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs border ${getSeverityColor(asText(event.severity, 'unknown'))}`}
-                      >
-                        {asText(event.severity, 'unknown')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {asText(event.ip_address, '-')}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {event.location_city
-                        ? `${asText(event.location_city, '-')}, ${asText(event.location_country, '-')}`
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {event.resolved ? (
-                        <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400">
-                          Resolved
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 rounded text-xs bg-yellow-500/10 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400">
-                          Open
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {!event.resolved && (
-                        <button
-                          onClick={() => handleResolve(event.id)}
-                          aria-label={`Resolve security event ${event.id}`}
-                          className="text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                          title="Resolve event"
-                        >
-                          <CheckCircle size={18} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={columns}
+            data={events as unknown as TableRow[]}
+            loading={loading}
+            empty={{ title: 'No security events found' }}
+            rowMenu={(row) => {
+              const event = row as unknown as SecurityEventRow;
+              return {
+                primary: event.resolved
+                  ? []
+                  : [
+                      {
+                        id: 'resolve',
+                        label: 'Resolve event',
+                        icon: CheckCircle,
+                        onClick: () => void handleResolve(event.id),
+                      },
+                    ],
+              };
+            }}
+          />
         </div>
       )}
     </div>
