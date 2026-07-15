@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -21,6 +22,7 @@ interface SOPStandardsStepProps {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export const SOPStandardsStep: React.FC<SOPStandardsStepProps> = ({ session, isPolish }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [title, setTitle] = useState('');
   const [criteria, setCriteria] = useState('');
@@ -63,12 +65,10 @@ export const SOPStandardsStep: React.FC<SOPStandardsStepProps> = ({ session, isP
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Standardy i kryteria jakości' : 'Standards & quality criteria'}
+          {t('discoveryToolsTools.operational.sopStandardsStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zdefiniuj standardy operacyjne i kryteria jakości.'
-            : 'Define operational standards and quality criteria.'}
+          {t('discoveryToolsTools.operational.sopStandardsStep.description')}
         </p>
       </div>
 
@@ -77,13 +77,13 @@ export const SOPStandardsStep: React.FC<SOPStandardsStepProps> = ({ session, isP
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'Nazwa standardu...' : 'Standard name...'}
+          placeholder={t('discoveryToolsTools.operational.sopStandardsStep.namePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <textarea
           value={criteria}
           onChange={(e) => setCriteria(e.target.value)}
-          placeholder={isPolish ? 'Kryteria jakości...' : 'Quality criteria...'}
+          placeholder={t('discoveryToolsTools.operational.sopStandardsStep.criteriaPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
@@ -91,7 +91,7 @@ export const SOPStandardsStep: React.FC<SOPStandardsStepProps> = ({ session, isP
           type="text"
           value={frequency}
           onChange={(e) => setFrequency(e.target.value)}
-          placeholder={isPolish ? 'Częstotliwość kontroli...' : 'Audit frequency...'}
+          placeholder={t('discoveryToolsTools.operational.sopStandardsStep.frequencyPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <button
@@ -100,21 +100,15 @@ export const SOPStandardsStep: React.FC<SOPStandardsStepProps> = ({ session, isP
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
-          {isPolish ? 'Dodaj standard' : 'Add standard'}
+          {t('discoveryToolsTools.operational.sopStandardsStep.addStandard')}
         </button>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Dodaj mierzalne kryteria i częstotliwość kontroli.'
-              : 'Add measurable criteria and audit frequency.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.sopStandardsStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak standardów' : 'No standards yet'}
+            {t('discoveryToolsTools.operational.sopStandardsStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -132,7 +126,8 @@ export const SOPStandardsStep: React.FC<SOPStandardsStepProps> = ({ session, isP
                   )}
                   {item.frequency && (
                     <div className="text-xs text-slate-500 mt-2">
-                      {isPolish ? 'Częstotliwość' : 'Frequency'}: {item.frequency}
+                      {t('discoveryToolsTools.operational.sopStandardsStep.frequencyLabel')}:{' '}
+                      {item.frequency}
                     </div>
                   )}
                 </div>

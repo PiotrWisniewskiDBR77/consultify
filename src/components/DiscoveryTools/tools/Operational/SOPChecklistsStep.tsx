@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   OperationalItem,
@@ -21,6 +22,7 @@ interface SOPChecklistsStepProps {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export const SOPChecklistsStep: React.FC<SOPChecklistsStepProps> = ({ session, isPolish }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -63,12 +65,10 @@ export const SOPChecklistsStep: React.FC<SOPChecklistsStepProps> = ({ session, i
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Checklisty i weryfikacja' : 'Checklists & verification'}
+          {t('discoveryToolsTools.operational.sopChecklistsStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zdefiniuj kroki kontrolne i odpowiedzialnych.'
-            : 'Define checklist steps and owners.'}
+          {t('discoveryToolsTools.operational.sopChecklistsStep.description')}
         </p>
       </div>
 
@@ -77,13 +77,13 @@ export const SOPChecklistsStep: React.FC<SOPChecklistsStepProps> = ({ session, i
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'Nazwa checklisty...' : 'Checklist item...'}
+          placeholder={t('discoveryToolsTools.operational.sopChecklistsStep.itemPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={isPolish ? 'Opis kroku...' : 'Step description...'}
+          placeholder={t('discoveryToolsTools.operational.sopChecklistsStep.descPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
@@ -91,7 +91,7 @@ export const SOPChecklistsStep: React.FC<SOPChecklistsStepProps> = ({ session, i
           type="text"
           value={owner}
           onChange={(e) => setOwner(e.target.value)}
-          placeholder={isPolish ? 'Owner / Rola...' : 'Owner / Role...'}
+          placeholder={t('discoveryToolsTools.operational.sopChecklistsStep.ownerPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
         <button
@@ -100,21 +100,15 @@ export const SOPChecklistsStep: React.FC<SOPChecklistsStepProps> = ({ session, i
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
-          {isPolish ? 'Dodaj' : 'Add'}
+          {t('discoveryToolsTools.common.add')}
         </button>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Każdy punkt powinien mieć odpowiedzialną rolę.'
-              : 'Each checklist item should have an owner role.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.operational.sopChecklistsStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak checklist' : 'No checklists yet'}
+            {t('discoveryToolsTools.operational.sopChecklistsStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -132,7 +126,8 @@ export const SOPChecklistsStep: React.FC<SOPChecklistsStepProps> = ({ session, i
                   )}
                   {item.owner && (
                     <div className="text-xs text-slate-500 mt-2">
-                      {isPolish ? 'Owner' : 'Owner'}: {item.owner}
+                      {t('discoveryToolsTools.operational.sopChecklistsStep.ownerLabel')}:{' '}
+                      {item.owner}
                     </div>
                   )}
                 </div>
