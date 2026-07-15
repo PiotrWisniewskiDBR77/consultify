@@ -1,22 +1,34 @@
 /**
  * M16/2.1 — Living Business Case
  * ------------------------------------------------------------------
- * Pure (DB-free) economics layer that lets a financial-analysis-born
+ * Pure (DB-free) economics layer that WOULD let a financial-analysis-born
  * initiative carry its NUMBERS — not just a name + summary.
  *
- * Seam A (the bug this fixes): today an initiative spawned from a
- * financial analysis (`server/src/routes/v8/finance.routes.ts:1911`)
- * is born "empty" — only `name` + `summary`, with no NPV / IRR /
- * payback. This service extracts the economics out of the already
- * computed investment ratios (financialAnalysisService.computeInvestmentRatios:
- * NPV / IRR / payback / ROI) into a transportable shape, and lets the
- * read path RE-COMPUTE NPV/IRR/payback/PI from the stored assumptions
- * against a REAL WACC (the "living" part — change WACC → numbers move),
- * never a hardcoded 10%.
+ * Seam A (the bug this is meant to fix): today an initiative spawned from a
+ * financial analysis (`server/src/routes/v8/finance.routes.ts`, see
+ * `POST /analyses/:analysisId/initiatives`) is born "empty" — only `name` +
+ * `summary`, with no NPV / IRR / payback. This service extracts the
+ * economics out of the already computed investment ratios
+ * (financialAnalysisService.computeInvestmentRatios: NPV / IRR / payback /
+ * ROI) into a transportable shape, and lets the read path RE-COMPUTE
+ * NPV/IRR/payback/PI from the stored assumptions against a REAL WACC (the
+ * "living" part — change WACC → numbers move), never a hardcoded 10%.
  *
- * Everything here is a pure function. No imports of DbPromise, no I/O.
- * The DB/route wiring lives in the caller (finance.routes.ts) and the
- * roi_assumptions persistence (benefits.routes.ts / results.routes.ts).
+ * ★ NOT WIRED (verified 2026-07-15, Oxford O4 audit): grep of server/src
+ * finds zero callers of buildBusinessCaseFromAnalysis / computeNpvOnRead /
+ * toRoiAssumptions outside this file's own tests. `finance.routes.ts`'s
+ * `/analyses/:analysisId/initiatives` does NOT call this service — it still
+ * inserts initiatives with only name/summary, exactly the "empty" state
+ * this module was written to fix. A previous version of this docblock
+ * claimed "the DB/route wiring lives in the caller" — that was aspirational,
+ * not actual; corrected here so this file stops misrepresenting its own
+ * integration status. Everything below is still a pure function (no
+ * DbPromise import, no I/O) and is safe to wire in; the remaining work is
+ * a route-level call in finance.routes.ts that (a) fetches the analysis'
+ * ratios via financialAnalysisService, (b) resolves capex/opex/benefit
+ * drivers (not currently read by that route — only insight title/description
+ * are), and (c) persists the result via the roi_assumptions writers already
+ * used by benefits.routes.ts / results.routes.ts.
  */
 
 import type { RatioResult } from './financialAnalysisService.js';
