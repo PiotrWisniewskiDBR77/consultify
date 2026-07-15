@@ -154,7 +154,11 @@
     "delay": "Opóźnij",
     "dismiss": "Zamknij",
     "restore": "Przywróć",
-    "showLess": "Pokaż mniej"
+    "showLess": "Pokaż mniej",
+    "resetColumns": "Przywróć domyślne",
+    "viewSettings": "Ustawienia widoku",
+    "visibleColumns": "Widoczne kolumny",
+    "showRowDescription": "Pokaż opis / uzasadnienie"
   },
   "superadmin": {
     "confirm": {
@@ -29363,6 +29367,22 @@
       "roleOutput": "Wynik",
       "noResults": "Brak wyników",
       "emptyHint": "Wpisz nazwę, indeks lub wklej ref artefaktu"
+    },
+    "gridView": {
+      "justNow": "Przed chwilą",
+      "hoursAgo": "{{count}} h temu",
+      "daysAgo": "{{count}} dni temu",
+      "open": "Otwórz",
+      "duplicate": "Duplikuj",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "newItemDefault": "Nowy element",
+      "emptyDefault": "Brak elementów"
+    },
+    "filterableTable": {
+      "justNow": "Przed chwilą",
+      "hoursAgo": "{{count}} h temu",
+      "daysAgo": "{{count}} dni temu"
     }
   },
   "reportBuilder": {

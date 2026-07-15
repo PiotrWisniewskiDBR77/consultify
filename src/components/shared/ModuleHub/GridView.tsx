@@ -18,6 +18,7 @@
 
 import { Copy, Trash2 } from 'lucide-react';
 import React, { useMemo } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import type { RowAction } from '@/components/shared/RowActionsMenu';
@@ -113,16 +114,16 @@ const TYPE_ACCENT_VAR: Record<string, string> = {
 const FALLBACK_ACCENT_VAR = 'var(--c-tag-8)'; // slate — nieznany typ
 
 // Format relative time
-const formatRelativeTime = (date: Date | string, isPolish: boolean) => {
+const formatRelativeTime = (date: Date | string, t: TFunction) => {
   const d = new Date(date);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(hours / 24);
 
-  if (hours < 1) return isPolish ? 'Przed chwilą' : 'Just now';
-  if (hours < 24) return isPolish ? `${hours} h temu` : `${hours}h ago`;
-  if (days < 7) return isPolish ? `${days} dni temu` : `${days}d ago`;
+  if (hours < 1) return t('sharedComponents.gridView.justNow');
+  if (hours < 24) return t('sharedComponents.gridView.hoursAgo', { count: hours });
+  if (days < 7) return t('sharedComponents.gridView.daysAgo', { count: days });
   return d.toLocaleDateString();
 };
 
@@ -136,19 +137,18 @@ export const GridView: React.FC<GridViewProps> = ({
   emptyMessage = 'No items found',
   extraCardActions,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const labels = useMemo(
     () => ({
-      open: isPolish ? 'Otwórz' : 'Open',
-      duplicate: isPolish ? 'Duplikuj' : 'Duplicate',
-      edit: isPolish ? 'Edytuj' : 'Edit',
-      delete: isPolish ? 'Usuń' : 'Delete',
-      newItem: newItemLabel || (isPolish ? 'Nowy element' : 'New item'),
-      empty: emptyMessage || (isPolish ? 'Brak elementów' : 'No items found'),
+      open: t('sharedComponents.gridView.open'),
+      duplicate: t('sharedComponents.gridView.duplicate'),
+      edit: t('sharedComponents.gridView.edit'),
+      delete: t('sharedComponents.gridView.delete'),
+      newItem: newItemLabel || t('sharedComponents.gridView.newItemDefault'),
+      empty: emptyMessage || t('sharedComponents.gridView.emptyDefault'),
     }),
-    [isPolish, newItemLabel, emptyMessage]
+    [t, newItemLabel, emptyMessage]
   );
 
   const toGridCard = (item: GridItem): StandardGridCardData => {
@@ -198,7 +198,7 @@ export const GridView: React.FC<GridViewProps> = ({
         TYPE_ACCENT_VAR[item.type] ?? TYPE_ACCENT_VAR[item.typeColor] ?? FALLBACK_ACCENT_VAR,
       chips: item.type ? [{ id: 'type', label: String(item.type) }] : undefined,
       progress: typeof item.progress === 'number' ? item.progress : undefined,
-      footerRight: formatRelativeTime(item.updatedAt, isPolish),
+      footerRight: formatRelativeTime(item.updatedAt, t),
       customFooterActions: extra ?? undefined,
       rowMenuActions: rowMenuActions.length ? rowMenuActions : undefined,
     };

@@ -266,8 +266,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   rowDescription,
   rowClassName,
 }) => {
-  const { i18n, t } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const cellPadding = density === 'compact' ? 'px-4 py-2' : 'px-4 py-3';
 
   // PPM-mirror (ANEKS #3b): right-click on a row opens the SAME
@@ -560,9 +559,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(hours / 24);
 
-    if (hours < 1) return isPolish ? 'Przed chwilą' : 'Just now';
-    if (hours < 24) return isPolish ? `${hours} h temu` : `${hours}h ago`;
-    if (days < 7) return isPolish ? `${days} dni temu` : `${days}d ago`;
+    if (hours < 1) return t('sharedComponents.filterableTable.justNow');
+    if (hours < 24) return t('sharedComponents.filterableTable.hoursAgo', { count: hours });
+    if (days < 7) return t('sharedComponents.filterableTable.daysAgo', { count: days });
     return d.toLocaleDateString();
   };
 
@@ -609,8 +608,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               selection!.onToggleAll();
                             }}
                             aria-label={
-                              selection!.selectAllLabel ??
-                              t('common.selectAll', isPolish ? 'Zaznacz wszystko' : 'Select all')
+                              selection!.selectAllLabel ?? t('common.selectAll')
                             }
                             className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
                           />
@@ -681,7 +679,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             // Actions column is structural — shown as LOCKED (wzór My Work).
                             {
                               id: '__actions',
-                              label: t('common.actions', isPolish ? 'Akcje' : 'Actions'),
+                              label: t('common.actions'),
                               required: true,
                               visible: true,
                             },
@@ -712,32 +710,15 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             });
                           }}
                           onReset={resetColumns}
-                          resetLabel={t(
-                            'common.resetColumns',
-                            isPolish ? 'Przywróć domyślne' : 'Reset columns'
-                          )}
+                          resetLabel={t('common.resetColumns')}
                           showDescription={rowDescription.show}
                           onToggleDescription={rowDescription.onToggle}
-                          label={
-                            rowDescription.settingsLabel ??
-                            t(
-                              'common.viewSettings',
-                              isPolish ? 'Ustawienia widoku' : 'View settings'
-                            )
-                          }
+                          label={rowDescription.settingsLabel ?? t('common.viewSettings')}
                           columnsHeading={
-                            rowDescription.columnsHeading ??
-                            t(
-                              'common.visibleColumns',
-                              isPolish ? 'Widoczne kolumny' : 'Visible columns'
-                            )
+                            rowDescription.columnsHeading ?? t('common.visibleColumns')
                           }
                           descriptionLabel={
-                            rowDescription.label ??
-                            t(
-                              'common.showRowDescription',
-                              isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'
-                            )
+                            rowDescription.label ?? t('common.showRowDescription')
                           }
                         />
                       </div>
@@ -751,8 +732,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             <button
                               type="button"
                               className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                              title={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
-                              aria-label={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
+                              title={t('common.columns')}
+                              aria-label={t('common.columns')}
                             >
                               <Columns size={14} />
                             </button>
@@ -830,8 +811,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               selection.onToggleRow(String(row.id));
                             }}
                             aria-label={
-                              selection.selectRowLabel ??
-                              t('common.selectRow', isPolish ? 'Zaznacz wiersz' : 'Select row')
+                              selection.selectRowLabel ?? t('common.selectRow')
                             }
                             className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-info focus:ring-c-focus cursor-pointer"
                           />

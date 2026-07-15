@@ -1551,7 +1551,11 @@
     "delay": "Delay",
     "dismiss": "Dismiss",
     "restore": "Restore",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "resetColumns": "Reset columns",
+    "viewSettings": "View settings",
+    "visibleColumns": "Visible columns",
+    "showRowDescription": "Show row description"
   },
   "superadmin": {
     "confirm": {
@@ -28303,6 +28307,22 @@
       "roleOutput": "Output",
       "noResults": "No results",
       "emptyHint": "Type a name, index, or paste an artifact ref"
+    },
+    "gridView": {
+      "justNow": "Just now",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago",
+      "open": "Open",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "delete": "Delete",
+      "newItemDefault": "New item",
+      "emptyDefault": "No items found"
+    },
+    "filterableTable": {
+      "justNow": "Just now",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     }
   },
   "reportBuilder": {
