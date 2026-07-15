@@ -22,62 +22,62 @@ interface ImportExportPopoverProps {
 }
 
 const IMPORT_ACTIONS = [
-  { action: 'mm_import_device', iconEl: Upload, labelPl: 'Mapa JSON', labelEn: 'JSON map' },
+  { action: 'mm_import_device', tkey: 'myWorkMindmap.importExport.jsonMap', iconEl: Upload, labelEn: 'JSON map' },
   {
     action: 'mm_import_external',
+    tkey: 'myWorkMindmap.importExport.xmindFreemindOpml',
     iconEl: FileUp,
-    labelPl: 'XMind / FreeMind / OPML',
     labelEn: 'XMind / FreeMind / OPML',
   },
   {
     action: 'mm_doc_to_map',
+    tkey: 'myWorkMindmap.importExport.documentToMap',
     iconEl: FileText,
-    labelPl: 'Dokument → Mapa',
     labelEn: 'Document → Map',
   },
-  { action: 'mm_voice', iconEl: Mic, labelPl: 'Mów pomysły (Voice)', labelEn: 'Voice to Node' },
+  { action: 'mm_voice', tkey: 'myWorkMindmap.importExport.voiceToNode', iconEl: Mic, labelEn: 'Voice to Node' },
   {
     action: 'mm_interview_to_map',
+    tkey: 'myWorkMindmap.importExport.interviewsToMap',
     iconEl: MessageSquare,
-    labelPl: 'Wywiady → Mapa',
     labelEn: 'Interviews → Map',
   },
 ];
 
 const EXPORT_ACTIONS = [
-  { action: 'mm_export_pdf', iconEl: Printer, labelPl: 'Eksport PDF', labelEn: 'Export PDF' },
-  { action: 'mm_export_png', iconEl: Image, labelPl: 'PNG', labelEn: 'PNG' },
-  { action: 'mm_export_svg', iconEl: Image, labelPl: 'SVG', labelEn: 'SVG' },
-  { action: 'mm_export_json', iconEl: Download, labelPl: 'JSON', labelEn: 'JSON' },
+  { action: 'mm_export_pdf', tkey: 'myWorkMindmap.importExport.exportPdf', iconEl: Printer, labelEn: 'Export PDF' },
+  { action: 'mm_export_png', tkey: 'myWorkMindmap.importExport.png', iconEl: Image, labelEn: 'PNG' },
+  { action: 'mm_export_svg', tkey: 'myWorkMindmap.importExport.svg', iconEl: Image, labelEn: 'SVG' },
+  { action: 'mm_export_json', tkey: 'myWorkMindmap.importExport.json', iconEl: Download, labelEn: 'JSON' },
   {
     action: 'mm_export_diagram',
+    tkey: 'myWorkMindmap.importExport.mermaidPlantuml',
     iconEl: Code,
-    labelPl: 'Mermaid / PlantUML',
     labelEn: 'Mermaid / PlantUML',
   },
-  { action: 'mm_export_csv', iconEl: FileText, labelPl: 'CSV (Excel)', labelEn: 'CSV (Excel)' },
+  { action: 'mm_export_csv', tkey: 'myWorkMindmap.importExport.csvExcel', iconEl: FileText, labelEn: 'CSV (Excel)' },
   {
     action: 'mm_export_markdown',
+    tkey: 'myWorkMindmap.importExport.markdownOutline',
     iconEl: List,
-    labelPl: 'Markdown (konspekt)',
     labelEn: 'Markdown outline',
   },
   {
     action: 'mm_export_pptx',
+    tkey: 'myWorkMindmap.importExport.htmlPresentation',
     iconEl: Presentation,
-    labelPl: 'Prezentacja HTML',
     labelEn: 'HTML Presentation',
   },
   {
     action: 'mm_embed_report',
+    tkey: 'myWorkMindmap.importExport.embedInReport',
     iconEl: FileText,
-    labelPl: 'Osadź w raporcie',
     labelEn: 'Embed in report',
   },
 ];
 
 export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
-  isPl,
+  isPl: _isPl,
   onAction,
   onClose,
 }) => {
@@ -110,7 +110,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              {t(a.tkey, a.labelEn)}
             </button>
           );
         })}
@@ -133,7 +133,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              {t(a.tkey, a.labelEn)}
             </button>
           );
         })}

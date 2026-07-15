@@ -11,15 +11,15 @@ interface KnowledgePopoverProps {
 const KNOWLEDGE_CARDS = [
   {
     action: 'mm_add_knowledge',
+    tkey: 'myWorkMindmap.knowledge.knowledgeCard',
     iconEl: FileText,
-    labelPl: 'Karta wiedzy',
     labelEn: 'Knowledge card',
   },
-  { action: 'mm_add_note', iconEl: Star, labelPl: 'Notatka', labelEn: 'Note card' },
+  { action: 'mm_add_note', tkey: 'myWorkMindmap.knowledge.noteCard', iconEl: Star, labelEn: 'Note card' },
   {
     action: 'mm_add_evidence',
+    tkey: 'myWorkMindmap.knowledge.evidenceCard',
     iconEl: Shield,
-    labelPl: 'Dowód / Evidence',
     labelEn: 'Evidence card',
   },
 ];
@@ -27,19 +27,19 @@ const KNOWLEDGE_CARDS = [
 const FROM_PLATFORM = [
   {
     action: 'mm_insert_from_notebook',
+    tkey: 'myWorkMindmap.knowledge.insertFromNotebook',
     iconEl: BookOpen,
-    labelPl: 'Wstaw z Notebook',
     labelEn: 'Insert from Notebook',
   },
   {
     action: 'mm_insert_from_interview',
+    tkey: 'myWorkMindmap.knowledge.insertFromInterview',
     iconEl: MessageSquare,
-    labelPl: 'Wstaw z Interview',
     labelEn: 'Insert from Interview',
   },
 ];
 
-export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl, onAction, onClose }) => {
+export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl: _isPl, onAction, onClose }) => {
   const { t } = useTranslation();
   const dispatch = (action: string) => {
     onAction(action);
@@ -61,7 +61,7 @@ export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl, onActi
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              {t(a.tkey, a.labelEn)}
             </button>
           );
         })}
@@ -79,7 +79,7 @@ export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl, onActi
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              {t(a.tkey, a.labelEn)}
             </button>
           );
         })}

@@ -11,59 +11,59 @@ import type { MapStructureType } from '../../ideaSelectionTypes';
 interface StructureOption {
   type: MapStructureType;
   icon: LucideIcon;
-  labelPl: string;
+  labelKey: string;
   labelEn: string;
-  descPl: string;
+  descKey: string;
   descEn: string;
 }
 
 const STRUCTURE_OPTIONS: StructureOption[] = [
   {
     type: 'mindmap',
+    labelKey: 'myWorkMindmap.structure.mindmap.label',
+    descKey: 'myWorkMindmap.structure.mindmap.desc',
     icon: Network,
-    labelPl: 'Mapa myśli',
     labelEn: 'Mind Map',
-    descPl: 'Radialna lub drzewo — klasyczny układ',
     descEn: 'Radial or tree — classic layout',
   },
   {
     type: 'org_chart',
+    labelKey: 'myWorkMindmap.structure.orgChart.label',
+    descKey: 'myWorkMindmap.structure.orgChart.desc',
     icon: Rows3,
-    labelPl: 'Schemat organizacyjny',
     labelEn: 'Org Chart',
-    descPl: 'Hierarchia z góry na dół',
     descEn: 'Top-down hierarchy',
   },
   {
     type: 'tree_right',
+    labelKey: 'myWorkMindmap.structure.treeRight.label',
+    descKey: 'myWorkMindmap.structure.treeRight.desc',
     icon: GitBranch,
-    labelPl: 'Drzewo (w prawo)',
     labelEn: 'Tree (Right)',
-    descPl: 'Korzeń po lewej, gałęzie w prawo',
     descEn: 'Root on left, branches to the right',
   },
   {
     type: 'fishbone',
+    labelKey: 'myWorkMindmap.structure.fishbone.label',
+    descKey: 'myWorkMindmap.structure.fishbone.desc',
     icon: Waypoints,
-    labelPl: 'Ishikawa (rybka)',
     labelEn: 'Fishbone (Ishikawa)',
-    descPl: 'Diagram przyczynowo-skutkowy',
     descEn: 'Cause-and-effect diagram',
   },
   {
     type: 'timeline',
+    labelKey: 'myWorkMindmap.structure.timeline.label',
+    descKey: 'myWorkMindmap.structure.timeline.desc',
     icon: Timer,
-    labelPl: 'Oś czasu',
     labelEn: 'Timeline',
-    descPl: 'Węzły wzdłuż osi poziomej',
     descEn: 'Nodes along a horizontal axis',
   },
   {
     type: 'semantic',
+    labelKey: 'myWorkMindmap.structure.semantic.label',
+    descKey: 'myWorkMindmap.structure.semantic.desc',
     icon: Brain,
-    labelPl: 'Semantyczny',
     labelEn: 'Semantic',
-    descPl: 'Grupuje węzły wg znaczenia i typu',
     descEn: 'Groups nodes by meaning and type',
   },
 ];
@@ -76,7 +76,7 @@ interface StructurePickerPopoverProps {
 }
 
 export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
-  isPl,
+  isPl: _isPl,
   current,
   onSelect,
   onClose,
@@ -120,10 +120,10 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
                       : 'text-c-text-secondary dark:text-c-text'
                   }`}
                 >
-                  {isPl ? opt.labelPl : opt.labelEn}
+                  {t(opt.labelKey, opt.labelEn)}
                 </div>
                 <div className="text-[9px] text-c-text-secondary dark:text-c-text-secondary leading-tight mt-0.5">
-                  {isPl ? opt.descPl : opt.descEn}
+                  {t(opt.descKey, opt.descEn)}
                 </div>
               </div>
               {isActive && (
