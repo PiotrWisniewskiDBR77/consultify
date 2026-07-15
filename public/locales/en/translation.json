@@ -11327,6 +11327,13 @@
       },
       "thisStep": {
         "next": "next"
+      },
+      "overview": {
+        "intro": "Start with the system map or jump straight into the work that matters on this screen.",
+        "openIntro": "Open app intro",
+        "openIntroDesc": "A short map of Consultify work: 5 steps and supporting modules.",
+        "showThisScreen": "Show this screen",
+        "showThisScreenDesc": "The shortest version: why this screen exists and what to do next."
       }
     },
     "chatbot": {

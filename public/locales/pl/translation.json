@@ -10473,6 +10473,13 @@
       },
       "thisStep": {
         "next": "następne"
+      },
+      "overview": {
+        "intro": "Najpierw zobacz logikę systemu albo przejdź od razu do bieżącego kroku pracy.",
+        "openIntro": "Otwórz intro aplikacji",
+        "openIntroDesc": "Krótka mapa pracy w Consultify: 5 etapów i moduły wspierające.",
+        "showThisScreen": "Pokaż ten ekran",
+        "showThisScreenDesc": "Najkrótsza wersja: po co ten ekran istnieje i co teraz zrobić."
       }
     },
     "chatbot": {

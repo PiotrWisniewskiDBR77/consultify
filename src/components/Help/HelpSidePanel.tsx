@@ -431,9 +431,7 @@ export const HelpSidePanel: React.FC = () => {
             <div className="space-y-5">
               <SectionCard title={t('help.sidePanel.overview.startHere', 'Start here')}>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {lang === 'pl'
-                    ? 'Najpierw zobacz logikę systemu albo przejdź od razu do bieżącego kroku pracy.'
-                    : 'Start with the system map or jump straight into the work that matters on this screen.'}
+                  {t('help.sidePanel.overview.intro', 'Start with the system map or jump straight into the work that matters on this screen.')}
                 </p>
                 <div className="mt-3 grid gap-2">
                   <button
@@ -442,12 +440,10 @@ export const HelpSidePanel: React.FC = () => {
                   >
                     <div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {lang === 'pl' ? 'Otwórz intro aplikacji' : 'Open app intro'}
+                        {t('help.sidePanel.overview.openIntro', 'Open app intro')}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {lang === 'pl'
-                          ? 'Krótka mapa pracy w Consultify: 5 etapów i moduły wspierające.'
-                          : 'A short map of Consultify work: 5 steps and supporting modules.'}
+                        {t('help.sidePanel.overview.openIntroDesc', 'A short map of Consultify work: 5 steps and supporting modules.')}
                       </div>
                     </div>
                     <ArrowRight size={16} className="text-primary-500" />
@@ -458,12 +454,10 @@ export const HelpSidePanel: React.FC = () => {
                   >
                     <div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {lang === 'pl' ? 'Pokaż ten ekran' : 'Show this screen'}
+                        {t('help.sidePanel.overview.showThisScreen', 'Show this screen')}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {lang === 'pl'
-                          ? 'Najkrótsza wersja: po co ten ekran istnieje i co teraz zrobić.'
-                          : 'The shortest version: why this screen exists and what to do next.'}
+                        {t('help.sidePanel.overview.showThisScreenDesc', 'The shortest version: why this screen exists and what to do next.')}
                       </div>
                     </div>
                     <ArrowRight size={16} className="text-primary-500" />
