@@ -27042,6 +27042,52 @@
         { "name": "Technology", "current": 3, "target": 5, "gap": "moderate" },
         { "name": "Partnerships", "current": 4, "target": 5, "gap": "minor" }
       ]
+    },
+    "focusTradeoffLibraryGraphic": {
+      "titleProcess": "How Focus & Trade-offs moves from value and effort to decisions",
+      "titleExample": "Example: from competing priorities to pursue/defer/drop moves",
+      "subtitleProcess": "This is not a wishlist sorted by gut feel. First we frame competing priorities and decision criteria, score value vs effort on a 1-5 scale, map them onto a matrix, and translate positions into pursue/defer/drop moves.",
+      "subtitleExample": "This case shows that prioritization is not a wishlist ranking. It weighs the value and effort of each option first, maps them onto a matrix, and only then recommends what to pursue, defer, or drop.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts with competing priorities, decision criteria, the goal, and constraints. Without that, value and effort scoring is detached from strategy.",
+      "scenarioValueExample": "A team has more initiatives than capacity and everyone defends their own. The real question is which deliver the most value for the least effort and which only drain the team.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "Each priority's value vs effort score, its position on the 2x2 matrix, and pursue/defer/drop moves ready for downstream work.",
+      "decisionValueExample": "Which priorities do we pursue now, and which do we deliberately defer or drop?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        ["Brief", "Priorities, criteria, goal, constraints", "bg-sky-500"],
+        ["Priorities", "List of competing options", "bg-sky-500"],
+        ["Scoring", "Value vs effort 1-5 + fit", "bg-blue-500"],
+        ["Matrix", "Quick wins, big bets, fill-ins, money pit", "bg-amber-500"],
+        ["Moves & outputs", "Pursue/defer/drop, initiatives, report, deck", "bg-emerald-500"]
+      ],
+      "matrixTitle": "Value x effort matrix",
+      "scaleHint": "Scale 1-5",
+      "axisValue": "Value",
+      "axisEffort": "Effort",
+      "quadrants": [
+        ["Quick wins", "High value, low effort"],
+        ["Big bets", "High value, high effort"],
+        ["Fill-ins", "Low value, low effort"],
+        ["Money pit", "Low value, high effort"]
+      ],
+      "legendTitle": "Recommendation",
+      "legend": [
+        ["pursue", "Pursue"],
+        ["defer", "Defer"],
+        ["drop", "Drop"]
+      ],
+      "footer": "Focus & Trade-offs = brief -> priorities -> value vs effort -> matrix -> moves -> outputs",
+      "bubbles": [
+        { "label": "AI support pilot", "value": 5, "effort": 2, "recommendation": "pursue" },
+        { "label": "New data platform", "value": 5, "effort": 5, "recommendation": "pursue" },
+        { "label": "Report cleanup", "value": 2, "effort": 2, "recommendation": "defer" },
+        { "label": "Full ERP migration", "value": 2, "effort": 5, "recommendation": "drop" }
+      ]
     }
   }
 }

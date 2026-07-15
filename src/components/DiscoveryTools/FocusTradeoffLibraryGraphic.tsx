@@ -1,120 +1,42 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function FocusTradeoffLibraryGraphic({
-  isPolish,
   variant = 'process',
 }: {
-  isPolish: boolean;
+  isPolish?: boolean;
   variant?: 'process' | 'example';
 }) {
+  const { t } = useTranslation();
   const isExample = variant === 'example';
-  const labels = isPolish
-    ? {
-        eyebrow: 'Focus & Trade-offs',
-        title: isExample
-          ? 'Przykład: od konkurujących priorytetów do ruchów pursue/defer/drop'
-          : 'Jak Focus & Trade-offs prowadzi od wartości i wysiłku do decyzji',
-        subtitle: isExample
-          ? 'Ten case pokazuje, że priorytetyzacja to nie ranking życzeń. Najpierw waży wartość i wysiłek każdej opcji, mapuje je na macierz, a dopiero potem rekomenduje, co realizować, co odłożyć, a co odpuścić.'
-          : 'To nie lista życzeń posortowana intuicją. Najpierw ustawiamy konkurujące priorytety i kryteria decyzji, oceniamy wartość vs wysiłek na skali 1-5, mapujemy je na macierz i zamieniamy pozycje w ruchy pursue/defer/drop.',
-        scenario: isExample ? 'Sytuacja' : 'Punkt wyjścia',
-        scenarioValue: isExample
-          ? 'Zespół ma więcej inicjatyw niż mocy przerobowych i każdy broni swojej. Pytanie brzmi: które dają najwięcej wartości przy najmniejszym wysiłku, a które tylko drenują zespół.'
-          : 'Sesja startuje od konkurujących priorytetów, kryteriów decyzji, celu i ograniczeń. Bez tego ocena wartości i wysiłku jest oderwana od strategii.',
-        decision: isExample ? 'Pytanie decyzyjne' : 'Efekt sesji',
-        decisionValue: isExample
-          ? 'Które priorytety realizować teraz, a które świadomie odłożyć lub odpuścić?'
-          : 'Ocena wartości vs wysiłku każdego priorytetu, pozycja na macierzy 2x2 oraz ruchy pursue/defer/drop gotowe do dalszej pracy.',
-        stagesTitle: '5 kroków pracy',
-        stages: [
-          ['Brief', 'Priorytety, kryteria, cel, ograniczenia', 'bg-sky-500'],
-          ['Priorytety', 'Lista konkurujących opcji', 'bg-sky-500'],
-          ['Ocena', 'Wartość vs wysiłek 1-5 + dopasowanie', 'bg-blue-500'],
-          ['Macierz', 'Quick wins, big bets, fill-ins, money pit', 'bg-amber-500'],
-          ['Ruchy & outputy', 'Pursue/defer/drop, inicjatywy, raport, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        matrixTitle: 'Macierz wartość x wysiłek',
-        scaleHint: 'Skala 1-5',
-        axisValue: 'Wartość',
-        axisEffort: 'Wysiłek',
-        quadrants: [
-          ['Quick wins', 'Wys. wartość, niski wysiłek'],
-          ['Big bets', 'Wys. wartość, wysoki wysiłek'],
-          ['Fill-ins', 'Nis. wartość, niski wysiłek'],
-          ['Money pit', 'Nis. wartość, wysoki wysiłek'],
-        ] as Array<[string, string]>,
-        legendTitle: 'Rekomendacja',
-        legend: [
-          ['pursue', 'Realizuj (pursue)'],
-          ['defer', 'Odłóż (defer)'],
-          ['drop', 'Odpuść (drop)'],
-        ] as Array<[string, string]>,
-        footer:
-          'Focus & Trade-offs = brief -> priorytety -> wartość vs wysiłek -> macierz -> ruchy -> outputy',
-      }
-    : {
-        eyebrow: 'Focus & Trade-offs',
-        title: isExample
-          ? 'Example: from competing priorities to pursue/defer/drop moves'
-          : 'How Focus & Trade-offs moves from value and effort to decisions',
-        subtitle: isExample
-          ? 'This case shows that prioritization is not a wishlist ranking. It weighs the value and effort of each option first, maps them onto a matrix, and only then recommends what to pursue, defer, or drop.'
-          : 'This is not a wishlist sorted by gut feel. First we frame competing priorities and decision criteria, score value vs effort on a 1-5 scale, map them onto a matrix, and translate positions into pursue/defer/drop moves.',
-        scenario: isExample ? 'Situation' : 'Starting point',
-        scenarioValue: isExample
-          ? 'A team has more initiatives than capacity and everyone defends their own. The real question is which deliver the most value for the least effort and which only drain the team.'
-          : 'The session starts with competing priorities, decision criteria, the goal, and constraints. Without that, value and effort scoring is detached from strategy.',
-        decision: isExample ? 'Decision question' : 'Session outcome',
-        decisionValue: isExample
-          ? 'Which priorities do we pursue now, and which do we deliberately defer or drop?'
-          : "Each priority's value vs effort score, its position on the 2x2 matrix, and pursue/defer/drop moves ready for downstream work.",
-        stagesTitle: '5 working steps',
-        stages: [
-          ['Brief', 'Priorities, criteria, goal, constraints', 'bg-sky-500'],
-          ['Priorities', 'List of competing options', 'bg-sky-500'],
-          ['Scoring', 'Value vs effort 1-5 + fit', 'bg-blue-500'],
-          ['Matrix', 'Quick wins, big bets, fill-ins, money pit', 'bg-amber-500'],
-          ['Moves & outputs', 'Pursue/defer/drop, initiatives, report, deck', 'bg-emerald-500'],
-        ] as Array<[string, string, string]>,
-        matrixTitle: 'Value x effort matrix',
-        scaleHint: 'Scale 1-5',
-        axisValue: 'Value',
-        axisEffort: 'Effort',
-        quadrants: [
-          ['Quick wins', 'High value, low effort'],
-          ['Big bets', 'High value, high effort'],
-          ['Fill-ins', 'Low value, low effort'],
-          ['Money pit', 'Low value, high effort'],
-        ] as Array<[string, string]>,
-        legendTitle: 'Recommendation',
-        legend: [
-          ['pursue', 'Pursue'],
-          ['defer', 'Defer'],
-          ['drop', 'Drop'],
-        ] as Array<[string, string]>,
-        footer:
-          'Focus & Trade-offs = brief -> priorities -> value vs effort -> matrix -> moves -> outputs',
-      };
+  const ns = 'discoveryToolsMain.focusTradeoffLibraryGraphic';
+  const labels = {
+    eyebrow: 'Focus & Trade-offs',
+    title: isExample ? t(`${ns}.titleExample`) : t(`${ns}.titleProcess`),
+    subtitle: isExample ? t(`${ns}.subtitleExample`) : t(`${ns}.subtitleProcess`),
+    scenario: isExample ? t(`${ns}.scenarioLabelExample`) : t(`${ns}.scenarioLabelProcess`),
+    scenarioValue: isExample ? t(`${ns}.scenarioValueExample`) : t(`${ns}.scenarioValueProcess`),
+    decision: isExample ? t(`${ns}.decisionLabelExample`) : t(`${ns}.decisionLabelProcess`),
+    decisionValue: isExample ? t(`${ns}.decisionValueExample`) : t(`${ns}.decisionValueProcess`),
+    stagesTitle: isExample ? t(`${ns}.stagesTitleExample`) : t(`${ns}.stagesTitleProcess`),
+    stages: t(`${ns}.stages`, { returnObjects: true }) as Array<[string, string, string]>,
+    matrixTitle: t(`${ns}.matrixTitle`),
+    scaleHint: t(`${ns}.scaleHint`),
+    axisValue: t(`${ns}.axisValue`),
+    axisEffort: t(`${ns}.axisEffort`),
+    quadrants: t(`${ns}.quadrants`, { returnObjects: true }) as Array<[string, string]>,
+    legendTitle: t(`${ns}.legendTitle`),
+    legend: t(`${ns}.legend`, { returnObjects: true }) as Array<[string, string]>,
+    footer: t(`${ns}.footer`),
+  };
 
   // Static decorative priorities for the value x effort matrix (value 1-5, effort 1-5).
-  const bubbles: Array<{
+  const bubbles = t(`${ns}.bubbles`, { returnObjects: true }) as Array<{
     label: string;
     value: number;
     effort: number;
     recommendation: 'pursue' | 'defer' | 'drop';
-  }> = isPolish
-    ? [
-        { label: 'Pilot AI w obsłudze', value: 5, effort: 2, recommendation: 'pursue' },
-        { label: 'Nowa platforma danych', value: 5, effort: 5, recommendation: 'pursue' },
-        { label: 'Porządki w raportach', value: 2, effort: 2, recommendation: 'defer' },
-        { label: 'Pełna migracja ERP', value: 2, effort: 5, recommendation: 'drop' },
-      ]
-    : [
-        { label: 'AI support pilot', value: 5, effort: 2, recommendation: 'pursue' },
-        { label: 'New data platform', value: 5, effort: 5, recommendation: 'pursue' },
-        { label: 'Report cleanup', value: 2, effort: 2, recommendation: 'defer' },
-        { label: 'Full ERP migration', value: 2, effort: 5, recommendation: 'drop' },
-      ];
+  }>;
 
   const recoTone: Record<'pursue' | 'defer' | 'drop', string> = {
     pursue: 'bg-emerald-500',

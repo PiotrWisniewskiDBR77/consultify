@@ -28118,6 +28118,52 @@
         { "name": "Technologia", "current": 3, "target": 5, "gap": "moderate" },
         { "name": "Partnerstwa", "current": 4, "target": 5, "gap": "minor" }
       ]
+    },
+    "focusTradeoffLibraryGraphic": {
+      "titleProcess": "Jak Focus & Trade-offs prowadzi od wartości i wysiłku do decyzji",
+      "titleExample": "Przykład: od konkurujących priorytetów do ruchów pursue/defer/drop",
+      "subtitleProcess": "To nie lista życzeń posortowana intuicją. Najpierw ustawiamy konkurujące priorytety i kryteria decyzji, oceniamy wartość vs wysiłek na skali 1-5, mapujemy je na macierz i zamieniamy pozycje w ruchy pursue/defer/drop.",
+      "subtitleExample": "Ten case pokazuje, że priorytetyzacja to nie ranking życzeń. Najpierw waży wartość i wysiłek każdej opcji, mapuje je na macierz, a dopiero potem rekomenduje, co realizować, co odłożyć, a co odpuścić.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od konkurujących priorytetów, kryteriów decyzji, celu i ograniczeń. Bez tego ocena wartości i wysiłku jest oderwana od strategii.",
+      "scenarioValueExample": "Zespół ma więcej inicjatyw niż mocy przerobowych i każdy broni swojej. Pytanie brzmi: które dają najwięcej wartości przy najmniejszym wysiłku, a które tylko drenują zespół.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ocena wartości vs wysiłku każdego priorytetu, pozycja na macierzy 2x2 oraz ruchy pursue/defer/drop gotowe do dalszej pracy.",
+      "decisionValueExample": "Które priorytety realizować teraz, a które świadomie odłożyć lub odpuścić?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        ["Brief", "Priorytety, kryteria, cel, ograniczenia", "bg-sky-500"],
+        ["Priorytety", "Lista konkurujących opcji", "bg-sky-500"],
+        ["Ocena", "Wartość vs wysiłek 1-5 + dopasowanie", "bg-blue-500"],
+        ["Macierz", "Quick wins, big bets, fill-ins, money pit", "bg-amber-500"],
+        ["Ruchy & outputy", "Pursue/defer/drop, inicjatywy, raport, deck", "bg-emerald-500"]
+      ],
+      "matrixTitle": "Macierz wartość x wysiłek",
+      "scaleHint": "Skala 1-5",
+      "axisValue": "Wartość",
+      "axisEffort": "Wysiłek",
+      "quadrants": [
+        ["Quick wins", "Wys. wartość, niski wysiłek"],
+        ["Big bets", "Wys. wartość, wysoki wysiłek"],
+        ["Fill-ins", "Nis. wartość, niski wysiłek"],
+        ["Money pit", "Nis. wartość, wysoki wysiłek"]
+      ],
+      "legendTitle": "Rekomendacja",
+      "legend": [
+        ["pursue", "Realizuj (pursue)"],
+        ["defer", "Odłóż (defer)"],
+        ["drop", "Odpuść (drop)"]
+      ],
+      "footer": "Focus & Trade-offs = brief -> priorytety -> wartość vs wysiłek -> macierz -> ruchy -> outputy",
+      "bubbles": [
+        { "label": "Pilot AI w obsłudze", "value": 5, "effort": 2, "recommendation": "pursue" },
+        { "label": "Nowa platforma danych", "value": 5, "effort": 5, "recommendation": "pursue" },
+        { "label": "Porządki w raportach", "value": 2, "effort": 2, "recommendation": "defer" },
+        { "label": "Pełna migracja ERP", "value": 2, "effort": 5, "recommendation": "drop" }
+      ]
     }
   }
 }
