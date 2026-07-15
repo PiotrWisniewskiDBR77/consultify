@@ -131,7 +131,15 @@ describe('AIPipeline routing', () => {
     expect((llmService as any).callStream).toHaveBeenCalledTimes(1);
     const llmArgs = ((llmService as any).callStream as any).mock.calls[0]?.[0];
     expect(llmArgs.modelConfig.provider).toBe('openai');
-    expect(llmArgs.modelConfig.id).toBe('gpt-4o-mini');
+    // Not a bug: AIPipeline.ts deliberately overrides the tier-selected model
+    // when aiModes.showReasoning is true (as this test's request sets) —
+    // it prepends 'deepseek-reasoner' as the preferred model for the
+    // reasoning-on streaming chat path (see AIPipeline.ts ~line 454-466,
+    // "reasoningPreferredModelId"), independent of what modelRouter.select()
+    // returned. This test originally asserted the tier default
+    // ('gpt-4o-mini' from the mocked modelRouter.select) and predates that
+    // feature.
+    expect(llmArgs.modelConfig.id).toBe('deepseek-reasoner');
 
     // streamed response path
     expect(res.success).toBe(true);
