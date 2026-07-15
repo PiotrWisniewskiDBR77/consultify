@@ -6473,28 +6473,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           );
 
           const renderChecklistCard = (
-            titleEn: string,
-            titlePl: string,
-            helperEn: string,
-            helperPl: string,
+            titleKey: string,
+            helperKey: string,
             items: Array<{ id: string; text: string; done: boolean }>,
             onAdd: () => void,
             onUpdate: (id: string, patch: Partial<{ text: string; done: boolean }>) => void,
             onRemove: (id: string) => void,
             aiFieldKey: string,
             setItems: (items: Array<{ id: string; text: string; done: boolean }>) => void,
-            placeholderEn: string,
-            placeholderPl: string
+            placeholderKey: string
           ) => (
             <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-c-text-secondary">
-                    {isPolish ? titlePl : titleEn}
-                  </h3>
-                  <p className="text-[10px] text-c-text-muted mt-0.5">
-                    {isPolish ? helperPl : helperEn}
-                  </p>
+                  <h3 className="text-sm font-semibold text-c-text-secondary">{t(titleKey)}</h3>
+                  <p className="text-[10px] text-c-text-muted mt-0.5">{t(helperKey)}</p>
                 </div>
                 <div className="inline-flex items-center gap-2">
                   <button
@@ -6506,7 +6499,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </button>
                   <AIFieldEnhancer
                     fieldKey={aiFieldKey}
-                    sectionLabel={isPolish ? titlePl : titleEn}
+                    sectionLabel={t(titleKey)}
                     currentValue={items
                       .map((item) => item.text)
                       .filter(Boolean)
@@ -6539,8 +6532,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       item,
                       onUpdate,
                       onRemove,
-                      isPolish ? placeholderPl : placeholderEn,
-                      isPolish ? `${titlePl} — element listy` : `${titleEn} — list item`,
+                      t(placeholderKey),
+                      t('initiatives.initiativeDocumentView.listItemLabel', { title: t(titleKey) }),
                       aiFieldKey
                     )
                   )
@@ -6557,46 +6550,37 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </h2>
               </div>
               {renderChecklistCard(
-                'Target State',
-                'Stan docelowy',
-                'Desired end state after initiative completion',
-                'Pożądany stan końcowy po wdrożeniu inicjatywy',
+                'initiatives.initiativeDocumentView.targetStateScopeTargetTitle',
+                'initiatives.initiativeDocumentView.targetStateScopeTargetDesc',
                 targetStateItems,
                 addTarget,
                 updateTarget,
                 removeTarget,
                 'initiative-target-state',
                 setTargetStateItems,
-                'Target state item...',
-                'Element stanu docelowego...'
+                'initiatives.initiativeDocumentView.targetStateScopeTargetPlaceholder'
               )}
               {renderChecklistCard(
-                'Success Criteria',
-                'Kryteria sukcesu',
-                'Measurable conditions to consider initiative successful',
-                'Mierzalne warunki uznania inicjatywy za udaną',
+                'initiatives.initiativeDocumentView.targetStateScopeSuccessTitle',
+                'initiatives.initiativeDocumentView.targetStateScopeSuccessDesc',
                 successCriteriaItems,
                 addCriteria,
                 updateCriteria,
                 removeCriteria,
                 'initiative-success-criteria',
                 setSuccessCriteriaItems,
-                'Success criterion...',
-                'Kryterium sukcesu...'
+                'initiatives.initiativeDocumentView.targetStateScopeSuccessPlaceholder'
               )}
               {renderChecklistCard(
-                'Deliverables',
-                'Produkty',
-                'Specific outputs and results to be delivered',
-                'Konkretne produkty i wyniki do dostarczenia',
+                'initiatives.initiativeDocumentView.targetStateScopeDeliverablesTitle',
+                'initiatives.initiativeDocumentView.targetStateScopeDeliverablesDesc',
                 deliverableItems,
                 addDeliverable,
                 updateDeliverable,
                 removeDeliverable,
                 'initiative-deliverables',
                 setDeliverableItems,
-                'Deliverable...',
-                'Element dostarczany...'
+                'initiatives.initiativeDocumentView.targetStateScopeDeliverablesPlaceholder'
               )}
             </div>
           );
@@ -6680,16 +6664,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
           /* ── Reusable checklist block (identical for all 3) ── */
           const renderBlock = (
-            labelEN: string,
-            labelPL: string,
-            descEN: string,
-            descPL: string,
+            labelKey: string,
+            descKey: string,
             items: { id: string; text: string; done: boolean }[],
             onUpdate: (id: string, p: Partial<{ text: string; done: boolean }>) => void,
             onRemove: (id: string) => void,
             onAdd: () => void,
-            placeholderEN: string,
-            placeholderPL: string,
+            placeholderKey: string,
             aiFieldKey: string,
             setItems: (items: { id: string; text: string; done: boolean }[]) => void
           ) => (
@@ -6697,11 +6678,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary">
-                    {isPolish ? labelPL : labelEN}
+                    {t(labelKey)}
                   </label>
-                  <p className="text-[10px] text-c-text-secondary mt-0.5">
-                    {isPolish ? descPL : descEN}
-                  </p>
+                  <p className="text-[10px] text-c-text-secondary mt-0.5">{t(descKey)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -6713,7 +6692,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </button>
                   <AIFieldEnhancer
                     fieldKey={aiFieldKey}
-                    sectionLabel={isPolish ? labelPL : labelEN}
+                    sectionLabel={t(labelKey)}
                     currentValue={items
                       .map((c) => c.text)
                       .filter(Boolean)
@@ -6739,9 +6718,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </div>
               </div>
               <div className="border-b border-c-border-subtle pb-2 min-h-[40px]">
-                {items.map((item) =>
-                  renderItem(item, onUpdate, onRemove, isPolish ? placeholderPL : placeholderEN)
-                )}
+                {items.map((item) => renderItem(item, onUpdate, onRemove, t(placeholderKey)))}
               </div>
             </div>
           );
@@ -6755,46 +6732,37 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
 
               {renderBlock(
-                'Target State',
-                'Stan docelowy',
-                'Desired end state after initiative completion',
-                'Pożądany stan końcowy po wdrożeniu inicjatywy',
+                'initiatives.initiativeDocumentView.targetSuccessTargetTitle',
+                'initiatives.initiativeDocumentView.targetSuccessTargetDesc',
                 targetStateItems,
                 updateTS,
                 removeTS,
                 addTS,
-                'Target state item...',
-                'Element stanu docelowego...',
+                'initiatives.initiativeDocumentView.targetSuccessTargetPlaceholder',
                 'initiative-target-state',
                 setTargetStateItems
               )}
 
               {renderBlock(
-                'Success Criteria',
-                'Kryteria sukcesu',
-                'Measurable conditions to consider the initiative successful',
-                'Mierzalne warunki uznania inicjatywy za udaną',
+                'initiatives.initiativeDocumentView.targetSuccessSuccessTitle',
+                'initiatives.initiativeDocumentView.targetSuccessSuccessDesc',
                 successCriteriaItems,
                 updateSC,
                 removeSC,
                 addSC,
-                'Success criterion...',
-                'Kryterium sukcesu...',
+                'initiatives.initiativeDocumentView.targetSuccessSuccessPlaceholder',
                 'initiative-success-criteria',
                 setSuccessCriteriaItems
               )}
 
               {renderBlock(
-                'Deliverables',
-                'Produkty',
-                'Specific outputs and results to be delivered',
-                'Konkretne produkty i wyniki do dostarczenia',
+                'initiatives.initiativeDocumentView.targetSuccessDeliverablesTitle',
+                'initiatives.initiativeDocumentView.targetSuccessDeliverablesDesc',
                 deliverableItems,
                 updateDL,
                 removeDL,
                 addDL,
-                'Deliverable...',
-                'Deliverable...',
+                'initiatives.initiativeDocumentView.targetSuccessDeliverablesPlaceholder',
                 'initiative-deliverables',
                 setDeliverableItems
               )}

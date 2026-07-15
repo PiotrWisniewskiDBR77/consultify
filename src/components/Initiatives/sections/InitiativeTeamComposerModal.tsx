@@ -16,6 +16,7 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 
 type TargetKey = { kind: 'user'; id: string } | { kind: 'consultant'; id: string };
@@ -268,7 +269,8 @@ function toneClasses(tone: RoleDef['tone']) {
 
 function displayRole(roleKey: string | null | undefined, isPl: boolean): string {
   const def = ROLE_DEFS.find((r) => r.key === String(roleKey || '').toUpperCase());
-  if (!def) return roleKey ? String(roleKey) : isPl ? 'Brak roli' : 'No role';
+  if (!def)
+    return roleKey ? String(roleKey) : i18n.t('initiatives.initiativeTeamComposerModal.noRole');
   return isPl ? def.labelPl : def.labelEn;
 }
 
@@ -292,7 +294,7 @@ export function InitiativeTeamComposerModal(props: {
     onAfterChange,
     canInviteConsultant = true,
   } = props;
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
 
   const [selectedUserId, setSelectedUserId] = useState('');
@@ -357,15 +359,15 @@ export function InitiativeTeamComposerModal(props: {
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(isPl ? 'Skopiowano' : 'Copied');
+      toast.success(t('initiatives.initiativeTeamComposerModal.copied'));
     } catch {
-      toast.error(isPl ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('initiatives.initiativeTeamComposerModal.copyFailed'));
     }
   };
 
   const assignRoleToActive = async (roleKey: string) => {
     if (!active) {
-      toast.error(isPl ? 'Wybierz osobę po lewej stronie' : 'Select a person on the left');
+      toast.error(t('initiatives.initiativeTeamComposerModal.selectPersonOnLeft'));
       return;
     }
     const projectId = await ensureProjectId();
@@ -381,14 +383,16 @@ export function InitiativeTeamComposerModal(props: {
             projectRole: roleKey,
           });
         }
-        toast.success(isPl ? 'Rola przypisana' : 'Role assigned');
+        toast.success(t('initiatives.initiativeTeamComposerModal.roleAssigned'));
       } else {
         await Api.put(`/consultant-project-access/${active.id}`, { projectRole: roleKey });
-        toast.success(isPl ? 'Rola konsultanta zaktualizowana' : 'Consultant role updated');
+        toast.success(t('initiatives.initiativeTeamComposerModal.consultantRoleUpdated'));
       }
       await onAfterChange(projectId);
     } catch (e: any) {
-      toast.error(e?.message || (isPl ? 'Nie udało się przypisać roli' : 'Failed to assign role'));
+      toast.error(
+        e?.message || t('initiatives.initiativeTeamComposerModal.failedToAssignRole')
+      );
     } finally {
       setBusy(false);
     }
@@ -400,7 +404,7 @@ export function InitiativeTeamComposerModal(props: {
       .trim()
       .toLowerCase();
     if (!email || !email.includes('@')) {
-      toast.error(isPl ? 'Podaj poprawny email' : 'Enter a valid email');
+      toast.error(t('initiatives.initiativeTeamComposerModal.enterValidEmail'));
       return;
     }
     const projectId = await ensureProjectId();
@@ -423,13 +427,13 @@ export function InitiativeTeamComposerModal(props: {
         setActive({ kind: 'consultant', id: accessId });
       }
       await onAfterChange(projectId);
-      toast.success(isPl ? 'Wysłano zaproszenie' : 'Invitation sent');
+      toast.success(t('initiatives.initiativeTeamComposerModal.invitationSent'));
       setInviteEmail('');
       setInviteAccessCode('');
       setInviteGenerateCode(true);
       setShowInvite(false);
     } catch (e: any) {
-      toast.error(e?.message || (isPl ? 'Nie udało się zaprosić' : 'Failed to invite'));
+      toast.error(e?.message || t('initiatives.initiativeTeamComposerModal.failedToInvite'));
     } finally {
       setBusy(false);
     }
@@ -456,12 +460,10 @@ export function InitiativeTeamComposerModal(props: {
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {isPl ? 'Kompozycja zespołu' : 'Team composer'}
+                    {t('initiatives.initiativeTeamComposerModal.teamComposer')}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {isPl
-                      ? 'Wybierz osoby po lewej, przypisz role po prawej.'
-                      : 'Pick people on the left, assign roles on the right.'}
+                    {t('initiatives.initiativeTeamComposerModal.pickPeopleAssignRoles')}
                   </div>
                 </div>
               </div>
@@ -469,7 +471,7 @@ export function InitiativeTeamComposerModal(props: {
             <button
               onClick={onClose}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-navy-800 transition-colors"
-              title={isPl ? 'Zamknij' : 'Close'}
+              title={t('initiatives.initiativeTeamComposerModal.close')}
             >
               <X size={16} />
             </button>
@@ -483,12 +485,12 @@ export function InitiativeTeamComposerModal(props: {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {isPl ? 'Osoby' : 'People'}
+                  {t('initiatives.initiativeTeamComposerModal.people')}
                 </div>
                 {busy ? (
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                     <Loader2 size={12} className="animate-spin" />
-                    {isPl ? 'Zapis…' : 'Saving…'}
+                    {t('initiatives.initiativeTeamComposerModal.saving')}
                   </span>
                 ) : null}
               </div>
@@ -496,7 +498,7 @@ export function InitiativeTeamComposerModal(props: {
               {/* Picker */}
               <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-950/20 p-3">
                 <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                  {isPl ? 'Pracownicy organizacji' : 'Organization members'}
+                  {t('initiatives.initiativeTeamComposerModal.organizationMembers')}
                 </label>
                 <div className="mt-2 flex items-center gap-2">
                   <select
@@ -504,7 +506,9 @@ export function InitiativeTeamComposerModal(props: {
                     onChange={(e) => setSelectedUserId(e.target.value)}
                     className="flex-1 h-10 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                   >
-                    <option value="">{isPl ? 'Wybierz osobę…' : 'Select a person…'}</option>
+                    <option value="">
+                      {t('initiatives.initiativeTeamComposerModal.selectAPerson')}
+                    </option>
                     {availableUsers.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name} ({u.email})
@@ -518,7 +522,7 @@ export function InitiativeTeamComposerModal(props: {
                     className="h-10 px-3 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold transition-colors inline-flex items-center gap-2"
                   >
                     <Plus size={16} />
-                    {isPl ? 'Dodaj' : 'Add'}
+                    {t('initiatives.initiativeTeamComposerModal.add')}
                   </button>
                 </div>
               </div>
@@ -526,13 +530,13 @@ export function InitiativeTeamComposerModal(props: {
               {/* Selected list (fits ~5 items, scroll after) */}
               <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 overflow-hidden">
                 <div className="px-3 py-2 bg-slate-50/60 dark:bg-navy-950/20 border-b border-slate-200/70 dark:border-navy-700/60 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                  {isPl ? 'Wybrane' : 'Selected'} (
+                  {t('initiatives.initiativeTeamComposerModal.selected')} (
                   {selectedUsers.length + selectedConsultants.length})
                 </div>
                 <div className="max-h-[232px] overflow-auto p-2 space-y-2 bg-white dark:bg-navy-900">
                   {selectedUserCards.length === 0 && selectedConsultantCards.length === 0 ? (
                     <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
-                      {isPl ? 'Dodaj osoby z listy powyżej.' : 'Add people using the picker above.'}
+                      {t('initiatives.initiativeTeamComposerModal.addPeopleUsingPicker')}
                     </div>
                   ) : (
                     <>
@@ -573,7 +577,7 @@ export function InitiativeTeamComposerModal(props: {
                                     setActive(null);
                                 }}
                                 className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                                title={isPl ? 'Usuń z listy' : 'Remove from list'}
+                                title={t('initiatives.initiativeTeamComposerModal.removeFromList')}
                               >
                                 <X size={14} />
                               </span>
@@ -600,7 +604,7 @@ export function InitiativeTeamComposerModal(props: {
                                 {c.email}
                               </div>
                               <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                {isPl ? 'Konsultant zewnętrzny' : 'External consultant'} •{' '}
+                                {t('initiatives.initiativeTeamComposerModal.externalConsultant')} •{' '}
                                 {String(c.status || '').toUpperCase()}
                               </div>
                             </div>
@@ -621,7 +625,7 @@ export function InitiativeTeamComposerModal(props: {
                                     setActive(null);
                                 }}
                                 className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                                title={isPl ? 'Usuń z listy' : 'Remove from list'}
+                                title={t('initiatives.initiativeTeamComposerModal.removeFromList')}
                               >
                                 <X size={14} />
                               </span>
@@ -638,7 +642,7 @@ export function InitiativeTeamComposerModal(props: {
               <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-950/20 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                    {isPl ? 'Konsultant zewnętrzny' : 'External consultant'}
+                    {t('initiatives.initiativeTeamComposerModal.externalConsultant')}
                   </div>
                   {canInviteConsultant ? (
                     <button
@@ -646,11 +650,13 @@ export function InitiativeTeamComposerModal(props: {
                       onClick={() => setShowInvite((v) => !v)}
                       className="text-xs font-semibold text-c-info dark:text-c-info hover:text-c-info dark:hover:text-c-info"
                     >
-                      {showInvite ? (isPl ? 'Zwiń' : 'Hide') : isPl ? 'Dodaj' : 'Add'}
+                      {showInvite
+                        ? t('initiatives.initiativeTeamComposerModal.hide')
+                        : t('initiatives.initiativeTeamComposerModal.add')}
                     </button>
                   ) : (
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {isPl ? 'Brak uprawnień' : 'No permission'}
+                      {t('initiatives.initiativeTeamComposerModal.noPermission')}
                     </span>
                   )}
                 </div>
@@ -670,7 +676,9 @@ export function InitiativeTeamComposerModal(props: {
                         <input
                           value={inviteEmail}
                           onChange={(e) => setInviteEmail(e.target.value)}
-                          placeholder={isPl ? 'konsultant@firma.com' : 'consultant@firm.com'}
+                          placeholder={t(
+                            'initiatives.initiativeTeamComposerModal.consultantEmailPlaceholder'
+                          )}
                           className="mt-1 w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                         />
                       </div>
@@ -679,7 +687,7 @@ export function InitiativeTeamComposerModal(props: {
                         <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 p-3">
                           <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                             <Key size={14} className="text-slate-500 dark:text-slate-400" />
-                            {isPl ? 'Kod dostępu (free seat)' : 'Access code (free seat)'}
+                            {t('initiatives.initiativeTeamComposerModal.accessCodeFreeSeat')}
                           </div>
                           <label className="mt-2 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 select-none">
                             <input
@@ -691,13 +699,15 @@ export function InitiativeTeamComposerModal(props: {
                               }}
                               className="rounded border-slate-300 dark:border-navy-600"
                             />
-                            {isPl ? 'Generuj automatycznie' : 'Auto-generate'}
+                            {t('initiatives.initiativeTeamComposerModal.autoGenerate')}
                           </label>
                           {!inviteGenerateCode ? (
                             <input
                               value={inviteAccessCode}
                               onChange={(e) => setInviteAccessCode(e.target.value.toUpperCase())}
-                              placeholder={isPl ? 'Wpisz kod…' : 'Enter code…'}
+                              placeholder={t(
+                                'initiatives.initiativeTeamComposerModal.enterCodePlaceholder'
+                              )}
                               className="mt-2 w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white font-mono"
                             />
                           ) : null}
@@ -706,7 +716,7 @@ export function InitiativeTeamComposerModal(props: {
                         <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 p-3">
                           <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                             <UserCheck size={14} className="text-slate-500 dark:text-slate-400" />
-                            {isPl ? 'Rola w projekcie' : 'Project role'}
+                            {t('initiatives.initiativeTeamComposerModal.projectRole')}
                           </div>
                           <select
                             value={inviteRole}
@@ -726,7 +736,7 @@ export function InitiativeTeamComposerModal(props: {
                         <div className="rounded-xl border border-blue-200/60 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 p-3 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <div className="text-[11px] font-semibold text-blue-700 dark:text-blue-200">
-                              {isPl ? 'Kod dostępu' : 'Access code'}
+                              {t('initiatives.initiativeTeamComposerModal.accessCode')}
                             </div>
                             <div className="text-sm font-mono text-blue-900 dark:text-blue-100 truncate">
                               {lastInviteCode}
@@ -738,7 +748,7 @@ export function InitiativeTeamComposerModal(props: {
                             className="h-9 px-3 rounded-xl border border-blue-200/60 dark:border-blue-500/20 bg-white/70 dark:bg-navy-900/30 text-blue-700 dark:text-blue-200 text-xs font-semibold hover:bg-white transition-colors inline-flex items-center gap-2"
                           >
                             <Copy size={14} />
-                            {isPl ? 'Kopiuj' : 'Copy'}
+                            {t('initiatives.initiativeTeamComposerModal.copy')}
                           </button>
                         </div>
                       ) : null}
@@ -749,7 +759,7 @@ export function InitiativeTeamComposerModal(props: {
                           onClick={() => setShowInvite(false)}
                           className="h-10 px-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-white dark:hover:bg-navy-800 transition-colors"
                         >
-                          {isPl ? 'Anuluj' : 'Cancel'}
+                          {t('initiatives.initiativeTeamComposerModal.cancel')}
                         </button>
                         <button
                           type="button"
@@ -762,7 +772,7 @@ export function InitiativeTeamComposerModal(props: {
                           ) : (
                             <UserPlus size={16} />
                           )}
-                          {isPl ? 'Zaproś' : 'Invite'}
+                          {t('initiatives.initiativeTeamComposerModal.invite')}
                         </button>
                       </div>
                     </motion.div>
@@ -777,12 +787,12 @@ export function InitiativeTeamComposerModal(props: {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {isPl ? 'Role w projekcie' : 'Project roles'}
+                  {t('initiatives.initiativeTeamComposerModal.projectRoles')}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {active ? (
                     <>
-                      {isPl ? 'Wybrano:' : 'Selected:'}{' '}
+                      {t('initiatives.initiativeTeamComposerModal.selectedLabel')}{' '}
                       <span className="font-semibold text-slate-700 dark:text-slate-200">
                         {active.kind === 'user'
                           ? selectedUserCards.find((u) => u.id === active.id)?.name || active.id
@@ -791,23 +801,21 @@ export function InitiativeTeamComposerModal(props: {
                       {activeRole ? (
                         <>
                           {' '}
-                          • {isPl ? 'Rola:' : 'Role:'}{' '}
+                          • {t('initiatives.initiativeTeamComposerModal.roleLabel')}{' '}
                           <span className="font-semibold text-slate-700 dark:text-slate-200">
                             {displayRole(activeRole, isPl)}
                           </span>
                         </>
                       ) : null}
                     </>
-                  ) : isPl ? (
-                    'Kliknij osobę po lewej, żeby przypisać rolę.'
                   ) : (
-                    'Click a person on the left to assign a role.'
+                    t('initiatives.initiativeTeamComposerModal.clickPersonToAssignRole')
                   )}
                 </div>
               </div>
               <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                 <Shield size={14} />
-                {isPl ? 'Kliknij rolę, aby przypisać' : 'Click a role to assign'}
+                {t('initiatives.initiativeTeamComposerModal.clickRoleToAssign')}
               </div>
             </div>
 
