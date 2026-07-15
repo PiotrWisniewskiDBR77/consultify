@@ -3407,7 +3407,14 @@
       "noCommentsYet": "Brak komentarzy",
       "startTheConversation": "Rozpocznij dyskusję...",
       "placeholder2": "Napisz komentarz...",
-      "send": "Wyślij"
+      "send": "Wyślij",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu",
+      "repliesCount_one": "{{count}} odpowiedź",
+      "repliesCount_few": "{{count}} odpowiedzi",
+      "repliesCount_many": "{{count}} odpowiedzi",
+      "repliesCount_other": "{{count}} odpowiedzi"
     },
     "taskTimer": {
       "toastSuccess": "⏱️ Timer uruchomiony",
@@ -3552,7 +3559,11 @@
       "title5": "Kopiuj link",
       "title6": "Usuń",
       "previewNotAvailable": "Podgląd niedostępny",
-      "downloadFile": "Pobierz plik"
+      "downloadFile": "Pobierz plik",
+      "maxFilesExceeded": "Maksymalnie {{maxFiles}} plików",
+      "fileTooLarge": "Plik {{fileName}} jest za duży (max {{maxSizeMB}}MB)",
+      "uploadedCount": "Przesłano {{count}} plik(ów)",
+      "confirmDelete": "Czy na pewno chcesz usunąć \"{{name}}\"?"
     },
     "riskAssessment": {
       "riskAnalysis": "Analiza ryzyka",
@@ -3613,7 +3624,13 @@
       "dueTomorrow": "Termin upływa jutro!",
       "thisDecisionRequiresImmediate": "Ta decyzja wymaga natychmiastowej uwagi",
       "overdue": "po terminie",
-      "today": "Dziś"
+      "today": "Dziś",
+      "overdueByDays_one": "Termin minął {{count}} dzień temu!",
+      "overdueByDays_few": "Termin minął {{count}} dni temu!",
+      "overdueByDays_many": "Termin minął {{count}} dni temu!",
+      "overdueByDays_other": "Termin minął {{count}} dni temu!",
+      "daysRemaining": "Pozostały {{count}} dni do terminu",
+      "daysUntilDeadline": "Pozostało {{count}} dni do terminu"
     },
     "keyboardShortcuts": {
       "label": "Nawigacja",
@@ -3631,7 +3648,8 @@
     "convertToMenu": {
       "conversionFailed": "Konwersja nieudana",
       "toastSuccess": "Utworzono inicjatywę",
-      "failedToCreateInitiative": "Nie udało się utworzyć inicjatywy"
+      "failedToCreateInitiative": "Nie udało się utworzyć inicjatywy",
+      "convertedTo": "Przekonwertowano na {{target}}"
     },
     "relatedContext": {
       "relatedContext": "Powiązany kontekst",

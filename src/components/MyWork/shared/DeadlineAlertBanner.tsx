@@ -22,8 +22,7 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
   status,
   onExtendRequest,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const { urgency, daysRemaining, message } = useMemo(() => {
     // If no due date or decision is already made, no alert needed
@@ -45,9 +44,9 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
     if (diffDays < 0) {
       urgency = 'overdue';
       const overdueDays = Math.abs(diffDays);
-      message = isPolish
-        ? `Termin minął ${overdueDays} ${overdueDays === 1 ? 'dzień' : 'dni'} temu!`
-        : `Overdue by ${overdueDays} ${overdueDays === 1 ? 'day' : 'days'}!`;
+      message = t('myWork.deadlineAlert.overdueByDays', 'Overdue by {{count}} days!', {
+        count: overdueDays,
+      });
     } else if (diffDays === 0) {
       urgency = 'critical';
       message = t('myWork.deadlineAlert.dueToday', 'Due today!');
@@ -56,19 +55,21 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
       message = t('myWork.deadlineAlert.dueTomorrow', 'Due tomorrow!');
     } else if (diffDays <= 3) {
       urgency = 'warning';
-      message = isPolish ? `Pozostały ${diffDays} dni do terminu` : `${diffDays} days remaining`;
+      message = t('myWork.deadlineAlert.daysRemaining', '{{count}} days remaining', {
+        count: diffDays,
+      });
     } else if (diffDays <= 7) {
       urgency = 'approaching';
-      message = isPolish
-        ? `Pozostało ${diffDays} dni do terminu`
-        : `${diffDays} days until deadline`;
+      message = t('myWork.deadlineAlert.daysUntilDeadline', '{{count}} days until deadline', {
+        count: diffDays,
+      });
     } else {
       urgency = 'ok';
       message = '';
     }
 
     return { urgency, daysRemaining: diffDays, message };
-  }, [dueDate, status, isPolish]);
+  }, [dueDate, status, t]);
 
   // Don't render if no urgency or OK
   if (urgency === 'none' || urgency === 'ok') {

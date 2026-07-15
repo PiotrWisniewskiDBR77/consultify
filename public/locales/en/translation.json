@@ -4261,7 +4261,12 @@
       "noCommentsYet": "No comments yet",
       "startTheConversation": "Start the conversation...",
       "placeholder2": "Write a comment...",
-      "send": "Send"
+      "send": "Send",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago",
+      "repliesCount_one": "{{count}} reply",
+      "repliesCount_other": "{{count}} replies"
     },
     "taskTimer": {
       "toastSuccess": "⏱️ Timer started",
@@ -4406,7 +4411,11 @@
       "title5": "Copy link",
       "title6": "Delete",
       "previewNotAvailable": "Preview not available",
-      "downloadFile": "Download file"
+      "downloadFile": "Download file",
+      "maxFilesExceeded": "Maximum {{maxFiles}} files allowed",
+      "fileTooLarge": "File {{fileName}} is too large (max {{maxSizeMB}}MB)",
+      "uploadedCount": "Uploaded {{count}} file(s)",
+      "confirmDelete": "Are you sure you want to delete \"{{name}}\"?"
     },
     "riskAssessment": {
       "riskAnalysis": "Risk Analysis",
@@ -4467,7 +4476,11 @@
       "dueTomorrow": "Due tomorrow!",
       "thisDecisionRequiresImmediate": "This decision requires immediate attention",
       "overdue": "overdue",
-      "today": "Today"
+      "today": "Today",
+      "overdueByDays_one": "Overdue by {{count}} day!",
+      "overdueByDays_other": "Overdue by {{count}} days!",
+      "daysRemaining": "{{count}} days remaining",
+      "daysUntilDeadline": "{{count}} days until deadline"
     },
     "keyboardShortcuts": {
       "label": "Navigation",
@@ -4485,7 +4498,8 @@
     "convertToMenu": {
       "conversionFailed": "Conversion failed",
       "toastSuccess": "Initiative created",
-      "failedToCreateInitiative": "Failed to create initiative"
+      "failedToCreateInitiative": "Failed to create initiative",
+      "convertedTo": "Converted to {{target}}"
     },
     "relatedContext": {
       "relatedContext": "Related Context",

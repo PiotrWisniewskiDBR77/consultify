@@ -75,8 +75,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
   isGenerating = false,
   readOnly = false,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
 

@@ -62,8 +62,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   expanded = false,
   onToggleExpand,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -80,9 +79,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return t('myWork.comments.justNow', 'Just now');
-    if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
-    if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
-    if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
+    if (diffMins < 60)
+      return t('myWork.comments.minutesAgo', '{{count}}m ago', { count: diffMins });
+    if (diffHours < 24)
+      return t('myWork.comments.hoursAgo', '{{count}}h ago', { count: diffHours });
+    if (diffDays < 7) return t('myWork.comments.daysAgo', '{{count}}d ago', { count: diffDays });
 
     return date.toLocaleDateString(t('myWork.comments.dateToLocaleDateString', 'en-US'), {
       month: 'short',
@@ -105,7 +106,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     } finally {
       setSubmitting(false);
     }
-  }, [newComment, onAddComment, isPolish]);
+  }, [newComment, onAddComment, t]);
 
   const handleReply = useCallback(
     async (parentId: string) => {
@@ -125,7 +126,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         setSubmitting(false);
       }
     },
-    [replyContent, onAddComment, isPolish]
+    [replyContent, onAddComment, t]
   );
 
   const handleDelete = useCallback(
@@ -145,7 +146,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         toast.error(t('myWork.comments.toastError3', 'Failed to delete comment'));
       }
     },
-    [onDeleteComment, isPolish]
+    [onDeleteComment, t]
   );
 
   const toggleReplies = (commentId: string) => {
@@ -268,14 +269,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 >
                   {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   <span>
-                    {comment.replies?.length}{' '}
-                    {isPolish
-                      ? comment.replies?.length === 1
-                        ? 'odpowiedź'
-                        : 'odpowiedzi'
-                      : comment.replies?.length === 1
-                        ? 'reply'
-                        : 'replies'}
+                    {t('myWork.comments.repliesCount', '{{count}} replies', {
+                      count: comment.replies?.length ?? 0,
+                    })}
                   </span>
                 </button>
               )}
