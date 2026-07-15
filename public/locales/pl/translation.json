@@ -5911,7 +5911,22 @@
       "saveFailed": "Nie udało się zapisać",
       "loadingData": "Ładowanie danych assessmentu...",
       "progress": "Postęp:",
-      "saving": "Zapisuję..."
+      "saving": "Zapisuję...",
+      "table": {
+        "author": "Autor"
+      },
+      "editNoteImported": "Edycja przez przegląd zaimportowanego PDF",
+      "triagePrompt": "Zrób wstępną ocenę AI listy „{{lane}}\" ({{count}} pozycji): co wymaga uwagi najpierw i dlaczego?",
+      "statusFilterTooltip": "Filtruj listę po statusie „{{status}}\".",
+      "activeTabTooltip": "Aktualnie otwarta zakładka i liczba pozycji na liście.",
+      "statusFilterAppliedTooltip": "Filtr statusu zastosowany do listy (kliknij status w tabeli, by go ustawić).",
+      "documentsTooltip": "Liczba otwartych dokumentów (assessment/raport/inicjatywa) w tym module.",
+      "generateReportTooltip": "Wygeneruj nowy raport z ukończonego assessmentu.",
+      "initiativePackTooltip": "Wygeneruj paczkę inicjatyw AI na podstawie wniosków z assessmentu.",
+      "resumeLatestLabel": "Wznów ostatni assessment",
+      "resumeLatestTooltip": "Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.",
+      "aiTriageTooltip": "Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.",
+      "chatTooltip": "Otwiera pusty czat AI dla tego huba."
     },
     "notes": "Notatki",
     "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
@@ -6159,7 +6174,8 @@
       "title": "Inicjatywy",
       "relatedHint": "Powiązane z aktualnym assessmentem",
       "goAfterPlanning": "Przejdź do Inicjatyw po PLANNING",
-      "goTo": "Idź do Inicjatyw"
+      "goTo": "Idź do Inicjatyw",
+      "sourceReport": "Raport źródłowy"
     },
     "drd": {
       "whyThisMatters": {
@@ -6296,6 +6312,9 @@
         "matrixTitle": "Macierz dojrzałości SIRI",
         "dimensionColumn": "Wymiar"
       }
+    },
+    "reports": {
+      "source": "Assessment źródłowy"
     }
   },
   "initiatives": {

@@ -6676,7 +6676,22 @@
       "saveFailed": "Failed to save assessment",
       "loadingData": "Loading assessment data...",
       "progress": "Progress:",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "table": {
+        "author": "Author"
+      },
+      "editNoteImported": "Edit via the imported-PDF review flow",
+      "triagePrompt": "Give me an AI pre-screen of the \"{{lane}}\" list ({{count}} items): what needs attention first, and why?",
+      "statusFilterTooltip": "Filter the list by status \"{{status}}\".",
+      "activeTabTooltip": "Currently open tab and the number of items in its list.",
+      "statusFilterAppliedTooltip": "Status filter applied to the list (click a status in the table to set it).",
+      "documentsTooltip": "Number of documents (assessment/report/initiative) currently open in this module.",
+      "generateReportTooltip": "Generate a new report from a completed assessment.",
+      "initiativePackTooltip": "Generate an AI initiative pack from the assessment findings.",
+      "resumeLatestLabel": "Resume latest assessment",
+      "resumeLatestTooltip": "Opens the editor for your most recently updated assessment, back where you left off.",
+      "aiTriageTooltip": "Opens AI chat with a ready-made prompt: what in this list needs attention first.",
+      "chatTooltip": "Opens a blank AI chat for this hub."
     },
     "notes": "Notes",
     "notesPlaceholder": "Key observations, context, rationale for the score...",
@@ -6924,7 +6939,8 @@
       "title": "Initiatives",
       "relatedHint": "Related to the current assessment",
       "goAfterPlanning": "Go to Initiatives after PLANNING",
-      "goTo": "Go to Initiatives"
+      "goTo": "Go to Initiatives",
+      "sourceReport": "Source report"
     },
     "drd": {
       "whyThisMatters": {
@@ -7061,6 +7077,9 @@
         "matrixTitle": "SIRI Maturity Matrix",
         "dimensionColumn": "Dimension"
       }
+    },
+    "reports": {
+      "source": "Source assessment"
     }
   },
   "initiatives": {
