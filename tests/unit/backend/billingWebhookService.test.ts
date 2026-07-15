@@ -69,7 +69,7 @@ describe('BillingWebhookService', () => {
             const eventType = 'subscription.created';
             const payload = { subscription_id: 'sub-456' };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb.call({ changes: 1 }, null);
             });
@@ -82,7 +82,7 @@ describe('BillingWebhookService', () => {
             expect(result.eventType).toBe(eventType);
             expect(result.status).toBe('pending');
             // Mock call verification
-            expect(mockDb.run).toHaveBeenCalledWith(
+            expect(mocks.db.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO billing_webhook_events'),
                 expect.any(Array),
                 expect.any(Function)
@@ -90,7 +90,7 @@ describe('BillingWebhookService', () => {
         });
 
         it('should handle database errors', async () => {
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(new Error('DB Error'));
             });
@@ -112,7 +112,7 @@ describe('BillingWebhookService', () => {
                 status: 'sent'
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(null, mockEvent);
             });
@@ -125,7 +125,7 @@ describe('BillingWebhookService', () => {
         });
 
         it('should return null for non-existent event', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(null, null);
             });
@@ -143,7 +143,7 @@ describe('BillingWebhookService', () => {
                 { id: 'evt-2', status: 'retrying', payload: JSON.stringify({}) }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(null, mockEvents);
             });
@@ -152,7 +152,7 @@ describe('BillingWebhookService', () => {
             const result = await service.getPendingRetries(50);
 
             expect(result).toHaveLength(2);
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.stringContaining('status IN'),
                 [50],
                 expect.any(Function)
@@ -160,7 +160,7 @@ describe('BillingWebhookService', () => {
         });
 
         it('should respect limit parameter', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(null, []);
             });
@@ -168,7 +168,7 @@ describe('BillingWebhookService', () => {
             const service = new BillingWebhookServiceClass(deps);
             await service.getPendingRetries(10);
 
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.any(String),
                 [10],
                 expect.any(Function)
@@ -182,7 +182,7 @@ describe('BillingWebhookService', () => {
             const eventType = 'invoice.paid';
             const data = { invoice_id: 'inv-456', amount: 5000 };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb.call({ changes: 1 }, null);
             });
@@ -195,7 +195,7 @@ describe('BillingWebhookService', () => {
         });
 
         it('should only record when recordOnly option is true', async () => {
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb.call({ changes: 1 }, null);
             });
@@ -210,7 +210,7 @@ describe('BillingWebhookService', () => {
 
     describe('Convenience Methods', () => {
         beforeEach(() => {
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb.call({ changes: 1 }, null);
             });
@@ -252,7 +252,7 @@ describe('BillingWebhookService', () => {
                 { event_type: 'payment.failed', status: 'failed', count: 2 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(null, mockStats);
             });
@@ -261,7 +261,7 @@ describe('BillingWebhookService', () => {
             const result = await service.getEventStats('org-123', '30 days');
 
             expect(result).toHaveLength(2);
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.stringContaining('GROUP BY event_type, status'),
                 ['org-123'],
                 expect.any(Function)
@@ -276,7 +276,7 @@ describe('BillingWebhookService', () => {
                 { id: 'evt-2', payload: JSON.stringify({ amount: 200 }) }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(null, mockEvents);
             });
@@ -291,7 +291,7 @@ describe('BillingWebhookService', () => {
 
     describe('getFailedEvents()', () => {
         it('should return failed events under retry limit', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(null, [{ id: 'evt-1', status: 'failed', attempt_count: 3 }]);
             });
@@ -299,7 +299,7 @@ describe('BillingWebhookService', () => {
             const service = new BillingWebhookServiceClass(deps);
             const result = await service.getFailedEvents(50);
 
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.stringContaining("status = 'failed'"),
                 [50],
                 expect.any(Function)
