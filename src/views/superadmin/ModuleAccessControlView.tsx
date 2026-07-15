@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 import { apiGet, apiPost } from '@/services/api/baseClient';
+import { StandardTable, type TableColumn, type TableRow } from '@/components/standard/StandardTable';
 
 type ScopeType = 'organization' | 'user';
 type ModuleKey = 'wordy' | 'excele' | 'prezentacje';
@@ -135,6 +136,74 @@ export const ModuleAccessControlView: React.FC = () => {
     }
   };
 
+  const grantColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'module',
+        label: 'Module',
+        render: (row: TableRow) => MODULE_LABELS[row.module_key as ModuleKey] || row.module_key,
+      },
+      {
+        id: 'scope',
+        label: 'Scope',
+        render: (row: TableRow) => <span className="capitalize">{row.scope_type}</span>,
+      },
+      {
+        id: 'target',
+        label: 'Target',
+        render: (row: TableRow) =>
+          row.scope_type === 'organization' ? (
+            <span>{row.organization_name || row.organization_id || 'Unknown org'}</span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5">
+              <UserRound size={13} />
+              {row.user_email || row.user_id || 'Unknown user'}
+            </span>
+          ),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => (
+          <span
+            className={`inline-flex px-2 py-0.5 rounded-md text-xs ${
+              row.is_active
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                : 'bg-slate-500/10 text-slate-500'
+            }`}
+          >
+            {row.is_active ? 'ACTIVE' : 'DISABLED'}
+          </span>
+        ),
+      },
+      {
+        id: 'updated',
+        label: 'Updated',
+        render: (row: TableRow) => (
+          <span className="text-xs text-slate-500">
+            {new Date(row.updated_at).toLocaleString()}
+          </span>
+        ),
+      },
+      {
+        id: 'action',
+        label: 'Action',
+        align: 'right',
+        render: (row: TableRow) => (
+          <button
+            onClick={() => void toggleGrant(row.id, Boolean(row.is_active))}
+            className="text-xs px-2 py-1 rounded border border-slate-200 dark:border-navy-700"
+          >
+            {row.is_active ? 'Disable' : 'Enable'}
+          </button>
+        ),
+      },
+    ],
+    [toggleGrant]
+  );
+
+  const grantRows: TableRow[] = useMemo(() => grants.map((grant) => ({ ...grant })), [grants]);
+
   return (
     <div className="p-6 overflow-y-auto h-full space-y-6">
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
@@ -246,92 +315,14 @@ export const ModuleAccessControlView: React.FC = () => {
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 text-sm font-medium">
           Active Grants
         </div>
-        <div className="overflow-x-auto">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-sm"
-          >
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-800">
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-slate-500">
-                  Module
-                </th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-slate-500">
-                  Scope
-                </th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-slate-500">
-                  Target
-                </th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-slate-500">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-slate-500">
-                  Updated
-                </th>
-                <th className="px-4 py-3 text-right text-xs uppercase tracking-wider text-slate-500">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-600">
-                    Loading grants...
-                  </td>
-                </tr>
-              ) : grants.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-600">
-                    No grants configured yet.
-                  </td>
-                </tr>
-              ) : (
-                grants.map((grant) => (
-                  <tr key={grant.id} className="border-b border-slate-50 dark:border-navy-800/50">
-                    <td className="px-4 py-3">
-                      {MODULE_LABELS[grant.module_key] || grant.module_key}
-                    </td>
-                    <td className="px-4 py-3 capitalize">{grant.scope_type}</td>
-                    <td className="px-4 py-3">
-                      {grant.scope_type === 'organization' ? (
-                        <span>
-                          {grant.organization_name || grant.organization_id || 'Unknown org'}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5">
-                          <UserRound size={13} />
-                          {grant.user_email || grant.user_id || 'Unknown user'}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-md text-xs ${
-                          grant.is_active
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-slate-500/10 text-slate-500'
-                        }`}
-                      >
-                        {grant.is_active ? 'ACTIVE' : 'DISABLED'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      {new Date(grant.updated_at).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => void toggleGrant(grant.id, Boolean(grant.is_active))}
-                        className="text-xs px-2 py-1 rounded border border-slate-200 dark:border-navy-700"
-                      >
-                        {grant.is_active ? 'Disable' : 'Enable'}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <StandardTable
+          columns={grantColumns}
+          data={grantRows}
+          loading={loading}
+          empty={{ title: 'No grants configured yet.' }}
+          persistKey="superadmin.moduleAccessGrants"
+          canvasClassName="p-0"
+        />
       </div>
     </div>
   );
