@@ -71,6 +71,7 @@ import {
 import ReportGenerationService from '../services/reportGenerationService.js';
 import { checkQualityGates } from '../services/reportQualityGatesService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -3744,6 +3745,32 @@ router.post('/:id/export/notion', async (req: Request, res: Response) => {
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) return res.status(404).json({ error: 'Report not found' });
 
+    // M17: export-approval gate — Notion is an external publish target, so this
+    // is the most important main-path gate of all (fail-open on registry lag).
+    const approvalArtifact = await artifactRegistryService
+      .getArtifactByOrigin({
+        organizationId,
+        originRuntime: 'report',
+        originRecordId: id,
+        userId,
+        roleKey: (req as any).user?.role ? String((req as any).user.role) : null,
+      })
+      .catch(() => null);
+    if (
+      approvalArtifact &&
+      !applyExportApprovalGate({
+        res,
+        organizationId,
+        userId,
+        originRuntime: 'report',
+        originRecordId: id,
+        format: 'notion',
+        publishState: approvalArtifact.publishState,
+      })
+    ) {
+      return;
+    }
+
     // Notion is an external publish target — apply the same export-readiness gate
     // enforced for pdf/doc/docx/pptx so un-vetted reports cannot leak outside.
     if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
@@ -3815,6 +3842,35 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
   const id = paramStr(req.params.id);
   const { userId, organizationId } = getAuthContext(req);
   try {
+    // M17: export-approval gate. Fail-open when the artifact registry has no
+    // linked record yet (registry-sync lag) — the existence/visibility check
+    // belongs to a separate concern (P18-B, already covered on the pptx path);
+    // this gate only ever blocks an artifact we KNOW is under an un-approved
+    // review. See server/src/services/v8/exportApprovalGate.ts.
+    const approvalArtifact = await artifactRegistryService
+      .getArtifactByOrigin({
+        organizationId,
+        originRuntime: 'report',
+        originRecordId: id,
+        userId,
+        roleKey: (req as any).user?.role ? String((req as any).user.role) : null,
+      })
+      .catch(() => null);
+    if (
+      approvalArtifact &&
+      !applyExportApprovalGate({
+        res,
+        organizationId,
+        userId,
+        originRuntime: 'report',
+        originRecordId: id,
+        format: 'pdf',
+        publishState: approvalArtifact.publishState,
+      })
+    ) {
+      return;
+    }
+
     if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
@@ -3886,6 +3942,31 @@ const exportDocx = async (req: Request, res: Response) => {
   const id = paramStr(req.params.id);
   const { userId, organizationId } = getAuthContext(req);
   try {
+    // M17: export-approval gate (fail-open on registry lag — see /export/pdf above).
+    const approvalArtifact = await artifactRegistryService
+      .getArtifactByOrigin({
+        organizationId,
+        originRuntime: 'report',
+        originRecordId: id,
+        userId,
+        roleKey: (req as any).user?.role ? String((req as any).user.role) : null,
+      })
+      .catch(() => null);
+    if (
+      approvalArtifact &&
+      !applyExportApprovalGate({
+        res,
+        organizationId,
+        userId,
+        originRuntime: 'report',
+        originRecordId: id,
+        format: 'docx',
+        publishState: approvalArtifact.publishState,
+      })
+    ) {
+      return;
+    }
+
     if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
@@ -3977,6 +4058,22 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     });
     if (!artifact) {
       return res.status(404).json({ error: 'Report not found' });
+    }
+
+    // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts
+    // for the shadow/enforce rationale (EXPORT_APPROVAL_ENFORCE).
+    if (
+      !applyExportApprovalGate({
+        res,
+        organizationId,
+        userId,
+        originRuntime: 'report',
+        originRecordId: id,
+        format: 'pptx',
+        publishState: artifact.publishState,
+      })
+    ) {
+      return;
     }
 
     if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;

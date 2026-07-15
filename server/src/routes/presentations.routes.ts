@@ -162,6 +162,7 @@ import {
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1581,6 +1582,21 @@ router.get(
       return res.status(404).json({ success: false, error: 'Export not available' });
     }
 
+    // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
+    if (
+      !applyExportApprovalGate({
+        res,
+        organizationId: orgId,
+        userId,
+        originRuntime: 'presentation',
+        originRecordId: String(req.params.id || ''),
+        format: 'pptx',
+        publishState: artifact.publishState,
+      })
+    ) {
+      return;
+    }
+
     const deck = (await dbGet(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
@@ -1727,6 +1743,21 @@ router.get(
     });
     if (!artifact) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
+    if (
+      !applyExportApprovalGate({
+        res,
+        organizationId: orgId,
+        userId,
+        originRuntime: 'presentation',
+        originRecordId: String(deckId || ''),
+        format: 'pdf',
+        publishState: artifact.publishState,
+      })
+    ) {
+      return;
     }
 
     const deck = (await dbGet(
@@ -2408,6 +2439,21 @@ router.post(
     });
     if (!artifact) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
+    if (
+      !applyExportApprovalGate({
+        res,
+        organizationId: orgId,
+        userId,
+        originRuntime: 'presentation',
+        originRecordId: String(deckId || ''),
+        format: 'html',
+        publishState: artifact.publishState,
+      })
+    ) {
+      return;
     }
 
     const deck = await dbGet(
@@ -6286,6 +6332,21 @@ router.post(
     });
     if (!artifact) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
+    if (
+      !applyExportApprovalGate({
+        res,
+        organizationId: orgId,
+        userId,
+        originRuntime: 'presentation',
+        originRecordId: String(deckId || ''),
+        format: 'png',
+        publishState: artifact.publishState,
+      })
+    ) {
+      return;
     }
 
     const deck = await dbGet(
