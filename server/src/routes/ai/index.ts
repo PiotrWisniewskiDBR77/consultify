@@ -7,6 +7,7 @@ import { Router } from 'express';
 
 import agentAuditRoutes from './agent-audit.routes.js';
 import agentManifestsRoutes from './agent-manifests.routes.js';
+import agentPlanRoutes from './agent-plan.routes.js';
 import aiAbTestingRoutes from './ai-ab-testing.routes.js';
 import aiAnalyticsRoutesV1 from './ai-analytics.routes.js';
 import aiBudgetsRoutes from './ai-budgets.routes.js';
@@ -30,7 +31,6 @@ import aiAsyncRoutes from './aiAsync.routes.js';
 import aiCoachRoutes from './aiCoach.routes.js';
 import aiExplainRoutes from './aiExplain.routes.js';
 import aiLearningRoutes from './aiLearning.routes.js';
-import agentPlanRoutes from './agent-plan.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
 import deepThinkingRoutes from './deep-thinking.routes.js';
 import pinnedInsightsRoutes from './pinned-insights.routes.js';

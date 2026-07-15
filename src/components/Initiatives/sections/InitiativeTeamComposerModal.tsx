@@ -390,9 +390,7 @@ export function InitiativeTeamComposerModal(props: {
       }
       await onAfterChange(projectId);
     } catch (e: any) {
-      toast.error(
-        e?.message || t('initiatives.initiativeTeamComposerModal.failedToAssignRole')
-      );
+      toast.error(e?.message || t('initiatives.initiativeTeamComposerModal.failedToAssignRole'));
     } finally {
       setBusy(false);
     }

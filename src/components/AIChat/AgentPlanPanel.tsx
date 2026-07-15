@@ -34,6 +34,8 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PreviewActionButton } from '@/components/shared/PreviewPane';
+import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 import {
   type AgentPlan,
   type AgentPlanStep,
@@ -41,8 +43,6 @@ import {
   cancelAgentPlan,
   getAgentPlan,
 } from '@/services/api/agentPlan.api';
-import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
-import { PreviewActionButton } from '@/components/shared/PreviewPane';
 
 export interface AgentPlanPanelProps {
   planId: string;

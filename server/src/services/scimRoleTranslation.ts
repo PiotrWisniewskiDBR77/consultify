@@ -20,13 +20,13 @@
  * action (or fall back to a role the caller already explicitly holds), never
  * substitute an elevated or "reasonable-sounding" role.
  */
+import { DEFAULT_PERMISSIONS, PROJECT_ROLES } from './projectMemberService.js';
 import {
-  canonicalToProjectMemberRole,
   CanonicalProjectRole,
   type CanonicalProjectRoleType,
+  canonicalToProjectMemberRole,
   mapToCanonicalProjectRole,
 } from './projectRoleCanon.js';
-import { DEFAULT_PERMISSIONS, PROJECT_ROLES } from './projectMemberService.js';
 
 /**
  * Known `internal_role` values used today by the SCIM group-mapping UI

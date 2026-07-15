@@ -102,14 +102,11 @@ export async function approveAgentPlanStep(
   planId: string,
   stepIndex: number
 ): Promise<{ plan: AgentPlan; dispatch: 'enqueued' | 'unavailable' }> {
-  const res = await fetch(
-    `${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/approve-step`,
-    {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ stepIndex }),
-    }
-  );
+  const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/approve-step`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ stepIndex }),
+  });
   return handleResponse<{ plan: AgentPlan; dispatch: 'enqueued' | 'unavailable' }>(
     res,
     'Failed to approve agent plan step'

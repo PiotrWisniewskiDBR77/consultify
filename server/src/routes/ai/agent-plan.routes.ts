@@ -55,8 +55,8 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
-import { getDiscoveryAgentManifest } from '../../services/ai/agentRuntime/discoveryAgentManifestCatalog.js';
 import { agentPlannerService } from '../../services/ai/agentPlannerService.js';
+import { getDiscoveryAgentManifest } from '../../services/ai/agentRuntime/discoveryAgentManifestCatalog.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
@@ -175,7 +175,10 @@ router.get(
     }
 
     const mineOnly = String(req.query?.mine || '') === '1';
-    const plans = await agentPlannerService.listPlans(organizationId, mineOnly ? userId : undefined);
+    const plans = await agentPlannerService.listPlans(
+      organizationId,
+      mineOnly ? userId : undefined
+    );
 
     return res.json({ success: true, total: plans.length, plans });
   })

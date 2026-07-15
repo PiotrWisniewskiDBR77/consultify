@@ -127,7 +127,12 @@ class FinalBatchService {
   ): Promise<
     | { id: string; status: 'pending' }
     | { id: string; status: 'completed'; fileUrl: string; fileSizeBytes: number }
-    | { id: string; status: 'failed'; reason: 'unsupported_format' | 'idea_not_found'; message: string }
+    | {
+        id: string;
+        status: 'failed';
+        reason: 'unsupported_format' | 'idea_not_found';
+        message: string;
+      }
   > {
     const { id } = await this.requestExport(orgId, data);
 
