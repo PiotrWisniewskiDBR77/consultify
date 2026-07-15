@@ -59,6 +59,29 @@ vi.mock('../../services/ai/contextGovernance.js', () => ({
   getOrgContextPolicy: (...args: any[]) => getOrgContextPolicy(...args),
 }));
 
+const insertScimGroupMapping = vi.fn();
+const scimMappingsHasProjectId = vi.fn();
+vi.mock('../../services/scimGroupMappingService.js', () => {
+  // Defined inside the factory (hoisted above imports) so the route and the
+  // tests share the SAME class the route's `instanceof` check relies on.
+  class ScimGroupMappingError extends Error {
+    code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.name = 'ScimGroupMappingError';
+      this.code = code;
+    }
+  }
+  return {
+    insertScimGroupMapping: (...args: any[]) => insertScimGroupMapping(...args),
+    scimMappingsHasProjectId: (...args: any[]) => scimMappingsHasProjectId(...args),
+    ScimGroupMappingError,
+  };
+});
+
+// Resolves to the mocked module's class (set up above).
+import { ScimGroupMappingError } from '../../services/scimGroupMappingService.js';
+
 function createApp(): Express {
   const app = express();
   app.use(express.json());
@@ -102,6 +125,9 @@ describe('adminP32Routes', () => {
       allowExternalContext: false,
       defaultSensitivity: 'internal',
     });
+    insertScimGroupMapping.mockReset();
+    scimMappingsHasProjectId.mockReset();
+    scimMappingsHasProjectId.mockResolvedValue(true);
   });
 
   it('blocks guests from the admin cockpit with explicit guidance', async () => {
@@ -535,5 +561,96 @@ describe('adminP32Routes', () => {
     expect(Array.isArray(res.body.validationErrors)).toBe(true);
     expect(dbRun).not.toHaveBeenCalled();
     expect(logAction).not.toHaveBeenCalled();
+  });
+
+  // ── HP-25 B2/B4: SCIM group-mapping per-project + org-scope ──
+
+  it('creates a per-project group mapping using the token org (never the body org)', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    insertScimGroupMapping.mockResolvedValueOnce({
+      id: 'map-1',
+      externalGroupId: 'grp-1',
+      externalGroupName: 'Finance',
+      internalRole: 'PROJECT_LEADER',
+      projectId: 'proj-A',
+      projectName: 'Alpha',
+      isActive: true,
+      memberCount: 0,
+      projectIdApplied: true,
+    });
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/admin/identity/scim/group-mappings')
+      .send({
+        externalGroupName: 'Finance',
+        externalGroupId: 'grp-1',
+        internalRole: 'PROJECT_LEADER',
+        projectId: 'proj-A',
+        // Attempt to smuggle another org — must be ignored.
+        organizationId: 'org-evil',
+        orgId: 'org-evil',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.mapping.projectId).toBe('proj-A');
+    // Service was called with the authenticated org, not the body-supplied one.
+    expect(insertScimGroupMapping).toHaveBeenCalledWith(
+      expect.objectContaining({ orgId: 'org-1', projectId: 'proj-A' })
+    );
+    expect(logAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: 'create_scim_group_mapping',
+        details: expect.objectContaining({ orgId: 'org-1', projectScoped: true }),
+      })
+    );
+  });
+
+  it('returns 404 when the mapping targets a project outside the org (cross-org guard)', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    insertScimGroupMapping.mockRejectedValueOnce(
+      new ScimGroupMappingError('PROJECT_NOT_IN_ORG', 'Project not found in this organization')
+    );
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/admin/identity/scim/group-mappings')
+      .send({
+        externalGroupName: 'Finance',
+        externalGroupId: 'grp-1',
+        internalRole: 'member',
+        projectId: 'proj-from-org-2',
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('PROJECT_NOT_IN_ORG');
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('blocks a non-superadmin from managing another org via ?orgId (403)', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/admin/identity/scim/group-mappings')
+      .query({ orgId: 'org-2' })
+      .send({ externalGroupName: 'Finance', internalRole: 'member' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ADMIN_BOUNDARY_VIOLATION');
+    expect(insertScimGroupMapping).not.toHaveBeenCalled();
+  });
+
+  it('scopes the delete to the active org (id + organization_id predicate)', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+
+    const app = createApp();
+    const res = await request(app).delete('/api/admin/identity/scim/group-mappings/map-9');
+
+    expect(res.status).toBe(200);
+    const deleteCall = dbRun.mock.calls.find((call) =>
+      String(call[0]).includes('DELETE FROM scim_group_mappings')
+    );
+    expect(deleteCall).toBeDefined();
+    expect(String(deleteCall?.[0])).toContain('organization_id = ?');
+    expect(deleteCall?.[1]).toEqual(['map-9', 'org-1']);
   });
 });
