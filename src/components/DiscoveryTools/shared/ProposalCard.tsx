@@ -41,7 +41,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   className = '',
   compact = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showComment, setShowComment] = useState(false);
   const [comment, setComment] = useState('');
   const isPolish = i18n.language === 'pl';
@@ -65,33 +65,33 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
     return [
       {
         id: 'accept',
-        label: isPolish ? 'Akceptuj' : 'Accept',
+        label: t('discoveryToolsSteps.proposalCard.accept'),
         icon: Check,
         variant: 'primary',
         onClick: () => onAccept(cardType, cardId),
       },
       {
         id: 'comment',
-        label: isPolish ? 'Komentarz i rethink' : 'Comment & rethink',
+        label: t('discoveryToolsSteps.proposalCard.commentAndRethink'),
         icon: MessageSquare,
         onClick: () => setShowComment((current) => !current),
       },
       {
         id: 'rethink',
-        label: isPolish ? 'Przemyśl ponownie' : 'Rethink',
+        label: t('discoveryToolsSteps.proposalCard.rethink'),
         icon: Sparkles,
         onClick: () => onRethink(cardType, cardId),
       },
       {
         id: 'reject',
-        label: isPolish ? 'Odrzuć' : 'Reject',
+        label: t('discoveryToolsSteps.proposalCard.reject'),
         icon: X,
         variant: 'danger',
         divider: true,
         onClick: () => onReject(cardType, cardId),
       },
     ];
-  }, [cardId, cardType, isPolish, isRethinking, onAccept, onReject, onRethink, status]);
+  }, [cardId, cardType, t, isRethinking, onAccept, onReject, onRethink, status]);
 
   if (isRejected) return null;
 
@@ -125,7 +125,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRethink()}
-            placeholder={isPolish ? 'Dodaj feedback dla AI...' : 'Your feedback for AI...'}
+            placeholder={t('discoveryToolsSteps.proposalCard.feedbackPlaceholder')}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             autoFocus
           />
@@ -133,7 +133,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onClick={handleRethink}
             className="rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-medium text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
           >
-            {isPolish ? 'Przemyśl' : 'Rethink'}
+            {t('discoveryToolsSteps.proposalCard.rethinkShort')}
           </button>
         </div>
       )}

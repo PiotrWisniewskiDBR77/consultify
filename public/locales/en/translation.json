@@ -27501,6 +27501,14 @@
       "reviewAiCount": "Review AI ({{count}})",
       "stopGenerationTitle": "Stop the current AI generation",
       "stopAi": "Stop AI"
+    },
+    "proposalCard": {
+      "accept": "Accept",
+      "commentAndRethink": "Comment & rethink",
+      "rethink": "Rethink",
+      "reject": "Reject",
+      "feedbackPlaceholder": "Your feedback for AI...",
+      "rethinkShort": "Rethink"
     }
   }
 }

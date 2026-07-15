@@ -28577,6 +28577,14 @@
       "reviewAiCount": "Review AI ({{count}})",
       "stopGenerationTitle": "Zatrzymaj bieżące generowanie AI",
       "stopAi": "Zatrzymaj AI"
+    },
+    "proposalCard": {
+      "accept": "Akceptuj",
+      "commentAndRethink": "Komentarz i rethink",
+      "rethink": "Przemyśl ponownie",
+      "reject": "Odrzuć",
+      "feedbackPlaceholder": "Dodaj feedback dla AI...",
+      "rethinkShort": "Przemyśl"
     }
   }
 }
