@@ -2103,7 +2103,7 @@ function renderBody(props: BodyProps): React.ReactElement {
           </div>
           <div className="overflow-x-auto">
             <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800"
+              /* §27-todo: lista encji, ALE deep-link highlight wymaga refa do <tr> (highlightedRowRef + scrollIntoView + aria-current + mark-segmenty w tytule) — StandardTable nie eksponuje row refs; migracja 1:1 zlamie skok wyszukiwarki; plik-gigant 2253 linie (m27-b, wymaga decyzji/rozszerzenia fasady) */ className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800"
             >
               <thead className="bg-slate-50 dark:bg-slate-900/60">
                 <tr>
