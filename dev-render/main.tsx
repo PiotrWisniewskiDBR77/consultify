@@ -43,6 +43,7 @@ import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import PartnerSettlementsViewScreen from './screens/partner-settlements-view';
+import PromptRegistryTabScreen from './screens/prompt-registry-tab';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
 import ReportBuilderBlockTypesScreen from './screens/report-builder-block-types';
 import ReportBuilderTemplatesScreen from './screens/report-builder-templates';
@@ -159,6 +160,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'partner-settlements-view': {
     label: '§27-todo: PartnerSettlementsView (SuperAdmin → Revenue) → StandardTable ×4',
     render: () => <PartnerSettlementsViewScreen />,
+  },
+  'prompt-registry-tab': {
+    label:
+      'Oxford O5.5: PromptRegistryTab (SuperAdmin → AI Platform → Development) → StandardTable (ff promptRegistryUi)',
+    render: () => <PromptRegistryTabScreen />,
   },
   'assessment-reports-table': {
     label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
