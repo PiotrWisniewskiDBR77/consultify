@@ -310,7 +310,10 @@ export const ApprovalPatternManager: React.FC = () => {
               {t('settings.approvalPatterns.howItWorksTitle', 'How do patterns work?')}
             </p>
             <p className="text-indigo-600 dark:text-indigo-400">
-              {t('settings.approvalPatterns.howItWorksBody', 'The system learns from your decisions. After 3 similar approvals/rejections, it can automatically make the same decisions (if you enable auto-approve).')}
+              {t(
+                'settings.approvalPatterns.howItWorksBody',
+                'The system learns from your decisions. After 3 similar approvals/rejections, it can automatically make the same decisions (if you enable auto-approve).'
+              )}
             </p>
           </div>
         </div>
@@ -448,7 +451,10 @@ export const ApprovalPatternManager: React.FC = () => {
                         <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
                           <Shield size={14} />
                           <span className="font-medium">
-                            {t('settings.approvalPatterns.autoApproveEnabled', 'Auto-approve enabled')}
+                            {t(
+                              'settings.approvalPatterns.autoApproveEnabled',
+                              'Auto-approve enabled'
+                            )}
                           </span>
                         </div>
                         <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-1">

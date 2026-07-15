@@ -431,7 +431,10 @@ export const HelpSidePanel: React.FC = () => {
             <div className="space-y-5">
               <SectionCard title={t('help.sidePanel.overview.startHere', 'Start here')}>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {t('help.sidePanel.overview.intro', 'Start with the system map or jump straight into the work that matters on this screen.')}
+                  {t(
+                    'help.sidePanel.overview.intro',
+                    'Start with the system map or jump straight into the work that matters on this screen.'
+                  )}
                 </p>
                 <div className="mt-3 grid gap-2">
                   <button
@@ -443,7 +446,10 @@ export const HelpSidePanel: React.FC = () => {
                         {t('help.sidePanel.overview.openIntro', 'Open app intro')}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {t('help.sidePanel.overview.openIntroDesc', 'A short map of Consultify work: 5 steps and supporting modules.')}
+                        {t(
+                          'help.sidePanel.overview.openIntroDesc',
+                          'A short map of Consultify work: 5 steps and supporting modules.'
+                        )}
                       </div>
                     </div>
                     <ArrowRight size={16} className="text-primary-500" />
@@ -457,7 +463,10 @@ export const HelpSidePanel: React.FC = () => {
                         {t('help.sidePanel.overview.showThisScreen', 'Show this screen')}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {t('help.sidePanel.overview.showThisScreenDesc', 'The shortest version: why this screen exists and what to do next.')}
+                        {t(
+                          'help.sidePanel.overview.showThisScreenDesc',
+                          'The shortest version: why this screen exists and what to do next.'
+                        )}
                       </div>
                     </div>
                     <ArrowRight size={16} className="text-primary-500" />

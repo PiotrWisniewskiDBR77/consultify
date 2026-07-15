@@ -433,7 +433,8 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   // Real active app language, unless the caller explicitly overrides it.
-  const effectiveLanguage: 'en' | 'pl' = language ?? (i18n.language?.startsWith('pl') ? 'pl' : 'en');
+  const effectiveLanguage: 'en' | 'pl' =
+    language ?? (i18n.language?.startsWith('pl') ? 'pl' : 'en');
 
   // Get status options based on context
   const rawOptions = getStatusesForModule(context);

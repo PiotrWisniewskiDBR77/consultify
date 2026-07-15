@@ -213,7 +213,10 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                     colSpan={locked ? 9 : 10}
                     className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                   >
-                    {t('processFlow.workSurface.emptyTable', 'No steps yet. Click "Add step" to start.')}
+                    {t(
+                      'processFlow.workSurface.emptyTable',
+                      'No steps yet. Click "Add step" to start.'
+                    )}
                   </td>
                 </tr>
               ) : (

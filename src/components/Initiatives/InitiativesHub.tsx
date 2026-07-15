@@ -2083,11 +2083,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     },
                   }}
                   ai={{
-                    hints:
-                      [
-                        t('initiatives.aiHint.summarize', 'Summarize'),
-                        t('initiatives.aiHint.makeDocument', 'Make document'),
-                      ],
+                    hints: [
+                      t('initiatives.aiHint.summarize', 'Summarize'),
+                      t('initiatives.aiHint.makeDocument', 'Make document'),
+                    ],
                     onRunHint: (hint) => {
                       const isSummarize = hint === 'Podsumuj' || hint === 'Summarize';
                       void openAiChat(
