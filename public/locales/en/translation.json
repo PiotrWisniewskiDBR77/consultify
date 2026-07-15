@@ -28341,6 +28341,22 @@
       "metaStage": "Stage",
       "openArtifact": "Open artifact",
       "removeLink": "Remove link"
+    },
+    "unifiedCreateLauncher": {
+      "decisionCreated": "Decision request created",
+      "decisionCreateFailed": "Failed to create decision",
+      "title": "New",
+      "close": "Close"
+    },
+    "previewDetailsSection": {
+      "expand": "Expand",
+      "summarize": "Summarize",
+      "copy": "Copy",
+      "details": "Details",
+      "words": "words",
+      "detailsOptions": "Details options",
+      "options": "Options",
+      "noDescription": "No description."
     }
   },
   "reportBuilder": {

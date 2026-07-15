@@ -94,6 +94,7 @@ export const UnifiedCreateLauncher: React.FC<UnifiedCreateLauncherProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
+  const t = i18n.getFixedT(isPolish ? 'pl' : 'en');
   const [selected, setSelected] = useState<CreatorType | null>(defaultType ?? null);
 
   // Re-sync to defaultType every time the launcher opens fresh, so a host with
@@ -117,11 +118,11 @@ export const UnifiedCreateLauncher: React.FC<UnifiedCreateLauncherProps> = ({
         relatedObjectType: 'PROJECT',
         relatedObjectId: projectId,
       });
-      toast.success(isPolish ? 'Utworzono wniosek decyzyjny' : 'Decision request created');
+      toast.success(t('sharedComponents.unifiedCreateLauncher.decisionCreated'));
       onCreated?.('decision');
     } catch (error) {
       console.error('Failed to create decision:', error);
-      toast.error(isPolish ? 'Nie udało się utworzyć decyzji' : 'Failed to create decision');
+      toast.error(t('sharedComponents.unifiedCreateLauncher.decisionCreateFailed'));
     }
   };
 
@@ -146,12 +147,12 @@ export const UnifiedCreateLauncher: React.FC<UnifiedCreateLauncherProps> = ({
         >
           <div className="flex items-center justify-between border-b border-c-border px-4 py-3">
             <h2 id="unified-create-launcher-title" className="text-lg font-semibold text-c-text">
-              {isPolish ? 'Nowy' : 'New'}
+              {t('sharedComponents.unifiedCreateLauncher.title')}
             </h2>
             <button
               type="button"
               onClick={handleFullClose}
-              aria-label={isPolish ? 'Zamknij' : 'Close'}
+              aria-label={t('sharedComponents.unifiedCreateLauncher.close')}
               className="rounded p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <X size={18} />

@@ -77,8 +77,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   compact,
   children,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const resolvedText = text ?? detailsText?.join('\n') ?? '';
 
@@ -87,7 +86,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
       ? [
           {
             id: 'expand',
-            label: isPolish ? 'Rozwiń' : 'Expand',
+            label: t('sharedComponents.previewDetailsSection.expand'),
             icon: ChevronDown,
             onClick: onExpand,
           },
@@ -97,7 +96,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
       ? [
           {
             id: 'summarize',
-            label: isPolish ? 'Podsumuj' : 'Summarize',
+            label: t('sharedComponents.previewDetailsSection.summarize'),
             icon: Sparkles,
             onClick: onSummarize,
           },
@@ -107,7 +106,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
       ? [
           {
             id: 'copy',
-            label: isPolish ? 'Kopiuj' : 'Copy',
+            label: t('sharedComponents.previewDetailsSection.copy'),
             icon: Copy,
             onClick: onCopy,
           },
@@ -133,16 +132,16 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          {title ?? label ?? (isPolish ? 'Szczegóły' : 'Details')}
+          {title ?? label ?? t('sharedComponents.previewDetailsSection.details')}
         </div>
 
         <div className="flex items-center gap-2">
           {wordCount > 0 ? (
             <span
               className="text-[10px] text-slate-400 dark:text-slate-500"
-              aria-label={`${wordCount} ${isPolish ? 'słów' : 'words'}`}
+              aria-label={`${wordCount} ${t('sharedComponents.previewDetailsSection.words')}`}
             >
-              ~{wordCount} {isPolish ? 'słów' : 'words'}
+              ~{wordCount} {t('sharedComponents.previewDetailsSection.words')}
             </span>
           ) : null}
           {hasMenu ? (
@@ -153,8 +152,8 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
                   setMenuOpen((v) => !v);
                 }}
                 className={KEBAB_BUTTON}
-                aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-                title={isPolish ? 'Opcje' : 'Options'}
+                aria-label={t('sharedComponents.previewDetailsSection.detailsOptions')}
+                title={t('sharedComponents.previewDetailsSection.options')}
               >
                 <MoreVertical size={14} />
               </button>
@@ -229,7 +228,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
                 compact ? 'text-xs text-slate-600 italic' : 'text-sm text-slate-600 italic'
               }
             >
-              {isPolish ? 'Brak opisu.' : 'No description.'}
+              {t('sharedComponents.previewDetailsSection.noDescription')}
             </div>
           ) : null}
           {children}

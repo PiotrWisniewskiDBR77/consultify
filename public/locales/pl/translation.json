@@ -29401,6 +29401,22 @@
       "metaStage": "Etap",
       "openArtifact": "Otwórz artefakt",
       "removeLink": "Usuń link"
+    },
+    "unifiedCreateLauncher": {
+      "decisionCreated": "Utworzono wniosek decyzyjny",
+      "decisionCreateFailed": "Nie udało się utworzyć decyzji",
+      "title": "Nowy",
+      "close": "Zamknij"
+    },
+    "previewDetailsSection": {
+      "expand": "Rozwiń",
+      "summarize": "Podsumuj",
+      "copy": "Kopiuj",
+      "details": "Szczegóły",
+      "words": "słów",
+      "detailsOptions": "Opcje szczegółów",
+      "options": "Opcje",
+      "noDescription": "Brak opisu."
     }
   },
   "reportBuilder": {
