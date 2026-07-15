@@ -29349,6 +29349,20 @@
       "aiTitle": "Popraw sekcję z AI",
       "sectionCompleteAria": "AI: sekcja gotowa",
       "completeLabel": "Ukończono"
+    },
+    "artifactAttachPopover": {
+      "invalidRef": "Nieprawidłowy ref artefaktu. Użyj formatu typ:id.",
+      "title": "Dołącz artefakt",
+      "searchPlaceholder": "Szukaj lub wklej ref (np. task:abc123)...",
+      "filterAll": "Wszystkie",
+      "roleLabel": "Rola:",
+      "roleRelated": "Powiązany",
+      "roleContext": "Kontekst",
+      "roleSource": "Źródło",
+      "roleEvidence": "Dowód",
+      "roleOutput": "Wynik",
+      "noResults": "Brak wyników",
+      "emptyHint": "Wpisz nazwę, indeks lub wklej ref artefaktu"
     }
   },
   "reportBuilder": {

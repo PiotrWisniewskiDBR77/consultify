@@ -212,8 +212,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
   isSuggestingEscalations = false,
   onAISuggestStakeholderDraft,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   // ── Internal editing state ──
 

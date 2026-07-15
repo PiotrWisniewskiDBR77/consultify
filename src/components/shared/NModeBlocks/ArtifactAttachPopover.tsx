@@ -6,6 +6,7 @@
  */
 import { Link2, Search, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ArtifactLinkRole, ArtifactType } from '../../../utils/artifactLinks';
 import {
@@ -54,12 +55,12 @@ const QUICK_TYPES: ArtifactType[] = [
   'budget',
 ];
 
-const ROLE_OPTIONS: { value: ArtifactLinkRole; labelEn: string; labelPl: string }[] = [
-  { value: 'related', labelEn: 'Related', labelPl: 'Powiązany' },
-  { value: 'context', labelEn: 'Context', labelPl: 'Kontekst' },
-  { value: 'source', labelEn: 'Source', labelPl: 'Źródło' },
-  { value: 'evidence', labelEn: 'Evidence', labelPl: 'Dowód' },
-  { value: 'output', labelEn: 'Output', labelPl: 'Wynik' },
+const ROLE_OPTIONS: { value: ArtifactLinkRole; labelKey: string }[] = [
+  { value: 'related', labelKey: 'sharedComponents.artifactAttachPopover.roleRelated' },
+  { value: 'context', labelKey: 'sharedComponents.artifactAttachPopover.roleContext' },
+  { value: 'source', labelKey: 'sharedComponents.artifactAttachPopover.roleSource' },
+  { value: 'evidence', labelKey: 'sharedComponents.artifactAttachPopover.roleEvidence' },
+  { value: 'output', labelKey: 'sharedComponents.artifactAttachPopover.roleOutput' },
 ];
 
 export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
@@ -70,6 +71,8 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
   onSearch,
   isPl = false,
 }) => {
+  const { i18n } = useTranslation();
+  const t = i18n.getFixedT(isPl ? 'pl' : 'en');
   const [query, setQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<ArtifactLinkRole>('related');
   const [filterType, setFilterType] = useState<ArtifactType | null>(null);
@@ -96,13 +99,9 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
         onClose();
         return;
       }
-      setPasteStatus(
-        isPl
-          ? 'Nieprawidlowy ref artefaktu. Uzyj formatu typ:id.'
-          : 'Invalid artifact ref. Use type:id format.'
-      );
+      setPasteStatus(t('sharedComponents.artifactAttachPopover.invalidRef'));
     },
-    [onAttach, onClose, selectedRole, isPl]
+    [onAttach, onClose, selectedRole, t]
   );
 
   const filteredResults = filterType
@@ -118,7 +117,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200/40 dark:border-white/[0.04]">
           <Link2 size={14} className="text-blue-500" />
           <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex-1">
-            {isPl ? 'Dołącz artefakt' : 'Attach Artifact'}
+            {t('sharedComponents.artifactAttachPopover.title')}
           </span>
           <button
             type="button"
@@ -141,11 +140,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
                 const text = e.clipboardData.getData('text');
                 if (text.includes(':')) handlePaste(text);
               }}
-              placeholder={
-                isPl
-                  ? 'Szukaj lub wklej ref (np. task:abc123)...'
-                  : 'Search or paste ref (e.g. task:abc123)...'
-              }
+              placeholder={t('sharedComponents.artifactAttachPopover.searchPlaceholder')}
               className="flex-1 text-[10px] bg-transparent outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60"
               autoFocus
             />
@@ -172,27 +167,29 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
                 : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
-            {isPl ? 'Wszystkie' : 'All'}
+            {t('sharedComponents.artifactAttachPopover.filterAll')}
           </button>
-          {QUICK_TYPES.map((t) => (
+          {QUICK_TYPES.map((quickType) => (
             <button
-              key={t}
+              key={quickType}
               type="button"
-              onClick={() => setFilterType(filterType === t ? null : t)}
+              onClick={() => setFilterType(filterType === quickType ? null : quickType)}
               className={`px-2 py-0.5 rounded text-[9px] font-medium transition-colors ${
-                filterType === t
+                filterType === quickType
                   ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
                   : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
-              {getArtifactLabel(t, isPl ? 'pl' : 'en')}
+              {getArtifactLabel(quickType, isPl ? 'pl' : 'en')}
             </button>
           ))}
         </div>
 
         {/* Role selector */}
         <div className="px-3 pb-1.5 flex items-center gap-1">
-          <span className="text-[9px] text-slate-600 mr-1">{isPl ? 'Rola:' : 'Role:'}</span>
+          <span className="text-[9px] text-slate-600 mr-1">
+            {t('sharedComponents.artifactAttachPopover.roleLabel')}
+          </span>
           {ROLE_OPTIONS.map((r) => (
             <button
               key={r.value}
@@ -204,7 +201,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
                   : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
-              {isPl ? r.labelPl : r.labelEn}
+              {t(r.labelKey)}
             </button>
           ))}
         </div>
@@ -213,14 +210,12 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
         <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
           {filteredResults.length === 0 && query.length > 0 && (
             <div className="text-[10px] text-slate-600 text-center py-4">
-              {isPl ? 'Brak wyników' : 'No results'}
+              {t('sharedComponents.artifactAttachPopover.noResults')}
             </div>
           )}
           {filteredResults.length === 0 && query.length === 0 && (
             <div className="text-[10px] text-slate-600 text-center py-4">
-              {isPl
-                ? 'Wpisz nazwę, indeks lub wklej ref artefaktu'
-                : 'Type a name, index, or paste an artifact ref'}
+              {t('sharedComponents.artifactAttachPopover.emptyHint')}
             </div>
           )}
           {filteredResults.map((result) => {

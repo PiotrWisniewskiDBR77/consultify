@@ -28289,6 +28289,20 @@
       "aiTitle": "Improve this section with AI",
       "sectionCompleteAria": "AI: section complete",
       "completeLabel": "Complete"
+    },
+    "artifactAttachPopover": {
+      "invalidRef": "Invalid artifact ref. Use type:id format.",
+      "title": "Attach Artifact",
+      "searchPlaceholder": "Search or paste ref (e.g. task:abc123)...",
+      "filterAll": "All",
+      "roleLabel": "Role:",
+      "roleRelated": "Related",
+      "roleContext": "Context",
+      "roleSource": "Source",
+      "roleEvidence": "Evidence",
+      "roleOutput": "Output",
+      "noResults": "No results",
+      "emptyHint": "Type a name, index, or paste an artifact ref"
     }
   },
   "reportBuilder": {
