@@ -23,14 +23,22 @@
  *    zero navy/slate. Fokus = c-focus (w ArtifactRightPanel).
  *  - Identyczny co do piksela dla 4 narzędzi (mindmap/process_flow/whiteboard/
  *    table) — różni się WYŁĄCZNIE deklaracja treści.
+ *
+ *  HP-17 (2026-07-15): opcjonalna 5. karta „Źródła i założenia" — renderuje
+ *  `EvidencePanelSection` dla artefaktu `canvas` (mindmap/process_flow —
+ *  patrz `canvasGraphLlm.buildMindmapEvidenceContract` / `generateDeliverable.ts`).
+ *  Caller-gated: gdy `evidenceArtifactId` nie jest podane (flaga
+ *  `ff_evidencePanel` OFF, patrz `src/utils/evidencePanelFlag.ts`), sekcja
+ *  się NIE montuje — zero zmian DOM/wizualnych.
  */
-import { Link2, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { FileSearch, Link2, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 
 /** Która sekcja ma być otwarta na starcie (mapowana z aktywnego klawisza paska). */
 export type IdeaRightPanelSectionKey = 'properties' | 'context' | 'teresa' | null;
@@ -44,6 +52,12 @@ export interface IdeaRightPanelProps {
   contextContent: React.ReactNode;
   /** Treść karty „Teresa" (komendy + strumień sugestii — <IdeaTeresaSection>). */
   teresaContent: React.ReactNode;
+  /**
+   * HP-17: id artefaktu canvas (tool_session/mindmap id) dla karty „Źródła i
+   * założenia". Gdy `undefined` (flaga `ff_evidencePanel` OFF u wołającego),
+   * karta się nie renderuje — powłoka zostaje 1:1 jak przed HP-17.
+   */
+  evidenceArtifactId?: string;
   /** Szerokość panelu (default 360; kanon ArtifactRightPanel 320–420). */
   width?: number;
   /** PL/EN etykiety nagłówków sekcji. */
@@ -55,11 +69,12 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
   propertiesContent,
   contextContent,
   teresaContent,
+  evidenceArtifactId,
   width = 360,
   isPolish = false,
 }) => {
-  const sections = useMemo<ArtifactRightPanelSection[]>(
-    () => [
+  const sections = useMemo<ArtifactRightPanelSection[]>(() => {
+    const base: ArtifactRightPanelSection[] = [
       {
         id: 'properties',
         label: isPolish ? 'Właściwości' : 'Properties',
@@ -82,9 +97,24 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         children: teresaContent,
         defaultOpen: activeSection === 'teresa',
       },
-    ],
-    [isPolish, activeSection, propertiesContent, contextContent, teresaContent]
-  );
+    ];
+    if (evidenceArtifactId) {
+      base.push({
+        id: 'evidence',
+        label: isPolish ? 'Źródła i założenia' : 'Sources & assumptions',
+        icon: FileSearch,
+        defaultOpen: false,
+        children: (
+          <EvidencePanelSection
+            artifactType="canvas"
+            artifactId={evidenceArtifactId}
+            isPolish={isPolish}
+          />
+        ),
+      });
+    }
+    return base;
+  }, [isPolish, activeSection, propertiesContent, contextContent, teresaContent, evidenceArtifactId]);
 
   return (
     <ArtifactRightPanel

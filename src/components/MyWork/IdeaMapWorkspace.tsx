@@ -34,6 +34,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
 
 import {
@@ -3437,6 +3438,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           <IdeaRightPanel
             isPolish={isPolish}
             activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'context' : 'teresa'}
+            // HP-17: karta „Źródła i założenia" (EvidencePanelSection, artifactType
+            // 'canvas') tylko za flagą ff_evidencePanel (default OFF, patrz
+            // src/utils/evidencePanelFlag.ts). OFF → prop `undefined` → karta się
+            // nie montuje → powłoka panelu 1:1 jak przed HP-17 (zero zmian DOM).
+            evidenceArtifactId={
+              isEvidencePanelEnabled() && realId ? realId : undefined
+            }
             propertiesContent={
               <IdeaWorkspaceTools
                 {...ideaWorkspaceToolsSharedProps}

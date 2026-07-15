@@ -14,6 +14,7 @@ import { useParams } from 'react-router-dom';
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
@@ -30,6 +31,7 @@ import {
 } from '@/services/presentationRuntimeEvents';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
+import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
@@ -1144,6 +1146,20 @@ export const DeckBuilder: React.FC = () => {
               />
             ),
             relations: <DeckRelationsPanel cards={deck.cards} />,
+            // HP-17: „Źródła i założenia" (EvidencePanelSection artifactType='deck',
+            // artifactId=deck_id) TYLKO za flagą ff_evidencePanel (default OFF,
+            // src/utils/evidencePanelFlag.ts). OFF → undefined → narzędzie nie
+            // pojawia się na pasku (DeckBuilderMelsView.includeEvidence=false) →
+            // pasek 1:1 jak przed HP-17. Silnik: presentationGeneratorService
+            // .buildDeckEvidenceContract (HP-16).
+            evidence:
+              isEvidencePanelEnabled() && (deckId || deck?.deck_id) ? (
+                <EvidencePanelSection
+                  artifactType="deck"
+                  artifactId={deckId || deck?.deck_id}
+                  isPolish={i18n.language?.startsWith('pl')}
+                />
+              ) : undefined,
           }}
           leftRailTitle={t('presentations.builder.slides', 'Slides')}
           leftRail={

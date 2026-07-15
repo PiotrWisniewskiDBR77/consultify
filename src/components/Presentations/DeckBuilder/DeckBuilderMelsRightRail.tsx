@@ -19,12 +19,18 @@
  * (block insertion, media library, agent activity) live in the rail.
  */
 
-import { Activity, Image, LayoutGrid, Link2, MessageSquare } from 'lucide-react';
+import { Activity, FileSearch, Image, LayoutGrid, Link2, MessageSquare } from 'lucide-react';
 import React from 'react';
 
 import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 
-export type DeckBuilderRightRailToolId = 'blocks' | 'media' | 'comments' | 'activity' | 'relations';
+export type DeckBuilderRightRailToolId =
+  | 'blocks'
+  | 'media'
+  | 'comments'
+  | 'activity'
+  | 'relations'
+  | 'evidence';
 
 export interface DeckBuilderRightRailLabels {
   blocks?: string;
@@ -32,6 +38,7 @@ export interface DeckBuilderRightRailLabels {
   comments?: string;
   activity?: string;
   relations?: string;
+  evidence?: string;
 }
 
 const DEFAULT_LABELS: Required<DeckBuilderRightRailLabels> = {
@@ -40,6 +47,7 @@ const DEFAULT_LABELS: Required<DeckBuilderRightRailLabels> = {
   comments: 'Comments',
   activity: 'Activity',
   relations: 'Relations',
+  evidence: 'Sources & assumptions',
 };
 
 export interface DeckBuilderRightRailState {
@@ -54,8 +62,14 @@ export interface DeckBuilderRightRailState {
 export function buildDeckBuilderRightRailTools(args: {
   state?: DeckBuilderRightRailState;
   labels?: DeckBuilderRightRailLabels;
+  /**
+   * HP-17: gdy true, dokłada narzędzie „Źródła i założenia" (evidence) na
+   * końcu paska. Wołający włącza je TYLKO za flagą ff_evidencePanel (default
+   * OFF) — patrz DeckBuilder.tsx. false/undefined → pasek 1:1 jak przed HP-17.
+   */
+  includeEvidence?: boolean;
 }): RightRailToolDescriptor[] {
-  const { state = {}, labels = {} } = args;
+  const { state = {}, labels = {}, includeEvidence = false } = args;
   const L = { ...DEFAULT_LABELS, ...labels };
 
   const activityBadge =
@@ -67,7 +81,7 @@ export function buildDeckBuilderRightRailTools(args: {
       ? state.openCommentCount
       : undefined;
 
-  return [
+  const tools: RightRailToolDescriptor[] = [
     { id: 'blocks', label: L.blocks, icon: LayoutGrid },
     { id: 'media', label: L.media, icon: Image },
     {
@@ -85,6 +99,10 @@ export function buildDeckBuilderRightRailTools(args: {
     },
     { id: 'relations', label: L.relations, icon: Link2 },
   ];
+  if (includeEvidence) {
+    tools.push({ id: 'evidence', label: L.evidence, icon: FileSearch });
+  }
+  return tools;
 }
 
 export interface DeckBuilderRightRailPanelRenderers {
@@ -93,6 +111,7 @@ export interface DeckBuilderRightRailPanelRenderers {
   comments?: React.ReactNode;
   activity?: React.ReactNode;
   relations?: React.ReactNode;
+  evidence?: React.ReactNode;
 }
 
 interface DeckBuilderRightRailPanelProps {
@@ -108,6 +127,7 @@ const PANEL_KEY: Record<DeckBuilderRightRailToolId, keyof DeckBuilderRightRailPa
   comments: 'comments',
   activity: 'activity',
   relations: 'relations',
+  evidence: 'evidence',
 };
 
 export const DeckBuilderRightRailPanel: React.FC<DeckBuilderRightRailPanelProps> = ({

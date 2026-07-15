@@ -12,6 +12,7 @@ import {
   Bot,
   ChevronDown,
   Download,
+  FileSearch,
   FileText,
   FileWarning,
   History,
@@ -34,12 +35,14 @@ import {
   type RightRailToolDescriptor,
   type TopBarChipDescriptor,
 } from '@/components/shared/ExecutiveModuleShell';
+import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import Button from '@/components/ui/primitives/Button';
 import {
   fetchExecutionModuleManifest,
   validateExecutionModuleManifest,
 } from '@/services/executionModuleStandard/api';
 import type { ExecutionModuleValidationResult } from '@/services/executionModuleStandard/types';
+import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import {
   buildMyWorkSheetTableOpenPath,
   resolveTablePlatformWorkspaceIdForTable,
@@ -1635,7 +1638,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   onStartOver,
   onSchemaUpdated,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [exporting, setExporting] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
   const [exportNote, setExportNote] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -2030,6 +2033,20 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         label: t('documentStudio.panel.toolAiEditor', 'AI Editor'),
         icon: Sparkles,
       },
+      // HP-17: „Źródła i założenia" (EvidencePanelSection artifactType='document')
+      // dokładane do overflow TYLKO za flagą ff_evidencePanel (default OFF,
+      // src/utils/evidencePanelFlag.ts). OFF → wpis nie istnieje → pasek/menu
+      // 1:1 jak przed HP-17. Silnik: documentContentGenerator
+      // .buildDocumentEvidenceContract (HP-16).
+      ...(isEvidencePanelEnabled()
+        ? [
+            {
+              id: 'evidence',
+              label: t('documentStudio.panel.toolEvidence', 'Sources & assumptions'),
+              icon: FileSearch,
+            } as RightRailToolDescriptor,
+          ]
+        : []),
     ],
     [t]
   );
@@ -2099,6 +2116,18 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       content = <ApprovalsPanel artifactId={artifactId} />;
     } else if (overflowToolId === 'manifest') {
       content = <ManifestGatePanel />;
+    } else if (overflowToolId === 'evidence') {
+      // HP-17: renderowane tylko gdy wpis istnieje w overflowRightRailTools,
+      // co dzieje się wyłącznie za flagą ff_evidencePanel (patrz wyżej).
+      content = (
+        <div className="h-full overflow-y-auto p-3">
+          <EvidencePanelSection
+            artifactType="document"
+            artifactId={artifactId}
+            isPolish={i18n.language?.startsWith('pl')}
+          />
+        </div>
+      );
     } else if (overflowToolId === 'library') {
       content = (
         <ContentLibraryPanel

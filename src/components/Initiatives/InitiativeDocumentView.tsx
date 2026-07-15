@@ -29,6 +29,7 @@ import {
   Edit3,
   ExternalLink,
   FileDown,
+  FileSearch,
   FileText,
   FileType,
   Flag,
@@ -73,6 +74,7 @@ import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode'
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -110,6 +112,7 @@ import {
 } from '@/types/gateAi';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
+import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
@@ -5222,6 +5225,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
     ];
 
+    // HP-17: sekcja „Źródła i założenia" (EvidencePanelSection artifactType=
+    // 'initiative') dokładana do listy sekcji TYLKO za flagą ff_evidencePanel
+    // (default OFF, src/utils/evidencePanelFlag.ts). OFF → sekcja nie istnieje
+    // → left-nav/canvas/C-board 1:1 jak przed HP-17. Silnik:
+    // assessmentInitiativeService.buildInitiativeEvidenceContract (HP-16).
+    if (isEvidencePanelEnabled()) {
+      allSections.push({
+        id: 'evidence',
+        icon: FileSearch,
+        label: { en: 'Sources & assumptions', pl: 'Źródła i założenia' },
+        cSpan: 2,
+        component: null,
+      });
+    }
+
     // Group tabs (mirrors InsightViewer's bilingual groupLabels + groupIndexById).
     const groupLabels = isPolish
       ? ['Zakres i plan', 'Decyzje i ryzyko', 'Rezultaty', 'Ludzie', 'Zapisy']
@@ -5258,6 +5276,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       'lessons-learned': 4,
       comments: 4,
       'activity-log': 4,
+      evidence: 4, // HP-17 — grupa „Zapisy"/Records
     };
 
     const withGroup = (sections: NModeSection[]): NModeSection[] =>
@@ -8623,6 +8642,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           );
           break;
         }
+        case 'evidence': {
+          // HP-17: karta „Źródła i założenia" (EvidencePanelSection,
+          // artifactType='initiative'). Sekcja istnieje TYLKO za flagą
+          // ff_evidencePanel (patrz initiativeNSections) — brak brancha OFF.
+          component = (
+            <EvidencePanelSection
+              artifactType="initiative"
+              artifactId={initiativeId}
+              isPolish={isPolish}
+            />
+          );
+          break;
+        }
       }
 
       // Canon Blok C / P0-9: every section is wrapped so it carries a uniform
@@ -8961,7 +8993,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Canonical, presentable sections in nav order, EXCLUDING Comments + Activity
   // Log (records, not deliverable content). Drives Present mode, the export
   // section picker, the markdown builder and the deck-card mapper.
-  const EXPORT_EXCLUDED_SECTION_IDS = useMemo(() => new Set(['comments', 'activity-log']), []);
+  // HP-17: 'evidence' to żywy panel async (źródła/założenia z API), nie treść
+  // deliverable — wyłączony z eksportu/decka jak comments/activity-log.
+  const EXPORT_EXCLUDED_SECTION_IDS = useMemo(
+    () => new Set(['comments', 'activity-log', 'evidence']),
+    []
+  );
 
   const exportableSections = useMemo(
     () =>
