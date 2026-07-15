@@ -21636,7 +21636,8 @@
       "confirmDeleteTitle": "Usunąć zaznaczone spotkania?",
       "confirmDeleteDesc": "Trwale usuniesz {{count}} spotkań. Tej operacji nie można cofnąć.",
       "deletedNoun": "usunięto"
-    }
+    },
+    "project": "Projekt"
   },
   "manager": {
     "col": {

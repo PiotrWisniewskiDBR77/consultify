@@ -20583,7 +20583,8 @@
       "confirmDeleteTitle": "Delete selected meetings?",
       "confirmDeleteDesc": "You will permanently delete {{count}} meeting(s). This cannot be undone.",
       "deletedNoun": "deleted"
-    }
+    },
+    "project": "Project"
   },
   "manager": {
     "col": {
