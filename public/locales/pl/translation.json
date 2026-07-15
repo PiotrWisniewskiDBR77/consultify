@@ -28421,6 +28421,61 @@
       "chapterName": "Nazwa rozdziału...",
       "add": "Dodaj",
       "cancel": "Anuluj"
+    },
+    "uploadChaosStep": {
+      "unsupportedFileTypesAllowedPdfDocx": "Nieobsługiwane pliki. Dozwolone: PDF, DOCX, XLSX, CSV.",
+      "dragDropFilesHere": "Przeciągnij pliki tutaj",
+      "orClickToBrowsePdfDocx": "lub kliknij, aby wybrać • PDF, DOCX, XLSX, CSV • do 20 MB",
+      "uploadedFiles": "Przesłane pliki",
+      "uploading": "Przesyłanie...",
+      "processing": "Przetwarzanie...",
+      "buildingKnowledgeMap": "Budowanie mapy wiedzy...",
+      "knowledgeMap": "Mapa wiedzy",
+      "files": "Pliki",
+      "topics": "Tematy",
+      "entities": "Encje",
+      "reportType": "Typ raportu",
+      "keyTopics": "Kluczowe tematy",
+      "useTemplatePathA": "Użyj szablonu (Ścieżka A)",
+      "freeIntelligencePathB": "Wolna inteligencja (Ścieżka B)"
+    },
+    "sourceSelectStep": {
+      "sourceType": "Typ Źródła",
+      "notAvailable": "Niedostępne",
+      "selectSource": "Wybierz Źródło",
+      "search": "Szukaj...",
+      "noApprovedSourcesAvailable": "Brak zatwierdzonych źródeł do wyboru",
+      "approved": "Zatwierdzono",
+      "completed": "Zakończono",
+      "updated": "Zaktualizowano",
+      "reportDetails": "Szczegóły Raportu",
+      "reportTitle": "Tytuł Raportu",
+      "enterReportTitle": "Wprowadź tytuł raportu...",
+      "descriptionReportPurpose": "Opis / Cel Raportu",
+      "describeTheReportPurposeTargetAudience": "Opisz cel raportu, dla kogo jest przeznaczony, jakie decyzje ma wspierać...",
+      "thisDescriptionWillBeUsedBy": "Ten opis zostanie wykorzystany przez AI do lepszego dopasowania treści raportu",
+      "type": {
+        "ASSESSMENT": {
+          "label": "Ocena",
+          "description": "Utwórz raport z zatwierdzonej oceny (DRD, SIRI)"
+        },
+        "INTERVIEW": {
+          "label": "Wywiad",
+          "description": "Utwórz raport z przeprowadzonych wywiadów"
+        },
+        "TOOL": {
+          "label": "Narzędzie Strategiczne",
+          "description": "Utwórz raport z analizy narzędzia strategicznego"
+        },
+        "INITIATIVE": {
+          "label": "Inicjatywa",
+          "description": "Utwórz raport postępu inicjatywy"
+        },
+        "UPLOAD_BUNDLE": {
+          "label": "Paczka Uploadów",
+          "description": "Utwórz draft raportu z wrzuconych dokumentów"
+        }
+      }
     }
   }
 }

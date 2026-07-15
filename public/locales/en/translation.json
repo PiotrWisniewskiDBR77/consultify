@@ -27345,6 +27345,61 @@
       "chapterName": "Chapter name...",
       "add": "Add",
       "cancel": "Cancel"
+    },
+    "uploadChaosStep": {
+      "unsupportedFileTypesAllowedPdfDocx": "Unsupported file types. Allowed: PDF, DOCX, XLSX, CSV.",
+      "dragDropFilesHere": "Drag & drop files here",
+      "orClickToBrowsePdfDocx": "or click to browse • PDF, DOCX, XLSX, CSV • up to 20 MB",
+      "uploadedFiles": "Uploaded files",
+      "uploading": "Uploading...",
+      "processing": "Processing...",
+      "buildingKnowledgeMap": "Building knowledge map...",
+      "knowledgeMap": "Knowledge Map",
+      "files": "Files",
+      "topics": "Topics",
+      "entities": "Entities",
+      "reportType": "Report type",
+      "keyTopics": "Key topics",
+      "useTemplatePathA": "Use Template (Path A)",
+      "freeIntelligencePathB": "Free Intelligence (Path B)"
+    },
+    "sourceSelectStep": {
+      "sourceType": "Source Type",
+      "notAvailable": "Not available",
+      "selectSource": "Select Source",
+      "search": "Search...",
+      "noApprovedSourcesAvailable": "No approved sources available",
+      "approved": "Approved",
+      "completed": "Completed",
+      "updated": "Updated",
+      "reportDetails": "Report Details",
+      "reportTitle": "Report Title",
+      "enterReportTitle": "Enter report title...",
+      "descriptionReportPurpose": "Description / Report Purpose",
+      "describeTheReportPurposeTargetAudience": "Describe the report purpose, target audience, decisions it should support...",
+      "thisDescriptionWillBeUsedBy": "This description will be used by AI to better tailor the report content",
+      "type": {
+        "ASSESSMENT": {
+          "label": "Assessment",
+          "description": "Create report from an approved assessment (DRD, SIRI)"
+        },
+        "INTERVIEW": {
+          "label": "Interview",
+          "description": "Create report from completed interviews"
+        },
+        "TOOL": {
+          "label": "Strategy Tool",
+          "description": "Create report from strategy tool analysis"
+        },
+        "INITIATIVE": {
+          "label": "Initiative",
+          "description": "Create report for initiative progress"
+        },
+        "UPLOAD_BUNDLE": {
+          "label": "Upload Bundle",
+          "description": "Create draft report from uploaded documents"
+        }
+      }
     }
   }
 }
