@@ -35,6 +35,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
@@ -910,9 +915,7 @@ export const ComplianceCenterView: React.FC = () => {
               Framework requirements are read-only here. Persisted DSAR, audit and processing
               records remain editable through their dedicated flows.
             </div>
-            <table
-              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
-            >
+            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700">
                   <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
@@ -1070,6 +1073,152 @@ export const ComplianceCenterView: React.FC = () => {
     );
   };
 
+  const dsarColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'requester',
+        label: 'Requester',
+        render: (row: TableRow) => (
+          <span className="font-medium text-slate-900 dark:text-white">{row.requesterEmail}</span>
+        ),
+      },
+      {
+        id: 'type',
+        label: 'Type',
+        render: (row: TableRow) => (
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
+            {DSAR_TYPE_LABELS[row.requestType as keyof typeof DSAR_TYPE_LABELS] || row.requestType}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => (
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+              row.status === 'completed'
+                ? 'bg-emerald-500/10 text-emerald-600'
+                : row.status === 'in_progress'
+                  ? 'bg-blue-500/10 text-blue-600'
+                  : row.status === 'pending'
+                    ? 'bg-amber-500/10 text-amber-600'
+                    : 'bg-danger-500/10 text-danger-600'
+            }`}
+          >
+            {String(row.status).replace('_', ' ')}
+          </span>
+        ),
+      },
+      {
+        id: 'received',
+        label: 'Received',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {formatDate(row.receivedAt)}
+          </span>
+        ),
+      },
+      {
+        id: 'dueDate',
+        label: 'Due Date',
+        render: (row: TableRow) => (
+          <span
+            className={`text-sm ${
+              isOverdue(row.dueDate, row.status)
+                ? 'text-danger-600 font-medium'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {formatDate(row.dueDate)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => (
+          <button
+            onClick={() => handleViewDsar(row.__dsar as DSAR)}
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+          >
+            <Eye size={16} className="text-slate-600 dark:text-slate-500" />
+          </button>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const dsarRows: TableRow[] = React.useMemo(
+    () =>
+      dsarRequests.map((dsar) => ({
+        ...dsar,
+        id: String(dsar.id),
+        __dsar: dsar,
+      })),
+    [dsarRequests]
+  );
+
+  const recordColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'name',
+        label: 'Name',
+        render: (row: TableRow) => (
+          <span className="font-medium text-slate-900 dark:text-white">{row.name}</span>
+        ),
+      },
+      {
+        id: 'purpose',
+        label: 'Purpose',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">{row.purpose}</span>
+        ),
+      },
+      {
+        id: 'legalBasis',
+        label: 'Legal Basis',
+        render: (row: TableRow) => (
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
+            {row.legal_basis || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'retention',
+        label: 'Retention',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {row.retention_period || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'created',
+        label: 'Created',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {formatDate(row.created_at, '—')}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const recordRows: TableRow[] = React.useMemo(
+    () =>
+      processingRecords.map((rec) => ({
+        ...rec,
+        id: String(rec.id),
+      })),
+    [processingRecords]
+  );
+
   const renderDsarTab = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1101,94 +1250,13 @@ export const ComplianceCenterView: React.FC = () => {
             <DegradedState title="DSAR requests unavailable" description={dsarLoadError} />
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Requester
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Type
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Received
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Due Date
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {dsarRequests.map((dsar) => (
-                <tr key={dsar.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {dsar.requesterEmail}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
-                      {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] ||
-                        dsar.requestType}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        dsar.status === 'completed'
-                          ? 'bg-emerald-500/10 text-emerald-600'
-                          : dsar.status === 'in_progress'
-                            ? 'bg-blue-500/10 text-blue-600'
-                            : dsar.status === 'pending'
-                              ? 'bg-amber-500/10 text-amber-600'
-                              : 'bg-danger-500/10 text-danger-600'
-                      }`}
-                    >
-                      {dsar.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {formatDate(dsar.receivedAt)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-sm ${
-                        isOverdue(dsar.dueDate, dsar.status)
-                          ? 'text-danger-600 font-medium'
-                          : 'text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      {formatDate(dsar.dueDate)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleViewDsar(dsar)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                    >
-                      <Eye size={16} className="text-slate-600 dark:text-slate-500" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {dsarRequests.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <Users size={40} className="mx-auto mb-3 text-slate-600" />
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">
-                      No data subject requests
-                    </p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={dsarColumns}
+            data={dsarRows}
+            empty={{ title: 'No data subject requests', icon: Users }}
+            persistKey="superadmin.compliance.dsar"
+            canvasClassName="p-0"
+          />
         )}
       </div>
     </div>
@@ -1303,50 +1371,12 @@ export const ComplianceCenterView: React.FC = () => {
             />
           </div>
         ) : processingRecords.length > 0 ? (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Name
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Purpose
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Legal Basis
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Retention
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Created
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {processingRecords.map((rec) => (
-                <tr key={rec.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                    {rec.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {rec.purpose}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
-                      {rec.legal_basis || '—'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {rec.retention_period || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {formatDate(rec.created_at, '—')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={recordColumns}
+            data={recordRows}
+            persistKey="superadmin.compliance.processingRecords"
+            canvasClassName="p-0"
+          />
         ) : (
           <div className="p-12 text-center">
             <FileText size={40} className="mx-auto mb-3 text-slate-600" />

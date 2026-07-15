@@ -39,6 +39,11 @@ import toast from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
+import {
   CreditNotesPanel,
   InvoiceTemplateEditor,
   TaxSettingsPanel,
@@ -394,6 +399,224 @@ export const InvoiceCenterView: React.FC = () => {
     );
   };
 
+  const invoiceColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'invoice',
+        label: 'Invoice',
+        render: (row: TableRow) => (
+          <div className="font-medium text-slate-900 dark:text-white font-mono">
+            {row.invoiceNumber}
+          </div>
+        ),
+      },
+      {
+        id: 'organization',
+        label: 'Organization',
+        render: (row: TableRow) => (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
+              {String(row.organizationName || '').charAt(0)}
+            </div>
+            <span className="text-slate-700 dark:text-slate-300">{row.organizationName}</span>
+          </div>
+        ),
+      },
+      {
+        id: 'amount',
+        label: 'Amount',
+        render: (row: TableRow) => {
+          const invoice = row.__invoice as Invoice;
+          return (
+            <div>
+              <div className="font-semibold text-slate-900 dark:text-white">
+                {formatCurrency(invoice.total, invoice.currency)}
+              </div>
+              {invoice.tax > 0 && (
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  incl. {formatCurrency(invoice.tax, invoice.currency)} tax
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => getStatusBadge((row.__invoice as Invoice).status),
+      },
+      {
+        id: 'date',
+        label: 'Date',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {new Date(row.createdAt).toLocaleDateString()}
+          </span>
+        ),
+      },
+      {
+        id: 'dueDate',
+        label: 'Due Date',
+        render: (row: TableRow) => (
+          <span
+            className={`text-sm ${
+              row.status === 'overdue'
+                ? 'text-danger-600 font-medium'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {new Date(row.dueDate).toLocaleDateString()}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => {
+          const invoice = row.__invoice as Invoice;
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <button
+                onClick={() => setSelectedInvoice(invoice)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                title="View"
+              >
+                <Eye size={16} className="text-slate-600 dark:text-slate-500" />
+              </button>
+              <button
+                onClick={() => handleDownloadPdf(invoice.id)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                title="Download Invoice"
+              >
+                <Download size={16} className="text-slate-600 dark:text-slate-500" />
+              </button>
+              {(invoice.status === 'pending' || invoice.status === 'overdue') && (
+                <button
+                  onClick={() => handleSendReminder(invoice.id)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                  title="Send Reminder"
+                >
+                  <Send size={16} className="text-slate-600 dark:text-slate-500" />
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const invoiceRows: TableRow[] = React.useMemo(
+    () =>
+      filteredInvoices.map((invoice) => ({
+        ...invoice,
+        id: String(invoice.id),
+        __invoice: invoice,
+      })),
+    [filteredInvoices]
+  );
+
+  const tierColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'name',
+        label: 'Name',
+        render: (row: TableRow) => (
+          <div className="font-medium text-slate-900 dark:text-white">{row.name}</div>
+        ),
+      },
+      {
+        id: 'unit',
+        label: 'Unit',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">{row.unit}</span>
+        ),
+      },
+      {
+        id: 'price',
+        label: 'Price',
+        render: (row: TableRow) => (
+          <span className="text-lg font-semibold text-slate-900 dark:text-white">
+            {formatCurrency(row.pricePerUnit, row.currency)}
+          </span>
+        ),
+      },
+      {
+        id: 'type',
+        label: 'Type',
+        render: (row: TableRow) => (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
+            {row.tierType}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => {
+          const tier = row.__tier as any;
+          return (
+            <button
+              onClick={() => handleToggleTierActive(tier)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                tier.isActive
+                  ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
+                  : 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/20'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${tier.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}
+              />
+              {tier.isActive ? 'Active' : 'Inactive'}
+            </button>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => {
+          const tier = row.__tier as any;
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <button
+                onClick={() => openEditTier(tier)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                title="Edit"
+              >
+                <Pencil size={16} className="text-primary-500" />
+              </button>
+              <button
+                onClick={() => handleDeleteTier(tier.id)}
+                className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
+                title="Delete"
+              >
+                <Trash2 size={16} className="text-danger-400" />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const tierRows: TableRow[] = React.useMemo(
+    () =>
+      usageTiers.map((tier) => ({
+        ...tier,
+        id: String(tier.id),
+        __tier: tier,
+      })),
+    [usageTiers]
+  );
+
   const renderInvoicesTab = () => (
     <div className="space-y-6">
       {loadError && <DegradedState title="Invoice overview unavailable" description={loadError} />}
@@ -513,129 +736,23 @@ export const InvoiceCenterView: React.FC = () => {
 
       {/* Invoices Table */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table
-          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-        >
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Invoice
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Organization
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Amount
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Status
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Date
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Due Date
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {loadError ? (
-              <tr>
-                <td colSpan={7} className="p-6">
-                  <DegradedState title="Invoices unavailable" description={loadError} />
-                </td>
-              </tr>
-            ) : (
-              filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900 dark:text-white font-mono">
-                      {invoice.invoiceNumber}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
-                        {invoice.organizationName.charAt(0)}
-                      </div>
-                      <span className="text-slate-700 dark:text-slate-300">
-                        {invoice.organizationName}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      {formatCurrency(invoice.total, invoice.currency)}
-                    </div>
-                    {invoice.tax > 0 && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        incl. {formatCurrency(invoice.tax, invoice.currency)} tax
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {new Date(invoice.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-sm ${
-                        invoice.status === 'overdue'
-                          ? 'text-danger-600 font-medium'
-                          : 'text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      {new Date(invoice.dueDate).toLocaleDateString()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => setSelectedInvoice(invoice)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                        title="View"
-                      >
-                        <Eye size={16} className="text-slate-600 dark:text-slate-500" />
-                      </button>
-                      <button
-                        onClick={() => handleDownloadPdf(invoice.id)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                        title="Download Invoice"
-                      >
-                        <Download size={16} className="text-slate-600 dark:text-slate-500" />
-                      </button>
-                      {(invoice.status === 'pending' || invoice.status === 'overdue') && (
-                        <button
-                          onClick={() => handleSendReminder(invoice.id)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                          title="Send Reminder"
-                        >
-                          <Send size={16} className="text-slate-600 dark:text-slate-500" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-            {!loadError && filteredInvoices.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
-                  <Receipt size={40} className="mx-auto mb-3 text-slate-600" />
-                  <p className="text-slate-500 dark:text-slate-400 font-medium">
-                    No invoices found
-                  </p>
-                  <p className="text-sm text-slate-600 dark:text-slate-500">
-                    Invoices will appear here once created
-                  </p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Invoices unavailable" description={loadError} />
+          </div>
+        ) : (
+          <StandardTable
+            columns={invoiceColumns}
+            data={invoiceRows}
+            empty={{
+              title: 'No invoices found',
+              description: 'Invoices will appear here once created',
+              icon: Receipt,
+            }}
+            persistKey="superadmin.invoices.list"
+            canvasClassName="p-0"
+          />
+        )}
       </div>
 
       {showCreateInvoice && (
@@ -942,85 +1059,12 @@ export const InvoiceCenterView: React.FC = () => {
             </p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Name
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Unit
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Price
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Type
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {usageTiers.map((tier) => (
-                <tr key={tier.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900 dark:text-white">{tier.name}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {tier.unit}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-lg font-semibold text-slate-900 dark:text-white">
-                      {formatCurrency(tier.pricePerUnit, tier.currency)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
-                      {tier.tierType}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => handleToggleTierActive(tier)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                        tier.isActive
-                          ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
-                          : 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/20'
-                      }`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${tier.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}
-                      />
-                      {tier.isActive ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openEditTier(tier)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                        title="Edit"
-                      >
-                        <Pencil size={16} className="text-primary-500" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTier(tier.id)}
-                        className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} className="text-danger-400" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={tierColumns}
+            data={tierRows}
+            persistKey="superadmin.invoices.usageTiers"
+            canvasClassName="p-0"
+          />
         )}
       </div>
 
@@ -1088,7 +1132,7 @@ export const InvoiceCenterView: React.FC = () => {
               </div>
             </div>
 
-            <table className="w-full mb-6">
+            <table /* §27-exempt: sub-tabela w widoku szczegolow (pozycje faktury w modalu), tabela dokumentowa, nie samodzielna lista */ className="w-full mb-6">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700">
                   <th className="text-left py-3 text-sm text-slate-500 dark:text-slate-400">

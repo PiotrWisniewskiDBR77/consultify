@@ -7,10 +7,15 @@
  * - mark items approved/ignored/applied
  */
 import { Check, RefreshCw, Server, X, Zap } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
@@ -195,6 +200,75 @@ export const MarketInboxTab: React.FC = () => {
     void load();
   }, [load]);
 
+  const inboxColumns: TableColumn[] = useMemo(
+    () => [
+      { id: 'change_type', label: 'Type', render: (row: TableRow) => row.change_type },
+      {
+        id: 'model_id',
+        label: 'Model',
+        render: (row: TableRow) => <span className="font-mono text-xs">{row.model_id}</span>,
+      },
+      {
+        id: 'origin_vendor',
+        label: 'Origin',
+        render: (row: TableRow) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {row.origin_vendor || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: 'Created',
+        render: (row: TableRow) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {row.created_at || '—'}
+          </span>
+        ),
+      },
+      { id: 'status', label: 'Status', render: (row: TableRow) => row.status },
+      {
+        id: 'actions',
+        label: '',
+        align: 'right',
+        render: (row: TableRow) => (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => applyItem(row.id)}
+              disabled={updating || row.status !== 'approved'}
+              className="p-2 rounded-lg hover:bg-indigo-500/10 text-slate-500 hover:text-indigo-500 transition-colors disabled:opacity-40"
+              title="Apply (requires approved)"
+              aria-label={`Apply ${row.model_id}`}
+            >
+              <Zap size={16} />
+            </button>
+            <button
+              onClick={() => setStatus(row.id, 'approved')}
+              disabled={updating}
+              className="p-2 rounded-lg hover:bg-emerald-500/10 text-slate-500 hover:text-emerald-500 transition-colors"
+              title="Approve"
+              aria-label={`Approve ${row.model_id}`}
+            >
+              <Check size={16} />
+            </button>
+            <button
+              onClick={() => setStatus(row.id, 'ignored')}
+              disabled={updating}
+              className="p-2 rounded-lg hover:bg-danger-500/10 text-slate-500 hover:text-danger-400 transition-colors"
+              title="Ignore"
+              aria-label={`Ignore ${row.model_id}`}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [updating, applyItem, setStatus]
+  );
+
+  const inboxRows: TableRow[] = useMemo(() => rows.map((row) => ({ ...row })), [rows]);
+
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -261,78 +335,13 @@ export const MarketInboxTab: React.FC = () => {
             <div className="text-sm font-semibold text-slate-900 dark:text-white">Inbox items</div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{rows.length} items</div>
           </div>
-          <div className="overflow-x-auto">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full text-sm"
-            >
-              <thead className="bg-slate-50 dark:bg-navy-900/60">
-                <tr className="text-left text-slate-600 dark:text-slate-300">
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Model</th>
-                  <th className="px-4 py-3">Origin</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-200 dark:border-navy-700">
-                    <td className="px-4 py-3">{r.change_type}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{r.model_id}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                      {r.origin_vendor || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                      {r.created_at || '—'}
-                    </td>
-                    <td className="px-4 py-3">{r.status}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => applyItem(r.id)}
-                          disabled={updating || r.status !== 'approved'}
-                          className="p-2 rounded-lg hover:bg-indigo-500/10 text-slate-500 hover:text-indigo-500 transition-colors disabled:opacity-40"
-                          title="Apply (requires approved)"
-                          aria-label={`Apply ${r.model_id}`}
-                        >
-                          <Zap size={16} />
-                        </button>
-                        <button
-                          onClick={() => setStatus(r.id, 'approved')}
-                          disabled={updating}
-                          className="p-2 rounded-lg hover:bg-emerald-500/10 text-slate-500 hover:text-emerald-500 transition-colors"
-                          title="Approve"
-                          aria-label={`Approve ${r.model_id}`}
-                        >
-                          <Check size={16} />
-                        </button>
-                        <button
-                          onClick={() => setStatus(r.id, 'ignored')}
-                          disabled={updating}
-                          className="p-2 rounded-lg hover:bg-danger-500/10 text-slate-500 hover:text-danger-400 transition-colors"
-                          title="Ignore"
-                          aria-label={`Ignore ${r.model_id}`}
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
-                    >
-                      Inbox is empty.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={inboxColumns}
+            data={inboxRows}
+            empty={{ title: 'Inbox is empty.' }}
+            persistKey="superadmin.aiPlatform.marketInbox"
+            canvasClassName="p-0"
+          />
         </div>
       )}
     </div>

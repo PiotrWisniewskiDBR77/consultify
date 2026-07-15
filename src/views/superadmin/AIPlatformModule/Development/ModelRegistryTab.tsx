@@ -4,10 +4,15 @@
  */
 
 import { Activity, Check, Cpu, Database, Edit, Eye, Plus, RefreshCw, Search } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
@@ -229,6 +234,129 @@ export const ModelRegistryTab: React.FC = () => {
 
   const providers = [...new Set(models.map((m) => m.provider))];
 
+  const modelColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'model',
+        label: 'Model',
+        render: (row: TableRow) => {
+          const model = row.__model as Model;
+          return (
+            <div>
+              <div className="font-medium text-slate-900 dark:text-white">{model.name}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                {model.modelId}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'provider',
+        label: 'Provider',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-slate-300">
+            {(row.__model as Model).provider}
+          </span>
+        ),
+      },
+      {
+        id: 'tier',
+        label: 'Tier',
+        render: (row: TableRow) => getTierBadge((row.__model as Model).tier),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => getStatusBadge((row.__model as Model).status),
+      },
+      {
+        id: 'cost',
+        label: 'Cost',
+        render: (row: TableRow) => (
+          <div className="text-xs">
+            <div className="text-slate-700 dark:text-slate-300">
+              {formatCostPer1k((row.__model as Model).costPer1k)}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'latency',
+        label: 'Latency',
+        render: (row: TableRow) => {
+          const model = row.__model as Model;
+          return (
+            <span className="text-sm text-slate-700 dark:text-slate-300">
+              {model.avgLatency < 1000
+                ? `${model.avgLatency}ms`
+                : `${(model.avgLatency / 1000).toFixed(1)}s`}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'success',
+        label: 'Success',
+        render: (row: TableRow) => {
+          const model = row.__model as Model;
+          return (
+            <span
+              className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-danger-500'}`}
+            >
+              {model.successRate.toFixed(1)}%
+            </span>
+          );
+        },
+      },
+      {
+        id: 'requests',
+        label: 'Requests',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-slate-300">
+            {formatNumber((row.__model as Model).totalRequests)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => {
+          const model = row.__model as Model;
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedModel(model)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+                title="View Details"
+              >
+                <Eye size={16} className="text-slate-600" />
+              </button>
+              <button
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+                title="Edit"
+              >
+                <Edit size={16} className="text-slate-600" />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const modelRows: TableRow[] = useMemo(
+    () =>
+      filteredModels.map((model) => ({
+        id: model.id,
+        name: model.name,
+        __model: model,
+      })),
+    [filteredModels]
+  );
+
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
   }
@@ -342,110 +470,13 @@ export const ModelRegistryTab: React.FC = () => {
 
           {/* Models Table */}
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-            >
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700">
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Model
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Provider
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Tier
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Status
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Cost
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Latency
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Success
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Requests
-                  </th>
-                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-                {filteredModels.map((model) => (
-                  <tr
-                    key={model.id}
-                    className="hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-medium text-slate-900 dark:text-white">
-                          {model.name}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                          {model.modelId}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {model.provider}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">{getTierBadge(model.tier)}</td>
-                    <td className="px-6 py-4">{getStatusBadge(model.status)}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-xs">
-                        <div className="text-slate-700 dark:text-slate-300">
-                          {formatCostPer1k(model.costPer1k)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {model.avgLatency < 1000
-                          ? `${model.avgLatency}ms`
-                          : `${(model.avgLatency / 1000).toFixed(1)}s`}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-danger-500'}`}
-                      >
-                        {model.successRate.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {formatNumber(model.totalRequests)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setSelectedModel(model)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <Eye size={16} className="text-slate-600" />
-                        </button>
-                        <button
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={16} className="text-slate-600" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <StandardTable
+              columns={modelColumns}
+              data={modelRows}
+              empty={{ title: 'No models found.' }}
+              persistKey="superadmin.aiPlatform.modelRegistry"
+              canvasClassName="p-0"
+            />
           </div>
         </>
       ) : null}

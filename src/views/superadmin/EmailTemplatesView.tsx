@@ -18,10 +18,16 @@ import {
   Tag,
   Trash2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EmailTemplateEditor } from '../../components/SuperAdmin/EmailTemplateEditor';
+import {
+  StandardTable,
+  type RowActionSection,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import type { ContentCategory, ContentTag, EmailTemplate, EmailTemplateStatus } from '../../types';
 
@@ -49,7 +55,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
 
   // Actions state
-  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Load templates
@@ -104,7 +109,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
       console.error('Publish error:', err);
     } finally {
       setActionLoading(null);
-      setActionMenuOpen(null);
     }
   };
 
@@ -117,7 +121,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
       console.error('Deprecate error:', err);
     } finally {
       setActionLoading(null);
-      setActionMenuOpen(null);
     }
   };
 
@@ -130,7 +133,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
       console.error('Clone error:', err);
     } finally {
       setActionLoading(null);
-      setActionMenuOpen(null);
     }
   };
 
@@ -145,7 +147,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
       console.error('Delete error:', err);
     } finally {
       setActionLoading(null);
-      setActionMenuOpen(null);
     }
   };
 
@@ -157,7 +158,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
   const handleEdit = (template: EmailTemplate) => {
     setSelectedTemplate(template);
     setEditorOpen(true);
-    setActionMenuOpen(null);
   };
 
   const handleEditorClose = () => {
@@ -193,6 +193,181 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
       default:
         return null;
     }
+  };
+
+  const templateColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'template',
+        label: t('superadmin.emailTemplates.table.template'),
+        render: (row: TableRow) => {
+          const template = row.__template as EmailTemplate;
+          return (
+            <div className="flex items-start gap-3">
+              <div
+                className="p-2 rounded-lg"
+                style={{
+                  backgroundColor: template.category?.color
+                    ? `${template.category.color}20`
+                    : '#6366F120',
+                }}
+              >
+                <Mail size={16} style={{ color: template.category?.color || '#6366F1' }} />
+              </div>
+              <div>
+                <div className="font-medium text-slate-900 dark:text-white">{template.name}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 font-mono">
+                  {template.templateKey}
+                </div>
+                {template.description && (
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+                    {template.description}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'category',
+        label: t('superadmin.emailTemplates.table.category'),
+        render: (row: TableRow) => {
+          const template = row.__template as EmailTemplate;
+          return template.category ? (
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: `${template.category.color}20`,
+                color: template.category.color,
+                borderColor: `${template.category.color}40`,
+                borderWidth: '1px',
+              }}
+            >
+              <FolderOpen size={12} />
+              {template.category.name}
+            </span>
+          ) : (
+            <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: t('superadmin.emailTemplates.table.status'),
+        render: (row: TableRow) => getStatusBadge((row.__template as EmailTemplate).status),
+      },
+      {
+        id: 'version',
+        label: t('superadmin.emailTemplates.table.version'),
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-slate-300">
+            v{(row.__template as EmailTemplate).version}
+          </span>
+        ),
+      },
+      {
+        id: 'usage',
+        label: t('superadmin.emailTemplates.table.usage'),
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-slate-300">
+            {(row.__template as EmailTemplate).usageCount || 0}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
+  );
+
+  const templateRows: TableRow[] = useMemo(
+    () =>
+      templates.map((template) => ({
+        id: template.id,
+        name: template.name,
+        status: template.status,
+        __template: template,
+      })),
+    [templates]
+  );
+
+  const buildTemplateSections = (row: TableRow): RowActionSection[] => {
+    const template = row.__template as EmailTemplate;
+    const busy = actionLoading === template.id;
+    return [
+      {
+        id: 'open',
+        kind: 'open',
+        actions: [
+          {
+            id: 'edit',
+            label: t('superadmin.emailTemplates.actions.edit'),
+            icon: Edit,
+            onClick: () => handleEdit(template),
+          },
+          {
+            id: 'clone',
+            label: t('superadmin.emailTemplates.actions.clone'),
+            icon: Copy,
+            disabled: busy,
+            onClick: () => void handleClone(template.id),
+          },
+          {
+            id: 'preview',
+            label: t('superadmin.emailTemplates.actions.preview'),
+            icon: Eye,
+            onClick: () =>
+              window.open(
+                `/api/content/emails/templates/${template.id}/preview`,
+                '_blank',
+                'noopener,noreferrer'
+              ),
+          },
+        ],
+      },
+      {
+        id: 'manage',
+        kind: 'manage',
+        actions: [
+          ...(template.status === 'DRAFT'
+            ? [
+                {
+                  id: 'publish',
+                  label: t('superadmin.emailTemplates.actions.publish'),
+                  icon: CheckCircle2,
+                  disabled: busy,
+                  onClick: () => void handlePublish(template.id),
+                },
+              ]
+            : []),
+          ...(template.status === 'PUBLISHED'
+            ? [
+                {
+                  id: 'deprecate',
+                  label: t('superadmin.emailTemplates.actions.deprecate'),
+                  icon: Archive,
+                  disabled: busy,
+                  onClick: () => void handleDeprecate(template.id),
+                },
+              ]
+            : []),
+        ],
+      },
+      {
+        id: 'danger',
+        kind: 'danger',
+        actions: [
+          {
+            id: 'delete',
+            label: t('superadmin.emailTemplates.actions.delete'),
+            icon: Trash2,
+            variant: 'danger',
+            disabled: busy,
+            onClick: () => void handleDelete(template.id),
+          },
+        ],
+      },
+    ].filter((section) => section.actions.length > 0) as RowActionSection[];
   };
 
   // Editor view
@@ -345,186 +520,13 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               )}
             </div>
           ) : (
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-            >
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-800 bg-slate-50/70 dark:bg-white/5">
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    {t('superadmin.emailTemplates.table.template')}
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    {t('superadmin.emailTemplates.table.category')}
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    {t('superadmin.emailTemplates.table.status')}
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    {t('superadmin.emailTemplates.table.version')}
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    {t('superadmin.emailTemplates.table.usage')}
-                  </th>
-                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    {t('superadmin.emailTemplates.table.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-navy-800">
-                {templates.map((template) => (
-                  <tr
-                    key={template.id}
-                    className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className="p-2 rounded-lg"
-                          style={{
-                            backgroundColor: template.category?.color
-                              ? `${template.category.color}20`
-                              : '#6366F120',
-                          }}
-                        >
-                          <Mail
-                            size={16}
-                            style={{
-                              color: template.category?.color || '#6366F1',
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-900 dark:text-white">
-                            {template.name}
-                          </div>
-                          <div className="text-sm text-slate-600 dark:text-slate-400 font-mono">
-                            {template.templateKey}
-                          </div>
-                          {template.description && (
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
-                              {template.description}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {template.category ? (
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                          style={{
-                            backgroundColor: `${template.category.color}20`,
-                            color: template.category.color,
-                            borderColor: `${template.category.color}40`,
-                            borderWidth: '1px',
-                          }}
-                        >
-                          <FolderOpen size={12} />
-                          {template.category.name}
-                        </span>
-                      ) : (
-                        <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">{getStatusBadge(template.status)}</td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        v{template.version}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {template.usageCount || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Quick actions */}
-                        <button
-                          onClick={() => handleEdit(template)}
-                          className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                          title={t('superadmin.emailTemplates.actions.edit')}
-                        >
-                          <Edit size={16} />
-                        </button>
-
-                        {/* More actions menu */}
-                        <div className="relative">
-                          <button
-                            onClick={() =>
-                              setActionMenuOpen(actionMenuOpen === template.id ? null : template.id)
-                            }
-                            aria-label="More actions"
-                            className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-
-                          {actionMenuOpen === template.id && (
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-lg shadow-xl z-10 py-1">
-                              <button
-                                onClick={() => handleEdit(template)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5"
-                              >
-                                <Edit size={14} />
-                                {t('superadmin.emailTemplates.actions.edit')}
-                              </button>
-                              <button
-                                onClick={() => handleClone(template.id)}
-                                disabled={actionLoading === template.id}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
-                              >
-                                <Copy size={14} />
-                                {t('superadmin.emailTemplates.actions.clone')}
-                              </button>
-                              <a
-                                href={`/api/content/emails/templates/${template.id}/preview`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5"
-                              >
-                                <Eye size={14} />
-                                {t('superadmin.emailTemplates.actions.preview')}
-                              </a>
-                              <div className="border-t border-slate-200 dark:border-navy-800 my-1" />
-                              {template.status === 'DRAFT' && (
-                                <button
-                                  onClick={() => handlePublish(template.id)}
-                                  disabled={actionLoading === template.id}
-                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50"
-                                >
-                                  <CheckCircle2 size={14} />
-                                  {t('superadmin.emailTemplates.actions.publish')}
-                                </button>
-                              )}
-                              {template.status === 'PUBLISHED' && (
-                                <button
-                                  onClick={() => handleDeprecate(template.id)}
-                                  disabled={actionLoading === template.id}
-                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
-                                >
-                                  <Archive size={14} />
-                                  {t('superadmin.emailTemplates.actions.deprecate')}
-                                </button>
-                              )}
-                              <div className="border-t border-slate-200 dark:border-navy-800 my-1" />
-                              <button
-                                onClick={() => handleDelete(template.id)}
-                                disabled={actionLoading === template.id}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-700 dark:text-danger-400 hover:bg-danger-500/10 disabled:opacity-50"
-                              >
-                                <Trash2 size={14} />
-                                {t('superadmin.emailTemplates.actions.delete')}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <StandardTable
+              columns={templateColumns}
+              data={templateRows}
+              rowActions={buildTemplateSections}
+              persistKey="superadmin.emailTemplates"
+              canvasClassName="p-0"
+            />
           )}
         </div>
 
@@ -564,11 +566,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
           </div>
         </div>
       </div>
-
-      {/* Click away handler for menus */}
-      {actionMenuOpen && (
-        <div className="fixed inset-0 z-0" onClick={() => setActionMenuOpen(null)} />
-      )}
     </div>
   );
 };

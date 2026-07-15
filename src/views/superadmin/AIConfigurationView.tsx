@@ -43,6 +43,11 @@ import {
   SettingsToggle,
 } from '../../components/AISettings';
 import { InfoButton } from '../../components/shared/InfoButton';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { SuperAdminAISettings } from '../../types';
 import { LLMProvider, LLMProviderConfig } from '../../types/domain/ai';
@@ -437,6 +442,101 @@ Help leaders develop change management competencies.`,
     { id: 'settings' as AIConfigTab, label: 'Global Settings', icon: Shield },
   ];
 
+  const providerColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'name',
+        label: 'Name',
+        render: (row: TableRow) => <span className="font-medium text-c-text">{row.name}</span>,
+      },
+      {
+        id: 'provider',
+        label: 'Provider',
+        render: (row: TableRow) => (
+          <span className="text-slate-300 capitalize">{row.provider}</span>
+        ),
+      },
+      {
+        id: 'model_id',
+        label: 'Model ID',
+        render: (row: TableRow) => (
+          <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
+            {row.model_id}
+          </span>
+        ),
+      },
+      {
+        id: 'visibility',
+        label: 'Visibility',
+        render: (row: TableRow) => (
+          <span
+            className={`px-2 py-1 rounded text-xs ${row.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-400' : row.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
+          >
+            {row.visibility}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) =>
+          row.is_active ? (
+            <span className="text-emerald-400 flex items-center gap-1">
+              <Check size={14} /> Active
+            </span>
+          ) : (
+            <span className="text-slate-500 dark:text-slate-400">Inactive</span>
+          ),
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => {
+          const p = row.__provider as LLMProviderConfig;
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => handleTestConnection(p)}
+                title="Test Connection"
+                disabled={testingConnection}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-emerald-400 transition-colors"
+              >
+                <Wifi size={16} />
+              </button>
+              <button
+                onClick={() => handleEditProvider(p)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                onClick={() => handleDeleteProvider(p.id)}
+                className="p-2 hover:bg-danger-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-400"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [testingConnection]
+  );
+
+  const providerRows: TableRow[] = React.useMemo(
+    () =>
+      providers
+        .filter((p) => showInactive || p.is_active)
+        .map((p) => ({
+          ...p,
+          id: String(p.id),
+          __provider: p,
+        })),
+    [providers, showInactive]
+  );
+
   return (
     <div className="h-full flex flex-col bg-c-bg overflow-hidden relative">
       <InfoButton cardId="superadmin-ai-config" position="top-right" />
@@ -693,96 +793,14 @@ Help leaders develop change management competencies.`,
             </div>
 
             <div className="bg-c-surface border border-white/10 rounded-xl overflow-hidden">
-              <table
-                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left text-sm"
-              >
-                <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Name</th>
-                    <th className="px-6 py-4 font-medium">Provider</th>
-                    <th className="px-6 py-4 font-medium">Model ID</th>
-                    <th className="px-6 py-4 font-medium">Visibility</th>
-                    <th className="px-6 py-4 font-medium">Status</th>
-                    <th className="px-6 py-4 font-medium text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {loading ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="p-8 text-center text-slate-500 dark:text-slate-400"
-                      >
-                        Loading...
-                      </td>
-                    </tr>
-                  ) : providers.filter((p) => showInactive || p.is_active).length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="p-8 text-center text-slate-500 dark:text-slate-400"
-                      >
-                        No providers configured
-                      </td>
-                    </tr>
-                  ) : (
-                    providers
-                      .filter((p) => showInactive || p.is_active)
-                      .map((p) => (
-                        <tr
-                          key={p.id}
-                          className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-                        >
-                          <td className="px-6 py-4 font-medium text-c-text">{p.name}</td>
-                          <td className="px-6 py-4 text-slate-300 capitalize">{p.provider}</td>
-                          <td className="px-6 py-4 font-mono text-xs text-slate-400 dark:text-slate-500">
-                            {p.model_id}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
-                            >
-                              {p.visibility}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {p.is_active ? (
-                              <span className="text-emerald-400 flex items-center gap-1">
-                                <Check size={14} /> Active
-                              </span>
-                            ) : (
-                              <span className="text-slate-500 dark:text-slate-400">Inactive</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleTestConnection(p)}
-                                title="Test Connection"
-                                disabled={testingConnection}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-emerald-400 transition-colors"
-                              >
-                                <Wifi size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleEditProvider(p)}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProvider(p.id)}
-                                className="p-2 hover:bg-danger-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-400"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                  )}
-                </tbody>
-              </table>
+              <StandardTable
+                columns={providerColumns}
+                data={providerRows}
+                loading={loading}
+                empty={{ title: 'No providers configured' }}
+                persistKey="superadmin.aiConfiguration.providers"
+                canvasClassName="p-0"
+              />
             </div>
           </div>
         )}

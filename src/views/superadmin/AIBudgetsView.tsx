@@ -24,6 +24,11 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import TeresaMark from '../../components/shared/TeresaMark';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../components/standard/StandardTable';
 import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -1014,6 +1019,75 @@ const AIBudgetsView: React.FC = () => {
     </div>
   );
 
+  const modelPermissionColumns: TableColumn[] = React.useMemo(
+    () => [
+      {
+        id: 'model',
+        label: 'Model',
+        render: (row: TableRow) => (
+          <div>
+            <div className="font-medium text-slate-900 dark:text-white">{row.modelId}</div>
+            <div className="text-sm text-slate-500 dark:text-gray-400">{row.modelProvider}</div>
+          </div>
+        ),
+      },
+      {
+        id: 'scope',
+        label: 'Scope',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-700 dark:text-gray-200 capitalize">
+            {row.scopeType}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        render: (row: TableRow) => (
+          <span
+            className={`px-2 py-1 rounded text-xs ${
+              row.isAllowed ? 'bg-green-500/20 text-green-300' : 'bg-danger-500/20 text-danger-300'
+            }`}
+          >
+            {row.isAllowed ? 'Allowed' : 'Blocked'}
+          </span>
+        ),
+      },
+      {
+        id: 'limits',
+        label: 'Limits',
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-600 dark:text-gray-400">
+            {row.maxTokensPerRequest && `Max: ${formatTokens(row.maxTokensPerRequest)}/req`}
+            {row.dailyTokenLimit && `, ${formatTokens(row.dailyTokenLimit)}/day`}
+            {!row.maxTokensPerRequest && !row.dailyTokenLimit && '-'}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (row: TableRow) => (
+          <button
+            onClick={() => handleDeleteModelPermission(row.id)}
+            aria-label={`Delete model permission ${row.id}`}
+            className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
+          >
+            <Trash2 size={18} />
+          </button>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const modelPermissionRows: TableRow[] = React.useMemo(
+    () => modelPermissions.map((perm) => ({ ...perm })),
+    [modelPermissions]
+  );
+
   const renderModels = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1044,72 +1118,12 @@ const AIBudgetsView: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl overflow-hidden">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-          >
-            <thead className="bg-slate-50 dark:bg-gray-900/50">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  Model
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  Scope
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  Limits
-                </th>
-                <th className="text-right px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
-              {modelPermissions.map((perm) => (
-                <tr key={perm.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/30">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900 dark:text-white">{perm.modelId}</div>
-                    <div className="text-sm text-slate-500 dark:text-gray-400">
-                      {perm.modelProvider}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-slate-700 dark:text-gray-200 capitalize">
-                      {perm.scopeType}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        perm.isAllowed
-                          ? 'bg-green-500/20 text-green-300'
-                          : 'bg-danger-500/20 text-danger-300'
-                      }`}
-                    >
-                      {perm.isAllowed ? 'Allowed' : 'Blocked'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-gray-400">
-                    {perm.maxTokensPerRequest &&
-                      `Max: ${formatTokens(perm.maxTokensPerRequest)}/req`}
-                    {perm.dailyTokenLimit && `, ${formatTokens(perm.dailyTokenLimit)}/day`}
-                    {!perm.maxTokensPerRequest && !perm.dailyTokenLimit && '-'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDeleteModelPermission(perm.id)}
-                      aria-label={`Delete model permission ${perm.id}`}
-                      className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <StandardTable
+            columns={modelPermissionColumns}
+            data={modelPermissionRows}
+            persistKey="superadmin.aiBudgets.modelRestrictions"
+            canvasClassName="p-0"
+          />
         </div>
       )}
 

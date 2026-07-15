@@ -9,6 +9,7 @@ import { Bell, Brain, Calendar, Download, Package, RefreshCw, Search, Users } fr
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { apiGet } from '../../services/api/baseClient';
+import { StandardTable, type TableColumn, type TableRow } from '../../components/standard/StandardTable';
 
 interface InterestRecord {
   id: string;
@@ -110,6 +111,74 @@ export const ModuleWaitlistView: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const waitlistColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'module',
+        label: 'Module',
+        render: (row: TableRow) => {
+          const meta = MODULE_META[row.module_key] || {
+            label: row.module_key,
+            icon: <Bell size={14} />,
+            color: 'bg-slate-500/10 text-slate-500',
+          };
+          return (
+            <span
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${meta.color}`}
+            >
+              {meta.icon}
+              {meta.label}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'user',
+        label: 'User',
+        render: (row: TableRow) => (
+          <span className="text-slate-900 dark:text-white font-medium">
+            {row.user_name || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'email',
+        label: 'Email',
+        render: (row: TableRow) => (
+          <span className="text-slate-600 dark:text-slate-300">{row.user_email || '—'}</span>
+        ),
+      },
+      {
+        id: 'organization',
+        label: 'Organization',
+        render: (row: TableRow) => (
+          <span className="text-slate-600 dark:text-slate-300">{row.org_name || '—'}</span>
+        ),
+      },
+      {
+        id: 'registered',
+        label: 'Registered',
+        render: (row: TableRow) => (
+          <span className="text-slate-500 dark:text-slate-400 text-xs">
+            {new Date(row.created_at).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const waitlistRows: TableRow[] = useMemo(
+    () => filteredInterests.map((record) => ({ ...record })),
+    [filteredInterests]
+  );
+
   return (
     <div className="p-6 overflow-y-auto h-full space-y-6">
       {/* Stats Cards */}
@@ -202,91 +271,20 @@ export const ModuleWaitlistView: React.FC = () => {
 
       {/* Table */}
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-sm"
-          >
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-800">
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Module
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Organization
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Registered
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-600">
-                    <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
-                    Loading...
-                  </td>
-                </tr>
-              ) : filteredInterests.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-600">
-                    <Bell size={20} className="mx-auto mb-2 opacity-40" />
-                    {interests.length === 0
-                      ? 'No interest registrations yet'
-                      : 'No results matching your filters'}
-                  </td>
-                </tr>
-              ) : (
-                filteredInterests.map((record) => {
-                  const meta = MODULE_META[record.module_key] || {
-                    label: record.module_key,
-                    icon: <Bell size={14} />,
-                    color: 'bg-slate-500/10 text-slate-500',
-                  };
-                  return (
-                    <tr
-                      key={record.id}
-                      className="border-b border-slate-50 dark:border-navy-800/50 hover:bg-slate-50/50 dark:hover:bg-navy-800/30 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${meta.color}`}
-                        >
-                          {meta.icon}
-                          {meta.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">
-                        {record.user_name || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {record.user_email || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {record.org_name || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">
-                        {new Date(record.created_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <StandardTable
+          columns={waitlistColumns}
+          data={waitlistRows}
+          loading={loading}
+          empty={{
+            title:
+              interests.length === 0
+                ? 'No interest registrations yet'
+                : 'No results matching your filters',
+            icon: Bell,
+          }}
+          persistKey="superadmin.moduleWaitlist"
+          canvasClassName="p-0"
+        />
 
         {/* Footer */}
         {filteredInterests.length > 0 && (
