@@ -10,6 +10,17 @@ export const shouldFallbackToLegacyResults = (error: any) => {
   return [400, 404, 405, 501].includes(status);
 };
 
+/** Builds a `?a=1&b=2` suffix from defined values, or '' when none are set. */
+function queryStringFrom(query?: Record<string, string | number | boolean | undefined>): string {
+  if (!query) return '';
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
 export interface V8ResultsDashboardSnapshot {
   organizationId: string;
   kpiScorecard: {
@@ -469,6 +480,55 @@ export interface V8ResultsCloseDeviationCaseResponse {
   success: boolean;
 }
 
+// #M15/OC2 (2026-07-15) — wiring for the 3 previously orphaned engines
+// (kpiAnomalyService/kpiForecastService/deviationRcaSuggestService) surfaced
+// behind resultsFeatureFlags.deviationDiagnostics. Read-only, additive to the
+// existing acknowledge/rca/actions/resolve/close seam above — does not
+// replace it.
+export interface V8ResultsKpiAnomaly {
+  index: number;
+  value: number;
+  periodIso: string | null;
+  method: 'zscore' | 'iqr' | string;
+  severity: 'moderate' | 'severe' | string;
+  score: number;
+}
+
+export interface V8ResultsKpiAnomaliesResponse {
+  kpiId: string;
+  anomalies: V8ResultsKpiAnomaly[];
+  summary: { hasAnomalies: boolean; count: number; [key: string]: unknown };
+}
+
+export interface V8ResultsKpiForecastResponse {
+  kpiId: string;
+  target: number | null;
+  direction: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+  trend: { slope: number; intercept: number; [key: string]: unknown };
+  projection: { willHitTarget: boolean; [key: string]: unknown } | null;
+  alert: Record<string, unknown> | null;
+  points: Array<{ t: number; value: number; periodIso: string | null }>;
+}
+
+export interface V8ResultsRcaHypothesis {
+  category: 'measurement' | 'adoption' | 'scope' | 'external' | 'capacity' | 'data-quality' | string;
+  hypothesis: string;
+  confidence: number;
+}
+
+export interface V8ResultsRcaAction {
+  title: string;
+  [key: string]: unknown;
+}
+
+export interface V8ResultsDeviationCaseRcaSuggestResponse {
+  caseId: string;
+  kpiId: string;
+  signals: Record<string, unknown>;
+  hypotheses: V8ResultsRcaHypothesis[];
+  actions: V8ResultsRcaAction[];
+}
+
 export interface V8ResultsCreateKpiReportPayload {
   periodStart: string;
   periodEnd?: string | null;
@@ -598,6 +658,24 @@ export const V8ResultsApi = {
     v8Post<V8ResultsCloseDeviationCaseResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/close`,
       payload
+    ),
+  // #M15/OC2 (2026-07-15): AI-assisted diagnostics — anomalies/forecast/RCA
+  // suggestions. Behind resultsFeatureFlags.deviationDiagnostics; no legacy
+  // /benefits/* equivalent exists, so there is nothing to fall back to.
+  getKpiAnomalies: (kpiId: string, query?: Record<string, number | undefined>) =>
+    v8Get<V8ResultsKpiAnomaliesResponse>(
+      `/results/kpis/${encodeURIComponent(kpiId)}/anomalies${queryStringFrom(query)}`
+    ),
+  getKpiForecast: (kpiId: string, query?: Record<string, number | undefined>) =>
+    v8Get<V8ResultsKpiForecastResponse>(
+      `/results/kpis/${encodeURIComponent(kpiId)}/forecast${queryStringFrom(query)}`
+    ),
+  getDeviationCaseRcaSuggest: (
+    caseId: string,
+    query?: Record<string, string | number | boolean | undefined>
+  ) =>
+    v8Get<V8ResultsDeviationCaseRcaSuggestResponse>(
+      `/results/deviation-cases/${encodeURIComponent(caseId)}/rca-suggest${queryStringFrom(query)}`
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),
