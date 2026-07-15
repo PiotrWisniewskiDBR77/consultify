@@ -809,14 +809,10 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
-            {isPolish
-              ? 'Market Forces nie służy do mechanicznego ocenienia pięciu sił. Służy do zamiany struktury rynku w decyzję: gdzie naciska marża, gdzie jest defensibility i jaki ruch ma sens.'
-              : 'Market Forces is not a mechanical Five Forces scorecard. It turns market structure into a decision: where margin is pressured, where defensibility exists, and what move makes sense.'}
+            {t('discoveryToolsMain.knownToolDetail.marketForces.goal.positioningHeadline')}
           </div>
           <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {isPolish
-              ? 'To narzędzie jest evidence-first i AI-assisted. Najpierw ustawia branżę, zakres, pozycję firmy oraz pytanie decyzyjne. Potem AI pomaga zebrać sygnały z rozmów i kontekstu organizacji, proponuje scorecard sił, pyta użytkownika o akceptację i dopiero z zatwierdzonej diagnozy buduje implikacje, ruchy oraz inicjatywy.'
-              : 'This is an evidence-first, AI-assisted tool. It frames the industry, scope, company position, and decision question first. AI then helps capture signals from interviews and organization context, proposes the force scorecard, asks for user approval, and only then builds implications, moves, and initiatives from the approved diagnosis.'}
+            {t('discoveryToolsMain.knownToolDetail.marketForces.goal.positioningBody')}
           </div>
         </div>
 
@@ -826,19 +822,9 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetailView.whatTheToolActuallyDoes')}
             </div>
             {bullets(
-              isPolish
-                ? [
-                    'łączy kontekst organizacji i wywiadu z sygnałami rynku',
-                    'zamienia sygnały w ocenę pięciu sił z driverami, evidence i confidence',
-                    'pokazuje presję marży, siłę nabywców, bariery wejścia i defensibility',
-                    'prowadzi od diagnozy rynku do rekomendowanych ruchów i inicjatyw',
-                  ]
-                : [
-                    'connects organization and interview context with market signals',
-                    'turns signals into a Five Forces scorecard with drivers, evidence, and confidence',
-                    'shows margin pressure, buyer power, entry barriers, and defensibility',
-                    'moves from market diagnosis into recommended moves and initiatives',
-                  ]
+              t('discoveryToolsMain.knownToolDetail.marketForces.goal.whatItDoes', {
+                returnObjects: true,
+              }) as string[]
             )}
           </div>
           <div className="rounded-2xl border border-danger-200/70 bg-danger-500/5 p-4 dark:border-danger-900/40">
@@ -846,19 +832,9 @@ export function KnownToolDetailView(props: {
               {t('discoveryToolsMain.knownToolDetailView.whatThisToolIsNot')}
             </div>
             {bullets(
-              isPolish
-                ? [
-                    'nie jest suchą checklistą Portera bez kontekstu decyzji',
-                    'nie jest miejscem na ocenę rynku bez źródeł i sygnałów',
-                    'nie służy do automatycznego wygenerowania strategii bez akceptacji użytkownika',
-                    'nie kończy się na radarze lub scorecardzie, tylko przechodzi do outputów',
-                  ]
-                : [
-                    'it is not a dry Porter checklist without decision context',
-                    'it is not a place to score a market without sources and signals',
-                    'it does not auto-generate strategy without user approval',
-                    'it does not stop at a radar or scorecard, but bridges into outputs',
-                  ]
+              t('discoveryToolsMain.knownToolDetail.marketForces.goal.whatItIsNot', {
+                returnObjects: true,
+              }) as string[]
             )}
           </div>
         </div>
@@ -867,15 +843,9 @@ export function KnownToolDetailView(props: {
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
             {t('discoveryToolsMain.knownToolDetailView.aIPhilosophy')}
           </div>
-          {chipRow(
-            isPolish
-              ? ['Market brief', 'Evidence', 'AI proposals', 'User approval', 'Initiatives']
-              : ['Market brief', 'Evidence', 'AI proposals', 'User approval', 'Initiatives']
-          )}
+          {chipRow(['Market brief', 'Evidence', 'AI proposals', 'User approval', 'Initiatives'])}
           <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {isPolish
-              ? 'AI jest konsultantem wspierającym, nie źródłem prawdy. Proponuje sygnały, oceny sił, implikacje, ruchy i outputy, ale użytkownik akceptuje, odrzuca albo prosi o przemyślenie kart przed przejściem do inicjatyw.'
-              : 'AI acts as an assisting consultant, not the source of truth. It proposes signals, force scores, implications, moves, and outputs, while the user accepts, rejects, or asks to rethink cards before they become initiative material.'}
+            {t('discoveryToolsMain.knownToolDetail.marketForces.goal.aiPhilosophyBody')}
           </div>
         </div>
 
@@ -890,49 +860,15 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.workLogic')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {isPolish
-              ? 'Market Forces działa w pięciu fazach analogicznych do Dynamic SWOT: mission, input, forces, insights i outputs. Każda faza ma inny poziom decyzji i inne zadanie dla AI.'
-              : 'Market Forces runs through five phases analogous to Dynamic SWOT: mission, input, forces, insights, and outputs. Each phase has a different decision level and a different AI job.'}
+            {t('discoveryToolsMain.knownToolDetail.marketForces.process.intro')}
           </div>
         </div>
         <div className="grid gap-3">
-          {(isPolish
-            ? [
-                [
-                  'Mission & Market Context',
-                  'Branża, geografia, pozycja, pytanie i success signal',
-                ],
-                ['Input & Exploration', 'Sygnały z wywiadu, benchmarków, plików i obserwacji'],
-                [
-                  'Five Forces Build',
-                  'Ocena każdej siły: score, trend, drivery, evidence i confidence',
-                ],
-                [
-                  'Strategic Implications',
-                  'Presja marży, defensibility, napięcia rynkowe i rekomendacje',
-                ],
-                ['Outputs & Actions', 'Source summary, output candidates i drafty inicjatyw'],
-              ]
-            : [
-                [
-                  'Mission & Market Context',
-                  'Industry, geography, position, question, and success signal',
-                ],
-                [
-                  'Input & Exploration',
-                  'Signals from interviews, benchmarks, files, and observations',
-                ],
-                [
-                  'Five Forces Build',
-                  'Each force scored with trend, drivers, evidence, and confidence',
-                ],
-                [
-                  'Strategic Implications',
-                  'Margin pressure, defensibility, market tensions, and recommendations',
-                ],
-                ['Outputs & Actions', 'Source summary, output candidates, and initiative drafts'],
-              ]
-          ).map(([title, text], index) => (
+          {(
+            t('discoveryToolsMain.knownToolDetail.marketForces.process.steps', {
+              returnObjects: true,
+            }) as Array<{ title: string; text: string }>
+          ).map(({ title, text }, index) => (
             <div
               key={title}
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
@@ -961,44 +897,15 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {isPolish
-              ? 'Dobry wynik jest gotowy do decyzji: pokazuje nie tylko ocenę sił, ale też konsekwencje dla pozycji, marży i kolejności ruchów.'
-              : 'A strong outcome is decision-ready: it shows not only force scores, but also consequences for position, margin, and move sequence.'}
+            {t('discoveryToolsMain.knownToolDetail.marketForces.outcomes.intro')}
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {(isPolish
-            ? [
-                ['Scorecard 5 sił', 'Oceny, trendy, drivery, dowody i confidence dla każdej siły.'],
-                [
-                  'Implikacje strategiczne',
-                  'Co struktura rynku oznacza dla marży, defensibility i pozycji firmy.',
-                ],
-                [
-                  'Rekomendowane ruchy',
-                  '2-4 ruchy z uzasadnieniem, wysiłkiem, ryzykiem i pierwszym krokiem.',
-                ],
-                [
-                  'Output candidates',
-                  'Materiał do inicjatywy, raportu, prezentacji lub dalszej eksploracji.',
-                ],
-              ]
-            : [
-                [
-                  'Five Forces scorecard',
-                  'Scores, trends, drivers, evidence, and confidence for each force.',
-                ],
-                [
-                  'Strategic implications',
-                  'What market structure means for margin, defensibility, and company position.',
-                ],
-                ['Recommended moves', '2-4 moves with rationale, effort, risk, and first step.'],
-                [
-                  'Output candidates',
-                  'Material for an initiative, report, presentation, or follow-on exploration.',
-                ],
-              ]
-          ).map(([title, text]) => (
+          {(
+            t('discoveryToolsMain.knownToolDetail.marketForces.outcomes.blocks', {
+              returnObjects: true,
+            }) as Array<{ title: string; text: string }>
+          ).map(({ title, text }) => (
             <div
               key={title}
               className="rounded-2xl border border-blue-200/70 bg-blue-500/5 p-4 dark:border-blue-900/40"
@@ -1022,114 +929,21 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {isPolish
-              ? 'Firma premium rozważa wejście w nowy kanał marketplace. Market Forces pomaga sprawdzić, czy atrakcyjność wzrostu nie zostanie zjedzona przez siłę kupujących, presję platform i łatwość kopiowania oferty.'
-              : 'A premium company is considering entering a new marketplace channel. Market Forces checks whether growth attractiveness will be consumed by buyer power, platform pressure, and easy offer imitation.'}
+            {t('discoveryToolsMain.knownToolDetail.marketForces.example.intro')}
           </div>
         </div>
         {caseGrid(
-          isPolish
-            ? [
-                {
-                  title: 'Marketplace dla marki premium',
-                  context:
-                    'Firma rozważa nowy kanał sprzedaży z dużym zasięgiem, ale niską kontrolą relacji.',
-                  question:
-                    'Czy wzrost wolumenu nie zostanie zjedzony przez siłę platformy i presję cenową?',
-                  evidence: [
-                    'Wywiady wskazują, że klienci lubią markę, ale w marketplace porównują głównie cenę i czas dostawy.',
-                    'Dane kanału pokazują wysokie prowizje, duży koszt promocji oraz łatwość kopiowania bestsellerów.',
-                  ],
-                  aiDraft:
-                    'AI ocenia wysoką siłę kupujących i platformy, średnią groźbę nowych wejść oraz dużą presję substytutów w tańszych segmentach.',
-                  approvedUse:
-                    'Użytkownik akceptuje drivery, które mają dowody, a AI buduje z nich implikacje marżowe i warunki defensible entry.',
-                  outcome:
-                    'Decyzja nie brzmi “wejść albo nie”, tylko: wejść pilotażowo z ograniczonym SKU, kontrolą ceny i unikalnym bundlem, którego nie da się łatwo porównać.',
-                },
-                {
-                  title: 'Nowy segment B2B w branży usług',
-                  context:
-                    'Firma chce wejść do większych klientów, gdzie proces zakupowy jest dłuższy i bardziej formalny.',
-                  question: 'Czy atrakcyjność rynku równoważy siłę kupujących i koszt sprzedaży?',
-                  evidence: [
-                    'Rozmowy z handlowcami pokazują większe kontrakty, ale też silniejsze procurement, dłuższe RFP i presję na referencje.',
-                    'Benchmark konkurencji wskazuje, że liderzy segmentu mają certyfikacje, case studies i długi proces pre-sales.',
-                  ],
-                  aiDraft:
-                    'AI proponuje scorecard z wysoką siłą kupujących, wysokimi barierami reputacyjnymi i umiarkowaną rywalizacją w wyspecjalizowanych niszach.',
-                  approvedUse:
-                    'Po akceptacji kart narzędzie wskazuje, które bariery wejścia trzeba zbudować przed pełnym skalowaniem sprzedaży.',
-                  outcome:
-                    'Rekomendacja: zacząć od niszy B2B, przygotować referencje i proof assets, a dopiero potem wejść w szeroki segment enterprise.',
-                },
-                {
-                  title: 'Producent przed wejściem zagranicznym',
-                  context:
-                    'Rynek wygląda duży, ale lokalni gracze mają dystrybucję i relacje z kanałem.',
-                  question: 'Czy wejście ma sens bez partnerstwa lub unikalnej przewagi kosztowej?',
-                  evidence: [
-                    'Analiza rynku pokazuje duży popyt, ale także dominację kilku dystrybutorów i wysokie koszty pozyskania półki.',
-                    'Wywiady sugerują, że lokalni klienci ufają obecnym dostawcom i wymagają serwisu posprzedażowego na miejscu.',
-                  ],
-                  aiDraft:
-                    'AI wskazuje wysoką siłę dostawców kanału, wysokie bariery wejścia oraz ryzyko substytucji przez lokalne marki.',
-                  approvedUse:
-                    'Zaakceptowane siły przechodzą do implikacji: bez partnera firma może kupić przychód kosztem marży i kontroli.',
-                  outcome:
-                    'Powstaje model testu: partner dystrybucyjny, ograniczony region, jasne progi marży i decyzja scale/stop po 90 dniach.',
-                },
-              ]
-            : [
-                {
-                  title: 'Marketplace entry for a premium brand',
-                  context:
-                    'The company considers a high-reach channel with low control over customer relationship.',
-                  question: 'Will volume growth be eaten by platform power and price pressure?',
-                  evidence: [
-                    'Interviews show customers like the brand, but marketplace buying is driven by price and delivery comparison.',
-                    'Channel data shows high commissions, promotion cost, and easy imitation of best-selling items.',
-                  ],
-                  aiDraft:
-                    'AI scores buyer and platform power high, new entrants medium, and substitutes high in cheaper segments.',
-                  approvedUse:
-                    'The user approves evidence-backed drivers, and AI turns them into margin implications and defensible-entry conditions.',
-                  outcome:
-                    'The decision becomes a controlled pilot with limited SKU, price discipline, and a unique bundle that is hard to compare directly.',
-                },
-                {
-                  title: 'New B2B segment for a services firm',
-                  context:
-                    'The company wants larger clients with longer and more formal buying processes.',
-                  question: 'Does market attractiveness offset buyer power and sales cost?',
-                  evidence: [
-                    'Sales interviews show larger contracts, but stronger procurement, longer RFPs, and higher reference requirements.',
-                    'Competitive benchmarks show segment leaders with certifications, case studies, and heavier pre-sales.',
-                  ],
-                  aiDraft:
-                    'AI proposes high buyer power, high reputation barriers, and moderate rivalry in specialized niches.',
-                  approvedUse:
-                    'Approved cards identify which entry barriers must be built before broad sales scaling.',
-                  outcome:
-                    'The recommendation is to start with a B2B niche, build references and proof assets, then expand into enterprise.',
-                },
-                {
-                  title: 'Manufacturer before international entry',
-                  context:
-                    'The market is large, but local players own distribution and channel relationships.',
-                  question: 'Can entry work without a partner or a distinct cost advantage?',
-                  evidence: [
-                    'Market data shows strong demand, but a few distributors dominate access and shelf acquisition is expensive.',
-                    'Interviews suggest local customers trust current suppliers and require local after-sales service.',
-                  ],
-                  aiDraft:
-                    'AI flags high channel supplier power, high entry barriers, and substitution risk from local brands.',
-                  approvedUse:
-                    'Accepted forces feed implications: without a partner, revenue may be bought at the expense of margin and control.',
-                  outcome:
-                    'The output is a test model: distribution partner, limited region, clear margin gates, and a 90-day scale/stop decision.',
-                },
-              ]
+          t('discoveryToolsMain.knownToolDetail.marketForces.example.cases', {
+            returnObjects: true,
+          }) as Array<{
+            title: string;
+            context: string;
+            question: string;
+            evidence: string[];
+            aiDraft: string;
+            approvedUse: string;
+            outcome: string;
+          }>
         )}
         <MarketForcesLibraryGraphic isPolish={isPolish} variant="example" />
       </div>

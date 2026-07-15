@@ -32019,6 +32019,112 @@
           ],
           "closingNote": "To jest dobry case, bo nie kończy się na opisaniu czterech ćwiartek. Pokazuje, jak z sygnałów powstaje decyzja o kolejności ruchów oraz materiał, z którego można od razu przejść do działania."
         }
+      },
+      "marketForces": {
+        "goal": {
+          "positioningHeadline": "Market Forces nie służy do mechanicznego ocenienia pięciu sił. Służy do zamiany struktury rynku w decyzję: gdzie naciska marża, gdzie jest defensibility i jaki ruch ma sens.",
+          "positioningBody": "To narzędzie jest evidence-first i AI-assisted. Najpierw ustawia branżę, zakres, pozycję firmy oraz pytanie decyzyjne. Potem AI pomaga zebrać sygnały z rozmów i kontekstu organizacji, proponuje scorecard sił, pyta użytkownika o akceptację i dopiero z zatwierdzonej diagnozy buduje implikacje, ruchy oraz inicjatywy.",
+          "whatItDoes": [
+            "łączy kontekst organizacji i wywiadu z sygnałami rynku",
+            "zamienia sygnały w ocenę pięciu sił z driverami, evidence i confidence",
+            "pokazuje presję marży, siłę nabywców, bariery wejścia i defensibility",
+            "prowadzi od diagnozy rynku do rekomendowanych ruchów i inicjatyw"
+          ],
+          "whatItIsNot": [
+            "nie jest suchą checklistą Portera bez kontekstu decyzji",
+            "nie jest miejscem na ocenę rynku bez źródeł i sygnałów",
+            "nie służy do automatycznego wygenerowania strategii bez akceptacji użytkownika",
+            "nie kończy się na radarze lub scorecardzie, tylko przechodzi do outputów"
+          ],
+          "aiPhilosophyBody": "AI jest konsultantem wspierającym, nie źródłem prawdy. Proponuje sygnały, oceny sił, implikacje, ruchy i outputy, ale użytkownik akceptuje, odrzuca albo prosi o przemyślenie kart przed przejściem do inicjatyw."
+        },
+        "process": {
+          "intro": "Market Forces działa w pięciu fazach analogicznych do Dynamic SWOT: mission, input, forces, insights i outputs. Każda faza ma inny poziom decyzji i inne zadanie dla AI.",
+          "steps": [
+            {
+              "title": "Mission & Market Context",
+              "text": "Branża, geografia, pozycja, pytanie i success signal"
+            },
+            {
+              "title": "Input & Exploration",
+              "text": "Sygnały z wywiadu, benchmarków, plików i obserwacji"
+            },
+            {
+              "title": "Five Forces Build",
+              "text": "Ocena każdej siły: score, trend, drivery, evidence i confidence"
+            },
+            {
+              "title": "Strategic Implications",
+              "text": "Presja marży, defensibility, napięcia rynkowe i rekomendacje"
+            },
+            {
+              "title": "Outputs & Actions",
+              "text": "Source summary, output candidates i drafty inicjatyw"
+            }
+          ]
+        },
+        "outcomes": {
+          "intro": "Dobry wynik jest gotowy do decyzji: pokazuje nie tylko ocenę sił, ale też konsekwencje dla pozycji, marży i kolejności ruchów.",
+          "blocks": [
+            {
+              "title": "Scorecard 5 sił",
+              "text": "Oceny, trendy, drivery, dowody i confidence dla każdej siły."
+            },
+            {
+              "title": "Implikacje strategiczne",
+              "text": "Co struktura rynku oznacza dla marży, defensibility i pozycji firmy."
+            },
+            {
+              "title": "Rekomendowane ruchy",
+              "text": "2-4 ruchy z uzasadnieniem, wysiłkiem, ryzykiem i pierwszym krokiem."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Materiał do inicjatywy, raportu, prezentacji lub dalszej eksploracji."
+            }
+          ]
+        },
+        "example": {
+          "intro": "Firma premium rozważa wejście w nowy kanał marketplace. Market Forces pomaga sprawdzić, czy atrakcyjność wzrostu nie zostanie zjedzona przez siłę kupujących, presję platform i łatwość kopiowania oferty.",
+          "cases": [
+            {
+              "title": "Marketplace dla marki premium",
+              "context": "Firma rozważa nowy kanał sprzedaży z dużym zasięgiem, ale niską kontrolą relacji.",
+              "question": "Czy wzrost wolumenu nie zostanie zjedzony przez siłę platformy i presję cenową?",
+              "evidence": [
+                "Wywiady wskazują, że klienci lubią markę, ale w marketplace porównują głównie cenę i czas dostawy.",
+                "Dane kanału pokazują wysokie prowizje, duży koszt promocji oraz łatwość kopiowania bestsellerów."
+              ],
+              "aiDraft": "AI ocenia wysoką siłę kupujących i platformy, średnią groźbę nowych wejść oraz dużą presję substytutów w tańszych segmentach.",
+              "approvedUse": "Użytkownik akceptuje drivery, które mają dowody, a AI buduje z nich implikacje marżowe i warunki defensible entry.",
+              "outcome": "Decyzja nie brzmi “wejść albo nie”, tylko: wejść pilotażowo z ograniczonym SKU, kontrolą ceny i unikalnym bundlem, którego nie da się łatwo porównać."
+            },
+            {
+              "title": "Nowy segment B2B w branży usług",
+              "context": "Firma chce wejść do większych klientów, gdzie proces zakupowy jest dłuższy i bardziej formalny.",
+              "question": "Czy atrakcyjność rynku równoważy siłę kupujących i koszt sprzedaży?",
+              "evidence": [
+                "Rozmowy z handlowcami pokazują większe kontrakty, ale też silniejsze procurement, dłuższe RFP i presję na referencje.",
+                "Benchmark konkurencji wskazuje, że liderzy segmentu mają certyfikacje, case studies i długi proces pre-sales."
+              ],
+              "aiDraft": "AI proponuje scorecard z wysoką siłą kupujących, wysokimi barierami reputacyjnymi i umiarkowaną rywalizacją w wyspecjalizowanych niszach.",
+              "approvedUse": "Po akceptacji kart narzędzie wskazuje, które bariery wejścia trzeba zbudować przed pełnym skalowaniem sprzedaży.",
+              "outcome": "Rekomendacja: zacząć od niszy B2B, przygotować referencje i proof assets, a dopiero potem wejść w szeroki segment enterprise."
+            },
+            {
+              "title": "Producent przed wejściem zagranicznym",
+              "context": "Rynek wygląda duży, ale lokalni gracze mają dystrybucję i relacje z kanałem.",
+              "question": "Czy wejście ma sens bez partnerstwa lub unikalnej przewagi kosztowej?",
+              "evidence": [
+                "Analiza rynku pokazuje duży popyt, ale także dominację kilku dystrybutorów i wysokie koszty pozyskania półki.",
+                "Wywiady sugerują, że lokalni klienci ufają obecnym dostawcom i wymagają serwisu posprzedażowego na miejscu."
+              ],
+              "aiDraft": "AI wskazuje wysoką siłę dostawców kanału, wysokie bariery wejścia oraz ryzyko substytucji przez lokalne marki.",
+              "approvedUse": "Zaakceptowane siły przechodzą do implikacji: bez partnera firma może kupić przychód kosztem marży i kontroli.",
+              "outcome": "Powstaje model testu: partner dystrybucyjny, ograniczony region, jasne progi marży i decyzja scale/stop po 90 dniach."
+            }
+          ]
+        }
       }
     }
   },

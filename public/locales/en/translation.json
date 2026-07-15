@@ -30959,6 +30959,112 @@
           ],
           "closingNote": "This is a strong case because it does not stop at describing four quadrants. It shows how signals turn into a decision about move sequence and into material that can immediately bridge into execution."
         }
+      },
+      "marketForces": {
+        "goal": {
+          "positioningHeadline": "Market Forces is not a mechanical Five Forces scorecard. It turns market structure into a decision: where margin is pressured, where defensibility exists, and what move makes sense.",
+          "positioningBody": "This is an evidence-first, AI-assisted tool. It frames the industry, scope, company position, and decision question first. AI then helps capture signals from interviews and organization context, proposes the force scorecard, asks for user approval, and only then builds implications, moves, and initiatives from the approved diagnosis.",
+          "whatItDoes": [
+            "connects organization and interview context with market signals",
+            "turns signals into a Five Forces scorecard with drivers, evidence, and confidence",
+            "shows margin pressure, buyer power, entry barriers, and defensibility",
+            "moves from market diagnosis into recommended moves and initiatives"
+          ],
+          "whatItIsNot": [
+            "it is not a dry Porter checklist without decision context",
+            "it is not a place to score a market without sources and signals",
+            "it does not auto-generate strategy without user approval",
+            "it does not stop at a radar or scorecard, but bridges into outputs"
+          ],
+          "aiPhilosophyBody": "AI acts as an assisting consultant, not the source of truth. It proposes signals, force scores, implications, moves, and outputs, while the user accepts, rejects, or asks to rethink cards before they become initiative material."
+        },
+        "process": {
+          "intro": "Market Forces runs through five phases analogous to Dynamic SWOT: mission, input, forces, insights, and outputs. Each phase has a different decision level and a different AI job.",
+          "steps": [
+            {
+              "title": "Mission & Market Context",
+              "text": "Industry, geography, position, question, and success signal"
+            },
+            {
+              "title": "Input & Exploration",
+              "text": "Signals from interviews, benchmarks, files, and observations"
+            },
+            {
+              "title": "Five Forces Build",
+              "text": "Each force scored with trend, drivers, evidence, and confidence"
+            },
+            {
+              "title": "Strategic Implications",
+              "text": "Margin pressure, defensibility, market tensions, and recommendations"
+            },
+            {
+              "title": "Outputs & Actions",
+              "text": "Source summary, output candidates, and initiative drafts"
+            }
+          ]
+        },
+        "outcomes": {
+          "intro": "A strong outcome is decision-ready: it shows not only force scores, but also consequences for position, margin, and move sequence.",
+          "blocks": [
+            {
+              "title": "Five Forces scorecard",
+              "text": "Scores, trends, drivers, evidence, and confidence for each force."
+            },
+            {
+              "title": "Strategic implications",
+              "text": "What market structure means for margin, defensibility, and company position."
+            },
+            {
+              "title": "Recommended moves",
+              "text": "2-4 moves with rationale, effort, risk, and first step."
+            },
+            {
+              "title": "Output candidates",
+              "text": "Material for an initiative, report, presentation, or follow-on exploration."
+            }
+          ]
+        },
+        "example": {
+          "intro": "A premium company is considering entering a new marketplace channel. Market Forces checks whether growth attractiveness will be consumed by buyer power, platform pressure, and easy offer imitation.",
+          "cases": [
+            {
+              "title": "Marketplace entry for a premium brand",
+              "context": "The company considers a high-reach channel with low control over customer relationship.",
+              "question": "Will volume growth be eaten by platform power and price pressure?",
+              "evidence": [
+                "Interviews show customers like the brand, but marketplace buying is driven by price and delivery comparison.",
+                "Channel data shows high commissions, promotion cost, and easy imitation of best-selling items."
+              ],
+              "aiDraft": "AI scores buyer and platform power high, new entrants medium, and substitutes high in cheaper segments.",
+              "approvedUse": "The user approves evidence-backed drivers, and AI turns them into margin implications and defensible-entry conditions.",
+              "outcome": "The decision becomes a controlled pilot with limited SKU, price discipline, and a unique bundle that is hard to compare directly."
+            },
+            {
+              "title": "New B2B segment for a services firm",
+              "context": "The company wants larger clients with longer and more formal buying processes.",
+              "question": "Does market attractiveness offset buyer power and sales cost?",
+              "evidence": [
+                "Sales interviews show larger contracts, but stronger procurement, longer RFPs, and higher reference requirements.",
+                "Competitive benchmarks show segment leaders with certifications, case studies, and heavier pre-sales."
+              ],
+              "aiDraft": "AI proposes high buyer power, high reputation barriers, and moderate rivalry in specialized niches.",
+              "approvedUse": "Approved cards identify which entry barriers must be built before broad sales scaling.",
+              "outcome": "The recommendation is to start with a B2B niche, build references and proof assets, then expand into enterprise."
+            },
+            {
+              "title": "Manufacturer before international entry",
+              "context": "The market is large, but local players own distribution and channel relationships.",
+              "question": "Can entry work without a partner or a distinct cost advantage?",
+              "evidence": [
+                "Market data shows strong demand, but a few distributors dominate access and shelf acquisition is expensive.",
+                "Interviews suggest local customers trust current suppliers and require local after-sales service."
+              ],
+              "aiDraft": "AI flags high channel supplier power, high entry barriers, and substitution risk from local brands.",
+              "approvedUse": "Accepted forces feed implications: without a partner, revenue may be bought at the expense of margin and control.",
+              "outcome": "The output is a test model: distribution partner, limited region, clear margin gates, and a 90-day scale/stop decision."
+            }
+          ]
+        }
       }
     }
   },
