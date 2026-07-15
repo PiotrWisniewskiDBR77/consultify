@@ -202,7 +202,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
   onClose,
   onCommand,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [query, setQuery] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -303,7 +303,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
               setSelectedIdx(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder={isPl ? 'Wpisz polecenie…' : 'Type a command…'}
+            placeholder={t('myWorkIdeas.slashCommandMenu.typeCommand')}
             className="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400"
           />
         </div>
@@ -350,7 +350,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
         ))}
         {filtered.length === 0 && (
           <div className="px-3 py-4 text-center text-[11px] text-slate-600">
-            {isPl ? 'Brak wyników' : 'No results'}
+            {t('myWorkIdeas.slashCommandMenu.noResults')}
           </div>
         )}
       </div>
