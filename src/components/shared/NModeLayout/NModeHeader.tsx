@@ -66,7 +66,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   primaryAction,
   showChatButton = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [copiedId, setCopiedId] = useState(false);
   const artifactCode =
@@ -86,34 +86,32 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   const effectiveSaveState = saveState || (saving ? 'saving' : isDirty ? 'dirty' : 'saved');
   const saveCopy = {
     saved: {
-      label: isPolish ? 'Zapisano' : 'Saved',
-      title: lastSavedLabel || (isPolish ? 'Zmiany zapisane' : 'Changes saved'),
+      label: t('sharedComponents.nModeHeader.savedLabel'),
+      title: lastSavedLabel || t('sharedComponents.nModeHeader.savedTitle'),
       className:
         'bg-slate-100/70 dark:bg-navy-800/40 text-slate-600 dark:text-slate-500 border-transparent',
       icon: CheckCircle2,
       disabled: true,
     },
     saving: {
-      label: isPolish ? 'Zapisywanie...' : 'Saving...',
-      title: isPolish ? 'Trwa zapis do backendu' : 'Saving to backend',
+      label: t('sharedComponents.nModeHeader.savingLabel'),
+      title: t('sharedComponents.nModeHeader.savingTitle'),
       className:
         'bg-blue-500/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
       icon: Loader2,
       disabled: true,
     },
     dirty: {
-      label: isPolish ? 'Zapisz' : 'Save',
-      title: isPolish ? 'Masz niezapisane zmiany' : 'You have unsaved changes',
+      label: t('sharedComponents.nModeHeader.saveLabel'),
+      title: t('sharedComponents.nModeHeader.dirtyTitle'),
       className:
         'bg-blue-500/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15 dark:hover:bg-blue-500/15 border-blue-500/20',
       icon: Save,
       disabled: false,
     },
     error: {
-      label: isPolish ? 'Błąd zapisu' : 'Save failed',
-      title: isPolish
-        ? 'Zapis nie powiódł się. Kliknij, aby spróbować ponownie.'
-        : 'Save failed. Click to retry.',
+      label: t('sharedComponents.nModeHeader.saveFailedLabel'),
+      title: t('sharedComponents.nModeHeader.saveFailedTitle'),
       className:
         'bg-danger-500/10 dark:bg-danger-500/10 text-danger-700 dark:text-danger-300 hover:bg-danger-500/15 dark:hover:bg-danger-500/15 border-danger-500/30',
       icon: AlertTriangle,
@@ -167,7 +165,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               <button
                 type="button"
                 onClick={copyArtifactId}
-                title={isPolish ? 'Kopiuj ID artefaktu' : 'Copy artifact ID'}
+                title={t('sharedComponents.nModeHeader.copyArtifactId')}
                 className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-200/60 dark:bg-navy-800/60 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-300/60 dark:hover:bg-navy-700/60"
               >
                 {copiedId ? (
@@ -218,7 +216,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               whileTap={{ scale: 0.98 }}
               onClick={onChat}
               className="flex items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm font-medium text-c-text transition-all duration-150 hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-              title={isPolish ? 'AI — otwórz asystenta' : 'AI — open assistant'}
+              title={t('sharedComponents.nModeHeader.aiAssistantTitle')}
             >
               <Sparkles size={16} className="text-c-text-muted" />
               <span>AI</span>

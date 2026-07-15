@@ -27,12 +27,11 @@ export type QuoteRequirementLevel = 'NONE' | 'EACH_ITEM' | 'STRONG_ITEMS';
  * NModeSectionWrapper as their top-level wrapper.
  */
 export const EvidenceBadge: React.FC = () => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-medium border border-amber-200 dark:border-amber-700/40 shrink-0">
       <AlertTriangle size={10} />
-      {isPolish ? 'Brak dowodów' : 'Missing evidence'}
+      {t('sharedComponents.nModeSectionWrapper.missingEvidence')}
     </span>
   );
 };
@@ -100,12 +99,6 @@ interface NModeSectionWrapperProps {
   children: React.ReactNode;
 }
 
-const DEFAULT_SECTION_LABEL = { en: 'AI', pl: 'AI' };
-const DEFAULT_SECTION_TITLE = {
-  en: 'Improve this section with AI',
-  pl: 'Popraw sekcję z AI',
-};
-
 /**
  * SectionAIButton — internal renderer for a single section-level AI affordance.
  * Subtle, primary-tinted, matching the 'ai' variant styling from NModeActionBar.
@@ -114,20 +107,29 @@ const SectionAIButton: React.FC<{ action: NModeSectionAIAction; isPolish: boolea
   action,
   isPolish,
 }) => {
-  const label = action.label ?? DEFAULT_SECTION_LABEL;
-  const title = action.title ?? DEFAULT_SECTION_TITLE;
+  const { t } = useTranslation();
+  const label = action.label
+    ? isPolish
+      ? action.label.pl
+      : action.label.en
+    : t('sharedComponents.nModeSectionWrapper.aiLabel');
+  const title = action.title
+    ? isPolish
+      ? action.title.pl
+      : action.title.en
+    : t('sharedComponents.nModeSectionWrapper.aiTitle');
 
   return (
     <button
       type="button"
       onClick={action.onClick}
       disabled={action.disabled || action.loading}
-      title={isPolish ? title.pl : title.en}
-      aria-label={isPolish ? title.pl : title.en}
+      title={title}
+      aria-label={title}
       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-700/40 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {action.loading ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-      {isPolish ? label.pl : label.en}
+      {label}
     </button>
   );
 };
@@ -144,7 +146,7 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
   quotesSatisfied = true,
   children,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const sectionActions: NModeSectionAIAction[] = [
@@ -173,13 +175,13 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
                 <CheckCircle2
                   size={15}
                   className="text-success-500 dark:text-success-400 shrink-0"
-                  aria-label={isPolish ? 'AI: sekcja gotowa' : 'AI: section complete'}
+                  aria-label={t('sharedComponents.nModeSectionWrapper.sectionCompleteAria')}
                 />
                 {/* Headingless sections (which self-title below) still read clearly:
                     show a compact label so the success bar is not an orphaned tick. */}
                 {!heading && (
                   <span className="text-xs font-medium text-success-700 dark:text-success-300">
-                    {isPolish ? 'Ukończono' : 'Complete'}
+                    {t('sharedComponents.nModeSectionWrapper.completeLabel')}
                   </span>
                 )}
               </span>

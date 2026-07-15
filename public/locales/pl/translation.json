@@ -29330,6 +29330,25 @@
       "enhanceSuccess": "Treść zaktualizowana przez AI. Kliknij Undo AI aby cofnąć.",
       "enhanceError": "Nie udało się poprawić treści przez AI",
       "undoSuccess": "Przywrócono poprzednią wersję tekstu"
+    },
+    "nModeHeader": {
+      "savedLabel": "Zapisano",
+      "savedTitle": "Zmiany zapisane",
+      "savingLabel": "Zapisywanie...",
+      "savingTitle": "Trwa zapis do backendu",
+      "saveLabel": "Zapisz",
+      "dirtyTitle": "Masz niezapisane zmiany",
+      "saveFailedLabel": "Błąd zapisu",
+      "saveFailedTitle": "Zapis nie powiódł się. Kliknij, aby spróbować ponownie.",
+      "copyArtifactId": "Kopiuj ID artefaktu",
+      "aiAssistantTitle": "AI — otwórz asystenta"
+    },
+    "nModeSectionWrapper": {
+      "missingEvidence": "Brak dowodów",
+      "aiLabel": "AI",
+      "aiTitle": "Popraw sekcję z AI",
+      "sectionCompleteAria": "AI: sekcja gotowa",
+      "completeLabel": "Ukończono"
     }
   },
   "reportBuilder": {

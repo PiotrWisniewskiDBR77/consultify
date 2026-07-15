@@ -28270,6 +28270,25 @@
       "enhanceSuccess": "Content updated by AI. Click Undo AI to revert.",
       "enhanceError": "Failed to refine content with AI",
       "undoSuccess": "Previous text restored"
+    },
+    "nModeHeader": {
+      "savedLabel": "Saved",
+      "savedTitle": "Changes saved",
+      "savingLabel": "Saving...",
+      "savingTitle": "Saving to backend",
+      "saveLabel": "Save",
+      "dirtyTitle": "You have unsaved changes",
+      "saveFailedLabel": "Save failed",
+      "saveFailedTitle": "Save failed. Click to retry.",
+      "copyArtifactId": "Copy artifact ID",
+      "aiAssistantTitle": "AI — open assistant"
+    },
+    "nModeSectionWrapper": {
+      "missingEvidence": "Missing evidence",
+      "aiLabel": "AI",
+      "aiTitle": "Improve this section with AI",
+      "sectionCompleteAria": "AI: section complete",
+      "completeLabel": "Complete"
     }
   },
   "reportBuilder": {
