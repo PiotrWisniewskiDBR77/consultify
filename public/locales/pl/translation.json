@@ -18197,6 +18197,34 @@
         "viewGraph": "Zobacz graf wiedzy",
         "errorRebuild": "Odbudowa nie powiodła się — spróbuj ponownie"
       }
+    },
+    "knowledgeGraph": {
+      "stats": {
+        "entities": "Encje",
+        "relations": "Relacje",
+        "avgConfidence": "Śr. pewność",
+        "stale": "Nieaktualne",
+        "redacted": "Zredagowane"
+      },
+      "searchPlaceholder": "Szukaj encji w grafie wiedzy...",
+      "search": "Szukaj",
+      "refreshStats": "Odśwież statystyki",
+      "emptyOrg": {
+        "title": "Twój graf wiedzy jest jeszcze pusty",
+        "description": "Graf wiedzy będzie się wypełniać, gdy Teresa przetworzy wywiady, dokumenty i kontekst organizacji.",
+        "setupProfile": "Uzupełnij profil organizacji"
+      },
+      "emptySearch": {
+        "title": "Wyszukaj encje aby zobaczyć graf wiedzy",
+        "hint": "Kliknij na węzeł aby zobaczyć szczegóły i proweniencję"
+      },
+      "properties": "Właściwości",
+      "type": "Typ",
+      "confidence": "Pewność",
+      "mentions": "Wzmianki",
+      "traverse": "Przejdź graf",
+      "provenance": "Proweniencja",
+      "sources": "Źródła"
     }
   },
   "megatrends": {
