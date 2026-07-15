@@ -45,8 +45,7 @@ export const AICategorizeTool: React.FC<AICategorizeToolProps> = ({
   onApplyCluster,
   onMergeNodes,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryResult[]>([]);
@@ -167,7 +166,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Sparkles size={16} className="text-c-accent" />
           <span className="text-sm font-bold text-c-text">
-            {isPl ? 'AI Kategoryzacja & Klastry' : 'AI Categorize & Cluster'}
+            {t('myWorkTable.aiCategorizeTool.title')}
           </span>
           <div className="flex-1" />
           <button
@@ -187,12 +186,8 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
             {loading
-              ? isPl
-                ? 'Analizuję...'
-                : 'Analyzing...'
-              : isPl
-                ? `Analizuj ${nodes.length} pomysłów`
-                : `Analyze ${nodes.length} ideas`}
+              ? t('myWorkTable.aiCategorizeTool.analyzing')
+              : t('myWorkTable.aiCategorizeTool.analyzeIdeas', { count: nodes.length })}
           </button>
           {categories.length > 0 && (
             <button
@@ -200,7 +195,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
               className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
             >
               <Check size={12} />
-              {isPl ? 'Zastosuj wszystko' : 'Apply all'}
+              {t('myWorkTable.aiCategorizeTool.applyAll')}
             </button>
           )}
         </div>
@@ -213,14 +208,14 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-c-border-subtle text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
             >
               <Layers size={10} className="inline mr-1" />
-              {isPl ? 'Klastry' : 'Clusters'} ({clusters.length})
+              {t('myWorkTable.aiCategorizeTool.clusters')} ({clusters.length})
             </button>
             <button
               onClick={() => setActiveTab('duplicates')}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-c-border-subtle text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
             >
               <GitMerge size={10} className="inline mr-1" />
-              {isPl ? 'Duplikaty' : 'Duplicates'} ({duplicates.length})
+              {t('myWorkTable.aiCategorizeTool.duplicates')} ({duplicates.length})
             </button>
           </div>
         )}
@@ -231,9 +226,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
             <div className="text-center py-8">
               <Sparkles size={24} className="text-c-text-secondary mx-auto mb-2" />
               <p className="text-xs text-c-text-secondary">
-                {isPl
-                  ? 'Kliknij "Analizuj" aby AI pogrupowało pomysły'
-                  : 'Click "Analyze" to let AI group your ideas'}
+                {t('myWorkTable.aiCategorizeTool.clickAnalyzeHint')}
               </p>
             </div>
           )}
@@ -252,7 +245,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                     />
                     <span className="text-[11px] font-bold text-c-text">{clusterName}</span>
                     <span className="text-[9px] text-c-text-secondary ml-auto">
-                      {clusterNodes.length} {isPl ? 'elementów' : 'items'}
+                      {clusterNodes.length} {t('myWorkTable.aiCategorizeTool.items')}
                     </span>
                   </div>
                   <div className="p-2 space-y-1">
@@ -297,7 +290,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
             <div className="space-y-2">
               {duplicates.length === 0 && (
                 <p className="text-xs text-c-text-secondary text-center py-4">
-                  {isPl ? 'Nie znaleziono duplikatów' : 'No duplicates found'}
+                  {t('myWorkTable.aiCategorizeTool.noDuplicatesFound')}
                 </p>
               )}
               {duplicates.map((dup, idx) => (
@@ -305,7 +298,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                   <div className="flex items-center gap-2 mb-2">
                     <GitMerge size={12} className="text-amber-500" />
                     <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                      {Math.round(dup.similarity * 100)}% {isPl ? 'podobieństwo' : 'similar'}
+                      {Math.round(dup.similarity * 100)}% {t('myWorkTable.aiCategorizeTool.similar')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-1.5">
@@ -324,7 +317,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                       className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
                     >
                       <GitMerge size={9} />
-                      {isPl ? 'Scal' : 'Merge'}
+                      {t('myWorkTable.aiCategorizeTool.merge')}
                     </button>
                   )}
                 </div>

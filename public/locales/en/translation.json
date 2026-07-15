@@ -27043,6 +27043,19 @@
     "validationBadge": {
       "validationStatus": "Validation status",
       "validationStatusTitle": "Validation status — set manually by a human reviewer."
+    },
+    "aiCategorizeTool": {
+      "title": "AI Categorize & Cluster",
+      "analyzing": "Analyzing...",
+      "analyzeIdeas": "Analyze {{count}} ideas",
+      "applyAll": "Apply all",
+      "clusters": "Clusters",
+      "duplicates": "Duplicates",
+      "clickAnalyzeHint": "Click \"Analyze\" to let AI group your ideas",
+      "items": "items",
+      "noDuplicatesFound": "No duplicates found",
+      "similar": "similar",
+      "merge": "Merge"
     }
   },
   "myWorkNotebook": {

@@ -28103,6 +28103,19 @@
     "validationBadge": {
       "validationStatus": "Status walidacji",
       "validationStatusTitle": "Status walidacji rekordu (zmieniany ręcznie przez recenzenta)."
+    },
+    "aiCategorizeTool": {
+      "title": "AI Kategoryzacja & Klastry",
+      "analyzing": "Analizuję...",
+      "analyzeIdeas": "Analizuj {{count}} pomysłów",
+      "applyAll": "Zastosuj wszystko",
+      "clusters": "Klastry",
+      "duplicates": "Duplikaty",
+      "clickAnalyzeHint": "Kliknij \"Analizuj\" aby AI pogrupowało pomysły",
+      "items": "elementów",
+      "noDuplicatesFound": "Nie znaleziono duplikatów",
+      "similar": "podobieństwo",
+      "merge": "Scal"
     }
   },
   "myWorkNotebook": {
