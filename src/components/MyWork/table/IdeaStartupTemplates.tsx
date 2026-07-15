@@ -232,12 +232,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             </div>
             <div>
               <h3 className="text-[15px] font-semibold text-c-text">
-                {isPl ? 'Nowy pomysł' : 'New Idea'}
+                {t('myWorkTable.ideaStartupTemplates.newIdea')}
               </h3>
               <p className="text-[11px] text-c-text-muted mt-0.5">
-                {isPl
-                  ? 'Spokojny start, szybkie przejście do workspace.'
-                  : 'Calm start, fast handoff into workspace.'}
+                {t('myWorkTable.ideaStartupTemplates.calmStartFastHandoffInto')}
               </p>
             </div>
           </div>
@@ -254,24 +252,20 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
           {/* Problem description */}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-c-accent mb-1.5">
-              {isPl ? 'Twój pomysł' : 'Your idea'}
+              {t('myWorkTable.ideaStartupTemplates.yourIdea')}
             </div>
             <h4 className="text-lg font-semibold text-c-text tracking-tight">
-              {isPl ? 'Opisz problem, pomysł albo wynik' : 'Describe the problem, idea, or outcome'}
+              {t('myWorkTable.ideaStartupTemplates.describeTheProblemIdeaOr')}
             </h4>
             <p className="mt-1 text-[13px] text-c-text-muted leading-relaxed">
-              {isPl
-                ? 'Lekki start bez ciężkiego formularza. Brief dodasz tylko gdy potrzebujesz.'
-                : 'Light start without a heavy form. Add a brief only when you need one.'}
+              {t('myWorkTable.ideaStartupTemplates.lightStartWithoutAHeavy')}
             </p>
             <textarea
               value={heroText}
               onChange={(e) => setHeroText(e.target.value)}
               rows={3}
               placeholder={
-                isPl
-                  ? 'Np. Chcę uporządkować inicjatywy transformacyjne i znaleźć najlepszą kolejność wdrożeń...'
-                  : 'E.g. I want to structure transformation initiatives and find the best rollout order...'
+                t('myWorkTable.ideaStartupTemplates.eGIWantTo')
               }
               autoFocus
               className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
@@ -282,7 +276,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               user picks a tool before triggering a start action (Z18). */}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
-              {isPl ? '1. Wybierz narzędzie' : '1. Choose your tool'}
+              {t('myWorkTable.ideaStartupTemplates.n1ChooseYourTool')}
             </div>
             <div className="grid grid-cols-4 gap-2">
               {TEMPLATES.map((ws) => {
@@ -318,7 +312,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
           {/* 3 Action Cards */}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
-              {isPl ? '2. Wybierz start' : '2. Choose a start'}
+              {t('myWorkTable.ideaStartupTemplates.n2ChooseAStart')}
             </div>
             <div className="grid grid-cols-3 gap-3">
               {/* Start with AI */}
@@ -336,9 +330,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     {t('ideas.table.ideaStartupTemplates.startWithAi', 'Start with AI')}
                   </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
-                    {isPl
-                      ? 'Przenieś seed do workspace i od razu uruchom builder flow.'
-                      : 'Transfer seed to workspace and launch builder flow.'}
+                    {t('myWorkTable.ideaStartupTemplates.transferSeedToWorkspaceAnd')}
                   </div>
                 </div>
                 <ArrowRight
@@ -362,9 +354,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     {t('ideas.table.ideaStartupTemplates.blankCanvas', 'Blank canvas')}
                   </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
-                    {isPl
-                      ? 'Otwórz spokojny workspace z wybranym systemem startowym.'
-                      : 'Open a calm workspace with your chosen starting system.'}
+                    {t('myWorkTable.ideaStartupTemplates.openACalmWorkspaceWith')}
                   </div>
                 </div>
                 <ArrowRight
@@ -390,12 +380,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 </div>
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
-                    {isPl ? 'Użyj szablonu' : 'Use template'}
+                    {t('myWorkTable.ideaStartupTemplates.useTemplate')}
                   </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
-                    {isPl
-                      ? 'Wejdź przez szablon startowy i ustaw domyślny system pracy.'
-                      : 'Enter via a starter template with a default work system.'}
+                    {t('myWorkTable.ideaStartupTemplates.enterViaAStarterTemplate')}
                   </div>
                 </div>
                 <ArrowRight
@@ -409,7 +397,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
           <div className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted">
-                {isPl ? 'Popularne starty' : 'Popular starts'}
+                {t('myWorkTable.ideaStartupTemplates.popularStarts')}
               </div>
               <button
                 type="button"
@@ -417,12 +405,8 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 className="text-[11px] font-medium text-c-accent hover:underline"
               >
                 {showStructuredBrief
-                  ? isPl
-                    ? 'Ukryj brief'
-                    : 'Hide brief'
-                  : isPl
-                    ? 'Dodaj brief'
-                    : 'Add brief'}
+                  ? t('myWorkTable.ideaStartupTemplates.hideBrief')
+                  : t('myWorkTable.ideaStartupTemplates.addBrief')}
               </button>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -444,7 +428,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   onChange={(e) =>
                     setStructuredBrief((prev) => ({ ...prev, problem: e.target.value }))
                   }
-                  placeholder={isPl ? 'Problem' : 'Problem'}
+                  placeholder={t('myWorkTable.ideaStartupTemplates.problem')}
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
                 <input
@@ -452,7 +436,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   onChange={(e) =>
                     setStructuredBrief((prev) => ({ ...prev, goal: e.target.value }))
                   }
-                  placeholder={isPl ? 'Cel / wynik' : 'Goal / outcome'}
+                  placeholder={t('myWorkTable.ideaStartupTemplates.goalOutcome')}
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
                 <textarea
@@ -462,7 +446,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   }
                   rows={2}
                   placeholder={
-                    isPl ? 'Ograniczenia, po jednym w linii' : 'Constraints, one per line'
+                    t('myWorkTable.ideaStartupTemplates.constraintsOnePerLine')
                   }
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs resize-none"
                 />
@@ -479,7 +463,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             disabled={!selectedAction}
             className="rounded-lg bg-c-surface-raised border border-c-border-subtle px-4 py-2 text-[13px] font-semibold text-c-text transition-colors duration-150 hover:bg-c-surface enabled:hover:border-c-focus disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {isPl ? 'Start' : 'Start'}
+            {t('myWorkTable.ideaStartupTemplates.start')}
           </button>
         </div>
       </div>

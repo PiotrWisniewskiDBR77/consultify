@@ -192,7 +192,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
       <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Dodaj kolumnę' : 'Add Column'}</h3>
+          <h3 className="text-sm font-bold text-c-text">{t('myWorkTable.addColumnDialog.addColumn')}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
@@ -205,12 +205,12 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {/* Name */}
           <div>
             <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-              {isPl ? 'Nazwa' : 'Name'}
+              {t('myWorkTable.addColumnDialog.name')}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
+              placeholder={t('myWorkTable.addColumnDialog.eGStatusPriority')}
               className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               autoFocus
             />
@@ -219,7 +219,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {/* Grouped type selector */}
           <div>
             <label className="block text-[11px] font-bold text-c-text-secondary mb-1.5">
-              {isPl ? 'Typ' : 'Type'}
+              {t('myWorkTable.addColumnDialog.type')}
             </label>
             <div className="space-y-3">
               {groups.map((group) => (
@@ -258,7 +258,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {(type === 'select' || type === 'multiselect') && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Opcje (oddzielone przecinkiem)' : 'Options (comma-separated)'}
+                {t('myWorkTable.addColumnDialog.optionsCommaSeparated')}
               </label>
               <input
                 value={options}
@@ -285,7 +285,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               ) : (
                 <div>
                   <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                    {isPl ? 'Formuła' : 'Formula'}
+                    {t('myWorkTable.addColumnDialog.formula')}
                   </label>
                   <input
                     value={formula}
@@ -294,9 +294,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                     className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                   <p className="mt-1 text-[9px] text-c-text-secondary">
-                    {isPl
-                      ? 'Użyj {nazwa_kolumny} aby odwołać się do wartości'
-                      : 'Use {column_key} to reference values'}
+                    {t('myWorkTable.addColumnDialog.useColumnKeyToReference')}
                   </p>
                 </div>
               )}
@@ -306,9 +304,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-900/20">
                     <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
                     <span className="text-[10px] text-amber-700 dark:text-amber-300">
-                      {isPl
-                        ? 'Formuła tworzy cykl zależności!'
-                        : 'Formula creates a dependency cycle!'}
+                      {t('myWorkTable.addColumnDialog.formulaCreatesADependencyCycle')}
                     </span>
                   </div>
                 )}
@@ -318,15 +314,13 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {type === 'ai_generated' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Prompt AI' : 'AI Prompt'}
+                {t('myWorkTable.addColumnDialog.aiPrompt')}
               </label>
               <textarea
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
                 placeholder={
-                  isPl
-                    ? 'Oceń ryzyko na podstawie kontekstu firmy...'
-                    : 'Assess risk based on company context...'
+                  t('myWorkTable.addColumnDialog.assessRiskBasedOnCompany')
                 }
                 rows={3}
                 className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
@@ -337,7 +331,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {type === 'currency' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Waluta' : 'Currency'}
+                {t('myWorkTable.addColumnDialog.currency')}
               </label>
               <select
                 value={currencyCode}
@@ -356,7 +350,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {type === 'date' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Format daty' : 'Date format'}
+                {t('myWorkTable.addColumnDialog.dateFormat')}
               </label>
               <select
                 value={dateFormat}
@@ -367,7 +361,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                 <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                 <option value="relative">
-                  {isPl ? 'Relatywny (2 dni temu)' : 'Relative (2 days ago)'}
+                  {t('myWorkTable.addColumnDialog.relative2DaysAgo')}
                 </option>
               </select>
             </div>
@@ -376,18 +370,16 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {type === 'relation' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {isPl ? 'Cel relacji' : 'Relation target'}
+                {t('myWorkTable.addColumnDialog.relationTarget')}
               </label>
               <input
                 value={relationTarget}
                 onChange={(e) => setRelationTarget(e.target.value)}
-                placeholder={isPl ? 'np. Inicjatywy, Zadania...' : 'e.g. Initiatives, Tasks...'}
+                placeholder={t('myWorkTable.addColumnDialog.eGInitiativesTasks')}
                 className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
               <p className="mt-1 text-[9px] text-c-text-secondary">
-                {isPl
-                  ? 'Wskaż tabelę lub moduł, z którego chcesz linkować wiersze'
-                  : 'Point to the table or module to link rows from'}
+                {t('myWorkTable.addColumnDialog.pointToTheTableOr')}
               </p>
             </div>
           )}
@@ -396,18 +388,18 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
             <div className="space-y-2">
               <div>
                 <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                  {isPl ? 'Źródło (kolumna relacji)' : 'Source (relation column)'}
+                  {t('myWorkTable.addColumnDialog.sourceRelationColumn')}
                 </label>
                 <input
                   value={rollupSource}
                   onChange={(e) => setRollupSource(e.target.value)}
-                  placeholder={isPl ? 'np. tasks_relation' : 'e.g. tasks_relation'}
+                  placeholder={t('myWorkTable.addColumnDialog.eGTasksRelation')}
                   className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                  {isPl ? 'Funkcja' : 'Function'}
+                  {t('myWorkTable.addColumnDialog.function')}
                 </label>
                 <select
                   value={rollupFunction}
@@ -421,7 +413,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   </option>
                   <option value="min">{t('ideas.table.addColumn.rollup.min', 'Min')}</option>
                   <option value="max">{t('ideas.table.addColumn.rollup.max', 'Max')}</option>
-                  <option value="percent_checked">{isPl ? '% zaznaczonych' : '% checked'}</option>
+                  <option value="percent_checked">{t('myWorkTable.addColumnDialog.checked')}</option>
                 </select>
               </div>
             </div>
@@ -437,14 +429,14 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
             }}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('myWorkTable.addColumnDialog.cancel')}
           </button>
           <button
             onClick={handleAdd}
             disabled={!name.trim()}
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
           >
-            {isPl ? 'Dodaj kolumnę' : 'Add Column'}
+            {t('myWorkTable.addColumnDialog.addColumn')}
           </button>
         </div>
       </div>
