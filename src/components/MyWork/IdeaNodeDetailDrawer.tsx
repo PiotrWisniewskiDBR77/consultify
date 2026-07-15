@@ -233,7 +233,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   mapVersion,
   onMapConflictRefresh,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -471,7 +471,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
         return;
       }
     } catch {
-      toast.error(isPl ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      toast.error(t('myWorkIdeas.nodeDetailDrawer.failedAddComment'));
     } finally {
       setCommentSubmitting(false);
     }
@@ -615,7 +615,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   className="text-base font-bold text-slate-900 dark:text-white cursor-pointer hover:text-c-info transition-colors line-clamp-2"
                   onClick={() => !locked && setEditingTitle(true)}
                 >
-                  {nodeData.label || (isPl ? 'Bez tytułu' : 'Untitled')}
+                  {nodeData.label || t('myWorkIdeas.nodeDetailDrawer.untitled')}
                 </h2>
               )}
               <div className="flex items-center gap-2 mt-1.5">
@@ -647,7 +647,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors"
               >
                 <GitBranch size={12} />
-                {isPl ? 'Rozwiń sub-mapę' : 'Drill down'}
+                {t('myWorkIdeas.nodeDetailDrawer.drillDown')}
               </button>
             )}
             <button
@@ -656,7 +656,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors disabled:opacity-40"
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-              {isPl ? 'AI Rozbuduj' : 'AI Expand'}
+              {t('myWorkIdeas.nodeDetailDrawer.aiExpand')}
             </button>
           </div>
         </div>
@@ -694,7 +694,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           {/* Priority slider */}
           <div>
             <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-              {isPl ? 'Priorytet' : 'Priority'}: {priority}
+              {t('myWorkIdeas.nodeDetailDrawer.priority')}: {priority}
             </div>
             <input
               type="range"
@@ -706,8 +706,8 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               className="w-full h-1.5 rounded-full appearance-none bg-slate-200 dark:bg-navy-700 accent-c-info"
             />
             <div className="flex justify-between text-[9px] text-slate-600 mt-0.5">
-              <span>{isPl ? 'Niski' : 'Low'}</span>
-              <span>{isPl ? 'Wysoki' : 'High'}</span>
+              <span>{t('myWorkIdeas.nodeDetailDrawer.low')}</span>
+              <span>{t('myWorkIdeas.nodeDetailDrawer.high')}</span>
             </div>
           </div>
 
@@ -715,7 +715,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           <div>
             <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
               <User size={10} />
-              {isPl ? 'Właściciel' : 'Owner'}
+              {t('myWorkIdeas.nodeDetailDrawer.owner')}
             </div>
             <input
               value={ownerValue}
@@ -734,14 +734,14 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 }
               }}
               disabled={locked}
-              placeholder={isPl ? 'Przypisz właściciela...' : 'Assign owner...'}
+              placeholder={t('myWorkIdeas.nodeDetailDrawer.assignOwner')}
               className="w-full text-xs bg-slate-50 dark:bg-navy-800 rounded-lg px-3 py-2 border border-slate-200 dark:border-navy-700 outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400 disabled:opacity-50"
             />
           </div>
 
           {/* Description */}
           <SectionToggle
-            title={isPl ? 'Opis' : 'Description'}
+            title={t('myWorkIdeas.nodeDetailDrawer.description')}
             icon={FileText}
             expanded={expandedSections.has('description')}
             onToggle={() => toggleSection('description')}
@@ -752,11 +752,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 value={descValue}
                 onChange={(e) => setDescValue(e.target.value)}
                 onBlur={commitDescription}
-                placeholder={
-                  isPl
-                    ? 'Dodaj opis (obsługuje **markdown**)...'
-                    : 'Add description (supports **markdown**)...'
-                }
+                placeholder={t('myWorkIdeas.nodeDetailDrawer.addDescriptionSupportsMarkdown')}
                 className="w-full min-h-[100px] text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 rounded-xl p-3 border border-slate-200 dark:border-navy-700 outline-none resize-y placeholder:text-slate-400 font-mono"
                 rows={4}
               />
@@ -775,7 +771,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     dangerouslySetInnerHTML={{ __html: simpleMarkdown(descValue) }}
                   />
                 ) : (
-                  <span>{isPl ? 'Kliknij, aby dodać opis...' : 'Click to add description...'}</span>
+                  <span>{t('myWorkIdeas.nodeDetailDrawer.clickAddDescription')}</span>
                 )}
               </div>
             )}
@@ -784,10 +780,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           {/* V5-IDEA-18: Node depth model fields */}
           <DepthFieldSection
             fieldKey="notes"
-            title={isPl ? 'Notatki' : 'Notes'}
+            title={t('myWorkIdeas.nodeDetailDrawer.notes')}
             icon={FileText}
             value={nodeData.notes}
-            placeholder={isPl ? 'Dodaj notatki...' : 'Add notes...'}
+            placeholder={t('myWorkIdeas.nodeDetailDrawer.addNotes')}
             locked={locked}
             expanded={expandedSections.has('notes')}
             onToggle={() => toggleSection('notes')}
@@ -795,10 +791,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           />
           <DepthFieldSection
             fieldKey="context"
-            title={isPl ? 'Kontekst' : 'Context'}
+            title={t('myWorkIdeas.nodeDetailDrawer.context')}
             icon={Lightbulb}
             value={nodeData.context}
-            placeholder={isPl ? 'Jaki jest kontekst tego elementu?' : 'What is the context?'}
+            placeholder={t('myWorkIdeas.nodeDetailDrawer.whatContext')}
             locked={locked}
             expanded={expandedSections.has('context')}
             onToggle={() => toggleSection('context')}
@@ -806,10 +802,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           />
           <DepthFieldSection
             fieldKey="goal"
-            title={isPl ? 'Cel' : 'Goal'}
+            title={t('myWorkIdeas.nodeDetailDrawer.goal')}
             icon={Target}
             value={nodeData.goal}
-            placeholder={isPl ? 'Jaki jest cel?' : 'What is the goal?'}
+            placeholder={t('myWorkIdeas.nodeDetailDrawer.whatGoal')}
             locked={locked}
             expanded={expandedSections.has('goal')}
             onToggle={() => toggleSection('goal')}
@@ -817,10 +813,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           />
           <DepthFieldSection
             fieldKey="rationale"
-            title={isPl ? 'Uzasadnienie' : 'Rationale'}
+            title={t('myWorkIdeas.nodeDetailDrawer.rationale')}
             icon={GitBranch}
             value={nodeData.rationale}
-            placeholder={isPl ? 'Dlaczego to ważne?' : 'Why is this important?'}
+            placeholder={t('myWorkIdeas.nodeDetailDrawer.whyImportant')}
             locked={locked}
             expanded={expandedSections.has('rationale')}
             onToggle={() => toggleSection('rationale')}
@@ -828,10 +824,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           />
           <DepthFieldSection
             fieldKey="riskNote"
-            title={isPl ? 'Ryzyko' : 'Risk'}
+            title={t('myWorkIdeas.nodeDetailDrawer.risk')}
             icon={AlertTriangle}
             value={nodeData.riskNote}
-            placeholder={isPl ? 'Jakie są ryzyka?' : 'What are the risks?'}
+            placeholder={t('myWorkIdeas.nodeDetailDrawer.whatRisks')}
             locked={locked}
             expanded={expandedSections.has('riskNote')}
             onToggle={() => toggleSection('riskNote')}
@@ -840,7 +836,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
 
           {/* Semantic Type */}
           <SectionToggle
-            title={isPl ? 'Typ semantyczny' : 'Semantic type'}
+            title={t('myWorkIdeas.nodeDetailDrawer.semanticType')}
             icon={CircleDot}
             expanded={expandedSections.has('semantic_type')}
             onToggle={() => toggleSection('semantic_type')}
@@ -853,7 +849,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               disabled={locked}
               className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-info transition-colors"
             >
-              <option value="">{isPl ? '— Brak —' : '— None —'}</option>
+              <option value="">{t('myWorkIdeas.nodeDetailDrawer.none')}</option>
               {[
                 { value: 'hypothesis', pl: 'Hipoteza', en: 'Hypothesis' },
                 { value: 'decision', pl: 'Decyzja', en: 'Decision' },
@@ -874,7 +870,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
 
           {/* Tags */}
           <SectionToggle
-            title={isPl ? 'Tagi' : 'Tags'}
+            title={t('myWorkIdeas.nodeDetailDrawer.tags')}
             icon={Tag}
             expanded={expandedSections.has('tags')}
             onToggle={() => toggleSection('tags')}
@@ -906,7 +902,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleAddTag();
                     }}
-                    placeholder={isPl ? 'Nowy tag...' : 'New tag...'}
+                    placeholder={t('myWorkIdeas.nodeDetailDrawer.newTag')}
                     className="w-20 text-[10px] bg-transparent border-b border-dashed border-slate-300 dark:border-navy-600 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
                   <button onClick={handleAddTag} className="text-slate-600 hover:text-c-info">
@@ -919,7 +915,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
 
           {/* AI Context */}
           <SectionToggle
-            title={isPl ? 'Kontekst AI' : 'AI Context'}
+            title={t('myWorkIdeas.nodeDetailDrawer.aiContext')}
             icon={Sparkles}
             expanded={expandedSections.has('ai_context')}
             onToggle={() => toggleSection('ai_context')}
@@ -929,7 +925,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               <div className="flex items-center gap-2 py-4 justify-center text-c-info">
                 <Loader2 size={14} className="animate-spin" />
                 <span className="text-[11px]">
-                  {isPl ? 'Analizuję kontekst...' : 'Analyzing context...'}
+                  {t('myWorkIdeas.nodeDetailDrawer.analyzingContext')}
                 </span>
               </div>
             ) : aiContext ? (
@@ -942,7 +938,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 {aiContext.relatedInitiatives.length > 0 && (
                   <div>
                     <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      {isPl ? 'Powiązane inicjatywy' : 'Related Initiatives'}
+                      {t('myWorkIdeas.nodeDetailDrawer.relatedInitiatives')}
                     </div>
                     {aiContext.relatedInitiatives.map((ini, i) => (
                       <div key={i} className="flex items-start gap-1.5 py-1">
@@ -962,7 +958,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 {aiContext.relatedRisks.length > 0 && (
                   <div>
                     <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      {isPl ? 'Ryzyka' : 'Risks'}
+                      {t('myWorkIdeas.nodeDetailDrawer.risks')}
                     </div>
                     {aiContext.relatedRisks.map((risk, i) => (
                       <div key={i} className="flex items-start gap-1.5 py-1">
@@ -980,7 +976,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 {aiContext.suggestions.length > 0 && (
                   <div>
                     <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      {isPl ? 'Sugestie AI' : 'AI Suggestions'}
+                      {t('myWorkIdeas.nodeDetailDrawer.aiSuggestions')}
                     </div>
                     {aiContext.suggestions.map((sug, i) => (
                       <div key={i} className="flex items-start gap-1.5 py-1">
@@ -996,19 +992,19 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   onClick={fetchAIContext}
                   className="text-[10px] text-c-info hover:text-c-info font-medium"
                 >
-                  {isPl ? '↻ Odśwież kontekst' : '↻ Refresh context'}
+                  {t('myWorkIdeas.nodeDetailDrawer.refreshContext')}
                 </button>
               </div>
             ) : (
               <div className="text-[11px] text-slate-600 py-2 text-center">
-                {isPl ? 'Brak danych kontekstowych' : 'No context data available'}
+                {t('myWorkIdeas.nodeDetailDrawer.noContextDataAvailable')}
               </div>
             )}
           </SectionToggle>
 
           {/* Attachments */}
           <SectionToggle
-            title={isPl ? 'Załączniki' : 'Attachments'}
+            title={t('myWorkIdeas.nodeDetailDrawer.attachments')}
             icon={Paperclip}
             expanded={expandedSections.has('attachments')}
             onToggle={() => toggleSection('attachments')}
@@ -1061,7 +1057,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleAddAttachment();
                     }}
-                    placeholder={isPl ? 'Wklej URL...' : 'Paste URL...'}
+                    placeholder={t('myWorkIdeas.nodeDetailDrawer.pasteUrl')}
                     className="flex-1 text-[10px] bg-slate-50 dark:bg-navy-800 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
                   <button
@@ -1076,7 +1072,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           </SectionToggle>
 
           <SectionToggle
-            title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+            title={t('myWorkIdeas.nodeDetailDrawer.linkedArtifacts')}
             icon={Link2}
             expanded={expandedSections.has('artifact_links')}
             onToggle={() => toggleSection('artifact_links')}
@@ -1085,12 +1081,12 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             <div className="space-y-1.5">
               {artifactLoading && (
                 <div className="text-[10px] text-slate-600">
-                  {isPl ? 'Ładowanie powiązań...' : 'Loading links...'}
+                  {t('myWorkIdeas.nodeDetailDrawer.loadingLinks')}
                 </div>
               )}
               {!artifactLoading && artifactLinks.length === 0 && (
                 <div className="text-[10px] text-slate-600">
-                  {isPl ? 'Brak podpiętych artefaktów' : 'No linked artifacts'}
+                  {t('myWorkIdeas.nodeDetailDrawer.noLinkedArtifacts')}
                 </div>
               )}
               {!locked && (
@@ -1106,7 +1102,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-c-info bg-c-info/5 hover:bg-c-info/10 transition-colors mb-1.5"
                 >
                   <Plus size={12} />
-                  {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
+                  {t('myWorkIdeas.nodeDetailDrawer.attachArtifact')}
                 </button>
               )}
               {artifactLinks.map((link) => {
@@ -1160,7 +1156,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
 
           {/* Evidence Links */}
           <SectionToggle
-            title={isPl ? 'Dowody i źródła' : 'Evidence & Sources'}
+            title={t('myWorkIdeas.nodeDetailDrawer.evidenceSources')}
             icon={ExternalLink}
             expanded={expandedSections.has('evidence_links')}
             onToggle={() => toggleSection('evidence_links')}
@@ -1205,7 +1201,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/5 hover:bg-blue-500/10 transition-colors"
                 >
                   <Plus size={12} />
-                  {isPl ? 'Dodaj dowód / źródło' : 'Add evidence / source'}
+                  {t('myWorkIdeas.nodeDetailDrawer.addEvidenceSource')}
                 </button>
               )}
               {!locked && showEvidenceForm && (
@@ -1218,7 +1214,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       if (e.key === 'Enter') handleAddEvidence();
                       if (e.key === 'Escape') setShowEvidenceForm(false);
                     }}
-                    placeholder={isPl ? 'Tytuł dowodu...' : 'Evidence title...'}
+                    placeholder={t('myWorkIdeas.nodeDetailDrawer.evidenceTitle')}
                     className="w-full text-[10px] bg-white dark:bg-navy-900 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
                   <input
@@ -1228,7 +1224,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       if (e.key === 'Enter') handleAddEvidence();
                       if (e.key === 'Escape') setShowEvidenceForm(false);
                     }}
-                    placeholder={isPl ? 'URL (opcjonalnie)' : 'URL (optional)'}
+                    placeholder={t('myWorkIdeas.nodeDetailDrawer.urlOptional')}
                     className="w-full text-[10px] bg-white dark:bg-navy-900 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
                   <div className="flex gap-1.5">
@@ -1237,7 +1233,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       disabled={!newEvidenceTitle.trim()}
                       className="flex-1 h-7 rounded-lg text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors disabled:opacity-40"
                     >
-                      {isPl ? 'Dodaj' : 'Add'}
+                      {t('myWorkIdeas.nodeDetailDrawer.add')}
                     </button>
                     <button
                       onClick={() => {
@@ -1247,14 +1243,14 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       }}
                       className="h-7 px-3 rounded-lg text-[10px] text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                     >
-                      {isPl ? 'Anuluj' : 'Cancel'}
+                      {t('myWorkIdeas.nodeDetailDrawer.cancel')}
                     </button>
                   </div>
                 </div>
               )}
               {(nodeData.evidenceLinks || []).length === 0 && !showEvidenceForm && (
                 <div className="text-[10px] text-slate-600 py-1">
-                  {isPl ? 'Brak dowodów' : 'No evidence yet'}
+                  {t('myWorkIdeas.nodeDetailDrawer.noEvidenceYet')}
                 </div>
               )}
             </div>
@@ -1262,7 +1258,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
 
           {/* Comments */}
           <SectionToggle
-            title={isPl ? 'Komentarze' : 'Comments'}
+            title={t('myWorkIdeas.nodeDetailDrawer.comments')}
             icon={MessageSquare}
             expanded={expandedSections.has('comments')}
             onToggle={() => toggleSection('comments')}
@@ -1294,7 +1290,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   {mentionQuery !== null && mentionSuggestions.length > 0 && (
                     <div
                       role="listbox"
-                      aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
+                      aria-label={t('myWorkIdeas.nodeDetailDrawer.mentionTeammate')}
                       className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 shadow-lg max-h-40 overflow-y-auto z-overlay"
                     >
                       {mentionSuggestions.map((user) => (
@@ -1350,9 +1346,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                         handleAddComment();
                       }
                     }}
-                    placeholder={
-                      isPl ? 'Dodaj komentarz... (@wzmianka)' : 'Add comment... (@mention)'
-                    }
+                    placeholder={t('myWorkIdeas.nodeDetailDrawer.addCommentMention')}
                     className="w-full text-[11px] bg-slate-50 dark:bg-navy-800 rounded-lg pl-2.5 pr-6 py-2 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400 resize-none"
                     rows={2}
                   />
@@ -1372,7 +1366,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           {/* Linked Nodes */}
           {linkedNodeLabels.length > 0 && (
             <SectionToggle
-              title={isPl ? 'Powiązania' : 'Links'}
+              title={t('myWorkIdeas.nodeDetailDrawer.links')}
               icon={Link2}
               expanded={expandedSections.has('links')}
               onToggle={() => toggleSection('links')}

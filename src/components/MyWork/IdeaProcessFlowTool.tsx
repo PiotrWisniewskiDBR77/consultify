@@ -333,7 +333,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   onGraphChange,
   externalRuntime,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
   const isDarkFlow = useIsDark();
@@ -463,7 +463,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     semanticKit,
     autoValidate: false,
     onError: (message) =>
-      toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
+      toast.error(isPl ? t('myWorkIdeas.processFlowTool.validationFailedRetry') : message),
   });
   // (M07 F2: useProcessFlowAIProposal moved below useProcessFlowUndoRedo —
   // its onApply handler needs pushUndo for the single-undo-step acceptance.)
@@ -535,7 +535,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       .filter(Boolean)
       .join(' ')
       .trim();
-    return fullName || currentUser?.email || (isPl ? 'Ty' : 'You');
+    return fullName || currentUser?.email || t('myWorkIdeas.processFlowTool.you');
   }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPl]);
   const saveStatusLabel = useMemo(
     () => formatIdeaMapSyncLabel(syncState, lastSavedAt, isPl),
@@ -683,7 +683,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         edges: result.edges,
         lanes: result.lanes,
       });
-      toast.success(isPl ? 'Zastosowano propozycję AI' : 'AI proposal applied', {
+      toast.success(t('myWorkIdeas.processFlowTool.aiProposalApplied'), {
         duration: 1200,
       });
     },
@@ -1282,7 +1282,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // the shared workspace runtime owns preferredTool anyway. One sync path = no race.
       didPersistRef.current = true;
     } catch (err: any) {
-      const nextError = err?.message || (isPl ? 'Nie udało się wczytać' : 'Failed to load');
+      const nextError = err?.message || t('myWorkIdeas.processFlowTool.failedLoad');
       toast.error(nextError);
       setLoadError(nextError);
       setNodes([]);
@@ -1441,7 +1441,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     if (locked) return;
     const selectedEdge = (edges as Edge[]).find((e) => e.selected);
     if (!selectedEdge) {
-      toast.error(isPl ? 'Zaznacz krawędź' : 'Select an edge first');
+      toast.error(t('myWorkIdeas.processFlowTool.selectEdgeFirst'));
       return;
     }
     pushUndo();
@@ -1464,7 +1464,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       type: resolvedType,
       position: { x: midX, y: midY },
       data: {
-        label: isPl ? 'Nowy krok' : 'New step',
+        label: t('myWorkIdeas.processFlowTool.newStep'),
         shape: insertShape,
         laneId: lane.id,
         laneColor: lane.color,
@@ -1498,7 +1498,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       { op: 'add_edge', data: edgeA },
       { op: 'add_edge', data: edgeB },
     ]);
-    toast.success(isPl ? 'Wstawiono krok' : 'Step inserted', { duration: 800 });
+    toast.success(t('myWorkIdeas.processFlowTool.stepInserted'), { duration: 800 });
   }, [
     collab,
     edges,
@@ -1520,7 +1520,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       (n: Node) => n.selected && n.data?.shape === 'decision'
     );
     if (!selected) {
-      toast.error(isPl ? 'Zaznacz decyzję' : 'Select a decision node');
+      toast.error(t('myWorkIdeas.processFlowTool.selectDecisionNode'));
       return;
     }
     pushUndo();
@@ -1536,7 +1536,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       type: resolvedSplitType,
       position: { x: selected.position.x + 250, y: selected.position.y + 80 },
       data: {
-        label: isPl ? 'Alternatywna ścieżka' : 'Alternative path',
+        label: t('myWorkIdeas.processFlowTool.alternativePath'),
         shape: splitShape,
         laneId: lane.id,
         laneColor: lane.color,
@@ -1565,7 +1565,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       { op: 'add_node', data: newNode },
       { op: 'add_edge', data: splitEdge },
     ]);
-    toast.success(isPl ? 'Ścieżka rozdzielona' : 'Path split', { duration: 800 });
+    toast.success(t('myWorkIdeas.processFlowTool.pathSplit'), { duration: 800 });
   }, [collab, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
 
   // ── Add lane ───────────────────────────────────────────────────────────
@@ -1602,7 +1602,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const openMetricsEditor = useCallback(() => {
     const selected = nodes.find((node) => node.selected);
     if (!selected) {
-      toast.error(isPl ? 'Najpierw zaznacz krok procesu' : 'Select a process step first');
+      toast.error(t('myWorkIdeas.processFlowTool.selectProcessStepFirst'));
       return;
     }
     setMetricsEditorNodeId(selected.id);
@@ -1644,13 +1644,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       })
     );
     setMetricsEditorNodeId(null);
-    toast.success(isPl ? 'Zapisano metryki kroku' : 'Step metrics saved', { duration: 900 });
+    toast.success(t('myWorkIdeas.processFlowTool.stepMetricsSaved'), { duration: 900 });
   }, [collab, isPl, locked, metricsDraft, metricsEditorNodeId, pushUndo]);
 
   const runSavingsAnalysis = useCallback(async () => {
     if (locked || savingsLoading) return;
     if (nodes.length === 0) {
-      toast.error(isPl ? 'Najpierw dodaj kroki procesu' : 'Add process steps first');
+      toast.error(t('myWorkIdeas.processFlowTool.addProcessStepsFirst'));
       return;
     }
     setSavingsLoading(true);
@@ -1683,15 +1683,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       if (batch?.proposals?.length) {
         window.dispatchEvent(new CustomEvent('idea-workspace-ai-proposal', { detail: { batch } }));
       } else {
-        toast(isPl ? 'Brak nowych rekomendacji savings' : 'No new savings recommendations', {
+        toast(t('myWorkIdeas.processFlowTool.noNewSavingsRecommendations'), {
           icon: '🤖',
         });
       }
     } catch (error: any) {
-      toast.error(
-        error?.message ||
-          (isPl ? 'Nie udało się uruchomić analizy savings' : 'Failed to run savings analysis')
-      );
+      toast.error(error?.message || t('myWorkIdeas.processFlowTool.failedRunSavingsAnalysis'));
     } finally {
       setSavingsLoading(false);
     }
@@ -1725,12 +1722,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     },
     confirmBulkDelete: (count: number) =>
       confirmBulkDelete({
-        title: isPl ? 'Usunąć węzły?' : 'Delete nodes?',
-        description: isPl
-          ? `Zostaną usunięte ${count} węzły i ich połączenia. Możesz cofnąć przez Ctrl+Z.`
-          : `${count} nodes and their connections will be deleted. You can undo with Ctrl+Z.`,
-        confirmLabel: isPl ? 'Usuń' : 'Delete',
-        cancelLabel: isPl ? 'Anuluj' : 'Cancel',
+        title: t('myWorkIdeas.processFlowTool.deleteNodes'),
+        description: t('myWorkIdeas.processFlowTool.deleteNodesConfirm', { value: count }),
+        confirmLabel: t('myWorkIdeas.processFlowTool.delete'),
+        cancelLabel: t('myWorkIdeas.processFlowTool.cancel'),
         variant: 'danger',
       }),
   });
@@ -1778,7 +1773,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     setNodes(layouted);
     // F3: auto-layout moves every node → mass change → graph_snapshot.
     collab.broadcastSnapshot({ nodes: layouted, edges, lanes });
-    toast.success(isPl ? 'Układ automatyczny zastosowany' : 'Auto-layout applied', {
+    toast.success(t('myWorkIdeas.processFlowTool.autoLayoutApplied'), {
       duration: 900,
     });
   }, [collab, edges, isPl, lanes, locked, nodes, pushUndo]);
@@ -1820,7 +1815,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       setCoachInsights(insights);
       setShowCoach(true);
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się' : 'Failed'));
+      toast.error(err?.message || t('myWorkIdeas.processFlowTool.failed'));
     } finally {
       setCoachLoading(false);
     }
@@ -1849,7 +1844,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       setSummaryData(result?.summary || result);
       setShowSummary(true);
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się' : 'Failed'));
+      toast.error(err?.message || t('myWorkIdeas.processFlowTool.failed'));
     } finally {
       setSummaryLoading(false);
     }
@@ -1914,7 +1909,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       setNodes((prev: Node[]) => [...prev, realNode]);
       setGhostNodes((prev) => prev.filter((g) => g.id !== ghostId));
       collab.broadcastNodeAdd(realNode); // F3: accepted ghost → real add
-      toast.success(isPl ? 'Krok zaakceptowany' : 'Step accepted', { duration: 800 });
+      toast.success(t('myWorkIdeas.processFlowTool.stepAccepted'), { duration: 800 });
     },
     [collab, ghostNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
   );
@@ -1927,12 +1922,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       await persistSave(buildPersistPayload(), {
         reason: 'manual',
         createSnapshot: true,
-        snapshotLabel: isPl ? 'Process flow checkpoint' : 'Process flow checkpoint',
+        snapshotLabel: t('myWorkIdeas.processFlowTool.processFlowCheckpoint'),
       });
-      toast.success(isPl ? 'Zapisano' : 'Saved', { duration: 900 });
+      toast.success(t('myWorkIdeas.processFlowTool.saved'), { duration: 900 });
       onSaved?.();
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się zapisać' : 'Failed to save'));
+      toast.error(err?.message || t('myWorkIdeas.processFlowTool.failedSave'));
     }
   }, [buildPersistPayload, persistSave, isPl, locked, onSaved]);
 
@@ -2256,7 +2251,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     <div
       className="w-full h-full flex flex-col bg-white dark:bg-navy-950 relative"
       role="region"
-      aria-label={isPl ? 'Edytor przepływu procesu' : 'Process flow editor'}
+      aria-label={t('myWorkIdeas.processFlowTool.processFlowEditor')}
     >
       {/* z-[60] wrapper: keep the FLOW MODE / shape toolbar above the workspace
           breadcrumb card (IdeaMapWorkspace, z-57) which otherwise overlaps and
@@ -2316,18 +2311,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           <EmptyStateInline
             icon={AlertTriangle}
             dashed={false}
-            message={
-              isPl
-                ? 'Widok procesu jest chwilowo niedostępny.'
-                : 'Process flow is temporarily unavailable.'
-            }
-            hint={
-              isPl
-                ? 'To nie oznacza pustego procesu. Spróbuj ponownie wczytać mapę i sprawdź jeszcze raz.'
-                : 'This does not mean the process is empty. Retry loading the map and check again.'
-            }
+            message={t('myWorkIdeas.processFlowTool.processFlowTemporarilyUnavailable')}
+            hint={t('myWorkIdeas.processFlowTool.thisDoesMeanProcessEmptyRetry')}
             action={{
-              label: isPl ? 'Ponów' : 'Retry',
+              label: t('myWorkIdeas.processFlowTool.retry'),
               onClick: hydrate,
             }}
             className="mb-2"
@@ -2339,12 +2326,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="px-4 pt-3">
           <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300">
             <div className="font-medium text-slate-900 dark:text-slate-100">
-              {isPl ? 'Tryb tylko do odczytu' : 'Read-only mode'}
+              {t('myWorkIdeas.processFlowTool.readOnlyMode')}
             </div>
             <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {isPl
-                ? 'Możesz przeglądać przepływ, ale edycja i zapis są obecnie zablokowane.'
-                : 'You can review the flow, but editing and saving are currently disabled.'}
+              {t('myWorkIdeas.processFlowTool.youCanReviewFlowButEditing')}
             </div>
           </div>
         </div>
@@ -2355,13 +2340,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="px-4 py-2 bg-amber-50/80 dark:bg-amber-900/20 border-b border-amber-200/60 dark:border-amber-700/40 flex-shrink-0">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-              {isPl ? `${warnings.length} ostrzeżeń` : `${warnings.length} warning(s)`}
+              {t('myWorkIdeas.processFlowTool.warningsCount', { value: warnings.length })}
             </span>
             <button
               onClick={() => setShowWarnings(false)}
               className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline"
             >
-              {isPl ? 'Zamknij' : 'Close'}
+              {t('myWorkIdeas.processFlowTool.close')}
             </button>
           </div>
           <ul className="space-y-0.5">
@@ -2384,13 +2369,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
               <TeresaMark size={14} />
-              {isPl ? 'AI Coach — Analiza procesu' : 'AI Coach — Process Analysis'}
+              {t('myWorkIdeas.processFlowTool.aiCoachProcessAnalysis')}
             </div>
             <button
               type="button"
               onClick={() => setShowCoach(false)}
               className="text-slate-600 hover:text-slate-800 dark:hover:text-slate-300"
-              aria-label={isPl ? 'Zamknij' : 'Close'}
+              aria-label={t('myWorkIdeas.processFlowTool.close')}
             >
               <X size={14} />
             </button>
@@ -2431,16 +2416,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       {processBriefData && (
         <div className="mx-3 mb-2 rounded-xl border border-slate-200/60 dark:border-navy-700/40 bg-slate-50/50 dark:bg-navy-900/20 p-3">
           <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
-            {isPl ? 'Structured brief' : 'Structured brief'}
+            {t('myWorkIdeas.processFlowTool.structuredBrief')}
           </div>
           <div className="mt-1 text-[10px] text-slate-700 dark:text-slate-300">
-            <span className="font-semibold">{isPl ? 'Cel:' : 'Objective:'}</span>{' '}
+            <span className="font-semibold">{t('myWorkIdeas.processFlowTool.objective')}</span>{' '}
             {processBriefData.objective}
           </div>
           <div className="mt-2 grid grid-cols-3 gap-2">
             <div>
               <div className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
-                {isPl ? 'Luki' : 'Gaps'}
+                {t('myWorkIdeas.processFlowTool.gaps')}
               </div>
               <ul className="mt-1 space-y-0.5">
                 {(processBriefData.currentGaps || [])
@@ -2454,7 +2439,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             </div>
             <div>
               <div className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
-                {isPl ? 'Ruchy' : 'Moves'}
+                {t('myWorkIdeas.processFlowTool.moves')}
               </div>
               <ul className="mt-1 space-y-0.5">
                 {(processBriefData.nextMoves || []).slice(0, 3).map((item: string, idx: number) => (
@@ -2466,7 +2451,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             </div>
             <div>
               <div className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
-                {isPl ? 'Checkpointy' : 'Checkpoints'}
+                {t('myWorkIdeas.processFlowTool.checkpoints')}
               </div>
               <ul className="mt-1 space-y-0.5">
                 {(processBriefData.reviewCheckpoints || [])
@@ -2486,7 +2471,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="mx-3 mb-2 rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20 p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
-              {isPl ? 'Savings analysis' : 'Savings analysis'}
+              {t('myWorkIdeas.processFlowTool.savingsAnalysis')}
             </div>
             <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
               {savingsAnalysisData.totalSavingsEstimate}
@@ -2510,13 +2495,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
               <CheckCircle size={14} />
-              {isPl ? 'Podsumowanie procesu' : 'Process Summary'}
+              {t('myWorkIdeas.processFlowTool.processSummary')}
             </div>
             <button
               type="button"
               onClick={() => setShowSummary(false)}
               className="text-slate-600 hover:text-slate-800 dark:hover:text-slate-300"
-              aria-label={isPl ? 'Zamknij' : 'Close'}
+              aria-label={t('myWorkIdeas.processFlowTool.close')}
             >
               <X size={14} />
             </button>
@@ -2527,7 +2512,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   {summaryData.totalSteps}
                 </div>
-                <div className="text-[8px] text-slate-500">{isPl ? 'Kroków' : 'Steps'}</div>
+                <div className="text-[8px] text-slate-500">
+                  {t('myWorkIdeas.processFlowTool.steps')}
+                </div>
               </div>
             )}
             {(summaryData.decisions ?? summaryData.totalDecisions) != null && (
@@ -2535,7 +2522,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
                   {summaryData.decisions ?? summaryData.totalDecisions}
                 </div>
-                <div className="text-[8px] text-slate-500">{isPl ? 'Decyzji' : 'Decisions'}</div>
+                <div className="text-[8px] text-slate-500">
+                  {t('myWorkIdeas.processFlowTool.decisions')}
+                </div>
               </div>
             )}
             {(summaryData.lanes ?? summaryData.totalLanes) != null && (
@@ -2543,21 +2532,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
                   {summaryData.lanes ?? summaryData.totalLanes}
                 </div>
-                <div className="text-[8px] text-slate-500">{isPl ? 'Ścieżek' : 'Lanes'}</div>
+                <div className="text-[8px] text-slate-500">
+                  {t('myWorkIdeas.processFlowTool.lanes')}
+                </div>
               </div>
             )}
           </div>
           {summaryData.estimatedDuration && (
             <div className="text-[10px] text-slate-600 dark:text-slate-400 mb-1">
-              <span className="font-semibold">{isPl ? 'Szacowany czas:' : 'Est. duration:'}</span>{' '}
+              <span className="font-semibold">{t('myWorkIdeas.processFlowTool.estDuration')}</span>{' '}
               {summaryData.estimatedDuration}
             </div>
           )}
           {summaryData.criticalPath && (
             <div className="text-[10px] text-slate-600 dark:text-slate-400 mb-1">
-              <span className="font-semibold">
-                {isPl ? 'Ścieżka krytyczna:' : 'Critical path:'}
-              </span>{' '}
+              <span className="font-semibold">{t('myWorkIdeas.processFlowTool.criticalPath')}</span>{' '}
               {Array.isArray(summaryData.criticalPath)
                 ? summaryData.criticalPath.join(' → ')
                 : summaryData.criticalPath}
@@ -2566,7 +2555,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           {summaryData.risks?.length > 0 && (
             <div className="mt-1.5">
               <div className="text-[9px] font-bold text-danger-600 dark:text-danger-400 mb-0.5">
-                {isPl ? 'Ryzyka:' : 'Risks:'}
+                {t('myWorkIdeas.processFlowTool.risks')}
               </div>
               <ul className="space-y-0.5">
                 {summaryData.risks.map((r: string, i: number) => (
@@ -2583,7 +2572,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           {summaryData.recommendations?.length > 0 && (
             <div className="mt-1.5">
               <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
-                {isPl ? 'Rekomendacje:' : 'Recommendations:'}
+                {t('myWorkIdeas.processFlowTool.recommendations')}
               </div>
               <ul className="space-y-0.5">
                 {summaryData.recommendations.map((r: string, i: number) => (
@@ -2636,8 +2625,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   ? 'text-c-info bg-c-surface-raised'
                   : 'text-c-text-muted hover:bg-c-surface-raised'
               }`}
-              title={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
-              aria-label={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
+              title={t('myWorkIdeas.processFlowTool.toggleGrid')}
+              aria-label={t('myWorkIdeas.processFlowTool.toggleGrid')}
               aria-pressed={showGrid}
             >
               <Grid3x3 size={14} />
@@ -2650,8 +2639,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   ? 'text-c-info bg-c-surface-raised'
                   : 'text-c-text-muted hover:bg-c-surface-raised'
               }`}
-              title={isPl ? 'Przyciąganie do siatki' : 'Snap to grid'}
-              aria-label={isPl ? 'Przyciąganie do siatki' : 'Snap to grid'}
+              title={t('myWorkIdeas.processFlowTool.snapGrid')}
+              aria-label={t('myWorkIdeas.processFlowTool.snapGrid')}
               aria-pressed={snapToGridEnabled}
             >
               <Magnet size={14} />
@@ -2666,12 +2655,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   <GitMerge size={24} className="text-indigo-500" />
                 </div>
                 <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  {isPl ? 'Pusty przepływ' : 'Empty process flow'}
+                  {t('myWorkIdeas.processFlowTool.emptyProcessFlow')}
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-500 mb-3 max-w-[220px]">
-                  {isPl
-                    ? 'Dodaj kroki z paska narzędzi lub naciśnij Enter'
-                    : 'Add steps from the toolbar or press Enter'}
+                  {t('myWorkIdeas.processFlowTool.addStepsFromToolbarPressEnter')}
                 </div>
                 {!locked && (
                   <button
@@ -2679,7 +2666,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
                   >
                     <Plus size={14} />
-                    {isPl ? 'Dodaj start' : 'Add start'}
+                    {t('myWorkIdeas.processFlowTool.addStart')}
                   </button>
                 )}
               </div>
@@ -2925,12 +2912,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {isPl ? 'Walidacja' : 'Validation'}
+              {t('myWorkIdeas.processFlowTool.validation')}
             </span>
             <button
               onClick={() => setShowValidationPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-              aria-label={isPl ? 'Zamknij' : 'Close'}
+              aria-label={t('myWorkIdeas.processFlowTool.close')}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -2952,12 +2939,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="absolute right-0 top-0 bottom-0 w-96 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {isPl ? 'Propozycja AI' : 'AI Proposal'}
+              {t('myWorkIdeas.processFlowTool.aiProposal')}
             </span>
             <button
               onClick={() => setShowAIPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-              aria-label={isPl ? 'Zamknij' : 'Close'}
+              aria-label={t('myWorkIdeas.processFlowTool.close')}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -2984,12 +2971,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {isPl ? 'Odczyt semantyczny' : 'Semantic Readback'}
+              {t('myWorkIdeas.processFlowTool.semanticReadback')}
             </span>
             <button
               onClick={() => setShowReadbackPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-              aria-label={isPl ? 'Zamknij' : 'Close'}
+              aria-label={t('myWorkIdeas.processFlowTool.close')}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -3010,12 +2997,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {isPl ? 'Właściwości' : 'Properties'}
+              {t('myWorkIdeas.processFlowTool.properties')}
             </span>
             <button
               onClick={() => setShowPropertiesPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-              aria-label={isPl ? 'Zamknij' : 'Close'}
+              aria-label={t('myWorkIdeas.processFlowTool.close')}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -3188,7 +3175,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                  {isPl ? 'Metryki kroku procesu' : 'Process step metrics'}
+                  {t('myWorkIdeas.processFlowTool.processStepMetrics')}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {metricsEditorNode.data?.label}
@@ -3198,14 +3185,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 type="button"
                 onClick={() => setMetricsEditorNodeId(null)}
                 className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-navy-800 dark:hover:text-slate-200"
-                aria-label={isPl ? 'Zamknij' : 'Close'}
+                aria-label={t('myWorkIdeas.processFlowTool.close')}
               >
                 <X size={14} />
               </button>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">{isPl ? 'Czas' : 'Duration'}</div>
+                <div className="mb-1">{t('myWorkIdeas.processFlowTool.duration')}</div>
                 <input
                   value={metricsDraft.duration || ''}
                   onChange={(e) =>
@@ -3215,7 +3202,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">{isPl ? 'Jednostka' : 'Unit'}</div>
+                <div className="mb-1">{t('myWorkIdeas.processFlowTool.unit')}</div>
                 <input
                   value={metricsDraft.durationUnit || ''}
                   onChange={(e) =>
@@ -3225,7 +3212,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">{isPl ? 'Koszt' : 'Cost'}</div>
+                <div className="mb-1">{t('myWorkIdeas.processFlowTool.cost')}</div>
                 <input
                   value={metricsDraft.cost || ''}
                   onChange={(e) => setMetricsDraft((prev) => ({ ...prev, cost: e.target.value }))}
@@ -3243,9 +3230,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">
-                  {isPl ? 'Potencjał automatyzacji' : 'Automation potential'}
-                </div>
+                <div className="mb-1">{t('myWorkIdeas.processFlowTool.automationPotential')}</div>
                 <select
                   value={metricsDraft.automationPotential || 'medium'}
                   onChange={(e) =>
@@ -3253,13 +3238,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   }
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 >
-                  <option value="low">{isPl ? 'Niski' : 'Low'}</option>
-                  <option value="medium">{isPl ? 'Średni' : 'Medium'}</option>
-                  <option value="high">{isPl ? 'Wysoki' : 'High'}</option>
+                  <option value="low">{t('myWorkIdeas.processFlowTool.low')}</option>
+                  <option value="medium">{t('myWorkIdeas.processFlowTool.medium')}</option>
+                  <option value="high">{t('myWorkIdeas.processFlowTool.high')}</option>
                 </select>
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">{isPl ? 'Szacowane oszczędności' : 'Savings estimate'}</div>
+                <div className="mb-1">{t('myWorkIdeas.processFlowTool.savingsEstimate')}</div>
                 <input
                   value={metricsDraft.savingsEstimate || ''}
                   onChange={(e) =>
@@ -3275,14 +3260,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 onClick={() => setMetricsEditorNodeId(null)}
                 className="rounded-xl px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-navy-800"
               >
-                {isPl ? 'Anuluj' : 'Cancel'}
+                {t('myWorkIdeas.processFlowTool.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleSaveMetrics}
                 className="rounded-xl bg-slate-900 dark:bg-white px-3 py-2 text-xs font-semibold text-white dark:text-navy-900 hover:bg-slate-800 dark:hover:bg-slate-100"
               >
-                {isPl ? 'Zapisz metryki' : 'Save metrics'}
+                {t('myWorkIdeas.processFlowTool.saveMetrics')}
               </button>
             </div>
           </div>

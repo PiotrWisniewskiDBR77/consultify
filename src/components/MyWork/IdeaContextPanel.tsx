@@ -124,7 +124,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   stage,
   seedText,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [loading, setLoading] = useState(false);
@@ -289,18 +289,16 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       if (!label) {
         result.push({
           type: 'no_label',
-          message: isPl
-            ? `Węzeł bez etykiety: ${nid.slice(0, 12)}`
-            : `Node without label: ${nid.slice(0, 12)}`,
+          message: t('myWorkIdeas.contextPanel.nodeWithoutLabel', { value: nid.slice(0, 12) }),
           nodeId: nid,
         });
       }
       if (nodes.length > 1 && !connectedIds.has(nid)) {
         result.push({
           type: 'orphan',
-          message: isPl
-            ? `Osierocony węzeł: "${label || nid.slice(0, 12)}"`
-            : `Orphan node: "${label || nid.slice(0, 12)}"`,
+          message: t('myWorkIdeas.contextPanel.orphanNode', {
+            value: label || nid.slice(0, 12),
+          }),
           nodeId: nid,
         });
       }
@@ -313,17 +311,17 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       if (src && !nodeIdSet.has(src)) {
         result.push({
           type: 'broken_link',
-          message: isPl
-            ? `Uszkodzony link: źródło ${src.slice(0, 12)} nie istnieje`
-            : `Broken link: source ${src.slice(0, 12)} missing`,
+          message: t('myWorkIdeas.contextPanel.brokenLinkSource', {
+            value: src.slice(0, 12),
+          }),
         });
       }
       if (tgt && !nodeIdSet.has(tgt)) {
         result.push({
           type: 'broken_link',
-          message: isPl
-            ? `Uszkodzony link: cel ${tgt.slice(0, 12)} nie istnieje`
-            : `Broken link: target ${tgt.slice(0, 12)} missing`,
+          message: t('myWorkIdeas.contextPanel.brokenLinkTarget', {
+            value: tgt.slice(0, 12),
+          }),
         });
       }
     }
@@ -331,7 +329,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     return result;
   }, [liveGraphNodes, liveGraphEdges, isPl]);
 
-  const subtitle = useMemo(() => (isPl ? 'Kontekst i statystyki' : 'Context & statistics'), [isPl]);
+  const subtitle = useMemo(() => t('myWorkIdeas.contextPanel.contextStatistics'), [isPl]);
 
   const toggleSection = useCallback((key: SectionKey) => {
     setExpandedSections((prev) => {
@@ -464,9 +462,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         }
       } catch (err: any) {
         if (signal?.cancelled) return;
-        setError(
-          err?.message || (isPl ? 'Nie udało się wczytać kontekstu' : 'Failed to load context')
-        );
+        setError(err?.message || t('myWorkIdeas.contextPanel.failedLoadContext'));
       } finally {
         if (!signal?.cancelled) setLoading(false);
       }
@@ -581,7 +577,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
 
   return (
     <ToolsPanelShell
-      title={isPl ? 'Kontekst' : 'Context'}
+      title={t('myWorkIdeas.contextPanel.context')}
       subtitle={subtitle}
       icon={
         <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center">
@@ -593,11 +589,11 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     >
       <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
         <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-          {title || (isPl ? 'Wyzwanie' : 'Idea')}
+          {title || t('myWorkIdeas.contextPanel.idea')}
         </div>
         {onInsertToCanvas && (
           <div className="mt-1 text-[9px] text-slate-600 dark:text-slate-500">
-            {isPl ? 'Przeciągnij element na canvas lub kliknij +' : 'Drag to canvas or click +'}
+            {t('myWorkIdeas.contextPanel.dragCanvasClick')}
           </div>
         )}
       </div>
@@ -613,7 +609,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             >
               <Target size={12} className="text-c-info" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-c-info flex-1">
-                {isPl ? 'Wybrany węzeł' : 'Selected Node'}
+                {t('myWorkIdeas.contextPanel.selectedNode')}
               </span>
               {expandedSections.has('selected_node') ? (
                 <ChevronUp size={12} className="text-c-info" />
@@ -624,7 +620,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             {expandedSections.has('selected_node') && (
               <div className="space-y-1.5">
                 <div className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">
-                  {selectedNodeData.label || (isPl ? 'Bez etykiety' : 'No label')}
+                  {selectedNodeData.label || t('myWorkIdeas.contextPanel.noLabel')}
                 </div>
                 {selectedNodeData.semanticType && (
                   <span className="inline-block text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
@@ -638,7 +634,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 )}
                 {selectedNodeData.owner && (
                   <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                    {isPl ? 'Właściciel' : 'Owner'}: {selectedNodeData.owner}
+                    {t('myWorkIdeas.contextPanel.owner')}: {selectedNodeData.owner}
                   </div>
                 )}
                 {selectedNodeData.description && (
@@ -650,7 +646,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 {selectedNodeData.notes && (
                   <div className="text-[10px] text-slate-600 dark:text-slate-300">
                     <span className="font-semibold text-slate-500">
-                      {isPl ? 'Notatki: ' : 'Notes: '}
+                      {t('myWorkIdeas.contextPanel.notes')}
                     </span>
                     {selectedNodeData.notes.slice(0, 150)}
                     {selectedNodeData.notes.length > 150 ? '…' : ''}
@@ -659,7 +655,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 {selectedNodeData.context && (
                   <div className="text-[10px] text-slate-600 dark:text-slate-300">
                     <span className="font-semibold text-slate-500">
-                      {isPl ? 'Kontekst: ' : 'Context: '}
+                      {t('myWorkIdeas.contextPanel.context2')}
                     </span>
                     {selectedNodeData.context.slice(0, 150)}
                     {selectedNodeData.context.length > 150 ? '…' : ''}
@@ -668,7 +664,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 {selectedNodeData.goal && (
                   <div className="text-[10px] text-slate-600 dark:text-slate-300">
                     <span className="font-semibold text-slate-500">
-                      {isPl ? 'Cel: ' : 'Goal: '}
+                      {t('myWorkIdeas.contextPanel.goal')}
                     </span>
                     {selectedNodeData.goal.slice(0, 150)}
                   </div>
@@ -688,13 +684,15 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 {selectedNodeData.artifactLinks.length > 0 && (
                   <div className="text-[10px] text-slate-500">
                     <Paperclip size={9} className="inline mr-1" />
-                    {selectedNodeData.artifactLinks.length} {isPl ? 'artefaktów' : 'artifacts'}
+                    {selectedNodeData.artifactLinks.length}{' '}
+                    {t('myWorkIdeas.contextPanel.artifacts')}
                   </div>
                 )}
                 {selectedNodeData.evidenceLinks.length > 0 && (
                   <div className="text-[10px] text-slate-500">
                     <Link2 size={9} className="inline mr-1" />
-                    {selectedNodeData.evidenceLinks.length} {isPl ? 'dowodów' : 'evidence links'}
+                    {selectedNodeData.evidenceLinks.length}{' '}
+                    {t('myWorkIdeas.contextPanel.evidenceLinks')}
                   </div>
                 )}
               </div>
@@ -703,7 +701,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         ) : (
           <div className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 bg-slate-50/30 dark:bg-navy-900/20 p-2.5 text-center">
             <div className="text-[10px] text-slate-600 dark:text-slate-500">
-              {isPl ? 'Kliknij węzeł, aby zobaczyć szczegóły' : 'Click a node to see details'}
+              {t('myWorkIdeas.contextPanel.clickNodeSeeDetails')}
             </div>
           </div>
         )}
@@ -717,7 +715,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           >
             <BarChart3 size={12} className="text-slate-500" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex-1">
-              {isPl ? 'Statystyki mapy' : 'Map Statistics'}
+              {t('myWorkIdeas.contextPanel.mapStatistics')}
             </span>
             {expandedSections.has('map_stats') ? (
               <ChevronUp size={12} className="text-slate-600" />
@@ -732,19 +730,23 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
                     {mapStats.total}
                   </div>
-                  <div className="text-[9px] text-slate-600">{isPl ? 'Węzłów' : 'Nodes'}</div>
+                  <div className="text-[9px] text-slate-600">
+                    {t('myWorkIdeas.contextPanel.nodes')}
+                  </div>
                 </div>
                 <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-slate-200/30 dark:border-navy-700/30">
                   <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
                     {mapStats.edges}
                   </div>
-                  <div className="text-[9px] text-slate-600">{isPl ? 'Połączeń' : 'Edges'}</div>
+                  <div className="text-[9px] text-slate-600">
+                    {t('myWorkIdeas.contextPanel.edges')}
+                  </div>
                 </div>
               </div>
               {Object.keys(mapStats.byStatus).length > 0 && (
                 <div>
                   <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    {isPl ? 'Wg statusu' : 'By status'}
+                    {t('myWorkIdeas.contextPanel.byStatus')}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {Object.entries(mapStats.byStatus).map(([s, count]) => (
@@ -761,7 +763,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               {Object.keys(mapStats.byType).length > 1 && (
                 <div>
                   <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    {isPl ? 'Wg typu' : 'By type'}
+                    {t('myWorkIdeas.contextPanel.byType')}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {Object.entries(mapStats.byType)
@@ -779,12 +781,14 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               )}
               {stage && (
                 <div className="text-[10px] text-slate-500">
-                  {isPl ? 'Etap' : 'Stage'}: <span className="font-semibold">{stage}</span>
+                  {t('myWorkIdeas.contextPanel.stage')}:{' '}
+                  <span className="font-semibold">{stage}</span>
                 </div>
               )}
               {activeTool && (
                 <div className="text-[10px] text-slate-500">
-                  {isPl ? 'Narzędzie' : 'Tool'}: <span className="font-semibold">{activeTool}</span>
+                  {t('myWorkIdeas.contextPanel.tool')}:{' '}
+                  <span className="font-semibold">{activeTool}</span>
                 </div>
               )}
             </div>
@@ -801,7 +805,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             >
               <AlertTriangle size={12} className="text-amber-500" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex-1">
-                {isPl ? 'Ostrzeżenia' : 'Warnings'} ({warnings.length})
+                {t('myWorkIdeas.contextPanel.warnings')} ({warnings.length})
               </span>
               {expandedSections.has('warnings') ? (
                 <ChevronUp size={12} className="text-amber-400" />
@@ -822,7 +826,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 ))}
                 {warnings.length > 10 && (
                   <div className="text-[9px] text-amber-500">
-                    +{warnings.length - 10} {isPl ? 'więcej' : 'more'}
+                    +{warnings.length - 10} {t('myWorkIdeas.contextPanel.more')}
                   </div>
                 )}
               </div>
@@ -832,7 +836,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
 
         {/* V4-IDEA-09: EmbeddedView for "Used in" parity with Notebook/Tools/Initiatives */}
         <EmbeddedView
-          title={isPl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
+          title={t('myWorkIdeas.contextPanel.usedBacklinks')}
           count={backlinks.length}
           loading={loading}
           readOnly
@@ -840,7 +844,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         >
           {backlinks.length === 0 && !loading ? (
             <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-              {isPl ? 'Brak powiązań' : 'No links yet'}
+              {t('myWorkIdeas.contextPanel.noLinksYet')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -878,7 +882,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           >
             <StickyNote size={12} className="text-amber-500" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex-1">
-              {isPl ? 'Notatki' : 'Notes'} ({notes.length})
+              {t('myWorkIdeas.contextPanel.notes2')} ({notes.length})
             </span>
             {expandedSections.has('notes') ? (
               <ChevronUp size={12} className="text-amber-400" />
@@ -905,7 +909,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 <input
                   value={newNoteText}
                   onChange={(e) => setNewNoteText(e.target.value)}
-                  placeholder={isPl ? 'Dodaj notatkę...' : 'Add a note...'}
+                  placeholder={t('myWorkIdeas.contextPanel.addNote')}
                   className="flex-1 text-[10px] px-2 py-1 rounded-lg border border-amber-200/40 dark:border-amber-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-amber-400/40"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && newNoteText.trim()) {
@@ -945,7 +949,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               </div>
               {notes.length === 0 && (
                 <div className="text-[10px] text-slate-600">
-                  {isPl ? 'Brak notatek' : 'No notes yet'}
+                  {t('myWorkIdeas.contextPanel.noNotesYet')}
                 </div>
               )}
             </div>
@@ -961,7 +965,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           >
             <Shield size={12} className="text-blue-500" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex-1">
-              {isPl ? 'Dowody' : 'Evidence'} ({evidence.length})
+              {t('myWorkIdeas.contextPanel.evidence')} ({evidence.length})
             </span>
             {expandedSections.has('evidence') ? (
               <ChevronUp size={12} className="text-blue-400" />
@@ -993,7 +997,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const url = window.prompt(isPl ? 'Wklej URL:' : 'Paste URL:');
+                    const url = window.prompt(t('myWorkIdeas.contextPanel.pasteUrl'));
                     if (url?.trim()) {
                       const ev: EvidenceItem = {
                         id: `ev-url-${Date.now()}`,
@@ -1008,14 +1012,12 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                 >
                   <Link2 size={9} />
-                  {isPl ? 'Dodaj URL' : 'Add URL'}
+                  {t('myWorkIdeas.contextPanel.addUrl')}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    const text = window.prompt(
-                      isPl ? 'Wklej tekst dowodu:' : 'Paste evidence text:'
-                    );
+                    const text = window.prompt(t('myWorkIdeas.contextPanel.pasteEvidenceText'));
                     if (text?.trim()) {
                       const ev: EvidenceItem = {
                         id: `ev-note-${Date.now()}`,
@@ -1029,7 +1031,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                 >
                   <FileText size={9} />
-                  {isPl ? 'Importuj tekst' : 'Import text'}
+                  {t('myWorkIdeas.contextPanel.importText')}
                 </button>
                 <button
                   type="button"
@@ -1043,14 +1045,12 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                 >
                   <Plus size={9} />
-                  {isPl ? 'Na canvas' : 'To canvas'}
+                  {t('myWorkIdeas.contextPanel.toCanvas')}
                 </button>
               </div>
               {evidence.length === 0 && (
                 <div className="text-[10px] text-slate-600 mt-1">
-                  {isPl
-                    ? 'Dodaj dowody przez URL, tekst lub kartę na canvas'
-                    : 'Add evidence via URL, text, or canvas card'}
+                  {t('myWorkIdeas.contextPanel.addEvidenceViaUrlTextOr')}
                 </div>
               )}
             </div>
@@ -1067,12 +1067,8 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             <Paperclip size={12} className="text-indigo-500" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex-1">
               {selectedNodeId
-                ? isPl
-                  ? 'Artefakty węzła'
-                  : 'Node Artifacts'
-                : isPl
-                  ? 'Powiązane artefakty'
-                  : 'Linked Artifacts'}{' '}
+                ? t('myWorkIdeas.contextPanel.nodeArtifacts')
+                : t('myWorkIdeas.contextPanel.linkedArtifacts')}{' '}
               ({displayedArtifacts.length})
             </span>
             {expandedSections.has('artifacts') ? (
@@ -1102,9 +1098,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               ))}
               {displayedArtifacts.length === 0 && (
                 <div className="text-[10px] text-slate-600">
-                  {isPl
-                    ? 'Dodaj karty wiedzy na canvas, aby je tu zobaczyć'
-                    : 'Add knowledge cards on canvas to see them here'}
+                  {t('myWorkIdeas.contextPanel.addKnowledgeCardsCanvasSeeThem')}
                 </div>
               )}
             </div>
@@ -1116,16 +1110,12 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           <div className="flex items-center gap-1.5 mb-2">
             <Search size={12} className="text-c-info" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-c-info">
-              {isPl ? 'Szukaj wiedzy' : 'Search Knowledge'}
+              {t('myWorkIdeas.contextPanel.searchKnowledge')}
             </span>
           </div>
           <div className="flex gap-1">
             <input
-              placeholder={
-                isPl
-                  ? 'Szukaj w wywiadach, narzędziach, notatkach...'
-                  : 'Search interviews, tools, notes...'
-              }
+              placeholder={t('myWorkIdeas.contextPanel.searchInterviewsToolsNotes')}
               className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-c-info/20 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-c-focus"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -1134,9 +1124,9 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                     window.dispatchEvent(
                       new CustomEvent('idea-workspace-chat-prompt', {
                         detail: {
-                          prompt: isPl
-                            ? `Znajdź w bazie wiedzy firmy informacje związane z: "${query}". Zwróć kluczowe fakty, insights i źródła.`
-                            : `Search the company knowledge base for information related to: "${query}". Return key facts, insights, and sources.`,
+                          prompt: t('myWorkIdeas.contextPanel.searchKnowledgeBasePrompt', {
+                            value: query,
+                          }),
                           ideaId,
                         },
                       })
@@ -1169,9 +1159,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   window.dispatchEvent(
                     new CustomEvent('idea-workspace-chat-prompt', {
                       detail: {
-                        prompt: isPl
-                          ? `Przeszukaj ${src.labelPl.toLowerCase()} i znajdź informacje powiązane z: "${title}". Zwróć jako karty wiedzy.`
-                          : `Search ${src.labelEn.toLowerCase()} and find information related to: "${title}". Return as knowledge cards.`,
+                        prompt: t('myWorkIdeas.contextPanel.searchSourcePrompt', {
+                          label: (isPl ? src.labelPl : src.labelEn).toLowerCase(),
+                          value: title,
+                        }),
                         ideaId,
                       },
                     })
@@ -1197,7 +1188,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-danger-700 dark:text-danger-300 bg-danger-100/60 dark:bg-danger-900/20 hover:bg-danger-200/60 transition-colors"
             >
               <RefreshCw size={10} />
-              {isPl ? 'Spróbuj ponownie' : 'Retry'}
+              {t('myWorkIdeas.contextPanel.retry')}
             </button>
           </div>
         ) : (
@@ -1264,7 +1255,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                               <button
                                 onClick={() => handleInsert(item)}
                                 className="text-c-info hover:text-c-info/80 transition-colors shrink-0 mt-0.5"
-                                title={isPl ? 'Dodaj na canvas' : 'Add to canvas'}
+                                title={t('myWorkIdeas.contextPanel.addCanvas')}
                               >
                                 <Plus size={14} />
                               </button>
@@ -1280,9 +1271,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
 
             {contextItems.length === 0 && (
               <div className="text-center py-8 text-[11px] text-slate-600">
-                {isPl
-                  ? 'Brak kontekstu. Dodaj opis wyzwania.'
-                  : 'No context yet. Add a challenge description.'}
+                {t('myWorkIdeas.contextPanel.noContextYetAddChallengeDescription')}
               </div>
             )}
           </div>
