@@ -15,9 +15,11 @@
  * Fail-safe: a backend error keeps the local session draft and surfaces a toast
  * instead of breaking the tool flow — identical to the SWOT reference fix.
  */
+import type { TFunction } from 'i18next';
 import { Lightbulb } from 'lucide-react';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { InitiativeDraft, ToolSession, useToolStore } from '@/store/useToolStore';
@@ -106,10 +108,10 @@ function collectLinkedItems(move: ToolMoveLike): string[] {
 export async function createInitiativeFromMove(params: {
   session: ToolSession;
   move: ToolMoveLike;
-  isPolish: boolean;
+  t: TFunction;
   addInitiative: (initiative: Omit<InitiativeDraft, 'id'>) => void;
 }): Promise<boolean> {
-  const { session, move, isPolish, addInitiative } = params;
+  const { session, move, t, addInitiative } = params;
   const description = move.rationale || move.title;
   const impact = move.expectedImpact || 'medium';
   const effort = move.estimatedEffort || 'medium';
@@ -138,17 +140,11 @@ export async function createInitiativeFromMove(params: {
       sourceType: 'tool',
       sourceId: session.id,
     });
-    toast.success(
-      isPolish ? 'Inicjatywa utworzona w module Inicjatywy' : 'Initiative created in Initiatives'
-    );
+    toast.success(t('discoveryToolsSteps.createInitiativeFromMove.createdToast'));
     return true;
   } catch (err) {
     console.error('[Tools] initiative handoff failed:', err);
-    toast.error(
-      isPolish
-        ? 'Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia'
-        : 'Could not save the initiative to the Initiatives module — draft kept in the tool session'
-    );
+    toast.error(t('discoveryToolsSteps.createInitiativeFromMove.saveFailedToast'));
     return false;
   }
 }
@@ -160,7 +156,6 @@ export async function createInitiativeFromMove(params: {
 export function CreateInitiativeFromMoveButton({
   session,
   move,
-  isPolish,
   className,
 }: {
   session: ToolSession;
@@ -168,6 +163,7 @@ export function CreateInitiativeFromMoveButton({
   isPolish: boolean;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const { addInitiative } = useToolStore();
   const [busy, setBusy] = useState(false);
 
@@ -175,7 +171,7 @@ export function CreateInitiativeFromMoveButton({
     if (busy) return;
     setBusy(true);
     try {
-      await createInitiativeFromMove({ session, move, isPolish, addInitiative });
+      await createInitiativeFromMove({ session, move, t, addInitiative });
     } finally {
       setBusy(false);
     }
@@ -193,12 +189,8 @@ export function CreateInitiativeFromMoveButton({
     >
       <Lightbulb className="h-3 w-3" />
       {busy
-        ? isPolish
-          ? 'Tworzenie…'
-          : 'Creating…'
-        : isPolish
-          ? 'Utwórz inicjatywę z tego ruchu'
-          : 'Create initiative from this move'}
+        ? t('discoveryToolsSteps.createInitiativeFromMove.creating')
+        : t('discoveryToolsSteps.createInitiativeFromMove.createFromMove')}
     </button>
   );
 }

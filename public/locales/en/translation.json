@@ -27525,6 +27525,12 @@
       "pdfExportHint": "If you are in the tool document view, export uses the hidden report template.",
       "exporting": "Exporting...",
       "downloadPdf": "Download PDF"
+    },
+    "createInitiativeFromMove": {
+      "createdToast": "Initiative created in Initiatives",
+      "saveFailedToast": "Could not save the initiative to the Initiatives module — draft kept in the tool session",
+      "creating": "Creating…",
+      "createFromMove": "Create initiative from this move"
     }
   }
 }

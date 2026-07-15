@@ -28601,6 +28601,12 @@
       "pdfExportHint": "Jeśli pracujesz w widoku dokumentu narzędzia, eksport użyje ukrytego szablonu raportu.",
       "exporting": "Eksport...",
       "downloadPdf": "Pobierz PDF"
+    },
+    "createInitiativeFromMove": {
+      "createdToast": "Inicjatywa utworzona w module Inicjatywy",
+      "saveFailedToast": "Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia",
+      "creating": "Tworzenie…",
+      "createFromMove": "Utwórz inicjatywę z tego ruchu"
     }
   }
 }
