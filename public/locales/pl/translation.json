@@ -27934,6 +27934,25 @@
       "stepOf": "Krok {{current}}/{{total}}",
       "finish": "Zakończ",
       "next": "Następny"
+    },
+    "toolHeader": {
+      "help": "Pomoc",
+      "requestReview": "Request review",
+      "export": "Eksportuj",
+      "createInitiative": "Utwórz inicjatywę"
+    },
+    "generateInitiativesModal": {
+      "title": "Generate initiatives",
+      "initiativesCount": "Liczba inicjatyw",
+      "customPlaceholder": "Custom (1-7)",
+      "methodology": "Metodyka",
+      "decisionOwner": "Decision Owner",
+      "optional": "(opcjonalnie)",
+      "selectPlaceholder": "-- Wybierz --",
+      "includeChatContext": "Include AI chat context",
+      "previewList": "Preview list",
+      "cancel": "Anuluj",
+      "generateDrafts": "Generate drafts"
     }
   }
 }

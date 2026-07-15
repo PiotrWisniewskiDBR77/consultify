@@ -5,6 +5,7 @@
 
 import { X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -42,6 +43,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
   onClose,
   onGenerate,
 }) => {
+  const { t } = useTranslation();
   const [count, setCount] = useState(defaults.count);
   const [customCount, setCustomCount] = useState('');
   const [methodologyId, setMethodologyId] = useState(defaults.methodologyId);
@@ -85,7 +87,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
       <div className="w-full max-w-lg bg-white dark:bg-navy-900 rounded-xl shadow-lg border border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
+            {t('discoveryToolsMain.generateInitiativesModal.title')}
           </h3>
           <button
             onClick={onClose}
@@ -98,7 +100,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
         <div className="px-5 py-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Liczba inicjatyw' : 'Initiatives count'}
+              {t('discoveryToolsMain.generateInitiativesModal.initiativesCount')}
             </label>
             <div className="grid grid-cols-5 gap-2">
               {[3, 4, 5, 6, 7].map((value) => (
@@ -122,7 +124,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 max={7}
                 value={customCount}
                 onChange={(e) => setCustomCount(e.target.value)}
-                placeholder={isPolish ? 'Custom (1-7)' : 'Custom (1-7)'}
+                placeholder={t('discoveryToolsMain.generateInitiativesModal.customPlaceholder')}
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm bg-white dark:bg-navy-900"
               />
             </div>
@@ -130,7 +132,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Metodyka' : 'Methodology'}
+              {t('discoveryToolsMain.generateInitiativesModal.methodology')}
             </label>
             <div className="space-y-2">
               {METHODOLOGIES.map((method) => (
@@ -150,15 +152,15 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Decision Owner' : 'Decision Owner'}{' '}
-              {isPolish ? '(opcjonalnie)' : '(optional)'}
+              {t('discoveryToolsMain.generateInitiativesModal.decisionOwner')}{' '}
+              {t('discoveryToolsMain.generateInitiativesModal.optional')}
             </label>
             <select
               value={decisionOwnerId}
               onChange={(e) => setDecisionOwnerId(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm bg-white dark:bg-navy-900"
             >
-              <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
+              <option value="">{t('discoveryToolsMain.generateInitiativesModal.selectPlaceholder')}</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name || user.email || user.id}
@@ -173,12 +175,12 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               checked={includeChatContext}
               onChange={(e) => setIncludeChatContext(e.target.checked)}
             />
-            {isPolish ? 'Include AI chat context' : 'Include AI chat context'}
+            {t('discoveryToolsMain.generateInitiativesModal.includeChatContext')}
           </label>
 
           <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
             <div className="text-xs text-slate-500 mb-2">
-              {isPolish ? 'Preview list' : 'Preview list'}
+              {t('discoveryToolsMain.generateInitiativesModal.previewList')}
             </div>
             <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
               {Array.from({ length: finalCount }).map((_, idx) => (
@@ -196,13 +198,13 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700"
           >
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('discoveryToolsMain.generateInitiativesModal.cancel')}
           </button>
           <button
             onClick={handleGenerate}
             className="px-4 py-2 rounded-lg text-sm text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
           >
-            {isPolish ? 'Generate drafts' : 'Generate drafts'}
+            {t('discoveryToolsMain.generateInitiativesModal.generateDrafts')}
           </button>
         </div>
       </div>

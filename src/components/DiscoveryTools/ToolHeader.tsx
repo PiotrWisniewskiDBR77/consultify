@@ -6,6 +6,7 @@
 
 import { ArrowLeft, Check, Download, HelpCircle, Lightbulb } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { StepDefinition, ToolType } from '@/store/useToolStore';
 
@@ -57,18 +58,9 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
   canRequestReview,
   isPolish,
 }) => {
-  const statusLabel =
-    toolStatus === 'REVIEW'
-      ? isPolish
-        ? 'REVIEW'
-        : 'REVIEW'
-      : toolStatus === 'APPROVED'
-        ? isPolish
-          ? 'APPROVED'
-          : 'APPROVED'
-        : isPolish
-          ? 'DRAFT'
-          : 'DRAFT';
+  const { t } = useTranslation();
+  // Status codes are identical in both languages (REVIEW/APPROVED/DRAFT), no translation needed.
+  const statusLabel = toolStatus;
 
   return (
     <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
@@ -120,7 +112,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
             <button
               onClick={onHelp}
               className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-400 transition-colors"
-              title={isPolish ? 'Pomoc' : 'Help'}
+              title={t('discoveryToolsMain.toolHeader.help')}
             >
               <HelpCircle className="w-5 h-5" />
             </button>
@@ -136,14 +128,14 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
               } text-sm font-medium transition-colors`}
             >
               <Check className="w-4 h-4" />
-              {isPolish ? 'Request review' : 'Request review'}
+              {t('discoveryToolsMain.toolHeader.requestReview')}
             </button>
           )}
           {onExport && (
             <button
               onClick={onExport}
               className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-400 transition-colors"
-              title={isPolish ? 'Eksportuj' : 'Export'}
+              title={t('discoveryToolsMain.toolHeader.export')}
             >
               <Download className="w-5 h-5" />
             </button>
@@ -154,7 +146,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
               className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-${toolMeta.color}-500 hover:bg-${toolMeta.color}-600 text-white text-sm font-medium transition-colors`}
             >
               <Lightbulb className="w-4 h-4" />
-              {isPolish ? 'Utwórz inicjatywę' : 'Create Initiative'}
+              {t('discoveryToolsMain.toolHeader.createInitiative')}
             </button>
           )}
         </div>
