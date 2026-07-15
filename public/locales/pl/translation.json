@@ -28334,6 +28334,38 @@
       "convertedFromSource": "Konwersja z {{typeLabel}}: {{title}}",
       "overdueDate": "Po terminie: {{date}}",
       "itemTitlePlaceholder": "Nazwa {{typeLabelLower}}..."
+    },
+    "nModeCardState": {
+      "aiDraftTooltip": "Wersja robocza AI — do weryfikacji",
+      "aiDraftBadge": "AI-draft",
+      "editedTooltip": "Zmienione ręcznie",
+      "editedBadge": "Edytowane",
+      "doneTooltip": "Zaakceptowane",
+      "doneBadge": "Gotowe",
+      "errorTooltip": "Błąd generacji",
+      "errorBadge": "Błąd",
+      "generatingTooltip": "AI generuje…",
+      "generatingBadge": "Generowanie",
+      "clearAction": "Wyczyść",
+      "cardHistoryAction": "Historia karty",
+      "hideSectionAction": "Ukryj sekcję",
+      "moreTooltip": "Więcej",
+      "moreCardActionsLabel": "Więcej akcji karty",
+      "confirmOverwritePrompt": "Regeneracja zastąpi Twoje ręczne zmiany. Kontynuować?",
+      "aiGeneratedLabel": "Treść AI",
+      "regenerateTooltip": "Napisz kartę od nowa z AI",
+      "regenerateAction": "Regeneruj",
+      "editManuallyTooltip": "Edytuj ręcznie",
+      "editAction": "Edytuj",
+      "acceptCardTooltip": "Zaakceptuj kartę",
+      "acceptAction": "Zaakceptuj",
+      "teresaWriting": "Teresa pisze…",
+      "sectionEmptyHint": "Ta sekcja jest jeszcze pusta.",
+      "generateWithAiAction": "Wygeneruj z AI",
+      "fillManuallyAction": "Wypełnij ręcznie",
+      "generationFailedMessage": "Nie udało się wygenerować tej karty.",
+      "errorNotYourFaultHint": "To był błąd po naszej stronie — nie Twoja wina.",
+      "tryAgainAction": "Spróbuj ponownie"
     }
   }
 }

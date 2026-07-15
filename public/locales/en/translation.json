@@ -27258,6 +27258,38 @@
       "convertedFromSource": "Converted from {{typeLabel}}: {{title}}",
       "overdueDate": "Overdue: {{date}}",
       "itemTitlePlaceholder": "{{typeLabel}} name..."
+    },
+    "nModeCardState": {
+      "aiDraftTooltip": "AI draft — needs review",
+      "aiDraftBadge": "AI draft",
+      "editedTooltip": "Edited manually",
+      "editedBadge": "Edited",
+      "doneTooltip": "Accepted",
+      "doneBadge": "Done",
+      "errorTooltip": "Generation error",
+      "errorBadge": "Error",
+      "generatingTooltip": "AI generating…",
+      "generatingBadge": "Generating",
+      "clearAction": "Clear",
+      "cardHistoryAction": "Card history",
+      "hideSectionAction": "Hide section",
+      "moreTooltip": "More",
+      "moreCardActionsLabel": "More card actions",
+      "confirmOverwritePrompt": "Regenerating will overwrite your manual edits. Continue?",
+      "aiGeneratedLabel": "AI-generated",
+      "regenerateTooltip": "Regenerate this card with AI",
+      "regenerateAction": "Regenerate",
+      "editManuallyTooltip": "Edit manually",
+      "editAction": "Edit",
+      "acceptCardTooltip": "Accept card",
+      "acceptAction": "Accept",
+      "teresaWriting": "Teresa is writing…",
+      "sectionEmptyHint": "This section is still empty.",
+      "generateWithAiAction": "Generate with AI",
+      "fillManuallyAction": "Fill manually",
+      "generationFailedMessage": "This card couldn't be generated.",
+      "errorNotYourFaultHint": "That was an error on our side — not your fault.",
+      "tryAgainAction": "Try again"
     }
   }
 }
