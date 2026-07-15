@@ -28547,6 +28547,19 @@
       "lowForce": "Niska siła",
       "moderate": "Umiarkowana",
       "highForce": "Wysoka siła"
+    },
+    "reasoningStep": {
+      "add": "Dodaj",
+      "remove": "Usuń",
+      "noItems": "Brak elementów.",
+      "title": "Uzasadnienie",
+      "subtitle": "Zapisz logikę: co jest evidence, co jest założeniem i gdzie są znaki zapytania.",
+      "narrative": "Narracja",
+      "narrativePlaceholder": "Dlaczego te wyniki wynikają z danych i obserwacji?",
+      "evidence": "Evidence / fakty",
+      "evidencePlaceholder": "Dodaj evidence...",
+      "openQuestions": "Otwarte pytania",
+      "openQuestionsPlaceholder": "Dodaj pytanie..."
     }
   }
 }

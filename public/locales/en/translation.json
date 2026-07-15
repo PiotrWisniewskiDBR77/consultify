@@ -27471,6 +27471,19 @@
       "lowForce": "Low force",
       "moderate": "Moderate",
       "highForce": "High force"
+    },
+    "reasoningStep": {
+      "add": "Add",
+      "remove": "Remove",
+      "noItems": "No items.",
+      "title": "Reasoning",
+      "subtitle": "Capture the logic: evidence vs assumptions and what remains unknown.",
+      "narrative": "Narrative",
+      "narrativePlaceholder": "Why do these results follow from your inputs and observations?",
+      "evidence": "Evidence / facts",
+      "evidencePlaceholder": "Add evidence...",
+      "openQuestions": "Open questions",
+      "openQuestionsPlaceholder": "Add a question..."
     }
   }
 }

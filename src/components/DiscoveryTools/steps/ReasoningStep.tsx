@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ToolFlowReasoning, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -68,7 +69,8 @@ function BulletListEditor(props: {
 }
 
 export function ReasoningStep(props: { session: ToolSession; isPolish: boolean }) {
-  const { session, isPolish } = props;
+  const { session } = props;
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
 
   const flow = (session.inputData as any)?.flow || {};
@@ -88,43 +90,37 @@ export function ReasoningStep(props: { session: ToolSession; isPolish: boolean }
     });
   };
 
-  const addLabel = isPolish ? 'Dodaj' : 'Add';
-  const removeLabel = isPolish ? 'Usuń' : 'Remove';
-  const emptyLabel = isPolish ? 'Brak elementów.' : 'No items.';
+  const addLabel = t('discoveryToolsSteps.reasoningStep.add');
+  const removeLabel = t('discoveryToolsSteps.reasoningStep.remove');
+  const emptyLabel = t('discoveryToolsSteps.reasoningStep.noItems');
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Uzasadnienie' : 'Reasoning'}
+          {t('discoveryToolsSteps.reasoningStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zapisz logikę: co jest evidence, co jest założeniem i gdzie są znaki zapytania.'
-            : 'Capture the logic: evidence vs assumptions and what remains unknown.'}
+          {t('discoveryToolsSteps.reasoningStep.subtitle')}
         </p>
       </div>
 
       <div className="space-y-2">
         <div className="text-sm font-medium text-slate-900 dark:text-white">
-          {isPolish ? 'Narracja' : 'Narrative'}
+          {t('discoveryToolsSteps.reasoningStep.narrative')}
         </div>
         <textarea
           value={reasoning.narrative}
           onChange={(e) => patch({ narrative: e.target.value })}
           rows={5}
-          placeholder={
-            isPolish
-              ? 'Dlaczego te wyniki wynikają z danych i obserwacji?'
-              : 'Why do these results follow from your inputs and observations?'
-          }
+          placeholder={t('discoveryToolsSteps.reasoningStep.narrativePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
       </div>
 
       <BulletListEditor
-        label={isPolish ? 'Evidence / fakty' : 'Evidence / facts'}
-        placeholder={isPolish ? 'Dodaj evidence...' : 'Add evidence...'}
+        label={t('discoveryToolsSteps.reasoningStep.evidence')}
+        placeholder={t('discoveryToolsSteps.reasoningStep.evidencePlaceholder')}
         items={reasoning.evidence}
         onChange={(items) => patch({ evidence: items })}
         addLabel={addLabel}
@@ -133,8 +129,8 @@ export function ReasoningStep(props: { session: ToolSession; isPolish: boolean }
       />
 
       <BulletListEditor
-        label={isPolish ? 'Otwarte pytania' : 'Open questions'}
-        placeholder={isPolish ? 'Dodaj pytanie...' : 'Add a question...'}
+        label={t('discoveryToolsSteps.reasoningStep.openQuestions')}
+        placeholder={t('discoveryToolsSteps.reasoningStep.openQuestionsPlaceholder')}
         items={reasoning.openQuestions}
         onChange={(items) => patch({ openQuestions: items })}
         addLabel={addLabel}
