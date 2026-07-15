@@ -26905,6 +26905,15 @@
       "cancel": "Cancel",
       "save": "Save",
       "new": "New"
+    },
+    "ganttView": {
+      "title": "Gantt Chart",
+      "configureFields": "Configure start and end date fields in view settings",
+      "tasks": "tasks",
+      "zoomDay": "Day",
+      "zoomWeek": "Week",
+      "zoomMonth": "Month",
+      "task": "Task"
     }
   },
   "myWorkNotebook": {

@@ -27965,6 +27965,15 @@
       "cancel": "Anuluj",
       "save": "Zapisz",
       "new": "Nowy"
+    },
+    "ganttView": {
+      "title": "Wykres Gantta",
+      "configureFields": "Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku",
+      "tasks": "zadań",
+      "zoomDay": "Dzień",
+      "zoomWeek": "Tydzień",
+      "zoomMonth": "Miesiąc",
+      "task": "Zadanie"
     }
   },
   "myWorkNotebook": {
