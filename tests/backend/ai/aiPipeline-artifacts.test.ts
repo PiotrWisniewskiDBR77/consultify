@@ -66,18 +66,11 @@ describe('aiPipeline - Artifacts', () => {
       expect(artifacts[0].metadata.framework).toBe('ISO');
     });
 
-    // TODO(bug, found 2026-07-15 reviving orphaned test): extractArtifacts() in
-    // server/src/services/ai/AIPipeline.ts extracts artifacts in two phases —
-    // first all ```artifact:type:lang:title blocks (with-language form), then all
-    // ```artifact:type:title blocks (no-language form) — and pushes matches to the
-    // `artifacts` array in per-phase order, not document order. So when an earlier
-    // block uses the no-language form and a later block uses the with-language
-    // form (e.g. markdown block first, then a code:javascript block), the code
-    // block is appended to `artifacts` before the markdown one even though it
-    // appears later in the source text. Any caller relying on `artifacts[]` order
-    // matching document order (e.g. rendering artifacts in reading order) gets
-    // them out of sequence. Not fixing here per instructions — code untouched.
-    it.skip('extracts multiple artifacts', () => {
+    // Fixed 2026-07-15: extractArtifacts() now collects matches with their
+    // source position and sorts the final `artifacts` array by that position,
+    // so results reflect document order regardless of which regex phase
+    // (with-language vs no-language vs JSON vs regular code block) found them.
+    it('extracts multiple artifacts', () => {
       const content = `
         \`\`\`artifact:markdown:Doc 1
         Content 1

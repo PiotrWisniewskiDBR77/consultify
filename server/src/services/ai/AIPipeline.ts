@@ -3132,7 +3132,11 @@ export function extractArtifacts(content: string): {
 } {
   if (!content) return { cleanContent: '', artifacts: [] };
 
-  const artifacts: AIArtifact[] = [];
+  // Collect matches alongside their position in the source text so the final
+  // `artifacts` array can be sorted into document order — the extraction below
+  // runs in multiple phases (one regex pass per artifact form), so the order
+  // matches themselves are found in is NOT the order they appear in the text.
+  const foundArtifacts: Array<{ index: number; artifact: AIArtifact }> = [];
   const processedPositions = new Set<number>();
 
   // Pattern for artifact blocks with language: ```artifact:type:language:title\ncontent\n```
@@ -3142,12 +3146,15 @@ export function extractArtifacts(content: string): {
   while ((match = artifactPatternWithLang.exec(content)) !== null) {
     const [, type, language, title, artifactContent] = match;
     processedPositions.add(match.index);
-    artifacts.push({
-      id: `art-${Math.random().toString(36).substring(2, 9)}`,
-      type: type as any,
-      title: title.trim(),
-      content: artifactContent.trim(),
-      language,
+    foundArtifacts.push({
+      index: match.index,
+      artifact: {
+        id: `art-${Math.random().toString(36).substring(2, 9)}`,
+        type: type as any,
+        title: title.trim(),
+        content: artifactContent.trim(),
+        language,
+      },
     });
   }
 
@@ -3159,11 +3166,14 @@ export function extractArtifacts(content: string): {
 
     const [, type, title, artifactContent] = match;
     processedPositions.add(match.index);
-    artifacts.push({
-      id: `art-${Math.random().toString(36).substring(2, 9)}`,
-      type: type as any,
-      title: title.trim(),
-      content: artifactContent.trim(),
+    foundArtifacts.push({
+      index: match.index,
+      artifact: {
+        id: `art-${Math.random().toString(36).substring(2, 9)}`,
+        type: type as any,
+        title: title.trim(),
+        content: artifactContent.trim(),
+      },
     });
   }
 
@@ -3173,12 +3183,15 @@ export function extractArtifacts(content: string): {
     try {
       const artifactDef = JSON.parse(match[1]);
       if (artifactDef.type && artifactDef.content) {
-        artifacts.push({
-          id: artifactDef.id || `art-${Math.random().toString(36).substring(2, 9)}`,
-          type: artifactDef.type,
-          title: artifactDef.title || 'Untitled',
-          content: artifactDef.content,
-          ...artifactDef,
+        foundArtifacts.push({
+          index: match.index,
+          artifact: {
+            id: artifactDef.id || `art-${Math.random().toString(36).substring(2, 9)}`,
+            type: artifactDef.type,
+            title: artifactDef.title || 'Untitled',
+            content: artifactDef.content,
+            ...artifactDef,
+          },
         });
       }
     } catch (e) {
@@ -3194,15 +3207,23 @@ export function extractArtifacts(content: string): {
     const [, language, codeContent] = match;
     if (codeContent.length > 100) {
       processedPositions.add(match.index);
-      artifacts.push({
-        id: `art-${Math.random().toString(36).substring(2, 9)}`,
-        type: 'code',
-        title: 'Code Snippet',
-        content: codeContent.trim(),
-        language: language || 'text',
+      foundArtifacts.push({
+        index: match.index,
+        artifact: {
+          id: `art-${Math.random().toString(36).substring(2, 9)}`,
+          type: 'code',
+          title: 'Code Snippet',
+          content: codeContent.trim(),
+          language: language || 'text',
+        },
       });
     }
   }
+
+  // Sort by position of first appearance in the source text so callers that
+  // rely on `artifacts[]` matching document/reading order get a stable result.
+  foundArtifacts.sort((a, b) => a.index - b.index);
+  const artifacts = foundArtifacts.map((found) => found.artifact);
 
   // Remove artifacts from content
   const cleanContent = content
@@ -3233,11 +3254,17 @@ export function extractThinkingSteps(content: string): {
   while ((match = thinkingPattern.exec(content)) !== null) {
     const thinkingContent = match[1].trim();
 
-    // Split into individual steps if numbered or bulleted
-    const stepLines = thinkingContent.split(/\n(?=\d+\.|[-*•])/);
+    // Split into individual steps if numbered or bulleted. Real AI output
+    // typically indents each list line (e.g. "        2. Then, ..."), so the
+    // lookahead must tolerate leading whitespace between the newline and the
+    // marker — otherwise indented lists never split and collapse into one step.
+    const stepLines = thinkingContent.split(/\n(?=[ \t]*(?:\d+\.|[-*•]))/);
 
     stepLines.forEach((line) => {
-      const cleanLine = line.replace(/^\d+\.\s*|^[-*•]\s*/, '').trim();
+      const cleanLine = line
+        .trim()
+        .replace(/^\d+\.\s*|^[-*•]\s*/, '')
+        .trim();
       if (cleanLine) {
         thinkingSteps.push({
           id: `think-${stepId++}`,
