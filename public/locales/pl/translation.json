@@ -28034,6 +28034,19 @@
       "skippedSuffix": "pominiętych",
       "failedSuffix": "błędnych",
       "errorDetails": "Szczegóły błędu"
+    },
+    "linkedRecordPicker": {
+      "title": "Powiązane rekordy",
+      "selected": "Wybrane",
+      "clickToExpand": "Kliknij aby rozwinąć",
+      "openFullRecord": "Otwórz pełny rekord",
+      "searchPlaceholder": "Szukaj rekordów...",
+      "noRecordsFound": "Brak rekordów",
+      "linked": "powiązany",
+      "createNewRecord": "Utwórz nowy rekord",
+      "selectedCount": "zaznaczonych",
+      "cancel": "Anuluj",
+      "confirm": "Potwierdź"
     }
   },
   "myWorkNotebook": {

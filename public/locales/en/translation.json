@@ -26974,6 +26974,19 @@
       "skippedSuffix": "skipped",
       "failedSuffix": "failed",
       "errorDetails": "Error details"
+    },
+    "linkedRecordPicker": {
+      "title": "Linked Records",
+      "selected": "Selected",
+      "clickToExpand": "Click to expand",
+      "openFullRecord": "Open full record",
+      "searchPlaceholder": "Search records...",
+      "noRecordsFound": "No records found",
+      "linked": "linked",
+      "createNewRecord": "Create new record",
+      "selectedCount": "selected",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
     }
   },
   "myWorkNotebook": {
