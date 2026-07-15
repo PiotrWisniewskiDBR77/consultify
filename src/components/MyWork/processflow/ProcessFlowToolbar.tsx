@@ -17,6 +17,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
@@ -215,6 +216,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   onOpenChat,
   onConvert,
 }) => {
+  const { t } = useTranslation();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const overflowRef = useRef<HTMLDivElement>(null);
 
@@ -247,11 +249,11 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           {/* UI-L13: ONE segmented mode control (was two redundant rows) */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {isPl ? 'Tryb' : 'Mode'}
+              {t('processFlow.toolbar.modeLabel', 'Mode')}
             </span>
             <div
               role="tablist"
-              aria-label={isPl ? 'Tryb przepływu' : 'Flow mode'}
+              aria-label={t('processFlow.toolbar.flowModeAriaLabel', 'Flow mode')}
               className="flex items-center gap-0.5 rounded-lg bg-c-surface-raised p-0.5"
             >
               {(['classic', 'automation', 'vsm'] as ProcessFlowMode[]).map((mode) => {
@@ -282,7 +284,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             {kitLabel && (
               <span
                 className="inline-flex items-center rounded-full bg-c-accent-soft px-2 py-0.5 text-[10px] font-medium text-c-accent"
-                title={isPl ? 'Zestaw notacji ustawiony z czatu' : 'Notation kit set from chat'}
+                title={t('processFlow.toolbar.kitTitle', 'Notation kit set from chat')}
               >
                 {kitLabel}
               </span>
@@ -291,10 +293,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
 
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full bg-c-surface px-2.5 py-1 text-[10px] font-medium text-c-text-secondary">
-              {isPl ? `Kroki ${stepCount}` : `Steps ${stepCount}`}
+              {t('processFlow.toolbar.stepsCount', 'Steps {{value}}', { value: stepCount })}
             </span>
             <span className="inline-flex items-center rounded-full bg-c-surface px-2.5 py-1 text-[10px] font-medium text-c-text-secondary">
-              {isPl ? `Lanes ${laneCount}` : `Lanes ${laneCount}`}
+              {/* Both locales render the same "Lanes N" string (term kept in EN
+                  intentionally in the original code) — no translation needed. */}
+              {`Lanes ${laneCount}`}
             </span>
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${
@@ -304,17 +308,18 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               }`}
             >
               {warnings.length > 0
-                ? isPl
-                  ? `Ostrzeżenia ${warnings.length}`
-                  : `Warnings ${warnings.length}`
-                : isPl
-                  ? 'Brak ostrzeżeń'
-                  : 'No warnings'}
+                ? t('processFlow.toolbar.warningsCount', 'Warnings {{value}}', {
+                    value: warnings.length,
+                  })
+                : t('processFlow.toolbar.noWarnings', 'No warnings')}
             </span>
           </div>
         </div>
 
         {/* Mode guidance line (single, contextual — replaces the redundant stage badge) */}
+        {/* `guidance` is the shared FLOW_MODE_GUIDANCE record (also consumed by
+            IdeaProcessFlowTool.tsx) — left as isPl-selected data, not converted
+            here to avoid diverging from that shared contract. */}
         <p className="-mt-1 text-[11px] text-c-text-secondary">
           {isPl ? guidance.pl : guidance.en}
         </p>
@@ -324,7 +329,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           {/* Build flow */}
           <div className="flex-1 min-w-[320px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
             <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {isPl ? 'Budowanie procesu' : 'Build flow'}
+              {t('processFlow.toolbar.buildFlow', 'Build flow')}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               {availableShapes.map((shape) => {
@@ -350,7 +355,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 onClick={addLane}
                 disabled={locked}
                 className={BTN}
-                title={isPl ? 'Dodaj lane' : 'Add lane'}
+                title={t('processFlow.toolbar.addLane', 'Add lane')}
               >
                 <Plus size={14} />
                 Lane
@@ -360,20 +365,20 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 onClick={insertBetween}
                 disabled={locked}
                 className={BTN}
-                title={isPl ? 'Wstaw krok między' : 'Insert between'}
+                title={t('processFlow.toolbar.insertBetweenTitle', 'Insert between')}
               >
                 <Plus size={14} />
-                {isPl ? 'Wstaw' : 'Insert'}
+                {t('processFlow.toolbar.insert', 'Insert')}
               </button>
               <button
                 type="button"
                 onClick={splitPath}
                 disabled={locked}
                 className={BTN}
-                title={isPl ? 'Rozdziel ścieżkę' : 'Split path'}
+                title={t('processFlow.toolbar.splitPathTitle', 'Split path')}
               >
                 <GitMerge size={14} />
-                {isPl ? 'Rozdziel' : 'Split'}
+                {t('processFlow.toolbar.split', 'Split')}
               </button>
             </div>
           </div>
@@ -381,7 +386,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           {/* Analyze & validate */}
           <div className="flex-1 min-w-[260px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
             <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {isPl ? 'Analiza i walidacja' : 'Analyze and validate'}
+              {t('processFlow.toolbar.analyzeAndValidate', 'Analyze and validate')}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <button
@@ -405,10 +410,10 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                     ? 'text-warning-700 bg-warning-50 dark:bg-warning-900/20 dark:text-warning-300'
                     : 'text-warning-600 dark:text-warning-400 hover:bg-warning-50 dark:hover:bg-warning-900/20'
                 }`}
-                title={isPl ? 'Waliduj przepływ' : 'Validate flow'}
+                title={t('processFlow.toolbar.validateFlowTitle', 'Validate flow')}
               >
                 <AlertTriangle size={14} />
-                {isPl ? 'Waliduj' : 'Validate'}
+                {t('processFlow.toolbar.validate', 'Validate')}
               </button>
               <button
                 type="button"
@@ -437,14 +442,14 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                     ? 'text-success-700 bg-success-50 dark:bg-success-900/20 dark:text-success-300'
                     : 'text-success-600 dark:text-success-400 hover:bg-success-50 dark:hover:bg-success-900/20'
                 }`}
-                title={isPl ? 'Podsumowanie' : 'Summary'}
+                title={t('processFlow.toolbar.summaryTitle', 'Summary')}
               >
                 {summaryLoading ? (
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
                   <BarChart3 size={14} />
                 )}
-                {isPl ? 'Podsumuj' : 'Summary'}
+                {t('processFlow.toolbar.summarize', 'Summary')}
               </button>
               {onOpenReadback && (
                 <button
@@ -455,10 +460,10 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                       ? 'text-c-info bg-c-surface-raised'
                       : 'text-c-info hover:bg-c-surface-raised'
                   }`}
-                  title={isPl ? 'Odczyt semantyczny' : 'Semantic readback'}
+                  title={t('processFlow.toolbar.semanticReadbackTitle', 'Semantic readback')}
                 >
                   <ScanText size={14} />
-                  {isPl ? 'Odczyt' : 'Readback'}
+                  {t('processFlow.toolbar.readback', 'Readback')}
                 </button>
               )}
               {AI_PROPOSAL_ENABLED && onOpenAIProposal && (
@@ -471,10 +476,10 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                       ? 'text-c-tag-2 bg-c-surface-raised'
                       : 'text-c-tag-2 hover:bg-c-surface-raised'
                   }`}
-                  title={isPl ? 'Propozycja AI' : 'AI proposal'}
+                  title={t('processFlow.toolbar.aiProposalTitle', 'AI proposal')}
                 >
                   <Sparkles size={14} />
-                  {isPl ? 'Propozycja AI' : 'AI Proposal'}
+                  {t('processFlow.toolbar.aiProposalLabel', 'AI Proposal')}
                 </button>
               )}
             </div>
@@ -483,7 +488,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           {/* Manage canvas — command-row hierarchy: primary (max 4) · secondary · overflow "…" */}
           <div className="flex-1 min-w-[280px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
             <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {isPl ? 'Zarządzanie canvasem' : 'Manage canvas'}
+              {t('processFlow.toolbar.manageCanvas', 'Manage canvas')}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               {/* Primary: Save (strongest action) */}
@@ -498,7 +503,9 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 }`}
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
+                {saving
+                  ? t('processFlow.toolbar.saving', 'Saving…')
+                  : t('processFlow.toolbar.save', 'Save')}
               </button>
               {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
                 Mechanika sync (syncLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
@@ -511,8 +518,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 onClick={undo}
                 disabled={!canUndo || locked}
                 className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-30"
-                title={isPl ? 'Cofnij (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
-                aria-label={isPl ? 'Cofnij' : 'Undo'}
+                title={t('processFlow.toolbar.undoTitle', 'Undo (Ctrl+Z)')}
+                aria-label={t('processFlow.toolbar.undo', 'Undo')}
               >
                 <Undo2 size={14} />
               </button>
@@ -521,8 +528,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 onClick={redo}
                 disabled={!canRedo || locked}
                 className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-30"
-                title={isPl ? 'Ponów (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
-                aria-label={isPl ? 'Ponów' : 'Redo'}
+                title={t('processFlow.toolbar.redoTitle', 'Redo (Ctrl+Shift+Z)')}
+                aria-label={t('processFlow.toolbar.redo', 'Redo')}
               >
                 <Redo2 size={14} />
               </button>
@@ -531,7 +538,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 onClick={handleAutoLayout}
                 disabled={locked}
                 className={BTN}
-                title={isPl ? 'Auto układ' : 'Auto arrange'}
+                title={t('processFlow.toolbar.autoArrangeTitle', 'Auto arrange')}
               >
                 <LayoutGrid size={14} />
                 Auto
@@ -547,8 +554,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   aria-haspopup="menu"
                   aria-expanded={overflowOpen}
                   className={`${BTN} ${overflowOpen ? 'bg-c-surface-raised' : ''}`}
-                  title={isPl ? 'Więcej akcji' : 'More actions'}
-                  aria-label={isPl ? 'Więcej akcji' : 'More actions'}
+                  title={t('processFlow.toolbar.moreActions', 'More actions')}
+                  aria-label={t('processFlow.toolbar.moreActions', 'More actions')}
                 >
                   <MoreHorizontal size={16} />
                 </button>
@@ -568,7 +575,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                       className={OVERFLOW_ITEM}
                     >
                       <Copy size={14} />
-                      {isPl ? 'Duplikuj (Ctrl+D)' : 'Duplicate (Ctrl+D)'}
+                      {t('processFlow.toolbar.duplicateWithShortcut', 'Duplicate (Ctrl+D)')}
                     </button>
                     <button
                       type="button"
@@ -581,7 +588,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                       className={`${OVERFLOW_ITEM} text-danger-600 dark:text-danger-400`}
                     >
                       <Trash2 size={14} />
-                      {isPl ? 'Usuń zaznaczone' : 'Delete selected'}
+                      {t('processFlow.toolbar.deleteSelected', 'Delete selected')}
                     </button>
                     {onOpenChat && (
                       <>
@@ -596,7 +603,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                           className={OVERFLOW_ITEM}
                         >
                           <MessageSquare size={14} />
-                          {isPl ? 'Zapytaj AI o ten proces' : 'Ask AI about this process'}
+                          {t('processFlow.toolbar.askAiAboutProcess', 'Ask AI about this process')}
                         </button>
                       </>
                     )}
@@ -606,15 +613,24 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                         <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted">
                           <span className="inline-flex items-center gap-1">
                             <Rocket size={11} />
-                            {isPl ? 'Konwertuj' : 'Convert'}
+                            {t('processFlow.toolbar.convert', 'Convert')}
                           </span>
                         </div>
                         {(
                           [
-                            ['pf_convert_initiative', isPl ? 'Inicjatywa' : 'Initiative'],
-                            ['pf_convert_task_set', isPl ? 'Zadania' : 'Task set'],
-                            ['pf_convert_report', isPl ? 'Raport' : 'Report'],
-                            ['pf_convert_analysis', isPl ? 'Analiza' : 'Analysis'],
+                            [
+                              'pf_convert_initiative',
+                              t('processFlow.toolbar.convertInitiative', 'Initiative'),
+                            ],
+                            [
+                              'pf_convert_task_set',
+                              t('processFlow.toolbar.convertTaskSet', 'Task set'),
+                            ],
+                            ['pf_convert_report', t('processFlow.toolbar.convertReport', 'Report')],
+                            [
+                              'pf_convert_analysis',
+                              t('processFlow.toolbar.convertAnalysis', 'Analysis'),
+                            ],
                           ] as [string, string][]
                         ).map(([action, label]) => (
                           <button
