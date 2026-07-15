@@ -62,6 +62,40 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
   return { userId, orgId };
 };
 
+// Shared authz gate for facilitation *control* actions. Changing the phase, driving the
+// shared timer, ending the session, or assigning roles all mutate state that affects
+// every participant of a whiteboard session — they are facilitator privileges, not
+// per-member ones. Without this, any authenticated org member could end (or hijack the
+// phase/timer of) someone else's session. Allowed only if the requester is (a) the
+// session creator/owner (tool_facilitation_sessions.facilitator_id), (b) already holds
+// the 'facilitator' role in THIS session (tool_facilitation_roles), or (c) an org
+// admin/owner/superadmin. Returns true when allowed; otherwise writes a 403 with the
+// caller-supplied error/code and returns false. Org-scope is assumed already enforced by
+// the caller's getFacilitationSession(orgId, sessionId) fetch (cross-org → 404 first).
+const ensureFacilitatorControl = async (
+  req: AuthRequest,
+  res: Response,
+  session: unknown,
+  id: { userId: string; orgId: string },
+  sessionId: string,
+  forbidden: { error: string; code: string }
+): Promise<boolean> => {
+  const isSessionOwner = (session as { facilitator_id?: string }).facilitator_id === id.userId;
+  const isOrgAdmin = isOrgAdminRequester(req);
+  let isExistingFacilitator = false;
+  if (!isSessionOwner && !isOrgAdmin) {
+    const existingRole = await realtimePlatformService.getRoleForUser(
+      id.orgId,
+      sessionId,
+      id.userId
+    );
+    isExistingFacilitator = existingRole?.role_name === 'facilitator';
+  }
+  if (isSessionOwner || isOrgAdmin || isExistingFacilitator) return true;
+  res.status(403).json(forbidden);
+  return false;
+};
+
 // ═══════════════════════════════════════════
 // V4-ENT-06: Channels & Presence
 // ═══════════════════════════════════════════
@@ -588,6 +622,14 @@ router.put(
         });
         return;
       }
+      if (
+        !(await ensureFacilitatorControl(req, res, session, id, req.params.sessionId, {
+          error:
+            'Only the session facilitator, its creator, or an org admin can control this facilitation session',
+          code: 'REALTIME_FACILITATION_CONTROL_FORBIDDEN',
+        }))
+      )
+        return;
       res.json(
         await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState)
       );
@@ -630,6 +672,14 @@ router.put(
         });
         return;
       }
+      if (
+        !(await ensureFacilitatorControl(req, res, session, id, req.params.sessionId, {
+          error:
+            'Only the session facilitator, its creator, or an org admin can control this facilitation session',
+          code: 'REALTIME_FACILITATION_CONTROL_FORBIDDEN',
+        }))
+      )
+        return;
       res.json(await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase));
     } catch (error) {
       if (isRealtimeSubstrateUnavailableError(error)) {
@@ -661,6 +711,14 @@ router.post(
         });
         return;
       }
+      if (
+        !(await ensureFacilitatorControl(req, res, session, id, req.params.sessionId, {
+          error:
+            'Only the session facilitator, its creator, or an org admin can end this facilitation session',
+          code: 'REALTIME_FACILITATION_CONTROL_FORBIDDEN',
+        }))
+      )
+        return;
       res.json(await realtimePlatformService.endFacilitationSession(req.params.sessionId));
     } catch (error) {
       if (isRealtimeSubstrateUnavailableError(error)) {
@@ -706,6 +764,11 @@ router.post(
         });
         return;
       }
+      // No facilitator gate here (deliberate): casting a vote is ordinary participation,
+      // not session control. The voter is always the authenticated requester — voterId is
+      // taken from id.userId, never the body — so a member can only ever vote as
+      // themselves within their own org's session. Existence/org-scope is already enforced
+      // by the getFacilitationSession(orgId, sessionId) fetch above.
       const r = await realtimePlatformService.castVote(req.params.sessionId, {
         voterId: id.userId,
         ...p.data,
@@ -797,29 +860,16 @@ router.post(
       // AUTHZ GATE (security fix): assigning a facilitation role is a privilege
       // grant — without this check any authenticated org member could hand
       // themselves (or anyone else) the 'facilitator' role and its permissions
-      // (timer/voting/follow control) on someone else's session. Allowed only if
-      // the requester is (a) the session creator/owner, (b) already holds the
-      // 'facilitator' role in THIS session, or (c) an org admin/owner/superadmin.
-      const isSessionOwner = (session as { facilitator_id?: string }).facilitator_id === id.userId;
-      const isOrgAdmin = isOrgAdminRequester(req);
-      let isExistingFacilitator = false;
-      if (!isSessionOwner && !isOrgAdmin) {
-        const existingRole = await realtimePlatformService.getRoleForUser(
-          id.orgId,
-          req.params.sessionId,
-          id.userId
-        );
-        isExistingFacilitator = existingRole?.role_name === 'facilitator';
-      }
-
-      if (!isSessionOwner && !isOrgAdmin && !isExistingFacilitator) {
-        res.status(403).json({
+      // (timer/voting/follow control) on someone else's session. Same gate as the
+      // phase/timer/end control actions; keeps its role-specific error code.
+      if (
+        !(await ensureFacilitatorControl(req, res, session, id, req.params.sessionId, {
           error:
             'Only the session facilitator, its creator, or an org admin can assign facilitation roles',
           code: 'REALTIME_FACILITATION_ROLE_FORBIDDEN',
-        });
+        }))
+      )
         return;
-      }
 
       const r = await realtimePlatformService.assignRole(req.params.sessionId, p.data);
       res.status(201).json(r);
