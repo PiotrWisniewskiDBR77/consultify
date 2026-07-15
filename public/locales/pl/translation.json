@@ -28522,6 +28522,21 @@
       "rejectAiCard": "Odrzuć kartę AI",
       "rethinkPlaceholder": "Co AI ma poprawić?",
       "send": "Wyślij"
+    },
+    "prepareStep": {
+      "add": "Dodaj",
+      "remove": "Usuń",
+      "noItems": "Brak elementów.",
+      "title": "Przygotuj",
+      "subtitle": "Zamień analizę w plan: kolejne kroki, dane, stakeholderzy i horyzont.",
+      "nextSteps": "Kolejne kroki",
+      "nextStepsPlaceholder": "Dodaj krok...",
+      "stakeholders": "Stakeholderzy",
+      "stakeholdersPlaceholder": "Dodaj osobę/rolę...",
+      "dataNeeded": "Dane do zebrania",
+      "dataNeededPlaceholder": "Dodaj dane...",
+      "timeline": "Timeline",
+      "timelinePlaceholder": "np. 2 tygodnie discovery + 4 tygodnie wdrożenia"
     }
   }
 }

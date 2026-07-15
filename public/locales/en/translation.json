@@ -27446,6 +27446,21 @@
       "rejectAiCard": "Reject AI card",
       "rethinkPlaceholder": "What should AI improve?",
       "send": "Send"
+    },
+    "prepareStep": {
+      "add": "Add",
+      "remove": "Remove",
+      "noItems": "No items.",
+      "title": "Prepare",
+      "subtitle": "Turn analysis into a plan: next steps, data, stakeholders, and timeline.",
+      "nextSteps": "Next steps",
+      "nextStepsPlaceholder": "Add a step...",
+      "stakeholders": "Stakeholders",
+      "stakeholdersPlaceholder": "Add person/role...",
+      "dataNeeded": "Data to collect",
+      "dataNeededPlaceholder": "Add data...",
+      "timeline": "Timeline",
+      "timelinePlaceholder": "e.g. 2 weeks discovery + 4 weeks delivery"
     }
   }
 }
