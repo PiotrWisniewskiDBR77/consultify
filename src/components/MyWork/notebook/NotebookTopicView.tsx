@@ -60,7 +60,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
   onOpenNote,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
 
   const [agg, setAgg] = useState<TopicAggregate | null>(null);
@@ -75,12 +75,12 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
       const data = await v8Get<TopicAggregate>(`/notebook/topics/${topicId}`);
       setAgg(data);
     } catch (err: any) {
-      setError(err?.message || (isPl ? 'Nie udało się wczytać tematu' : 'Failed to load topic'));
+      setError(err?.message || t('myWorkNotebook.topicView.loadFailed'));
       setAgg(null);
     } finally {
       setLoading(false);
     }
-  }, [topicId, isPl]);
+  }, [topicId, isPl, t]);
 
   useEffect(() => {
     load();
@@ -105,13 +105,15 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
       <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2 min-w-0 text-sm font-semibold text-c-text">
           <Hash size={16} className="text-c-text-muted shrink-0" />
-          <span className="truncate">{agg?.topic?.name || (isPl ? 'Temat' : 'Topic')}</span>
+          <span className="truncate">
+            {agg?.topic?.name || t('myWorkNotebook.topicView.topic')}
+          </span>
         </div>
         {onClose && (
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkNotebook.topicView.close')}
           >
             <X size={14} />
           </button>
@@ -122,7 +124,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
         <div className="flex flex-col items-center gap-2 py-12 text-center">
           <Loader2 size={20} className="animate-spin text-c-text-muted" />
           <span className="text-xs text-c-text-muted">
-            {isPl ? 'Wczytywanie tematu…' : 'Loading topic…'}
+            {t('myWorkNotebook.topicView.loadingTopic')}
           </span>
         </div>
       ) : error ? (
@@ -132,7 +134,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
             onClick={load}
             className="px-3 py-1.5 rounded-lg bg-c-surface-raised hover:bg-c-border-subtle text-c-text-secondary text-xs font-medium"
           >
-            {isPl ? 'Spróbuj ponownie' : 'Retry'}
+            {t('myWorkNotebook.topicView.retry')}
           </button>
         </div>
       ) : agg ? (
@@ -143,29 +145,29 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
               <Stat
                 icon={<StickyNote size={14} />}
                 n={agg.counts.notes}
-                label={isPl ? 'notatki' : 'notes'}
+                label={t('myWorkNotebook.topicView.notesLabel')}
               />
               <Stat
                 icon={<FileText size={14} />}
                 n={agg.counts.outputs}
-                label={isPl ? 'outputy' : 'outputs'}
+                label={t('myWorkNotebook.topicView.outputsLabel')}
               />
               <Stat
                 icon={<Rocket size={14} />}
                 n={agg.counts.initiatives}
-                label={isPl ? 'inicjatywy' : 'initiatives'}
+                label={t('myWorkNotebook.topicView.initiativesLabel')}
               />
             </div>
             <p className="text-[11px] text-c-text-muted">
-              {isPl ? 'Ostatnio aktywny: ' : 'Last active: '}
+              {t('myWorkNotebook.topicView.lastActive')}
               {formatDate(agg.lastActiveAt, isPl)}
             </p>
           </div>
 
           {/* Notes */}
-          <Section title={isPl ? 'Notatki' : 'Notes'} count={agg.notes.length}>
+          <Section title={t('myWorkNotebook.topicView.notesSection')} count={agg.notes.length}>
             {agg.notes.length === 0 ? (
-              <Empty text={isPl ? 'Brak przypiętych notatek' : 'No pinned notes'} />
+              <Empty text={t('myWorkNotebook.topicView.noPinnedNotes')} />
             ) : (
               agg.notes.map((n) => (
                 <button
@@ -175,7 +177,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-c-text truncate">
-                      {n.title || (isPl ? 'Bez tytułu' : 'Untitled')}
+                      {n.title || t('myWorkNotebook.topicView.untitled')}
                     </span>
                     {n.source === 'ai' && (
                       <span className="text-[11px] uppercase tracking-wide text-c-text-muted shrink-0">
@@ -192,9 +194,12 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
           </Section>
 
           {/* Outputs */}
-          <Section title={isPl ? 'Powiązane outputy' : 'Linked outputs'} count={agg.outputs.length}>
+          <Section
+            title={t('myWorkNotebook.topicView.linkedOutputs')}
+            count={agg.outputs.length}
+          >
             {agg.outputs.length === 0 ? (
-              <Empty text={isPl ? 'Brak powiązanych outputów' : 'No linked outputs'} />
+              <Empty text={t('myWorkNotebook.topicView.noLinkedOutputs')} />
             ) : (
               agg.outputs.map((a) => <ArtifactRow key={`${a.type}:${a.id}`} artifact={a} />)
             )}
@@ -202,11 +207,11 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
 
           {/* Initiatives */}
           <Section
-            title={isPl ? 'Powiązane inicjatywy' : 'Linked initiatives'}
+            title={t('myWorkNotebook.topicView.linkedInitiatives')}
             count={agg.initiatives.length}
           >
             {agg.initiatives.length === 0 ? (
-              <Empty text={isPl ? 'Brak powiązanych inicjatyw' : 'No linked initiatives'} />
+              <Empty text={t('myWorkNotebook.topicView.noLinkedInitiatives')} />
             ) : (
               agg.initiatives.map((a) => <ArtifactRow key={`${a.type}:${a.id}`} artifact={a} />)
             )}
