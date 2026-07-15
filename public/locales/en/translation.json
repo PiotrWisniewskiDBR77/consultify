@@ -192,31 +192,17 @@
         {
           "title": "Financial Intelligence",
           "description": "Consultify extends classic consulting with financial models, analysis, valuation, and forecasting.",
-          "bullets": [
-            "Financial models",
-            "Financial analysis",
-            "Company valuation",
-            "Forecasting"
-          ]
+          "bullets": ["Financial models", "Financial analysis", "Company valuation", "Forecasting"]
         },
         {
           "title": "Reports & Presentations",
           "description": "Consultify turns live work into reports, executive presentations, and consulting deliverables.",
-          "bullets": [
-            "Reports",
-            "Executive presentations",
-            "Notes"
-          ]
+          "bullets": ["Reports", "Executive presentations", "Notes"]
         },
         {
           "title": "My Work",
           "description": "Consultify gives teams a personal and shared workspace for follow-through after strategy work starts.",
-          "bullets": [
-            "Tasks",
-            "Decisions",
-            "Ideas",
-            "Initiatives"
-          ]
+          "bullets": ["Tasks", "Decisions", "Ideas", "Initiatives"]
         }
       ]
     },
@@ -375,61 +361,37 @@
           "badge": "AI Core",
           "title": "Strategic AI Advisor",
           "description": "AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.",
-          "highlights": [
-            "Diagnostic Assessment",
-            "Gap Analysis",
-            "Benchmark vs. Industry"
-          ]
+          "highlights": ["Diagnostic Assessment", "Gap Analysis", "Benchmark vs. Industry"]
         },
         "economics": {
           "badge": "Economics",
           "title": "Financial Modeling & ROI",
           "description": "Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.",
-          "highlights": [
-            "NPV / IRR Modeling",
-            "Sensitivity Analysis",
-            "Live ROI Tracking"
-          ]
+          "highlights": ["NPV / IRR Modeling", "Sensitivity Analysis", "Live ROI Tracking"]
         },
         "execution": {
           "badge": "Execution",
           "title": "Initiative Management",
           "description": "Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.",
-          "highlights": [
-            "Initiative Roadmap",
-            "Human Approval Gates",
-            "Risk Flagging"
-          ]
+          "highlights": ["Initiative Roadmap", "Human Approval Gates", "Risk Flagging"]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Report & Presentation Builder",
           "description": "Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.",
-          "highlights": [
-            "Auto-Generated Decks",
-            "Narrative Engine",
-            "Source Traceability"
-          ]
+          "highlights": ["Auto-Generated Decks", "Narrative Engine", "Source Traceability"]
         },
         "chat": {
           "badge": "Chat",
           "title": "AI Expert Interview",
           "description": "Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.",
-          "highlights": [
-            "Context-Aware Chat",
-            "Framework Library",
-            "Cited Answers"
-          ]
+          "highlights": ["Context-Aware Chat", "Framework Library", "Cited Answers"]
         },
         "results": {
           "badge": "Results",
           "title": "Impact Tracking",
           "description": "Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.",
-          "highlights": [
-            "KPI Dashboard",
-            "Deviation Alerts",
-            "Value Attribution"
-          ]
+          "highlights": ["KPI Dashboard", "Deviation Alerts", "Value Attribution"]
         }
       }
     },
@@ -872,42 +834,27 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": [
-          "Basic tools",
-          "Directory listing"
-        ]
+        "benefits": ["Basic tools", "Directory listing"]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": [
-          "Priority support",
-          "Training materials"
-        ]
+        "benefits": ["Priority support", "Training materials"]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": [
-          "Dedicated manager",
-          "Beta feature access"
-        ]
+        "benefits": ["Dedicated manager", "Beta feature access"]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": [
-          "Co-marketing",
-          "Conference speaking"
-        ]
+        "benefits": ["Co-marketing", "Conference speaking"]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": [
-          "Revenue share boost",
-          "Executive partnership"
-        ]
+        "benefits": ["Revenue share boost", "Executive partnership"]
       }
     },
     "onboarding": {
@@ -18662,38 +18609,19 @@
           "registered": {
             "title": "Registered",
             "description": "For those starting the partnership",
-            "requirements": [
-              "Registration",
-              "Basic training"
-            ],
-            "benefits": [
-              "10% discount",
-              "Access to materials",
-              "Email support"
-            ]
+            "requirements": ["Registration", "Basic training"],
+            "benefits": ["10% discount", "Access to materials", "Email support"]
           },
           "certified": {
             "title": "Certified",
             "description": "For experienced consultants",
-            "requirements": [
-              "Certification exam",
-              "Min. 3 projects"
-            ],
-            "benefits": [
-              "12% discount",
-              "Partner logo",
-              "Dedicated support",
-              "Catalog listing"
-            ]
+            "requirements": ["Certification exam", "Min. 3 projects"],
+            "benefits": ["12% discount", "Partner logo", "Dedicated support", "Catalog listing"]
           },
           "premier": {
             "title": "Premier",
             "description": "For strategic partners",
-            "requirements": [
-              "10+ projects",
-              "Case study",
-              "References"
-            ],
+            "requirements": ["10+ projects", "Case study", "References"],
             "benefits": [
               "14% discount",
               "Dedicated account manager",
@@ -24240,6 +24168,31 @@
     },
     "reminderSummary": {
       "prefix": "Reminder"
+    }
+  },
+  "processFlow": {
+    "generateReadback": {
+      "backTo": "Back to: {{label}}",
+      "branchLabel": "Branch: {{label}}",
+      "unreachableWarning": "{{value}} node(s) unreachable from any start node",
+      "unreachableNode": "Unreachable: {{label}}",
+      "noStartNode": "No start node found for traversal",
+      "title": "Process Semantic Readback",
+      "branchWord": "Branch",
+      "warningsLabel": "Warnings:"
+    },
+    "aiProposal": {
+      "warning": {
+        "unknownLaneFallback": "Unknown lane \"{{detail}}\" — node \"{{objectId}}\" assigned to the first lane",
+        "duplicateNodeSkipped": "Node \"{{objectId}}\" already exists — skipped",
+        "duplicateEdgeSkipped": "Edge \"{{objectId}}\" already exists — skipped",
+        "danglingEdgeSkipped": "Edge \"{{objectId}}\" ({{detail}}) references a missing node — skipped",
+        "unknownUpdateTarget": "Update for \"{{objectId}}\" skipped — node does not exist",
+        "unknownMoveTarget": "Move for \"{{objectId}}\" skipped — node does not exist"
+      },
+      "errorNoProposal": "AI returned no change proposal for this process. Refine the prompt and try again.",
+      "defaultSummary": "Proposed process changes",
+      "errorGenerate": "Failed to generate the AI proposal. Please try again."
     }
   }
 }
