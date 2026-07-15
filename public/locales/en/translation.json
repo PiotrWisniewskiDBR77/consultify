@@ -27184,6 +27184,45 @@
         "implicationPlaceholder": "Implication of this theme...",
         "hint": "Tie the theme to a concrete metric, target value, and horizon in which the ambition becomes measurable."
       }
+    },
+    "marketForces": {
+      "signalsTitle": "Market Signals & Evidence",
+      "signalsSubtitle": "Capture interview, benchmark, and market observation facts before AI scores the forces.",
+      "addSignalPlaceholder": "Add a market signal...",
+      "scorecardTitle": "Porter's Five Forces Scorecard",
+      "scorecardSubtitle": "Each force should have a score, drivers, evidence, and a strategic implication.",
+      "forceScore": "Force score",
+      "trend": "Trend",
+      "trendIncreasing": "Increasing",
+      "trendStable": "Stable",
+      "trendDecreasing": "Decreasing",
+      "driversPlaceholder": "Drivers, one per line",
+      "implicationPlaceholder": "Strategic implication...",
+      "implicationsTitle": "Strategic Implications",
+      "implicationsSubtitle": "This is where market structure turns into margin pressure, levers, and moves.",
+      "acceptedForces": "Accepted forces",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on the approved diagnosis.",
+      "finalSourceSummary": "Final source summary",
+      "step": {
+        "forceIntensity": "Force Intensity",
+        "scoreVeryLow": "Very Low",
+        "scoreLow": "Low",
+        "scoreModerate": "Moderate",
+        "scoreHigh": "High",
+        "scoreVeryHigh": "Very High",
+        "scoreHint": "Score should be grounded in market data.",
+        "trend": "Trend",
+        "increasing": "Increasing",
+        "stable": "Stable",
+        "decreasing": "Decreasing",
+        "trendHint": "Indicate if the force is increasing or decreasing and why.",
+        "keyDrivers": "Key Drivers",
+        "addDriverPlaceholder": "Add a driver...",
+        "noDrivers": "No drivers added",
+        "driversHint": "Add 2-4 concrete drivers for each force.",
+        "guidingQuestions": "Guiding Questions"
+      }
     }
   }
 }

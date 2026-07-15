@@ -28260,6 +28260,45 @@
         "implicationPlaceholder": "Implikacja tego tematu...",
         "hint": "Powiąż temat z konkretną miarą i wartością docelową oraz horyzontem, w którym ambicja staje się mierzalna."
       }
+    },
+    "marketForces": {
+      "signalsTitle": "Sygnały rynkowe i dowody",
+      "signalsSubtitle": "Zbierz fakty z wywiadu, benchmarków i obserwacji rynku zanim AI oceni siły.",
+      "addSignalPlaceholder": "Dodaj sygnał...",
+      "scorecardTitle": "Scorecard 5 sił Portera",
+      "scorecardSubtitle": "Każda siła powinna mieć ocenę, drivery, dowody i implikację dla strategii.",
+      "forceScore": "Ocena siły",
+      "trend": "Trend",
+      "trendIncreasing": "Rosnący",
+      "trendStable": "Stabilny",
+      "trendDecreasing": "Malejący",
+      "driversPlaceholder": "Drivery, po jednym w linii",
+      "implicationPlaceholder": "Implikacja strategiczna...",
+      "implicationsTitle": "Implikacje strategiczne",
+      "implicationsSubtitle": "Tu analiza rynku zamienia się w napięcia, presję marży i ruchy strategiczne.",
+      "acceptedForces": "Zaakceptowane siły",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów powstają z zatwierdzonej diagnozy.",
+      "finalSourceSummary": "Final source summary",
+      "step": {
+        "forceIntensity": "Intensywność siły",
+        "scoreVeryLow": "Bardzo niska",
+        "scoreLow": "Niska",
+        "scoreModerate": "Umiarkowana",
+        "scoreHigh": "Wysoka",
+        "scoreVeryHigh": "Bardzo wysoka",
+        "scoreHint": "Ocena powinna byc oparta o dane rynkowe.",
+        "trend": "Trend",
+        "increasing": "Rosnący",
+        "stable": "Stabilny",
+        "decreasing": "Malejący",
+        "trendHint": "Wskaz czy sila rosnie czy maleje i dlaczego.",
+        "keyDrivers": "Kluczowe czynniki",
+        "addDriverPlaceholder": "Dodaj czynnik...",
+        "noDrivers": "Brak dodanych czynników",
+        "driversHint": "Dodaj 2-4 konkretne czynniki dla kazdej sily.",
+        "guidingQuestions": "Pytania pomocnicze"
+      }
     }
   }
 }
