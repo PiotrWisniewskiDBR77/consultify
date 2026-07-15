@@ -1062,7 +1062,8 @@
       "cta": "Create and connect profile",
       "success": "Partner profile connected. You can now complete your company profile.",
       "unavailable": "Partner Portal is not configured yet. Please run partner portal migrations in the database.",
-      "requiredToNavigate": "Connect your partner profile first to access other sections."
+      "requiredToNavigate": "Connect your partner profile first to access other sections.",
+      "contactAdmin": "To join the partner program, contact your administrator or request an invitation."
     },
     "sidebar": {
       "title": "Partner Portal",
@@ -1130,7 +1131,8 @@
       "featureSoon": "Coming soon",
       "col": {
         "status": "Status"
-      }
+      },
+      "userCount": "{{count}} users"
     },
     "dashboard": {
       "welcome": "Welcome back",
@@ -1166,7 +1168,8 @@
         "governance": "Deal registration and approval",
         "benefits": "Commission tracking and settlements",
         "resource": "Client access management"
-      }
+      },
+      "freshHint": "Your data will appear here after your first referrals and commission transactions."
     },
     "metrics": {
       "title": "Metrics",
@@ -1178,7 +1181,8 @@
       "customerSatisfaction": "Customer Satisfaction",
       "avgProjectDuration": "Avg. Project Duration",
       "performanceScore": "Performance Score",
-      "scoreBreakdown": "Score Breakdown"
+      "scoreBreakdown": "Score Breakdown",
+      "freshHint": "Your data will appear here after your first referrals and commission transactions."
     },
     "certification": {
       "learningPath": "Learning Path",
@@ -1211,7 +1215,8 @@
     },
     "resources": {
       "desc": "Download partner toolkit resources",
-      "empty": "No resources available in this category"
+      "empty": "No resources available in this category",
+      "downloadError": "Couldn't download the resource."
     },
     "profile": {
       "companyInfo": "Company Info",
@@ -1230,7 +1235,81 @@
       "getStarted": "Get started",
       "quickLinks": "Quick links",
       "contact": {
-        "role": "Partner Success Manager"
+        "role": "Partner Success Manager",
+        "bookCall": "Book a call",
+        "bookCallSub": "Schedule a 15-min intro call",
+        "linkedin": "Connect on LinkedIn",
+        "quote": "I'm here to help you grow your business with Consultify. Whether you have questions about the program, need help with a client proposal, or want to discuss co-marketing opportunities — reach out!",
+        "responseTime": "Average response time: {{time}}",
+        "sendEmail": "Send email",
+        "subtitle": "Your dedicated Partner Manager will help you succeed"
+      },
+      "academy": {
+        "badgeFree": "FREE",
+        "boundaryText": "Partner help and documentation explain processes while you work. Partner Academy is a separate training layer for structured growth, repeatable enablement and certification signals.",
+        "courses": {
+          "drd": {
+            "description": "In-depth mastery of the Digital Readiness Diagnostic methodology."
+          },
+          "fundamentals": {
+            "description": "Get to know the Consultify platform inside out. Master assessments, reporting and client management."
+          },
+          "selling": {
+            "description": "A proven methodology for selling transformation services.",
+            "title": "How to sell digital transformation"
+          },
+          "success": {
+            "description": "Maximize client retention and satisfaction rates."
+          }
+        },
+        "openCertGuide": "Open certification guide",
+        "openLearningPath": "Open learning path",
+        "pillarRolePath": "Role path",
+        "subtitle": "Structured partner enablement beyond the documentation: fundamentals, role paths and certification readiness.",
+        "title": "Grow your skills with Partner Academy"
+      },
+      "calculator": {
+        "avgValueLabel": "Average client value (€/month)",
+        "basis": "Based on {{count}} referrals per year at an average value of €{{value}}",
+        "clientsLabel": "How many clients can you refer per month?",
+        "cta": "Start earning — generate your code",
+        "subtitle": "See how much you can earn as a Consultify Partner",
+        "title": "Calculate your earning potential",
+        "yourTier": "Your tier:"
+      },
+      "faq": {
+        "cancel": {
+          "a": "If a referred client cancels within the first {{days}} days (cooling-off period), the commission for that client is adjusted. After {{days}} days you keep all earned commissions, even if the client later cancels. We believe in fair and transparent commission structures.",
+          "q": "What happens if a referred client cancels?"
+        },
+        "certification": {
+          "a": "The Platform Fundamentals certification takes about 45 minutes. Advanced certifications, such as the DRD framework, take 2-3 hours. All certifications are self-paced, so you can complete them at your convenience."
+        },
+        "countries": {
+          "a": "Yes! Consultify operates globally and you can refer clients from any country. Your partner directory listing can highlight your regional expertise, helping local clients find you. Commission payouts can be made in EUR, USD or GBP.",
+          "q": "Can I refer clients from any country?"
+        },
+        "earn": {
+          "a": "You earn commissions by referring new clients to Consultify. When a client signs up using your unique code or link and becomes a paying customer, you receive a percentage of their subscription fee. Commission rates range from {{min}}% to {{max}}% depending on your partner tier.",
+          "q": "How do I earn commissions as a partner?"
+        },
+        "openFull": "Open the full partner FAQ",
+        "payout": {
+          "a": "Commissions are paid monthly by bank transfer or PayPal, once you reach the minimum threshold of {{threshold}}. Payments are made on the {{day}} of each month for approved commissions from the previous month. You track all earnings in real time in the Partner Dashboard.",
+          "q": "When and how do I get paid?"
+        },
+        "support": {
+          "a": "All partners get access to Partner Academy training, marketing materials and the partner community. From the Bronze tier upward, priority support and dedicated training are available. Gold and Platinum partners receive a dedicated Partner Manager, co-marketing opportunities and early access to new features.",
+          "q": "What support do I get as a partner?"
+        },
+        "title": "Frequently asked questions"
+      },
+      "onboarding": {
+        "customTerms": "Discuss custom terms",
+        "openGuide": "Open the application guide",
+        "reviewCase": "See the proof case",
+        "secureNote": "Your data is encrypted and secure",
+        "sharedFlow": "This is the same shared application flow used from the public site and from inside the product. Review the application guide, check the proof case, or jump straight to a conversation about custom terms when self-serve isn't enough."
       }
     },
     "earnings": {
@@ -1319,6 +1398,9 @@
     },
     "referrals": {
       "deleteFailed": "Failed to delete deck"
+    },
+    "common": {
+      "comingSoon": "Coming soon"
     }
   },
   "common": {
@@ -1465,7 +1547,11 @@
     "convertTo": "Convert to",
     "openPreview": "Open preview",
     "chatAbout": "Chat",
-    "comingSoonBackend": "Coming soon (backend)"
+    "comingSoonBackend": "Coming soon (backend)",
+    "delay": "Delay",
+    "dismiss": "Dismiss",
+    "restore": "Restore",
+    "showLess": "Show less"
   },
   "superadmin": {
     "confirm": {
@@ -1918,7 +2004,10 @@
         "done": "Done",
         "snooze": "Snooze",
         "remove": "Remove from focus",
-        "delegate": "Delegate"
+        "delegate": "Delegate",
+        "delay": "Reschedule",
+        "edit": "Edit",
+        "openPreview": "Open preview"
       },
       "delegateTitle": "Delegate Task",
       "completed": "Marked as done!",
@@ -9212,6 +9301,16 @@
       "roleLabel": "Role:",
       "clickPersonToAssignRole": "Click a person on the left to assign a role.",
       "clickRoleToAssign": "Click a role to assign"
+    },
+    "candidates": {
+      "dismiss": "Dismiss",
+      "empty": "No candidates. Run a scan so AI can propose initiatives from discovery.",
+      "error": "Couldn't fetch candidates.",
+      "source": "Source"
+    },
+    "proposedCards": {
+      "core": "core",
+      "proposedHeading": "Proposed cards (AI)"
     }
   },
   "execution": {
@@ -9820,7 +9919,9 @@
       "confirmStatusTitle": "Change status of selected initiatives?",
       "setStatus": "Change status:",
       "statusPartial": "Changed {{success}}, failed: {{failed}}",
-      "statusUpdated": "Updated status of {{count}} initiative(s)"
+      "statusUpdated": "Updated status of {{count}} initiative(s)",
+      "confirmStatusDesc": "New status „{{status}}” for {{count}} initiatives. Each change is subject to governance rules.",
+      "noCommonStatus": "No common status action for the selection"
     },
     "controlTower": {
       "failed": "Control tower signals unavailable"
@@ -9877,6 +9978,20 @@
       "signals": "Signals",
       "tasks": "Tasks",
       "tasksCount": "{{count}} task(s)"
+    },
+    "changeSignals": {
+      "affected": "people affected by the change",
+      "capacity": "Team capacity signals",
+      "capacityEmpty": "No overloads — capacity is within norms.",
+      "capacityFailed": "Capacity signals temporarily unavailable — the cockpit works normally.",
+      "champions": "Change champions coalition",
+      "championsEmpty": "No change champions reported yet.",
+      "championsFailed": "Champions coalition temporarily unavailable — the cockpit works normally.",
+      "loading": "Loading…",
+      "overall": "Overall",
+      "readiness": "People readiness for change",
+      "readinessEmpty": "No adoption signals (pulse/capability) to assess yet.",
+      "readinessFailed": "Change readiness temporarily unavailable — the cockpit works normally."
     }
   },
   "benefits": {
@@ -10326,7 +10441,8 @@
     "sharedSnapshot": "Shared Snapshot",
     "sharedSnapshotFooter": "This is a read-only shared snapshot",
     "snapshotGeneratedAt": "Generated",
-    "aiActionComplete": "AI action complete"
+    "aiActionComplete": "AI action complete",
+    "clientReport": "DRD Report"
   },
   "auth": {
     "logIn": "Log in",
@@ -10376,7 +10492,8 @@
       "successMessage": "Your email has been verified.",
       "successTitle": "Email verified",
       "verifying": "Verifying your email…"
-    }
+    },
+    "privacyLink": "Privacy Policy"
   },
   "help": {
     "onboarding": {
@@ -13257,7 +13374,9 @@
     },
     "titles": {
       "idea": "Idea",
-      "note": "Note"
+      "note": "Note",
+      "ideasTable": "Ideas Table",
+      "processFlow": "Process Flow"
     },
     "deliverable": {
       "sheetTitle": "Sheet from chat",
@@ -13281,6 +13400,9 @@
       "viewEvidence": "View evidence map",
       "openOutputs": "Open Outputs Library",
       "reviewPending": "Review pending artifacts"
+    },
+    "feedback": {
+      "missingInfoPlaceholder": "Describe what was missing from the answer..."
     }
   },
   "aiChat": {
@@ -13560,7 +13682,8 @@
       "formatConversational": "Conversational",
       "missingInfo": "What was missing? (optional)",
       "missingInfoPlaceholder": "Describe what was missing from the response...",
-      "submit": "Submit feedback"
+      "submit": "Submit feedback",
+      "whatWasGood": "What was good? (optional)"
     },
     "greeting": {
       "morning": "Good morning",
@@ -13807,7 +13930,8 @@
       "noFiles": "No files",
       "selectFile": "Select file",
       "downloading": "Downloading: {{name}}",
-      "loadError": "Failed to load files"
+      "loadError": "Failed to load files",
+      "notAvailable": "Cloud integrations are not available"
     },
     "myProjects": "My Folders",
     "teamProjects": "Organization Folders",
@@ -13926,6 +14050,15 @@
     "teresaProposal": {
       "failed": "Failed",
       "reject": "Reject"
+    },
+    "attachments": {
+      "extractionFailed": "Couldn't read text from file \"{{name}}\". Check that the file isn't empty or corrupted.",
+      "unsupportedType": "File \"{{name}}\" is not supported. Allowed formats: {{types}}.",
+      "uploadError": "Error uploading file \"{{name}}\": {{error}}",
+      "uploadFailed": "Couldn't process file \"{{name}}\".",
+      "uploadSuccess": "Attachment \"{{name}}\" processed.",
+      "urlError": "Error processing link: {{error}}",
+      "urlIngestFailed": "Couldn't process the link."
     }
   },
   "agentAudit": {
@@ -14396,7 +14529,8 @@
     },
     "refresh": "Refresh",
     "desktopOnly": {
-      "body": "{{surface}} is optimized for desktop. On a phone, part of the layout (tables, side preview) may be hard to use."
+      "body": "{{surface}} is optimized for desktop. On a phone, part of the layout (tables, side preview) may be hard to use.",
+      "title": "Best viewed on a larger screen"
     },
     "select": "Select…",
     "initiativeCreator": {
@@ -16409,6 +16543,12 @@
       "confirmDeleteTitle": "Delete selected presentations?",
       "confirmDeleteDesc": "You will permanently delete {{count}} presentation(s). This cannot be undone.",
       "deletedNoun": "deleted"
+    },
+    "relations": {
+      "empty": "No related sources. Blocks generated from initiatives, analyses and tools will appear here.",
+      "jumpTo": "Jump to artifact",
+      "subtitle": "All sources linked to this presentation — click to jump to the artifact.",
+      "title": "Relations"
     }
   },
   "finance": {
@@ -16578,7 +16718,8 @@
       "createAnalysis": "Create analysis",
       "createModelFromStatement": "Create model",
       "createValuation": "Create valuation",
-      "openRecoveryQueue": "Open recovery queue"
+      "openRecoveryQueue": "Open recovery queue",
+      "confirmStatement": "Confirm statement"
     },
     "toast": {
       "deleted": "Deleted",
@@ -16602,7 +16743,9 @@
       "valuationComputed": "Valuation computed",
       "statementConfirmed": "Statement confirmed",
       "valuationCreated": "Valuation created",
-      "createFailed": "Failed to create"
+      "createFailed": "Failed to create",
+      "budgetCreated": "Budget created",
+      "statementDuplicateUnsupported": "Statement duplication is not supported"
     },
     "prediction": {
       "budget": "Budget",
@@ -16617,7 +16760,8 @@
       "budgetName": "Name",
       "namePlaceholder": "e.g., Budget 2026 Q1-Q4",
       "periodStart": "Period from",
-      "periodEnd": "Period to"
+      "periodEnd": "Period to",
+      "monthly": "Monthly"
     },
     "analysis": {
       "ratioSummary": "Financial Ratios",
@@ -16716,7 +16860,18 @@
       "linkHint": "Click to link an initiative to finance"
     },
     "analyze": {
-      "cta": "Analyze"
+      "cta": "Analyze",
+      "analysisFromModelHint": "Go to Analysis and create a draft in the context of the current model.",
+      "analysisFromPredictionHint": "Go to Analysis and create a draft in the context of the current budget or scenario.",
+      "budgeting": "Budgeting",
+      "budgetingHint": "Go to the budget and create a new planning item.",
+      "financialAnalysisHint": "Create a financial analysis based on ready statements.",
+      "modelingHint": "Create a financial model from a ready statement.",
+      "valuation": "Company valuation",
+      "valuationFromAnalysisHint": "Go to Valuation and create an item based on the current analysis.",
+      "valuationFromModelHint": "Go to Valuation and create an item based on the current model.",
+      "valuationFromPredictionHint": "Go to Valuation and create an item based on the current model or budget.",
+      "valuationFromStatementsHint": "Valuation is available after creating a model, budget or financial analysis."
     },
     "importWizard": {
       "completed": "Completed",
@@ -16858,7 +17013,9 @@
   },
   "portfolio": {
     "toast": {
-      "cannotDowngrade": "Cannot downgrade status. Use Cancel or Archive."
+      "cannotDowngrade": "Cannot downgrade status. Use Cancel or Archive.",
+      "gateDecisionError": "Couldn't create the gate decision",
+      "projectRequired": "A project is required to raise a decision"
     },
     "ai": {
       "selectedCount": "Selected",
@@ -17814,7 +17971,20 @@
       }
     },
     "attach": {
-      "upload": "Upload"
+      "upload": "Upload",
+      "diagnostics": "Attach console logs, network errors and breadcrumbs (without form values)",
+      "notAnImage": "File must be an image (PNG, JPG, GIF or WebP).",
+      "pasteHint": "or paste (Ctrl/⌘+V)",
+      "preparing": "Preparing…",
+      "previewHint": "Passwords and email fields are blurred automatically. Use the data-feedback-redact attribute for other sensitive areas.",
+      "readFailed": "Couldn't read the file. Please try again.",
+      "remove": "Remove attached screenshot",
+      "removeShort": "Remove",
+      "replace": "Replace screenshot",
+      "screenshot": "Attach a screenshot of the current view (optional)",
+      "tooLarge": "Screenshot is too large (max ~1.4 MB). Use a compression tool or crop the image.",
+      "uploaded": "Screenshot added to the report.",
+      "uploadHint": "Upload your own screenshot (PNG/JPG, max ~1.4 MB) or paste an image from the clipboard (Ctrl/Cmd+V)."
     },
     "backlog": {
       "empty": "No presentations yet."
@@ -17826,7 +17996,35 @@
       "more": "more",
       "all": "All"
     },
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "duplicateBadge": {
+      "title": "Triage detected similar reports — open details to see them"
+    },
+    "feature": {
+      "categories": {
+        "missing": "Missing feature"
+      },
+      "impactLevels": {
+        "low": "Nice to have",
+        "medium": "Important"
+      }
+    },
+    "floatingButton": {
+      "ariaLabel": "Report a bug (Shift+Ctrl+B)",
+      "label": "Report a bug"
+    },
+    "footer": "Feedback sent as",
+    "hasDiagnostics": "Report contains console / network logs / breadcrumbs",
+    "hasScreenshot": "Report contains a screenshot",
+    "overdueHint": "Show only reports past the response deadline (SLA)",
+    "overdueOnly": "Overdue (SLA)",
+    "severity": {
+      "medium": "Medium"
+    },
+    "success": {
+      "reference": "Report number",
+      "referenceHint": "We'll notify you here when the status changes."
+    }
   },
   "behaviorIntelligence": {
     "journeyTracked": "Journey event tracked",
@@ -20562,12 +20760,25 @@
     "builderUnreachable": "Deck identifier is missing — cannot open Deck Builder yet.",
     "openingBuilder": "Opening Deck Builder...",
     "qualityGateBlocked": "Export blocked by Quality Gate",
-    "qualityGateBlockedDetailed": "Quality gate blocked — review required before export"
+    "qualityGateBlockedDetailed": "Quality gate blocked — review required before export",
+    "leftRail": {
+      "openBuilder": "Open in Builder"
+    }
   },
   "aiActions": {
     "report": "Report",
     "failed": "Failed",
-    "completed": "Completed"
+    "completed": "Completed",
+    "approve": "Approve",
+    "dismiss": "Dismiss",
+    "dismissAll": "Dismiss all",
+    "edit": "Edit",
+    "mediumRisk": "Medium risk",
+    "navigateTo": "Go to",
+    "pendingActions": "Proposed actions",
+    "proposedActions": "Proposed actions",
+    "showLess": "Show less",
+    "showMore": "Show more"
   },
   "artifacts": {
     "next": "next",
@@ -20641,7 +20852,10 @@
     "presentation": {
       "empty": "No presentations yet.",
       "loading": "Loading…",
-      "failed": "Failed"
+      "failed": "Failed",
+      "generating": "Generating…",
+      "generatingBody": "Teresa is generating slides — they will appear here automatically.",
+      "openInBuilder": "Open in Deck Builder"
     },
     "panel": {
       "common": {
@@ -21003,7 +21217,12 @@
     }
   },
   "focusMode": {
-    "all": "All"
+    "all": "All",
+    "allDesc": "All available sources",
+    "projectDataDesc": "Context of the current project",
+    "researchDesc": "Deep analysis mode",
+    "selectSource": "Select sources",
+    "projectData": "Project"
   },
   "trust": {
     "badge": {
@@ -22433,7 +22652,12 @@
   },
   "onboarding": {
     "toast": {
-      "completed": "Completed"
+      "completed": "Completed",
+      "acceptBoth": "Accept the Terms and Privacy Policy",
+      "completeError": "Couldn't complete onboarding",
+      "selectTier": "Select a pricing plan",
+      "termsError": "Couldn't accept the terms",
+      "tierError": "Couldn't select the plan"
     }
   },
   "editor": {
@@ -22462,7 +22686,8 @@
   },
   "dashboard": {
     "shortcuts": {
-      "error": "Error"
+      "error": "Error",
+      "allMarkedRead": "All notifications marked as read"
     }
   },
   "aiPlatform": {
@@ -26909,6 +27134,12 @@
       "1": "Name your challenge",
       "2": "Describe the problem or idea",
       "3": "Click \"Accept\" in the Tools panel"
+    }
+  },
+  "roadmap": {
+    "toast": {
+      "clickToCreateDependency": "Click another initiative to create a dependency",
+      "dependencyCreated": "Dependency created"
     }
   }
 }
