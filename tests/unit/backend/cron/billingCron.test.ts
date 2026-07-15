@@ -37,23 +37,28 @@ describe('BillingCron', () => {
             updateSeatCount: vi.fn().mockResolvedValue(undefined)
         };
 
-        vi.doMock('../../../../server/database', () => ({
-            default: mockDb
+        // billingCron.ts's initDeps() dynamically imports these exact paths
+        // (server/cron/billingCron.ts:55-73) — the mocks below were pointed at
+        // stale paths (server/database, server/services/budgetService without
+        // "src", "Management") that don't match, so none of them were ever
+        // actually intercepted; fixed to match the real specifiers.
+        vi.doMock('../../../../server/src/database/Database.js', () => ({
+            getDatabase: () => mockDb
         }));
 
-        vi.doMock('../../../../server/services/budgetService', () => ({
+        vi.doMock('../../../../server/src/services/budgetManagementService.js', () => ({
             default: mockBudgetService
         }));
 
-        vi.doMock('../../../../server/services/adminAlertService', () => ({
+        vi.doMock('../../../../server/src/services/adminAlertService.js', () => ({
             default: mockAdminAlertService
         }));
 
-        vi.doMock('../../../../server/services/payAsYouGoService', () => ({
+        vi.doMock('../../../../server/src/services/payAsYouGoService.js', () => ({
             default: mockPayAsYouGoService
         }));
 
-        vi.doMock('../../../../server/services/seatManagementService', () => ({
+        vi.doMock('../../../../server/src/services/seatManagementService.js', () => ({
             default: mockSeatManagementService
         }));
 
@@ -63,11 +68,11 @@ describe('BillingCron', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../../server/database');
-        vi.doUnmock('../../../../server/services/budgetManagementService');
-        vi.doUnmock('../../../../server/services/adminAlertService');
-        vi.doUnmock('../../../../server/services/payAsYouGoService');
-        vi.doUnmock('../../../../server/services/seatManagementService');
+        vi.doUnmock('../../../../server/src/database/Database.js');
+        vi.doUnmock('../../../../server/src/services/budgetManagementService.js');
+        vi.doUnmock('../../../../server/src/services/adminAlertService.js');
+        vi.doUnmock('../../../../server/src/services/payAsYouGoService.js');
+        vi.doUnmock('../../../../server/src/services/seatManagementService.js');
     });
 
     describe('resetMonthlyBudgets', () => {
@@ -86,19 +91,19 @@ describe('BillingCron', () => {
 
     describe('checkAndTriggerAlerts', () => {
         it('should check alerts for all active organizations', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [
-                    { id: 'org-1' },
-                    { id: 'org-2' }
-                ]);
-            });
+            // deps.db.all() in server/cron/billingCron.ts is called Promise-style
+            // (`await deps.db.all(sql, params)`, no callback) — this test previously
+            // mocked a 3-arg callback-style signature, which doesn't match.
+            mockDb.all.mockResolvedValue([
+                { id: 'org-1' },
+                { id: 'org-2' }
+            ]);
 
             await BillingCron.checkAndTriggerAlerts();
 
             expect(mockDb.all).toHaveBeenCalledWith(
                 'SELECT id FROM organizations WHERE status = ?',
-                ['active'],
-                expect.any(Function)
+                ['active']
             );
             expect(mockAdminAlertService.checkAndTriggerAlerts).toHaveBeenCalledTimes(2);
         });
@@ -126,9 +131,9 @@ describe('BillingCron', () => {
 
     describe('generatePayAsYouGoInvoices', () => {
         it('should generate invoices for PAYG organizations', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ organization_id: 'org-1' }]);
-            });
+            // deps.db.all() is called Promise-style (no callback) in
+            // server/cron/billingCron.ts — see checkAndTriggerAlerts fix above.
+            mockDb.all.mockResolvedValue([{ organization_id: 'org-1' }]);
 
             mockPayAsYouGoService.generatePayAsYouGoInvoice.mockResolvedValue({
                 invoiced: true,
@@ -141,9 +146,7 @@ describe('BillingCron', () => {
         });
 
         it('should handle errors gracefully', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
-            });
+            mockDb.all.mockRejectedValue(new Error('DB Error'));
 
             await expect(BillingCron.generatePayAsYouGoInvoices()).resolves.not.toThrow();
         });
@@ -151,9 +154,7 @@ describe('BillingCron', () => {
 
     describe('updateSeatCounts', () => {
         it('should update seat counts for all active organizations', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ id: 'org-1' }, { id: 'org-2' }]);
-            });
+            mockDb.all.mockResolvedValue([{ id: 'org-1' }, { id: 'org-2' }]);
 
             await BillingCron.updateSeatCounts();
 
@@ -161,9 +162,7 @@ describe('BillingCron', () => {
         });
 
         it('should handle errors gracefully', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
-            });
+            mockDb.all.mockRejectedValue(new Error('DB Error'));
 
             await expect(BillingCron.updateSeatCounts()).resolves.not.toThrow();
         });
