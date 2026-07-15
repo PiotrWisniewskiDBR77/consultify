@@ -130,9 +130,18 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     [topBarHandlers, onRunPrimary, topBarState, topBarLabels]
   );
 
+  // HP-17: narzędzie „Źródła i założenia" pojawia się na pasku TYLKO gdy
+  // wołający dostarczył jego panel (DeckBuilder robi to za flagą ff_evidencePanel,
+  // default OFF). Brak panelu → pasek 1:1 jak przed HP-17.
+  const includeEvidence = rightRailPanels.evidence != null;
   const rightTools = useMemo(
-    () => buildDeckBuilderRightRailTools({ state: rightRailState, labels: rightRailLabels }),
-    [rightRailState, rightRailLabels]
+    () =>
+      buildDeckBuilderRightRailTools({
+        state: rightRailState,
+        labels: rightRailLabels,
+        includeEvidence,
+      }),
+    [rightRailState, rightRailLabels, includeEvidence]
   );
 
   const shell = (
