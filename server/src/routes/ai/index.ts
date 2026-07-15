@@ -30,7 +30,10 @@ import aiCoachRoutes from './aiCoach.routes.js';
 import aiExplainRoutes from './aiExplain.routes.js';
 import aiLearningRoutes from './aiLearning.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
+import aiTrustRoutes from './ai-trust.routes.js';
 import deepThinkingRoutes from './deep-thinking.routes.js';
+import pinnedInsightsRoutes from './pinned-insights.routes.js';
+import smartFollowupRoutes from './smart-followup.routes.js';
 
 const router = Router();
 
@@ -70,5 +73,10 @@ router.use('/agent-audit', agentAuditRoutes);
 // M01 wiring (HP-2/HP-3): read-only Discovery Tool agent manifest catalog.
 // Not wired into chat/stream function-calling — see wiring report for rationale.
 router.use('/agent-manifests', agentManifestsRoutes);
+// Fala 5 (2026-07-15): wiring osieroconych silników AI — endpointy opt-in,
+// świadomie NIE hookowane w pipeline czatu (osobna decyzja projektowa).
+router.use('/pinned-insights', pinnedInsightsRoutes);
+router.use('/smart-followup', smartFollowupRoutes);
+router.use('/trust', aiTrustRoutes);
 
 export default router;
