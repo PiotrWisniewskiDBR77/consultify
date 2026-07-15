@@ -149,9 +149,13 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
           comment,
         });
         toast.success(
-          t('myWork.delegationModal.inputRequestedFromCount', 'Input requested from {{count}} people', {
-            count: selectedUsers.length,
-          })
+          t(
+            'myWork.delegationModal.inputRequestedFromCount',
+            'Input requested from {{count}} people',
+            {
+              count: selectedUsers.length,
+            }
+          )
         );
       } else {
         // Delegate to single user

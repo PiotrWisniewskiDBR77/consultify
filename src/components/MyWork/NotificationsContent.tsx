@@ -117,8 +117,7 @@ const formatRelativeTime = (dateString: string, _isPolish: boolean = false): str
 
   if (diffMins < 1) return i18n.t('myWork.notificationsContent.justNow', 'Just now');
   if (diffMins < 60) return i18n.t('myWork.notificationsContent.minutesAgo', { count: diffMins });
-  if (diffHours < 24)
-    return i18n.t('myWork.notificationsContent.hoursAgo', { count: diffHours });
+  if (diffHours < 24) return i18n.t('myWork.notificationsContent.hoursAgo', { count: diffHours });
   if (diffDays < 7) return i18n.t('myWork.notificationsContent.daysAgo', { count: diffDays });
   return date.toLocaleDateString(
     i18n.t('myWork.notificationsContent.dateToLocaleDateString', 'en-US')

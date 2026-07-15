@@ -741,7 +741,9 @@ const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = 
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="CHAIR">{t('pmo.memberTypeChair', 'Chair')}</option>
-                  <option value="BOARD_MEMBER">{t('pmo.memberTypeBoardMember', 'Board member')}</option>
+                  <option value="BOARD_MEMBER">
+                    {t('pmo.memberTypeBoardMember', 'Board member')}
+                  </option>
                   <option value="OBSERVER">{t('pmo.memberTypeObserver', 'Observer')}</option>
                 </select>
               </div>

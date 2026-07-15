@@ -3,6 +3,7 @@
  * Interview-style design with hover animations and resizable columns
  */
 
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   Archive,
@@ -29,7 +30,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import { type RowActionSection } from '@/components/shared/RowActionsMenu';
@@ -183,10 +183,7 @@ const getDecisionTypeIcon = (type?: string): LucideIcon => {
   }
 };
 
-const statusLabel = (
-  status: string | undefined,
-  t: TFunction
-): string => {
+const statusLabel = (status: string | undefined, t: TFunction): string => {
   switch (status?.toUpperCase()) {
     case 'APPROVED':
       return t('myWork.decisionsPanel.approved', 'Approved');
@@ -552,7 +549,9 @@ const buildAwaitingKebabSections = (
               },
               {
                 id: 'escalate',
-                label: overdue ? t('myWork.decisionsPanel.escalateUrgent') : t('myWork.decisionsPanel.escalate'),
+                label: overdue
+                  ? t('myWork.decisionsPanel.escalateUrgent')
+                  : t('myWork.decisionsPanel.escalate'),
                 icon: TrendingUp,
                 variant: (overdue ? 'danger' : 'default') as 'danger' | 'default',
                 onClick: () => h.onEscalate(decision.id),

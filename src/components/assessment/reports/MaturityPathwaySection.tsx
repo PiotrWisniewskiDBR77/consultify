@@ -50,7 +50,10 @@ export const MaturityPathwaySection: React.FC<MaturityPathwaySectionProps> = ({
   maxCards = 6,
 }) => {
   const label = (key: string, pl: string, en: string) =>
-    i18n.t(`assessment.maturityPathway.${key}`, { lng: language, defaultValue: language === 'pl' ? pl : en });
+    i18n.t(`assessment.maturityPathway.${key}`, {
+      lng: language,
+      defaultValue: language === 'pl' ? pl : en,
+    });
 
   // Only dimensions genuinely below target, largest gap first, capped.
   const recommendations = useMemo(() => {

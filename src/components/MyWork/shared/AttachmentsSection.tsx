@@ -99,10 +99,14 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
       for (const file of Array.from(files)) {
         if (file.size > maxSizeMB * 1024 * 1024) {
           toast.error(
-            t('myWork.attachments.fileTooLarge', 'File {{fileName}} is too large (max {{maxSizeMB}}MB)', {
-              fileName: file.name,
-              maxSizeMB,
-            })
+            t(
+              'myWork.attachments.fileTooLarge',
+              'File {{fileName}} is too large (max {{maxSizeMB}}MB)',
+              {
+                fileName: file.name,
+                maxSizeMB,
+              }
+            )
           );
           return;
         }

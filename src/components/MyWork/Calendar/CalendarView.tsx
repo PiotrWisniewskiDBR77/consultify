@@ -204,8 +204,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return {
       variant: 'info' as const,
       title: t('myWork.calendarView.title5', 'Day is partially loaded'),
-      body:
-        dayLoad?.suggestion || t('myWork.calendarView.partialLoadSuggestion', { totalItems }),
+      body: dayLoad?.suggestion || t('myWork.calendarView.partialLoadSuggestion', { totalItems }),
     };
   }, [dayLoad, dayLoadError, dayLoadLoading, t]);
 

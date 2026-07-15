@@ -133,10 +133,9 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     setEntries((prev) => [entry, ...prev]);
     onTimerStop?.(sessionTime);
 
-    toast.success(
-      t('myWork.taskTimer.loggedDuration', { duration: formatDuration(sessionTime) }),
-      { duration: 3000 }
-    );
+    toast.success(t('myWork.taskTimer.loggedDuration', { duration: formatDuration(sessionTime) }), {
+      duration: 3000,
+    });
 
     setSessionTime(0);
     startTimeRef.current = null;

@@ -185,7 +185,8 @@ export const FoFRoadBar: React.FC<{
           <span className="inline-block h-3 w-0.5 bg-c-text" />
           {i18n.t('assessment.fofRoadBar.fofThreshold', {
             lng: language,
-            defaultValue: language === 'pl' ? 'Próg FoF ({{benchmark}})' : 'FoF threshold ({{benchmark}})',
+            defaultValue:
+              language === 'pl' ? 'Próg FoF ({{benchmark}})' : 'FoF threshold ({{benchmark}})',
             benchmark,
           })}
         </span>

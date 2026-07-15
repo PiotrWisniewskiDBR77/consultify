@@ -280,9 +280,7 @@ export const KnownToolPreviewV3Body: React.FC<{
         'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
     },
     {
-      label: tool.isLicensed
-        ? t('tools.hub.license.licensed')
-        : t('tools.hub.license.free'),
+      label: tool.isLicensed ? t('tools.hub.license.licensed') : t('tools.hub.license.free'),
       className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
     },
     {

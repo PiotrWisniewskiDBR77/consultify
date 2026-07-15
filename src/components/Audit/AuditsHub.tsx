@@ -520,11 +520,7 @@ export const AuditsHub: React.FC = () => {
   // endpoint/confirmation semantics; no bulk API exists for audit programs.
   const handleBulkDelete = useCallback(async () => {
     if (selectedListIds.size === 0) return;
-    if (
-      !window.confirm(
-        t('audit.confirmDeleteBulk', { count: selectedListIds.size })
-      )
-    ) {
+    if (!window.confirm(t('audit.confirmDeleteBulk', { count: selectedListIds.size }))) {
       return;
     }
     for (const id of Array.from(selectedListIds)) {
@@ -551,9 +547,7 @@ export const AuditsHub: React.FC = () => {
           <Menu3Chip onClick={() => setSelectedListIds(new Set(rows.map((r) => r.id)))}>
             {t('common.selectAll', 'Select all')}
           </Menu3Chip>
-          <Menu3Chip onClick={() => setSelectedListIds(new Set())}>
-            {t('common.clear')}
-          </Menu3Chip>
+          <Menu3Chip onClick={() => setSelectedListIds(new Set())}>{t('common.clear')}</Menu3Chip>
         </div>
         <div className={MENU_3_RIGHT_CLASS}>
           <button
@@ -744,10 +738,7 @@ export const AuditsHub: React.FC = () => {
                         },
                       }}
                       ai={{
-                        hints: [
-                          t('audit.aiHintSummarize'),
-                          t('audit.aiHintNextSteps'),
-                        ],
+                        hints: [t('audit.aiHintSummarize'), t('audit.aiHintNextSteps')],
                         disabled: true,
                         disabledTooltip: t('common.comingSoon', 'Coming soon'),
                       }}
