@@ -13,6 +13,11 @@
 
 import logger from '../utils/Logger.js';
 import { aiAssessmentPartner, DRD_AXES } from './aiAssessmentPartnerService.js';
+import {
+  deriveConfidence,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from './evidence/evidenceContract.js';
 
 // ==========================================
 // CONSTANTS
@@ -90,6 +95,57 @@ function extractScores(assessment: any): Array<{
 }
 
 // ==========================================
+// HP-16: EvidenceContract — DETERMINISTYCZNIE, zero LLM, zero I/O
+// ==========================================
+
+/**
+ * Buduje `EvidenceContract` sekcji raportu oceny (DRD/SIRI/ADMA) z REALNYCH sygnałów:
+ *  - `sources` = same wynikowe osie/wymiary oceny (`extractScores`) faktycznie użyte do
+ *    zbudowania promptu tej sekcji — nie zgadywanie, tylko liczby, które i tak trafiły do
+ *    modelu.
+ *  - `mode` ('AI_GENERATED' | 'FALLBACK') pochodzi wprost z `aiAssessmentPartnerService`
+ *    (KAŻDA metoda partnera zwraca ten deterministyczny znacznik) — 'FALLBACK' = model
+ *    niedostępny/błąd → sekcja to szablon, nie analiza AI. To realny sygnał, nie LLM-owa
+ *    samoocena.
+ */
+function buildScoreBasedEvidenceContract(
+  assessment: Record<string, any>,
+  scores: Array<{ axis: string; name: string; actual: number; target?: number; gap?: number }>,
+  opts: {
+    mode?: string;
+    extraRisks?: string[];
+    extraToVerify?: string[];
+    extraUnresolvedGaps?: number;
+  } = {}
+): EvidenceContract {
+  const assessmentRef = String(assessment?.projectId || assessment?.id || 'assessment');
+  const sources: EvidenceContractSource[] = [
+    {
+      type: 'assessment',
+      ref: assessmentRef,
+      title: assessment?.name ? String(assessment.name) : undefined,
+    },
+    ...scores.map((s) => ({ type: 'assessment_axis', ref: s.axis, title: s.name })),
+  ];
+
+  const risks: string[] = [...(opts.extraRisks || [])];
+  if (opts.mode === 'FALLBACK') {
+    risks.push(
+      'Sekcja wygenerowana deterministycznym fallbackiem (AI niedostępne) — brak narracji modelu.'
+    );
+  }
+
+  const toVerify: string[] = [...(opts.extraToVerify || [])];
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps: (opts.mode === 'FALLBACK' ? 1 : 0) + (opts.extraUnresolvedGaps || 0),
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
+}
+
+// ==========================================
 // REPORT GENERATOR
 // ==========================================
 
@@ -138,6 +194,30 @@ export const aiAssessmentReportGenerator = {
       const avgActual = scores.reduce((sum, s) => sum + s.actual, 0) / scores.length;
       const avgTarget = scores.reduce((sum, s) => sum + s.target, 0) / scores.length;
 
+      // HP-16: realny EvidenceContract — sources=osie użyte w promptach, mode=realny
+      // znacznik AI_GENERATED/FALLBACK z aiAssessmentPartnerService, toVerify=osie bez
+      // szczegółowej analizy luki (tylko top-3 wg wielkości luki dostają gapAnalysis).
+      const gapAnalysesNoAiRecs = (gapAnalyses as any[]).filter(
+        (g) => Array.isArray(g?.aiRecommendations) && g.aiRecommendations.length === 0
+      ).length;
+      const uncoveredAxes = scores.length - (gapAnalyses as any[]).length;
+      const evidence = buildScoreBasedEvidenceContract(assessment, scores, {
+        mode: (executiveSummary as any)?.mode,
+        extraRisks:
+          gapAnalysesNoAiRecs > 0
+            ? [
+                `${gapAnalysesNoAiRecs} analiz(y) luki bez rekomendacji AI (model niedostępny lub błąd generacji).`,
+              ]
+            : [],
+        extraToVerify:
+          uncoveredAxes > 0
+            ? [
+                `${uncoveredAxes}/${scores.length} osi bez szczegółowej analizy luki (pokazano tylko top 3 wg wielkości luki).`,
+              ]
+            : [],
+        extraUnresolvedGaps: gapAnalysesNoAiRecs,
+      });
+
       return {
         status: 'success',
         report: {
@@ -163,6 +243,7 @@ export const aiAssessmentReportGenerator = {
           gapAnalyses,
           topStrengths: executiveSummary.topStrengths || [],
           priorityGaps: executiveSummary.priorityGaps || [],
+          evidence,
         },
       };
     } catch (err: any) {
@@ -199,6 +280,10 @@ export const aiAssessmentReportGenerator = {
 
       const avgActual = scores.reduce((sum, s) => sum + s.actual, 0) / scores.length;
 
+      const evidence = buildScoreBasedEvidenceContract(assessment, scores, {
+        mode: stakeholderView.mode,
+      });
+
       return {
         status: 'success',
         report: {
@@ -213,6 +298,7 @@ export const aiAssessmentReportGenerator = {
             axesAssessed: scores.length,
           },
           mode: stakeholderView.mode || 'AI_GENERATED',
+          evidence,
         },
       };
     } catch (err: any) {
@@ -246,6 +332,18 @@ export const aiAssessmentReportGenerator = {
         }
       );
 
+      // HP-16: realny sygnał — ile ocenionych osi NIE ma danych benchmarkowych (real gap
+      // w danych wejściowych, nie zgadywanie).
+      const axesWithoutBenchmark = scores.filter((s) => !benchmarks?.[s.axis]).length;
+      const evidence = buildScoreBasedEvidenceContract(assessment, scores, {
+        mode: commentary.mode,
+        extraRisks:
+          axesWithoutBenchmark > 0
+            ? [`${axesWithoutBenchmark}/${scores.length} osi bez danych benchmarkowych — porównanie częściowe.`]
+            : [],
+        extraUnresolvedGaps: axesWithoutBenchmark,
+      });
+
       return {
         status: 'success',
         report: {
@@ -256,6 +354,7 @@ export const aiAssessmentReportGenerator = {
           summary: commentary.summary,
           detailedComparison: commentary.detailedComparison,
           mode: commentary.mode || 'AI_GENERATED',
+          evidence,
         },
       };
     } catch (err: any) {
@@ -312,6 +411,21 @@ export const aiAssessmentReportGenerator = {
         );
       }
 
+      // HP-16: sources = TYLKO osie z gap>0 faktycznie wysłane do generateInitiativesFromGaps
+      // (nie wszystkie ocenione osie — plan opiera się wyłącznie na lukach).
+      const evidence = buildScoreBasedEvidenceContract(
+        assessment,
+        gapAnalysis.map((g) => ({ axis: g.axis, name: g.axisName, actual: g.currentScore, target: g.targetScore, gap: g.gap })),
+        {
+          mode: initiativeResult.mode,
+          extraToVerify:
+            initiatives.length === 0
+              ? ['Brak wygenerowanych inicjatyw z luk — plan pusty, zweryfikuj dane wejściowe.']
+              : [],
+          extraUnresolvedGaps: initiatives.length === 0 ? 1 : 0,
+        }
+      );
+
       return {
         status: 'success',
         plan: {
@@ -323,6 +437,7 @@ export const aiAssessmentReportGenerator = {
           prioritizedList: prioritized?.prioritizedList || [],
           constraints,
           mode: initiativeResult.mode || 'AI_GENERATED',
+          evidence,
         },
       };
     } catch (err: any) {
