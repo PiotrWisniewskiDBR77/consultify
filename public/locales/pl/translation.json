@@ -8565,7 +8565,9 @@
       "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
       "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
       "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
-      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}"
+      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}",
+      "linkCopied": "Skopiowano link",
+      "linkCopyError": "Nie udało się skopiować"
     },
     "decisions": {
       "decision": "Decyzja",
@@ -8896,7 +8898,19 @@
       "core": "rdzeń",
       "proposedHeading": "Proponowane karty (AI)",
       "coreHeading": "Karty rdzenia (zawsze)"
-    }
+    },
+    "noDescription": "Brak opisu.",
+    "aiPrompt": {
+      "summarize": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.",
+      "makeDocument": "Napisz dokument na podstawie tej inicjatywy: cele, status, ryzyka i rekomendacje."
+    },
+    "aiHint": {
+      "summarize": "Podsumuj",
+      "makeDocument": "Napisz dokument"
+    },
+    "financeShortcut": "Finanse",
+    "copyLinkAction": "Kopiuj link",
+    "newButton": "Nowy"
   },
   "execution": {
     "title": "Centrum Realizacji",

@@ -9419,7 +9419,9 @@
       "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
       "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
       "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
-      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}"
+      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}",
+      "linkCopied": "Link copied",
+      "linkCopyError": "Copy failed"
     },
     "decisions": {
       "decision": "Decision",
@@ -9750,7 +9752,19 @@
       "core": "core",
       "proposedHeading": "Proposed cards (AI)",
       "coreHeading": "Core cards (always)"
-    }
+    },
+    "noDescription": "No description.",
+    "aiPrompt": {
+      "summarize": "Summarize this initiative in 5 bullets and propose 3 next steps.",
+      "makeDocument": "Write a document based on this initiative: goals, status, risks and recommendations."
+    },
+    "aiHint": {
+      "summarize": "Summarize",
+      "makeDocument": "Make document"
+    },
+    "financeShortcut": "Finance",
+    "copyLinkAction": "Copy link",
+    "newButton": "New"
   },
   "execution": {
     "title": "Execution Center",
