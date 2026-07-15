@@ -26998,6 +26998,16 @@
       "noDataToScore": "No data to score",
       "cancel": "Cancel",
       "applyRanking": "Apply ranking"
+    },
+    "conditionalFormatting": {
+      "title": "Conditional formatting",
+      "addRule": "Add rule",
+      "noRules": "No formatting rules",
+      "valuePlaceholder": "Value...",
+      "toPlaceholder": "To...",
+      "bg": "BG",
+      "text": "Text",
+      "preview": "Formatting preview"
     }
   },
   "myWorkNotebook": {

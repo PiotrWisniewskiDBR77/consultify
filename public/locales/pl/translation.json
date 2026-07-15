@@ -28058,6 +28058,16 @@
       "noDataToScore": "Brak danych do scoringu",
       "cancel": "Anuluj",
       "applyRanking": "Zastosuj ranking"
+    },
+    "conditionalFormatting": {
+      "title": "Formatowanie warunkowe",
+      "addRule": "Dodaj regułę",
+      "noRules": "Brak reguł formatowania",
+      "valuePlaceholder": "Wartość...",
+      "toPlaceholder": "Do...",
+      "bg": "Tło",
+      "text": "Tekst",
+      "preview": "Podgląd formatowania"
     }
   },
   "myWorkNotebook": {

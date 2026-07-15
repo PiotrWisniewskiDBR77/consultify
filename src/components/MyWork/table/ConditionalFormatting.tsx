@@ -146,7 +146,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
   open = true,
   onClose: _onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const addRule = useCallback(() => {
@@ -192,7 +192,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
         <div className="flex items-center gap-1.5">
           <Paintbrush size={12} className="text-c-text-secondary" />
           <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
-            {isPl ? 'Formatowanie warunkowe' : 'Conditional formatting'}
+            {t('myWorkTable.conditionalFormatting.title')}
           </span>
         </div>
         <button
@@ -200,13 +200,13 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
           className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
         >
           <Plus size={10} />
-          {isPl ? 'Dodaj regułę' : 'Add rule'}
+          {t('myWorkTable.conditionalFormatting.addRule')}
         </button>
       </div>
 
       {rules.length === 0 && (
         <div className="text-[10px] text-c-text-secondary text-center py-3">
-          {isPl ? 'Brak reguł formatowania' : 'No formatting rules'}
+          {t('myWorkTable.conditionalFormatting.noRules')}
         </div>
       )}
 
@@ -259,7 +259,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                   type="text"
                   value={rule.value != null ? String(rule.value) : ''}
                   onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                  placeholder={isPl ? 'Wartość...' : 'Value...'}
+                  placeholder={t('myWorkTable.conditionalFormatting.valuePlaceholder')}
                   className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
                 />
                 {isBetween && (
@@ -269,7 +269,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                       type="text"
                       value={rule.value2 != null ? String(rule.value2) : ''}
                       onChange={(e) => updateRule(rule.id, { value2: e.target.value })}
-                      placeholder={isPl ? 'Do...' : 'To...'}
+                      placeholder={t('myWorkTable.conditionalFormatting.toPlaceholder')}
                       className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
                     />
                   </>
@@ -282,7 +282,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
               {/* Background color */}
               <div className="flex items-center gap-1">
                 <span className="text-[8px] text-c-text-secondary uppercase tracking-wider">
-                  {isPl ? 'Tło' : 'BG'}
+                  {t('myWorkTable.conditionalFormatting.bg')}
                 </span>
                 {PRESET_BG_COLORS.slice(0, 5).map((c) => (
                   <button
@@ -307,7 +307,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
               {/* Text color */}
               <div className="flex items-center gap-1">
                 <span className="text-[8px] text-c-text-secondary uppercase tracking-wider">
-                  {isPl ? 'Tekst' : 'Text'}
+                  {t('myWorkTable.conditionalFormatting.text')}
                 </span>
                 {PRESET_TEXT_COLORS.slice(0, 4).map((c) => (
                   <button
@@ -361,7 +361,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
               className="px-2 py-1 rounded-lg text-[10px] border border-c-border-subtle"
               style={rule.style as React.CSSProperties}
             >
-              {isPl ? 'Podgląd formatowania' : 'Formatting preview'}
+              {t('myWorkTable.conditionalFormatting.preview')}
             </div>
           </div>
         );
