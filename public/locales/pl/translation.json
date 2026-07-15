@@ -28164,6 +28164,49 @@
         { "label": "Porządki w raportach", "value": 2, "effort": 2, "recommendation": "defer" },
         { "label": "Pełna migracja ERP", "value": 2, "effort": 5, "recommendation": "drop" }
       ]
+    },
+    "ambitionDecomposerLibraryGraphic": {
+      "titleProcess": "Jak Ambition Decomposer rozkłada ambicję na mierzalne motywy",
+      "titleExample": "Przykład: jedna ambicja rozłożona na motywy strategiczne z celami i horyzontem",
+      "subtitleProcess": "To nie deklaracja na slajdzie. Najpierw ostro formułujemy ambicję, potem rozkładamy ją na motywy strategiczne, nadajemy każdemu mierzalny cel oraz horyzont i ważymy je istotnością.",
+      "subtitleExample": "Ten case pokazuje, że ambicja to nie slogan. Najpierw nazywamy ją jednym zdaniem, a potem rozkładamy na motywy strategiczne, każdy z mierzalnym celem i horyzontem czasowym.",
+      "scenarioLabelProcess": "Punkt wyjścia",
+      "scenarioLabelExample": "Sytuacja",
+      "scenarioValueProcess": "Sesja startuje od jednego zdania ambicji, zakresu i sygnału sukcesu. Bez tego motywy są oderwane od tego, co naprawdę chcemy osiągnąć.",
+      "scenarioValueExample": "Zarząd chce „być liderem AI w branży\", ale nikt nie wie, co to znaczy w liczbach ani kiedy. Ambicja jest zbyt ogólna, by ją zaplanować.",
+      "decisionLabelProcess": "Efekt sesji",
+      "decisionLabelExample": "Pytanie decyzyjne",
+      "decisionValueProcess": "Ambicja rozłożona na motywy strategiczne, każdy z celem, metryką i horyzontem, posortowane wg istotności i gotowe do dalszej pracy.",
+      "decisionValueExample": "Na jakie mierzalne motywy musimy rozłożyć ambicję, żeby dało się ją zaplanować i rozliczyć?",
+      "stagesTitleProcess": "5 kroków pracy",
+      "stagesTitleExample": "5 kroków pracy",
+      "stages": [
+        ["Ambicja", "Jedno zdanie + zakres + sygnał sukcesu", "bg-violet-500"],
+        ["Sygnały", "Co napędza i ogranicza ambicję", "bg-violet-500"],
+        ["Motywy", "Rozkład na motywy strategiczne", "bg-indigo-500"],
+        ["Cele & horyzont", "Metryka, cel i okno czasowe", "bg-sky-500"],
+        ["Ruchy & outputy", "Priorytety, inicjatywy, raport, deck", "bg-emerald-500"]
+      ],
+      "cascadeTitle": "Kaskada ambicji",
+      "cascadeHint": "Motywy wg horyzontu",
+      "legendTitle": "Istotność motywu",
+      "legend": [
+        ["high", "Wysoka istotność"],
+        ["medium", "Średnia istotność"],
+        ["low", "Niska istotność"]
+      ],
+      "horizonLabels": { "short": "Krótki", "medium": "Średni", "long": "Długi" },
+      "ambition": "Lider AI w branży do 2028",
+      "ambitionWord": "Ambicja",
+      "footer": "Ambition Decomposer = ambicja -> sygnały -> motywy -> cele & horyzont -> ruchy -> outputy",
+      "themes": [
+        { "title": "Dane gotowe pod AI", "target": "90% danych skatalogowanych", "horizon": "short", "importance": "high" },
+        { "title": "Kompetencje zespołu", "target": "40 przeszkolonych osób", "horizon": "short", "importance": "medium" },
+        { "title": "Produkty wsparte AI", "target": "3 wdrożone use-case", "horizon": "medium", "importance": "high" },
+        { "title": "Automatyzacja procesów", "target": "25% kosztów operacji", "horizon": "medium", "importance": "medium" },
+        { "title": "Nowe modele przychodu", "target": "15% przychodu z AI", "horizon": "long", "importance": "high" },
+        { "title": "Ekosystem partnerów", "target": "2 alianse strategiczne", "horizon": "long", "importance": "low" }
+      ]
     }
   }
 }

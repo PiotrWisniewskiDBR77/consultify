@@ -27088,6 +27088,49 @@
         { "label": "Report cleanup", "value": 2, "effort": 2, "recommendation": "defer" },
         { "label": "Full ERP migration", "value": 2, "effort": 5, "recommendation": "drop" }
       ]
+    },
+    "ambitionDecomposerLibraryGraphic": {
+      "titleProcess": "How Ambition Decomposer breaks an ambition into measurable themes",
+      "titleExample": "Example: one ambition decomposed into strategic themes with targets and horizon",
+      "subtitleProcess": "This is not a statement on a slide. We sharpen the ambition first, decompose it into strategic themes, give each a measurable target and horizon, and weight them by importance.",
+      "subtitleExample": "This case shows that an ambition is not a slogan. We first name it in a single sentence, then decompose it into strategic themes, each with a measurable target and a time horizon.",
+      "scenarioLabelProcess": "Starting point",
+      "scenarioLabelExample": "Situation",
+      "scenarioValueProcess": "The session starts from a single ambition sentence, scope, and success signal. Without that, themes are detached from what we actually want to achieve.",
+      "scenarioValueExample": "The board wants to \"be the AI leader in the industry,\" but nobody knows what that means in numbers or by when. The ambition is too vague to plan.",
+      "decisionLabelProcess": "Session outcome",
+      "decisionLabelExample": "Decision question",
+      "decisionValueProcess": "The ambition decomposed into strategic themes, each with a target, metric, and horizon, sorted by importance and ready for downstream work.",
+      "decisionValueExample": "Into which measurable themes must we decompose the ambition so it can be planned and held accountable?",
+      "stagesTitleProcess": "5 working steps",
+      "stagesTitleExample": "5 working steps",
+      "stages": [
+        ["Ambition", "One sentence + scope + success signal", "bg-violet-500"],
+        ["Signals", "What drives and constrains the ambition", "bg-violet-500"],
+        ["Themes", "Decompose into strategic themes", "bg-indigo-500"],
+        ["Targets & horizon", "Metric, target value, and time window", "bg-sky-500"],
+        ["Moves & outputs", "Priorities, initiatives, report, deck", "bg-emerald-500"]
+      ],
+      "cascadeTitle": "Ambition cascade",
+      "cascadeHint": "Themes by horizon",
+      "legendTitle": "Theme importance",
+      "legend": [
+        ["high", "High importance"],
+        ["medium", "Medium importance"],
+        ["low", "Low importance"]
+      ],
+      "horizonLabels": { "short": "Short", "medium": "Medium", "long": "Long" },
+      "ambition": "AI leader in the industry by 2028",
+      "ambitionWord": "Ambition",
+      "footer": "Ambition Decomposer = ambition -> signals -> themes -> targets & horizon -> moves -> outputs",
+      "themes": [
+        { "title": "AI-ready data", "target": "90% data cataloged", "horizon": "short", "importance": "high" },
+        { "title": "Team capability", "target": "40 people upskilled", "horizon": "short", "importance": "medium" },
+        { "title": "AI-powered products", "target": "3 use-cases live", "horizon": "medium", "importance": "high" },
+        { "title": "Process automation", "target": "25% ops cost cut", "horizon": "medium", "importance": "medium" },
+        { "title": "New revenue models", "target": "15% revenue from AI", "horizon": "long", "importance": "high" },
+        { "title": "Partner ecosystem", "target": "2 strategic alliances", "horizon": "long", "importance": "low" }
+      ]
     }
   }
 }
