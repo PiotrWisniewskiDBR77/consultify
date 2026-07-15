@@ -12,7 +12,23 @@
  *     [--archetype diagnostic|synthetic|real-anon] \
  *     [--output-dir benchmark/results] \
  *     [--run-id my-run-001] \
+ *     [--generate] [--max-tasks 5] \
  *     [--quiet]
+ *
+ * `--generate` (E4): for every task WITHOUT a pre-collected `modelAnswer`,
+ * calls the real PRODUCT LLM path (`generateChatResponse` from
+ * `server/src/services/aiService.ts` — the same function real routes use,
+ * e.g. `documentBlockProseGenerator.ts` / `docGenerationRuntime.ts`) with a
+ * prompt built EXCLUSIVELY via `buildProductPromptPayload(task)` (never the
+ * raw task — see ANTI-CONTAMINATION below). Generated answers are cached to
+ * `benchmark/answers/<corpusHash>/<taskId>.json` (never written into
+ * `benchmark/tasks/**`, never committed — see .gitignore) and reused on
+ * subsequent runs so re-running the same corpus doesn't re-spend money.
+ * `--max-tasks N` (default 5) caps how many NEW generations (cache misses)
+ * happen in a single invocation — a cost/time safety valve, not a limit on
+ * how many tasks get judged (cached answers don't count against it). Without
+ * `--generate`, tasks with no modelAnswer are reported `no_model_answer`
+ * exactly as before (E1-E3 behaviour, unchanged).
  *
  * Exit codes:
  *   0 — every task that had a model answer was graded (status 'ok'); PASS/FAIL
@@ -32,10 +48,9 @@
  *
  * ANTI-CONTAMINATION (PROJEKT_BENCHMARK.md §4.3): this runner is a judge-only
  * harness. It reads goldNotes/binaryCriteria/scaleRubrics from the task file
- * for GRADING only. If/when a real product-model call is wired in
- * `resolveProductAnswerProvider`, it MUST build the model-under-test prompt
- * exclusively via `buildProductPromptPayload(task)` — never pass the raw
- * task object (which carries goldNotes/criteria) into the product call.
+ * for GRADING only. The model-under-test call (`--generate`) builds its
+ * prompt EXCLUSIVELY via `buildProductPromptPayload(task)` — never the raw
+ * task object (which carries goldNotes/criteria) — enforced in `run()` below.
  *
  * Adapter selection (judge LLM, same convention as run-benchmark-judge.ts):
  *   1. If the project's `llmService` is importable AND at least one of
@@ -46,6 +61,29 @@
  *      call → every task reports status=unavailable, NOT a crash, NOT a
  *      fabricated score (§4.2: never report a flaky/absent judge as a real
  *      low pass-rate).
+ *
+ * Same key-presence gate applies to `--generate`: no keys → a clear one-line
+ * warning is printed, generation is skipped for every task (they fall back
+ * to `no_model_answer`), never a crash, never a fabricated answer.
+ *
+ * COST WARNING: `--generate` makes REAL, BILLED LLM calls (tier via
+ * BENCHMARK_GENERATE_MODEL_TIER, default 'premium' — the same tier the
+ * product uses for its highest-stakes generations, e.g. initiative/decision
+ * drafting). Keep `--max-tasks` low for exploratory runs; the full 100-task
+ * corpus is ~100 premium-tier calls if the answer cache is empty.
+ *
+ * ENVIRONMENT NOTE: `--generate` imports the real `aiService.ts`/`llmService.ts`
+ * product path, which (by tier-string convention, e.g. `{ id: 'premium' }`)
+ * resolves the active provider via `LLMConfigService`, which reads the DB.
+ * That means `--generate` needs the SAME environment a real server process
+ * needs — notably `DATABASE_URL` — not just an LLM API key. Running it with
+ * no `DATABASE_URL` at all hits `DatabaseConfig.ts`'s own hard
+ * `process.exit(1)` (pre-existing product behaviour, not introduced here).
+ * This is expected to be a non-issue on staging/demo (where DATABASE_URL is
+ * always set); it was not independently re-verified end-to-end against a
+ * live provider from a bare local shell (no reachable DB / no real keys in
+ * this sandbox — see the script's own `--generate`-with-no-keys smoke path,
+ * which IS verified and prints a clean warning with no crash).
  */
 
 import * as crypto from 'crypto';
@@ -76,6 +114,10 @@ interface CliArgs {
   outputDir: string;
   runId: string;
   quiet: boolean;
+  /** E4: invoke the real product LLM path for tasks with no modelAnswer. */
+  generate: boolean;
+  /** E4: cap on NEW generations (cache misses) in this invocation. Cost safety valve. */
+  maxTasks: number;
 }
 
 interface ParseOk {
@@ -96,6 +138,8 @@ const KNOWN_FLAGS = new Set([
   '--output-dir',
   '--run-id',
   '--quiet',
+  '--generate',
+  '--max-tasks',
 ]);
 
 const KNOWN_FLAG_PREFIXES = KNOWN_FLAGS.size
@@ -108,6 +152,26 @@ const EXIT_ARG_ERROR = 2;
 
 const DEFAULT_TASKS_ROOT = path.join('benchmark', 'tasks');
 const DEFAULT_OUTPUT_DIR = path.join('benchmark', 'results');
+const DEFAULT_ANSWERS_DIR = path.join('benchmark', 'answers');
+
+/** E4 cost safety valve default: cap on NEW (cache-miss) generations per invocation. */
+const DEFAULT_MAX_GENERATE_TASKS = 5;
+
+/** E4: product tier used for the model-under-test call — same convention as
+ * BENCHMARK_JUDGE_MODEL_TIER, but a distinct env var since judge and
+ * generation are different calls with potentially different cost profiles.
+ * Defaults to 'premium' — the tier the product uses for its highest-stakes
+ * generations (initiative/decision drafting, presentation layouts). */
+function generateModelTier(): string {
+  return process.env.BENCHMARK_GENERATE_MODEL_TIER || 'premium';
+}
+
+/** E4: hard wall-clock cap for one generation call (defense in depth on top
+ * of aiService.ts's own internal 30s timeout). */
+function generateTimeoutMs(): number {
+  const raw = Number(process.env.BENCHMARK_GENERATE_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 60_000;
+}
 
 // ---------------------------------------------------------------------------
 // Argument parsing
@@ -189,10 +253,21 @@ function parseArgs(argv: string[]): ParseOk | ParseErr {
   const outputDir = getSingleFlagValue('output-dir', argv) || DEFAULT_OUTPUT_DIR;
   const runId = getSingleFlagValue('run-id', argv) || defaultRunId();
   const quiet = hasBareFlag('quiet', argv);
+  const generate = hasBareFlag('generate', argv);
+
+  const maxTasksRaw = getSingleFlagValue('max-tasks', argv);
+  let maxTasks = DEFAULT_MAX_GENERATE_TASKS;
+  if (maxTasksRaw !== null && maxTasksRaw !== '') {
+    const parsed = Number(maxTasksRaw);
+    if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0) {
+      return { ok: false, error: `--max-tasks must be a non-negative integer, got: ${maxTasksRaw}` };
+    }
+    maxTasks = parsed;
+  }
 
   return {
     ok: true,
-    args: { tasksGlobRoot, taskIds, lang, archetype, outputDir, runId, quiet },
+    args: { tasksGlobRoot, taskIds, lang, archetype, outputDir, runId, quiet, generate, maxTasks },
   };
 }
 
@@ -375,24 +450,157 @@ function computeCorpusHash(records: TaskFileRecord[]): string {
 // ---------------------------------------------------------------------------
 
 /**
- * E4 scope: wiring a real call into the product model (Teresa / tool
- * runtime) via the SAME path a real user hits, using ONLY
- * `buildProductPromptPayload(task)` as the input (never the raw task —
- * that would leak goldNotes/binaryCriteria into the model-under-test,
- * see PROJEKT_BENCHMARK.md §4.3).
+ * E4: wires a real call into the product LLM path — `generateChatResponse`
+ * from `server/src/services/aiService.ts`, the SAME function real routes use
+ * (document generation/refinement, assessment initiative drafting, the
+ * prompt-assistant route) — using ONLY `buildProductPromptPayload(task)` as
+ * the input (never the raw task, which carries goldNotes/binaryCriteria; see
+ * PROJEKT_BENCHMARK.md §4.3 / the module header ANTI-CONTAMINATION note).
  *
- * Until that's wired, this runner supports OFFLINE evaluation: a task file
- * may carry a pre-collected `modelAnswer` (e.g. captured from a prior manual
- * or scripted product run). Tasks without one are reported as
+ * A task file MAY carry a pre-collected `modelAnswer` (e.g. captured from a
+ * prior manual or scripted product run) — that always wins over generation.
+ * Tasks with neither a `modelAnswer` nor `--generate` are reported
  * `no_model_answer` — skipped, never crashing, never inventing an answer.
  */
-function resolveProductAnswer(record: TaskFileRecord): { status: 'ok' | 'no_model_answer' } {
-  // Exercise the firewall so any future wiring here is forced through it.
-  void buildProductPromptPayload(record.task);
-  if (record.task.modelAnswer && record.task.modelAnswer.trim().length > 0) {
-    return { status: 'ok' };
+
+type GenerationStatus = 'ok' | 'unavailable' | 'timeout' | 'rate_limited';
+
+interface GenerationOutcome {
+  status: GenerationStatus;
+  text?: string;
+  reason?: string;
+  durationMs?: number;
+}
+
+/** Sanitizes a taskId into a safe filename component (defense in depth — task
+ * ids are expected to already be filesystem-safe, e.g. "drd-4C7-051"). */
+function sanitizeForFilename(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_.-]/g, '_') || 'task';
+}
+
+function answerCachePath(answersDir: string, corpusHash: string, taskId: string): string {
+  return path.join(answersDir, corpusHash, `${sanitizeForFilename(taskId)}.json`);
+}
+
+/** Loads a previously generated answer from the local cache, if present and
+ * non-empty. Cache misses / corrupt files are treated the same as "no cache"
+ * — never throws, never blocks the run. */
+function loadCachedAnswer(answersDir: string, corpusHash: string, taskId: string): string | null {
+  const abs = path.resolve(process.cwd(), answerCachePath(answersDir, corpusHash, taskId));
+  if (!fs.existsSync(abs)) return null;
+  try {
+    const raw = fs.readFileSync(abs, 'utf8');
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const answer = typeof parsed.answer === 'string' ? parsed.answer.trim() : '';
+    return answer.length > 0 ? answer : null;
+  } catch {
+    return null;
   }
-  return { status: 'no_model_answer' };
+}
+
+function timeoutGuard<T>(promise: Promise<T>, ms: number): Promise<T | { __timedOut: true }> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve({ __timedOut: true });
+    }, ms);
+    promise.then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        // Errors are surfaced by the caller's own try/catch around `promise`;
+        // this branch only exists so the timer always gets cleared.
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+      }
+    );
+  });
+}
+
+/**
+ * Calls the product's real LLM path with EXACTLY the firewalled payload
+ * (`{ prompt, context }`) — never the raw task. Never throws: every failure
+ * mode (missing import, empty response, rate limit, timeout, provider error)
+ * is returned as a typed `GenerationOutcome`, matching the judge service's
+ * own never-throws discipline.
+ */
+async function generateProductAnswer(
+  payload: { prompt: string; context?: string }
+): Promise<GenerationOutcome> {
+  const startedAt = Date.now();
+
+  let generateChatResponse: (params: {
+    systemPrompt?: string;
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+    model?: string;
+    maxTokens?: number;
+  }) => Promise<{ content: string }>;
+
+  try {
+    const mod = await import(/* @vite-ignore */ '../src/services/aiService.js');
+    const fn = (mod as { generateChatResponse?: unknown }).generateChatResponse;
+    if (typeof fn !== 'function') {
+      return {
+        status: 'unavailable',
+        reason: 'aiService import did not expose generateChatResponse(...)',
+        durationMs: Date.now() - startedAt,
+      };
+    }
+    generateChatResponse = fn as typeof generateChatResponse;
+  } catch (error) {
+    const message = (error as { message?: unknown })?.message ?? String(error);
+    return {
+      status: 'unavailable',
+      reason: `aiService import failed: ${String(message)}`,
+      durationMs: Date.now() - startedAt,
+    };
+  }
+
+  const userContent = payload.context
+    ? `${payload.prompt}\n\n---\nContext:\n${payload.context}`
+    : payload.prompt;
+
+  try {
+    const guarded = await timeoutGuard(
+      generateChatResponse({
+        systemPrompt:
+          'You are a senior management consultant answering a client task directly and concretely. Use only the information given in the task and context; never invent facts, figures, or sources.',
+        messages: [{ role: 'user', content: userContent }],
+        model: generateModelTier(),
+        maxTokens: 2000,
+      }),
+      generateTimeoutMs()
+    );
+    if ((guarded as { __timedOut?: true }).__timedOut) {
+      return {
+        status: 'timeout',
+        reason: `generation exceeded ${generateTimeoutMs()}ms`,
+        durationMs: Date.now() - startedAt,
+      };
+    }
+    const text = String((guarded as { content: string }).content || '').trim();
+    if (!text) {
+      return { status: 'unavailable', reason: 'empty_response', durationMs: Date.now() - startedAt };
+    }
+    return { status: 'ok', text, durationMs: Date.now() - startedAt };
+  } catch (error) {
+    const message = (error as { message?: unknown })?.message ?? String(error);
+    const lower = String(message).toLowerCase();
+    if (lower.includes('rate') || lower.includes('429') || lower.includes('quota')) {
+      return { status: 'rate_limited', reason: String(message), durationMs: Date.now() - startedAt };
+    }
+    if (lower.includes('timeout') || lower.includes('aborted')) {
+      return { status: 'timeout', reason: String(message), durationMs: Date.now() - startedAt };
+    }
+    return { status: 'unavailable', reason: String(message), durationMs: Date.now() - startedAt };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -646,25 +854,117 @@ async function run(): Promise<number> {
     logLine(args.quiet, `[run-consulting-benchmark] Real LLM adapter resolved (tier=${adapterInfo.tier}).`);
   }
 
+  // E4: generation gate. Same key-presence check as the judge adapter, same
+  // env vars, checked ONCE up front so the warning is printed exactly once
+  // (not once per task) — "jasny komunikat" per the anti-fabrication rule.
+  const genHasKeys = hasAnyLlmKey();
+  const genTier = generateModelTier();
+  let generateBudgetRemaining = args.maxTasks;
+  let generationAttempted = 0;
+  let generationSucceeded = 0;
+  let generationCacheHits = 0;
+
+  if (args.generate) {
+    if (!genHasKeys) {
+      logLine(
+        args.quiet,
+        `[run-consulting-benchmark] --generate requested but NO LLM API keys found in env ` +
+          `(checked OPENAI_API_KEY/ANTHROPIC_API_KEY/GEMINI_API_KEY/GOOGLE_AI_API_KEY/OPENROUTER_API_KEY). ` +
+          `Generation SKIPPED for every task — they will report status=no_model_answer. ` +
+          `Set one of these keys and re-run with --generate to exercise the product path.`
+      );
+    } else {
+      logLine(
+        args.quiet,
+        `[run-consulting-benchmark] --generate enabled: tier=${genTier} max-new-generations-this-run=${args.maxTasks}`
+      );
+    }
+  }
+
   const outcomes: TaskRunOutcome[] = [];
 
   for (const record of records) {
-    const answer = resolveProductAnswer(record);
-    if (answer.status === 'no_model_answer') {
+    let modelAnswer =
+      record.task.modelAnswer && record.task.modelAnswer.trim().length > 0
+        ? record.task.modelAnswer.trim()
+        : '';
+    let unresolvedStatus: GenerationStatus | null = null;
+    let unresolvedReason: string | undefined;
+
+    if (!modelAnswer && args.generate) {
+      const cached = loadCachedAnswer(DEFAULT_ANSWERS_DIR, corpusHash, record.taskId);
+      if (cached) {
+        modelAnswer = cached;
+        generationCacheHits++;
+        logLine(
+          args.quiet,
+          `[run-consulting-benchmark] ${record.taskId}: using cached generated answer (${DEFAULT_ANSWERS_DIR}/${corpusHash}/…)`
+        );
+      } else if (!genHasKeys) {
+        unresolvedReason = 'no LLM API keys — generation skipped (see --generate warning above)';
+      } else if (generateBudgetRemaining <= 0) {
+        unresolvedReason = `--max-tasks (${args.maxTasks}) generation budget exhausted this run`;
+      } else {
+        generationAttempted++;
+        generateBudgetRemaining--;
+        logLine(
+          args.quiet,
+          `[run-consulting-benchmark] ${record.taskId}: generating product answer (${generationAttempted}/${args.maxTasks})…`
+        );
+        // Firewall: the ONLY thing the model-under-test sees is {prompt, context}.
+        const payload = buildProductPromptPayload(record.task);
+        const gen = await generateProductAnswer(payload);
+        if (gen.status === 'ok' && gen.text) {
+          modelAnswer = gen.text;
+          generationSucceeded++;
+          try {
+            writeJsonFile(answerCachePath(DEFAULT_ANSWERS_DIR, corpusHash, record.taskId), {
+              taskId: record.taskId,
+              corpusHash,
+              tier: genTier,
+              generatedAt: new Date().toISOString(),
+              promptPayload: payload,
+              answer: gen.text,
+              durationMs: gen.durationMs,
+            });
+          } catch (error) {
+            const message = (error as { message?: unknown })?.message ?? String(error);
+            logError(
+              `[run-consulting-benchmark] ${record.taskId}: failed to cache generated answer (continuing): ${String(message)}`
+            );
+          }
+          logLine(
+            args.quiet,
+            `[run-consulting-benchmark] ${record.taskId}: generated OK (${gen.durationMs}ms), cached.`
+          );
+        } else {
+          unresolvedStatus = gen.status;
+          unresolvedReason = gen.reason ?? 'generation_failed';
+          logError(
+            `[run-consulting-benchmark] ${record.taskId}: generation FAILED status=${gen.status} reason=${unresolvedReason}`
+          );
+        }
+      }
+    }
+
+    if (!modelAnswer) {
       outcomes.push({
         taskId: record.taskId,
-        status: 'no_model_answer',
+        status: unresolvedStatus ?? 'no_model_answer',
         archetype: record.task.archetype,
         domain: record.task.domain,
-        reason: 'task file has no pre-collected modelAnswer (product-model wiring is E4 scope)',
+        reason:
+          unresolvedReason ??
+          'task file has no pre-collected modelAnswer (pass --generate to invoke the product path)',
       });
       continue;
     }
 
+    const taskForJudge: JudgeTaskInput = { ...record.task, modelAnswer };
     const judge = await judgeConsultingTask({
       adapter: adapterInfo.adapter,
-      task: record.task,
-      scaleRubrics: record.task.scaleRubrics ?? DEFAULT_CONSULTING_RUBRICS,
+      task: taskForJudge,
+      scaleRubrics: taskForJudge.scaleRubrics ?? DEFAULT_CONSULTING_RUBRICS,
     });
 
     outcomes.push({
@@ -680,6 +980,14 @@ async function run(): Promise<number> {
       durationMs: judge.durationMs,
       reason: judge.reason,
     });
+  }
+
+  if (args.generate) {
+    logLine(
+      args.quiet,
+      `[run-consulting-benchmark] Generation summary: ${generationSucceeded}/${generationAttempted} succeeded, ` +
+        `${generationCacheHits} served from cache, budget was ${args.maxTasks} new generation(s).`
+    );
   }
 
   const scorecard = buildScorecard(outcomes);

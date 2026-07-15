@@ -297,3 +297,10 @@ vts-wave2-credentials*.csv
 docs/qa/.auth.b64
 docs/qa/screens/review/
 dev-render/.vite-cache/
+
+# Consulting Benchmark (Blok E): generated LLM answers + run results are
+# local/CI artifacts, never committed. `benchmark/tasks/**` (the task bank
+# itself) and `benchmark/SCORECARD.md` (checked-in quality card) are NOT
+# covered by this and stay tracked.
+benchmark/answers/
+benchmark/results/
