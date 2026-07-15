@@ -28669,5 +28669,686 @@
     "scheduleReportModal": {
       "eGWeeklyStatusReport": "e.g. Weekly Status Report"
     }
+  },
+  "discoveryToolsSteps": {
+    "contextStep": {
+      "dynamicSwot": {
+        "seed": {
+          "understanding": "I understand this session as an attempt to define the strategic direction for the whole organization, not just improve a single KPI. Dynamic SWOT should help name where the company should go, what advantage it can build on, and which choices matter most for leadership now.",
+          "goal": "How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?",
+          "scope": "The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice.",
+          "successSignal": "By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution.",
+          "kpiTarget": "12-18 months for directional change, 90 days for the first moves and execution decisions",
+          "constraints": "The direction must be realistic for current resources; we do not assume a full transformation of everything at once; the recommendation must be clear for leadership and translatable into next decisions.",
+          "assumptions": "The company has several possible growth paths, but no shared answer yet on which one truly builds advantage; some tensions come from the market, others from inside the organization; leadership needs material that structures the choice instead of merely describing the situation."
+        },
+        "refinement": {
+          "understanding": {
+            "comment": "We place even more emphasis on {{detail}}",
+            "thinkDeeper": "We sharpen this especially around {{detail}}"
+          },
+          "direction": {
+            "comment": "This narrows the strategic question toward {{detail}}",
+            "thinkDeeper": "We define the direction more deeply around {{detail}}"
+          },
+          "scope": {
+            "comment": "The analysis is further focused on {{detail}}",
+            "thinkDeeper": "We deepen the dimension of {{detail}}"
+          },
+          "success": {
+            "comment": "A strong result should also include {{detail}}",
+            "thinkDeeper": "We sharpen the outcome especially around {{detail}}"
+          },
+          "constraints": {
+            "comment": "In practice this means accounting for {{detail}}",
+            "thinkDeeper": "We tighten the guardrails especially around {{detail}}"
+          }
+        },
+        "direction": {
+          "companyDirection": {
+            "label": "Whole-company strategic direction",
+            "description": "Find the answer to where the company should go as a whole.",
+            "goal": "How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?"
+          },
+          "growthEngine": {
+            "label": "New growth engine",
+            "description": "Choose where the next wave of growth should come from.",
+            "goal": "Which growth direction should become the company’s next engine and how should it be built without fragmenting the organization?"
+          },
+          "marketPosition": {
+            "label": "Market repositioning",
+            "description": "Answer how the company should reposition itself in the market.",
+            "goal": "How should the company redefine its market position to win in more important segments and defend value?"
+          },
+          "capabilityShift": {
+            "label": "Capability model shift",
+            "description": "Focus on which capabilities must shift to make strategy executable.",
+            "goal": "What operating-model shift must the company make so its strategy becomes real, scalable, and coherent?"
+          }
+        },
+        "scope": {
+          "wholeCompany": {
+            "label": "Whole organization",
+            "description": "Offer, market, growth model, and execution.",
+            "scope": "The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice."
+          },
+          "goToMarket": {
+            "label": "Go-to-market and offer",
+            "description": "Sales, segments, value proposition, pricing.",
+            "scope": "The analysis focuses on how the company sells, who it targets, how it positions value, and which segments should be prioritized now."
+          },
+          "portfolioFocus": {
+            "label": "Portfolio and investment priorities",
+            "description": "Where to invest and what to de-prioritize.",
+            "scope": "The analysis covers the portfolio of initiatives and directions to identify where the company should invest attention, resources, and capital, and where it should pull back."
+          },
+          "capabilitiesAndConstraints": {
+            "label": "Capabilities and organizational constraints",
+            "description": "What the organization can do and what holds it back.",
+            "scope": "The analysis focuses on internal capabilities, constraints, and execution tensions that determine which strategy is actually feasible today."
+          }
+        },
+        "success": {
+          "directionAndPriorities": {
+            "label": "Direction and strategic priorities",
+            "description": "A clear choice and list of priorities for leadership.",
+            "successSignal": "By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution."
+          },
+          "boardDecision": {
+            "label": "Board decision material",
+            "description": "Ready material that structures the choice.",
+            "successSignal": "Success means material that allows leadership to compare options, see the tensions, and decide without further interpretive chaos."
+          },
+          "executionBridge": {
+            "label": "Bridge to execution",
+            "description": "Moves that can quickly be translated into action.",
+            "successSignal": "After the session, the company should know not only which direction to choose, but also which first moves to launch within 90 days and how to secure execution."
+          },
+          "strategicClarity": {
+            "label": "Strategic clarity",
+            "description": "Order the thinking and language of strategy.",
+            "successSignal": "Success in this session means a shared language of strategy: naming advantages, risks, priorities, and boundaries of choice so the whole organization understands what it is truly playing for."
+          }
+        },
+        "timeframe": {
+          "short": {
+            "label": "Short horizon",
+            "description": "The next 1-2 quarters."
+          },
+          "medium": {
+            "label": "Medium horizon",
+            "description": "The next 12-18 months."
+          },
+          "long": {
+            "label": "Long horizon",
+            "description": "Transformation over 2+ years."
+          }
+        },
+        "ui": {
+          "comment": "Comment",
+          "thinkDeeper": "Think deeper",
+          "implement": "Implement",
+          "close": "Close",
+          "next": "Next",
+          "previous": "Previous",
+          "confirm": "Confirm",
+          "selectedMany": "You can select multiple answers"
+        },
+        "question4": {
+          "leadershipChoice": {
+            "label": "What is the real leadership choice?",
+            "description": "Name the decision leadership actually needs to make."
+          },
+          "wholeCompanyPriority": {
+            "label": "Which priority should align the whole company?",
+            "description": "A question about one shared direction for the whole organization."
+          },
+          "growthSource": {
+            "label": "Where should the next growth wave come from?",
+            "description": "Go deeper on the source of growth and commercial concentration."
+          },
+          "positioningChoice": {
+            "label": "What market position do we truly want to hold?",
+            "description": "Clarify market ambition and target segments."
+          },
+          "tradeOff": {
+            "label": "Which trade-off must be accepted?",
+            "description": "Name the compromise that cannot be avoided."
+          }
+        },
+        "question5": {
+          "resourceReality": {
+            "label": "Which resource constraints are real?",
+            "description": "People, time, budget, execution capacity."
+          },
+          "riskBoundary": {
+            "label": "Which risk boundary should not be crossed?",
+            "description": "The acceptable risk boundary for this strategy."
+          },
+          "decisionSpeed": {
+            "label": "How fast does this decision need to be?",
+            "description": "Pace of action and rhythm of next moves."
+          },
+          "boardClarity": {
+            "label": "What must be crystal-clear for leadership?",
+            "description": "How to frame the choice so it is unmistakably clear."
+          },
+          "executionReadiness": {
+            "label": "What must be ready for execution?",
+            "description": "Which first moves should follow from this session."
+          }
+        },
+        "confirm": {
+          "direction": "The strategic direction of this session focuses on: {{list}}.",
+          "scope": "At the center of the analysis we place: {{list}}.",
+          "success": "A strong result from this session should deliver: {{list}}.",
+          "question4": "The key contextual questions we need to resolve are: {{list}}.",
+          "question5": "This session must respect the following boundaries: {{list}}."
+        },
+        "summary": {
+          "intro": "This Dynamic SWOT is meant to build decision material for leadership, not just a neat diagnosis. Its role is to identify the strategic direction the organization should consider most sensible, and show why that choice deserves to be carried forward into actions, priorities, and subsequent decisions.",
+          "body": "Based on the answers so far, this session should focus on: {{direction}}. At the center of the analysis should sit: {{scope}}. That means the SWOT should not merely describe the situation, but structure the strategic choice, surface the tensions, name the constraints, and show which decision logic is most justified today.",
+          "delivery": "The intended delivery of this work is an outcome shaped as: {{success}}. To make that outcome credible, the session must additionally answer: {{question4}}, while respecting the boundaries: {{question5}}. This is the exact fragment that should later become the first slide of the presentation, explaining the purpose of the SWOT, the scope of work, and the intended logic of delivery."
+        },
+        "deepDive": {
+          "understanding": {
+            "broaderStrategy": "Broaden the strategy framing",
+            "leadershipAngle": "Make it more leadership-facing",
+            "realChoice": "Make the underlying choice more explicit"
+          },
+          "direction": {
+            "competition": "Go deeper on competition and market",
+            "capabilities": "Go deeper on capabilities",
+            "tradeOffs": "Surface the real trade-offs"
+          },
+          "scope": {
+            "narrowerScope": "Narrow the scope to a sharper area",
+            "organizationWide": "Show whole-organization implications",
+            "marketVsInternal": "Separate market and internal factors"
+          },
+          "success": {
+            "decisionReadiness": "Clarify decision-readiness",
+            "executionBridge": "Strengthen the bridge to execution",
+            "boardMaterial": "Make it more board-material oriented"
+          },
+          "constraints": {
+            "resourceLimits": "Clarify resource limits",
+            "governance": "Add governance boundaries",
+            "riskTolerance": "Name the acceptable risk level"
+          }
+        },
+        "placeholder": {
+          "feedbackComment": "Write the comment that should shape the next version of this block.",
+          "horizonComment": "Add if the recommendation should follow a different time rhythm or horizon."
+        },
+        "jsx": {
+          "consultantProposal": "Consultant proposal",
+          "aiWorking": "AI working",
+          "alignIntent": "First we align on how I understand the intent of this session and what type of strategic direction we are trying to design.",
+          "aiUnderstanding": "AI understanding",
+          "question1Heading": "1. What strategic direction are we designing?",
+          "question1Description": "Choose what kind of strategic direction we are actually trying to build here.",
+          "question2Heading": "2. What should sit at the center of this analysis?",
+          "question2Description": "Here we narrow down what exactly should become the object of work in this session.",
+          "question3Heading": "3. How do we recognize a strong outcome from this session?",
+          "question3Description": "Choose which type of outcome should be genuinely useful once this session is complete.",
+          "question4Heading": "4. Which contextual question still needs sharpening?",
+          "question4Description": "This question already depends on previous answers and helps sharpen the real strategic context.",
+          "question5Heading": "5. Which boundaries and realities must this strategy respect?",
+          "question5Description": "At the end, we sharpen the constraints this strategy cannot ignore.",
+          "executiveSummaryHeading": "Executive summary of this session",
+          "aiMissionBriefHeading": "AI mission brief proposal",
+          "strategicQuestionLabel": "Strategic question:",
+          "scopeLabel": "Scope:",
+          "successSignalLabel": "Success signal:",
+          "constraintsLabel": "Constraints:",
+          "applyToMissionBrief": "Apply to mission brief",
+          "discardSuggestion": "Discard suggestion",
+          "moveToNextPhases": "Move to the next phases",
+          "moveToNextPhasesDescription": "Once Mission & Context are aligned, AI can prepare the rest of the session: input map, SWOT matrix, tensions, moves, and outputs.",
+          "generatingFullSession": "AI is building the full session...",
+          "generateFullSession": "Generate the next parts of the session"
+        }
+      },
+      "generic": {
+        "lightStartHint": "This is a light entry: define the goal, scope, and expected finish, and AI will help build the structure for the rest of the conversation and analysis.",
+        "goalHint": "Add concrete KPIs or expected outcome.",
+        "scopeHint": "Specify business area and stakeholders.",
+        "timeframe": {
+          "short": "Short",
+          "medium": "Medium",
+          "long": "Long"
+        },
+        "position": {
+          "leader": "Market Leader",
+          "challenger": "Challenger",
+          "follower": "Follower",
+          "niche": "Niche Player"
+        },
+        "helpText": "💡 A clearly defined goal will help AI generate more relevant suggestions in the following steps."
+      }
+    },
+    "summaryStep": {
+      "selectContent": "Select content",
+      "dynamicSwot": {
+        "sections": {
+          "executiveSummary": {
+            "label": "Executive Summary",
+            "description": "Full analysis summary"
+          },
+          "swotMatrix": {
+            "label": "SWOT Matrix",
+            "description": "Factors in 4 quadrants"
+          },
+          "insights": {
+            "label": "Strategic Insights",
+            "description": "Key insights and observations"
+          },
+          "correlations": {
+            "label": "Correlations",
+            "description": "Cross-factor correlations"
+          },
+          "recommendations": {
+            "label": "Recommendations",
+            "description": "Recommended strategic moves"
+          },
+          "initiatives": {
+            "label": "Initiatives",
+            "description": "Initiative drafts for execution"
+          }
+        },
+        "readiness": {
+          "missionBrief": "Mission brief is clear",
+          "swotFactors": "SWOT factors defined",
+          "strategicInsights": "Strategic insights exist",
+          "recommendationsOrMoves": "Recommendations or moves",
+          "initiativesDefined": "Initiatives defined"
+        },
+        "outputsActions": {
+          "title": "Outputs & Actions",
+          "badge": "Output management",
+          "description": "Turn analysis results into concrete deliverables: initiatives for execution, reports, presentations, and ideas for further exploration."
+        },
+        "analysisReadiness": "Analysis readiness",
+        "metricPills": {
+          "factors": "Factors",
+          "tensions": "Tensions",
+          "moves": "Moves",
+          "initiatives": "Initiatives"
+        },
+        "initiativesTable": {
+          "title": "Initiatives — decision table",
+          "badge": "Initiatives",
+          "description": "Decide which initiatives to develop, which to defer, and which to keep as ideas.",
+          "empty": "No initiatives yet. Go back to \"Synthesis & Insights\" step and create initiatives from recommendations."
+        },
+        "counters": {
+          "toDevelop": "to develop",
+          "deferred": "deferred",
+          "asIdeas": "as ideas"
+        },
+        "impactLabel": "Impact",
+        "effortLabel": "Effort",
+        "rationaleLabel": "Rationale",
+        "collapse": "Collapse",
+        "details": "Details",
+        "develop": "Develop",
+        "defer": "Defer",
+        "asIdea": "As idea",
+        "createReport": {
+          "title": "Create report",
+          "badge": "Report",
+          "description": "Select which analysis elements to include in the consulting report."
+        },
+        "sectionsSelected": "sections selected",
+        "reportCreated": "Report created",
+        "generateReport": "Generate report",
+        "createPresentation": {
+          "title": "Create presentation",
+          "badge": "Presentation",
+          "description": "Select which analysis elements to include in the stakeholder presentation."
+        },
+        "presentationCreated": "Presentation created",
+        "generatePresentation": "Generate presentation",
+        "ideasBank": {
+          "title": "Ideas bank",
+          "badge": "Ideas",
+          "description": "Ideas and observations for further exploration — no immediate action required.",
+          "empty": "Mark initiatives as \"As idea\" in the table above to add them here."
+        }
+      },
+      "generic": {
+        "title": "Final Summary & Initiatives",
+        "finalSourceSummaryProposal": "Final source summary (AI proposal)",
+        "finalSourceSummary": "Final source summary",
+        "generateAnalysisHint": "Click \"Generate Analysis\" to get an AI summary.",
+        "metrics": {
+          "industryAttractiveness": "Industry Attractiveness",
+          "avgForceScore": "Avg. Force Score",
+          "penetration": "Penetration",
+          "marketDev": "Market dev.",
+          "productDev": "Product dev.",
+          "diversification": "Diversification",
+          "stars": "Stars",
+          "cashCows": "Cash Cows",
+          "questionMarks": "Question Marks",
+          "dogs": "Dogs",
+          "assumptions": "Assumptions",
+          "risks": "Risks",
+          "scenarios": "Scenarios",
+          "items": "Items",
+          "sections": "Sections"
+        },
+        "visualization": "Visualization",
+        "visualizationNote": {
+          "growthPaths": "Growth paths summary is reflected in the metrics above.",
+          "portfolioPriority": "BCG matrix is available in the Portfolio Matrix step.",
+          "riskUncertainty": "Risk summary is reflected in the metrics above.",
+          "operational": "Operational summary is reflected in the metrics above."
+        },
+        "keyInsights": "Key Insights",
+        "appliedConclusions": "Applied Conclusions",
+        "refineConclusionsHint": "If anything here feels too vague, go back to the AI conversation and refine the conclusions before generating outputs.",
+        "recommendedInitiatives": "Recommended Initiatives",
+        "generateInitiativesHint": "Click \"Generate Analysis\" to get initiative recommendations."
+      }
+    },
+    "strategicCanvasVisuals": {
+      "swotMatrix": {
+        "strengths": "Strengths",
+        "weaknesses": "Weaknesses",
+        "opportunities": "Opportunities",
+        "threats": "Threats",
+        "tensionsHint": "Tensions emerge from S/O, W/O, S/T, and W/T intersections."
+      },
+      "porterPentagon": {
+        "rivalry": "Rivalry",
+        "newEntrants": "Entrants",
+        "substitutes": "Substitutes",
+        "buyerPower": "Buyers",
+        "supplierPower": "Suppliers",
+        "title": "Porter force radar"
+      },
+      "ansoffMatrix": {
+        "hint": "Each option carries impact, effort, and risk chips."
+      },
+      "portfolioBcg": {
+        "hint": "Position = growth and share, bubble size = investment."
+      },
+      "riskMatrix": {
+        "title": "Probability x impact matrix",
+        "hint": "Scenarios create a response lane for upper-right risks."
+      },
+      "valueChain": {
+        "contributionHigh": "hi",
+        "contributionMedium": "mid",
+        "contributionLow": "lo",
+        "cost": "cost",
+        "value": "value",
+        "title": "Porter value chain",
+        "supportActivities": "Support activities",
+        "primaryActivities": "Primary activities",
+        "margin": "Margin",
+        "createsMargin": "Creates margin",
+        "neutral": "Neutral",
+        "drainsMargin": "Drains margin",
+        "costAdvantage": "Cost advantage",
+        "differentiation": "Differentiation",
+        "stuckInTheMiddle": "Stuck in the middle",
+        "legendHint": "Activity color = margin role, annotations = cost and value contribution."
+      },
+      "capabilityMaturity": {
+        "importanceHigh": "high",
+        "importanceMedium": "medium",
+        "importanceLow": "low",
+        "title": "Capability maturity ladder",
+        "scale": "Scale 1-5",
+        "empty": "No capabilities to show yet. Add capabilities to see current vs target maturity.",
+        "weight": "importance",
+        "current": "Current",
+        "target": "Target",
+        "criticalGap": "Critical gap",
+        "moderateGap": "Moderate gap",
+        "minorGap": "Minor gap",
+        "hint": "Sorted by strategic importance, fill color = gap size, markers = current and target maturity."
+      },
+      "ambitionDecomposition": {
+        "horizonShort": "Short",
+        "horizonMedium": "Medium",
+        "horizonLong": "Long",
+        "importanceHigh": "High",
+        "importanceMedium": "Medium",
+        "importanceLow": "Low",
+        "title": "Ambition cascade",
+        "subtitle": "Themes by horizon",
+        "ambitionLabel": "Ambition",
+        "nameAmbition": "Name the ambition in one sentence",
+        "empty": "No themes to show yet. Decompose the ambition into strategic themes with a target and horizon.",
+        "importanceLabel": "Importance",
+        "highImportance": "High importance",
+        "mediumImportance": "Medium importance",
+        "lowImportance": "Low importance",
+        "hint": "Themes grouped by horizon (short → long), chip color = importance, caption = target and metric."
+      },
+      "focusTradeoff": {
+        "pursue": "Pursue",
+        "defer": "Defer",
+        "drop": "Drop",
+        "quadrants": {
+          "quickWins": "High value, low effort",
+          "bigBets": "High value, high effort",
+          "fillIns": "Low value, low effort",
+          "moneyPit": "Low value, high effort"
+        },
+        "title": "Value x effort matrix",
+        "scale": "Scale 1-5",
+        "empty": "No priorities to show yet. Add priorities with value and effort scores to see the matrix.",
+        "value": "value",
+        "effort": "effort",
+        "hint": "Position = value (y) and effort (x), bubble color = pursue/defer/drop recommendation."
+      },
+      "narrativeArc": {
+        "resonanceHigh": "High",
+        "resonanceMedium": "Medium",
+        "resonanceLow": "Low",
+        "title": "Message house",
+        "subtitle": "Roof + pillars",
+        "coreMessageLabel": "Core message",
+        "nameCoreMessage": "Name one core message",
+        "empty": "No pillars to show yet. Add pillars with a claim and proof points to build the message house.",
+        "resonanceLabel": "Resonance",
+        "proof": "proof",
+        "highResonance": "High resonance",
+        "mediumResonance": "Medium resonance",
+        "lowResonance": "Low resonance",
+        "hint": "Roof = core message, columns = pillars (claim + proof count), color = audience resonance."
+      }
+    },
+    "resultsStep": {
+      "title": "Results",
+      "subtitle": "Turn inputs into crisp outcomes: quick wins, strategic bets, and key risks/prerequisites.",
+      "executiveSummary": "Executive Summary",
+      "executiveSummaryPlaceholder": "Write 3–5 sentences: what you found and what it means.",
+      "keyFindings": "Key Findings",
+      "keyFindingsPlaceholder": "Add a finding...",
+      "quickWinsPlaceholder": "Add a quick win...",
+      "strategicBets": "Strategic bets",
+      "strategicBetsPlaceholder": "Add a strategic bet...",
+      "prerequisites": "Prerequisites",
+      "prerequisitesPlaceholder": "Add a prerequisite...",
+      "risks": "Risks",
+      "risksPlaceholder": "Add a risk...",
+      "dependencies": "Dependencies (dependency map)",
+      "dependenciesPlaceholder": "Add a dependency...",
+      "add": "Add",
+      "remove": "Remove",
+      "noItems": "No items."
+    },
+    "processAutomationEconomicsStep": {
+      "title": "Economics",
+      "subtitle": "Build a fast business case: savings, costs, payback.",
+      "fullyLoadedCostPerHour": "Fully loaded cost / hour",
+      "fullyLoadedCostPlaceholder": "e.g. 45",
+      "oneTimeCost": "One-time cost",
+      "oneTimeCostPlaceholder": "e.g. 20000",
+      "monthlyCost": "Monthly run cost",
+      "monthlyCostPlaceholder": "e.g. 800",
+      "currencyInfo": "Currency (info)",
+      "baselineHoursPerWeek": "Baseline hours/week (optional)",
+      "baselineHoursPlaceholder": "e.g. 120",
+      "fromMeasurement": "from measurement",
+      "targetHoursPerWeek": "Target hours/week (optional)",
+      "targetHoursPlaceholder": "e.g. 60",
+      "fromReEstimation": "from re-estimation",
+      "output": "Output",
+      "hoursSavedPerWeek": "Hours saved / week",
+      "grossSavingsPerWeek": "Gross savings / week",
+      "netSavingsPerMonth": "Net savings / month",
+      "paybackMonths": "Payback (months)",
+      "disclaimer": "Note: quick model (52 weeks/year, no discounting). Refine assumptions before approval."
+    },
+    "processAutomationMeasurementStep": {
+      "measurementTitle": "Measurement",
+      "reEstimationTitle": "Re-estimation",
+      "measurementSubtitle": "Capture the baseline: volume, time, and errors.",
+      "reEstimationSubtitle": "Estimate the target after redesign: time and errors.",
+      "processName": "Process name",
+      "processNamePlaceholder": "e.g. invoice processing, order intake...",
+      "owner": "Owner (role/person)",
+      "ownerPlaceholder": "e.g. AP Manager",
+      "volumePerWeek": "Volume / week",
+      "volumePerWeekPlaceholder": "e.g. 250",
+      "baselineMinutesPerCycle": "Baseline: min/cycle",
+      "baselineMinutesPlaceholder": "e.g. 12",
+      "baselineErrorRate": "Baseline: error rate (%)",
+      "baselineErrorRatePlaceholder": "e.g. 3.5",
+      "targetMinutesPerCycle": "Target: min/cycle",
+      "targetMinutesPlaceholder": "e.g. 5",
+      "targetErrorRate": "Target: error rate (%)",
+      "targetErrorRatePlaceholder": "e.g. 1",
+      "estimatedHoursPerWeek": "Estimated hours / week",
+      "baselineLabel": "Baseline",
+      "targetLabel": "Target"
+    },
+    "impactHypothesisStep": {
+      "title": "Impact Hypothesis",
+      "subtitle": "Define a measurable baseline → target and key assumptions.",
+      "metric": "Metric",
+      "metricPlaceholder": "e.g. cycle time, cost, errors...",
+      "unit": "Unit",
+      "unitPlaceholder": "e.g. min/week, %, USD",
+      "baseline": "Baseline",
+      "baselinePlaceholder": "Baseline value",
+      "target": "Target",
+      "targetPlaceholder": "Target value",
+      "timeframe": "Timeframe",
+      "timeframePlaceholder": "e.g. 6 weeks / Q2",
+      "assumptions": "Assumptions",
+      "assumptionPlaceholder": "Add an assumption...",
+      "add": "Add",
+      "noAssumptions": "No assumptions yet.",
+      "remove": "Remove"
+    },
+    "proposalCardGovernance": {
+      "status": {
+        "aiProposed": "AI proposal",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "rethinking": "Rethinking"
+      },
+      "accept": "Accept",
+      "acceptAiCard": "Accept AI card",
+      "rethink": "Rethink",
+      "askAiToRethink": "Ask AI to rethink",
+      "reject": "Reject",
+      "rejectAiCard": "Reject AI card",
+      "rethinkPlaceholder": "What should AI improve?",
+      "send": "Send"
+    },
+    "prepareStep": {
+      "add": "Add",
+      "remove": "Remove",
+      "noItems": "No items.",
+      "title": "Prepare",
+      "subtitle": "Turn analysis into a plan: next steps, data, stakeholders, and timeline.",
+      "nextSteps": "Next steps",
+      "nextStepsPlaceholder": "Add a step...",
+      "stakeholders": "Stakeholders",
+      "stakeholdersPlaceholder": "Add person/role...",
+      "dataNeeded": "Data to collect",
+      "dataNeededPlaceholder": "Add data...",
+      "timeline": "Timeline",
+      "timelinePlaceholder": "e.g. 2 weeks discovery + 4 weeks delivery"
+    },
+    "porterRadar": {
+      "industryAttractiveness": "Industry Attractiveness",
+      "inverseHint": "Inverse of average force strength",
+      "low": "Low",
+      "high": "High",
+      "scoreInterpretation": "Score Interpretation",
+      "lowForce": "Low force",
+      "moderate": "Moderate",
+      "highForce": "High force"
+    },
+    "reasoningStep": {
+      "add": "Add",
+      "remove": "Remove",
+      "noItems": "No items.",
+      "title": "Reasoning",
+      "subtitle": "Capture the logic: evidence vs assumptions and what remains unknown.",
+      "narrative": "Narrative",
+      "narrativePlaceholder": "Why do these results follow from your inputs and observations?",
+      "evidence": "Evidence / facts",
+      "evidencePlaceholder": "Add evidence...",
+      "openQuestions": "Open questions",
+      "openQuestionsPlaceholder": "Add a question..."
+    },
+    "initiativesStep": {
+      "title": "Initiatives",
+      "subtitle": "Turn results into initiatives: quick wins vs strategic bets, owners, and dependencies.",
+      "summary": "Summary",
+      "openInitiatives": "Open Initiatives",
+      "openChat": "Open chat",
+      "generatedInitiatives": "Generated initiatives",
+      "noInitiativesHint": "No initiatives yet. Use AI to generate recommendations, then create initiatives in the Initiatives module.",
+      "toolType": "Tool type: {{toolType}}"
+    },
+    "toolPhaseAiActions": {
+      "aiCopilot": "AI Copilot",
+      "reviewWaitingTitle": "{{count}} AI cards waiting for review",
+      "reviewAiCount": "Review AI ({{count}})",
+      "stopGenerationTitle": "Stop the current AI generation",
+      "stopAi": "Stop AI"
+    },
+    "proposalCard": {
+      "accept": "Accept",
+      "commentAndRethink": "Comment & rethink",
+      "rethink": "Rethink",
+      "reject": "Reject",
+      "feedbackPlaceholder": "Your feedback for AI...",
+      "rethinkShort": "Rethink"
+    },
+    "swotMatrix": {
+      "noItems": "No items",
+      "internalFactors": "Internal Factors",
+      "externalFactors": "External Factors"
+    },
+    "reportStep": {
+      "noExportableView": "No exportable report view found in this screen.",
+      "pdfExported": "PDF exported",
+      "pdfExportFailed": "PDF export failed",
+      "title": "Report / Deck",
+      "subtitle": "Export a stakeholder-ready PDF report.",
+      "pdfExport": "PDF export",
+      "pdfExportHint": "If you are in the tool document view, export uses the hidden report template.",
+      "exporting": "Exporting...",
+      "downloadPdf": "Download PDF"
+    },
+    "createInitiativeFromMove": {
+      "createdToast": "Initiative created in Initiatives",
+      "saveFailedToast": "Could not save the initiative to the Initiatives module — draft kept in the tool session",
+      "creating": "Creating…",
+      "createFromMove": "Create initiative from this move"
+    }
   }
 }

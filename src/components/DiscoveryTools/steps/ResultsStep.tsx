@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ToolFlowResults, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -68,7 +69,8 @@ function BulletListEditor(props: {
 }
 
 export function ResultsStep(props: { session: ToolSession; isPolish: boolean }) {
-  const { session, isPolish } = props;
+  const { session } = props;
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
 
   const flow = (session.inputData as any)?.flow || {};
@@ -92,96 +94,93 @@ export function ResultsStep(props: { session: ToolSession; isPolish: boolean }) 
     });
   };
 
-  const title = useMemo(() => (isPolish ? 'Wyniki' : 'Results'), [isPolish]);
+  const title = t('discoveryToolsSteps.resultsStep.title');
+  const addLabel = t('discoveryToolsSteps.resultsStep.add');
+  const removeLabel = t('discoveryToolsSteps.resultsStep.remove');
+  const emptyLabel = t('discoveryToolsSteps.resultsStep.noItems');
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zamknij wnioski w zwięzłe rezultaty: quick wins, zakłady strategiczne oraz ryzyka/prerekwizyty.'
-            : 'Turn inputs into crisp outcomes: quick wins, strategic bets, and key risks/prerequisites.'}
+          {t('discoveryToolsSteps.resultsStep.subtitle')}
         </p>
       </div>
 
       <div className="space-y-2">
         <div className="text-sm font-medium text-slate-900 dark:text-white">
-          {isPolish ? 'Podsumowanie wykonawcze' : 'Executive Summary'}
+          {t('discoveryToolsSteps.resultsStep.executiveSummary')}
         </div>
         <textarea
           value={results.executiveSummary}
           onChange={(e) => patch({ executiveSummary: e.target.value })}
           rows={4}
-          placeholder={
-            isPolish
-              ? 'Napisz 3–5 zdań: co znaleźliśmy i co to znaczy.'
-              : 'Write 3–5 sentences: what you found and what it means.'
-          }
+          placeholder={t('discoveryToolsSteps.resultsStep.executiveSummaryPlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
         />
       </div>
 
       <BulletListEditor
-        label={isPolish ? 'Kluczowe wnioski' : 'Key Findings'}
-        placeholder={isPolish ? 'Dodaj wniosek...' : 'Add a finding...'}
+        label={t('discoveryToolsSteps.resultsStep.keyFindings')}
+        placeholder={t('discoveryToolsSteps.resultsStep.keyFindingsPlaceholder')}
         items={results.keyFindings}
         onChange={(items) => patch({ keyFindings: items })}
-        addLabel={isPolish ? 'Dodaj' : 'Add'}
-        removeLabel={isPolish ? 'Usuń' : 'Remove'}
-        emptyLabel={isPolish ? 'Brak elementów.' : 'No items.'}
+        addLabel={addLabel}
+        removeLabel={removeLabel}
+        emptyLabel={emptyLabel}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BulletListEditor
-          label={isPolish ? 'Quick wins' : 'Quick wins'}
-          placeholder={isPolish ? 'Dodaj quick win...' : 'Add a quick win...'}
+          label="Quick wins"
+          placeholder={t('discoveryToolsSteps.resultsStep.quickWinsPlaceholder')}
           items={results.quickWins}
           onChange={(items) => patch({ quickWins: items })}
-          addLabel={isPolish ? 'Dodaj' : 'Add'}
-          removeLabel={isPolish ? 'Usuń' : 'Remove'}
-          emptyLabel={isPolish ? 'Brak elementów.' : 'No items.'}
+          addLabel={addLabel}
+          removeLabel={removeLabel}
+          emptyLabel={emptyLabel}
         />
         <BulletListEditor
-          label={isPolish ? 'Zakłady strategiczne' : 'Strategic bets'}
-          placeholder={isPolish ? 'Dodaj zakład...' : 'Add a strategic bet...'}
+          label={t('discoveryToolsSteps.resultsStep.strategicBets')}
+          placeholder={t('discoveryToolsSteps.resultsStep.strategicBetsPlaceholder')}
           items={results.strategicBets}
           onChange={(items) => patch({ strategicBets: items })}
-          addLabel={isPolish ? 'Dodaj' : 'Add'}
-          removeLabel={isPolish ? 'Usuń' : 'Remove'}
-          emptyLabel={isPolish ? 'Brak elementów.' : 'No items.'}
+          addLabel={addLabel}
+          removeLabel={removeLabel}
+          emptyLabel={emptyLabel}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BulletListEditor
-          label={isPolish ? 'Prerekwizyty' : 'Prerequisites'}
-          placeholder={isPolish ? 'Dodaj prerequisite...' : 'Add a prerequisite...'}
+          label={t('discoveryToolsSteps.resultsStep.prerequisites')}
+          placeholder={t('discoveryToolsSteps.resultsStep.prerequisitesPlaceholder')}
           items={results.prerequisites}
           onChange={(items) => patch({ prerequisites: items })}
-          addLabel={isPolish ? 'Dodaj' : 'Add'}
-          removeLabel={isPolish ? 'Usuń' : 'Remove'}
-          emptyLabel={isPolish ? 'Brak elementów.' : 'No items.'}
+          addLabel={addLabel}
+          removeLabel={removeLabel}
+          emptyLabel={emptyLabel}
         />
         <BulletListEditor
-          label={isPolish ? 'Ryzyka' : 'Risks'}
-          placeholder={isPolish ? 'Dodaj ryzyko...' : 'Add a risk...'}
+          label={t('discoveryToolsSteps.resultsStep.risks')}
+          placeholder={t('discoveryToolsSteps.resultsStep.risksPlaceholder')}
           items={results.risks}
           onChange={(items) => patch({ risks: items })}
-          addLabel={isPolish ? 'Dodaj' : 'Add'}
-          removeLabel={isPolish ? 'Usuń' : 'Remove'}
-          emptyLabel={isPolish ? 'Brak elementów.' : 'No items.'}
+          addLabel={addLabel}
+          removeLabel={removeLabel}
+          emptyLabel={emptyLabel}
         />
       </div>
 
       <BulletListEditor
-        label={isPolish ? 'Zależności (dependency map)' : 'Dependencies (dependency map)'}
-        placeholder={isPolish ? 'Dodaj zależność...' : 'Add a dependency...'}
+        label={t('discoveryToolsSteps.resultsStep.dependencies')}
+        placeholder={t('discoveryToolsSteps.resultsStep.dependenciesPlaceholder')}
         items={results.dependencies}
         onChange={(items) => patch({ dependencies: items })}
-        addLabel={isPolish ? 'Dodaj' : 'Add'}
-        removeLabel={isPolish ? 'Usuń' : 'Remove'}
-        emptyLabel={isPolish ? 'Brak elementów.' : 'No items.'}
+        addLabel={addLabel}
+        removeLabel={removeLabel}
+        emptyLabel={emptyLabel}
       />
     </div>
   );

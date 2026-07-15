@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ToolFlowEconomics, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -22,7 +23,8 @@ export function ProcessAutomationEconomicsStep(props: {
   isPolish: boolean;
   currency?: string;
 }) {
-  const { session, isPolish, currency = 'USD' } = props;
+  const { session, currency = 'USD' } = props;
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
 
   const flow = (session.inputData as any)?.flow || {};
@@ -91,19 +93,17 @@ export function ProcessAutomationEconomicsStep(props: {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Ekonomia' : 'Economics'}
+          {t('discoveryToolsSteps.processAutomationEconomicsStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zbuduj szybki business case: oszczędności, koszty, payback.'
-            : 'Build a fast business case: savings, costs, payback.'}
+          {t('discoveryToolsSteps.processAutomationEconomicsStep.subtitle')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Fully loaded cost / godzina' : 'Fully loaded cost / hour'}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.fullyLoadedCostPerHour')}
           </label>
           <input
             inputMode="decimal"
@@ -113,40 +113,46 @@ export function ProcessAutomationEconomicsStep(props: {
                 : String(economics.fullyLoadedCostPerHour)
             }
             onChange={(e) => patch({ fullyLoadedCostPerHour: coerceNumber(e.target.value) })}
-            placeholder={isPolish ? 'np. 45' : 'e.g. 45'}
+            placeholder={t(
+              'discoveryToolsSteps.processAutomationEconomicsStep.fullyLoadedCostPlaceholder'
+            )}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Koszt jednorazowy' : 'One-time cost'}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.oneTimeCost')}
           </label>
           <input
             inputMode="decimal"
             value={economics.oneTimeCost == null ? '' : String(economics.oneTimeCost)}
             onChange={(e) => patch({ oneTimeCost: coerceNumber(e.target.value) })}
-            placeholder={isPolish ? 'np. 20000' : 'e.g. 20000'}
+            placeholder={t(
+              'discoveryToolsSteps.processAutomationEconomicsStep.oneTimeCostPlaceholder'
+            )}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Koszt miesięczny (run)' : 'Monthly run cost'}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.monthlyCost')}
           </label>
           <input
             inputMode="decimal"
             value={economics.monthlyCost == null ? '' : String(economics.monthlyCost)}
             onChange={(e) => patch({ monthlyCost: coerceNumber(e.target.value) })}
-            placeholder={isPolish ? 'np. 800' : 'e.g. 800'}
+            placeholder={t(
+              'discoveryToolsSteps.processAutomationEconomicsStep.monthlyCostPlaceholder'
+            )}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Waluta (info)' : 'Currency (info)'}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.currencyInfo')}
           </label>
           <input
             value={currency}
@@ -157,7 +163,7 @@ export function ProcessAutomationEconomicsStep(props: {
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Baseline hours/week (opcjonalnie)' : 'Baseline hours/week (optional)'}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.baselineHoursPerWeek')}
           </label>
           <input
             inputMode="decimal"
@@ -167,10 +173,12 @@ export function ProcessAutomationEconomicsStep(props: {
             onChange={(e) => patch({ baselineHoursPerWeek: coerceNumber(e.target.value) })}
             placeholder={
               measuredBaselineHours == null
-                ? isPolish
-                  ? 'np. 120'
-                  : 'e.g. 120'
-                : `${measuredBaselineHours.toFixed(1)} (${isPolish ? 'z pomiaru' : 'from measurement'})`
+                ? t(
+                    'discoveryToolsSteps.processAutomationEconomicsStep.baselineHoursPlaceholder'
+                  )
+                : `${measuredBaselineHours.toFixed(1)} (${t(
+                    'discoveryToolsSteps.processAutomationEconomicsStep.fromMeasurement'
+                  )})`
             }
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
@@ -178,7 +186,7 @@ export function ProcessAutomationEconomicsStep(props: {
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Target hours/week (opcjonalnie)' : 'Target hours/week (optional)'}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.targetHoursPerWeek')}
           </label>
           <input
             inputMode="decimal"
@@ -186,10 +194,10 @@ export function ProcessAutomationEconomicsStep(props: {
             onChange={(e) => patch({ targetHoursPerWeek: coerceNumber(e.target.value) })}
             placeholder={
               measuredTargetHours == null
-                ? isPolish
-                  ? 'np. 60'
-                  : 'e.g. 60'
-                : `${measuredTargetHours.toFixed(1)} (${isPolish ? 'z re-estymacji' : 'from re-estimation'})`
+                ? t('discoveryToolsSteps.processAutomationEconomicsStep.targetHoursPlaceholder')
+                : `${measuredTargetHours.toFixed(1)} (${t(
+                    'discoveryToolsSteps.processAutomationEconomicsStep.fromReEstimation'
+                  )})`
             }
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
@@ -198,30 +206,28 @@ export function ProcessAutomationEconomicsStep(props: {
 
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <div className="text-sm font-medium text-slate-900 dark:text-white">
-          {isPolish ? 'Wynik' : 'Output'}
+          {t('discoveryToolsSteps.processAutomationEconomicsStep.output')}
         </div>
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700 dark:text-slate-300">
           <div>
-            {isPolish ? 'Godziny oszczędzone / tydzień' : 'Hours saved / week'}:{' '}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.hoursSavedPerWeek')}:{' '}
             {hoursSavedPerWeek == null ? '—' : hoursSavedPerWeek.toFixed(1)}
           </div>
           <div>
-            {isPolish ? 'Oszczędność brutto / tydzień' : 'Gross savings / week'}:{' '}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.grossSavingsPerWeek')}:{' '}
             {weeklyGrossSavings == null ? '—' : formatMoney(weeklyGrossSavings, currency)}
           </div>
           <div>
-            {isPolish ? 'Oszczędność netto / miesiąc' : 'Net savings / month'}:{' '}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.netSavingsPerMonth')}:{' '}
             {monthlyNetSavings == null ? '—' : formatMoney(monthlyNetSavings, currency)}
           </div>
           <div>
-            {isPolish ? 'Payback (mies.)' : 'Payback (months)'}:{' '}
+            {t('discoveryToolsSteps.processAutomationEconomicsStep.paybackMonths')}:{' '}
             {paybackMonths == null ? '—' : paybackMonths.toFixed(1)}
           </div>
         </div>
         <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Uwaga: to szybki model (52 tygodnie/rok, bez dyskonta). Doprecyzuj założenia przed zatwierdzeniem.'
-            : 'Note: quick model (52 weeks/year, no discounting). Refine assumptions before approval.'}
+          {t('discoveryToolsSteps.processAutomationEconomicsStep.disclaimer')}
         </div>
       </div>
     </div>

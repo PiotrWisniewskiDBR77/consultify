@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ToolImpactHypothesis, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -10,7 +11,8 @@ function coerceNumber(value: string): number | null {
 }
 
 export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: boolean }) {
-  const { session, isPolish } = props;
+  const { session } = props;
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
 
   const flow = (session.inputData as any)?.flow || {};
@@ -65,76 +67,72 @@ export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: bo
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Hipoteza wpływu' : 'Impact Hypothesis'}
+          {t('discoveryToolsSteps.impactHypothesisStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zdefiniuj mierzalny baseline → target oraz kluczowe założenia.'
-            : 'Define a measurable baseline → target and key assumptions.'}
+          {t('discoveryToolsSteps.impactHypothesisStep.subtitle')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Metryka' : 'Metric'}
+            {t('discoveryToolsSteps.impactHypothesisStep.metric')}
           </label>
           <input
             value={impactHypothesis.metricName}
             onChange={(e) => patch({ metricName: e.target.value })}
-            placeholder={
-              isPolish ? 'np. czas cyklu, koszt, błędy...' : 'e.g. cycle time, cost, errors...'
-            }
+            placeholder={t('discoveryToolsSteps.impactHypothesisStep.metricPlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Jednostka' : 'Unit'}
+            {t('discoveryToolsSteps.impactHypothesisStep.unit')}
           </label>
           <input
             value={impactHypothesis.unit}
             onChange={(e) => patch({ unit: e.target.value })}
-            placeholder={isPolish ? 'np. min/tydzień, %, PLN' : 'e.g. min/week, %, USD'}
+            placeholder={t('discoveryToolsSteps.impactHypothesisStep.unitPlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Baseline' : 'Baseline'}
+            {t('discoveryToolsSteps.impactHypothesisStep.baseline')}
           </label>
           <input
             inputMode="decimal"
             value={baselineText}
             onChange={(e) => patch({ baseline: coerceNumber(e.target.value) })}
-            placeholder={isPolish ? 'Wartość bazowa' : 'Baseline value'}
+            placeholder={t('discoveryToolsSteps.impactHypothesisStep.baselinePlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Target' : 'Target'}
+            {t('discoveryToolsSteps.impactHypothesisStep.target')}
           </label>
           <input
             inputMode="decimal"
             value={targetText}
             onChange={(e) => patch({ target: coerceNumber(e.target.value) })}
-            placeholder={isPolish ? 'Wartość docelowa' : 'Target value'}
+            placeholder={t('discoveryToolsSteps.impactHypothesisStep.targetPlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1 md:col-span-2">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Horyzont' : 'Timeframe'}
+            {t('discoveryToolsSteps.impactHypothesisStep.timeframe')}
           </label>
           <input
             value={impactHypothesis.timeframe}
             onChange={(e) => patch({ timeframe: e.target.value })}
-            placeholder={isPolish ? 'np. 6 tygodni / Q2' : 'e.g. 6 weeks / Q2'}
+            placeholder={t('discoveryToolsSteps.impactHypothesisStep.timeframePlaceholder')}
             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
         </div>
@@ -142,13 +140,13 @@ export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: bo
 
       <div className="space-y-3">
         <div className="text-sm font-medium text-slate-900 dark:text-white">
-          {isPolish ? 'Założenia' : 'Assumptions'}
+          {t('discoveryToolsSteps.impactHypothesisStep.assumptions')}
         </div>
         <div className="flex gap-2">
           <input
             value={assumptionDraft}
             onChange={(e) => setAssumptionDraft(e.target.value)}
-            placeholder={isPolish ? 'Dodaj założenie...' : 'Add an assumption...'}
+            placeholder={t('discoveryToolsSteps.impactHypothesisStep.assumptionPlaceholder')}
             className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
           />
           <button
@@ -156,13 +154,13 @@ export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: bo
             disabled={!assumptionDraft.trim()}
             className="px-4 py-3 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('discoveryToolsSteps.impactHypothesisStep.add')}
           </button>
         </div>
 
         {impactHypothesis.assumptions.length === 0 ? (
           <div className="p-6 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600 text-sm">
-            {isPolish ? 'Brak założeń.' : 'No assumptions yet.'}
+            {t('discoveryToolsSteps.impactHypothesisStep.noAssumptions')}
           </div>
         ) : (
           <ul className="space-y-2">
@@ -176,7 +174,7 @@ export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: bo
                   onClick={() => removeAssumption(idx)}
                   className="text-xs text-slate-500 hover:text-danger-600"
                 >
-                  {isPolish ? 'Usuń' : 'Remove'}
+                  {t('discoveryToolsSteps.impactHypothesisStep.remove')}
                 </button>
               </li>
             ))}

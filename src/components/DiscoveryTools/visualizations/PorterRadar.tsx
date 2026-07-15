@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ForceData, PorterData } from '@/store/useToolStore';
 
@@ -48,6 +49,7 @@ const FORCE_CONFIG = {
 // ==================== COMPONENT ====================
 
 export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
+  const { t } = useTranslation();
   const lang = isPolish ? 'pl' : 'en';
   const forces = data.forces;
 
@@ -102,10 +104,10 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
         <div className="flex items-center justify-between">
           <div>
             <h4 className="font-medium text-slate-900 dark:text-white">
-              {isPolish ? 'Atrakcyjność branży' : 'Industry Attractiveness'}
+              {t('discoveryToolsSteps.porterRadar.industryAttractiveness')}
             </h4>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Odwrotność średniej siły sił' : 'Inverse of average force strength'}
+              {t('discoveryToolsSteps.porterRadar.inverseHint')}
             </p>
           </div>
           <div className="text-right">
@@ -125,8 +127,8 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
             />
           </div>
           <div className="flex justify-between mt-1 text-xs text-slate-600">
-            <span>{isPolish ? 'Niska' : 'Low'}</span>
-            <span>{isPolish ? 'Wysoka' : 'High'}</span>
+            <span>{t('discoveryToolsSteps.porterRadar.low')}</span>
+            <span>{t('discoveryToolsSteps.porterRadar.high')}</span>
           </div>
         </div>
       </div>
@@ -141,20 +143,20 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
       {/* Legend */}
       <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          {isPolish ? 'Interpretacja wyników' : 'Score Interpretation'}
+          {t('discoveryToolsSteps.porterRadar.scoreInterpretation')}
         </h4>
         <div className="grid grid-cols-3 gap-2 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 rounded bg-emerald-500" />
-            <span>1-2: {isPolish ? 'Niska siła' : 'Low force'}</span>
+            <span>1-2: {t('discoveryToolsSteps.porterRadar.lowForce')}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 rounded bg-amber-500" />
-            <span>3: {isPolish ? 'Umiarkowana' : 'Moderate'}</span>
+            <span>3: {t('discoveryToolsSteps.porterRadar.moderate')}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 rounded bg-danger-500" />
-            <span>4-5: {isPolish ? 'Wysoka siła' : 'High force'}</span>
+            <span>4-5: {t('discoveryToolsSteps.porterRadar.highForce')}</span>
           </div>
         </div>
       </div>

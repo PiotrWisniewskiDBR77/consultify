@@ -1,12 +1,14 @@
 import { Download } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { ToolSession, ToolType } from '@/store/useToolStore';
 import { exportToPDF } from '@/utils/pdfExport';
 
 export function ReportStep(props: { toolType: ToolType; session: ToolSession; isPolish: boolean }) {
-  const { toolType, session, isPolish } = props;
+  const { toolType, session } = props;
+  const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
 
   const canExport = useMemo(() => typeof document !== 'undefined', []);
@@ -15,11 +17,7 @@ export function ReportStep(props: { toolType: ToolType; session: ToolSession; is
     if (!canExport) return;
     const el = document.getElementById('tool-report-export');
     if (!el) {
-      toast.error(
-        isPolish
-          ? 'Brak widoku raportu do eksportu w tym ekranie.'
-          : 'No exportable report view found in this screen.'
-      );
+      toast.error(t('discoveryToolsSteps.reportStep.noExportableView'));
       return;
     }
     try {
@@ -35,9 +33,9 @@ export function ReportStep(props: { toolType: ToolType; session: ToolSession; is
         title: `${toolType} • Tool Report`,
         orientation: 'portrait',
       });
-      toast.success(isPolish ? 'Wyeksportowano PDF' : 'PDF exported');
+      toast.success(t('discoveryToolsSteps.reportStep.pdfExported'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się wyeksportować PDF' : 'PDF export failed');
+      toast.error(t('discoveryToolsSteps.reportStep.pdfExportFailed'));
     } finally {
       setExporting(false);
     }
@@ -47,12 +45,10 @@ export function ReportStep(props: { toolType: ToolType; session: ToolSession; is
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Raport / Deck' : 'Report / Deck'}
+          {t('discoveryToolsSteps.reportStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Wyeksportuj raport do PDF (do wysłania do stakeholderów).'
-            : 'Export a stakeholder-ready PDF report.'}
+          {t('discoveryToolsSteps.reportStep.subtitle')}
         </p>
       </div>
 
@@ -60,12 +56,10 @@ export function ReportStep(props: { toolType: ToolType; session: ToolSession; is
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="text-sm font-medium text-slate-900 dark:text-white">
-              {isPolish ? 'Eksport PDF' : 'PDF export'}
+              {t('discoveryToolsSteps.reportStep.pdfExport')}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {isPolish
-                ? 'Jeśli pracujesz w widoku dokumentu narzędzia, eksport użyje ukrytego szablonu raportu.'
-                : 'If you are in the tool document view, export uses the hidden report template.'}
+              {t('discoveryToolsSteps.reportStep.pdfExportHint')}
             </div>
           </div>
           <button
@@ -75,12 +69,8 @@ export function ReportStep(props: { toolType: ToolType; session: ToolSession; is
           >
             <Download className="w-4 h-4" />
             {exporting
-              ? isPolish
-                ? 'Eksport...'
-                : 'Exporting...'
-              : isPolish
-                ? 'Pobierz PDF'
-                : 'Download PDF'}
+              ? t('discoveryToolsSteps.reportStep.exporting')
+              : t('discoveryToolsSteps.reportStep.downloadPdf')}
           </button>
         </div>
       </div>

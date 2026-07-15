@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ToolFlowPrepare, ToolSession, useToolStore } from '@/store/useToolStore';
 
@@ -68,7 +69,8 @@ function BulletListEditor(props: {
 }
 
 export function PrepareStep(props: { session: ToolSession; isPolish: boolean }) {
-  const { session, isPolish } = props;
+  const { session } = props;
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
 
   const flow = (session.inputData as any)?.flow || {};
@@ -89,26 +91,24 @@ export function PrepareStep(props: { session: ToolSession; isPolish: boolean }) 
     });
   };
 
-  const addLabel = isPolish ? 'Dodaj' : 'Add';
-  const removeLabel = isPolish ? 'Usuń' : 'Remove';
-  const emptyLabel = isPolish ? 'Brak elementów.' : 'No items.';
+  const addLabel = t('discoveryToolsSteps.prepareStep.add');
+  const removeLabel = t('discoveryToolsSteps.prepareStep.remove');
+  const emptyLabel = t('discoveryToolsSteps.prepareStep.noItems');
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Przygotuj' : 'Prepare'}
+          {t('discoveryToolsSteps.prepareStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Zamień analizę w plan: kolejne kroki, dane, stakeholderzy i horyzont.'
-            : 'Turn analysis into a plan: next steps, data, stakeholders, and timeline.'}
+          {t('discoveryToolsSteps.prepareStep.subtitle')}
         </p>
       </div>
 
       <BulletListEditor
-        label={isPolish ? 'Kolejne kroki' : 'Next steps'}
-        placeholder={isPolish ? 'Dodaj krok...' : 'Add a step...'}
+        label={t('discoveryToolsSteps.prepareStep.nextSteps')}
+        placeholder={t('discoveryToolsSteps.prepareStep.nextStepsPlaceholder')}
         items={prepare.nextSteps}
         onChange={(items) => patch({ nextSteps: items })}
         addLabel={addLabel}
@@ -118,8 +118,8 @@ export function PrepareStep(props: { session: ToolSession; isPolish: boolean }) 
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BulletListEditor
-          label={isPolish ? 'Stakeholderzy' : 'Stakeholders'}
-          placeholder={isPolish ? 'Dodaj osobę/rolę...' : 'Add person/role...'}
+          label={t('discoveryToolsSteps.prepareStep.stakeholders')}
+          placeholder={t('discoveryToolsSteps.prepareStep.stakeholdersPlaceholder')}
           items={prepare.stakeholders}
           onChange={(items) => patch({ stakeholders: items })}
           addLabel={addLabel}
@@ -127,8 +127,8 @@ export function PrepareStep(props: { session: ToolSession; isPolish: boolean }) 
           emptyLabel={emptyLabel}
         />
         <BulletListEditor
-          label={isPolish ? 'Dane do zebrania' : 'Data to collect'}
-          placeholder={isPolish ? 'Dodaj dane...' : 'Add data...'}
+          label={t('discoveryToolsSteps.prepareStep.dataNeeded')}
+          placeholder={t('discoveryToolsSteps.prepareStep.dataNeededPlaceholder')}
           items={prepare.dataNeeded}
           onChange={(items) => patch({ dataNeeded: items })}
           addLabel={addLabel}
@@ -139,16 +139,12 @@ export function PrepareStep(props: { session: ToolSession; isPolish: boolean }) 
 
       <div className="space-y-2">
         <div className="text-sm font-medium text-slate-900 dark:text-white">
-          {isPolish ? 'Timeline' : 'Timeline'}
+          {t('discoveryToolsSteps.prepareStep.timeline')}
         </div>
         <input
           value={prepare.timeline}
           onChange={(e) => patch({ timeline: e.target.value })}
-          placeholder={
-            isPolish
-              ? 'np. 2 tygodnie discovery + 4 tygodnie wdrożenia'
-              : 'e.g. 2 weeks discovery + 4 weeks delivery'
-          }
+          placeholder={t('discoveryToolsSteps.prepareStep.timelinePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
       </div>

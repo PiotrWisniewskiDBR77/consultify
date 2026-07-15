@@ -5,8 +5,10 @@
  * Adapts labels based on tool type.
  */
 
+import type { TFunction } from 'i18next';
 import { Calendar, Check, Loader2, MapPin, Sparkles, Target, X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   GrowthPathsData,
@@ -213,36 +215,22 @@ const LABELS: Record<string, ToolLabels> = {
   },
 };
 
-function buildDynamicSwotSeedProposal(isPolish: boolean): SWOTData['context'] {
+function buildDynamicSwotSeedProposal(t: TFunction): SWOTData['context'] {
   return {
-    understanding: isPolish
-      ? 'Rozumiem tę sesję jako próbę uchwycenia kierunku strategicznego dla całej organizacji, a nie tylko poprawy jednego KPI. Dynamic SWOT ma pomóc nazwać, gdzie firma powinna iść, na czym zbudować przewagę i jakie wybory są dziś najważniejsze dla zarządu.'
-      : 'I understand this session as an attempt to define the strategic direction for the whole organization, not just improve a single KPI. Dynamic SWOT should help name where the company should go, what advantage it can build on, and which choices matter most for leadership now.',
+    understanding: t('discoveryToolsSteps.contextStep.dynamicSwot.seed.understanding'),
     directionChoice: 'company-direction',
     directionChoices: ['company-direction'],
-    goal: isPolish
-      ? 'Jak wyznaczyć kolejny kierunek strategiczny firmy, tak aby połączyć wzrost, pozycję rynkową i zdolność wykonawczą organizacji?'
-      : 'How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?',
+    goal: t('discoveryToolsSteps.contextStep.dynamicSwot.seed.goal'),
     scopeChoice: 'whole-company',
     scopeChoices: ['whole-company'],
-    scope: isPolish
-      ? 'Analiza obejmuje całą firmę: ofertę, segmenty klientów, model wzrostu, kluczowe zdolności operacyjne, ograniczenia organizacyjne oraz czynniki rynkowe, które wpływają na wybór kierunku.'
-      : 'The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice.',
+    scope: t('discoveryToolsSteps.contextStep.dynamicSwot.seed.scope'),
     successChoice: 'direction-and-priorities',
     successChoices: ['direction-and-priorities'],
-    successSignal: isPolish
-      ? 'Po tej sesji zarząd ma mieć uzgodniony kierunek strategiczny, logikę wyboru, najważniejsze priorytety i listę ruchów, które można przełożyć na dalsze decyzje oraz execution.'
-      : 'By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution.',
+    successSignal: t('discoveryToolsSteps.contextStep.dynamicSwot.seed.successSignal'),
     timeframe: 'medium' as const,
-    kpiTarget: isPolish
-      ? '12-18 miesięcy na zmianę kierunku, 90 dni na pierwsze ruchy i decyzje wykonawcze'
-      : '12-18 months for directional change, 90 days for the first moves and execution decisions',
-    constraints: isPolish
-      ? 'Kierunek musi być realistyczny wobec obecnych zasobów; nie zakładamy pełnej transformacji wszystkiego naraz; rekomendacja ma być zrozumiała dla zarządu i możliwa do przełożenia na kolejne decyzje.'
-      : 'The direction must be realistic for current resources; we do not assume a full transformation of everything at once; the recommendation must be clear for leadership and translatable into next decisions.',
-    assumptions: isPolish
-      ? 'Firma ma kilka możliwych ścieżek wzrostu, ale nie ma jeszcze wspólnej odpowiedzi, która z nich naprawdę buduje przewagę; część napięć wynika z rynku, część z wnętrza organizacji; zarząd potrzebuje materiału, który porządkuje wybór, a nie tylko opisuje sytuację.'
-      : 'The company has several possible growth paths, but no shared answer yet on which one truly builds advantage; some tensions come from the market, others from inside the organization; leadership needs material that structures the choice instead of merely describing the situation.',
+    kpiTarget: t('discoveryToolsSteps.contextStep.dynamicSwot.seed.kpiTarget'),
+    constraints: t('discoveryToolsSteps.contextStep.dynamicSwot.seed.constraints'),
+    assumptions: t('discoveryToolsSteps.contextStep.dynamicSwot.seed.assumptions'),
     understandingComment: '',
     directionComment: '',
     scopeComment: '',
@@ -271,6 +259,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
   onApplyMissionSuggestion,
   onDismissMissionSuggestion,
 }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [activeMissionFeedback, setActiveMissionFeedback] = React.useState<{
     blockId: 'understanding' | 'direction' | 'scope' | 'success' | 'constraints';
@@ -350,7 +339,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
   };
 
   const dynamicSwotMissionContext = contextData as SWOTData['context'];
-  const dynamicSwotSeedProposal = buildDynamicSwotSeedProposal(isPolish);
+  const dynamicSwotSeedProposal = buildDynamicSwotSeedProposal(t);
 
   if (toolType === 'dynamic-swot') {
     const missionContext = dynamicSwotMissionContext;
@@ -393,85 +382,12 @@ export const ContextStep: React.FC<ContextStepProps> = ({
         return cleanBase;
       }
 
-      if (isPolish) {
-        if (blockId === 'understanding') {
-          return appendMissionRefinement(
-            cleanBase,
-            mode === 'comment'
-              ? `Rdzeń tej sesji jeszcze mocniej ustawiamy wokół ${detail.toLowerCase()}`
-              : `Szczególnie doprecyzowujemy tutaj ${detail.toLowerCase()}`
-          );
-        }
-        if (blockId === 'direction') {
-          return appendMissionRefinement(
-            cleanBase,
-            mode === 'comment'
-              ? `To zawęża pytanie strategiczne do ${detail.toLowerCase()}`
-              : `Mocniej definiujemy tutaj kierunek związany z ${detail.toLowerCase()}`
-          );
-        }
-        if (blockId === 'scope') {
-          return appendMissionRefinement(
-            cleanBase,
-            mode === 'comment'
-              ? `Analizę dodatkowo ogniskujemy na ${detail.toLowerCase()}`
-              : `Pogłębiamy zwłaszcza wymiar ${detail.toLowerCase()}`
-          );
-        }
-        if (blockId === 'success') {
-          return appendMissionRefinement(
-            cleanBase,
-            mode === 'comment'
-              ? `Za mocny wynik uznajemy również ${detail.toLowerCase()}`
-              : `Silniej doprecyzowujemy rezultat związany z ${detail.toLowerCase()}`
-          );
-        }
-        return appendMissionRefinement(
-          cleanBase,
-          mode === 'comment'
-            ? `W praktyce oznacza to konieczność uwzględnienia ${detail.toLowerCase()}`
-            : `Szczególnie zaostrzamy ograniczenia związane z ${detail.toLowerCase()}`
-        );
-      }
-
-      if (blockId === 'understanding') {
-        return appendMissionRefinement(
-          cleanBase,
-          mode === 'comment'
-            ? `We place even more emphasis on ${detail}`
-            : `We sharpen this especially around ${detail}`
-        );
-      }
-      if (blockId === 'direction') {
-        return appendMissionRefinement(
-          cleanBase,
-          mode === 'comment'
-            ? `This narrows the strategic question toward ${detail}`
-            : `We define the direction more deeply around ${detail}`
-        );
-      }
-      if (blockId === 'scope') {
-        return appendMissionRefinement(
-          cleanBase,
-          mode === 'comment'
-            ? `The analysis is further focused on ${detail}`
-            : `We deepen the dimension of ${detail}`
-        );
-      }
-      if (blockId === 'success') {
-        return appendMissionRefinement(
-          cleanBase,
-          mode === 'comment'
-            ? `A strong result should also include ${detail}`
-            : `We sharpen the outcome especially around ${detail}`
-        );
-      }
-      return appendMissionRefinement(
-        cleanBase,
-        mode === 'comment'
-          ? `In practice this means accounting for ${detail}`
-          : `We tighten the guardrails especially around ${detail}`
+      const modeKey = mode === 'comment' ? 'comment' : 'thinkDeeper';
+      const refinement = t(
+        `discoveryToolsSteps.contextStep.dynamicSwot.refinement.${blockId}.${modeKey}`,
+        { detail, detailLower: detail.toLowerCase() }
       );
+      return appendMissionRefinement(cleanBase, refinement);
     };
 
     const displayedContext = {
@@ -514,54 +430,46 @@ export const ContextStep: React.FC<ContextStepProps> = ({
     const directionOptions = [
       {
         id: 'company-direction',
-        label: isPolish ? 'Kierunek strategiczny całej firmy' : 'Whole-company strategic direction',
-        description: isPolish
-          ? 'Szukanie odpowiedzi, dokąd firma ma zmierzać jako całość.'
-          : 'Find the answer to where the company should go as a whole.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.companyDirection.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.direction.companyDirection.description'
+        ),
         patch: {
           directionChoice: 'company-direction',
-          goal: isPolish
-            ? 'Jak wyznaczyć kolejny kierunek strategiczny firmy, tak aby połączyć wzrost, pozycję rynkową i zdolność wykonawczą organizacji?'
-            : 'How should the company define its next strategic direction so that growth, market position, and execution capability reinforce one another?',
+          goal: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.companyDirection.goal'),
         },
       },
       {
         id: 'growth-engine',
-        label: isPolish ? 'Nowy silnik wzrostu' : 'New growth engine',
-        description: isPolish
-          ? 'Wybór, skąd ma przyjść następna fala wzrostu.'
-          : 'Choose where the next wave of growth should come from.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.growthEngine.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.direction.growthEngine.description'
+        ),
         patch: {
           directionChoice: 'growth-engine',
-          goal: isPolish
-            ? 'Który kierunek wzrostu powinien stać się następnym silnikiem rozwoju firmy i jak go zbudować bez rozproszenia organizacji?'
-            : 'Which growth direction should become the company’s next engine and how should it be built without fragmenting the organization?',
+          goal: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.growthEngine.goal'),
         },
       },
       {
         id: 'market-position',
-        label: isPolish ? 'Repozycjonowanie rynkowe' : 'Market repositioning',
-        description: isPolish
-          ? 'Odpowiedź, jak firma ma zmienić pozycję na rynku.'
-          : 'Answer how the company should reposition itself in the market.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.marketPosition.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.direction.marketPosition.description'
+        ),
         patch: {
           directionChoice: 'market-position',
-          goal: isPolish
-            ? 'Jak firma powinna przedefiniować swoją pozycję rynkową, aby wygrać w ważniejszych segmentach i obronić wartość?'
-            : 'How should the company redefine its market position to win in more important segments and defend value?',
+          goal: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.marketPosition.goal'),
         },
       },
       {
         id: 'capability-shift',
-        label: isPolish ? 'Zmiana modelu działania' : 'Capability model shift',
-        description: isPolish
-          ? 'Skupienie na tym, jakie zdolności trzeba przestawić, by strategia była wykonalna.'
-          : 'Focus on which capabilities must shift to make strategy executable.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.capabilityShift.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.direction.capabilityShift.description'
+        ),
         patch: {
           directionChoice: 'capability-shift',
-          goal: isPolish
-            ? 'Jaką zmianę w modelu działania firma musi wykonać, aby jej strategia była realna, skalowalna i spójna?'
-            : 'What operating-model shift must the company make so its strategy becomes real, scalable, and coherent?',
+          goal: t('discoveryToolsSteps.contextStep.dynamicSwot.direction.capabilityShift.goal'),
         },
       },
     ];
@@ -569,58 +477,50 @@ export const ContextStep: React.FC<ContextStepProps> = ({
     const scopeOptions = [
       {
         id: 'whole-company',
-        label: isPolish ? 'Cała organizacja' : 'Whole organization',
-        description: isPolish
-          ? 'Oferta, rynek, model wzrostu i wykonanie.'
-          : 'Offer, market, growth model, and execution.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.wholeCompany.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.scope.wholeCompany.description'
+        ),
         patch: {
           scopeChoice: 'whole-company',
-          scope: isPolish
-            ? 'Analiza obejmuje całą firmę: ofertę, segmenty klientów, model wzrostu, kluczowe zdolności operacyjne, ograniczenia organizacyjne oraz czynniki rynkowe, które wpływają na wybór kierunku.'
-            : 'The analysis covers the whole company: offer, customer segments, growth model, core operating capabilities, organizational constraints, and market factors that shape the strategic choice.',
+          scope: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.wholeCompany.scope'),
         },
       },
       {
         id: 'go-to-market',
-        label: isPolish ? 'Go-to-market i oferta' : 'Go-to-market and offer',
-        description: isPolish
-          ? 'Sprzedaż, segmenty, propozycja wartości, pricing.'
-          : 'Sales, segments, value proposition, pricing.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.goToMarket.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.scope.goToMarket.description'
+        ),
         patch: {
           scopeChoice: 'go-to-market',
-          scope: isPolish
-            ? 'Analiza koncentruje się na tym, jak firma sprzedaje, do kogo kieruje ofertę, jak pozycjonuje wartość i które segmenty powinny być dziś priorytetem.'
-            : 'The analysis focuses on how the company sells, who it targets, how it positions value, and which segments should be prioritized now.',
+          scope: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.goToMarket.scope'),
         },
       },
       {
         id: 'portfolio-focus',
-        label: isPolish
-          ? 'Portfolio i priorytety inwestycji'
-          : 'Portfolio and investment priorities',
-        description: isPolish
-          ? 'Gdzie inwestować, a z czego schodzić.'
-          : 'Where to invest and what to de-prioritize.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.portfolioFocus.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.scope.portfolioFocus.description'
+        ),
         patch: {
           scopeChoice: 'portfolio-focus',
-          scope: isPolish
-            ? 'Analiza obejmuje portfolio działań i kierunków, aby wskazać, gdzie firma powinna inwestować uwagę, zasoby i kapitał, a gdzie ograniczyć zaangażowanie.'
-            : 'The analysis covers the portfolio of initiatives and directions to identify where the company should invest attention, resources, and capital, and where it should pull back.',
+          scope: t('discoveryToolsSteps.contextStep.dynamicSwot.scope.portfolioFocus.scope'),
         },
       },
       {
         id: 'capabilities-and-constraints',
-        label: isPolish
-          ? 'Zdolności i ograniczenia organizacji'
-          : 'Capabilities and organizational constraints',
-        description: isPolish
-          ? 'Co organizacja potrafi, a co ją blokuje.'
-          : 'What the organization can do and what holds it back.',
+        label: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.scope.capabilitiesAndConstraints.label'
+        ),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.scope.capabilitiesAndConstraints.description'
+        ),
         patch: {
           scopeChoice: 'capabilities-and-constraints',
-          scope: isPolish
-            ? 'Analiza skupia się na wewnętrznych zdolnościach, ograniczeniach i napięciach wykonawczych, które przesądzają o tym, jaka strategia jest dziś rzeczywiście możliwa.'
-            : 'The analysis focuses on internal capabilities, constraints, and execution tensions that determine which strategy is actually feasible today.',
+          scope: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.scope.capabilitiesAndConstraints.scope'
+          ),
         },
       },
     ];
@@ -628,56 +528,56 @@ export const ContextStep: React.FC<ContextStepProps> = ({
     const successOptions = [
       {
         id: 'direction-and-priorities',
-        label: isPolish
-          ? 'Kierunek i priorytety strategiczne'
-          : 'Direction and strategic priorities',
-        description: isPolish
-          ? 'Jasny wybór i lista priorytetów dla zarządu.'
-          : 'A clear choice and list of priorities for leadership.',
+        label: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.success.directionAndPriorities.label'
+        ),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.success.directionAndPriorities.description'
+        ),
         patch: {
           successChoice: 'direction-and-priorities',
-          successSignal: isPolish
-            ? 'Po tej sesji zarząd ma mieć uzgodniony kierunek strategiczny, logikę wyboru, najważniejsze priorytety i listę ruchów, które można przełożyć na dalsze decyzje oraz execution.'
-            : 'By the end of the session, leadership should have an agreed strategic direction, a clear logic of choice, the top priorities, and a set of moves that can be translated into decisions and execution.',
+          successSignal: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.success.directionAndPriorities.successSignal'
+          ),
         },
       },
       {
         id: 'board-decision',
-        label: isPolish ? 'Materiał do decyzji zarządu' : 'Board decision material',
-        description: isPolish
-          ? 'Gotowy materiał, który porządkuje wybór.'
-          : 'Ready material that structures the choice.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.success.boardDecision.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.success.boardDecision.description'
+        ),
         patch: {
           successChoice: 'board-decision',
-          successSignal: isPolish
-            ? 'Sukces oznacza materiał, który pozwala zarządowi porównać opcje, zobaczyć napięcia i podjąć decyzję bez dalszego chaosu interpretacyjnego.'
-            : 'Success means material that allows leadership to compare options, see the tensions, and decide without further interpretive chaos.',
+          successSignal: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.success.boardDecision.successSignal'
+          ),
         },
       },
       {
         id: 'execution-bridge',
-        label: isPolish ? 'Most do execution' : 'Bridge to execution',
-        description: isPolish
-          ? 'Ruchy, które można od razu przełożyć na działanie.'
-          : 'Moves that can quickly be translated into action.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.success.executionBridge.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.success.executionBridge.description'
+        ),
         patch: {
           successChoice: 'execution-bridge',
-          successSignal: isPolish
-            ? 'Po sesji firma ma wiedzieć nie tylko jaki kierunek wybrać, ale także jakie pierwsze ruchy uruchomić w ciągu 90 dni i jak zabezpieczyć wykonanie.'
-            : 'After the session, the company should know not only which direction to choose, but also which first moves to launch within 90 days and how to secure execution.',
+          successSignal: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.success.executionBridge.successSignal'
+          ),
         },
       },
       {
         id: 'strategic-clarity',
-        label: isPolish ? 'Jasność strategiczna' : 'Strategic clarity',
-        description: isPolish
-          ? 'Uporządkowanie myślenia i języka strategii.'
-          : 'Order the thinking and language of strategy.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.success.strategicClarity.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.success.strategicClarity.description'
+        ),
         patch: {
           successChoice: 'strategic-clarity',
-          successSignal: isPolish
-            ? 'Sukces tej sesji to wspólny język strategii: nazwanie przewag, ryzyk, priorytetów i granic wyboru, tak aby cała organizacja rozumiała, o co naprawdę gramy.'
-            : 'Success in this session means a shared language of strategy: naming advantages, risks, priorities, and boundaries of choice so the whole organization understands what it is truly playing for.',
+          successSignal: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.success.strategicClarity.successSignal'
+          ),
         },
       },
     ];
@@ -685,32 +585,32 @@ export const ContextStep: React.FC<ContextStepProps> = ({
     const timeframeOptions = [
       {
         id: 'short' as const,
-        label: isPolish ? 'Krótki horyzont' : 'Short horizon',
-        description: isPolish ? 'Najbliższe 1-2 kwartały.' : 'The next 1-2 quarters.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.timeframe.short.label'),
+        description: t('discoveryToolsSteps.contextStep.dynamicSwot.timeframe.short.description'),
       },
       {
         id: 'medium' as const,
-        label: isPolish ? 'Średni horyzont' : 'Medium horizon',
-        description: isPolish ? 'Najbliższe 12-18 miesięcy.' : 'The next 12-18 months.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.timeframe.medium.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.timeframe.medium.description'
+        ),
       },
       {
         id: 'long' as const,
-        label: isPolish ? 'Długi horyzont' : 'Long horizon',
-        description: isPolish ? 'Transformacja na 2+ lata.' : 'Transformation over 2+ years.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.timeframe.long.label'),
+        description: t('discoveryToolsSteps.contextStep.dynamicSwot.timeframe.long.description'),
       },
     ];
 
     const labelsUi = {
-      comment: isPolish ? 'Komentarz' : 'Comment',
-      thinkDeeper: isPolish ? 'Pogłęb' : 'Think deeper',
-      implement: isPolish ? 'Wprowadź' : 'Implement',
-      close: isPolish ? 'Zamknij' : 'Close',
-      next: isPolish ? 'Next' : 'Next',
-      previous: isPolish ? 'Previous' : 'Previous',
-      confirm: isPolish ? 'Potwierdź' : 'Confirm',
-      selectedMany: isPolish
-        ? 'Możesz zaznaczyć wiele odpowiedzi'
-        : 'You can select multiple answers',
+      comment: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.comment'),
+      thinkDeeper: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.thinkDeeper'),
+      implement: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.implement'),
+      close: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.close'),
+      next: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.next'),
+      previous: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.previous'),
+      confirm: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.confirm'),
+      selectedMany: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.selectedMany'),
     };
 
     const navButtonClass =
@@ -752,12 +652,10 @@ export const ContextStep: React.FC<ContextStepProps> = ({
 
       options.push({
         id: 'leadership-choice',
-        label: isPolish
-          ? 'Jaki wybór naprawdę stoi przed zarządem?'
-          : 'What is the real leadership choice?',
-        description: isPolish
-          ? 'Nazwij decyzję, którą zarząd faktycznie ma podjąć.'
-          : 'Name the decision leadership actually needs to make.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.question4.leadershipChoice.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.question4.leadershipChoice.description'
+        ),
       });
 
       if (
@@ -766,47 +664,43 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       ) {
         options.push({
           id: 'whole-company-priority',
-          label: isPolish
-            ? 'Który priorytet ma spiąć całą firmę?'
-            : 'Which priority should align the whole company?',
-          description: isPolish
-            ? 'Pytanie o wspólny kierunek dla całej organizacji.'
-            : 'A question about one shared direction for the whole organization.',
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question4.wholeCompanyPriority.label'
+          ),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question4.wholeCompanyPriority.description'
+          ),
         });
       }
 
       if (basedOnDirection.includes('growth-engine') || basedOnScope.includes('go-to-market')) {
         options.push({
           id: 'growth-source',
-          label: isPolish
-            ? 'Skąd ma przyjść następna fala wzrostu?'
-            : 'Where should the next growth wave come from?',
-          description: isPolish
-            ? 'Pogłębienie źródła wzrostu i koncentracji handlowej.'
-            : 'Go deeper on the source of growth and commercial concentration.',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.question4.growthSource.label'),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question4.growthSource.description'
+          ),
         });
       }
 
       if (basedOnDirection.includes('market-position')) {
         options.push({
           id: 'positioning-choice',
-          label: isPolish
-            ? 'Jaką pozycję rynkową chcemy naprawdę zająć?'
-            : 'What market position do we truly want to hold?',
-          description: isPolish
-            ? 'Doprecyzowanie aspiracji rynkowej i segmentów.'
-            : 'Clarify market ambition and target segments.',
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question4.positioningChoice.label'
+          ),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question4.positioningChoice.description'
+          ),
         });
       }
 
       options.push({
         id: 'trade-off',
-        label: isPolish
-          ? 'Jaki trade-off trzeba zaakceptować?'
-          : 'Which trade-off must be accepted?',
-        description: isPolish
-          ? 'Nazwij kompromis, którego nie da się ominąć.'
-          : 'Name the compromise that cannot be avoided.',
+        label: t('discoveryToolsSteps.contextStep.dynamicSwot.question4.tradeOff.label'),
+        description: t(
+          'discoveryToolsSteps.contextStep.dynamicSwot.question4.tradeOff.description'
+        ),
       });
 
       return options.slice(0, 5);
@@ -816,48 +710,40 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       const options: Array<{ id: string; label: string; description: string }> = [
         {
           id: 'resource-reality',
-          label: isPolish
-            ? 'Jakie ograniczenia zasobów są realne?'
-            : 'Which resource constraints are real?',
-          description: isPolish
-            ? 'Ludzie, czas, budżet, zdolność wykonawcza.'
-            : 'People, time, budget, execution capacity.',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.question5.resourceReality.label'),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question5.resourceReality.description'
+          ),
         },
         {
           id: 'risk-boundary',
-          label: isPolish
-            ? 'Jakiego ryzyka nie chcemy przekroczyć?'
-            : 'Which risk boundary should not be crossed?',
-          description: isPolish
-            ? 'Granice akceptowalnego ryzyka dla tej strategii.'
-            : 'The acceptable risk boundary for this strategy.',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.question5.riskBoundary.label'),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question5.riskBoundary.description'
+          ),
         },
         {
           id: 'decision-speed',
-          label: isPolish
-            ? 'Jak szybka musi być ta decyzja?'
-            : 'How fast does this decision need to be?',
-          description: isPolish
-            ? 'Tempo działania i rytm kolejnych kroków.'
-            : 'Pace of action and rhythm of next moves.',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.question5.decisionSpeed.label'),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question5.decisionSpeed.description'
+          ),
         },
         {
           id: 'board-clarity',
-          label: isPolish
-            ? 'Co musi być jasne dla zarządu?'
-            : 'What must be crystal-clear for leadership?',
-          description: isPolish
-            ? 'Jak opisać wybór, by był jednoznaczny.'
-            : 'How to frame the choice so it is unmistakably clear.',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.question5.boardClarity.label'),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question5.boardClarity.description'
+          ),
         },
         {
           id: 'execution-readiness',
-          label: isPolish
-            ? 'Co musi być gotowe do execution?'
-            : 'What must be ready for execution?',
-          description: isPolish
-            ? 'Jakie pierwsze ruchy powinny wynikać z tej sesji.'
-            : 'Which first moves should follow from this session.',
+          label: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question5.executionReadiness.label'
+          ),
+          description: t(
+            'discoveryToolsSteps.contextStep.dynamicSwot.question5.executionReadiness.description'
+          ),
         },
       ];
 
@@ -873,9 +759,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           question1Confirmed: true,
           goal:
             labelsSelected.length > 0
-              ? isPolish
-                ? `Strategiczny kierunek tej sesji koncentruje się na obszarach: ${composeList(labelsSelected)}.`
-                : `The strategic direction of this session focuses on: ${composeList(labelsSelected)}.`
+              ? t('discoveryToolsSteps.contextStep.dynamicSwot.confirm.direction', {
+                  list: composeList(labelsSelected),
+                })
               : displayedContext.goal,
         });
       }
@@ -888,9 +774,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           question2Confirmed: true,
           scope:
             labelsSelected.length > 0
-              ? isPolish
-                ? `W centrum analizy stawiamy: ${composeList(labelsSelected)}.`
-                : `At the center of the analysis we place: ${composeList(labelsSelected)}.`
+              ? t('discoveryToolsSteps.contextStep.dynamicSwot.confirm.scope', {
+                  list: composeList(labelsSelected),
+                })
               : displayedContext.scope,
         });
       }
@@ -903,9 +789,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           question3Confirmed: true,
           successSignal:
             labelsSelected.length > 0
-              ? isPolish
-                ? `Dobry wynik tej sesji powinien dostarczyć: ${composeList(labelsSelected)}.`
-                : `A strong result from this session should deliver: ${composeList(labelsSelected)}.`
+              ? t('discoveryToolsSteps.contextStep.dynamicSwot.confirm.success', {
+                  list: composeList(labelsSelected),
+                })
               : displayedContext.successSignal,
         });
       }
@@ -918,9 +804,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           question4Confirmed: true,
           assumptions:
             labelsSelected.length > 0
-              ? isPolish
-                ? `Kluczowe pytania kontekstowe, które trzeba rozstrzygnąć, to: ${composeList(labelsSelected)}.`
-                : `The key contextual questions we need to resolve are: ${composeList(labelsSelected)}.`
+              ? t('discoveryToolsSteps.contextStep.dynamicSwot.confirm.question4', {
+                  list: composeList(labelsSelected),
+                })
               : displayedContext.assumptions,
         });
       }
@@ -933,9 +819,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           question5Confirmed: true,
           constraints:
             labelsSelected.length > 0
-              ? isPolish
-                ? `Ta sesja musi respektować następujące granice: ${composeList(labelsSelected)}.`
-                : `This session must respect the following boundaries: ${composeList(labelsSelected)}.`
+              ? t('discoveryToolsSteps.contextStep.dynamicSwot.confirm.question5', {
+                  list: composeList(labelsSelected),
+                })
               : displayedContext.constraints,
         });
       }
@@ -957,41 +843,33 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       .filter((option) => (displayedContext.question5Choices || []).includes(option.id))
       .map((option) => option.label);
 
-    const executiveSummaryIntro = isPolish
-      ? 'Ten Dynamic SWOT ma zbudować materiał decyzyjny dla zarządu, a nie tylko porządną diagnozę. Jego rolą jest uchwycenie kierunku strategicznego, który organizacja powinna uznać za najbardziej sensowny, oraz pokazanie, dlaczego właśnie ten wybór powinien zostać dowieziony dalej w formie działań, priorytetów i kolejnych decyzji.'
-      : 'This Dynamic SWOT is meant to build decision material for leadership, not just a neat diagnosis. Its role is to identify the strategic direction the organization should consider most sensible, and show why that choice deserves to be carried forward into actions, priorities, and subsequent decisions.';
+    const executiveSummaryIntro = t('discoveryToolsSteps.contextStep.dynamicSwot.summary.intro');
 
-    const executiveSummaryBody = isPolish
-      ? `Na podstawie odpowiedzi przyjmujemy, że ta sesja koncentruje się na obszarach: ${composeList(
-          selectedDirectionLabels.length ? selectedDirectionLabels : [displayedContext.goal]
-        )}. W centrum analizy powinny znaleźć się: ${composeList(
-          selectedScopeLabels.length ? selectedScopeLabels : [displayedContext.scope]
-        )}. Oznacza to, że SWOT ma nie tylko opisać sytuację, ale uporządkować wybór strategiczny, pokazać napięcia, nazwać ograniczenia oraz wskazać, jaka logika decyzji jest dziś najbardziej uzasadniona.`
-      : `Based on the answers so far, this session should focus on: ${composeList(
-          selectedDirectionLabels.length ? selectedDirectionLabels : [displayedContext.goal]
-        )}. At the center of the analysis should sit: ${composeList(
-          selectedScopeLabels.length ? selectedScopeLabels : [displayedContext.scope]
-        )}. That means the SWOT should not merely describe the situation, but structure the strategic choice, surface the tensions, name the constraints, and show which decision logic is most justified today.`;
+    const executiveSummaryBody = t('discoveryToolsSteps.contextStep.dynamicSwot.summary.body', {
+      direction: composeList(
+        selectedDirectionLabels.length ? selectedDirectionLabels : [displayedContext.goal]
+      ),
+      scope: composeList(
+        selectedScopeLabels.length ? selectedScopeLabels : [displayedContext.scope]
+      ),
+    });
 
-    const executiveSummaryDelivery = isPolish
-      ? `Założeniem dowiezienia tej pracy jest rezultat w postaci: ${composeList(
+    const executiveSummaryDelivery = t(
+      'discoveryToolsSteps.contextStep.dynamicSwot.summary.delivery',
+      {
+        success: composeList(
           selectedSuccessLabels.length ? selectedSuccessLabels : [displayedContext.successSignal]
-        )}. Żeby ten rezultat był wiarygodny, sesja musi dodatkowo odpowiedzieć na pytania: ${composeList(
+        ),
+        question4: composeList(
           selectedQuestion4Labels.length
             ? selectedQuestion4Labels
             : [displayedContext.assumptions].filter((value): value is string => Boolean(value))
-        )}, przy jednoczesnym uszanowaniu granic: ${composeList(
+        ),
+        question5: composeList(
           selectedQuestion5Labels.length ? selectedQuestion5Labels : [displayedContext.constraints]
-        )}. To właśnie ten fragment powinien później wejść na pierwszy slajd prezentacji jako uzasadnienie celu SWOT-a, zakresu pracy i oczekiwanego sposobu dowiezienia rekomendacji.`
-      : `The intended delivery of this work is an outcome shaped as: ${composeList(
-          selectedSuccessLabels.length ? selectedSuccessLabels : [displayedContext.successSignal]
-        )}. To make that outcome credible, the session must additionally answer: ${composeList(
-          selectedQuestion4Labels.length
-            ? selectedQuestion4Labels
-            : [displayedContext.assumptions].filter((value): value is string => Boolean(value))
-        )}, while respecting the boundaries: ${composeList(
-          selectedQuestion5Labels.length ? selectedQuestion5Labels : [displayedContext.constraints]
-        )}. This is the exact fragment that should later become the first slide of the presentation, explaining the purpose of the SWOT, the scope of work, and the intended logic of delivery.`;
+        ),
+      }
+    );
 
     const deepDiveOptions: Record<
       'understanding' | 'direction' | 'scope' | 'success' | 'constraints',
@@ -1000,87 +878,71 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       understanding: [
         {
           id: 'broader-strategy',
-          label: isPolish
-            ? 'Pokaż szerzej, o jaką strategię chodzi'
-            : 'Broaden the strategy framing',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.understanding.broaderStrategy'),
         },
         {
           id: 'leadership-angle',
-          label: isPolish ? 'Napisz to bardziej pod zarząd' : 'Make it more leadership-facing',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.understanding.leadershipAngle'),
         },
         {
           id: 'real-choice',
-          label: isPolish
-            ? 'Mocniej pokaż, jaki wybór jest do podjęcia'
-            : 'Make the underlying choice more explicit',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.understanding.realChoice'),
         },
       ],
       direction: [
         {
           id: 'competition',
-          label: isPolish
-            ? 'Mocniej uwzględnij konkurencję i rynek'
-            : 'Go deeper on competition and market',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.direction.competition'),
         },
         {
           id: 'capabilities',
-          label: isPolish ? 'Pokaż mocniej zdolności organizacji' : 'Go deeper on capabilities',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.direction.capabilities'),
         },
         {
           id: 'trade-offs',
-          label: isPolish ? 'Nazwij ważniejsze trade-offy' : 'Surface the real trade-offs',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.direction.tradeOffs'),
         },
       ],
       scope: [
         {
           id: 'narrower-scope',
-          label: isPolish
-            ? 'Zawęź zakres do konkretnego obszaru'
-            : 'Narrow the scope to a sharper area',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.scope.narrowerScope'),
         },
         {
           id: 'organization-wide',
-          label: isPolish
-            ? 'Pokaż skutki dla całej organizacji'
-            : 'Show whole-organization implications',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.scope.organizationWide'),
         },
         {
           id: 'market-vs-internal',
-          label: isPolish
-            ? 'Rozdziel rynek i wnętrze organizacji'
-            : 'Separate market and internal factors',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.scope.marketVsInternal'),
         },
       ],
       success: [
         {
           id: 'decision-readiness',
-          label: isPolish ? 'Doprecyzuj gotowość do decyzji' : 'Clarify decision-readiness',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.success.decisionReadiness'),
         },
         {
           id: 'execution-bridge',
-          label: isPolish
-            ? 'Mocniej pokaż most do execution'
-            : 'Strengthen the bridge to execution',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.success.executionBridge'),
         },
         {
           id: 'board-material',
-          label: isPolish
-            ? 'Zrób z tego bardziej materiał zarządczy'
-            : 'Make it more board-material oriented',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.success.boardMaterial'),
         },
       ],
       constraints: [
         {
           id: 'resource-limits',
-          label: isPolish ? 'Doprecyzuj ograniczenia zasobów' : 'Clarify resource limits',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.constraints.resourceLimits'),
         },
         {
           id: 'governance',
-          label: isPolish ? 'Dodaj ograniczenia governance' : 'Add governance boundaries',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.constraints.governance'),
         },
         {
           id: 'risk-tolerance',
-          label: isPolish ? 'Nazwij poziom akceptowanego ryzyka' : 'Name the acceptable risk level',
+          label: t('discoveryToolsSteps.contextStep.dynamicSwot.deepDive.constraints.riskTolerance'),
         },
       ],
     };
@@ -1214,11 +1076,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                     value={missionFeedbackInput}
                     onChange={(e) => setMissionFeedbackInput(e.target.value)}
                     rows={3}
-                    placeholder={
-                      isPolish
-                        ? 'Wpisz komentarz, który ma wpłynąć na nową wersję tego bloku.'
-                        : 'Write the comment that should shape the next version of this block.'
-                    }
+                    placeholder={t(
+                      'discoveryToolsSteps.contextStep.dynamicSwot.placeholder.feedbackComment'
+                    )}
                     className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
                   />
                   <div className="mt-3 flex gap-2">
@@ -1297,17 +1157,17 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   Mission & Context
                 </span>
                 <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
-                  {isPolish ? 'Propozycja konsultanta' : 'Consultant proposal'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.consultantProposal')}
                 </span>
               </div>
               <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
-                {isGenerating ? (isPolish ? 'AI pracuje' : 'AI working') : 'Draft'}
+                {isGenerating
+                  ? t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.aiWorking')
+                  : 'Draft'}
               </span>
             </div>
             <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-white">
-              {isPolish
-                ? 'Najpierw uzgadniamy, jak rozumiem intencję tej sesji i jaki typ kierunku strategicznego próbujemy zaprojektować.'
-                : 'First we align on how I understand the intent of this session and what type of strategic direction we are trying to design.'}
+              {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.alignIntent')}
             </div>
           </div>
 
@@ -1315,7 +1175,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
             <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-5 shadow-sm dark:border-primary-900/40">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
-                  {isPolish ? 'AI understanding' : 'AI understanding'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.aiUnderstanding')}
                 </div>
                 <span className="inline-flex rounded-full border border-primary-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
                   Understanding
@@ -1331,18 +1191,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
             <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                  {isPolish
-                    ? '1. Jaki kierunek strategiczny projektujemy?'
-                    : '1. What strategic direction are we designing?'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question1Heading')}
                 </div>
                 <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
                   1/5
                 </span>
               </div>
               <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {isPolish
-                  ? 'Wybierz, jaki rodzaj kierunku strategicznego naprawdę próbujemy tutaj zbudować.'
-                  : 'Choose what kind of strategic direction we are actually trying to build here.'}
+                {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question1Description')}
               </div>
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 {labelsUi.selectedMany}
@@ -1404,18 +1260,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <div className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-5 shadow-sm dark:border-sky-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-                    {isPolish
-                      ? '2. Co ma być w centrum tej analizy?'
-                      : '2. What should sit at the center of this analysis?'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question2Heading')}
                   </div>
                   <span className="inline-flex rounded-full border border-sky-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200">
                     2/5
                   </span>
                 </div>
                 <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  {isPolish
-                    ? 'Tutaj zawężamy, co dokładnie ma być przedmiotem pracy w tej sesji.'
-                    : 'Here we narrow down what exactly should become the object of work in this session.'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question2Description')}
                 </div>
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {labelsUi.selectedMany}
@@ -1490,18 +1342,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-5 shadow-sm dark:border-emerald-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-                    {isPolish
-                      ? '3. Jak rozpoznajemy dobry wynik tej sesji?'
-                      : '3. How do we recognize a strong outcome from this session?'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question3Heading')}
                   </div>
                   <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
                     3/5
                   </span>
                 </div>
                 <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  {isPolish
-                    ? 'Wybierz, jaki rodzaj wyniku ma być naprawdę użyteczny po zakończeniu tej sesji.'
-                    : 'Choose which type of outcome should be genuinely useful once this session is complete.'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question3Description')}
                 </div>
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {labelsUi.selectedMany}
@@ -1567,11 +1415,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   value={displayedContext.horizonComment || ''}
                   onChange={(e) => updateMissionContext({ horizonComment: e.target.value })}
                   rows={2}
-                  placeholder={
-                    isPolish
-                      ? 'Dopisz, jeśli rekomendacja ma obejmować inny rytm lub horyzont.'
-                      : 'Add if the recommendation should follow a different time rhythm or horizon.'
-                  }
+                  placeholder={t(
+                    'discoveryToolsSteps.contextStep.dynamicSwot.placeholder.horizonComment'
+                  )}
                   className="mt-4 w-full resize-none rounded-2xl border border-emerald-200/70 bg-white/80 px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-900/40 dark:bg-navy-800 dark:text-white"
                 />
                 <div className="mt-3 text-sm font-medium leading-relaxed text-slate-900 dark:text-white">
@@ -1610,18 +1456,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-5 shadow-sm dark:border-primary-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
-                    {isPolish
-                      ? '4. Jakie pytanie kontekstowe musimy jeszcze doprecyzować?'
-                      : '4. Which contextual question still needs sharpening?'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question4Heading')}
                   </div>
                   <span className="inline-flex rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
                     4/5
                   </span>
                 </div>
                 <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  {isPolish
-                    ? 'To pytanie jest już zależne od wcześniejszych odpowiedzi i pomaga doprecyzować właściwy kontekst strategiczny.'
-                    : 'This question already depends on previous answers and helps sharpen the real strategic context.'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question4Description')}
                 </div>
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {labelsUi.selectedMany}
@@ -1689,18 +1531,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <div className="rounded-[26px] border border-amber-200/70 bg-amber-500/5 p-5 shadow-sm dark:border-amber-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
-                    {isPolish
-                      ? '5. Jakie granice i realia ta strategia musi respektować?'
-                      : '5. Which boundaries and realities must this strategy respect?'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question5Heading')}
                   </div>
                   <span className="inline-flex rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
                     5/5
                   </span>
                 </div>
                 <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  {isPolish
-                    ? 'Na końcu doprecyzowujemy ograniczenia, których ta strategia nie może ignorować.'
-                    : 'At the end, we sharpen the constraints this strategy cannot ignore.'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question5Description')}
                 </div>
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {labelsUi.selectedMany}
@@ -1775,7 +1613,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                    {isPolish ? 'Executive summary tej sesji' : 'Executive summary of this session'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.executiveSummaryHeading')}
                   </div>
                   <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
                     Summary
@@ -1797,7 +1635,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <div className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-5 shadow-sm dark:border-sky-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-                    {isPolish ? 'Propozycja AI dla mission brief' : 'AI mission brief proposal'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.aiMissionBriefHeading')}
                   </div>
                   <span className="inline-flex rounded-full border border-sky-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200">
                     AI
@@ -1807,21 +1645,23 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   {missionSuggestion.goal ? (
                     <div>
                       <span className="font-semibold">
-                        {isPolish ? 'Pytanie strategiczne:' : 'Strategic question:'}
+                        {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.strategicQuestionLabel')}
                       </span>{' '}
                       {missionSuggestion.goal}
                     </div>
                   ) : null}
                   {missionSuggestion.scope ? (
                     <div>
-                      <span className="font-semibold">{isPolish ? 'Zakres:' : 'Scope:'}</span>{' '}
+                      <span className="font-semibold">
+                        {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.scopeLabel')}
+                      </span>{' '}
                       {missionSuggestion.scope}
                     </div>
                   ) : null}
                   {missionSuggestion.successSignal ? (
                     <div>
                       <span className="font-semibold">
-                        {isPolish ? 'Sygnał sukcesu:' : 'Success signal:'}
+                        {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.successSignalLabel')}
                       </span>{' '}
                       {missionSuggestion.successSignal}
                     </div>
@@ -1829,7 +1669,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   {missionSuggestion.constraints ? (
                     <div>
                       <span className="font-semibold">
-                        {isPolish ? 'Ograniczenia:' : 'Constraints:'}
+                        {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.constraintsLabel')}
                       </span>{' '}
                       {missionSuggestion.constraints}
                     </div>
@@ -1842,7 +1682,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                     className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-700"
                   >
                     <Check className="h-4 w-4" />
-                    {isPolish ? 'Zastosuj do mission brief' : 'Apply to mission brief'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.applyToMissionBrief')}
                   </button>
                   <button
                     type="button"
@@ -1850,7 +1690,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                     className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
                   >
                     <X className="h-4 w-4" />
-                    {isPolish ? 'Odrzuć propozycję' : 'Discard suggestion'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.discardSuggestion')}
                   </button>
                 </div>
               </div>
@@ -1860,16 +1700,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-5 shadow-sm dark:border-emerald-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-                    {isPolish ? 'Przejście do kolejnych faz' : 'Move to the next phases'}
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.moveToNextPhases')}
                   </div>
                   <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
                     Session
                   </span>
                 </div>
                 <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-                  {isPolish
-                    ? 'Kiedy Mission & Context są już uzgodnione, AI może przygotować dalszą część sesji: input map, macierz SWOT, napięcia, ruchy i outputy.'
-                    : 'Once Mission & Context are aligned, AI can prepare the rest of the session: input map, SWOT matrix, tensions, moves, and outputs.'}
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.moveToNextPhasesDescription')}
                 </div>
                 <button
                   type="button"
@@ -1879,12 +1717,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                 >
                   <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
                   {isGenerating
-                    ? isPolish
-                      ? 'AI buduje pełną sesję...'
-                      : 'AI is building the full session...'
-                    : isPolish
-                      ? 'Generuj dalszą część sesji'
-                      : 'Generate the next parts of the session'}
+                    ? t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.generatingFullSession')
+                    : t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.generateFullSession')}
                 </button>
               </div>
             )}
@@ -1907,9 +1741,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       </div>
 
       <div className="rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
-        {isPolish
-          ? 'To jest lekki start: opisz cel, zakres i efekt końcowy, a AI pomoże zbudować dalszą strukturę rozmowy i analizy.'
-          : 'This is a light entry: define the goal, scope, and expected finish, and AI will help build the structure for the rest of the conversation and analysis.'}
+        {t('discoveryToolsSteps.contextStep.generic.lightStartHint')}
       </div>
 
       {/* Goal / Industry */}
@@ -1927,11 +1759,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         />
         <InlineAssist
-          hint={
-            isPolish
-              ? 'Dodaj konkretne KPI lub oczekiwany wynik.'
-              : 'Add concrete KPIs or expected outcome.'
-          }
+          hint={t('discoveryToolsSteps.contextStep.generic.goalHint')}
         />
       </div>
 
@@ -1950,11 +1778,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         />
         <InlineAssist
-          hint={
-            isPolish
-              ? 'Wskaz obszar biznesowy i interesariuszy.'
-              : 'Specify business area and stakeholders.'
-          }
+          hint={t('discoveryToolsSteps.contextStep.generic.scopeHint')}
         />
       </div>
 
@@ -1982,17 +1806,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                 `}
               >
                 <div className="text-sm font-medium">
-                  {tf === 'short'
-                    ? isPolish
-                      ? 'Krótki'
-                      : 'Short'
-                    : tf === 'medium'
-                      ? isPolish
-                        ? 'Średni'
-                        : 'Medium'
-                      : isPolish
-                        ? 'Długi'
-                        : 'Long'}
+                  {t(`discoveryToolsSteps.contextStep.generic.timeframe.${tf}`)}
                 </div>
                 <div className="text-xs mt-1 opacity-70">
                   {tf === 'short' ? '< 1 rok' : tf === 'medium' ? '1-3 lata' : '3+ lata'}
@@ -2026,21 +1840,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                 `}
               >
                 <div className="text-sm font-medium">
-                  {pos === 'leader'
-                    ? isPolish
-                      ? 'Lider rynku'
-                      : 'Market Leader'
-                    : pos === 'challenger'
-                      ? isPolish
-                        ? 'Pretendent'
-                        : 'Challenger'
-                      : pos === 'follower'
-                        ? isPolish
-                          ? 'Naśladowca'
-                          : 'Follower'
-                        : isPolish
-                          ? 'Gracz niszowy'
-                          : 'Niche Player'}
+                  {t(`discoveryToolsSteps.contextStep.generic.position.${pos}`)}
                 </div>
               </button>
             ))}
@@ -2051,9 +1851,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       {/* Help text */}
       <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
         <p className="text-sm text-blue-700 dark:text-blue-300">
-          {isPolish
-            ? '💡 Jasno zdefiniowany cel pomoże AI generować bardziej trafne sugestie w kolejnych krokach.'
-            : '💡 A clearly defined goal will help AI generate more relevant suggestions in the following steps.'}
+          {t('discoveryToolsSteps.contextStep.generic.helpText')}
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { Loader2, Search, Sparkles, Square, Wand2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 
@@ -34,12 +35,13 @@ export const ToolPhaseAiActions: React.FC<ToolPhaseAiActionsProps> = ({
   aiReviewCount = 0,
   onReviewAiCards,
 }) => {
+  const { t } = useTranslation();
   if (!actions.length && !isStreaming && aiReviewCount <= 0) return null;
 
   return (
     <div className={`flex flex-wrap items-center justify-end gap-2 ${className}`}>
       <span className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-slate-600 sm:inline">
-        {isPolish ? 'AI Copilot' : 'AI Copilot'}
+        {t('discoveryToolsSteps.toolPhaseAiActions.aiCopilot')}
       </span>
 
       {aiReviewCount > 0 ? (
@@ -47,14 +49,12 @@ export const ToolPhaseAiActions: React.FC<ToolPhaseAiActionsProps> = ({
           type="button"
           onClick={onReviewAiCards}
           className={getMenu3AiButtonClass(false)}
-          title={
-            isPolish
-              ? `${aiReviewCount} kart AI czeka na review`
-              : `${aiReviewCount} AI cards waiting for review`
-          }
+          title={t('discoveryToolsSteps.toolPhaseAiActions.reviewWaitingTitle', {
+            count: aiReviewCount,
+          })}
         >
           <Sparkles size={12} />
-          {isPolish ? `Review AI (${aiReviewCount})` : `Review AI (${aiReviewCount})`}
+          {t('discoveryToolsSteps.toolPhaseAiActions.reviewAiCount', { count: aiReviewCount })}
         </button>
       ) : null}
 
@@ -85,10 +85,10 @@ export const ToolPhaseAiActions: React.FC<ToolPhaseAiActionsProps> = ({
           type="button"
           onClick={onAbort}
           className={getMenu3AiButtonClass(true)}
-          title={isPolish ? 'Zatrzymaj bieżące generowanie AI' : 'Stop the current AI generation'}
+          title={t('discoveryToolsSteps.toolPhaseAiActions.stopGenerationTitle')}
         >
           <Square size={12} />
-          {isPolish ? 'Zatrzymaj AI' : 'Stop AI'}
+          {t('discoveryToolsSteps.toolPhaseAiActions.stopAi')}
         </button>
       ) : null}
     </div>

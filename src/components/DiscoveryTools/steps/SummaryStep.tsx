@@ -19,6 +19,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   buildToolConclusionModel,
@@ -127,17 +128,17 @@ function ContentSelector({
   sections,
   selected,
   onToggle,
-  isPolish,
 }: {
   sections: ContentSection[];
   selected: Set<string>;
   onToggle: (id: string) => void;
   isPolish: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
       <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Wybierz zawartość' : 'Select content'}
+        {t('discoveryToolsSteps.summaryStep.selectContent')}
       </div>
       {sections.map((s) => (
         <label
@@ -191,6 +192,7 @@ function DynamicSwotOutputs({
   onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
+  const { t } = useTranslation();
   const swotData = session.inputData as SWOTData;
 
   const allInitiatives: InitiativeDraft[] = useMemo(() => {
@@ -250,71 +252,81 @@ function DynamicSwotOutputs({
     () => [
       {
         id: 'executive-summary',
-        label: isPolish ? 'Executive Summary' : 'Executive Summary',
-        description: isPolish ? 'Podsumowanie całej analizy' : 'Full analysis summary',
+        label: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.executiveSummary.label'),
+        description: t(
+          'discoveryToolsSteps.summaryStep.dynamicSwot.sections.executiveSummary.description'
+        ),
         available: !!summary?.executiveSummary,
         itemCount: 0,
       },
       {
         id: 'swot-matrix',
-        label: isPolish ? 'Macierz SWOT' : 'SWOT Matrix',
-        description: isPolish ? 'Czynniki w 4 kwadrantach' : 'Factors in 4 quadrants',
+        label: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.swotMatrix.label'),
+        description: t(
+          'discoveryToolsSteps.summaryStep.dynamicSwot.sections.swotMatrix.description'
+        ),
         available: items.length > 0,
         itemCount: items.length,
       },
       {
         id: 'insights',
-        label: isPolish ? 'Wnioski strategiczne' : 'Strategic Insights',
-        description: isPolish ? 'Kluczowe wnioski i obserwacje' : 'Key insights and observations',
+        label: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.insights.label'),
+        description: t(
+          'discoveryToolsSteps.summaryStep.dynamicSwot.sections.insights.description'
+        ),
         available: (summary?.keyInsights?.length || 0) > 0 || tensions.length > 0,
         itemCount: (summary?.keyInsights?.length || 0) + tensions.length,
       },
       {
         id: 'correlations',
-        label: isPolish ? 'Korelacje' : 'Correlations',
-        description: isPolish ? 'Powiązania między czynnikami' : 'Cross-factor correlations',
+        label: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.correlations.label'),
+        description: t(
+          'discoveryToolsSteps.summaryStep.dynamicSwot.sections.correlations.description'
+        ),
         available: correlations.length > 0,
         itemCount: correlations.length,
       },
       {
         id: 'recommendations',
-        label: isPolish ? 'Rekomendacje' : 'Recommendations',
-        description: isPolish ? 'Rekomendowane ruchy strategiczne' : 'Recommended strategic moves',
+        label: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.recommendations.label'),
+        description: t(
+          'discoveryToolsSteps.summaryStep.dynamicSwot.sections.recommendations.description'
+        ),
         available: moves.length > 0,
         itemCount: moves.length,
       },
       {
         id: 'initiatives',
-        label: isPolish ? 'Inicjatywy' : 'Initiatives',
-        description: isPolish
-          ? 'Drafty inicjatyw do realizacji'
-          : 'Initiative drafts for execution',
+        label: t('discoveryToolsSteps.summaryStep.dynamicSwot.sections.initiatives.label'),
+        description: t(
+          'discoveryToolsSteps.summaryStep.dynamicSwot.sections.initiatives.description'
+        ),
         available: allInitiatives.length > 0,
         itemCount: allInitiatives.length,
       },
     ],
-    [isPolish, summary, items, tensions, correlations, moves, allInitiatives]
+    [t, summary, items, tensions, correlations, moves, allInitiatives]
   );
 
   const readinessChecklist = [
     {
-      label: isPolish ? 'Mission brief jest jasny' : 'Mission brief is clear',
+      label: t('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.missionBrief'),
       done: !!swotData.context.goal && !!swotData.context.scope,
     },
     {
-      label: isPolish ? 'Czynniki SWOT zdefiniowane' : 'SWOT factors defined',
+      label: t('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.swotFactors'),
       done: items.length >= 4,
     },
     {
-      label: isPolish ? 'Wnioski strategiczne' : 'Strategic insights exist',
+      label: t('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.strategicInsights'),
       done: (summary?.keyInsights?.length || 0) > 0 || tensions.length > 0,
     },
     {
-      label: isPolish ? 'Rekomendacje lub ruchy' : 'Recommendations or moves',
+      label: t('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.recommendationsOrMoves'),
       done: moves.length > 0 || allInitiatives.length > 0,
     },
     {
-      label: isPolish ? 'Inicjatywy zdefiniowane' : 'Initiatives defined',
+      label: t('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.initiativesDefined'),
       done: allInitiatives.length > 0,
     },
   ];
@@ -330,13 +342,11 @@ function DynamicSwotOutputs({
       {/* HEADER + READINESS */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
         <SectionHeader
-          title={isPolish ? 'Outputs & Actions' : 'Outputs & Actions'}
-          badge={isPolish ? 'Zarządzanie wynikami' : 'Output management'}
-          description={
-            isPolish
-              ? 'Zamień wyniki analizy w konkretne deliverables: inicjatywy do realizacji, raporty, prezentacje i idee do dalszej eksploracji.'
-              : 'Turn analysis results into concrete deliverables: initiatives for execution, reports, presentations, and ideas for further exploration.'
-          }
+          title={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.title')}
+          badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.badge')}
+          description={t(
+            'discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.description'
+          )}
         />
         <div className="p-5">
           {/* Readiness bar */}
@@ -344,7 +354,7 @@ function DynamicSwotOutputs({
             <div className="flex-1">
               <div className="mb-1.5 flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Gotowość analizy' : 'Analysis readiness'}
+                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.analysisReadiness')}
                 </span>
                 <span
                   className={`text-sm font-bold ${readinessScore >= 4 ? 'text-emerald-600 dark:text-emerald-400' : readinessScore >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-danger-600 dark:text-danger-400'}`}
@@ -391,23 +401,23 @@ function DynamicSwotOutputs({
           <div className="mt-5 flex flex-wrap gap-3">
             {[
               {
-                label: isPolish ? 'Czynniki' : 'Factors',
+                label: t('discoveryToolsSteps.summaryStep.dynamicSwot.metricPills.factors'),
                 value: items.length,
                 color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
               },
               {
-                label: isPolish ? 'Napięcia' : 'Tensions',
+                label: t('discoveryToolsSteps.summaryStep.dynamicSwot.metricPills.tensions'),
                 value: tensions.length,
                 color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
               },
               {
-                label: isPolish ? 'Ruchy' : 'Moves',
+                label: t('discoveryToolsSteps.summaryStep.dynamicSwot.metricPills.moves'),
                 value: moves.length,
                 color:
                   'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
               },
               {
-                label: isPolish ? 'Inicjatywy' : 'Initiatives',
+                label: t('discoveryToolsSteps.summaryStep.dynamicSwot.metricPills.initiatives'),
                 value: allInitiatives.length,
                 color:
                   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
@@ -427,22 +437,18 @@ function DynamicSwotOutputs({
       {/* INITIATIVE DRAFTS TABLE */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
         <SectionHeader
-          title={isPolish ? 'Inicjatywy — tabela decyzyjna' : 'Initiatives — decision table'}
-          badge={isPolish ? 'Inicjatywy' : 'Initiatives'}
-          description={
-            isPolish
-              ? 'Zdecyduj, które inicjatywy chcesz opracować, które odłożyć, a które zachować jako idee.'
-              : 'Decide which initiatives to develop, which to defer, and which to keep as ideas.'
-          }
+          title={t('discoveryToolsSteps.summaryStep.dynamicSwot.initiativesTable.title')}
+          badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.initiativesTable.badge')}
+          description={t(
+            'discoveryToolsSteps.summaryStep.dynamicSwot.initiativesTable.description'
+          )}
         />
         <div className="p-5">
           {allInitiatives.length === 0 ? (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
               <Rocket className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? 'Brak inicjatyw. Wróć do kroku "Synthesis & Insights" i utwórz inicjatywy z rekomendacji.'
-                  : 'No initiatives yet. Go back to "Synthesis & Insights" step and create initiatives from recommendations.'}
+                {t('discoveryToolsSteps.summaryStep.dynamicSwot.initiativesTable.empty')}
               </div>
             </div>
           ) : (
@@ -453,19 +459,19 @@ function DynamicSwotOutputs({
                   {developCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
                       <Rocket className="h-3 w-3" /> {developCount}{' '}
-                      {isPolish ? 'do realizacji' : 'to develop'}
+                      {t('discoveryToolsSteps.summaryStep.dynamicSwot.counters.toDevelop')}
                     </span>
                   )}
                   {deferCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
                       <Shield className="h-3 w-3" /> {deferCount}{' '}
-                      {isPolish ? 'odłożone' : 'deferred'}
+                      {t('discoveryToolsSteps.summaryStep.dynamicSwot.counters.deferred')}
                     </span>
                   )}
                   {ideaCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
                       <Lightbulb className="h-3 w-3" /> {ideaCount}{' '}
-                      {isPolish ? 'jako idee' : 'as ideas'}
+                      {t('discoveryToolsSteps.summaryStep.dynamicSwot.counters.asIdeas')}
                     </span>
                   )}
                 </div>
@@ -513,7 +519,8 @@ function DynamicSwotOutputs({
                                     : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
                                 }`}
                               >
-                                {isPolish ? 'Wpływ' : 'Impact'}: {initiative.estimatedImpact}
+                                {t('discoveryToolsSteps.summaryStep.dynamicSwot.impactLabel')}:{' '}
+                                {initiative.estimatedImpact}
                               </span>
                               <span
                                 className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
@@ -524,7 +531,8 @@ function DynamicSwotOutputs({
                                       : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                                 }`}
                               >
-                                {isPolish ? 'Wysiłek' : 'Effort'}: {initiative.estimatedEffort}
+                                {t('discoveryToolsSteps.summaryStep.dynamicSwot.effortLabel')}:{' '}
+                                {initiative.estimatedEffort}
                               </span>
                             </div>
                           </div>
@@ -538,7 +546,7 @@ function DynamicSwotOutputs({
                           {isExpanded && (
                             <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-navy-700/40 dark:bg-navy-950/20">
                               <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">
-                                {isPolish ? 'Uzasadnienie' : 'Rationale'}
+                                {t('discoveryToolsSteps.summaryStep.dynamicSwot.rationaleLabel')}
                               </div>
                               <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                                 {initiative.rationale}
@@ -560,12 +568,8 @@ function DynamicSwotOutputs({
                                 <ChevronDown className="inline h-3 w-3" />
                               )}{' '}
                               {isExpanded
-                                ? isPolish
-                                  ? 'Zwiń'
-                                  : 'Collapse'
-                                : isPolish
-                                  ? 'Szczegóły'
-                                  : 'Details'}
+                                ? t('discoveryToolsSteps.summaryStep.dynamicSwot.collapse')
+                                : t('discoveryToolsSteps.summaryStep.dynamicSwot.details')}
                             </button>
                             <div className="ml-auto flex gap-1.5">
                               <button
@@ -577,7 +581,7 @@ function DynamicSwotOutputs({
                                 }`}
                               >
                                 <Rocket className="h-3 w-3" />
-                                {isPolish ? 'Realizuj' : 'Develop'}
+                                {t('discoveryToolsSteps.summaryStep.dynamicSwot.develop')}
                               </button>
                               <button
                                 onClick={() => setAction(initiative.id, 'defer')}
@@ -588,7 +592,7 @@ function DynamicSwotOutputs({
                                 }`}
                               >
                                 <Shield className="h-3 w-3" />
-                                {isPolish ? 'Odłóż' : 'Defer'}
+                                {t('discoveryToolsSteps.summaryStep.dynamicSwot.defer')}
                               </button>
                               <button
                                 onClick={() => setAction(initiative.id, 'idea')}
@@ -599,7 +603,7 @@ function DynamicSwotOutputs({
                                 }`}
                               >
                                 <Lightbulb className="h-3 w-3" />
-                                {isPolish ? 'Jako idea' : 'As idea'}
+                                {t('discoveryToolsSteps.summaryStep.dynamicSwot.asIdea')}
                               </button>
                             </div>
                           </div>
@@ -617,13 +621,9 @@ function DynamicSwotOutputs({
       {/* CREATE REPORT */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
         <SectionHeader
-          title={isPolish ? 'Utwórz raport' : 'Create report'}
-          badge={isPolish ? 'Raport' : 'Report'}
-          description={
-            isPolish
-              ? 'Wybierz, które elementy analizy chcesz zawrzeć w raporcie konsultingowym.'
-              : 'Select which analysis elements to include in the consulting report.'
-          }
+          title={t('discoveryToolsSteps.summaryStep.dynamicSwot.createReport.title')}
+          badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.createReport.badge')}
+          description={t('discoveryToolsSteps.summaryStep.dynamicSwot.createReport.description')}
         />
         <div className="p-5">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
@@ -636,12 +636,13 @@ function DynamicSwotOutputs({
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 px-8 py-6 dark:border-navy-700">
               <BookOpen className="h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="text-center text-sm text-slate-500 dark:text-slate-400">
-                {reportSections.size} {isPolish ? 'sekcji wybranych' : 'sections selected'}
+                {reportSections.size}{' '}
+                {t('discoveryToolsSteps.summaryStep.dynamicSwot.sectionsSelected')}
               </div>
               {reportCreated ? (
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
                   <Check className="h-3.5 w-3.5" />
-                  {isPolish ? 'Raport utworzony' : 'Report created'}
+                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.reportCreated')}
                 </span>
               ) : (
                 <button
@@ -650,7 +651,7 @@ function DynamicSwotOutputs({
                   className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-slate-800 disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
                 >
                   <FileText className="h-3.5 w-3.5" />
-                  {isPolish ? 'Generuj raport' : 'Generate report'}
+                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.generateReport')}
                 </button>
               )}
             </div>
@@ -661,13 +662,11 @@ function DynamicSwotOutputs({
       {/* CREATE PRESENTATION */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
         <SectionHeader
-          title={isPolish ? 'Utwórz prezentację' : 'Create presentation'}
-          badge={isPolish ? 'Prezentacja' : 'Presentation'}
-          description={
-            isPolish
-              ? 'Wybierz, które elementy analizy chcesz zawrzeć w prezentacji dla stakeholderów.'
-              : 'Select which analysis elements to include in the stakeholder presentation.'
-          }
+          title={t('discoveryToolsSteps.summaryStep.dynamicSwot.createPresentation.title')}
+          badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.createPresentation.badge')}
+          description={t(
+            'discoveryToolsSteps.summaryStep.dynamicSwot.createPresentation.description'
+          )}
         />
         <div className="p-5">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
@@ -680,12 +679,13 @@ function DynamicSwotOutputs({
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 px-8 py-6 dark:border-navy-700">
               <Presentation className="h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="text-center text-sm text-slate-500 dark:text-slate-400">
-                {presSections.size} {isPolish ? 'sekcji wybranych' : 'sections selected'}
+                {presSections.size}{' '}
+                {t('discoveryToolsSteps.summaryStep.dynamicSwot.sectionsSelected')}
               </div>
               {presCreated ? (
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
                   <Check className="h-3.5 w-3.5" />
-                  {isPolish ? 'Prezentacja utworzona' : 'Presentation created'}
+                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.presentationCreated')}
                 </span>
               ) : (
                 <button
@@ -694,7 +694,7 @@ function DynamicSwotOutputs({
                   className="inline-flex items-center gap-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-40"
                 >
                   <Presentation className="h-3.5 w-3.5" />
-                  {isPolish ? 'Generuj prezentację' : 'Generate presentation'}
+                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.generatePresentation')}
                 </button>
               )}
             </div>
@@ -705,13 +705,9 @@ function DynamicSwotOutputs({
       {/* IDEAS BANK */}
       <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
         <SectionHeader
-          title={isPolish ? 'Bank idei' : 'Ideas bank'}
-          badge={isPolish ? 'Idee' : 'Ideas'}
-          description={
-            isPolish
-              ? 'Idee i obserwacje do dalszej eksploracji — nie wymagają natychmiastowego działania.'
-              : 'Ideas and observations for further exploration — no immediate action required.'
-          }
+          title={t('discoveryToolsSteps.summaryStep.dynamicSwot.ideasBank.title')}
+          badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.ideasBank.badge')}
+          description={t('discoveryToolsSteps.summaryStep.dynamicSwot.ideasBank.description')}
         />
         <div className="p-5">
           {(() => {
@@ -727,9 +723,7 @@ function DynamicSwotOutputs({
                 <div className="rounded-xl border-2 border-dashed border-slate-200 p-6 text-center dark:border-navy-700">
                   <Lightbulb className="mx-auto h-7 w-7 text-slate-600 dark:text-slate-400" />
                   <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    {isPolish
-                      ? 'Oznacz inicjatywy jako "Jako idea" w tabeli powyżej, aby dodać je tutaj.'
-                      : 'Mark initiatives as "As idea" in the table above to add them here.'}
+                    {t('discoveryToolsSteps.summaryStep.dynamicSwot.ideasBank.empty')}
                   </div>
                 </div>
               );
@@ -788,6 +782,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
+  const { t } = useTranslation();
   const inputData = session.inputData;
   const initiatives = session.generatedInitiatives;
   const swotSummary = toolType === 'dynamic-swot' ? (inputData as SWOTData).summary : undefined;
@@ -951,7 +946,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
           <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Final Summary i inicjatywy' : 'Final Summary & Initiatives'}
+          {t('discoveryToolsSteps.summaryStep.generic.title')}
         </h2>
       </div>
 
@@ -967,15 +962,11 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         >
           <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
             <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-              {isPolish
-                ? 'Final source summary (AI proposal)'
-                : 'Final source summary (AI proposal)'}
+              {t('discoveryToolsSteps.summaryStep.generic.finalSourceSummaryProposal')}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {summaryData.summary ||
-                (isPolish
-                  ? 'Kliknij "Generuj analizę" aby otrzymać podsumowanie AI.'
-                  : 'Click "Generate Analysis" to get an AI summary.')}
+                t('discoveryToolsSteps.summaryStep.generic.generateAnalysisHint')}
             </p>
             {summaryData.insights.length > 0 && (
               <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-400">
@@ -998,13 +989,11 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
       ) : (
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-            {isPolish ? 'Final source summary' : 'Final source summary'}
+            {t('discoveryToolsSteps.summaryStep.generic.finalSourceSummary')}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             {summaryData.summary ||
-              (isPolish
-                ? 'Kliknij "Generuj analizę" aby otrzymać podsumowanie AI.'
-                : 'Click "Generate Analysis" to get an AI summary.')}
+              t('discoveryToolsSteps.summaryStep.generic.generateAnalysisHint')}
           </p>
         </div>
       )}
@@ -1014,12 +1003,12 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         {toolType === 'market-forces' && (
           <>
             <MetricCard
-              label={isPolish ? 'Atrakcyjność branży' : 'Industry Attractiveness'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.industryAttractiveness')}
               value={`${((summaryData.metrics as any).attractiveness || 0).toFixed(1)}/5`}
               color="emerald"
             />
             <MetricCard
-              label={isPolish ? 'Śr. siła konkurencji' : 'Avg. Force Score'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.avgForceScore')}
               value={`${((summaryData.metrics as any).avgForceScore || 0).toFixed(1)}/5`}
               color="blue"
             />
@@ -1028,22 +1017,22 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         {toolType === 'growth-paths' && (
           <>
             <MetricCard
-              label={isPolish ? 'Penetracja' : 'Penetration'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.penetration')}
               value={(summaryData.metrics as any).marketPenetration || 0}
               color="emerald"
             />
             <MetricCard
-              label={isPolish ? 'Rozwój rynku' : 'Market dev.'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.marketDev')}
               value={(summaryData.metrics as any).marketDevelopment || 0}
               color="blue"
             />
             <MetricCard
-              label={isPolish ? 'Rozwój produktu' : 'Product dev.'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.productDev')}
               value={(summaryData.metrics as any).productDevelopment || 0}
               color="purple"
             />
             <MetricCard
-              label={isPolish ? 'Dywersyfikacja' : 'Diversification'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.diversification')}
               value={(summaryData.metrics as any).diversification || 0}
               color="amber"
             />
@@ -1052,22 +1041,22 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         {toolType === 'portfolio-priority' && (
           <>
             <MetricCard
-              label={isPolish ? 'Stars' : 'Stars'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.stars')}
               value={(summaryData.metrics as any).stars || 0}
               color="emerald"
             />
             <MetricCard
-              label={isPolish ? 'Cash Cows' : 'Cash Cows'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.cashCows')}
               value={(summaryData.metrics as any).cashCows || 0}
               color="blue"
             />
             <MetricCard
-              label={isPolish ? 'Question Marks' : 'Question Marks'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.questionMarks')}
               value={(summaryData.metrics as any).questionMarks || 0}
               color="amber"
             />
             <MetricCard
-              label={isPolish ? 'Dogs' : 'Dogs'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.dogs')}
               value={(summaryData.metrics as any).dogs || 0}
               color="red"
             />
@@ -1076,17 +1065,17 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         {toolType === 'risk-uncertainty' && (
           <>
             <MetricCard
-              label={isPolish ? 'Założenia' : 'Assumptions'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.assumptions')}
               value={(summaryData.metrics as any).assumptions || 0}
               color="emerald"
             />
             <MetricCard
-              label={isPolish ? 'Ryzyka' : 'Risks'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.risks')}
               value={(summaryData.metrics as any).risks || 0}
               color="amber"
             />
             <MetricCard
-              label={isPolish ? 'Scenariusze' : 'Scenarios'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.scenarios')}
               value={(summaryData.metrics as any).scenarios || 0}
               color="blue"
             />
@@ -1101,12 +1090,12 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         ].includes(toolType) && (
           <>
             <MetricCard
-              label={isPolish ? 'Elementy' : 'Items'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.items')}
               value={(summaryData.metrics as any).totalItems || 0}
               color="emerald"
             />
             <MetricCard
-              label={isPolish ? 'Sekcje' : 'Sections'}
+              label={t('discoveryToolsSteps.summaryStep.generic.metrics.sections')}
               value={(summaryData.metrics as any).sectionsWithItems || 0}
               color="blue"
             />
@@ -1117,30 +1106,24 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
       {/* Visualization */}
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white mb-4">
-          {isPolish ? 'Wizualizacja' : 'Visualization'}
+          {t('discoveryToolsSteps.summaryStep.generic.visualization')}
         </h3>
         {toolType === 'market-forces' && (
           <PorterRadar data={inputData as PorterData} isPolish={isPolish} />
         )}
         {toolType === 'growth-paths' && (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Podsumowanie ścieżek wzrostu znajduje się w metrykach powyżej.'
-              : 'Growth paths summary is reflected in the metrics above.'}
+            {t('discoveryToolsSteps.summaryStep.generic.visualizationNote.growthPaths')}
           </div>
         )}
         {toolType === 'portfolio-priority' && (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Macierz BCG jest dostępna w kroku Portfolio Matrix.'
-              : 'BCG matrix is available in the Portfolio Matrix step.'}
+            {t('discoveryToolsSteps.summaryStep.generic.visualizationNote.portfolioPriority')}
           </div>
         )}
         {toolType === 'risk-uncertainty' && (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Podsumowanie ryzyk jest widoczne w metrykach powyżej.'
-              : 'Risk summary is reflected in the metrics above.'}
+            {t('discoveryToolsSteps.summaryStep.generic.visualizationNote.riskUncertainty')}
           </div>
         )}
         {[
@@ -1151,9 +1134,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
           'inventory-autopilot',
         ].includes(toolType) && (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Podsumowanie operacyjne jest widoczne w metrykach powyżej.'
-              : 'Operational summary is reflected in the metrics above.'}
+            {t('discoveryToolsSteps.summaryStep.generic.visualizationNote.operational')}
           </div>
         )}
       </div>
@@ -1166,7 +1147,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
           <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
             <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary-500" />
-              {isPolish ? 'Kluczowe wnioski' : 'Key Insights'}
+              {t('discoveryToolsSteps.summaryStep.generic.keyInsights')}
             </h3>
             <ul className="space-y-2">
               {summaryData.insights.map((insight: string, index: number) => (
@@ -1188,7 +1169,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
           <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
             <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
               <Target className="w-4 h-4 text-emerald-500" />
-              {isPolish ? 'Wnioski aplikowane' : 'Applied Conclusions'}
+              {t('discoveryToolsSteps.summaryStep.generic.appliedConclusions')}
             </h3>
             <ul className="space-y-2">
               {summaryData.appliedConclusions.map((conclusion: string, index: number) => (
@@ -1202,9 +1183,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
               ))}
             </ul>
             <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'Jeśli coś tu jest nieprecyzyjne, wróć do rozmowy z AI i doprecyzuj wnioski przed generowaniem outputów.'
-                : 'If anything here feels too vague, go back to the AI conversation and refine the conclusions before generating outputs.'}
+              {t('discoveryToolsSteps.summaryStep.generic.refineConclusionsHint')}
             </div>
           </div>
         )}
@@ -1213,7 +1192,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-amber-500" />
-          {isPolish ? 'Rekomendowane inicjatywy' : 'Recommended Initiatives'}
+          {t('discoveryToolsSteps.summaryStep.generic.recommendedInitiatives')}
         </h3>
         {summaryData.initiatives.length > 0 ? (
           <div className="space-y-3">
@@ -1256,9 +1235,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
           </div>
         ) : (
           <p className="text-sm text-slate-600">
-            {isPolish
-              ? 'Kliknij "Generuj analizę" aby otrzymać rekomendacje inicjatyw.'
-              : 'Click "Generate Analysis" to get initiative recommendations.'}
+            {t('discoveryToolsSteps.summaryStep.generic.generateInitiativesHint')}
           </p>
         )}
       </div>
