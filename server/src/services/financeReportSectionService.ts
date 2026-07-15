@@ -1142,7 +1142,9 @@ export async function loadFinanceReportSectionData(
       loadOrgBenchmarkRows(scope.organizationId),
       resolveValuation(scope.organizationId, scope.valuationId),
       loadPortfolioAdvisoryInputs(scope.organizationId),
-      loadTrendSeriesForOrg(scope.organizationId).catch(() => ({}) as Record<string, SeriesPoint[]>),
+      loadTrendSeriesForOrg(scope.organizationId).catch(
+        () => ({}) as Record<string, SeriesPoint[]>
+      ),
     ]);
   const lineValues: LineValueMap = { ...maps.pnl, ...maps.bs, ...maps.cf };
 
