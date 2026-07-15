@@ -41,8 +41,8 @@ import {
 } from './financeScenarioLevers.js';
 import {
   type BenefitValueTree,
-  type ComponentRisk,
   buildBenefitValueTree,
+  type ComponentRisk,
   narrateValueTree,
   type ValueComponentInput,
 } from './financeValueTree.js';
@@ -146,12 +146,14 @@ export function renderFinanceScenarioMarkdown(
     )
     .join('\n');
   const header = `## Scenariusze-dźwignie (${section.baseMetricLabel})`;
-  const table =
-    '| Dźwignia | Projekcja | Δ vs status quo | Ryzyko |\n|---|---:|---:|---|\n' + rows;
+  const table = '| Dźwignia | Projekcja | Δ vs status quo | Ryzyko |\n|---|---:|---:|---|\n' + rows;
   const rec = section.recommendation
-    ? ['', `**${section.recommendation.verdict}**`, section.recommendation.rationale, section.recommendation.tradeoff].join(
-        '\n\n'
-      )
+    ? [
+        '',
+        `**${section.recommendation.verdict}**`,
+        section.recommendation.rationale,
+        section.recommendation.tradeoff,
+      ].join('\n\n')
     : '';
   return [header, '', table, rec].filter(Boolean).join('\n');
 }

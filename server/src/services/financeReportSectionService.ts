@@ -54,6 +54,12 @@ import {
   upsertEnvelope as upsertEvidenceEnvelope,
 } from './evidence/evidenceEnvelopeService.js';
 import {
+  buildPortfolioAdvisory,
+  type PortfolioAdvisory,
+  type PortfolioItemInput,
+  type SynergyInput,
+} from './financePortfolioAdvisory.js';
+import {
   type ComputedFamilyRatio,
   computeDupontFromLines,
   computeFinanceRatioFamilyCatalog,
@@ -63,11 +69,6 @@ import {
   type RatioFamily,
 } from './financeRatioFamilyCatalog.js';
 import {
-  buildFinanceReportConclusions,
-  type FinanceConclusionWithValidation,
-  renderFinanceConclusionsMarkdown,
-} from './financeReportConclusion.js';
-import {
   buildFinanceScenarioSection,
   buildFinanceValueTreeSection,
   type FinanceScenarioSection,
@@ -75,13 +76,12 @@ import {
   renderFinanceScenarioMarkdown,
   renderFinanceValueTreeMarkdown,
 } from './financeReportAdvisory.js';
-import { getStatementPackDetail, loadPackValueMaps } from './financialStatementPackService.js';
 import {
-  buildPortfolioAdvisory,
-  type PortfolioAdvisory,
-  type PortfolioItemInput,
-  type SynergyInput,
-} from './financePortfolioAdvisory.js';
+  buildFinanceReportConclusions,
+  type FinanceConclusionWithValidation,
+  renderFinanceConclusionsMarkdown,
+} from './financeReportConclusion.js';
+import { getStatementPackDetail, loadPackValueMaps } from './financialStatementPackService.js';
 import {
   buildRatioBenchmark,
   type ComputedRatio,
