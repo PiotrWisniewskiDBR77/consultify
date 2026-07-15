@@ -27973,7 +27973,11 @@
         "high": "Wysoki",
         "medium": "Średni",
         "low": "Niski"
-      }
+      },
+      "category": "Kategoria",
+      "growth": "Wzrost",
+      "share": "Udział",
+      "investment": "Inwestycje"
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -28354,6 +28358,38 @@
         "lowEffort": "Niski wysiłek",
         "hint": "Dodaj konkretne inicjatywy i oznacz wpływ oraz wysiłek.",
         "empty": "Brak wpisów"
+      }
+    },
+    "portfolioPriority": {
+      "signalsTitle": "Sygnały portfolio i evidence",
+      "signalsSubtitle": "Zbierz dane z wywiadu, finansów, rynku i ograniczeń zasobowych zanim AI zaproponuje portfel.",
+      "addSignalPlaceholder": "Dodaj sygnał portfolio...",
+      "matrixTitle": "Macierz portfolio BCG",
+      "matrixSubtitle": "AI i użytkownik oceniają elementy według wzrostu rynku, udziału i poziomu inwestycji.",
+      "namePlaceholder": "Nazwa inicjatywy / produktu...",
+      "descPlaceholder": "Krótki opis...",
+      "marketGrowth": "Wzrost rynku",
+      "sharePosition": "Udział / pozycja",
+      "investmentLevel": "Poziom inwestycji",
+      "tradeoffsTitle": "Trade-offy i priorytety",
+      "tradeoffsSubtitle": "Tu portfolio zamienia się w decyzje o alokacji zasobów.",
+      "outputsTitle": "Outputy i inicjatywy",
+      "outputsSubtitle": "Final source summary i kandydaci outputów bazują na zaakceptowanych decyzjach portfolio.",
+      "itemsStep": {
+        "title": "Elementy portfolio",
+        "subtitle": "Dodaj inicjatywy i ocen ich wzrost oraz udział.",
+        "namePlaceholder": "Nazwa inicjatywy...",
+        "descPlaceholder": "Opis inicjatywy...",
+        "marketGrowth": "Wzrost rynku",
+        "marketShare": "Udział w rynku",
+        "investmentLevel": "Poziom inwestycji",
+        "hint": "Oceny wzrostu i udziału użyj do automatycznej kategorii BCG.",
+        "empty": "Brak inicjatyw"
+      },
+      "matrixStep": {
+        "title": "Macierz BCG",
+        "subtitle": "Podsumowanie kategorii na podstawie wzrostu i udziału.",
+        "initiativesAndCategories": "Inicjatywy i kategorie"
       }
     }
   }

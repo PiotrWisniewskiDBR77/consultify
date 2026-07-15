@@ -3,6 +3,7 @@
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   PortfolioItem,
@@ -27,7 +28,8 @@ const getCategory = (growth: number, share: number): PortfolioItem['category'] =
   return 'dog';
 };
 
-export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session, isPolish }) => {
+export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session }) => {
+  const { t } = useTranslation();
   const { updateInputData } = useToolStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -81,12 +83,10 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session,
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Elementy portfolio' : 'Portfolio items'}
+          {t('discoveryToolsTools.portfolioPriority.itemsStep.title')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Dodaj inicjatywy i ocen ich wzrost oraz udział.'
-            : 'Add initiatives and assess growth and share.'}
+          {t('discoveryToolsTools.portfolioPriority.itemsStep.subtitle')}
         </p>
       </div>
 
@@ -95,19 +95,19 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session,
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={isPolish ? 'Nazwa inicjatywy...' : 'Initiative title...'}
+          placeholder={t('discoveryToolsTools.portfolioPriority.itemsStep.namePlaceholder')}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={isPolish ? 'Opis inicjatywy...' : 'Initiative description...'}
+          placeholder={t('discoveryToolsTools.portfolioPriority.itemsStep.descPlaceholder')}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="text-xs text-slate-500">
-            {isPolish ? 'Wzrost rynku' : 'Market growth'}
+            {t('discoveryToolsTools.portfolioPriority.itemsStep.marketGrowth')}
             <select
               value={marketGrowth}
               onChange={(e) => setMarketGrowth(Number(e.target.value))}
@@ -121,7 +121,7 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session,
             </select>
           </label>
           <label className="text-xs text-slate-500">
-            {isPolish ? 'Udział w rynku' : 'Market share'}
+            {t('discoveryToolsTools.portfolioPriority.itemsStep.marketShare')}
             <select
               value={marketShare}
               onChange={(e) => setMarketShare(Number(e.target.value))}
@@ -135,7 +135,7 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session,
             </select>
           </label>
           <label className="text-xs text-slate-500">
-            {isPolish ? 'Poziom inwestycji' : 'Investment level'}
+            {t('discoveryToolsTools.portfolioPriority.itemsStep.investmentLevel')}
             <select
               value={investmentLevel}
               onChange={(e) => setInvestmentLevel(Number(e.target.value))}
@@ -155,21 +155,15 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session,
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
-          {isPolish ? 'Dodaj' : 'Add'}
+          {t('discoveryToolsTools.common.add')}
         </button>
-        <InlineAssist
-          hint={
-            isPolish
-              ? 'Oceny wzrostu i udziału użyj do automatycznej kategorii BCG.'
-              : 'Growth/share scores are used to auto-categorize in BCG.'
-          }
-        />
+        <InlineAssist hint={t('discoveryToolsTools.portfolioPriority.itemsStep.hint')} />
       </div>
 
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
-            {isPolish ? 'Brak inicjatyw' : 'No initiatives yet'}
+            {t('discoveryToolsTools.portfolioPriority.itemsStep.empty')}
           </div>
         ) : (
           items.map((item) => (
@@ -186,7 +180,7 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session,
                     </p>
                   )}
                   <div className="mt-2 text-xs text-slate-500">
-                    {isPolish ? 'Kategoria' : 'Category'}: {item.category}
+                    {t('discoveryToolsTools.common.category')}: {item.category}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

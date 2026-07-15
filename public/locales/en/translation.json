@@ -26897,7 +26897,11 @@
         "high": "High",
         "medium": "Medium",
         "low": "Low"
-      }
+      },
+      "category": "Category",
+      "growth": "Growth",
+      "share": "Share",
+      "investment": "Investment"
     },
     "dynamicSwot": {
       "insightsPhase": {
@@ -27278,6 +27282,38 @@
         "lowEffort": "Low effort",
         "hint": "Add specific initiatives and mark impact and effort.",
         "empty": "No items yet"
+      }
+    },
+    "portfolioPriority": {
+      "signalsTitle": "Portfolio Signals & Evidence",
+      "signalsSubtitle": "Capture interview, financial, market, and resource signals before AI proposes the portfolio.",
+      "addSignalPlaceholder": "Add a portfolio signal...",
+      "matrixTitle": "BCG Portfolio Matrix",
+      "matrixSubtitle": "AI and the user score items by market growth, share, and investment level.",
+      "namePlaceholder": "Initiative / product name...",
+      "descPlaceholder": "Short description...",
+      "marketGrowth": "Market growth",
+      "sharePosition": "Share / position",
+      "investmentLevel": "Investment level",
+      "tradeoffsTitle": "Trade-offs & Priorities",
+      "tradeoffsSubtitle": "This is where the portfolio becomes resource allocation decisions.",
+      "outputsTitle": "Outputs & Initiatives",
+      "outputsSubtitle": "The final source summary and output candidates are based on approved portfolio decisions.",
+      "itemsStep": {
+        "title": "Portfolio items",
+        "subtitle": "Add initiatives and assess growth and share.",
+        "namePlaceholder": "Initiative title...",
+        "descPlaceholder": "Initiative description...",
+        "marketGrowth": "Market growth",
+        "marketShare": "Market share",
+        "investmentLevel": "Investment level",
+        "hint": "Growth/share scores are used to auto-categorize in BCG.",
+        "empty": "No initiatives yet"
+      },
+      "matrixStep": {
+        "title": "BCG Matrix",
+        "subtitle": "Category summary based on growth and share.",
+        "initiativesAndCategories": "Initiatives and categories"
       }
     }
   }
