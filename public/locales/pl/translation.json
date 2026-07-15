@@ -28094,6 +28094,11 @@
       "aiError": "Błąd AI",
       "commandPlaceholder": "Wpisz polecenie dla tabeli…",
       "examples": "Przykłady"
+    },
+    "kanbanView": {
+      "uncategorized": "Bez kategorii",
+      "noItems": "Brak elementów",
+      "add": "Dodaj"
     }
   },
   "myWorkNotebook": {

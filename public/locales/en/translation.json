@@ -27034,6 +27034,11 @@
       "aiError": "AI error",
       "commandPlaceholder": "Type a table command…",
       "examples": "Examples"
+    },
+    "kanbanView": {
+      "uncategorized": "Uncategorized",
+      "noItems": "No items",
+      "add": "Add"
     }
   },
   "myWorkNotebook": {
