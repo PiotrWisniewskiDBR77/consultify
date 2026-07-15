@@ -75,7 +75,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
   readOnly = false,
   testId = 'provenance-source-popover',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const active = sources.filter((s) => s.archived_at === null);
   const atCap = active.length >= MAX_SOURCES_PER_RECORD;
@@ -85,19 +85,17 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
       data-testid={testId}
       className="w-[360px] max-w-[90vw] rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl"
       role="dialog"
-      aria-label={isPl ? 'Źródła rekordu' : 'Record sources'}
+      aria-label={t('myWorkTable.sourcePopover.recordSources')}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-            {isPl ? 'Pochodzenie' : 'Provenance'}
+            {t('myWorkTable.sourcePopover.provenance')}
           </p>
           <p className="text-[11px] text-c-text-muted">
             {active.length}/{MAX_SOURCES_PER_RECORD}
             {' · '}
-            {isPl
-              ? 'Aktywne źródła wpływające na pewność AI.'
-              : 'Active sources influencing AI confidence.'}
+            {t('myWorkTable.sourcePopover.activeSourcesInfluencingAiConfidence')}
           </p>
         </div>
         {onClose && (
@@ -105,7 +103,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
             type="button"
             onClick={onClose}
             className="text-c-text-secondary hover:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus rounded p-0.5"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('myWorkTable.sourcePopover.close')}
             data-testid={`${testId}-close`}
           >
             <X size={14} />
@@ -116,7 +114,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
       <div className="max-h-[320px] overflow-y-auto px-2 py-2">
         {loading && (
           <p className="text-[12px] text-c-text-muted px-2 py-1">
-            {isPl ? 'Wczytywanie…' : 'Loading…'}
+            {t('myWorkTable.sourcePopover.loading')}
           </p>
         )}
         {!loading && error && (
@@ -133,9 +131,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
             className="text-[12px] text-c-text-muted px-2 py-3 text-center"
             data-testid={`${testId}-empty`}
           >
-            {isPl
-              ? 'Brak aktywnych źródeł — dodaj pierwsze, aby zwiększyć pewność AI.'
-              : 'No active sources yet — add one to raise AI confidence.'}
+            {t('myWorkTable.sourcePopover.noActiveSourcesYetAdd')}
           </p>
         )}
         {!loading &&
@@ -161,7 +157,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                     {source.confidence_contribution != null && (
                       <span
                         className="text-[10px] tabular-nums text-c-text-muted"
-                        aria-label={isPl ? 'Wkład w pewność' : 'Confidence contribution'}
+                        aria-label={t('myWorkTable.sourcePopover.confidenceContribution')}
                       >
                         · {Math.round(Number(source.confidence_contribution) * 100)}%
                       </span>
@@ -169,9 +165,9 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                     {verifiedRecently && (
                       <span
                         className="text-[10px] font-semibold text-c-success"
-                        aria-label={isPl ? 'Niedawno zweryfikowano' : 'Recently verified'}
+                        aria-label={t('myWorkTable.sourcePopover.recentlyVerified')}
                       >
-                        {isPl ? '✓ świeże' : '✓ fresh'}
+                        {t('myWorkTable.sourcePopover.fresh')}
                       </span>
                     )}
                   </div>
@@ -187,11 +183,11 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                     </a>
                   )}
                   <p className="text-[10px] text-c-text-secondary mt-0.5">
-                    {isPl ? 'Dodał' : 'Added by'} {source.created_by} · {fmtDate(source.created_at)}
+                    {t('myWorkTable.sourcePopover.addedBy')} {source.created_by} · {fmtDate(source.created_at)}
                     {source.last_verified_at && (
                       <>
                         {' · '}
-                        {isPl ? 'zweryfikowano' : 'verified'} {fmtDate(source.last_verified_at)}
+                        {t('myWorkTable.sourcePopover.verified')} {fmtDate(source.last_verified_at)}
                       </>
                     )}
                   </p>
@@ -205,8 +201,8 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                           void onVerify(source);
                         }}
                         className="p-1 rounded hover:bg-c-success text-c-success"
-                        title={isPl ? 'Zweryfikuj teraz' : 'Verify now'}
-                        aria-label={isPl ? 'Zweryfikuj' : 'Verify'}
+                        title={t('myWorkTable.sourcePopover.verifyNow')}
+                        aria-label={t('myWorkTable.sourcePopover.verify')}
                         data-testid={`${testId}-verify-${source.id}`}
                       >
                         <BadgeCheck size={12} />
@@ -219,8 +215,8 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                           void onArchive(source);
                         }}
                         className="p-1 rounded hover:bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-c-danger"
-                        title={isPl ? 'Archiwizuj' : 'Archive'}
-                        aria-label={isPl ? 'Archiwizuj' : 'Archive'}
+                        title={t('myWorkTable.sourcePopover.archive')}
+                        aria-label={t('myWorkTable.sourcePopover.archive')}
                         data-testid={`${testId}-archive-${source.id}`}
                       >
                         <Trash2 size={12} />
@@ -237,12 +233,8 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
         <div className="px-3 py-2 border-t border-c-border-subtle flex items-center justify-between">
           <p className="text-[10px] text-c-text-muted">
             {atCap
-              ? isPl
-                ? `Limit ${MAX_SOURCES_PER_RECORD} aktywnych źródeł osiągnięty.`
-                : `Reached cap of ${MAX_SOURCES_PER_RECORD} active sources.`
-              : isPl
-                ? 'Każde nowe źródło zwiększa pewność AI.'
-                : 'Every source raises AI confidence.'}
+              ? t('myWorkTable.sourcePopover.reachedCap', { value: MAX_SOURCES_PER_RECORD })
+              : t('myWorkTable.sourcePopover.everySourceRaisesAiConfidence')}
           </p>
           <button
             type="button"
@@ -252,7 +244,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
             data-testid={`${testId}-add`}
           >
             <Plus size={12} aria-hidden />
-            {isPl ? 'Dodaj' : 'Add'}
+            {t('myWorkTable.sourcePopover.add')}
           </button>
         </div>
       )}
