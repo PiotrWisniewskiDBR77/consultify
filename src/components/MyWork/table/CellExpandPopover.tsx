@@ -52,8 +52,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
   anchorRect,
   onAIRegenerate,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const [cellNote, setCellNote] = useState<string>(rowData?.[`_note_${column.key}`] || '');
@@ -154,13 +153,11 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 disabled={locked}
                 rows={6}
                 className="w-full rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 text-xs text-c-text outline-none resize-none focus:ring-2 focus:ring-blue-500/30 leading-relaxed"
-                placeholder={isPl ? 'Markdown obsługiwany...' : 'Markdown supported...'}
+                placeholder={t('myWorkTable.cellExpandPopover.markdownSupportedPlaceholder')}
               />
               <p className="text-[9px] text-c-text-secondary mt-1.5">
                 <AlignLeft size={8} className="inline mr-0.5" />
-                {isPl
-                  ? 'Obsługuje **pogrubienie**, *kursywę*, - listy'
-                  : 'Supports **bold**, *italic*, - lists'}
+                {t('myWorkTable.cellExpandPopover.markdownHint')}
               </p>
             </div>
           )}
@@ -225,7 +222,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                     value={newOption}
                     onChange={(e) => setNewOption(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddOption()}
-                    placeholder={isPl ? 'Nowa opcja...' : 'New option...'}
+                    placeholder={t('myWorkTable.cellExpandPopover.newOptionPlaceholder')}
                     className="flex-1 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                   <button
@@ -247,7 +244,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 <div className="flex items-center gap-1.5 mb-2">
                   <Sparkles size={11} className="text-c-accent" />
                   <span className="text-[10px] font-bold text-c-accent">
-                    {isPl ? 'Prompt AI' : 'AI Prompt'}
+                    {t('myWorkTable.cellExpandPopover.aiPrompt')}
                   </span>
                 </div>
                 <textarea
@@ -256,17 +253,15 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   disabled={locked}
                   rows={3}
                   className="w-full bg-transparent border-0 outline-none text-[11px] text-c-text resize-none leading-relaxed"
-                  placeholder={
-                    isPl ? 'Opisz co AI ma wygenerować...' : 'Describe what AI should generate...'
-                  }
+                  placeholder={t('myWorkTable.cellExpandPopover.aiPromptPlaceholder')}
                 />
               </div>
               <div className="rounded-xl bg-c-surface-raised p-3 mb-3">
                 <label className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1 block">
-                  {isPl ? 'Wynik' : 'Result'}
+                  {t('myWorkTable.cellExpandPopover.result')}
                 </label>
                 <p className="text-[11px] text-c-text leading-relaxed">
-                  {String(value || (isPl ? 'Brak wyniku' : 'No result'))}
+                  {String(value || t('myWorkTable.cellExpandPopover.noResult'))}
                 </p>
               </div>
               {!locked && onAIRegenerate && (
@@ -281,12 +276,8 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                     <RefreshCw size={12} />
                   )}
                   {aiLoading
-                    ? isPl
-                      ? 'Generuję...'
-                      : 'Generating...'
-                    : isPl
-                      ? 'Regeneruj'
-                      : 'Regenerate'}
+                    ? t('myWorkTable.cellExpandPopover.generating')
+                    : t('myWorkTable.cellExpandPopover.regenerate')}
                 </button>
               )}
             </div>
@@ -304,7 +295,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               />
               {column.type === 'currency' && (
                 <p className="text-[9px] text-c-text-secondary mt-1.5">
-                  {isPl ? 'Waluta' : 'Currency'}
+                  {t('myWorkTable.cellExpandPopover.currency')}
                 </p>
               )}
             </div>
@@ -381,7 +372,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   rel="noopener noreferrer"
                   className="text-[9px] text-blue-500 hover:underline mt-1 block"
                 >
-                  {isPl ? 'Otwórz link' : 'Open link'} ↗
+                  {t('myWorkTable.cellExpandPopover.openLink')} ↗
                 </a>
               )}
             </div>
@@ -416,7 +407,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
             className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             <StickyNote size={9} />
-            {isPl ? 'Notatka do komórki' : 'Cell note'}
+            {t('myWorkTable.cellExpandPopover.cellNote')}
             <ChevronDown
               size={9}
               className={`transition-transform ${showNote ? 'rotate-180' : ''}`}
@@ -430,7 +421,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 onBlur={handleSaveNote}
                 disabled={locked}
                 rows={2}
-                placeholder={isPl ? 'Dodaj notatkę...' : 'Add a note...'}
+                placeholder={t('myWorkTable.cellExpandPopover.addNotePlaceholder')}
                 className="w-full bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/40 dark:border-amber-700/20 rounded-lg px-2.5 py-1.5 text-[10px] text-c-text outline-none resize-none"
               />
             </div>

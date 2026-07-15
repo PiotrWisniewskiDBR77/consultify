@@ -27983,6 +27983,21 @@
       "selectRow": "Wybierz wiersz",
       "totals": "Podsum.",
       "requiresProvider": "GridView wymaga TableDataProvider lub właściwości rows i columns."
+    },
+    "cellExpandPopover": {
+      "markdownSupportedPlaceholder": "Markdown obsługiwany...",
+      "markdownHint": "Obsługuje **pogrubienie**, *kursywę*, - listy",
+      "newOptionPlaceholder": "Nowa opcja...",
+      "aiPrompt": "Prompt AI",
+      "aiPromptPlaceholder": "Opisz co AI ma wygenerować...",
+      "result": "Wynik",
+      "noResult": "Brak wyniku",
+      "generating": "Generuję...",
+      "regenerate": "Regeneruj",
+      "currency": "Waluta",
+      "openLink": "Otwórz link",
+      "cellNote": "Notatka do komórki",
+      "addNotePlaceholder": "Dodaj notatkę..."
     }
   },
   "myWorkNotebook": {

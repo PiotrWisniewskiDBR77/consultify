@@ -26923,6 +26923,21 @@
       "selectRow": "Select row",
       "totals": "Totals",
       "requiresProvider": "GridView requires TableDataProvider or rows and columns props."
+    },
+    "cellExpandPopover": {
+      "markdownSupportedPlaceholder": "Markdown supported...",
+      "markdownHint": "Supports **bold**, *italic*, - lists",
+      "newOptionPlaceholder": "New option...",
+      "aiPrompt": "AI Prompt",
+      "aiPromptPlaceholder": "Describe what AI should generate...",
+      "result": "Result",
+      "noResult": "No result",
+      "generating": "Generating...",
+      "regenerate": "Regenerate",
+      "currency": "Currency",
+      "openLink": "Open link",
+      "cellNote": "Cell note",
+      "addNotePlaceholder": "Add a note..."
     }
   },
   "myWorkNotebook": {
