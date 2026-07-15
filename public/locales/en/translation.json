@@ -27514,6 +27514,17 @@
       "noItems": "No items",
       "internalFactors": "Internal Factors",
       "externalFactors": "External Factors"
+    },
+    "reportStep": {
+      "noExportableView": "No exportable report view found in this screen.",
+      "pdfExported": "PDF exported",
+      "pdfExportFailed": "PDF export failed",
+      "title": "Report / Deck",
+      "subtitle": "Export a stakeholder-ready PDF report.",
+      "pdfExport": "PDF export",
+      "pdfExportHint": "If you are in the tool document view, export uses the hidden report template.",
+      "exporting": "Exporting...",
+      "downloadPdf": "Download PDF"
     }
   }
 }

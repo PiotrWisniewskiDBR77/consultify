@@ -28590,6 +28590,17 @@
       "noItems": "Brak elementów",
       "internalFactors": "Czynniki wewnętrzne",
       "externalFactors": "Czynniki zewnętrzne"
+    },
+    "reportStep": {
+      "noExportableView": "Brak widoku raportu do eksportu w tym ekranie.",
+      "pdfExported": "Wyeksportowano PDF",
+      "pdfExportFailed": "Nie udało się wyeksportować PDF",
+      "title": "Raport / Deck",
+      "subtitle": "Wyeksportuj raport do PDF (do wysłania do stakeholderów).",
+      "pdfExport": "Eksport PDF",
+      "pdfExportHint": "Jeśli pracujesz w widoku dokumentu narzędzia, eksport użyje ukrytego szablonu raportu.",
+      "exporting": "Eksport...",
+      "downloadPdf": "Pobierz PDF"
     }
   }
 }
