@@ -24,6 +24,8 @@ import type { AutomationIdea, ProcessCandidate, RpaSession, TechTier } from './f
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './feasibilityEngine';
+export * from './rpaInsightStaircase';
+export * from './rpaQuestionBank';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
