@@ -855,9 +855,21 @@ export async function startSheet(params: {
     try {
       const pl = stored.language !== 'en';
       const sheetLang = pl ? ('pl' as const) : ('en' as const);
+      // §0.3-style kwantyfikacja dla arkusza (parytet z docGenerationRuntime §0.3 dla
+      // dokumentów/narrativeEngine dla decków): bez faktów z groundingu model NIE MOŻE
+      // podawać precyzyjnie wyglądających liczb biznesowych jako realnych danych org —
+      // seed rows muszą być jawnie oznaczone jako przykładowe (round numbers / etykieta
+      // "przykład"/"example"), nigdy nie mieszane bez oznaczenia z realnymi faktami.
+      const sheetFabricationGuard = pl
+        ? ' DANE (§0.3): jeśli kontekst zawiera konkretne fakty organizacji — użyj WYŁĄCZNIE tych wartości, bez modyfikacji. Jeśli faktów brak: wiersze startowe muszą być jawnie oznaczone jako przykładowe (np. nazwa "Przykład 1", "Przykład 2" w pierwszej kolumnie lub dopisek "(przykład)" przy wartości) i używać okrągłych, ewidentnie ilustracyjnych liczb (10/20/30, nie 27,4% czy 183 450 zł) — NIGDY nie prezentuj zmyślonych precyzyjnych metryk biznesowych jako rzeczywistych danych organizacji.'
+        : ' DATA (§0.3): if the context contains concrete organisation facts, use ONLY those values, unmodified. If there are no facts: seed rows MUST be explicitly marked as examples (e.g. "Example 1", "Example 2" in the first column, or an "(example)" tag next to the value) and use round, clearly illustrative numbers (10/20/30, not 27.4% or $183,450) — NEVER present fabricated precise-looking business metrics as real organisation data.';
       const sheetSystemBase = pl
-        ? 'Jesteś analitykiem danych w Consultify. Tworzysz arkusz roboczy jako tabelę Markdown (GFM). Zwracasz WYŁĄCZNIE: linię tytułu "# <tytuł>" i jedną tabelę GFM (wiersz nagłówków, separator, wiersze danych). Maksymalnie 10 kolumn i 15 wierszy. Kolumny dobierz pod intencję użytkownika. Jeśli kontekst zawiera konkretne dane — użyj ich; w przeciwnym razie wypełnij realistycznymi wierszami startowymi (bez lorem ipsum). Bez komentarzy, bez bloków kodu.'
-        : 'You are a data analyst at Consultify. You create a working sheet as a Markdown (GFM) table. Return ONLY: a title line "# <title>" and one GFM table (header row, separator, data rows). At most 10 columns and 15 rows. Choose columns to fit the user intent. If the context contains concrete data, use it; otherwise fill with realistic seed rows (no lorem ipsum). No commentary, no code fences.';
+        ? 'Jesteś analitykiem danych w Consultify. Tworzysz arkusz roboczy jako tabelę Markdown (GFM). Zwracasz WYŁĄCZNIE: linię tytułu "# <tytuł>" i jedną tabelę GFM (wiersz nagłówków, separator, wiersze danych). Maksymalnie 10 kolumn i 15 wierszy. Kolumny dobierz pod intencję użytkownika. Jeśli kontekst zawiera konkretne dane — użyj ich; w przeciwnym razie wypełnij realistycznymi wierszami startowymi (bez lorem ipsum).' +
+          sheetFabricationGuard +
+          ' Bez komentarzy, bez bloków kodu.'
+        : 'You are a data analyst at Consultify. You create a working sheet as a Markdown (GFM) table. Return ONLY: a title line "# <title>" and one GFM table (header row, separator, data rows). At most 10 columns and 15 rows. Choose columns to fit the user intent. If the context contains concrete data, use it; otherwise fill with realistic seed rows (no lorem ipsum).' +
+          sheetFabricationGuard +
+          ' No commentary, no code fences.';
       const systemPrompt = `${languageDirective(sheetLang)}\n\n${sheetSystemBase}`;
       const explicitSheetFacts = await buildGroundingFacts(
         params.organizationId,
