@@ -9611,6 +9611,24 @@
       "phasesSuffix": "faz",
       "milestonesSuffix": "kamieni milowych",
       "onCriticalPathSuffix": "na ścieżce krytycznej"
+    },
+    "initiativesReportSection": {
+      "effortPrefix": "Wysiłek",
+      "impactPrefix": "Wpływ",
+      "matrixTitle": "Macierz Wysiłek/Wpływ",
+      "lowEffortLabel": "Niski wysiłek",
+      "mediumEffortLabel": "Średni wysiłek",
+      "highEffortLabel": "Wysoki wysiłek",
+      "highImpactLabel": "Wysoki wpływ",
+      "mediumImpactLabel": "Średni wpływ",
+      "lowImpactLabel": "Niski wpływ",
+      "fetchError": "Nie udało się pobrać inicjatyw",
+      "emptyState": "Brak inicjatyw do wyświetlenia",
+      "strategicLabel": "Strategiczne",
+      "totalLabel": "Łącznie",
+      "strategicInitiativesTitle": "Inicjatywy Strategiczne",
+      "otherInitiativesTitle": "Pozostałe Inicjatywy",
+      "moreInitiativesSuffix": "+ {{count}} więcej inicjatyw"
     }
   },
   "auth": {

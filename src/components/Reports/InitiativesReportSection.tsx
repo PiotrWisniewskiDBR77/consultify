@@ -98,6 +98,7 @@ const InitiativeCard: React.FC<{
   isPolish: boolean;
   showDetails: boolean;
 }> = ({ initiative, isPolish, showDetails }) => {
+  const { t } = useTranslation();
   const effortConfig = EFFORT_LABELS[initiative.effort] || EFFORT_LABELS.medium;
   const impactConfig = IMPACT_LABELS[initiative.impact] || IMPACT_LABELS.medium;
   const priorityConfig = PRIORITY_LABELS[initiative.priority] || PRIORITY_LABELS.medium;
@@ -157,7 +158,8 @@ const InitiativeCard: React.FC<{
               className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded ${effortConfig.color}`}
             >
               <Clock className="w-3 h-3" />
-              {isPolish ? `Wysiłek: ${effortConfig.pl}` : `Effort: ${effortConfig.en}`}
+              {t('reports.initiativesReportSection.effortPrefix', 'Effort')}:{' '}
+              {isPolish ? effortConfig.pl : effortConfig.en}
             </span>
 
             {/* Impact */}
@@ -165,7 +167,8 @@ const InitiativeCard: React.FC<{
               className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded ${impactConfig.color}`}
             >
               <TrendingUp className="w-3 h-3" />
-              {isPolish ? `Wpływ: ${impactConfig.pl}` : `Impact: ${impactConfig.en}`}
+              {t('reports.initiativesReportSection.impactPrefix', 'Impact')}:{' '}
+              {isPolish ? impactConfig.pl : impactConfig.en}
             </span>
 
             {/* Timeframe */}
@@ -208,6 +211,7 @@ const EffortImpactMatrix: React.FC<{ initiatives: Initiative[]; isPolish: boolea
   initiatives,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   // Group initiatives by effort/impact
   const matrix = useMemo(() => {
     const groups: Record<string, Initiative[]> = {
@@ -283,7 +287,7 @@ const EffortImpactMatrix: React.FC<{ initiatives: Initiative[]; isPolish: boolea
   return (
     <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4">
       <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-4">
-        {isPolish ? 'Macierz Wysiłek/Wpływ' : 'Effort/Impact Matrix'}
+        {t('reports.initiativesReportSection.matrixTitle', 'Effort/Impact Matrix')}
       </h4>
 
       <div className="overflow-x-auto">
@@ -292,13 +296,13 @@ const EffortImpactMatrix: React.FC<{ initiatives: Initiative[]; isPolish: boolea
           <div className="grid grid-cols-4 gap-2 mb-2">
             <div></div>
             <div className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Niski wysiłek' : 'Low effort'}
+              {t('reports.initiativesReportSection.lowEffortLabel', 'Low effort')}
             </div>
             <div className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Średni wysiłek' : 'Medium effort'}
+              {t('reports.initiativesReportSection.mediumEffortLabel', 'Medium effort')}
             </div>
             <div className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Wysoki wysiłek' : 'High effort'}
+              {t('reports.initiativesReportSection.highEffortLabel', 'High effort')}
             </div>
           </div>
 
@@ -307,16 +311,10 @@ const EffortImpactMatrix: React.FC<{ initiatives: Initiative[]; isPolish: boolea
             <div key={impact} className="grid grid-cols-4 gap-2 mb-2">
               <div className="flex items-center text-xs font-medium text-slate-500 dark:text-slate-400">
                 {impact === 'high'
-                  ? isPolish
-                    ? 'Wysoki wpływ'
-                    : 'High impact'
+                  ? t('reports.initiativesReportSection.highImpactLabel', 'High impact')
                   : impact === 'medium'
-                    ? isPolish
-                      ? 'Średni wpływ'
-                      : 'Medium impact'
-                    : isPolish
-                      ? 'Niski wpływ'
-                      : 'Low impact'}
+                    ? t('reports.initiativesReportSection.mediumImpactLabel', 'Medium impact')
+                    : t('reports.initiativesReportSection.lowImpactLabel', 'Low impact')}
               </div>
               {['low', 'medium', 'high'].map((effort) => {
                 const key = `${effort}-${impact}`;
@@ -379,7 +377,7 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
         setInitiatives(data.initiatives || data || []);
       } catch (err) {
         console.error('[InitiativesReportSection] Fetch error:', err);
-        setError(isPolish ? 'Nie udało się pobrać inicjatyw' : 'Failed to load initiatives');
+        setError(t('reports.initiativesReportSection.fetchError', 'Failed to load initiatives'));
       } finally {
         setIsLoading(false);
       }
@@ -388,7 +386,7 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
     if (projectId) {
       fetchInitiatives();
     }
-  }, [projectId, maxItems, isPolish]);
+  }, [projectId, maxItems, t]);
 
   // Group initiatives
   const { quickWins, strategic, other } = useMemo(() => {
@@ -434,7 +432,7 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
       <div className="bg-slate-50 dark:bg-navy-800/50 rounded-lg p-8 text-center">
         <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
         <p className="text-slate-600 dark:text-slate-400">
-          {isPolish ? 'Brak inicjatyw do wyświetlenia' : 'No initiatives to display'}
+          {t('reports.initiativesReportSection.emptyState', 'No initiatives to display')}
         </p>
       </div>
     );
@@ -457,7 +455,7 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
             {strategic.length}
           </div>
           <div className="text-xs text-primary-600 dark:text-primary-400">
-            {isPolish ? 'Strategiczne' : 'Strategic'}
+            {t('reports.initiativesReportSection.strategicLabel', 'Strategic')}
           </div>
         </div>
         <div className="bg-slate-50 dark:bg-slate-500/10 rounded-lg p-4 text-center">
@@ -466,7 +464,7 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
             {initiatives.length}
           </div>
           <div className="text-xs text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Łącznie' : 'Total'}
+            {t('reports.initiativesReportSection.totalLabel', 'Total')}
           </div>
         </div>
       </div>
@@ -499,7 +497,8 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
         <div>
           <h4 className="flex items-center gap-2 text-sm font-semibold text-navy-900 dark:text-white mb-3">
             <Target className="w-4 h-4 text-primary-500" />
-            {isPolish ? 'Inicjatywy Strategiczne' : 'Strategic Initiatives'} ({strategic.length})
+            {t('reports.initiativesReportSection.strategicInitiativesTitle', 'Strategic Initiatives')}{' '}
+            ({strategic.length})
           </h4>
           <div className="space-y-3">
             {strategic.map((initiative) => (
@@ -519,7 +518,8 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
         <div>
           <h4 className="flex items-center gap-2 text-sm font-semibold text-navy-900 dark:text-white mb-3">
             <Lightbulb className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-            {isPolish ? 'Pozostałe Inicjatywy' : 'Other Initiatives'} ({other.length})
+            {t('reports.initiativesReportSection.otherInitiativesTitle', 'Other Initiatives')} (
+            {other.length})
           </h4>
           <div className="space-y-3">
             {other.slice(0, 5).map((initiative) => (
@@ -532,9 +532,9 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
             ))}
             {other.length > 5 && (
               <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-2">
-                {isPolish
-                  ? `+ ${other.length - 5} więcej inicjatyw`
-                  : `+ ${other.length - 5} more initiatives`}
+                {t('reports.initiativesReportSection.moreInitiativesSuffix', '+ {{count}} more initiatives', {
+                  count: other.length - 5,
+                })}
               </p>
             )}
           </div>

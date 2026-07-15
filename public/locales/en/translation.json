@@ -10376,6 +10376,24 @@
       "phasesSuffix": "phases",
       "milestonesSuffix": "milestones",
       "onCriticalPathSuffix": "on critical path"
+    },
+    "initiativesReportSection": {
+      "effortPrefix": "Effort",
+      "impactPrefix": "Impact",
+      "matrixTitle": "Effort/Impact Matrix",
+      "lowEffortLabel": "Low effort",
+      "mediumEffortLabel": "Medium effort",
+      "highEffortLabel": "High effort",
+      "highImpactLabel": "High impact",
+      "mediumImpactLabel": "Medium impact",
+      "lowImpactLabel": "Low impact",
+      "fetchError": "Failed to load initiatives",
+      "emptyState": "No initiatives to display",
+      "strategicLabel": "Strategic",
+      "totalLabel": "Total",
+      "strategicInitiativesTitle": "Strategic Initiatives",
+      "otherInitiativesTitle": "Other Initiatives",
+      "moreInitiativesSuffix": "+ {{count}} more initiatives"
     }
   },
   "auth": {
