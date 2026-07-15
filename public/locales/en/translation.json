@@ -27251,6 +27251,30 @@
       "intentExecBrief": "Executive brief",
       "intentKeyRisks": "Key risks",
       "intentInitiativeAngles": "Initiative angles"
+    },
+    "toolWorkspace": {
+      "dodNotSatisfied": "DoD not satisfied",
+      "reviewRequested": "Review requested",
+      "toolApproved": "Tool approved",
+      "sentBackToDraft": "Sent back to draft",
+      "permissionDenied": "Permission denied",
+      "generatedInitiatives": "Generated initiatives",
+      "loadingTool": "Loading tool…",
+      "requestReviewTitle": "Request review",
+      "requestReviewSubtitle": "Check completeness and confirm sending to review.",
+      "noDodGaps": "No DoD gaps.",
+      "gapsLabel": "Gaps",
+      "decisionOwner": "Decision Owner",
+      "optional": "(optional)",
+      "selectPlaceholder": "-- Select --",
+      "dueDate": "Due date",
+      "priority": "Priority",
+      "priorityLow": "Low",
+      "priorityMedium": "Medium",
+      "priorityHigh": "High",
+      "priorityCritical": "Critical",
+      "cancel": "Cancel",
+      "sendToReview": "Send to review"
     }
   }
 }
