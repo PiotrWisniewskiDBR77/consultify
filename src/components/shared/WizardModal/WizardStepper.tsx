@@ -15,6 +15,7 @@
 /* eslint-disable no-restricted-syntax */
 import { Check } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { WizardStep } from './types';
 
@@ -41,6 +42,8 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
   isPolish,
   accentColor,
 }) => {
+  const { i18n } = useTranslation();
+  const t = i18n.getFixedT(isPolish ? 'pl' : 'en');
   const total = steps.length;
   // Progress fill: fraction of the journey covered up to (and including) the
   // active step. Guards against a single-step wizard.
@@ -113,7 +116,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                       {label}
                       {step.optional ? (
                         <span className="ml-1 text-[10px] font-normal text-slate-400">
-                          {isPolish ? '(opcjonalnie)' : '(optional)'}
+                          {t('sharedComponents.wizardStepper.optional')}
                         </span>
                       ) : null}
                     </span>

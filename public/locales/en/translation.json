@@ -28408,6 +28408,21 @@
       "copied": "Permalink copied",
       "copyFailed": "Failed to copy link",
       "copyPermalink": "Copy permalink"
+    },
+    "wizardStepper": {
+      "optional": "(optional)"
+    },
+    "previewBatchPanel": {
+      "selected": "selected",
+      "deselectAll": "Deselect all",
+      "commonFields": "Common fields",
+      "batchActions": "Batch actions"
+    },
+    "sectionErrorBoundary": {
+      "failedNamed": "This section (\"{{label}}\") couldn't be displayed.",
+      "failed": "This section couldn't be displayed.",
+      "restFine": "The rest of the document is fine. Try again or switch to another section.",
+      "tryAgain": "Try again"
     }
   },
   "reportBuilder": {

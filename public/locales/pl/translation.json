@@ -29468,6 +29468,21 @@
       "copied": "Permalink skopiowany",
       "copyFailed": "Nie udało się skopiować linku",
       "copyPermalink": "Kopiuj permalink"
+    },
+    "wizardStepper": {
+      "optional": "(opcjonalnie)"
+    },
+    "previewBatchPanel": {
+      "selected": "zaznaczonych",
+      "deselectAll": "Odznacz",
+      "commonFields": "Wspólne pola",
+      "batchActions": "Akcje grupowe"
+    },
+    "sectionErrorBoundary": {
+      "failedNamed": "Nie udało się wyświetlić sekcji „{{label}}\".",
+      "failed": "Nie udało się wyświetlić sekcji.",
+      "restFine": "Reszta dokumentu działa. Możesz spróbować ponownie albo przejść do innej sekcji.",
+      "tryAgain": "Spróbuj ponownie"
     }
   },
   "reportBuilder": {
