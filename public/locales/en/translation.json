@@ -27484,6 +27484,16 @@
       "evidencePlaceholder": "Add evidence...",
       "openQuestions": "Open questions",
       "openQuestionsPlaceholder": "Add a question..."
+    },
+    "initiativesStep": {
+      "title": "Initiatives",
+      "subtitle": "Turn results into initiatives: quick wins vs strategic bets, owners, and dependencies.",
+      "summary": "Summary",
+      "openInitiatives": "Open Initiatives",
+      "openChat": "Open chat",
+      "generatedInitiatives": "Generated initiatives",
+      "noInitiativesHint": "No initiatives yet. Use AI to generate recommendations, then create initiatives in the Initiatives module.",
+      "toolType": "Tool type: {{toolType}}"
     }
   }
 }

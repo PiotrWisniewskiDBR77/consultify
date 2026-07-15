@@ -1,5 +1,6 @@
 import { ArrowRight, ListTodo, MessageSquareText } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { InitiativeDraft, ToolSession, ToolType } from '@/store/useToolStore';
 
@@ -11,8 +12,8 @@ export function InitiativesStep(props: {
   onOpenInitiatives?: () => void;
   onOpenChat?: () => void;
 }) {
-  const { toolType, session, isPolish, generatedInitiatives, onOpenInitiatives, onOpenChat } =
-    props;
+  const { toolType, session, generatedInitiatives, onOpenInitiatives, onOpenChat } = props;
+  const { t } = useTranslation();
 
   const localDrafts: InitiativeDraft[] = Array.isArray(session.generatedInitiatives)
     ? session.generatedInitiatives
@@ -23,23 +24,21 @@ export function InitiativesStep(props: {
   const summary = (session.inputData as any)?.flow?.results?.executiveSummary || '';
   const keyFindings: string[] = (session.inputData as any)?.flow?.results?.keyFindings || [];
 
-  const title = useMemo(() => (isPolish ? 'Inicjatywy' : 'Initiatives'), [isPolish]);
+  const title = t('discoveryToolsSteps.initiativesStep.title');
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Przełóż wyniki na inicjatywy: quick wins vs strategic bets, właściciele i zależności.'
-            : 'Turn results into initiatives: quick wins vs strategic bets, owners, and dependencies.'}
+          {t('discoveryToolsSteps.initiativesStep.subtitle')}
         </p>
       </div>
 
       {(summary || keyFindings.length > 0) && (
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <div className="text-sm font-medium text-slate-900 dark:text-white mb-2">
-            {isPolish ? 'Podsumowanie' : 'Summary'}
+            {t('discoveryToolsSteps.initiativesStep.summary')}
           </div>
           {summary && (
             <div className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
@@ -66,7 +65,7 @@ export function InitiativesStep(props: {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
           >
             <ArrowRight className="w-4 h-4" />
-            {isPolish ? 'Otwórz Initiatives' : 'Open Initiatives'}
+            {t('discoveryToolsSteps.initiativesStep.openInitiatives')}
           </button>
         )}
         {onOpenChat && (
@@ -75,7 +74,7 @@ export function InitiativesStep(props: {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700"
           >
             <MessageSquareText className="w-4 h-4" />
-            {isPolish ? 'Otwórz chat' : 'Open chat'}
+            {t('discoveryToolsSteps.initiativesStep.openChat')}
           </button>
         )}
       </div>
@@ -83,7 +82,7 @@ export function InitiativesStep(props: {
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
           <ListTodo className="w-4 h-4 text-slate-500" />
-          <span>{isPolish ? 'Wygenerowane inicjatywy' : 'Generated initiatives'}</span>
+          <span>{t('discoveryToolsSteps.initiativesStep.generatedInitiatives')}</span>
           <span className="text-xs text-slate-500">
             ({apiDrafts.length || localDrafts.length || 0})
           </span>
@@ -91,9 +90,7 @@ export function InitiativesStep(props: {
 
         {!hasAny ? (
           <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-            {isPolish
-              ? 'Brak inicjatyw. Użyj AI do wygenerowania rekomendacji, a następnie utwórz inicjatywy w module Initiatives.'
-              : 'No initiatives yet. Use AI to generate recommendations, then create initiatives in the Initiatives module.'}
+            {t('discoveryToolsSteps.initiativesStep.noInitiativesHint')}
           </div>
         ) : (
           <ul className="mt-3 space-y-2">
@@ -122,7 +119,7 @@ export function InitiativesStep(props: {
       </div>
 
       <div className="text-xs text-slate-500 dark:text-slate-400">
-        {isPolish ? `Tool type: ${toolType}` : `Tool type: ${toolType}`}
+        {t('discoveryToolsSteps.initiativesStep.toolType', { toolType })}
       </div>
     </div>
   );

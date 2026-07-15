@@ -28560,6 +28560,16 @@
       "evidencePlaceholder": "Dodaj evidence...",
       "openQuestions": "Otwarte pytania",
       "openQuestionsPlaceholder": "Dodaj pytanie..."
+    },
+    "initiativesStep": {
+      "title": "Inicjatywy",
+      "subtitle": "Przełóż wyniki na inicjatywy: quick wins vs strategic bets, właściciele i zależności.",
+      "summary": "Podsumowanie",
+      "openInitiatives": "Otwórz Initiatives",
+      "openChat": "Otwórz chat",
+      "generatedInitiatives": "Wygenerowane inicjatywy",
+      "noInitiativesHint": "Brak inicjatyw. Użyj AI do wygenerowania rekomendacji, a następnie utwórz inicjatywy w module Initiatives.",
+      "toolType": "Tool type: {{toolType}}"
     }
   }
 }
