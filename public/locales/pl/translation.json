@@ -27974,6 +27974,15 @@
       "zoomWeek": "Tydzień",
       "zoomMonth": "Miesiąc",
       "task": "Zadanie"
+    },
+    "gridView": {
+      "noItems": "Brak elementów",
+      "selectAll": "Zaznacz wszystkie",
+      "removeFromView": "Usuń z widoku",
+      "resizeColumn": "Zmień szerokość",
+      "selectRow": "Wybierz wiersz",
+      "totals": "Podsum.",
+      "requiresProvider": "GridView wymaga TableDataProvider lub właściwości rows i columns."
     }
   },
   "myWorkNotebook": {

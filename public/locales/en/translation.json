@@ -26914,6 +26914,15 @@
       "zoomWeek": "Week",
       "zoomMonth": "Month",
       "task": "Task"
+    },
+    "gridView": {
+      "noItems": "No items",
+      "selectAll": "Select all",
+      "removeFromView": "Remove from view",
+      "resizeColumn": "Resize column",
+      "selectRow": "Select row",
+      "totals": "Totals",
+      "requiresProvider": "GridView requires TableDataProvider or rows and columns props."
     }
   },
   "myWorkNotebook": {
