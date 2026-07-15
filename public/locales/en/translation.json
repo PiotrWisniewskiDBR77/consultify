@@ -10500,6 +10500,15 @@
       "cadenceMonthly": "Monthly",
       "cadenceQuarterly": "Quarterly",
       "cadenceRecurring": "Recurring"
+    },
+    "stickyNavigation": {
+      "previousSectionLabel": "Previous section",
+      "nextSectionLabel": "Next section",
+      "jumpToSectionLabel": "Jump to section",
+      "readingModeLabel": "Reading mode",
+      "keyboardShortcutsTooltip": "Keyboard shortcuts",
+      "keyboardShortcutsTitle": "Keyboard Shortcuts",
+      "goToLabel": "Go to..."
     }
   },
   "auth": {

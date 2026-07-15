@@ -9735,6 +9735,15 @@
       "cadenceMonthly": "Miesięcznie",
       "cadenceQuarterly": "Kwartalnie",
       "cadenceRecurring": "Cyklicznie"
+    },
+    "stickyNavigation": {
+      "previousSectionLabel": "Poprzednia sekcja",
+      "nextSectionLabel": "Następna sekcja",
+      "jumpToSectionLabel": "Przejdź do sekcji",
+      "readingModeLabel": "Tryb czytania",
+      "keyboardShortcutsTooltip": "Skróty klawiszowe",
+      "keyboardShortcutsTitle": "Skróty klawiszowe",
+      "goToLabel": "Przejdź do..."
     }
   },
   "auth": {
