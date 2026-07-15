@@ -193,6 +193,7 @@ const NumberValueInput: React.FC<ValueInputProps> = ({ value, onChange }) => (
 );
 
 const DateValueInput: React.FC<ValueInputProps> = ({ value, operator, onChange, isPl }) => {
+  const { t } = useTranslation();
   if (operator === 'isWithin') {
     return (
       <select

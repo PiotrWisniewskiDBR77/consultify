@@ -77,7 +77,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
   onAddDependency,
   onAddAll,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [dependencies, setDependencies] = useState<DetectedDependency[]>([]);
   const [loading, setLoading] = useState(false);
