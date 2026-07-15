@@ -701,7 +701,10 @@ describe('HP-16 serwis #7 (Mind Map / canvasGraphLlm) zwraca wypełniony Evidenc
       ],
       edges: [],
     };
-    const contract = buildMindmapEvidenceContract(graph, { source: 'skeleton', seedText: 'intent' });
+    const contract = buildMindmapEvidenceContract(graph, {
+      source: 'skeleton',
+      seedText: 'intent',
+    });
     expect(contract.risks.some((r) => r.includes('fallbackiem'))).toBe(true);
     expect(contract.confidence).toBe('low');
   });

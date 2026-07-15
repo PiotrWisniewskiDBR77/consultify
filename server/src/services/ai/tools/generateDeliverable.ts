@@ -355,7 +355,10 @@ export async function generateDeliverable(
     // Zero LLM-zgadywania — patrz `buildProcessFlowEvidenceContract`.
     const evidence: EvidenceContract | undefined =
       preferredSystem === 'process_flow'
-        ? buildProcessFlowEvidenceContract(graph, { source: graphSource, seedText: intent || title })
+        ? buildProcessFlowEvidenceContract(graph, {
+            source: graphSource,
+            seedText: intent || title,
+          })
         : undefined;
 
     // Materialize a REAL my_ideas/my_idea_maps row server-side — identical
