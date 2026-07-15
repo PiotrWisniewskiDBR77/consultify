@@ -26959,6 +26959,21 @@
       "noteLabel": "Note (optional)",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "runHistoryPanel": {
+      "statusSuccess": "Success",
+      "statusFailed": "Failed",
+      "statusRunning": "Running",
+      "title": "Run History",
+      "totalRuns": "Total runs",
+      "successRate": "Success rate",
+      "imported": "Imported",
+      "successes": "Successes",
+      "noRunsYet": "No runs yet",
+      "importedSuffix": "imported",
+      "skippedSuffix": "skipped",
+      "failedSuffix": "failed",
+      "errorDetails": "Error details"
     }
   },
   "myWorkNotebook": {

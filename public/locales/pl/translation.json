@@ -28019,6 +28019,21 @@
       "noteLabel": "Notatka (opcjonalnie)",
       "cancel": "Anuluj",
       "save": "Zapisz"
+    },
+    "runHistoryPanel": {
+      "statusSuccess": "Sukces",
+      "statusFailed": "Błąd",
+      "statusRunning": "W toku",
+      "title": "Historia uruchomień",
+      "totalRuns": "Uruchomienia",
+      "successRate": "Sukces",
+      "imported": "Zaimportowane",
+      "successes": "Udane",
+      "noRunsYet": "Brak uruchomień",
+      "importedSuffix": "zaimportowanych",
+      "skippedSuffix": "pominiętych",
+      "failedSuffix": "błędnych",
+      "errorDetails": "Szczegóły błędu"
     }
   },
   "myWorkNotebook": {
