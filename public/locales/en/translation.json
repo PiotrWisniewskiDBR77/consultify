@@ -10522,6 +10522,9 @@
       "fullscreenExitTooltip": "Exit fullscreen",
       "fullscreenExitShort": "Exit",
       "approveButton": "Approve"
+    },
+    "reportSection": {
+      "noContentPlaceholder": "*No content*"
     }
   },
   "auth": {

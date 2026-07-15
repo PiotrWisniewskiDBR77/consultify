@@ -9757,6 +9757,9 @@
       "fullscreenExitTooltip": "Zamknij pełny ekran",
       "fullscreenExitShort": "Zamknij",
       "approveButton": "Zatwierdź"
+    },
+    "reportSection": {
+      "noContentPlaceholder": "*Brak treści*"
     }
   },
   "auth": {
