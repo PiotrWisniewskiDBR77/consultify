@@ -6927,7 +6927,10 @@
       "initiativeAngles": "Initiative angles",
       "runAiPrompt": "Run one of the AI prompts to get insights.",
       "selectSession": "Select a session to see details.",
-      "openSessionHint": "Open assessment session to continue."
+      "openSessionHint": "Open assessment session to continue.",
+      "execBrief": "Executive brief",
+      "title": "Assessment session",
+      "aiHints": "AI hints"
     },
     "form": {
       "current": "Current",

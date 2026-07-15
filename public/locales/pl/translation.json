@@ -6162,7 +6162,10 @@
       "initiativeAngles": "Kąty inicjatyw",
       "runAiPrompt": "Uruchom jeden z promptów AI aby uzyskać insighty.",
       "selectSession": "Wybierz sesję, aby zobaczyć szczegóły.",
-      "openSessionHint": "Otwórz sesję assessment aby kontynuować."
+      "openSessionHint": "Otwórz sesję assessment aby kontynuować.",
+      "execBrief": "Executive brief",
+      "title": "Sesja assessmentu",
+      "aiHints": "Podpowiedzi AI"
     },
     "form": {
       "current": "Aktualny",
