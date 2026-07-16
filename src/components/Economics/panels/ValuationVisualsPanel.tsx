@@ -150,7 +150,7 @@ function buildTornado(v: ValuationResults): { bars: TornadoBar[]; base: number }
 }
 
 const SectionEmpty: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-sm text-gray-500">{children}</p>
+  <p className="text-sm text-c-text-muted">{children}</p>
 );
 
 export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
@@ -169,11 +169,11 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
   if (!hasAnything) {
     return (
       <div
-        className="rounded-xl border border-gray-200 bg-white p-6 text-center"
+        className="rounded-xl border border-c-border bg-c-surface p-6 text-center"
         data-testid="valuation-visuals-panel"
         data-empty="true"
       >
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-c-text-muted">
           {t('valuation.visuals.emptyAll', 'Run the valuation to see the visualizations.')}
         </p>
       </div>
@@ -184,10 +184,10 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
     <div className="space-y-4" data-testid="valuation-visuals-panel">
       {/* Football field — valuation triangulation */}
       <section
-        className="rounded-xl border border-gray-200 bg-white p-4"
+        className="rounded-xl border border-c-border bg-c-surface p-4"
         data-testid="valuation-football"
       >
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+        <h3 className="mb-3 text-sm font-semibold text-c-text">
           {t('valuation.visuals.triangulation', 'Valuation triangulation')}
         </h3>
         {hasFootball ? (
@@ -201,10 +201,10 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
 
       {/* Sensitivity heatmap — WACC × growth */}
       <section
-        className="rounded-xl border border-gray-200 bg-white p-4"
+        className="rounded-xl border border-c-border bg-c-surface p-4"
         data-testid="valuation-heatmap"
       >
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+        <h3 className="mb-3 text-sm font-semibold text-c-text">
           {t('valuation.visuals.sensitivity', 'Sensitivity: WACC × growth')}
         </h3>
         {hasHeatmap ? (
@@ -221,10 +221,10 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
 
       {/* Tornado — one-way sensitivity */}
       <section
-        className="rounded-xl border border-gray-200 bg-white p-4"
+        className="rounded-xl border border-c-border bg-c-surface p-4"
         data-testid="valuation-tornado"
       >
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+        <h3 className="mb-3 text-sm font-semibold text-c-text">
           {t('valuation.visuals.tornado', 'One-way sensitivity')}
         </h3>
         {hasTornado ? (
