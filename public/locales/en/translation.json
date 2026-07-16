@@ -18122,6 +18122,49 @@
         "assumed": "AI assumed — needs review",
         "missing": "Missing"
       }
+    },
+    "m16b": {
+      "cashForecast": {
+        "title": "Cash / liquidity forecast",
+        "subtitle": "Direct-method cash forecast — runway, minimum-cash alerts and the closing-cash curve.",
+        "run": "Run forecast",
+        "running": "Computing…",
+        "openingCash": "Opening cash",
+        "monthlyBurn": "Monthly burn (optional)",
+        "minCash": "Minimum cash floor (optional)",
+        "periodLabel": "Period",
+        "inflows": "Inflows",
+        "outflows": "Outflows",
+        "addPeriod": "Add period",
+        "removePeriod": "Remove period",
+        "empty": "Set opening cash and periods, then run the forecast.",
+        "errorGeneric": "Cash forecast failed to compute.",
+        "runwayLabel": "periods runway",
+        "runwayNever": "Cash does not run out within the forecast horizon.",
+        "runwayCashOut": "Cash runs out at {{period}}",
+        "floorLabel": "Min cash",
+        "alertsTitle": "Minimum-cash alerts",
+        "alertClosing": "closing {{value}}"
+      },
+      "varianceNarration": {
+        "title": "Variance narration",
+        "subtitle": "Auto-generated CFO commentary on plan-vs-actual variance — headline, drivers, severity.",
+        "run": "Narrate variance",
+        "running": "Analyzing…",
+        "line": "Line",
+        "plan": "Plan",
+        "actual": "Actual",
+        "isCost": "Cost",
+        "addLine": "Add line",
+        "removeLine": "Remove line",
+        "unlabeled": "Unlabeled",
+        "empty": "Add plan/actual lines, then run the narration.",
+        "errorGeneric": "Variance narration failed to compute.",
+        "driversTitle": "Top drivers",
+        "severityOnTrack": "On track",
+        "severityWatch": "Watch",
+        "severityOffTrack": "Off track"
+      }
     }
   },
   "portfolio": {

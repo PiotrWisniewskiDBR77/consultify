@@ -127,11 +127,13 @@ import { CreateBudgetModal } from './modals/CreateBudgetModal';
 import { CreateModelModal } from './modals/CreateModelModal';
 import { CreateValuationModal } from './modals/CreateValuationModal';
 import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
+import { CashForecastPanel } from './panels/CashForecastPanel';
 import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
 import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
 import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
 import { ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
+import { VarianceNarrationPanel } from './panels/VarianceNarrationPanel';
 
 /**
  * Guard against raw JS Date `.toString()` leaking into a statement title
@@ -2943,7 +2945,22 @@ export const FinanceHub: React.FC = () => {
     const _showDriver = isFinanceFlagEnabled('driverPlanner') && activeTab === 'models';
     const _showVariance = isFinanceFlagEnabled('varianceBridge') && activeTab === 'prediction';
     const _showValVis = isFinanceFlagEnabled('valuationVisuals') && activeTab === 'valuation';
-    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis) {
+    // wire-b: M16 Planning-Suite (cash forecast + variance narration) — own
+    // flag (m16PlanningSuite), lives on the 'prediction' tab alongside the
+    // existing variance-bridge panel.
+    const _showCashForecast =
+      isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
+    const _showVarianceNarration =
+      isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
+    if (
+      _showInvest ||
+      _showValue ||
+      _showDriver ||
+      _showVariance ||
+      _showValVis ||
+      _showCashForecast ||
+      _showVarianceNarration
+    ) {
       return (
         <div className="flex flex-col">
           {_baseView}
@@ -2953,6 +2970,8 @@ export const FinanceHub: React.FC = () => {
             {_showDriver && <DriverPlannerPanel />}
             {_showVariance && <VarianceBridgePanel />}
             {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
+            {_showCashForecast && <CashForecastPanel />}
+            {_showVarianceNarration && <VarianceNarrationPanel />}
           </div>
         </div>
       );
