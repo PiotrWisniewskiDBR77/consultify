@@ -129,9 +129,12 @@ import { CreateValuationModal } from './modals/CreateValuationModal';
 import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
 import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
 import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
+import { MonteCarloNpvPanel } from './panels/MonteCarloNpvPanel';
+import { RealOptionsPanel } from './panels/RealOptionsPanel';
 import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
 import { ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
+import { WhatIfSensitivityPanel } from './panels/WhatIfSensitivityPanel';
 
 /**
  * Guard against raw JS Date `.toString()` leaking into a statement title
@@ -2943,7 +2946,8 @@ export const FinanceHub: React.FC = () => {
     const _showDriver = isFinanceFlagEnabled('driverPlanner') && activeTab === 'models';
     const _showVariance = isFinanceFlagEnabled('varianceBridge') && activeTab === 'prediction';
     const _showValVis = isFinanceFlagEnabled('valuationVisuals') && activeTab === 'valuation';
-    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis) {
+    const _showM16Suite = isFinanceFlagEnabled('m16ValuationSuite') && activeTab === 'valuation';
+    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis || _showM16Suite) {
       return (
         <div className="flex flex-col">
           {_baseView}
@@ -2953,6 +2957,9 @@ export const FinanceHub: React.FC = () => {
             {_showDriver && <DriverPlannerPanel />}
             {_showVariance && <VarianceBridgePanel />}
             {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
+            {_showM16Suite && <MonteCarloNpvPanel />}
+            {_showM16Suite && <RealOptionsPanel />}
+            {_showM16Suite && <WhatIfSensitivityPanel />}
           </div>
         </div>
       );
