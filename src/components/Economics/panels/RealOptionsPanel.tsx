@@ -52,7 +52,7 @@ export interface RealOptionsPanelProps {
 }
 
 const badgeToneClass =
-  'rounded-full border border-c-accent/30 bg-c-accent-soft px-2.5 py-0.5 text-xs font-semibold text-c-accent';
+  'rounded-full border border-c-border bg-c-surface-raised px-2.5 py-0.5 text-xs font-semibold text-c-text';
 
 export const RealOptionsPanel: React.FC<RealOptionsPanelProps> = ({ fetcher }) => {
   const { t } = useTranslation();
@@ -196,10 +196,10 @@ export const RealOptionsPanel: React.FC<RealOptionsPanelProps> = ({ fetcher }) =
             role="tab"
             aria-selected={type === opt.key}
             onClick={() => switchType(opt.key)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+            className={`rounded-full border border-c-border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
               type === opt.key
-                ? 'bg-c-accent text-white'
-                : 'border border-c-border text-c-text-secondary hover:text-c-text'
+                ? 'bg-c-surface-raised text-c-text'
+                : 'text-c-text-muted hover:text-c-text'
             }`}
             data-testid={`ro-type-${opt.key}`}
           >
@@ -363,7 +363,7 @@ export const RealOptionsPanel: React.FC<RealOptionsPanelProps> = ({ fetcher }) =
           type="button"
           onClick={() => void run()}
           disabled={loading}
-          className="rounded-lg bg-c-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text transition hover:border-c-focus disabled:opacity-50"
           data-testid="ro-run"
         >
           {loading
