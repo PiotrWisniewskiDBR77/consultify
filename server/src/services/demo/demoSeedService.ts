@@ -1,3 +1,4 @@
+import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
@@ -2101,6 +2102,29 @@ async function upsertProjectUsers(
   }
 }
 
+const CANONICAL_INITIATIVE_STATUSES = new Set<string>(Object.values(InitiativeStatus));
+
+/**
+ * Demo templates still carry some legacy/UI status values (e.g. 'in_progress',
+ * 'planned'). The `initiatives.status` DB check constraint only accepts the
+ * canonical InitiativeStatus enum (case-insensitive), so translate before persist.
+ */
+function toCanonicalInitiativeStatus(raw: unknown): string {
+  const s = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  const legacy: Record<string, string> = {
+    IN_PROGRESS: InitiativeStatus.EXECUTING,
+    ACTIVE: InitiativeStatus.EXECUTING,
+    PLANNED: InitiativeStatus.PLANNING,
+    COMPLETED: InitiativeStatus.DONE,
+    COMPLETE: InitiativeStatus.DONE,
+  };
+  if (legacy[s]) return legacy[s];
+  if (CANONICAL_INITIATIVE_STATUSES.has(s)) return s;
+  return InitiativeStatus.DRAFT;
+}
+
 async function upsertInitiatives(
   organizationId: string,
   userMap: UserMap,
@@ -2141,7 +2165,7 @@ async function upsertInitiatives(
       organizationId,
       projectMap[initiative.projectSlug],
       initiative.name,
-      initiative.status,
+      toCanonicalInitiativeStatus(initiative.status),
     ];
 
     if (hasArea) {
