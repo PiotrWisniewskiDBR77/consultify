@@ -60,9 +60,9 @@ const defaultFetcher = async (req: AppraisalRequest): Promise<AppraisalResult> =
 };
 
 const VERDICT_STYLE: Record<AppraisalVerdict, string> = {
-  go: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  conditional: 'bg-amber-100 text-amber-700 border-amber-200',
-  'no-go': 'bg-rose-100 text-rose-700 border-rose-200',
+  go: 'border-c-success/30 bg-c-success/10 text-c-success',
+  conditional: 'border-c-warning/30 bg-c-warning/10 text-c-warning',
+  'no-go': 'border-c-danger/30 bg-c-danger/10 text-c-danger',
 };
 
 const VERDICT_LABEL: Record<AppraisalVerdict, string> = {
@@ -189,14 +189,14 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
 
   return (
     <div
-      className="rounded-xl border border-gray-200 bg-white p-4"
+      className="rounded-xl border border-c-border bg-c-surface p-4"
       data-testid="investment-appraisal-panel"
     >
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">
+        <h3 className="text-sm font-semibold text-c-text">
           Analiza inwestycyjna (NPV/IRR/payback)
         </h3>
-        <p className="mt-0.5 text-xs text-gray-500">
+        <p className="mt-0.5 text-xs text-c-text-muted">
           Wprowadź przepływy pieniężne (pierwszy ujemny = nakład początkowy) i stopę dyskontową.
         </p>
       </div>
@@ -204,21 +204,21 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
       {/* Inputs: cash-flow series */}
       <div className="mb-3 flex flex-wrap items-end gap-2" data-testid="appraise-cashflows">
         {cashflows.map((cf, idx) => (
-          <label key={idx} className="flex flex-col text-[11px] text-gray-500">
+          <label key={idx} className="flex flex-col text-[11px] text-c-text-muted">
             <span className="mb-0.5">{idx === 0 ? 'T0 (nakład)' : `Rok ${idx}`}</span>
             <span className="flex items-center gap-1">
               <input
                 type="number"
                 value={Number.isFinite(cf) ? cf : 0}
                 onChange={(e) => updateFlow(idx, e.target.value)}
-                className="w-20 rounded border border-gray-200 px-1.5 py-1 text-xs text-gray-800 focus:border-blue-400 focus:outline-none"
+                className="w-20 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
                 aria-label={idx === 0 ? 'Nakład początkowy' : `Przepływ rok ${idx}`}
               />
               {cashflows.length > 2 && (
                 <button
                   type="button"
                   onClick={() => removePeriod(idx)}
-                  className="text-gray-300 hover:text-rose-500"
+                  className="text-c-text-muted hover:text-c-danger"
                   aria-label={`Usuń okres ${idx}`}
                 >
                   ×
@@ -230,7 +230,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
         <button
           type="button"
           onClick={addPeriod}
-          className="rounded border border-dashed border-gray-300 px-2 py-1 text-xs text-gray-500 hover:border-blue-400 hover:text-blue-600"
+          className="rounded border border-dashed border-c-border px-2 py-1 text-xs text-c-text-secondary hover:border-c-focus hover:text-c-text"
         >
           + okres
         </button>
@@ -238,13 +238,13 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
 
       {/* Inputs: discount rate + compute */}
       <div className="mb-3 flex items-end gap-3">
-        <label className="flex flex-col text-[11px] text-gray-500">
+        <label className="flex flex-col text-[11px] text-c-text-muted">
           <span className="mb-0.5">Stopa dyskontowa (%)</span>
           <input
             type="number"
             value={discountRate}
             onChange={(e) => setDiscountRate(Number(e.target.value) || 0)}
-            className="w-24 rounded border border-gray-200 px-1.5 py-1 text-xs text-gray-800 focus:border-blue-400 focus:outline-none"
+            className="w-24 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
             aria-label="Stopa dyskontowa"
           />
         </label>
@@ -252,7 +252,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
           type="button"
           onClick={() => void compute()}
           disabled={loading}
-          className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-xl border border-c-border bg-c-surface-raised px-3.5 py-2 text-xs font-medium text-c-text transition hover:border-c-focus disabled:opacity-50"
           data-testid="appraise-compute"
         >
           {loading ? 'Liczę…' : 'Oblicz'}
@@ -260,7 +260,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
       </div>
 
       {failed && (
-        <p className="text-sm text-gray-500" data-testid="appraise-failed">
+        <p className="text-sm text-c-text-muted" data-testid="appraise-failed">
           Analiza niedostępna chwilowo — spróbuj ponownie.
         </p>
       )}
@@ -269,7 +269,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
         <>
           {/* Verdict */}
           <div className="mb-3 flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-500">Werdykt:</span>
+            <span className="text-xs font-medium text-c-text-muted">Werdykt:</span>
             <span
               className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${VERDICT_STYLE[result.verdict]}`}
               data-testid="appraise-verdict"
@@ -286,21 +286,21 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
             {metrics.map((m) => (
               <div
                 key={m.key}
-                className="rounded-lg border border-gray-100 bg-gray-50 p-2"
+                className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-2"
                 {...(m.testid ? { 'data-testid': m.testid } : {})}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
                   {m.label}
                 </p>
-                <p className="text-sm font-semibold text-gray-900">{m.value}</p>
-                <p className="text-[10px] text-gray-400">{m.hint}</p>
+                <p className="text-sm font-semibold text-c-text">{m.value}</p>
+                <p className="text-[10px] text-c-text-muted">{m.hint}</p>
               </div>
             ))}
           </div>
 
           {/* NPV vs break-even threshold (0) */}
-          <div className="border-t border-gray-100 pt-2">
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          <div className="border-t border-c-border-subtle pt-2">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
               NPV względem progu opłacalności (0)
             </p>
             <BulletChart
