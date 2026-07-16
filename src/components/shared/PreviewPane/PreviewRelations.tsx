@@ -4,7 +4,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { renderIconNode } from '../renderIconNode';
-
 import { PREVIEW_META_PILL, PREVIEW_RELATION_CHIP } from './previewStyles';
 
 export interface RelationPreview {
