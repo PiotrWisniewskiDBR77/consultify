@@ -651,8 +651,8 @@ export const V8FinanceApi = {
       `/finance/models/${encodeURIComponent(modelId)}/versions`
     ),
   getModelVersionDiff: (modelId: string, from: string, to: string) =>
-    v8Get<{ diff: unknown }>(
-      `/finance/models/${encodeURIComponent(modelId)}/versions/diff`,
-      { from, to }
-    ),
+    v8Get<{ diff: unknown }>(`/finance/models/${encodeURIComponent(modelId)}/versions/diff`, {
+      from,
+      to,
+    }),
 };
