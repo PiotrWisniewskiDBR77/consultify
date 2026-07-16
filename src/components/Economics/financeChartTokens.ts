@@ -55,6 +55,8 @@ export interface FinanceChartColors {
   grid: string;
   /** axis tick labels + muted reference labels */
   axis: string;
+  /** primary text — chart labels that need full-strength contrast (e.g. row/driver names) */
+  text: string;
   /** neutral reference line (e.g. break-even @ 0) */
   reference: string;
   /** cost / outflow series (semantic danger) */
@@ -88,6 +90,7 @@ export function readFinanceChartColors(): FinanceChartColors {
   return {
     grid: readCssToken('--c-border-subtle', 'rgba(148, 163, 184, 0.2)'),
     axis: readCssToken('--c-text-muted', '#64748b'),
+    text: readCssToken('--c-text', '#0f172a'),
     reference: readCssToken('--c-border-strong', '#94a3b8'),
     cost: readCssToken('--c-danger', '#e80538'),
     benefit: readCssToken('--c-success', '#026833'),
