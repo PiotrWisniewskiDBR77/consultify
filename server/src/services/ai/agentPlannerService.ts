@@ -42,6 +42,9 @@ export interface PlanStep {
   result?: unknown;
   errorMessage?: string;
   requiresApproval: boolean;
+  /** Set once a human approves a side-effect step; presence means the approval
+   * gate must NOT re-fire on resume (bug fix 2026-07-16 — plan never completed). */
+  approvedAt?: string | null;
   durationMs?: number;
 }
 
@@ -178,7 +181,10 @@ class AgentPlannerService {
     for (let i = plan.currentStepIndex; i < plan.steps.length; i++) {
       const step = plan.steps[i];
 
-      if (step.requiresApproval && step.status !== 'awaiting_approval') {
+      // Gate: pause only an un-approved side-effect step. `approveStep` sets the
+      // step back to 'pending' + stamps approved_at, so WITHOUT the !approvedAt
+      // guard the gate re-fired forever and the plan never reached 'completed'.
+      if (step.requiresApproval && !step.approvedAt && step.status !== 'awaiting_approval') {
         await this.updateStepStatus(step.id, 'awaiting_approval');
         await this.updatePlanStatus(planId, 'awaiting_approval', i);
         emitter?.emit('agent_checkpoint', {
@@ -332,6 +338,7 @@ class AgentPlannerService {
       result: s.result_json ? JSON.parse(s.result_json) : undefined,
       errorMessage: s.error_message || undefined,
       requiresApproval: Boolean(s.requires_approval),
+      approvedAt: s.approved_at || null,
       durationMs: s.duration_ms || undefined,
     }));
 
