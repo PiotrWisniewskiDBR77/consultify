@@ -175,9 +175,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 
 // ─── 1. Monte Carlo NPV ─────────────────────────────────────────────────
 
-export async function runMonteCarloNpv(
-  req: MonteCarloNpvRequest
-): Promise<MonteCarloNpvResponse> {
+export async function runMonteCarloNpv(req: MonteCarloNpvRequest): Promise<MonteCarloNpvResponse> {
   return post<MonteCarloNpvResponse>('/monte-carlo-npv', req);
 }
 

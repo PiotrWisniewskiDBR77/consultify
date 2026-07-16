@@ -51,7 +51,8 @@ export interface RealOptionsPanelProps {
   };
 }
 
-const badgeToneClass = 'rounded-full border border-c-accent/30 bg-c-accent-soft px-2.5 py-0.5 text-xs font-semibold text-c-accent';
+const badgeToneClass =
+  'rounded-full border border-c-accent/30 bg-c-accent-soft px-2.5 py-0.5 text-xs font-semibold text-c-accent';
 
 export const RealOptionsPanel: React.FC<RealOptionsPanelProps> = ({ fetcher }) => {
   const { t } = useTranslation();

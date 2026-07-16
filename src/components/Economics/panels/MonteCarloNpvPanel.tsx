@@ -78,7 +78,14 @@ export const MonteCarloNpvPanel: React.FC<MonteCarloNpvPanelProps> = ({ fetcher 
   const addRow = useCallback(() => {
     setRows((prev) => [
       ...prev,
-      { id: nextRowId(), label: `Driver ${prev.length + 1}`, min: 0, mode: 100, max: 200, weight: 1 },
+      {
+        id: nextRowId(),
+        label: `Driver ${prev.length + 1}`,
+        min: 0,
+        mode: 100,
+        max: 200,
+        weight: 1,
+      },
     ]);
   }, []);
 
@@ -277,10 +284,26 @@ export const MonteCarloNpvPanel: React.FC<MonteCarloNpvPanelProps> = ({ fetcher 
             data-testid="mc-stats"
           >
             {[
-              { key: 'mean', label: t('finance.m16.monteCarlo.mean', 'Mean NPV'), value: fmt(result.simulation.mean) },
-              { key: 'p10', label: t('finance.m16.monteCarlo.p10', 'P10'), value: fmt(result.simulation.p10) },
-              { key: 'p50', label: t('finance.m16.monteCarlo.p50', 'P50 (median)'), value: fmt(result.simulation.p50) },
-              { key: 'p90', label: t('finance.m16.monteCarlo.p90', 'P90'), value: fmt(result.simulation.p90) },
+              {
+                key: 'mean',
+                label: t('finance.m16.monteCarlo.mean', 'Mean NPV'),
+                value: fmt(result.simulation.mean),
+              },
+              {
+                key: 'p10',
+                label: t('finance.m16.monteCarlo.p10', 'P10'),
+                value: fmt(result.simulation.p10),
+              },
+              {
+                key: 'p50',
+                label: t('finance.m16.monteCarlo.p50', 'P50 (median)'),
+                value: fmt(result.simulation.p50),
+              },
+              {
+                key: 'p90',
+                label: t('finance.m16.monteCarlo.p90', 'P90'),
+                value: fmt(result.simulation.p90),
+              },
               {
                 key: 'probPositive',
                 label: t('finance.m16.monteCarlo.probPositive', 'P(NPV > 0)'),
@@ -310,7 +333,10 @@ export const MonteCarloNpvPanel: React.FC<MonteCarloNpvPanelProps> = ({ fetcher 
               bins={result.histogram}
               markers={markers}
               formatValue={fmt}
-              emptyLabel={t('finance.m16.monteCarlo.empty', 'Set drivers and run the simulation to see the NPV distribution.')}
+              emptyLabel={t(
+                'finance.m16.monteCarlo.empty',
+                'Set drivers and run the simulation to see the NPV distribution.'
+              )}
             />
           </div>
         </>

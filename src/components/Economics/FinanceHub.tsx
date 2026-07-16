@@ -135,8 +135,8 @@ import { RealOptionsPanel } from './panels/RealOptionsPanel';
 import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
 import { ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
-import { WhatIfSensitivityPanel } from './panels/WhatIfSensitivityPanel';
 import { VarianceNarrationPanel } from './panels/VarianceNarrationPanel';
+import { WhatIfSensitivityPanel } from './panels/WhatIfSensitivityPanel';
 
 /**
  * Guard against raw JS Date `.toString()` leaking into a statement title
@@ -2949,9 +2949,20 @@ export const FinanceHub: React.FC = () => {
     const _showVariance = isFinanceFlagEnabled('varianceBridge') && activeTab === 'prediction';
     const _showValVis = isFinanceFlagEnabled('valuationVisuals') && activeTab === 'valuation';
     const _showM16Suite = isFinanceFlagEnabled('m16ValuationSuite') && activeTab === 'valuation';
-    const _showCashForecast = isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
-    const _showVarianceNarration = isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
-    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis || _showM16Suite || _showCashForecast || _showVarianceNarration) {
+    const _showCashForecast =
+      isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
+    const _showVarianceNarration =
+      isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
+    if (
+      _showInvest ||
+      _showValue ||
+      _showDriver ||
+      _showVariance ||
+      _showValVis ||
+      _showM16Suite ||
+      _showCashForecast ||
+      _showVarianceNarration
+    ) {
       return (
         <div className="flex flex-col">
           {_baseView}

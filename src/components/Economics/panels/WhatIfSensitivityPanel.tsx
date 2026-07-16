@@ -248,7 +248,9 @@ export const WhatIfSensitivityPanel: React.FC<WhatIfSensitivityPanelProps> = ({ 
             {t('finance.m16.sensitivity.tornadoTitle', 'Tornado — one-way sensitivity')}
           </h4>
           <label className="flex flex-col text-[11px] text-c-text-muted">
-            <span className="mb-0.5">{t('finance.m16.sensitivity.swingPct', 'Tornado swing (%)')}</span>
+            <span className="mb-0.5">
+              {t('finance.m16.sensitivity.swingPct', 'Tornado swing (%)')}
+            </span>
             <input
               type="number"
               value={swingPct}
@@ -324,7 +326,9 @@ export const WhatIfSensitivityPanel: React.FC<WhatIfSensitivityPanelProps> = ({ 
             </select>
           </label>
           <label className="flex flex-col text-[11px] text-c-text-muted">
-            <span className="mb-0.5">{t('finance.m16.sensitivity.xRange', 'X range (comma-separated)')}</span>
+            <span className="mb-0.5">
+              {t('finance.m16.sensitivity.xRange', 'X range (comma-separated)')}
+            </span>
             <input
               type="text"
               value={xRangeRaw}
@@ -333,7 +337,9 @@ export const WhatIfSensitivityPanel: React.FC<WhatIfSensitivityPanelProps> = ({ 
             />
           </label>
           <label className="flex flex-col text-[11px] text-c-text-muted">
-            <span className="mb-0.5">{t('finance.m16.sensitivity.yRange', 'Y range (comma-separated)')}</span>
+            <span className="mb-0.5">
+              {t('finance.m16.sensitivity.yRange', 'Y range (comma-separated)')}
+            </span>
             <input
               type="text"
               value={yRangeRaw}
