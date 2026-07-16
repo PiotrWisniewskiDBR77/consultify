@@ -1624,8 +1624,9 @@ async function canUserAccessSession(params: {
   sessionId: string;
   organizationId: string;
   userId: string;
+  userRole?: string | null;
 }): Promise<boolean> {
-  const { sessionId, organizationId, userId } = params;
+  const { sessionId, organizationId, userId, userRole } = params;
 
   let base: any = null;
   try {
@@ -1663,6 +1664,24 @@ async function canUserAccessSession(params: {
   if (!base) return false;
   if (String((base as any).owner_id) === String(userId)) return true;
 
+  // Org owners/admins may read non-anonymous sessions within their own org.
+  // `base` is already org-scoped, so membership is established here. Anonymity
+  // is checked defensively so this bypass never exposes anonymous responses.
+  const elevatedRoles = ['OWNER', 'ADMIN', 'ADMINISTRATOR', 'SUPERADMIN'];
+  if (userRole && elevatedRoles.includes(String(userRole).toUpperCase())) {
+    let anonymityMode = 'identified';
+    try {
+      const a = await queryHelpers.queryOne(
+        `SELECT anonymity_mode FROM interview_sessions WHERE id = ?`,
+        [sessionId]
+      );
+      anonymityMode = String((a as any)?.anonymity_mode || 'identified').toLowerCase();
+    } catch {
+      anonymityMode = 'identified';
+    }
+    if (anonymityMode === 'identified') return true;
+  }
+
   const assignmentId = (base as any).assignment_id ? String((base as any).assignment_id) : '';
   if (!assignmentId) return false;
 
@@ -1693,9 +1712,10 @@ async function assertSessionAccessibleOrThrow(params: {
   sessionId: string;
   organizationId: string;
   userId: string;
+  userRole?: string | null;
 }): Promise<void> {
-  const { sessionId, organizationId, userId } = params;
-  const ok = await canUserAccessSession({ sessionId, organizationId, userId });
+  const { sessionId, organizationId, userId, userRole } = params;
+  const ok = await canUserAccessSession({ sessionId, organizationId, userId, userRole });
   if (ok) return;
 
   // Differentiate "not found" from "forbidden" for read endpoints.
@@ -6092,6 +6112,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -6463,6 +6484,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -6661,6 +6683,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -6993,6 +7016,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -7483,6 +7507,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
