@@ -125,7 +125,10 @@ export const ScenarioComputePanel: React.FC<ScenarioComputePanelProps> = ({ fetc
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-c-text">
-            {t('finance.m16c.scenario.title', 'Scenario compute — base / optimistic / conservative')}
+            {t(
+              'finance.m16c.scenario.title',
+              'Scenario compute — base / optimistic / conservative'
+            )}
           </h3>
           <p className="mt-0.5 text-xs text-c-text-secondary">
             {t(
@@ -226,7 +229,10 @@ export const ScenarioComputePanel: React.FC<ScenarioComputePanelProps> = ({ fetc
               />
             </ComposedChart>
           </ResponsiveContainer>
-          <div className="mt-2 flex flex-wrap gap-3 text-xs text-c-text-secondary" data-testid="scenario-legend">
+          <div
+            className="mt-2 flex flex-wrap gap-3 text-xs text-c-text-secondary"
+            data-testid="scenario-legend"
+          >
             <span className="inline-flex items-center gap-1.5">
               <span className="h-0.5 w-4" style={{ backgroundColor: colors.net }} />
               {t('finance.m16c.scenario.legendBase', 'Base')}

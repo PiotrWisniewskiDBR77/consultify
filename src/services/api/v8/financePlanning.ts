@@ -227,10 +227,10 @@ export async function postRollingRollForward(
   forecast: PeriodValueInput[],
   byPeriods?: number
 ): Promise<{ lines: PeriodValueInput[] }> {
-  return v8Post<{ lines: PeriodValueInput[] }>(
-    '/finance-planning/rolling-forecast/roll-forward',
-    { forecast, ...(byPeriods !== undefined ? { byPeriods } : {}) }
-  );
+  return v8Post<{ lines: PeriodValueInput[] }>('/finance-planning/rolling-forecast/roll-forward', {
+    forecast,
+    ...(byPeriods !== undefined ? { byPeriods } : {}),
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -170,7 +170,9 @@ router.post(
     }
 
     if (!steps || steps.length === 0) {
-      return res.status(400).json({ success: false, error: 'No steps could be resolved for this plan' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'No steps could be resolved for this plan' });
     }
     if (steps.length > MAX_STEPS_PER_PLAN) {
       steps = steps.slice(0, MAX_STEPS_PER_PLAN);

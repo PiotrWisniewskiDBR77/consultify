@@ -2959,8 +2959,7 @@ export const FinanceHub: React.FC = () => {
     const _showVarianceNarration =
       isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
     // M16 advanced suite (wire-c) — independent of m16ValuationSuite/m16PlanningSuite (fala 1).
-    const _showFrontier =
-      isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'valuation';
+    const _showFrontier = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'valuation';
     const _showScenarioCompute =
       isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'prediction';
     const _showRollingForecast =

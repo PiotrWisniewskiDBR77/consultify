@@ -79,9 +79,7 @@ const TreeNode: React.FC<{ node: DriverChartNode; depth: number }> = ({ node, de
       <span className="font-mono text-sm tabular-nums text-c-text-secondary">
         {fmt(node.value)}
       </span>
-      {node.formula && (
-        <span className="text-[11px] text-c-text-muted">{node.formula}</span>
-      )}
+      {node.formula && <span className="text-[11px] text-c-text-muted">{node.formula}</span>}
     </div>
     {node.children.length > 0 && (
       <div className="space-y-0.5">
@@ -157,9 +155,7 @@ export const DriverTreePanel: React.FC<DriverTreePanelProps> = ({ fetcher }) => 
       setValues(null);
       const code = err?.data?.code;
       if (code === 'DRIVER_TREE_CYCLE') {
-        setError(
-          t('finance.m16c.driverTree.errorCycle', 'The driver tree contains a cycle.')
-        );
+        setError(t('finance.m16c.driverTree.errorCycle', 'The driver tree contains a cycle.'));
       } else {
         setError(
           err?.message
@@ -232,9 +228,7 @@ export const DriverTreePanel: React.FC<DriverTreePanelProps> = ({ fetcher }) => 
               <span className="mb-0.5">{t('finance.m16c.driverTree.nodeKind', 'Kind')}</span>
               <select
                 value={row.kind}
-                onChange={(e) =>
-                  updateRow(row.id, { kind: e.target.value as 'input' | 'formula' })
-                }
+                onChange={(e) => updateRow(row.id, { kind: e.target.value as 'input' | 'formula' })}
                 className="w-24 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="input">{t('finance.m16c.driverTree.kindInput', 'input')}</option>

@@ -84,10 +84,7 @@ export const EfficientFrontierPanel: React.FC<EfficientFrontierPanelProps> = ({ 
   }, []);
 
   const addRow = useCallback(() => {
-    setRows((prev) => [
-      ...prev,
-      { id: nextRowId(), value: '100000', risk: '0.3', cost: '50000' },
-    ]);
+    setRows((prev) => [...prev, { id: nextRowId(), value: '100000', risk: '0.3', cost: '50000' }]);
   }, []);
 
   const removeRow = useCallback((id: string) => {
@@ -112,9 +109,7 @@ export const EfficientFrontierPanel: React.FC<EfficientFrontierPanelProps> = ({ 
       });
       setResult(res ?? null);
       if (!res) {
-        setError(
-          t('finance.m16c.frontier.errorGeneric', 'Efficient frontier failed to compute.')
-        );
+        setError(t('finance.m16c.frontier.errorGeneric', 'Efficient frontier failed to compute.'));
       }
     } catch (err: any) {
       setResult(null);
@@ -240,9 +235,7 @@ export const EfficientFrontierPanel: React.FC<EfficientFrontierPanelProps> = ({ 
             />
           </label>
           <label className="flex flex-col text-[11px] text-c-text-muted">
-            <span className="mb-0.5">
-              {t('finance.m16c.frontier.points', 'Frontier points')}
-            </span>
+            <span className="mb-0.5">{t('finance.m16c.frontier.points', 'Frontier points')}</span>
             <input
               type="number"
               min={2}
@@ -274,10 +267,7 @@ export const EfficientFrontierPanel: React.FC<EfficientFrontierPanelProps> = ({ 
 
       {!error && result && (
         <>
-          <div
-            className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3"
-            data-testid="frontier-stats"
-          >
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="frontier-stats">
             <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
                 {t('finance.m16c.frontier.optimalValue', 'Optimal — value')}
@@ -294,7 +284,10 @@ export const EfficientFrontierPanel: React.FC<EfficientFrontierPanelProps> = ({ 
               <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
                 {t('finance.m16c.frontier.optimalMix', 'Optimal mix')}
               </p>
-              <p className="truncate text-sm font-semibold text-c-text" title={result.optimal.mix.join(', ')}>
+              <p
+                className="truncate text-sm font-semibold text-c-text"
+                title={result.optimal.mix.join(', ')}
+              >
                 {result.optimal.mix.length > 0
                   ? result.optimal.mix.join(', ')
                   : t('finance.m16c.frontier.noneSelected', '—')}

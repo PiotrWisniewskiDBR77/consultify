@@ -80,7 +80,12 @@ export const RollingForecastPanel: React.FC<RollingForecastPanelProps> = ({ fetc
   const addRow = useCallback(() => {
     setRows((prev) => [
       ...prev,
-      { period: `P${(prev.length + 1).toString().padStart(2, '0')}`, plan: '0', actual: '', hasActual: false },
+      {
+        period: `P${(prev.length + 1).toString().padStart(2, '0')}`,
+        plan: '0',
+        actual: '',
+        hasActual: false,
+      },
     ]);
   }, []);
 
@@ -154,7 +159,10 @@ export const RollingForecastPanel: React.FC<RollingForecastPanelProps> = ({ fetc
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-c-text">
-            {t('finance.m16c.rollingForecast.title', 'Rolling forecast — reforecast & roll-forward')}
+            {t(
+              'finance.m16c.rollingForecast.title',
+              'Rolling forecast — reforecast & roll-forward'
+            )}
           </h3>
           <p className="mt-0.5 text-xs text-c-text-secondary">
             {t(
