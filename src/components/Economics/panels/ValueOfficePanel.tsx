@@ -8,13 +8,16 @@
  *    POST /api/v8/finance/value/portfolio/prioritize (x=risk, y=npv, size=effort).
  *
  * Wzorzec fail-soft / Api / data-testid wg ExecutionIntelligencePanel:
- *  - initiatives podawane z kokpitu; gdy brak → przykład (żeby panel nigdy nie był pusty).
+ *  - initiatives podawane z kokpitu; gdy brak realnych → PUSTY STAN (nie dane
+ *    demo — „Dane demo = twarz produktu", zakaz syntetycznego fallbacku na
+ *    produkcji). Realną ścieżkę zachowujemy 1:1.
  *  - busy-state na czas fetchu; błąd degraduje do cichej notki, NIE blokuje kokpitu.
  *  - fetchery wstrzykiwalne (testy / odmienni wywołujący).
  *
- * NIE wpięty nigdzie — buduje się i testuje niezależnie.
+ * Wpięty w FinanceHub (zakładka „models", za flagą valueOffice).
  */
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FinanceWaterfall, PortfolioBubble } from '@/components/Economics/charts';
 import { Api } from '@/services/api';
@@ -118,46 +121,6 @@ const defaultPortfolioFetcher = async (
   return (res?.data ?? res) as PortfolioResponse;
 };
 
-// Przykładowe inicjatywy — panel nigdy nie jest pusty (gdy kokpit nic nie poda).
-const SAMPLE_INITIATIVES: ValueOfficeInitiative[] = [
-  {
-    id: 'demo-1',
-    name: 'Automatyzacja zakupów',
-    value: 1_200_000,
-    stage: 'realized',
-    npv: 900_000,
-    risk: 0.2,
-    effort: 3,
-  },
-  {
-    id: 'demo-2',
-    name: 'Konsolidacja systemów',
-    value: 800_000,
-    stage: 'in_flight',
-    npv: 600_000,
-    risk: 0.5,
-    effort: 6,
-  },
-  {
-    id: 'demo-3',
-    name: 'Optymalizacja energii',
-    value: 450_000,
-    stage: 'committed',
-    npv: 300_000,
-    risk: 0.35,
-    effort: 2,
-  },
-  {
-    id: 'demo-4',
-    name: 'Nowy kanał sprzedaży',
-    value: 600_000,
-    stage: 'identified',
-    npv: 200_000,
-    risk: 0.7,
-    effort: 8,
-  },
-];
-
 // --- Formatowanie KPI (skala k/M) ---------------------------------------
 
 const fmtMoney = (value: number): string => {
@@ -173,10 +136,11 @@ export const ValueOfficePanel: React.FC<Props> = ({
   valueBridgeFetcher,
   portfolioFetcher,
 }) => {
-  const effectiveInitiatives = useMemo(
-    () => (initiatives && initiatives.length > 0 ? initiatives : SAMPLE_INITIATIVES),
-    [initiatives]
-  );
+  const { t } = useTranslation();
+  // Real-data-only: no synthetic fallback. When the cockpit supplies no real
+  // initiatives we render an empty state (below), never demo rows.
+  const hasInitiatives = Array.isArray(initiatives) && initiatives.length > 0;
+  const effectiveInitiatives = useMemo(() => initiatives ?? [], [initiatives]);
 
   const [bridge, setBridge] = useState<ValueBridgeResponse['data'] | null>(null);
   const [portfolio, setPortfolio] = useState<PrioritizedInitiative[] | null>(null);
@@ -184,6 +148,13 @@ export const ValueOfficePanel: React.FC<Props> = ({
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (!hasInitiatives) {
+      setBridge(null);
+      setPortfolio(null);
+      setFailed(false);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     const load = async () => {
       setLoading(true);
@@ -211,7 +182,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [effectiveInitiatives, valueBridgeFetcher, portfolioFetcher]);
+  }, [hasInitiatives, effectiveInitiatives, valueBridgeFetcher, portfolioFetcher]);
 
   const bubbleData = useMemo(
     () =>
@@ -226,6 +197,35 @@ export const ValueOfficePanel: React.FC<Props> = ({
     [portfolio]
   );
 
+  // Empty state — brak realnych inicjatyw. NIE renderujemy danych demo.
+  // c-* tokeny (dark-safe) — wzór empty-state paneli M16.
+  if (!hasInitiatives) {
+    return (
+      <div
+        className="rounded-xl border border-c-border bg-c-surface p-4"
+        data-testid="value-office-panel"
+      >
+        <h3 className="mb-2 text-sm font-semibold text-c-text">
+          {t('finance.valueOffice.title', 'Value Office — motor wartości transformacji')}
+        </h3>
+        <div
+          className="rounded-lg border border-dashed border-c-border bg-c-surface-raised p-4 text-center"
+          data-testid="value-office-empty"
+        >
+          <p className="text-sm font-medium text-c-text-secondary">
+            {t('finance.valueOffice.empty.title', 'No initiatives to show yet')}
+          </p>
+          <p className="mt-1 text-xs text-c-text-muted">
+            {t(
+              'finance.valueOffice.empty.body',
+              'The value engine draws on the organization’s initiatives (their value, stage, NPV and risk). Add or link initiatives to see the value bridge and decision portfolio here.'
+            )}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (failed) {
     return (
       <div
@@ -233,7 +233,10 @@ export const ValueOfficePanel: React.FC<Props> = ({
         data-testid="value-office-panel"
       >
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Motor wartości niedostępny chwilowo — kokpit działa normalnie.
+          {t(
+            'finance.valueOffice.failed',
+            'Value engine temporarily unavailable — the cockpit works normally.'
+          )}
         </p>
       </div>
     );

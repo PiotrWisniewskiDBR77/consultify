@@ -9,9 +9,12 @@
  * (base / optimistic / conservative).
  *
  * Additive + fail-soft: missing/invalid input degrades to a quiet empty state and
- * never throws. Drop the `driverTree` prop entirely to see the default SaaS example.
+ * never throws. Real-data-only: with no `driverTree` supplied the panel renders
+ * an empty state prompting model selection — never a synthetic demo tree („Dane
+ * demo = twarz produktu", zakaz syntetycznego fallbacku na produkcji).
  */
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TornadoChart } from '@/components/Economics/charts';
 
@@ -51,39 +54,6 @@ export interface DriverPlannerPanelProps {
   /** Override formatting of computed/numeric values. */
   formatValue?: (value: number) => string;
 }
-
-// ---------------------------------------------------------------------------
-// Default example — SaaS: Przychód = Klienci × ARPU
-// ---------------------------------------------------------------------------
-
-const DEFAULT_TREE: DriverNode = {
-  id: 'revenue',
-  label: 'Przychód',
-  op: 'multiply',
-  unit: 'zł',
-  children: [
-    {
-      id: 'customers',
-      label: 'Klienci',
-      value: 1200,
-      unit: 'szt.',
-      min: 0,
-      max: 5000,
-      step: 50,
-      scenario: { optimistic: 1.25, conservative: 0.75 },
-    },
-    {
-      id: 'arpu',
-      label: 'ARPU',
-      value: 240,
-      unit: 'zł',
-      min: 0,
-      max: 1000,
-      step: 10,
-      scenario: { optimistic: 1.15, conservative: 0.85 },
-    },
-  ],
-};
 
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for unit testing)
@@ -276,7 +246,11 @@ export const DriverPlannerPanel: React.FC<DriverPlannerPanelProps> = ({
   driverTree,
   formatValue = defaultFormat,
 }) => {
-  const tree = driverTree ?? DEFAULT_TREE;
+  const { t } = useTranslation();
+  // Real-data-only: no synthetic SaaS fallback tree. `tree` is DEFINITELY the
+  // caller's real tree here — the no-tree case short-circuits to an empty state
+  // below before any of the derived hooks run against a fabricated shape.
+  const tree = driverTree;
   const leaves = useMemo(() => collectLeaves(tree), [tree]);
 
   // Per-leaf override state, seeded from the tree's leaf values.
@@ -343,6 +317,36 @@ export const DriverPlannerPanel: React.FC<DriverPlannerPanelProps> = ({
   };
   const reset = (): void => setOverrides(seed);
 
+  // Empty state — no real driver tree supplied (no financial model selected /
+  // previewed). We prompt model selection rather than showing a demo tree.
+  if (!tree) {
+    return (
+      // c-* tokeny (dark-safe) — wzór empty-state paneli M16.
+      <div
+        data-testid="driver-planner-panel"
+        className="rounded-xl border border-c-border bg-c-surface p-4"
+      >
+        <h3 className="mb-2 text-sm font-semibold text-c-text">
+          {t('finance.driverPlanner.title', 'Driver-based planning + what-if')}
+        </h3>
+        <div
+          className="rounded-lg border border-dashed border-c-border bg-c-surface-raised p-4 text-center"
+          data-testid="driver-planner-empty"
+        >
+          <p className="text-sm font-medium text-c-text-secondary">
+            {t('finance.driverPlanner.empty.title', 'Select a financial model')}
+          </p>
+          <p className="mt-1 text-xs text-c-text-muted">
+            {t(
+              'finance.driverPlanner.empty.body',
+              'The driver tree decomposes a selected model’s forecast (EBIT = Revenue − COGS − Opex − Depreciation). Pick a model from the list to plan and run what-if on its real figures.'
+            )}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-testid="driver-planner-panel"
@@ -350,7 +354,7 @@ export const DriverPlannerPanel: React.FC<DriverPlannerPanelProps> = ({
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Planowanie driver-based + what-if
+          {t('finance.driverPlanner.title', 'Driver-based planning + what-if')}
         </h3>
         {!isEmpty && (
           <button
@@ -359,14 +363,17 @@ export const DriverPlannerPanel: React.FC<DriverPlannerPanelProps> = ({
             data-testid="driver-reset"
             className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
           >
-            Reset
+            {t('finance.driverPlanner.reset', 'Reset')}
           </button>
         )}
       </div>
 
       {isEmpty ? (
-        <p className="text-sm text-slate-500" data-testid="driver-planner-empty">
-          Brak drzewa driverów — dodaj drivery, aby zaplanować wynik.
+        <p className="text-sm text-slate-500" data-testid="driver-planner-empty-leaves">
+          {t(
+            'finance.driverPlanner.emptyLeaves',
+            'No driver values — this model’s forecast has no usable driver lines.'
+          )}
         </p>
       ) : (
         <div className="space-y-5">

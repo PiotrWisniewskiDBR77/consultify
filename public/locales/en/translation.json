@@ -18555,6 +18555,23 @@
       "key": "Assumption",
       "diffFailed": "Diff failed",
       "empty": "No saved versions yet. Approve a model to create a snapshot."
+    },
+    "valueOffice": {
+      "title": "Value Office — transformation value engine",
+      "failed": "Value engine temporarily unavailable — the cockpit works normally.",
+      "empty": {
+        "title": "No initiatives to show yet",
+        "body": "The value engine draws on the organization’s initiatives (their value, stage, NPV and risk). Add or link initiatives to see the value bridge and decision portfolio here."
+      }
+    },
+    "driverPlanner": {
+      "title": "Driver-based planning + what-if",
+      "reset": "Reset",
+      "emptyLeaves": "No driver values — this model’s forecast has no usable driver lines.",
+      "empty": {
+        "title": "Select a financial model",
+        "body": "The driver tree decomposes a selected model’s forecast (EBIT = Revenue − COGS − Opex − Depreciation). Pick a model from the list to plan and run what-if on its real figures."
+      }
     }
   },
   "portfolio": {

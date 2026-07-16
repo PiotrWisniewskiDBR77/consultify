@@ -19023,6 +19023,23 @@
       "key": "Założenie",
       "diffFailed": "Nie udało się porównać",
       "empty": "Brak zapisanych wersji. Zatwierdź model, aby utworzyć migawkę."
+    },
+    "valueOffice": {
+      "title": "Value Office — motor wartości transformacji",
+      "failed": "Motor wartości chwilowo niedostępny — kokpit działa normalnie.",
+      "empty": {
+        "title": "Brak inicjatyw do pokazania",
+        "body": "Motor wartości korzysta z inicjatyw organizacji (ich wartości, etapu, NPV i ryzyka). Dodaj lub powiąż inicjatywy, aby zobaczyć tu most wartości i portfel decyzyjny."
+      }
+    },
+    "driverPlanner": {
+      "title": "Planowanie driver-based + what-if",
+      "reset": "Reset",
+      "emptyLeaves": "Brak wartości driverów — prognoza tego modelu nie ma użytecznych linii driverów.",
+      "empty": {
+        "title": "Wybierz model finansowy",
+        "body": "Drzewo driverów rozkłada prognozę wybranego modelu (EBIT = Przychód − COGS − Opex − Amortyzacja). Wybierz model z listy, aby planować i uruchamiać what-if na jego realnych danych."
+      }
     }
   },
   "portfolio": {
