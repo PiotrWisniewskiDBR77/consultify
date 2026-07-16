@@ -1,0 +1,355 @@
+/**
+ * agentPlannerService.executePlan — continue-on-error unit tests (HP-4).
+ *
+ * Piotr decision (07-16, koncept _KONCEPT_HP4_AGENT_W_TERESIE.md §5 Q1 —
+ * RESOLVED): a failing step must NOT stop the plan — the engine continues
+ * with the remaining steps ("robustness over fail-fast"). This engine has no
+ * step-dependency graph, so "continue with independent steps" reduces to
+ * "continue sequentially, skip only the failed step".
+ *
+ * These tests exercise the real `agentPlannerService` (server/src/services/ai
+ * /agentPlannerService.ts) against an in-memory fake of `DbPromise` (run/get/
+ * all) that mirrors the two tables from migration 672
+ * (`ai_agent_plans`/`ai_agent_plan_steps`) — no real sqlite/pg needed.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+interface PlanRow {
+  id: string;
+  organization_id: string;
+  conversation_id: string | null;
+  user_id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  total_steps: number;
+  completed_steps: number;
+  current_step_index: number;
+  plan_json: string;
+  result_summary: string | null;
+  error_message: string | null;
+  is_background: number;
+  scheduled_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface StepRow {
+  id: string;
+  plan_id: string;
+  step_index: number;
+  tool_name: string;
+  tool_input_json: string;
+  status: string;
+  result_json: string | null;
+  error_message: string | null;
+  requires_approval: number;
+  approved_by: string | null;
+  approved_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  duration_ms: number | null;
+  created_at: string;
+}
+
+const db = vi.hoisted(() => ({
+  plans: new Map<string, PlanRow>(),
+  steps: new Map<string, StepRow[]>(), // keyed by plan_id
+}));
+
+function normalize(sql: string): string {
+  return sql.replace(/\s+/g, ' ').trim();
+}
+
+function findStep(planId: string, stepId: string): StepRow | undefined {
+  return (db.steps.get(planId) || []).find((s) => s.id === stepId);
+}
+
+function findStepAnyPlan(stepId: string): StepRow | undefined {
+  for (const arr of db.steps.values()) {
+    const hit = arr.find((s) => s.id === stepId);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  run: async (sql: string, params: unknown[] = []) => {
+    const s = normalize(sql);
+
+    if (s.startsWith('INSERT INTO ai_agent_plans')) {
+      const [
+        id,
+        organization_id,
+        conversation_id,
+        user_id,
+        title,
+        description,
+        total_steps,
+        plan_json,
+        is_background,
+        scheduled_at,
+      ] = params as [
+        string,
+        string,
+        string | null,
+        string,
+        string,
+        string | null,
+        number,
+        string,
+        number,
+        string | null,
+      ];
+      db.plans.set(id, {
+        id,
+        organization_id,
+        conversation_id,
+        user_id,
+        title,
+        description,
+        status: 'planning',
+        total_steps,
+        completed_steps: 0,
+        current_step_index: 0,
+        plan_json,
+        result_summary: null,
+        error_message: null,
+        is_background,
+        scheduled_at,
+        started_at: null,
+        completed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      return { changes: 1 };
+    }
+
+    if (s.startsWith('INSERT INTO ai_agent_plan_steps')) {
+      const [id, plan_id, step_index, tool_name, tool_input_json, requires_approval] =
+        params as [string, string, number, string, string, number];
+      const arr = db.steps.get(plan_id) || [];
+      arr.push({
+        id,
+        plan_id,
+        step_index,
+        tool_name,
+        tool_input_json,
+        status: 'pending',
+        result_json: null,
+        error_message: null,
+        requires_approval,
+        approved_by: null,
+        approved_at: null,
+        started_at: null,
+        completed_at: null,
+        duration_ms: null,
+        created_at: new Date().toISOString(),
+      });
+      db.steps.set(plan_id, arr);
+      return { changes: 1 };
+    }
+
+    if (s.startsWith('UPDATE ai_agent_plan_steps')) {
+      if (s.includes("status = 'completed'") && s.includes('result_json')) {
+        const [result_json, duration_ms, id] = params as [string, number, string];
+        const step = findStepAnyPlan(id);
+        if (step) Object.assign(step, { status: 'completed', result_json, duration_ms });
+        return { changes: 1 };
+      }
+      if (s.includes("status = 'failed'") && s.includes('error_message')) {
+        const [error_message, duration_ms, id] = params as [string, number, string];
+        const step = findStepAnyPlan(id);
+        if (step) Object.assign(step, { status: 'failed', error_message, duration_ms });
+        return { changes: 1 };
+      }
+      if (s.includes("status = 'pending'") && s.includes('approved_by')) {
+        const [approved_by, id] = params as [string, string];
+        const step = findStepAnyPlan(id);
+        if (step) Object.assign(step, { status: 'pending', approved_by });
+        return { changes: 1 };
+      }
+      // generic single-status update (e.g. updateStepStatus -> 'awaiting_approval' | 'running')
+      const [status, id] = params as [string, string];
+      const step = findStepAnyPlan(id);
+      if (step) Object.assign(step, { status });
+      return { changes: 1 };
+    }
+
+    if (s.startsWith('UPDATE ai_agent_plans')) {
+      if (s.includes('result_summary = ?') && s.includes('error_message = ?')) {
+        // finalizePlan
+        const [status, result_summary, error_message, id] = params as [
+          string,
+          string,
+          string | null,
+          string,
+        ];
+        const plan = db.plans.get(id);
+        if (plan) Object.assign(plan, { status, result_summary, error_message });
+        return { changes: 1 };
+      }
+      if (s.includes('completed_steps = ?')) {
+        // updatePlanProgress
+        const [completed_steps, current_step_index, id] = params as [number, number, string];
+        const plan = db.plans.get(id);
+        if (plan) Object.assign(plan, { completed_steps, current_step_index });
+        return { changes: 1 };
+      }
+      // dynamic updatePlanStatus(planId, status, currentStep?, errorMessage?)
+      let idx = 0;
+      const status = params[idx++] as string;
+      const updates: Partial<PlanRow> = { status };
+      if (s.includes('current_step_index = ?')) updates.current_step_index = params[idx++] as number;
+      if (s.includes('error_message = ?')) updates.error_message = params[idx++] as string;
+      const id = params[idx] as string;
+      const plan = db.plans.get(id);
+      if (plan) Object.assign(plan, updates);
+      return { changes: 1 };
+    }
+
+    if (s.startsWith('CREATE TABLE') || s.startsWith('CREATE INDEX')) return { changes: 0 };
+
+    throw new Error(`Unmocked SQL in agentPlannerService test: ${s}`);
+  },
+
+  get: async (sql: string, params: unknown[] = []) => {
+    const s = normalize(sql);
+
+    if (s.startsWith('SELECT * FROM ai_agent_plans WHERE id = ?')) {
+      return db.plans.get(params[0] as string) || undefined;
+    }
+
+    if (s.includes('FROM ai_agent_plan_steps') && s.includes("status = 'awaiting_approval'")) {
+      const [planId, stepIndex] = params as [string, number];
+      const arr = db.steps.get(planId) || [];
+      return arr.find((st) => st.step_index === stepIndex && st.status === 'awaiting_approval');
+    }
+
+    throw new Error(`Unmocked SQL (get) in agentPlannerService test: ${s}`);
+  },
+
+  all: async (sql: string, params: unknown[] = []) => {
+    const s = normalize(sql);
+    if (s.startsWith('SELECT * FROM ai_agent_plan_steps WHERE plan_id = ?')) {
+      const arr = db.steps.get(params[0] as string) || [];
+      return [...arr].sort((a, b) => a.step_index - b.step_index);
+    }
+    throw new Error(`Unmocked SQL (all) in agentPlannerService test: ${s}`);
+  },
+}));
+
+vi.mock('node:crypto', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:crypto')>();
+  return actual;
+});
+
+const { agentPlannerService } = await import(
+  '../../../server/src/services/ai/agentPlannerService.js'
+);
+
+describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr decision 07-16)', () => {
+  beforeEach(() => {
+    db.plans.clear();
+    db.steps.clear();
+  });
+
+  it('runs every step and reports "completed" when all succeed', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'All good',
+      steps: [
+        { toolName: 'search_web', toolInput: { q: 'a' } },
+        { toolName: 'search_web', toolInput: { q: 'b' } },
+        { toolName: 'search_web', toolInput: { q: 'c' } },
+      ],
+    });
+
+    const executor = vi.fn().mockResolvedValue('ok');
+    const result = await agentPlannerService.executePlan(plan.id, executor);
+
+    expect(executor).toHaveBeenCalledTimes(3);
+    expect(result.status).toBe('completed');
+    expect(result.errorMessage).toBeUndefined();
+    expect(result.resultSummary).toBe('Completed 3/3 steps.');
+    expect(result.steps.every((s) => s.status === 'completed')).toBe(true);
+  });
+
+  it('continues past a failing middle step instead of stopping the plan (fail-fast regression guard)', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Middle step fails',
+      steps: [
+        { toolName: 'search_web', toolInput: { q: 'a' } },
+        { toolName: 'get_initiative_status', toolInput: { question: 'boom' } },
+        { toolName: 'search_web', toolInput: { q: 'c' } },
+      ],
+    });
+
+    const executor = vi
+      .fn()
+      .mockResolvedValueOnce('ok-1')
+      .mockRejectedValueOnce(new Error('tool exploded'))
+      .mockResolvedValueOnce('ok-3');
+
+    const result = await agentPlannerService.executePlan(plan.id, executor);
+
+    // The key regression guard: the 3rd (independent) step still ran.
+    expect(executor).toHaveBeenCalledTimes(3);
+    expect(result.status).toBe('completed_with_errors');
+    expect(result.steps[0].status).toBe('completed');
+    expect(result.steps[1].status).toBe('failed');
+    expect(result.steps[1].errorMessage).toBe('tool exploded');
+    expect(result.steps[2].status).toBe('completed');
+    expect(result.errorMessage).toContain('1/3 steps failed');
+    expect(result.errorMessage).toContain('get_initiative_status');
+    expect(result.errorMessage).toContain('tool exploded');
+    expect(result.resultSummary).toContain('2/3 steps');
+  });
+
+  it('reports "completed_with_errors" (never the old fail-fast "failed") even when every step fails', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'All fail',
+      steps: [
+        { toolName: 'search_web', toolInput: {} },
+        { toolName: 'search_web', toolInput: {} },
+      ],
+    });
+
+    const executor = vi.fn().mockRejectedValue(new Error('down'));
+    const result = await agentPlannerService.executePlan(plan.id, executor);
+
+    expect(executor).toHaveBeenCalledTimes(2);
+    expect(result.status).toBe('completed_with_errors');
+    expect(result.status).not.toBe('failed');
+    expect(result.steps.every((s) => s.status === 'failed')).toBe(true);
+  });
+
+  it('still pauses on a step requiring approval (checkpoint behaviour unaffected by continue-on-error)', async () => {
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Has a mutating step',
+      steps: [
+        { toolName: 'search_web', toolInput: {} },
+        { toolName: 'create_initiative_draft', toolInput: { title: 'x' } },
+        { toolName: 'search_web', toolInput: {} },
+      ],
+    });
+
+    const executor = vi.fn().mockResolvedValue('ok');
+    const result = await agentPlannerService.executePlan(plan.id, executor);
+
+    // Only step 0 ran; step 1 (side-effect tool) requires approval and pauses the plan.
+    expect(executor).toHaveBeenCalledTimes(1);
+    expect(result.status).toBe('awaiting_approval');
+    expect(result.steps[1].status).toBe('awaiting_approval');
+    expect(result.steps[2].status).toBe('pending');
+  });
+});
