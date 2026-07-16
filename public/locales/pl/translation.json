@@ -19376,6 +19376,17 @@
       "ok": "Wygenerowano PPTX",
       "failed": "Eksport nie powiódł się",
       "approvalGate": "Eksport wymaga statusu APPROVED i zawiera disclaimers."
+    },
+    "visuals": {
+      "triangulation": "Triangulacja wyceny",
+      "sensitivity": "Wrażliwość: WACC × wzrost",
+      "tornado": "Wrażliwość jednozmiennowa",
+      "methodComps": "Porównywalne spółki",
+      "methodAsset": "Metoda majątkowa (NAV)",
+      "emptyAll": "Uruchom wycenę, aby zobaczyć wizualizacje.",
+      "emptyMethods": "Brak metod wyceny — uruchom wycenę.",
+      "emptySensitivity": "Brak analizy wrażliwości — uruchom wycenę.",
+      "emptyDrivers": "Brak driverów wrażliwości — uruchom wycenę."
     }
   },
   "capability": {

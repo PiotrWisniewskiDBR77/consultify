@@ -18908,6 +18908,17 @@
       "ok": "PPTX generated",
       "failed": "Export failed",
       "approvalGate": "Export requires APPROVED valuation and includes disclaimers."
+    },
+    "visuals": {
+      "triangulation": "Valuation triangulation",
+      "sensitivity": "Sensitivity: WACC × growth",
+      "tornado": "One-way sensitivity",
+      "methodComps": "Comparables",
+      "methodAsset": "Asset-based (NAV)",
+      "emptyAll": "Run the valuation to see the visualizations.",
+      "emptyMethods": "No valuation methods — run the valuation.",
+      "emptySensitivity": "No sensitivity analysis — run the valuation.",
+      "emptyDrivers": "No sensitivity drivers — run the valuation."
     }
   },
   "capability": {
