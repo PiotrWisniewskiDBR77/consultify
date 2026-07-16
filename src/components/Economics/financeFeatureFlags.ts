@@ -58,6 +58,15 @@ const FLAGS = {
     localStorage: 'ff.fin_m16_advanced_suite',
     env: 'VITE_FIN_M16_ADVANCED_SUITE_ENABLED',
   },
+  // M16 value suite (wire-d) — value ledger, attribution rollup, capture
+  // pipeline (G0-G5), banking-the-value, extended ratios. Independent of
+  // m16ValuationSuite / m16PlanningSuite / m16AdvancedSuite — does not touch
+  // those flags.
+  m16ValueSuite: {
+    query: 'ff_m16ValueSuite',
+    localStorage: 'ff.fin_m16_value_suite',
+    env: 'VITE_FIN_M16_VALUE_SUITE_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type FinanceFlag = keyof typeof FLAGS;
