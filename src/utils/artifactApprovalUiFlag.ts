@@ -59,7 +59,7 @@ export function isArtifactApprovalUiEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return false;
+  return true; // FLIP default ON — delegowany akcept Piotra 2026-07-16 (galeria czysta; Vegas dopracuje wygląd)
 }
 
 export const ARTIFACT_APPROVAL_UI_FLAG_KEYS = {

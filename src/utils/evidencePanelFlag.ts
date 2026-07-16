@@ -57,7 +57,7 @@ export function isEvidencePanelEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return false;
+  return true; // FLIP default ON — delegowany akcept Piotra 2026-07-16 (galeria czysta; Vegas dopracuje wygląd)
 }
 
 export const EVIDENCE_PANEL_FLAG_KEYS = {

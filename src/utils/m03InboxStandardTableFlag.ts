@@ -41,7 +41,7 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed; // default OFF — nie akceptowane wizualnie jeszcze
+    return parsed === null ? true : parsed; // FLIP ON — akcept Piotra 07-16
   } catch {
     return false;
   }

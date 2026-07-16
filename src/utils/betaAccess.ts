@@ -39,7 +39,7 @@ export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
   MODULE_BENEFITS: 'open', // Results (M15 — GA per D-A)
   MODULE_CONCLUSIONS: 'closed', // HIDDEN 2026-07-04 (owner decision — added without consent); nav entry removed in menuConfig too
   MODULE_ECONOMICS: 'open', // Finance (M16 — GA per D-A)
-  MODULE_AUDITS: 'closed', // Audits (M12 — hidden pre-demo per DECYZJA-D3; empty module, no real content yet)
+  MODULE_AUDITS: 'open', // FLIP — akcept Piotra 07-16 (816 linii + backend, demo-ready)
   MODULE_PRESENTATIONS: 'open', // Documents (Outputs library)
   MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
   MODULE_PREZENTACJE_GEN: 'open', // Presentation Studio
