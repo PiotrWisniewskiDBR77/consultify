@@ -21,6 +21,11 @@
  *     persisting the Conclusion MUST NOT break tool output generation/saving.
  */
 
+import {
+  type ValidatableConclusion,
+  validateNoFiller,
+  validateNumbersFromEngine,
+} from '../conclusionValidators.js';
 import type {
   ArtifactRef,
   ConclusionStatus,
@@ -280,6 +285,99 @@ export function extractToolConclusion(
   };
 }
 
+// ---------------------------------------------------------------------------
+// SERVER-GAP fix (OXFORD): re-validate a tool candidate BEFORE persisting it.
+//
+// The extraction above is intentionally PURE — it only reshapes the W2 summary.
+// Without a gate, slop (filler prose) or fabricated numbers a W2 tool conclusion
+// carries would be server-persisted verbatim, even though the finance/FE report
+// path runs the 12-validator gate (`validateConclusion.allHardPass`). But that
+// full 12-gate is shaped for K1→K4 REPORT conclusions (it hard-requires a K4
+// horizon, an owned 1-3 K3 action set, a non-empty K4 text): a legitimate tool
+// verdict has NONE of that shape, so running the full gate would reject EVERY
+// tool conclusion (false positive). Priority per spec: block SLOP, not block the
+// good. So we apply a LIGHTER, shape-appropriate subset of the SAME real
+// validators — the two that actually detect slop in free-form verdict prose:
+//   • no_filler            — listed filler phrases ("zoptymalizować procesy", …)
+//   • numbers_from_engine  — any number in the verdict must be within ±25% of a
+//                            number the engine already produced (grounding); the
+//                            "engine facts" pool for a tool = every value in the
+//                            session `answers` EXCEPT the summary itself (which
+//                            IS the conclusion prose under test).
+// Plus a minimal completeness check (statement present & non-trivial ≈ k_complete).
+// ---------------------------------------------------------------------------
+
+export interface ToolConclusionQualityVerdict {
+  ok: boolean;
+  /** Validator names that fired (subset of no_filler | numbers_from_engine | k_complete). */
+  failures: string[];
+}
+
+/** pl when the prose carries Polish diacritics; en otherwise (product is PL-first). */
+function detectConclusionLanguage(text: string): 'pl' | 'en' {
+  return /[ąćęłńóśźż]/i.test(text) ? 'pl' : 'en';
+}
+
+function firstSentence(text: string): string {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^[^.!?\n]{1,220}[.!?]?/);
+  return (match ? match[0] : trimmed).slice(0, 220);
+}
+
+/**
+ * The "engine facts" pool for a tool conclusion is every value the session
+ * produced OUTSIDE `answers.summary` — the summary is the verdict/exec prose we
+ * are validating, so grounding numbers against it would be circular. Everything
+ * else (accepted items, signals, computed sections, …) is legitimate provenance.
+ */
+function toolFactsPool(answers: unknown): Record<string, unknown> {
+  const data = asRecord(answers);
+  if (!data) return {};
+  const { summary: _summary, ...rest } = data;
+  return rest;
+}
+
+/** Map a tool candidate onto the variant-agnostic validator shape (verdict-first). */
+function candidateToValidatable(
+  candidate: ToolConclusionCandidate,
+  answers: unknown
+): ValidatableConclusion {
+  const proseForLang = `${candidate.statement} ${candidate.contextSummary}`;
+  return {
+    headline: firstSentence(candidate.statement),
+    k1Text: candidate.statement,
+    k1FactRefs: [],
+    k2Text: candidate.contextSummary || '',
+    k2FactRefs: [],
+    k3Actions: candidate.recommendedNextAction
+      ? [{ action: candidate.recommendedNextAction, whyFirst: '-', ownerRole: '-' }]
+      : [],
+    k4Text: '',
+    k4Horizon: '',
+    confidence: candidate.confidenceLevel,
+    language: detectConclusionLanguage(proseForLang),
+    facts: toolFactsPool(answers),
+  };
+}
+
+/**
+ * LIGHTER quality gate for a tool conclusion candidate — reuses the REAL
+ * anti-slop validators (no_filler + numbers_from_engine) plus a minimal
+ * completeness check. Returns `ok:false` with the fired validator names when the
+ * candidate must NOT be persisted.
+ */
+export function validateToolConclusionQuality(
+  candidate: ToolConclusionCandidate,
+  answers: unknown
+): ToolConclusionQualityVerdict {
+  const vc = candidateToValidatable(candidate, answers);
+  const failures: string[] = [];
+  if (validateNoFiller(vc) === 'fail') failures.push('no_filler');
+  if (validateNumbersFromEngine(vc) === 'fail') failures.push('numbers_from_engine');
+  if (candidate.statement.trim().length < 12) failures.push('k_complete');
+  return { ok: failures.length === 0, failures };
+}
+
 export interface PersistToolConclusionParams extends ExtractToolConclusionParams {
   organizationId: string;
   projectId?: string | null;
@@ -292,14 +390,29 @@ interface ConclusionWriter {
 
 /**
  * Persist the session's W2 conclusion into the Conclusions layer.
- * Returns true when a conclusion was extracted and written.
+ * Returns true when a conclusion was extracted, PASSED the quality gate, and
+ * was written. A candidate that trips the lighter anti-slop gate
+ * (`validateToolConclusionQuality`) is NOT persisted (returns false + logs the
+ * fired validators) — closing the SERVER-GAP where un-validated slop reached
+ * the DB.
  */
 export async function persistToolSessionConclusion(
   params: PersistToolConclusionParams,
-  writer: ConclusionWriter = conclusionService
+  writer: ConclusionWriter = conclusionService,
+  logger?: { warn: (msg: string, meta?: unknown) => void }
 ): Promise<boolean> {
   const candidate = extractToolConclusion(params);
   if (!candidate) return false;
+
+  const quality = validateToolConclusionQuality(candidate, params.answers);
+  if (!quality.ok) {
+    logger?.warn('[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted', {
+      sessionId: params.sessionId,
+      toolType: params.toolType ?? null,
+      failures: quality.failures,
+    });
+    return false;
+  }
 
   await writer.createConclusion({
     organizationId: params.organizationId,
@@ -332,7 +445,11 @@ export async function safePersistToolSessionConclusion(
   }
 ): Promise<boolean> {
   try {
-    return await persistToolSessionConclusion(params, options?.writer ?? conclusionService);
+    return await persistToolSessionConclusion(
+      params,
+      options?.writer ?? conclusionService,
+      options?.logger
+    );
   } catch (error) {
     try {
       options?.logger?.warn('[ToolConclusionBridge] Failed to persist tool conclusion', {
