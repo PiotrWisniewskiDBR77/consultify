@@ -32980,6 +32980,7 @@
   },
   "scimGroupSync": {
     "title": "Group mappings (Entra / Okta → role)",
+    "description": "Map an identity-provider group to an internal role. Leave \"Project\" empty for an organization-wide mapping, or pick a project to scope the role to it.",
     "loading": "Loading group mappings…",
     "fields": {
       "groupName": "IdP group name",
@@ -32987,6 +32988,16 @@
       "role": "Internal role",
       "project": "Project (optional — org-wide if empty)",
       "orgWide": "Organization-wide"
+    },
+    "roles": {
+      "member": "Member",
+      "admin": "Admin",
+      "projectLeader": "Project Leader",
+      "initiativeOwner": "Initiative Owner",
+      "workstreamOwner": "Workstream Owner",
+      "reviewer": "Reviewer",
+      "sme": "Subject Matter Expert",
+      "observer": "Observer"
     },
     "actions": {
       "add": "Add group mapping",

@@ -34040,6 +34040,7 @@
   },
   "scimGroupSync": {
     "title": "Mapowania grup (Entra / Okta → rola)",
+    "description": "Zmapuj grupę dostawcy tożsamości na rolę wewnętrzną. Zostaw pole \"Projekt\" puste dla mapowania na poziomie całej organizacji, albo wybierz projekt, aby ograniczyć rolę tylko do niego.",
     "loading": "Wczytywanie mapowań grup…",
     "fields": {
       "groupName": "Nazwa grupy IdP",
@@ -34047,6 +34048,16 @@
       "role": "Rola wewnętrzna",
       "project": "Projekt (opcjonalnie — cała organizacja jeśli puste)",
       "orgWide": "Cała organizacja"
+    },
+    "roles": {
+      "member": "Członek",
+      "admin": "Administrator",
+      "projectLeader": "Project Leader",
+      "initiativeOwner": "Właściciel inicjatywy",
+      "workstreamOwner": "Właściciel strumienia",
+      "reviewer": "Recenzent",
+      "sme": "Ekspert dziedzinowy",
+      "observer": "Obserwator"
     },
     "actions": {
       "add": "Dodaj mapowanie grupy",
