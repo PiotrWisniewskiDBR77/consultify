@@ -70,7 +70,12 @@ export interface CreateAgentPlanInput {
   description?: string;
   conversationId?: string;
   manifestId?: string;
-  steps: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+  /**
+   * Optional when `manifestId` is set — the backend's PlanBuilder
+   * (server/src/services/ai/agentPlan/planBuilderService.ts) generates the
+   * step list from the manifest. Provide explicit steps to override.
+   */
+  steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
 }
 
 export async function createAgentPlan(

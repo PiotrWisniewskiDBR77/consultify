@@ -182,6 +182,73 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       expect(res.status).toBe(201);
       expect(createPlan).toHaveBeenCalled();
     });
+
+    it('generates real multi-step steps via PlanBuilder when manifestId is given without steps (HP-4 F1 — no more single-step kickoff)', async () => {
+      getDiscoveryAgentManifest.mockReturnValue({
+        id: 'market-forces',
+        status: 'built',
+        sourceType: 'discovery_tool',
+        displayName: { pl: 'Siły Rynkowe', en: 'Market Forces' },
+        wave: 'wave-1',
+        configDir: 'src/config/porter',
+      });
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Test plan', manifestId: 'market-forces' });
+
+      expect(res.status).toBe(201);
+      expect(createPlan).toHaveBeenCalledTimes(1);
+      const passedSteps = createPlan.mock.calls[0][0].steps as Array<{
+        toolName: string;
+        toolInput: Record<string, unknown>;
+      }>;
+      // Real PlanBuilder output: 3+ steps, more than one distinct tool — not
+      // the old single "search_knowledge_base" kickoff placeholder.
+      expect(passedSteps.length).toBeGreaterThanOrEqual(3);
+      expect(new Set(passedSteps.map((s) => s.toolName)).size).toBeGreaterThan(1);
+      // No stray `rationale` field leaking into what's persisted.
+      expect(Object.keys(passedSteps[0]).sort()).toEqual(['toolInput', 'toolName']);
+    });
+
+    it('rejects when neither manifestId nor steps are provided (400)', async () => {
+      const res = await request(createApp()).post('/api/ai/agent-plan').send({ title: 'Test plan' });
+
+      expect(res.status).toBe(400);
+      expect(createPlan).not.toHaveBeenCalled();
+    });
+
+    it('lets explicit steps override PlanBuilder generation even when manifestId is present', async () => {
+      getDiscoveryAgentManifest.mockReturnValue({
+        id: 'market-forces',
+        status: 'built',
+        sourceType: 'discovery_tool',
+        displayName: { pl: 'x', en: 'x' },
+        wave: 'wave-1',
+        configDir: 'x',
+      });
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({
+          title: 'Test plan',
+          manifestId: 'market-forces',
+          steps: [{ toolName: 'search_web', toolInput: { query: 'override' } }],
+        });
+
+      expect(res.status).toBe(201);
+      expect(createPlan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          steps: [{ toolName: 'search_web', toolInput: { query: 'override' } }],
+        })
+      );
+    });
   });
 
   describe('GET /:id', () => {

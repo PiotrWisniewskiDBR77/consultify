@@ -7,17 +7,14 @@
  * 31 wpisów, endpoint `/api/ai/agent-manifests` — już żywy, read-only), NIE
  * pełny builder definicji agenta od zera (to HP-5, osobna, późniejsza fala).
  *
- * WAŻNE ograniczenie (uczciwie, bez fantomów — złota reguła CLAUDE.md):
- * katalog manifestów jest SUMMARY-ONLY (id/displayName/status/wave/configDir —
- * bez `steps`, patrz nagłówek discoveryAgentManifestCatalog.ts). `PlanBuilder`
- * (koncept zadanie F1 — tłumaczenie manifestu na listę kroków narzędzi) NIE
- * istnieje jeszcze. Ten launcher tworzy więc plan z JEDNYM krokiem
- * "kickoff" — prawdziwym wywołaniem `search_knowledge_base` (realne
- * przeszukanie bazy wiedzy organizacji pod kątem wybranego narzędzia
- * Discovery), NIE udajemy wykonania całego wieloetapowego narzędzia. Gdy F1
- * powstanie, ten komponent wstawi tam wygenerowaną listę kroków zamiast tego
- * pojedynczego placeholdera — reszta (routing, panel, continue-on-error)
- * zostaje bez zmian.
+ * PlanBuilder (koncept zadanie F1 — LANDED 2026-07-16,
+ * server/src/services/ai/agentPlan/planBuilderService.ts) tłumaczy teraz
+ * manifest na 3-4 realne kroki narzędzi (kurowane per manifest-id, fallback
+ * per `wave` dla manifestów bez kuracji). Ten launcher NIE buduje już kroków
+ * sam — wysyła tylko `manifestId`, a backend (agent-plan.routes.ts POST /)
+ * woła `buildPlanFromManifest` i zapisuje wygenerowaną listę. Poprzedni
+ * placeholder (pojedynczy krok "kickoff" — `search_knowledge_base`) został
+ * usunięty; agent wykonuje teraz realną wieloetapową pracę.
  *
  * Za flagą `ff_agentPlan` (patrz AgentPlanWorkspace.tsx, wołający tego
  * komponentu). Wyłącznie tokeny c-*, fokus c-focus, zero crimson w primary.
@@ -106,17 +103,8 @@ export const AgentManifestLauncher: React.FC<AgentManifestLauncherProps> = ({ on
       const { plan } = await createAgentPlan({
         title: `${t('agentPlan.launcher.planTitlePrefix', 'Agent')}: ${label}`,
         manifestId: manifest.id,
-        // Kickoff placeholder step — see file header: full manifest->steps
-        // expansion is F1 PlanBuilder, not yet built. This is a REAL tool
-        // call (KB search), not a fake/no-op step.
-        steps: [
-          {
-            toolName: 'search_knowledge_base',
-            toolInput: {
-              query: `${manifest.displayName.pl} / ${manifest.displayName.en}`,
-            },
-          },
-        ],
+        // No `steps` here — the backend's PlanBuilder (planBuilderService.ts)
+        // generates the real multi-step playbook from manifest.id/wave.
       });
       onPlanCreated(plan.id);
     } catch (error) {

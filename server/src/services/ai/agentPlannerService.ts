@@ -9,6 +9,12 @@ import { randomUUID } from 'node:crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
+
+// Re-exported for backward compatibility with any existing import of
+// `SIDE_EFFECT_TOOLS` from this module — the canonical source is now
+// `sideEffectTools.ts` (see that file's header for why it was split out).
+export { SIDE_EFFECT_TOOLS };
 
 export type PlanStatus =
   | 'planning'
@@ -60,14 +66,6 @@ export interface AgentPlan {
 export interface SSEEmitter {
   emit: (event: string, data: unknown) => void;
 }
-
-const SIDE_EFFECT_TOOLS = new Set([
-  'create_initiative_draft',
-  'generate_report_section',
-  'schedule_meeting',
-  'create_notebook_entry',
-  'query_structured_data',
-]);
 
 class AgentPlannerService {
   async createPlan(input: {
