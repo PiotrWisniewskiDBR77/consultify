@@ -65,6 +65,7 @@ import {
   type V8FinanceDashboard,
 } from '@/services/api/v8/finance';
 import { useAppStore } from '@/store/useAppStore';
+import { InitiativeStatus } from '@/types/core';
 
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
@@ -109,6 +110,7 @@ import { useFinancePreview } from './FinancePreviewPanel';
 import {
   type FinanceAnalysisRow,
   type FinanceKind,
+  type FinanceModelPreviewDetail,
   type FinanceModelRow,
   type FinanceRow,
   type FinanceStatementRow,
@@ -129,7 +131,7 @@ import { CreateValuationModal } from './modals/CreateValuationModal';
 import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
 import { BankingValuePanel } from './panels/BankingValuePanel';
 import { CashForecastPanel } from './panels/CashForecastPanel';
-import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
+import { type DriverNode, DriverPlannerPanel } from './panels/DriverPlannerPanel';
 import { DriverTreePanel } from './panels/DriverTreePanel';
 import { EfficientFrontierPanel } from './panels/EfficientFrontierPanel';
 import { ExtendedRatiosPanel } from './panels/ExtendedRatiosPanel';
@@ -143,7 +145,7 @@ import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
 import { ValueAttributionPanel } from './panels/ValueAttributionPanel';
 import { ValueCapturePipelinePanel } from './panels/ValueCapturePipelinePanel';
 import { ValueLedgerPanel } from './panels/ValueLedgerPanel';
-import { ValueOfficePanel } from './panels/ValueOfficePanel';
+import { type ValueOfficeInitiative, ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
 import { VarianceNarrationPanel } from './panels/VarianceNarrationPanel';
 import { WhatIfSensitivityPanel } from './panels/WhatIfSensitivityPanel';
@@ -217,6 +219,196 @@ function isInvestmentAnalysisType(value: unknown): boolean {
     normalized.includes('investment') ||
     normalized.includes('capex')
   );
+}
+
+// ---------------------------------------------------------------------------
+// Value Office (M16) — real-initiative mapping helpers.
+//
+// GET /api/initiatives returns free-text/legacy-shaped financial columns
+// (business_value/expected_roi were widened to TEXT by migration 903 to stop
+// AI-authored payloads like "20-30%" from failing inserts — see that
+// migration's note). These helpers are a best-effort, non-fabricating parse:
+// unparsable input degrades to a neutral default (0 / 0.5), never a made-up
+// specific number. Cancelled/archived initiatives are excluded outright
+// rather than mapped to a fake stage.
+// ---------------------------------------------------------------------------
+
+/** Best-effort numeric parse of a possibly free-text finance column. */
+function parseFinanceNumber(raw: unknown): number {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
+  if (raw == null) return 0;
+  const str = String(raw).trim();
+  if (!str) return 0;
+  const direct = Number(str.replace(/\s/g, '').replace(',', '.'));
+  if (Number.isFinite(direct)) return direct;
+  const match = str.match(/-?\d+(?:[.,]\d+)?/);
+  if (!match) return 0;
+  const base = Number(match[0].replace(',', '.'));
+  if (!Number.isFinite(base)) return 0;
+  const lower = str.toLowerCase();
+  if (/mln|milion|million/.test(lower)) return base * 1_000_000;
+  if (/\btys\.?\b/.test(lower)) return base * 1_000;
+  if (/\bk\b/.test(lower)) return base * 1_000;
+  if (/\bm\b/.test(lower) && !/mln/.test(lower)) return base * 1_000_000;
+  return base;
+}
+
+type ValueStage = 'identified' | 'committed' | 'in_flight' | 'realized' | 'banked';
+
+/** Maps the enforced InitiativeStatus lifecycle (src/types/core.ts) onto the
+ * M16 value-bridge maturity ladder. Cancelled/archived initiatives return
+ * `null` — they are excluded from the value cockpit rather than counted as
+ * "identified" value that no longer exists. */
+function mapInitiativeStatusToStage(status: unknown): ValueStage | null {
+  const normalized = String(status || '').toUpperCase();
+  switch (normalized) {
+    case InitiativeStatus.DRAFT:
+    case InitiativeStatus.PENDING_REVIEW:
+    case InitiativeStatus.REVIEW:
+    case InitiativeStatus.PROMOTED:
+      return 'identified';
+    case InitiativeStatus.PLANNING:
+    case InitiativeStatus.APPROVED:
+    case InitiativeStatus.SCHEDULED:
+      return 'committed';
+    case InitiativeStatus.EXECUTING:
+    case InitiativeStatus.BLOCKED:
+      return 'in_flight';
+    case InitiativeStatus.DONE:
+      return 'realized';
+    case InitiativeStatus.TRACKING:
+      return 'banked';
+    default:
+      return null;
+  }
+}
+
+/** risk_level is a free TEXT column (low/medium/high, occasionally numeric).
+ * Unknown/missing values get a neutral 0.5 — never a fabricated specific
+ * risk score. */
+function mapRiskLevelToScore(riskLevel: unknown): number {
+  const normalized = String(riskLevel || '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'low') return 0.2;
+  if (normalized === 'medium' || normalized === 'moderate') return 0.5;
+  if (normalized === 'high') return 0.8;
+  const numeric = Number(normalized);
+  if (Number.isFinite(numeric) && normalized !== '') {
+    return Math.min(Math.max(numeric > 1 ? numeric / 100 : numeric, 0), 1);
+  }
+  return 0.5;
+}
+
+/** effort is a free TEXT column — usually a small integer string (see
+ * transformationReadDeckPackService.ts's `Number(initiative.effort || 3)`),
+ * sometimes a low/medium/high label. Falls back to 3 (the same default used
+ * elsewhere in the codebase) when neither parses. */
+function mapEffortToScore(effort: unknown): number {
+  const numeric = Number(effort);
+  if (Number.isFinite(numeric) && numeric > 0) return numeric;
+  const normalized = String(effort || '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'low') return 3;
+  if (normalized === 'medium') return 6;
+  if (normalized === 'high') return 9;
+  return 3;
+}
+
+interface RawInitiativeForValueOffice {
+  id: string | number;
+  name?: string;
+  status?: string;
+  businessValue?: unknown;
+  costCapex?: unknown;
+  costOpex?: unknown;
+  riskLevel?: unknown;
+  effort?: unknown;
+}
+
+/** Maps GET /api/initiatives rows onto ValueOfficeInitiative[]. Excludes
+ * cancelled/archived initiatives (no live/realized value to represent). NPV
+ * is approximated as businessValue net of capex+opex — the initiatives table
+ * has no dedicated NPV column, so this is a transparent proxy, not the
+ * discounted-cashflow NPV a formal investment appraisal would produce. */
+function mapInitiativesToValueOffice(
+  rows: RawInitiativeForValueOffice[] | null | undefined
+): ValueOfficeInitiative[] {
+  const mapped: ValueOfficeInitiative[] = [];
+  for (const row of rows || []) {
+    const stage = mapInitiativeStatusToStage(row.status);
+    if (!stage) continue;
+    const value = parseFinanceNumber(row.businessValue);
+    const capex = parseFinanceNumber(row.costCapex);
+    const opex = parseFinanceNumber(row.costOpex);
+    mapped.push({
+      id: String(row.id),
+      name: row.name || undefined,
+      value,
+      stage,
+      npv: value - capex - opex,
+      risk: mapRiskLevelToScore(row.riskLevel),
+      effort: mapEffortToScore(row.effort),
+    });
+  }
+  return mapped;
+}
+
+// ---------------------------------------------------------------------------
+// Driver Planner (M16) — real driver-tree from the selected model's forecast.
+//
+// There is no persisted "Revenue = Customers × ARPU"-style driver assumption
+// tree per financial model (that decomposition only exists transiently in
+// nlToModelService's NL-parse-to-model wizard flow). What IS real and
+// already computed for the selected model is its base-scenario P&L forecast
+// (modelPreviewDetail.scenarioTables.base['P&L']), so this builds a genuine
+// EBIT = (Revenue − COGS − Opex) − Depreciation tree from those real figures
+// instead of inventing customer/ARPU semantics the model doesn't have.
+// ---------------------------------------------------------------------------
+function buildDriverTreeFromModelPreview(
+  detail: FinanceModelPreviewDetail | null
+): DriverNode | undefined {
+  if (!detail) return undefined;
+  const year = detail.forecastYears?.[0];
+  if (!year) return undefined;
+  const plLines = detail.scenarioTables?.base?.['P&L'];
+  if (!Array.isArray(plLines) || plLines.length === 0) return undefined;
+  const findLine = (code: string) => plLines.find((l) => l.lineCode === code);
+  const revenue = Number(findLine('REVENUE')?.values?.[year]);
+  if (!Number.isFinite(revenue) || revenue <= 0) return undefined;
+  const cogs = Number(findLine('COGS')?.values?.[year] ?? 0) || 0;
+  const opex = Number(findLine('OPEX')?.values?.[year] ?? 0) || 0;
+  const depreciation = Number(findLine('DEPRECIATION')?.values?.[year] ?? 0) || 0;
+  const unit = detail.currency || undefined;
+  const leaf = (id: string, label: string, val: number): DriverNode => ({
+    id,
+    label,
+    value: val,
+    unit,
+    min: 0,
+    max: Math.max(val * 1.5, val + 1, 1),
+  });
+  return {
+    id: 'ebit',
+    label: `EBIT (${year})`,
+    op: 'subtract',
+    unit,
+    children: [
+      {
+        id: 'ebitda',
+        label: 'EBITDA',
+        op: 'subtract',
+        unit,
+        children: [
+          leaf('revenue', 'Revenue', revenue),
+          leaf('cogs', 'COGS', cogs),
+          leaf('opex', 'Opex', opex),
+        ],
+      },
+      leaf('depreciation', 'Depreciation', depreciation),
+    ],
+  };
 }
 
 export const FinanceHub: React.FC = () => {
@@ -361,6 +553,15 @@ export const FinanceHub: React.FC = () => {
     deselectRow,
   } = useFinanceSelection(activeTab);
 
+  // Driver Planner (M16, flag-gated) — real EBIT decomposition of the
+  // currently previewed model's base-scenario forecast. `undefined` when no
+  // model is selected/previewed yet (or it has no P&L forecast lines), in
+  // which case DriverPlannerPanel falls back to its own SaaS sample.
+  const valueOfficeDriverTree = useMemo(
+    () => buildDriverTreeFromModelPreview(modelPreviewDetail),
+    [modelPreviewDetail]
+  );
+
   const handleOpenEntityChat = useCallback(
     (row: FinanceRow) => {
       const entityTypeMap: Record<string, string> = {
@@ -411,6 +612,37 @@ export const FinanceHub: React.FC = () => {
     setV8Dashboard(null);
     setLanePanelOpen(false);
   }, [currentOrganization?.id]);
+
+  // Value Office (M16, flag-gated) — real org initiatives for ValueOfficePanel.
+  // Only fetched on the 'models' tab (the only place the panel renders) so the
+  // rest of Finance never pays for this call. Fail-soft: on error the panel
+  // falls back to its own built-in sample (never a thrown error).
+  const [valueOfficeInitiatives, setValueOfficeInitiatives] = useState<ValueOfficeInitiative[]>([]);
+  useEffect(() => {
+    if (
+      activeTab !== 'models' ||
+      !isFinanceFlagEnabled('valueOffice') ||
+      !currentOrganization?.id
+    ) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = (await Api.get('/api/initiatives?limit=200')) as
+          | RawInitiativeForValueOffice[]
+          | null;
+        if (!cancelled) {
+          setValueOfficeInitiatives(mapInitiativesToValueOffice(Array.isArray(rows) ? rows : []));
+        }
+      } catch {
+        if (!cancelled) setValueOfficeInitiatives([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, currentOrganization?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2936,11 +3168,13 @@ export const FinanceHub: React.FC = () => {
           </div>
           {isFinanceFlagEnabled('valueOffice') && (
             <div className="px-6 pb-4">
-              <ValueOfficePanel />
+              <ValueOfficePanel initiatives={valueOfficeInitiatives} />
             </div>
           )}
           {isFinanceFlagEnabled('driverPlanner') && (
             <div className="px-6 pb-6">
+              {/* No model exists yet on this empty-state branch, so there is no
+                  real forecast to decompose — the panel's own sample renders. */}
               <DriverPlannerPanel />
             </div>
           )}
@@ -3006,8 +3240,8 @@ export const FinanceHub: React.FC = () => {
           {_baseView}
           <div className="flex flex-col gap-4 px-4 pb-6">
             {_showInvest && <InvestmentAppraisalPanel />}
-            {_showValue && <ValueOfficePanel />}
-            {_showDriver && <DriverPlannerPanel />}
+            {_showValue && <ValueOfficePanel initiatives={valueOfficeInitiatives} />}
+            {_showDriver && <DriverPlannerPanel driverTree={valueOfficeDriverTree} />}
             {_showVariance && <VarianceBridgePanel />}
             {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
             {_showM16Suite && <MonteCarloNpvPanel />}
@@ -3048,6 +3282,8 @@ export const FinanceHub: React.FC = () => {
     statementsTableWithPreview,
     showImportWizard,
     handleImportWizardComplete,
+    valueOfficeInitiatives,
+    valueOfficeDriverTree,
   ]);
 
   // ---- Render ----
