@@ -12,6 +12,8 @@
 
 import React, { useMemo } from 'react';
 
+import { useFinanceChartColors } from '@/components/Economics/financeChartTokens';
+
 export interface FootballFieldRange {
   /** Etykieta metody wyceny, np. "DCF", "Comparables", "NAV". */
   label: string;
@@ -55,6 +57,7 @@ export const FootballField: React.FC<FootballFieldProps> = ({
   height,
   formatValue = defaultFormatValue,
 }) => {
+  const colors = useFinanceChartColors();
   const safeRanges = useMemo(
     () =>
       Array.isArray(ranges)
@@ -144,11 +147,11 @@ export const FootballField: React.FC<FootballFieldProps> = ({
                 y1={PAD_TOP}
                 x2={x}
                 y2={axisY}
-                stroke="rgb(226 232 240)"
+                stroke={colors.grid}
                 strokeWidth={1}
                 strokeDasharray="3 3"
               />
-              <text x={x} y={axisY + 18} textAnchor="middle" fontSize={11} fill="rgb(100 116 139)">
+              <text x={x} y={axisY + 18} textAnchor="middle" fontSize={11} fill={colors.axis}>
                 {formatValue(t)}
               </text>
             </g>
@@ -161,7 +164,7 @@ export const FootballField: React.FC<FootballFieldProps> = ({
           y1={axisY}
           x2={VIEW_WIDTH - PAD_RIGHT}
           y2={axisY}
-          stroke="rgb(148 163 184)"
+          stroke={colors.reference}
           strokeWidth={1}
         />
 
@@ -184,7 +187,7 @@ export const FootballField: React.FC<FootballFieldProps> = ({
                 textAnchor="end"
                 fontSize={12}
                 fontWeight={600}
-                fill="rgb(51 65 85)"
+                fill={colors.text}
               >
                 {r.label}
               </text>
@@ -195,8 +198,8 @@ export const FootballField: React.FC<FootballFieldProps> = ({
                 width={Math.max(2, x2 - x1)}
                 height={BAR_HEIGHT}
                 rx={4}
-                fill="rgb(203 213 225)"
-                stroke="rgb(59 130 246)"
+                fill={colors.reference}
+                stroke={colors.net}
                 strokeWidth={1.5}
                 opacity={0.9}
               >
