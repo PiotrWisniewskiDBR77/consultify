@@ -492,6 +492,12 @@ export class InitiativeController {
         priority: i.priority || 'medium',
         impact: i.impact || 'medium',
         effort: i.effort,
+        // Wiring finding (2026-07-16): `risk_level` is a real column (011/
+        // 20260603) already pulled by `SELECT i.*` above, but this hand-built
+        // response shape dropped it before reaching the client — same class
+        // of bug as the `createdBy` fix above (#69). Additive only: adds a
+        // field, changes nothing for existing consumers.
+        riskLevel: (i as any).risk_level ?? null,
         category: i.category,
         reportName: i.report_name || null,
         report_name: i.report_name || null,
