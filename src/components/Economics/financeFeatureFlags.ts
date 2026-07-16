@@ -120,6 +120,10 @@ const DEFAULT_ON: ReadonlySet<FinanceFlag> = new Set([
   'investmentAppraisal',
   'valuationVisuals',
   'modelVersioning',
+  // Wired realnymi danymi org + pusty stan zamiast sample (zweryf. dev-render
+  // populated+empty light+dark 2026-07-16); realny fetch inicjatyw / drzewo z modelu:
+  'valueOffice',
+  'driverPlanner',
 ]);
 
 /** True when the given finance cockpit feature is enabled. */
