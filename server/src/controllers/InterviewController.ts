@@ -2232,6 +2232,12 @@ async function evaluateInterviewSessionAnswers(params: {
         score: z.number().min(1).max(5),
         verdict: z.enum(['sufficient', 'needs_improvement', 'insufficient', 'unanswered']),
         feedback: z.string(),
+        // Must be `.nullable()`, not `.optional()`: OpenAI/Azure strict
+        // structured outputs require every property to appear in `required`.
+        // An optional field breaks the schema ("Provider returned error"),
+        // failing every evaluation and tripping the LLM circuit breaker.
+        // The model returns null when no fix is needed; the downstream
+        // normalizer derives a sensible fixType from verdict/feedback.
         fixType: z
           .enum([
             'clarify',
@@ -2241,7 +2247,7 @@ async function evaluateInterviewSessionAnswers(params: {
             'complete_required_fields',
             'correct_meaning',
           ])
-          .optional(),
+          .nullable(),
       })
     ),
     overallScore: z.number().min(1).max(5),
