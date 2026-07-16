@@ -12,6 +12,11 @@
  *   - Real options (defer/abandon/staged) -> RealOptionsPanel
  *   - What-if sensitivity (tornado + 2D data-table) -> WhatIfSensitivityPanel
  *
+ * wire-c adds 2 more endpoints from the same bridge, behind `m16AdvancedSuite`
+ * (default OFF, independent flag — see financeFeatureFlags.ts):
+ *   - Efficient frontier (value-vs-risk portfolio curve) -> EfficientFrontierPanel
+ *   - Scenario compute (apply/fan)                        -> ScenarioComputePanel
+ *
  * Response envelope mirrors the rest of the v8 finance surface:
  * `{ data: <payload>, meta }`. `Api.post` wraps the raw JSON body in an
  * axios-like `{ data: <body> }`, so callers must unwrap twice — see `post()`
@@ -203,4 +208,81 @@ export async function runTornado(req: TornadoRequest): Promise<TornadoResult> {
 
 export async function runDataTable2D(req: DataTable2DRequest): Promise<DataTable2DResult> {
   return post<DataTable2DResult>('/sensitivity/data-table', req);
+}
+
+// ─── 4. Efficient frontier ──────────────────────────────────────────────
+
+export interface FrontierInitiativeInput {
+  id: string;
+  /** Expected value of the initiative, e.g. NPV. */
+  value: number;
+  /** Probability-of-failure style risk in [0, 1]. */
+  risk: number;
+  /** Capital / budget required to undertake the initiative. */
+  cost: number;
+}
+
+export interface FrontierPoint {
+  /** Portfolio-level risk (weighted average of member risks) in [0, 1]. */
+  risk: number;
+  /** Total portfolio value (sum of member values). */
+  value: number;
+  /** Initiative ids selected at this point on the frontier. */
+  mix: string[];
+}
+
+export interface EfficientFrontierRequest {
+  initiatives: FrontierInitiativeInput[];
+  /** Total capital available; <= 0 means unconstrained. */
+  budget: number;
+  /** Number of frontier samples (default 12 server-side, min 2). */
+  points?: number;
+}
+
+export interface EfficientFrontierResponse {
+  curve: FrontierPoint[];
+  /** Frontier point matching the full (all-affordable) selection, if any. */
+  current?: FrontierPoint;
+  /** Frontier point with the best value-per-unit-risk ratio. */
+  optimal: FrontierPoint;
+}
+
+export async function runEfficientFrontier(
+  req: EfficientFrontierRequest
+): Promise<EfficientFrontierResponse> {
+  return post<EfficientFrontierResponse>('/efficient-frontier', req);
+}
+
+// ─── 5. Scenario compute ────────────────────────────────────────────────
+
+export type ScenarioName = 'base' | 'optimistic' | 'conservative';
+
+export interface ScenarioApplyRequest {
+  assumptions: Record<string, unknown>;
+  scenario: ScenarioName;
+}
+
+export interface ScenarioApplyResponse {
+  assumptions: Record<string, unknown>;
+}
+
+export async function runScenarioApply(req: ScenarioApplyRequest): Promise<ScenarioApplyResponse> {
+  return post<ScenarioApplyResponse>('/scenarios/apply', req);
+}
+
+export interface ScenarioFanRequest {
+  /** Per-scenario metric -> time-series lookup (already scenario-scaled). */
+  scenarios: Partial<Record<ScenarioName, Record<string, number[]>>>;
+  metric: string;
+}
+
+export interface ScenarioFanResponse {
+  /** The base scenario's series for the requested metric. */
+  base: number[];
+  /** Upper/lower (and any extra) bands for the fan chart. */
+  bands: Array<{ label: string; values: number[] }>;
+}
+
+export async function runScenarioFan(req: ScenarioFanRequest): Promise<ScenarioFanResponse> {
+  return post<ScenarioFanResponse>('/scenarios/fan', req);
 }
