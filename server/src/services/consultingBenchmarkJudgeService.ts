@@ -447,6 +447,7 @@ export function buildJudgeSystemPrompt(): string {
     'and (2) five fixed quality dimensions on a 1.0 to 5.0 scale in 0.5 increments only.',
     'Allowed score values: 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5.',
     'Return JSON only — no markdown, no commentary outside the JSON object.',
+    'CRITICAL — emit STRICTLY VALID JSON: every double-quote character that appears INSIDE a string value MUST be escaped as \\" ; never place a raw unescaped " inside a value. When quoting words or phrases inside a rationale/evidence string, prefer single quotes \' or typographic marks („ ” ‘ ’) so the JSON string is never terminated early. Do not use literal newlines inside string values.',
     'For every scale dimension you MUST include: dimension, score, rationale (1-3 sentences),',
     'evidence (an array of short quotes from the model answer), confidence (low|medium|high).',
     'For every binary criterion you MUST include: id (must match exactly), pass (boolean), rationale (1-2 sentences).',
