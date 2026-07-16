@@ -39,7 +39,9 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    // HP-4 domknięty (wejście /agent-plan + sidebar + silnik PlanBuilder),
+    // zweryfikowany wizualnie w dev-render (light+dark, pełny flow) → default ON.
+    return parsed === null ? true : parsed;
   } catch {
     return false;
   }
