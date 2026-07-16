@@ -20,6 +20,10 @@ export type AgentPlanStatus =
   | 'executing'
   | 'paused'
   | 'completed'
+  // Continue-on-error (Piotr decision 07-16): a plan that ran to the end but
+  // had 1+ failing steps lands here, never in 'failed' — see
+  // agentPlannerService.executePlan's header comment for the full rationale.
+  | 'completed_with_errors'
   | 'failed'
   | 'cancelled';
 

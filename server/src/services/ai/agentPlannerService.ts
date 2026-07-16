@@ -16,6 +16,7 @@ export type PlanStatus =
   | 'executing'
   | 'paused'
   | 'completed'
+  | 'completed_with_errors'
   | 'failed'
   | 'cancelled';
 export type StepStatus =
@@ -143,6 +144,26 @@ class AgentPlannerService {
     };
   }
 
+  /**
+   * Executes a plan's steps sequentially, delegating each step to `toolExecutor`.
+   *
+   * Continue-on-error (Piotr decision 07-16, koncept §5 Q1 — RESOLVED):
+   * a failing step is marked `failed` but does NOT stop the plan — execution
+   * continues with the remaining steps (robustness over fail-fast). This
+   * engine has no step-dependency graph (unlike `toolChainExecutor`'s DAG with
+   * `$step.X.field` interpolation) — steps here are independent tool calls, so
+   * "continue with steps that don't depend on the failed one" reduces to
+   * "continue sequentially, skipping only the failed step itself". A step that
+   * requires approval still PAUSES the plan (`awaiting_approval`) — that is a
+   * checkpoint, not an error, and is unaffected by this change.
+   *
+   * Final status: `completed` when every step succeeded, `completed_with_errors`
+   * when at least one step failed but the loop still ran to the end (partial
+   * result — still useful, per the resilience decision), `failed` is now only
+   * reachable via `cancelPlan`'s counterpart paths or an unexpected exception
+   * escaping this method (e.g. a DB write failure) — never as a "some steps
+   * broke" verdict.
+   */
   async executePlan(
     planId: string,
     toolExecutor: (toolName: string, input: Record<string, unknown>) => Promise<unknown>,
@@ -153,6 +174,8 @@ class AgentPlannerService {
 
     await this.updatePlanStatus(planId, 'executing');
     emitter?.emit('agent_plan', { planId, status: 'executing', steps: plan.steps });
+
+    const failedSteps: PlanStep[] = [];
 
     for (let i = plan.currentStepIndex; i < plan.steps.length; i++) {
       const step = plan.steps[i];
@@ -166,6 +189,7 @@ class AgentPlannerService {
           toolName: step.toolName,
           requiresApproval: true,
         });
+        step.status = 'awaiting_approval'; // keep the returned plan's in-memory step in sync with the DB write above
         plan.status = 'awaiting_approval';
         plan.currentStepIndex = i;
         return plan;
@@ -204,13 +228,12 @@ class AgentPlannerService {
           durationMs,
           success: true,
         });
-
-        await this.updatePlanProgress(planId, i + 1);
       } catch (err: any) {
         const durationMs = Date.now() - startMs;
         step.status = 'failed';
         step.errorMessage = err?.message || 'Unknown error';
         step.durationMs = durationMs;
+        failedSteps.push(step);
 
         await dbRun(
           `UPDATE ai_agent_plan_steps
@@ -229,18 +252,42 @@ class AgentPlannerService {
           error: step.errorMessage,
         });
 
-        await this.updatePlanStatus(planId, 'failed', i, step.errorMessage);
-        plan.status = 'failed';
-        plan.errorMessage = step.errorMessage;
-        return plan;
+        // Continue-on-error: do NOT return here. Fall through to the next
+        // step — no dependency graph exists in this engine, so "skip the
+        // failed step and keep going" is the correct continuation.
       }
+
+      // Progress reflects "steps attempted" (success or failure) so the
+      // panel's progress bar keeps moving through a partially-failing plan;
+      // per-step status/errorMessage (already surfaced to the UI) is what
+      // distinguishes success from failure at each position.
+      await this.updatePlanProgress(planId, i + 1);
     }
 
-    await this.updatePlanStatus(planId, 'completed');
-    emitter?.emit('agent_plan', { planId, status: 'completed' });
+    const finalStatus: PlanStatus = failedSteps.length > 0 ? 'completed_with_errors' : 'completed';
+    const finalErrorMessage =
+      failedSteps.length > 0
+        ? `${failedSteps.length}/${plan.steps.length} steps failed: ${failedSteps
+            .map((s) => `${s.toolName} (${s.errorMessage || 'unknown error'})`)
+            .join('; ')}`
+        : undefined;
+    const finalResultSummary =
+      failedSteps.length === 0
+        ? `Completed ${plan.steps.length}/${plan.steps.length} steps.`
+        : `Completed ${plan.steps.length - failedSteps.length}/${plan.steps.length} steps (${failedSteps.length} failed — see report).`;
 
-    plan.status = 'completed';
-    plan.completedSteps = plan.totalSteps;
+    await this.finalizePlan(planId, finalStatus, finalResultSummary, finalErrorMessage);
+    emitter?.emit('agent_plan', {
+      planId,
+      status: finalStatus,
+      failedCount: failedSteps.length,
+      totalSteps: plan.steps.length,
+    });
+
+    plan.status = finalStatus;
+    plan.completedSteps = plan.steps.length;
+    plan.resultSummary = finalResultSummary;
+    plan.errorMessage = finalErrorMessage;
     return plan;
   }
 
@@ -372,7 +419,7 @@ class AgentPlannerService {
       sets.push('error_message = ?');
       params.push(errorMessage);
     }
-    if (status === 'completed') {
+    if (status === 'completed' || status === 'completed_with_errors') {
       sets.push("completed_at = datetime('now')");
     }
     if (status === 'executing') {
@@ -381,6 +428,22 @@ class AgentPlannerService {
 
     params.push(planId);
     await dbRun(`UPDATE ai_agent_plans SET ${sets.join(', ')} WHERE id = ?`, params);
+  }
+
+  /** Terminal-state writer for `executePlan`'s end-of-loop finalization (continue-on-error report). */
+  private async finalizePlan(
+    planId: string,
+    status: PlanStatus,
+    resultSummary: string,
+    errorMessage?: string
+  ): Promise<void> {
+    await dbRun(
+      `UPDATE ai_agent_plans
+       SET status = ?, result_summary = ?, error_message = ?, completed_at = datetime('now'),
+           updated_at = datetime('now')
+       WHERE id = ?`,
+      [status, resultSummary, errorMessage || null, planId]
+    );
   }
 
   private async updateStepStatus(stepId: string, status: StepStatus): Promise<void> {
