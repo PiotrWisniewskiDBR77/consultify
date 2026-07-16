@@ -42,7 +42,11 @@ const defaultFormat = (value: number): string => {
 };
 
 const VIEW_W = 720;
-const LABEL_W = 150;
+// LABEL_W must fit the longest driver name (Polish labels run long, e.g.
+// "Wzrost rezydualny ±50bps") without the text running past x=0 and being
+// clipped by the SVG viewBox. Widened from 150 → 210 (audit finding: labels
+// were being cut off at the left edge).
+const LABEL_W = 210;
 const PAD_RIGHT = 24;
 const PAD_TOP = 16;
 const PAD_BOTTOM = 28;
