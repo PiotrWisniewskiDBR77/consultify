@@ -46,12 +46,17 @@ import {
 
 export interface AgentPlanPanelProps {
   planId: string;
-  /** Odświeżanie w tle (ms) dopóki plan nie osiągnie stanu końcowego. Default 3000. */
+  /**
+   * Odświeżanie w tle (ms) dopóki plan nie osiągnie stanu końcowego. Default
+   * 2000 — koncept §1/§4 zadanie F4: "jeśli SSE za trudne, polling co 2s"
+   * (Piotr decision 07-16: wykonanie w tle + panel po prawej, niekoniecznie
+   * na żywo przez SSE — 2s polling jest wystarczające dla tego trybu).
+   */
   pollIntervalMs?: number;
   onClose?: () => void;
 }
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
+const TERMINAL_STATUSES = new Set(['completed', 'completed_with_errors', 'failed', 'cancelled']);
 
 const STEP_ICON: Record<AgentPlanStep['status'], React.ReactNode> = {
   pending: <Circle size={14} className="text-c-text-muted" />,
@@ -68,6 +73,7 @@ const STATUS_LABEL_KEY: Record<AgentPlan['status'], string> = {
   executing: 'agentPlan.status.executing',
   paused: 'agentPlan.status.paused',
   completed: 'agentPlan.status.completed',
+  completed_with_errors: 'agentPlan.status.completedWithErrors',
   failed: 'agentPlan.status.failed',
   cancelled: 'agentPlan.status.cancelled',
 };
@@ -78,13 +84,14 @@ const STATUS_FALLBACK: Record<AgentPlan['status'], string> = {
   executing: 'Executing…',
   paused: 'Paused',
   completed: 'Completed',
+  completed_with_errors: 'Completed with errors',
   failed: 'Failed',
   cancelled: 'Cancelled',
 };
 
 export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
   planId,
-  pollIntervalMs = 3000,
+  pollIntervalMs = 2000,
   onClose,
 }) => {
   const { t } = useTranslation();
@@ -217,7 +224,9 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
               </div>
               <div className="h-1.5 w-full rounded-full bg-c-border-subtle overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-c-success transition-[width] duration-300"
+                  className={`h-full rounded-full transition-[width] duration-300 ${
+                    plan.status === 'completed_with_errors' ? 'bg-c-warning' : 'bg-c-success'
+                  }`}
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
