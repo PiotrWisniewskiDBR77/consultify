@@ -19,6 +19,8 @@
  *     (Mode 2) is owned by `documentTemplateService.ts`.
  */
 
+import { randomUUID } from 'node:crypto';
+
 import logger from '../../utils/Logger.js';
 import { safePersistEvidenceContract } from '../evidence/evidenceContractBridge.js';
 import {
@@ -562,7 +564,14 @@ export async function materializeDocumentArtifact(
 
   const sourceRefs = incomingSourceRefs;
 
-  const provisionalArtifactId = `documentstudio-pending-${Date.now()}`;
+  // BUG-FIX (OXFORD/Word stale self-ref): generate the REAL wave5 artifact id
+  // UP FRONT and thread it through both the schema (`schema.artifactId`) and the
+  // wave5 row (via `externalArtifactId`), instead of building the schema with a
+  // transient `documentstudio-pending-<ts>` placeholder that then never gets
+  // corrected in the persisted `content_json_native` / `metadata_json`. Matches
+  // createWave5Artifact's own default id scheme (`artifact-<uuid>`), so the
+  // persisted schema's self-referential id equals the real row id on reload.
+  const provisionalArtifactId = `artifact-${randomUUID()}`;
   // Premium tier (B3 structure + content-gen) when flag ON; fail-open + byte-identical
   // to the deterministic builder when OFF (default, all clients). preferPremium tied to
   // useLlm so a purely deterministic request stays deterministic even with the flag on.
@@ -674,6 +683,9 @@ export async function materializeDocumentArtifact(
     projectId: params.projectId ?? null,
     sourceRefs: sourceRefs as unknown[],
     metadata,
+    // Persist under the id the schema already carries, so the row id and the
+    // schema's self-referential `artifactId` are identical on reload.
+    externalArtifactId: provisionalArtifactId,
   });
 
   const artifactId = String(artifact?.artifactId ?? artifact?.artifact_id ?? provisionalArtifactId);
