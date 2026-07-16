@@ -159,12 +159,15 @@ class AuditEventsService {
     const total = Number(countResult?.count ?? 0);
 
     const data = await db.all(
+      // Unified schema (624) is live everywhere; legacy 019 columns
+      // (actor_user_id/action_type/entity_type/entity_id) never coexist and
+      // referencing them in COALESCE made Postgres 500 (parse-time column check).
       `SELECT id, ts as timestamp,
-              COALESCE(actor_id, actor_user_id) as "actorId",
+              actor_id as "actorId",
               actor_type as "actorType",
-              COALESCE(action, action_type) as action,
-              COALESCE(resource_type, entity_type) as "resourceType",
-              COALESCE(resource_id, entity_id) as "resourceId",
+              action as action,
+              resource_type as "resourceType",
+              resource_id as "resourceId",
               before_json as "before", after_json as "after", metadata_json as metadata
        FROM audit_events WHERE ${where} ORDER BY ts DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]

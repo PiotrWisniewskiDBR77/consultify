@@ -333,7 +333,7 @@ class UnifiedKGService {
       conditions.push('e.merged_into_id IS NULL');
     }
     if (!options.includeRedacted) {
-      conditions.push('(e.redacted = 0 OR e.redacted IS NULL)');
+      conditions.push('(e.redacted = FALSE OR e.redacted IS NULL)');
     }
     if (options.query) {
       conditions.push('(LOWER(e.name) LIKE ? OR LOWER(e.description) LIKE ?)');
@@ -762,7 +762,7 @@ class UnifiedKGService {
       (await db.all(
         `SELECT canonical_name, type, GROUP_CONCAT(id) as ids, GROUP_CONCAT(name, '|||') as names
        FROM knowledge_graph_entities
-       WHERE organization_id = ? AND merged_into_id IS NULL AND (redacted = 0 OR redacted IS NULL)
+       WHERE organization_id = ? AND merged_into_id IS NULL AND (redacted = FALSE OR redacted IS NULL)
        GROUP BY canonical_name, type
        HAVING COUNT(*) > 1
        ORDER BY COUNT(*) DESC
