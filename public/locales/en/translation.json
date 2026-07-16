@@ -18541,6 +18541,20 @@
         "benchmarkMedian": "Median",
         "benchmarkRun": "Compare to benchmark"
       }
+    },
+    "versions": {
+      "version": "Version",
+      "scenario": "Scenario",
+      "status": "Status",
+      "created": "Created",
+      "compareFrom": "From",
+      "compareTo": "To",
+      "showDiff": "Show diff",
+      "diffTitle": "Assumption diff",
+      "noDiff": "No assumption changes",
+      "key": "Assumption",
+      "diffFailed": "Diff failed",
+      "empty": "No saved versions yet. Approve a model to create a snapshot."
     }
   },
   "portfolio": {

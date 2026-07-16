@@ -116,6 +116,10 @@ const DEFAULT_ON: ReadonlySet<FinanceFlag> = new Set([
   'm16PlanningSuite',
   'm16AdvancedSuite',
   'm16ValueSuite',
+  // Zweryfikowane dev-render 2026-07-16 (light+dark, po naprawie dark-mode/i18n):
+  'investmentAppraisal',
+  'valuationVisuals',
+  'modelVersioning',
 ]);
 
 /** True when the given finance cockpit feature is enabled. */

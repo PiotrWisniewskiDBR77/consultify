@@ -19009,6 +19009,20 @@
         "benchmarkMedian": "Mediana",
         "benchmarkRun": "Porównaj z benchmarkiem"
       }
+    },
+    "versions": {
+      "version": "Wersja",
+      "scenario": "Scenariusz",
+      "status": "Status",
+      "created": "Utworzono",
+      "compareFrom": "Od",
+      "compareTo": "Do",
+      "showDiff": "Pokaż różnice",
+      "diffTitle": "Różnica założeń",
+      "noDiff": "Brak zmian w założeniach",
+      "key": "Założenie",
+      "diffFailed": "Nie udało się porównać",
+      "empty": "Brak zapisanych wersji. Zatwierdź model, aby utworzyć migawkę."
     }
   },
   "portfolio": {
