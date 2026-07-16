@@ -127,10 +127,12 @@ import { CreateBudgetModal } from './modals/CreateBudgetModal';
 import { CreateModelModal } from './modals/CreateModelModal';
 import { CreateValuationModal } from './modals/CreateValuationModal';
 import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
+import { BankingValuePanel } from './panels/BankingValuePanel';
 import { CashForecastPanel } from './panels/CashForecastPanel';
 import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
 import { DriverTreePanel } from './panels/DriverTreePanel';
 import { EfficientFrontierPanel } from './panels/EfficientFrontierPanel';
+import { ExtendedRatiosPanel } from './panels/ExtendedRatiosPanel';
 import { HeadcountPlannerPanel } from './panels/HeadcountPlannerPanel';
 import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
 import { MonteCarloNpvPanel } from './panels/MonteCarloNpvPanel';
@@ -138,6 +140,9 @@ import { RealOptionsPanel } from './panels/RealOptionsPanel';
 import { RollingForecastPanel } from './panels/RollingForecastPanel';
 import { ScenarioComputePanel } from './panels/ScenarioComputePanel';
 import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
+import { ValueAttributionPanel } from './panels/ValueAttributionPanel';
+import { ValueCapturePipelinePanel } from './panels/ValueCapturePipelinePanel';
+import { ValueLedgerPanel } from './panels/ValueLedgerPanel';
 import { ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
 import { VarianceNarrationPanel } from './panels/VarianceNarrationPanel';
@@ -2966,6 +2971,16 @@ export const FinanceHub: React.FC = () => {
       isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'prediction';
     const _showDriverTree = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'models';
     const _showHeadcount = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'models';
+    // M16 value suite (wire-d) — independent of m16ValuationSuite /
+    // m16PlanningSuite / m16AdvancedSuite (does not touch those flags).
+    // Ledger/attribution/capture/banking follow the 'models' tab convention
+    // established by ValueOfficePanel (_showValue above); extended ratios
+    // follows the 'analysis' tab (ratio-analysis semantics).
+    const _showValueLedger = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
+    const _showAttribution = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
+    const _showCapturePipeline = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
+    const _showBanking = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
+    const _showExtendedRatios = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'analysis';
     if (
       _showInvest ||
       _showValue ||
@@ -2979,7 +2994,12 @@ export const FinanceHub: React.FC = () => {
       _showScenarioCompute ||
       _showRollingForecast ||
       _showDriverTree ||
-      _showHeadcount
+      _showHeadcount ||
+      _showValueLedger ||
+      _showAttribution ||
+      _showCapturePipeline ||
+      _showBanking ||
+      _showExtendedRatios
     ) {
       return (
         <div className="flex flex-col">
@@ -3000,6 +3020,11 @@ export const FinanceHub: React.FC = () => {
             {_showRollingForecast && <RollingForecastPanel />}
             {_showDriverTree && <DriverTreePanel />}
             {_showHeadcount && <HeadcountPlannerPanel />}
+            {_showValueLedger && <ValueLedgerPanel />}
+            {_showAttribution && <ValueAttributionPanel />}
+            {_showCapturePipeline && <ValueCapturePipelinePanel />}
+            {_showBanking && <BankingValuePanel />}
+            {_showExtendedRatios && <ExtendedRatiosPanel />}
           </div>
         </div>
       );
