@@ -22731,7 +22731,9 @@
         "commentDraftPrompt": "Draft a concise and professional decision comment. Comment priority: {{priority}}. Decision title: \"{{title}}\". Description: \"{{description}}\". Current user draft: \"{{draft}}\". Return comment text only (no quotes, no list).",
         "pmConsultantSystemInstruction": "You are a PM consultant. Return a short comment ready to publish.",
         "commentDraftFallback": "I suggest a short validation of this option on historical data and clarifying execution ownership.",
-        "commentDraftAppend": "It is also worth clarifying owner and deadline."
+        "commentDraftAppend": "It is also worth clarifying owner and deadline.",
+        "analyzeOptionsKickoff": "Analyze the options for decision \"{{title}}\": compare pros/cons, risks, and propose a recommendation.",
+        "analyzeOptionsKickoffUntitled": "untitled"
       },
       "altGen": {
         "option1Title": "Option 1: Conservative approach",

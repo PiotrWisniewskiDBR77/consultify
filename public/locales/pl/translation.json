@@ -23771,7 +23771,9 @@
         "commentDraftPrompt": "Przygotuj zwięzły i profesjonalny komentarz do decyzji. Priorytet komentarza: {{priority}}. Tytuł decyzji: \"{{title}}\". Opis: \"{{description}}\". Obecny szkic użytkownika: \"{{draft}}\". Zwróć sam tekst komentarza (bez cudzysłowów i bez listy).",
         "pmConsultantSystemInstruction": "Jesteś konsultantem PM. Zwracaj krótki komentarz gotowy do publikacji.",
         "commentDraftFallback": "Proponuję krótką walidację opcji na danych historycznych oraz doprecyzowanie właściciela wykonania.",
-        "commentDraftAppend": "Warto też doprecyzować właściciela i termin."
+        "commentDraftAppend": "Warto też doprecyzować właściciela i termin.",
+        "analyzeOptionsKickoff": "Przeanalizuj opcje decyzji „{{title}}”: porównaj plusy i minusy, ryzyka oraz zaproponuj rekomendację.",
+        "analyzeOptionsKickoffUntitled": "bez tytułu"
       },
       "altGen": {
         "option1Title": "Opcja 1: Podejście konserwatywne",

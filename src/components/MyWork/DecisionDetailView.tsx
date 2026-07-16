@@ -2079,9 +2079,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       },
     });
     setChatKickoffMessage(
-      isPolish
-        ? `Przeanalizuj opcje decyzji „${title || 'bez tytułu'}”: porównaj plusy i minusy, ryzyka oraz zaproponuj rekomendację.`
-        : `Analyze the options for decision "${title || 'untitled'}": compare pros/cons, risks, and propose a recommendation.`
+      t('decisions.detail.ai.analyzeOptionsKickoff', {
+        title: title || t('decisions.detail.ai.analyzeOptionsKickoffUntitled', 'untitled'),
+        defaultValue:
+          'Analyze the options for decision "{{title}}": compare pros/cons, risks, and propose a recommendation.',
+      })
     );
     if (isChatCollapsed) {
       toggleChatCollapse();
@@ -2093,7 +2095,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     status,
     priority,
     alternatives.length,
-    isPolish,
+    t,
     isChatCollapsed,
     toggleChatCollapse,
     setChatKickoffMessage,
