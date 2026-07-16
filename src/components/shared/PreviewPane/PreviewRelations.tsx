@@ -3,6 +3,8 @@ import type { LucideIcon } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { renderIconNode } from '../renderIconNode';
+
 import { PREVIEW_META_PILL, PREVIEW_RELATION_CHIP } from './previewStyles';
 
 export interface RelationPreview {
@@ -34,7 +36,6 @@ export interface PreviewRelationsProps {
 const HOVER_DELAY = 300;
 
 const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx }) => {
-  const Icon = typeof item.icon === 'function' ? item.icon : null;
   const tone = item.tone ?? 'text-slate-600 dark:text-slate-300';
   const Tag = item.onClick ? 'button' : 'span';
 
@@ -60,7 +61,7 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
         onClick={item.onClick}
         title={item.label}
       >
-        {Icon ? <Icon size={13} /> : (item.icon as React.ReactNode)}
+        {renderIconNode(item.icon, { size: 13 })}
         {item.value !== undefined ? (
           <>
             <span className="font-medium">{item.label}</span>
