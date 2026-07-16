@@ -200,10 +200,7 @@ export async function postCreateGate(req: CreateGateRequest): Promise<ValueCaptu
   return v8Post<ValueCaptureGate>(`${BASE}/capture/gates`, req);
 }
 
-export async function postAdvanceGate(
-  id: string,
-  signedOffBy: string
-): Promise<ValueCaptureGate> {
+export async function postAdvanceGate(id: string, signedOffBy: string): Promise<ValueCaptureGate> {
   return v8Post<ValueCaptureGate>(`${BASE}/capture/gates/${encodeURIComponent(id)}/advance`, {
     signedOffBy,
   });

@@ -15,15 +15,7 @@
  */
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { useFinanceChartColors } from '@/components/Economics/financeChartTokens';
 import {
@@ -218,9 +210,7 @@ export const ValueAttributionPanel: React.FC<ValueAttributionPanelProps> = ({ fe
               />
             </label>
             <label className="flex flex-col text-[11px] text-c-text-muted">
-              <span className="mb-0.5">
-                {t('finance.m16d.attribution.share', 'Share (0–1)')}
-              </span>
+              <span className="mb-0.5">{t('finance.m16d.attribution.share', 'Share (0–1)')}</span>
               <input
                 type="number"
                 min={0}

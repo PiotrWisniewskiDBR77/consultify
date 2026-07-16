@@ -21,11 +21,11 @@ import {
   type BankingStatusValue,
   type Benefit,
   type BenefitType,
+  type PortfolioBankedResult,
+  type PortfolioBenefitItem,
   postBankBenefit,
   postBankingStatus,
   postPortfolioBanked,
-  type PortfolioBankedResult,
-  type PortfolioBenefitItem,
 } from '@/services/api/v8/financeValue';
 
 const fmt = (v: number | null | undefined): string => {
@@ -345,7 +345,8 @@ export const BankingValuePanel: React.FC<BankingValuePanelProps> = ({ fetcher })
                   {t('finance.m16d.banking.budgetImpact', 'Budget line delta')}
                 </p>
                 <p className="text-sm font-semibold text-c-text">
-                  {bankResult.budgetLineImpact.lineCode}: {fmt(bankResult.budgetLineImpact.deltaValue)}
+                  {bankResult.budgetLineImpact.lineCode}:{' '}
+                  {fmt(bankResult.budgetLineImpact.deltaValue)}
                 </p>
               </div>
             </>
@@ -443,12 +444,17 @@ export const BankingValuePanel: React.FC<BankingValuePanelProps> = ({ fetcher })
         </div>
 
         {portfolioResult && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="banking-portfolio-stats">
+          <div
+            className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+            data-testid="banking-portfolio-stats"
+          >
             <div className="rounded-lg border border-c-success/30 bg-c-success/10 p-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-c-success">
                 {t('finance.m16d.banking.totalBanked', 'Banked')}
               </p>
-              <p className="text-sm font-semibold text-c-text">{fmt(portfolioResult.totalBanked)}</p>
+              <p className="text-sm font-semibold text-c-text">
+                {fmt(portfolioResult.totalBanked)}
+              </p>
             </div>
             <div className="rounded-lg border border-c-warning/30 bg-c-warning/10 p-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-c-warning">
@@ -470,7 +476,9 @@ export const BankingValuePanel: React.FC<BankingValuePanelProps> = ({ fetcher })
               <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
                 {t('finance.m16d.banking.bankedPct', 'Banked %')}
               </p>
-              <p className="text-sm font-semibold text-c-text">{fmtPct(portfolioResult.bankedPct)}</p>
+              <p className="text-sm font-semibold text-c-text">
+                {fmtPct(portfolioResult.bankedPct)}
+              </p>
             </div>
           </div>
         )}

@@ -200,7 +200,10 @@ export const ExtendedRatiosPanel: React.FC<ExtendedRatiosPanelProps> = ({ fetche
     >
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-c-text">
-          {t('finance.m16d.ratios.title', 'Extended ratios — return, leverage, coverage, efficiency')}
+          {t(
+            'finance.m16d.ratios.title',
+            'Extended ratios — return, leverage, coverage, efficiency'
+          )}
         </h3>
         <p className="mt-0.5 text-xs text-c-text-secondary">
           {t(
@@ -256,10 +259,7 @@ export const ExtendedRatiosPanel: React.FC<ExtendedRatiosPanelProps> = ({ fetche
       )}
 
       {ratios && (
-        <div
-          className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5"
-          data-testid="ratios-grid"
-        >
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5" data-testid="ratios-grid">
           {ratios.map((r) => (
             <div
               key={r.code}
@@ -305,9 +305,7 @@ export const ExtendedRatiosPanel: React.FC<ExtendedRatiosPanelProps> = ({ fetche
             <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
               {t('finance.m16d.ratios.dupontEquityMultiplier', 'Equity multiplier')}
             </p>
-            <p className="text-sm font-semibold text-c-text">
-              {fmtRatio(dupont.equityMultiplier)}
-            </p>
+            <p className="text-sm font-semibold text-c-text">{fmtRatio(dupont.equityMultiplier)}</p>
           </div>
           <span className="text-c-text-muted">=</span>
           <div className="text-center">
@@ -392,10 +390,7 @@ export const ExtendedRatiosPanel: React.FC<ExtendedRatiosPanelProps> = ({ fetche
 
         <div className="h-[180px] w-full" data-testid="ratios-benchmark-chart">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={benchmarkChartData}
-              margin={{ top: 8, right: 12, bottom: 8, left: 0 }}
-            >
+            <BarChart data={benchmarkChartData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
               <CartesianGrid stroke={colors.grid} strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="label" stroke={colors.axis} tick={{ fontSize: 11 }} />
               <YAxis stroke={colors.axis} tick={{ fontSize: 11 }} tickFormatter={fmtRatio} />

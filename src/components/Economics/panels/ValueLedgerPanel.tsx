@@ -304,9 +304,7 @@ export const ValueLedgerPanel: React.FC<ValueLedgerPanelProps> = ({ fetcher }) =
                   <th className="py-1.5 pr-3 font-medium">
                     {t('finance.m16d.ledger.colReason', 'Reason')}
                   </th>
-                  <th className="py-1.5 font-medium">
-                    {t('finance.m16d.ledger.colAt', 'At')}
-                  </th>
+                  <th className="py-1.5 font-medium">{t('finance.m16d.ledger.colAt', 'At')}</th>
                 </tr>
               </thead>
               <tbody>
