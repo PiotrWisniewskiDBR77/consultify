@@ -657,7 +657,7 @@ async function resolveLlmAdapter(): Promise<{
             systemPrompt,
             messages: [{ role: 'user', content: userPrompt }],
             temperature: 0,
-            maxTokens: 1500,
+            maxTokens: 4000,
             cache: false,
           });
 
