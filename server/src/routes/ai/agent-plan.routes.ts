@@ -40,21 +40,28 @@
  *   (np. MOCK_REDIS=true w testach/dev) — nie wysadzamy żądania, plan zostaje
  *   w stanie 'planning'/'awaiting_approval' do ręcznego/testowego wykonania
  *   (pytanie Q2 konceptu — "na żywo z SSE" to zadanie 2, tu tylko szkielet).
- * - HP-4 default (Piotr decision pending): manifest-only — `manifestId` w
- *   ciele żądania jest WALIDOWANY względem istniejącego katalogu
- *   (discoveryAgentManifestCatalog, status 'built') tylko jako referencja/etykieta
- *   planu. Ten fundament NIE generuje kroków z manifestu (katalog jest
- *   summary-only, bez `steps` — patrz komentarz w pliku katalogu) i NIE
- *   zawiera pełnego Agent Buildera (edycja definicji agenta) — to HP-5,
- *   osobna, późniejsza fala (pytanie Q3 konceptu). Kroki planu podaje
- *   wywołujący explicite (`steps: [{toolName, toolInput}]`) — przyszły
- *   `PlanBuilder` (zadanie F1 konceptu) wstawi się w to samo miejsce.
+ * - HP-4 (F1 PlanBuilder — LANDED 2026-07-16): `manifestId` w ciele żądania
+ *   jest WALIDOWANY względem istniejącego katalogu
+ *   (discoveryAgentManifestCatalog). Gdy caller NIE poda `steps` explicite,
+ *   ten router woła `buildPlanFromManifest(manifest)`
+ *   (server/src/services/ai/agentPlan/planBuilderService.ts) — deterministyczne
+ *   tłumaczenie manifestu na 3-4 kroki realnych narzędzi z `toolDefinitions.ts`
+ *   (kurowane per manifest-id, z fallbackiem per `wave` dla manifestów bez
+ *   kuracji, w tym `status: 'planned'`). Katalog wciąż jest summary-only —
+ *   PlanBuilder NIE czyta z niego kroków (nie ma ich tam), tylko używa
+ *   `id`/`wave`/`displayName` jako klucza do własnej tabeli playbooków.
+ *   Caller może nadal podać `steps` explicite (np. do testów, albo gdy w
+ *   przyszłości czat/LLM-planner wygeneruje własną listę) — jawne `steps`
+ *   zawsze wygrywają nad wygenerowanymi z manifestu. Pełny Agent Builder
+ *   (edycja definicji agenta) pozostaje HP-5, osobna, późniejsza fala
+ *   (pytanie Q3 konceptu).
  */
 import { Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import { buildPlanFromManifest } from '../../services/ai/agentPlan/planBuilderService.js';
 import { agentPlannerService } from '../../services/ai/agentPlannerService.js';
 import { getDiscoveryAgentManifest } from '../../services/ai/agentRuntime/discoveryAgentManifestCatalog.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -71,13 +78,20 @@ const PlanStepInputSchema = z.object({
   toolInput: z.record(z.string(), z.unknown()).default({}),
 });
 
-const CreatePlanRequestSchema = z.object({
-  title: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(2000).optional(),
-  conversationId: z.string().trim().max(200).optional(),
-  manifestId: z.string().trim().max(120).optional(),
-  steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN),
-});
+const CreatePlanRequestSchema = z
+  .object({
+    title: z.string().trim().min(1).max(200),
+    description: z.string().trim().max(2000).optional(),
+    conversationId: z.string().trim().max(200).optional(),
+    manifestId: z.string().trim().max(120).optional(),
+    // Optional now: when omitted and manifestId is set, PlanBuilder generates
+    // the steps (see header comment). Still capped at MAX_STEPS_PER_PLAN when provided explicitly.
+    steps: z.array(PlanStepInputSchema).max(MAX_STEPS_PER_PLAN).optional(),
+  })
+  .refine((body) => Boolean(body.manifestId) || (body.steps && body.steps.length > 0), {
+    message: 'Either manifestId (to auto-generate steps) or a non-empty steps array is required',
+    path: ['steps'],
+  });
 
 /** Best-effort background dispatch — nigdy nie wysadza żądania HTTP (default: background, patrz nagłówek pliku). */
 async function tryDispatchBackgroundExecution(payload: {
@@ -128,19 +142,38 @@ router.post(
 
     const body = req.body as z.infer<typeof CreatePlanRequestSchema>;
 
+    // steps resolution order: explicit caller-provided steps win; otherwise,
+    // when manifestId is set, PlanBuilder generates them from the manifest
+    // (see header comment — F1 landed 2026-07-16).
+    let steps = body.steps;
+
     if (body.manifestId) {
       const manifest = getDiscoveryAgentManifest(body.manifestId);
       if (!manifest) {
         return res.status(400).json({ success: false, error: 'Unknown manifestId' });
       }
-      // HP-4 default (manifest-only): referencyjna walidacja, katalog nie dostarcza
-      // kroków (summary-only) — nie blokujemy 'planned', tylko oznaczamy w opisie.
+      // referencyjna walidacja — nie blokujemy 'planned', tylko oznaczamy w logu.
       if (manifest.status !== 'built') {
         logger.warn('[AgentPlanRoutes] Plan referencing a non-built manifest', {
           manifestId: body.manifestId,
           status: manifest.status,
         });
       }
+      if (!steps || steps.length === 0) {
+        const generated = buildPlanFromManifest(manifest);
+        steps = generated.map(({ toolName, toolInput }) => ({ toolName, toolInput }));
+        logger.info('[AgentPlanRoutes] PlanBuilder generated steps from manifest', {
+          manifestId: body.manifestId,
+          stepCount: steps.length,
+        });
+      }
+    }
+
+    if (!steps || steps.length === 0) {
+      return res.status(400).json({ success: false, error: 'No steps could be resolved for this plan' });
+    }
+    if (steps.length > MAX_STEPS_PER_PLAN) {
+      steps = steps.slice(0, MAX_STEPS_PER_PLAN);
     }
 
     const plan = await agentPlannerService.createPlan({
@@ -149,7 +182,7 @@ router.post(
       conversationId: body.conversationId,
       title: body.title,
       description: body.description,
-      steps: body.steps,
+      steps,
       isBackground: true, // HP-4 default (Piotr decision pending): background, patrz nagłówek pliku
     });
 
