@@ -97,23 +97,37 @@ function readLocalStorage(key: string): boolean | null {
   }
 }
 
-function readEnv(key: string): boolean {
+function readEnv(key: string): boolean | null {
   try {
     const env = (import.meta as unknown as { env?: Record<string, string> }).env;
-    return parseFlag(env?.[key]) === true;
+    return parseFlag(env?.[key]);
   } catch {
-    return false;
+    return null;
   }
 }
 
-/** True when the given finance cockpit feature is enabled (default OFF). */
+/**
+ * Suity M16 zweryfikowane wizualnie (dev-render harness, light+dark, 15 paneli —
+ * 2026-07-16) → default ON. Valuation po naprawie crimson CTA/tabów/odznaki.
+ * Query/localStorage/env nadal nadpisują (np. `?ff_m16ValueSuite=0`).
+ */
+const DEFAULT_ON: ReadonlySet<FinanceFlag> = new Set([
+  'm16ValuationSuite',
+  'm16PlanningSuite',
+  'm16AdvancedSuite',
+  'm16ValueSuite',
+]);
+
+/** True when the given finance cockpit feature is enabled. */
 export function isFinanceFlagEnabled(flag: FinanceFlag): boolean {
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
-  return readEnv(keys.env);
+  const fromEnv = readEnv(keys.env);
+  if (fromEnv !== null) return fromEnv;
+  return DEFAULT_ON.has(flag);
 }
 
 export const FINANCE_FLAG_KEYS = FLAGS;
