@@ -38,16 +38,17 @@ const FLAGS = {
     localStorage: 'ff.fin_model_versioning',
     env: 'VITE_FIN_MODEL_VERSIONING_ENABLED',
   },
-  /**
-   * M16 valuation/risk suite — Monte Carlo NPV, real options, what-if
-   * sensitivity. Bridges the 3 orphaned-UI engines wired at
-   * POST /api/v8/finance-valuation/* (fala 4). Default OFF everywhere;
-   * flip only after Piotr's pixel-verify (dev-render harness, not live login).
-   */
+  // M16 valuation/risk suite — Monte Carlo NPV, real options, what-if sensitivity.
   m16ValuationSuite: {
     query: 'ff_m16ValuationSuite',
     localStorage: 'ff.fin_m16_valuation_suite',
     env: 'VITE_FIN_M16_VALUATION_SUITE_ENABLED',
+  },
+  // M16 planning suite — cash forecast + variance narration.
+  m16PlanningSuite: {
+    query: 'ff_m16PlanningSuite',
+    localStorage: 'ff.fin_m16_planning_suite',
+    env: 'VITE_FIN_M16_PLANNING_SUITE_ENABLED',
   },
 } as const satisfies Record<string, FlagKeys>;
 

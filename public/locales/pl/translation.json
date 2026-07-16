@@ -18676,6 +18676,49 @@
         "assumed": "Założenie AI — do przeglądu",
         "missing": "Brak wartości"
       }
+    },
+    "m16b": {
+      "cashForecast": {
+        "title": "Prognoza gotówki / płynności",
+        "subtitle": "Prognoza gotówki metodą bezpośrednią — runway, alerty minimalnej gotówki i krzywa gotówki zamykającej.",
+        "run": "Uruchom prognozę",
+        "running": "Obliczanie…",
+        "openingCash": "Gotówka otwarcia",
+        "monthlyBurn": "Miesięczne spalanie gotówki (opcjonalnie)",
+        "minCash": "Próg minimalnej gotówki (opcjonalnie)",
+        "periodLabel": "Okres",
+        "inflows": "Wpływy",
+        "outflows": "Wypływy",
+        "addPeriod": "Dodaj okres",
+        "removePeriod": "Usuń okres",
+        "empty": "Ustaw gotówkę otwarcia i okresy, a następnie uruchom prognozę.",
+        "errorGeneric": "Nie udało się obliczyć prognozy gotówki.",
+        "runwayLabel": "okresów runway",
+        "runwayNever": "Gotówka nie kończy się w horyzoncie prognozy.",
+        "runwayCashOut": "Gotówka kończy się w okresie {{period}}",
+        "floorLabel": "Min. gotówka",
+        "alertsTitle": "Alerty minimalnej gotówki",
+        "alertClosing": "zamknięcie {{value}}"
+      },
+      "varianceNarration": {
+        "title": "Komentarz odchyleń (wariancji)",
+        "subtitle": "Automatyczny komentarz CFO do odchyleń plan-vs-wykonanie — nagłówek, drivery, dotkliwość.",
+        "run": "Skomentuj wariancję",
+        "running": "Analizowanie…",
+        "line": "Pozycja",
+        "plan": "Plan",
+        "actual": "Wykonanie",
+        "isCost": "Koszt",
+        "addLine": "Dodaj pozycję",
+        "removeLine": "Usuń pozycję",
+        "unlabeled": "Bez nazwy",
+        "empty": "Dodaj pozycje plan/wykonanie, a następnie uruchom komentarz.",
+        "errorGeneric": "Nie udało się wygenerować komentarza wariancji.",
+        "driversTitle": "Główne drivery",
+        "severityOnTrack": "Zgodnie z planem",
+        "severityWatch": "Do obserwacji",
+        "severityOffTrack": "Poza planem"
+      }
     }
   },
   "portfolio": {

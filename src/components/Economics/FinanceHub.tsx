@@ -127,6 +127,7 @@ import { CreateBudgetModal } from './modals/CreateBudgetModal';
 import { CreateModelModal } from './modals/CreateModelModal';
 import { CreateValuationModal } from './modals/CreateValuationModal';
 import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
+import { CashForecastPanel } from './panels/CashForecastPanel';
 import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
 import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
 import { MonteCarloNpvPanel } from './panels/MonteCarloNpvPanel';
@@ -135,6 +136,7 @@ import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
 import { ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
 import { WhatIfSensitivityPanel } from './panels/WhatIfSensitivityPanel';
+import { VarianceNarrationPanel } from './panels/VarianceNarrationPanel';
 
 /**
  * Guard against raw JS Date `.toString()` leaking into a statement title
@@ -2947,7 +2949,9 @@ export const FinanceHub: React.FC = () => {
     const _showVariance = isFinanceFlagEnabled('varianceBridge') && activeTab === 'prediction';
     const _showValVis = isFinanceFlagEnabled('valuationVisuals') && activeTab === 'valuation';
     const _showM16Suite = isFinanceFlagEnabled('m16ValuationSuite') && activeTab === 'valuation';
-    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis || _showM16Suite) {
+    const _showCashForecast = isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
+    const _showVarianceNarration = isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
+    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis || _showM16Suite || _showCashForecast || _showVarianceNarration) {
       return (
         <div className="flex flex-col">
           {_baseView}
@@ -2960,6 +2964,8 @@ export const FinanceHub: React.FC = () => {
             {_showM16Suite && <MonteCarloNpvPanel />}
             {_showM16Suite && <RealOptionsPanel />}
             {_showM16Suite && <WhatIfSensitivityPanel />}
+            {_showCashForecast && <CashForecastPanel />}
+            {_showVarianceNarration && <VarianceNarrationPanel />}
           </div>
         </div>
       );
