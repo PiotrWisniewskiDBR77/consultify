@@ -643,12 +643,15 @@ export const V8FinanceApi = {
     }),
 
   // M16/6.5 — Model version history + diff
+  // v8Get rozpakowuje jeden poziom koperty {data} — serwer wysyła {data:{versions,count}},
+  // więc tu typ to już rozpakowana zawartość (NIE {data:{...}}, to był bug: podwójny .data
+  // → komponent zawsze pokazywał pusty stan mimo działającego backendu; fix 2026-07-16).
   getModelVersions: (modelId: string) =>
-    v8Get<{ data: { versions: unknown[]; count: number } }>(
+    v8Get<{ versions: unknown[]; count: number }>(
       `/finance/models/${encodeURIComponent(modelId)}/versions`
     ),
   getModelVersionDiff: (modelId: string, from: string, to: string) =>
-    v8Get<{ data: { diff: unknown } }>(
+    v8Get<{ diff: unknown }>(
       `/finance/models/${encodeURIComponent(modelId)}/versions/diff`,
       { from, to }
     ),

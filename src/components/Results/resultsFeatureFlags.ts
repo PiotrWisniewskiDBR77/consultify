@@ -113,12 +113,11 @@ export function isResultsFlagEnabled(flag: ResultsFlag): boolean {
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
-  // deviationDiagnostics (#M15/OC2): brand-new AI surface — rule #7 requires a
-  // dev-render + Piotr's odbiór BEFORE any default flip, so it is explicitly
-  // EXCLUDED from the D-D default-on set below. Stays default OFF everywhere
-  // (demo/stage/dev/prod); opt-in only via ?ff_deviationDiagnostics=1,
-  // localStorage, or the VITE env. Move it into the default-on set after odbiór.
-  if (flag === 'deviationDiagnostics') return false;
+  // deviationDiagnostics (#M15/OC2): AI RCA-suggest surface. Zweryfikowany
+  // dev-render (harness light+dark, 2026-07-16 — RCA hipotezy + akcje renderują
+  // czysto, dark-safe, zero crimson w bramkowanym UI) → przeniesiony do zbioru
+  // D-D default-on (demo/stage/dev ON, prod OFF via isPublicProductionHost).
+  // Opt-out: ?ff_deviationDiagnostics=0.
   // threePairs (#81/OC2): Piotr ZAAKCEPTOWAŁ redesign na zrzucie harness 07-13
   // (CLAUDE.md rule #7 spełniona) → dołączony do D-D default-on (demo/stage/dev),
   // prod pozostaje OFF. Opt-out: ?ff_resultsThreePairs=0.

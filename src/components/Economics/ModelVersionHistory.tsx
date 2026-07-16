@@ -52,7 +52,7 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
     setLoading(true);
     V8FinanceApi.getModelVersions(modelId)
       .then((res: any) => {
-        setVersions(Array.isArray(res?.data?.versions) ? res.data.versions : []);
+        setVersions(Array.isArray(res?.versions) ? res.versions : []);
       })
       .catch(() => setVersions([]))
       .finally(() => setLoading(false));
@@ -65,7 +65,7 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
     setDiffError(null);
     try {
       const res: any = await V8FinanceApi.getModelVersionDiff(modelId, selectedFrom, selectedTo);
-      setDiff(res?.data?.diff ?? null);
+      setDiff(res?.diff ?? null);
     } catch (e: any) {
       setDiffError(e?.response?.data?.error || t('finance.versions.diffFailed', 'Diff failed'));
     } finally {

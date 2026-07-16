@@ -37,7 +37,9 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    // EV Basket football-field zweryfikowany dev-render (light+dark, 2026-07-16 —
+    // triangulacja 4 metod, read-only, zero crimson) → default ON. Opt-out ?ff_evBasket=0.
+    return parsed === null ? true : parsed;
   } catch {
     return false;
   }
