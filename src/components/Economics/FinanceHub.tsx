@@ -129,9 +129,14 @@ import { CreateValuationModal } from './modals/CreateValuationModal';
 import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
 import { CashForecastPanel } from './panels/CashForecastPanel';
 import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
+import { DriverTreePanel } from './panels/DriverTreePanel';
+import { EfficientFrontierPanel } from './panels/EfficientFrontierPanel';
+import { HeadcountPlannerPanel } from './panels/HeadcountPlannerPanel';
 import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
 import { MonteCarloNpvPanel } from './panels/MonteCarloNpvPanel';
 import { RealOptionsPanel } from './panels/RealOptionsPanel';
+import { RollingForecastPanel } from './panels/RollingForecastPanel';
+import { ScenarioComputePanel } from './panels/ScenarioComputePanel';
 import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
 import { ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
@@ -2953,6 +2958,15 @@ export const FinanceHub: React.FC = () => {
       isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
     const _showVarianceNarration =
       isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
+    // M16 advanced suite (wire-c) — independent of m16ValuationSuite/m16PlanningSuite (fala 1).
+    const _showFrontier =
+      isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'valuation';
+    const _showScenarioCompute =
+      isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'prediction';
+    const _showRollingForecast =
+      isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'prediction';
+    const _showDriverTree = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'models';
+    const _showHeadcount = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'models';
     if (
       _showInvest ||
       _showValue ||
@@ -2961,7 +2975,12 @@ export const FinanceHub: React.FC = () => {
       _showValVis ||
       _showM16Suite ||
       _showCashForecast ||
-      _showVarianceNarration
+      _showVarianceNarration ||
+      _showFrontier ||
+      _showScenarioCompute ||
+      _showRollingForecast ||
+      _showDriverTree ||
+      _showHeadcount
     ) {
       return (
         <div className="flex flex-col">
@@ -2977,6 +2996,11 @@ export const FinanceHub: React.FC = () => {
             {_showM16Suite && <WhatIfSensitivityPanel />}
             {_showCashForecast && <CashForecastPanel />}
             {_showVarianceNarration && <VarianceNarrationPanel />}
+            {_showFrontier && <EfficientFrontierPanel />}
+            {_showScenarioCompute && <ScenarioComputePanel />}
+            {_showRollingForecast && <RollingForecastPanel />}
+            {_showDriverTree && <DriverTreePanel />}
+            {_showHeadcount && <HeadcountPlannerPanel />}
           </div>
         </div>
       );

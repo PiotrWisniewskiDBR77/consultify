@@ -50,6 +50,14 @@ const FLAGS = {
     localStorage: 'ff.fin_m16_planning_suite',
     env: 'VITE_FIN_M16_PLANNING_SUITE_ENABLED',
   },
+  // M16 advanced suite (wire-c) — efficient frontier, scenario compute,
+  // driver tree, rolling forecast, headcount planner. Independent of
+  // m16ValuationSuite / m16PlanningSuite (fala 1) — does not touch those flags.
+  m16AdvancedSuite: {
+    query: 'ff_m16AdvancedSuite',
+    localStorage: 'ff.fin_m16_advanced_suite',
+    env: 'VITE_FIN_M16_ADVANCED_SUITE_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type FinanceFlag = keyof typeof FLAGS;
