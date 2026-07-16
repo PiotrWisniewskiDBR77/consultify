@@ -22,6 +22,7 @@ import { createRoot } from 'react-dom/client';
 import i18n from '../src/i18n';
 import AdminCommandCenterPanelScreen from './screens/admin-command-center-panel';
 import AdminSsoSelfServiceCardScreen from './screens/admin-sso-self-service-card';
+import AgentPlanViewScreen from './screens/agent-plan-view';
 import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
 import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
 import AssessmentListScreen from './screens/assessment-list';
@@ -75,6 +76,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'admin-sso-self-service-card': {
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
     render: () => <AdminSsoSelfServiceCardScreen />,
+  },
+  'agent-plan-view': {
+    label:
+      'HP-4 F3 — /agent-plan entry point (AgentManifestLauncher → AgentPlanPanel), ff_agentPlan; append &ff_agentPlan=1 to the URL',
+    render: () => <AgentPlanViewScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

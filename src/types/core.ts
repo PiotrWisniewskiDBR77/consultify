@@ -165,6 +165,7 @@ export enum AppView {
   PROJECT_INTELLIGENCE = 'PROJECT_INTELLIGENCE', // AI-powered project knowledge capture
   PROJECTS = 'PROJECTS', // Zwornik (#78): project stakeholder registry + finance rollup
   CLIENT_VAULT = 'CLIENT_VAULT', // HP-22 Harvey-Parity: org-scoped client document vault (gated, ff.client_vault)
+  AGENT_PLAN = 'AGENT_PLAN', // HP-4 F3 Harvey-Parity: run-agent workspace entry (gated, ff.agent_plan)
 
   // Initiative Lifecycle Management
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP

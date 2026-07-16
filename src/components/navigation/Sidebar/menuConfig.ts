@@ -39,6 +39,7 @@ import {
 import React from 'react';
 
 import { AppView, UserRole } from '../../../types';
+import { isAgentPlanEnabled } from '../../../utils/agentPlanFlag';
 import { isClientVaultEnabled } from '../../../utils/clientVaultFlag';
 import { MenuItem } from './types';
 
@@ -72,6 +73,22 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
             label: t('sidebar.clientVault', 'Client Vault'),
             icon: React.createElement(Database, { size: 20 }),
             viewId: AppView.CLIENT_VAULT,
+          },
+        ]
+      : []),
+    // 2.6 Uruchom agenta (HP-4 F3, Harvey-Parity) — entry point into
+    // AgentPlanWorkspace (pick one of 31 ready manifests, run as a
+    // background plan with an approval gate). Wizualnie nowa powierzchnia →
+    // gated OFF by default (agentPlanFlag, reguła #7/#9). Nav entry is
+    // omitted entirely when the flag is off, so the sidebar is byte-for-byte
+    // unchanged for everyone until Piotr accepts the screenshot.
+    ...(isAgentPlanEnabled()
+      ? [
+          {
+            id: 'AGENT_PLAN',
+            label: t('sidebar.agentPlan', 'Run agent'),
+            icon: React.createElement(Bot, { size: 20 }),
+            viewId: AppView.AGENT_PLAN,
           },
         ]
       : []),
@@ -301,6 +318,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
     [AppView.CLIENT_VAULT]: t('sidebar.clientVault', 'Client Vault'),
+    [AppView.AGENT_PLAN]: t('sidebar.agentPlan', 'Run agent'),
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
     [AppView.CONCLUSIONS]: t('sidebar.conclusions', 'Conclusions'),

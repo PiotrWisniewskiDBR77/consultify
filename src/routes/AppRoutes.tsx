@@ -27,6 +27,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
+import { isAgentPlanEnabled } from '@/utils/agentPlanFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
@@ -55,6 +56,13 @@ const MyWorkView = lazyWithRetry(() =>
 // URL never shows a blank shell.
 const ClientDocumentsVault = lazyWithRetry(() =>
   import('@/views/vault/ClientDocumentsVault').then((m) => ({ default: m.ClientDocumentsVault }))
+);
+// HP-4 F3 Harvey-Parity: run-agent workspace entry (AgentPlanWorkspace).
+// Gated OFF by default (agentPlanFlag) — component self-gates and renders
+// null, the route below additionally redirects away when disabled so the
+// URL never shows a blank shell (mirrors ClientDocumentsVault above).
+const AgentPlanView = lazyWithRetry(() =>
+  import('@/views/AgentPlanView').then((m) => ({ default: m.AgentPlanView }))
 );
 // M16 P0-4: ContextBuilderView is no longer routed standalone — /context/* now
 // redirects to the canonical /organization/* workspace. The view file is retained
@@ -1259,6 +1267,30 @@ export const AppRoutes: React.FC = () => {
               </MainLayout>
             ) : (
               <Navigate to={ROUTES.MY_WORK} replace />
+            )
+          }
+        />
+
+        {/* Run agent (HP-4 F3, Harvey-Parity) — AgentPlanWorkspace entry
+            point. Gated OFF by default (agentPlanFlag, reguła #7/#9): when
+            disabled the route redirects to /chat so hitting /agent-plan by
+            URL never shows a blank shell. No visual/behavioral change for
+            anyone until the flag is flipped after Piotr's screenshot accept. */}
+        <Route
+          path={ROUTES.AGENT_PLAN}
+          element={
+            isAgentPlanEnabled() ? (
+              <MainLayout breadcrumbs={breadcrumbs || ['Agent']}>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="fade">
+                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                      <AgentPlanView />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            ) : (
+              <Navigate to={ROUTES.AI_CHAT} replace />
             )
           }
         />
