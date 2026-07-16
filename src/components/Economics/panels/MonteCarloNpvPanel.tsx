@@ -253,7 +253,7 @@ export const MonteCarloNpvPanel: React.FC<MonteCarloNpvPanelProps> = ({ fetcher 
           type="button"
           onClick={() => void run()}
           disabled={loading || rows.length === 0}
-          className="rounded-lg bg-c-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text transition hover:border-c-focus disabled:opacity-50"
           data-testid="mc-run"
         >
           {loading
