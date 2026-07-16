@@ -38,6 +38,14 @@ const FLAGS = {
     localStorage: 'ff.fin_model_versioning',
     env: 'VITE_FIN_MODEL_VERSIONING_ENABLED',
   },
+  // ── wire-b block (M16 Planning-Suite: cash forecast + variance narration) ──
+  // Own key, own block — do not fold into partner blocks (see wire-a
+  // m16ValuationSuite, added separately) to keep merges conflict-free.
+  m16PlanningSuite: {
+    query: 'ff_m16PlanningSuite',
+    localStorage: 'ff.fin_m16_planning_suite',
+    env: 'VITE_FIN_M16_PLANNING_SUITE_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type FinanceFlag = keyof typeof FLAGS;
