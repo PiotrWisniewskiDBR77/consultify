@@ -1251,9 +1251,7 @@ router.post(
         ${cols.has('source_type') ? 't.source_type' : 'NULL'} as "sourceType",
         ${cols.has('source_id') ? 't.source_id' : 'NULL'} as "sourceId"
       FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
-        AND lower(coalesce(t.task_type,'')) = 'personal'
-      LIMIT 1
+      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?      LIMIT 1
     `,
       [id, orgId, userId]
     );
@@ -1290,9 +1288,7 @@ router.get(
         t.updated_at as "updatedAt",
         t.completed_at as "completedAt"
       FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-        AND lower(coalesce(t.task_type,'')) = 'personal'
-      LIMIT 1
+      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}      LIMIT 1
     `,
       [id, orgId, ...ownerScope.params]
     );
@@ -1325,7 +1321,7 @@ router.put(
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} AND lower(coalesce(task_type,''))='personal' LIMIT 1`,
+      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} LIMIT 1`,
       [id, orgId, ...ownerScope.params]
     );
     if (!existing) {
@@ -1388,9 +1384,7 @@ router.put(
           t.updated_at as "updatedAt",
           t.completed_at as "completedAt"
         FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-          AND lower(coalesce(t.task_type,'')) = 'personal'
-        LIMIT 1
+      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}        LIMIT 1
       `,
         [id, orgId, ...ownerScope.params]
       );
@@ -1400,7 +1394,7 @@ router.put(
 
     params.push(id, orgId, ...ownerScopeNoAlias.params);
     await queryHelpers.queryRun(
-      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql} AND lower(coalesce(task_type,''))='personal'`,
+      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql}`,
       params
     );
 
@@ -1418,9 +1412,7 @@ router.put(
         t.updated_at as "updatedAt",
         t.completed_at as "completedAt"
       FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-        AND lower(coalesce(t.task_type,'')) = 'personal'
-      LIMIT 1
+      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}      LIMIT 1
     `,
       [id, orgId, ...ownerScope.params]
     );
@@ -1444,7 +1436,7 @@ router.delete(
 
     const id = String(req.params.id || '').trim();
     await queryHelpers.queryRun(
-      `DELETE FROM tasks WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} AND lower(coalesce(task_type,''))='personal'`,
+      `DELETE FROM tasks WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql}`,
       [id, orgId, ...ownerScope.params]
     );
     res.status(204).send();
