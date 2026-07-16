@@ -35,7 +35,10 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? true : parsed;
+    // Default OFF (jak melsCanvasFlag): re-skin NIGDY nie jest domyślnie ON bez
+    // akceptu Piotra na zrzutach (reguła #7 / incydent light-shell). Wcześniej
+    // `? true` = re-skin wyciekał żywy na demo bez odbioru — naprawione 2026-07-16.
+    return parsed === null ? false : parsed;
   } catch {
     return false;
   }
