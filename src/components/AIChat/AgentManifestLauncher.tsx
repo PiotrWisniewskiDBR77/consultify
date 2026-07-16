@@ -27,11 +27,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PreviewActionButton } from '@/components/shared/PreviewPane';
+import { type AgentManifestSummary, listAgentManifests } from '@/services/api/agentManifests.api';
 import { createAgentPlan } from '@/services/api/agentPlan.api';
-import {
-  type AgentManifestSummary,
-  listAgentManifests,
-} from '@/services/api/agentManifests.api';
 
 export interface AgentManifestLauncherProps {
   /** Wywołane po pomyślnym utworzeniu planu — wołający montuje AgentPlanPanel z tym id. */
@@ -54,9 +51,7 @@ const WAVE_LABEL_FALLBACK: Record<string, string> = {
   reference: 'Reference',
 };
 
-export const AgentManifestLauncher: React.FC<AgentManifestLauncherProps> = ({
-  onPlanCreated,
-}) => {
+export const AgentManifestLauncher: React.FC<AgentManifestLauncherProps> = ({ onPlanCreated }) => {
   const { t, i18n } = useTranslation();
   const isPl = (i18n.language || '').toLowerCase().startsWith('pl');
 
@@ -147,10 +142,7 @@ export const AgentManifestLauncher: React.FC<AgentManifestLauncherProps> = ({
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-c-text-muted">
-        {t(
-          'agentPlan.launcher.hint',
-          'Choose a ready-made agent to launch as a background plan.'
-        )}
+        {t('agentPlan.launcher.hint', 'Choose a ready-made agent to launch as a background plan.')}
       </p>
       <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
         {grouped.map(({ wave, items }) => (
