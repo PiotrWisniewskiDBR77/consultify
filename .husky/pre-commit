@@ -1,13 +1,28 @@
 #!/usr/bin/env sh
-# JEDYNY guard włączony po regresji 2026-07-12 (własne tabele zamiast StandardTable).
-# Wąski i szybki: odpala się tylko gdy commit dotyka komponentów .tsx.
+# Guardy włączone po regresjach wizualnych. Wąskie i szybkie.
 # Ciężkie checki (lint/typecheck/tests) pozostają wyłączone jak prosiłeś.
+
+# 1) Regresja 2026-07-12 (własne tabele zamiast StandardTable) — odpala się
+#    tylko gdy commit dotyka komponentów .tsx poza src/components/standard/.
 STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/components/.*\.tsx$' | grep -v '^src/components/standard/')
-[ -z "$STAGED" ] && exit 0
-if ! bash scripts/check-list-canon.sh $STAGED; then
+if [ -n "$STAGED" ]; then
+  if ! bash scripts/check-list-canon.sh $STAGED; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: ekran listowy nie używa StandardTable (kanon TRIADA, reguła #1)." >&2
+    echo "     To ta sama klasa błędu co 2026-07-12. Osadź <StandardTable> i commituj ponownie." >&2
+    exit 1
+  fi
+fi
+
+# 2) Crimson w powłoce artefaktów (SPEC-A, CLAUDE.md UI pkt 6) — ratchet na
+#    stałym, małym zakresie plików (NModeLayout/ExecutiveModuleShell/
+#    ArtifactRightPanel/IdeaMapWorkspace), więc odpala się zawsze i tanio.
+if ! bash scripts/check-artefakt.sh; then
   echo "" >&2
-  echo "  ⛔ Commit zablokowany: ekran listowy nie używa StandardTable (kanon TRIADA, reguła #1)." >&2
-  echo "     To ta sama klasa błędu co 2026-07-12. Osadź <StandardTable> i commituj ponownie." >&2
+  echo "  ⛔ Commit zablokowany: nowe użycie primary-*/c-accent (crimson) w powłoce artefaktu." >&2
+  echo "     Powłoka SPEC-A ma być crimson-neutralna (CLAUDE.md UI pkt 6). Napraw albo oznacz" >&2
+  echo "     świadomie jako /* crimson-ok */, i commituj ponownie." >&2
   exit 1
 fi
+
 exit 0
