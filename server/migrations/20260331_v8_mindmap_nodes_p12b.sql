@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS v8_mindmap_nodes (
   collapsed INTEGER NOT NULL DEFAULT 0
     CHECK (collapsed IN (0, 1)),
   metadata TEXT DEFAULT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (parent_id) REFERENCES v8_mindmap_nodes(id) ON DELETE CASCADE
 );
 
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS v8_mindmap_ai_proposals (
   diff_summary_json TEXT NOT NULL DEFAULT '{}',
   status TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'accepted', 'rejected')),
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   resolved_at TEXT DEFAULT NULL
 );
 
