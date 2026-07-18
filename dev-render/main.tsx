@@ -43,8 +43,10 @@ import FinanceValuePanelsScreen from './screens/finance-value-panels';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
+import MelsCanvasWorkspaceScreen from './screens/melscanvas-workspace';
 import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
 import ModelCatalogTableScreen from './screens/model-catalog-table';
+import NavDeclutterSidebarScreen from './screens/navdeclutter-sidebar';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import PartnerSettlementsViewScreen from './screens/partner-settlements-view';
@@ -226,6 +228,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mindmap-i18n-smoke': {
     label: 'Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*)',
     render: () => <MindmapI18nSmokeScreen />,
+  },
+  'navdeclutter-sidebar': {
+    label:
+      'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',
+    render: () => <NavDeclutterSidebarScreen />,
+  },
+  'melscanvas-workspace': {
+    label:
+      'ODB O5 — REALNY <IdeaMapWorkspace> (melsCanvasFlag, default OFF); &ff_melsCanvas=1 dla ON',
+    render: () => <MelsCanvasWorkspaceScreen />,
   },
   'i18n-fala1-smoke': {
     label:
