@@ -17,6 +17,13 @@
  * Every function here is pure — the runtime and the AI prompts both consume this bank,
  * so a question asked by the mentor in chat and a question rendered in the wizard are
  * the same question (single source of truth).
+ *
+ * No separate deepeningLadder.ts here (unlike ansoff/capabilitymapper/etc): this file
+ * IS the ladder for market-forces, same as swot. Wired into the live chat mentor via
+ * buildForceLadderPromptBlock -> src/hooks/discovery/toolAi/marketForces.ts's
+ * buildMarketForcesConversationProtocol -> useToolAI.ts sendMessage (J6 fix — this
+ * wiring was previously missing; the ladder content existed but the chat mentor never
+ * saw it). Full 19-tool deepening architecture map: docs/standards/O3_DEEPENING_MAP.md.
  */
 
 import type { PorterForceId } from '@/store/useToolStore';

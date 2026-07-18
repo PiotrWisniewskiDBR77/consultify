@@ -15,6 +15,14 @@
  * The answer to each question branches to the next (the conversation digs instead
  * of collecting checkboxes). Every function is pure; the wizard and the AI mentor
  * consume the same bank, so a question asked in chat equals a question in the UI.
+ *
+ * No separate deepeningLadder.ts here (unlike ansoff/capabilitymapper/etc): this file
+ * IS the ladder for portfolio-priority, same as swot/porter/value-chain. Wired into
+ * the live chat mentor via buildPortfolioLadderPromptBlock ->
+ * src/hooks/discovery/toolAi/portfolioPriority.ts's buildPortfolioConversationProtocol
+ * -> useToolAI.ts sendMessage (J6 fix — this wiring was previously entirely missing;
+ * buildPortfolioLadderPromptBlock had zero callers anywhere in the codebase). Full
+ * 19-tool deepening architecture map: docs/standards/O3_DEEPENING_MAP.md.
  */
 
 export type PortfolioLadderTrack = 'element';

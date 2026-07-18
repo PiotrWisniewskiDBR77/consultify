@@ -61,6 +61,7 @@ import {
 } from './toolAi/growthPaths';
 import {
   applyMarketForcesPendingAction,
+  buildMarketForcesConversationProtocol,
   buildMarketForcesFullSessionPrompt,
   buildMarketForcesImplicationsPrompt,
   buildMarketForcesRethinkPrompt,
@@ -79,6 +80,7 @@ import {
 } from './toolAi/operationalTool';
 import {
   applyPortfolioPendingAction,
+  buildPortfolioConversationProtocol,
   buildPortfolioFullSessionPrompt,
   buildPortfolioRethinkPrompt,
   buildPortfolioSynthesisPrompt,
@@ -241,14 +243,19 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         const stepContext = currentStepDef
           ? `\n\nCURRENT STEP: ${currentStepDef.name}\nSTEP DESCRIPTION: ${currentStepDef.description}`
           : '';
-        // Dynamic SWOT: the chat mentor interviews with the laddered question bank
-        // (same source of truth as the wizard) during the SWOT step.
+        // Dynamic SWOT / Market Forces / Value Chain / Portfolio Priority: the
+        // chat mentor interviews with each tool's laddered question bank (same
+        // source of truth as the wizard) during that tool's build step.
         const interviewProtocol =
           toolType === 'dynamic-swot'
             ? buildDynamicSwotConversationProtocol(currentStepDef?.id)
             : toolType === 'value-chain'
               ? buildValueChainConversationProtocol(currentStepDef?.id)
-              : '';
+              : toolType === 'market-forces'
+                ? buildMarketForcesConversationProtocol(currentStepDef?.id)
+                : toolType === 'portfolio-priority'
+                  ? buildPortfolioConversationProtocol(currentStepDef?.id)
+                  : '';
 
         await startStream(
           message,
