@@ -2118,8 +2118,13 @@ interface ReconciliationVarianceRow {
  * nonsensical +162252% variance. For non-monetary units we still surface the
  * projected value but suppress the fabricated monetary variance/mismatch.
  */
+// NOTE: the `unit` fed here is sourced from `v8_kpi_definitions.metric_type`
+// (enum: currency|percentage|count|ratio|duration|score|index) — the table has no
+// free-text `unit` column. Only `currency` is monetary; every other metric_type
+// (incl. `duration`) must be classified non-monetary so a summed €-realized value is
+// never differenced against a %/count/duration target.
 const NON_MONETARY_UNIT_RE =
-  /^\s*(%|percent|percentage|pct|pp|ppt|pts?|points?|ratio|score|index|nps|csat|days?|day|hrs?|hours?|months?|weeks?|szt\.?|pcs?|count|qty|units?|x)\s*$/i;
+  /^\s*(%|percent|percentage|pct|pp|ppt|pts?|points?|ratio|score|index|nps|csat|duration|days?|day|hrs?|hours?|months?|weeks?|szt\.?|pcs?|count|qty|units?|x)\s*$/i;
 
 export function isMonetaryUnit(unit: string | null | undefined): boolean {
   const u = (unit ?? '').trim();
@@ -2197,7 +2202,7 @@ export async function getReconciliationOverview(
        r.updated_at,
        k.name AS kpi_name,
        k.initiative_id AS initiative_id,
-       k.unit AS unit,
+       k.metric_type AS unit,
        k.target_value AS projected_value,
        (
          SELECT SUM(e.realized_value)
@@ -2210,7 +2215,11 @@ export async function getReconciliationOverview(
      WHERE r.organization_id = ?${filters.join('')}
      ORDER BY r.created_at DESC`,
     params,
-    { fallback: true }
+    // fallback:false — surface real query errors (bad column / schema drift) in the
+    // log instead of silently returning []. A swallowed `column ... does not exist`
+    // is what made this endpoint always-empty; the base tables exist in every real
+    // deployment, so a genuine failure here SHOULD be loud (500 + logged), not hidden.
+    { fallback: false }
   );
 
   const byStatus = emptyReconciliationStatusCounts();
