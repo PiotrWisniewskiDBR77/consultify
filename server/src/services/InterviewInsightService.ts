@@ -1767,18 +1767,22 @@ class InterviewInsightService {
       },
     });
 
-    // Start async generation
-    void this.generateInsight(
+    // Start async generation (error-bounded — see detachGeneration).
+    this.detachGeneration(
+      this.generateInsight(
+        id,
+        normalizedSessionIds,
+        input.organizationId,
+        promptType,
+        input.customPrompt,
+        analysisScope,
+        approvedOrgKnowledgePack,
+        contextDocumentPack,
+        input.createdBy,
+        generationPreferences
+      ),
       id,
-      normalizedSessionIds,
-      input.organizationId,
-      promptType,
-      input.customPrompt,
-      analysisScope,
-      approvedOrgKnowledgePack,
-      contextDocumentPack,
-      input.createdBy,
-      generationPreferences
+      input.organizationId
     );
 
     return this.getById(id) as Promise<Insight>;
@@ -1873,17 +1877,21 @@ class InterviewInsightService {
         leading_question: null,
       },
     });
-    void this.generateInsight(
+    this.detachGeneration(
+      this.generateInsight(
+        id,
+        insight.sourceSessionIds,
+        insight.organizationId,
+        insight.promptType,
+        customPrompt,
+        insight.analysisScope,
+        undefined,
+        undefined,
+        insight.createdBy,
+        generationPreferences
+      ),
       id,
-      insight.sourceSessionIds,
-      insight.organizationId,
-      insight.promptType,
-      customPrompt,
-      insight.analysisScope,
-      undefined,
-      undefined,
-      insight.createdBy,
-      generationPreferences
+      insight.organizationId
     );
 
     return this.getById(id);
@@ -2245,6 +2253,43 @@ Rules:
     v6Data: ReturnType<typeof InterviewInsightService.prototype.parseV6Response>
   ): InsightMaterialQuality {
     return buildInsightMaterialQuality(sessionData, v6Data);
+  }
+
+  /**
+   * H5.5: Detach background insight generation with an error boundary.
+   * generateInsight self-handles its own failures (status → 'failed'), but if
+   * that failure-path UPDATE itself throws, the promise would reject with NO
+   * handler → an unhandledRejection AND the insight stuck at 'generating'
+   * forever. This boundary logs with correlation and makes a last-ditch attempt
+   * to move the insight to a terminal 'failed' state.
+   */
+  private detachGeneration(
+    promise: Promise<void>,
+    insightId: string,
+    organizationId: string
+  ): void {
+    promise.catch(async (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(
+        `[InterviewInsightService] Background generation crashed insight=${insightId} ` +
+          `org=${organizationId}: ${message}`
+      );
+      try {
+        const db = await this.getDb();
+        await db.run(
+          `UPDATE interview_insights
+              SET status = 'failed', error_message = ?, updated_at = ?
+            WHERE id = ? AND status = 'generating'`,
+          [message.slice(0, 500), new Date().toISOString(), insightId]
+        );
+      } catch (markErr) {
+        logger.warn(
+          `[InterviewInsightService] failed to mark insight=${insightId} failed after crash: ${
+            markErr instanceof Error ? markErr.message : String(markErr)
+          }`
+        );
+      }
+    });
   }
 
   /**

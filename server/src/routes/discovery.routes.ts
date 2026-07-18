@@ -290,7 +290,10 @@ router.post('/sessions/convert', async (req: AuthRequest, res) => {
       }
     }
 
-    // Mark the session converted.
+    // Mark the session converted. Best-effort (the project is already created
+    // and the response is about to be sent), but H5.5: a swallowed failure here
+    // leaves the session's outcome stuck as un-converted with NO trace — log
+    // with correlation so the stale state is diagnosable.
     if (sessionId) {
       await dbRun(
         `UPDATE discovery_sessions
@@ -298,7 +301,14 @@ router.post('/sessions/convert', async (req: AuthRequest, res) => {
          WHERE id = ? AND organization_id = ?`,
         [project.id, new Date().toISOString(), sessionId, organizationId],
         { fallback: false }
-      ).catch(() => {});
+      ).catch((err: unknown) => {
+        logger.warn(
+          `[Discovery] failed to mark session converted session=${sessionId} ` +
+            `project=${project.id} org=${organizationId}: ${
+              err instanceof Error ? err.message : String(err)
+            }`
+        );
+      });
     }
 
     res.json({

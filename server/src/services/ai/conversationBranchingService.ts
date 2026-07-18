@@ -57,12 +57,24 @@ class ConversationBranchingService {
     );
 
     const newConvId = randomUUID();
+    // H5.5: these two INSERTs ARE the branch — a swallowed failure previously
+    // left this method returning a "success" branch object pointing at a
+    // conversation that was never created (silent data loss). Keep it
+    // fire-and-forget (semantics unchanged) but surface failures with
+    // correlation so the loss is observable instead of invisible.
     await dbRun(
       `INSERT INTO conversations (id, user_id, organization_id, title, parent_conversation_id, branch_id, created_at, updated_at)
        SELECT ?, user_id, organization_id, title || ' (Branch)', ?, ?, datetime('now'), datetime('now')
        FROM conversations WHERE id = ?`,
       [newConvId, input.conversationId, branchId, input.conversationId]
-    ).catch(() => {});
+    ).catch((err: unknown) => {
+      logger.warn(
+        `[ConversationBranching] failed to create branch conversation newConv=${newConvId} ` +
+          `branch=${branchId} from=${input.conversationId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+      );
+    });
 
     await dbRun(
       `INSERT INTO conversation_messages (id, conversation_id, role, content, created_at)
@@ -73,7 +85,14 @@ class ConversationBranchingService {
        )
        ORDER BY created_at`,
       [randomUUID(), newConvId, input.conversationId, input.forkMessageId]
-    ).catch(() => {});
+    ).catch((err: unknown) => {
+      logger.warn(
+        `[ConversationBranching] failed to copy messages into branch newConv=${newConvId} ` +
+          `branch=${branchId} fork=${input.forkMessageId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+      );
+    });
 
     return {
       id: branchId,
