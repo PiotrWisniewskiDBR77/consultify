@@ -21,6 +21,7 @@ import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middlewa
 import { validateBody } from '../../middleware/validation.middleware.js';
 import auditEventsService from '../../services/AuditEventsService.js';
 import blueprintService from '../../services/blueprintService.js';
+import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
 import { requireInitiativeWriteAccess } from '../../services/initiative/initiativeGovernanceGuard.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
 import {
@@ -2537,6 +2538,226 @@ router.post(
   requireInitiativeCapability('initiative.create', { shadow: true }),
   validateBody(CreateInitiativeSchema),
   InitiativeController.createInitiative
+);
+
+// ─────────────────────────────────────────────────────────────────────────
+// H1.4 / S6.2 — Tools → Initiatives session handoff (chain gap #4).
+//
+// A Discovery tool session concludes with recommendations, but the
+// "materialize these into the Initiatives backbone" callback had NO server
+// handler: the SWOT SummaryStep's develop/defer/idea marking lived only in
+// local UI state (SummaryStep.tsx `initiativeActions`) and evaporated on
+// unmount. This endpoint closes the gap. It drafts ONE canonical initiative
+// per accepted recommendation through the SAME funnel the wizard and the
+// interview-insight handoff use (createInitiativeService), tagged
+// source_type='tool_session' / source_id=<sessionId> for a real back-reference.
+//
+// Idempotent (dedup przy powtórce): a repeat call skips any recommendation
+// already materialized from this session — the same back-ref-based dedup
+// doctrine as the interview-insight handoff (#59) and the AI tool generator
+// (#68b), so re-clicking "Create initiatives" never duplicates the portfolio.
+//
+// Recommendations are taken from the request body (the SummaryStep already
+// holds them client-side); when omitted, they are derived from the session's
+// own stored output/answers so a server-only caller still works.
+// ─────────────────────────────────────────────────────────────────────────
+const FromToolSessionSchema = z.object({
+  toolSessionId: z.string().min(1).max(255),
+  projectId: z.string().max(255).optional().nullable(),
+  recommendations: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(255),
+        description: z.string().max(20000).optional().nullable(),
+        rationale: z.string().max(20000).optional().nullable(),
+        category: z.string().max(255).optional().nullable(),
+        impact: z.string().max(50).optional().nullable(),
+        effort: z.string().max(50).optional().nullable(),
+      })
+    )
+    .max(50)
+    .optional(),
+});
+
+type ToolSessionRecommendation = {
+  title: string;
+  description?: string | null;
+  rationale?: string | null;
+  category?: string | null;
+  impact?: string | null;
+  effort?: string | null;
+};
+
+/**
+ * Derive recommendations from a tool session's persisted state when the caller
+ * did not pass an explicit list. Tolerant of the several shapes tools store:
+ * `recommendedInitiatives` / `generatedInitiatives` / `summary.recommendedInitiatives`
+ * / `recommendations`, in either `output_json` or `answers_json`.
+ */
+function extractSessionRecommendations(session: {
+  answers_json: string | null;
+  output_json: string | null;
+}): ToolSessionRecommendation[] {
+  const tryParse = (s: string | null): any => {
+    try {
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  };
+  const out: ToolSessionRecommendation[] = [];
+  for (const src of [tryParse(session.output_json), tryParse(session.answers_json)]) {
+    if (!src || typeof src !== 'object') continue;
+    const list: any[] | null =
+      (Array.isArray(src.recommendedInitiatives) && src.recommendedInitiatives) ||
+      (Array.isArray(src.generatedInitiatives) && src.generatedInitiatives) ||
+      (src.summary &&
+        Array.isArray(src.summary.recommendedInitiatives) &&
+        src.summary.recommendedInitiatives) ||
+      (Array.isArray(src.recommendations) && src.recommendations) ||
+      null;
+    if (list && list.length) {
+      for (const item of list) {
+        const title = item?.title || item?.name;
+        if (!title) continue;
+        out.push({
+          title: String(title),
+          description: item?.description ?? null,
+          rationale: item?.rationale ?? null,
+          category: item?.category ?? item?.type ?? null,
+          impact: item?.estimatedImpact ?? item?.impact ?? null,
+          effort: item?.estimatedEffort ?? item?.effort ?? null,
+        });
+      }
+      if (out.length) break;
+    }
+  }
+  return out;
+}
+
+router.post(
+  '/from-tool-session',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.create', { shadow: true }),
+  requireInitiativeWriteAccess(),
+  validateBody(FromToolSessionSchema),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id || null;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const toolSessionId = String(req.body.toolSessionId);
+
+    // 1) Session must exist within the caller's org (tenant guard).
+    const session = (await queryHelpers.queryOne(
+      `SELECT id, organization_id, project_id, tool_type, answers_json, output_json
+         FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+      [toolSessionId, orgId]
+    )) as {
+      id: string;
+      organization_id: string;
+      project_id: string | null;
+      tool_type: string;
+      answers_json: string | null;
+      output_json: string | null;
+    } | null;
+    if (!session) {
+      return res
+        .status(404)
+        .json({ error: 'Tool session not found', code: 'TOOL_SESSION_NOT_FOUND' });
+    }
+
+    // 2) Resolve recommendations: explicit body list wins; else derive from the
+    //    session's own persisted output/answers.
+    const bodyRecs: ToolSessionRecommendation[] = Array.isArray(req.body.recommendations)
+      ? req.body.recommendations
+      : [];
+    const recommendations =
+      bodyRecs.length > 0 ? bodyRecs : extractSessionRecommendations(session);
+    if (!recommendations.length) {
+      return res.status(422).json({
+        error: 'Tool session has no recommendations to materialize',
+        code: 'TOOL_SESSION_NO_RECOMMENDATIONS',
+      });
+    }
+
+    // Project scope: body override, else the session's own project.
+    const projectId =
+      (typeof req.body.projectId === 'string' && req.body.projectId) || session.project_id || null;
+
+    // 3) Existing back-refs from THIS session drive the idempotent dedup.
+    const existingRows = (await queryHelpers.queryAll(
+      `SELECT LOWER(TRIM(COALESCE(title, name))) AS norm_title FROM initiatives
+        WHERE organization_id = ? AND source_type = 'tool_session' AND source_id = ?`,
+      [orgId, toolSessionId]
+    )) as Array<{ norm_title: string | null }>;
+    const seenTitles = new Set(existingRows.map((r) => (r.norm_title || '').trim()));
+
+    const created: Array<{ id: string; title: string; status: string }> = [];
+    const skipped: Array<{ title: string; reason: string }> = [];
+
+    for (const rec of recommendations) {
+      const title = String(rec.title || '').trim();
+      if (!title) {
+        skipped.push({ title: '', reason: 'empty_title' });
+        continue;
+      }
+      const norm = title.toLowerCase();
+      if (seenTitles.has(norm)) {
+        skipped.push({ title, reason: 'already_materialized' });
+        continue;
+      }
+      try {
+        const result = await funnelCreateInitiative(
+          orgId,
+          {
+            title,
+            projectId,
+            summary: rec.description || rec.rationale || title,
+            description: rec.rationale || rec.description || null,
+            axis: rec.category ? String(rec.category).toLowerCase() : null,
+            impact: rec.impact || null,
+            effort: rec.effort || null,
+            status: 'DRAFT',
+            sourceType: 'tool_session',
+            sourceId: toolSessionId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        created.push({ id: result.id, title: result.title, status: result.status });
+        // Guard against duplicate titles WITHIN a single request payload too.
+        seenTitles.add(norm);
+      } catch (err: any) {
+        logger.warn('[Tools→Initiatives] initiative create failed', {
+          toolSessionId,
+          title,
+          msg: err?.message,
+        });
+        skipped.push({ title, reason: 'create_failed' });
+      }
+    }
+
+    // 4) Best-effort audit (mirrors ToolInitiativeService's tool-generation log).
+    try {
+      await auditEventsService.log({
+        actorId: userId ?? undefined,
+        actorType: 'USER',
+        action: 'initiatives.from_tool_session',
+        resourceType: 'tool_session',
+        resourceId: toolSessionId,
+        after: { created: created.length, skipped: skipped.length },
+        organizationId: orgId,
+      });
+    } catch {
+      /* best-effort audit */
+    }
+
+    return res.status(created.length > 0 ? 201 : 200).json({
+      sessionId: toolSessionId,
+      created,
+      skipped,
+    });
+  }
 );
 
 /**

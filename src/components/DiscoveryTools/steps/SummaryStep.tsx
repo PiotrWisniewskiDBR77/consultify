@@ -19,8 +19,10 @@ import {
   Wrench,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
 import {
   buildToolConclusionModel,
   extractToolConclusionFacts,
@@ -211,6 +213,8 @@ function DynamicSwotOutputs({
 
   const [initiativeActions, setInitiativeActions] = useState<Record<string, InitiativeAction>>({});
   const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
+  const [materializing, setMaterializing] = useState(false);
+  const [materializedCount, setMaterializedCount] = useState(0);
 
   const [reportSections, setReportSections] = useState<Set<string>>(
     new Set(['executive-summary', 'swot-matrix', 'insights'])
@@ -246,6 +250,58 @@ function DynamicSwotOutputs({
 
   const setAction = (id: string, action: InitiativeAction) => {
     setInitiativeActions((prev) => ({ ...prev, [id]: action }));
+  };
+
+  // H1.4 / S6.2 — materialize the recommendations into the real Initiatives
+  // backbone through the canonical server handler (POST /initiatives/from-tool-
+  // session). Persists the ones marked "develop" (or all, when nothing was
+  // marked yet), tagged source_type='tool_session'. Server-side idempotent, so
+  // a repeat click never duplicates. Fail-safe: an error keeps the local
+  // session intact and surfaces a toast (identical doctrine to the per-move
+  // CreateInitiativeFromMoveButton handoff).
+  const handleMaterializeInitiatives = async () => {
+    if (materializing) return;
+    const marked = allInitiatives.filter((i) => initiativeActions[i.id] === 'develop');
+    const toCreate = marked.length > 0 ? marked : allInitiatives;
+    if (toCreate.length === 0) return;
+    setMaterializing(true);
+    try {
+      const result = await Api.createInitiativesFromToolSession({
+        toolSessionId: session.id,
+        recommendations: toCreate.map((i) => ({
+          title: i.title,
+          description: i.description,
+          rationale: i.rationale || i.description,
+          category: i.type,
+          impact: i.estimatedImpact,
+          effort: i.estimatedEffort,
+        })),
+      });
+      setMaterializedCount((prev) => prev + result.created.length);
+      if (result.created.length > 0) {
+        toast.success(
+          t('discoveryToolsSteps.summaryStep.dynamicSwot.materialize.createdToast', {
+            count: result.created.length,
+            defaultValue: `${result.created.length} initiative(s) created`,
+          })
+        );
+      } else {
+        toast(
+          t('discoveryToolsSteps.summaryStep.dynamicSwot.materialize.allExistToast', {
+            defaultValue: 'All recommendations were already created',
+          })
+        );
+      }
+    } catch (err) {
+      console.error('[Tools→Initiatives] session handoff failed:', err);
+      toast.error(
+        t('discoveryToolsSteps.summaryStep.dynamicSwot.materialize.failedToast', {
+          defaultValue: 'Could not create initiatives — your session is safe',
+        })
+      );
+    } finally {
+      setMaterializing(false);
+    }
   };
 
   const contentSections: ContentSection[] = useMemo(
@@ -449,6 +505,36 @@ function DynamicSwotOutputs({
             </div>
           ) : (
             <>
+              {/* H1.4 / S6.2 — materialize recommendations into the Initiatives backbone */}
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleMaterializeInitiatives}
+                  disabled={materializing}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-slate-700 disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                >
+                  <Rocket className="h-3 w-3" />
+                  {materializing
+                    ? t('discoveryToolsSteps.summaryStep.dynamicSwot.materialize.creating', {
+                        defaultValue: 'Creating…',
+                      })
+                    : t('discoveryToolsSteps.summaryStep.dynamicSwot.materialize.button', {
+                        count: developCount > 0 ? developCount : allInitiatives.length,
+                        defaultValue: `Create ${
+                          developCount > 0 ? developCount : allInitiatives.length
+                        } initiative(s)`,
+                      })}
+                </button>
+                {materializedCount > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                    <Check className="h-3 w-3" /> {materializedCount}{' '}
+                    {t('discoveryToolsSteps.summaryStep.dynamicSwot.materialize.createdBadge', {
+                      defaultValue: 'in backbone',
+                    })}
+                  </span>
+                )}
+              </div>
+
               {/* Summary counters */}
               {Object.keys(initiativeActions).length > 0 && (
                 <div className="mb-4 flex flex-wrap gap-3">

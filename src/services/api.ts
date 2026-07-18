@@ -6493,6 +6493,37 @@ export const Api = {
     await handleResponse(res, 'Failed to update initiative');
   },
 
+  /**
+   * H1.4 / S6.2 — Tools → Initiatives session handoff. Materialize a discovery
+   * tool session's recommendations into the canonical Initiatives backbone as
+   * DRAFTs, tagged source_type='tool_session' (back-reference to the session).
+   * Idempotent server-side: a repeat call skips recommendations already
+   * materialized from this session, so re-clicking never duplicates.
+   */
+  createInitiativesFromToolSession: async (payload: {
+    toolSessionId: string;
+    projectId?: string | null;
+    recommendations?: Array<{
+      title: string;
+      description?: string | null;
+      rationale?: string | null;
+      category?: string | null;
+      impact?: string | null;
+      effort?: string | null;
+    }>;
+  }): Promise<{
+    sessionId: string;
+    created: Array<{ id: string; title: string; status: string }>;
+    skipped: Array<{ title: string; reason: string }>;
+  }> => {
+    const res = await fetch(`${API_URL}/initiatives/from-tool-session`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create initiatives from tool session');
+  },
+
   validateInitiative: async (id: string) => {
     const response = await fetchWithRetry(`${API_URL}/initiatives/${id}/validate`, {
       method: 'POST',
