@@ -38,6 +38,13 @@ interface DeckBuilderTopBarProps {
   governanceVerdict?: 'PASS' | 'PASS_WITH_P2' | 'BLOCKED_P1' | 'BLOCKED_P0' | 'INCONCLUSIVE' | null;
   confidentiality?: 'public' | 'internal' | 'confidential';
   lastAgentActivityAt?: string | null;
+  /**
+   * HP-8 approval status bar slot — DeckBuilder passes a flag-gated
+   * `<ArtifactApprovalStatusBar artifactType="deck" .../>` here (mirrors the
+   * `statusBar` slot on ArtifactRightPanel used by Decision/Insight). Undefined
+   * when the flag is OFF, so the header renders exactly as before.
+   */
+  statusBar?: React.ReactNode;
 }
 
 const GOVERNANCE_DOT_CLASS: Record<string, string> = {
@@ -108,6 +115,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   governanceVerdict,
   confidentiality,
   lastAgentActivityAt,
+  statusBar,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -211,6 +219,9 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
           </button>
         )}
       </div>
+
+      {/* HP-8 approval status bar (deck) — flag-gated slot, undefined = OFF */}
+      {statusBar ? <div className="flex-shrink-0">{statusBar}</div> : null}
 
       {/* Undo / Redo */}
       <div className="flex items-center gap-1 border-r border-c-border-subtle pr-3 mr-1">

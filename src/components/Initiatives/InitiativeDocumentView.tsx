@@ -74,6 +74,7 @@ import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode'
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -112,6 +113,7 @@ import {
 } from '@/types/gateAi';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
+import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import {
   getWorkflowStatusForInitiative,
@@ -9687,6 +9689,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
 
               <div className="col-span-full space-y-0 mt-4">
+                {/* HP-8 workflow-engine status bar (initiative) — behind
+                    ff_artifactApprovalUi. At OFF this is null and the view
+                    renders 1:1 as before (no new DOM, no visual change). */}
+                {isArtifactApprovalUiEnabled() && initiativeId ? (
+                  <ArtifactApprovalStatusBar
+                    artifactType="initiative"
+                    artifactId={initiativeId}
+                    currentUserId={currentUser?.id}
+                    canReview
+                  />
+                ) : null}
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
                 <NModeCBoard sections={orderedNModeSectionsWithContent} />
               </div>
@@ -9964,6 +9977,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   → Menu 3. */}
 
               <div className="col-span-full space-y-4 mt-4">
+                {/* HP-8 workflow-engine status bar (initiative) — behind
+                    ff_artifactApprovalUi. At OFF this is null and the view
+                    renders 1:1 as before (no new DOM, no visual change). */}
+                {isArtifactApprovalUiEnabled() && initiativeId ? (
+                  <ArtifactApprovalStatusBar
+                    artifactType="initiative"
+                    artifactId={initiativeId}
+                    currentUserId={currentUser?.id}
+                    canReview
+                  />
+                ) : null}
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
 
                 {statusDriftUi ? (

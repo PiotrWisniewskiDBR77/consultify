@@ -14,10 +14,12 @@ import { useParams } from 'react-router-dom';
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 import {
@@ -31,6 +33,7 @@ import {
 } from '@/services/presentationRuntimeEvents';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
+import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
@@ -338,6 +341,11 @@ export const DeckBuilder: React.FC = () => {
     }
   }, [collaborateEnabled]);
   const collab = useCollaboration(deckId, currentUser, collaborateEnabled);
+
+  // HP-8 — current user for the approval status bar (canonical store source;
+  // distinct from the collaborate-only `currentUser` above, which is id-only
+  // and null when VITE_ENABLE_DECK_COLLABORATE is off).
+  const approvalUser = useAppStore((s) => s.currentUser);
 
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1342,6 +1350,19 @@ export const DeckBuilder: React.FC = () => {
                 'internal') as 'public' | 'internal' | 'confidential'
             }
             lastAgentActivityAt={lastAgentActivityAt}
+            statusBar={
+              // HP-8 workflow-engine status bar (deck) — behind
+              // ff_artifactApprovalUi. At OFF this is `undefined` and the top
+              // bar renders 1:1 as before (no new DOM, no visual change).
+              isArtifactApprovalUiEnabled() && (deckId || deck?.deck_id) ? (
+                <ArtifactApprovalStatusBar
+                  artifactType="deck"
+                  artifactId={(deckId || deck?.deck_id) as string}
+                  currentUserId={approvalUser?.id}
+                  canReview
+                />
+              ) : undefined
+            }
           />
           <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
           {collaborateEnabled && (
