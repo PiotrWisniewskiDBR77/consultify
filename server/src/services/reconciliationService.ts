@@ -46,8 +46,21 @@ import { getCanonicalLineByCode } from './financeCanonicalRegistry.js';
 // ── SHADOW MODE MASTER SWITCH ───────────────────────────────────────────────
 // While false, reconcile is purely observational: shouldBlockReady() always
 // returns false, so no pack/model status is ever changed by reconcile findings.
-// Do NOT flip to true before the DBR77 sign calibration test (spec §5) passes.
-export const RECONCILE_ENFORCE = false;
+//
+// Default = shadow (false). Flip per-environment via the `RECONCILE_ENFORCE`
+// env var (`enforce` | `true`), mirroring the reversible CAPABILITY_ENFORCE
+// rollout convention: the flag lives ONLY on the target Railway service, so
+// demo/TROLLEY can enforce while prod/centerbeam stays shadow (prod never sets
+// the var). Rollback = unset the env var. NODE_ENV is deliberately NOT used as
+// the discriminator because the demo deployment also runs NODE_ENV=production.
+//
+// ★ Do NOT set enforce before the DBR77 sign calibration test (spec §5) passes —
+// an uncalibrated sign can turn a healthy pack's reconcile into a false `fail`
+// and (under enforce) block report readiness. On demo (test data) this is an
+// acceptable trial surface; on prod it is not.
+const RECONCILE_ENFORCE_ENV = (process.env.RECONCILE_ENFORCE ?? '').trim().toLowerCase();
+export const RECONCILE_ENFORCE =
+  RECONCILE_ENFORCE_ENV === 'enforce' || RECONCILE_ENFORCE_ENV === 'true';
 
 export type ReconcileContext = 'import' | 'model';
 export type ReconcileStatus = 'pass' | 'warning' | 'fail' | 'skipped';
