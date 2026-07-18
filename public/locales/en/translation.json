@@ -7462,7 +7462,14 @@
         "notesAndEvidence": "Notes & Evidence",
         "notesPlaceholder": "Add notes or evidence...",
         "matrixTitle": "ADMA Maturity Matrix",
-        "dimensionColumn": "Dimension"
+        "dimensionColumn": "Dimension",
+        "whyThisMatters": {
+          "title": "Why we ask this",
+          "ariaLabel": "Why this question"
+        },
+        "glossary": {
+          "button": "Glossary"
+        }
       }
     },
     "siri": {
@@ -7489,7 +7496,14 @@
         "notesPlaceholder": "Add notes or evidence...",
         "relatedPrioritisationAreas": "Related Prioritisation Areas",
         "matrixTitle": "SIRI Maturity Matrix",
-        "dimensionColumn": "Dimension"
+        "dimensionColumn": "Dimension",
+        "whyThisMatters": {
+          "title": "Why we ask this",
+          "ariaLabel": "Why this question"
+        },
+        "glossary": {
+          "button": "Glossary"
+        }
       }
     },
     "reports": {
@@ -31198,7 +31212,8 @@
       "help": "Help",
       "requestReview": "Request review",
       "export": "Export",
-      "createInitiative": "Create Initiative"
+      "createInitiative": "Create Initiative",
+      "glossary": "Glossary"
     },
     "generateInitiativesModal": {
       "title": "Generate initiatives",

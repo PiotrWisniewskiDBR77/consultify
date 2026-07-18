@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -27,8 +28,11 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
+import { Tooltip } from '@/components/ui/primitives';
 import { getAssessmentGuidanceLive } from '@/services/assessmentKnowledge/assessmentGuidanceRuntime';
 import type { AssessmentGuidanceOutput } from '@/services/assessmentKnowledge/assessmentGuidanceService';
+import { getWhyThisMattersHint } from '@/services/assessmentKnowledge/whyThisMatters';
 import {
   calculateBlockScore,
   calculateOverallSIRIScore,
@@ -446,6 +450,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
     'dimensions'
   );
   const [showNotes, setShowNotes] = useState(false);
+  const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
 
   // Per-dimension×level AI guidance (canon-grounded; keyed by "dimensionId#level").
   const [guidance, setGuidance] = useState<
@@ -461,6 +466,10 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
   const dimensionPrioritisationAreas = useMemo(
     () => (activeDimensionId ? getPrioritisationAreasForDimension(activeDimensionId) : []),
     [activeDimensionId]
+  );
+  const whyThisMattersHint = useMemo(
+    () => getWhyThisMattersHint('siri', activeBlock),
+    [activeBlock]
   );
 
   // Calculate block scores
@@ -585,7 +594,15 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
     <div className="flex flex-col h-full bg-c-surface">
       {/* Header with Building Block Tabs */}
       <div className="border-b border-c-border-subtle p-3">
-        <div className="flex items-center justify-end mb-3">
+        <div className="flex items-center justify-between mb-3">
+          <button
+            type="button"
+            onClick={() => setIsGlossaryOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface text-xs font-semibold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised transition-colors shrink-0"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            {t('assessment.siri.editor.glossary.button', isPolish ? 'Słownik' : 'Glossary')}
+          </button>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('dimensions')}
@@ -689,7 +706,34 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
             <div className="max-w-2xl mx-auto space-y-6">
               {/* Dimension Header */}
               <div>
-                <h3 className="text-2xl font-bold text-c-text">{activeDimension.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-2xl font-bold text-c-text">{activeDimension.name}</h3>
+                  <Tooltip
+                    content={
+                      <div className="max-w-[280px]">
+                        <div className="text-xs font-bold mb-1">
+                          {t('assessment.siri.editor.whyThisMatters.title', 'Why we ask this')}
+                        </div>
+                        <div className="text-xs leading-relaxed">
+                          {isPolish ? whyThisMattersHint.pl : whyThisMattersHint.en}
+                        </div>
+                      </div>
+                    }
+                    placement="bottom-start"
+                    maxWidth={300}
+                  >
+                    <button
+                      type="button"
+                      aria-label={t(
+                        'assessment.siri.editor.whyThisMatters.ariaLabel',
+                        'Why this question'
+                      )}
+                      className="shrink-0 p-1 rounded-full text-c-info hover:bg-c-surface-raised transition-colors"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </button>
+                  </Tooltip>
+                </div>
                 <p className="text-c-text-secondary dark:text-c-text-muted mt-2">
                   {activeDimension.description}
                 </p>
@@ -928,6 +972,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
           )}
         </div>
       </div>
+      <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />
     </div>
   );
 };

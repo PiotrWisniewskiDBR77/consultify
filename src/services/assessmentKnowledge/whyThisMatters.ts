@@ -80,24 +80,29 @@ export const SIRI_BLOCK_WHY_HINTS: Record<string, WhyThisMattersHint> = {
 };
 
 /**
- * ADMA — keyed by pillar id (see ADMAPillarId in src/services/admaStructure.ts)
+ * ADMA — keyed by pillar id (see ADMAPillarId in src/services/admaStructure.ts:
+ * 'strategy' | 'smart_products' | 'smart_operations' | 'smart_supply' | 'data_driven')
  */
 export const ADMA_PILLAR_WHY_HINTS: Record<string, WhyThisMattersHint> = {
   strategy: {
-    en: 'We ask about strategy because analytics initiatives without clear business goals tend to produce dashboards nobody uses. This pillar checks if analytics work is actually tied to decisions that matter.',
-    pl: 'Pytamy o strategię, bo inicjatywy analityczne bez jasnych celów biznesowych zwykle kończą się dashboardami, których nikt nie używa. Ten filar sprawdza, czy praca analityczna jest realnie powiązana z decyzjami, które mają znaczenie.',
+    en: 'We ask about strategy & organization because digital investments without a clear business rationale and organizational buy-in tend to stall after the pilot. This pillar checks whether digital initiatives are actually tied to business goals, funded on purpose, and supported by a culture that adopts new ways of working rather than resisting them.',
+    pl: 'Pytamy o strategię i organizację, bo inwestycje cyfrowe bez jasnego uzasadnienia biznesowego i poparcia organizacji zwykle utykają po pilotażu. Ten filar sprawdza, czy inicjatywy cyfrowe są realnie powiązane z celami biznesowymi, celowo finansowane i wspierane przez kulturę, która przyjmuje nowe sposoby pracy, zamiast się im opierać.',
   },
-  data: {
-    en: 'We ask about data foundations because every analytics or AI model is only as good as the data feeding it. Poor data quality or governance quietly undermines even the best algorithms.',
-    pl: 'Pytamy o fundamenty danych, bo każdy model analityczny czy AI jest tak dobry, jak dane, którymi jest karmiony. Słaba jakość lub zarządzanie danymi po cichu podważa nawet najlepsze algorytmy.',
+  smart_products: {
+    en: "We ask about smart products because digitalization isn't only internal — it's also about what you sell. Products with embedded sensors, connectivity, or data-driven features (servitization) open new revenue streams and let you learn from how customers actually use what you build.",
+    pl: 'Pytamy o inteligentne produkty, bo cyfryzacja to nie tylko wnętrze firmy — to też to, co sprzedajesz. Produkty z wbudowanymi czujnikami, łącznością czy funkcjami opartymi na danych (serwicyzacja) otwierają nowe źródła przychodu i pozwalają uczyć się na tym, jak klienci faktycznie korzystają z tego, co budujesz.',
   },
-  technology: {
-    en: 'We ask about your analytics technology stack because the right tools (or lack of them) determine whether insights can be produced and delivered fast enough to matter.',
-    pl: 'Pytamy o stos technologiczny analityki, bo odpowiednie narzędzia (albo ich brak) decydują, czy wnioski da się wypracować i dostarczyć na tyle szybko, by miały znaczenie.',
+  smart_operations: {
+    en: 'We ask about smart operations because production technology and manufacturing IT are where digital investment usually pays back fastest: fewer defects, less downtime, and real-time visibility into what is actually happening on the shop floor instead of relying on end-of-shift reports.',
+    pl: 'Pytamy o inteligentne operacje, bo technologia produkcyjna i IT produkcyjne to obszar, gdzie inwestycja cyfrowa zwykle zwraca się najszybciej: mniej braków, mniej przestojów i wgląd w czasie rzeczywistym w to, co dzieje się na hali produkcyjnej, zamiast polegania na raportach ze zmiany.',
   },
-  people: {
-    en: 'We ask about people and organization because analytics maturity depends on skills and a culture that trusts and acts on data, not just on having smart tools.',
-    pl: 'Pytamy o ludzi i organizację, bo dojrzałość analityczna zależy od kompetencji i kultury, która ufa danym i na ich podstawie działa — a nie tylko od posiadania sprytnych narzędzi.',
+  smart_supply: {
+    en: 'We ask about the smart supply chain because most companies today do not compete alone — they compete as part of a supply network. Digital integration and end-to-end visibility with suppliers and logistics partners determine whether you can react to disruption in hours, not weeks.',
+    pl: 'Pytamy o inteligentny łańcuch dostaw, bo dziś firmy rzadko konkurują same — konkurują jako część sieci dostaw. Cyfrowa integracja i widoczność od początku do końca łańcucha z dostawcami i partnerami logistycznymi decydują, czy na zakłócenie zareagujesz w godziny, a nie tygodnie.',
+  },
+  data_driven: {
+    en: 'We ask about data-driven services because collecting data is worthless if it never turns into analytics you act on or new revenue you monetize. This pillar checks the full chain — from data collection, through analytics maturity, to data-based services you can actually sell or use to decide.',
+    pl: 'Pytamy o usługi oparte na danych, bo zbieranie danych nie ma wartości, jeśli nigdy nie zamienia się w analitykę, na podstawie której działasz, ani w nowy przychód, który monetyzujesz. Ten filar sprawdza cały łańcuch — od zbierania danych, przez dojrzałość analityczną, po usługi oparte na danych, które realnie możesz sprzedać albo wykorzystać do podjęcia decyzji.',
   },
 };
 

@@ -4,10 +4,11 @@
  * Displays tool name, progress, step navigation, and actions.
  */
 
-import { ArrowLeft, Check, Download, HelpCircle, Lightbulb } from 'lucide-react';
-import React from 'react';
+import { ArrowLeft, BookOpen, Check, Download, HelpCircle, Lightbulb } from 'lucide-react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
 import { StepDefinition, ToolType } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
@@ -61,6 +62,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
   const { t } = useTranslation();
   // Status codes are identical in both languages (REVIEW/APPROVED/DRAFT), no translation needed.
   const statusLabel = toolStatus;
+  const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
 
   return (
     <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
@@ -108,6 +110,13 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsGlossaryOpen(true)}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-400 transition-colors"
+            title={t('discoveryToolsMain.toolHeader.glossary', isPolish ? 'Słownik' : 'Glossary')}
+          >
+            <BookOpen className="w-5 h-5" />
+          </button>
           {onHelp && (
             <button
               onClick={onHelp}
@@ -195,6 +204,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
           );
         })}
       </div>
+      <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />
     </div>
   );
 };
