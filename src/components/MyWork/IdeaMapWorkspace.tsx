@@ -2489,6 +2489,104 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => window.removeEventListener('idea-workspace-attach-knowledge', handler);
   }, [realId]);
 
+  // J26 (two-channel doctrine): direct "AI: rewrite this node" action.
+  // Triggered from the node context menu / floating AI popover (not free chat).
+  // Reuses the exact Propose→Accept path the chat `renameNodes` block uses:
+  // an LLM produces a new label, we build an `updateNodes` proposal and surface
+  // it for explicit review — never silently overwriting the node.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== realId) return;
+      const nodeId = String(detail.nodeId || '');
+      const nodeLabel = String(detail.nodeLabel || '');
+      if (!nodeId) return;
+
+      const instruction = window.prompt(
+        isPolish
+          ? 'Jak AI ma przeredagować ten węzeł? (np. „skróć”, „bardziej formalnie”, „ujmij jako pytanie”)'
+          : 'How should the AI rewrite this node? (e.g. "shorten", "more formal", "phrase as a question")',
+        ''
+      );
+      if (instruction === null) return; // cancelled
+      const trimmed = instruction.trim();
+      if (!trimmed) return;
+
+      const systemPrompt = isPolish
+        ? 'Przeredaguj etykietę węzła mapy myśli zgodnie z poleceniem. Zwróć TYLKO nową, zwięzłą etykietę — bez cudzysłowów, bez komentarza, bez nagłówków.'
+        : 'Rewrite the mind-map node label per the instruction. Return ONLY the new, concise label — no quotes, no commentary, no headings.';
+      const userMessage = isPolish
+        ? `Polecenie: ${trimmed}\n\nObecna etykieta węzła:\n${nodeLabel}`
+        : `Instruction: ${trimmed}\n\nCurrent node label:\n${nodeLabel}`;
+
+      const loadingId = toast.loading(
+        isPolish ? 'Teresa redaguje węzeł…' : 'Teresa is rewriting the node…'
+      );
+      let result = '';
+      void (async () => {
+        try {
+          await Api.chatWithAIStream(
+            userMessage,
+            [],
+            (chunk) => {
+              result += chunk;
+            },
+            () => {
+              toast.dismiss(loadingId);
+              const newLabel = result.trim().replace(/^["'\s]+|["'\s]+$/g, '');
+              if (!newLabel || newLabel === nodeLabel) {
+                toast(isPolish ? 'Brak zmiany do zaproponowania.' : 'No change to propose.', {
+                  icon: 'ℹ️',
+                });
+                return;
+              }
+              const batch: AIProposalBatch = {
+                id: `rewrite-batch-${Date.now()}`,
+                tool: 'mindmap',
+                generatorType: 'node_rewrite',
+                proposals: [
+                  {
+                    id: `rewrite-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    type: 'graph_patch',
+                    rationale: isPolish
+                      ? `Przeredaguj „${nodeLabel}” → „${newLabel}”`
+                      : `Rewrite "${nodeLabel}" → "${newLabel}"`,
+                    confidence: 0.8,
+                    patch: { updateNodes: [{ id: nodeId, data: { label: newLabel } }] },
+                    status: 'pending',
+                  },
+                ],
+                createdAt: Date.now(),
+              };
+              setProposalBatch(batch);
+              toast(
+                isPolish
+                  ? 'AI zaproponowało zmianę węzła — sprawdź i zatwierdź.'
+                  : 'AI proposed a node change — review and accept.',
+                { icon: '🤖' }
+              );
+            },
+            systemPrompt,
+            undefined,
+            undefined,
+            isPolish ? 'pl' : 'en',
+            undefined,
+            { responseStyle: 'concise', selectedTier: 'STANDARD' }
+          );
+        } catch (err: any) {
+          toast.dismiss(loadingId);
+          if (err?.name !== 'AbortError') {
+            toast.error(
+              isPolish ? 'Nie udało się przeredagować węzła.' : 'Failed to rewrite the node.'
+            );
+          }
+        }
+      })();
+    };
+    window.addEventListener('idea-mindmap-rewrite-node', handler);
+    return () => window.removeEventListener('idea-mindmap-rewrite-node', handler);
+  }, [realId, isPolish]);
+
   // Quick task creation from mindmap node
   useEffect(() => {
     const handler = async (e: Event) => {

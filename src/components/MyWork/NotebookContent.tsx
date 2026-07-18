@@ -82,6 +82,7 @@ import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
 import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
+import { NotebookInlineAIMenu } from './notebook/NotebookInlineAIMenu';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
@@ -3511,6 +3512,16 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
                   {/* Rich editor */}
                   {editor && <NotebookBubbleToolbar editor={editor} />}
+                  {/* J26 (channel 2): select → rewrite fragment in place via AI. */}
+                  {editor && activePage && (
+                    <NotebookInlineAIMenu
+                      editor={editor}
+                      pageId={activePage.id}
+                      onApplied={() => {
+                        void Promise.all([fetchPages(), refreshAIProposals(activePage.id)]);
+                      }}
+                    />
+                  )}
                   <EditorContent editor={editor} />
 
                   {/* K1 — incoming backlinks ("Mentioned in") surfaced inline. */}

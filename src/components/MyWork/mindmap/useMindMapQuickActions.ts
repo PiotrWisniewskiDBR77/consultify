@@ -735,6 +735,29 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
 
     // ── AI Actions ─────────────────────────────────────────────────────────
+    // J26 (channel 2): direct node rewrite. Hands off to IdeaMapWorkspace's
+    // `idea-mindmap-rewrite-node` listener, which prompts for an instruction,
+    // asks the LLM for a new label, and surfaces it via the Propose→Accept path.
+    if (action === 'mm_ai_rewrite_node') {
+      if (locked) return;
+      const target = targetNodeId
+        ? nodes.find((n) => n.id === targetNodeId)
+        : handlers.getSelectedNode();
+      if (!target) {
+        toast(i18n.t('mindmap.quickActions.selectNodeFirst'), { icon: 'ℹ️' });
+        return;
+      }
+      window.dispatchEvent(
+        new CustomEvent('idea-mindmap-rewrite-node', {
+          detail: {
+            ideaId,
+            nodeId: target.id,
+            nodeLabel: String(target.data?.label || ''),
+          },
+        })
+      );
+      return;
+    }
     if (action === 'mm_ai_expand') handlers.handleAIExpand();
     if (action === 'mm_ai_expand_node')
       handlers.handleAIExpand(detail?.nodeId as string | undefined);

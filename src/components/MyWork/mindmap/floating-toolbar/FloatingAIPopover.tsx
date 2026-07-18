@@ -1,4 +1,4 @@
-import { Brain, Lightbulb, Link2, MessageCircle, Sparkles, Wand2, Zap } from 'lucide-react';
+import { Brain, Lightbulb, Link2, MessageCircle, PenLine, Sparkles, Wand2, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +13,13 @@ interface FloatingAIPopoverProps {
 }
 
 const AI_ACTIONS = [
+  {
+    // J26 (channel 2): direct "select node → AI rewrites this node's label".
+    action: 'mm_ai_rewrite_node',
+    iconEl: PenLine,
+    key: 'rewriteNode',
+    labelEn: 'AI: Rewrite this node',
+  },
   {
     action: 'mm_ai_expand_node',
     iconEl: Zap,

@@ -226,6 +226,13 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         titleEn: 'AI',
         items: [
           {
+            // J26 (channel 2): direct "AI rewrites this node's label" action.
+            id: 'ctx_ai_rewrite_node',
+            labelEn: 'AI: Rewrite this node',
+            icon: Sparkles,
+            disabled: isLocked,
+          },
+          {
             id: 'ctx_ai_expand',
             labelEn: 'Expand topic',
             icon: Sparkles,
