@@ -1506,15 +1506,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, [ideaId, i18n.language]);
 
   // ── URL deep link support ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const toolParam = params.get('tool');
-    if (toolParam && ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(toolParam)) {
-      setActiveTool(toolParam as CanvasToolType);
-      userSelectedToolRef.current = true;
-    }
-  }, [setActiveTool]);
+  // H2.3 (M06 "Mind Map opens Process Flow"): the `?tool=` query param is NOT a
+  // real deep-link entry point for ideas — genuine deep links arrive via the
+  // route PATH (`/my-work/.../workspace/<tool>` → parseIdeaTool → `initialTool`
+  // prop). `?tool=` is only ever WRITTEN by `setActiveTool` as a cosmetic URL
+  // mirror (via history.replaceState). Because this workspace REMOUNTS per idea
+  // (`key={idea-workspace-<id>}`) while the SPA URL persists, reading `?tool=` on
+  // mount pulled the PREVIOUSLY-opened idea's tool into the newly-opened idea AND
+  // set `userSelectedToolRef=true`, which then SUPPRESSED the idea's real,
+  // server-saved `preferredTool` / `surfaceState.activeTool` restore in
+  // `hydrate()`. Net effect: open a Process-Flow idea, then open a Mind-Map idea
+  // → the Mind-Map idea wrongly opened in Process Flow. Tool selection is fully
+  // governed by `initialTool` (deep-link) + server `preferredTool`/`surfaceState`
+  // (idea identity, restored on hydrate) + genuine in-session user clicks, so
+  // this stale cross-idea param read is pure liability and is removed. The
+  // `setActiveTool` write keeps `?tool=` in the address bar for shareability.
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
   const {
