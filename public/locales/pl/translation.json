@@ -6624,7 +6624,14 @@
         "notesAndEvidence": "Notatki i dowody",
         "notesPlaceholder": "Dodaj notatki lub dowody...",
         "matrixTitle": "Macierz dojrzałości ADMA",
-        "dimensionColumn": "Wymiar"
+        "dimensionColumn": "Wymiar",
+        "whyThisMatters": {
+          "title": "Dlaczego o to pytamy",
+          "ariaLabel": "Dlaczego to pytanie"
+        },
+        "glossary": {
+          "button": "Słownik"
+        }
       }
     },
     "siri": {
@@ -6651,7 +6658,14 @@
         "notesPlaceholder": "Dodaj notatki lub dowody...",
         "relatedPrioritisationAreas": "Powiązane obszary priorytetyzacji",
         "matrixTitle": "Macierz dojrzałości SIRI",
-        "dimensionColumn": "Wymiar"
+        "dimensionColumn": "Wymiar",
+        "whyThisMatters": {
+          "title": "Dlaczego o to pytamy",
+          "ariaLabel": "Dlaczego to pytanie"
+        },
+        "glossary": {
+          "button": "Słownik"
+        }
       }
     },
     "reports": {
@@ -32258,7 +32272,8 @@
       "help": "Pomoc",
       "requestReview": "Request review",
       "export": "Eksportuj",
-      "createInitiative": "Utwórz inicjatywę"
+      "createInitiative": "Utwórz inicjatywę",
+      "glossary": "Słownik"
     },
     "generateInitiativesModal": {
       "title": "Generate initiatives",
