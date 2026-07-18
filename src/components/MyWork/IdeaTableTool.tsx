@@ -635,6 +635,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showConditionalFmt, setShowConditionalFmt] = useState(false);
   const [detailNodeId, setDetailNodeId] = useState<string | null>(null);
   const [detailMode, setDetailMode] = useState<'preview' | 'full'>('preview');
+  /** Which tab RowDetailPanel should land on when it (re)opens — e.g. "Add note" deep-links to Comments. */
+  const [detailInitialTab, setDetailInitialTab] = useState<'properties' | 'comments'>('properties');
   const [aiProposal, setAiProposal] = useState<TableProposal | null>(null);
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [activePalette, setActivePalette] = useState('vibrant');
@@ -3184,6 +3186,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                   onClick={() => {
                     const rowId = rowContextMenu.rowId;
+                    setDetailInitialTab('properties');
                     if (usePlatform) {
                       setExpandedRecordId(rowId);
                     } else {
@@ -3199,12 +3202,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                   onClick={() => {
                     const rowId = rowContextMenu.rowId;
-                    if (usePlatform) {
-                      setExpandedRecordId(rowId);
-                    } else {
-                      setDetailNodeId(rowId);
-                      setDetailMode('full');
-                    }
+                    // "Add note" opens the record's Comments tab specifically. RecordExpandModal
+                    // (the usePlatform "Edit" target) has no comment thread — RowDetailPanel does
+                    // (TablePlatformApi.listRecordComments/addRecordComment, tab "comments" for both
+                    // platform and legacy records) — so always route through it here, even when the
+                    // table is in platform mode.
+                    setDetailInitialTab('comments');
+                    setDetailNodeId(rowId);
+                    setDetailMode('full');
                     setRowContextMenu(null);
                   }}
                 >
@@ -3243,13 +3248,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       {/* Row Detail Panel */}
       <RowDetailPanel
         open={!!detailNodeId}
-        onClose={() => setDetailNodeId(null)}
+        onClose={() => {
+          setDetailNodeId(null);
+          setDetailInitialTab('properties');
+        }}
         node={detailNode}
         columns={_visCols}
         edges={edges}
         allNodes={effectiveNodes}
         locked={locked}
         mode={detailMode}
+        initialTab={detailInitialTab}
         onExpand={() => setDetailMode('full')}
         onFieldChange={_fieldChange}
         onConvert={(target) => {
