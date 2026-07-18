@@ -35,6 +35,7 @@ import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
 import { trackDeliverableEvent } from './deliverablesTelemetryService.js';
 import { planDoc, planSheet, startDoc, startSheet, statusDoc } from './docGenerationRuntime.js';
 import { DeliverablesGenerationError } from './errors.js';
+import { newCorrelationId, withTransientRetry } from './transientRetry.js';
 
 const LOG_PREFIX = '[DeliverablesGen]';
 
@@ -285,8 +286,15 @@ export async function start(params: {
 
   // Świadomie bez await — wzorzec Gamma (202 + poll). Błąd ląduje w mapie
   // ORAZ w presentation_decks.status='failed' (generateDeck robi to sam).
+  // H3.6 (pipeline): korelacja logów + 1 retry na błąd PRZEJŚCIOWY (timeout/429/5xx).
+  // Błędy trwałe (zła prośba, refusal) propagują natychmiast — bez maskowania.
   const generationStartedAt = Date.now();
-  void generateDeck(row.id, outline, setup, params.organizationId)
+  const correlationId = newCorrelationId('deck');
+  logger.info(`${LOG_PREFIX} generation start: generation=${row.id} cid=${correlationId}`);
+  void withTransientRetry(
+    () => generateDeck(row.id, outline, setup, params.organizationId),
+    { label: 'deck', correlationId }
+  )
     .then((result) => {
       runtimeState.set(row.id, {
         state: 'draft',

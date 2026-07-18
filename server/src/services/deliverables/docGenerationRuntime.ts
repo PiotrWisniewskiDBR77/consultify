@@ -57,6 +57,26 @@ function isSkeletonContent(content: string): boolean {
 }
 
 /**
+ * H3.6 (pipeline): markery TREŚCI-BŁĘDU zapisanej przez `markDraftFailedBestEffort`
+ * (patrz `failureContentMarkdown`). Po restarcie serwera mapa runtime jest pusta,
+ * a treść draftu niesie honestny komunikat porażki — bez tego statusDoc traktował
+ * ją jak gotowy `draft` (stan „error" nieodróżnialny od „ready"). Ten wykrywacz
+ * przywraca stan `error` w fallbacku statusu i pozwala wyłuskać powód.
+ */
+const FAILURE_CONTENT_MARKER_PL = 'Generacja nie powiodła się.';
+const FAILURE_CONTENT_MARKER_EN = 'Generation failed.';
+function isFailureContent(content: string): boolean {
+  return (
+    content.includes(FAILURE_CONTENT_MARKER_PL) || content.includes(FAILURE_CONTENT_MARKER_EN)
+  );
+}
+/** Wyłuskaj powód z treści-błędu (linia „Powód: …" / „Reason: …"). */
+function extractFailureReason(content: string): string | undefined {
+  const m = content.match(/^(?:Powód|Reason):\s*(.+)$/m);
+  return m ? m[1].trim().slice(0, 300) : undefined;
+}
+
+/**
  * N-6: twarda dyrektywa języka treści. Sam dobór polskiego/angielskiego
  * systemowego promptu NIE wymusza języka u modelu — przy mieszanym kontekście
  * (angielskie cytaty w faktach, angielskie tytuły sekcji) model dryfuje na EN
@@ -1705,12 +1725,15 @@ export async function statusDoc(params: {
   // L3: ta sama ścieżka statusu obsługuje doc i sheet — format po kind draftu.
   const format = draft.kind === 'table' ? ('sheet' as const) : ('doc' as const);
 
-  // Po restarcie serwera mapa jest pusta — wnioskujemy z draftu: wypełniona
-  // treść bez markera szkieletu ⇒ draft gotowy; inaczej plan_ready.
+  // Po restarcie serwera mapa jest pusta — wnioskujemy z draftu. H3.6: rozróżniamy
+  // trzy przypadki nieodróżnialne wcześniej: (1) treść-błędu (markDraftFailedBestEffort)
+  // ⇒ 'error' z powodem; (2) wciąż szkielet ⇒ 'plan_ready'; (3) realna treść ⇒ 'draft'.
   const content = typeof draft.content === 'string' ? draft.content : '';
-  const fallbackState: DocRuntimeEntry['state'] = isSkeletonContent(content)
-    ? 'plan_ready'
-    : 'draft';
+  const fallbackState: DocRuntimeEntry['state'] = isFailureContent(content)
+    ? 'error'
+    : isSkeletonContent(content)
+      ? 'plan_ready'
+      : 'draft';
   const state = runtime?.state || fallbackState;
 
   const response: GenerationStatusResponse = {
@@ -1719,7 +1742,8 @@ export async function statusDoc(params: {
     state,
   };
   if (state === 'error') {
-    response.error = runtime?.error || 'Generacja nie powiodła się';
+    response.error =
+      runtime?.error || extractFailureReason(content) || 'Generacja nie powiodła się';
   }
   if (state === 'draft') {
     response.artifact = {
@@ -1747,7 +1771,59 @@ export async function isDocGeneration(
   return Boolean(draft);
 }
 
+/**
+ * H3.6 WATCHDOG (pipeline): stan doc/sheet 'generating' żyje WYŁĄCZNIE w mapie
+ * in-memory (`docRuntimeState`) — work_canvas_drafts nie ma kolumny statusu
+ * generacji. Gdy generacja w tle zawiśnie (LLM nigdy nie wróci, brak restartu),
+ * wpis tkwi w 'generating' bez końca, a poll statusu zwraca „generating" wiecznie.
+ * Watchdog odwraca wpisy 'generating' starsze niż `timeoutMs` na 'error' z powodem,
+ * żeby użytkownik dostał uczciwy stan zamiast wiecznego spinnera i mógł ponowić.
+ *
+ * Uwaga: to warstwa PIPELINE (statusy/timeout), nie dotyka budowania treści.
+ * Best-effort persystencji powodu: treść-błędu w draftcie zapisuje osobna ścieżka
+ * (`markDraftFailedBestEffort` w catch generatora); tu wystarczy odblokować poll.
+ */
+export function sweepStaleDocGenerations(
+  timeoutMs: number,
+  now: number = Date.now()
+): { swept: string[] } {
+  const cutoff = now - Math.max(0, timeoutMs);
+  const swept: string[] = [];
+  for (const [id, entry] of docRuntimeState) {
+    if (entry.state !== 'generating') continue;
+    const startedAt = entry.updatedAtMs || 0;
+    if (startedAt > cutoff) continue;
+    const ageMin = Math.round((now - startedAt) / 60000);
+    const reason = `Generacja przekroczyła limit czasu (${ageMin} min) — proces w tle nie zakończył się. Spróbuj ponownie.`;
+    setDocRuntime(id, { state: 'error', error: reason, warnings: entry.warnings || [] });
+    swept.push(id);
+    logger.warn(
+      `${LOG_PREFIX} watchdog: stale generation → error: generation=${id} ageMin=${ageMin} timeoutMs=${timeoutMs}`
+    );
+  }
+  return { swept };
+}
+
 /** Wyłącznie do testów. */
 export function __clearDocRuntimeStateForTests(): void {
   docRuntimeState.clear();
+}
+
+/**
+ * Wyłącznie do testów — wstrzykuje wpis runtime z KONTROLOWANYM znacznikiem czasu
+ * (setDocRuntime zawsze stempluje Date.now(), co uniemożliwia test watchdoga).
+ */
+export function __setDocRuntimeForTests(
+  id: string,
+  entry: DocRuntimeEntry,
+  updatedAtMs: number
+): void {
+  docRuntimeState.set(id, { ...entry, updatedAtMs });
+}
+
+/** Wyłącznie do testów — odczyt bieżącego stanu wpisu runtime. */
+export function __getDocRuntimeForTests(
+  id: string
+): (DocRuntimeEntry & { updatedAtMs?: number }) | undefined {
+  return docRuntimeState.get(id);
 }
