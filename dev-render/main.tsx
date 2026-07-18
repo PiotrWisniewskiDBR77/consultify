@@ -20,6 +20,7 @@ import { createRoot } from 'react-dom/client';
 
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
+import AccentSoftTokenFixScreen from './screens/accent-soft-token-fix';
 import AdminCommandCenterPanelScreen from './screens/admin-command-center-panel';
 import AdminSsoSelfServiceCardScreen from './screens/admin-sso-self-service-card';
 import AgentPlanViewScreen from './screens/agent-plan-view';
@@ -71,6 +72,10 @@ import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'accent-soft-token-fix': {
+    label: 'J23 — bg-c-accent-soft opacity bug fix (cTok): odznaka REKOMENDACJA tint vs pełny crimson',
+    render: () => <AccentSoftTokenFixScreen />,
+  },
   'admin-command-center-panel': {
     label:
       'F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&tab=)',
