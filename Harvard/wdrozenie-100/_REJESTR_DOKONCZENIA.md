@@ -35,14 +35,14 @@
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | 27 | 24 | 8 | 1 | 2 | 62 |
-| B · Harvey (HP-0…27) | 18 | 7 | 3 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 1 | 53 | 14 | 2 | 0 | 70 |
-| D · Vegas (F0-F6+V7) | 10 | 9 | 33 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 17 | 5 | 16 | 7 | 2 | 47 |
-| **SUMA** | **73** | **98** | **74** | **13** | **5** | **263** |
+| A · Harvard (H1-H6) | 45 | 12 | 3 | 1 | 1 | 62 |
+| B · Harvey (HP-0…27) | 21 | 5 | 2 | 0 | 0 | 28 |
+| C · Oxford (O1-O8) | 8 | 49 | 11 | 2 | 0 | 70 |
+| D · Vegas (F0-F6+V7) | 11 | 19 | 22 | 3 | 1 | 56 |
+| E · Przekroje (+nowe) | 22 | 6 | 12 | 7 | 2 | 49 |
+| **SUMA** | **107** | **91** | **50** | **13** | **4** | **265** |
 
-**Postęp: 86/263 rozstrzygnięte (33%).**
+**Postęp: 120/265 rozstrzygnięte (45%).**
 (≈50×🟡→✅ w Oxfordzie) + E1 env (ożywia oś Teresy) + SESJA#1 decyzji.**
 
 Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra · `ODB`=odbiór Piotra.
