@@ -271,7 +271,12 @@ router.get(
       const counts = await service.getCounts(userId);
       return res.json(counts);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Enrichment badge — fail-soft: degrade to zeroed counts instead of 500.
+      logger.warn('[Notifications] getCounts degraded', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.json({ unread: 0, degraded: true });
     }
   })
 );
@@ -293,7 +298,14 @@ router.get(
       const prefs = await service.getPreferences(userId);
       return res.json(prefs || {});
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      logger.error('[Notifications] getPreferences failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.status(500).json({
+        error: 'Failed to load notification preferences',
+        code: 'NOTIFICATIONS_PREFERENCES_LOAD_FAILED',
+      });
     }
   })
 );
@@ -338,7 +350,12 @@ router.get(
       const counts = await service.getCounts(userId);
       return res.json({ count: counts.unread || 0 });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message, count: 0 });
+      // Enrichment badge — fail-soft: degrade to zero instead of 500.
+      logger.warn('[Notifications] unread-count degraded', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.json({ count: 0, degraded: true });
     }
   })
 );
@@ -359,7 +376,15 @@ router.patch(
       await service.markAsRead(req.params.id, userId);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write path — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] markAsRead failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.status(500).json({
+        error: 'Failed to mark notification as read',
+        code: 'NOTIFICATIONS_MARK_READ_FAILED',
+      });
     }
   })
 );

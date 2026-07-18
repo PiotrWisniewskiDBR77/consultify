@@ -170,7 +170,13 @@ router.get(
 
       return res.json(settings);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Failed to load settings', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to load settings', code: 'SETTINGS_LOAD_FAILED' });
     }
   })
 );
@@ -205,7 +211,13 @@ router.post(
 
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Failed to update setting', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to update setting', code: 'SETTINGS_UPDATE_FAILED' });
     }
   })
 );

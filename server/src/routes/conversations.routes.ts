@@ -391,8 +391,13 @@ router.get(
         offset,
       });
     } catch (err: any) {
-      logger.error('[Conversations] List error:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[Conversations] List error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to list conversations', code: 'CONVERSATIONS_LIST_FAILED' });
     }
   })
 );
@@ -476,8 +481,13 @@ router.post(
 
       return res.status(201).json(conversation);
     } catch (err: any) {
-      logger.error('[Conversations] Create error:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[Conversations] Create error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to create conversation', code: 'CONVERSATIONS_CREATE_FAILED' });
     }
   })
 );
