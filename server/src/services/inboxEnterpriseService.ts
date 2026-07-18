@@ -630,10 +630,46 @@ class InboxEnterpriseService {
       idx++;
     }
 
-    const sortCol = filters.sortBy || 'created_at';
+    // H6.5 SQL-injection guard: the ORDER BY column and direction MUST come from
+    // an explicit whitelist — never interpolate raw user input (req.query.sortBy)
+    // into SQL. Unknown/malicious input falls back to the default (created_at DESC).
+    // Whitelist maps accepted client keys (API field names + raw column names) to
+    // real canonical_inbox_items columns.
+    const SORTABLE_COLUMNS: Record<string, string> = {
+      created_at: 'created_at',
+      received_at: 'created_at',
+      receivedat: 'created_at',
+      updated_at: 'updated_at',
+      updatedat: 'updated_at',
+      resolved_at: 'resolved_at',
+      priority: 'priority',
+      title: 'title',
+      status: 'status',
+      section: 'section',
+      item_type: 'item_type',
+      itemtype: 'item_type',
+      type: 'item_type',
+      sla_deadline: 'sla_deadline',
+      sladeadline: 'sla_deadline',
+      due_date: 'sla_deadline',
+      duedate: 'sla_deadline',
+      sla_status: 'sla_status',
+      slastatus: 'sla_status',
+    };
+    const sortCol =
+      SORTABLE_COLUMNS[(filters.sortBy || '').toLowerCase().trim()] || 'created_at';
+    // sortDir whitelist: only 'asc' maps to ASC, everything else → DESC.
     const sortDir = filters.sortDir === 'asc' ? 'ASC' : 'DESC';
-    const limit = filters.limit || 50;
-    const offset = filters.offset || 0;
+    // Defense-in-depth: coerce limit/offset to safe bounded integers (the value is
+    // also interpolated, so it must never carry non-numeric input).
+    const limit =
+      Number.isFinite(filters.limit) && (filters.limit as number) > 0
+        ? Math.min(Math.floor(filters.limit as number), 500)
+        : 50;
+    const offset =
+      Number.isFinite(filters.offset) && (filters.offset as number) >= 0
+        ? Math.floor(filters.offset as number)
+        : 0;
 
     const countSql = `SELECT COUNT(*) as total FROM canonical_inbox_items WHERE ${conditions.join(' AND ')}`;
     const dataSql = `SELECT * FROM canonical_inbox_items WHERE ${conditions.join(' AND ')} ORDER BY ${sortCol} ${sortDir} LIMIT ${limit} OFFSET ${offset}`;

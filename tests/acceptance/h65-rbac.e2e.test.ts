@@ -40,6 +40,7 @@ const B_TRIAGE = `${P}triage-B`;
 // Org A resource ids (positive-control: A must be able to use its own).
 const A_BOARD = `${P}board-A`;
 const A_FITEM = `${P}fitem-A`;
+const A_INBOX = `${P}inbox-A`;
 
 function mintTokenFor(userId: string, orgId: string, email: string): string {
   return jwt.sign(
@@ -152,6 +153,12 @@ describe('H6.5 — cross-org isolation (Inbox · Tasks · Notatnik)', () => {
       `INSERT INTO focus_board_items (id, board_id, title, priority, status, created_at)
        VALUES ($1,$2,'A-own-item','high','planned',NOW()) ON CONFLICT (id) DO NOTHING`,
       [A_FITEM, A_BOARD]
+    );
+    await client.query(
+      `INSERT INTO canonical_inbox_items (id, user_id, organization_id, item_type, source_entity_type, source_entity_id, title, priority, section, status)
+       VALUES ($1,$2,$3,'task','task',$4,'A-OWN-INBOX','high','assigned_tasks','pending')
+       ON CONFLICT (id) DO NOTHING`,
+      [A_INBOX, USER_A, ORG_A, A_FITEM]
     );
 
     process.env.RUN_DB_TESTS = '1';
@@ -309,5 +316,62 @@ describe('H6.5 — cross-org isolation (Inbox · Tasks · Notatnik)', () => {
     expect(done.status).toBe(200);
     const row = await client.query(`SELECT status FROM focus_board_items WHERE id=$1`, [A_FITEM]);
     expect(row.rows[0].status).toBe('completed');
+  });
+
+  // ─────────────────────── SQL INJECTION (H6.5 finding: /inbox-v4/table sortBy) ───────────────────────
+  // Before the fix, `filters.sortBy` (req.query.sortBy) was interpolated raw into
+  // `ORDER BY ${sortCol}`. These tests prove the whitelist guard now neutralizes
+  // injection: malicious sortBy → 200 with the default ordering, tables intact.
+
+  it('inbox-table: sortBy=stacked-statement injection → 200 default sort, tables ALIVE', async () => {
+    const res = await request(app)
+      .get('/api/inbox-v4/table')
+      .query({ sortBy: 'created_at; DROP TABLE canonical_inbox_items; --' })
+      .set('Authorization', `Bearer ${tokenA}`);
+
+    // Injection neutralized: normal 200, not a 500 from broken SQL.
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.items)).toBe(true);
+
+    // The table must still exist AND still hold the seeded rows (DROP did not run).
+    const alive = await client.query(
+      `SELECT COUNT(*)::int AS n FROM canonical_inbox_items WHERE id = ANY($1)`,
+      [[A_INBOX, B_INBOX]]
+    );
+    expect(alive.rows[0].n).toBe(2);
+
+    // Org isolation still holds: A's table never contains B's item.
+    expect(JSON.stringify(res.body)).not.toContain('B-SECRET-INBOX');
+  });
+
+  it('inbox-table: sortBy=(SELECT subquery) injection → 200 default sort, no leak, tables ALIVE', async () => {
+    const res = await request(app)
+      .get('/api/inbox-v4/table')
+      .query({ sortBy: '(SELECT title FROM canonical_inbox_items LIMIT 1)', sortDir: 'asc' })
+      .set('Authorization', `Bearer ${tokenA}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.items)).toBe(true);
+
+    // Table intact, seeded rows survive the subquery-injection attempt.
+    const alive = await client.query(
+      `SELECT COUNT(*)::int AS n FROM canonical_inbox_items WHERE id = ANY($1)`,
+      [[A_INBOX, B_INBOX]]
+    );
+    expect(alive.rows[0].n).toBe(2);
+  });
+
+  it('inbox-table: legit sortBy=priority + sortDir=asc → 200, returns A OWN item, not B', async () => {
+    const res = await request(app)
+      .get('/api/inbox-v4/table')
+      .query({ sortBy: 'priority', sortDir: 'asc' })
+      .set('Authorization', `Bearer ${tokenA}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.items)).toBe(true);
+    // A sees its own inbox item …
+    expect(JSON.stringify(res.body)).toContain('A-OWN-INBOX');
+    // … and never B's (org isolation preserved under legit sort).
+    expect(JSON.stringify(res.body)).not.toContain('B-SECRET-INBOX');
   });
 });
