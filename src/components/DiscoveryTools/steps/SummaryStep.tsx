@@ -511,7 +511,7 @@ function DynamicSwotOutputs({
                   type="button"
                   onClick={handleMaterializeInitiatives}
                   disabled={materializing}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-slate-700 disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text transition hover:border-c-focus disabled:opacity-40"
                 >
                   <Rocket className="h-3 w-3" />
                   {materializing

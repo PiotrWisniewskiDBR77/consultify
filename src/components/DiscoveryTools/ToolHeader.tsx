@@ -72,7 +72,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-400 transition-colors"
+            className="p-2 rounded-lg hover:bg-c-surface-raised text-c-text-muted transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
+import { all as "dbAll", get as "dbGet", run as "dbRun" } from '../../../utils/DbPromise.js';
 import { logAgentAuditEvent } from './agentAuditMetricsService.js';
 
 function isMustHaveQuestion(q: unknown): boolean {
@@ -219,20 +219,20 @@ export async function getAgentAuditRun(args: { runId: string; organizationId: st
   const row = (await dbGet(
     `SELECT
         id,
-        organization_id as organizationId,
-        user_id as userId,
-        conversation_id as conversationId,
-        dt_session_id as dtSessionId,
-        user_intent as userIntent,
-        loop_iteration as loopIteration,
-        accepted_at as acceptedAt,
-        accepted_by_user_id as acceptedByUserId,
-        accepted_note as acceptedNote,
-        decision_context_json as decisionContextJson,
-        selected_agent_ids_json as selectedAgentIdsJson,
-        verdict_json as verdictJson,
-        created_at as createdAt,
-        updated_at as updatedAt
+        organization_id as "organizationId",
+        user_id as "userId",
+        conversation_id as "conversationId",
+        dt_session_id as "dtSessionId",
+        user_intent as "userIntent",
+        loop_iteration as "loopIteration",
+        accepted_at as "acceptedAt",
+        accepted_by_user_id as "acceptedByUserId",
+        accepted_note as "acceptedNote",
+        decision_context_json as "decisionContextJson",
+        selected_agent_ids_json as "selectedAgentIdsJson",
+        verdict_json as "verdictJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
       FROM ai_agent_audit_runs
       WHERE id = ? AND organization_id = ?
       LIMIT 1`,
@@ -244,10 +244,10 @@ export async function getAgentAuditRun(args: { runId: string; organizationId: st
   const reviews = (await dbAll(
     `SELECT
         id,
-        agent_id as agentId,
+        agent_id as "agentId",
         overreach,
-        review_json as reviewJson,
-        created_at as createdAt
+        review_json as "reviewJson",
+        created_at as "createdAt"
       FROM ai_agent_audit_reviews
       WHERE run_id = ?
       ORDER BY id ASC`,
@@ -317,7 +317,7 @@ export async function acceptAgentAuditRun(args: {
   // Metrics (best-effort)
   try {
     const row = (await dbGet(
-      `SELECT conversation_id as conversationId
+      `SELECT conversation_id as "conversationId"
        FROM ai_agent_audit_runs
        WHERE id = ? AND organization_id = ?
        LIMIT 1`,
