@@ -177,12 +177,19 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // The functional hub lives at /audit-programs (AppRoutes), reached via the
     // canonical audits AppView so it inherits the authenticated app shell.
     // Positioned under Materials (Reports/Materials group) per owner instruction (#85).
+    // H6.8 (2026-07-18): betaAccess.ts flipped MODULE_AUDITS 'closed' -> 'open' on
+    // 07-16 (Piotr's own acceptance commit dfb83212dc — "816 linii + backend,
+    // demo-ready"), but this badge was left at 'soon' ("Wkrótce"), which lies to
+    // users: the module is fully clickable and functional, not upcoming. Badge
+    // corrected to 'beta' to match the other GA-per-D-A modules (Results/Finance/
+    // Materials) that are also 'open' in BETA_MENU_STATUS yet still carry a beta
+    // badge (access is unrestricted; badge is informational only).
     {
       id: 'MODULE_AUDITS',
       label: t('sidebar.audits', 'Audits'),
       icon: React.createElement(ClipboardCheck, { size: 20 }),
       viewId: AppView.ASSESSMENT_AUDITS,
-      badge: 'soon',
+      badge: 'beta',
     },
     {
       id: 'MODULE_MEETING',
