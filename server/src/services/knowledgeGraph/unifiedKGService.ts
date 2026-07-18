@@ -651,7 +651,7 @@ class UnifiedKGService {
     const db = await this.getDb();
     const result = await db.run(
       `UPDATE knowledge_graph_entities
-       SET redacted = 1, name = '[REDACTED]', description = NULL, attributes = '{}'
+       SET redacted = TRUE, name = '[REDACTED]', description = NULL, attributes = '{}'
        WHERE id = ? AND organization_id = ?`,
       [entityId, orgId]
     );
@@ -928,7 +928,7 @@ class UnifiedKGService {
     )) as any;
 
     const redacted = (await db.get(
-      `SELECT COUNT(*) as cnt FROM knowledge_graph_entities WHERE organization_id = ? AND redacted = 1`,
+      `SELECT COUNT(*) as cnt FROM knowledge_graph_entities WHERE organization_id = ? AND redacted = TRUE`,
       [orgId]
     )) as any;
 
