@@ -41,6 +41,9 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
+import { useAppStore } from '@/store/useAppStore';
+import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 
 import { Api } from '../../../services/api';
 import { getSourceDisplayLabel } from '../../Initiatives/InitiativeSourceLink';
@@ -749,6 +752,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   const reportStatus = (report?.status || 'DRAFT') as ReportStatus;
   const reportIdForActions = report?.id || reportId || null;
+
+  // HP-8 — current user for the approval status bar (canonical store source).
+  const approvalUser = useAppStore((s) => s.currentUser);
 
   useEffect(() => {
     if (!reportIdForActions || isTemplateMode) return;
@@ -2310,6 +2316,19 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               title={t('reportBuilder.editor.unsavedChanges', 'Unsaved changes')}
             />
           )}
+
+          {/* HP-8 workflow-engine status bar (report) — behind
+              ff_artifactApprovalUi. At OFF this is null and the header renders
+              1:1 as before (no new DOM, no visual change). Not shown in
+              template mode (a template has no approval lifecycle). */}
+          {!isTemplateMode && isArtifactApprovalUiEnabled() && reportIdForActions ? (
+            <ArtifactApprovalStatusBar
+              artifactType="report"
+              artifactId={reportIdForActions}
+              currentUserId={approvalUser?.id}
+              canReview
+            />
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2">
