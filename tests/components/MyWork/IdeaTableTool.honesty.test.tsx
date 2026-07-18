@@ -11,7 +11,7 @@ const useTablePersistenceMock = vi.fn();
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));

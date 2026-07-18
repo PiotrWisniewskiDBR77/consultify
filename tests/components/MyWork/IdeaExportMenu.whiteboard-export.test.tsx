@@ -27,7 +27,7 @@ vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: () => undefined },
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
   }),
 }));
 

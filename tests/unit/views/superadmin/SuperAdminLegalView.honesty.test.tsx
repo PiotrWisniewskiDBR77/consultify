@@ -6,7 +6,7 @@ import { SuperAdminLegalView } from '@/views/superadmin/SuperAdminLegalView';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string) => fallback,
+    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
   }),
 }));
 

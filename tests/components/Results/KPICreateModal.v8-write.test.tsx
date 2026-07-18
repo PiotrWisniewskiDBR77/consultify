@@ -11,7 +11,7 @@ import { V8ResultsApi } from '../../../src/services/api/v8/results';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
   }),
 }));
 
