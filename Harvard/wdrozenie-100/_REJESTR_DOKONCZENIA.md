@@ -1,0 +1,308 @@
+# _REJESTR_DOKONCZENIA — ŻYWY rejestr 258 pozycji fazy (SSOT)
+
+> **To jest JEDYNE miejsce statusów domknięcia fazy.** Artefakty HTML (inwentarz v3
+> `5395f8ac`, scorecard `1e796cdb`) to widoki-snapshoty; ten plik jest prawdą.
+> Utworzony 2026-07-18 z inwentarza v3 (po panelu 3 sceptyków + uzgodnieniu pełnych
+> list: _PROJEKT_A(62) · HP(28) · _PROJEKT_C(70) · _PROJEKT_B_VEGAS+V7(56) · przekroje(42)).
+
+## PROTOKÓŁ (jak dojeżdżamy do końca bez utraty kontekstu)
+
+1. **JEDEN REJESTR.** Każda sesja robocza (moja lub Piotra) ZACZYNA od tego pliku i KOŃCZY
+   jego aktualizacją. Zero statusów w głowach/czatach/innych plikach.
+2. **STAŁE ID.** Pozycje mają niezmienne ID (H1.4, HP-8, O4.6, F2-F5, T-5, K-3…).
+   W commitach/handoffach odwołujemy się TYLKO przez ID.
+3. **DoD = 3 osie + DOWÓD.** Pozycja przechodzi na ✅ wyłącznie z dowodem wpisanym w wiersz:
+   SHA commita / plik testu E2E / link zrzutu-galerii / data+treść decyzji Piotra.
+   „Zamknięte bez dowodu" nie istnieje (złota reguła: runtime, nie deklaracja).
+4. **STANY:** ✅ zamknięte(z dowodem) · 🟡 zbudowane-bez-dowodu/odbioru · ⬜ otwarte ·
+   🔵 poza-v1 (WYMAGA wpisanej decyzji Piotra — inaczej to ⬜) · ❓ do-weryfikacji.
+5. **RYTM:** (a) moje fale (floty; pętla zmierz→napraw→deploy→re-test→bramki tsc/E2E/hooki)
+   → po KAŻDEJ fali: update rejestru + commit razem z falą na demo (git = historia diffów);
+   (b) sesje Piotra BATCHED z przygotowanym materiałem: SESJA#1 = promptbook Oxford +
+   decyzje ZAKRES/OXFORD/VEGAS + galerie; SESJA#2 = ENFORCE/SPRZĄT/OPS + B-checklisty + M27;
+   (c) kalendarz twardy: ELKOMTECH ≤03.08 · audyt ISO 04.08 · cert ~10.08.
+6. **ANTY-DRYF:** po każdych ~50 zamkniętych pozycjach → panel sceptyków NA REJESTRZE
+   (fakty/kompletność/wykonalność); status obalony wraca do ⬜ z notatką.
+7. **META KOŃCA (definicja „dojechaliśmy"):** 258/258 w stanie ✅ albo 🔵-z-decyzją,
+   zero 🟡/⬜/❓ → finalny panel sceptyków potwierdza → Piotr podpisuje rejestr
+   (sekcja PODPIS na dole) → faza ZAMKNIĘTA. Dopiero potem pełny Vegas-finał wizualny
+   jest odhaczany tym samym trybem (jest częścią rejestru: sekcja V).
+8. **OCHRONA KONTEKSTU:** rejestr commitowany na `demo` przy każdej fali (git-trwały),
+   wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
+   = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
+
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-18)
+
+| Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
+|---|---|---|---|---|---|---|
+| A · Harvard (H1-H6) | 27 | 24 | 8 | 1 | 2 | 62 |
+| B · Harvey (HP-0…27) | 17 | 8 | 3 | 0 | 0 | 28 |
+| C · Oxford (O1-O8) | 1 | 53 | 14 | 2 | 0 | 70 |
+| D · Vegas (F0-F6+V7) | 9 | 9 | 34 | 3 | 1 | 56 |
+| E · Przekroje (B7/145/moduły/K/T/kal.) | 3 | 3 | 27 | 7 | 2 | 42 |
+| **SUMA** | **57** | **97** | **86** | **13** | **5** | **258** |
+
+**Postęp fazy: 57+13=70/258 rozstrzygnięte (27%) · najszybsza dźwignia: sesja promptbooka
+(≈50×🟡→✅ w Oxfordzie) + E1 env (ożywia oś Teresy) + SESJA#1 decyzji.**
+
+Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra · `ODB`=odbiór Piotra.
+
+---
+
+## A · HARVARD (62) — mechanika/niezawodność (lista _PROJEKT_A; UWAGA: 145-matryca UX = osobny rejestr, domknięta ~130-140/145)
+
+### H1 · Łańcuch danych (11): 5✅
+| ID | Zadanie | S | Akcja | Dowód/notatka |
+|---|---|---|---|---|
+| H1.1 | Wywiad/Czat→Insights | ✅ | — | E2E 07-16 (Teresa treść LLM) |
+| H1.2 | Insights→Inicjatywy | ✅ | — | handoffFinding + dedup #59 |
+| H1.3 | Assessment→Inicjatywy | 🟡 | JA | promoteWorkbench ręczne |
+| H1.4 | Tools→Inicjatywy (callback bez handlera) | ⬜ | JA | brak dowodu naprawy |
+| H1.5 | Ideas→convert back-ref źródła | 🟡 | JA | dedup był, back-ref nie |
+| H1.6 | Start Execution (dowód przejścia) | 🟡 | JA | kokpit jest, dowód nie |
+| H1.7 | Execution DONE→Rezultaty | ✅ | ODB | bridge w kodzie demo |
+| H1.8 | Rezultaty↔Finanse reconcile | 🟡 | DEC #82b | shadow; enforce=decyzja |
+| H1.9 | Statements→Model | ✅ | ODB | refresh-from-source |
+| H1.10 | Teresa→Deliverable | ✅ | — | auto |
+| H1.11 | Deliverable→M17 back-ref (S6.1) | 🟡 | JA | S6.3 jest, S6.1 nie |
+
+### H2 · Twarde bugi (17): 14✅
+| ID | Zadanie | S | Akcja | Dowód |
+|---|---|---|---|---|
+| H2.1-2 | M05 foldery+pułapka | ✅✅ | — | clearSchemaCache |
+| H2.3 | M06 routing MindMap→Flow | ⬜ | JA | BRAK dowodu naprawy |
+| H2.4-14 | (11 bugów: z-index/OEE/wykresy/KPI/lineage/M16 kreator×2/M24×4) | ✅×11 | — | markery w kodzie demo |
+| H2.15 | z-index command-row | ❓ | JA | marker zniknął — zweryfikować |
+| H2.16 | M08 rail-undo | ✅ | — | live |
+| H2.17 | M24 PATCH roli | ❓ | JA | marker zniknął — zweryfikować |
+
+### H3 · Mechanika sesji (8): 2✅
+| ID | Zadanie | S | Akcja | Notatka |
+|---|---|---|---|---|
+| H3.1 | Tool-sesja e2e (SWOT wzorzec) | 🟡 | JA | Harvard 10/10 blisko; SWOT dosłownie? |
+| H3.2 | Checklista mechaniki 19 Active | ⬜ | JA | niewykonana |
+| H3.3 | Assessment e2e DRD | ✅ | — | E2E+akcept 07-13 |
+| H3.4 | Assessment e2e SIRI | 🟡 | JA | dedykowany dowód |
+| H3.5 | Assessment e2e ADMA | 🟡 | JA | dedykowany dowód |
+| H3.6 | Pipeline generatorów (timeout/retry) | 🟡 | JA | — |
+| H3.7 | CMMI/LEAN „wkrótce" UX | 🟡 | JA | dane są |
+| H3.8 | M12 orkiestrator | ✅ | ODB 10-min | 5/5 e2e + flip ON |
+
+### H4 · Redesigny (5): 0✅ — ZAMROŻONE od 07-01
+| ID | Zadanie | S | Akcja |
+|---|---|---|---|
+| H4.1 | Sign-off wzorca D-I | 🟡 | DEC D18 (=brama F2 Vegas) |
+| H4.2 | Shell: Flow/Tabela/Whiteboard | ⬜ | JA (po D18) |
+| H4.3 | Shell: 3 edytory dok. | ⬜ | JA (po D18) |
+| H4.4 | M13 DRAFT→dokument→timeline | 🟡 | JA |
+| H4.5 | M17 IA kroku źródeł | ⬜ | JA |
+
+### H5 · Wydajność (6): 1✅ — ZAMROŻONE
+| ID | Zadanie | S | Akcja |
+|---|---|---|---|
+| H5.1 | M16 perf/skeleton | 🟡 | JA |
+| H5.2 | Timeouty ciężkich op. | 🟡 | JA |
+| H5.3 | N+1 listy | 🟡 | JA |
+| H5.4 | Kanaryjski strażnik v8-mutacji | ⬜ | JA |
+| H5.5 | Audyt fire-and-forget | 🟡 | JA |
+| H5.6 | Capacity allocated/backlog | ✅ | — |
+
+### H6 · Operacje (15): 5✅
+| ID | Zadanie | S | Akcja | Notatka |
+|---|---|---|---|---|
+| H6.1 | M10 STT | ✅ | — | 07-01 |
+| H6.2 | i18n resztki | ✅ | JA (monolity=osobne sesje) | ~6500 kluczy |
+| H6.3 | Spójność powiadomień | 🟡 | JA | |
+| H6.4 | Standard fail-soft | 🟡 | JA | dziś gaszenie pożarów |
+| H6.5 | RBAC sweep M03/M04 | 🟡 | JA | punktowy fix był |
+| H6.6 | Higiena CI/testów | 🟡 | JA | +tests/acceptance `git add -f` |
+| H6.7 | Panel Health | ✅ | — | |
+| H6.8 | Beta-gating | 🟡 | JA | |
+| H6.9 | Fasady M25 (~8) | 🟡 | JA | „coming soon" żywe |
+| H6.10 | M27 pakiet+odbiór | 🟡 | ODB O7 | |
+| H6.11 | Czystość danych demo | ⬜ | DEC K7 + JA | STAGE-BLOCKER |
+| H6.12 | Global search zakres | 🟡 | DEC | CommandPalette jest |
+| H6.13 | Eksport PDF | 🟡 | JA | serwisy są, żywy dowód |
+| H6.14 | Dataset Atelier | ✅ | — | seed+README |
+| H6.15 | D-K M10 w GA | ✅ | — | |
+| — | CMMI/LEAN v1 | 🔵 | — | decyzja D-B (Konstytucja) |
+
+---
+
+## B · HARVEY (28): 17✅ 8🟡 3⬜
+✅ (17, z dowodami w _PLAN_HARVEY_PARITY + E2E 07-16): HP-0·1·4·6·7·9·11·12·13·14·15·17·19·22·**23(korekta: ingest zbudowany, testy 11/11, commit 7cf9b37aa1)**·24·26.
+
+| ID | Otwarte | S | Akcja | Notatka |
+|---|---|---|---|---|
+| HP-2 | agentRuntime retest audytowego | 🟡 | JA J9 | |
+| HP-3 | manifesty 19/31 z krokami | 🟡 | DEC | wystarcza? |
+| HP-5 | Agent Builder NL | ⬜ | DEC | budować? kolizja doktryny |
+| HP-8 | pasek 2/5 typów | 🟡 | JA J2 | +Report/Initiative/Deck |
+| HP-10 | spec CC formalny | 🟡 | — | de-facto wdrożone |
+| HP-16 | evidence mapowanie 8/8 | 🟡 | JA | |
+| HP-18 | spec benchmarku formalny | 🟡 | — | de-facto |
+| HP-20 | graded-run pełny (3/100, tier przypiąć!) | 🟡 | DEC D12→JA | all-pass 0/3 |
+| HP-21 | scorecard prezentowalny | ⬜ | JA J8 | po HP-20 |
+| HP-25 | migracja ręczna governance | 🟡 | DEC | fallback działa |
+| HP-27 | GTM landing/pricing/SLA | ⬜ | DEC | timing |
+| HP-4d | 3 pytania semantyczne agenta | 🟡 | DEC | fail-fast/live/builder |
+
+---
+
+## C · OXFORD (70): 1✅ formalne · ~55 zbudowane — WĄSKIE GARDŁO = ODBIÓR
+> ★ Sesja promptbooka (60-90 min) + sesja kanonu O1 przełączają ~50×🟡→✅ hurtem.
+
+### O1 · Kanony ×3 (24 = 8 elem. × DRD/SIRI/ADMA)
+| Element | DRD | SIRI | ADMA | Akcja |
+|---|---|---|---|---|
+| Kanon | 🟡(P1-P5!) | ✅? | ✅? | DEC K1 + ODB O6 |
+| Q-bank | 🟡(699 zmerg.) | ✅ | ✅ | ODB O6 |
+| Scoring | 🟡 | ✅ | ✅ | ODB O6 |
+| Benchmark | ⬜ | ✅ | 🟡(próg FoF) | JA |
+| Raport+narrator LLM | 🟡(zbud.+RAG) | 🟡 | 🟡 | ODB O6 |
+| Mapa/radar | 🟡 | ✅ | ✅ | ODB |
+| Ścieżka N→N+1 | 🟡 NOWE zbud. | 🟡 | 🟡 | ODB |
+| Generator inicjatyw z wyniku | 🟡 | ⬜ | ⬜ | JA |
+
+(SIRI/ADMA „✅?" = statusy z 07-01 sprzed metody dowodowej — przy odbiorze O6 potwierdzić.)
+
+### O2 · Standard wniosków (5)
+| ID | Zadanie | S | Akcja | Dowód |
+|---|---|---|---|---|
+| O2.1 | SSOT CONCLUSION_LAYER | 🟡 | DEC K2 | dokument gotowy |
+| O2.2 | Wdrożenie: assessmenty ×3 | 🟡 | ODB | d775f13946 |
+| O2.3 | Wdrożenie: 19/19 tooli + fix serwerowy | 🟡 | ODB | 6712546ad8+df5a1cf58a |
+| O2.4 | Wdrożenie: finanse | 🟡 | JA weryf. UI | ef636ee09b |
+| O2.5 | Narracja deck/generatorów | ⬜ | JA | brak dowodu |
+
+### O3 · Q-banki 19 narzędzi — 19/19 ZBUDOWANE+zmergowane (74bdf2762e i in.)
+| Pozycje | S | Akcja | Notatka |
+|---|---|---|---|
+| SWOT·Porter·ValueChain·Ansoff·Capability·Ambition·Focus·Narrative·Risk·Portfolio (10 strat.) | 🟡×10 | ODB O1(promptbook) | |
+| SOP·A3·SMED·DMS·Inventory·AI-Disc·Pain·RPA·ProcAuto (9 oper.) | 🟡×9 | ODB O1 | dedykowane commity SĄ |
+| deepeningLadder 4 narzędzia + napięcie „one-shot" | ❓→J6 | JA | wyjaśnić przed odbiorem |
+
+### O4 · Finanse-doradztwo (7) — 7/7 zbudowane
+| ID | Zadanie | S | Akcja | Dowód |
+|---|---|---|---|---|
+| O4.1 | Business case 5-fazowy | 🟡 | ODB O1 | E2E NPV 190901; flaga ON |
+| O4.2 | Scenariusze-dźwignie | 🟡 | JA weryf. UI | 2db90082a7 |
+| O4.3 | Value tree | 🟡 | JA weryf. UI | j.w. |
+| O4.4 | Współzależności portfela | 🟡 | JA weryf. UI | j.w. |
+| O4.5 | WACC/guidance | 🟡 | JA | 1e057461a2 |
+| O4.6 | Trend+driver+prognoza | 🟡 | JA | 8f432229d5 |
+| O4.7 | Post-mortem R-v-P | 🟡 | JA | j.w. |
+
+### O5 · Biblioteka promptów (6): 1✅
+| ID | Zadanie | S | Akcja |
+|---|---|---|---|
+| O5.1 | Sekcje inicjatyw (core 7/7 z promptem; 12 podniesionych) | 🟡 | JA weryf. DB |
+| O5.2 | Guidance DRD/SIRI/ADMA parity | 🟡 | JA | 87d74fa0f6 |
+| O5.3 | Briefy generatorów | 🟡 | JA |
+| O5.4 | Persona Teresy przegląd | ⬜ | JA+ODB |
+| O5.5 | Rejestr promptów | ✅ | — | flip Piotra 07-15 |
+| O5.6 | Macierz pokrycia Wywiadu | ⬜ | JA |
+
+### O6 · Benchmarki branżowe (3) — 3/3 zbudowane+wpięte
+| ID | S | Akcja | Dowód |
+|---|---|---|---|
+| O6.1 profile 7/7 w raporcie | 🟡 | DEC K6/P3 | ddcfd03e4a |
+| O6.2 per-industry zakresy | 🟡 | JA weryf. | 917aaef042 |
+| O6.3 źródła+refresh owner | 🟡 | JA | 77691e2771 |
+
+### O7 · Standardy treści (3)
+| ID | S | Akcja | Notatka |
+|---|---|---|---|
+| O7.1 CARD_FORMULA guardian | 🟡 | DEC | złagodzony do advisory — wystarcza? |
+| O7.2 INITIATIVE_FORMULA | 🟡 | — | walidatory są |
+| O7.3 Ton PL/EN konsultanta | ⬜ | JA+ODB | ≠ i18n |
+
+### O8 · Pomoc/edukacja (3) — zbudowane wąsko (tylko DRD)
+| ID | S | Akcja |
+|---|---|---|
+| O8.1 hinty „dlaczego pytanie" | 🟡 | JA J20 (→SIRI/ADMA/tools) |
+| O8.2 help content | 🟡 | JA weryf. |
+| O8.3 glossary | 🟡 | JA J20 |
+
+🔵 Oxford poza-v1: sędzia LLM w runtime (DEC D14 — dziś offline-QA) · poprzeczka all-pass jako gate (DEC).
+
+---
+
+## D · VEGAS (56) — ŚWIADOMIE OSTATNI (funkcje→wygląd)
+
+### F0 · Fundament (8): 3✅
+F0-1 ESLint gate ✅ (nie łapie primary-*/c-accent → rozszerzenie po DEC D16) · F0-2 komponenty ✅ ·
+F0-3 powłoka ✅ · F0-4 **D-I sign-off 🟡 = DEC D18 (BRAMA F2)** · F0-5 fixy systemowe 🟡 ·
+F0-6 cleanup skrypt ✅ · F0-7 rename Menu1/2/3 ⬜ (porzucone milcząco → DEC: formalnie zamknąć) ·
+F0-8 sweep ikon 🟡 (lucide-only ✓).
+
+### F1 · Listy A1-A5 (5): 5✅ — check-list-canon PASS, 85 plików StandardTable.
+
+### F2 · Artefakty (12 narzędzi + 6 findingów = 18): 0✅
+| ID | Pozycja | S | Akcja |
+|---|---|---|---|
+| F2-1..4,6,7,9,11,12 | Diagnozy Stan: MindMap·Flow·Whiteboard·IdeaTable·Insight·Initiative·Decision·Excel·Deck | ⬜×9 | JA J12 → ODB per narzędzie |
+| F2-5 | Notatnik (zdiagnozowany) | 🔨 | DEC D19 |
+| F2-8 | Task (ArtifactRightPanel częściowo) | 🟡 | JA J12 |
+| F2-10 | Word (zdiagnozowany) | ❓ | DEC D20 |
+| F2-F1 | check-artefakt.sh ZBUDOWAĆ (nie istnieje!) | ⬜ | JA J7 |
+| F2-F3 | Dublet CANON scalić | ⬜ | JA J7 |
+| F2-F4 | Fala N za flagami | 🔵 | po Bramce 0 |
+| F2-F5 | **Bramka 0: prompty kart N** | ⬜ | DEC (blokuje odsłonięcie N) |
+| F2-F6 | Flagi mels odsłonięcie | 🔵 | ODB O5 per-moduł |
+
+### F3 · Huby (6): 0✅ — ModuleHuby ⬜ · dashboardy ⬜ · M15 motyw(!) ⬜ · M24 🟡 · M16 wizual 🟡(funkcja≠wygląd) · wykresy chrome ⬜. Akcja: Vegas-fala.
+
+### F4 · Hartowanie (5): 0✅ — z-index ⬜ · M15-UI1/UI6 dark ⬜ · empty/loading/skeleton ⬜ · mikro-detale ⬜ · bg-white bez dark (46-63 plików) ⬜.
+
+### F5 · Light mode (2): 0✅ — całość ⬜ · **cTok fix ODTWORZYĆ** (stara gałąź nie merguje — JA J23 → ODB).
+
+### F6 · Dokumenty generowane (4): PPTX 🟡(polish zmerg., branding nie) · XLSX ⬜(„dramat") · DOCX 🟡 · branding cross ⬜.
+
+### V7 · Przekroje (8): 0✅ — empty-states(crimson!) ⬜ · skeletony ⬜ · e-maile ⬜ · onboarding ⬜ · PDF wygląd ⬜ · ikonografia 🟡 · ESLint gate 🟡(luka primary/c-accent) · smoke-suite wizualny ⬜.
+
+---
+
+## E · PRZEKROJE (42)
+
+### B7 · Forward-port Londyn (2) — ★bez tego prod nie dostaje NIC
+| ID | Zadanie | S | Akcja |
+|---|---|---|---|
+| B7-D | Decyzja startu + bramka D-G (per-krok zgoda) | ⬜ | DEC |
+| B7-X | Wykonanie per-SHA 1581 commitów (0 wstecz — bezpieczne) | ⬜ | JA J24 (po B7-D) |
+
+### Ogony „145" (7)
+#24b-d kalendarz ⬜(po ENV E4) · I1-I3 kreatory ⬜(DEC greenlight, ADR gotowy) · #82b RECONCILE ⬜DEC ·
+#28/25/30/35 role PM ⬜DEC · #71 chipy ⬜DEC · #77 silnik obłożenia ⬜JA · presence-write ⬜JA ·
+(§27 backlog admin 🔵 — decyzja 07-13 „zostaw").
+
+### Moduły (12)
+M27: tabele ~73-80 ⬜JA(po koncie) · Email Templates audyt ❓ODB · konto superadmina ⬜ODB O7 ·
+(i18n SuperAdmin 🔵 DP-10). M26: 5 migracji PROD ⬜**TYLKO PIOTR** (pre-condition portalu) ·
+D-01 stuby ⬜DEC · (self-connect 🔵 rozstrz.). M25/M22: OAuth klucze ⬜ENV E4 · wave7 label ⬜DEC.
+M16: ~50 endpointów przeznaczenie ⬜DEC · (token-billing 🔵). M24: AdminSidebar rm ⬜JA J22 · (Stripe 🔵 DP-11).
+M14: inwentarz uzgodnić („27/35" vs ~18 ekranów — dwa dokumenty) ❓JA · D-03 manager lanes ⬜DEC.
+
+### Konstytucja §5 (8)
+K1 P1-P5 DRD ⬜DEC · K2 CONCLUSION_LAYER ⬜DEC · K3 39 śmieci ⬜DEC · K4 sekcje bez AI ⬜DEC ·
+K5 SWOT×3/PPTX×3 ⬜DEC · K6 profile publikacja ⬜DEC · K7 179 orgs ⬜DEC · K8 D-G 🔵zasada.
+
+### Długi techniczne (10)
+T1 256 testów ⬜JA-flota · T2 SLA F3/F5 E2E ❓JA · T3 (=ogony enforce, patrz wyżej) · T4 #77 (j.w.) ·
+T5 sanitizer tytuły+tool_sessions ⬜JA · T6 permissionService domknąć-jako-OK ⬜JA ·
+T7 wrappery 42+46 ⬜DEC→JA · T8 (=presence-write) · T9 taski-w-tle (facilitation/EmptyState/SCIM DDL/reportContentGenerator/KnownTool) ⬜JA×5 · T10 migracje renumeracja+presentation_cards+baseline 🟡JA J4.
+
+### Kalendarz (3)
+📅 03.08 ELKOMTECH (ODB O2; PROD per-zgoda) ⬜ · 📅 04.08 audyt ISO (Piotr) ⬜ · 📅 ~10.08 flip „Certified" (JA) ⬜.
+
+---
+
+## SESJE PIOTRA — plan materiałów (przygotowuję PRZED)
+- **SESJA #1 (~2-3h):** promptbook O1 (6 testów) + kanon O1/O6 + decyzje ZAKRES(6)+OXFORD(7)+VEGAS(7) + galerie (po moich renderach). Efekt: ~60-70 pozycji → ✅.
+- **SESJA #2 (~1,5h):** ENFORCE(4)+SPRZĄT(4)+OPS(8) + B-checklisty narzędzi + M27 (konto) + Teresa live (po E1). Efekt: ~30-40 pozycji.
+- **ELKOMTECH ≤03.08** (osobno, prod, per-zgoda).
+
+## PODPIS KOŃCOWY FAZY
+- [ ] 258/258 = ✅ lub 🔵-z-decyzją (liczniki powyżej)
+- [ ] Finalny panel sceptyków: POTWIERDZONY (data, link)
+- [ ] Piotr: ____________________ (data)
