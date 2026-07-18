@@ -103,6 +103,48 @@ export interface V8ResultsRoiPortfolioSummary {
 
 export type V8ReconciliationStatus = 'pending' | 'reconciled' | 'disputed' | 'escalated';
 
+/** O4.7 — market-vs-execution decomposition of a realized-vs-projected variance. */
+export type V8PostMortemVerdict =
+  | 'market-driven'
+  | 'execution-driven'
+  | 'mixed'
+  | 'on-plan'
+  | 'undetermined';
+
+export interface V8ReconciliationPostMortem {
+  projected: number;
+  realized: number;
+  /** realized − projected. */
+  totalVariance: number;
+  /** Portion of the gap attributable to the market moving vs assumption. */
+  marketEffect: number;
+  /** Residual portion attributable to execution. */
+  executionEffect: number;
+  /** |marketEffect| / (|marketEffect| + |executionEffect|), [0..1]. */
+  marketShare: number;
+  /** |executionEffect| / (…), [0..1]. */
+  executionShare: number;
+  verdict: V8PostMortemVerdict;
+  confidence: 'confirmed' | 'mixed' | 'declared' | 'undetermined';
+  explanation: { pl: string; en: string };
+}
+
+/**
+ * CONCLUSION_LAYER payload persisted alongside an engine reconciliation. The O4.7
+ * `postMortem` is embedded as a sibling key on this object (no dedicated column).
+ */
+export interface V8ReconciliationConclusion {
+  headline?: string;
+  k1Fact?: string;
+  k2Meaning?: string;
+  k3Actions?: Array<{ action: string; ownerRole: string; impact: string; effort: string }>;
+  k4Effect?: string;
+  severity?: 'on_track' | 'watch' | 'off_track';
+  aiGenerated?: boolean;
+  /** O4.7 — market-vs-execution post-mortem (present only for engine reconciliations). */
+  postMortem?: V8ReconciliationPostMortem | null;
+}
+
 export interface V8ResultsReconciliationItem {
   reconciliationId: string;
   kpiId: string;
@@ -118,8 +160,44 @@ export interface V8ResultsReconciliationItem {
   varianceAbsolute: number | null;
   variancePercent: number | null;
   hasMismatch: boolean;
+  /** Finance-model driver the KPI feeds (present for engine reconciliations). */
+  driverKey?: string | null;
+  /** CONCLUSION_LAYER (incl. O4.7 postMortem) when the engine reconciled this pair. */
+  conclusion?: V8ReconciliationConclusion | null;
+  /** true when the engine (not the legacy monetary heuristic) produced this row. */
+  engineReconciled?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** POST /results/reconciliations/pull request body. */
+export interface V8ReconciliationPullPayload {
+  initiativeId: string;
+  mappings: Array<{
+    kpiId: string;
+    driverKey: string;
+    unitMultiplier?: number;
+    projectedValue?: number | null;
+  }>;
+}
+
+/** POST /results/reconciliations/pull response. */
+export interface V8ReconciliationPullResult {
+  organizationId: string;
+  initiativeId: string;
+  reconciledCount: number;
+  offTrackCount: number;
+  items: Array<{
+    kpiId: string;
+    kpiName: string;
+    driverKey: string;
+    realizedValue: number | null;
+    projectedValue: number | null;
+    deviationAbsolute: number | null;
+    deviationPercent: number | null;
+    conclusion: V8ReconciliationConclusion | null;
+    postMortem: V8ReconciliationPostMortem | null;
+  }>;
 }
 
 export interface V8ResultsReconciliationOverview {
@@ -620,6 +698,12 @@ export const V8ResultsApi = {
           }
         : undefined
     ),
+  /**
+   * O4.7 — pull actuals for one initiative and (re)reconcile them against the
+   * finance model, computing a market-vs-execution post-mortem per KPI↔driver.
+   */
+  pullReconciliation: (payload: V8ReconciliationPullPayload) =>
+    v8Post<V8ReconciliationPullResult>('/results/reconciliations/pull', payload),
   createKpi: (payload: V8ResultsCreateKpiPayload) =>
     v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
   updateKpi: (kpiId: string, payload: V8ResultsUpdateKpiPayload) =>
