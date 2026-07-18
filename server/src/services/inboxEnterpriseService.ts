@@ -291,6 +291,7 @@ class InboxEnterpriseService {
 
   async addFocusItem(
     boardId: string,
+    orgId: string,
     data: {
       inboxItemId?: string;
       sourceEntityType?: string;
@@ -302,15 +303,21 @@ class InboxEnterpriseService {
       sortOrder?: number;
     }
   ) {
+    // H6.5 (org-scope, fail-closed): the board MUST belong to the caller's org.
+    // Without this filter any authenticated user could add items to a foreign
+    // org's focus board by guessing/knowing its id (cross-org write).
     const board = await queryHelpers.queryFirst<{ capacity_limit: number }>(
-      `SELECT capacity_limit FROM focus_boards WHERE id=$1`,
-      [boardId]
+      `SELECT capacity_limit FROM focus_boards WHERE id=$1 AND organization_id=$2`,
+      [boardId, orgId]
     );
+    if (!board) {
+      return { error: 'board_not_found' };
+    }
     const currentCount = await queryHelpers.queryFirst<{ cnt: number }>(
       `SELECT COUNT(*) as cnt FROM focus_board_items WHERE board_id=$1 AND status IN ('planned','in_progress')`,
       [boardId]
     );
-    if (board && currentCount && currentCount.cnt >= board.capacity_limit) {
+    if (currentCount && currentCount.cnt >= board.capacity_limit) {
       return { error: 'capacity_exceeded', limit: board.capacity_limit, current: currentCount.cnt };
     }
 
@@ -334,23 +341,42 @@ class InboxEnterpriseService {
     return { id };
   }
 
-  async getFocusItems(boardId: string, status?: string) {
+  async getFocusItems(boardId: string, orgId: string, status?: string) {
+    // H6.5 (org-scope, fail-closed): only return items when the owning board
+    // belongs to the caller's org. The board_id -> focus_boards join enforces
+    // the tenant boundary; a foreign board id yields an empty list, never data.
     const sql = status
-      ? `SELECT * FROM focus_board_items WHERE board_id=$1 AND status=$2 ORDER BY sort_order`
-      : `SELECT * FROM focus_board_items WHERE board_id=$1 ORDER BY sort_order`;
-    return queryHelpers.queryAll(sql, status ? [boardId, status] : [boardId]);
+      ? `SELECT fbi.* FROM focus_board_items fbi
+           JOIN focus_boards fb ON fb.id = fbi.board_id
+          WHERE fbi.board_id=$1 AND fb.organization_id=$2 AND fbi.status=$3
+          ORDER BY fbi.sort_order`
+      : `SELECT fbi.* FROM focus_board_items fbi
+           JOIN focus_boards fb ON fb.id = fbi.board_id
+          WHERE fbi.board_id=$1 AND fb.organization_id=$2
+          ORDER BY fbi.sort_order`;
+    return queryHelpers.queryAll(sql, status ? [boardId, orgId, status] : [boardId, orgId]);
   }
 
-  async completeFocusItem(itemId: string) {
+  async completeFocusItem(itemId: string, orgId: string) {
+    // H6.5 (org-scope, fail-closed): scope the mutation to items whose board
+    // belongs to the caller's org so a foreign item id is a no-op, not a write.
     await queryHelpers.queryRun(
-      `UPDATE focus_board_items SET status='completed', completed_at=CURRENT_TIMESTAMP WHERE id=$1`,
-      [itemId]
+      `UPDATE focus_board_items SET status='completed', completed_at=CURRENT_TIMESTAMP
+        WHERE id=$1
+          AND board_id IN (SELECT id FROM focus_boards WHERE organization_id=$2)`,
+      [itemId, orgId]
     );
     return { ok: true };
   }
 
-  async removeFocusItem(itemId: string) {
-    await queryHelpers.queryRun(`DELETE FROM focus_board_items WHERE id=$1`, [itemId]);
+  async removeFocusItem(itemId: string, orgId: string) {
+    // H6.5 (org-scope, fail-closed): same tenant guard as completeFocusItem.
+    await queryHelpers.queryRun(
+      `DELETE FROM focus_board_items
+        WHERE id=$1
+          AND board_id IN (SELECT id FROM focus_boards WHERE organization_id=$2)`,
+      [itemId, orgId]
+    );
     return { deleted: true };
   }
 
@@ -425,58 +451,68 @@ class InboxEnterpriseService {
     return { id };
   }
 
-  async acceptTriage(triageId: string) {
-    await queryHelpers.queryRun(
-      `UPDATE inbox_ai_triage_log SET accepted=1, resolved_at=CURRENT_TIMESTAMP WHERE id=$1`,
-      [triageId]
-    );
+  async acceptTriage(triageId: string, orgId: string) {
+    // H6.5 (org-scope, fail-closed): resolve the triage row inside the caller's
+    // org first. A foreign triageId returns not_found and mutates nothing —
+    // previously any user could accept another org's triage and rewrite that
+    // org's inbox item priority/section (cross-org write).
     const triage = await queryHelpers.queryFirst<{
       inbox_item_id: string;
       suggested_priority: string;
       suggested_section: string;
     }>(
-      `SELECT inbox_item_id, suggested_priority, suggested_section FROM inbox_ai_triage_log WHERE id=$1`,
-      [triageId]
+      `SELECT inbox_item_id, suggested_priority, suggested_section
+         FROM inbox_ai_triage_log WHERE id=$1 AND organization_id=$2`,
+      [triageId, orgId]
     );
-    if (triage) {
-      const sets: string[] = [];
-      const params: unknown[] = [];
-      let idx = 1;
-      if (triage.suggested_priority) {
-        sets.push(`priority=$${idx++}`);
-        params.push(triage.suggested_priority);
-      }
-      if (triage.suggested_section) {
-        sets.push(`section=$${idx++}`);
-        params.push(triage.suggested_section);
-      }
-      if (sets.length > 0) {
-        params.push(triage.inbox_item_id);
-        await queryHelpers.queryRun(
-          `UPDATE canonical_inbox_items SET ${sets.join(', ')}, status='triaged', updated_at=CURRENT_TIMESTAMP WHERE id=$${idx}`,
-          params
-        );
-      }
+    if (!triage) return { ok: false, reason: 'not_found' };
+
+    await queryHelpers.queryRun(
+      `UPDATE inbox_ai_triage_log SET accepted=1, resolved_at=CURRENT_TIMESTAMP
+        WHERE id=$1 AND organization_id=$2`,
+      [triageId, orgId]
+    );
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    let idx = 1;
+    if (triage.suggested_priority) {
+      sets.push(`priority=$${idx++}`);
+      params.push(triage.suggested_priority);
+    }
+    if (triage.suggested_section) {
+      sets.push(`section=$${idx++}`);
+      params.push(triage.suggested_section);
+    }
+    if (sets.length > 0) {
+      params.push(triage.inbox_item_id, orgId);
+      await queryHelpers.queryRun(
+        `UPDATE canonical_inbox_items SET ${sets.join(', ')}, status='triaged', updated_at=CURRENT_TIMESTAMP WHERE id=$${idx++} AND organization_id=$${idx}`,
+        params
+      );
     }
     return { ok: true };
   }
 
-  async rejectTriage(triageId: string) {
+  async rejectTriage(triageId: string, orgId: string) {
+    // H6.5 (org-scope, fail-closed): scope the write to the caller's org.
     await queryHelpers.queryRun(
-      `UPDATE inbox_ai_triage_log SET accepted=0, resolved_at=CURRENT_TIMESTAMP WHERE id=$1`,
-      [triageId]
+      `UPDATE inbox_ai_triage_log SET accepted=0, resolved_at=CURRENT_TIMESTAMP
+        WHERE id=$1 AND organization_id=$2`,
+      [triageId, orgId]
     );
     return { ok: true };
   }
 
-  async undoTriage(triageId: string) {
+  async undoTriage(triageId: string, orgId: string) {
+    // H6.5 (org-scope, fail-closed): resolve + mutate strictly within the org.
     const triage = await queryHelpers.queryFirst<{
       inbox_item_id: string;
       original_priority: string;
       original_section: string;
       accepted: number;
-    }>(`SELECT * FROM inbox_ai_triage_log WHERE id=$1`, [triageId]);
-    if (!triage || !triage.accepted) return { ok: false, reason: 'not_accepted' };
+    }>(`SELECT * FROM inbox_ai_triage_log WHERE id=$1 AND organization_id=$2`, [triageId, orgId]);
+    if (!triage) return { ok: false, reason: 'not_found' };
+    if (!triage.accepted) return { ok: false, reason: 'not_accepted' };
 
     const sets: string[] = [];
     const params: unknown[] = [];
@@ -490,13 +526,16 @@ class InboxEnterpriseService {
       params.push(triage.original_section);
     }
     if (sets.length > 0) {
-      params.push(triage.inbox_item_id);
+      params.push(triage.inbox_item_id, orgId);
       await queryHelpers.queryRun(
-        `UPDATE canonical_inbox_items SET ${sets.join(', ')}, status='pending', updated_at=CURRENT_TIMESTAMP WHERE id=$${idx}`,
+        `UPDATE canonical_inbox_items SET ${sets.join(', ')}, status='pending', updated_at=CURRENT_TIMESTAMP WHERE id=$${idx++} AND organization_id=$${idx}`,
         params
       );
     }
-    await queryHelpers.queryRun(`UPDATE inbox_ai_triage_log SET undone=1 WHERE id=$1`, [triageId]);
+    await queryHelpers.queryRun(
+      `UPDATE inbox_ai_triage_log SET undone=1 WHERE id=$1 AND organization_id=$2`,
+      [triageId, orgId]
+    );
     return { ok: true };
   }
 
@@ -591,10 +630,46 @@ class InboxEnterpriseService {
       idx++;
     }
 
-    const sortCol = filters.sortBy || 'created_at';
+    // H6.5 SQL-injection guard: the ORDER BY column and direction MUST come from
+    // an explicit whitelist — never interpolate raw user input (req.query.sortBy)
+    // into SQL. Unknown/malicious input falls back to the default (created_at DESC).
+    // Whitelist maps accepted client keys (API field names + raw column names) to
+    // real canonical_inbox_items columns.
+    const SORTABLE_COLUMNS: Record<string, string> = {
+      created_at: 'created_at',
+      received_at: 'created_at',
+      receivedat: 'created_at',
+      updated_at: 'updated_at',
+      updatedat: 'updated_at',
+      resolved_at: 'resolved_at',
+      priority: 'priority',
+      title: 'title',
+      status: 'status',
+      section: 'section',
+      item_type: 'item_type',
+      itemtype: 'item_type',
+      type: 'item_type',
+      sla_deadline: 'sla_deadline',
+      sladeadline: 'sla_deadline',
+      due_date: 'sla_deadline',
+      duedate: 'sla_deadline',
+      sla_status: 'sla_status',
+      slastatus: 'sla_status',
+    };
+    const sortCol =
+      SORTABLE_COLUMNS[(filters.sortBy || '').toLowerCase().trim()] || 'created_at';
+    // sortDir whitelist: only 'asc' maps to ASC, everything else → DESC.
     const sortDir = filters.sortDir === 'asc' ? 'ASC' : 'DESC';
-    const limit = filters.limit || 50;
-    const offset = filters.offset || 0;
+    // Defense-in-depth: coerce limit/offset to safe bounded integers (the value is
+    // also interpolated, so it must never carry non-numeric input).
+    const limit =
+      Number.isFinite(filters.limit) && (filters.limit as number) > 0
+        ? Math.min(Math.floor(filters.limit as number), 500)
+        : 50;
+    const offset =
+      Number.isFinite(filters.offset) && (filters.offset as number) >= 0
+        ? Math.floor(filters.offset as number)
+        : 0;
 
     const countSql = `SELECT COUNT(*) as total FROM canonical_inbox_items WHERE ${conditions.join(' AND ')}`;
     const dataSql = `SELECT * FROM canonical_inbox_items WHERE ${conditions.join(' AND ')} ORDER BY ${sortCol} ${sortDir} LIMIT ${limit} OFFSET ${offset}`;

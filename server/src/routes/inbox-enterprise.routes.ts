@@ -193,9 +193,10 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    const r = await inboxEnterpriseService.addFocusItem(req.params.boardId, p.data);
+    const r = await inboxEnterpriseService.addFocusItem(req.params.boardId, id.orgId, p.data);
     if ('error' in r) {
-      res.status(409).json(r);
+      // board_not_found = the board is absent or owned by another org (fail-closed).
+      res.status(r.error === 'board_not_found' ? 404 : 409).json(r);
       return;
     }
     res.status(201).json(r);
@@ -208,7 +209,9 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     const status = req.query.status as string | undefined;
-    res.json({ items: await inboxEnterpriseService.getFocusItems(req.params.boardId, status) });
+    res.json({
+      items: await inboxEnterpriseService.getFocusItems(req.params.boardId, id.orgId, status),
+    });
   })
 );
 
@@ -217,7 +220,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await inboxEnterpriseService.completeFocusItem(req.params.itemId));
+    res.json(await inboxEnterpriseService.completeFocusItem(req.params.itemId, id.orgId));
   })
 );
 
@@ -226,7 +229,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await inboxEnterpriseService.removeFocusItem(req.params.itemId));
+    res.json(await inboxEnterpriseService.removeFocusItem(req.params.itemId, id.orgId));
   })
 );
 
@@ -295,7 +298,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await inboxEnterpriseService.acceptTriage(req.params.triageId));
+    res.json(await inboxEnterpriseService.acceptTriage(req.params.triageId, id.orgId));
   })
 );
 
@@ -304,7 +307,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await inboxEnterpriseService.rejectTriage(req.params.triageId));
+    res.json(await inboxEnterpriseService.rejectTriage(req.params.triageId, id.orgId));
   })
 );
 
@@ -313,7 +316,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await inboxEnterpriseService.undoTriage(req.params.triageId));
+    res.json(await inboxEnterpriseService.undoTriage(req.params.triageId, id.orgId));
   })
 );
 

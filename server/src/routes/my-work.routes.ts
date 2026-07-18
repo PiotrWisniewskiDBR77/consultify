@@ -223,6 +223,16 @@ async function applyInboxTriageSideEffects({
   if (action === 'delegate') {
     const delegateUserId = typeof params?.userId === 'string' ? params.userId : undefined;
     if (delegateUserId && kind === 'task') {
+      // H6.5 (org-scope, fail-closed): the triage itemKey is caller-supplied, and
+      // TaskAssignmentService.assignTask resolves/updates the task by id WITHOUT an
+      // org filter. Verify the task belongs to the caller's org before delegating,
+      // otherwise a crafted itemKey (task:<foreignId>) could reassign a task in
+      // another tenant. Foreign/absent tasks are silently skipped.
+      const owned = await queryHelpers.queryOne<{ ok: number }>(
+        `SELECT 1 as ok FROM tasks WHERE id = ? AND organization_id = ? LIMIT 1`,
+        [rawId, orgId]
+      );
+      if (!owned) return;
       await TaskAssignmentService.assignTask(rawId, delegateUserId, { assignedById: userId });
       await NotificationService.send({
         userId: delegateUserId,
