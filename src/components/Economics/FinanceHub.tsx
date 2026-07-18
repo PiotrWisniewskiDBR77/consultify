@@ -556,7 +556,8 @@ export const FinanceHub: React.FC = () => {
   // Driver Planner (M16, flag-gated) — real EBIT decomposition of the
   // currently previewed model's base-scenario forecast. `undefined` when no
   // model is selected/previewed yet (or it has no P&L forecast lines), in
-  // which case DriverPlannerPanel falls back to its own SaaS sample.
+  // which case DriverPlannerPanel renders an empty state prompting model
+  // selection (real-data-only — no synthetic SaaS sample; fixed 2026-07-16).
   const valueOfficeDriverTree = useMemo(
     () => buildDriverTreeFromModelPreview(modelPreviewDetail),
     [modelPreviewDetail]
@@ -3174,7 +3175,8 @@ export const FinanceHub: React.FC = () => {
           {isFinanceFlagEnabled('driverPlanner') && (
             <div className="px-6 pb-6">
               {/* No model exists yet on this empty-state branch, so there is no
-                  real forecast to decompose — the panel's own sample renders. */}
+                  real forecast to decompose — the panel renders its empty state
+                  prompting model selection (no synthetic sample). */}
               <DriverPlannerPanel />
             </div>
           )}

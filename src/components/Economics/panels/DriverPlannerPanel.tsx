@@ -49,7 +49,8 @@ export interface DriverNode {
 }
 
 export interface DriverPlannerPanelProps {
-  /** Root of the driver tree. If omitted, a default SaaS example is used. */
+  /** Root of the driver tree. If omitted, the panel renders an empty state
+   * prompting model selection (real-data-only — never a synthetic sample). */
   driverTree?: DriverNode;
   /** Override formatting of computed/numeric values. */
   formatValue?: (value: number) => string;
