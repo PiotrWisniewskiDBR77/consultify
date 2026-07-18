@@ -1,3 +1,4 @@
+import { buildPortfolioLadderPromptBlock } from '@/config/portfolio/portfolioQuestionBank';
 import type {
   InitiativeDraft,
   PortfolioItem,
@@ -9,6 +10,31 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { GROUNDING_RULES_BOTH } from './groundingRules';
 import { pickW2SummaryFields } from './w2SummaryFields';
+
+/**
+ * Conversation-layer protocol appended to the system prompt for the Portfolio
+ * Priority "items" step: the mentor in chat interviews with the SAME laddered
+ * per-element question bank as the wizard (single source of truth), one element
+ * at a time, branching on answers. Mirrors buildDynamicSwotConversationProtocol /
+ * buildValueChainConversationProtocol / buildMarketForcesConversationProtocol —
+ * this tool had the ladder content (portfolioQuestionBank.ts) but no dedicated
+ * prompt builder and no wiring into the live chat mentor at all (O3 audit gap,
+ * closed here). Returns '' for other steps so it is a no-op there.
+ */
+export function buildPortfolioConversationProtocol(
+  stepId: string | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  if (stepId !== 'items') return '';
+  const ladder = buildPortfolioLadderPromptBlock(language);
+  return `
+
+INTERVIEW PROTOCOL (laddered portfolio-element question bank — the single source of truth for this step):
+When the user explores a portfolio element (initiative / project / product) in conversation, walk this ladder. Ask ONE question at a time; classify the answer into a branch key and follow the branch. Vague answer -> use the probe. Dig from surface -> WHERE the value numbers come from -> feasibility and dependencies between elements -> the urgency window. Do not accept a value/effort score without a sourced proof; an element with no session evidence is "declared, unconfirmed". When a ladder path completes, propose the scored element with its evidence status.
+
+${ladder}`;
+}
+
 interface PortfolioActionHandlers {
   updateInputData: (data: Partial<PortfolioPriorityData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;

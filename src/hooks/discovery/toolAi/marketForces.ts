@@ -103,6 +103,33 @@ When proposing the force verdict, return JSON:
 {"force":"${force}","intensity":"low|medium|high","score":1-5,"trend":"increasing|stable|decreasing","drivers":[{"dimension":"concentration|switching-costs|barriers|scale-economics","finding":"..."}],"staircase":{"fact":"...","factRefs":["signal-id"],"interpretation":"...","implication":"..."},"evidenceStatus":"confirmed|declared","ladderAnswers":[{"questionId":"...","answerKey":"...","note":"..."}]}`;
 }
 
+/**
+ * Conversation-layer protocol appended to the system prompt for the Market
+ * Forces "forces" step: the mentor in chat interviews with the SAME laddered
+ * question bank as the wizard (single source of truth), one force at a time,
+ * branching on answers. Mirrors buildDynamicSwotConversationProtocol /
+ * buildValueChainConversationProtocol — this tool had the ladder content
+ * (porterQuestionBank.ts) and a per-force prompt builder (above) but was never
+ * wired into the live chat mentor (O3 audit gap, closed here). Returns '' for
+ * other steps so it is a no-op there.
+ */
+export function buildMarketForcesConversationProtocol(
+  stepId: string | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  if (stepId !== 'forces') return '';
+  const ladders = FORCE_IDS.map(
+    (force) =>
+      `--- ${PORTER_FORCE_LABELS[force][language].toUpperCase()} (${force}) ---\n${buildForceLadderPromptBlock(force, language)}`
+  ).join('\n');
+  return `
+
+INTERVIEW PROTOCOL (laddered Porter forces question bank — the single source of truth for this step):
+When the user explores a force in conversation, walk this ladder. Ask ONE question at a time; classify the answer into a branch key and follow the branch. Vague answer -> use the probe. Dig from surface -> structural evidence (concentration / switching costs / barriers) -> a quantified anchor -> the 24-month trend. Do not accept a rating without a structural driver. When a ladder path completes, propose the force verdict with its insight staircase, intensity, dominant driver and evidence status.
+
+${ladders}`;
+}
+
 interface MarketForcesActionHandlers {
   updateInputData: (data: Partial<PorterData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
