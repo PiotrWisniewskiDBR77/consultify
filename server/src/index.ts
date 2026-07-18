@@ -475,6 +475,19 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
   });
 
+  // H3.6: Deliverables generation watchdog (deck/doc/sheet timeout sweep) - non-blocking
+  scheduleStartupTask(async () => {
+    try {
+      const { startGenerationWatchdog } = await import(
+        './services/deliverables/generationWatchdog.js'
+      );
+      startGenerationWatchdog();
+      logger.info('[Server] ✅ Deliverables generation watchdog started');
+    } catch (err: any) {
+      logger.error('[Server] Deliverables generation watchdog failed to start:', err?.message);
+    }
+  });
+
   // V4-TASK-05: Init Automation Rules Engine - non-blocking
   scheduleStartupTask(async () => {
     try {
