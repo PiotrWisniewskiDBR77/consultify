@@ -229,6 +229,13 @@ async function planViaLlm(
     ? 'Section headings must be action-titles (so-what statements). E.g. "Sales grew 40% driven by new channel" not "Sales performance".'
     : '';
 
+  const groundingGuard =
+    'GROUNDING (§0.3): a `hint` describes WHAT a block should cover (a metric name, a comparison ' +
+    'axis, a topic) — it must NEVER invent a specific number, date, percentage, or named external ' +
+    'source (no "according to Gartner", no precise-looking figures like "30% growth") that is not ' +
+    'present in the document intent. Reference metrics/topics by NAME, leave the actual value to the ' +
+    "later content-generation step, which is grounded in the organization's real data.";
+
   const systemPrompt =
     'You are a document structure architect (McKinsey / Kimi-Claude quality). ' +
     'For each section, choose a sequence of block types that best conveys the ' +
@@ -240,6 +247,7 @@ async function planViaLlm(
     'never maximise block variety for its own sake. ' +
     `${blocksPerSectionGuide} ` +
     `${registerGuide} ${answerFirstGuide} ${actionTitlesGuide} ` +
+    `${groundingGuard} ` +
     'A section\'s purpose may carry HARD CONSTRAINTS (e.g. "data-only, no prose", ' +
     '"exactly N items", a required block type) — those OVERRIDE the generic guidance ' +
     'above; obey them exactly. ' +
