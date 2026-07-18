@@ -35,9 +35,18 @@ export async function seed() {
       [SEED.ORG_ID, 'Odbior Harness Org', now]
     );
 
+    // FIX (J1, znalezisko): `users` NIE MA kolumny `updated_at` w realnym schemacie
+    // (server/migrations/000_initdb_core_tables.sql CREATE TABLE users — brak;
+    // potwierdzone też w pełnym baseline dumpie migrations-v2/001_baseline_20260413.sql).
+    // Poprzednia wersja tego INSERT-u (feat/acceptance-harness-p03) referencjonowała
+    // users.updated_at, co na CZYSTEJ bazie/PARITY zawsze wywala INSERT z
+    // `column "updated_at" of relation "users" does not exist` — PRZED sprawdzeniem
+    // ON CONFLICT (Postgres waliduje listę kolumn niezależnie od ścieżki konfliktu).
+    // Istniejący wiersz seed-usera (z wcześniejszych sesji) przetrwał tylko dlatego,
+    // że insert nigdy się nie powiódł od nowa na czystej bazie z tą kolumną w SQL.
     await client.query(
-      `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, 'ADMIN', 'active', 'Odbior', 'Harness', $5, $5)
+      `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name, created_at)
+       VALUES ($1, $2, $3, $4, 'ADMIN', 'active', 'Odbior', 'Harness', $5)
        ON CONFLICT (id) DO NOTHING`,
       [SEED.USER_ID, SEED.ORG_ID, SEED.EMAIL, passwordHash, now]
     );
