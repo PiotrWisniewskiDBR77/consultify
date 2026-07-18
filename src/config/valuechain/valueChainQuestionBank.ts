@@ -17,6 +17,12 @@
  *
  * Every function is pure — the runtime interview and the wizard render the SAME
  * question (single source of truth). The branch keys are stable and persisted.
+ *
+ * No separate deepeningLadder.ts here (unlike ansoff/capabilitymapper/etc): this file
+ * IS the ladder for value-chain, same as swot/porter. Wired into the live chat mentor
+ * via buildActivityLadderPromptBlock -> src/hooks/discovery/toolAi/valueChain.ts's
+ * buildValueChainConversationProtocol -> useToolAI.ts sendMessage. Full 19-tool
+ * deepening architecture map: docs/standards/O3_DEEPENING_MAP.md (rejestr J6).
  */
 
 import type { ValueActivityId, ValueActivityKind } from '@/store/useToolStore';

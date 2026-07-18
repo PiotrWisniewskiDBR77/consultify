@@ -15,6 +15,13 @@
  * Every function here is pure — the runtime and the AI prompts both consume this bank,
  * so a question asked by the mentor in chat and a question rendered in the wizard are
  * the same question (single source of truth).
+ *
+ * No separate deepeningLadder.ts here (unlike ansoff/capabilitymapper/etc): this file
+ * IS the ladder for swot — a branching question bank predates and supersedes the flat
+ * rung-array pattern for this reference tool. Wired into the live chat mentor via
+ * buildQuadrantLadderPromptBlock -> src/hooks/discovery/toolAi/dynamicSwot.ts's
+ * buildDynamicSwotConversationProtocol -> useToolAI.ts sendMessage. Full 19-tool
+ * deepening architecture map: docs/standards/O3_DEEPENING_MAP.md (rejestr J6).
  */
 
 import type { SWOTItem } from '@/store/useToolStore';
