@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as "dbAll", get as "dbGet", run as "dbRun" } from '../../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
 import { logAgentAuditEvent } from './agentAuditMetricsService.js';
 
 function isMustHaveQuestion(q: unknown): boolean {
