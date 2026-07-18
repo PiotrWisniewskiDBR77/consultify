@@ -236,23 +236,32 @@ describe('Acceptance HP-2 · Agent Audit (real router + auth + generic agentRunt
         .set('Authorization', `Bearer ${token}`);
       expect(getRes.status).toBe(200);
       expect(getRes.body?.success).toBe(true);
-      // The row is FOUND (id round-trips — no alias involved in the SELECT).
-      expect(getRes.body?.run?.id).toBe(runId);
-      // ★ SEPARATE FINDING (pre-existing, NOT a HP-2 regression — agentAuditStore.ts
-      // is untouched by the agentRuntime generalization): `getAgentAuditRun`'s SQL
-      // uses UNQUOTED camelCase aliases (`verdict_json as verdictJson`,
-      // `organization_id as organizationId`, `agent_id as agentId`, `review_json as
-      // reviewJson`, `created_at as createdAt`, …). Postgres folds unquoted
-      // identifiers to lowercase, so the driver returns `verdictjson`, not
-      // `verdictJson` — every camelCase-aliased field in this query (verdict,
-      // decisionContext, selectedAgentIds, organizationId, userId, reviews[].agentId,
-      // reviews[].review, …) is silently `undefined` on Postgres. SQLite (the
-      // original target) preserves the alias case, which is why this never
-      // surfaced before. Flagged as a follow-up (spawn_task) — NOT fixed here
-      // (out of HP-2 scope). Documenting actual behavior instead of asserting the
-      // intended-but-currently-broken shape:
-      expect(getRes.body?.run?.verdict).toBeNull();
-      expect(getRes.body?.run?.reviews?.[0]?.agentId).toBeUndefined();
+      // The row is FOUND and every field round-trips with its intended camelCase
+      // key. ★ This exercises the fix for a pre-existing SQLite-ism in
+      // agentAuditStore.ts (NOT a HP-2 regression — the file is untouched by the
+      // agentRuntime generalization): the SELECT used UNQUOTED camelCase aliases
+      // (`verdict_json as verdictJson`, …), which Postgres folds to lowercase
+      // (`verdictjson`), so verdict/decisionContext/selectedAgentIds/organizationId/
+      // reviews[].agentId/… all came back `undefined`/null on the live Postgres app
+      // (SQLite, the original target, preserves alias case — hence never surfaced).
+      // Fixed by double-quoting every camelCase alias; these assertions now pin
+      // the CORRECT read-back shape:
+      const run = getRes.body.run;
+      expect(run.id).toBe(runId);
+      expect(run.organizationId).toBe(SEED.ORG_ID);
+      expect(run.userId).toBe(SEED.USER_ID);
+      expect(run.userIntent).toBe('validate');
+      expect(run.selectedAgentIds).toEqual(['function.cfo_finance']);
+      expect(run.verdict).toBeTruthy();
+      expect(run.verdict.qualityStatus).toBe(verdict.qualityStatus);
+      expect(run.createdAt).toBeTruthy();
+      expect(Array.isArray(run.reviews)).toBe(true);
+      expect(run.reviews.length).toBe(reviews.length);
+      if (run.reviews.length > 0) {
+        expect(run.reviews[0].agentId).toBe('function.cfo_finance');
+        expect(run.reviews[0].review).toBeTruthy();
+        expect(run.reviews[0].review.verdict).toBe(reviews[0].verdict);
+      }
     },
     // Real Anthropic structured-output call: llmService.callStructured default
     // structuredTimeoutMs is 60_000/attempt with up to 3 circuit-breaker retries

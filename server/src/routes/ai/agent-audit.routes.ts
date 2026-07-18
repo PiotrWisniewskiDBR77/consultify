@@ -76,7 +76,7 @@ router.get(
     // Aggregate simple KPIs from run_completed payloads (JS-side for compatibility)
     const rows = (await dbAll(
       `
-        SELECT payload_json as payloadJson
+        SELECT payload_json as "payloadJson"
         FROM ai_agent_audit_metrics
         WHERE organization_id = ?
           AND event_type = 'run_completed'
