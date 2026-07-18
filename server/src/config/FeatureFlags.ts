@@ -35,6 +35,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TERESA_MINDMAP: z.boolean().default(true),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
+  ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
@@ -155,6 +156,16 @@ export function loadFeatureFlags(): FeatureFlags {
     // default OFF (live clients stay on STANDARD until quality is proven).
     // Fail-open: any resolution error falls back to STANDARD, never blocks.
     ENABLE_DELIVERABLES_PREMIUM: process.env.ENABLE_DELIVERABLES_PREMIUM === 'true',
+
+    // Oxford O2.5 — Deck CONCLUSION LAYER slide: appends a grounded K1→K4
+    // "Wnioski" slide (werdykt→dlaczego→co robić→horyzont) to a generated deck,
+    // per docs/standards/CONCLUSION_LAYER_STANDARD.md §W5. Additive (never
+    // reshapes existing slides) + fail-safe (deterministic grounded fallback
+    // when the LLM elevation fails). Opt-in, default OFF until owner accept.
+    // NOTE: presentationGeneratorService.generateDeck reads process.env directly
+    // at CALL time (not this singleton) so the gate reflects late env changes in
+    // background generation; this registry entry is the SSOT/documentation.
+    ENABLE_DECK_CONCLUSION_SLIDE: process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true',
 
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated

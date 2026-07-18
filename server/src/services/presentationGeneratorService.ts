@@ -1489,6 +1489,57 @@ export async function generateDeck(
     }
 
     // ------------------------------------------------------------
+    // Oxford O2.5 — CONCLUSION LAYER slide (K1→K4 "Wnioski")
+    // ------------------------------------------------------------
+    // ADDITIVE + fail-safe: appends a grounded verdict→why→what-to-do→horizon
+    // slide (CONCLUSION_LAYER_STANDARD §W5) built from the deck's OWN facts
+    // (artifactData + ContextPack) and validated by the K1→K4 server twin
+    // (`validateConclusion`). A management deck should end on "Co robić
+    // najpierw" (K3) + "Czego oczekiwać" (K4), not a section collage. Gated by
+    // ENABLE_DECK_CONCLUSION_SLIDE (default OFF); process.env is read at CALL
+    // time so background generation reflects late env changes. Never throws.
+    if (process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true') {
+      try {
+        const { buildDeckConclusionSlide } = await import(
+          './deliverables/deckConclusionSlide.js'
+        );
+        let conclusionLlm: unknown = null;
+        try {
+          const mod = await import('./ai/llmService.js');
+          conclusionLlm = (mod as any).llmService || (mod as any).default || null;
+        } catch {
+          conclusionLlm = null;
+        }
+        const conclusion = await buildDeckConclusionSlide({
+          language: setup.language,
+          artifactData,
+          contextPack,
+          llm: conclusionLlm as any,
+          logger: {
+            info: (m: string, meta?: unknown) => logger.info(m, meta as any),
+            warn: (m: string, meta?: unknown) => logger.warn(m, meta as any),
+          },
+        });
+        // Insert before a trailing next_steps/appendix slide so the deck still
+        // closes on the recommendation arc; else append at the end.
+        const tailIntents: SlideIntent[] = ['next_steps', 'appendix'];
+        let insertAt = slides.length;
+        for (let i = slides.length - 1; i >= 0; i--) {
+          if (tailIntents.includes(slides[i].intent)) insertAt = i;
+          else break;
+        }
+        slides.splice(insertAt, 0, conclusion.slide as unknown as UnifiedSlide);
+        logger.info(
+          `[PresentationGen] Conclusion slide inserted at ${insertAt} (source=${conclusion.source}, allHardPass=${conclusion.validation.allHardPass}, failures=[${conclusion.validation.failures.join(',')}])`
+        );
+      } catch (conclusionErr) {
+        logger.warn('[PresentationGen] Conclusion slide skipped (non-fatal)', {
+          err: (conclusionErr as Error)?.message,
+        });
+      }
+    }
+
+    // ------------------------------------------------------------
     // Gamma-like visuals (best-effort)
     // ------------------------------------------------------------
     const visualsEnabled = setup.visuals?.enabled !== false; // default ON if caller doesn't specify
