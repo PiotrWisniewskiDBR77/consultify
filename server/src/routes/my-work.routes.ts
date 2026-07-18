@@ -6865,6 +6865,22 @@ router.post(
             /* sponsor_id column may be absent on some schemas */
           }
         }
+        // H1.5 — idea provenance back-reference. source_type/source_id carry the
+        // tool-session lineage (V3-A01 traceability), so the direct "where from"
+        // label lives in `created_from` — the same origin idiom the assessment
+        // path uses (created_from='assessment') and InitiativeController's source
+        // filter already recognises. The idea id itself stays reachable via the
+        // link-graph edge (below) + my_ideas.promoted_entity_id.
+        if (cols.has('created_from')) {
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET created_from = 'idea' WHERE id = ? AND organization_id = ?`,
+              [initiativeId, orgId]
+            );
+          } catch {
+            /* created_from column may be absent on some schemas */
+          }
+        }
       } else {
         initiativeId = uuidv4();
         const insertCols: string[] = ['id'];
@@ -6887,6 +6903,8 @@ router.post(
         add('sponsor_id', userId);
         add('source_type', 'tool');
         add('source_id', toolSessionId);
+        // H1.5 — idea provenance back-reference (see funnel branch above).
+        add('created_from', 'idea');
 
         await queryHelpers.queryRun(
           `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,

@@ -616,6 +616,64 @@ export async function generateDeliverable(
     const shortKind: 'doc' | 'sheet' | 'deck' =
       format === 'doc' ? 'doc' : format === 'sheet' ? 'sheet' : 'deck';
 
+    // H1.11 (S6.1) — register the deliverable in the M17 Outputs library with a
+    // back-reference to its source conversation, SERVER-SIDE at materialization
+    // time. Previously M17 registration happened only when the FE called
+    // POST /artifacts/register-chat (UnifiedChatPanel) — a split-brain where a
+    // non-v8 org, an FE crash, or an API-only client left the deliverable absent
+    // from Materiały. This mirrors register-chat's taxonomy exactly and is
+    // idempotent per (org, originRuntime, generationId), so the FE call (if it
+    // fires) updates the SAME artifact rather than duplicating. Fire-and-forget +
+    // fail-soft: registry errors must never break the chat deliverable flow.
+    {
+      const mapping =
+        shortKind === 'deck'
+          ? {
+              outputType: 'presentation' as const,
+              artifactFamily: 'presentation' as const,
+              originRuntime: 'presentation' as const,
+            }
+          : shortKind === 'sheet'
+            ? {
+                outputType: 'sheet' as const,
+                artifactFamily: 'sheet' as const,
+                originRuntime: 'sheet' as const,
+              }
+            : {
+                outputType: 'report' as const,
+                artifactFamily: 'document' as const,
+                originRuntime: 'native_artifact' as const,
+              };
+      void import('../../v8/artifactRegistryService.js')
+        .then(({ registerArtifactOrigin }) =>
+          registerArtifactOrigin({
+            organizationId: orgId,
+            outputType: mapping.outputType,
+            artifactFamily: mapping.artifactFamily,
+            originRuntime: mapping.originRuntime,
+            originRecordId: generationId,
+            titleSnapshot: title,
+            ownerUserId: userId,
+            createdBy: userId,
+            originSummary: {
+              sourceType: 'chat',
+              sourceId: conversationId || null,
+              sourceTable: 'conversations',
+              kind: shortKind,
+              generationId,
+              writer: 'generate_deliverable',
+            },
+          })
+        )
+        .catch((registerErr: unknown) => {
+          logger.warn(
+            `[generate_deliverable] M17 origin registration failed (non-blocking) gen=${generationId}: ${
+              registerErr instanceof Error ? registerErr.message : String(registerErr)
+            }`
+          );
+        });
+    }
+
     // Most do frontu — montaż panelu canvasa.
     try {
       context.onDeliverable?.({

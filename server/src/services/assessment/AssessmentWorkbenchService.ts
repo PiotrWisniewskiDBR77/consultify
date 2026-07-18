@@ -6,7 +6,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../../utils/Logger.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { checkSimilarInitiatives } from '../initiativeSimilarityService.js';
 import * as artifactRegistryService from '../v8/artifactRegistryService.js';
 import { addFinding } from '../v8/interviewInsightFindingsService.js';
 import AssessmentDefinitionService from './AssessmentDefinitionService.js';
@@ -474,6 +476,216 @@ async function createInsightProposalFromAssessment(params: {
   return insightId;
 }
 
+export interface AssessmentInitiativeSeed {
+  initiativeId: string;
+  title: string;
+}
+
+export interface AssessmentInitiativeSeedResult {
+  created: AssessmentInitiativeSeed[];
+  skippedDuplicates: number;
+  batchId: string | null;
+}
+
+/** Idempotency marker for the automatic assessment→initiatives batch (H1.3). */
+const AUTO_INITIATIVE_BATCH_NAME = 'p28_workbench_auto';
+
+/**
+ * H1.3 — Assessment → Initiatives (automatic on approval/completion).
+ *
+ * Reuses the H1.2 handoffFinding idiom (interview-insights.routes.ts): a completed
+ * assessment whose interpretation carries recommendations (nextActions, or
+ * keyFindings as fallback) materializes REAL DRAFT initiatives instead of leaving
+ * the user to run the manual `promoteWorkbench` step. Each initiative:
+ *   - is deduped against the org/project's live portfolio (checkSimilarInitiatives,
+ *     informational — only a hard `duplicate` verdict is skipped; never blocks),
+ *   - carries a back-reference to its source (source_type='assessment',
+ *     source_id=<assessmentId>, created_from='assessment' — the same lineage the
+ *     manual endpoint and InitiativeController source-filter already recognise),
+ *   - is linked through assessment_initiative_batches + assessment_initiative_links
+ *     so the Assessment > Initiatives tab surfaces it (no orphan links).
+ *
+ * Column-aware (add() pattern) — robust to schema drift between the demo/parity
+ * databases. Idempotent per assessment (skips when the auto-batch already exists),
+ * so re-completing / retrying never double-creates. Fail-soft: the caller wraps
+ * this in try/catch so completion never fails on a downstream initiative error.
+ */
+async function createInitiativesFromAssessmentRecommendations(params: {
+  assessmentId: string;
+  organizationId: string;
+  userId: string;
+  state: P28WorkbenchState;
+}): Promise<AssessmentInitiativeSeedResult> {
+  const { assessmentId, organizationId, userId, state } = params;
+
+  const rawRecommendations = state.interpretationProposal?.nextActions?.length
+    ? state.interpretationProposal.nextActions
+    : state.interpretationProposal?.keyFindings || [];
+  const recommendations = rawRecommendations
+    .map((r) => String(r || '').trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  if (recommendations.length === 0) {
+    return { created: [], skippedDuplicates: 0, batchId: null };
+  }
+
+  const initiativeCols = await getTableColumns('initiatives');
+  // `name` is the one NOT NULL provenance column — if it is absent the table shape
+  // is unknown and we refuse to guess (fail-soft: no initiatives created).
+  if (!initiativeCols.has('name')) {
+    return { created: [], skippedDuplicates: 0, batchId: null };
+  }
+
+  const batchCols = await getTableColumns('assessment_initiative_batches');
+  const linkCols = await getTableColumns('assessment_initiative_links');
+
+  // Idempotency: never double-create the auto-batch for the same assessment.
+  const batchNameCol = batchCols.has('batch_name')
+    ? 'batch_name'
+    : batchCols.has('methodology_id')
+      ? 'methodology_id'
+      : null;
+  if (batchNameCol) {
+    const existingBatch = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM assessment_initiative_batches WHERE assessment_id = ? AND ${batchNameCol} = ? LIMIT 1`,
+      [assessmentId, AUTO_INITIATIVE_BATCH_NAME]
+    );
+    if (existingBatch) {
+      return { created: [], skippedDuplicates: 0, batchId: null };
+    }
+  }
+
+  const assessmentRow = await queryHelpers.queryOne<{ project_id?: string | null }>(
+    `SELECT project_id FROM assessments WHERE id = ? AND organization_id = ?`,
+    [assessmentId, organizationId]
+  );
+  const projectId = assessmentRow?.project_id || null;
+
+  const now = nowIso();
+  const summaryBase = String(
+    state.interpretationProposal?.summary || state.interpretationReview?.overrideSummary || ''
+  ).trim();
+  const limits = String(state.interpretationProposal?.limits || '').trim();
+  const initiativeSummary =
+    [summaryBase, limits ? `Limits: ${limits}` : '', `Source: assessment ${assessmentId}`]
+      .filter(Boolean)
+      .join('\n\n')
+      .slice(0, 5000) || null;
+
+  // Batch first so links never orphan.
+  const batchId = uuidv4();
+  {
+    const cols: string[] = ['id', 'assessment_id'];
+    const vals: string[] = ['?', '?'];
+    const args: unknown[] = [batchId, assessmentId];
+    const add = (col: string, val: unknown) => {
+      if (!batchCols.has(col)) return;
+      cols.push(col);
+      vals.push('?');
+      args.push(val);
+    };
+    add('organization_id', organizationId);
+    add('batch_name', AUTO_INITIATIVE_BATCH_NAME);
+    add('methodology_id', AUTO_INITIATIVE_BATCH_NAME);
+    add('status', 'draft');
+    add('initiatives_count', 0);
+    add('include_chat_context', 0);
+    add('generated_by', userId);
+    add('created_by', userId);
+    add('created_at', now);
+    add('updated_at', now);
+    await queryHelpers.queryRun(
+      `INSERT INTO assessment_initiative_batches (${cols.join(', ')}) VALUES (${vals.join(', ')})`,
+      args
+    );
+  }
+
+  const created: AssessmentInitiativeSeed[] = [];
+  let skippedDuplicates = 0;
+
+  for (const recommendation of recommendations) {
+    const title = recommendation.slice(0, 200);
+
+    // Dedup parity with the H1.2 handoff + AI wizard: informational only, never
+    // blocks; only a hard `duplicate` verdict is skipped. Isolated try/catch so a
+    // similarity-service outage never fails the auto-promotion.
+    try {
+      const similarity = await checkSimilarInitiatives({
+        orgId: organizationId,
+        projectId,
+        candidates: [{ title, description: summaryBase }],
+      });
+      if (similarity.results[0]?.verdict === 'duplicate') {
+        skippedDuplicates += 1;
+        continue;
+      }
+    } catch (similarityError) {
+      logger.warn(
+        '[AssessmentWorkbench] similarity-check unavailable (non-blocking)',
+        similarityError
+      );
+    }
+
+    const initiativeId = uuidv4();
+    const insertCols: string[] = ['id'];
+    const insertVals: string[] = ['?'];
+    const insertArgs: unknown[] = [initiativeId];
+    const add = (col: string, val: unknown) => {
+      if (!initiativeCols.has(col)) return;
+      insertCols.push(col);
+      insertVals.push('?');
+      insertArgs.push(val);
+    };
+    add('organization_id', organizationId);
+    add('project_id', projectId);
+    add('name', title);
+    add('title', title);
+    add('summary', initiativeSummary);
+    add('description', initiativeSummary);
+    add('status', 'DRAFT');
+    add('priority', 'medium');
+    add('risk_level', 'medium');
+    add('source_type', 'assessment');
+    add('source_id', assessmentId);
+    add('source_assessment_id', assessmentId);
+    add('created_from', 'assessment');
+    add('created_by', userId);
+    add('owner_id', userId);
+    add('created_at', now);
+    add('updated_at', now);
+    await queryHelpers.queryRun(
+      `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+      insertArgs
+    );
+
+    const linkId = uuidv4();
+    const lcols: string[] = ['id', 'assessment_id', 'batch_id', 'initiative_id'];
+    const lvals: string[] = ['?', '?', '?', '?'];
+    const largs: unknown[] = [linkId, assessmentId, batchId, initiativeId];
+    if (linkCols.has('created_at')) {
+      lcols.push('created_at');
+      lvals.push('?');
+      largs.push(now);
+    }
+    await queryHelpers.queryRun(
+      `INSERT INTO assessment_initiative_links (${lcols.join(', ')}) VALUES (${lvals.join(', ')})`,
+      largs
+    );
+
+    created.push({ initiativeId, title });
+  }
+
+  if (batchCols.has('initiatives_count')) {
+    await queryHelpers.queryRun(
+      `UPDATE assessment_initiative_batches SET initiatives_count = ? WHERE id = ?`,
+      [created.length, batchId]
+    );
+  }
+
+  return { created, skippedDuplicates, batchId };
+}
+
 export class AssessmentWorkbenchService {
   static async load(
     assessmentId: string,
@@ -599,6 +811,38 @@ export class AssessmentWorkbenchService {
       detail: `${from} -> ${to}`,
     });
     await persistState(assessmentId, organizationId, state);
+
+    // H1.3 — completion is the approval gate: automatically materialize DRAFT
+    // initiatives from the assessment recommendations (replaces the manual-only
+    // promoteWorkbench step). Fully fail-soft — a downstream initiative error must
+    // never roll back or fail the completion the user just performed.
+    if (to === 'completed') {
+      try {
+        const seedResult = await createInitiativesFromAssessmentRecommendations({
+          assessmentId,
+          organizationId,
+          userId,
+          state,
+        });
+        if (seedResult.created.length > 0 || seedResult.skippedDuplicates > 0) {
+          state.audit.push({
+            at: nowIso(),
+            actorId: userId,
+            action: 'initiatives_auto_created',
+            detail: `created=${seedResult.created.length} skipped_dup=${seedResult.skippedDuplicates} batch=${
+              seedResult.batchId || 'none'
+            }`,
+          });
+          await persistState(assessmentId, organizationId, state);
+        }
+      } catch (seedErr) {
+        logger.warn(
+          '[AssessmentWorkbench] auto initiative creation failed (non-blocking)',
+          seedErr
+        );
+      }
+    }
+
     return state;
   }
 
