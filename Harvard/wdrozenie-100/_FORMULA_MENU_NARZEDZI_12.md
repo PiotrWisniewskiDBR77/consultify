@@ -287,3 +287,9 @@ Legenda kolumny **Stan** (wypełniamy w kroku 2): `✅ JEST` · `🔨 DOROBIĆ` 
 4. **Odbiór wzrokiem (DoD §18.1):** per narzędzie zrzuty dark+light → akceptacja Piotra. Dopiero „tak" = ✅.
 
 **Uwaga o reużyciu:** Task/Decision/Insight/KPI pojawiają się w wielu modułach (My Work, Initiatives, Execution, Results) — to JEDEN artefakt, wiele domów. Standaryzujemy raz, działa wszędzie.
+
+## KOREKTY 07-18 (niezależna weryfikacja canvas — nanieść na sekcje wyżej)
+- **Process Flow RAIL = 🔨 nie ✅**: `PF_CONTEXT_SLOTS` (CanvasLeftToolbar.tsx:196-224) = TYLKO start/task/decision/lane; „połącz" i „komentarz" istnieją silnikowo ale BEZ ikon w RAIL; „tekst" nie istnieje w PF wcale.
+- **Whiteboard: komentarze NIE ISTNIEJĄ w ogóle** (0 wystąpień NodeCommentThread w whiteboard/) — realne 🔨 DOROBIĆ, nie relokacja. WB_CONTEXT_SLOTS = sticky/text/shape/pen/frame (bez connect/comment).
+- **❓ NOWA DECYZJA #6b (Piotr)**: rozjazd save-status w Canvas — MM celowo ZERO tekstów o zapisie (doktryna w IdeaRecommendationMap.tsx:4970), PF przycisk-Save-bez-tekstu, WB pełny saveStatusLabel. Ujednolicić (wyjątek Formuły dla Canvas=silent-autosave?) czy dociągnąć WB/PF do zera jak MM.
+- WB/PF mają WŁASNE wewnętrzne toolbary (WhiteboardToolbar.tsx 411l / ProcessFlowToolbar.tsx 662l) równoległe do wspólnego RAIL — duplikacja do decyzji przy adopcji SPEC-A.

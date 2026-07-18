@@ -237,7 +237,15 @@ class GenericReportService {
       params.push(reportType);
     }
 
-    sql += ` ORDER BY ${sortBy} DESC LIMIT 50`;
+    // SQLi guard: sortBy is caller-supplied — whitelist to real sortable columns,
+    // never interpolate raw input (same class as fixed inbox-v4 getInboxTable).
+    const SORTABLE: Record<string, string> = {
+      uploaded_at: 'uploaded_at',
+      title: 'title',
+      report_type: 'report_type',
+    };
+    const sortCol = SORTABLE[String(sortBy)] || 'uploaded_at';
+    sql += ` ORDER BY ${sortCol} DESC LIMIT 50`;
 
     const rows = await DbPromise.all(this.db, sql, params);
     return rows || [];
