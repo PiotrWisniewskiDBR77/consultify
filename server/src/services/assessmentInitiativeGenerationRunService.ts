@@ -304,9 +304,30 @@ export class AssessmentInitiativeGenerationRunService {
 
     // Start async (best-effort). Do not block request/response cycle.
     setTimeout(() => {
-      void this.processRun(runId).catch((err: unknown) =>
-        logger.warn('[InitiativeGenRun] processRun failed', err)
-      );
+      void this.processRun(runId).catch(async (err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        // H5.5: processRun handles KNOWN validation failures internally by
+        // moving the run to FAILED. An UNEXPECTED rejection here (e.g. a DB read
+        // in the setup phase throwing before any status write) would otherwise
+        // leave the run stuck at status='RUNNING' FOREVER — getProgress would
+        // report a perpetual spinner. Advance the state machine to FAILED so the
+        // caller sees a terminal state, and log with correlation (runId).
+        logger.error(`[InitiativeGenRun] processRun crashed run=${runId}: ${message}`);
+        try {
+          await queryHelpers.queryRun(
+            `UPDATE assessment_initiative_generation_runs
+                SET status = 'FAILED', error = ?, updated_at = ?
+              WHERE id = ? AND status = 'RUNNING'`,
+            [message.slice(0, 500), nowIso(), runId]
+          );
+        } catch (markErr: unknown) {
+          logger.warn(
+            `[InitiativeGenRun] failed to mark run=${runId} FAILED after crash: ${
+              markErr instanceof Error ? markErr.message : String(markErr)
+            }`
+          );
+        }
+      });
     }, 0);
 
     return { runId };
