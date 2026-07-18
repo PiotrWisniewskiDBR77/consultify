@@ -43,6 +43,7 @@ import FinanceValuePanelsScreen from './screens/finance-value-panels';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
+import MelsCanvasWorkspaceScreen from './screens/melscanvas-workspace';
 import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
 import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NavDeclutterSidebarScreen from './screens/navdeclutter-sidebar';
@@ -232,6 +233,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',
     render: () => <NavDeclutterSidebarScreen />,
+  },
+  'melscanvas-workspace': {
+    label:
+      'ODB O5 — REALNY <IdeaMapWorkspace> (melsCanvasFlag, default OFF); &ff_melsCanvas=1 dla ON',
+    render: () => <MelsCanvasWorkspaceScreen />,
   },
   'i18n-fala1-smoke': {
     label:
