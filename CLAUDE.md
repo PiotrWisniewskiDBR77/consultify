@@ -12,7 +12,7 @@ Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko
    `Harvard/wdrozenie-100/_STANDARD_TRIADA_NOTATKA.md`. Przy każdej pracy nad ekranem listowym
    użyj skilla `consultify-triada`.
 3. **Pułapka nr 1: `primary` w tailwind = crimson #85182F.** Czerwień TYLKO semantyka krytyczna.
-   CTA/stany aktywne = neutralne; fokus = niebieski `c-focus` (hook `check-triada.sh` blokuje naruszenia).
+   CTA/stany aktywne = neutralne; fokus = niebieski `c-focus` (hook `check-list-canon.sh` blokuje naruszenia).
 4. **Odbiór ekranu = lista czekowania część B, literalnie, ZA KAŻDYM RAZEM** (menu, tabela,
    pstryczek, kebab, preview, kanban, dark+light). Weryfikacja WZROKIEM (zrzuty), nigdy „testy przeszły".
 5. **Nic nie wchodzi na demo bez akceptacji właściciela na zrzutach.** `origin/demo` = święta baza;
@@ -22,7 +22,8 @@ Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko
    Powłoka wspólna (Menu 1 + prawy panel accordion `ArtifactRightPanel` + kebab + stany), archetyp
    zmienia TYLKO centrum (A Canvas·B Dokument·C Rekord·D Matryca·E Deck). Przy każdej pracy nad
    artefaktem użyj skilla `consultify-artefakty`. Pułapka: `primary-*` KAŻDY numer = crimson
-   (hook `check-artefakt.sh` blokuje w powłoce). Odbiór = DoD §18.1 oczami. Plan: `_ROLLOUT_ARTEFAKTY_PLAN.md`.
+   (hook `check-artefakt.sh` — zbudowany 2026-07-18 — blokuje w powłoce). Odbiór = DoD §18.1
+   oczami. Plan: `_PROJEKT_B_VEGAS.md`.
 7. **★ PIOTR NIGDY NIE JEST PIERWSZYM TESTEREM WIZUALNYM (nienaruszalne — powód: załamanie 07-11, „gwiazda").**
    Zanim Piotr zobaczy JAKIKOLWIEK ekran wizualny: (a) prototyp → wstępny OK Piotra; (b) JA renderuję realny
    ekran + robię ZRZUT sam (dev-render/harness z mock-danymi, bez logowania Piotra — wzór: harness EV
@@ -44,14 +45,15 @@ Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko
    (osadzają realny StandardTable).
 ## STRUKTURA PRAC (2026-07)
 - Program 7 rozbudów narzędzi = mechanika NAJPIERW; artefakty (frontend) dorabiamy PO gotowej
-  mechanice — patrz `Harvard/wdrozenie-100/_STRUKTURA_PRAC_UI.md`.
-- Rollout triady tabel (LISTA/SPEC-L): `Harvard/wdrozenie-100/_ROLLOUT_TRIADA_INWENTARZ.md` — ✅ KOMPLETNY na demo.
-- Rollout artefaktów (ARTEFAKT/SPEC-A): `Harvard/wdrozenie-100/_ROLLOUT_ARTEFAKTY_PLAN.md` — fundament gotowy, fale G0-G5.
+  mechanice — patrz `Harvard/wdrozenie-100/_PROJEKT_B_VEGAS.md`.
+- Rollout triady tabel (LISTA/SPEC-L) i artefaktów (ARTEFAKT/SPEC-A) — stan 12 narzędzi:
+  `Harvard/wdrozenie-100/_FORMULA_MENU_NARZEDZI_12.md`.
 
 ## PRACA W PĘTLI (aktywny tryb od 07-08)
 Program domykania = ŻELAZNA KOLEJNOŚĆ BLOKÓW B1→B9 (Harvard→Vegas→Oxford) — skill `consultify-petla`
 (orkiestracja+pigułka+modele) i `consultify-test` (progi, panel, feed-forward kryteriów).
 Dashboard statusu (aktualizuj po każdym bloku): `Harvard/wdrozenie-100/_STATUS_3_FILARY.html`.
+SSOT statusów domknięcia fazy = `Harvard/wdrozenie-100/_REJESTR_DOKONCZENIA.md` (start/koniec każdej sesji).
 
 ## HIGIENA WYKONANIA
 Robotnicy: modele tanie (Sonnet/Haiku) do mechaniki, Opus tylko trudny kod; świeża gałąź per krok
