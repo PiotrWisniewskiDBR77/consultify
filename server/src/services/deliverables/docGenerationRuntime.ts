@@ -1347,11 +1347,16 @@ async function runStreamingDocGeneration(params: {
   const quantificationRule = pl
     ? ' KWANTYFIKACJA (§0.3): każda liczba, procent, kwota lub ROI/payback MUSI albo wynikać z dostarczonych faktów, albo być opatrzona jawnym założeniem w nawiasie, np. „30% (szacunek: przy założeniu X)". Liczby bez podstawy w faktach i bez założenia są ZABRONIONE — usuń je lub zastąp jakościowym opisem. Jeśli poproszono o ROI/payback, a brak danych do wyliczenia — napisz wprost, jakich danych brakuje, zamiast zmyślać wynik.'
     : ' QUANTIFICATION (§0.3): every number, percentage, amount, or ROI/payback MUST either follow from the provided facts or carry an explicit assumption in parentheses, e.g. "30% (estimate: assuming X)". Numbers with no basis in the facts and no assumption are FORBIDDEN — remove them or replace with a qualitative statement. If ROI/payback was requested but there is no data to compute it, state plainly which data is missing instead of fabricating a result.';
+  const answerFirstRule = pl
+    ? ' ANSWER-FIRST (piramida Minto): pierwsze zdanie sekcji niesie konkluzję lub kluczowe ustalenie — żadnej rozgrzewki ani powtórzenia tytułu sekcji.'
+    : ' ANSWER-FIRST (Minto pyramid): the first sentence of the section carries the conclusion or key finding — no warm-up, no restating the section title.';
   const systemPromptBase = pl
     ? 'Jesteś starszym konsultantem w Consultify. Piszesz JEDNĄ sekcję dokumentu biznesowego — zwracasz treść tej sekcji bez nagłówka (bez markdownu nagłówków #/##). Domyślnie 2–4 akapity prozy, konkretnie, językiem konsultingowym; gdy sekcja jest tabelaryczna z natury, dodaj tabelę Markdown GFM. Jeśli twierdzenie wykracza poza dostarczone fakty, oznacz je w nawiasie „(założenie)".' +
+      answerFirstRule +
       quantificationRule +
       ' Bez bloków kodu, bez meta-komentarzy.'
     : 'You are a senior consultant at Consultify. You write ONE section of a business document — return the section content with no heading (no #/## markdown headings). By default 2–4 paragraphs of prose, concrete, consulting register; when the section is inherently tabular, add a GFM Markdown table. If a claim goes beyond the provided facts, flag it inline as "(assumption)".' +
+      answerFirstRule +
       quantificationRule +
       ' No code fences, no meta-commentary.';
   const systemPrompt = `${languageDirective(docLang)}\n\n${tableDirective(docLang, params.reinforceTables)}\n\n${systemPromptBase}`;

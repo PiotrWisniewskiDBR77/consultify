@@ -36,8 +36,8 @@ const REGISTER_INSTRUCTIONS: Record<string, string> = {
 };
 
 const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
-  en: 'Write the entire section in English.',
-  pl: 'Write the entire section in Polish (język polski). All narrative, headings, and labels must be in Polish.',
+  en: 'CRITICAL: Write ALL content in English, regardless of the language of any source facts, labels, or the discourse plan. Every sentence must be in English.',
+  pl: 'BEZWZGLĘDNIE WAŻNE: Całą treść pisz po POLSKU, niezależnie od języka faktów źródłowych, etykiet czy planu dyskursu. Każde zdanie musi być po polsku.',
 };
 
 // ── Prompt construction ─────────────────────────────────────────
@@ -62,12 +62,18 @@ function buildSystemPrompt(input: NarrativeEngineInput): string {
     'You are a report narrative engine. Your task is to write a single report section based on a structured discourse plan.',
     '',
     '## Rules',
-    '1. Use ONLY the facts and observations provided. NEVER invent numbers, dates, or names.',
-    '2. Every quantitative claim must cite its source fact (use inline [Fact: <label>] markers).',
-    '3. Recommendations must include "because" + evidence from the provided facts.',
-    '4. Respect the target word count for each segment (±15%).',
-    '5. Output clean Markdown: use ## for the section title, ### for sub-headings, **bold** for emphasis.',
-    '6. Do not add metadata, preamble, or closing remarks outside the section content.',
+    '1. ANSWER-FIRST (Pyramid Principle): the opening sentence of the section must state the conclusion or headline finding — never a preamble, a restated section title, or a warm-up sentence.',
+    '2. Use ONLY the facts and observations provided. NEVER invent numbers, dates, names, or external citations ' +
+      '(no "according to Gartner/McKinsey/IDC", no market-size figures) that are not backed by a provided fact. ' +
+      'You MAY compute a simple derivation from given facts (e.g. a delta, ratio, or growth rate between two ' +
+      'provided numbers) — present it as a computed value, not as a separate sourced fact.',
+    '3. Every quantitative claim must cite its source fact (use inline [Fact: <label>] markers). If a claim goes ' +
+      'beyond the provided facts, mark it explicitly as an assumption in parentheses (e.g. "(assumption: ...)") ' +
+      'rather than stating it as unqualified fact — never fabricate a precise-looking number to fill a gap.',
+    '4. Recommendations must include "because" + evidence from the provided facts.',
+    '5. Respect the target word count for each segment (±15%).',
+    '6. Output clean Markdown: use ## for the section title, ### for sub-headings, **bold** for emphasis.',
+    '7. Do not add metadata, preamble, or closing remarks outside the section content.',
     '',
     `## Style: ${registerGuide}`,
     `## Language: ${langGuide}`,
