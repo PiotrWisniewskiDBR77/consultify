@@ -40,6 +40,7 @@ import type {
 } from '../../types/myWorkRoofPackage.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
@@ -955,7 +956,12 @@ router.post(
     if (!(await requireNotebookPagesTable(res))) return;
     const notebookCols = await getNotebookPageColumns();
 
-    const title = String(req.body?.title || '').trim();
+    // Z139 (data-integrity): the global input-sanitization middleware escapes
+    // HTML entities on every req.body string. Decode back to plain before
+    // storing notebook_pages.title — same fix already applied to the primary
+    // /my-work/notebook path — so the DB holds plain text instead of a literal
+    // `&amp;` that would otherwise render un-decoded in the UI.
+    const title = decodeHtmlEntities(String(req.body?.title || '').trim());
     if (!title) {
       return res.status(400).json({ error: 'title is required', code: 'NOTEBOOK_TITLE_REQUIRED' });
     }
@@ -1337,7 +1343,8 @@ router.put(
       params.push(value);
     };
 
-    if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
+    if (typeof req.body?.title === 'string')
+      set('title', decodeHtmlEntities(String(req.body.title).trim())); // Z139: decode-before-store
     if (req.body?.tags !== undefined)
       set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
     if (req.body?.contentJson !== undefined) {
