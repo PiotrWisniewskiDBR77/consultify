@@ -1641,14 +1641,18 @@ const LaneExecuteSchema = z.object({
 // the whole organisation's action queue. Gate the entire /manager surface behind a
 // manager-level capability (SUPERADMIN/OWNER/ADMIN/PROJECT_MANAGER) — a plain USER now
 // gets 403 instead of seeing colleagues' assignments.
-router.use('/manager', requirePermission('manage_workstreams'));
+// M14 D-03 (Piotr 2026-07-18): manager lanes live on a dedicated sub-router so they
+// can ALSO be served via a legacy-fallback alias that bypasses ENABLE_V8_GLOBAL / org
+// V8 enablement (see Gateway.ts). Same handlers, same org scope, same permission gate.
+const managerRouter = Router();
+managerRouter.use(requirePermission('manage_workstreams'));
 
 /**
  * GET /api/v8/execution-control/manager/lanes/:laneId/problems
  * Flat list of ManagerProblemRow[] for the given lane — real data from DB.
  */
-router.get(
-  '/manager/lanes/:laneId/problems',
+managerRouter.get(
+  '/lanes/:laneId/problems',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const laneId = String(req.params.laneId);
@@ -1667,8 +1671,8 @@ router.get(
   })
 );
 
-router.post(
-  '/manager/lanes/:laneId/problem-actions/execute',
+managerRouter.post(
+  '/lanes/:laneId/problem-actions/execute',
   validateBody(ManagerProblemActionSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
@@ -1696,8 +1700,8 @@ router.post(
   })
 );
 
-router.post(
-  '/manager/lanes/:laneId/suggestions/apply',
+managerRouter.post(
+  '/lanes/:laneId/suggestions/apply',
   validateBody(ManagerSuggestionApplySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
@@ -1728,8 +1732,8 @@ router.post(
  * GET /api/v8/execution-control/manager/lanes/:laneId/analysis
  * Full 6-section analysis for a lane.
  */
-router.get(
-  '/manager/lanes/:laneId/analysis',
+managerRouter.get(
+  '/lanes/:laneId/analysis',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const laneId = String(req.params.laneId);
@@ -1752,8 +1756,8 @@ router.get(
  * POST /api/v8/execution-control/manager/lanes/:laneId/decisions
  * Submit a decision on a suggestion.
  */
-router.post(
-  '/manager/lanes/:laneId/decisions',
+managerRouter.post(
+  '/lanes/:laneId/decisions',
   validateBody(LaneDecisionSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
@@ -1846,8 +1850,8 @@ router.post(
  * POST /api/v8/execution-control/manager/lanes/:laneId/execute
  * Create execution plan from an approved decision.
  */
-router.post(
-  '/manager/lanes/:laneId/execute',
+managerRouter.post(
+  '/lanes/:laneId/execute',
   validateBody(LaneExecuteSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
@@ -1929,8 +1933,8 @@ router.post(
  * GET /api/v8/execution-control/manager/lanes/:laneId/verification
  * Get execution plans for verification readback.
  */
-router.get(
-  '/manager/lanes/:laneId/verification',
+managerRouter.get(
+  '/lanes/:laneId/verification',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const laneId = String(req.params.laneId);
@@ -1973,8 +1977,8 @@ router.get(
  * POST /api/v8/execution-control/manager/lanes/:laneId/ai/recommend
  * AI recommendation for a single problem.
  */
-router.post(
-  '/manager/lanes/:laneId/ai/recommend',
+managerRouter.post(
+  '/lanes/:laneId/ai/recommend',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const laneId = String(req.params.laneId);
@@ -1995,8 +1999,8 @@ router.post(
  * POST /api/v8/execution-control/manager/lanes/:laneId/ai/triage
  * AI clustering and prioritization of all problems in a lane.
  */
-router.post(
-  '/manager/lanes/:laneId/ai/triage',
+managerRouter.post(
+  '/lanes/:laneId/ai/triage',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const laneId = String(req.params.laneId);
@@ -2013,8 +2017,8 @@ router.post(
  * POST /api/v8/execution-control/manager/lanes/:laneId/ai/manage-all
  * Comprehensive AI management plan for an entire lane.
  */
-router.post(
-  '/manager/lanes/:laneId/ai/manage-all',
+managerRouter.post(
+  '/lanes/:laneId/ai/manage-all',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const laneId = String(req.params.laneId);
@@ -2026,5 +2030,11 @@ router.post(
     return res.json({ data: plan, meta: executionControlMeta() });
   })
 );
+
+// Mount the manager sub-router under the canonical /manager prefix for the gated
+// /api/v8 mount (external paths unchanged: /api/v8/execution-control/manager/lanes/...).
+router.use('/manager', managerRouter);
+
+export { managerRouter };
 
 export default router;

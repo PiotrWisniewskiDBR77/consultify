@@ -8,6 +8,7 @@ import { deprecationHeader } from './middleware/deprecationHeader.middleware.js'
 import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
 import { trialEntryGuard } from './middleware/trialEntryGuard.middleware.js';
+import { attachV8Context, requireV8OrgContext } from './middleware/v8Auth.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
@@ -312,6 +313,7 @@ import userGoalsRoutes from './routes/user/userGoals.routes.js';
 import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import v8Router from './routes/v8/index.js';
+import { managerRouter as v8ExecutionControlManagerRouter } from './routes/v8/execution-control.routes.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import v10TeresaRoutes from './routes/v10/teresa.routes.js';
 import verifyRoutes from './routes/verify.routes.js';
@@ -1114,6 +1116,22 @@ export class ApiGateway {
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
       app.use('/api/referrals', referralsRoutes);
+
+      // M14 D-03 (Piotr 2026-07-18): Manager lanes legacy fallback. The Manager tab
+      // (action-queue/decisions/blockers/workload/risk/people-change) must return real
+      // data on demo WITHOUT requiring ENABLE_V8_GLOBAL or org-level V8 enablement.
+      // Mounted BEFORE the gated /api/v8 mount so these exact paths bypass v8FeatureGate
+      // + v8OrgGate; every OTHER /api/v8/execution-control/* path (and non-lanes traffic)
+      // falls through to the gated v8Router below. The security posture is preserved:
+      // same auth (verifyToken), same org scoping (requireV8OrgContext/attachV8Context),
+      // and the manage_workstreams permission gate lives inside managerRouter itself.
+      app.use(
+        '/api/v8/execution-control/manager',
+        gatewayVerifyToken,
+        requireV8OrgContext,
+        attachV8Context,
+        v8ExecutionControlManagerRouter
+      );
 
       // V8 API namespace — feature-gated
       logger.info('[ApiGateway] Mounting /api/v8');
