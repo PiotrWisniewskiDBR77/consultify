@@ -229,8 +229,13 @@ router.post(
         expiresIn: result.expiresIn,
       });
     } catch (error: unknown) {
-      logger.error('[Auth] Refresh error:', error);
-      return res.status(500).json({ error: 'Token refresh failed' });
+      logger.error('[Auth] Refresh error:', {
+        error,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Token refresh failed', code: 'AUTH_TOKEN_REFRESH_FAILED' });
     }
   })
 );
@@ -244,8 +249,13 @@ router.get(
       const sessions = await refreshTokenService.getActiveSessions(req.user!.id);
       return res.json({ sessions });
     } catch (error: unknown) {
-      logger.error('[Auth] Get sessions error:', error);
-      return res.status(500).json({ error: 'Failed to get sessions' });
+      logger.error('[Auth] Get sessions error:', {
+        error,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to get sessions', code: 'AUTH_GET_SESSIONS_FAILED' });
     }
   })
 );
