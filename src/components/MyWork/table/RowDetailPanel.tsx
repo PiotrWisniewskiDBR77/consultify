@@ -113,6 +113,8 @@ interface RowDetailPanelProps {
   fields?: TablePlatformField[];
   /** `tp_tables.id` for platform API calls (watch, comments). Falls back to `fields[0].tableId`. */
   platformTableId?: string | null;
+  /** Tab to land on when the panel (re)opens — e.g. "Add note" deep-links straight to Comments. Defaults to Properties/Fields. */
+  initialTab?: 'properties' | 'comments';
 }
 
 type TabId = 'properties' | 'comments' | 'attachments' | 'activity' | 'ai' | 'drawing';
@@ -144,6 +146,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   ideaId,
   fields,
   platformTableId,
+  initialTab,
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -173,8 +176,27 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     [currentUser?.email, currentUser?.firstName, currentUser?.lastName]
   );
 
-  const [activeTab, setActiveTab] = useState<TabId>('properties');
-  const [platformSheetTab, setPlatformSheetTab] = useState<PlatformSheetTabId>('fields');
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab === 'comments' ? 'comments' : 'properties');
+  const [platformSheetTab, setPlatformSheetTab] = useState<PlatformSheetTabId>(
+    initialTab === 'comments' ? 'comments' : 'fields'
+  );
+
+  // The panel stays mounted between opens (only `open` toggles), so the useState
+  // initializers above only apply on first mount. Re-apply `initialTab` on every
+  // fresh open so callers like "Add note" (→ Comments tab) land where they promise,
+  // even on the 2nd+ open. Does not fight a manual tab click made while the panel
+  // was already open (e.g. clicking through to a linked record via onNodeClick).
+  useEffect(() => {
+    if (!open || !initialTab) return;
+    if (initialTab === 'comments') {
+      setActiveTab('comments');
+      setPlatformSheetTab('comments');
+    } else {
+      setActiveTab('properties');
+      setPlatformSheetTab('fields');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialTab, node?.id]);
   const [newComment, setNewComment] = useState('');
   const [isWatching, setIsWatching] = useState(false);
   const [watchLoading, setWatchLoading] = useState(false);

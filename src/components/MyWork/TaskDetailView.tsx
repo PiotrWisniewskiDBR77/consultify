@@ -1468,6 +1468,80 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const isDone = status === 'done';
   const isDecisionBlocked = Boolean(blockedByDecisionId);
 
+  // Single M1 primary CTA driven by lifecycle status (Formuła §M1 / wzorzec
+  // Decision `DecisionDetailView.tsx:5041` — "Approve = M1 primary … workflow
+  // keeps secondary actions"). Exactly one forward-progress action lives in
+  // the header; the matching button is dropped from the local action bar
+  // below so it isn't offered twice (see render, ~4250).
+  const taskPrimaryAction = useMemo(() => {
+    if (readMode) return undefined;
+    if (status === 'todo' || status === 'blocked') {
+      return {
+        label: { en: 'Start', pl: 'Rozpocznij' },
+        icon: Play,
+        onClick: () => {
+          const old = status;
+          setStatus('in_progress');
+          if (status === 'blocked') setBlockedReason('');
+          addActivityLogEntry(
+            'status_change',
+            t('myWork.taskDetail.taskStarted', 'Task started'),
+            old,
+            'in_progress'
+          );
+        },
+      };
+    }
+    if (status === 'in_progress') {
+      return {
+        label: { en: 'Send to Review', pl: 'Wyślij do przeglądu' },
+        icon: Eye,
+        onClick: () => {
+          setStatus('review');
+          addActivityLogEntry(
+            'status_change',
+            t('myWork.taskDetail.sentToReview', 'Sent to review'),
+            'in_progress',
+            'review'
+          );
+        },
+      };
+    }
+    if (status === 'review') {
+      return {
+        label: { en: 'Complete', pl: 'Zakończ' },
+        icon: CheckCircle2,
+        onClick: () => {
+          const old = status;
+          setStatus('done');
+          addActivityLogEntry(
+            'status_change',
+            t('myWork.taskDetail.taskCompleted', 'Task completed'),
+            old,
+            'done'
+          );
+        },
+      };
+    }
+    if (status === 'done') {
+      return {
+        label: { en: 'Reopen', pl: 'Wznów' },
+        icon: Play,
+        onClick: () => {
+          setStatus('in_progress');
+          addActivityLogEntry(
+            'status_change',
+            t('myWork.taskDetail.taskReopened', 'Task reopened'),
+            'done',
+            'in_progress'
+          );
+        },
+      };
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readMode, status, t]);
+
   // ── Risk helpers (matching Decision pattern) ──────────────────────────────
   const riskLevelOptions = useMemo(() => ['low', 'medium', 'high', 'critical'] as const, []);
   const riskCategoryOptions = useMemo(
@@ -4164,6 +4238,7 @@ Return ONLY the final comment text.`;
                 presentationMode={presentationMode}
                 onPresentationModeChange={setPresentationMode}
                 buildArtifactCode={buildArtifactCode}
+                primaryAction={taskPrimaryAction}
               />
 
               {/* ── N-Mode Content ──────────────────────────────── */}
@@ -4250,46 +4325,15 @@ Return ONLY the final comment text.`;
                 {!readMode && (
                   <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                     <div className="flex items-center gap-2">
-                      {/* Start / Resume — shown when todo or blocked */}
-                      {(status === 'todo' || status === 'blocked') && (
-                        <button
-                          onClick={() => {
-                            const old = status;
-                            setStatus('in_progress');
-                            if (status === 'blocked') setBlockedReason('');
-                            addActivityLogEntry(
-                              'status_change',
-                              t('myWork.taskDetail.taskStarted', 'Task started'),
-                              old,
-                              'in_progress'
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-400/50 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
-                        >
-                          <Play size={13} /> {t('myWork.taskDetail.start', 'Start')}
-                        </button>
-                      )}
+                      {/* Start/Resume, Send to Review and Reopen are now the M1 primary
+                          CTA (NModeHeader.primaryAction, computed in taskPrimaryAction
+                          above from `status`) — kept here only when they are NOT the
+                          current primary, so the same transition is never offered twice. */}
 
-                      {/* Send to Review — shown when in_progress */}
+                      {/* Complete — secondary "skip ahead" shortcut while in_progress;
+                          when status is 'review', Complete IS the primary action already
+                          shown in the header, so it is intentionally not duplicated here. */}
                       {status === 'in_progress' && (
-                        <button
-                          onClick={() => {
-                            setStatus('review');
-                            addActivityLogEntry(
-                              'status_change',
-                              t('myWork.taskDetail.sentToReview', 'Sent to review'),
-                              'in_progress',
-                              'review'
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
-                        >
-                          <Eye size={13} /> {t('myWork.taskDetail.sendToReview', 'Send to Review')}
-                        </button>
-                      )}
-
-                      {/* Complete — shown when in_progress or review */}
-                      {(status === 'in_progress' || status === 'review') && (
                         <button
                           onClick={() => {
                             const old = status;
@@ -4326,23 +4370,8 @@ Return ONLY the final comment text.`;
                         </button>
                       )}
 
-                      {/* Reopen — shown when done */}
-                      {status === 'done' && (
-                        <button
-                          onClick={() => {
-                            setStatus('in_progress');
-                            addActivityLogEntry(
-                              'status_change',
-                              t('myWork.taskDetail.taskReopened', 'Task reopened'),
-                              'done',
-                              'in_progress'
-                            );
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-400/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
-                        >
-                          <Play size={13} /> {t('myWork.taskDetail.reopen', 'Reopen')}
-                        </button>
-                      )}
+                      {/* Reopen (done → in_progress) is the M1 primary CTA when status
+                          is 'done' (see taskPrimaryAction) — no local duplicate. */}
 
                       {/* Reassign — FAZA C: bramka task.reassign (fail-open, shadow = bez zmian) */}
                       <CapabilityGate capability="task.reassign" projectId={projectId || undefined}>
@@ -4369,8 +4398,8 @@ Return ONLY the final comment text.`;
                           disabled={isGeneratingIdeas}
                           className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             isGeneratingIdeas
-                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                              ? 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
+                              : 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]'
                           } disabled:opacity-40 disabled:cursor-not-allowed`}
                           title={t(
                             'myWork.taskDetail.generateImplementationPlanWith',
@@ -4392,8 +4421,8 @@ Return ONLY the final comment text.`;
                           disabled={isGeneratingRisks}
                           className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             isGeneratingRisks
-                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                              ? 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
+                              : 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]'
                           } disabled:opacity-40 disabled:cursor-not-allowed`}
                           title={t('myWork.taskDetail.title13', 'Analyze risks with AI')}
                         >
@@ -4412,8 +4441,8 @@ Return ONLY the final comment text.`;
                           disabled={isGeneratingChecklist}
                           className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             isGeneratingChecklist
-                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                              ? 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
+                              : 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]'
                           } disabled:opacity-40 disabled:cursor-not-allowed`}
                           title={t(
                             'myWork.taskDetail.generateChecklistWithAI',
@@ -4435,8 +4464,8 @@ Return ONLY the final comment text.`;
                           disabled={isGeneratingAIComment}
                           className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             isGeneratingAIComment
-                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                              ? 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
+                              : 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]'
                           } disabled:opacity-40 disabled:cursor-not-allowed`}
                           title={t('myWork.taskDetail.title14', 'Generate AI comments')}
                         >
@@ -4547,8 +4576,8 @@ Return ONLY the final comment text.`;
                           disabled={isSuggestingStakeholders}
                           className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             isSuggestingStakeholders
-                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                              ? 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
+                              : 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]'
                           } disabled:opacity-40 disabled:cursor-not-allowed`}
                           title={t('myWork.taskDetail.title15', 'Generate RACI with AI')}
                         >
