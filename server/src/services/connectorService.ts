@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import db from '../database/Database.js';
 import * as auditLogger from '../utils/auditLogger.js';
+// TODO(T7): dead self-import wrapper (real impl never existed) — this path is a 503/fallback victim. Build a real service before relying on it. Ref: finding_42_self_import_wrappers_services_2026-07-15.
 import connectorRegistry from './connectorRegistry.js';
 import secretsVault from './secretsVault.js';
 

@@ -1353,6 +1353,7 @@ class ManagementReportsService {
     }
 
     try {
+      // TODO(T7): dead self-import wrapper (real impl never existed) — this path is a 503/fallback victim. Build a real service before relying on it. Ref: finding_42_self_import_wrappers_services_2026-07-15.
       const aiModule = await import('./aiExecutiveReporting.js');
       const aiService = aiModule.default || aiModule;
       if (
