@@ -176,7 +176,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     [currentUser?.email, currentUser?.firstName, currentUser?.lastName]
   );
 
-  const [activeTab, setActiveTab] = useState<TabId>(initialTab === 'comments' ? 'comments' : 'properties');
+  const [activeTab, setActiveTab] = useState<TabId>(
+    initialTab === 'comments' ? 'comments' : 'properties'
+  );
   const [platformSheetTab, setPlatformSheetTab] = useState<PlatformSheetTabId>(
     initialTab === 'comments' ? 'comments' : 'fields'
   );

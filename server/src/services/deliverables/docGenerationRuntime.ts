@@ -66,9 +66,7 @@ function isSkeletonContent(content: string): boolean {
 const FAILURE_CONTENT_MARKER_PL = 'Generacja nie powiodła się.';
 const FAILURE_CONTENT_MARKER_EN = 'Generation failed.';
 function isFailureContent(content: string): boolean {
-  return (
-    content.includes(FAILURE_CONTENT_MARKER_PL) || content.includes(FAILURE_CONTENT_MARKER_EN)
-  );
+  return content.includes(FAILURE_CONTENT_MARKER_PL) || content.includes(FAILURE_CONTENT_MARKER_EN);
 }
 /** Wyłuskaj powód z treści-błędu (linia „Powód: …" / „Reason: …"). */
 function extractFailureReason(content: string): string | undefined {

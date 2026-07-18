@@ -19,7 +19,6 @@ import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
-import { useAppStore } from '@/store/useAppStore';
 import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 import {
@@ -31,6 +30,7 @@ import {
   fetchPresentationRuntimeEvents,
   type PresentationRuntimeEvent,
 } from '@/services/presentationRuntimeEvents';
+import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';

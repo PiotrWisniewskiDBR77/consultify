@@ -526,7 +526,7 @@ function DynamicSwotOutputs({
                       })}
                 </button>
                 {materializedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-c-success/10 px-3 py-1 text-xs font-semibold text-c-success">
                     <Check className="h-3 w-3" /> {materializedCount}{' '}
                     {t('discoveryToolsSteps.summaryStep.dynamicSwot.materialize.createdBadge', {
                       defaultValue: 'in backbone',
@@ -539,7 +539,7 @@ function DynamicSwotOutputs({
               {Object.keys(initiativeActions).length > 0 && (
                 <div className="mb-4 flex flex-wrap gap-3">
                   {developCount > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-c-success/10 px-3 py-1 text-xs font-semibold text-c-success">
                       <Rocket className="h-3 w-3" /> {developCount}{' '}
                       {t('discoveryToolsSteps.summaryStep.dynamicSwot.counters.toDevelop')}
                     </span>

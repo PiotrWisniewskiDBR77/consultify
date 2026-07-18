@@ -291,10 +291,10 @@ export async function start(params: {
   const generationStartedAt = Date.now();
   const correlationId = newCorrelationId('deck');
   logger.info(`${LOG_PREFIX} generation start: generation=${row.id} cid=${correlationId}`);
-  void withTransientRetry(
-    () => generateDeck(row.id, outline, setup, params.organizationId),
-    { label: 'deck', correlationId }
-  )
+  void withTransientRetry(() => generateDeck(row.id, outline, setup, params.organizationId), {
+    label: 'deck',
+    correlationId,
+  })
     .then((result) => {
       runtimeState.set(row.id, {
         state: 'draft',

@@ -5,8 +5,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import logger from '../../utils/Logger.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { checkSimilarInitiatives } from '../initiativeSimilarityService.js';
 import * as artifactRegistryService from '../v8/artifactRegistryService.js';

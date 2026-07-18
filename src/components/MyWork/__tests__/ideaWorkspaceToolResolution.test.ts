@@ -42,7 +42,10 @@ describe('H2.3 — idea workspace initial tool resolution', () => {
   it('maps table and whiteboard deep-links 1:1 as well', () => {
     const cases: CanvasToolType[] = ['table', 'whiteboard'];
     for (const tool of cases) {
-      const state = createDefaultIdeaWorkspaceState({ id: `idea-${tool}`, data: { initialTool: tool } });
+      const state = createDefaultIdeaWorkspaceState({
+        id: `idea-${tool}`,
+        data: { initialTool: tool },
+      });
       expect(state.activeTool).toBe(tool);
     }
   });

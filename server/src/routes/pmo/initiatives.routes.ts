@@ -2672,8 +2672,7 @@ router.post(
     const bodyRecs: ToolSessionRecommendation[] = Array.isArray(req.body.recommendations)
       ? req.body.recommendations
       : [];
-    const recommendations =
-      bodyRecs.length > 0 ? bodyRecs : extractSessionRecommendations(session);
+    const recommendations = bodyRecs.length > 0 ? bodyRecs : extractSessionRecommendations(session);
     if (!recommendations.length) {
       return res.status(422).json({
         error: 'Tool session has no recommendations to materialize',

@@ -656,8 +656,7 @@ class InboxEnterpriseService {
       sla_status: 'sla_status',
       slastatus: 'sla_status',
     };
-    const sortCol =
-      SORTABLE_COLUMNS[(filters.sortBy || '').toLowerCase().trim()] || 'created_at';
+    const sortCol = SORTABLE_COLUMNS[(filters.sortBy || '').toLowerCase().trim()] || 'created_at';
     // sortDir whitelist: only 'asc' maps to ASC, everything else → DESC.
     const sortDir = filters.sortDir === 'asc' ? 'ASC' : 'DESC';
     // Defense-in-depth: coerce limit/offset to safe bounded integers (the value is

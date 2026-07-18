@@ -111,9 +111,9 @@ import {
   gateAiSoftBlocks,
   type GateAiTimeline,
 } from '@/types/gateAi';
+import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
-import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import {
   getWorkflowStatusForInitiative,
