@@ -5129,7 +5129,7 @@ Use userId only from this list:
                             disabled={workflowActionLoading}
                             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                               action.tone === 'primary'
-                                ? 'border border-primary-400/50 bg-primary-500/10 text-primary-700 hover:bg-primary-500/15 dark:text-primary-300'
+                                ? 'border border-c-info/50 bg-c-info/10 text-c-info hover:bg-c-info/15'
                                 : action.tone === 'success'
                                   ? 'border border-emerald-400/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300'
                                   : 'border border-slate-300/60 text-slate-600 hover:bg-slate-100 dark:border-navy-600/60 dark:text-slate-300 dark:hover:bg-navy-800'
@@ -5172,8 +5172,8 @@ Use userId only from this list:
                             disabled={isDecisionStageLocked || isGeneratingAlternatives}
                             className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                               isGeneratingAlternatives
-                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                                ? 'border-c-info/50 text-c-info bg-c-info/10'
+                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
                             } disabled:opacity-40 disabled:cursor-not-allowed`}
                             title={t(
                               'decisions.detail.actions.generateOptionsTitle',
@@ -5208,8 +5208,8 @@ Use userId only from this list:
                             disabled={isDecisionStageLocked || isGeneratingRisks}
                             className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                               isGeneratingRisks
-                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                                ? 'border-c-info/50 text-c-info bg-c-info/10'
+                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
                             } disabled:opacity-40 disabled:cursor-not-allowed`}
                             title={t(
                               'decisions.detail.actions.analyzeRisksTitle',
@@ -5230,8 +5230,8 @@ Use userId only from this list:
                             disabled={isDecisionStageLocked || isSuggestingStakeholders}
                             className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                               isSuggestingStakeholders
-                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                                ? 'border-c-info/50 text-c-info bg-c-info/10'
+                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
                             } disabled:opacity-40 disabled:cursor-not-allowed`}
                             title={t(
                               'decisions.detail.actions.generateRaciTitle',
@@ -5252,8 +5252,8 @@ Use userId only from this list:
                             disabled={isDecisionStageLocked || isGeneratingAIComment}
                             className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                               isGeneratingAIComment
-                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                                ? 'border-c-info/50 text-c-info bg-c-info/10'
+                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
                             } disabled:opacity-40 disabled:cursor-not-allowed`}
                             title={t(
                               'decisions.detail.actions.generateCommentTitle',
@@ -5274,8 +5274,8 @@ Use userId only from this list:
                             disabled={isDecisionStageLocked || isGeneratingConsequenceScenarios}
                             className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                               isGeneratingConsequenceScenarios
-                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                                ? 'border-c-info/50 text-c-info bg-c-info/10'
+                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
                             } disabled:opacity-40 disabled:cursor-not-allowed`}
                             title={t(
                               'decisions.detail.actions.analyzeConsequencesTitle',
@@ -5367,7 +5367,7 @@ Use userId only from this list:
                                         className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
                                       >
                                         <div className="flex min-w-0 items-center gap-2">
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-info/50 text-c-info bg-c-info/10 uppercase">
                                             {item.type}
                                           </span>
                                           <span className="truncate">{item.title}</span>
