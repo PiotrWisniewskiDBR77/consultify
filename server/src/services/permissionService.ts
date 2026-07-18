@@ -373,12 +373,24 @@ export async function hasPermission(
   };
 
   try {
-    // First check for explicit org-user override
+    // First check for explicit org-user override.
+    // FIX (T6, rejestr fail-open audit): DbPromise.get() defaults to
+    // `fallback: true`, which SWALLOWS db errors and resolves `null` instead of
+    // rejecting — indistinguishable from "no row found". Without `fallback: false`
+    // here, a genuine internal DB error (connection reset, timeout, transient
+    // failure — anything that is NOT a missing-table error) would silently fall
+    // through to `allowFallbackPermission()` below instead of reaching the
+    // catch-block discrimination at the bottom of this function, granting the
+    // narrow role-fallback permissions (e.g. ADMIN+INTERVIEW_ASSIGN_MANAGE) on
+    // an unrelated internal error. `fallback: false` makes real errors reject,
+    // so they land in the catch block, which correctly denies unless the error
+    // specifically looks like a missing-table/migration-not-applied condition.
     const override = await DbPromise.get<OverrideRow>(
       db,
-      `SELECT grant_type FROM org_user_permissions 
+      `SELECT grant_type FROM org_user_permissions
              WHERE user_id = ? AND organization_id = ? AND permission_key = ?`,
-      [userId, orgId, permissionKey]
+      [userId, orgId, permissionKey],
+      { fallback: false }
     );
 
     // If explicit override exists, use it
@@ -390,9 +402,10 @@ export async function hasPermission(
     // (PostgreSQL deployments may have role_permissions with role_id/permission_id schema instead of role/permission_key)
     const rolePermission = await DbPromise.get<{ '1'?: number }>(
       db,
-      `SELECT 1 FROM builtin_role_permissions 
+      `SELECT 1 FROM builtin_role_permissions
              WHERE role = ? AND permission_key = ?`,
-      [userRole, permissionKey]
+      [userRole, permissionKey],
+      { fallback: false }
     );
 
     if (rolePermission) return true;
