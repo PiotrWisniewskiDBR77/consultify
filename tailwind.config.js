@@ -1,6 +1,14 @@
 // VA0.5 - alpha-enabled token colors: solid = var(--c-X) (jak dotad), /NN = rgb(var(--c-X-rgb) / alpha)
+// Tailwind's built-in color-opacity plugins (bg/text/border/ring/divide) never call this with
+// opacityValue undefined for the no-modifier case — they always pass the CSS var default,
+// e.g. 'var(--tw-bg-opacity, 1)'. Without matching that sentinel the bare class falls into the
+// rgb()/alpha branch and tokens with a baked-in alpha in --c-X (like --c-accent-soft, 0.08/0.14)
+// render fully opaque (full crimson) instead of their intended soft tint. The /NN modifier path
+// is unaffected — it still receives a numeric opacityValue and resolves via -rgb.
 const cTok = (name) => ({ opacityValue }) =>
-  opacityValue === undefined ? 'var(--c-' + name + ')' : 'rgb(var(--c-' + name + '-rgb) / ' + opacityValue + ')';
+  opacityValue === undefined || (typeof opacityValue === 'string' && opacityValue.indexOf('var(--tw-') === 0)
+    ? 'var(--c-' + name + ')'
+    : 'rgb(var(--c-' + name + '-rgb) / ' + opacityValue + ')';
 
 /** @type {import('tailwindcss').Config} */
 export default {
