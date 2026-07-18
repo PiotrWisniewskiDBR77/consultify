@@ -34,6 +34,8 @@ export type GeneratorType =
   | 'process_summary'
   | 'process_brief'
   | 'process_savings'
+  // J26 (Kanał 2): rewrite an EXISTING process step in place (updateNodes, not addNodes)
+  | 'edit_step'
   | 'vsm_generator'
   | 'sticky_summarize'
   | 'vsm_future_state'
@@ -538,6 +540,16 @@ const WbNameClustersSchema = z.object({
   ),
 });
 
+// J26 (Kanał 2): edit_step — rewrite ONE existing process step. LLM returns the
+// rewritten label (+ optional description) for the target node; the formatter
+// wraps it in patch.updateNodes so Propose→Accept modifies that node in place
+// (no new nodes, neighbours untouched). Pattern mirrors wb_name_clusters.
+const EditStepSchema = z.object({
+  label: z.string(),
+  description: z.string().optional().nullable(),
+  rationale: z.string().optional().nullable(),
+});
+
 const WbToMapBranchesSchema = z.object({
   rootLabel: z.string(),
   branches: z.array(
@@ -625,6 +637,7 @@ const SCHEMA_MAP: Record<GeneratorType, z.ZodSchema<any>> = {
   process_summary: ProcessSummarySchema,
   process_brief: ProcessBriefSchema,
   process_savings: ProcessSavingsSchema,
+  edit_step: EditStepSchema,
   vsm_generator: VSMGeneratorSchema,
   sticky_summarize: StickySummarizeSchema,
   vsm_future_state: VSMFutureStateSchema,
@@ -803,6 +816,28 @@ function buildSystemPrompt(
     .slice(0, 50);
   const existingLaneLabels = (ctx.existingLanes || [])
     .map((l: any) => String(l?.label || '').trim())
+    .filter(Boolean);
+
+  // J26 (Kanał 2, edit_step): resolve the target step + its neighbours for grounding.
+  const editStepTargetId = String(ctx.selection?.primaryId || ctx.selection?.ids?.[0] || '');
+  const labelOfNode = (id: string): string => {
+    const n = ctx.existingNodes.find((x: any) => String(x?.id) === String(id));
+    return String(n?.data?.label || n?.label || '').trim();
+  };
+  const editStepTargetNode = ctx.existingNodes.find(
+    (n: any) => String(n?.id) === editStepTargetId
+  );
+  const editStepTargetLabel = String(
+    editStepTargetNode?.data?.label || editStepTargetNode?.label || ''
+  ).trim();
+  const editStepTargetDesc = String(editStepTargetNode?.data?.description || '').trim();
+  const editStepPredLabels = (ctx.existingEdges || [])
+    .filter((e: any) => String(e?.target) === editStepTargetId)
+    .map((e: any) => labelOfNode(String(e?.source)))
+    .filter(Boolean);
+  const editStepSuccLabels = (ctx.existingEdges || [])
+    .filter((e: any) => String(e?.source) === editStepTargetId)
+    .map((e: any) => labelOfNode(String(e?.target)))
     .filter(Boolean);
 
   const prompts: Record<GeneratorType, string> = {
@@ -1111,6 +1146,19 @@ Istniejące kolumny: ${existingNodeLabels.join(', ') || 'brak'}`
       : `You are a data analyst. Analyze the table and propose simplification: which columns to remove (irrelevant, empty), which to merge (redundant). Provide rationale. Respond ONLY in JSON.${orgBlock}
 
 Existing columns: ${existingNodeLabels.join(', ') || 'none'}`,
+
+    // J26 (Kanał 2): rewrite ONE existing step in place. NEVER add or touch other steps.
+    edit_step: isPl
+      ? `Jesteś ekspertem od mapowania procesów. Przeredaguj JEDEN wskazany krok procesu zgodnie z instrukcją użytkownika. NIE twórz nowych kroków i NIE zmieniaj innych kroków — przepisz WYŁĄCZNIE etykietę (label) i, jeśli to zasadne, opis (description) TEGO kroku. Zachowaj spójność z sąsiednimi krokami. Odpowiedz TYLKO w formacie JSON zgodnym ze schematem: { label, description }.${orgBlock}
+
+Krok do przeredagowania: "${editStepTargetLabel || 'brak'}"${editStepTargetDesc ? ` (obecny opis: ${editStepTargetDesc})` : ''}
+Poprzednie kroki: ${editStepPredLabels.join(', ') || 'brak'}
+Następne kroki: ${editStepSuccLabels.join(', ') || 'brak'}`
+      : `You are a process mapping expert. Rewrite ONE specified process step according to the user's instruction. Do NOT create new steps and do NOT change other steps — rewrite ONLY the label and, if warranted, the description of THIS step. Keep it consistent with the neighbouring steps. Respond ONLY in JSON matching the schema: { label, description }.${orgBlock}
+
+Step to rewrite: "${editStepTargetLabel || 'none'}"${editStepTargetDesc ? ` (current description: ${editStepTargetDesc})` : ''}
+Previous steps: ${editStepPredLabels.join(', ') || 'none'}
+Next steps: ${editStepSuccLabels.join(', ') || 'none'}`,
   };
 
   return prompts[generatorType] || prompts.suggestions;
@@ -1183,6 +1231,16 @@ export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
   let output = (result as any)?.object || result;
   if (generatorType === 'ai_retrieve_artifacts') {
     output = await verifyRetrievedArtifacts(orgId, output);
+  }
+  if (generatorType === 'edit_step') {
+    // The target node id is context (selection.primaryId), not part of the LLM
+    // output — attach it so the formatter can build patch.updateNodes for it.
+    output = {
+      ...output,
+      _targetId: String(
+        scopedContext.selection?.primaryId || scopedContext.selection?.ids?.[0] || ''
+      ),
+    };
   }
 
   const ts = Date.now();
@@ -1965,6 +2023,50 @@ export function formatIdeaGeneratorOutput(
           status: 'pending',
         },
       ],
+      createdAt: ts,
+    };
+  }
+
+  // J26 (Kanał 2): edit_step — one proposal that rewrites the target node in
+  // place via patch.updateNodes (Propose→Accept). No addNodes → neighbours are
+  // never touched. Mirrors the wb_name_clusters shape.
+  if (generatorType === 'edit_step') {
+    const targetId = String(output?._targetId || '');
+    const newLabel = String(output?.label || '').trim();
+    const newDesc =
+      typeof output?.description === 'string' && output.description.trim()
+        ? output.description.trim()
+        : undefined;
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals:
+        targetId && newLabel
+          ? [
+              {
+                id: `prop-${ts}-edit-step`,
+                type: 'graph_patch',
+                rationale: isPl
+                  ? `Przeredagowano krok: „${newLabel}"`
+                  : `Rewrote step: "${newLabel}"`,
+                confidence: 0.8,
+                patch: {
+                  updateNodes: [
+                    {
+                      id: targetId,
+                      data: {
+                        label: newLabel,
+                        ...(newDesc ? { description: newDesc } : {}),
+                        ...(output?.rationale ? { _rewriteRationale: output.rationale } : {}),
+                      },
+                    },
+                  ],
+                },
+                status: 'pending',
+              },
+            ]
+          : [],
       createdAt: ts,
     };
   }

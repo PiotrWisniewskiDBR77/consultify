@@ -79,7 +79,7 @@ export interface AIProposal {
   readback_after: string;
   created_at: string;
   confidence?: number;
-  generatorType?: 'flow_generator' | 'node_expand';
+  generatorType?: 'flow_generator' | 'node_expand' | 'edit_step';
   /** Raw patch from the backend proposal — re-applied on accept. */
   patch?: ProposalPatch;
   /** Ghost nodes for the on-canvas preview (decision 6). */
@@ -215,6 +215,73 @@ export function useProcessFlowAIProposal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Shared tail for every generator: pick the graph_patch proposal from the
+   * batch, simulate it (Decision 4) and publish it as the active proposal
+   * (Decision 5 accept re-applies against the live graph). Used by both the
+   * free-prompt `createProposal` and the J26 `createStepRewriteProposal`.
+   */
+  const presentBatch = useCallback(
+    (
+      batch: Awaited<ReturnType<typeof generateAIProposal>>,
+      prompt: string,
+      generatorType: NonNullable<AIProposal['generatorType']>
+    ): boolean => {
+      const proposal: BatchProposal | undefined = (batch?.proposals || []).find(
+        (p) => p?.type === 'graph_patch' && p.patch && p.status !== 'rejected'
+      );
+      if (!proposal) {
+        setError(
+          tr(
+            isPl,
+            'errorNoProposal',
+            'AI returned no change proposal for this process. Refine the prompt and try again.'
+          )
+        );
+        return false;
+      }
+
+      // Decision 4: simulate with the same pure function used on accept.
+      const sim = applyProposalPatch(nodes, edges, lanes, proposal.patch);
+      const validationBefore = validateFlow(nodes, edges, semanticKit);
+      const validationAfter = validateFlow(sim.nodes, sim.edges, semanticKit);
+      const readbackBefore = readbackToText(generateReadback(nodes, edges, lanes, isPl), isPl);
+      const readbackAfter = readbackToText(
+        generateReadback(sim.nodes, sim.edges, sim.lanes, isPl),
+        isPl
+      );
+
+      setActiveProposal({
+        id: proposal.id,
+        status: 'pending',
+        prompt,
+        summary:
+          proposal.rationale ||
+          proposal.resultSummary ||
+          tr(isPl, 'defaultSummary', 'Proposed process changes'),
+        operations: patchToOperations(proposal.patch),
+        risk_flags: sim.warnings.map((w) => localizeWarning(w, isPl)),
+        validation_before: {
+          valid: validationBefore.valid,
+          issue_count: validationBefore.issues.length,
+        },
+        validation_after: {
+          valid: validationAfter.valid,
+          issue_count: validationAfter.issues.length,
+        },
+        readback_before: readbackBefore,
+        readback_after: readbackAfter,
+        created_at: new Date().toISOString(),
+        confidence: proposal.confidence,
+        generatorType,
+        patch: proposal.patch,
+        previewNodes: toPreviewGhosts(sim),
+      });
+      return true;
+    },
+    [edges, isPl, lanes, nodes, semanticKit]
+  );
+
   const createProposal = useCallback(
     async (prompt: string) => {
       if (!ideaId || !prompt.trim()) return;
@@ -265,56 +332,7 @@ export function useProcessFlowAIProposal({
           },
         });
 
-        const proposal: BatchProposal | undefined = (batch?.proposals || []).find(
-          (p) => p?.type === 'graph_patch' && p.patch && p.status !== 'rejected'
-        );
-        if (!proposal) {
-          setError(
-            tr(
-              isPl,
-              'errorNoProposal',
-              'AI returned no change proposal for this process. Refine the prompt and try again.'
-            )
-          );
-          return;
-        }
-
-        // Decision 4: simulate with the same pure function used on accept.
-        const sim = applyProposalPatch(nodes, edges, lanes, proposal.patch);
-        const validationBefore = validateFlow(nodes, edges, semanticKit);
-        const validationAfter = validateFlow(sim.nodes, sim.edges, semanticKit);
-        const readbackBefore = readbackToText(generateReadback(nodes, edges, lanes, isPl), isPl);
-        const readbackAfter = readbackToText(
-          generateReadback(sim.nodes, sim.edges, sim.lanes, isPl),
-          isPl
-        );
-
-        setActiveProposal({
-          id: proposal.id,
-          status: 'pending',
-          prompt,
-          summary:
-            proposal.rationale ||
-            proposal.resultSummary ||
-            tr(isPl, 'defaultSummary', 'Proposed process changes'),
-          operations: patchToOperations(proposal.patch),
-          risk_flags: sim.warnings.map((w) => localizeWarning(w, isPl)),
-          validation_before: {
-            valid: validationBefore.valid,
-            issue_count: validationBefore.issues.length,
-          },
-          validation_after: {
-            valid: validationAfter.valid,
-            issue_count: validationAfter.issues.length,
-          },
-          readback_before: readbackBefore,
-          readback_after: readbackAfter,
-          created_at: new Date().toISOString(),
-          confidence: proposal.confidence,
-          generatorType,
-          patch: proposal.patch,
-          previewNodes: toPreviewGhosts(sim),
-        });
+        presentBatch(batch, prompt, generatorType);
       } catch (err: unknown) {
         const message = err instanceof Error && err.message ? err.message : null;
         setError(
@@ -325,7 +343,70 @@ export function useProcessFlowAIProposal({
         setIsGenerating(false);
       }
     },
-    [edges, ideaId, isPl, lanes, language, nodes, selectedNodeIds, semanticKit]
+    [edges, ideaId, isPl, lanes, language, nodes, presentBatch, selectedNodeIds]
+  );
+
+  /**
+   * J26 (Kanał 2 — doktryna dwóch kanałów): rewrite ONE existing step in place.
+   * Calls the `edit_step` generator with the target node id in
+   * `selection.primaryId` and the user's instruction as `seedText`; the backend
+   * returns a `patch.updateNodes` proposal (no addNodes → neighbours untouched).
+   * Reuses the same Propose→Accept lifecycle (`presentBatch` + `resolveProposal`).
+   */
+  const createStepRewriteProposal = useCallback(
+    async (params: { nodeId: string; instruction: string }) => {
+      const nodeId = String(params.nodeId || '');
+      const instruction = String(params.instruction || '');
+      if (!ideaId || !nodeId || !instruction.trim()) return;
+      setIsGenerating(true);
+      setError(null);
+      setActiveProposal(null);
+      try {
+        const batch = await generateAIProposal({
+          ideaId,
+          generatorType: 'edit_step',
+          tool: 'process_flow',
+          context: {
+            seedText: instruction,
+            title: '',
+            existingNodes: nodes.map((n) => ({
+              id: n.id,
+              data: {
+                label: n.data?.label,
+                description: n.data?.description,
+                shape: n.data?.shape,
+                laneId: n.data?.laneId,
+              },
+            })),
+            existingEdges: edges.map((e) => ({
+              id: e.id,
+              source: e.source,
+              target: e.target,
+              label: (e.data?.label ?? e.label) || undefined,
+            })),
+            existingLanes: lanes,
+            language: language || (isPl ? 'pl' : 'en'),
+            selection: {
+              type: 'node',
+              count: 1,
+              ids: [nodeId],
+              primaryId: nodeId,
+            },
+          },
+        });
+
+        presentBatch(batch, instruction, 'edit_step');
+      } catch (err: unknown) {
+        const message = err instanceof Error && err.message ? err.message : null;
+        setError(
+          message ||
+            tr(isPl, 'errorGenerate', 'Failed to generate the AI proposal. Please try again.')
+        );
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [edges, ideaId, isPl, lanes, language, nodes, presentBatch]
   );
 
   /**
@@ -350,5 +431,13 @@ export function useProcessFlowAIProposal({
     setError(null);
   }, []);
 
-  return { activeProposal, isGenerating, error, createProposal, resolveProposal, dismiss };
+  return {
+    activeProposal,
+    isGenerating,
+    error,
+    createProposal,
+    createStepRewriteProposal,
+    resolveProposal,
+    dismiss,
+  };
 }
