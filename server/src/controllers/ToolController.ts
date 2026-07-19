@@ -374,19 +374,23 @@ const ensureToolsSchema = async (): Promise<void> => {
       )`
     );
     // V4-TOOL-02: runtime contract & DoD status columns
+    // IF NOT EXISTS (Postgres-native, supported since 9.6) makes these true no-ops
+    // on repeat calls instead of throwing 42701 "column already exists" — which
+    // queryHelpers.queryRun logs via logger.error() BEFORE the try/catch here
+    // ever sees it, spamming logs on every create/update tool_session.
     try {
       await queryHelpers.queryRun(
-        `ALTER TABLE tool_sessions ADD COLUMN runtime_contract_json TEXT`
+        `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS runtime_contract_json TEXT`
       );
     } catch {
-      // column already exists
+      // defensive: should be no-op now, keep catch for forward-compat
     }
     try {
       await queryHelpers.queryRun(
-        `ALTER TABLE tool_sessions ADD COLUMN dod_status TEXT DEFAULT 'pending'`
+        `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS dod_status TEXT DEFAULT 'pending'`
       );
     } catch {
-      // column already exists
+      // defensive: should be no-op now, keep catch for forward-compat
     }
     // P27-B: wizard state, missing items, failure reason
     // H3: output_json — generated tool outputs; read by the Conclusions sync
@@ -400,9 +404,11 @@ const ensureToolsSchema = async (): Promise<void> => {
       { name: 'output_json', def: 'TEXT' },
     ]) {
       try {
-        await queryHelpers.queryRun(`ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`);
+        await queryHelpers.queryRun(
+          `ALTER TABLE tool_sessions ADD COLUMN IF NOT EXISTS ${col.name} ${col.def}`
+        );
       } catch {
-        // column already exists
+        // defensive: should be no-op now, keep catch for forward-compat
       }
     }
 
