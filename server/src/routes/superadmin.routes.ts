@@ -3146,7 +3146,7 @@ router.post(
  */
 router.get(
   '/platform-stats',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     const safeQuery = async <T>(query: string, defaultValue: T): Promise<T> => {
       try {
         const result = await dbGet<T>(query);
@@ -3392,8 +3392,47 @@ router.get(
         },
       });
     } catch (error: any) {
-      logger.error('[SuperAdmin] Platform stats error:', error);
-      return res.status(500).json({ error: error?.message });
+      // Dashboard enrichment read — degrade to safe zeroed defaults instead of failing the panel.
+      logger.warn('[SuperAdmin] Platform stats error, degrading', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        timestamp: new Date().toISOString(),
+        infrastructure: { dbSizeMB: 0 },
+        users: {
+          activeNow: 0,
+          totalUsers: 0,
+          totalOrgs: 0,
+          todaySignups: 0,
+          todayLogins: 0,
+          recentSignups: [],
+        },
+        business: {
+          trialsExpiring: 0,
+          trialsExpiringSoonList: [],
+          overdueInvoices: 0,
+          overdueInvoicesList: [],
+          pendingFeedback: 0,
+          recentFeedback: [],
+        },
+        security: {
+          failedLoginsLastHour: 0,
+          failedLoginsList: [],
+          suspiciousIPs: 0,
+          apiErrors15Min: 0,
+          recentErrors: [],
+        },
+        performance: {
+          avgApiLatencyMs: 0,
+          slowQueries: 0,
+          slowQueriesList: [],
+          aiRequestsToday: 0,
+          aiTokensToday: 0,
+          aiErrorsToday: 0,
+        },
+        degraded: true,
+      });
     }
   })
 );
@@ -3646,8 +3685,15 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error updating lifecycle stage:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error updating lifecycle stage:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować etapu cyklu życia',
+        code: 'SUPERADMIN_LIFECYCLE_STAGE_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -3664,8 +3710,15 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error deleting lifecycle stage:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error deleting lifecycle stage:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się usunąć etapu cyklu życia',
+        code: 'SUPERADMIN_LIFECYCLE_STAGE_DELETE_FAILED',
+      });
     }
   })
 );
@@ -3673,7 +3726,7 @@ router.delete(
 // Get lifecycle transitions
 router.get(
   '/lifecycle/transitions',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
       const transitions = await dbAll(`
@@ -3692,8 +3745,12 @@ router.get(
             `);
       return res.json(transitions || []);
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching lifecycle transitions:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching lifecycle transitions, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -3738,8 +3795,15 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error creating lifecycle transition:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error creating lifecycle transition:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć przejścia cyklu życia',
+        code: 'SUPERADMIN_LIFECYCLE_TRANSITION_CREATE_FAILED',
+      });
     }
   })
 );
@@ -3747,7 +3811,7 @@ router.post(
 // Get lifecycle stats
 router.get(
   '/lifecycle/stats',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { all: dbAll, get: dbGet } = await import('../utils/DbPromise.js');
 
@@ -3770,8 +3834,12 @@ router.get(
         totalTransitions: totalTransitions?.total || 0,
       });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching lifecycle stats:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching lifecycle stats, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ stageStats: [], totalTransitions: 0, degraded: true });
     }
   })
 );
@@ -3783,7 +3851,7 @@ router.get(
 // Get all playbooks
 router.get(
   '/playbooks',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
       const playbooks = await dbAll(`
@@ -3792,8 +3860,12 @@ router.get(
             `);
       return res.json(playbooks || []);
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching playbooks:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching playbooks, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -3801,7 +3873,7 @@ router.get(
 // Get playbook actions
 router.get(
   '/playbooks/actions',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
       const actions = await dbAll(`
@@ -3816,8 +3888,12 @@ router.get(
             `);
       return res.json(actions || []);
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching playbook actions:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching playbook actions, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -3825,7 +3901,7 @@ router.get(
 // Get playbook stats
 router.get(
   '/playbooks/stats',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { get: dbGet } = await import('../utils/DbPromise.js');
 
@@ -3841,8 +3917,18 @@ router.get(
         stats || { total_playbooks: 0, active_playbooks: 0, total_actions: 0, completed_actions: 0 }
       );
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching playbook stats:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching playbook stats, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        total_playbooks: 0,
+        active_playbooks: 0,
+        total_actions: 0,
+        completed_actions: 0,
+        degraded: true,
+      });
     }
   })
 );
@@ -3877,8 +3963,14 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error creating playbook:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error creating playbook:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się utworzyć playbooka', code: 'SUPERADMIN_PLAYBOOK_CREATE_FAILED' });
     }
   })
 );
@@ -3914,8 +4006,14 @@ router.put(
       if (result.changes === 0) return res.status(404).json({ error: 'Playbook not found' });
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error updating playbook:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error updating playbook:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zaktualizować playbooka', code: 'SUPERADMIN_PLAYBOOK_UPDATE_FAILED' });
     }
   })
 );
@@ -3932,8 +4030,14 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error deleting playbook:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error deleting playbook:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się usunąć playbooka', code: 'SUPERADMIN_PLAYBOOK_DELETE_FAILED' });
     }
   })
 );
@@ -3970,8 +4074,14 @@ router.post(
 
       return res.json({ success: true, actionsExecuted: actions.length });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error executing playbook:', err);
-      return res.status(500).json({ error: err.message });
+      // Write (executes actions) — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error executing playbook:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się wykonać playbooka', code: 'SUPERADMIN_PLAYBOOK_EXECUTE_FAILED' });
     }
   })
 );
@@ -4004,8 +4114,12 @@ router.get(
       const contracts = await dbAll(query, params);
       return res.json(contracts || []);
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching contracts:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching contracts, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -4013,7 +4127,7 @@ router.get(
 // Get contract stats
 router.get(
   '/contracts/stats',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { get: dbGet } = await import('../utils/DbPromise.js');
 
@@ -4030,8 +4144,18 @@ router.get(
         stats || { total_contracts: 0, active_contracts: 0, total_value: 0, renewals_30d: 0 }
       );
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching contract stats:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching contract stats, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        total_contracts: 0,
+        active_contracts: 0,
+        total_value: 0,
+        renewals_30d: 0,
+        degraded: true,
+      });
     }
   })
 );
@@ -4059,8 +4183,12 @@ router.get(
 
       return res.json(renewals || []);
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching renewals:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[SuperAdmin] Error fetching renewals, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -4117,8 +4245,14 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error creating contract:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error creating contract:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się utworzyć kontraktu', code: 'SUPERADMIN_CONTRACT_CREATE_FAILED' });
     }
   })
 );
@@ -4175,8 +4309,14 @@ router.put(
       if (result.changes === 0) return res.status(404).json({ error: 'Contract not found' });
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error updating contract:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error updating contract:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zaktualizować kontraktu', code: 'SUPERADMIN_CONTRACT_UPDATE_FAILED' });
     }
   })
 );
@@ -4193,8 +4333,14 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error deleting contract:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error deleting contract:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się usunąć kontraktu', code: 'SUPERADMIN_CONTRACT_DELETE_FAILED' });
     }
   })
 );

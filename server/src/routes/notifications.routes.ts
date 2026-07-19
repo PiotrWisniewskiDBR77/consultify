@@ -9,6 +9,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import EscalationService from '../services/escalationService.js';
 import NotificationService from '../services/notificationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -34,7 +35,12 @@ router.get(
       });
       return res.json(notifications);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Enrichment read (notifications list) — degrade to safe default instead of 500.
+      logger.warn('[Notifications] getNotifications degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -56,7 +62,12 @@ router.get(
       const counts = await (service as any).getCounts(userId);
       return res.json(counts);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Enrichment badge read — degrade to zeroed counts instead of 500.
+      logger.warn('[Notifications] getCounts degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ unread: 0, degraded: true });
     }
   })
 );
@@ -77,7 +88,12 @@ router.get(
       const counts = await (service as any).getCounts(userId);
       return res.json({ count: counts.unread || 0 });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message, count: 0 });
+      // Enrichment badge read — degrade to zero instead of 500.
+      logger.warn('[Notifications] unread-count degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ count: 0, degraded: true });
     }
   })
 );
@@ -100,7 +116,14 @@ router.patch(
       await (service as any).markAsRead(id, userId);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] markAsRead failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to mark notification as read', code: 'NOTIFICATIONS_MARK_READ_FAILED' });
     }
   })
 );
@@ -121,7 +144,15 @@ router.post(
       const updated = await (service as any).markAllAsRead(userId);
       return res.json({ success: true, updated });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] markAllAsRead failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Failed to mark all notifications as read',
+        code: 'NOTIFICATIONS_MARK_ALL_READ_FAILED',
+      });
     }
   })
 );
@@ -143,7 +174,12 @@ router.get(
       const escalations = await service.getEscalations(projectId, status as string | undefined);
       return res.json(escalations);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Enrichment read (project escalations panel) — degrade to safe default instead of 500.
+      logger.warn('[Notifications] getEscalations degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -175,7 +211,14 @@ router.post(
       const result = await service.runAutoEscalation(projectId);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write (triggers escalation actions) — never fail-soft.
+      logger.error('[Notifications] runAutoEscalation failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to run escalations', code: 'NOTIFICATIONS_ESCALATION_RUN_FAILED' });
     }
   })
 );
@@ -198,7 +241,14 @@ router.delete(
       await (service as any).delete(id, userId);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] delete failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to delete notification', code: 'NOTIFICATIONS_DELETE_FAILED' });
     }
   })
 );
