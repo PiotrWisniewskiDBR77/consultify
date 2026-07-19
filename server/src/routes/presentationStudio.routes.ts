@@ -1121,8 +1121,25 @@ router.post(
         ? rawInstruction.trim()
         : undefined;
 
-    const result = await regenerateSlide(deckId, slideIndex, orgId, { instruction });
-    res.json({ success: true, data: result });
+    try {
+      const result = await regenerateSlide(deckId, slideIndex, orgId, { instruction });
+      res.json({ success: true, data: result });
+    } catch (error) {
+      // RED-J W6 bug #3 — regenerateSlide() throws a plain `Error('Deck not
+      // found')` for a missing/foreign-org deck instead of a typed
+      // not-found error. Map it here to 404 (same not-found shape used
+      // throughout presentations.routes.ts) rather than letting it fall
+      // through to asyncHandler's default 500.
+      if (error instanceof Error && error.message === 'Deck not found') {
+        return res.status(404).json({ success: false, error: 'Deck not found', code: 'DECK_NOT_FOUND' });
+      }
+      if (error instanceof Error && error.message === 'Invalid slide index') {
+        return res
+          .status(400)
+          .json({ success: false, error: 'Invalid slide index', code: 'INVALID_SLIDE_INDEX' });
+      }
+      throw error;
+    }
   })
 );
 

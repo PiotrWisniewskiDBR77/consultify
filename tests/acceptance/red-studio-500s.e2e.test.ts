@@ -54,47 +54,38 @@ writeFileSync(RESULTS_FILE, '');
 const evidence = (line: string) => appendFileSync(RESULTS_FILE, line + '\n');
 
 /**
- * KNOWN RED — confirmed real 500s (parity pg18, 2026-07-19). All 3 are
- * OUT of migration-fix scope: none are Postgres schema errors (the whole
- * 205-endpoint sweep produced ZERO occurrences of 42703/42P01/23502/22P02/
- * 42883/42804 or "does not exist" — grep-verified against the raw evidence
- * log). Each is an unhandled application-code exception from missing
- * input validation / missing error-to-HTTP-status mapping on the LLM
- * generation routes, reached via an intentionally minimal `{}` body
- * (LLM call itself is never made — the throw happens in the pre-LLM
- * synchronous setup):
+ * KNOWN RED — FIXED 2026-07-19 (RED-J W6). The 3 code-level 500s pinned by
+ * this sweep on first discovery are now fixed (not a schema/migration
+ * issue — application-code validation/error-mapping, per the original
+ * note below, kept for history):
  *
  * 1. POST /api/presentations/generate/outline — `TypeError: setup.
  *    sourceArtifacts is not iterable` at presentationGeneratorService.ts
- *    generateDefaultOutline():355 — iterates `setup.sourceArtifacts`
- *    without checking it is an array first.
+ *    generateDefaultOutline():355 (+ validateOutline():~1129/1140) —
+ *    iterated/accessed `setup.sourceArtifacts` without checking it is an
+ *    array first. FIX: `Array.isArray(setup.sourceArtifacts) ? ... : []`
+ *    guards at all 3 call sites. An empty/absent `sourceArtifacts` with a
+ *    minimal `{}` body now returns 200 (falls back to the default blank
+ *    -brief narrative arc) instead of crashing.
  * 2. POST /api/presentations/generate/deck — uncaught `ZodError` (missing
- *    `originRecordId`) propagates past the route's try/catch instead of
- *    being mapped to a 400.
+ *    `originRecordId`, thrown by `registerArtifactOrigin()`'s raw
+ *    `RegisterArtifactOriginParamsSchema.parse()` deep inside
+ *    `generateDeck()`) propagated past the route with no catch. FIX: the
+ *    route now wraps `generateDeck()` in try/catch and maps
+ *    `error instanceof ZodError` → 400 `VALIDATION_ERROR` (pattern from
+ *    execution.routes.ts / my-work.routes.ts).
  * 3. POST /api/presentation-studio/decks/:deckId/slides/:i/regenerate —
  *    `Error: Deck not found` thrown by regenerateSlide() (presentation
- *    GeneratorService.ts:1992) is a domain "not found" condition that
- *    should 404, but the route has no catch mapping it, so it falls
- *    through to Express's default 500 handler.
+ *    GeneratorService.ts:1992) fell through to Express's default 500.
+ *    FIX: the route now catches it and maps to 404 `DECK_NOT_FOUND`
+ *    (+ `Invalid slide index` → 400, same function's other throw).
  *
- * See RAPORT RED in the handoff message for the full write-up. Code-level
- * fix (add validation / catch+404-map), not a SQL migration — do not
- * "fix" these here per orchestrator scope (schema-500 / migrations only).
+ * Focused red→green proof with real assertions (not just "not 500") lives
+ * in odbior--pres--generate-error-mapping.e2e.test.ts. Kept as an empty
+ * map (rather than deleted) so a future regression on any of these 3
+ * routes is caught by this sweep's generic "<500" assertion.
  */
-const KNOWN_RED: Record<string, { status: number | 'HANG'; messageIncludes?: string }> = {
-  'POST /api/presentations/generate/outline': {
-    status: 500,
-    messageIncludes: 'setup.sourceArtifacts is not iterable',
-  },
-  'POST /api/presentations/generate/deck': {
-    status: 500,
-    messageIncludes: 'originRecordId',
-  },
-  'POST /api/presentation-studio/decks/00000000-0000-4000-8000-000000000000/slides/0/regenerate': {
-    status: 500,
-    messageIncludes: 'Deck not found',
-  },
-};
+const KNOWN_RED: Record<string, { status: number | 'HANG'; messageIncludes?: string }> = {};
 
 function assertNotRegressed(r: {
   label: string;
