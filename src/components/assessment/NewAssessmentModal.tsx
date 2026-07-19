@@ -160,27 +160,30 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
   );
 
   // Handle framework selection
-  const handleFrameworkSelect = useCallback((framework: AssessmentFramework) => {
-    // Honest gate (decision D-B): coming-soon frameworks (CMMI/LEAN) never start
-    // a session, even if the disabled card is bypassed.
-    if (isFrameworkComingSoon(framework)) {
-      toast(t('assessment.newModal.comingSoonToast', 'This framework is coming soon.'), {
-        icon: '🔜',
+  const handleFrameworkSelect = useCallback(
+    (framework: AssessmentFramework) => {
+      // Honest gate (decision D-B): coming-soon frameworks (CMMI/LEAN) never start
+      // a session, even if the disabled card is bypassed.
+      if (isFrameworkComingSoon(framework)) {
+        toast(t('assessment.newModal.comingSoonToast', 'This framework is coming soon.'), {
+          icon: '🔜',
+        });
+        return;
+      }
+      setSelectedFramework(framework);
+      // Auto-generate a default name
+      const frameworkData = FRAMEWORKS.find((f) => f.value === framework);
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
       });
-      return;
-    }
-    setSelectedFramework(framework);
-    // Auto-generate a default name
-    const frameworkData = FRAMEWORKS.find((f) => f.value === framework);
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    setAssessmentName(`${frameworkData?.shortName || framework} Assessment - ${dateStr}`);
-    setStep(2);
-  }, [t]);
+      setAssessmentName(`${frameworkData?.shortName || framework} Assessment - ${dateStr}`);
+      setStep(2);
+    },
+    [t]
+  );
 
   // Handle back to framework selection
   const handleBack = useCallback(() => {

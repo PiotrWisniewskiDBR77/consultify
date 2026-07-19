@@ -2942,64 +2942,70 @@ export const FinanceHub: React.FC = () => {
                 : 'p-4'
             }
           >
-            <Suspense fallback={<div className="p-6"><LoadingState template="panel" /></div>}>
-            {isBudgetPrediction ? (
-              <BudgetWorkspace
-                initialBudgetId={getBudgetRawId(activeDocument.id)}
-                hideSidebar
-                onBudgetChanged={handleBudgetChanged}
-              />
-            ) : openStatement ? (
-              <FinancialStatementPackWorkspace
-                statementPackId={activeDocument.id}
-                onStatementChanged={handleStatementChanged}
-                onCreateModelFromPack={handleCreateModelFromStatement}
-                onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
-              />
-            ) : isModelWorkspace ? (
-              // #82c/#82f — FinanceModelDocumentView (read-only P&L/BS/CF table) had no
-              // way to edit assumptions, add events, compute, approve, or refresh from
-              // source: FinancialModelWorkspace is the superset (same tabs' data PLUS
-              // Inputs & Assumptions editing incl. #82f assumptionsRegistry status,
-              // Events Timeline CRUD, Compute, Approve, Refresh from source) and already
-              // follows the same initialXId/hideSidebar/onXChanged contract as the
-              // sibling Analysis/Valuation/Budget workspaces below.
-              <FinancialModelWorkspace
-                initialModelId={activeDocument.id}
-                hideSidebar
-                onModelChanged={handleModelChanged}
-              />
-            ) : openAnalysis ? (
-              <FinancialAnalysisWorkspace
-                initialAnalysisId={activeDocument.id}
-                hideSidebar
-                onAnalysisChanged={handleAnalysisChanged}
-              />
-            ) : openValuation ? (
-              <ValuationWorkspace
-                initialValuationId={activeDocument.id}
-                hideSidebar
-                onValuationChanged={handleValuationChanged}
-              />
-            ) : (
-              <div className="p-4">
-                <EmptyStateInline
-                  icon={FileText}
-                  message={t(
-                    'finance.document.unsupported.message',
-                    'This finance document type is not yet available in the full workspace.'
-                  )}
-                  hint={t(
-                    'finance.document.unsupported.hint',
-                    'Return to the list and reopen a supported statement pack, model, analysis, budget, or valuation.'
-                  )}
-                  action={{
-                    label: t('common.backToList', 'Wróć do listy'),
-                    onClick: handleShowList,
-                  }}
+            <Suspense
+              fallback={
+                <div className="p-6">
+                  <LoadingState template="panel" />
+                </div>
+              }
+            >
+              {isBudgetPrediction ? (
+                <BudgetWorkspace
+                  initialBudgetId={getBudgetRawId(activeDocument.id)}
+                  hideSidebar
+                  onBudgetChanged={handleBudgetChanged}
                 />
-              </div>
-            )}
+              ) : openStatement ? (
+                <FinancialStatementPackWorkspace
+                  statementPackId={activeDocument.id}
+                  onStatementChanged={handleStatementChanged}
+                  onCreateModelFromPack={handleCreateModelFromStatement}
+                  onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
+                />
+              ) : isModelWorkspace ? (
+                // #82c/#82f — FinanceModelDocumentView (read-only P&L/BS/CF table) had no
+                // way to edit assumptions, add events, compute, approve, or refresh from
+                // source: FinancialModelWorkspace is the superset (same tabs' data PLUS
+                // Inputs & Assumptions editing incl. #82f assumptionsRegistry status,
+                // Events Timeline CRUD, Compute, Approve, Refresh from source) and already
+                // follows the same initialXId/hideSidebar/onXChanged contract as the
+                // sibling Analysis/Valuation/Budget workspaces below.
+                <FinancialModelWorkspace
+                  initialModelId={activeDocument.id}
+                  hideSidebar
+                  onModelChanged={handleModelChanged}
+                />
+              ) : openAnalysis ? (
+                <FinancialAnalysisWorkspace
+                  initialAnalysisId={activeDocument.id}
+                  hideSidebar
+                  onAnalysisChanged={handleAnalysisChanged}
+                />
+              ) : openValuation ? (
+                <ValuationWorkspace
+                  initialValuationId={activeDocument.id}
+                  hideSidebar
+                  onValuationChanged={handleValuationChanged}
+                />
+              ) : (
+                <div className="p-4">
+                  <EmptyStateInline
+                    icon={FileText}
+                    message={t(
+                      'finance.document.unsupported.message',
+                      'This finance document type is not yet available in the full workspace.'
+                    )}
+                    hint={t(
+                      'finance.document.unsupported.hint',
+                      'Return to the list and reopen a supported statement pack, model, analysis, budget, or valuation.'
+                    )}
+                    action={{
+                      label: t('common.backToList', 'Wróć do listy'),
+                      onClick: handleShowList,
+                    }}
+                  />
+                </div>
+              )}
             </Suspense>
           </div>
         </div>
@@ -3126,7 +3132,13 @@ export const FinanceHub: React.FC = () => {
     // hides the app navigation. See H2.9 / H2.10.
     if (showImportWizard)
       return (
-        <Suspense fallback={<div className="p-6"><LoadingState template="panel" /></div>}>
+        <Suspense
+          fallback={
+            <div className="p-6">
+              <LoadingState template="panel" />
+            </div>
+          }
+        >
           <FinancialStatementImportWizard
             embedded
             onClose={() => setShowImportWizard(false)}
@@ -3334,29 +3346,35 @@ export const FinanceHub: React.FC = () => {
       return (
         <div className="flex flex-col">
           {_baseView}
-          <Suspense fallback={<div className="px-4 pb-6"><LoadingState template="panel" /></div>}>
-          <div className="flex flex-col gap-4 px-4 pb-6">
-            {_showInvest && <InvestmentAppraisalPanel />}
-            {_showValue && <ValueOfficePanel initiatives={valueOfficeInitiatives} />}
-            {_showDriver && <DriverPlannerPanel driverTree={valueOfficeDriverTree} />}
-            {_showVariance && <VarianceBridgePanel />}
-            {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
-            {_showM16Suite && <MonteCarloNpvPanel />}
-            {_showM16Suite && <RealOptionsPanel />}
-            {_showM16Suite && <WhatIfSensitivityPanel />}
-            {_showCashForecast && <CashForecastPanel />}
-            {_showVarianceNarration && <VarianceNarrationPanel />}
-            {_showFrontier && <EfficientFrontierPanel />}
-            {_showScenarioCompute && <ScenarioComputePanel />}
-            {_showRollingForecast && <RollingForecastPanel />}
-            {_showDriverTree && <DriverTreePanel />}
-            {_showHeadcount && <HeadcountPlannerPanel />}
-            {_showValueLedger && <ValueLedgerPanel />}
-            {_showAttribution && <ValueAttributionPanel />}
-            {_showCapturePipeline && <ValueCapturePipelinePanel />}
-            {_showBanking && <BankingValuePanel />}
-            {_showExtendedRatios && <ExtendedRatiosPanel />}
-          </div>
+          <Suspense
+            fallback={
+              <div className="px-4 pb-6">
+                <LoadingState template="panel" />
+              </div>
+            }
+          >
+            <div className="flex flex-col gap-4 px-4 pb-6">
+              {_showInvest && <InvestmentAppraisalPanel />}
+              {_showValue && <ValueOfficePanel initiatives={valueOfficeInitiatives} />}
+              {_showDriver && <DriverPlannerPanel driverTree={valueOfficeDriverTree} />}
+              {_showVariance && <VarianceBridgePanel />}
+              {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
+              {_showM16Suite && <MonteCarloNpvPanel />}
+              {_showM16Suite && <RealOptionsPanel />}
+              {_showM16Suite && <WhatIfSensitivityPanel />}
+              {_showCashForecast && <CashForecastPanel />}
+              {_showVarianceNarration && <VarianceNarrationPanel />}
+              {_showFrontier && <EfficientFrontierPanel />}
+              {_showScenarioCompute && <ScenarioComputePanel />}
+              {_showRollingForecast && <RollingForecastPanel />}
+              {_showDriverTree && <DriverTreePanel />}
+              {_showHeadcount && <HeadcountPlannerPanel />}
+              {_showValueLedger && <ValueLedgerPanel />}
+              {_showAttribution && <ValueAttributionPanel />}
+              {_showCapturePipeline && <ValueCapturePipelinePanel />}
+              {_showBanking && <BankingValuePanel />}
+              {_showExtendedRatios && <ExtendedRatiosPanel />}
+            </div>
           </Suspense>
         </div>
       );
@@ -3476,104 +3494,104 @@ export const FinanceHub: React.FC = () => {
       )}
 
       <Suspense fallback={null}>
-      {showCreateModelModal && (
-        <CreateModelModal
-          availableStatements={readyStatementRows}
-          initialSourceStatementPackId={createModelSourceStatementPackId}
-          onClose={() => {
-            setShowCreateModelModal(false);
-            setCreateModelSourceStatementPackId(null);
-          }}
-          onCreated={async (row) => {
-            await refreshFinanceTruth(['models']);
-            setShowCreateModelModal(false);
-            setCreateModelSourceStatementPackId(null);
-            handleOpenFull(row);
-          }}
-        />
-      )}
+        {showCreateModelModal && (
+          <CreateModelModal
+            availableStatements={readyStatementRows}
+            initialSourceStatementPackId={createModelSourceStatementPackId}
+            onClose={() => {
+              setShowCreateModelModal(false);
+              setCreateModelSourceStatementPackId(null);
+            }}
+            onCreated={async (row) => {
+              await refreshFinanceTruth(['models']);
+              setShowCreateModelModal(false);
+              setCreateModelSourceStatementPackId(null);
+              handleOpenFull(row);
+            }}
+          />
+        )}
 
-      {showAnalysisCreateModal && (
-        <CreateAnalysisModal
-          defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}
-          availableStatements={readyStatementRows}
-          initialStatementPackId={analysisSourceStatementPackId}
-          initialTitle={analysisInitialTitle}
-          onClose={() => {
-            setShowAnalysisCreateModal(false);
-            setAnalysisSourceStatementPackId(null);
-            setAnalysisInitialTitle('');
-          }}
-          onCreated={async (row) => {
-            await refreshFinanceTruth(['analysis']);
-            setShowAnalysisCreateModal(false);
-            setAnalysisSourceStatementPackId(null);
-            setAnalysisInitialTitle('');
-            handleOpenFull(row);
-          }}
-        />
-      )}
+        {showAnalysisCreateModal && (
+          <CreateAnalysisModal
+            defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}
+            availableStatements={readyStatementRows}
+            initialStatementPackId={analysisSourceStatementPackId}
+            initialTitle={analysisInitialTitle}
+            onClose={() => {
+              setShowAnalysisCreateModal(false);
+              setAnalysisSourceStatementPackId(null);
+              setAnalysisInitialTitle('');
+            }}
+            onCreated={async (row) => {
+              await refreshFinanceTruth(['analysis']);
+              setShowAnalysisCreateModal(false);
+              setAnalysisSourceStatementPackId(null);
+              setAnalysisInitialTitle('');
+              handleOpenFull(row);
+            }}
+          />
+        )}
 
-      {showPredictionCreateModal && (
-        <CreateBudgetModal
-          initialTitle={budgetInitialTitle}
-          onClose={() => {
-            setShowPredictionCreateModal(false);
-            setBudgetInitialTitle('');
-          }}
-          onCreated={async (row) => {
-            await refreshFinanceTruth(['prediction']);
-            setShowPredictionCreateModal(false);
-            setBudgetInitialTitle('');
-            handleOpenFull(row);
-          }}
-        />
-      )}
+        {showPredictionCreateModal && (
+          <CreateBudgetModal
+            initialTitle={budgetInitialTitle}
+            onClose={() => {
+              setShowPredictionCreateModal(false);
+              setBudgetInitialTitle('');
+            }}
+            onCreated={async (row) => {
+              await refreshFinanceTruth(['prediction']);
+              setShowPredictionCreateModal(false);
+              setBudgetInitialTitle('');
+              handleOpenFull(row);
+            }}
+          />
+        )}
 
-      {showValuationCreateModal && (
-        <CreateValuationModal
-          initialSourceType={valuationInitialSource.type}
-          initialSourceId={valuationInitialSource.id}
-          initialTitle={valuationInitialTitle}
-          onClose={() => {
-            setShowValuationCreateModal(false);
-            setValuationInitialSource({});
-            setValuationInitialTitle('');
-          }}
-          onCreated={async (row) => {
-            await refreshFinanceTruth(['valuation']);
-            setShowValuationCreateModal(false);
-            setValuationInitialSource({});
-            setValuationInitialTitle('');
-            handleOpenFull(row);
-          }}
-        />
-      )}
+        {showValuationCreateModal && (
+          <CreateValuationModal
+            initialSourceType={valuationInitialSource.type}
+            initialSourceId={valuationInitialSource.id}
+            initialTitle={valuationInitialTitle}
+            onClose={() => {
+              setShowValuationCreateModal(false);
+              setValuationInitialSource({});
+              setValuationInitialTitle('');
+            }}
+            onCreated={async (row) => {
+              await refreshFinanceTruth(['valuation']);
+              setShowValuationCreateModal(false);
+              setValuationInitialSource({});
+              setValuationInitialTitle('');
+              handleOpenFull(row);
+            }}
+          />
+        )}
 
-      {showLinkInitiativeModal && (
-        <LinkInitiativeModal
-          onClose={() => setShowLinkInitiativeModal(false)}
-          onLinked={() => {
-            setShowLinkInitiativeModal(false);
-            lane.refreshLane?.();
-          }}
-        />
-      )}
+        {showLinkInitiativeModal && (
+          <LinkInitiativeModal
+            onClose={() => setShowLinkInitiativeModal(false)}
+            onLinked={() => {
+              setShowLinkInitiativeModal(false);
+              lane.refreshLane?.();
+            }}
+          />
+        )}
 
-      {exportDialogOpen && exportTarget && (
-        <ExportToOutputDialog
-          open={exportDialogOpen}
-          onClose={() => setExportDialogOpen(false)}
-          analysisId={exportTarget.id}
-          analysisTitle={exportTarget.title}
-          analysisType={exportTarget.sourceType}
-          onExportComplete={(result) => {
-            toast.success(t('finance.export.created', 'Output created'));
-            setExportDialogOpen(false);
-            navigate(`/reports/builder/${result.outputId}`);
-          }}
-        />
-      )}
+        {exportDialogOpen && exportTarget && (
+          <ExportToOutputDialog
+            open={exportDialogOpen}
+            onClose={() => setExportDialogOpen(false)}
+            analysisId={exportTarget.id}
+            analysisTitle={exportTarget.title}
+            analysisType={exportTarget.sourceType}
+            onExportComplete={(result) => {
+              toast.success(t('finance.export.created', 'Output created'));
+              setExportDialogOpen(false);
+              navigate(`/reports/builder/${result.outputId}`);
+            }}
+          />
+        )}
       </Suspense>
     </>
   );
