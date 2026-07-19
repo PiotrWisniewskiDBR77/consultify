@@ -46,6 +46,7 @@ import {
   PREVIEW_SELECTED_ROW_CLASS,
   SELECTED_ROW_CLASS,
 } from '@/components/shared/selectionTokens';
+import { EmptyState, ErrorState, SkeletonState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
@@ -69,6 +70,11 @@ type IdeaConvertTarget = Extract<
 >;
 type IdeasTableOptionalColumn = 'stage' | 'tags' | 'tool' | 'date';
 type IdeasResizableColumn = 'title' | IdeasTableOptionalColumn;
+
+// VF1-11 (SPEC-A IdeaTable): honest empty/loading/error states behind a flag,
+// default OFF. Piotr approves the visual on a screenshot before the flip —
+// see CLAUDE.md "PIOTR NIGDY NIE JEST PIERWSZYM TESTEREM WIZUALNYM".
+const VF1_IDEATABLE_SPECA_ENABLED = import.meta.env.VITE_VF1_IDEATABLE_SPECA === 'true';
 
 const IDEAS_TABLE_COLUMNS_STORAGE_KEY = 'consultify.mywork.ideas.tableColumns.v1';
 const IDEAS_TABLE_ROW_DESCRIPTION_STORAGE_KEY = 'consultify.mywork.ideas.showRowDescription.v1';
@@ -139,7 +145,6 @@ const STAGE_META: Record<
     labelPl: string;
     icon: React.ElementType;
     badge: string;
-    iconClass: string;
   }
 > = {
   spark: {
@@ -148,7 +153,6 @@ const STAGE_META: Record<
     icon: Lightbulb,
     badge:
       'border border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
-    iconClass: 'text-amber-600 dark:text-amber-300',
   },
   incubating: {
     label: 'Growing',
@@ -156,7 +160,6 @@ const STAGE_META: Record<
     icon: Sprout,
     badge:
       'border border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
-    iconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   shaping: {
     label: 'Shaping',
@@ -164,7 +167,6 @@ const STAGE_META: Record<
     icon: TreePine,
     badge:
       'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
-    iconClass: 'text-blue-600 dark:text-blue-300',
   },
   ready: {
     label: 'Ready',
@@ -172,17 +174,17 @@ const STAGE_META: Record<
     icon: CheckCircle2,
     badge:
       'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
-    iconClass: 'text-blue-600 dark:text-blue-300',
   },
   promoted: {
     label: 'Promoted',
     labelPl: 'Promowany',
     icon: Rocket,
     // Canon §4.0: "Promoted" = pozytywny stan końcowy (idea → inicjatywa), NIE alarm.
-    // Marka/accent (crimson) zgodnie z STAGE_DOT_VAR.promoted; nigdy danger.
-    badge:
-      'border border-primary-300/80 bg-primary-50 text-primary-900 dark:border-primary-300/[0.25] dark:bg-primary-300/[0.12] dark:text-primary-100',
-    iconClass: 'text-primary-600 dark:text-primary-300',
+    // Crimson-leak fix (VF1-11): was raw `primary-*` (bypassed the design tokens AND
+    // read as brand-crimson on a non-critical status badge). Neutral shell — same
+    // treatment as TOOL_META below — color signal lives in STAGE_DOT_VAR's dot only
+    // (canon §4.0a), never in the badge fill/text/border.
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
   },
 };
 
@@ -193,7 +195,6 @@ const TOOL_META: Record<
     labelPl: string;
     icon: React.ElementType;
     badge: string;
-    iconClass: string;
     /** Canonical ToolChip icon color — semantic `c.*` var. */
     iconColorVar: string;
   }
@@ -203,15 +204,16 @@ const TOOL_META: Record<
     labelPl: 'Mapa rekomendacji',
     icon: Network,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    iconClass: 'text-primary-600 dark:text-primary-300',
-    iconColorVar: 'var(--c-accent)',
+    // Crimson-leak fix (VF1-11): tool identity is a DATA category, not a brand/CTA
+    // moment — tailwind.config.js data-palette guide bans the brand token here
+    // ("crimson w danych = dług"). Use the tag category palette instead (violet, tag 3).
+    iconColorVar: 'var(--c-tag-3)',
   },
   table: {
     label: 'Table',
     labelPl: 'Tabela',
     icon: Table2,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    iconClass: 'text-sky-600 dark:text-sky-300',
     iconColorVar: 'var(--c-info)',
   },
   process_flow: {
@@ -219,7 +221,6 @@ const TOOL_META: Record<
     labelPl: 'Proces',
     icon: Workflow,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    iconClass: 'text-emerald-600 dark:text-emerald-300',
     iconColorVar: 'var(--c-success)',
   },
   whiteboard: {
@@ -227,7 +228,6 @@ const TOOL_META: Record<
     labelPl: 'Whiteboard',
     icon: PenTool,
     badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    iconClass: 'text-amber-600 dark:text-amber-300',
     iconColorVar: 'var(--c-warning)',
   },
 };
@@ -235,6 +235,11 @@ const TOOL_META: Record<
 interface IdeasTableContentProps {
   ideas: MyIdea[];
   isPolish: boolean;
+  /** SPEC-A state (flag `VITE_VF1_IDEATABLE_SPECA`, default OFF): table is fetching. */
+  isLoading?: boolean;
+  /** SPEC-A state (flag `VITE_VF1_IDEATABLE_SPECA`, default OFF): load failed. */
+  loadError?: string | null;
+  onRetryLoad?: () => void;
   tableFilters: TableFilters;
   availableStageOptions: FilterOption[];
   availableTagOptions: FilterOption[];
@@ -271,13 +276,16 @@ function getStageMeta(stage?: IdeaStage) {
   return STAGE_META[(stage || 'spark') as IdeaStage] || STAGE_META.spark;
 }
 
-/** Stage → signal-tone dot color (canon §4.0a: neutral chip shell, color only in dot). */
+/** Stage → signal-tone dot color (canon §4.0a: neutral chip shell, color only in dot).
+ * `promoted` was the brand accent (crimson) — crimson-leak fix (VF1-11): "promoted"
+ * is a positive terminal state (idea → initiative), not a brand/CTA moment, so it
+ * takes the same success signal as `incubating` rather than the brand token. */
 const STAGE_DOT_VAR: Record<IdeaStage, string | undefined> = {
   spark: CHIP_TONE_VAR.warning,
   incubating: CHIP_TONE_VAR.success,
   shaping: CHIP_TONE_VAR.info,
   ready: CHIP_TONE_VAR.info,
-  promoted: CHIP_TONE_VAR.accent,
+  promoted: CHIP_TONE_VAR.success,
 };
 
 function getToolMeta(tool?: string | null) {
@@ -303,6 +311,9 @@ function SortIndicator({ active, direction }: { active: boolean; direction: Sort
 export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   ideas,
   isPolish,
+  isLoading = false,
+  loadError = null,
+  onRetryLoad,
   tableFilters,
   availableStageOptions,
   availableTagOptions,
@@ -669,6 +680,84 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     );
   };
 
+  // ── SPEC-A states (VF1-11) — flag `VITE_VF1_IDEATABLE_SPECA`, default OFF. ──
+  // Zero behavior change while the flag is off: the caller (MyIdeasListContent)
+  // does not pass isLoading/loadError today and already gates ideas.length === 0
+  // upstream of this component, so none of these branches fire until wired.
+  const hasActiveIdeaFilter = Boolean(
+    (tableFilters.stage as string[] | undefined)?.length ||
+      (tableFilters.tags as string[] | undefined)?.length ||
+      (tableFilters.tool as string[] | undefined)?.length
+  );
+  const clearIdeaTableFilters = useCallback(() => {
+    onTableFilterChange('stage', []);
+    onTableFilterChange('tags', []);
+    onTableFilterChange('tool', []);
+  }, [onTableFilterChange]);
+
+  if (VF1_IDEATABLE_SPECA_ENABLED && loadError) {
+    return (
+      <div className="flex-1 min-h-0 bg-c-bg">
+        <ErrorState
+          title={isPolish ? 'Nie udało się wczytać pomysłów' : 'Could not load ideas'}
+          // Hard rule (shared/states/ErrorState): never interpolate the raw error
+          // message here — a calm, human-authored sentence only.
+          description={
+            isPolish
+              ? 'Dane mogły się przenieść albo źródło jest chwilowo niedostępne.'
+              : 'The data may have moved, or the source is temporarily unavailable.'
+          }
+          onRetry={onRetryLoad}
+        />
+      </div>
+    );
+  }
+
+  if (VF1_IDEATABLE_SPECA_ENABLED && isLoading) {
+    return (
+      <div className="flex-1 min-h-0 bg-c-bg p-4">
+        <SkeletonState variant="table" rows={8} columns={getVisibleResizableColumns().length + 1} />
+      </div>
+    );
+  }
+
+  if (VF1_IDEATABLE_SPECA_ENABLED && ideas.length === 0) {
+    return (
+      <div className="flex-1 min-h-0 bg-c-bg">
+        <EmptyState
+          variant={hasActiveIdeaFilter ? 'filter' : 'new'}
+          icon={Lightbulb}
+          title={
+            hasActiveIdeaFilter
+              ? isPolish
+                ? 'Brak pomysłów dla tego filtra'
+                : 'No ideas match this filter'
+              : isPolish
+                ? 'Brak pomysłów'
+                : 'No ideas yet'
+          }
+          description={
+            hasActiveIdeaFilter
+              ? isPolish
+                ? 'Zmień lub wyczyść filtry, aby zobaczyć więcej pomysłów.'
+                : 'Adjust or clear the filters to see more ideas.'
+              : isPolish
+                ? 'Zapisane pomysły pojawią się tutaj jako wiersze tabeli.'
+                : 'Captured ideas will appear here as table rows.'
+          }
+          primaryAction={
+            hasActiveIdeaFilter
+              ? {
+                  label: isPolish ? 'Wyczyść filtry' : 'Clear filters',
+                  onClick: clearIdeaTableFilters,
+                }
+              : undefined
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 min-h-0 bg-c-bg">
       <TableWithPreviewLayout<MyIdea>
@@ -702,7 +791,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         onSelectAllVisible();
                       }
                     }}
-                    className={`flex h-4 w-4 items-center justify-center rounded-[4px] border text-[10px] transition-all ${
+                    className={`flex h-4 w-4 items-center justify-center rounded-[4px] border text-[10px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                       allSelected
                         ? 'border-c-text bg-c-text text-c-surface'
                         : someSelected
@@ -720,7 +809,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 >
                   <button
                     onClick={() => onSort('title')}
-                    className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                    className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     {isPolish ? 'Tytul' : 'Title'}
                     <SortIndicator active={sortField === 'title'} direction={sortDir} />
@@ -741,7 +830,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     <div className="flex items-center justify-start gap-1">
                       <button
                         onClick={() => onSort('stage')}
-                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       >
                         <span
                           className={
@@ -780,7 +869,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     <div className="flex items-center justify-start gap-1">
                       <button
                         onClick={() => onSort('tags')}
-                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       >
                         <span
                           className={
@@ -819,7 +908,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     <div className="flex items-center justify-start gap-1">
                       <button
                         onClick={() => onSort('tool')}
-                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       >
                         <span
                           className={
@@ -857,7 +946,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   >
                     <button
                       onClick={() => onSort('date')}
-                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       {isPolish ? 'Data' : 'Updated'}
                       <SortIndicator active={sortField === 'date'} direction={sortDir} />
@@ -1175,7 +1264,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                                   : 'Star'
                             }
                             aria-pressed={isFavorite?.(idea.id) ?? false}
-                            className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-amber-400"
+                            className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
                             <Star
                               size={14}
