@@ -25,7 +25,7 @@
  */
 
 import { CheckCircle2, Loader2, Sparkles, Wand2, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import i18n from '@/i18n';
@@ -244,6 +244,18 @@ export const AIConsultantPanel: React.FC<AIConsultantPanelProps> = ({
   // so it is always safe to mount. We still guard with a degradation flag so
   // the panel never crashes if the component fails to resolve at runtime.
   const chatAvailable = typeof UnifiedChatPanel === 'function';
+
+  // Esc closes the panel (kanon TRIADA_KANON.md część B pkt 42; promised by the
+  // `onClose` doc comment above but was never actually wired up — a keyboard
+  // user had no way to dismiss this slide-over other than clicking the X).
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 
