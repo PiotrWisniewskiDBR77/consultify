@@ -37,12 +37,27 @@
 |---|---|---|---|---|---|---|
 | A · Harvard (H1-H6) | 55 | 3 | 2 | 1 | 1 | 62 |
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 33 | 23 | 11 | 3 | 0 | 70 |
+| C · Oxford (O1-O8) | 36 | 23 | 11 | 0 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 47 | 1 | 31 | 7 | 2 | 88 |
-| **SUMA** | **169** | **49** | **68** | **14** | **4** | **304** |
+| E · Przekroje (+nowe) | 50 | 5 | 24 | 7 | 2 | 88 |
+| **SUMA** | **175** | **53** | **61** | **11** | **4** | **304** |
 
-**Postęp: 183/304 rozstrzygnięte (60%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.)
+**Postęp: 186/304 rozstrzygnięte (61%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 14 decyzji 🔵/⬜DEC rozstrzygnięte przez Piotra — K1-K8 domknięte; +3 rozstrzygnięte (K1/K2/K6→✅), K3/K4/K5/K7 = decyzja✅+wykonanie🟡; Oxford 4 wiersze 🔵→✅. Blok ↓.**
+
+### ★ DECYZJE 2026-07-19 (druga sesja taryfowa) — 14 decyzji 🔵/⬜DEC rozstrzygniętych przez Piotra (dowód: rozmowa robocza 07-19, materiał `_SESJA1_ODBIOR_OXFORD.md §3`)
+**DoD decyzji = decyzja Piotra wpisana. Kanon §5 K1-K8 domknięte.**
+- **K1 — DRD Kanon P1-P5 → ✅.** P1 radar 8 wymiarów = wariant „uczciwy pomiarowo" teraz, „Strategia"→kanon 2.0 · P2 „Digital Frontrunner DRD" jako marka = TAK (cel aspiracyjny + narracja sprzedażowa) · P3 benchmark branżowy = publikować OD RAZU z adnotacją „hipoteza ekspercka" · P4 branding = „DRD by DBR77" okładka, Consultify stopka · P5 nazwa = „Diagnostic". → wpisać do `docs/product/DRD_CANON.md §12`.
+- **K2 — CONCLUSION_LAYER_STANDARD → ✅** (potwierdzone; już wdrożone 3 powierzchniami). Oxford wiersz O2.1 🔵→✅.
+- **K3 — ~39 śmieci-artefaktów → ✅ decyzja: USUŃ FIZYCZNIE** (dane demo, nie prod). Wykonanie = 🟡 (partia destrukcyjna na demo: backup→dry-run lista→OK Piotra→delete; dowód=SHA). Lista ID: `_KARTY_SESJI/DOWODY_SESJA1.md`.
+- **K4 — sekcje inicjatywy bez AI → ✅ decyzja: AI-UZUPEŁNIENIE UNIWERSALNIE.** Piotr: KAŻDA z 19 sekcji dostaje własny przycisk „uzupełnij AI" (też Tasks/Comments/Attachments/Activity Log). Nie wyjątki — doktryna. Wykonanie = 🟡 (wiring ~10 sekcji dziś bez promptu → robota mechaniki, delegacja Sonnet/Opus).
+- **K5 — „SWOT ×3 / PPTX ×3" → ✅ doprecyzowane: 3 POZIOMY (krótka/średnia/pełna)** tego samego SWOT i tej samej prezentacji. Wykonanie = 🟡 (generacja 3 poziomów).
+- **K6 — publikacja profili branżowych O6.1 → ✅** = ta sama decyzja co P3: publikować teraz z adnotacją „expert-hypothesis-v1, kalibracja od n≥10".
+- **K7 — 179 osieroconych org → ✅ decyzja: ZACHOWAJ REALNE, KASUJ 179 KLONÓW** „Atelier Toys"/`demo-org-session-*` (rezydua probe'ów QA, [[finding_179_orphan_atelier_toys_orgs_2026-07-12]]). Reguła zachowania = wszystko co NIE `demo-org-session-*` (realny `atelier`, DBR77, org-i nazwane). Wykonanie = 🟡 (partia destrukcyjna z kaskadą FK: backup→dry-run+licznik→OK Piotra→delete).
+- **K8 — PROD nietykalny bez zgody (D-G) → 🔵 zasada stała** (bez zmian).
+- **6 martwych `build<Tool>DeepenPrompt` → ✅ decyzja: USUŃ** (0 callerów, mechanizm pokryty `deepeningLadder.ts`; czysty dług — JA robi bez pytania). Oxford wiersz O3 🔵→✅.
+- **O7.1 CARD_CONTENT_FORMULA → ✅** (potwierdzone twarda-brama, już `353fca6bb2`). Oxford wiersz O7 🔵→✅.
+- **Licznik:** C · Oxford 🔵 3→0 (+3 ✅). E · Przekroje ⬜ 7→ (K1/K2/K6 +3✅, K3/K4/K5/K7 +4🟡). SUMA rozstrzygnięte 183→186 (61%). RAZEM 304 bez zmian.
+- **NOWA ROBOTA WYKONAWCZA ze zdecydowanych (⬜/🟡 do zjazdu falami):** K3-exec (kasacja śmieci demo) · K4-wiring (AI-fill 10 sekcji) · K5-gen (3 poziomy SWOT/PPTX) · K7-exec (kasacja 179 org) · martwe-buildDeepen-rm (JA cleanup).
 
 ### FALA-W9 (2026-07-19, deploy 38eda846ab, demo-safe-2026-07-19) — 3 gałęzie, bramki zielone (server tsc 146/204 0-nowych, kolory/artefakt PASS, eslint 0, boot 4/4) — DOMKNIĘCIE KODOWALNEGO OGONA
 - **★ sweep cichych degradacji** — smoking gun: `DbPromise fallback=true` łyka 42703 (`does not exist`) BEZ logu → panel pusty bez alarmu (gorsze niż 500). **8 realnych user-facing bugów naprawionych**: `task_dependencies` predecessor/successor→from/to (graf/Gantt), `users.full_name`×4 (AI-analytics/feedback/quality), `projects.progress/end_date` (500), zespół projektu, report-builder, `initiative_kpis.latest_value`→fałszywe 404 „KPI not found". Dowód niepustych danych na parity. `38bec1bdb2`.
@@ -78,10 +93,10 @@
 
 ### FALA-W7 (2026-07-19, deploy d27d0fef6c, demo-safe-2026-07-19) — 11 gałęzi, bramki zielone (server tsc 146/204 0-nowych, FE tc 0, kolory/artefakt PASS, eslint 0, boot 4/4 = 2 migracje autorun OK)
 **★ Oxford proof-sweep (5 clusterów, wzorzec O4-cluster) — dowód kod+E2E dla ~13 pozycji 🟡→✅:**
-- **O1** (generator z assessmentu): benchmark DRD (⬜ stale→✅, `buildDrdIndustryBenchmarkSection` wołane bezwarunkowo, nie za flagą), ADMA FoF≥4 ✅, raport+narrator DRD ✅ (llmService live+fail-safe „numbers-from-engine"), ścieżka N→N+1 ×3 ✅ (168/168 unit). DRD Kanon P1-P5→🔵 (K1 decyzja). Q-bank/scoring/mapa SIRI-ADMA→🟡 (ODB O6). ★finding: `axis_data` = poziomy 0-5 NIE procenty 0-100 (seed 0-100→„Cyber 600%" w raporcie klienta).
-- **O2** (warstwa wniosków): O2.2 (raporty SIRI/ADMA→wnioski) / O2.3 (19/19 tooli) / O2.4 (analizy finansowe→wnioski) → ✅ (35/35 testów). O2.1 CONCLUSION_LAYER→🔵 (K2 decyzja, standard już wdrożony 3 powierzchniami).
-- **O3** (pogłębianie): całe wiring żywe (7 strat. kanał-A + 9 operacyjnych + ansoff/ambition + risk), +testy capabilityMapper/narrativeEngine (106/106). Dowód gotowy, formalne ✅ czeka ODB O1 promptbook (SESJA#1). 6 martwych `buildXDeepenPrompt`→🔵.
-- **O7** (standardy treści): O7.2 INITIATIVE_FORMULA→✅; O7.1 CARD_CONTENT guardian→🔵 (advisory-vs-gate) +★fix bug `\b` po polskich diakrytykach; O7.3 ton persona→🟡 ODB (subiektywny).
+- **O1** (generator z assessmentu): benchmark DRD (⬜ stale→✅, `buildDrdIndustryBenchmarkSection` wołane bezwarunkowo, nie za flagą), ADMA FoF≥4 ✅, raport+narrator DRD ✅ (llmService live+fail-safe „numbers-from-engine"), ścieżka N→N+1 ×3 ✅ (168/168 unit). DRD Kanon P1-P5→✅ (K1 decyzja 07-19, patrz blok DECYZJE). Q-bank/scoring/mapa SIRI-ADMA→🟡 (ODB O6). ★finding: `axis_data` = poziomy 0-5 NIE procenty 0-100 (seed 0-100→„Cyber 600%" w raporcie klienta).
+- **O2** (warstwa wniosków): O2.2 (raporty SIRI/ADMA→wnioski) / O2.3 (19/19 tooli) / O2.4 (analizy finansowe→wnioski) → ✅ (35/35 testów). O2.1 CONCLUSION_LAYER→✅ (K2 decyzja 07-19, standard już wdrożony 3 powierzchniami).
+- **O3** (pogłębianie): całe wiring żywe (7 strat. kanał-A + 9 operacyjnych + ansoff/ambition + risk), +testy capabilityMapper/narrativeEngine (106/106). Dowód gotowy, formalne ✅ czeka ODB O1 promptbook (SESJA#1). 6 martwych `buildXDeepenPrompt`→✅ (decyzja 07-19: USUŃ, JA cleanup).
+- **O7** (standardy treści): O7.2 INITIATIVE_FORMULA→✅; O7.1 CARD_CONTENT guardian→✅ (K decyzja 07-19: twarda brama, `353fca6bb2`) +★fix bug `\b` po polskich diakrytykach; O7.3 ton persona→🟡 ODB (subiektywny).
 - **O8** (help/glossary): O8.1/O8.2/O8.3→✅ (16/16, zbudowane szerzej niż docy — złota reguła złamana w dokumentacji nie kodzie).
 
 **★ Kodowalne nowe RED naprawione:**
@@ -92,7 +107,7 @@
 - **project-members/permissions/retention** — aliasy dryfu + serwis permissions przepisany na realny schemat + retention DI-bug+serwis+migracja tabeli.
 - **fail-soft batch4** — 45 handlerów (settings/metrics/documents), ~120→~81 gołych 500.
 
-**★ NOWE RED (⬜/🔵 — do domknięcia):** 7 ai-ops sub-endpointów (SQLite-izmy) · `aiWatchdog.ts` martwy wzorzec import-as-call · axis_data 0-5-nie-100 (dokumentacja seedów) · 6 martwych buildXDeepenPrompt (🔵) · DRD Kanon P1-P5 (🔵) · O2.1/O7.1 (🔵).
+**★ NOWE RED (⬜/🔵 — do domknięcia):** 7 ai-ops sub-endpointów (SQLite-izmy) · `aiWatchdog.ts` martwy wzorzec import-as-call · axis_data 0-5-nie-100 (dokumentacja seedów). [ROZSTRZYGNIĘTE 07-19: 6 martwych buildXDeepenPrompt→✅ · DRD Kanon P1-P5→✅ · O2.1/O7.1→✅ — patrz blok DECYZJE 07-19.]
 
 **★ B13 baseline_gap (33k linii, fresh-env==TROLLEY) — GOTOWE, deploy OSOBNO** (izolacja: rozmiar + adaptQuery-DDL mangluje `*_update()/*_validate()`). Demo-safe (no-op na TROLLEY), wartość=fresh-env. Gałąź `t10-migracje` @ 25c4d8655d.
 
@@ -446,9 +461,9 @@ D-01 stuby ⬜DEC · (self-connect 🔵 rozstrz.). M25/M22: OAuth klucze ⬜ENV 
 M16: ~50 endpointów przeznaczenie ⬜DEC · (token-billing 🔵). M24: AdminSidebar rm ⬜JA J22 · (Stripe 🔵 DP-11).
 M14: inwentarz uzgodnić („27/35" vs ~18 ekranów — dwa dokumenty) ❓JA · D-03 manager lanes ⬜DEC.
 
-### Konstytucja §5 (8)
-K1 P1-P5 DRD ⬜DEC · K2 CONCLUSION_LAYER ⬜DEC · K3 39 śmieci ⬜DEC · K4 sekcje bez AI ⬜DEC ·
-K5 SWOT×3/PPTX×3 ⬜DEC · K6 profile publikacja ⬜DEC · K7 179 orgs ⬜DEC · K8 D-G 🔵zasada.
+### Konstytucja §5 (8) — ROZSTRZYGNIĘTE 07-19 (patrz blok DECYZJE 07-19 na górze)
+K1 P1-P5 DRD ✅(decyzja) · K2 CONCLUSION_LAYER ✅ · K3 39 śmieci ✅decyzja(usuń fizycznie)/🟡wykonanie · K4 sekcje AI ✅decyzja(AI uniwersalnie na KAŻDEJ sekcji)/🟡wiring ·
+K5 SWOT×3/PPTX×3 ✅decyzja(3 poziomy krótka/średnia/pełna)/🟡gen · K6 profile publikacja ✅(=P3, adnotacja) · K7 179 orgs ✅decyzja(kasuj klony/zachowaj realne)/🟡wykonanie · K8 D-G 🔵zasada.
 
 ### Długi techniczne (10)
 T1 256 testów ⬜JA-flota · T2 SLA F3/F5 E2E ❓JA · T3 (=ogony enforce, patrz wyżej) · T4 #77 (j.w.) ·
