@@ -290,7 +290,7 @@ const refreshInitiativeDecisionBlock = async (input: {
 
   await queryHelpers.queryRun(
     `UPDATE initiatives SET
-      status = CASE WHEN status = 'blocked' THEN 'executing' ELSE status END,
+      status = CASE WHEN UPPER(status) = 'BLOCKED' THEN 'EXECUTING' ELSE status END,
       unblocked_at = CURRENT_TIMESTAMP,
       blocked_reason = NULL,
       updated_at = CURRENT_TIMESTAMP
@@ -1019,7 +1019,7 @@ export class DecisionController {
 
             await queryHelpers.queryRun(
               `UPDATE initiatives SET
-                status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
+                status = CASE WHEN UPPER(status) = 'DONE' THEN status ELSE 'BLOCKED' END,
                 blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
                 blocked_reason = CASE
                   WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
