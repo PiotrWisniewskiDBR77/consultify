@@ -627,14 +627,26 @@ class ManagementReportRepository {
   }
 
   async getBasicTaskMetrics(projectId) {
+    // RED #4 (audyt adwersaryjny W3/B10): `tasks.progress` is TEXT on the real
+    // Postgres schema (never numeric), so plain `AVG(progress)` 500s with
+    // "function avg(text) does not exist". CAST(NULLIF(progress,'') AS NUMERIC)
+    // treats NULL/empty as "no progress recorded" (excluded from the average,
+    // matching AVG's normal NULL-skipping semantics) and safely converts
+    // genuine numeric strings ('0'..'100').
+    // Aliases double-quoted: Postgres folds unquoted identifiers to lowercase
+    // (the systemic "SQLite-izm" — MEMORY finding_unquoted_camelcase_aliases),
+    // and callers (managementReportsService.generatePortfolioHealthReport)
+    // read taskMetrics.overdueTasks / .blocked / .avgProgress in camelCase —
+    // unquoted, this method silently returned undefined for every camelCase
+    // field on Postgres even once the AVG(TEXT) crash was fixed.
     return new Promise((resolve, reject) => {
       this.db.get(
         `
-                SELECT 
-                    COUNT(*) as totalTasks,
-                    SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completedTasks,
-                    AVG(progress) as avgProgress,
-                    SUM(CASE WHEN due_date < date('now') AND status != 'DONE' THEN 1 ELSE 0 END) as overdueTasks,
+                SELECT
+                    COUNT(*) as "totalTasks",
+                    SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as "completedTasks",
+                    AVG(CAST(NULLIF(progress, '') AS NUMERIC)) as "avgProgress",
+                    SUM(CASE WHEN due_date < date('now') AND status != 'DONE' THEN 1 ELSE 0 END) as "overdueTasks",
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
                 FROM tasks WHERE project_id = ?
             `,
