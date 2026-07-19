@@ -31,6 +31,7 @@ import { type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import ArtifactApprovalService from '../services/artifactApprovalService.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -57,11 +58,17 @@ function isServiceError(err: unknown): err is ServiceError {
  */
 function respondWithServiceError(res: Response, err: unknown): void {
   if (isServiceError(err) && typeof err.status === 'number') {
+    // Controlled application error (see comment above) — `.message` here is a
+    // deliberately safe, user-facing string set by the service, not a raw
+    // exception. Fine to forward.
     res.status(err.status).json({ error: err.message });
     return;
   }
-  const message = isServiceError(err) ? err.message : 'Internal server error';
-  res.status(500).json({ error: message });
+  // Genuinely unexpected error (no `.status` set by the service) — zero
+  // wycieku wnętrza (docs/standards/ERROR_HANDLING_STANDARD.md §1/§3): log
+  // the real detail server-side, never forward err.message to the client.
+  logger.error('[ArtifactApprovals] Unexpected service error', { err });
+  res.status(500).json({ error: 'Wystąpił błąd serwera', code: 'ARTIFACT_APPROVALS_UNEXPECTED_FAILED' });
 }
 
 function requireOrgId(req: AuthRequest, res: Response): string | null {
