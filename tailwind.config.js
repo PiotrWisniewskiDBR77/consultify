@@ -122,6 +122,19 @@ export default {
           'chart-8': cTok('chart-8'),
         },
         // ========================================================================
+        // VF0-6 STATE-LAYER TOKENS (color-mix) — see src/index.css `--state-*`.
+        // Plain values (not the `cTok` opacity-aware helper): the alpha is already
+        // baked into the color-mix formula, so no `/NN` modifier is expected.
+        // Usage: bg-state-hover, hover:bg-state-hover, active:bg-state-press,
+        // bg-state-selected. NOT applied to `c.*` because these are UI-state
+        // overlays (interaction feedback), not the semantic content palette.
+        // ========================================================================
+        state: {
+          hover: 'var(--state-hover)',
+          press: 'var(--state-press)',
+          selected: 'var(--state-selected)',
+        },
+        // ========================================================================
         // DATA-PALETTE DECISION GUIDE — kiedy c-tag vs c-chart vs c-accent (brand)?
         //   • c-accent (crimson/brand): TYLKO brand/CTA/selected — NIGDY jako dana,
         //     seria wykresu, ani kolor kategorii. Crimson w danych = dług (VA-B sweep).
@@ -687,6 +700,16 @@ export default {
         'token-card': '0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)',
         'token-card-hover': '0 8px 16px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.06)',
         'token-focus': '0 0 0 3px var(--c-focus)', // blue focus ring — never crimson (focus ≠ error)
+        // ----------------------------------------
+        // VF0-5 ELEVATION SCALE — see src/index.css `--elevation-*` (mapped to
+        // the hig-*/hig-dark-* shadows above). Not consumed anywhere yet — see
+        // the VF0 pitfall note in index.css for why (theme-invariant existing
+        // consumers vs. theme-aware token would change dark-mode screenshots).
+        // ----------------------------------------
+        'elevation-0': 'var(--elevation-0)',
+        'elevation-1': 'var(--elevation-1)',
+        'elevation-2': 'var(--elevation-2)',
+        'elevation-3': 'var(--elevation-3)',
       },
       backgroundImage: {
         // Legacy gradients
@@ -806,12 +829,21 @@ export default {
         'hig-smooth': 'cubic-bezier(0.25, 0.1, 0.25, 1)',
         'hig-decel': 'cubic-bezier(0, 0, 0.2, 1)',
         'hig-accel': 'cubic-bezier(0.4, 0, 1, 1)',
+        // VF0-4 MOTION — canonical easing token (`ease-standard`). Equals
+        // Tailwind's own default `ease` curve, so using it is a zero-diff swap.
+        standard: 'var(--motion-ease)',
       },
       transitionDuration: {
         'hig-fast': '100ms',
         'hig-normal': '200ms',
         'hig-slow': '300ms',
         'hig-slower': '400ms',
+        // VF0-4 MOTION — canonical duration scale (see src/index.css
+        // `--motion-*`). `duration-fast/base/slow` replace the ad-hoc literal
+        // `duration-150`/`duration-200`/`duration-300` classes in standard/.
+        fast: 'var(--motion-fast)',
+        base: 'var(--motion-base)',
+        slow: 'var(--motion-slow)',
       },
       animation: {
         // Legacy animations

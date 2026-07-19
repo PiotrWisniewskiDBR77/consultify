@@ -193,7 +193,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             whileTap={{ scale: 0.98 }}
             onClick={onSave}
             disabled={saveCopy.disabled}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed ${saveCopy.className} ${saving ? 'opacity-70' : ''}`}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-fast ease-standard disabled:cursor-not-allowed ${saveCopy.className} ${saving ? 'opacity-70' : ''}`}
             title={saveCopy.title}
           >
             <SaveIcon size={16} className={effectiveSaveState === 'saving' ? 'animate-spin' : ''} />
@@ -215,7 +215,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onChat}
-              className="flex items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm font-medium text-c-text transition-all duration-150 hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              className="flex items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm font-medium text-c-text transition-all duration-fast ease-standard hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               title={t('sharedComponents.nModeHeader.aiAssistantTitle')}
             >
               <Sparkles size={16} className="text-c-text-muted" />

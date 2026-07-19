@@ -115,7 +115,7 @@ const SectionRow: React.FC<{
         {header}
         <ChevronDown
           size={16}
-          className={`shrink-0 text-c-text-muted transition-transform duration-200 ${open ? '' : '-rotate-90'} motion-reduce:transition-none`}
+          className={`shrink-0 text-c-text-muted transition-transform duration-base ease-standard ${open ? '' : '-rotate-90'} motion-reduce:transition-none`}
         />
       </button>
       {open ? body : null}

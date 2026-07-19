@@ -147,7 +147,7 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
       style={accentStyle}
       className={cn(
         'group relative flex flex-col rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 cursor-pointer select-none',
-        'border-l-[3px] shadow-token-card hover:shadow-token-card-hover transition-shadow duration-150',
+        'border-l-[3px] shadow-token-card hover:shadow-token-card-hover transition-shadow duration-fast ease-standard',
         !accentStyle && URGENCY_ACCENT[urgency],
         urgency === 'critical' && 'bg-danger-500/[0.04] dark:bg-danger-500/[0.06]',
         isSelected && 'ring-2 ring-c-focus',
