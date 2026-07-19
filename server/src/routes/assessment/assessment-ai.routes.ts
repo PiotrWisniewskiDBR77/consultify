@@ -153,8 +153,8 @@ router.post('/:projectId/ai/suggest-justification', async (req: AuthRequest, res
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error suggesting justification:', err);
-    res.status(500).json({ error: 'Failed to generate suggestion', message: err.message });
+    logger.error('[AssessmentAI] Error suggesting justification', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować sugestii', code: 'ASSESSMENT_AI_GENERATE_SUGGESTION_FAILED' });
   }
 });
 
@@ -173,10 +173,8 @@ router.post('/:projectId/ai/suggest-evidence', async (req: AuthRequest, res: Res
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error suggesting evidence:', err);
-    res
-      .status(500)
-      .json({ error: 'Failed to generate evidence suggestions', message: err.message });
+    logger.error('[AssessmentAI] Error suggesting evidence', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować sugestii dowodów', code: 'ASSESSMENT_AI_GENERATE_EVIDENCE_SUGGESTIONS_FAILED' });
   }
 });
 
@@ -199,8 +197,8 @@ router.post('/:projectId/ai/suggest-target', async (req: AuthRequest, res: Respo
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error suggesting target:', err);
-    res.status(500).json({ error: 'Failed to generate target suggestion', message: err.message });
+    logger.error('[AssessmentAI] Error suggesting target', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować sugestii celu', code: 'ASSESSMENT_AI_GENERATE_TARGET_SUGGESTION_FAILED' });
   }
 });
 
@@ -223,8 +221,8 @@ router.post('/:projectId/ai/correct-text', async (req: AuthRequest, res: Respons
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error correcting text:', err);
-    res.status(500).json({ error: 'Failed to correct text', message: err.message });
+    logger.error('[AssessmentAI] Error correcting text', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się poprawić tekstu', code: 'ASSESSMENT_AI_CORRECT_TEXT_FAILED' });
   }
 });
 
@@ -249,8 +247,8 @@ router.post('/:projectId/ai/autocomplete', async (req: AuthRequest, res: Respons
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error autocompleting:', err);
-    res.status(500).json({ error: 'Failed to autocomplete', message: err.message });
+    logger.error('[AssessmentAI] Error autocompleting', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się uzupełnić automatycznie', code: 'ASSESSMENT_AI_AUTOCOMPLETE_FAILED' });
   }
 });
 
@@ -277,8 +275,8 @@ router.post('/:projectId/ai/validate-field', async (req: AuthRequest, res: Respo
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error validating field:', err);
-    res.status(500).json({ error: 'Failed to validate field', message: err.message });
+    logger.error('[AssessmentAI] Error validating field', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zweryfikować pola', code: 'ASSESSMENT_AI_VALIDATE_FIELD_FAILED' });
   }
 });
 
@@ -300,8 +298,8 @@ router.post('/:projectId/ai/validate', async (req: AuthRequest, res: Response) =
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error validating consistency:', err);
-    res.status(500).json({ error: 'Failed to validate consistency', message: err.message });
+    logger.error('[AssessmentAI] Error validating consistency', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zweryfikować spójności', code: 'ASSESSMENT_AI_VALIDATE_CONSISTENCY_FAILED' });
   }
 });
 
@@ -328,8 +326,8 @@ router.post('/:projectId/ai/guidance', async (req: AuthRequest, res: Response) =
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error getting guidance:', err);
-    res.status(500).json({ error: 'Failed to get guidance', message: err.message });
+    logger.error('[AssessmentAI] Error getting guidance', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać wskazówek', code: 'ASSESSMENT_AI_GET_GUIDANCE_FAILED' });
   }
 });
 
@@ -353,8 +351,8 @@ router.post('/:projectId/ai/gap/:axisId', async (req: AuthRequest, res: Response
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating gap analysis:', err);
-    res.status(500).json({ error: 'Failed to generate gap analysis', message: err.message });
+    logger.error('[AssessmentAI] Error generating gap analysis', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować analizy luk', code: 'ASSESSMENT_AI_GENERATE_GAP_ANALYSIS_FAILED' });
   }
 });
 
@@ -376,8 +374,8 @@ router.get('/:projectId/ai/insights', async (req: AuthRequest, res: Response) =>
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating insights:', err);
-    res.status(500).json({ error: 'Failed to generate insights', message: err.message });
+    logger.error('[AssessmentAI] Error generating insights', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować wniosków', code: 'ASSESSMENT_AI_GENERATE_INSIGHTS_FAILED' });
   }
 });
 
@@ -396,8 +394,8 @@ router.post('/:projectId/ai/clarify', async (req: AuthRequest, res: Response) =>
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error getting clarifying question:', err);
-    res.status(500).json({ error: 'Failed to get clarifying question', message: err.message });
+    logger.error('[AssessmentAI] Error getting clarifying question', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać pytania doprecyzowującego', code: 'ASSESSMENT_AI_GET_CLARIFYING_QUESTION_FAILED' });
   }
 });
 
@@ -428,8 +426,8 @@ router.post('/:projectId/ai/executive-summary', async (req: AuthRequest, res: Re
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating executive summary:', err);
-    res.status(500).json({ error: 'Failed to generate executive summary', message: err.message });
+    logger.error('[AssessmentAI] Error generating executive summary', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować podsumowania zarządczego', code: 'ASSESSMENT_AI_GENERATE_EXECUTIVE_SUMMARY_FAILED' });
   }
 });
 
@@ -459,8 +457,8 @@ router.post('/:projectId/ai/stakeholder-view', async (req: AuthRequest, res: Res
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating stakeholder view:', err);
-    res.status(500).json({ error: 'Failed to generate stakeholder view', message: err.message });
+    logger.error('[AssessmentAI] Error generating stakeholder view', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować widoku dla interesariuszy', code: 'ASSESSMENT_AI_GENERATE_STAKEHOLDER_VIEW_FAILED' });
   }
 });
 
@@ -490,10 +488,8 @@ router.post('/:projectId/ai/benchmark-commentary', async (req: AuthRequest, res:
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating benchmark commentary:', err);
-    res
-      .status(500)
-      .json({ error: 'Failed to generate benchmark commentary', message: err.message });
+    logger.error('[AssessmentAI] Error generating benchmark commentary', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować komentarza benchmarkowego', code: 'ASSESSMENT_AI_GENERATE_BENCHMARK_COMMENTARY_FAILED' });
   }
 });
 
@@ -524,8 +520,8 @@ router.post('/:projectId/ai/generate-initiatives', async (req: AuthRequest, res:
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating initiatives:', err);
-    res.status(500).json({ error: 'Failed to generate initiatives', message: err.message });
+    logger.error('[AssessmentAI] Error generating initiatives', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować inicjatyw', code: 'ASSESSMENT_AI_GENERATE_INITIATIVES_FAILED' });
   }
 });
 
@@ -548,8 +544,8 @@ router.post('/:projectId/ai/prioritize-initiatives', async (req: AuthRequest, re
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error prioritizing initiatives:', err);
-    res.status(500).json({ error: 'Failed to prioritize initiatives', message: err.message });
+    logger.error('[AssessmentAI] Error prioritizing initiatives', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się ustalić priorytetów inicjatyw', code: 'ASSESSMENT_AI_PRIORITIZE_INITIATIVES_FAILED' });
   }
 });
 
@@ -576,8 +572,8 @@ router.post('/:projectId/ai/estimate-roi', async (req: AuthRequest, res: Respons
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error estimating ROI:', err);
-    res.status(500).json({ error: 'Failed to estimate ROI', message: err.message });
+    logger.error('[AssessmentAI] Error estimating ROI', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się oszacować ROI', code: 'ASSESSMENT_AI_ESTIMATE_ROI_FAILED' });
   }
 });
 
@@ -600,8 +596,8 @@ router.post('/:projectId/ai/quick-actions', async (req: AuthRequest, res: Respon
 
     res.json({ actions: result });
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error getting quick actions:', err);
-    res.status(500).json({ error: 'Failed to get quick actions', message: err.message });
+    logger.error('[AssessmentAI] Error getting quick actions', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać szybkich akcji', code: 'ASSESSMENT_AI_GET_QUICK_ACTIONS_FAILED' });
   }
 });
 
@@ -620,8 +616,8 @@ router.post('/:projectId/ai/contextual-help', async (req: AuthRequest, res: Resp
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error getting contextual help:', err);
-    res.status(500).json({ error: 'Failed to get contextual help', message: err.message });
+    logger.error('[AssessmentAI] Error getting contextual help', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać pomocy kontekstowej', code: 'ASSESSMENT_AI_GET_CONTEXTUAL_HELP_FAILED' });
   }
 });
 
@@ -644,8 +640,8 @@ router.post('/:projectId/ai/fill-missing', async (req: AuthRequest, res: Respons
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error filling missing fields:', err);
-    res.status(500).json({ error: 'Failed to fill missing fields', message: err.message });
+    logger.error('[AssessmentAI] Error filling missing fields', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się uzupełnić brakujących pól', code: 'ASSESSMENT_AI_FILL_MISSING_FIELDS_FAILED' });
   }
 });
 
@@ -668,8 +664,8 @@ router.post('/:projectId/ai/review-justifications', async (req: AuthRequest, res
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error reviewing justifications:', err);
-    res.status(500).json({ error: 'Failed to review justifications', message: err.message });
+    logger.error('[AssessmentAI] Error reviewing justifications', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zweryfikować uzasadnień', code: 'ASSESSMENT_AI_REVIEW_JUSTIFICATIONS_FAILED' });
   }
 });
 
@@ -700,8 +696,8 @@ router.post('/:projectId/ai/reports/full', async (req: AuthRequest, res: Respons
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating full report:', err);
-    res.status(500).json({ error: 'Failed to generate full report', message: err.message });
+    logger.error('[AssessmentAI] Error generating full report', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować pełnego raportu', code: 'ASSESSMENT_AI_GENERATE_FULL_REPORT_FAILED' });
   }
 });
 
@@ -735,8 +731,8 @@ router.post('/:projectId/ai/reports/stakeholder', async (req: AuthRequest, res: 
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating stakeholder report:', err);
-    res.status(500).json({ error: 'Failed to generate stakeholder report', message: err.message });
+    logger.error('[AssessmentAI] Error generating stakeholder report', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować raportu dla interesariuszy', code: 'ASSESSMENT_AI_GENERATE_STAKEHOLDER_REPORT_FAILED' });
   }
 });
 
@@ -766,8 +762,8 @@ router.post('/:projectId/ai/reports/benchmark', async (req: AuthRequest, res: Re
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating benchmark report:', err);
-    res.status(500).json({ error: 'Failed to generate benchmark report', message: err.message });
+    logger.error('[AssessmentAI] Error generating benchmark report', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować raportu benchmarkowego', code: 'ASSESSMENT_AI_GENERATE_BENCHMARK_REPORT_FAILED' });
   }
 });
 
@@ -797,8 +793,8 @@ router.post('/:projectId/ai/reports/initiative-plan', async (req: AuthRequest, r
 
     res.json(result);
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error generating initiative plan:', err);
-    res.status(500).json({ error: 'Failed to generate initiative plan', message: err.message });
+    logger.error('[AssessmentAI] Error generating initiative plan', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować planu inicjatywy', code: 'ASSESSMENT_AI_GENERATE_INITIATIVE_PLAN_FAILED' });
   }
 });
 
@@ -832,8 +828,8 @@ router.get('/:projectId/ai/reports/types', async (_req: AuthRequest, res: Respon
       },
     });
   } catch (err: any) {
-    logger.error('[AssessmentAI] Error getting report types:', err);
-    res.status(500).json({ error: 'Failed to get report types', message: err.message });
+    logger.error('[AssessmentAI] Error getting report types', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać typów raportów', code: 'ASSESSMENT_AI_GET_REPORT_TYPES_FAILED' });
   }
 });
 
