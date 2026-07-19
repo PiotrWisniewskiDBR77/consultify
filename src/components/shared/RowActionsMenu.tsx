@@ -221,7 +221,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   const MenuIcon = iconVariant === 'vertical' ? MoreVertical : MoreHorizontal;
 
   const variantStyles: Record<string, string> = {
-    default: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700',
+    default: 'text-slate-700 dark:text-slate-300 hover:bg-state-hover',
     danger: 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20',
     primary:
       'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20',
@@ -232,7 +232,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className={`${buttonHit} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
+        className={`${buttonHit} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-state-hover transition-colors`}
         title="Actions"
         aria-label="Row actions"
         aria-expanded={isOpen}

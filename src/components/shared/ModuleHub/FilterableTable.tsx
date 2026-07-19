@@ -195,7 +195,7 @@ const FilterDropdown: React.FC<{
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`p-1 rounded-md hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors ${
+        className={`p-1 rounded-md hover:bg-state-hover transition-colors ${
           activeValues.length > 0 ? 'text-primary-400' : 'text-slate-500'
         }`}
       >
@@ -210,7 +210,7 @@ const FilterDropdown: React.FC<{
               {column.filterOptions.map((option) => (
                 <label
                   key={option.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-state-hover cursor-pointer"
                 >
                   <input
                     type="checkbox"
@@ -727,7 +727,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           trigger={
                             <button
                               type="button"
-                              className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                              className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-state-hover transition-colors"
                               title={t('common.columns')}
                               aria-label={t('common.columns')}
                             >
@@ -785,8 +785,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     className={[
                       'group cursor-pointer transition-colors',
                       row.id === selectedRowId
-                        ? 'bg-slate-50 dark:bg-white/[0.06]'
-                        : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
+                        ? 'bg-state-selected'
+                        : 'hover:bg-state-hover',
                       typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
                     ]
                       .filter(Boolean)

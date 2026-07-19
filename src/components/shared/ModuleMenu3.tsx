@@ -24,16 +24,16 @@ export const MENU_2_TAB_BASE =
 
 export const MENU_2_TAB_INACTIVE = cn(
   MENU_2_TAB_BASE,
-  'border-slate-200/70 bg-white/70 text-slate-700 hover:bg-slate-100/70',
-  'dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.06]'
+  'border-slate-200/70 bg-white/70 text-slate-700 hover:bg-state-hover',
+  'dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300'
 );
 
 // Active = neutral (decyzja Piotra: crimson TYLKO dla semantyki krytycznej,
 // nigdy jako stan UI; primary-* = crimson #85182F).
 export const MENU_2_TAB_ACTIVE = cn(
   MENU_2_TAB_BASE,
-  'border-slate-300 bg-slate-900/[0.07] text-slate-900',
-  'dark:border-white/25 dark:bg-white/10 dark:text-slate-100'
+  'border-slate-300 bg-state-selected text-slate-900',
+  'dark:border-white/25 dark:text-slate-100'
 );
 
 export const MENU_3_ROW_CLASS =
@@ -50,14 +50,14 @@ export const MENU_3_CHIP_BASE =
 
 export const MENU_3_CHIP_INACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-slate-200 bg-transparent text-c-text-muted hover:bg-slate-100 hover:text-slate-900',
-  'dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-slate-200'
+  'border-slate-200 bg-transparent text-c-text-muted hover:bg-state-hover hover:text-slate-900',
+  'dark:border-white/10 dark:hover:text-slate-200'
 );
 
 export const MENU_3_CHIP_ACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-slate-300 bg-slate-900/[0.07] text-slate-900',
-  'dark:border-white/30 dark:bg-white/10 dark:text-white'
+  'border-slate-300 bg-state-selected text-slate-900',
+  'dark:border-white/30 dark:text-white'
 );
 
 export const MENU_3_BADGE_BASE =
