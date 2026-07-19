@@ -38,8 +38,17 @@ router.get(
 
       return res.json(snapshot);
     } catch (err: any) {
-      logger.error('[OrganizationLimitsRoutes] Error fetching policy snapshot:', err);
-      return res.status(500).json({ error: err.message || 'Internal server error' });
+      // Fail-closed — the policy snapshot drives access-control decisions downstream
+      // (capability gates). A silent degrade here could hand back wrong/permissive
+      // defaults, so this stays a real 5xx with a code, never err.message leak.
+      logger.error('[OrganizationLimitsRoutes] Error fetching policy snapshot:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać ustawień dostępu organizacji',
+        code: 'ORG_POLICY_SNAPSHOT_FAILED',
+      });
     }
   })
 );
