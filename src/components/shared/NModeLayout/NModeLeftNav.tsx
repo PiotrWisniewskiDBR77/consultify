@@ -79,15 +79,15 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
     <div ref={setNodeRef} style={style}>
       <button
         onClick={() => onSectionChange(section.id)}
-        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard ${
+        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
           isActive
-            ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
-        } ${isDragging ? 'opacity-90 shadow-lg shadow-slate-300/20 dark:shadow-navy-900/40' : ''}`}
+            ? 'bg-c-surface-raised text-c-text border-l-2 border-c-focus-solid'
+            : 'text-c-text-secondary hover:bg-state-hover border-l-2 border-transparent'
+        } ${isDragging ? 'opacity-90 shadow-lg' : ''}`}
       >
         <span className="flex items-center gap-2">
           <span
-            className="inline-flex items-center text-slate-600 dark:text-slate-400 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing"
+            className="inline-flex items-center text-c-text-secondary hover:text-c-text-muted cursor-grab active:cursor-grabbing"
             onClick={(e) => e.stopPropagation()}
             {...attributes}
             {...listeners}
@@ -97,11 +97,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
           </span>
           <Icon
             size={14}
-            className={
-              isActive
-                ? 'text-primary-500 dark:text-primary-400'
-                : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
-            }
+            className={isActive ? 'text-c-focus-solid' : 'text-c-text-muted group-hover:text-c-text-secondary'}
           />
           <span className="whitespace-nowrap flex-1 min-w-0 truncate">
             {isPolish ? section.label.pl : section.label.en}
@@ -192,20 +188,16 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
       <button
         key={section.id}
         onClick={() => onSectionChange(section.id)}
-        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard ${
+        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
           isActive
-            ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
+            ? 'bg-c-surface-raised text-c-text border-l-2 border-c-focus-solid'
+            : 'text-c-text-secondary hover:bg-state-hover border-l-2 border-transparent'
         }`}
       >
         <span className="flex items-center gap-2">
           <Icon
             size={14}
-            className={
-              isActive
-                ? 'text-primary-500 dark:text-primary-400'
-                : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
-            }
+            className={isActive ? 'text-c-focus-solid' : 'text-c-text-muted group-hover:text-c-text-secondary'}
           />
           <span className="whitespace-nowrap flex-1 min-w-0 truncate">
             {isPolish ? section.label.pl : section.label.en}
@@ -321,7 +313,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
           <button
             type="button"
             onClick={() => setShowAll((v) => !v)}
-            className="mt-1 w-full px-3 py-1.5 text-left text-[11px] text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+            className="mt-1 w-full px-3 py-1.5 text-left text-[11px] text-c-text-muted transition-colors hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] rounded"
           >
             {showAll
               ? t('sharedComponents.nModeLeftNav.hideEmptySections')

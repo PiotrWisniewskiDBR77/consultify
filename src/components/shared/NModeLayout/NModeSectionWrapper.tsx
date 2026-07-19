@@ -126,7 +126,7 @@ const SectionAIButton: React.FC<{ action: NModeSectionAIAction; isPolish: boolea
       disabled={action.disabled || action.loading}
       title={title}
       aria-label={title}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-700/40 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-700/40 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
     >
       {action.loading ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
       {label}
@@ -209,7 +209,7 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
             <button
               type="button"
               onClick={emptyState.cta.onClick}
-              className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-700/40 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
+              className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-700/40 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
             >
               {isPolish ? emptyState.cta.label.pl : emptyState.cta.label.en}
             </button>

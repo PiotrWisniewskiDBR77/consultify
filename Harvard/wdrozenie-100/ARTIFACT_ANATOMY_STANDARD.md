@@ -1177,6 +1177,18 @@ Rama §15.2 · niezmienniki §15.3 · atomy tylko z puli 40 · paleta §15.1.4 �
 - [ ] Stany empty/loading/error uczciwe (`⑭`)
 - [ ] Light + dark czytelne; tokeny `c.*` (zero navy/slate/hex)
 - [ ] Zero crimson na: fokus/status/badge domyślny/selection
+- [ ] Pełny cykl Tab/Shift+Tab przez powłokę (Menu 1 → panel → sekcje → akcje)
+      bez pułapki fokusa; każdy element klikalny (także `<div onClick>`
+      karty/wiersza) osiągalny klawiaturą (`tabIndex=0` + `role="button"` +
+      Enter/Space)
+- [ ] Esc zamyka aktywną warstwę (kebab/dropdown → preview → modal/drawer),
+      najbardziej lokalna wygrywa
+- [ ] Fokus WIDOCZNY (`focus-visible:ring-2 ring-c.focus`, nigdy `primary-*`/
+      crimson) na KAŻDYM interaktywnym; zero `focus:outline-none` bez
+      widocznego zamiennika
+- [ ] Streaming Teresy (czat/panel AI, karty `generating`) w kontenerze
+      `role="log"` + `aria-live="polite"` + `aria-relevant="additions text"`
+      (wzór: `UnifiedChatPanel.tsx`)
 
 ### 18.2 DoD Instrumentu (czerwone MUST)
 - [ ] Rama §15.2 (pasek tytułu + licznik + akcje + legenda + panel szczegółu)

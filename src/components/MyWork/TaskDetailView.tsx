@@ -60,6 +60,7 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -142,6 +143,12 @@ interface TaskDetailViewProps {
   onSaved?: (data: any) => void;
   onOpenDecision?: (decisionId: string) => void;
 }
+
+// VF1-1 (SPEC-A wzorzec): gate for visible token/shell fixes on the N-mode
+// canonical path — crimson (`primary-*`) leaks + shared empty/skeleton/error
+// states. Default OFF until Piotr accepts on screenshots (reguła #7).
+// See docs/ui-standards/TRIADA_KANON.md + ARTIFACT_ANATOMY_STANDARD.md §18.1.
+const VF1_TASK_SPECA = import.meta.env.VITE_VF1_TASK_SPECA === 'true';
 
 // Status configuration
 const STATUS_CONFIG = {
@@ -2057,7 +2064,8 @@ Return ONLY the final comment text.`;
         : status === 'in_progress'
           ? 'border-blue-400/70 dark:border-blue-500/50'
           : status === 'review'
-            ? 'border-primary-400/70 dark:border-primary-500/50'
+            ? // VF1-1: align to STATUS_CONFIG.review (sky) — was crimson `primary-*`.
+              'border-sky-400/70 dark:border-sky-500/50'
             : 'border-slate-200 dark:border-navy-600/60';
   const priorityAlertBorderClass =
     priority === 'critical'
@@ -2244,7 +2252,8 @@ Return ONLY the final comment text.`;
       assignment: {
         icon: <User size={10} />,
         label: t('myWork.taskDetail.activityType.assigned', 'Assigned'),
-        style: 'border-primary-300/50 bg-primary-500/10 text-primary-600',
+        // VF1-1: was crimson `primary-*` — distinct hue from created/status/comment.
+        style: 'border-violet-300/50 bg-violet-500/10 text-violet-600',
       },
       comment: {
         icon: <MessageSquare size={10} />,
@@ -2425,7 +2434,7 @@ Return ONLY the final comment text.`;
                           className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
                         >
                           <div className="flex min-w-0 items-center gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-secondary bg-c-surface-raised uppercase">
                               {item.type}
                             </span>
                             <span className="truncate">{item.title}</span>
@@ -2532,7 +2541,7 @@ Return ONLY the final comment text.`;
                                       t('myWork.ideas.insertedToast', 'Inserted into description')
                                     );
                                   }}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border text-c-text hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                 >
                                   {t('myWork.ideas.insert', 'Insert')}
                                 </button>
@@ -2638,7 +2647,7 @@ Return ONLY the final comment text.`;
                                       )
                                     );
                                   }}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border text-c-text hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                 >
                                   {t('myWork.notebook.insert', 'Insert')}
                                 </button>
@@ -2992,7 +3001,7 @@ Return ONLY the final comment text.`;
                                   <span
                                     className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                       isAI
-                                        ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400'
+                                        ? 'bg-c-info/15 text-c-info'
                                         : isTeam
                                           ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
                                           : 'bg-slate-100 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400'
@@ -3284,7 +3293,7 @@ Return ONLY the final comment text.`;
                             },
                           });
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400/80 transition-colors"
                       >
                         + {t('myWork.taskDetail.addPerson', 'Add person')}
                       </button>
@@ -3355,7 +3364,7 @@ Return ONLY the final comment text.`;
                                         setEditingStakeholderId(s.id);
                                         setStakeholderDraft({ ...s });
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                                       title={t('myWork.taskDetail.title7', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3404,7 +3413,7 @@ Return ONLY the final comment text.`;
                             enabled: true,
                           });
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400/80 transition-colors"
                       >
                         + {t('myWork.taskDetail.addReminder', 'Add reminder')}
                       </button>
@@ -3487,7 +3496,7 @@ Return ONLY the final comment text.`;
                                           } as ReminderRuleWithDelivery)
                                         );
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                                       title={t('myWork.taskDetail.title9', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3539,7 +3548,7 @@ Return ONLY the final comment text.`;
                           );
                           setEditingEscalationId('__new__');
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400/80 transition-colors"
                       >
                         + {t('myWork.taskDetail.addEscalation', 'Add escalation')}
                       </button>
@@ -3635,7 +3644,7 @@ Return ONLY the final comment text.`;
                                         setEditingEscalationId(rule.id);
                                         setEscalationDraft({ ...rule });
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                                       title={t('myWork.taskDetail.title11', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3956,8 +3965,62 @@ Return ONLY the final comment text.`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, isDirty, saving, title, draftSnapshot]);
 
+  // ── VF1-1 a11y: Esc = back/zamknij (kanon §12.3/§17) ─────────────────────
+  // Skips when typing in a field or while a local dropdown/draft editor is
+  // open (those own their close-affordance); keyboard-only, no visual change.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (
+        editingStakeholderId ||
+        editingReminderId ||
+        editingEscalationId ||
+        showInitiativeDropdown ||
+        showDecisionSearch ||
+        showCreateDecision ||
+        showStatusDropdown ||
+        showPriorityDropdown
+      ) {
+        return;
+      }
+      onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    onClose,
+    editingStakeholderId,
+    editingReminderId,
+    editingEscalationId,
+    showInitiativeDropdown,
+    showDecisionSearch,
+    showCreateDecision,
+    showStatusDropdown,
+    showPriorityDropdown,
+  ]);
+
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
+  // VF1-1 (SPEC-A): swap ad-hoc spinner/empty markup for the shared
+  // shared/states library (record archetype) — gated (visible change,
+  // needs Piotr's screenshot sign-off per reguła #7).
   if (loading) {
+    if (VF1_TASK_SPECA) {
+      return (
+        <div className="flex h-full items-center justify-center bg-c-bg p-8">
+          <div className="w-full max-w-xl">
+            <SkeletonState variant="record" />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
         <LoadingState variant="spinner" />
@@ -3966,6 +4029,21 @@ Return ONLY the final comment text.`;
   }
 
   if (notFound) {
+    if (VF1_TASK_SPECA) {
+      return (
+        <div className="flex h-full items-center justify-center bg-c-bg">
+          <ErrorState
+            title={t('myWork.taskDetail.taskNotFound', 'Task not found')}
+            description={t(
+              'myWork.taskDetail.thisTaskHasBeen',
+              'This task has been deleted or is no longer available to you. Refresh your task list.'
+            )}
+            onBack={onClose}
+            backLabel={t('myWork.taskDetail.close', 'Close')}
+          />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 bg-white dark:bg-navy-950 p-8 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-navy-800">
@@ -4763,7 +4841,7 @@ Return ONLY the final comment text.`;
                           key={channel.key}
                           type="button"
                           onClick={channel.toggle}
-                          className={`${channelChipClass} ${channel.active ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${channel.active ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                         >
                           {channel.label}
                         </button>
@@ -4891,7 +4969,7 @@ Return ONLY the final comment text.`;
                   <button
                     disabled={isSuggestingStakeholders}
                     onClick={() => toast(t('myWork.taskDetail.toast3', 'AI will fill the form...'))}
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
                     <Sparkles size={12} /> AI
                   </button>
@@ -5014,7 +5092,7 @@ Return ONLY the final comment text.`;
                                     : coreChannels.includes('email'),
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                           >
                             {channel.label}
                           </button>
@@ -5053,7 +5131,7 @@ Return ONLY the final comment text.`;
                                 },
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}
@@ -5158,7 +5236,7 @@ Return ONLY the final comment text.`;
                   <button
                     disabled={isSuggestingStakeholders}
                     onClick={() => toast(t('myWork.taskDetail.toast4', 'AI will fill the form...'))}
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
                     <Sparkles size={12} /> AI
                   </button>
@@ -5309,7 +5387,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                         >
                           {channel.label}
                         </button>
@@ -5345,7 +5423,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                           title={channel.scope}
                         >
                           {channel.label}

@@ -52,7 +52,7 @@ export const FieldAIButton: React.FC<FieldAIButtonProps> = ({
       disabled={disabled || loading || completed}
       title={tooltip}
       aria-label={tooltip}
-      className="inline-flex items-center justify-center p-1 rounded-md text-teal-600 dark:text-teal-400 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-teal-500/10 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+      className="inline-flex items-center justify-center p-1 rounded-md text-teal-600 dark:text-teal-400 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-teal-500/10 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
     >
       {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
     </button>

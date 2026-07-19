@@ -33,9 +33,9 @@ const VARIANT_CLASSES: Record<ActionVariant, string> = {
     'border-emerald-400/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10',
   danger:
     'border-danger-400/30 dark:border-danger-500/20 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10',
-  neutral:
-    'border-slate-300/40 dark:border-navy-600/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60',
-  ai: 'border-primary-400/30 dark:border-primary-500/20 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15',
+  neutral: 'border-c-border text-c-text-secondary hover:bg-state-hover',
+  // AI = teal (canon: no crimson/primary-* as UI accent — see NModeToolbar/AIConsultantPanel).
+  ai: 'border-teal-400/30 dark:border-teal-500/20 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15',
 };
 
 const VARIANT_LOADING_CLASS: Record<ActionVariant, string> = {
@@ -43,9 +43,8 @@ const VARIANT_LOADING_CLASS: Record<ActionVariant, string> = {
     'border-emerald-400/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
   danger:
     'border-danger-400/30 dark:border-danger-500/20 text-danger-600 dark:text-danger-400 bg-danger-500/10',
-  neutral:
-    'border-slate-300/40 dark:border-navy-600/30 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-navy-800/60',
-  ai: 'border-primary-400/30 dark:border-primary-500/20 text-primary-600 dark:text-primary-300 bg-primary-500/10',
+  neutral: 'border-c-border text-c-text-secondary bg-c-surface-raised',
+  ai: 'border-teal-400/30 dark:border-teal-500/20 text-teal-600 dark:text-teal-300 bg-teal-500/10',
 };
 
 const ActionButton: React.FC<{ action: NModeAction; isPolish: boolean; className?: string }> = ({
@@ -65,7 +64,7 @@ const ActionButton: React.FC<{ action: NModeAction; isPolish: boolean; className
       onClick={action.onClick}
       disabled={action.disabled || action.loading}
       title={title}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${variantClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${variantClass} ${className}`}
     >
       {action.loading ? <Loader2 size={13} className="animate-spin" /> : <Icon size={13} />}
       {label}

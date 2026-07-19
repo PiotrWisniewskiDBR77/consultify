@@ -125,6 +125,30 @@ Czerwień = wyłącznie semantyka krytyczna (overdue/error/blocked/delete). Akty
 - [ ] 39. Fokus klawiaturowy niebieski; edytory tekstu bez obwódki
 - [ ] 40. Light mode: przejść pkt 10, 14, 31-32 ponownie w light
 
+**KLAWIATURA / A11Y (3)** — analogicznie do `ARTIFACT_ANATOMY_STANDARD.md` §18.1
+- [ ] 41. Pełny cykl Tab/Shift+Tab przez WSZYSTKIE interaktywne elementy ekranu
+      (menu → tabela/karty → pstryczek → kebab → preview → akcje), bez pułapki
+      fokusa (focus nigdy nie ginie ani nie zapętla się w martwym miejscu);
+      każdy element klikalny (w tym karty grid/kanban z `onClick` na `<div>`)
+      musi być osiągalny klawiaturą (`tabIndex=0` + `role="button"` +
+      Enter/Space), nie tylko myszą
+- [ ] 42. Esc zamyka aktywny warstwowy element — w kolejności najbardziej
+      lokalny wygrywa: otwarty kebab/dropdown → preview → modal/drawer
+      (jedno wciśnięcie = jedno zamknięcie, nie wszystko naraz)
+- [ ] 43. Fokus WIDOCZNY (`focus-visible:ring-2 ring-[color:var(--c-focus)]`,
+      nigdy `primary-*`/crimson) na KAŻDYM interaktywnym elemencie ekranu —
+      przycisk, link, checkbox, wiersz/karta klikalna, chip, input; zero
+      `focus:outline-none` bez widocznego zamiennika (edytory tekstu: dopuszczalna
+      zmiana koloru ramki/podkreślenia zamiast pełnego ringu — pkt 39)
+
+> **Streaming Teresy — wymóg `aria-live="polite"`.** Każdy region, w którym
+> odpowiedź AI dopisuje się na bieżąco (czat/panel Teresy, „AI pisze…", karty
+> `generating`), MUSI mieć kontener z `role="log"` (lub `role="status"` dla
+> krótkich wskaźników) + `aria-live="polite"` + `aria-relevant="additions text"`,
+> żeby czytnik ekranu ogłaszał przyrost treści bez re-czytania całej historii.
+> Referencyjna implementacja: `src/components/AIChat/UnifiedChatPanel.tsx`
+> (kontener wiadomości, `role="log" aria-live="polite"`).
+
 ---
 # CZĘŚĆ C — SPECYFIKACJA TECHNICZNA (wartości mierzalne, z kodu My Work)
 > Twarde liczby: kolory, rozmiary, ramki, odstępy. Źródło: `src/index.css` (tokeny), `tailwind.config.js` (radius/cień), `ModuleMenu3.tsx` + `MyTasksListContent.tsx` (klasy). To jest kontrakt — implementacja MUSI dać te wartości.
