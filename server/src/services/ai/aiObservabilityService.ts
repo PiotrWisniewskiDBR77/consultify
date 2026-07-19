@@ -225,7 +225,7 @@ class AIObservabilityService {
   private async queryQualityTrend(from: string, to: string, orgFilter: string, orgParams: any[]) {
     const rows = await dbAll(
       `SELECT DATE(created_at) as date,
-              AVG(overall_score) as avgScore,
+              AVG(overall_score) as "avgScore",
               COUNT(*) as count
        FROM ai_quality_metrics
        WHERE created_at >= ? AND created_at <= ? ${orgFilter}
@@ -253,8 +253,11 @@ class AIObservabilityService {
   }
 
   private async queryCost(from: string, to: string, orgFilter: string, orgParams: any[]) {
+    // NOTE: column was `cost_usd` (never existed on ai_usage_logs — real column is
+    // `estimated_cost_usd`, see migration 605_ai_usage_logs_cost_contract_v3.sql). On
+    // Postgres this threw "column does not exist" -> caught -> total_cost always 0/undefined.
     return dbGet(
-      `SELECT SUM(COALESCE(cost_usd, 0)) as total_cost
+      `SELECT SUM(COALESCE(estimated_cost_usd, 0)) as total_cost
        FROM ai_usage_logs
        WHERE created_at >= ? AND created_at <= ? ${orgFilter}`,
       [from, to, ...orgParams]
@@ -262,14 +265,16 @@ class AIObservabilityService {
   }
 
   private async queryCostByModel(from: string, to: string, orgFilter: string, orgParams: any[]) {
+    // NOTE: `model_id`/`cost_usd` never existed on ai_usage_logs (real columns:
+    // `model`, `estimated_cost_usd`) — same stale-schema bug as queryCost above.
     const rows = await dbAll(
-      `SELECT model_id as model,
-              SUM(COALESCE(cost_usd, 0)) as totalUsd,
+      `SELECT model,
+              SUM(COALESCE(estimated_cost_usd, 0)) as "totalUsd",
               COUNT(*) as count
        FROM ai_usage_logs
-       WHERE created_at >= ? AND created_at <= ? ${orgFilter} AND model_id IS NOT NULL
-       GROUP BY model_id
-       ORDER BY totalUsd DESC
+       WHERE created_at >= ? AND created_at <= ? ${orgFilter} AND model IS NOT NULL
+       GROUP BY model
+       ORDER BY "totalUsd" DESC
        LIMIT 20`,
       [from, to, ...orgParams]
     ).catch(() => []);
@@ -313,9 +318,12 @@ class AIObservabilityService {
   }
 
   private async queryTools(from: string, to: string, orgFilter: string, orgParams: any[]) {
+    // NOTE: `status` column never existed on ai_audit_logs (real column is the
+    // integer `success` — see server/src/controllers/ai/AITrainingController.ts for
+    // the same `success = 1` pattern already in use elsewhere in this codebase).
     return dbGet(
       `SELECT COUNT(*) as total_calls,
-              AVG(CASE WHEN status = 'success' THEN 1.0 ELSE 0.0 END) as success_rate
+              AVG(CASE WHEN success = 1 THEN 1.0 ELSE 0.0 END) as success_rate
        FROM ai_audit_logs
        WHERE created_at >= ? AND created_at <= ? ${orgFilter}
          AND action_type = 'tool_call'`,
@@ -327,7 +335,7 @@ class AIObservabilityService {
     const rows = await dbAll(
       `SELECT COALESCE(JSON_EXTRACT(context_snapshot, '$.tool_name'), 'unknown') as tool,
               COUNT(*) as count,
-              AVG(CASE WHEN status = 'success' THEN 1.0 ELSE 0.0 END) as successRate
+              AVG(CASE WHEN success = 1 THEN 1.0 ELSE 0.0 END) as "successRate"
        FROM ai_audit_logs
        WHERE created_at >= ? AND created_at <= ? ${orgFilter}
          AND action_type = 'tool_call'
