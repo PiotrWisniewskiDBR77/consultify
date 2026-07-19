@@ -9,8 +9,8 @@ import { z } from 'zod';
 
 import type { Task, TaskPriority, TaskStatus, User } from '../types/index.js';
 import { AuthorizationError, NotFoundError } from '../types/index.js';
-import { send as sendNotification } from './notificationService.js';
 import logger from '../utils/Logger.js';
+import { send as sendNotification } from './notificationService.js';
 
 // ==========================================
 // VALIDATION SCHEMAS (Zod)
@@ -359,7 +359,10 @@ export class TaskService {
         dedupeKey: `task-assigned:${taskId}:${assigneeId}`,
       });
     } catch (err) {
-      logger.warn(`[TaskService] notifyAssignee failed for task=${taskId} assignee=${assigneeId}:`, err);
+      logger.warn(
+        `[TaskService] notifyAssignee failed for task=${taskId} assignee=${assigneeId}:`,
+        err
+      );
     }
   }
 

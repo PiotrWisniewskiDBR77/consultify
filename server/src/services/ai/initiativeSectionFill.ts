@@ -57,10 +57,10 @@ export function normalizeFillSectionKey(raw: string): InitiativeFillSectionKey |
     case 'initiativeteam':
     case 'initiative-team':
       return 'team';
-    case 'raci':
-    case 'raci-escalation':
     // FE komponent-key `raciEscalation` → toLowerCase() = 'raciescalation'.
     // (Poprzedni alias 'racieescalation' miał literówkę i nigdy nie trafiał.)
+    case 'raci':
+    case 'raci-escalation':
     case 'raciescalation':
       return 'raci';
     case 'dependencies':
@@ -90,10 +90,10 @@ export function normalizeFillSectionKey(raw: string): InitiativeFillSectionKey |
     case 'comments':
     case 'discussion':
       return 'comments';
+    // FE komponent-key dla dziennika aktywności to `history` (HistorySection).
     case 'activity':
     case 'activity-log':
     case 'activitylog':
-    // FE komponent-key dla dziennika aktywności to `history` (HistorySection).
     case 'history':
     case 'history-log':
       return 'activity';

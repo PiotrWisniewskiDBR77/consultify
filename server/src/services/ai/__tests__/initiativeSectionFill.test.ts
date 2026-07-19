@@ -96,12 +96,20 @@ describe('normalizeFillSectionKey — kontrakt kluczy sekcji (10 bez natywnego A
   });
 
   // Sekcje z natywnym AI (obsługiwane przez /generate-section) → null.
-  it.each(['scope', 'kpis', 'financialAnalysis', 'financialImpact', 'resources', 'raid', 'decisions', 'gates', 'unknown-xyz', ''])(
-    'natywne/nieznane „%s" → null (kieruj do /generate-section)',
-    (raw) => {
-      expect(normalizeFillSectionKey(raw)).toBeNull();
-    }
-  );
+  it.each([
+    'scope',
+    'kpis',
+    'financialAnalysis',
+    'financialImpact',
+    'resources',
+    'raid',
+    'decisions',
+    'gates',
+    'unknown-xyz',
+    '',
+  ])('natywne/nieznane „%s" → null (kieruj do /generate-section)', (raw) => {
+    expect(normalizeFillSectionKey(raw)).toBeNull();
+  });
 
   it('każdy zwrócony klucz ma prompt w INITIATIVE_FILL_PROMPTS', () => {
     for (const k of canonical) {
@@ -125,14 +133,26 @@ describe('generateInitiativeSectionFill — wiring LLM (mock)', () => {
     stubJson({
       team: [
         { role: 'lider projektu', responsibility: 'koordynacja i bramki', fte: '0.2 (szacunek)' },
-        { role: 'analityk procesów', responsibility: 'mapowanie AS-IS/TO-BE', fte: '0.5 (szacunek)' },
-        { role: 'inżynier utrzymania', responsibility: 'wdrożenie techniczne', fte: '0.3 (szacunek)' },
+        {
+          role: 'analityk procesów',
+          responsibility: 'mapowanie AS-IS/TO-BE',
+          fte: '0.5 (szacunek)',
+        },
+        {
+          role: 'inżynier utrzymania',
+          responsibility: 'wdrożenie techniczne',
+          fte: '0.3 (szacunek)',
+        },
       ],
     });
 
     const res = await generateInitiativeSectionFill(
       'team',
-      { initiativeName: 'Redukcja przestojów linii', summary: 'Skrócić MTTR na linii pakowania', module: 'Operations' },
+      {
+        initiativeName: 'Redukcja przestojów linii',
+        summary: 'Skrócić MTTR na linii pakowania',
+        module: 'Operations',
+      },
       { language: 'pl' }
     );
 
@@ -153,9 +173,17 @@ describe('generateInitiativeSectionFill — wiring LLM (mock)', () => {
   });
 
   it('history (FE) → activity: uzupełnia właściwą sekcję', async () => {
-    stubJson({ summary: 'Postęp on-track', recentHighlights: ['pilotaż zakończony'], momentum: 'on-track — 2/3 kamieni' });
+    stubJson({
+      summary: 'Postęp on-track',
+      recentHighlights: ['pilotaż zakończony'],
+      momentum: 'on-track — 2/3 kamieni',
+    });
 
-    const res = await generateInitiativeSectionFill('history', { initiativeName: 'X' }, { language: 'pl' });
+    const res = await generateInitiativeSectionFill(
+      'history',
+      { initiativeName: 'X' },
+      { language: 'pl' }
+    );
 
     expect(res.sectionKey).toBe('activity');
     expect((res.parsedContent as any).momentum).toContain('on-track');
@@ -164,19 +192,43 @@ describe('generateInitiativeSectionFill — wiring LLM (mock)', () => {
   it('raciEscalation (FE) → raci: uzupełnia macierz RACI', async () => {
     stubJson({
       raci: [
-        { activity: 'zatwierdzenie zakresu', responsible: 'PM', accountable: 'sponsor', consulted: 'ops', informed: 'zespół' },
-        { activity: 'wdrożenie', responsible: 'inżynier', accountable: 'PM', consulted: 'sponsor', informed: 'ops' },
-        { activity: 'odbiór', responsible: 'QA', accountable: 'sponsor', consulted: 'PM', informed: 'zespół' },
+        {
+          activity: 'zatwierdzenie zakresu',
+          responsible: 'PM',
+          accountable: 'sponsor',
+          consulted: 'ops',
+          informed: 'zespół',
+        },
+        {
+          activity: 'wdrożenie',
+          responsible: 'inżynier',
+          accountable: 'PM',
+          consulted: 'sponsor',
+          informed: 'ops',
+        },
+        {
+          activity: 'odbiór',
+          responsible: 'QA',
+          accountable: 'sponsor',
+          consulted: 'PM',
+          informed: 'zespół',
+        },
       ],
     });
 
-    const res = await generateInitiativeSectionFill('raciEscalation', { initiativeName: 'X' }, { language: 'pl' });
+    const res = await generateInitiativeSectionFill(
+      'raciEscalation',
+      { initiativeName: 'X' },
+      { language: 'pl' }
+    );
     expect(res.sectionKey).toBe('raci');
     expect((res.parsedContent as any).raci).toHaveLength(3);
   });
 
   it('język EN → SYSTEM prompt EN + reguła przyszłych dat', async () => {
-    stubJson({ phases: [{ phase: 'Discovery', start: '+0', end: '+4w', goal: 'baseline captured' }] });
+    stubJson({
+      phases: [{ phase: 'Discovery', start: '+0', end: '+4w', goal: 'baseline captured' }],
+    });
 
     await generateInitiativeSectionFill('timeline', { initiativeName: 'X' }, { language: 'en' });
     const callArg = mockLlmCall.mock.calls[0][0] as any;
@@ -194,7 +246,9 @@ describe('generateInitiativeSectionFill — wiring LLM (mock)', () => {
   it('LLM nieskonfigurowany → 503 FEATURE_UNAVAILABLE (fail-closed)', async () => {
     llmConfigured = false;
     __resetInitiativeFillLlmForTests();
-    await expect(generateInitiativeSectionFill('team', { initiativeName: 'X' })).rejects.toMatchObject({
+    await expect(
+      generateInitiativeSectionFill('team', { initiativeName: 'X' })
+    ).rejects.toMatchObject({
       statusCode: 503,
       code: 'FEATURE_UNAVAILABLE',
     });
