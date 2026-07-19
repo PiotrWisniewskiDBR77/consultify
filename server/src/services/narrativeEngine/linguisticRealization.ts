@@ -42,7 +42,12 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
 
 // ── Prompt construction ─────────────────────────────────────────
 
-function buildSystemPrompt(input: NarrativeEngineInput): string {
+// Exported (O2.5 proof): CONCLUSION_LAYER_STANDARD compliance (answer-first,
+// anti-fabrication, assumption-labeling) is asserted directly against this
+// builder in tests/unit/narrativeEngineConclusionLayer.test.ts — this prompt
+// is shared by presentationGeneratorService (deck) and reportGenerationService
+// (report), so one prompt-level test covers both surfaces.
+export function buildSystemPrompt(input: NarrativeEngineInput): string {
   const { report_config } = input;
   const registerGuide =
     REGISTER_INSTRUCTIONS[report_config.communication_register] ?? REGISTER_INSTRUCTIONS.formal;
