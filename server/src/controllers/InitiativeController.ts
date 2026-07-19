@@ -2636,7 +2636,14 @@ export class InitiativeController {
           p.parent_program_id,
           COUNT(*) AS initiative_count,
           SUM(COALESCE(i.cost_capex, 0) + COALESCE(i.cost_opex, 0)) AS total_budget,
-          SUM(COALESCE(i.business_value, 0)) AS total_value,
+          -- business_value is stored as TEXT; a bare COALESCE(.., 0) makes Postgres
+          -- try to unify TEXT with INTEGER -> 42804. Guard the numeric cast so free-text
+          -- values do not blow up (would be 22P02) and non-numeric rows count as 0.
+          -- IMPORTANT: no literal question-mark chars anywhere here (comment or regex) —
+          -- adaptQuery naively rewrites every question-mark to a $n placeholder, even
+          -- inside comments and string literals, so use {0,1} for the optional quantifier.
+          SUM(CASE WHEN i.business_value ~ '^-{0,1}[0-9]+([.][0-9]+){0,1}$'
+                   THEN i.business_value::numeric ELSE 0 END) AS total_value,
           SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('EXECUTING','DONE','TRACKING') THEN 1 ELSE 0 END) AS health_green,
           SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') THEN 1 ELSE 0 END) AS health_amber,
           SUM(CASE WHEN UPPER(COALESCE(i.status,'')) NOT IN ('EXECUTING','DONE','TRACKING','APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') OR i.status IS NULL THEN 1 ELSE 0 END) AS health_red
