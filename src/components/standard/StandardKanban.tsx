@@ -117,7 +117,7 @@ const KanbanColumnZone: React.FC<{
             type="button"
             onClick={column.onCreate}
             title={column.createLabel ?? t('common.add', 'Add')}
-            className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text transition-colors"
+            className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
           >
             +
           </button>

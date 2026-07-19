@@ -140,14 +140,26 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
       ? { borderLeftColor: card.accentColorVar }
       : undefined;
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       onClick={onClick}
+      onKeyDown={onClick ? handleKeyDown : undefined}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       data-testid={`standard-grid-card-${card.id}`}
       style={accentStyle}
       className={cn(
         'group relative flex flex-col rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 cursor-pointer select-none',
         'border-l-[3px] shadow-token-card hover:shadow-token-card-hover transition-shadow duration-fast ease-standard',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]',
         !accentStyle && URGENCY_ACCENT[urgency],
         urgency === 'critical' && 'bg-danger-500/[0.04] dark:bg-danger-500/[0.06]',
         isSelected && 'ring-2 ring-c-focus',

@@ -316,7 +316,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
             <button
               type="button"
               onClick={onTogglePin}
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 pinned
                   ? 'text-[var(--c-info)] bg-state-selected'
                   : 'text-c-text-muted hover:bg-state-hover'
