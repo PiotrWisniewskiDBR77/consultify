@@ -568,8 +568,23 @@ router.get(
         _state: conversationState,
       });
     } catch (err: any) {
-      logger.error('[Conversations] Get error:', err);
-      return res.status(500).json({ error: err.message });
+      // Read — but this is the primary content of the screen (opening a chat with
+      // its messages), not a side enrichment. Stays fail-closed: real 500 + code,
+      // no err.message leak (H6.4).
+      logger.error('[Conversations] Get error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_GET_FAILED',
+            'Failed to load the conversation.'
+          )
+        );
     }
   })
 );
@@ -687,8 +702,21 @@ router.patch(
 
       return res.json(conversation);
     } catch (err: any) {
-      logger.error('[Conversations] Update error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[Conversations] Update error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_UPDATE_FAILED',
+            'Failed to update the conversation.'
+          )
+        );
     }
   })
 );
@@ -792,8 +820,21 @@ router.delete(
 
       return res.json({ success: true, deleted: id, softDeleted: true, deletedAt: now });
     } catch (err: any) {
-      logger.error('[Conversations] Delete error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[Conversations] Delete error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_DELETE_FAILED',
+            'Failed to delete the conversation.'
+          )
+        );
     }
   })
 );
@@ -974,8 +1015,21 @@ router.post(
 
       return res.status(201).json(message);
     } catch (err: any) {
-      logger.error('[Conversations] Add message error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — this IS the product (a chat message). NEVER fail-soft.
+      logger.error('[Conversations] Add message error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_ADD_MESSAGE_FAILED',
+            'Failed to save the message.'
+          )
+        );
     }
   })
 );
@@ -1056,8 +1110,21 @@ router.post(
 
       return res.json({ ok: true, itemId: result.itemId, alreadyCaptured: false });
     } catch (err: any) {
-      logger.error('[Conversations] Save-to-context error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write (explicit user click "save to context") — NEVER fail-soft.
+      logger.error('[Conversations] Save-to-context error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_SAVE_TO_CONTEXT_FAILED',
+            'Failed to save the message to organization context.'
+          )
+        );
     }
   })
 );
@@ -1185,8 +1252,21 @@ router.post(
 
       return res.json({ success: true, deletedCount });
     } catch (err: any) {
-      logger.error('[Conversations] Truncate error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write (edit/regenerate) — NEVER fail-soft.
+      logger.error('[Conversations] Truncate error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_TRUNCATE_FAILED',
+            'Failed to edit the conversation.'
+          )
+        );
     }
   })
 );
@@ -1492,8 +1572,21 @@ router.post(
         migrated,
       });
     } catch (err: any) {
-      logger.error('[Conversations] Migration error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write (bulk import from localStorage) — NEVER fail-soft.
+      logger.error('[Conversations] Migration error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_MIGRATE_FAILED',
+            'Failed to migrate conversations.'
+          )
+        );
     }
   })
 );
@@ -1621,8 +1714,21 @@ router.post(
         remainingCount: recentMessages.length + 1, // +1 for the new summary message
       });
     } catch (err: any) {
-      logger.error('[Conversations] Summarize error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write (mutates message history) — NEVER fail-soft.
+      logger.error('[Conversations] Summarize error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_SUMMARIZE_FAILED',
+            'Failed to summarize the conversation.'
+          )
+        );
     }
   })
 );
@@ -1867,8 +1973,21 @@ router.post(
       );
       return res.status(201).json(attachment);
     } catch (err: any) {
-      logger.error('[Conversations] Add attachment error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[Conversations] Add attachment error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_ADD_ATTACHMENT_FAILED',
+            'Failed to attach the file.'
+          )
+        );
     }
   })
 );
@@ -1896,16 +2015,18 @@ router.get(
 
       return res.json({ attachments: attachments || [] });
     } catch (err: any) {
-      // Degraded posture E6: table may not exist yet
-      if (err?.message?.includes('no such table') || err?.message?.includes('does not exist')) {
-        return res.json({
-          attachments: [],
-          _degraded: true,
-          _reason: 'attachment_table_unavailable',
-        });
-      }
-      logger.error('[Conversations] List attachments error:', err);
-      return res.status(500).json({ error: err.message });
+      // Read — side panel enrichment (attachment pointers for a message). Fail-soft:
+      // degrade to an empty list instead of breaking the panel with a 500 (H6.4).
+      logger.warn('[Conversations] List attachments degraded', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res.json({
+        attachments: [],
+        degraded: true,
+        _degraded: true,
+        _reason: 'attachment_table_unavailable',
+      });
     }
   })
 );
@@ -1932,8 +2053,21 @@ router.delete(
 
       return res.json({ success: true, deleted: attachmentId });
     } catch (err: any) {
-      logger.error('[Conversations] Delete attachment error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[Conversations] Delete attachment error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_DELETE_ATTACHMENT_FAILED',
+            'Failed to remove the attachment.'
+          )
+        );
     }
   })
 );
@@ -1963,11 +2097,13 @@ router.get(
 
       return res.json({ sessions: sessions || [] });
     } catch (err: any) {
-      if (err?.message?.includes('no such table') || err?.message?.includes('does not exist')) {
-        return res.json({ sessions: [], _degraded: true });
-      }
-      logger.error('[Conversations] List sessions error:', err);
-      return res.status(500).json({ error: err.message });
+      // Read — side panel enrichment (runtime session history). Fail-soft: degrade
+      // to an empty list instead of breaking the panel with a 500 (H6.4).
+      logger.warn('[Conversations] List sessions degraded', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res.json({ sessions: [], degraded: true, _degraded: true });
     }
   })
 );
@@ -2030,8 +2166,21 @@ router.post(
       const session = await dbGet(`SELECT * FROM conversation_sessions WHERE id = ?`, [sessionId]);
       return res.status(201).json(session);
     } catch (err: any) {
-      logger.error('[Conversations] Create session error:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[Conversations] Create session error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_CREATE_SESSION_FAILED',
+            'Failed to create the runtime session.'
+          )
+        );
     }
   })
 );
@@ -2160,8 +2309,23 @@ router.get(
         dateRange: { from: from || null, to: to || null },
       });
     } catch (err: any) {
-      logger.error('[Conversations] Export error:', err);
-      return res.status(500).json({ error: err.message });
+      // Explicit download action (user clicked "export") — NEVER fail-soft; a silent
+      // degrade here would produce a corrupt/incomplete downloaded file with no
+      // indication anything went wrong.
+      logger.error('[Conversations] Export error:', {
+        err,
+        correlationId: resolveConversationCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_EXPORT_FAILED',
+            'Failed to export the conversation.'
+          )
+        );
     }
   })
 );

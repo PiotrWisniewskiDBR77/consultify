@@ -901,8 +901,14 @@ router.get(
       );
       return res.json(context);
     } catch (err: any) {
-      const error = err as Error;
-      return res.status(500).json({ error: error.message });
+      // Read — side context assembly for the AI assistant panel (platform/org/project
+      // snapshot). Non-critical enrichment: the chat pipeline can proceed with a
+      // thinner context. Fail-soft degrade instead of a bare 500 (H6.4).
+      logger.warn('[AI Routes] Context build degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ degraded: true, focusMode: 'all', builtAt: new Date().toISOString() });
     }
   })
 );
@@ -923,8 +929,13 @@ router.get(
       );
       return res.json(context);
     } catch (err: any) {
-      const error = err as Error;
-      return res.status(500).json({ error: error.message });
+      // Read — same non-critical context enrichment as GET /context, scoped to a
+      // project. Fail-soft degrade instead of a bare 500 (H6.4).
+      logger.warn('[AI Routes] Project context build degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ degraded: true, focusMode: 'all', builtAt: new Date().toISOString() });
     }
   })
 );
@@ -5917,7 +5928,12 @@ router.post(
           'ADVISORY',
       });
     } catch (err: any) {
-      logger.error('Chat Error:', err);
+      // Core AI chat generation (Teresa) — the actual product. NEVER fail-soft:
+      // a real error with a stable code, no err.message leak (H6.4).
+      logger.error('[AI Routes] Chat failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
       const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
       if (error.isBudgetError) {
         return res.status(403).json({
@@ -5925,9 +5941,11 @@ router.post(
           code: 'AI_BUDGET_EXHAUSTED',
           budgetStatus: error.budgetStatus,
         });
-        return;
       }
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({
+        error: 'Nie udało się wygenerować odpowiedzi asystenta',
+        code: 'AI_CHAT_FAILED',
+      });
     }
   })
 );
@@ -8281,8 +8299,14 @@ router.post(
 
       return res.json({ success: true, notificationId: notifId });
     } catch (err: any) {
-      logger.error('[AI Routes] Failed to trigger AI notification:', err);
-      return res.status(500).json({ error: err.message });
+      // Write (creates a notification) — NEVER fail-soft.
+      logger.error('[AI Routes] Failed to trigger AI notification:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się utworzyć powiadomienia AI', code: 'AI_NOTIFICATION_TRIGGER_FAILED' });
     }
   })
 );
