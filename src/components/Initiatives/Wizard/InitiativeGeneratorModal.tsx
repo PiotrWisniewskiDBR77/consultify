@@ -32,6 +32,7 @@ import {
   submitSuggestedChange,
   type SuggestedChangeKind,
 } from '@/services/initiatives/suggestedChanges';
+import { isInitiativeDedupActionableEnabled } from '@/utils/initiativeDedupActionableFlag';
 
 import { type InitiativeCharterSource, InitiativeCharterWizard } from './InitiativeCharterWizard';
 import { type AcceptedItem, InitiativeCoverageWaveView } from './InitiativeCoverageWaveView';
@@ -256,6 +257,17 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
               coverage={coverage}
               source={source ? { label: source.label, content: source.content } : undefined}
               isPolish={isPolish}
+              dedupActionable={isInitiativeDedupActionableEnabled()}
+              onSkipDuplicate={(p) => {
+                // I1 — explicit "skip duplicate": the candidate is acknowledged as a
+                // duplicate of `p.matchedInitiativeId` and dropped (nothing created,
+                // portfolio untouched). Distinct from the neutral Dismiss.
+                toast(
+                  isPolish
+                    ? `Pominięto duplikat: „${p.candidate.title}".`
+                    : `Skipped duplicate: "${p.candidate.title}".`
+                );
+              }}
               onAcceptNew={(p) => {
                 setChosen(p);
                 setView('charter');

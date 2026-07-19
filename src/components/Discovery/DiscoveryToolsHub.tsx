@@ -5094,6 +5094,25 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               setGenerationDefaults(payload);
               const result = await Api.generateToolInitiatives(toolId, payload);
               toast.success(isPolish ? 'Wygenerowano inicjatywy' : 'Initiatives generated');
+              // I1 — actionable dedup. When the server-side flag
+              // (INITIATIVE_DEDUP_ACTIONABLE) is ON it SKIPS creating
+              // high-confidence duplicates and returns them in `skipped`. Surface
+              // that as a concrete outcome ("N skipped") instead of a vague warning.
+              // Server flag OFF → `skipped` absent/empty → legacy warning path below.
+              const skipped = Array.isArray(result?.skipped) ? result.skipped : [];
+              if (skipped.length > 0) {
+                const skippedNames = skipped
+                  .map((s: { title: string }) => s.title)
+                  .filter(Boolean)
+                  .slice(0, 3)
+                  .join(', ');
+                toast(
+                  isPolish
+                    ? `Pominięto ${skipped.length} duplikat(ów) — już istnieją w portfolio (${skippedNames}).`
+                    : `Skipped ${skipped.length} duplicate(s) — already in the portfolio (${skippedNames}).`,
+                  { icon: '⏭️', duration: 6000 }
+                );
+              }
               // #68b — functional parity with the canonical AI Initiative Wizard's
               // duplicate/similar detection (POST /initiatives/similarity-check).
               // Informational only, shown after success — never blocks creation.

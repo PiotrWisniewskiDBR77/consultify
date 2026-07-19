@@ -35,6 +35,17 @@ export interface InitiativeProposalBoardProps {
   onAcceptNew?: (p: ClassifiedProposal) => void;
   onAcceptChange?: (p: ClassifiedProposal) => void;
   onDismiss?: (p: ClassifiedProposal) => void;
+  /**
+   * I1 — actionable dedup. When true, a `duplicate` proposal gets an EXPLICIT pair
+   * of actions — **Scal / Merge** (fold into the matched initiative, via
+   * onAcceptChange) and **Pomiń duplikat / Skip** (acknowledge as a duplicate and
+   * drop, via onSkipDuplicate) — instead of the single ambiguous change button.
+   * Default (false) keeps today's rendering. Gated by the caller behind
+   * `isInitiativeDedupActionableEnabled()` (default OFF).
+   */
+  dedupActionable?: boolean;
+  /** I1 — invoked when the user explicitly SKIPS a detected duplicate. */
+  onSkipDuplicate?: (p: ClassifiedProposal) => void;
   isPolish?: boolean;
 }
 
@@ -121,6 +132,8 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
   onAcceptNew,
   onAcceptChange,
   onDismiss,
+  dedupActionable = false,
+  onSkipDuplicate,
   isPolish: isPolishProp,
 }) => {
   const { t, i18n } = useTranslation();
@@ -219,13 +232,29 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                           : t('initiatives.initiativeProposalBoard.proposeChange')}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => dismiss(i, p)}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
-                    >
-                      {t('initiatives.initiativeProposalBoard.dismiss')}
-                    </button>
+                    {/* I1 — actionable dedup: a detected duplicate gets an EXPLICIT
+                        "Skip" that acknowledges + drops it, distinct from the neutral
+                        "Dismiss". Only when the flag is on; otherwise unchanged. */}
+                    {dedupActionable && p.relation === 'duplicate' ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDismissed((s) => new Set(s).add(i));
+                          onSkipDuplicate?.(p);
+                        }}
+                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:border-navy-700 dark:text-slate-300 dark:hover:bg-navy-800"
+                      >
+                        {isPolish ? 'Pomiń duplikat' : 'Skip duplicate'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => dismiss(i, p)}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
+                      >
+                        {t('initiatives.initiativeProposalBoard.dismiss')}
+                      </button>
+                    )}
                   </div>
                 </div>
               );
