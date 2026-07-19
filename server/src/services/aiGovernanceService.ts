@@ -182,14 +182,22 @@ export async function getMeteringDashboard(
       { fallback: true } as any
     ),
     dbAll(
+      // NOTE: `model_id` never existed on ai_usage_logs (real column is `model`) —
+      // same stale-schema class as aiObservabilityService.ts. With { fallback: true }
+      // this silently returned [] -> Metering Dashboard "by model" breakdown was
+      // always empty regardless of source data.
+      // GROUP BY must use the COALESCE expression, not the bare alias `model` — since
+      // `model` is now ALSO a genuine input column, Postgres resolves a bare `GROUP BY
+      // model` to the input column (per its grouping-alias precedence rule), which
+      // would then reject `provider` in the SELECT list as ungrouped.
       `SELECT
-         COALESCE(model_id, provider, 'unknown') as model,
+         COALESCE(model, provider, 'unknown') as model,
          COALESCE(SUM(estimated_cost_usd), 0) as cost,
          COALESCE(SUM(tokens_used), 0) as tokens,
          COUNT(*) as requests
        FROM ai_usage_logs
        WHERE organization_id = ? AND created_at >= ? AND created_at <= ?
-       GROUP BY model
+       GROUP BY COALESCE(model, provider, 'unknown')
        ORDER BY cost DESC`,
       [orgId, from, to],
       { fallback: true } as any

@@ -617,8 +617,12 @@ class AISettingsService {
   // ORG COST ATTRIBUTION
   static async getOrgCostAttribution(orgId: string, period: string = '7d') {
     const days = period === '30d' ? 30 : period === '90d' ? 90 : 7;
+    // NOTE: column was `cost_usd` (never existed on ai_usage_logs — real column is
+    // `estimated_cost_usd`, see migration 605_ai_usage_logs_cost_contract_v3.sql, same
+    // stale-schema bug fixed in aiObservabilityService.ts / getUserCostHistory above).
+    // Was throwing "column does not exist" -> GET /api/ai-settings/org/:orgId/costs 500ed.
     const rows = await dbAll(
-      `SELECT user_id, COALESCE(SUM(cost_usd), 0) as cost, COALESCE(SUM(tokens_used), 0) as tokens
+      `SELECT user_id, COALESCE(SUM(estimated_cost_usd), 0) as cost, COALESCE(SUM(tokens_used), 0) as tokens
              FROM ai_usage_logs
              WHERE organization_id = ? AND created_at > ${dateWindowSql(days)}
              GROUP BY user_id`,

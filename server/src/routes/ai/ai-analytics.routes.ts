@@ -86,7 +86,11 @@ router.get(
       else if (period === '90d') daysBack = 90;
       else if (period === '1y') daysBack = 365;
 
-      const costExpr = 'COALESCE(estimated_cost_usd, cost_usd, 0)';
+      // NOTE: `cost_usd` never existed on ai_usage_logs (real column is
+      // `estimated_cost_usd` — same stale-schema class as aiObservabilityService.ts).
+      // COALESCE still validates every referenced column at parse time in Postgres,
+      // so this 500ed GET /api/ai/analytics/costs for groupBy=day|capability|model.
+      const costExpr = 'COALESCE(estimated_cost_usd, 0)';
       const capabilityExpr = "COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown')";
 
       // Get cost data from ai_usage_logs (runtime SSOT)

@@ -288,13 +288,16 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
+      // NOTE: `model_id`/`cost` never existed on ai_usage_logs (real columns: `model`,
+      // `estimated_cost_usd` — same stale-schema class as aiObservabilityService.ts).
+      // Silently caught below -> superadmin billing dashboard always showed empty/0.
       const costs = (await dbAll(`
-        SELECT provider, model_id,
+        SELECT provider, model,
           COUNT(*) as request_count,
-          COALESCE(SUM(cost), 0) as total_cost
+          COALESCE(SUM(estimated_cost_usd), 0) as total_cost
         FROM ai_usage_logs
         WHERE created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY provider, model_id
+        GROUP BY provider, model
         ORDER BY total_cost DESC
         LIMIT 20
       `)) as any[];
@@ -302,7 +305,7 @@ router.get(
       return res.json({
         items: costs.map((c: any) => ({
           provider: c.provider,
-          model: c.model_id,
+          model: c.model,
           requests: c.request_count,
           cost: c.total_cost,
         })),
