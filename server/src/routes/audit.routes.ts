@@ -42,7 +42,7 @@ router.post(
     const id = uuidv4();
     await dbRun(
       `INSERT INTO audits (id, organization_id, name, type, status, auditor, scheduled_date, created_at)
-    VALUES (?, ?, ?, ?, 'planned', ?, ?, datetime('now'))`,
+    VALUES (?, ?, ?, ?, 'planned', ?, ?, now())`,
       [id, orgId, name, type || 'internal', auditor || '', scheduledDate]
     );
     res.status(201).json({ success: true, id });
@@ -69,7 +69,7 @@ router.put(
       updates.push('findings = ?');
       params.push(JSON.stringify(findings));
     }
-    if (status === 'completed') updates.push("completed_date = datetime('now')");
+    if (status === 'completed') updates.push('completed_date = now()');
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
     params.push(req.params.id);
     await dbRun(`UPDATE audits SET ${updates.join(', ')} WHERE id = ?`, params);
