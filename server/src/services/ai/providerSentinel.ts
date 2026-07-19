@@ -46,7 +46,10 @@ function isActive(v: any): boolean {
   return v !== false && v !== 0 && String(v).toLowerCase() !== 'false';
 }
 
-function normalizeBaseUrl(endpoint?: string | null): string {
+// Exported so tests can exercise the real over-strip-regression guard directly
+// (rather than re-implementing the logic in a test double). Twin of
+// llmService.ts's normalizeBaseUrl — same bug, same fix.
+export function normalizeBaseUrl(endpoint?: string | null): string {
   const raw = String(endpoint || '').trim();
   if (!raw) return '';
   let base = raw.replace(/\/+$/, '');
