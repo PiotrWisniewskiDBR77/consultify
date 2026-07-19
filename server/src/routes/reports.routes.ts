@@ -50,14 +50,14 @@ router.get(
         onTrackProjects: number;
       }>(
         `SELECT
-            (SELECT COUNT(*) FROM projects WHERE organization_id = ?) as totalProjects,
-            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')) as activeProjects,
-            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as completedProjects,
-            (SELECT COUNT(*) FROM users WHERE organization_id = ?) as totalUsers,
-            (SELECT COUNT(*) FROM tasks WHERE organization_id = ?) as totalTasks,
-            (SELECT COUNT(*) FROM tasks WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as completedTasks,
-            (SELECT COALESCE(AVG(COALESCE(progress, 0)), 0) FROM projects WHERE organization_id = ?) as avgProjectProgress,
-            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(progress, 0) >= 80) as onTrackProjects`,
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ?) as "totalProjects",
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')) as "activeProjects",
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as "completedProjects",
+            (SELECT COUNT(*) FROM users WHERE organization_id = ?) as "totalUsers",
+            (SELECT COUNT(*) FROM tasks WHERE organization_id = ?) as "totalTasks",
+            (SELECT COUNT(*) FROM tasks WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as "completedTasks",
+            (SELECT COALESCE(AVG(COALESCE(progress, 0)), 0) FROM projects WHERE organization_id = ?) as "avgProjectProgress",
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(progress, 0) >= 80) as "onTrackProjects"`,
         [orgId, orgId, orgId, orgId, orgId, orgId, orgId, orgId]
       );
       const totalProjects = Number(summary?.totalProjects || 0);
@@ -122,8 +122,8 @@ router.get(
         taskCompletionRate: number;
       }>(
         `SELECT
-            (SELECT COUNT(*) FROM users WHERE organization_id = ?) as memberCount,
-            (SELECT COUNT(*) FROM projects WHERE organization_id = ?) as projectCount,
+            (SELECT COUNT(*) FROM users WHERE organization_id = ?) as "memberCount",
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ?) as "projectCount",
             CASE
               WHEN (SELECT COUNT(*) FROM tasks WHERE organization_id = ?) = 0 THEN 0
               ELSE ROUND(
@@ -131,7 +131,7 @@ router.get(
                   (SELECT COUNT(*) FROM tasks WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) * 100.0
                 ) / NULLIF((SELECT COUNT(*) FROM tasks WHERE organization_id = ?), 0)
               )
-            END as taskCompletionRate`,
+            END as "taskCompletionRate"`,
         [orgId, orgId, orgId, orgId, orgId]
       );
 
@@ -190,9 +190,9 @@ router.get(
         openTasks: number;
       }>(
         `SELECT
-            COUNT(*) as tasksTotal,
-            SUM(CASE WHEN COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE') THEN 1 ELSE 0 END) as tasksCompleted,
-            SUM(CASE WHEN COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as openTasks
+            COUNT(*) as "tasksTotal",
+            SUM(CASE WHEN COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE') THEN 1 ELSE 0 END) as "tasksCompleted",
+            SUM(CASE WHEN COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as "openTasks"
          FROM tasks
          WHERE project_id = ?`,
         [projectId]
