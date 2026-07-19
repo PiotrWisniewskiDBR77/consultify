@@ -334,7 +334,7 @@ router.get('/warnings', async (req, res) => {
                 SELECT 
                     cw.id,
                     cw.organization_id,
-                    o.name as organizationName,
+                    o.name as "organizationName",
                     cw.warning_type as type,
                     cw.severity,
                     cw.message,
@@ -426,8 +426,8 @@ router.get('/partners', async (req, res) => {
           (await dbAll(`
                     SELECT 
                         p.id as partner_id,
-                        p.company_name as partnerName,
-                        p.tier as partnerType,
+                        p.company_name as "partnerName",
+                        p.tier as "partnerType",
                         COALESCE(p.total_revenue, 0) as totalRevenue,
                         COALESCE(p.referral_count, 0) as orgCount,
                         COALESCE(p.total_commission, 0) as totalCommission
@@ -477,7 +477,7 @@ router.get('/help', async (req, res) => {
         (await dbAll(
           `
                 SELECT 
-                    playbook_key as playbookKey,
+                    playbook_key as "playbookKey",
                     COUNT(*) as started,
                     COUNT(CASE WHEN completed_at IS NOT NULL THEN 1 END) as completed,
                     ROUND(AVG(completion_percentage), 0) as avgProgress

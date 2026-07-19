@@ -87,11 +87,11 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     let sql = `
       SELECT 
         id, name, title, description, status, priority, impact, effort, category,
-        source_type as sourceType, source_id as sourceId,
-        report_id as reportId, report_name as reportName,
-        estimated_budget as estimatedBudget, estimated_timeline as estimatedTimeline,
-        created_by as createdBy, updated_by as updatedBy,
-        created_at as createdAt, updated_at as updatedAt
+        source_type as "sourceType", source_id as "sourceId",
+        report_id as "reportId", report_name as "reportName",
+        estimated_budget as "estimatedBudget", estimated_timeline as "estimatedTimeline",
+        created_by as "createdBy", updated_by as "updatedBy",
+        created_at as "createdAt", updated_at as "updatedAt"
       FROM initiatives
       WHERE organization_id = ?
     `;
@@ -130,11 +130,11 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     const row = await dbGet(
       `SELECT 
         id, name, title, description, status, priority, impact, effort, category,
-        source_type as sourceType, source_id as sourceId,
-        report_id as reportId, report_name as reportName,
-        estimated_budget as estimatedBudget, estimated_timeline as estimatedTimeline,
-        created_by as createdBy, updated_by as updatedBy,
-        created_at as createdAt, updated_at as updatedAt
+        source_type as "sourceType", source_id as "sourceId",
+        report_id as "reportId", report_name as "reportName",
+        estimated_budget as "estimatedBudget", estimated_timeline as "estimatedTimeline",
+        created_by as "createdBy", updated_by as "updatedBy",
+        created_at as "createdAt", updated_at as "updatedAt"
       FROM initiatives WHERE id = ? AND organization_id = ?`,
       [req.params.id, organizationId]
     );

@@ -146,7 +146,7 @@ router.get(
           ${notifEntityIdSelect},
           ${notifProjectIdSelect},
           ${notifProjectNameSelect},
-          created_at as createdAt
+          created_at as "createdAt"
         FROM notifications
         WHERE user_id = ?
           AND ${notifReadExpr} = 0

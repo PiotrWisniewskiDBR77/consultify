@@ -153,8 +153,8 @@ router.get(
       }>(
         `SELECT 
                 analytics, personalization, marketing,
-                third_party_sharing as thirdPartySharing,
-                ai_training as aiTraining
+                third_party_sharing as "thirdPartySharing",
+                ai_training as "aiTraining"
             FROM user_gdpr_consents
             WHERE user_id = ?`,
         [userId]
@@ -264,7 +264,7 @@ router.get(
       const userId = req.user!.id;
 
       const row = await dbGet<{ period: string; autoDelete: number | boolean }>(
-        `SELECT retention_period as period, auto_delete as autoDelete
+        `SELECT retention_period as period, auto_delete as "autoDelete"
             FROM user_data_retention
             WHERE user_id = ?`,
         [userId]
@@ -370,8 +370,8 @@ router.get(
       const userId = req.user!.id;
 
       const request = await dbGet<ExportRequest>(
-        `SELECT id, status, requested_at as requestedAt,
-                    expires_at as expiresAt, download_url as downloadUrl
+        `SELECT id, status, requested_at as "requestedAt",
+                    expires_at as "expiresAt", download_url as "downloadUrl"
             FROM data_export_requests
             WHERE user_id = ?
             ORDER BY requested_at DESC
@@ -630,8 +630,8 @@ router.get(
       const userId = req.user!.id;
 
       const request = await dbGet<ExportRequest>(
-        `SELECT id, status, requested_at as requestedAt,
-                    scheduled_for as scheduledFor
+        `SELECT id, status, requested_at as "requestedAt",
+                    scheduled_for as "scheduledFor"
             FROM account_deletion_requests
             WHERE user_id = ?
             ORDER BY requested_at DESC

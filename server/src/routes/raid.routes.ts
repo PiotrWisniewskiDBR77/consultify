@@ -27,10 +27,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const { projectId, initiativeId, type } = req.query;
-    let query = `SELECT id, initiative_id as initiativeId, type, title, description, 
-               impact as severity, status, owner_id as ownerId, due_date as dueDate, 
-               probability, impact, risk_score as riskScore, score_category as scoreCategory,
-               created_at as createdAt FROM raid_items WHERE organization_id = ?`;
+    let query = `SELECT id, initiative_id as "initiativeId", type, title, description, 
+               impact as severity, status, owner_id as "ownerId", due_date as "dueDate", 
+               probability, impact, risk_score as "riskScore", score_category as "scoreCategory",
+               created_at as "createdAt" FROM raid_items WHERE organization_id = ?`;
     const params: any[] = [orgId];
     if (initiativeId) {
       query += ' AND initiative_id = ?';
@@ -227,7 +227,7 @@ router.get(
         }
       : DEFAULT_THRESHOLDS;
 
-    let query = `SELECT id, title, probability, impact, initiative_id as initiativeId
+    let query = `SELECT id, title, probability, impact, initiative_id as "initiativeId"
                  FROM raid_items WHERE organization_id = ? AND status NOT IN ('CLOSED', 'REALIZED')`;
     const params: any[] = [orgId];
     if (initiativeId) {

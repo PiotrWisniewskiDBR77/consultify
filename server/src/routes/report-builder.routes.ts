@@ -874,7 +874,7 @@ router.get('/sources/tool', async (req: Request, res: Response, next: NextFuncti
       db.all(
         `SELECT ts.id, ts.name, ts.tool_type, ts.status, ts.completion_percent,
                 ts.confidence_avg, ts.created_at, ts.updated_at,
-                u.name as creatorName
+                u.name as "creatorName"
          FROM tool_sessions ts
          LEFT JOIN users u ON u.id = ts.created_by
          WHERE ts.organization_id = ?
@@ -922,7 +922,7 @@ router.get('/sources/tool/:sourceId', async (req: Request, res: Response, next: 
 
     const session = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT ts.*, u.name as creatorName
+        `SELECT ts.*, u.name as "creatorName"
            FROM tool_sessions ts
            LEFT JOIN users u ON u.id = ts.created_by
            WHERE ts.id = ? AND ts.organization_id = ?`,
@@ -5687,9 +5687,9 @@ router.get('/:id/entity-links', async (req: Request, res: Response, next: NextFu
       unit: string | null;
     }>(
       `SELECT k.id,
-              k.initiative_id AS initiativeId,
+              k.initiative_id AS "initiativeId",
               k.name,
-              k.target_value AS targetValue,
+              k.target_value AS "targetValue",
               k.unit
        FROM initiative_kpis k
        JOIN initiatives i ON i.id = k.initiative_id
@@ -5706,10 +5706,10 @@ router.get('/:id/entity-links', async (req: Request, res: Response, next: NextFu
       targetDate: string | null;
     }>(
       `SELECT m.id,
-              m.initiative_id AS initiativeId,
+              m.initiative_id AS "initiativeId",
               m.name,
               m.status,
-              m.target_date AS targetDate
+              m.target_date AS "targetDate"
        FROM initiative_milestones m
        JOIN initiatives i ON i.id = m.initiative_id
        WHERE m.organization_id = ? AND i.report_id = ?
