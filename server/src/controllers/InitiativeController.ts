@@ -4091,21 +4091,28 @@ export class InitiativeController {
         return;
       }
 
+      // H4.4 fix (SQLite-izm systemowy — MEMORY finding_unquoted_camelcase_aliases_systemic):
+      // unquoted camelCase aliases fold to all-lowercase on Postgres (initiativeId ->
+      // initiativeid, targetDate -> targetdate, orderIndex -> orderindex, isGate ->
+      // isgate, …), so every camelCase field below came back `undefined` in the JSON
+      // response on Postgres (and `Boolean(m.isGate)` was silently ALWAYS false).
+      // Double-quoting preserves the case on both engines without touching the
+      // frontend contract (Gantt/timeline UI already expects these camelCase keys).
       const milestones = await queryHelpers.queryAll(
-        `SELECT 
+        `SELECT
           id,
-          initiative_id as initiativeId,
+          initiative_id as "initiativeId",
           name,
           description,
-          target_date as targetDate,
-          actual_date as actualDate,
+          target_date as "targetDate",
+          actual_date as "actualDate",
           status,
-          order_index as orderIndex,
-          is_gate as isGate,
-          gate_decision_id as gateDecisionId,
-          created_at as createdAt,
-          updated_at as updatedAt
-        FROM initiative_milestones 
+          order_index as "orderIndex",
+          is_gate as "isGate",
+          gate_decision_id as "gateDecisionId",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        FROM initiative_milestones
         WHERE initiative_id = ?
         ORDER BY order_index ASC`,
         [initiativeId]
@@ -4146,11 +4153,17 @@ export class InitiativeController {
       }
 
       // Get next order index
+      // H4.4 fix (SQLite-izm systemowy — MEMORY finding_unquoted_camelcase_aliases_systemic):
+      // unquoted camelCase alias `maxOrder` gets folded to lowercase `maxorder` by
+      // Postgres, so `.maxOrder` silently read `undefined` and EVERY milestone was
+      // inserted with order_index=1 (nextOrder = (undefined || 0) + 1). Use the
+      // established snake_case-alias convention (see InterviewController.ts:7227,
+      // reportBuilderService.ts:1494) which round-trips correctly on both engines.
       const lastMilestone = await queryHelpers.queryOne(
-        'SELECT MAX(order_index) as maxOrder FROM initiative_milestones WHERE initiative_id = ?',
+        'SELECT MAX(order_index) as max_order FROM initiative_milestones WHERE initiative_id = ?',
         [initiativeId]
       );
-      const nextOrder = ((lastMilestone as any)?.maxOrder || 0) + 1;
+      const nextOrder = ((lastMilestone as any)?.max_order || 0) + 1;
 
       const milestoneId = uuidv4();
       const now = new Date().toISOString();

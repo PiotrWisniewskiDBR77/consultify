@@ -342,6 +342,12 @@ export async function getInitiativeDetailRead(
     description: getMultilingualText((row.hypothesis as string) || '', userLang),
     deliverables: safeJsonParse(row.deliverables as string, []),
     successCriteria: safeJsonParse(row.success_criteria as string, []),
+    // H4.4 fix: was missing the camelCase alias (only `problem_statement` from the
+    // `...initiative` spread), unlike every sibling field here — frontend already
+    // defends with `data.problemStatement || data.problem_statement` (dual-shape
+    // tolerance in InitiativeDocumentView.tsx), so this was latent, not
+    // user-visible; making the read service consistent with its neighbors.
+    problemStatement: row.problem_statement,
     scopeIn: safeJsonParse(row.scope_in as string, []),
     scopeOut: safeJsonParse(row.scope_out as string, []),
     killCriteria: safeJsonParse((row as any).kill_criteria as string, []),
