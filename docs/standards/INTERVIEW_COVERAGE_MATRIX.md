@@ -1,6 +1,9 @@
 # Macierz pokrycia pytań Wywiadu (M10) × 7 osi DRD
 
-**Rejestr:** O5.6 (Oxford biblioteka promptów) · **Data:** 2026-07-18 · **Status:** audyt, do decyzji Piotra przed seedowaniem nowych pytań.
+**Rejestr:** O5.6 (Oxford biblioteka promptów) · **Data:** 2026-07-18 (audyt) / 2026-07-19 (implementacja) ·
+**Status:** DEC Piotra 07-19 „dopuść NOWE pytania do macierzy Wywiadu wg gotowego audytu, przyrostowo" —
+29 nowych pytań wpięte przyrostowo w `server/migrations/20260719_interview_axis_gap_templates.sql`
+(5 nowych szablonów `draft`, istniejące 270 pytań/29 szablonów NIETKNIĘTE). Szczegóły w §7.
 
 ## 0. Metoda i źródła
 
@@ -218,3 +221,40 @@ pytać o to klientów) → 2+3 (Digital Products/Business Models — razem, bo p
    decyzji o nowym szablonie AI Maturity — szybka łatka na czas oczekiwania na pełny szablon?
 3. Czy pytania powinny od razu nieść PL tłumaczenie (jak `lib-tpl-*__en`/`rewrite-pl-system-templates.cjs`),
    czy najpierw EN + walidacja treści, tłumaczenie w kolejnym kroku?
+
+## 7. Implementacja 07-19 — decyzje robotnika + co wpięte
+
+**DEC Piotra (07-19):** „dopuść NOWE pytania do macierzy Wywiadu wg gotowego audytu, przyrostowo" — zielone
+światło na treść z §4, bez dalszych wytycznych co do 3 pytań z §6. Poniżej rozstrzygnięcie tych trzech pytań
+przyjęte przez robotnika (bezpieczny/konserwatywny wariant, zgodny z „przyrostowo, zachowując istniejące"),
+wraz z uzasadnieniem — jeśli któreś rozstrzygnięcie nie odpowiada intencji Piotra, jest odwracalne (nowa,
+addytywna migracja `draft`→`approved` lub scalenie do istniejącego szablonu, bez dotykania tej migracji).
+
+| # (z §6) | Rozstrzygnięcie robotnika | Uzasadnienie |
+|---|---|---|
+| 1. Osobne szablony vs. dopięte do istniejących | **Osobne, NOWE szablony** (5 sztuk, wszystkie `status='draft'`) | Zero ryzyka dla istniejących 29 szablonów/270 pytań i bieżących sesji Wywiadu; zgodne z konwencją rodziny #4 (`298_interview_draft_templates.sql`) — nowa, niewalidowana treść zawsze wchodzi jako `draft`, promocja do `approved` to osobna decyzja treściowa |
+| 2. Promocja `itq_ar_digital_4` draft→approved | **NIE promowane w tej migracji** | Promocja całego `itpl_automation_readiness_v1` (żeby wypłynęło 1 pytanie o AI) opublikowałaby też 15 niepowiązanych pytań o automatyzację — to większa decyzja niż „dodaj nowe pytania", zostaje otwarta dla Piotra. Zamiast tego: nowe, równoważne pytanie o użycie AI dodane wprost w `itpl_ai_readiness_governance_v1` (`itq_aim_digital_1`) — oś 7 ma realne pokrycie bez ruszania istniejącego draftu |
+| 3. PL od razu vs. EN najpierw | **EN only w tej partii** | Zgodne z tym, jak wystartowała rodzina #4 (`298`) — EN + walidacja treści przez konsultantów/Piotra najpierw, tłumaczenie PL (`rewrite-pl-system-templates.cjs`-owy wzorzec) jako osobny, następny krok po akcepcie treści |
+
+**Co faktycznie wpięte:** `server/migrations/20260719_interview_axis_gap_templates.sql` — 5 nowych szablonów
+(wszystkie `draft`, `visibility='global'`), **29 nowych pytań** w bibliotece Wywiadu, jeden-do-jednego z
+kandydatami z §4 tego audytu (treść pytań nieedytowana względem propozycji audytu — tylko przypisanie do
+konkretnych szablonów/kategorii/kolejności):
+
+| Szablon | id | Oś DRD | Pytania |
+|---|---|---|---|
+| Digital Product Portfolio | `itpl_digital_product_portfolio_v1` | 2 | 5 (`itq_dp_*`) |
+| Digital Business Model Discovery | `itpl_digital_business_model_v1` | 3 | 5 (`itq_bm_*`) |
+| Cybersecurity & Resilience Baseline | `itpl_cybersecurity_baseline_v1` | 6 | 6 (`itq_cyb_*`) |
+| AI Readiness & Governance | `itpl_ai_readiness_governance_v1` | 7 | 6 (`itq_aim_*`) |
+| DRD Coverage Supplement (Axis 1/4/5) | `itpl_drd_axis_supplement_v1` | 1 (1B/1C/1H/1I) + 4 (4B/4D) + 5 (5D) | 7 (`itq_sup_*`) |
+
+**Pokrycie po zmianie (jakościowo):** wszystkie 7 osi DRD mają dziś ≥1 dedykowany szablon/pytanie w banku
+(dawniej: 3 osie zero, 1 oś prawie zero). Osie 2/3/6/7 pozostają `draft` (niepublikowane w domyślnym banku
+sesji) do czasu redakcji/akceptu Piotra — to zamierzone, nie luka: nowa, niewalidowana treść konsultancka nie
+wchodzi automatycznie do każdej nowej sesji Wywiadu.
+
+**Dowód działania:** migracja pasuje do wzorca 297/298/669 (te same dwie tabele, `INSERT OR IGNORE`, pierwsza
+kolumna `id` = PRIMARY KEY → poprawny fallback w `conflictTargets.ts` bez rejestracji), uruchomiona i
+zweryfikowana end-to-end w izolowanym SQLite (zob. `server/src/__tests__/interviewAxisGapTemplates.e2e.test.ts`):
+5/5 szablonów + 29/29 pytań się ładują, pogrupowane po osi DRD, wszystkie 7 osi mają ≥1 pytanie po migracji.
