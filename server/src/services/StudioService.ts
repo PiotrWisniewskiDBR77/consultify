@@ -299,7 +299,7 @@ export class StudioService {
 
       // Get next version number
       const versionRow = await db.get<{ maxVersion: number }>(
-        'SELECT COALESCE(MAX(version), 0) as maxVersion FROM studio_snapshots WHERE document_id = ?',
+        'SELECT COALESCE(MAX(version), 0) as "maxVersion" FROM studio_snapshots WHERE document_id = ?',
         [documentId]
       );
       const nextVersion = (versionRow?.maxVersion || 0) + 1;
