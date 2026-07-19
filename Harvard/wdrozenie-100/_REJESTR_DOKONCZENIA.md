@@ -31,18 +31,50 @@
    wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
    = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
 
-## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W4)
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W5+W6)
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
 | A · Harvard (H1-H6) | 55 | 3 | 2 | 1 | 1 | 62 |
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 15 | 42 | 11 | 2 | 0 | 70 |
+| C · Oxford (O1-O8) | 21 | 36 | 11 | 2 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 30 | 1 | 23 | 7 | 2 | 63 |
-| **SUMA** | **134** | **68** | **60** | **13** | **4** | **279** |
+| E · Przekroje (+nowe) | 37 | 1 | 33 | 7 | 2 | 80 |
+| **SUMA** | **147** | **62** | **70** | **13** | **4** | **296** |
 
-**Postęp: 147/279 rozstrzygnięte (53%).** (RAZEM 270→279: +9 nowych RED wykrytych przez łowców 500-tek — patrz FALA-W4.)
+**Postęp: 160/296 rozstrzygnięte (54%).** (RAZEM 279→296: +17 nowych RED wykrytych przez łowców 500-tek W5/W6 — patrz FALA-W5+W6.)
+
+### FALA-W5+W6 (2026-07-19, deploy 581281e6f3, demo-safe-2026-07-19) — 15 gałęzi, bramki zielone (server tsc 146/204 0-nowych, kolory/artefakt PASS, eslint 0, zero FE, boot 4/4 = 8 migracji autorun OK)
+**★ Oxford O4 = 7/7 ✅** — cluster domknięty dowodem: O4.1-O4.5 (business case 5-fazowy, scenariusze-dźwignie, value tree, portfel, WACC/guidance) + O4.6 trend + O4.7 post-mortem. 5 miało dowód w `j21-oxford-o4` (nieodnotowany), 2 odblokowane (notatka „infra-gap LLM" nieaktualna — parity ma `llm_providers` zaseedowane, realny call Anthropic przeszedł strażnika liczb). Testy: `j21-oxford-o4` 4/4 + `odbior--o4c--business-case-live` PASS + `businessCase` unit 23/23.
+
+**★ SWEEP 500-tek W5+W6 (7 łowców RED × ~70-200 endpointów/rewir na parity, real-runtime):** ~30 realnych schema/kod-500 znalezionych, **~18 naprawionych** (8 migracji addytywnych + fixy kodu):
+- **admin/superadmin:** `security_events`+`admin_audit_logs` kolumny, `feature_roadmap`+`gdpr_data_subject_requests` tabele (6 endpointów).
+- **pmo-reszta:** `change_requests`+`governance_policies`+`roadmap_waves` tabele (4).
+- **ai/*:** `ai_audit_logs.success/metadata_json` (2).
+- **results:** globalny template `RESULTS_KPI_REPORT` (2, POST 500 dla każdej org).
+- **sync:** `integration_api_keys` tabela + `integration_providers` kolumny/re-seed 17 providerów + syncHub /connect→400 (3).
+- **assessment:** 3 tabele `assessment_versions/reviews/questions` (RED-C W4 domknięty) + workflow `organization_id` INTEGER→TEXT + 3 kolumny batch (RED-C W4).
+- **deliverables/my-work:** cost-summary `datetime('now',?)` param-42883 + delegation `u.name`→first/last (2 bugi kodu, jeden hard-500 na prod).
+Wspólna przyczyna: legacy migracje 3-cyfrowe (247/334/335/293/505/512/256/015/055) + `.sql.sql` NIGDY nie odpalają (regex autorun `/^(7\d{2}|\d{8})_/`).
+
+**★ Infra/systemowe domknięte:**
+- **adaptQuery quote-aware** — parser świadomy kontekstu (string/identyfikator/komentarz, escaped `''`); `?`→`$n` tylko poza literałami. 30 realnych query byte-identical (oracle-test), 46/46 unit. Domyka systemowe ryzyko z RED-A.
+- **DecisionController** — 2 bugi: L293 martwa gałąź unblock (inicjatywa utknięta BLOCKED) + L1022 **korupcja danych** (DONE→lowercase `blocked`) → `UPPER(status)`+kanoniczny. 4/4.
+- **ensureToolsSchema** — 7× `ADD COLUMN`→`IF NOT EXISTS`, log-spam 42701 zniknął (14→0).
+- **fail-soft H6.4 batch2+3** — +28 handlerów (conversations.routes.ts do zera + ai.routes.ts POST /chat rdzeń + settings/org-policy/superadmin). 166→~120 gołych 500. 23/23 unit.
+
+**★ NOWE RED (⬜ — do domknięcia; +17 do RAZEM, wszystkie z dowodem):**
+- **ai-operations ×6** (mission-control/performance/costs/sla/analytics/summary): SQLite-izmy `datetime()` + nieistniejąca `ai_request_log` → wymaga przepisania SQL na PG (nie migracja).
+- **project-members** dryf `role/joined_at` vs `project_role/created_at` → maskowany 503, lista członków stale-zepsuta (fix aliasami gotowy).
+- **permissions/stats** `role_permissions.role_id` drift (serwis używa role_id/enabled, tabela ma role).
+- **retention-policies** DI-bug (`DataRetentionService.getPolicies is not a function`) + brak tabeli.
+- **presentations ×3** (outline/deck/regenerate): bugi kodu (not-iterable, ZodError→400, not-found→404) — nie schema.
+- **agents.routes** broken lazy-export (`getAllAgentMetadata is not a function`).
+- **KB FTS** probe SQLite-only degraduje cicho (search zepsuty na PG).
+- Latentne (fallback=true maskuje puste): `conversion_events`/analytics/`business_metrics`.
+- pre-existing: conversations.context-os 500 (chip); ai-chat leak-assertion (naprawiony w batch2).
+
+**W toku (chipy Piotra + B13):** TaskService.createTask (RED#3) · notification_outbox (RED#5) · risk_register · normalizeBaseUrl(/v1) · T10 migracje fresh-env baseline-gap (B13).
 
 ### FALA-W4 (2026-07-19, deploy 3838cbebd7, demo-safe-2026-07-19) — 13 gałęzi (8 kod z migracjami + 5 test-only), bramki zielone (server tsc 146/204 0-nowych, kolory/artefakt PASS, eslint 0 błędów, zero zmian FE)
 **Domknięte z dowodem:**
