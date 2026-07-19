@@ -4,6 +4,18 @@
  *
  * Centralized audit logging with multi-tenant context
  * Logs all critical operations for compliance and security
+ *
+ * SCHEMA NOTE (fala 3, schema-drift fix): the real `audit_logs` table
+ * (server/migrations/000_z_core_baseline.sql — the one that actually wins
+ * on Postgres via CREATE TABLE IF NOT EXISTS) has columns
+ * `id, timestamp, user_id, action_type, resource_type, resource_id,
+ * organization_id, details, ip_address, user_agent, created_at`.
+ * It has NO `action`, `success`, `error_message` or `metadata` columns, and
+ * `id` has no default. This file used to target a schema that never existed
+ * on Postgres (42703 on every call). `success`/`errorMessage`/`metadata` are
+ * now folded into the `details` JSON column, matching the pattern already
+ * used by presentationStudioOrchestrationService.ts / presentationStudioLayoutCapacityAdminService.ts
+ * for the same table.
  */
 
 import { getDatabase } from '../database/Database.js';
@@ -40,6 +52,38 @@ export interface AuditLogQuery {
 }
 
 // ==========================================
+// SCHEMA-MAPPING HELPERS
+// ==========================================
+
+interface StoredDetails {
+  success?: boolean;
+  errorMessage?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+/** `details` is stored as JSON text; be tolerant of null/empty/malformed values. */
+function parseDetails(raw: unknown): StoredDetails {
+  if (!raw || typeof raw !== 'string') return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as StoredDetails) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** `timestamp` comes back from Postgres as a Date (or ISO string); normalize to epoch ms. */
+function toEpochMs(value: unknown): number {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = new Date(value).getTime();
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return Date.now();
+}
+
+// ==========================================
 // AUDIT LOGGER CLASS
 // ==========================================
 
@@ -71,26 +115,31 @@ class AuditLogger {
 
     try {
       const db = await this.getDb();
-      const timestamp = Date.now();
 
-      // Insert into audit_logs table
+      // Real audit_logs schema has no success/error_message/metadata columns —
+      // fold them into `details` (JSON text, same convention as
+      // presentationStudioOrchestrationService.ts's audit writer).
+      const details = JSON.stringify({
+        success: entry.success,
+        errorMessage: entry.errorMessage ?? null,
+        metadata: entry.metadata ?? null,
+      });
+
+      // Insert into audit_logs table (id has no DB default -> generate it here).
       await db.run(
         `INSERT INTO audit_logs (
-                    user_id, organization_id, action, resource_type, resource_id,
-                    ip_address, user_agent, success, error_message, metadata, timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    id, timestamp, user_id, organization_id, action_type, resource_type, resource_id,
+                    details, ip_address, user_agent, created_at
+                ) VALUES (gen_random_uuid()::TEXT, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
           entry.userId || null,
           entry.organizationId || null,
           entry.action,
           entry.resourceType,
           entry.resourceId || null,
+          details,
           entry.ipAddress || null,
           entry.userAgent || null,
-          entry.success ? 1 : 0,
-          entry.errorMessage || null,
-          entry.metadata ? JSON.stringify(entry.metadata) : null,
-          timestamp,
         ]
       );
 
@@ -229,7 +278,7 @@ class AuditLogger {
       }
 
       if (query.action) {
-        conditions.push('action = ?');
+        conditions.push('action_type = ?');
         params.push(query.action);
       }
 
@@ -240,12 +289,12 @@ class AuditLogger {
 
       if (query.startDate) {
         conditions.push('timestamp >= ?');
-        params.push(query.startDate);
+        params.push(new Date(query.startDate));
       }
 
       if (query.endDate) {
         conditions.push('timestamp <= ?');
-        params.push(query.endDate);
+        params.push(new Date(query.endDate));
       }
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -257,20 +306,23 @@ class AuditLogger {
         [...params, limit, offset]
       );
 
-      return logs.map((log: any) => ({
-        id: log.id,
-        userId: log.user_id,
-        organizationId: log.organization_id,
-        action: log.action,
-        resourceType: log.resource_type,
-        resourceId: log.resource_id,
-        ipAddress: log.ip_address,
-        userAgent: log.user_agent,
-        success: log.success === 1,
-        errorMessage: log.error_message,
-        metadata: log.metadata ? JSON.parse(log.metadata) : undefined,
-        timestamp: log.timestamp,
-      }));
+      return logs.map((log: any) => {
+        const parsedDetails = parseDetails(log.details);
+        return {
+          id: log.id,
+          userId: log.user_id,
+          organizationId: log.organization_id,
+          action: log.action_type,
+          resourceType: log.resource_type,
+          resourceId: log.resource_id,
+          ipAddress: log.ip_address,
+          userAgent: log.user_agent,
+          success: parsedDetails.success ?? true,
+          errorMessage: parsedDetails.errorMessage ?? undefined,
+          metadata: parsedDetails.metadata ?? undefined,
+          timestamp: toEpochMs(log.timestamp),
+        };
+      });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('[AuditLogger] Failed to query audit logs:', err);
@@ -303,12 +355,12 @@ class AuditLogger {
 
       if (startDate) {
         conditions.push('timestamp >= ?');
-        params.push(startDate);
+        params.push(new Date(startDate));
       }
 
       if (endDate) {
         conditions.push('timestamp <= ?');
-        params.push(endDate);
+        params.push(new Date(endDate));
       }
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -326,14 +378,14 @@ class AuditLogger {
 
       logs.forEach((log: any) => {
         // Count by action
-        stats.byAction[log.action] = (stats.byAction[log.action] || 0) + 1;
+        stats.byAction[log.action_type] = (stats.byAction[log.action_type] || 0) + 1;
 
         // Count by resource type
         stats.byResourceType[log.resource_type] =
           (stats.byResourceType[log.resource_type] || 0) + 1;
 
         // Count successes
-        if (log.success === 1) {
+        if (parseDetails(log.details).success ?? true) {
           successCount++;
         }
       });
