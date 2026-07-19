@@ -31,7 +31,8 @@ export function buildNarrativeEngineConversationProtocol(
 ): string {
   if (stepId !== 'pillars') return '';
   const ladders = PYRAMID_CATEGORIES.map(
-    (category) => `--- ${category.toUpperCase()} ---\n${buildCategoryLadderPromptBlock(category, language)}`
+    (category) =>
+      `--- ${category.toUpperCase()} ---\n${buildCategoryLadderPromptBlock(category, language)}`
   ).join('\n');
   return `
 

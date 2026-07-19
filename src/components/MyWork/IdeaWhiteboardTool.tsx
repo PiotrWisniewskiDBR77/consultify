@@ -62,6 +62,7 @@ import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import {
   appendComment as appendNodeComment,
   readComments as readNodeComments,
@@ -69,7 +70,6 @@ import {
   type WhiteboardNodeComment,
 } from './whiteboard/nodes/whiteboardNodeComments';
 import { WhiteboardNodeCommentThread } from './whiteboard/nodes/WhiteboardNodeCommentThread';
-import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
