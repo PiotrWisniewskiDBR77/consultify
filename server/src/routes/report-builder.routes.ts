@@ -658,7 +658,7 @@ router.get('/sources/interview', async (req: Request, res: Response, next: NextF
                   ),
                   u.email,
                   u.id
-                ) as ownerName
+                ) as "ownerName"
          FROM interview_sessions s
          LEFT JOIN users u ON u.id = s.owner_id
          WHERE s.organization_id = ? AND s.status IN ('completed', 'in_progress')
@@ -718,7 +718,7 @@ router.get(
                     ),
                     u.email,
                     u.id
-                  ) as ownerName
+                  ) as "ownerName"
            FROM interview_sessions s
            LEFT JOIN users u ON u.id = s.owner_id
            WHERE s.id = ? AND s.organization_id = ?`,
