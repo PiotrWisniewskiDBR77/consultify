@@ -13,8 +13,8 @@ import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import {
   decryptSecret,
-  encryptSecret,
   encryptionEnabled,
+  encryptSecret,
   isEncrypted,
 } from '../../utils/secretEncryption.js';
 
