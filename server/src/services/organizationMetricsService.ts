@@ -559,19 +559,19 @@ class OrganizationMetricsService {
                     event_type,
                     created_at,
                     'help_analytics' as source,
-                    json_object('playbookKey', COALESCE(json_extract(metadata, '$.playbookKey'), content_type)) as context
+                    jsonb_build_object('playbookKey', COALESCE(NULLIF(metadata, '')::jsonb ->> 'playbookKey', content_type))::text as context
                 FROM help_analytics
                 WHERE organization_id = $1
-                AND created_at >= datetime('now', '-30 days')
-                
+                AND created_at >= NOW() - INTERVAL '30 days'
+
                 UNION ALL
-                
-                SELECT 
+
+                SELECT
                     id,
                     'user_' || COALESCE(status, 'active') as event_type,
                     COALESCE(updated_at, created_at) as created_at,
                     'organization_members' as source,
-                    json_object('email', user_id) as context
+                    jsonb_build_object('email', user_id)::text as context
                 FROM organization_members
                 WHERE organization_id = $1
                 AND created_at >= datetime('now', '-30 days')
