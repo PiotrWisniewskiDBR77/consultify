@@ -323,8 +323,8 @@ export class AIPlaybooksController {
                     COALESCE(apt.version, 1) as version,
                     apt.template_graph as "templateGraph",
                     apt.created_at as "createdAt",
-                    COALESCE(apt.updated_at, apt.created_at) as updatedAt,
-                    COALESCE(apt.usage_count, 0) as usageCount,
+                    COALESCE(apt.updated_at, apt.created_at) as "updatedAt",
+                    COALESCE(apt.usage_count, 0) as "usageCount",
                     apt.success_rate as "successRate",
                     apt.category_id as "categoryId",
                     cc.name as "categoryName",
@@ -401,7 +401,7 @@ export class AIPlaybooksController {
                     estimated_duration_mins as "estimatedDurationMins",
                     COALESCE(version, 1) as version,
                     created_at as "createdAt",
-                    COALESCE(updated_at, created_at) as updatedAt
+                    COALESCE(updated_at, created_at) as "updatedAt"
                 FROM ai_playbook_templates
                 WHERE COALESCE(status, 'DRAFT') = 'PUBLISHED'
                 ORDER BY title ASC
@@ -533,8 +533,8 @@ export class AIPlaybooksController {
                     COALESCE(apt.version, 1) as version,
                     apt.template_graph as "templateGraph",
                     apt.created_at as "createdAt",
-                    COALESCE(apt.updated_at, apt.created_at) as updatedAt,
-                    COALESCE(apt.usage_count, 0) as usageCount,
+                    COALESCE(apt.updated_at, apt.created_at) as "updatedAt",
+                    COALESCE(apt.usage_count, 0) as "usageCount",
                     apt.success_rate as "successRate"
                 FROM ai_playbook_templates apt
                 WHERE apt.id = ?
