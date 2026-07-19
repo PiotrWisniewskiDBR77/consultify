@@ -1628,7 +1628,7 @@ export class ToolController {
       // portfolio already has. Informational only — mirrors the wizard's own
       // doctrine ("never blocks") and is intentionally isolated in its own
       // try/catch so a similarity-service outage never fails generation.
-      let duplicateWarnings: Array<{
+      const duplicateWarnings: Array<{
         title: string;
         verdict: 'duplicate' | 'similar' | 'related' | 'new';
         topMatch: { id: string; title: string; status: string; score: number } | null;
@@ -1641,7 +1641,7 @@ export class ToolController {
       // created + surfaced as a warning, exactly like today. Flag OFF (default)
       // → byte-for-byte the current behaviour: everything persisted.
       const dedupActionable = process.env.INITIATIVE_DEDUP_ACTIONABLE === 'true';
-      let skipped: Array<{
+      const skipped: Array<{
         title: string;
         topMatch: { id: string; title: string; status: string; score: number } | null;
       }> = [];
