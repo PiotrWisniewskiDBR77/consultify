@@ -14,6 +14,7 @@
  *   - pmo/initiatives.routes.ts    -> POST/PUT /programs (programs.name/description)
  *   - pmo/decisions.routes.ts      -> DecisionPlaybookController create (decision_playbooks.name)
  *   - v8/assessment.routes.ts      -> POST / (assessments.name)
+ *   - tools.routes.ts              -> ToolController.createToolSession (tool_sessions.name)
  *
  * Each case: POST/PUT a title containing an apostrophe AND an ampersand, then
  * assert the DB column holds the PLAIN string (not `&amp;`/`&#39;`) and the API
@@ -50,6 +51,7 @@ async function buildApp(): Promise<Express> {
   const decisionsRouter = (await import('../../server/src/routes/pmo/decisions.routes.js')).default;
   const v8AssessmentRouter = (await import('../../server/src/routes/v8/assessment.routes.js'))
     .default;
+  const toolsRouter = (await import('../../server/src/routes/tools.routes.js')).default;
 
   const app = express();
   app.use(express.json({ limit: '5mb' }));
@@ -58,10 +60,13 @@ async function buildApp(): Promise<Express> {
   app.use(inputSanitizationMiddleware as any);
   // projects.routes.ts and decisions.routes.ts apply verifyToken internally;
   // initiatives.routes.ts and v8/assessment.routes.ts expect it mounted externally.
+  // tools.routes.ts applies verifyToken + requireOrgAccess + demoContextMiddleware
+  // internally too (mirrors production server/src/index.ts mount).
   app.use('/api/projects', projectsRouter);
   app.use('/api/initiatives', verifyToken as any, initiativesRouter);
   app.use('/api/decisions', decisionsRouter);
   app.use('/api/v8/assessments', verifyToken as any, attachV8Context as any, v8AssessmentRouter);
+  app.use('/api/tools', toolsRouter);
   return app;
 }
 
@@ -73,6 +78,7 @@ async function cleanup(): Promise<void> {
     await c.query(`DELETE FROM programs WHERE name LIKE 'odbior--t5--%'`);
     await c.query(`DELETE FROM decision_playbooks WHERE name LIKE 'odbior--t5--%'`);
     await c.query(`DELETE FROM assessments WHERE name LIKE 'odbior--t5--%'`);
+    await c.query(`DELETE FROM tool_sessions WHERE name LIKE 'odbior--t5--%'`);
   } finally {
     await c.end();
   }
@@ -199,6 +205,38 @@ describe('T5: sanitizer double-escape decode-before-store', () => {
       const row = await c.query(`SELECT name FROM assessments WHERE id = $1`, [assessmentId]);
       expect(row.rows[0]?.name).toBe(RAW_TITLE);
       expect(row.rows[0]?.name).not.toContain('&amp;');
+    } finally {
+      await c.end();
+    }
+  });
+
+  it('tool_sessions.name round-trips plain through create (POST /api/tools -> ToolController.createToolSession)', async () => {
+    const res = await request(app)
+      .post('/api/tools')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ toolType: 'dynamic-swot', name: RAW_TITLE });
+
+    expect(res.status).toBeLessThan(300);
+    const sessionId: string = res.body?.id;
+    expect(sessionId).toBeTruthy();
+
+    const c = pgClient();
+    await c.connect();
+    try {
+      const row = await c.query(`SELECT name FROM tool_sessions WHERE id = $1`, [sessionId]);
+      expect(row.rows[0]?.name).toBe(RAW_TITLE);
+      expect(row.rows[0]?.name).not.toContain('&amp;');
+      expect(row.rows[0]?.name).not.toContain('&#39;');
+      expect(row.rows[0]?.name).not.toContain('&quot;');
+
+      // GET reload echoes plain text too (proves the read path doesn't
+      // re-escape or leave a stale escaped value behind).
+      const getRes = await request(app)
+        .get(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(getRes.status).toBeLessThan(300);
+      const echoedName = getRes.body?.name || getRes.body?.session?.name;
+      expect(echoedName).toBe(RAW_TITLE);
     } finally {
       await c.end();
     }
