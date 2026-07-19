@@ -20,6 +20,7 @@ import AssessmentInitiativeGenerationRunService from '../services/assessmentInit
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/assessmentReportBuilderLinkService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
@@ -782,7 +783,10 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     const organizationId = requireRequestOrganizationId(req, res);
     if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
-    const { assessmentId, name, templateId } = req.body || {};
+    const { assessmentId, name: rawName, templateId } = req.body || {};
+    // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+    // middleware escaped, before storing.
+    const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
 
     if (!assessmentId) {
       return res.status(400).json({ error: 'assessmentId is required' });
@@ -1374,7 +1378,12 @@ router.post('/:reportId/sections', async (req: AuthRequest, res: Response) => {
     if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
-    const { sectionType, axisId, areaId, title, content, orderIndex } = req.body || {};
+    const { sectionType, axisId, areaId, title: rawTitle, content: rawContent, orderIndex } =
+      req.body || {};
+    // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+    // middleware escaped, before storing.
+    const title = typeof rawTitle === 'string' ? decodeHtmlEntities(rawTitle) : rawTitle;
+    const content = typeof rawContent === 'string' ? decodeHtmlEntities(rawContent) : rawContent;
 
     const reportRow = await get<any>(
       `SELECT id FROM assessment_reports WHERE id = ? AND organization_id = ?`,
@@ -1433,7 +1442,10 @@ router.put('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Respo
     if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId, sectionId } = req.params;
-    const { content, title, saveHistory } = req.body || {};
+    const { content: rawContent, title: rawTitle, saveHistory } = req.body || {};
+    // T5 (Z139 follow-up): decode HTML entities before storing — see POST /sections.
+    const title = typeof rawTitle === 'string' ? decodeHtmlEntities(rawTitle) : rawTitle;
+    const content = typeof rawContent === 'string' ? decodeHtmlEntities(rawContent) : rawContent;
 
     const reportRow = await get<any>(
       `SELECT id FROM assessment_reports WHERE id = ? AND organization_id = ?`,
@@ -1861,7 +1873,10 @@ router.put('/:reportId', async (req: AuthRequest, res: Response) => {
     const organizationId = requireRequestOrganizationId(req, res);
     if (!organizationId) return;
     const { reportId } = req.params;
-    const { name, content } = req.body || {};
+    const { name: rawName, content } = req.body || {};
+    // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+    // middleware escaped, before storing.
+    const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
 
     const detailedAnalysis = JSON.stringify({
       keyFindings: content?.keyFindings || [],
@@ -1872,7 +1887,7 @@ router.put('/:reportId', async (req: AuthRequest, res: Response) => {
 
     await new Promise<void>((resolve, reject) => {
       db.run(
-        `UPDATE assessment_reports 
+        `UPDATE assessment_reports
          SET name = ?, executive_summary = ?, detailed_analysis = ?, recommendations = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ? AND organization_id = ?`,
         [

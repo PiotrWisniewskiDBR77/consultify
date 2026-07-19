@@ -8,6 +8,7 @@ import {
 } from '../services/decisionPlaybookService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -70,6 +71,10 @@ export class DecisionPlaybookController {
       }
 
       const body = req.body;
+      // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+      // middleware escaped, before storing.
+      if (typeof body.name === 'string') body.name = decodeHtmlEntities(body.name);
+      if (typeof body.description === 'string') body.description = decodeHtmlEntities(body.description);
       const id = uuidv4();
 
       if (body.isDefault) {
@@ -145,6 +150,9 @@ export class DecisionPlaybookController {
       }
 
       const body = req.body;
+      // T5 (Z139 follow-up): decode HTML entities before storing — see createPlaybook.
+      if (typeof body.name === 'string') body.name = decodeHtmlEntities(body.name);
+      if (typeof body.description === 'string') body.description = decodeHtmlEntities(body.description);
 
       if (body.isDefault && !existing.is_default) {
         await queryHelpers.queryRun(

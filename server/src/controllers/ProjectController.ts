@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
@@ -245,12 +246,18 @@ export class ProjectController {
         return;
       }
 
-      const { name, ownerId, description, goal } = req.body;
+      const { name: rawName, ownerId, description: rawDescription, goal: rawGoal } = req.body;
 
-      if (!name) {
+      if (!rawName) {
         res.status(400).json({ error: 'Project name is required' });
         return;
       }
+      // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+      // middleware escaped, before storing — mirrors the notebook/tool_sessions fix.
+      const name = decodeHtmlEntities(String(rawName));
+      const description =
+        typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
+      const goal = typeof rawGoal === 'string' ? decodeHtmlEntities(rawGoal) : rawGoal;
 
       const id = uuidv4();
       const owner = ownerId || userId;
@@ -396,17 +403,22 @@ export class ProjectController {
     async (req: AuthenticatedRequest<UpdateProjectRequest>, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const { id } = req.params;
-      const { name, description, goal, status } = req.body;
+      const { name: rawName, description: rawDescription, goal: rawGoal, status } = req.body;
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
+      // T5 (Z139 follow-up): decode HTML entities before storing — see createProject.
+      const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
+      const description =
+        typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
+      const goal = typeof rawGoal === 'string' ? decodeHtmlEntities(rawGoal) : rawGoal;
 
       const sql = `
-            UPDATE projects 
-            SET name = COALESCE(?, name), 
-                description = COALESCE(?, description), 
-                goal = COALESCE(?, goal), 
+            UPDATE projects
+            SET name = COALESCE(?, name),
+                description = COALESCE(?, description),
+                goal = COALESCE(?, goal),
                 status = COALESCE(?, status)
             WHERE id = ? AND organization_id = ?
         `;

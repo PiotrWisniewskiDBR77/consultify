@@ -29,6 +29,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { optionalAuth, verifyToken as authenticate } from '../middleware/auth.middleware.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 
 // ----- Augmentation so the legacy handlers can mention `req.user.id`. The
@@ -238,7 +239,12 @@ function rateLimitConsume(token: string, ip: string): boolean {
 router.post('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
   const { id: conversationId } = req.params;
   const userId = authedReq(req).user?.id;
-  const { title, description, expiresIn, settings } = req.body;
+  const { title: rawTitle, description: rawDescription, expiresIn, settings } = req.body;
+  // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+  // middleware escaped, before storing — the DB should hold plain text.
+  const title = typeof rawTitle === 'string' ? decodeHtmlEntities(rawTitle) : rawTitle;
+  const description =
+    typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const passcode = (req.body as any)?.password;
 
@@ -570,7 +576,11 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
 router.patch('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
   const { id: conversationId } = req.params;
   const userId = req.user?.id;
-  const { title, description, expiresIn, settings } = req.body;
+  const { title: rawTitle, description: rawDescription, expiresIn, settings } = req.body;
+  // T5 (Z139 follow-up): decode HTML entities before storing — see POST /share.
+  const title = typeof rawTitle === 'string' ? decodeHtmlEntities(rawTitle) : rawTitle;
+  const description =
+    typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
   const passcode = (req.body as any)?.password;
 
   try {
