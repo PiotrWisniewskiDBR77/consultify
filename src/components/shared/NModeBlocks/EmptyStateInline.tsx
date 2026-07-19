@@ -57,7 +57,7 @@ export const EmptyStateInline: React.FC<EmptyStateInlineProps> = ({
         <button
           onClick={action.onClick}
           disabled={action.disabled}
-          className="mt-2 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
+          className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors disabled:opacity-40"
         >
           + {action.label}
         </button>
