@@ -10,13 +10,29 @@
  * - Auto-escalate critical issues
  *
  * Designed to run every 15-30 minutes in production.
+ *
+ * STATUS (2026-07-19): DISABLED — dead end-to-end, honest no-op below.
+ * - Not mounted anywhere: no cron/scheduler references this file (grepped
+ *   server/src/cron/index.ts, Scheduler.ts and all of server/src — zero
+ *   live callers besides this file itself).
+ * - Its predictive-signal dependency (`predictiveService.js`) does not exist
+ *   anywhere in this codebase — there is no module to point the import at.
+ * - Its AI-briefing dependency (`getCoordinator()` from
+ *   services/ai/agents/index.ts) always throws AgentCoordinatorUnavailableError
+ *   by design: "the specialist agent classes and coordinator were gutted
+ *   during the ESM migration" (see that file's docstring).
+ * The original code destructured these two dependencies out of an
+ * un-awaited `import(...)` call (`const { getCoordinator } = import(...)`),
+ * which resolves to a Promise, not the module — silently producing
+ * `undefined` bindings instead of throwing. `run()` is now a guarded no-op
+ * so nothing crashes if this job is ever wired into a scheduler again. Do
+ * not re-enable without (a) building a real predictiveService.js and
+ * (b) restoring a working AgentCoordinator.
  */
 
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
 const db = getDatabase();
-const PredictiveService = import('predictiveService.js');
-const { getCoordinator } = import('ai/agents.js');
 import { v4 as uuidv4 } from 'uuid';
 
 // Alert severity levels
@@ -70,6 +86,20 @@ const AIWatchdog = {
    * Main watchdog execution - called by scheduler
    */
   run: async () => {
+    // Disabled: see file header. predictiveService.js does not exist and the
+    // AI coordinator is intentionally unavailable in this build, so a real
+    // run() would have zero analytical value. Fail safe instead of crashing.
+    // (Original body preserved below the return, commented out, so a future
+    // reactivation has the intended pipeline shape to work from.)
+    logger.warn(
+      '[AIWatchdog] disabled: predictive analysis service and AI coordinator are unavailable — skipping run (see server/src/jobs/aiWatchdog.ts header)'
+    );
+    return {
+      skipped: true,
+      reason: 'watchdog disabled: predictiveService.js missing, AgentCoordinator unavailable',
+    };
+
+    /* istanbul ignore next -- intentionally unreachable, kept for reference only
     if (AIWatchdog.isRunning) {
       logger.info('[AIWatchdog] Already running, skipping...');
       return { skipped: true };
@@ -132,6 +162,7 @@ const AIWatchdog = {
     } finally {
       AIWatchdog.isRunning = false;
     }
+    */
   },
 
   /**
@@ -167,7 +198,13 @@ const AIWatchdog = {
     const results = { alertsCreated: 0 };
 
     // 1. Run predictive analysis
-    const analysis = await PredictiveService.analyzeProject(project.id);
+    // predictiveService.js does not exist anywhere in this codebase (see file
+    // header) — there is no real module to call here. Fail safe instead of
+    // throwing a ReferenceError on the removed PredictiveService import.
+    logger.warn(
+      `[AIWatchdog] analyzeProject(${project?.id}) called but predictiveService.js is unavailable — returning empty analysis`
+    );
+    const analysis = { error: 'predictive_service_unavailable', signals: [] };
 
     if (analysis.error) {
       return results;
@@ -492,6 +529,12 @@ const AIWatchdog = {
     // Use AI to generate briefing content
     let briefingContent;
     try {
+      // getCoordinator() is intentionally unavailable in this build (throws
+      // AgentCoordinatorUnavailableError — see services/ai/agents/index.ts).
+      // Import it for real (properly awaited, correct relative path) so the
+      // throw is caught below and we degrade to the static summary instead
+      // of silently no-op'ing on an undefined destructured import.
+      const { getCoordinator } = await import('../services/ai/agents/index.js');
       const coordinator = getCoordinator();
       const result = await coordinator.processQuery(
         `Generate a concise daily briefing for ${summary.orgName}. 
