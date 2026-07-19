@@ -31,7 +31,7 @@
    wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
    = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
 
-## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W8)
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W9)
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
@@ -39,10 +39,24 @@
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
 | C · Oxford (O1-O8) | 33 | 23 | 11 | 3 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 45 | 1 | 28 | 7 | 2 | 83 |
-| **SUMA** | **167** | **49** | **65** | **14** | **4** | **299** |
+| E · Przekroje (+nowe) | 47 | 1 | 31 | 7 | 2 | 88 |
+| **SUMA** | **169** | **49** | **68** | **14** | **4** | **304** |
 
-**Postęp: 181/299 rozstrzygnięte (61%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś.
+**Postęp: 183/304 rozstrzygnięte (60%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.)
+
+### FALA-W9 (2026-07-19, deploy 38eda846ab, demo-safe-2026-07-19) — 3 gałęzie, bramki zielone (server tsc 146/204 0-nowych, kolory/artefakt PASS, eslint 0, boot 4/4) — DOMKNIĘCIE KODOWALNEGO OGONA
+- **★ sweep cichych degradacji** — smoking gun: `DbPromise fallback=true` łyka 42703 (`does not exist`) BEZ logu → panel pusty bez alarmu (gorsze niż 500). **8 realnych user-facing bugów naprawionych**: `task_dependencies` predecessor/successor→from/to (graf/Gantt), `users.full_name`×4 (AI-analytics/feedback/quality), `projects.progress/end_date` (500), zespół projektu, report-builder, `initiative_kpis.latest_value`→fałszywe 404 „KPI not found". Dowód niepustych danych na parity. `38bec1bdb2`.
+- **fail-soft batch6** — 42 handlery/13 plików; **gołych `500 {err.message}`: 166→1** (kampania H6.4 domknięta; ostatni = ai.routes.ts:8696, plik ~8800 linii, osobny). 18/18 unit. `032515b9a6`.
+- **red-final** — ostatni sweep rewirów (work-canvas/meeting/user-settings/org-context/onboarding, ~90 endpointów): **REWIR CZYSTY, zero schema-500** = potwierdzenie utwardzenia. 1 finding: `/api/user/ai-preferences` lazy-wrapper→martwy import (rodzina 46, 🔵). `d5a5cc32a2`.
+
+### ★ NOWE RED (⬜/🔵 — z sweepu cichych degradacji, bogata lista z dowodem parity):
+- **Semantyczne (decyzja/schemat):** `raid_items.severity`+project_id→initiative_id (triggery ryzyka) · `tasks.sla_due_at`→due_date · `invoices.amount`→amount_due/paid · `initiative_status_history.changed_at`→created_at · billing seat/dunning kolumny.
+- **Migracja-braku (addytywna):** `organizations` dunning/tax kolumny · `admin_sessions` (5 vs 11 kol.) · `email_templates` (~8) · connectors/partner_certifications/gdpr_requests/permission_requests/security_events/user_sessions/login_history.
+- **Martwy kod (nie montowany, łudząco podobny):** top-level `ai-operations/ai-feedback/ai-analytics.routes.ts` · `AuditService.getRecordHistory/getTableActivityFeed` · `tierAutoAssignmentJob`.
+- **Systemowe do DECYZJI:** `DbPromise fallback=true` maskuje KAŻDY schema-500→cichy 404/pustka (rozważ fail-loud w dev, żeby przyszłe drify były widoczne).
+- rodzina 46 lazy-wrapperów / 42 self-import (`/api/user/ai-preferences` crashuje) — decyzja Piotra.
+
+**★ META SESJI 2026-07-19 (10 deployów, 45%→60%):** silniki Harvard/Harvey/Oxford dowiedzione E2E · ~58 realnych 500/cichych-degradacji naprawionych (10 rewirów przemieciono, ostatnie CZYSTE) · długi systemowe domknięte (adaptQuery, 657 aliasów, B13 baseline_gap, axis_data guard) · Oxford proof-sweep O1/O2/O4/O7/O8 · decyzje O2.1/O7.1 · fail-soft 166→1. **Kodowalny backlog wyczerpany.** Handoff: `_HANDOFF_2026-07-19_PRZESIADKA_TARYFA.md`. Dalej = SESJA#1 (Piotr, `_SESJA1_ODBIOR_OXFORD.md`) · Vegas · decyzje 🔵 · chipy.
 
 ### FALA-W8 (2026-07-19, deploy 8d1edda57e, demo-safe-2026-07-19) — 7 gałęzi + B13-deploy-osobny, bramki zielone (server tsc 146/204 0-nowych, FE tc 0, kolory/artefakt PASS, eslint 0, boot 4/4)
 **★ Decyzje Piotra 2026-07-19 zaksięgowane:**
