@@ -95,6 +95,16 @@ Wzorzec: drabinka poziomów z rozgałęzieniami + dyscyplina dowodów + „insig
 | 3 | Źródła i aktualizacja (skąd dane, kto odświeża) | ✅ DOMKNIĘTE (07-14, oxford-o6-benchmark): per-band `source`+`asOf`+`confidence` już istniały; dodano brakujące „kto odświeża" (`FINANCIAL_BENCHMARK_REFRESH_OWNER`) + jawny disclaimer wzorem O6.1 (`FINANCIAL_BENCHMARK_DISCLAIMER`, „n ≥ 10", `expert-hypothesis-v1`) + skonsolidowane `sourceMetadata` na każdym `getRatioBenchmark()`/`benchmarkFinancial()` wyniku + wpięte do `ComputedRatio.benchmark` (disclaimerPl/En, refreshOwnerPl/En) w `ratioAnalysisService`. Dodano `benchmarkFinancial()` (pozycja below-p25/in-range/above-p75 + interpretacja) i most O4↔O6 (`financeIndustryClassToBenchmarkIndustry`) |
 **Licznik O6: 2/3 ✅ (poz.1 czeka na decyzję P3 Piotra — wpięcie w raport, nie brak roboty)**
 
+**DOWÓD 07-19 (pozycje 2+3, REJESTR O6.2/O6.3 🟡→✅):** `oxford-o6-benchmark` (77691e2771/6d06a04739)
+potwierdzony jako ANCESTOR `origin/demo` (merge-base = tip gałęzi) — już zmergowany, brak potrzeby
+forward-portu. Nowy acceptance test `tests/acceptance/o6-benchmark-financial.e2e.test.ts` (prefiks
+`odbior--o6--`, real Postgres :5443, real HTTP przez `verifyToken`+`finance-statements.routes.ts`):
+`GET /:id/ratios` na realnym statement (CURRENT_ASSETS/CURRENT_LIABILITIES → 0.9x, celowo poniżej
+branżowego p25=1.1x) zwraca benchmark z p25/median/p75 1:1 zgodne z `INDUSTRY_BENCHMARK_PROFILES`
+(nie fabrykowane), `disclaimerPl/En`+`refreshOwnerPl/En` niepuste i cytujące n≥10/DBR77, plus
+bezpośrednie wywołanie `benchmarkFinancial()` z tą samą wartością daje zgodny werdykt `below-p25`.
+2/2 PASS + 35/35 istniejący unit PASS. Bramki: server tsc 146/204 0-nowych, esbuild/eslint czyste.
+
 ## O7 — STANDARDY TREŚCI
 | # | Element | Stan |
 |---|---|---|
