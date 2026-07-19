@@ -277,9 +277,11 @@ router.post(
         throw new Error(runResult1.error || 'Failed to create prompt');
       }
 
+      // FIX (42703): ai_prompt_versions has no created_at/created_by columns —
+      // the audit columns are named changed_at/changed_by.
       const runResult2 = await dbRun(
         `
-            INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, created_at, created_by)
+            INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, changed_at, changed_by)
             VALUES (?, ?, 1, ?, ?, datetime('now'), ?)
         `,
         [randomUUID(), id, template, template, userId]
@@ -361,9 +363,11 @@ router.put(
       }
 
       if (template && template !== existing.template) {
+        // FIX (42703): ai_prompt_versions has no created_at/created_by columns —
+        // the audit columns are named changed_at/changed_by.
         const runResult2 = await dbRun(
           `
-                INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, created_at, created_by)
+                INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, changed_at, changed_by)
                 VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
             `,
           [randomUUID(), id, newVersion, template, template, userId]
