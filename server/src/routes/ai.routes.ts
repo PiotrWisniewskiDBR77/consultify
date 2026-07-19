@@ -8304,9 +8304,10 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się utworzyć powiadomienia AI', code: 'AI_NOTIFICATION_TRIGGER_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć powiadomienia AI',
+        code: 'AI_NOTIFICATION_TRIGGER_FAILED',
+      });
     }
   })
 );
