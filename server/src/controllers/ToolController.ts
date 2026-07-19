@@ -1626,6 +1626,18 @@ export class ToolController {
         verdict: 'duplicate' | 'similar' | 'related' | 'new';
         topMatch: { id: string; title: string; status: string; score: number } | null;
       }> = [];
+      // I1 — actionable dedup (owner greenlight 07-19, I2/I3 on hold). When the
+      // operator flag is ON, high-confidence duplicates (verdict === 'duplicate',
+      // score ≥ the service's duplicate threshold) are SKIPPED at persist time
+      // instead of being created and warned about after the fact. Lower-confidence
+      // 'similar' candidates are NOT skipped (false-positive risk) — they stay
+      // created + surfaced as a warning, exactly like today. Flag OFF (default)
+      // → byte-for-byte the current behaviour: everything persisted.
+      const dedupActionable = process.env.INITIATIVE_DEDUP_ACTIONABLE === 'true';
+      let skipped: Array<{
+        title: string;
+        topMatch: { id: string; title: string; status: string; score: number } | null;
+      }> = [];
       try {
         initiatives = await ToolInitiativeService.generateFromSession({
           toolSession: session,
@@ -1635,26 +1647,35 @@ export class ToolController {
           userId: user.id,
         });
 
+        const skipIndices = new Set<number>();
         try {
           const similarity = await checkSimilarInitiatives({
             orgId: user.organizationId,
             projectId: session.project_id || null,
             candidates: initiatives.map((i) => ({ title: i.title, description: i.description })),
           });
-          duplicateWarnings = similarity.results
-            .filter((r) => r.verdict === 'duplicate' || r.verdict === 'similar')
-            .map((r) => ({
-              title: initiatives[r.candidateIndex]?.title || '',
-              verdict: r.verdict,
-              topMatch: r.matches[0]
-                ? {
-                    id: r.matches[0].id,
-                    title: r.matches[0].title,
-                    status: r.matches[0].status,
-                    score: r.matches[0].score,
-                  }
-                : null,
-            }));
+          for (const r of similarity.results) {
+            if (r.verdict !== 'duplicate' && r.verdict !== 'similar') continue;
+            const topMatch = r.matches[0]
+              ? {
+                  id: r.matches[0].id,
+                  title: r.matches[0].title,
+                  status: r.matches[0].status,
+                  score: r.matches[0].score,
+                }
+              : null;
+            // I1: only 'duplicate' (high confidence) is skippable; 'similar' stays a warning.
+            if (dedupActionable && r.verdict === 'duplicate') {
+              skipIndices.add(r.candidateIndex);
+              skipped.push({ title: initiatives[r.candidateIndex]?.title || '', topMatch });
+            } else {
+              duplicateWarnings.push({
+                title: initiatives[r.candidateIndex]?.title || '',
+                verdict: r.verdict,
+                topMatch,
+              });
+            }
+          }
         } catch (similarityError: unknown) {
           logger.warn('[ToolController] similarity-check unavailable (non-blocking):', {
             toolId,
@@ -1663,10 +1684,16 @@ export class ToolController {
           });
         }
 
+        // I1: persist only the non-skipped candidates (flag OFF → skipIndices empty → all).
+        const toPersist =
+          skipIndices.size > 0
+            ? initiatives.filter((_, idx) => !skipIndices.has(idx))
+            : initiatives;
+
         created = await ToolInitiativeService.persistInitiatives({
           toolSession: session,
           batchId,
-          initiatives,
+          initiatives: toPersist,
           userId: user.id,
         });
       } catch (genError: unknown) {
@@ -1702,7 +1729,9 @@ export class ToolController {
 
       await logAudit(user.organizationId, user.id, 'initiatives_generated', toolId, {
         batchId,
-        count: initiatives.length,
+        count: created.length,
+        // I1: record how many high-confidence duplicates were skipped at persist time.
+        skippedCount: skipped.length,
         decisionId,
       });
 
@@ -1712,7 +1741,7 @@ export class ToolController {
         [batchId, now, toolId]
       );
 
-      res.json({ batchId, initiatives: created, status: 'GENERATED', duplicateWarnings });
+      res.json({ batchId, initiatives: created, status: 'GENERATED', duplicateWarnings, skipped });
     }
   );
 
