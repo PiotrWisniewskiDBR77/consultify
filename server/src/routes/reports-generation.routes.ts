@@ -10,6 +10,11 @@ import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import reportGenerationService from '../services/reportGenerationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { withRequestTimeout } from '../utils/withRequestTimeout.js';
+
+// H5.2 — ciężkie operacje raportowe/exportowe: budżety czasu.
+const REPORT_GENERATE_TIMEOUT_MS = 60_000;
+const REPORT_EXPORT_TIMEOUT_MS = 45_000;
 
 const router = Router();
 
@@ -36,15 +41,23 @@ router.post(
       return res.status(400).json({ error: 'reportType and sourceId are required' });
     }
 
-    const report = await reportGenerationService.generateReport(
+    const report = await withRequestTimeout(
+      reportGenerationService.generateReport(
+        {
+          reportType,
+          sourceId,
+          language,
+          templateId,
+          includeAppendix,
+        },
+        orgId
+      ),
+      REPORT_GENERATE_TIMEOUT_MS,
       {
-        reportType,
-        sourceId,
-        language,
-        templateId,
-        includeAppendix,
-      },
-      orgId
+        code: 'REPORT_GENERATION_TIMEOUT',
+        message: 'Generowanie raportu przekroczyło limit czasu',
+        details: { reportType, sourceId },
+      }
     );
 
     return res.json({
@@ -73,10 +86,18 @@ router.post(
       return res.status(400).json({ error: 'Invalid format. Supported: pdf, pptx' });
     }
 
-    const result = await reportGenerationService.exportReport(
-      reportId,
-      format as 'pdf' | 'pptx' | 'docx' | 'xlsx',
-      userId
+    const result = await withRequestTimeout(
+      reportGenerationService.exportReport(
+        reportId,
+        format as 'pdf' | 'pptx' | 'docx' | 'xlsx',
+        userId
+      ),
+      REPORT_EXPORT_TIMEOUT_MS,
+      {
+        code: 'REPORT_EXPORT_TIMEOUT',
+        message: 'Eksport raportu przekroczył limit czasu',
+        details: { reportId, format },
+      }
     );
 
     return res.json({

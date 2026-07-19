@@ -43,6 +43,11 @@ import organizationContextService from '../services/organizationContext/Organiza
 import PDFParserService from '../services/pdfParserService.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { AppError } from '../utils/ErrorHandler.js';
+import { withRequestTimeout } from '../utils/withRequestTimeout.js';
+
+// H5.2 — budżet czasu na wywołania LLM w trasach AI (raporty/deep-research).
+const AI_CLARIFY_TIMEOUT_MS = 30_000;
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import {
@@ -981,7 +986,16 @@ router.post(
         },
       };
 
-      const result = await generateClarificationQuestions(message, llmClient);
+      // H5.2 — LLM call z budżetem czasu; timeout ⇒ AppError(504) obsłużony
+      // centralnie (log z correlation-id, stabilny { code }).
+      const result = await withRequestTimeout(
+        generateClarificationQuestions(message, llmClient),
+        AI_CLARIFY_TIMEOUT_MS,
+        {
+          code: 'AI_CLARIFY_TIMEOUT',
+          message: 'Generowanie pytań doprecyzowujących przekroczyło limit czasu',
+        }
+      );
 
       return res.json({
         success: true,
@@ -996,6 +1010,9 @@ router.post(
         })(),
       });
     } catch (error: any) {
+      // Timeout (504) i inne błędy operacyjne przekaż do centralnego middleware,
+      // by nie zostały zamaskowane gołym 500 bez kodu/correlation-id.
+      if (error instanceof AppError) throw error;
       logger.error('[AI Routes] Clarification generation failed:', error);
       return res.status(500).json({ error: 'Failed to generate clarification questions' });
     }
