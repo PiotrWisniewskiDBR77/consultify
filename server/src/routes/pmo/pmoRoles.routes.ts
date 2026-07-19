@@ -152,19 +152,25 @@ router.get(
     const orgId = req.user?.organizationId;
     const includeCustom = req.query.includeCustom !== 'false';
 
-    // Get user counts for system roles
-    const systemRolesWithCounts = await Promise.all(
-      SYSTEM_ROLES.map(async (role) => {
-        const countResult = await dbGet<{ count: number }>(
-          `SELECT COUNT(*) as count FROM users WHERE organization_id = ? AND project_role = ?`,
-          [orgId, role.id]
-        );
-        return {
-          ...role,
-          userCount: countResult?.count || 0,
-        };
-      })
+    // H5.3 (N+1): fetch user counts for ALL system roles in one grouped query
+    // instead of one COUNT query per role. Response contract is unchanged —
+    // counts are looked up in-memory by role id below.
+    const roleIds = SYSTEM_ROLES.map((r) => r.id);
+    const countRows = await dbAll<{ project_role: string; count: number }>(
+      `SELECT project_role, COUNT(*) as count
+         FROM users
+        WHERE organization_id = ? AND project_role IN (${roleIds.map(() => '?').join(', ')})
+        GROUP BY project_role`,
+      [orgId, ...roleIds]
     );
+    const countByRole = new Map<string, number>();
+    for (const row of countRows) {
+      countByRole.set(String(row.project_role), Number(row.count) || 0);
+    }
+    const systemRolesWithCounts = SYSTEM_ROLES.map((role) => ({
+      ...role,
+      userCount: countByRole.get(role.id) || 0,
+    }));
 
     let allRoles: Array<{
       id: string;

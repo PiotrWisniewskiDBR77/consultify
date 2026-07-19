@@ -372,6 +372,28 @@ export async function pullAndReconcileInitiative(
   const nowIso = new Date().toISOString();
   let offTrackCount = 0;
 
+  // H5.3 (N+1): batch the realized-ROI SUM for every KPI in one grouped query
+  // instead of one SUM query per KPI inside the loop. Only KPIs that have a
+  // driver mapping are reconciled, so restrict the IN-set to those. Result is
+  // identical per-KPI — looked up from `realizedByKpi` below.
+  const reconcilableKpiIds = (kpiRows || [])
+    .map((k) => k.kpi_id)
+    .filter((id) => mappingByKpi.has(id));
+  const realizedByKpi = new Map<string, number | null>();
+  if (reconcilableKpiIds.length > 0) {
+    const realizedRows = await dbAll<{ kpi_id: string; realized_sum: number | null }>(
+      `SELECT kpi_id, SUM(realized_value) AS realized_sum
+         FROM v8_roi_realization_entries
+        WHERE organization_id = ? AND kpi_id IN (${reconcilableKpiIds.map(() => '?').join(', ')})
+        GROUP BY kpi_id`,
+      [organizationId, ...reconcilableKpiIds],
+      { fallback: true }
+    );
+    for (const row of realizedRows || []) {
+      realizedByKpi.set(String(row.kpi_id), row.realized_sum ?? null);
+    }
+  }
+
   for (const kpi of kpiRows || []) {
     const mapping = mappingByKpi.get(kpi.kpi_id);
     if (!mapping) continue;
@@ -380,15 +402,11 @@ export async function pullAndReconcileInitiative(
 
     // Realized actual: prefer the summed realized ROI entries; fall back to the
     // KPI's own current_value. Then normalise to the finance basis.
-    const realizedRow = await dbGet<{ realized_sum: number | null }>(
-      `SELECT SUM(realized_value) AS realized_sum
-         FROM v8_roi_realization_entries
-        WHERE organization_id = ? AND kpi_id = ?`,
-      [organizationId, kpi.kpi_id],
-      { fallback: true }
-    );
-    const kpiActual = isFiniteNumber(realizedRow?.realized_sum)
-      ? Number(realizedRow?.realized_sum)
+    const realizedSum = realizedByKpi.has(kpi.kpi_id)
+      ? realizedByKpi.get(kpi.kpi_id) ?? null
+      : null;
+    const kpiActual = isFiniteNumber(realizedSum)
+      ? Number(realizedSum)
       : isFiniteNumber(kpi.current_value)
         ? Number(kpi.current_value)
         : null;

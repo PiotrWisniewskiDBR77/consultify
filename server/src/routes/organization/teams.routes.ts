@@ -13,6 +13,7 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { buildInPlaceholders } from '../../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -64,25 +65,39 @@ router.get(
       is_active?: number;
     }>(sql, [orgId]);
 
-    // Fetch members for each team
-    const teamsWithMembers = await Promise.all(
-      teams.map(async (t) => {
-        const membersSql = `
-                    SELECT tm.user_id, tm.role, u.first_name, u.last_name, u.email, u.avatar_url
+    // H5.3 (N+1): fetch members for ALL teams in a single batched query
+    // instead of one query per team. Response contract is unchanged — members
+    // are grouped in-memory by team_id below. Empty list ⇒ skip the query.
+    type TeamMemberRow = {
+      team_id: string;
+      user_id: string;
+      role: string;
+      first_name: string;
+      last_name: string;
+      email: string;
+      avatar_url: string | null;
+    };
+    const membersByTeam = new Map<string, TeamMemberRow[]>();
+    const teamIds = teams.map((t) => t.id);
+    if (teamIds.length > 0) {
+      const membersSql = `
+                    SELECT tm.team_id, tm.user_id, tm.role, u.first_name, u.last_name, u.email, u.avatar_url
                     FROM team_members tm
                     JOIN users u ON tm.user_id = u.id
-                    WHERE tm.team_id = ?
+                    WHERE tm.team_id IN (${buildInPlaceholders(teamIds)})
                 `;
-        const members = await dbAll<{
-          user_id: string;
-          role: string;
-          first_name: string;
-          last_name: string;
-          email: string;
-          avatar_url: string | null;
-        }>(membersSql, [t.id]);
+      const allMembers = await dbAll<TeamMemberRow>(membersSql, teamIds);
+      for (const m of allMembers) {
+        const list = membersByTeam.get(m.team_id);
+        if (list) list.push(m);
+        else membersByTeam.set(m.team_id, [m]);
+      }
+    }
 
-        return {
+    const teamsWithMembers = teams.map((t) => {
+      const members = membersByTeam.get(t.id) || [];
+
+      return {
           id: t.id,
           organizationId: t.organization_id,
           name: t.name,
@@ -114,8 +129,7 @@ router.get(
           isActive: t.is_active !== 0,
           createdAt: t.created_at,
         };
-      })
-    );
+    });
 
     return res.json(teamsWithMembers);
   })
