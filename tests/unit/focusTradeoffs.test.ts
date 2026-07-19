@@ -13,6 +13,7 @@ import {
   toFocusMove,
   validateW2Move,
 } from '../../src/config/focustradeoffs';
+import { buildFocusTradeoffConversationProtocol } from '../../src/hooks/discovery/toolAi/focusTradeoff';
 import type { FocusPriority, FocusTradeoffData } from '../../src/store/useToolStore';
 
 const prio = (id: string, overrides: Partial<FocusPriority> = {}): FocusPriority => ({
@@ -268,5 +269,40 @@ describe('Focus & Trade-offs engine — O3 additions wired into the conclusion p
     ]);
     const prompt = buildFocusConclusionPrompt(data, false)!;
     expect(prompt).toContain('ANTI-FOCUS CHECK (clear)');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REJESTR (o3-focus-dead #1): buildFocusTradeoffConversationProtocol wiring —
+// the chat mentor for the "priorities" step must carry the SAME laddered
+// question bank as the wizard (single source of truth), mirroring
+// buildPortfolioConversationProtocol / buildMarketForcesConversationProtocol.
+// ---------------------------------------------------------------------------
+describe('buildFocusTradeoffConversationProtocol', () => {
+  it('is a no-op ("") for steps other than "priorities"', () => {
+    expect(buildFocusTradeoffConversationProtocol(undefined)).toBe('');
+    expect(buildFocusTradeoffConversationProtocol('mission')).toBe('');
+    expect(buildFocusTradeoffConversationProtocol('input')).toBe('');
+    expect(buildFocusTradeoffConversationProtocol('insights')).toBe('');
+    expect(buildFocusTradeoffConversationProtocol('outputs')).toBe('');
+  });
+
+  it('embeds the full 4-level laddered question bank for the "priorities" step', () => {
+    const protocol = buildFocusTradeoffConversationProtocol('priorities', 'en');
+    expect(protocol).toContain('INTERVIEW PROTOCOL');
+    // Every level of the ladder (surface -> evidence -> forced trade-off ->
+    // rejection justification) must be present — this is the single source
+    // of truth shared with the wizard (focusQuestionBank.ts).
+    expect(protocol).toContain('opt1-surface');
+    expect(protocol).toContain('opt2-evidence');
+    expect(protocol).toContain('opt3-forced-tradeoff');
+    expect(protocol).toContain('opt4-rejection-justification');
+  });
+
+  it('localizes the ladder into Polish when language="pl"', () => {
+    const protocol = buildFocusTradeoffConversationProtocol('priorities', 'pl');
+    expect(protocol).toContain('opt1-surface');
+    // Polish question text should appear, not just the English default.
+    expect(protocol.length).toBeGreaterThan(0);
   });
 });

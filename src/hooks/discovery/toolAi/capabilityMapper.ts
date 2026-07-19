@@ -1,3 +1,4 @@
+import { buildCapabilityLadderPromptBlock } from '@/config/capabilitymapper/capabilityQuestionBank';
 import type {
   CapabilityMapperData,
   InitiativeDraft,
@@ -8,6 +9,36 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { GROUNDING_RULES_BOTH } from './groundingRules';
 import { pickW2SummaryFields } from './w2SummaryFields';
+
+/**
+ * Conversation-layer protocol appended to the system prompt for the
+ * Capability Mapper "capabilities" step: the mentor in chat interviews with
+ * the SAME laddered per-capability question bank as the tests
+ * (capabilityQuestionBank.ts), one capability at a time, branching on
+ * answers. Mirrors buildDynamicSwotConversationProtocol /
+ * buildMarketForcesConversationProtocol / buildPortfolioConversationProtocol
+ * / buildFocusTradeoffConversationProtocol — this ladder (identification ->
+ * maturity evidence -> importance & gap -> build/buy/partner/sustain move)
+ * had zero runtime callers (O3 audit gap, closed here) even though it is
+ * distinct from — and richer/more interactive than — the static per-archetype
+ * reference content in deepeningLadder.ts (which stays as registry/reference
+ * data, not a chat protocol). Returns '' for other steps so it is a no-op
+ * there.
+ */
+export function buildCapabilityMapperConversationProtocol(
+  stepId: string | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  if (stepId !== 'capabilities') return '';
+  const ladder = buildCapabilityLadderPromptBlock(language);
+  return `
+
+INTERVIEW PROTOCOL (laddered capability question bank — the single source of truth for this step):
+When the user explores a capability in conversation, walk this ladder. Ask ONE question at a time; classify the answer into a branch key and follow the branch. Dig from surface identification -> sourced maturity evidence -> strategic importance & gap (have vs need) -> a build/buy/partner/sustain move that names its trade-off. Do not accept a maturity score with no source, or a move with no named rejected alternative. When a ladder path completes, propose the capability's scored maturity/importance/gap and its sourcing move.
+
+${ladder}`;
+}
+
 interface CapabilityMapperActionHandlers {
   updateInputData: (data: Partial<CapabilityMapperData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
