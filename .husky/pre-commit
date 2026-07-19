@@ -65,4 +65,17 @@ if [ -n "$STAGED_MIGRATIONS" ]; then
   fi
 fi
 
+# 6) Martwe ścieżki SSOT w CLAUDE.md (klasa błędu J7: dokument przeniesiony/
+#    usunięty, referencja w CLAUDE.md nie poprawiona) — odpala się tylko gdy
+#    commit dotyka CLAUDE.md, więc tanio i zawsze aktualne.
+STAGED_CLAUDEMD=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^CLAUDE\.md$')
+if [ -n "$STAGED_CLAUDEMD" ]; then
+  if ! bash scripts/check-ssot-paths.sh; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: CLAUDE.md wskazuje na ścieżkę SSOT, która nie istnieje." >&2
+    echo "     Popraw wskazanie (plik przeniesiony/usunięty) i commituj ponownie." >&2
+    exit 1
+  fi
+fi
+
 exit 0
