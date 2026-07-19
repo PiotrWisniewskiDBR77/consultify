@@ -83,7 +83,6 @@ interface TaskRow {
   status: string;
   priority: string | null;
   due_date: string | null;
-  sla_due_at: string | null;
   initiative_id: string | null;
   assignee_id: string | null;
   project_id: string | null;
@@ -331,7 +330,7 @@ export async function detectDelaySignals(
 
     // Task-level deviations
     let taskQuery = `
-      SELECT t.id, t.title, t.status, t.priority, t.due_date, t.sla_due_at,
+      SELECT t.id, t.title, t.status, t.priority, t.due_date,
              t.initiative_id, t.assignee_id, i.project_id as project_id
       FROM tasks t
       JOIN initiatives i ON i.id = t.initiative_id
@@ -349,7 +348,7 @@ export async function detectDelaySignals(
     const tasks = ((await dbAll(taskQuery, taskParams)) || []) as TaskRow[];
 
     for (const task of tasks) {
-      const dueDate = task.due_date || task.sla_due_at;
+      const dueDate = task.due_date;
       if (!dueDate) continue;
       const due = new Date(dueDate);
       if (due >= now) continue;
