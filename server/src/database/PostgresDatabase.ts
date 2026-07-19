@@ -128,24 +128,147 @@ function enforceReadOnly(sql: string): void {
   throw err;
 }
 
-/**
- * Postgres boolean-flag normalization for legacy SQLite-style 0/1 queries.
- *
- * Some tables use `BOOLEAN` (true/false), while older code paths still emit `0/1`.
- * We normalize on the SQL adapter layer to avoid DB-level custom operators/casts.
- */
-// IMPORTANT: Only include tables whose `is_active` column is actually BOOLEAN in Postgres.
-// Otherwise we can create `integer = boolean` errors by rewriting `is_active = 1` → `TRUE`.
-// NOTE: `initiative_section_types.is_active` is INTEGER (migration 529 declares INTEGER and
-// even converts boolean→integer). Including it here rewrote `is_active = 1` → `= TRUE`, which
-// threw `operator does not exist: integer = boolean` on getSectionTypeByKey → the generator
-// could never fetch a section template → no AI fill. Removed (2026-06-28). Keep only genuinely
-// BOOLEAN-columned tables.
-const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>(['llm_providers']);
+// AUTO-GENERATED from live Postgres schema (parity pg18 :5443, dump of demo/staging TROLLEY).
+// Regenerate when boolean columns change. See fix/sqlite-isms-runtime sweep 2026-07-19.
+// Column names that are BOOLEAN in EVERY table that has them → 0/1 comparisons are always safe to rewrite.
+const ALWAYS_BOOLEAN_COLUMNS = new Set<string>([
+  'acted_upon', 'adequacy_decision', 'ai_suggested', 'allow_password_login', 'allow_tool_calling', 'allow_web_research',
+  'applied', 'approved', 'archived', 'archived_via_session', 'auto_payout_enabled', 'auto_provision_users',
+  'can_approve', 'can_change_status', 'can_edit', 'can_generate_initiatives', 'can_generate_report', 'can_manage_team',
+  'cancel_at_period_end', 'certified', 'completed', 'compliance_mode', 'confirmation_required', 'converted',
+  'credit_note_issued', 'custom_domain_verified', 'deaggregation_ready', 'deletion_verified', 'dkim_verified', 'dmarc_verified',
+  'dpa_signed', 'email_digest_enabled', 'email_enabled', 'enable_max_mode', 'enable_proactive_nudges', 'enforce_eu_only',
+  'enforce_sso', 'featured', 'flagged', 'global_enabled', 'hard_required', 'has_tutorial',
+  'hide_powered_by', 'identity_verified', 'improvement_applied', 'invoice_created', 'invoice_overdue', 'invoice_paid',
+  'is_allowed', 'is_anonymous', 'is_background', 'is_beta', 'is_blocker', 'is_blocking',
+  'is_canonical', 'is_charge_refundable', 'is_computed', 'is_critical', 'is_enterprise_only', 'is_estimated',
+  'is_hidden', 'is_initialized', 'is_locked', 'is_manual', 'is_manually_corrected', 'is_milestone',
+  'is_non_financial', 'is_owner', 'is_paused', 'is_personal', 'is_published', 'is_retryable',
+  'is_selected', 'is_solution', 'is_subtotal', 'is_template', 'is_throttled', 'is_total',
+  'is_user_configurable', 'is_verified', 'legal_hold_override', 'locked', 'manages_team', 'notify_on_create',
+  'notify_on_decision', 'notify_on_escalation', 'notify_on_update', 'onboarding_completed', 'passes_gate', 'paused',
+  'payment_failed', 'payment_method_expiring', 'payment_setup', 'pii_flag', 'privacy_accepted', 'public_listing_enabled',
+  'published', 'quiet_hours_weekends_only', 'readiness_allowed', 'redacted', 'regulatory_mode_enabled', 'requires_acceptance',
+  'retain', 'sample_data_loaded', 'scim_provisioned', 'shared_to_project', 'show_checklist', 'show_company_logo',
+  'show_confidentiality', 'show_consultify_branding', 'show_once', 'show_page_numbers', 'show_tutorial_tips', 'signature_present',
+  'signature_valid', 'slack_dm_enabled', 'slack_enabled', 'spf_verified', 'sponsor_mode', 'starred',
+  'subscription_canceled', 'subscription_renewed', 'teams_enabled', 'terms_accepted', 'throttled', 'trusted',
+  'usage_threshold_warning', 'user_created', 'was_helpful',
+]);
 
-// IMPORTANT: Only include tables whose `is_default` column is actually BOOLEAN in Postgres.
-const BOOLEAN_IS_DEFAULT_TABLES = new Set<string>(['llm_providers', 'report_builder_templates']);
+// Tables whose named column is genuinely BOOLEAN, for column names that are AMBIGUOUS
+// (BOOLEAN in some tables, INTEGER in others). Keyed by table → boolean-typed column names.
+const AMBIGUOUS_BOOLEAN_TABLE_COLUMNS: Record<string, string[]> = {
+  ai_actions: ['requires_approval'],
+  ai_agent_plan_steps: ['requires_approval'],
+  ai_budgets: ['is_active'],
+  ai_dlp_rules: ['is_active'],
+  ai_eval_auto_triggers: ['is_active'],
+  ai_eval_golden_sets: ['is_active'],
+  ai_feature_control: ['is_enabled'],
+  ai_global_strategies: ['is_active'],
+  ai_governance_policies: ['is_active'],
+  ai_model_permissions: ['is_active'],
+  ai_prompt_blocks: ['is_active'],
+  ai_purpose_assignments: ['is_active'],
+  ai_purposes: ['is_active'],
+  ai_retention_schedule: ['is_active', 'notification_sent'],
+  ai_system_prompts: ['is_active'],
+  budget_overspend_signals: ['is_dismissed'],
+  budget_scenarios: ['is_active'],
+  budget_thresholds: ['is_active'],
+  candidate_profiles: ['is_active'],
+  capabilities: ['is_active'],
+  change_coaching_actions: ['is_global'],
+  change_resistance_alerts: ['is_acknowledged'],
+  communication_plans: ['is_active'],
+  communication_templates: ['is_global'],
+  competency_categories: ['is_active', 'is_system'],
+  competency_levels: ['is_system'],
+  consulting_templates: ['is_active'],
+  decision_playbooks: ['is_active', 'is_default'],
+  deck_comments: ['resolved'],
+  delay_signals: ['is_dismissed'],
+  document_studio_templates: ['is_system'],
+  domain_verifications: ['ssl_auto_renew'],
+  feature_flags: ['enabled'],
+  financial_model_events: ['is_active'],
+  financial_statement_lines: ['is_active', 'is_system'],
+  financial_statement_templates: ['is_system'],
+  help_articles: ['is_featured'],
+  integration_api_keys: ['is_active'],
+  integration_providers: ['is_active'],
+  integration_webhooks: ['is_active'],
+  interview_library_template_questions: ['is_required'],
+  interview_library_templates: ['is_active', 'is_system'],
+  interview_template_questions: ['is_required'],
+  interview_templates: ['is_default'],
+  knowledge_documents: ['is_active'],
+  kpi_definitions: ['is_active', 'is_global'],
+  legal_documents: ['is_active'],
+  llm_providers: ['is_active', 'is_default'],
+  llm_routing_rules: ['is_active'],
+  login_history: ['success'],
+  model_registry: ['is_active'],
+  module_access_grants: ['is_active'],
+  module_help: ['is_active'],
+  notification_preferences: ['quiet_hours_enabled'],
+  notification_rules: ['is_active'],
+  notification_templates: ['is_active'],
+  onboarding_steps: ['is_required'],
+  onboarding_tooltips: ['is_active'],
+  onboarding_tours: ['is_active'],
+  partner_campaign_links: ['is_active'],
+  partner_learning_modules: ['is_active'],
+  partner_licenses: ['auto_renew'],
+  partner_payout_accounts: ['is_primary'],
+  partner_regions: ['is_primary'],
+  partner_resources: ['is_active', 'is_featured'],
+  payment_methods: ['is_default'],
+  pinned_insights: ['is_shared'],
+  presentation_governance_alert_subscriptions: ['active'],
+  presentation_intents: ['is_active'],
+  presentation_templates: ['is_active', 'is_system'],
+  presentation_watchlist_presets: ['is_default'],
+  presentation_watchlist_saved_searches: ['is_default'],
+  projects: ['is_system'],
+  purpose_assignments: ['is_active'],
+  report_builder_block_types: ['is_active', 'is_system'],
+  report_builder_sections: ['enabled', 'required'],
+  report_builder_templates: ['is_active', 'is_default', 'is_public', 'is_system'],
+  report_definitions: ['is_system'],
+  report_quality_gates: ['is_resolved'],
+  report_schedules: ['is_active'],
+  retention_policies: ['is_active'],
+  risk_signal_alerts: ['is_dismissed'],
+  sandbox_projects: ['is_active'],
+  sandbox_templates: ['is_active', 'is_featured'],
+  schedule_trigger_rules: ['is_active'],
+  sellix_config: ['enabled'],
+  sellix_delivery_log: ['success'],
+  sso_configurations: ['is_active'],
+  sub_processors: ['gdpr_compliant', 'is_active'],
+  superadmin_impersonation_sessions: ['is_active'],
+  ticket_messages: ['is_internal'],
+  tool_assets: ['is_required'],
+  tp_automations: ['enabled'],
+  tp_base_templates: ['is_featured'],
+  tp_distributions: ['is_active'],
+  tp_row_policies: ['is_active'],
+  tp_scim_tokens: ['enabled'],
+  tp_sso_configs: ['enabled'],
+  tp_table_syncs: ['is_active'],
+  tp_views: ['is_default', 'is_shared'],
+  tp_webhook_relays: ['is_active'],
+  tp_webhooks: ['is_active'],
+  user_sessions: ['is_active'],
+  user_tour_progress: ['is_complete'],
+  v8_webhook_registrations: ['is_active'],
+  white_label_assets: ['is_active'],
+  white_label_themes: ['is_public', 'is_system'],
+};
 
+// --- referenced-table + boolean-compare rewrite helpers ---
 function findPrimaryTableForBooleanFlags(sql: string): string | null {
   const cleaned = sql.trim();
   const update = cleaned.match(/^\s*UPDATE\s+(?:(?:public\.)?("?[a-zA-Z0-9_]+"?))/i);
@@ -157,18 +280,49 @@ function findPrimaryTableForBooleanFlags(sql: string): string | null {
   return null;
 }
 
-function normalizeBooleanFlagsForTable(sql: string, table: string | null): string {
-  if (!table) return sql;
+// Rewrite `[alias.]col = 0/1` (and !=, <>, and `col = 1 - col` self-toggles) to boolean literals.
+// Only the operator/literal is touched; any table/alias qualifier is preserved.
+function rewriteBooleanCompare(sql: string, col: string): string {
+  const c = col.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   let out = sql;
-  if (BOOLEAN_IS_ACTIVE_TABLES.has(table)) {
-    out = out.replace(/\bis_active\s*=\s*1\b/gi, 'is_active = TRUE');
-    out = out.replace(/\bis_active\s*=\s*0\b/gi, 'is_active = FALSE');
-    out = out.replace(/\bis_active\s*=\s*1\s*-\s*is_active\b/gi, 'is_active = NOT is_active');
+  // Self-toggle: col = 1 - [alias.]col  ->  col = NOT col
+  out = out.replace(
+    new RegExp(`\\b${c}\\s*=\\s*1\\s*-\\s*(?:[a-zA-Z_][a-zA-Z0-9_]*\\.)?${c}\\b`, 'gi'),
+    `${col} = NOT ${col}`
+  );
+  out = out.replace(new RegExp(`\\b${c}\\s*(=|!=|<>)\\s*1\\b`, 'gi'), `${col} $1 TRUE`);
+  out = out.replace(new RegExp(`\\b${c}\\s*(=|!=|<>)\\s*0\\b`, 'gi'), `${col} $1 FALSE`);
+  return out;
+}
+
+/**
+ * Postgres boolean-flag normalization for legacy SQLite-style 0/1 queries.
+ *
+ * SQLite stores booleans as 0/1; Postgres has a real BOOLEAN type and throws
+ * `operator does not exist: boolean = integer` when 0/1 code paths hit a genuine
+ * boolean column. We rewrite at the adapter layer (schema-driven, generated above):
+ *  - ALWAYS_BOOLEAN_COLUMNS: boolean in every table that has them -> rewrite unconditionally.
+ *  - AMBIGUOUS_BOOLEAN_TABLE_COLUMNS: boolean only in some tables -> rewrite ONLY when the
+ *    statement's primary table (FROM/UPDATE/INSERT) is one where the column is genuinely boolean.
+ *    This preserves INTEGER-typed same-named columns (e.g. initiative_section_types.is_active).
+ */
+function normalizeBooleanFlags(sql: string): string {
+  // Cheap early-out: no `= 0/1` (or `!=`/`<>`) comparison anywhere -> nothing to normalize.
+  if (!/(?:=|!=|<>)\s*[01]\b/.test(sql)) return sql;
+  let out = sql;
+  // 1) Always-boolean columns (safe regardless of table).
+  for (const col of ALWAYS_BOOLEAN_COLUMNS) {
+    if (out.includes(col)) out = rewriteBooleanCompare(out, col);
   }
-  if (BOOLEAN_IS_DEFAULT_TABLES.has(table)) {
-    out = out.replace(/\bis_default\s*=\s*1\b/gi, 'is_default = TRUE');
-    out = out.replace(/\bis_default\s*=\s*0\b/gi, 'is_default = FALSE');
-    out = out.replace(/\bis_default\s*=\s*1\s*-\s*is_default\b/gi, 'is_default = NOT is_default');
+  // 2) Ambiguous columns: only for the primary table where they are genuinely boolean.
+  const table = findPrimaryTableForBooleanFlags(out);
+  if (table) {
+    const cols = AMBIGUOUS_BOOLEAN_TABLE_COLUMNS[table];
+    if (cols) {
+      for (const col of cols) {
+        if (out.includes(col)) out = rewriteBooleanCompare(out, col);
+      }
+    }
   }
   return out;
 }
@@ -785,7 +939,7 @@ export function adaptQuery(sql: string): string {
   );
   adapted = adapted.replace(/\bAUTOINCREMENT\b/gi, '');
 
-  adapted = normalizeBooleanFlagsForTable(adapted, findPrimaryTableForBooleanFlags(adapted));
+  adapted = normalizeBooleanFlags(adapted);
 
   return adapted;
 }
