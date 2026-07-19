@@ -1,12 +1,23 @@
 /**
- * AiInfrastructure Routes
- * API endpoints for ai-infrastructure
+ * AiInfrastructure Routes — mounted at /api/ai/infrastructure.
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * RECOVERY (self-import wrapper family): the previous `createLazyRoute('./ai-infrastructure.js')`
+ * wrapper resolved its relative specifier against utils/ (the loader's dir), so every request
+ * returned HTTP 500 "Failed to load route". No real implementation exists in the tree (only this
+ * wrapper + a re-export stub). Following the blessed pattern (see media-ingestion.routes.ts),
+ * return an honest 503 "not configured" instead of a hard 500 crash.
  */
+import { Router } from 'express';
 
-import { createLazyRoute } from '../../utils/lazyRouteLoader.js';
+const router = Router();
 
-const router = createLazyRoute('./ai-infrastructure.js');
+router.use((_req, res) => {
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'AI infrastructure endpoints are not implemented in this deployment.',
+  });
+});
 
 export default router;
