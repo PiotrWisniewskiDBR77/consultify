@@ -129,4 +129,34 @@ describe('safePersistEvidenceContract', () => {
     expect(ok).toBe(false);
     expect(warn).toHaveBeenCalledTimes(1);
   });
+
+  it('H5.5 regression: logs via the real logger when no options.logger is passed (as every current caller does)', async () => {
+    const upsertEnvelope = vi.fn().mockRejectedValue(new Error('db unavailable'));
+    const defaultLoggerModule = await import('../../../../../server/src/utils/Logger.js');
+    const warnSpy = vi.spyOn(defaultLoggerModule.default, 'warn').mockImplementation(() => {});
+
+    try {
+      const ok = await safePersistEvidenceContract(
+        emptyEvidenceContract(),
+        {
+          organizationId: 'org-4',
+          artifactType: 'initiative',
+          artifactId: 'initiative-1',
+          service: 'assessmentInitiativeService',
+        },
+        // Mirrors every real call site (InterviewInsightService,
+        // presentationGeneratorService, assessmentInitiativeService,
+        // documentStudioService, ai/tools/generateDeliverable): no `logger`
+        // passed at all. Before the H5.5 fix, this meant the failure vanished
+        // with zero trace anywhere — `options?.logger?.warn(...)` was a no-op.
+        { writer: { upsertEnvelope } }
+      );
+
+      expect(ok).toBe(false);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toContain('initiative/initiative-1');
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
 });

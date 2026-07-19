@@ -25,6 +25,7 @@
  * ADDYTYWNE — nigdy nie zmienia generacji artefaktu; błąd zapisu envelope jest
  * połykany (logowany, nie rzucany).
  */
+import defaultLogger from '../../utils/Logger.js';
 import type { EvidenceContract } from './evidenceContract.js';
 import { confidenceToNumeric } from './evidenceContract.js';
 import type {
@@ -127,6 +128,14 @@ export async function safePersistEvidenceContract(
     logger?: { warn: (msg: string, meta?: unknown) => void };
   }
 ): Promise<boolean> {
+  // H5.5 fix: every current caller (InterviewInsightService, presentationGeneratorService,
+  // assessmentInitiativeService, documentStudioService, ai/tools/generateDeliverable) calls
+  // this as `void safePersistEvidenceContract(...).catch(() => {})` WITHOUT passing
+  // `options.logger` — so the `options?.logger?.warn(...)` below was an unreachable
+  // no-op in production and every envelope-persist failure vanished with zero trace.
+  // Default to the real logger so the fail-safe path this function already documents
+  // ("błąd zapisu envelope jest połykany (logowany, nie rzucany)") actually logs.
+  const log = options?.logger ?? defaultLogger;
   try {
     const input = mapEvidenceContractToEnvelopeInput(contract, meta);
     let writer = options?.writer;
@@ -138,7 +147,7 @@ export async function safePersistEvidenceContract(
     return true;
   } catch (error) {
     try {
-      options?.logger?.warn(
+      log.warn(
         `[EvidenceContractBridge] Failed to persist envelope (${meta.artifactType}/${meta.artifactId})`,
         { error: error instanceof Error ? error.message : String(error) }
       );
