@@ -96,7 +96,7 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
         <button
           type="button"
           onClick={onUseAI}
-          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl border border-c-accent bg-c-accent-soft px-3 py-2.5 text-xs font-semibold text-c-accent shadow-sm hover:brightness-95 transition-colors"
+          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-3 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 shadow-sm hover:bg-indigo-500/20 transition-colors"
         >
           <Sparkles className="h-3.5 w-3.5 shrink-0" />
           {t('ideas.table.useAi', 'Use AI')}

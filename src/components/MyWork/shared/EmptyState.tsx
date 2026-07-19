@@ -72,8 +72,9 @@ const typeConfig: Record<
     icon: <CheckCircle2 size={32} />,
     defaultTitle: 'No Tasks',
     defaultDescription: 'Create a task to get started with your work.',
-    gradient:
-      'from-primary-500/20 to-crimson-500/20 dark:from-primary-500/10 dark:to-crimson-500/10',
+    // VF0-10 follow-up (T9): was `primary-*`/`crimson-*` — crimson is brand-only,
+    // never a decorative UI tint (TRIADA_KANON A10). Neutral slate to match.
+    gradient: 'from-slate-500/20 to-slate-600/20 dark:from-slate-500/10 dark:to-slate-600/10',
   },
   decisions: {
     icon: <Calendar size={32} />,
@@ -91,8 +92,8 @@ const typeConfig: Record<
     icon: <BarChart2 size={32} />,
     defaultTitle: 'No Data Yet',
     defaultDescription: 'Complete some tasks to see your execution metrics and trends.',
-    gradient:
-      'from-primary-500/20 to-primary-500/20 dark:from-primary-500/10 dark:to-primary-500/10',
+    // VF0-10 follow-up (T9): was `primary-*` (crimson) — neutral indigo tint instead.
+    gradient: 'from-indigo-500/20 to-indigo-500/20 dark:from-indigo-500/10 dark:to-indigo-500/10',
   },
   generic: {
     icon: <Sparkles size={32} />,
@@ -155,10 +156,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             onClick={onAISuggestion}
             className="
                             inline-flex items-center gap-2 px-4 py-2 rounded-lg
-                            bg-gradient-to-r from-primary-600 to-crimson-600
-                            hover:from-primary-500 hover:to-crimson-500
+                            bg-indigo-600 hover:bg-indigo-500
                             text-white text-sm font-medium
-                            shadow-lg shadow-primary-500/25
+                            shadow-lg shadow-indigo-500/25
                             transition-all duration-200
                         "
           >
