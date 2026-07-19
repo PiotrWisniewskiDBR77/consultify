@@ -31,18 +31,38 @@
    wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
    = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
 
-## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W5+W6)
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W7)
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
 | A · Harvard (H1-H6) | 55 | 3 | 2 | 1 | 1 | 62 |
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 21 | 36 | 11 | 2 | 0 | 70 |
+| C · Oxford (O1-O8) | 31 | 23 | 11 | 5 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 37 | 1 | 33 | 7 | 2 | 80 |
-| **SUMA** | **147** | **62** | **70** | **13** | **4** | **296** |
+| E · Przekroje (+nowe) | 42 | 1 | 31 | 7 | 2 | 83 |
+| **SUMA** | **162** | **49** | **68** | **16** | **4** | **299** |
 
-**Postęp: 160/296 rozstrzygnięte (54%).** (RAZEM 279→296: +17 nowych RED wykrytych przez łowców 500-tek W5/W6 — patrz FALA-W5+W6.)
+**Postęp: 178/299 rozstrzygnięte (60%).** (RAZEM 296→299: +3 nowe RED; Oxford C skok 21→31✅ przez proof-sweepy O1/O2/O3/O7/O8 — patrz FALA-W7. Uwaga: ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) to osobna oś, nienaruszona.)
+
+### FALA-W7 (2026-07-19, deploy d27d0fef6c, demo-safe-2026-07-19) — 11 gałęzi, bramki zielone (server tsc 146/204 0-nowych, FE tc 0, kolory/artefakt PASS, eslint 0, boot 4/4 = 2 migracje autorun OK)
+**★ Oxford proof-sweep (5 clusterów, wzorzec O4-cluster) — dowód kod+E2E dla ~13 pozycji 🟡→✅:**
+- **O1** (generator z assessmentu): benchmark DRD (⬜ stale→✅, `buildDrdIndustryBenchmarkSection` wołane bezwarunkowo, nie za flagą), ADMA FoF≥4 ✅, raport+narrator DRD ✅ (llmService live+fail-safe „numbers-from-engine"), ścieżka N→N+1 ×3 ✅ (168/168 unit). DRD Kanon P1-P5→🔵 (K1 decyzja). Q-bank/scoring/mapa SIRI-ADMA→🟡 (ODB O6). ★finding: `axis_data` = poziomy 0-5 NIE procenty 0-100 (seed 0-100→„Cyber 600%" w raporcie klienta).
+- **O2** (warstwa wniosków): O2.2 (raporty SIRI/ADMA→wnioski) / O2.3 (19/19 tooli) / O2.4 (analizy finansowe→wnioski) → ✅ (35/35 testów). O2.1 CONCLUSION_LAYER→🔵 (K2 decyzja, standard już wdrożony 3 powierzchniami).
+- **O3** (pogłębianie): całe wiring żywe (7 strat. kanał-A + 9 operacyjnych + ansoff/ambition + risk), +testy capabilityMapper/narrativeEngine (106/106). Dowód gotowy, formalne ✅ czeka ODB O1 promptbook (SESJA#1). 6 martwych `buildXDeepenPrompt`→🔵.
+- **O7** (standardy treści): O7.2 INITIATIVE_FORMULA→✅; O7.1 CARD_CONTENT guardian→🔵 (advisory-vs-gate) +★fix bug `\b` po polskich diakrytykach; O7.3 ton persona→🟡 ODB (subiektywny).
+- **O8** (help/glossary): O8.1/O8.2/O8.3→✅ (16/16, zbudowane szerzej niż docy — złota reguła złamana w dokumentacji nie kodzie).
+
+**★ Kodowalne nowe RED naprawione:**
+- **ai-operations ×6** SQLite→PG (realna `ai_usage_logs`, `datetime()`→interval, koercja; fallback=true czynił .catch martwym). 6×200, 19/19. (7 sub-endpointów zostaje.)
+- **KB FTS** — probe `sqlite_master` 42703→wyszukiwanie zawsze LIKE; teraz native `to_tsvector/plainto_tsquery`+GIN. FTS działa.
+- **agents.routes** — self-import lazy-wrapper→`_AIAgents`=Promise→crash; przepisany moduł metadanych (5 agentów), coordinator→503.
+- **presentations ×4** — Array.isArray guardy (+slidePlanning), ZodError→400, Deck-not-found→404. 212/212.
+- **project-members/permissions/retention** — aliasy dryfu + serwis permissions przepisany na realny schemat + retention DI-bug+serwis+migracja tabeli.
+- **fail-soft batch4** — 45 handlerów (settings/metrics/documents), ~120→~81 gołych 500.
+
+**★ NOWE RED (⬜/🔵 — do domknięcia):** 7 ai-ops sub-endpointów (SQLite-izmy) · `aiWatchdog.ts` martwy wzorzec import-as-call · axis_data 0-5-nie-100 (dokumentacja seedów) · 6 martwych buildXDeepenPrompt (🔵) · DRD Kanon P1-P5 (🔵) · O2.1/O7.1 (🔵).
+
+**★ B13 baseline_gap (33k linii, fresh-env==TROLLEY) — GOTOWE, deploy OSOBNO** (izolacja: rozmiar + adaptQuery-DDL mangluje `*_update()/*_validate()`). Demo-safe (no-op na TROLLEY), wartość=fresh-env. Gałąź `t10-migracje` @ 25c4d8655d.
 
 ### FALA-W5+W6 (2026-07-19, deploy 581281e6f3, demo-safe-2026-07-19) — 15 gałęzi, bramki zielone (server tsc 146/204 0-nowych, kolory/artefakt PASS, eslint 0, zero FE, boot 4/4 = 8 migracji autorun OK)
 **★ Oxford O4 = 7/7 ✅** — cluster domknięty dowodem: O4.1-O4.5 (business case 5-fazowy, scenariusze-dźwignie, value tree, portfel, WACC/guidance) + O4.6 trend + O4.7 post-mortem. 5 miało dowód w `j21-oxford-o4` (nieodnotowany), 2 odblokowane (notatka „infra-gap LLM" nieaktualna — parity ma `llm_providers` zaseedowane, realny call Anthropic przeszedł strażnika liczb). Testy: `j21-oxford-o4` 4/4 + `odbior--o4c--business-case-live` PASS + `businessCase` unit 23/23.
