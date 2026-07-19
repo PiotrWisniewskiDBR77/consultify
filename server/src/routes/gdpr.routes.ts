@@ -421,10 +421,13 @@ router.post(
       const requestId = uuidv4();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
+      // data_export_requests.export_type is NOT NULL with no DB default and a
+      // CHECK restricting it to 'full' | 'partial' | 'gdpr' — this endpoint is
+      // the GDPR data-subject-request export, so 'gdpr' is the correct value.
       await dbRun(
         `INSERT INTO data_export_requests (
-                id, user_id, status, requested_at, expires_at
-            ) VALUES (?, ?, 'pending', datetime('now'), ?)`,
+                id, user_id, export_type, status, requested_at, expires_at
+            ) VALUES (?, ?, 'gdpr', 'pending', datetime('now'), ?)`,
         [requestId, userId, expiresAt.toISOString()]
       );
 
