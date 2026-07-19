@@ -26,8 +26,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import sqlite3 from 'sqlite3';
+import { fileURLToPath } from 'url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -211,7 +211,9 @@ describe('O5.6 — interview axis-gap templates migration (real SQL, in-memory s
       "SELECT * FROM interview_library_template_questions WHERE template_id = 'itpl_pre_existing_v1'"
     );
     expect(preQuestions).toHaveLength(1);
-    expect((preQuestions[0] as { question_text: string }).question_text).toBe('pre-existing question');
+    expect((preQuestions[0] as { question_text: string }).question_text).toBe(
+      'pre-existing question'
+    );
   });
 
   it('is idempotent — running the migration file twice does not duplicate rows or throw', async () => {
@@ -236,9 +238,10 @@ describe('O5.6 — interview axis-gap templates migration (real SQL, in-memory s
         );
         axisQuestionCount += rows[0].n;
       }
-      expect(axisQuestionCount, `axis ${axis} should gain >= 1 question from new templates`).toBeGreaterThan(
-        0
-      );
+      expect(
+        axisQuestionCount,
+        `axis ${axis} should gain >= 1 question from new templates`
+      ).toBeGreaterThan(0);
     }
     // Axes 2/3/6/7 previously had ZERO or a single draft-only question in the
     // whole bank (per the audit) — assert they now clear a real bar (>= 5) from
