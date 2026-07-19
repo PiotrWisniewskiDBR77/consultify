@@ -8621,12 +8621,16 @@ router.get(
     if (!identity) return;
     const { orgId } = identity;
     const days = Math.min(90, parseInt(String(req.query.days || '30'), 10) || 30);
-    const modifier = `-${days} days`;
+    // RED-DELIV: `datetime('now', ?)` with a *parameterized* modifier is never
+    // rewritten by PostgresDatabase.adaptQuery (it only matches literal-string
+    // modifiers), so this always threw 42883 `function datetime(...) does not
+    // exist` on Postgres. Use the existing daysAgoSql() helper — `days` is an
+    // already-sanitized integer (Math.min/parseInt), so inlining is injection-safe.
     const row = await queryHelpers.queryOne<{ total: number; count: number }>(
       `SELECT COALESCE(SUM(estimated_cost_usd), 0) as total, COUNT(*) as count FROM ai_usage_logs
        WHERE organization_id = ? AND (action = 'inbox_ai_triage' OR purpose = 'inbox_triage')
-       AND created_at >= datetime('now', ?)`,
-      [orgId, modifier]
+       AND created_at >= ${daysAgoSql(days)}`,
+      [orgId]
     );
     res.json({
       totalCostUsd: Number(row?.total || 0),
@@ -9186,10 +9190,17 @@ router.get(
 
     try {
       const teamMembers = await queryHelpers.queryAll<any>(
-        `SELECT u.id, u.name, u.email,
+        // RED-DELIV: `users` has NO `name` column (only first_name/last_name),
+        // so `u.name` threw 42703 and the whole handler was silently swallowed
+        // (returns empty suggestions = data loss). Also `is_active` is a TEXT
+        // column in the live schema, so `u.is_active = 1` (text = integer) would
+        // throw 42883 once the name error was gone — use a tolerant text check.
+        `SELECT u.id,
+                COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.email) AS name,
+                u.email,
           (SELECT COUNT(*) FROM tasks t WHERE t.assignee_id = u.id AND t.organization_id = ? AND t.status NOT IN ('done', 'completed')) as open_tasks
          FROM users u
-         WHERE u.organization_id = ? AND u.id != ? AND u.is_active = 1
+         WHERE u.organization_id = ? AND u.id != ? AND LOWER(COALESCE(u.is_active, '')) IN ('1', 'true', 't', 'yes')
          ORDER BY open_tasks ASC
          LIMIT 10`,
         [orgId, orgId, userId]
