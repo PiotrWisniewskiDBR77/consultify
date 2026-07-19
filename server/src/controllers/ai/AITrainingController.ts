@@ -109,7 +109,7 @@ export class AITrainingController {
         `SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as helpful,
-                    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as notHelpful
+                    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as "notHelpful"
                  FROM ai_audit_logs 
                  WHERE organization_id = ?`,
         [req.organizationId]
