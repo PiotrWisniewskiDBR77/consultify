@@ -223,7 +223,7 @@ router.get(
     }
 
     try {
-      const agents = orchestrator.getAvailableAgents();
+      const agents = await orchestrator.getAvailableAgents();
       return res.json({ agents });
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting agents:', error);
@@ -247,7 +247,7 @@ router.get(
     }
 
     try {
-      const metrics = orchestrator.getAgentMetrics();
+      const metrics = await orchestrator.getAgentMetrics();
       return res.json(metrics);
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting metrics:', error);
