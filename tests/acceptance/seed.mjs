@@ -53,12 +53,12 @@ export async function seed() {
 
     // Membership must be ACTIVE — auth.middleware resolves org via organization_members.
     await client.query(
-      `INSERT INTO organization_members (organization_id, user_id, role, status, created_at)
-       SELECT $1, $2, $3, 'ACTIVE', $4
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+       SELECT $5, $1, $2, $3, 'ACTIVE', $4
        WHERE NOT EXISTS (
          SELECT 1 FROM organization_members WHERE organization_id = $1 AND user_id = $2
        )`,
-      [SEED.ORG_ID, SEED.USER_ID, SEED.ROLE, now]
+      [SEED.ORG_ID, SEED.USER_ID, SEED.ROLE, now, 'odbior--mem-0001']
     );
 
     const check = await client.query(
