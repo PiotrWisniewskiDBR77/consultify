@@ -17,10 +17,11 @@
  *   two columns; these endpoints are asserted < 500 below.
  *
  * KNOWN_RED (confirmed real 500s, OUT of safe-additive-migration scope — code
- * bugs, see RAPORT RED in the handoff): ai_request_log missing table + SQLite
- * date funcs (6 ai-operations endpoints), deep-thinking/metrics SQLite-isms,
+ * bugs, see RAPORT RED in the handoff): deep-thinking/metrics SQLite-isms,
  * ai_playbook_runs untyped `$2 IS NULL` param (42P18). Pinned so a change here
  * is a visible signal, not silent scope creep.
+ * FIXED in W6: the 6 ai-operations endpoints (ai_request_log missing table +
+ * SQLite date funcs) — repointed to ai_usage_logs + Postgres date funcs.
  */
 import { appendFileSync, writeFileSync } from 'node:fs';
 
@@ -46,16 +47,10 @@ const ASSESSMENT_ID = 'odbior--redai--assessment-0001';
  * Do NOT add entries without a matching RAPORT RED writeup.
  */
 const KNOWN_RED: Record<string, { status: number; messageIncludes: string }> = {
-  // ai-operations: all query `FROM ai_request_log` (relation missing) AND use
-  // SQLite `datetime('now', …)` — creating the table alone will NOT fix them
-  // (42883 on datetime). DbPromise fallback masks the SQL error into null →
-  // controller null-derefs → HTTP 500.
-  ['GET /api/ai/operations/mission-control/status']: { status: 500, messageIncludes: 'total' },
-  ['GET /api/ai/operations/performance/metrics']: { status: 500, messageIncludes: 'total_requests' },
-  ['GET /api/ai/operations/costs/summary']: { status: 500, messageIncludes: 'total_tokens' },
-  ['GET /api/ai/operations/sla/status']: { status: 500, messageIncludes: 'total' },
-  ['GET /api/ai/operations/analytics/insights']: { status: 500, messageIncludes: 'rate' },
-  ['GET /api/ai/operations/summary']: { status: 500, messageIncludes: 'requests_today' },
+  // ai-operations (6 endpoints): FIXED in W6 (fix-ai-operations) — repointed to
+  // the real `ai_usage_logs` table + Postgres date funcs (now() - interval …) +
+  // numeric-string coercion. Now asserted < 500 below. See
+  //   tests/acceptance/odbior--aiops--operations-green.e2e.test.ts
   // aiPlaybooks.getRuns: `WHERE apr.organization_id = $1 OR $2 IS NULL` — $2 has
   // no inferable type → 42P18. (Dead-logic smell: $2 is bound the same org value.)
   ['GET /api/ai/playbooks/runs']: { status: 500, messageIncludes: 'could not determine data type' },
@@ -203,9 +198,10 @@ describe('RED-AI FIXED: ai-training submitFeedback write-path (was latent 42703)
 });
 
 // ============================================================================
-// KNOWN_RED — ai-operations (ai_request_log missing table + SQLite datetime())
+// FIXED (W6) — ai-operations: repointed ai_request_log → ai_usage_logs, SQLite
+// datetime() → Postgres now()-interval, numeric-string coercion. Now < 500.
 // ============================================================================
-sweepGet('RED-AI KNOWN_RED: ai-operations', '/api/ai/operations', '../../server/src/routes/ai/ai-operations.routes.js', [
+sweepGet('RED-AI FIXED: ai-operations', '/api/ai/operations', '../../server/src/routes/ai/ai-operations.routes.js', [
   '/mission-control/status',
   '/performance/metrics',
   '/costs/summary',
