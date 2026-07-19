@@ -35,14 +35,40 @@
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | 56 | 3 | 2 | 0 | 1 | 62 |
+| A · Harvard (H1-H6) | 61 | 1 | 0 | 0 | 0 | 62 |
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 36 | 23 | 11 | 0 | 0 | 70 |
+| C · Oxford (O1-O8) | 39 | 20 | 11 | 0 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 50 | 7 | 22 | 7 | 2 | 88 |
-| **SUMA** | **176** | **55** | **59** | **10** | **4** | **304** |
+| E · Przekroje (+nowe) | 59 | 5 | 15 | 7 | 2 | 88 |
+| **SUMA** | **193** | **48** | **50** | **10** | **3** | **304** |
 
-**Postęp: 186/304 rozstrzygnięte (61%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
+**Postęp: 203/304 rozstrzygnięte (67%).** Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
+
+### ★★ FALA-ARMY 2026-07-19 (druga sesja, 12 robotników Opus/Sonnet, 2 deploye) — demo-safe `531ce7e62b`
+**Cel Piotra: domknięcie 4 modułów + czyste repo. PROD ZAMROŻONY — wszystko na demo. Bramki zielone (server tsc 146=baseline 0-nowych, kolory/artefakt/list-canon PASS, eslint 0). Boot: Fala1 4/4, Fala2 6/6 (11 migracji, gitSha potwierdzony).**
+
+**FALA 1 (deploy `6baaff3a27`) — martwy kod + dedup:**
+- **6× `build<Tool>DeepenPrompt`** (config/*/conclusionPrompts) + **variableResolver** wrapper usunięte. ★ Złota reguła: mapa O3 kłamała — `buildCapabilityLadderPromptBlock`/`buildCategoryLadderPromptBlock` SĄ wpięte, nie usunięto. `828a55a0d9`+`66186f7715`.
+- **Martwy kod E:** 3 top-level `ai-*.routes.ts` (0 importerów) + `AuditService.getRecordHistory/getTableActivityFeed` + `tierAutoAssignmentJob`. `871c728952`+`cf128612ce`+`bf5044f1b7`. ~3200 linii usuniętych łącznie.
+- **I1 actionable dedup** (E/Ogony) — realna akcja Scal/Pomiń (Insight) + skip (Tools), ZA FLAGĄ `INITIATIVE_DEDUP_ACTIONABLE` default OFF → 🟡 do odbioru wizualnego. `8118deb788`.
+
+**FALA 2 (deploy `531ce7e62b`) — RED + Harvard + Oxford:**
+- **RED migracja-braku → ✅:** 9 migracji `791-799` (organizations dunning, admin_sessions 5→16, email_templates, gdpr_requests, permission_requests, security_events, user_sessions, login_history, partner_certifications) — każda before/after+idempotencja na parity. `d4455d7bc1`.
+- **RED `tasks.sla_due_at` → ✅:** mig `800` + delayDetection; źródło = `042_*.sql.sql` (podwójne rozszerzenie, nie odpala). `3878df609f`.
+- **RED billing → ✅:** ★`os.billing_model` nie istniał → **rejestracja zużycia PAYG nigdy nie działała dla żadnej org**; + fantomowy `invoices.amount`→amount_due. `3e61d3585a`.
+- **RED fail-soft → ✅:** ostatni goły `500 {err.message}` w `ai.routes.ts` (kampania **166→0** DOMKNIĘTA) + interview citation-gate zawór `INTERVIEW_REPORT_CITATION_HARD_GATE` default ON. `acfcea53bd`+`1e3bae018f`.
+- **Harvard H2.3 → ✅:** MindMap→Process Flow realnie konwertuje gałąź (był pusty przełącznik zakładki). `35e55d879d`. **H2.15/H2.17 → ✅** potwierdzone (commit `24327c288d` na demo, ❓ rozstrzygnięte).
+- **Harvard H5.4 → ✅:** strażnik mutacji v8 `mutationGuard.middleware` (NIE `req.destroyed` — pamięć! wzór `res.on('close')`), flaga `ENABLE_MUTATION_ABORT_GUARD` OFF. **H5.5 → ✅:** ★`evidenceContractBridge.safePersistEvidenceContract` połykał logi 6 callerów (deck/canvas/doc/init/insight) — fix `logger ?? defaultLogger`. `c70b47b2d3`+`c54901125f`.
+- **Oxford O8 → ✅:** ★SIRI/ADMA knowledge było 100% EN → mieszany język dla PL; dodano pełne PL (48 SIRI + 60 ADMA kombinacji) + `lang` param. `18e7810f7b`.
+- **Oxford O6.1 → ✅:** profile branżowe już wpięte w raport DRD z adnotacją „expert-hypothesis-v1" (`ddcfd03e4a` na demo, 10/10 testów) — rejestr był stale.
+- **K5 SWOT/PPTX 3 poziomy → 🟡:** param `level` short/medium/full (backend+prompt, kompatybilność wsteczna), UI osobno. `9385ca2c65`.
+- **K4 AI-fill sekcje → 🟡:** nowy `initiativeSectionFill.ts` + endpoint `/generate-section-fill`, 10 sekcji (team/raci/deps/milestones/timeline/technical/tasks/attachments/comments/activity), flaga `INITIATIVE_SECTION_AIFILL` OFF, UI+odbiór osobno. `a64ae11574`.
+
+**★ FAŁSZYWE ALARMY (złota reguła — kod już poprawny, 0 zmian):** #6 `initiative_status_history.changed_at` (kod ma created_at+legacy-fallback) · #7 `raid_items` (kod ma `impact as severity` + initiative_id subquery) · canon-dublet (CANON 2.md = lokalny śmieć iCloud gitignored, SSOT już OK) · rejestr spóźniony: **M16 ~50 endpointów** (21 paneli Economics wpięte) · **D-03 manager lanes** (`dfefd83a78` na demo, e2e 5/5).
+
+**★ NOWE FINDINGI (do decyzji/chipów — NIE naprawione, udokumentowane):** ★`webauthn`/passkey może 404-ować na PROD jeśli `ENABLE_STUB_ROUTES` nieustawione (D-01: 37 mountStub, ~28 to żywe routery gaszone) · `.sql.sql` bug (029 dunning, 042 pmo — nie odpalają) · `task_escalations`/`invoice_items`/`dunning_notifications` tabele nie istnieją · `last_overdue_notified_at` TEXT vs timestamp · **45 wrapperów rodziny 46 = zamontowane-ale-crash** (mają importerów → nie 0-caller; wymaga naprawy loadera/graceful-degrade, NIE kasacji) · connectorService martwy schemat · LtvAnalytics `julianday()` SQLite w PG.
+
+**Licznik FALA-ARMY:** ✅ 176→193 (+17), 🟡 55→48, ⬜ 59→50, ❓ 4→3. rozstrzygnięte 186→203 (67%). RAZEM 304.
 
 ### ★ DECYZJE 2026-07-19 (druga sesja taryfowa) — 14 decyzji 🔵/⬜DEC rozstrzygniętych przez Piotra (dowód: rozmowa robocza 07-19, materiał `_SESJA1_ODBIOR_OXFORD.md §3`)
 **DoD decyzji = decyzja Piotra wpisana. Kanon §5 K1-K8 domknięte.**
