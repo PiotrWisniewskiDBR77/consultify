@@ -284,6 +284,7 @@ const AMBIGUOUS_BOOLEAN_TABLE_COLUMNS: Record<string, string[]> = {
   budget_overspend_signals: ['is_dismissed'],
   budget_scenarios: ['is_active'],
   budget_thresholds: ['is_active'],
+  business_metrics: ['is_active'],
   candidate_profiles: ['is_active'],
   capabilities: ['is_active'],
   change_coaching_actions: ['is_global'],
