@@ -28,11 +28,24 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export const ALL_PERIOD_TYPES: ReportPeriodType[] = ['WEEKLY', 'MONTHLY', 'QUARTERLY'];
 
 /**
- * Parse a DB timestamp (ISO string, or `YYYY-MM-DD HH:MM:SS` from CURRENT_TIMESTAMP)
- * into epoch millis. Returns null when unparseable / absent.
+ * Parse a DB timestamp into epoch millis. Returns null when unparseable/absent.
+ *
+ * Tolerant of BOTH shapes the `status_reports.created_at` column can hand
+ * back, because the live column type differs by environment (table-name
+ * collision documented in
+ * server/migrations/20260719_status_reports_m14_columns_backfill.sql — the
+ * legacy bootstrap in PostgresDatabase.ts created this table as `TIMESTAMP`,
+ * not the `TEXT` the 066 migration intended):
+ *   - a JS `Date` (node-postgres auto-parses a genuine `timestamp` column), or
+ *   - an ISO string / `YYYY-MM-DD HH:MM:SS` string (a `TEXT`-typed column, or
+ *     any DB driver that does not auto-parse timestamps).
  */
-function parseTimestamp(value: string | null): number | null {
+function parseTimestamp(value: string | Date | null): number | null {
   if (!value) return null;
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isNaN(ms) ? null : ms;
+  }
   // Postgres `TIMESTAMP` (no tz) serializes as "2026-06-23 10:00:00".
   // Date.parse on that is engine-dependent; normalize the space to 'T' and
   // treat it as UTC so cadence math is stable across environments.
@@ -59,7 +72,7 @@ function parseTimestamp(value: string | null): number | null {
  */
 export function isReportDue(
   periodType: ReportPeriodType,
-  lastGeneratedAt: string | null,
+  lastGeneratedAt: string | Date | null,
   now: number
 ): boolean {
   const last = parseTimestamp(lastGeneratedAt);
@@ -79,7 +92,7 @@ export function isReportDue(
  */
 export function nextDueDate(
   periodType: ReportPeriodType,
-  lastGeneratedAt: string | null,
+  lastGeneratedAt: string | Date | null,
   now: number
 ): string {
   const periodMs = PERIOD_DAYS[periodType] * MS_PER_DAY;
@@ -96,7 +109,7 @@ export interface DueReport {
 interface LastReportRow {
   initiative_id: string;
   period_type: string;
-  last_generated_at: string | null;
+  last_generated_at: string | Date | null;
 }
 
 /**

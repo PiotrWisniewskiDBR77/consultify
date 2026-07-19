@@ -12,7 +12,8 @@
  * Auth mirrors `status-reports.routes.ts`: verifyToken + isAuthenticated, org
  * taken from `req.user.organizationId`, handlers wrapped in `asyncHandler`.
  *
- * NOT mounted in the Gateway here — wiring is a separate, deliberate step.
+ * Mounted in Gateway.ts at `/api/report-pdf` (see `app.use('/api/report-pdf',
+ * reportPdfRoutes)`).
  */
 import { Request, Response, Router } from 'express';
 
