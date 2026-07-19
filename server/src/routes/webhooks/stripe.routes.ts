@@ -44,22 +44,47 @@ async function ensureStripeEventsTable(): Promise<void> {
   stripeEventsTableEnsured = true;
 }
 
-async function tryBeginStripeEvent(event: StripeTypes.Event): Promise<boolean> {
+// Exported (alongside the default router export) so the H6.3 acceptance
+// suite can exercise the idempotency gate + notification helper directly
+// against a real local Postgres, without dragging in the full Stripe
+// signature-verification / billingService / dunningService graph. No
+// behavior change — same functions the router itself calls.
+export async function tryBeginStripeEvent(event: StripeTypes.Event): Promise<boolean> {
   await ensureStripeEventsTable();
   const existing = await dbGet<{ event_id: string }>(
     `SELECT event_id FROM stripe_events WHERE event_id = ? LIMIT 1`,
     [event.id]
   );
   if (existing?.event_id) return false;
-  await dbRun(
+  const result = await dbRun(
     `INSERT INTO stripe_events (id, event_id, event_type, payload, status, created_at)
      VALUES (?, ?, ?, ?, 'processing', CURRENT_TIMESTAMP)`,
     [event.id, event.id, event.type, JSON.stringify(event)]
   );
+  // H6.3: dbRun fails OPEN by default — a DB error resolves {success:false}
+  // instead of rejecting. Without this check, two concurrent deliveries of the
+  // SAME Stripe event (SELECT-then-INSERT race above; Stripe does deliver
+  // duplicates under retry/timeout) would both pass the SELECT check, one
+  // INSERT would lose the event_id UNIQUE-constraint race, and — because the
+  // failure was swallowed — this function would still tell the caller "new
+  // event", double-firing every handler (including createNotification) for
+  // the same event.id. Distinguish the harmless race (dedupe, don't reprocess)
+  // from a genuine DB failure (must NOT be reported as deduped — that would
+  // ack a webhook to Stripe that we never actually processed).
+  if (!result.success) {
+    const isDuplicateKey = /unique constraint|duplicate key/i.test(result.error || '');
+    if (isDuplicateKey) {
+      logger.info(
+        `[Stripe Webhook] Concurrent duplicate insert for event ${event.id} — treating as deduped`
+      );
+      return false;
+    }
+    throw new Error(`stripe_events insert failed: ${result.error || 'unknown error'}`);
+  }
   return true;
 }
 
-async function markStripeEventProcessed(
+export async function markStripeEventProcessed(
   event: StripeTypes.Event,
   opts: { organizationId?: string | null } = {}
 ): Promise<void> {
@@ -754,7 +779,7 @@ async function getOrgIdFromCustomer(customerId: string): Promise<string | null> 
 /**
  * Helper: Create notification for organization admins
  */
-async function createNotification(
+export async function createNotification(
   orgId: string,
   type: string,
   title: string,
