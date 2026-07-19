@@ -81,8 +81,8 @@ export default function StyleGuidePage(): React.ReactElement {
               aria-pressed={tab === t.id}
               className={`h-9 rounded-full border px-3 text-sm font-medium transition-colors ${
                 tab === t.id
-                  ? 'border-slate-300 bg-slate-900/[0.07] text-slate-900 dark:border-white/25 dark:bg-white/10 dark:text-slate-100'
-                  : 'border-slate-200/70 bg-white/70 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300'
+                  ? 'border-c-border bg-state-selected text-c-text'
+                  : 'border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-state-hover'
               }`}
             >
               {t.label}
