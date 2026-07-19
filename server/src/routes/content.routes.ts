@@ -36,8 +36,8 @@ router.get(
       const { contentType } = req.query as { contentType?: string };
 
       let query = `
-                SELECT id, name, slug, description, content_type as contentType,
-                       color, icon, sort_order as sortOrder, is_active as isActive
+                SELECT id, name, slug, description, content_type as "contentType",
+                       color, icon, sort_order as "sortOrder", is_active as "isActive"
                 FROM content_categories
                 WHERE is_active = 1
             `;
@@ -75,7 +75,7 @@ router.get(
       const { contentType } = req.query as { contentType?: string };
 
       let query = `
-                SELECT id, name, slug, content_type as contentType, color, usage_count as usageCount
+                SELECT id, name, slug, content_type as "contentType", color, usage_count as "usageCount"
                 FROM content_tags
                 WHERE is_active = 1
             `;

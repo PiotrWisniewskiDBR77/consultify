@@ -567,17 +567,17 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     let sql = `
       SELECT 
         r.id,
-        r.assessment_id as assessmentId,
-        r.project_id as projectId,
+        r.assessment_id as "assessmentId",
+        r.project_id as "projectId",
         r.name as name,
         r.status as status,
-        r.template_id as templateId,
-        r.builder_report_id as builderReportId,
-        r.created_by as createdBy,
-        r.created_at as createdAt,
-        r.updated_at as updatedAt,
-        a.name as assessmentName,
-        a.assessment_type as assessmentType
+        r.template_id as "templateId",
+        r.builder_report_id as "builderReportId",
+        r.created_by as "createdBy",
+        r.created_at as "createdAt",
+        r.updated_at as "updatedAt",
+        a.name as "assessmentName",
+        a.assessment_type as "assessmentType"
       FROM assessment_reports r
       LEFT JOIN assessments a ON r.assessment_id = a.id
       WHERE r.organization_id = ?
@@ -712,7 +712,7 @@ router.post('/:reportId/generate-initiatives', async (req: AuthRequest, res: Res
 
     // Resolve assessment context and ensure the report belongs to this org via assessments
     const reportRow = await queryHelpers.queryOne<any>(
-      `SELECT r.*, a.organization_id as orgId, a.status as assessmentStatus, a.id as assessmentId
+      `SELECT r.*, a.organization_id as "orgId", a.status as "assessmentStatus", a.id as "assessmentId"
        FROM assessment_reports r
        JOIN assessments a ON a.id = r.assessment_id
        WHERE r.id = ? AND a.organization_id = ?
@@ -882,7 +882,7 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
     const { reportId } = req.params;
 
     const reportRow = await get<any>(
-      `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType, a.status as assessmentStatus
+      `SELECT r.*, a.name as "assessmentName", a.assessment_type as "assessmentType", a.status as "assessmentStatus"
        FROM assessment_reports r
        LEFT JOIN assessments a ON a.id = r.assessment_id
        WHERE r.id = ? AND r.organization_id = ?`,
@@ -976,7 +976,7 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
     const format = String((req.query.format as string) || 'html').toLowerCase();
 
     const reportRow = await get<any>(
-      `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
+      `SELECT r.*, a.name as "assessmentName", a.assessment_type as "assessmentType"
        FROM assessment_reports r
        LEFT JOIN assessments a ON a.id = r.assessment_id
        WHERE r.id = ? AND r.organization_id = ?`,
@@ -1121,7 +1121,7 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
     const { templateId, language } = req.body || {};
 
     const reportRow = await get<any>(
-      `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType, a.status as assessmentStatus
+      `SELECT r.*, a.name as "assessmentName", a.assessment_type as "assessmentType", a.status as "assessmentStatus"
        FROM assessment_reports r
        LEFT JOIN assessments a ON a.id = r.assessment_id
        WHERE r.id = ? AND r.organization_id = ?`,
@@ -1557,7 +1557,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     const { action, language, customPrompt } = req.body || {};
 
     const reportRow = await get<any>(
-      `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
+      `SELECT r.*, a.name as "assessmentName", a.assessment_type as "assessmentType"
        FROM assessment_reports r
        LEFT JOIN assessments a ON a.id = r.assessment_id
        WHERE r.id = ? AND r.organization_id = ?`,
@@ -1689,7 +1689,7 @@ router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, re
     if (!reportRow) return res.status(404).json({ error: 'Report not found' });
 
     const rows = await all<any>(
-      `SELECT id, version, title, content, created_by as createdBy, created_at as createdAt
+      `SELECT id, version, title, content, created_by as "createdBy", created_at as "createdAt"
        FROM assessment_report_section_history
        WHERE report_id = ? AND section_id = ?
        ORDER BY version DESC
@@ -1799,7 +1799,7 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
 
     const report = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
+        `SELECT r.*, a.name as "assessmentName", a.assessment_type as "assessmentType"
          FROM assessment_reports r
          LEFT JOIN assessments a ON r.assessment_id = a.id
          WHERE r.id = ? AND r.organization_id = ?`,
@@ -1908,7 +1908,7 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
     const { reportId } = req.params;
 
     const row = await get<any>(
-      `SELECT id, builder_report_id as builderReportId
+      `SELECT id, builder_report_id as "builderReportId"
        FROM assessment_reports
        WHERE id = ? AND organization_id = ?`,
       [String(reportId), String(organizationId)]
@@ -1992,7 +1992,7 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
 
     // Resolve assessmentId for RBAC check
     const reportRow = await queryHelpers.queryOne<any>(
-      `SELECT r.id, r.status, r.assessment_id as assessmentId
+      `SELECT r.id, r.status, r.assessment_id as "assessmentId"
        FROM assessment_reports r
        WHERE r.id = ? AND r.organization_id = ?`,
       [String(reportId), String(organizationId)]
@@ -2100,7 +2100,7 @@ router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
     if (!organizationId || !userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const reportRow = await queryHelpers.queryOne<any>(
-      `SELECT r.id, r.status, r.assessment_id as assessmentId
+      `SELECT r.id, r.status, r.assessment_id as "assessmentId"
        FROM assessment_reports r
        WHERE r.id = ? AND r.organization_id = ?`,
       [String(reportId), String(organizationId)]
@@ -2208,7 +2208,7 @@ router.post('/:reportId/utilize', async (req: AuthRequest, res: Response) => {
     if (!organizationId || !userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const reportRow = await queryHelpers.queryOne<any>(
-      `SELECT r.id, r.status, r.assessment_id as assessmentId
+      `SELECT r.id, r.status, r.assessment_id as "assessmentId"
        FROM assessment_reports r
        WHERE r.id = ? AND r.organization_id = ?`,
       [String(reportId), String(organizationId)]
@@ -2260,7 +2260,7 @@ router.get('/:reportId/export/pdf', async (_req: AuthRequest, res: Response) => 
 
     const report = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT r.*, a.name as assessmentName
+        `SELECT r.*, a.name as "assessmentName"
          FROM assessment_reports r
          LEFT JOIN assessments a ON r.assessment_id = a.id
          WHERE r.id = ? AND r.organization_id = ?`,
@@ -2298,7 +2298,7 @@ router.get('/:reportId/export/pptx', async (_req: AuthRequest, res: Response) =>
 
     const report = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT r.*, a.name as assessmentName
+        `SELECT r.*, a.name as "assessmentName"
          FROM assessment_reports r
          LEFT JOIN assessments a ON r.assessment_id = a.id
          WHERE r.id = ? AND r.organization_id = ?`,
@@ -2339,7 +2339,7 @@ router.get('/:reportId/export/excel', async (_req: AuthRequest, res: Response) =
 
     const report = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT r.*, a.name as assessmentName
+        `SELECT r.*, a.name as "assessmentName"
          FROM assessment_reports r
          LEFT JOIN assessments a ON r.assessment_id = a.id
          WHERE r.id = ? AND r.organization_id = ?`,
@@ -2401,7 +2401,7 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
 
     const report = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT r.*, a.name as assessmentName, a.framework, a.status as assessmentStatus,
+        `SELECT r.*, a.name as "assessmentName", a.framework, a.status as "assessmentStatus",
                 a.form_data, a.organization_id, a.project_id
          FROM assessment_reports r
          LEFT JOIN assessments a ON r.assessment_id = a.id

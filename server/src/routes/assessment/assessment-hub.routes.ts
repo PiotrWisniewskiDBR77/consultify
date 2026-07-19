@@ -125,11 +125,11 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
       db.all(
         `SELECT 
                     id,
-                    organization_id as organizationId,
+                    organization_id as "organizationId",
                     name,
                     status,
-                    created_at as createdAt,
-                    updated_at as updatedAt,
+                    created_at as "createdAt",
+                    updated_at as "updatedAt",
                     COALESCE(framework_type, assessment_type, 'DRD') as type,
                     CASE COALESCE(framework_type, assessment_type, 'DRD')
                       WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
@@ -139,7 +139,7 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
                     END as projectName,
-                    framework_data as frameworkData,
+                    framework_data as "frameworkData",
                     completion_percent,
                     answers_json,
                     score_summary
@@ -190,11 +190,11 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       const params: (string | number)[] = [organizationId];
       let sql = `SELECT 
                     a.id,
-                    a.organization_id as organizationId,
+                    a.organization_id as "organizationId",
                     a.name,
                     COALESCE(w.status, a.status) as status,
-                    a.created_at as createdAt,
-                    a.updated_at as updatedAt,
+                    a.created_at as "createdAt",
+                    a.updated_at as "updatedAt",
                     COALESCE(a.framework_type, a.assessment_type, 'DRD') as type,
                     CASE COALESCE(a.framework_type, a.assessment_type, 'DRD')
                       WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
@@ -204,7 +204,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
                     END as projectName,
-                    a.framework_data as frameworkData,
+                    a.framework_data as "frameworkData",
                     a.completion_percent,
                     a.answers_json,
                     a.score_summary
@@ -303,11 +303,11 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       db.get(
         `SELECT 
                     id,
-                    organization_id as organizationId,
+                    organization_id as "organizationId",
                     name,
                     status,
-                    created_at as createdAt,
-                    updated_at as updatedAt,
+                    created_at as "createdAt",
+                    updated_at as "updatedAt",
                     COALESCE(framework_type, assessment_type, 'DRD') as type,
                     CASE COALESCE(framework_type, assessment_type, 'DRD')
                       WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
@@ -317,7 +317,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
                     END as projectName,
-                    framework_data as frameworkData,
+                    framework_data as "frameworkData",
                     completion_percent,
                     answers_json,
                     score_summary
