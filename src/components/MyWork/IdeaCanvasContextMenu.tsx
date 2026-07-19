@@ -13,6 +13,7 @@ import {
   Link2,
   ListChecks,
   Loader2,
+  MessageSquare,
   Network,
   Search,
   Sparkles,
@@ -57,6 +58,8 @@ export interface IdeaCanvasContextMenuProps {
   onGenerateProposal: (batch: AIProposalBatch) => void;
   onSendToChat?: (prompt: string) => void;
   onAttachKnowledge?: (nodeId: string) => void;
+  /** Whiteboard-only: open the node comment thread panel (blob-persisted). */
+  onOpenComments?: (nodeId: string) => void;
 }
 
 interface MenuItem {
@@ -114,6 +117,16 @@ const NODE_ACTIONS: MenuItem[] = [
     labelPl: 'Dołącz wiedzę',
     labelEn: 'Attach knowledge',
     nodeOnly: true,
+  },
+  // Whiteboard node comment thread (blob-persisted via node.data.comments[],
+  // rides the graph autosave — same contract as Process Flow).
+  {
+    id: 'wb_comments',
+    icon: MessageSquare,
+    labelPl: 'Komentarze',
+    labelEn: 'Comments',
+    nodeOnly: true,
+    tools: ['whiteboard'],
   },
   // V51-05: Whiteboard facilitation (generate→preview→apply via IdeaProposalReview)
   {
@@ -201,6 +214,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   onGenerateProposal,
   onSendToChat,
   onAttachKnowledge,
+  onOpenComments,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -229,6 +243,12 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
 
       if (item.id === 'attach_knowledge' && target.nodeId && onAttachKnowledge) {
         onAttachKnowledge(target.nodeId);
+        onClose();
+        return;
+      }
+
+      if (item.id === 'wb_comments' && target.nodeId && onOpenComments) {
+        onOpenComments(target.nodeId);
         onClose();
         return;
       }
@@ -280,6 +300,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
       isAccepted,
       isPl,
       onAttachKnowledge,
+      onOpenComments,
       onClose,
       onGenerateProposal,
       onSendToChat,

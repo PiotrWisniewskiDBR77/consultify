@@ -62,6 +62,13 @@ import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import {
+  appendComment as appendNodeComment,
+  readComments as readNodeComments,
+  removeComment as removeNodeComment,
+  type WhiteboardNodeComment,
+} from './whiteboard/nodes/whiteboardNodeComments';
+import { WhiteboardNodeCommentThread } from './whiteboard/nodes/WhiteboardNodeCommentThread';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
@@ -658,6 +665,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     nodeLabel?: string;
     nodeType?: string;
   }>({});
+  // Node comment threads — comments live in `node.data.comments[]` and ride the
+  // existing setNodes → onGraphChange → PUT /map autosave (blob contract,
+  // identical to Process Flow). Opened from the canvas context menu (PPM).
+  const [commentsPanelNodeId, setCommentsPanelNodeId] = useState<string | null>(null);
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashMenuPos, setSlashMenuPos] = useState<{ x: number; y: number } | undefined>();
   const [bgPattern, setBgPattern] = useState<CanvasBgPattern>('dots');
@@ -3332,7 +3343,57 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                 })
               );
             }}
+            onOpenComments={(nodeId) => setCommentsPanelNodeId(nodeId)}
           />
+
+          {commentsPanelNodeId &&
+            (() => {
+              const node = nodes.find((n) => n.id === commentsPanelNodeId);
+              if (!node) return null;
+              const nodeComments = readNodeComments(node.data);
+              return (
+                <WhiteboardNodeCommentThread
+                  open
+                  onClose={() => setCommentsPanelNodeId(null)}
+                  nodeId={commentsPanelNodeId}
+                  nodeLabel={String(node.data?.label || node.data?.text || commentsPanelNodeId)}
+                  comments={nodeComments}
+                  locked={locked}
+                  currentUser={currentUserName}
+                  isPl={!!isPl}
+                  onAddComment={(nodeId, comment: WhiteboardNodeComment) => {
+                    setNodes((nds) =>
+                      nds.map((n) =>
+                        n.id === nodeId
+                          ? {
+                              ...n,
+                              data: {
+                                ...n.data,
+                                comments: appendNodeComment(readNodeComments(n.data), comment),
+                              },
+                            }
+                          : n
+                      )
+                    );
+                  }}
+                  onDeleteComment={(nodeId, commentId) => {
+                    setNodes((nds) =>
+                      nds.map((n) =>
+                        n.id === nodeId
+                          ? {
+                              ...n,
+                              data: {
+                                ...n.data,
+                                comments: removeNodeComment(readNodeComments(n.data), commentId),
+                              },
+                            }
+                          : n
+                      )
+                    );
+                  }}
+                />
+              );
+            })()}
 
           <IdeaSlashCommandMenu
             open={slashMenuOpen}
