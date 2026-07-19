@@ -129,8 +129,20 @@ router.get(
       });
       return res.json(documents);
     } catch (error: any) {
-      logger.error('[Documents] Error fetching project documents:', error);
-      return res.status(500).json({ error: error.message });
+      logger.error('[Documents] Error fetching project documents:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_PROJECT_LIST_FAILED',
+            'Failed to load project documents.'
+          )
+        );
     }
   })
 );
@@ -157,8 +169,20 @@ router.get(
       });
       return res.json(documents);
     } catch (error: any) {
-      logger.error('[Documents] Error fetching user documents:', error);
-      return res.status(500).json({ error: error.message });
+      logger.error('[Documents] Error fetching user documents:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_USER_LIST_FAILED',
+            'Failed to load your documents.'
+          )
+        );
     }
   })
 );
@@ -226,8 +250,20 @@ router.get(
       });
       return res.json(documents);
     } catch (error: any) {
-      logger.error('[Documents] Error fetching documents:', error);
-      return res.status(500).json({ error: error.message });
+      logger.error('[Documents] Error fetching documents:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_ACCESSIBLE_READ_FAILED',
+            'Failed to load documents.'
+          )
+        );
     }
   })
 );
@@ -256,8 +292,15 @@ router.get(
       }
       return res.json(document);
     } catch (error: any) {
-      logger.error('[Documents] Error fetching document:', error);
-      return res.status(500).json({ error: error.message });
+      logger.error('[Documents] Error fetching document:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(req, 500, 'DOCUMENTS_GET_FAILED', 'Failed to load document.')
+        );
     }
   })
 );
@@ -292,8 +335,20 @@ router.get(
 
       return res.download(filePath, document.originalName || document.filename);
     } catch (error: any) {
-      logger.error('[Documents] Error downloading document:', error);
-      return res.status(500).json({ error: error.message });
+      logger.error('[Documents] Error downloading document:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_DOWNLOAD_FAILED',
+            'Failed to download document.'
+          )
+        );
     }
   })
 );
@@ -455,8 +510,20 @@ router.post(
         data: result,
       });
     } catch (error: any) {
-      logger.error('[Documents] Processing attention acknowledgement error:', error);
-      return res.status(500).json({ error: error.message || 'Acknowledgement failed' });
+      logger.error('[Documents] Processing attention acknowledgement error:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_ACK_FAILED',
+            'Failed to acknowledge processing attention.'
+          )
+        );
     }
   })
 );
@@ -512,8 +579,15 @@ router.put(
         document,
       });
     } catch (error: any) {
-      logger.error('[Documents] Move error:', error);
-      return res.status(500).json({ error: error.message });
+      logger.error('[Documents] Move error:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(req, 500, 'DOCUMENTS_MOVE_FAILED', 'Failed to move document.')
+        );
     }
   })
 );
@@ -548,8 +622,15 @@ router.delete(
 
       return res.json({ message: 'Document deleted' });
     } catch (error: any) {
-      logger.error('[Documents] Delete error:', error);
-      return res.status(500).json({ error: error.message });
+      logger.error('[Documents] Delete error:', {
+        error,
+        correlationId: resolveDocumentsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(req, 500, 'DOCUMENTS_DELETE_FAILED', 'Failed to delete document.')
+        );
     }
   })
 );

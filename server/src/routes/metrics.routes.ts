@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
  * GET /api/metrics/conversion-intelligence
  * Conversion intelligence metrics
  */
-router.get('/conversion-intelligence', async (_req, res) => {
+router.get('/conversion-intelligence', async (req, res) => {
   try {
     return res.status(503).json({
       statusCode: 503,
@@ -84,8 +84,17 @@ router.get('/conversion-intelligence', async (_req, res) => {
     });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching conversion intelligence:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching conversion intelligence, degrading', {
+      err,
+      correlationId: (req as Request & { correlationId?: string }).correlationId,
+    });
+    return res.json({
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
+      degraded: true,
+    });
   }
 });
 
@@ -190,8 +199,11 @@ router.get('/funnels', async (req, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching funnels:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching funnels, degrading', {
+      err,
+      correlationId: (req as Request & { correlationId?: string }).correlationId,
+    });
+    return res.json({ funnels: {}, period: {}, degraded: true });
   }
 });
 
@@ -314,8 +326,11 @@ router.get('/attribution', async (req, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching attribution:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching attribution, degrading', {
+      err,
+      correlationId: (req as Request & { correlationId?: string }).correlationId,
+    });
+    return res.json({ channels: [], totalTrials: 0, totalPaid: 0, overallConversionRate: 0, degraded: true });
   }
 });
 
@@ -455,8 +470,11 @@ router.get('/partners', async (req, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching partners:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching partners, degrading', {
+      err,
+      correlationId: (req as Request & { correlationId?: string }).correlationId,
+    });
+    return res.json({ leaderboard: [], period: {}, total: 0, degraded: true });
   }
 });
 
@@ -545,8 +563,11 @@ router.get('/help', async (req, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching help metrics:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching help metrics, degrading', {
+      err,
+      correlationId: (req as Request & { correlationId?: string }).correlationId,
+    });
+    return res.json({ byPlaybook: [], totalStarted: 0, totalCompleted: 0, overallCompletionRate: 0, degraded: true });
   }
 });
 
@@ -570,8 +591,11 @@ router.get('/org/overview', requireAuth, async (req: AuthRequest, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching organization overview:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching organization overview, degrading', {
+      err,
+      correlationId: (req as AuthRequest & { correlationId?: string }).correlationId,
+    });
+    return res.json({ degraded: true });
   }
 });
 
@@ -591,8 +615,11 @@ router.get('/org/help', requireAuth, async (req: AuthRequest, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching organization help metrics:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching organization help metrics, degrading', {
+      err,
+      correlationId: (req as AuthRequest & { correlationId?: string }).correlationId,
+    });
+    return res.json({ degraded: true });
   }
 });
 
@@ -612,8 +639,11 @@ router.get('/org/team', requireAuth, async (req: AuthRequest, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching organization team metrics:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching organization team metrics, degrading', {
+      err,
+      correlationId: (req as AuthRequest & { correlationId?: string }).correlationId,
+    });
+    return res.json({ degraded: true });
   }
 });
 
@@ -634,8 +664,11 @@ router.get('/org/events', requireAuth, async (req: AuthRequest, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching metric events:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching metric events, degrading', {
+      err,
+      correlationId: (req as AuthRequest & { correlationId?: string }).correlationId,
+    });
+    return res.json({ events: [], degraded: true });
   }
 });
 
@@ -655,8 +688,11 @@ router.get('/org/ai-analytics', requireAuth, async (req: AuthRequest, res) => {
     return res.json(data);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('[MetricsRoutes] Error fetching AI analytics:', err);
-    return res.status(500).json({ error: err.message });
+    logger.warn('[MetricsRoutes] Error fetching AI analytics, degrading', {
+      err,
+      correlationId: (req as AuthRequest & { correlationId?: string }).correlationId,
+    });
+    return res.json({ degraded: true });
   }
 });
 
