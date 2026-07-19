@@ -318,7 +318,117 @@ async function executeWithLogging<T>(
 /**
  * Helper to convert SQLite params (?) to Postgres params ($1, $2)
  */
-function adaptQuery(sql: string): string {
+/**
+ * Replace SQLite-style positional placeholders (`?`) with Postgres-style
+ * numbered placeholders (`$1`, `$2`, ...), but ONLY when the `?` is a real
+ * bind placeholder — i.e. it appears in ordinary SQL text, NOT inside a
+ * string literal, an identifier literal, or a comment.
+ *
+ * Context tracked while scanning char-by-char:
+ *   - single-quoted string literal: '...'   (Postgres escape = doubled '')
+ *   - double-quoted identifier:     "..."   (Postgres escape = doubled "")
+ *   - line comment:                 -- ... \n
+ *   - block comment:                /* ... *\/
+ *
+ * A `?` inside any of those contexts (e.g. a regex `col ~ '.*?'`, a JSON
+ * path, or a comment containing `?`) is left untouched. This is a strict
+ * superset of the previous naive `sql.replace(/\?/g, ...)` behaviour: for
+ * queries whose only `?` are bind placeholders the output is byte-identical.
+ */
+export function replacePositionalPlaceholders(sql: string): string {
+  let result = '';
+  let paramIndex = 1;
+  let inSingle = false; // inside '...'
+  let inDouble = false; // inside "..."
+  let inLineComment = false; // inside -- ...
+  let inBlockComment = false; // inside /* ... */
+  const n = sql.length;
+  let i = 0;
+
+  while (i < n) {
+    const ch = sql[i];
+    const next = i + 1 < n ? sql[i + 1] : '';
+
+    if (inLineComment) {
+      result += ch;
+      if (ch === '\n') inLineComment = false;
+      i++;
+      continue;
+    }
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        result += '*/';
+        i += 2;
+        inBlockComment = false;
+        continue;
+      }
+      result += ch;
+      i++;
+      continue;
+    }
+    if (inSingle) {
+      if (ch === "'" && next === "'") {
+        // Escaped single quote ('') — stays inside the string literal.
+        result += "''";
+        i += 2;
+        continue;
+      }
+      result += ch;
+      if (ch === "'") inSingle = false;
+      i++;
+      continue;
+    }
+    if (inDouble) {
+      if (ch === '"' && next === '"') {
+        // Escaped double quote ("") — stays inside the quoted identifier.
+        result += '""';
+        i += 2;
+        continue;
+      }
+      result += ch;
+      if (ch === '"') inDouble = false;
+      i++;
+      continue;
+    }
+
+    // Not currently inside any string/identifier/comment context.
+    if (ch === "'") {
+      inSingle = true;
+      result += ch;
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      inDouble = true;
+      result += ch;
+      i++;
+      continue;
+    }
+    if (ch === '-' && next === '-') {
+      inLineComment = true;
+      result += '--';
+      i += 2;
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      inBlockComment = true;
+      result += '/*';
+      i += 2;
+      continue;
+    }
+    if (ch === '?') {
+      result += `$${paramIndex++}`;
+      i++;
+      continue;
+    }
+    result += ch;
+    i++;
+  }
+
+  return result;
+}
+
+export function adaptQuery(sql: string): string {
   // SQLite transaction flavor → Postgres
   // SQLite uses BEGIN IMMEDIATE/EXCLUSIVE to acquire a write lock early.
   // Postgres doesn't support those modifiers; BEGIN is sufficient.
@@ -371,10 +481,11 @@ function adaptQuery(sql: string): string {
     );
   }
 
-  let paramIndex = 1;
-  // Replace ? with $1, $2, etc.
-  // Also replace SQLite specific functions if possible
-  adapted = adapted.replace(/\?/g, () => `$${paramIndex++}`);
+  // Replace ? with $1, $2, etc. — context-aware so that `?` inside string
+  // literals ('...'), quoted identifiers ("..."), or comments (-- / block)
+  // is NOT mistaken for a bind placeholder (would otherwise emit a bogus
+  // $n and cause 42P18 / wrong-parameter errors, e.g. regex `~ '.*?'`).
+  adapted = replacePositionalPlaceholders(adapted);
 
   // Replace pragma_page_count()/pragma_page_size() with PostgreSQL equivalent
   if (adapted.includes('pragma_page_count') || adapted.includes('pragma_page_size')) {
