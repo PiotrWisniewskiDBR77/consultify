@@ -26,6 +26,7 @@ import {
   CAPABILITY_QUADRANT_META,
 } from '../../src/config/capabilitymapper/capabilityMatrixEngine';
 import type { CapabilityItem, CapabilityMapperData } from '../../src/config/capabilitymapper/moveValidator';
+import { buildCapabilityMapperConversationProtocol } from '../../src/hooks/discovery/toolAi/capabilityMapper';
 
 const cap = (id: string, overrides: Partial<CapabilityItem> = {}): CapabilityItem => ({
   id,
@@ -370,5 +371,43 @@ describe('Capability Mapper O3 — maturity x importance matrix (core vs commodi
     expect(pl).not.toEqual(en);
     expect(pl).toContain('wykonalność');
     expect(en).toContain('feasibility');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REJESTR (o3-cluster-proof, dowód dla o3-focus-dead #2): the chat mentor for
+// the "capabilities" step must carry the SAME laddered per-capability
+// question bank as the wizard (single source of truth), mirroring
+// buildFocusTradeoffConversationProtocol / buildPortfolioConversationProtocol.
+// Was wired in commit 71732e300d (o3-focus-dead) but never asserted by a
+// test — the underlying capabilityMapperO3 suite only covered the ladder
+// content itself, not that buildCapabilityMapperConversationProtocol reaches
+// runtime through useToolAI.ts's interviewProtocol ternary.
+// ---------------------------------------------------------------------------
+describe('buildCapabilityMapperConversationProtocol', () => {
+  it('is a no-op ("") for steps other than "capabilities"', () => {
+    expect(buildCapabilityMapperConversationProtocol(undefined)).toBe('');
+    expect(buildCapabilityMapperConversationProtocol('mission')).toBe('');
+    expect(buildCapabilityMapperConversationProtocol('input')).toBe('');
+    expect(buildCapabilityMapperConversationProtocol('correlations')).toBe('');
+    expect(buildCapabilityMapperConversationProtocol('outputs')).toBe('');
+  });
+
+  it('embeds the full 4-level laddered question bank for the "capabilities" step', () => {
+    const protocol = buildCapabilityMapperConversationProtocol('capabilities', 'en');
+    expect(protocol).toContain('INTERVIEW PROTOCOL');
+    // Every rung of the ladder (identification -> maturity evidence ->
+    // importance & gap -> build/buy/partner/sustain move) must be present —
+    // single source of truth shared with capabilityQuestionBank.ts.
+    expect(protocol).toContain('c1-identification');
+    expect(protocol).toContain('c2-maturity-source');
+    expect(protocol).toContain('c3-importance-gap');
+    expect(protocol).toContain('c4-move');
+  });
+
+  it('localizes the ladder into Polish when language="pl"', () => {
+    const protocol = buildCapabilityMapperConversationProtocol('capabilities', 'pl');
+    expect(protocol).toContain('c1-identification');
+    expect(protocol.length).toBeGreaterThan(0);
   });
 });
