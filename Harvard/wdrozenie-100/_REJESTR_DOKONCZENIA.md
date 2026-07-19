@@ -31,18 +31,43 @@
    wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
    = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
 
-## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W3)
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W4)
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | 52 | 5 | 3 | 1 | 1 | 62 |
-| B · Harvey (HP-0…27) | 21 | 5 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 14 | 43 | 11 | 2 | 0 | 70 |
+| A · Harvard (H1-H6) | 55 | 3 | 2 | 1 | 1 | 62 |
+| B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
+| C · Oxford (O1-O8) | 15 | 42 | 11 | 2 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 26 | 2 | 17 | 7 | 2 | 54 |
-| **SUMA** | **125** | **73** | **55** | **13** | **4** | **270** |
+| E · Przekroje (+nowe) | 30 | 1 | 23 | 7 | 2 | 63 |
+| **SUMA** | **134** | **68** | **60** | **13** | **4** | **279** |
 
-**Postęp: 138/270 rozstrzygnięte (51%).** (RAZEM 265→270: +5 nowych RED wykrytych w falach — patrz niżej.)
+**Postęp: 147/279 rozstrzygnięte (53%).** (RAZEM 270→279: +9 nowych RED wykrytych przez łowców 500-tek — patrz FALA-W4.)
+
+### FALA-W4 (2026-07-19, deploy 3838cbebd7, demo-safe-2026-07-19) — 13 gałęzi (8 kod z migracjami + 5 test-only), bramki zielone (server tsc 146/204 0-nowych, kolory/artefakt PASS, eslint 0 błędów, zero zmian FE)
+**Domknięte z dowodem:**
+- **H1.6** ⬜RED→✅ — Start Execution naprawiony: migracja `execution_started_at` (autorun idempotentny) + case `executing`→`EXECUTING` + gate case-insensitive. 4/4 E2E.
+- **H3.1** 🟡→✅ — SWOT literal E2E: create→4 kwadranty→reload→W2 realną bramką `swotTensionEngine`→conclusions (confidence=high). 1/1.
+- **H6.4** 🟡→✅ — fail-soft: 3 najważniejsze handlery wg doktryny (enrichment→degraded 200, zapisy→fail-closed 500+code). 10/10 unit. (Zostaje 163/166 gołych 500 = osobny sweep.)
+- **HP-8** 🟡→✅ — statusBar 5/5 typów (Decision/Insight/Initiative/Report/Deck), flaga ON. 4/4 E2E + 10/10 komponent. (Luka: brak sesji odbioru wizualnego 3 nowych — Vegas.)
+- **O5** 🟡→✅ — promptRegistry wpięty end-to-end (26 assetów+endpoint+UI), dowód HTTP 16/16+3/3.
+- **T5** ⬜→✅ — sanitizer double-escape: 9 plików decode-before-store (projects/assessments/programs/share/discovery/table-platform/decision-playbook/assessment-reports). 4/4.
+- **T2** 🟡→✅ — SLA F3/F5 E2E: overdue→escalate→outbox, zero dubli. 3/3.
+- **RED#4 mgmt-reports** ⬜→✅ — CHECK constraint 5 typów (migracja) + `AVG(CAST)` + docytowane aliasy. 2/2.
+- **DOC-1** (Teresa→Word „dokument z czatu") — naprawiony: był TIMEOUT (one-shot 9 bloków >30s), fix=chunking 2/partię współbieżność 4 →9/9 ~26s + DOC-2 anti-orphan. teresa-six 2×7/7.
+- **★ SWEEP 500-tek W4 (3 łowców RED, ~270 endpointów real-runtime na parity):** 15 realnych schema-500 znalezionych, **8 naprawionych migracjami addytywnymi**: `initiatives.actual_end_date` (v8, 5 ścieżek maskowanych przez fallback=true), `initiatives.blocked_reason`, 3 tabele pmo (`initiative_watchers/history/comments`), `initiative_stakeholders.influence/interest`, `assessment_reports.version/content_json`, + `business_value` TEXT cast w portfolio-rollups. Wspólna przyczyna: legacy migracje 247/334/335 (3-cyfrowe+SQLite-izmy) NIGDY nie odpalają.
+- **i18n help.*** — złota reguła: NIE bug (fallbackLng:'en' pokrywa), zero fałszywych tłumaczeń. Domknięte decyzją.
+
+**★ NOWE RED (⬜JA/DEC — do domknięcia; +9 do RAZEM):**
+1. 3 całkowicie brakujące tabele assessment: `assessment_versions`, `assessment_reviews`, `assessment_questions` (potrzebny projekt schematu, nie ADD COLUMN) — 500 na versions/pending-reviews/evidence-report.
+2. `assessment-workflow` (DEPRECATED router, wciąż live): `organization_id` INTEGER vs tekstowe org-id → 22P02; `initiative-batches` czyta nieistniejące kolumny (bug SQL).
+3. `business_value` TEXT = modeling-debt (cast punktowy załatwił rollups, ale kolumna sumowana gdzie indziej — decyzja typowania).
+4. `risk_register` nie istnieje na parity → `generatePortfolioHealthReport` 500 (chip task_47c195ea).
+5. **★ Systemowe: `DbPromise fallback=true`** zamienia każdy schema-500 w cichy 404/pustkę → maskuje przyszłe RED-y w całym v8 (wybór platformowy — decyzja).
+6. **★ env: `normalizeBaseUrl` obcina `.../v1/messages`→goły host → 404 dla wszystkich callów LLM** jeśli baza trzyma pełny endpoint (chip task_b731cd4d; demo działa=ma poprawną wartość, zweryfikować prod).
+7. Klasa `.sql.sql` (podwójne rozszerzenie, np. `025_ai_actions_complete.sql.sql`) + 3-cyfrowe legacy migracje NIGDY nie odpalają → schema-drift (domyka B13 baseline-gap fresh-env).
+
+**W toku (chipy Piotra + B13):** TaskService.createTask 500 (RED#3, chip) · notification_outbox drain+SLA (RED#5, chip) · T10 migracje fresh-env baseline-gap (B13).
 
 ### O6.2/O6.3 🟡→✅ (2026-07-19) — benchmark finansowy z dowodem
 `oxford-o6-benchmark` (77691e2771/6d06a04739) był już zmergowany na `origin/demo` (ancestor

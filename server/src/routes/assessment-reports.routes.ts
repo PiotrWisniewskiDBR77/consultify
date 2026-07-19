@@ -1378,8 +1378,14 @@ router.post('/:reportId/sections', async (req: AuthRequest, res: Response) => {
     if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
-    const { sectionType, axisId, areaId, title: rawTitle, content: rawContent, orderIndex } =
-      req.body || {};
+    const {
+      sectionType,
+      axisId,
+      areaId,
+      title: rawTitle,
+      content: rawContent,
+      orderIndex,
+    } = req.body || {};
     // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
     // middleware escaped, before storing.
     const title = typeof rawTitle === 'string' ? decodeHtmlEntities(rawTitle) : rawTitle;

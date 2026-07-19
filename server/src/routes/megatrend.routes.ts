@@ -211,9 +211,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zaktualizować trendu', code: 'MEGATREND_CUSTOM_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować trendu',
+        code: 'MEGATREND_CUSTOM_UPDATE_FAILED',
+      });
     }
   })
 );

@@ -74,7 +74,8 @@ export class DecisionPlaybookController {
       // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
       // middleware escaped, before storing.
       if (typeof body.name === 'string') body.name = decodeHtmlEntities(body.name);
-      if (typeof body.description === 'string') body.description = decodeHtmlEntities(body.description);
+      if (typeof body.description === 'string')
+        body.description = decodeHtmlEntities(body.description);
       const id = uuidv4();
 
       if (body.isDefault) {
@@ -152,7 +153,8 @@ export class DecisionPlaybookController {
       const body = req.body;
       // T5 (Z139 follow-up): decode HTML entities before storing — see createPlaybook.
       if (typeof body.name === 'string') body.name = decodeHtmlEntities(body.name);
-      if (typeof body.description === 'string') body.description = decodeHtmlEntities(body.description);
+      if (typeof body.description === 'string')
+        body.description = decodeHtmlEntities(body.description);
 
       if (body.isDefault && !existing.is_default) {
         await queryHelpers.queryRun(

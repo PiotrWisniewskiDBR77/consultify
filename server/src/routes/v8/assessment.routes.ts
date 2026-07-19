@@ -510,7 +510,9 @@ router.put(
     // T5 (Z139 follow-up): decode HTML entities before storing — mirrors
     // AssessmentController.updateAssessment.
     const nextName =
-      typeof req.body?.name === 'string' ? decodeHtmlEntities(req.body.name) : (req.body?.name ?? null);
+      typeof req.body?.name === 'string'
+        ? decodeHtmlEntities(req.body.name)
+        : (req.body?.name ?? null);
 
     await queryHelpers.queryRun(
       `UPDATE assessments

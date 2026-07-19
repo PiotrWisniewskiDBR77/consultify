@@ -253,9 +253,7 @@ export async function generateBlockProse(
   // backwards-compatibility; otherwise we chunk. The batches run sequentially
   // — the whole generation is a background job (watchdog budget 8 min), so a
   // handful of ~10 s calls is safe, and no single call risks the abort.
-  const batches = options.maxTokens
-    ? [targets]
-    : chunk(targets, PROSE_BATCH_SIZE);
+  const batches = options.maxTokens ? [targets] : chunk(targets, PROSE_BATCH_SIZE);
 
   // Build a blockId -> generated payload map, restricted to known targets.
   const targetById = new Map(targets.map((t) => [t.blockId, t]));
