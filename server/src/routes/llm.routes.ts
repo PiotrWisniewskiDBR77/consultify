@@ -1085,8 +1085,8 @@ router.get(
               usage = await dbGet(
                 `SELECT
                    COUNT(*) as requests,
-                   COALESCE(SUM(estimated_cost_usd), 0) as costUsd,
-                   COALESCE(AVG(latency_ms), 0) as avgLatencyMs
+                   COALESCE(SUM(estimated_cost_usd), 0) as "costUsd",
+                   COALESCE(AVG(latency_ms), 0) as "avgLatencyMs"
                  FROM ai_usage_logs
                  WHERE purpose IN (${placeholders})
                    ${organizationId ? 'AND organization_id = ?' : ''}

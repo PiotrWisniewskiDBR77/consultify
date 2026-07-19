@@ -418,9 +418,9 @@ router.get(
 
       // Get basic metrics from llm_logs
       const metricsResult = (await dbAll(`
-                SELECT 
-                    COUNT(*) as totalRequests,
-                    AVG(latency_ms) as avgLatencyMs,
+                SELECT
+                    COUNT(*) as "totalRequests",
+                    AVG(latency_ms) as "avgLatencyMs",
                     SUM(CASE WHEN error IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as uptime50
                 FROM (
                     SELECT latency_ms, error FROM llm_logs 
@@ -471,7 +471,7 @@ router.get(
                     COALESCE(
                         (SELECT AVG(latency_ms) FROM llm_logs WHERE provider = lp.provider ORDER BY created_at DESC LIMIT 10),
                         0
-                    ) as avgLatency
+                    ) as "avgLatency"
                 FROM llm_providers lp
                 WHERE is_active = 1
             `)) as Array<{

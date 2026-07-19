@@ -8928,11 +8928,11 @@ router.get(
     try {
       const stats = await dbGet(
         `SELECT
-           COUNT(*) as totalResponses,
+           COUNT(*) as "totalResponses",
            AVG(CAST(citations_count AS REAL) / NULLIF(
              json_array_length(json_extract(response_json, '$.answer')), 0
-           )) as avgCoverage,
-           SUM(CASE WHEN citations_count = 0 THEN 1 ELSE 0 END) as responsesBelowThreshold
+           )) as "avgCoverage",
+           SUM(CASE WHEN citations_count = 0 THEN 1 ELSE 0 END) as "responsesBelowThreshold"
          FROM advisor_response_log
          WHERE ${where}`,
         params

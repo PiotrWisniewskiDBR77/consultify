@@ -81,7 +81,7 @@ router.get(
     let orgTemplates: any[] = [];
     try {
       orgTemplates = await dbAll(
-        `SELECT id, name, category, 0 as isSystem
+        `SELECT id, name, category, 0 as "isSystem"
          FROM report_templates
          WHERE organization_id = ? ORDER BY name`,
         [orgId]

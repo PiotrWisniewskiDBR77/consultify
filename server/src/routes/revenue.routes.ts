@@ -113,7 +113,7 @@ router.get(
                     COUNT(CASE WHEN change_type = 'upgrade' THEN 1 END) as upgrades,
                     COUNT(CASE WHEN change_type = 'downgrade' THEN 1 END) as downgrades,
                     COUNT(CASE WHEN change_type = 'cancel' THEN 1 END) as cancellations,
-                    COALESCE(SUM(proration_amount), 0) as totalProration
+                    COALESCE(SUM(proration_amount), 0) as "totalProration"
                 FROM subscription_changes
             `)) as any;
 
@@ -243,12 +243,12 @@ router.get(
       const stats = (await dbGet(`
                 SELECT 
                     COUNT(*) as total,
-                    COALESCE(SUM(COALESCE(total_amount, revenue_amount, amount, 0)), 0) as totalRevenue,
-                    COALESCE(SUM(recognized_amount), 0) as recognizedRevenue,
-                    COALESCE(SUM(remaining_amount), 0) as remainingRevenue,
-                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingItems,
-                    COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as inProgressItems,
-                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedItems
+                    COALESCE(SUM(COALESCE(total_amount, revenue_amount, amount, 0)), 0) as "totalRevenue",
+                    COALESCE(SUM(recognized_amount), 0) as "recognizedRevenue",
+                    COALESCE(SUM(remaining_amount), 0) as "remainingRevenue",
+                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as "pendingItems",
+                    COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as "inProgressItems",
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as "completedItems"
                 FROM revenue_recognition
             `)) as any;
 
@@ -487,7 +487,7 @@ router.get(
                     COUNT(*) as total,
                     AVG(accuracy) as accuracy,
                     COUNT(DISTINCT scenario) as scenarios,
-                    COUNT(CASE WHEN status = 'active' THEN 1 END) as activeForecasts
+                    COUNT(CASE WHEN status = 'active' THEN 1 END) as "activeForecasts"
                 FROM revenue_forecasts
             `)) as any;
 

@@ -423,19 +423,19 @@ router.get('/partners', async (req, res) => {
       leaderboard =
         (await dbAll(
           `
-                SELECT 
+                SELECT
                     pr.partner_id,
-                    COALESCE(p.company_name, pr.partner_name, 'Unknown Partner') as partnerName,
-                    COALESCE(p.tier, pr.partner_type, 'AFFILIATE') as partnerType,
-                    COALESCE(SUM(pr.revenue_generated), 0) as totalRevenue,
-                    COUNT(DISTINCT pr.organization_id) as orgCount,
-                    COALESCE(SUM(pr.commission_earned), 0) as totalCommission
+                    COALESCE(p.company_name, pr.partner_name, 'Unknown Partner') as "partnerName",
+                    COALESCE(p.tier, pr.partner_type, 'AFFILIATE') as "partnerType",
+                    COALESCE(SUM(pr.revenue_generated), 0) as "totalRevenue",
+                    COUNT(DISTINCT pr.organization_id) as "orgCount",
+                    COALESCE(SUM(pr.commission_earned), 0) as "totalCommission"
                 FROM partner_referrals pr
                 LEFT JOIN partners p ON pr.partner_id = p.id
                 WHERE pr.created_at > datetime('now', '-' || ? || ' days')
                 AND pr.status = 'ACTIVE'
                 GROUP BY pr.partner_id
-                ORDER BY totalRevenue DESC
+                ORDER BY "totalRevenue" DESC
                 LIMIT 10
             `,
           [days]
@@ -449,9 +449,9 @@ router.get('/partners', async (req, res) => {
                         p.id as partner_id,
                         p.company_name as "partnerName",
                         p.tier as "partnerType",
-                        COALESCE(p.total_revenue, 0) as totalRevenue,
-                        COALESCE(p.referral_count, 0) as orgCount,
-                        COALESCE(p.total_commission, 0) as totalCommission
+                        COALESCE(p.total_revenue, 0) as "totalRevenue",
+                        COALESCE(p.referral_count, 0) as "orgCount",
+                        COALESCE(p.total_commission, 0) as "totalCommission"
                     FROM partners p
                     WHERE p.status = 'active' OR p.status = 'ACTIVE'
                     ORDER BY p.total_revenue DESC
@@ -504,7 +504,7 @@ router.get('/help', async (req, res) => {
                     playbook_key as "playbookKey",
                     COUNT(*) as started,
                     COUNT(CASE WHEN completed_at IS NOT NULL THEN 1 END) as completed,
-                    ROUND(AVG(completion_percentage), 0) as avgProgress
+                    ROUND(AVG(completion_percentage), 0) as "avgProgress"
                 FROM help_progress
                 WHERE started_at > datetime('now', '-' || ? || ' days')
                 GROUP BY playbook_key
@@ -519,7 +519,7 @@ router.get('/help', async (req, res) => {
           (await dbAll(
             `
                     SELECT 
-                        json_extract(metadata, '$.playbookKey') as playbookKey,
+                        json_extract(metadata, '$.playbookKey') as "playbookKey",
                         COUNT(CASE WHEN event_type = 'view' OR event_type = 'start' THEN 1 END) as started,
                         COUNT(CASE WHEN event_type = 'complete' THEN 1 END) as completed
                     FROM help_analytics
