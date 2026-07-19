@@ -612,9 +612,18 @@ export class InvitationServiceClass {
       // Canonical membership table (preferred)
       try {
         const memberId = this.deps.uuidv4();
+        // NOTE: project_members' real unique constraint is (project_id, user_id), not `id`
+        // (a freshly generated UUID per call). Without an explicit conflict target on the
+        // real constraint, re-inviting the same user to the same project inserted a second
+        // membership row instead of updating the existing one.
         await this.deps.db.run(
-          `INSERT OR REPLACE INTO project_members (id, project_id, user_id, project_role, allocation_percent, permissions, added_by_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO project_members (id, project_id, user_id, project_role, allocation_percent, permissions, added_by_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (project_id, user_id) DO UPDATE SET
+             project_role = EXCLUDED.project_role,
+             allocation_percent = EXCLUDED.allocation_percent,
+             permissions = EXCLUDED.permissions,
+             added_by_id = EXCLUDED.added_by_id`,
           [
             memberId,
             invitation.project_id,
@@ -645,9 +654,17 @@ export class InvitationServiceClass {
 
       // Legacy membership table (backward compatibility)
       try {
+        // NOTE: project_users' PK is the composite (project_id, user_id). A single-column
+        // ON CONFLICT (project_id) is not a valid conflict target for that constraint —
+        // Postgres raises "no unique or exclusion constraint matching the ON CONFLICT
+        // specification", which the outer catch below silently swallowed, so this legacy
+        // compat table was never actually written to.
         await this.deps.db.run(
-          `INSERT OR REPLACE INTO project_users (project_id, user_id, role, assigned_at)
-           VALUES (?, ?, ?, datetime('now'))`,
+          `INSERT INTO project_users (project_id, user_id, role, assigned_at)
+           VALUES (?, ?, ?, datetime('now'))
+           ON CONFLICT (project_id, user_id) DO UPDATE SET
+             role = EXCLUDED.role,
+             assigned_at = EXCLUDED.assigned_at`,
           [invitation.project_id, userId, rawProjectRole]
         );
       } catch {
