@@ -159,9 +159,9 @@ router.get(
       const offset = (pageNum - 1) * limitNum;
 
       let query = `
-        SELECT 
+        SELECT
           f.*,
-          u.full_name as user_name,
+          COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.display_name, u.email) as user_name,
           u.email as user_email
         FROM ai_feedback f
         LEFT JOIN users u ON f.user_id = u.id
@@ -188,10 +188,9 @@ router.get(
 
       // Get total count
       const countResult = (await dbGet(
-        query.replace(
-          'SELECT \n          f.*,\n          u.full_name as user_name,\n          u.email as user_email',
-          'SELECT COUNT(*) as count'
-        ),
+        // Robust to the SELECT-list content (regex, not an exact literal) so the
+        // user_name expression can change without silently breaking the count.
+        query.replace(/SELECT[\s\S]*?FROM ai_feedback f/, 'SELECT COUNT(*) as count FROM ai_feedback f'),
         params
       )) as { count: number } | null;
 
@@ -271,9 +270,9 @@ router.get(
       const { status = 'active', limit = '50' } = req.query;
 
       let query = `
-        SELECT 
+        SELECT
           p.*,
-          u.full_name as user_name
+          COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.display_name, u.email) as user_name
         FROM ai_style_learning_patterns p
         LEFT JOIN users u ON p.user_id = u.id
         WHERE (p.organization_id = ? OR p.organization_id IS NULL)

@@ -297,9 +297,9 @@ router.get(
       }
 
       let query = `
-            SELECT 
+            SELECT
                 f.*,
-                u.full_name as user_name,
+                COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.display_name, u.email) as user_name,
                 u.email as user_email
             FROM ai_feedback f
             LEFT JOIN users u ON f.user_id = u.id

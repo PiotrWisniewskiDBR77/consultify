@@ -34,11 +34,15 @@ export async function getProjectDetails(params: ProjectParams): Promise<Record<s
   const { projectId } = params;
 
   const project = await DbPromise.get<ProjectRow>(
-    `SELECT 
-            p.id, p.name, p.description, p.status, p.progress,
-            p.start_date, p.end_date, p.owner_id, p.organization_id,
+    // Silent-degr fix: projects has no `progress`/`end_date` columns
+    // (real: progress_pct, target_end_date/actual_end_date). With fallback:false
+    // this query THREW on every call, so getProjectDetails always errored out.
+    `SELECT
+            p.id, p.name, p.description, p.status, p.progress_pct AS progress,
+            p.start_date, COALESCE(p.actual_end_date, p.target_end_date) AS end_date,
+            p.owner_id, p.organization_id,
             p.created_at, p.updated_at
-         FROM projects p 
+         FROM projects p
          WHERE p.id = ?`,
     [projectId],
     { fallback: false }
@@ -51,7 +55,13 @@ export async function getProjectDetails(params: ProjectParams): Promise<Record<s
   let team: TeamRow[] = [];
   try {
     team = await DbPromise.all<TeamRow>(
-      `SELECT u.id, u.name, u.email, pm.role
+      // Silent-degr fix: users has no `name` (first_name/last_name), and
+      // project_members has no `role` (project_role/normalized_project_role).
+      // Both bogus columns errored the whole query -> DbPromise fallback -> [].
+      `SELECT u.id,
+              COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.display_name, u.email) as name,
+              u.email,
+              COALESCE(pm.normalized_project_role, pm.project_role) as role
              FROM project_members pm
              JOIN users u ON pm.user_id = u.id
              WHERE pm.project_id = ?`,
