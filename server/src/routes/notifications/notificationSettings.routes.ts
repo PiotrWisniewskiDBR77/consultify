@@ -85,8 +85,8 @@ router.put(
     const result = (await dbRun(
       `
     INSERT INTO notification_settings (user_id, settings, updated_at)
-    VALUES (?, ?, datetime('now'))
-    ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
+    VALUES (?, ?, now())
+    ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = now()
   `,
       [userId, settingsJson, settingsJson]
     )) as { success?: boolean; error?: string };
@@ -144,8 +144,8 @@ router.patch(
     const result = (await dbRun(
       `
     INSERT INTO notification_settings (user_id, settings, updated_at)
-    VALUES (?, ?, datetime('now'))
-    ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
+    VALUES (?, ?, now())
+    ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = now()
   `,
       [userId, settingsJson, settingsJson]
     )) as { success?: boolean; error?: string };
