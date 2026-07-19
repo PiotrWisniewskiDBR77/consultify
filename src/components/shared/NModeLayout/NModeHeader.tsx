@@ -133,7 +133,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onClose}
-          className="p-2 -ml-2 rounded-xl text-slate-600 hover:bg-slate-200/80 dark:hover:bg-navy-800/60 transition-all duration-150"
+          className="p-2 -ml-2 rounded-xl text-c-text-secondary hover:bg-state-hover transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
         >
           <ChevronLeft size={20} />
         </motion.button>
@@ -154,7 +154,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               }
             }}
             readOnly={titleReadOnly}
-            className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
+            className="flex-1 text-xl font-bold bg-transparent text-c-text placeholder-c-text-muted border-b-2 border-transparent focus:outline-none focus:border-c-focus-solid transition-colors"
             placeholder={
               titlePlaceholder ? (isPolish ? titlePlaceholder.pl : titlePlaceholder.en) : undefined
             }
@@ -166,7 +166,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
                 type="button"
                 onClick={copyArtifactId}
                 title={t('sharedComponents.nModeHeader.copyArtifactId')}
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-200/60 dark:bg-navy-800/60 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-300/60 dark:hover:bg-navy-700/60"
+                className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-surface-raised text-[10px] font-mono uppercase text-c-text-muted transition-colors hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               >
                 {copiedId ? (
                   <Check size={10} className="text-emerald-500" />
@@ -193,7 +193,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             whileTap={{ scale: 0.98 }}
             onClick={onSave}
             disabled={saveCopy.disabled}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-fast ease-standard disabled:cursor-not-allowed ${saveCopy.className} ${saving ? 'opacity-70' : ''}`}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-fast ease-standard disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${saveCopy.className} ${saving ? 'opacity-70' : ''}`}
             title={saveCopy.title}
           >
             <SaveIcon size={16} className={effectiveSaveState === 'saving' ? 'animate-spin' : ''} />
