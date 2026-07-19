@@ -97,7 +97,7 @@ router.post(
       `
     INSERT INTO notification_rules (id, organization_id, name, description, event_type,
                                     conditions, actions, is_active, priority, created_by, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, datetime('now'))
+    VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, now())
   `,
       [
         id,
@@ -182,7 +182,7 @@ router.put(
       return res.status(400).json({ error: 'No updates provided' });
     }
 
-    updates.push("updated_at = datetime('now')");
+    updates.push('updated_at = now()');
     params.push(id);
 
     const result = await dbRun(
@@ -262,7 +262,7 @@ router.post(
 
     const result = await dbRun(
       `
-    UPDATE notification_rules SET is_active = ?, updated_at = datetime('now') WHERE id = ?
+    UPDATE notification_rules SET is_active = ?, updated_at = now() WHERE id = ?
   `,
       [newStatus, id]
     );
