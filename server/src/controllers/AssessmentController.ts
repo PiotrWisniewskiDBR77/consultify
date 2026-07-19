@@ -197,12 +197,7 @@ const ensurePermission = async (
   if (!user) return false;
   if (process.env.ASSESSMENT_SKIP_PERMISSIONS === 'true') return true;
   const role = String(user.role || '').toUpperCase();
-  const allowed = await hasPermission(
-    user.id,
-    user.organizationId,
-    permissionKey,
-    role as any
-  );
+  const allowed = await hasPermission(user.id, user.organizationId, permissionKey, role as any);
   if (allowed) return true;
   const key = String(permissionKey || '').toUpperCase();
   if (role === 'ADMIN' && key.startsWith('ASSESSMENT_')) {
