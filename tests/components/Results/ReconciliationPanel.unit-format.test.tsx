@@ -112,4 +112,33 @@ describe('ReconciliationPanel unit-aware formatting (H2.5)', () => {
     // Variance percent is surfaced.
     expect(screen.getByText(/-20\.0%/)).toBeTruthy();
   });
+
+  it('formats a days-unit KPI variance as "-4 days", not "-€4" (Variance column unit bug)', async () => {
+    vi.mocked(V8ResultsApi.getReconciliationOverview).mockResolvedValue(
+      overviewWith({
+        reconciliationId: 'rec-days',
+        kpiId: 'kpi-days',
+        kpiName: 'Cycle time',
+        unit: 'days',
+        initiativeId: 'init-3',
+        financeRef: 'finance:GL-DAYS',
+        reconciliationStatus: 'disputed',
+        initiatedBy: 'finance',
+        projectedValue: 12,
+        realizedValue: 8,
+        varianceAbsolute: -4,
+        variancePercent: -33.3,
+        hasMismatch: true,
+        createdAt: '2026-03-31T00:00:00.000Z',
+        updatedAt: '2026-03-31T00:00:00.000Z',
+      }) as any
+    );
+
+    render(<ReconciliationPanel />);
+
+    await waitFor(() => expect(screen.getByText('Cycle time')).toBeTruthy());
+    // Variance column must render "-4 days", not a EUR-formatted "-€4".
+    expect(await screen.findByText('-4 days')).toBeTruthy();
+    expect(screen.queryByText(/€/)).toBeNull();
+  });
 });

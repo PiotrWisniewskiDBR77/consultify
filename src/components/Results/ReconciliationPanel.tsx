@@ -341,7 +341,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
                 : 'text-slate-400';
         return (
           <span className={`tabular-nums font-medium ${varianceTone}`}>
-            {formatCurrency(row.varianceAbsolute)}
+            {formatValueForUnit(row.varianceAbsolute as number | null, row.unit as string | null)}
             {row.variancePercent != null && (
               <span className="ml-1 text-xs text-slate-500">
                 ({formatPercent(row.variancePercent)})
