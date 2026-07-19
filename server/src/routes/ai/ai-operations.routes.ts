@@ -128,30 +128,35 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       // Get active requests count
-      const activeRequests = (await dbGet(`
-            SELECT COUNT(*) as count FROM ai_request_log 
-            WHERE created_at > datetime('now', '-5 minutes')
-        `).catch(() => ({ count: 0 }))) as { count?: number };
+      const activeRequests = ((await dbGet(`
+            SELECT COUNT(*) as count FROM ai_usage_logs
+            WHERE created_at > now() - interval '5 minutes'
+        `).catch(() => ({ count: 0 }))) ?? { count: 0 }) as { count?: number };
 
       // Get error rate last hour
-      const errorRate = (await dbGet(`
-            SELECT 
+      const errorRate = ((await dbGet(`
+            SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as errors
-            FROM ai_request_log 
-            WHERE created_at > datetime('now', '-1 hour')
-        `).catch(() => ({ total: 0, errors: 0 }))) as { total?: number; errors?: number };
+            FROM ai_usage_logs
+            WHERE created_at > now() - interval '1 hour'
+        `).catch(() => ({ total: 0, errors: 0 }))) ?? { total: 0, errors: 0 }) as {
+        total?: number;
+        errors?: number;
+      };
 
-      // Get queue status
-      const queueStatus = (await dbGet(`
-            SELECT COUNT(*) as pending FROM ai_async_jobs 
+      // Get queue status (ai_async_jobs may not exist in every deployment —
+      // degrade to zero rather than 500 if the relation is absent)
+      const queueStatus = ((await dbGet(`
+            SELECT COUNT(*) as pending FROM ai_async_jobs
             WHERE status = 'pending'
-        `).catch(() => ({ pending: 0 }))) as { pending?: number };
+        `).catch(() => ({ pending: 0 }))) ?? { pending: 0 }) as { pending?: number };
 
+      // Postgres returns COUNT/SUM (bigint) as strings — coerce to Number.
+      const totalReqs = Number(errorRate.total ?? 0) || 0;
+      const errorCount = Number(errorRate.errors ?? 0) || 0;
       const errorRatePercent =
-        errorRate.total && errorRate.total > 0
-          ? (((errorRate.errors || 0) / errorRate.total) * 100).toFixed(2)
-          : '0.00';
+        totalReqs > 0 ? ((errorCount / totalReqs) * 100).toFixed(2) : '0.00';
 
       return res.json({
         success: true,
@@ -162,9 +167,9 @@ router.get(
               : parseFloat(errorRatePercent) < 15
                 ? 'degraded'
                 : 'critical',
-          activeRequests: activeRequests.count || 0,
+          activeRequests: Number(activeRequests.count ?? 0) || 0,
           errorRate: parseFloat(errorRatePercent),
-          queuedJobs: queueStatus.pending || 0,
+          queuedJobs: Number(queueStatus.pending ?? 0) || 0,
           lastUpdated: new Date().toISOString(),
         },
       });
@@ -312,26 +317,26 @@ router.get(
       let timeFilter: string;
       switch (period) {
         case '1h':
-          timeFilter = "datetime('now', '-1 hour')";
+          timeFilter = "now() - interval '1 hour'";
           break;
         case '24h':
-          timeFilter = "datetime('now', '-24 hours')";
+          timeFilter = "now() - interval '24 hours'";
           break;
         case '7d':
-          timeFilter = "datetime('now', '-7 days')";
+          timeFilter = "now() - interval '7 days'";
           break;
         case '30d':
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
           break;
         case '90d':
-          timeFilter = "datetime('now', '-90 days')";
+          timeFilter = "now() - interval '90 days'";
           break;
         default:
-          timeFilter = "datetime('now', '-24 hours')";
+          timeFilter = "now() - interval '24 hours'";
       }
 
-      const metrics = (await dbGet(`
-            SELECT 
+      const metrics = ((await dbGet(`
+            SELECT
                 COUNT(*) as total_requests,
                 AVG(latency_ms) as avg_latency,
                 MIN(latency_ms) as min_latency,
@@ -339,7 +344,7 @@ router.get(
                 SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful,
                 SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed,
                 AVG(tokens_used) as avg_tokens
-            FROM ai_request_log 
+            FROM ai_usage_logs
             WHERE created_at > ${timeFilter}
         `).catch(() => ({
         total_requests: 0,
@@ -349,7 +354,15 @@ router.get(
         successful: 0,
         failed: 0,
         avg_tokens: 0,
-      }))) as {
+      }))) ?? {
+        total_requests: 0,
+        avg_latency: 0,
+        min_latency: 0,
+        max_latency: 0,
+        successful: 0,
+        failed: 0,
+        avg_tokens: 0,
+      }) as {
         total_requests?: number;
         avg_latency?: number;
         min_latency?: number;
@@ -359,19 +372,21 @@ router.get(
         avg_tokens?: number;
       };
 
+      // Postgres returns COUNT/SUM (bigint) and AVG (numeric) as strings — coerce.
+      const totalRequests = Number(metrics.total_requests ?? 0) || 0;
+      const successful = Number(metrics.successful ?? 0) || 0;
+
       return res.json({
         success: true,
         data: {
           period,
-          totalRequests: metrics.total_requests || 0,
-          avgLatency: Math.round(metrics.avg_latency || 0),
-          minLatency: metrics.min_latency || 0,
-          maxLatency: metrics.max_latency || 0,
+          totalRequests,
+          avgLatency: Math.round(Number(metrics.avg_latency ?? 0) || 0),
+          minLatency: Number(metrics.min_latency ?? 0) || 0,
+          maxLatency: Number(metrics.max_latency ?? 0) || 0,
           successRate:
-            metrics.total_requests && metrics.total_requests > 0
-              ? (((metrics.successful || 0) / metrics.total_requests) * 100).toFixed(2)
-              : '100',
-          avgTokens: Math.round(metrics.avg_tokens || 0),
+            totalRequests > 0 ? ((successful / totalRequests) * 100).toFixed(2) : '100',
+          avgTokens: Math.round(Number(metrics.avg_tokens ?? 0) || 0),
         },
       });
     } catch (error: unknown) {
@@ -478,68 +493,74 @@ router.get(
       let timeFilter: string;
       switch (period) {
         case 'day':
-          timeFilter = "datetime('now', '-1 day')";
+          timeFilter = "now() - interval '1 day'";
           break;
         case 'week':
-          timeFilter = "datetime('now', '-7 days')";
+          timeFilter = "now() - interval '7 days'";
           break;
         case 'month':
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
           break;
         default:
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
       }
 
-      const costs = (await dbGet(`
-            SELECT 
+      const costs = ((await dbGet(`
+            SELECT
                 SUM(tokens_used) as total_tokens,
-                SUM(cost_usd) as total_cost,
+                SUM(estimated_cost_usd) as total_cost,
                 COUNT(DISTINCT user_id) as unique_users,
                 COUNT(*) as total_requests
-            FROM ai_request_log 
+            FROM ai_usage_logs
             WHERE created_at > ${timeFilter}
         `).catch(() => ({
         total_tokens: 0,
         total_cost: 0,
         unique_users: 0,
         total_requests: 0,
-      }))) as {
+      }))) ?? {
+        total_tokens: 0,
+        total_cost: 0,
+        unique_users: 0,
+        total_requests: 0,
+      }) as {
         total_tokens?: number;
         total_cost?: number;
         unique_users?: number;
         total_requests?: number;
       };
 
-      const byProvider = (await dbAll(`
-            SELECT 
+      const byProvider = ((await dbAll(`
+            SELECT
                 provider,
                 SUM(tokens_used) as tokens,
-                SUM(cost_usd) as cost,
+                SUM(estimated_cost_usd) as cost,
                 COUNT(*) as requests
-            FROM ai_request_log 
+            FROM ai_usage_logs
             WHERE created_at > ${timeFilter}
             GROUP BY provider
             ORDER BY cost DESC
-        `).catch(() => [])) as Array<{
+        `).catch(() => [])) ?? []) as Array<{
         provider?: string;
         tokens?: number;
         cost?: number;
         requests?: number;
       }>;
 
+      // Postgres returns COUNT/SUM (bigint) and SUM(numeric) as strings — coerce.
       return res.json({
         success: true,
         data: {
           period,
-          totalTokens: costs.total_tokens || 0,
-          totalCost: parseFloat((costs.total_cost || 0).toFixed(4)),
-          uniqueUsers: costs.unique_users || 0,
-          totalRequests: costs.total_requests || 0,
+          totalTokens: Number(costs.total_tokens ?? 0) || 0,
+          totalCost: parseFloat((Number(costs.total_cost ?? 0) || 0).toFixed(4)),
+          uniqueUsers: Number(costs.unique_users ?? 0) || 0,
+          totalRequests: Number(costs.total_requests ?? 0) || 0,
           byProvider: byProvider.map((p) => ({
             provider: p.provider,
-            tokens: p.tokens || 0,
-            cost: parseFloat((p.cost || 0).toFixed(4)),
-            requests: p.requests,
+            tokens: Number(p.tokens ?? 0) || 0,
+            cost: parseFloat((Number(p.cost ?? 0) || 0).toFixed(4)),
+            requests: Number(p.requests ?? 0) || 0,
           })),
         },
       });
@@ -709,38 +730,40 @@ router.get(
         p95Latency: 5000, // ms
       };
 
-      const metrics = (await dbGet(`
-            SELECT 
+      const metrics = ((await dbGet(`
+            SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful,
                 AVG(latency_ms) as avg_latency
-            FROM ai_request_log 
-            WHERE created_at > datetime('now', '-24 hours')
-        `).catch(() => ({ total: 0, successful: 0, avg_latency: 0 }))) as {
+            FROM ai_usage_logs
+            WHERE created_at > now() - interval '24 hours'
+        `).catch(() => ({ total: 0, successful: 0, avg_latency: 0 }))) ?? {
+        total: 0,
+        successful: 0,
+        avg_latency: 0,
+      }) as {
         total?: number;
         successful?: number;
         avg_latency?: number;
       };
 
-      const p95Latency = (await dbGet(`
+      const p95Latency = ((await dbGet(`
             SELECT latency_ms FROM (
-                SELECT latency_ms, 
+                SELECT latency_ms,
                        ROW_NUMBER() OVER (ORDER BY latency_ms) as row_num,
                        COUNT(*) OVER () as total
-                FROM ai_request_log 
-                WHERE created_at > datetime('now', '-24 hours')
-            ) WHERE row_num >= total * 0.95
+                FROM ai_usage_logs
+                WHERE created_at > now() - interval '24 hours'
+            ) sub WHERE row_num >= total * 0.95
             LIMIT 1
-        `).catch(() => ({ latency_ms: 0 }))) as { latency_ms?: number };
+        `).catch(() => ({ latency_ms: 0 }))) ?? { latency_ms: 0 }) as { latency_ms?: number };
 
-      const availability =
-        metrics.total && metrics.total > 0
-          ? ((metrics.successful || 0) / metrics.total) * 100
-          : 100;
-      const errorRate =
-        metrics.total && metrics.total > 0
-          ? ((metrics.total - (metrics.successful || 0)) / metrics.total) * 100
-          : 0;
+      // Postgres returns COUNT/SUM (bigint) and AVG (numeric) as strings — coerce.
+      const totalReqs = Number(metrics.total ?? 0) || 0;
+      const successfulReqs = Number(metrics.successful ?? 0) || 0;
+      const avgLatencyVal = Number(metrics.avg_latency ?? 0) || 0;
+      const availability = totalReqs > 0 ? (successfulReqs / totalReqs) * 100 : 100;
+      const errorRate = totalReqs > 0 ? ((totalReqs - successfulReqs) / totalReqs) * 100 : 0;
 
       return res.json({
         success: true,
@@ -748,19 +771,19 @@ router.get(
           targets: slaTargets,
           current: {
             availability: parseFloat(availability.toFixed(2)),
-            avgLatency: Math.round(metrics.avg_latency || 0),
+            avgLatency: Math.round(avgLatencyVal),
             errorRate: parseFloat(errorRate.toFixed(2)),
-            p95Latency: p95Latency.latency_ms || 0,
+            p95Latency: Number(p95Latency.latency_ms ?? 0) || 0,
           },
           compliance: {
             availability: availability >= slaTargets.availability,
-            avgLatency: (metrics.avg_latency || 0) <= slaTargets.avgLatency,
+            avgLatency: avgLatencyVal <= slaTargets.avgLatency,
             errorRate: errorRate <= slaTargets.errorRate,
-            p95Latency: (p95Latency.latency_ms || 0) <= slaTargets.p95Latency,
+            p95Latency: (Number(p95Latency.latency_ms ?? 0) || 0) <= slaTargets.p95Latency,
           },
           overallCompliant:
             availability >= slaTargets.availability &&
-            (metrics.avg_latency || 0) <= slaTargets.avgLatency &&
+            avgLatencyVal <= slaTargets.avgLatency &&
             errorRate <= slaTargets.errorRate,
         },
       });
@@ -1350,55 +1373,60 @@ router.get(
       }> = [];
 
       // Check for error rate spikes
-      const errorRate = (await dbGet(`
-            SELECT 
-                SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as rate
-            FROM ai_request_log 
-            WHERE created_at > datetime('now', '-1 hour')
-        `).catch(() => ({ rate: 0 }))) as { rate?: number };
+      // (Postgres returns numeric aggregates as strings — coerce to Number.)
+      const errorRateRow = ((await dbGet(`
+            SELECT
+                SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*), 0) as rate
+            FROM ai_usage_logs
+            WHERE created_at > now() - interval '1 hour'
+        `).catch(() => ({ rate: 0 }))) ?? { rate: 0 }) as { rate?: number | string | null };
+      const errorRateValue = Number(errorRateRow.rate ?? 0) || 0;
 
-      if ((errorRate.rate || 0) > 5) {
+      if (errorRateValue > 5) {
         insights.push({
           type: 'warning',
           title: 'High Error Rate Detected',
-          message: `Error rate is ${(errorRate.rate || 0).toFixed(1)}% in the last hour`,
+          message: `Error rate is ${errorRateValue.toFixed(1)}% in the last hour`,
           recommendation: 'Review recent error logs and check provider health',
         });
       }
 
       // Check for latency increases
-      const latencyComparison = (await dbGet(`
-            SELECT 
-                (SELECT AVG(latency_ms) FROM ai_request_log WHERE created_at > datetime('now', '-1 hour')) as recent,
-                (SELECT AVG(latency_ms) FROM ai_request_log WHERE created_at BETWEEN datetime('now', '-24 hours') AND datetime('now', '-1 hour')) as baseline
-        `).catch(() => ({ recent: 0, baseline: 0 }))) as { recent?: number; baseline?: number };
+      const latencyRow = ((await dbGet(`
+            SELECT
+                (SELECT AVG(latency_ms) FROM ai_usage_logs WHERE created_at > now() - interval '1 hour') as recent,
+                (SELECT AVG(latency_ms) FROM ai_usage_logs WHERE created_at BETWEEN now() - interval '24 hours' AND now() - interval '1 hour') as baseline
+        `).catch(() => ({ recent: 0, baseline: 0 }))) ?? { recent: 0, baseline: 0 }) as {
+        recent?: number | string | null;
+        baseline?: number | string | null;
+      };
+      const recentLatency = Number(latencyRow.recent ?? 0) || 0;
+      const baselineLatency = Number(latencyRow.baseline ?? 0) || 0;
 
-      if (
-        latencyComparison.baseline &&
-        latencyComparison.baseline > 0 &&
-        latencyComparison.recent &&
-        latencyComparison.recent > latencyComparison.baseline * 1.5
-      ) {
+      if (baselineLatency > 0 && recentLatency > baselineLatency * 1.5) {
         insights.push({
           type: 'warning',
           title: 'Latency Increase Detected',
-          message: `Average latency increased by ${((latencyComparison.recent / latencyComparison.baseline - 1) * 100).toFixed(0)}%`,
+          message: `Average latency increased by ${((recentLatency / baselineLatency - 1) * 100).toFixed(0)}%`,
           recommendation: 'Consider scaling resources or investigating bottlenecks',
         });
       }
 
       // Cost optimization opportunity
-      const costOptimization = (await dbGet(`
-            SELECT 
+      const costOptimizationRow = (await dbGet(`
+            SELECT
                 model,
                 COUNT(*) as requests,
-                SUM(cost_usd) as cost
-            FROM ai_request_log 
-            WHERE created_at > datetime('now', '-7 days')
+                SUM(estimated_cost_usd) as cost
+            FROM ai_usage_logs
+            WHERE created_at > now() - interval '7 days'
             GROUP BY model
             ORDER BY cost DESC
             LIMIT 1
-        `).catch(() => null)) as { model?: string; requests?: number; cost?: number } | null;
+        `).catch(() => null)) as { model?: string; requests?: number | string; cost?: number | string } | null;
+      const costOptimization = costOptimizationRow
+        ? { model: costOptimizationRow.model, cost: Number(costOptimizationRow.cost ?? 0) || 0 }
+        : null;
 
       if (costOptimization && costOptimization.cost && costOptimization.cost > 100) {
         insights.push({
@@ -1447,48 +1475,55 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      const [status, costs, performance] = await Promise.all([
+      const [statusRaw, costsRaw, performanceRaw] = await Promise.all([
         dbGet(`
-                SELECT 
+                SELECT
                     COUNT(*) as requests_today,
                     SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as errors_today
-                FROM ai_request_log 
-                WHERE created_at > datetime('now', 'start of day')
-            `).catch(() => ({ requests_today: 0, errors_today: 0 })) as {
-          requests_today?: number;
-          errors_today?: number;
-        },
+                FROM ai_usage_logs
+                WHERE created_at > date_trunc('day', now())
+            `).catch(() => ({ requests_today: 0, errors_today: 0 })),
         dbGet(`
-                SELECT SUM(cost_usd) as cost_today
-                FROM ai_request_log 
-                WHERE created_at > datetime('now', 'start of day')
-            `).catch(() => ({ cost_today: 0 })) as { cost_today?: number },
+                SELECT SUM(estimated_cost_usd) as cost_today
+                FROM ai_usage_logs
+                WHERE created_at > date_trunc('day', now())
+            `).catch(() => ({ cost_today: 0 })),
         dbGet(`
                 SELECT AVG(latency_ms) as avg_latency
-                FROM ai_request_log 
-                WHERE created_at > datetime('now', '-1 hour')
-            `).catch(() => ({ avg_latency: 0 })) as { avg_latency?: number },
+                FROM ai_usage_logs
+                WHERE created_at > now() - interval '1 hour'
+            `).catch(() => ({ avg_latency: 0 })),
       ]);
 
+      const status = (statusRaw ?? { requests_today: 0, errors_today: 0 }) as {
+        requests_today?: number | string;
+        errors_today?: number | string;
+      };
+      const costs = (costsRaw ?? { cost_today: 0 }) as { cost_today?: number | string };
+      const performance = (performanceRaw ?? { avg_latency: 0 }) as {
+        avg_latency?: number | string;
+      };
+
+      // Postgres returns COUNT/SUM (bigint) and AVG/SUM(numeric) as strings — coerce.
+      const requestsToday = Number(status.requests_today ?? 0) || 0;
+      const errorsToday = Number(status.errors_today ?? 0) || 0;
       const availability =
-        status.requests_today && status.requests_today > 0
-          ? ((status.requests_today - (status.errors_today || 0)) / status.requests_today) * 100
-          : 100;
+        requestsToday > 0 ? ((requestsToday - errorsToday) / requestsToday) * 100 : 100;
 
       return res.json({
         success: true,
         data: {
           missionControl: {
             status: availability >= 99 ? 'healthy' : availability >= 95 ? 'degraded' : 'critical',
-            requestsToday: status.requests_today || 0,
-            errorsToday: status.errors_today || 0,
+            requestsToday,
+            errorsToday,
           },
           performance: {
-            avgLatency: Math.round(performance.avg_latency || 0),
+            avgLatency: Math.round(Number(performance.avg_latency ?? 0) || 0),
             availability: parseFloat(availability.toFixed(2)),
           },
           costs: {
-            today: parseFloat((costs.cost_today || 0).toFixed(4)),
+            today: parseFloat((Number(costs.cost_today ?? 0) || 0).toFixed(4)),
           },
         },
       });
