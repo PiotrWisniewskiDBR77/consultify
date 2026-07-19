@@ -557,15 +557,70 @@ class KnowledgeBaseService {
   }
 
   /**
-   * FTS5-powered search returning matching article IDs with relevance ranking.
-   * Returns { available: false } when the FTS virtual table is absent so callers
-   * can fall back to LIKE-based search transparently.
+   * Full-text search returning matching article IDs with relevance ranking.
+   *
+   * Two backends:
+   *  - Postgres (production/demo/parity): native `to_tsvector`/`plainto_tsquery`
+   *    over kb_article_translations (title+summary+content), ranked by ts_rank.
+   *    Backed by the GIN index from migration 20260719_red_kb_fts_gin.sql.
+   *  - SQLite (local dev): the legacy FTS5 virtual table `kb_articles_fts`,
+   *    probed via sqlite_master (the SQLite-only probe MUST NOT run on Postgres —
+   *    adaptQuery rewrites sqlite_master → information_schema.tables which has no
+   *    `name` column, yielding a silent 42703 that permanently disabled FTS).
+   *
+   * Returns { available: false } when the backend has no FTS facility so callers
+   * fall back to LIKE-based search transparently.
    */
   private async searchArticlesFTS(
     query: string,
     _language: string,
     limit: number
   ): Promise<{ ids: string[]; available: boolean }> {
+    const isPg =
+      process.env.DB_TYPE === 'postgres' || !!process.env.DATABASE_URL?.startsWith('postgres');
+
+    if (isPg) {
+      try {
+        // On Postgres full-text search is always available. Use the 'simple'
+        // config (tokenize + lowercase, no language stemming) — safe for mixed
+        // PL/EN content. plainto_tsquery returns an empty query for all-stopword
+        // / punctuation-only input, so we simply get zero rows (caller then uses
+        // the LIKE fallback) — no need for a separate empty-query guard.
+        const rows = await dbAll(
+          `SELECT article_id,
+                  ts_rank(
+                    to_tsvector('simple',
+                      coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(content, '')),
+                    plainto_tsquery('simple', ?)
+                  ) AS rank
+           FROM kb_article_translations
+           WHERE to_tsvector('simple',
+                   coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(content, ''))
+                 @@ plainto_tsquery('simple', ?)
+           ORDER BY rank DESC
+           LIMIT ?`,
+          [query, query, limit]
+        );
+
+        // A single article may have multiple translation rows (pl + en); collapse
+        // to distinct article ids preserving best-rank order.
+        const seen = new Set<string>();
+        const ids: string[] = [];
+        for (const r of rows as any[]) {
+          const id = String(r.article_id);
+          if (!seen.has(id)) {
+            seen.add(id);
+            ids.push(id);
+          }
+        }
+        return { ids, available: true };
+      } catch (err) {
+        logger.warn('[KnowledgeBaseService] Postgres FTS query failed, falling back to LIKE', err);
+        return { ids: [], available: false };
+      }
+    }
+
+    // SQLite (local dev): legacy FTS5 virtual table.
     try {
       const check = await dbGet(
         `SELECT name FROM sqlite_master WHERE type='table' AND name='kb_articles_fts'`,
