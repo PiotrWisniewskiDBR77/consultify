@@ -9,7 +9,7 @@ import { Check } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
@@ -300,7 +300,16 @@ function deckFromUnifiedJson(params: {
 
 export const DeckBuilder: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
+  // J12-S1 — back navigation for the builder. Mirrors the legacy
+  // DeckBuilderTopBar (`goToPresentations`) and sibling editors
+  // (IdeaMapWorkspace → navigate('/my-work')): return to the presentations
+  // library. Autosave (800ms debounce) has already persisted edits, so this
+  // is non-destructive.
+  const handleBackToPresentations = useCallback(() => {
+    navigate('/presentations');
+  }, [navigate]);
   const {
     deck,
     setDeck,
@@ -1070,6 +1079,7 @@ export const DeckBuilder: React.FC = () => {
         <DeckBuilderMelsView
           title={deck.title}
           onTitleChange={handleTitleChange}
+          onBack={handleBackToPresentations}
           moduleLabel={t('presentations.builder.moduleLabel', 'Prezentacje')}
           backLabel={t('presentations.builder.back', 'Back to presentations')}
           topBarHandlers={{
