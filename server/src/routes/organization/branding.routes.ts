@@ -274,8 +274,8 @@ router.get(
       logger.info(`[branding] Listed ${mappedBrandings.length} brandings`);
       return res.json({ brandings: mappedBrandings });
     } catch (err: any) {
-      logger.error('[branding] Error listing brandings:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[branding] Error listing brandings', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Failed to list brandings', code: 'BRANDING_LIST_FAILED' });
     }
   })
 );
@@ -364,8 +364,11 @@ router.get(
         },
       });
     } catch (err: any) {
-      logger.error(`[branding] Error getting branding for ${orgId}:`, err);
-      return res.status(500).json({ error: err.message });
+      logger.error(`[branding] Error getting branding for ${orgId}`, {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({ error: 'Failed to get branding', code: 'BRANDING_GET_FAILED' });
     }
   })
 );
@@ -503,8 +506,11 @@ router.patch(
         branding: mapBrandingToResponse(updated),
       });
     } catch (err: any) {
-      logger.error(`[branding] Error updating branding for ${orgId}:`, err);
-      return res.status(500).json({ error: err.message });
+      logger.error(`[branding] Error updating branding for ${orgId}`, {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({ error: 'Failed to update branding', code: 'BRANDING_UPDATE_FAILED' });
     }
   })
 );
@@ -534,8 +540,11 @@ router.delete(
       logger.info(`[branding] Deleted branding for organization ${orgId}`);
       return res.json({ success: true, message: 'Branding reset to defaults' });
     } catch (err: any) {
-      logger.error(`[branding] Error deleting branding for ${orgId}:`, err);
-      return res.status(500).json({ error: err.message });
+      logger.error(`[branding] Error deleting branding for ${orgId}`, {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({ error: 'Failed to delete branding', code: 'BRANDING_DELETE_FAILED' });
     }
   })
 );
@@ -620,8 +629,11 @@ router.post(
         branding: mapBrandingToResponse(cloned),
       });
     } catch (err: any) {
-      logger.error(`[branding] Error cloning branding to ${orgId}:`, err);
-      return res.status(500).json({ error: err.message });
+      logger.error(`[branding] Error cloning branding to ${orgId}`, {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({ error: 'Failed to clone branding', code: 'BRANDING_CLONE_FAILED' });
     }
   })
 );
@@ -702,8 +714,13 @@ router.post(
         foundTargets: cnames,
       });
     } catch (err: any) {
-      logger.error(`[branding] Error verifying domain for ${orgId}:`, err);
-      return res.status(500).json({ error: err.message });
+      logger.error(`[branding] Error verifying domain for ${orgId}`, {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to verify domain', code: 'BRANDING_VERIFY_DOMAIN_FAILED' });
     }
   })
 );

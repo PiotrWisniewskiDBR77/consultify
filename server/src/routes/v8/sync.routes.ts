@@ -60,6 +60,7 @@ import { LastRefreshResultValues, ProviderFamilyValues } from '../../types/pmSyn
 import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { parseMaybeJson } from '../../utils/pgFlags.js';
 
 const router = Router();
@@ -1926,8 +1927,13 @@ router.post(
         [errorMessage, Date.now() - startedAt.getTime(), runId]
       );
       await logSyncError(organizationId, integrationId, error as Error, runId);
+      logger.error('[v8/sync] sync failed', {
+        err: error,
+        correlationId: (req as any).correlationId,
+        syncRunId: runId,
+      });
 
-      return res.status(500).json({ error: errorMessage, syncRunId: runId, code: 'SYNC_FAILED' });
+      return res.status(500).json({ error: 'Sync failed', syncRunId: runId, code: 'SYNC_FAILED' });
     }
   })
 );

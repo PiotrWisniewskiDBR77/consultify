@@ -5724,8 +5724,9 @@ router.post(
       });
       res.json(result);
     } catch (err: any) {
-      logger.error('[IdeaAIGenerate] Failed:', err?.message);
-      res.status(500).json({ error: err?.message || 'AI generation failed' });
+      // Enrichment (AI generation panel) — degraded 200 zamiast wywracania panelu.
+      logger.warn('[IdeaAIGenerate] degraded', { err, correlationId: (req as any).correlationId });
+      res.json({ degraded: true, nodes: [], edges: [] });
     }
   })
 );
@@ -7838,7 +7839,11 @@ router.post(
           return res.status(400).json({ error: `Unknown action: ${action}` });
       }
     } catch (err: any) {
-      return res.status(500).json({ error: err.message || 'Action failed' });
+      logger.error('[my-work] chat-actions failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({ error: 'Action failed', code: 'MY_WORK_CHAT_ACTION_FAILED' });
     }
   })
 );
@@ -9634,8 +9639,9 @@ router.post(
       );
       res.json(result);
     } catch (err: any) {
-      logger.error('[ai-suggestions]', err);
-      res.status(500).json({ error: err?.message || 'Failed to generate suggestions' });
+      // Enrichment (AI podpowiedzi) — degraded 200 zamiast wywracania panelu.
+      logger.warn('[ai-suggestions] degraded', { err, correlationId: (req as any).correlationId });
+      res.json({ suggestions: [], companyContextUsed: false, degraded: true });
     }
   })
 );
@@ -9679,8 +9685,9 @@ router.post(
       );
       res.json({ action });
     } catch (err: any) {
-      logger.error('[ai-table-action]', err);
-      res.status(500).json({ error: err?.message || 'Failed to process command' });
+      // Enrichment (AI podpowiedź komendy) — degraded 200 zamiast wywracania panelu.
+      logger.warn('[ai-table-action] degraded', { err, correlationId: (req as any).correlationId });
+      res.json({ action: null, degraded: true });
     }
   })
 );
@@ -9724,8 +9731,9 @@ router.post(
       );
       res.json({ results });
     } catch (err: any) {
-      logger.error('[ai-fill]', err);
-      res.status(500).json({ error: err?.message || 'Failed to generate fill' });
+      // Enrichment (AI auto-fill kolumny) — degraded 200 zamiast wywracania panelu.
+      logger.warn('[ai-fill] degraded', { err, correlationId: (req as any).correlationId });
+      res.json({ results: [], degraded: true });
     }
   })
 );
@@ -9808,8 +9816,8 @@ router.get(
       res.setHeader('Content-Disposition', `attachment; filename="idea-table-${ideaId}.csv"`);
       res.send(csv);
     } catch (err: any) {
-      logger.error('[export-csv]', err);
-      res.status(500).json({ error: err?.message || 'Failed to export CSV' });
+      logger.error('[export-csv] failed', { err, correlationId: (req as any).correlationId });
+      res.status(500).json({ error: 'Failed to export CSV', code: 'MY_WORK_EXPORT_CSV_FAILED' });
     }
   })
 );
@@ -9851,8 +9859,12 @@ router.post(
       });
       res.json({ ok: true });
     } catch (err: any) {
-      logger.error('[idea-presence-broadcast]', err);
-      res.status(500).json({ error: err?.message || 'Failed to broadcast presence' });
+      // Enrichment (cursor/presence realtime) — degraded 200, nie wywraca współpracy.
+      logger.warn('[idea-presence-broadcast] degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      res.json({ ok: false, degraded: true });
     }
   })
 );

@@ -1496,8 +1496,13 @@ router.post(
       }
       return res.status(200).json({ results });
     } catch (err: any) {
-      logger.error('[TablePlatform] batchRecords failed', { error: err?.message });
-      return res.status(500).json({ error: err?.message ?? 'Internal server error' });
+      logger.error('[TablePlatform] batchRecords failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Batch operation failed', code: 'TABLE_PLATFORM_BATCH_RECORDS_FAILED' });
     }
   }
 );
