@@ -5513,8 +5513,15 @@ router.post(
         message: response.ok ? 'Webhook test successful' : 'Webhook returned non-200 status',
       });
     } catch (err: any) {
+      // H6.4 500-leak sweep: `err.message` here can be a DB-driver error from
+      // the `dbRun` call below (not only a network-test diagnostic) —
+      // never echo it raw. Logged server-side for support/debugging.
+      logger.warn('[settings] Webhook test failed', { err });
       await dbRun(`UPDATE user_webhooks SET failure_count = failure_count + 1 WHERE id = ?`, [id]);
-      return res.json({ success: false, error: err.message });
+      return res.json({
+        success: false,
+        error: 'Webhook test failed. Check the URL and try again.',
+      });
     }
   })
 );

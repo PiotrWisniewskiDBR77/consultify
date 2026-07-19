@@ -2336,7 +2336,18 @@ const P05_HTTP_STATUS: Record<string, number> = {
 function sendP05Error(res: Response, err: unknown): Response {
   const code = (err as { code?: string })?.code;
   const status = (code && P05_HTTP_STATUS[code]) || 500;
-  const message = err instanceof Error ? err.message : String(err);
+  const rawMessage = err instanceof Error ? err.message : String(err);
+  // Known P05_* codes carry a deliberately-authored, safe domain message
+  // (e.g. "Concurrent run already exists for lane X"). An unmapped code
+  // (falls to 500) means an unexpected exception — never echo its raw
+  // text (DB-driver / stack detail) to the client (H6.4 500-leak sweep).
+  const isKnownCode = Boolean(code && P05_HTTP_STATUS[code]);
+  if (!isKnownCode) {
+    logger.error('[v8/finance] P05 lane operation failed', { err });
+  }
+  const message = isKnownCode
+    ? rawMessage
+    : 'An unexpected error occurred. Please try again later.';
   return res.status(status).json({ error: message, code: code || 'P05_INTERNAL_ERROR' });
 }
 

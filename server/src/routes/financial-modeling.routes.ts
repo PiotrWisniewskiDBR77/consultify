@@ -503,7 +503,14 @@ router.post(
       });
     } catch (e: any) {
       logFinanceError('model.compute.failed', e, { traceId, modelId });
-      return res.status(500).json({ error: 'Computation failed', detail: e.message });
+      // H6.4 500-leak sweep: `e.message` can carry DB-driver text or internal
+      // structure — never echo it to the client. The failure is already
+      // logged server-side above with `traceId` for correlation.
+      return res.status(500).json({
+        error: 'Computation failed',
+        code: 'FINANCE_MODEL_COMPUTE_FAILED',
+        traceId,
+      });
     }
   })
 );

@@ -83,7 +83,7 @@ router.get('/supported-formats', authenticateToken, (req: Request, res: Response
     logger.error('[ReportImport] Error getting supported formats:', error);
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: 'Failed to load supported formats',
     });
   }
 });
@@ -104,7 +104,7 @@ router.get('/supported-frameworks', authenticateToken, (req: Request, res: Respo
     logger.error('[ReportImport] Error getting supported frameworks:', error);
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: 'Failed to load supported frameworks',
     });
   }
 });
@@ -158,7 +158,7 @@ router.post(
       logger.error('[ReportImport] Upload error:', error);
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: 'Failed to upload report',
       });
     }
   }
@@ -192,7 +192,7 @@ router.post('/detect/:id', authenticateToken, async (req: any, res: Response) =>
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Detection error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to detect report format' });
   }
 });
 
@@ -254,7 +254,7 @@ router.get('/preview/:id', authenticateToken, async (req: any, res: Response) =>
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Preview error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to preview extraction' });
   }
 });
 
@@ -302,7 +302,7 @@ router.post('/confirm/:id', authenticateToken, async (req: any, res: Response) =
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Confirm error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to confirm extraction' });
   }
 });
 
@@ -339,7 +339,7 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
     logger.error('[ReportImport] List error:', error);
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: 'Failed to list imports',
     });
   }
 });
@@ -372,7 +372,7 @@ router.get('/:id', authenticateToken, async (req: any, res: Response) => {
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Get error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to load import' });
   }
 });
 
@@ -404,7 +404,7 @@ router.delete('/:id', authenticateToken, async (req: any, res: Response) => {
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Delete error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to delete import' });
   }
 });
 
@@ -443,7 +443,7 @@ router.post('/:id/create-assessment', authenticateToken, async (req: any, res: R
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Create assessment error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to create assessment' });
   }
 });
 
@@ -482,7 +482,7 @@ router.post('/:id/create-initiatives', authenticateToken, async (req: any, res: 
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Create initiatives error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to create initiatives' });
   }
 });
 
@@ -529,7 +529,7 @@ router.get('/:id/download', authenticateToken, async (req: any, res: any) => {
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Download error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to download source file' });
   }
 });
 
@@ -598,7 +598,7 @@ router.put('/:id/scores', authenticateToken, async (req: any, res: Response) => 
       return res.status(404).json({ success: false, error: notFoundMessage(error) });
     }
     logger.error('[ReportImport] Update scores error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Failed to update scores' });
   }
 });
 

@@ -278,9 +278,11 @@ router.post(
         logger.error('[Stripe Webhook] Failed to queue for retry:', queueErr);
       }
 
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Webhook processing failed' });
+      // H6.4 500-leak sweep: the real error is already logged above
+      // (`logger.error('Webhook processing error:', error)`) and persisted
+      // via `markStripeEventFailed` — never echo raw `error.message` (can
+      // carry DB-driver / Stripe SDK internal detail) back in the response.
+      return res.status(500).json({ error: 'Webhook processing failed' });
     }
     return;
   })
