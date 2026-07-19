@@ -99,6 +99,7 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import {
   ArtifactRightPanel,
@@ -130,6 +131,13 @@ import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
+
+// VF1-2 (SPEC-A wzorzec, analogicznie do VF1-1 Task): gate for visible
+// shared empty/skeleton/error states on the N-mode canonical path. Default
+// OFF until Piotr accepts on screenshots (reguła #7 — nie jest pierwszym
+// testerem wizualnym). See docs/ui-standards/TRIADA_KANON.md +
+// ARTIFACT_ANATOMY_STANDARD.md §18.1.
+const VF1_INSIGHT_SPECA = import.meta.env.VITE_VF1_INSIGHT_SPECA === 'true';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -7723,13 +7731,78 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     handleExportMarkdown,
   ]);
 
+  // ── VF1-2 a11y: Esc = zamknij artefakt (kanon §12.3/§17) ──────────────────
+  // Skips when typing in a field, or while a local dropdown/dialog owns its
+  // own close-affordance (toolbar menus, export dialog, present mode, gen
+  // modal, handoff modal); keyboard-only, no visual change.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (
+        exportMenuOpen ||
+        aiMenuOpen ||
+        sectionsMenuOpen ||
+        exportDialogOpen ||
+        presentOpen ||
+        handoffModalOpen ||
+        genOpen
+      ) {
+        return;
+      }
+      onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    onClose,
+    exportMenuOpen,
+    aiMenuOpen,
+    sectionsMenuOpen,
+    exportDialogOpen,
+    presentOpen,
+    handoffModalOpen,
+    genOpen,
+  ]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
+  // VF1-2 (SPEC-A): swap ad-hoc spinner/error markup for the shared
+  // shared/states library (record archetype) — gated (visible change,
+  // needs Piotr's screenshot sign-off per reguła #7).
 
   if (isLoading) {
+    if (VF1_INSIGHT_SPECA) {
+      return (
+        <div className="flex h-full items-center justify-center bg-c-bg p-8">
+          <div className="w-full max-w-xl">
+            <SkeletonState variant="record" />
+          </div>
+        </div>
+      );
+    }
     return <LoadingState variant="spinner" className="h-full bg-white dark:bg-navy-950 py-0" />;
   }
 
   if (error) {
+    if (VF1_INSIGHT_SPECA) {
+      return (
+        <div className="flex h-full items-center justify-center bg-c-bg">
+          <ErrorState
+            title={isPolish ? 'Nie udało się wczytać wniosku' : 'Failed to load insight'}
+            description={error}
+            onBack={onClose}
+            backLabel={t('interview.insightViewer.goBack')}
+          />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center h-full bg-white dark:bg-navy-950 gap-4">
         <AlertCircle size={48} className="text-danger-400" />
@@ -7747,28 +7820,43 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Centrum (N-mode sekcje obserwacja/znaczenie/rekomendacja) pozostaje
   // nietknięte — ten panel tylko dokuje się z boku (NModeShell `rightPanel`).
   const panelDash = '—';
+  // VF1-2 bug fix: previously used `t('interview.insightViewer.enUs')` as the
+  // BCP-47 locale tag. When the `interview` i18n bundle hasn't loaded yet,
+  // `t()` falls back to returning the raw key string, which is not a valid
+  // language tag → `toLocaleDateString`/`toLocaleString` throw
+  // `RangeError: Invalid language tag`, tripping the ErrorBoundary. Derive
+  // the tag directly from `isPolish` (already resolved from `i18n.language`,
+  // no translation-bundle dependency) and keep a try/catch as a last-resort
+  // guard against any other unexpected locale value.
+  const panelLocale = isPolish ? 'pl-PL' : 'en-US';
   const fmtPanelDate = (v?: string) => {
     if (!v) return panelDash;
     const d = new Date(v);
-    return Number.isNaN(d.getTime())
-      ? v
-      : d.toLocaleDateString(t('interview.insightViewer.enUs'), {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        });
+    if (Number.isNaN(d.getTime())) return v;
+    try {
+      return d.toLocaleDateString(panelLocale, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return d.toISOString().slice(0, 10);
+    }
   };
   const fmtPanelDateTime = (v?: string) => {
     if (!v) return panelDash;
     const d = new Date(v);
-    return Number.isNaN(d.getTime())
-      ? v
-      : d.toLocaleString(t('interview.insightViewer.enUs'), {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
+    if (Number.isNaN(d.getTime())) return v;
+    try {
+      return d.toLocaleString(panelLocale, {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return d.toISOString().slice(0, 16).replace('T', ' ');
+    }
   };
   const panelTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
   const panelTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
