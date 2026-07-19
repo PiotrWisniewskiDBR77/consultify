@@ -31,18 +31,38 @@
    wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
    = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
 
-## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W2b)
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W3)
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | 49 | 8 | 3 | 1 | 1 | 62 |
+| A · Harvard (H1-H6) | 52 | 5 | 3 | 1 | 1 | 62 |
 | B · Harvey (HP-0…27) | 21 | 5 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 11 | 46 | 11 | 2 | 0 | 70 |
-| D · Vegas (F0-F6+V7) | 11 | 19 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 25 | 3 | 12 | 7 | 2 | 49 |
-| **SUMA** | **117** | **81** | **50** | **13** | **4** | **265** |
+| C · Oxford (O1-O8) | 12 | 45 | 11 | 2 | 0 | 70 |
+| D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
+| E · Przekroje (+nowe) | 26 | 2 | 17 | 7 | 2 | 54 |
+| **SUMA** | **123** | **75** | **55** | **13** | **4** | **270** |
 
-**Postęp: 130/265 rozstrzygnięte (49%).**
+**Postęp: 136/270 rozstrzygnięte (50%).** (RAZEM 265→270: +5 nowych RED wykrytych w falach — patrz niżej.)
+
+### FALA-W3 (2026-07-19, deploy eca4ecc5ea, demo-safe-2026-07-19) — 10 gałęzi (9 kod + smoke), bramki zielone (FE tsc 0/0, server 146/204 0-nowych, kolory/canon/artefakt PASS, eslint 0 błędów)
+- **H5.2+H5.3** 🟡→✅ — TOP-10 N+1 zmapowane, 3 najgorętsze naprawione batch-queryem (teams/pmoRoles/reconciliation) + util `withRequestTimeout` (504 na raportach/eksporcie/AI). 5/5 E2E.
+- **H6.3** 🟡→✅ — audyt ścieżek `notifications`; dedup dopięty w TaskService + Stripe-webhook (kanoniczna ścieżka miała). 2/2 E2E z realną współbieżnością.
+- **T7b (4/4 wrappery)** 🟡→✅ — demoService.cleanupExpiredDemos realny (korzeń orphanów, dry-run OFF), backup (W2b), aiExecutiveReporting realny llmService, connectorRegistry/connectorAdapter usunięte (0 konsumentów). E2E zielone.
+- **T9-1 facilitation** 🟡→✅(część) — state-machine faz (409 na nielegalnej), timer `timer_ends_at` (mig 790 autorun) + naprawiony latentny bug joinera, end+freeze, broadcast WS. 6/6 E2E. (zostaje EmptyState/KnownTool w T9.)
+- **O3 focusTradeoffs** 🟡→✅ — wpięty do useToolAI; „martwe" buildery = realna luka → capabilityMapper/narrativeEngine dostały ConversationProtocol. 100/100 testów.
+- **V7-8 smoke wizualny** 🟡→✅ — `tests/visual/` 49 ekranów×light/dark=98 baseline, bramka zweryfikowana (regresja→FAIL→cofnięte→PASS). Strażnik po falach Vegas.
+- **Deck 3× S-fix** — strzałka wstecz (brak `onBack` w MELS), tryb prezentera wywoływalny (chip overflow+Cmd+K), panel Media honest-UI. 18/18 testów.
+- **WB komentarze** — węzły Whiteboard dostały wątki komentarzy (parytet z Process Flow), 3/3 E2E + widoczność cross-user org-scoped.
+- **reportPdf+v8-decode** — komentarz nieaktualny (route zamontowany); v8 content decode dopięty. 5/5 E2E.
+
+### ★ NOWE RED wykryte w falach W2b/W3 (do rejestru jako ⬜JA — wszystkie z dowodem E2E/SQL):
+1. **H1.6 Start Execution zepsuty na Postgres** — kolumna `execution_started_at` nie istnieje (mig 061 w dialekcie SQLite) → 500; + rozjazd `executing`/`EXECUTING`.
+2. **status_reports kolizja schematu** — chuda tabela bootstrap vs bogata mig 066 `IF NOT EXISTS` (cichy no-op) → reportPdf/statusReport/reportCadence 500 na każdym bootstrapowanym env (prawd. demo/prod). Fix=migracja addytywna (gotowa, wymaga promocji demo+decyzji).
+3. **TaskService.createTask** INSERT bez `id`/`organization_id` (NOT NULL, brak DEFAULT) → zawsze 500 na Postgres mimo żywych callerów.
+4. **management_reports** CHECK constraint dopuszcza tylko 2/5 typów raportów; `getBasicTaskMetrics` `AVG(progress)` na kolumnie TEXT → 500.
+5. **notification_outbox** bez workera-drenu (dedupe_key nieegzekwowany) + gałąź „brak admina" w SLA nie stempluje `escalated_at` → zapętlenie co 10 min.
+
+**Zostaje w toku (relaunch W3b):** T10 migracje fresh-env (B13) · J25 testy klikane (A22) · DOC-1 „dokument z czatu" (generateBlockProse).
 
 ### FALA-W2b (2026-07-19, deploy fcbba5df4a, demo-safe-2026-07-19) — 15 gałęzi, 38 commitów, wszystkie bramki zielone
 - **H3.2** 🟡→✅ — 19/19 Active tools: create/save/reload/conclusion E2E (`h32-19tools.e2e.test.ts`, parity :5443). Finding: `ensureToolsSchema()` szum `42701` (nieblokujący).
