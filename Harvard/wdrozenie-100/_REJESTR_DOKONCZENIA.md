@@ -39,10 +39,10 @@
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
 | C · Oxford (O1-O8) | 39 | 20 | 11 | 0 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 59 | 5 | 15 | 7 | 2 | 88 |
-| **SUMA** | **193** | **48** | **50** | **10** | **3** | **304** |
+| E · Przekroje (+nowe) | 60 | 5 | 14 | 7 | 2 | 88 |
+| **SUMA** | **194** | **48** | **49** | **10** | **3** | **304** |
 
-**Postęp: 203/304 rozstrzygnięte (67%).** Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
+**Postęp: 204/304 rozstrzygnięte (67%).** Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
 
 ### ★★ FALA-ARMY 2026-07-19 (druga sesja, 12 robotników Opus/Sonnet, 2 deploye) — demo-safe `531ce7e62b`
 **Cel Piotra: domknięcie 4 modułów + czyste repo. PROD ZAMROŻONY — wszystko na demo. Bramki zielone (server tsc 146=baseline 0-nowych, kolory/artefakt/list-canon PASS, eslint 0). Boot: Fala1 4/4, Fala2 6/6 (11 migracji, gitSha potwierdzony).**
@@ -68,7 +68,11 @@
 
 **★ NOWE FINDINGI (do decyzji/chipów — NIE naprawione, udokumentowane):** ★`webauthn`/passkey może 404-ować na PROD jeśli `ENABLE_STUB_ROUTES` nieustawione (D-01: 37 mountStub, ~28 to żywe routery gaszone) · `.sql.sql` bug (029 dunning, 042 pmo — nie odpalają) · `task_escalations`/`invoice_items`/`dunning_notifications` tabele nie istnieją · `last_overdue_notified_at` TEXT vs timestamp · **45 wrapperów rodziny 46 = zamontowane-ale-crash** (mają importerów → nie 0-caller; wymaga naprawy loadera/graceful-degrade, NIE kasacji) · connectorService martwy schemat · LtvAnalytics `julianday()` SQLite w PG.
 
-**Licznik FALA-ARMY:** ✅ 176→193 (+17), 🟡 55→48, ⬜ 59→50, ❓ 4→3. rozstrzygnięte 186→203 (67%). RAZEM 304.
+**FALA 3 (deploy `12b56cbb4b`) — K4 backend + superadmin:**
+- **K4 AI-fill → 🟡** (build): serwis `initiativeSectionFill.ts` + endpoint `/generate-section-fill`, 10 sekcji, flaga `INITIATIVE_SECTION_AIFILL` OFF. `a64ae11574`.
+- **RED superadmin → ✅:** ★krytyczny kill-switch `emergency-kill` cicho zwracał 0 dotkniętych org (`connector_type`→`connector_id`) + drift-report konektorów; adminSessionService = fałszywy alarm (mig 792 naprawiła). `5ec7a4983a`.
+
+**Licznik FALA-ARMY (3 fale):** ✅ 176→194 (+18), 🟡 55→48, ⬜ 59→49, ❓ 4→3. rozstrzygnięte 186→204 (67%). RAZEM 304. **Kodowalny backlog scouta (15 rewirów) WYCZERPANY — 13 zamkniętych/zbudowanych, 3 fałszywe alarmy. Dalej = Piotr-gated (SESJA#1 Oxford, Vegas akcept, ENV) + higiena repo.**
 
 ### ★ DECYZJE 2026-07-19 (druga sesja taryfowa) — 14 decyzji 🔵/⬜DEC rozstrzygniętych przez Piotra (dowód: rozmowa robocza 07-19, materiał `_SESJA1_ODBIOR_OXFORD.md §3`)
 **DoD decyzji = decyzja Piotra wpisana. Kanon §5 K1-K8 domknięte.**
