@@ -167,8 +167,8 @@ router.get(
       const items = await KnowledgeService.getCandidates(status);
       return res.json(items);
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Get candidates failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się pobrać kandydatów wiedzy', code: 'KNOWLEDGE_CANDIDATES_LIST_FAILED' });
     }
     return;
   })
@@ -196,8 +196,8 @@ router.post(
       );
       return res.json({ id, message: 'Candidate submitted' });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Add candidate failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się zgłosić kandydata', code: 'KNOWLEDGE_CANDIDATE_CREATE_FAILED' });
     }
     return;
   })
@@ -220,8 +220,8 @@ router.put(
       await KnowledgeService.updateCandidateStatus(req.params.id, status, adminComment);
       return res.json({ message: 'Status updated' });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Update candidate status failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się zaktualizować statusu kandydata', code: 'KNOWLEDGE_CANDIDATE_STATUS_UPDATE_FAILED' });
     }
     return;
   })
@@ -253,8 +253,8 @@ router.put(
       const changes = await KnowledgeService.updateCandidate(req.params.id, updates);
       return res.json({ message: 'Candidate updated', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Update candidate failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się zaktualizować kandydata', code: 'KNOWLEDGE_CANDIDATE_UPDATE_FAILED' });
     }
     return;
   })
@@ -286,8 +286,8 @@ router.post(
       );
       return res.json({ message: 'Idea linked to project', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Link idea to project failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się powiązać pomysłu z projektem', code: 'KNOWLEDGE_CANDIDATE_LINK_PROJECT_FAILED' });
     }
     return;
   })
@@ -312,8 +312,8 @@ router.get(
       const ideas = await KnowledgeService.getApprovedIdeas(filters);
       return res.json(ideas);
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Get approved ideas failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się pobrać zatwierdzonych pomysłów', code: 'KNOWLEDGE_CANDIDATES_APPROVED_FAILED' });
     }
     return;
   })
@@ -335,8 +335,8 @@ router.get(
       const ideas = await KnowledgeService.getIdeasByCategory(req.params.category);
       return res.json(ideas);
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Get ideas by category failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się pobrać pomysłów wg kategorii', code: 'KNOWLEDGE_CANDIDATES_BY_CATEGORY_FAILED' });
     }
     return;
   })
@@ -358,8 +358,8 @@ router.get(
       const ideas = await KnowledgeService.getIdeasByProject(req.params.projectId);
       return res.json(ideas);
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Get ideas by project failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się pobrać pomysłów wg projektu', code: 'KNOWLEDGE_CANDIDATES_BY_PROJECT_FAILED' });
     }
     return;
   })
@@ -384,8 +384,8 @@ router.get(
         : await KnowledgeService.getActiveStrategies();
       return res.json(strategies);
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Get strategies failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się pobrać strategii', code: 'KNOWLEDGE_STRATEGIES_LIST_FAILED' });
     }
     return;
   })
@@ -420,8 +420,8 @@ router.post(
       );
       return res.json({ id, message: 'Strategy created' });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Create strategy failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się utworzyć strategii', code: 'KNOWLEDGE_STRATEGY_CREATE_FAILED' });
     }
     return;
   })
@@ -457,8 +457,8 @@ router.put(
       const changes = await KnowledgeService.updateStrategy(req.params.id, updates);
       return res.json({ message: 'Strategy updated', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Update strategy failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się zaktualizować strategii', code: 'KNOWLEDGE_STRATEGY_UPDATE_FAILED' });
     }
     return;
   })
@@ -486,8 +486,8 @@ router.post(
       const changes = await KnowledgeService.linkStrategyToDocument(req.params.id, document_id);
       return res.json({ message: 'Document linked to strategy', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Link strategy to document failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się powiązać dokumentu ze strategią', code: 'KNOWLEDGE_STRATEGY_LINK_DOCUMENT_FAILED' });
     }
     return;
   })
@@ -515,8 +515,8 @@ router.post(
       const changes = await KnowledgeService.linkStrategyToIdea(req.params.id, idea_id);
       return res.json({ message: 'Idea linked to strategy', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Link strategy to idea failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się powiązać pomysłu ze strategią', code: 'KNOWLEDGE_STRATEGY_LINK_IDEA_FAILED' });
     }
     return;
   })
@@ -541,8 +541,8 @@ router.delete(
       );
       return res.json({ message: 'Document unlinked from strategy', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Unlink strategy from document failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się odłączyć dokumentu od strategii', code: 'KNOWLEDGE_STRATEGY_UNLINK_DOCUMENT_FAILED' });
     }
     return;
   })
@@ -567,8 +567,8 @@ router.delete(
       );
       return res.json({ message: 'Idea unlinked from strategy', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Unlink strategy from idea failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się odłączyć pomysłu od strategii', code: 'KNOWLEDGE_STRATEGY_UNLINK_IDEA_FAILED' });
     }
     return;
   })
@@ -599,8 +599,8 @@ router.put(
       );
       return res.json({ message: 'Strategy progress updated', changes });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Update strategy progress failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się zaktualizować postępu strategii', code: 'KNOWLEDGE_STRATEGY_PROGRESS_UPDATE_FAILED' });
     }
     return;
   })
@@ -626,8 +626,8 @@ router.get(
       }
       return res.json(strategy);
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Get strategy with related failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się pobrać strategii z powiązaniami', code: 'KNOWLEDGE_STRATEGY_RELATED_FAILED' });
     }
     return;
   })
@@ -650,8 +650,8 @@ router.put(
       await KnowledgeService.toggleStrategy(req.params.id, isActive);
       return res.json({ message: 'Strategy toggled' });
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Toggle strategy failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się przełączyć strategii', code: 'KNOWLEDGE_STRATEGY_TOGGLE_FAILED' });
     }
     return;
   })
@@ -747,15 +747,17 @@ router.post(
 
       return res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
     } catch (err: any) {
-      logger.error('Upload Error', err);
+      logger.error('[Knowledge] Upload document failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
       // Cleanup temp file if it still exists
       if (tempPath && fs.existsSync(tempPath)) {
         try {
           fs.unlinkSync(tempPath);
         } catch (e) {}
       }
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      return res.status(500).json({ error: 'Nie udało się przesłać dokumentu', code: 'KNOWLEDGE_DOCUMENT_UPLOAD_FAILED' });
     }
     return;
   })
@@ -806,8 +808,8 @@ router.get(
 
       return res.json(parsed);
     } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return res.status(500).json({ error: message });
+      logger.error('[Knowledge] Get documents failed', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Nie udało się pobrać dokumentów wiedzy', code: 'KNOWLEDGE_DOCUMENTS_LIST_FAILED' });
     }
     return;
   })
