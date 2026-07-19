@@ -44,15 +44,27 @@ const num = (v: unknown): number => {
 };
 const avg = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
+/**
+ * RENDER GUARD (finding O1 W7 — client-report absurdity guard): SIRI and ADMA
+ * both use a 0-5 maturity scale (see `siriStructure.ts` / `admaStructure.ts`).
+ * `axisData` cells must hold that level, never a 0-100 percentage — templates
+ * (`SIRIReportTemplate.tsx`, `ADMAReportTemplate.tsx`) render bar widths as
+ * `(current/5)*100%` with no guard of their own, so a stray percentage here
+ * would blow past 100% just like the DRD `pct(level,maxLevel)` case. Clamp at
+ * this single read choke point so bad data (any source) can't reach the report.
+ */
+const SIRI_ADMA_MAX_LEVEL = 5;
+const clampLevel = (v: number): number => Math.max(0, Math.min(SIRI_ADMA_MAX_LEVEL, v));
+
 /** Reads a `{actual,target}` cell for a prefixed key, tolerant of shape drift. */
 const cell = (axisData: ReportAxisData, key: string): { current: number; target: number } => {
   const raw = axisData?.[key];
   if (raw && typeof raw === 'object') {
     const c = raw as AxisCell;
-    return { current: num(c.actual), target: num(c.target) };
+    return { current: clampLevel(num(c.actual)), target: clampLevel(num(c.target)) };
   }
   // Some legacy area_* cells store a bare number.
-  if (typeof raw === 'number') return { current: num(raw), target: 0 };
+  if (typeof raw === 'number') return { current: clampLevel(num(raw)), target: 0 };
   return { current: 0, target: 0 };
 };
 
@@ -117,11 +129,11 @@ export function buildSIRIAssessmentData(
     const explicit = data[`block_${block}`];
     const score =
       explicit && typeof explicit === 'object'
-        ? num((explicit as AxisCell).actual)
+        ? clampLevel(num((explicit as AxisCell).actual))
         : avg(blockCurrents[block]);
     const target =
       explicit && typeof explicit === 'object'
-        ? num((explicit as AxisCell).target)
+        ? clampLevel(num((explicit as AxisCell).target))
         : avg(blockTargets[block]);
     buildingBlocks[block] = {
       score: round1(score),
@@ -134,8 +146,9 @@ export function buildSIRIAssessmentData(
   for (const [key, val] of Object.entries(data)) {
     if (!key.startsWith('area_')) continue;
     const areaId = key.slice('area_'.length);
-    prioritisationMatrix[areaId] =
-      val && typeof val === 'object' ? num((val as AxisCell).actual) : num(val);
+    prioritisationMatrix[areaId] = clampLevel(
+      val && typeof val === 'object' ? num((val as AxisCell).actual) : num(val)
+    );
   }
 
   return {
@@ -181,11 +194,11 @@ export function buildADMAAssessmentData(
     const explicit = data[`pillar_${pillarId}`];
     const current =
       explicit && typeof explicit === 'object'
-        ? num((explicit as AxisCell).actual)
+        ? clampLevel(num((explicit as AxisCell).actual))
         : avg((pillarCurrents[pillarId] || []).filter((v) => v > 0));
     const target =
       explicit && typeof explicit === 'object'
-        ? num((explicit as AxisCell).target)
+        ? clampLevel(num((explicit as AxisCell).target))
         : avg((pillarTargets[pillarId] || []).filter((v) => v > 0));
     pillars[pillarId] = {
       current: round1(current),

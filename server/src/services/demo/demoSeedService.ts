@@ -2941,6 +2941,15 @@ async function upsertDrdAssessment(
     },
   };
 
+  // CONTRACT NOTE (finding O1 W7): `assessment_reports.axis_data` must hold DRD
+  // maturity LEVELS (0..axis.levelCount — 5 or 7), never 0-100 percentages — the
+  // report renderer divides by axis.levelCount to compute a percent, so a stray
+  // percentage here would render as e.g. "Cybersecurity 600%" in a client
+  // report. `scoreSummary` below is 0-5 scale already (safe), but it is keyed by
+  // `overall`/`topStrengths`/`topGaps`, NOT by per-axis id/name, so it does not
+  // populate the per-axis DRD report table (see `areaScoresFromAxisData` in
+  // `server/src/services/report/drdReportService.ts`) — tracked separately, not
+  // an out-of-range value.
   const scoreSummary = {
     overall: { actual: 3.3, target: 5.0, gap: 1.7 },
     topStrengths:

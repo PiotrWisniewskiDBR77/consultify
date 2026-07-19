@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as xlsx from 'xlsx';
 
 import { getDatabaseType } from '../config/DatabaseConfig.js';
+import { getAxisById } from '../data/drdStructure.js';
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
@@ -143,6 +144,11 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       status TEXT DEFAULT 'DRAFT',
       template_id TEXT,
       builder_report_id TEXT,
+      -- axis_data: JSON of per-axis {actual,target} MATURITY LEVELS (DRD: 0..5/7
+      -- depending on axis; SIRI/ADMA: 0..5). NEVER 0-100 percentages — the report
+      -- renderer computes pct(level,maxLevel) and a percentage stored here blows
+      -- past 100% in the client report (finding O1 W7). See clampAxisDataEntries()
+      -- in this file and areaScoresFromAxisData() in drdReportService.ts.
       axis_data TEXT,
       executive_summary TEXT,
       detailed_analysis TEXT,
@@ -343,6 +349,59 @@ const createDraftContent = (opts: {
   return `## ${sectionTitle}\n\nThis draft section is generated from available context and should be refined with concrete evidence, decisions, and implementation detail during review.\n`;
 };
 
+/**
+ * WRITE-TIME GUARD (finding O1 W7 — client-report absurdity guard).
+ *
+ * `assessment_reports.axis_data` MUST hold maturity LEVELS, never 0-100
+ * percentages: DRD levels are 0..axis.levelCount (5 or 7 depending on the
+ * axis — see `DRD_STRUCTURE`), SIRI/ADMA levels are 0..5. Downstream, the
+ * report renderer computes `pct(level, maxLevel) = level/maxLevel*100` — a
+ * stray percentage here (e.g. from a bad seed/fixture/import writing "60" or
+ * "100" instead of a level) blows straight past 100% ("Cybersecurity 600%"),
+ * which is exactly the kind of number Piotr will not sign off on for a client
+ * report. Clamp every `{actual,target}` cell into its framework's valid range
+ * right before persistence, and log loudly — this should never legitimately
+ * trigger, so a hit here means the write path upstream is producing the wrong
+ * scale and needs fixing at the source.
+ */
+const clampAxisDataEntries = (
+  data: Record<string, any>,
+  framework: 'DRD' | 'SIRI' | 'ADMA' | string
+): Record<string, any> => {
+  const out: Record<string, any> = {};
+  for (const [key, entry] of Object.entries(data || {})) {
+    if (key === '_framework' || !entry || typeof entry !== 'object') {
+      out[key] = entry;
+      continue;
+    }
+    let max = 5; // SIRI (0-5) and ADMA (1-5, treated 0-5) default.
+    if (framework === 'DRD') {
+      const axisId = Number(key);
+      const axis = Number.isFinite(axisId) ? getAxisById(axisId) : undefined;
+      max = axis?.levelCount ?? 7; // widest DRD axis scale as a safe fallback.
+    }
+    const clampField = (raw: unknown): number => {
+      const n = Number(raw ?? 0);
+      const value = Number.isFinite(n) ? n : 0;
+      if (value < 0 || value > max) {
+        logger.error(
+          `[AxisDataGuard] axis_data write out of range — clamping ${framework} axis "${key}" ` +
+            `value=${value} to [0,${max}]. axis_data must hold maturity LEVELS, never 0-100 ` +
+            `percentages — check the write path (assessment answers / seed / import).`
+        );
+        return Math.max(0, Math.min(max, value));
+      }
+      return value;
+    };
+    out[key] = {
+      ...entry,
+      actual: clampField((entry as any).actual),
+      target: clampField((entry as any).target),
+    };
+  }
+  return out;
+};
+
 const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => {
   const type = String(assessment?.assessment_type || assessment?.type || '').toUpperCase();
   const answers = assessment?.answers
@@ -376,7 +435,7 @@ const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => 
         target: Number(avg(bucket.target).toFixed(2)),
       };
     }
-    return out;
+    return clampAxisDataEntries(out, 'DRD');
   }
 
   // ==========================================
@@ -417,7 +476,7 @@ const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => 
       }
     }
 
-    return out;
+    return clampAxisDataEntries(out, 'SIRI');
   }
 
   // ==========================================
@@ -445,7 +504,7 @@ const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => 
       };
     }
 
-    return out;
+    return clampAxisDataEntries(out, 'ADMA');
   }
 
   // Unknown framework - return empty but try to parse any generic structure

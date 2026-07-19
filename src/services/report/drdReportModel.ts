@@ -175,7 +175,19 @@ export const EIGHT_D_NOTE =
   'dimension in buildDimensions() once the canon lands.';
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
-const pct = (value: number, max: number) => (max > 0 ? Math.round((value / max) * 100) : 0);
+/**
+ * RENDER GUARD (finding O1 W7): `value` is a DRD maturity LEVEL (0..max), not a
+ * percentage. Corrupt upstream data (bad seed/fixture/import writing 0-100 into
+ * `axis_data`) must never reach a client report as e.g. "600%" — clamp into
+ * [0,max] before dividing so the output is always a sane 0-100%, even if the
+ * write-side guard (`areaScoresFromAxisData` in `drdReportClient.ts`) was ever
+ * bypassed or the DB already holds bad rows from before that guard existed.
+ */
+const pct = (value: number, max: number) => {
+  if (max <= 0) return 0;
+  const clamped = Math.max(0, Math.min(max, Number.isFinite(value) ? value : 0));
+  return Math.round((clamped / max) * 100);
+};
 
 function severityFor(gapPercent: number): DrdAreaRow['severity'] {
   if (gapPercent <= 0) return 'none';
@@ -204,6 +216,15 @@ function confidenceLabel(completionPercent: number, isPL: boolean): string {
   return isPL ? 'Niewystarczająca' : 'Insufficient';
 }
 
+/**
+ * RENDER GUARD (finding O1 W7): clamps a raw engine-score level into [0,max]
+ * before it's displayed (e.g. "actual/maxLevel"). `buildAreaRows`/`buildDimensions`
+ * are the true render boundary — clamping here protects every caller, not just
+ * the ones that route through `areaScoresFromAxisData`.
+ */
+const clampToMax = (value: number, max: number) =>
+  Math.max(0, Math.min(max, Number.isFinite(value) ? value : 0));
+
 /** Build the per-area matrix rows (39 areas) from engine scores. */
 export function buildAreaRows(areaScores: AreaScores, language: 'pl' | 'en'): DrdAreaRow[] {
   const isPL = language === 'pl';
@@ -211,10 +232,10 @@ export function buildAreaRows(areaScores: AreaScores, language: 'pl' | 'en'): Dr
   for (const axis of DRD_STRUCTURE) {
     for (const area of axis.areas) {
       const raw = areaScores[area.id];
-      const actual = round1(Number(raw?.actual ?? 0));
-      const target = round1(Number(raw?.target ?? 0));
-      const gap = round1(Math.max(0, target - actual));
       const maxLevel = axis.levelCount;
+      const actual = round1(clampToMax(Number(raw?.actual ?? 0), maxLevel));
+      const target = round1(clampToMax(Number(raw?.target ?? 0), maxLevel));
+      const gap = round1(Math.max(0, target - actual));
       const actualPercent = pct(actual, maxLevel);
       const targetPercent = pct(target, maxLevel);
       rows.push({
@@ -244,17 +265,19 @@ export function buildDimensions(areaScores: AreaScores, language: 'pl' | 'en'): 
   return viz.dimensions.map((d) => {
     const axisId = Number(d.id);
     const { gap } = calculateAxisScore(axisId, areaScores);
+    const current = clampToMax(d.current, d.maxLevel);
+    const target = clampToMax(d.target, d.maxLevel);
     return {
       id: d.id,
       axisId,
       name: isPL ? d.namePL || d.name : d.name,
       namePL: d.namePL,
-      actual: round1(d.current),
-      target: round1(d.target),
+      actual: round1(current),
+      target: round1(target),
       gap: round1(gap),
       maxLevel: d.maxLevel,
-      actualPercent: pct(d.current, d.maxLevel),
-      targetPercent: pct(d.target, d.maxLevel),
+      actualPercent: pct(current, d.maxLevel),
+      targetPercent: pct(target, d.maxLevel),
       color: d.color || '#3b82f6',
     };
   });
