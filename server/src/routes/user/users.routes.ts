@@ -147,8 +147,13 @@ router.post(
           fs.unlinkSync(filePath);
         }
       }
-      logger.error('[users] Error uploading avatar', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Failed to upload avatar', code: 'USER_AVATAR_UPLOAD_FAILED' });
+      logger.error('[users] Error uploading avatar', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to upload avatar', code: 'USER_AVATAR_UPLOAD_FAILED' });
     }
   })
 );
@@ -196,8 +201,13 @@ router.delete(
       logger.info(`[users] Avatar removed for user ${id}`);
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[users] Error removing avatar', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Failed to remove avatar', code: 'USER_AVATAR_REMOVE_FAILED' });
+      logger.error('[users] Error removing avatar', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to remove avatar', code: 'USER_AVATAR_REMOVE_FAILED' });
     }
   })
 );

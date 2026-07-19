@@ -883,7 +883,9 @@ router.post('/:assessmentId/roles', validateBody(AssignAssessmentRoleSchema), as
       err,
       correlationId: (req as any).correlationId,
     });
-    return res.status(500).json({ error: 'Failed to assign role', code: 'ASSESSMENT_ROLE_ASSIGN_FAILED' });
+    return res
+      .status(500)
+      .json({ error: 'Failed to assign role', code: 'ASSESSMENT_ROLE_ASSIGN_FAILED' });
   }
 });
 
@@ -982,7 +984,9 @@ router.delete('/:assessmentId/roles/:userId', async (req, res) => {
       err,
       correlationId: (req as any).correlationId,
     });
-    return res.status(500).json({ error: 'Failed to remove role', code: 'ASSESSMENT_ROLE_REMOVE_FAILED' });
+    return res
+      .status(500)
+      .json({ error: 'Failed to remove role', code: 'ASSESSMENT_ROLE_REMOVE_FAILED' });
   }
 });
 
@@ -1368,9 +1372,10 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Failed to create initiative', code: 'ASSESSMENT_MANUAL_INITIATIVE_CREATE_FAILED' });
+      return res.status(500).json({
+        error: 'Failed to create initiative',
+        code: 'ASSESSMENT_MANUAL_INITIATIVE_CREATE_FAILED',
+      });
     }
   }
 );

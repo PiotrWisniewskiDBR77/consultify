@@ -274,8 +274,13 @@ router.get(
       logger.info(`[branding] Listed ${mappedBrandings.length} brandings`);
       return res.json({ brandings: mappedBrandings });
     } catch (err: any) {
-      logger.error('[branding] Error listing brandings', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Failed to list brandings', code: 'BRANDING_LIST_FAILED' });
+      logger.error('[branding] Error listing brandings', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to list brandings', code: 'BRANDING_LIST_FAILED' });
     }
   })
 );
@@ -510,7 +515,9 @@ router.patch(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res.status(500).json({ error: 'Failed to update branding', code: 'BRANDING_UPDATE_FAILED' });
+      return res
+        .status(500)
+        .json({ error: 'Failed to update branding', code: 'BRANDING_UPDATE_FAILED' });
     }
   })
 );
@@ -544,7 +551,9 @@ router.delete(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res.status(500).json({ error: 'Failed to delete branding', code: 'BRANDING_DELETE_FAILED' });
+      return res
+        .status(500)
+        .json({ error: 'Failed to delete branding', code: 'BRANDING_DELETE_FAILED' });
     }
   })
 );
@@ -633,7 +642,9 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res.status(500).json({ error: 'Failed to clone branding', code: 'BRANDING_CLONE_FAILED' });
+      return res
+        .status(500)
+        .json({ error: 'Failed to clone branding', code: 'BRANDING_CLONE_FAILED' });
     }
   })
 );

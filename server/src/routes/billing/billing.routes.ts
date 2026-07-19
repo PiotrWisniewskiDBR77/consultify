@@ -1590,7 +1590,9 @@ router.post(
         err: error,
         correlationId: (req as any).correlationId,
       });
-      return res.status(500).json({ error: 'Failed to subscribe', code: 'BILLING_SUBSCRIBE_FAILED' });
+      return res
+        .status(500)
+        .json({ error: 'Failed to subscribe', code: 'BILLING_SUBSCRIBE_FAILED' });
     }
   })
 );
@@ -1615,7 +1617,9 @@ router.post(
         err: error,
         correlationId: (req as any).correlationId,
       });
-      return res.status(500).json({ error: 'Failed to change plan', code: 'BILLING_CHANGE_PLAN_FAILED' });
+      return res
+        .status(500)
+        .json({ error: 'Failed to change plan', code: 'BILLING_CHANGE_PLAN_FAILED' });
     }
   })
 );
@@ -1638,9 +1642,10 @@ router.post(
         err: error,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Failed to cancel subscription', code: 'BILLING_CANCEL_SUBSCRIPTION_FAILED' });
+      return res.status(500).json({
+        error: 'Failed to cancel subscription',
+        code: 'BILLING_CANCEL_SUBSCRIPTION_FAILED',
+      });
     }
   })
 );

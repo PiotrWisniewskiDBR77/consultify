@@ -287,7 +287,9 @@ router.get('/canonical-index', async (req: AuthRequest, res: Response) => {
       err,
       correlationId: (req as any).correlationId,
     });
-    res.status(500).json({ error: 'Failed to fetch index', code: 'ASSESSMENT_CANONICAL_INDEX_FAILED' });
+    res
+      .status(500)
+      .json({ error: 'Failed to fetch index', code: 'ASSESSMENT_CANONICAL_INDEX_FAILED' });
   }
 });
 

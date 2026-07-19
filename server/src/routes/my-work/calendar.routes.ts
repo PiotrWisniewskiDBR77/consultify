@@ -723,9 +723,10 @@ router.get(
       res.json({ events });
     } catch (err: any) {
       logger.error('[calendar-unified] failed', { err, correlationId: (req as any).correlationId });
-      res
-        .status(500)
-        .json({ error: 'Failed to load unified calendar', code: 'MY_WORK_CALENDAR_UNIFIED_FAILED' });
+      res.status(500).json({
+        error: 'Failed to load unified calendar',
+        code: 'MY_WORK_CALENDAR_UNIFIED_FAILED',
+      });
     }
   })
 );
