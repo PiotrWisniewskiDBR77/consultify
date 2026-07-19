@@ -6,6 +6,7 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs';
+import multer from 'multer';
 import path from 'path';
 import PDFDocument from 'pdfkit';
 import sharp from 'sharp';
@@ -13,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
@@ -27,6 +29,7 @@ import {
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
 import { send as sendNotification } from '../services/notificationService.js';
+import { uploadMedia as uploadOrganizationMedia } from '../services/organizationMediaService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import {
   hasPresentationCapability,
@@ -162,6 +165,7 @@ import {
   buildPdfLayoutTruncationMarker,
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
+import { getStorage } from '../services/storage/index.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
@@ -6307,6 +6311,99 @@ router.get(
 
     const rows = await dbAll(query, params);
     res.json({ success: true, items: rows });
+  })
+);
+
+// Media upload was FE-only dead weight: DeckBuilder's MediaLibraryBrowser
+// (src/components/Presentations/DeckBuilder/MediaLibraryBrowser.tsx) has been
+// POSTing to /api/presentations/media/upload since it shipped, but no route
+// ever answered it (404) — uploads silently failed. Mirrors the whiteboard
+// image upload pattern (server/src/routes/my-work/whiteboard-uploads.routes.ts):
+// memoryStorage multer + the provider-agnostic storage seam
+// (services/storage), keyed `presentation-media/<orgId>/<uuid>.<ext>` under the
+// existing `uploads/` tree. Row bookkeeping (AI tagging, tag search, usage
+// counters) reuses the already-built organizationMediaService.uploadMedia,
+// which GET /media above already reads from.
+const MAX_PRESENTATION_MEDIA_BYTES = 10 * 1024 * 1024; // 10MB, matches whiteboard upload cap
+
+// Deliberately excludes image/svg+xml — same XSS rationale as the whiteboard
+// upload allow-list (SVGs can carry <script>/on* handlers and would be served
+// same-origin from /uploads).
+const ALLOWED_PRESENTATION_MEDIA_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+]);
+
+const presentationMediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_PRESENTATION_MEDIA_BYTES, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_PRESENTATION_MEDIA_MIME_TYPES.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Unsupported file type. Only PNG, JPEG, GIF and WebP are allowed.'), false);
+    }
+  },
+});
+
+router.post(
+  '/media/upload',
+  (req, res, next) => {
+    presentationMediaUpload.single('file')(req, res, (err: unknown) => {
+      if (!err) return next();
+      const isLimitError = err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE';
+      const message = isLimitError
+        ? 'Image too large (max 10MB)'
+        : err instanceof Error
+          ? err.message
+          : 'Upload failed';
+      res.status(isLimitError ? 413 : 400).json({ success: false, error: message });
+    });
+  },
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+    if (!ALLOWED_PRESENTATION_MEDIA_MIME_TYPES.has(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unsupported file type. Only PNG, JPEG, GIF and WebP are allowed.',
+      });
+    }
+    if (req.file.size > MAX_PRESENTATION_MEDIA_BYTES) {
+      return res.status(413).json({ success: false, error: 'Image too large (max 10MB)' });
+    }
+    if (!req.file.buffer) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const safeOrgId = sanitizeOrgIdForUploadPath(String(orgId));
+    const ext = path.extname(req.file.originalname || '').toLowerCase() || '.png';
+    const filename = `${uuidv4()}${ext}`;
+    const key = `presentation-media/${safeOrgId}/${filename}`;
+
+    const storage = getStorage();
+    await storage.putObject({ key, body: req.file.buffer, contentType: req.file.mimetype });
+    const storageUrl = await storage.getUrl(key);
+
+    const item = await uploadOrganizationMedia({
+      organizationId: orgId,
+      uploadedBy: userId,
+      filename,
+      originalName: req.file.originalname || filename,
+      mimeType: req.file.mimetype,
+      fileSize: req.file.size,
+      storageUrl,
+    });
+
+    logger.info(`[Presentations] Media uploaded for org ${orgId}: ${filename}`);
+    res.status(201).json({ success: true, item });
   })
 );
 
