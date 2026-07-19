@@ -69,7 +69,13 @@ router.post(
       INSERT INTO gdpr_requests (id, organization_id, user_id, type, request_type, status, requested_at, format, options)
       VALUES (?, ?, ?, 'export', 'EXPORT', 'PENDING', datetime('now'), ?, ?)
     `,
-        [requestId, organizationId, userId, format, JSON.stringify({ includeAIData, includeActivityLogs })]
+        [
+          requestId,
+          organizationId,
+          userId,
+          format,
+          JSON.stringify({ includeAIData, includeActivityLogs }),
+        ]
       );
 
       logger.info(`[DataExport] Export request created: ${requestId} for user ${userId}`);
@@ -96,12 +102,10 @@ router.post(
         err: error,
         correlationId: (req as any).correlationId,
       });
-      res
-        .status(500)
-        .json({
-          error: 'Nie udało się utworzyć wniosku o eksport danych',
-          code: 'DATA_EXPORT_CREATE_REQUEST_FAILED',
-        });
+      res.status(500).json({
+        error: 'Nie udało się utworzyć wniosku o eksport danych',
+        code: 'DATA_EXPORT_CREATE_REQUEST_FAILED',
+      });
     }
   }
 );
@@ -138,12 +142,10 @@ router.get(
         err: error,
         correlationId: (req as any).correlationId,
       });
-      res
-        .status(500)
-        .json({
-          error: 'Nie udało się pobrać statusu eksportu',
-          code: 'DATA_EXPORT_STATUS_FAILED',
-        });
+      res.status(500).json({
+        error: 'Nie udało się pobrać statusu eksportu',
+        code: 'DATA_EXPORT_STATUS_FAILED',
+      });
     }
   }
 );
@@ -173,12 +175,10 @@ router.get('/requests', verifyToken, isAuthenticated, async (req: Request, res: 
       err: error,
       correlationId: (req as any).correlationId,
     });
-    res
-      .status(500)
-      .json({
-        error: 'Nie udało się pobrać wniosków o eksport',
-        code: 'DATA_EXPORT_LIST_REQUESTS_FAILED',
-      });
+    res.status(500).json({
+      error: 'Nie udało się pobrać wniosków o eksport',
+      code: 'DATA_EXPORT_LIST_REQUESTS_FAILED',
+    });
   }
 });
 
@@ -291,7 +291,13 @@ router.post(
       INSERT INTO gdpr_requests (id, organization_id, user_id, type, request_type, status, requested_at, scheduled_date, options)
       VALUES (?, ?, ?, 'deletion', 'DELETE', 'SCHEDULED', datetime('now'), ?, ?)
     `,
-        [requestId, user.organization_id, userId, scheduledDate.toISOString(), JSON.stringify({ reason })]
+        [
+          requestId,
+          user.organization_id,
+          userId,
+          scheduledDate.toISOString(),
+          JSON.stringify({ reason }),
+        ]
       );
 
       logger.info(`[DataExport] Deletion request created: ${requestId} for user ${userId}`);
@@ -320,12 +326,10 @@ router.post(
         err: error,
         correlationId: (req as any).correlationId,
       });
-      res
-        .status(500)
-        .json({
-          error: 'Nie udało się utworzyć wniosku o usunięcie danych',
-          code: 'DATA_EXPORT_CREATE_DELETION_FAILED',
-        });
+      res.status(500).json({
+        error: 'Nie udało się utworzyć wniosku o usunięcie danych',
+        code: 'DATA_EXPORT_CREATE_DELETION_FAILED',
+      });
     }
   }
 );
@@ -372,12 +376,10 @@ router.delete(
         err: error,
         correlationId: (req as any).correlationId,
       });
-      res
-        .status(500)
-        .json({
-          error: 'Nie udało się anulować wniosku o usunięcie danych',
-          code: 'DATA_EXPORT_CANCEL_DELETION_FAILED',
-        });
+      res.status(500).json({
+        error: 'Nie udało się anulować wniosku o usunięcie danych',
+        code: 'DATA_EXPORT_CANCEL_DELETION_FAILED',
+      });
     }
   }
 );
