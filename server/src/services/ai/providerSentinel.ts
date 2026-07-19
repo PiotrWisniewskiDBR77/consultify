@@ -50,13 +50,13 @@ function normalizeBaseUrl(endpoint?: string | null): string {
   const raw = String(endpoint || '').trim();
   if (!raw) return '';
   let base = raw.replace(/\/+$/, '');
-  const suffixes = [
-    '/chat/completions',
-    '/v1/chat/completions',
-    '/v1/completions',
-    '/v1/responses',
-    '/v1/messages',
-  ];
+  // Strip ONLY the trailing operation path, and leave any /vN version segment
+  // intact (e.g. https://api.anthropic.com/v1/messages -> https://api.anthropic.com/v1,
+  // NOT bare https://api.anthropic.com). The old list included '/v1/messages' etc.
+  // as whole suffixes, which over-stripped the /v1 segment too -> provider SDKs
+  // then POST to `${baseURL}/messages` with no /v1 -> 404. See llmService.ts's
+  // normalizeBaseUrl (same bug, fixed the same way) for the twin of this function.
+  const suffixes = ['/chat/completions', '/completions', '/responses', '/messages'];
   const lower = base.toLowerCase();
   for (const s of suffixes) {
     if (lower.endsWith(s)) {
