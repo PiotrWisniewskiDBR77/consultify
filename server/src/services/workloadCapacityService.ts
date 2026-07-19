@@ -106,7 +106,18 @@ function getMonday(d: Date): Date {
 }
 
 function formatDate(d: Date): string {
-  return d.toISOString().split('T')[0];
+  // BUG (T4/#77, fixed 2026-07-19): `d.toISOString()` converts to UTC before
+  // formatting. `getMonday()`/callers build `d` from LOCAL date components
+  // (getDay/getDate/setHours(0,0,0,0)), so in any positive-UTC-offset timezone
+  // (e.g. Europe/Warsaw, UTC+1/+2) the UTC conversion rolls the date back by
+  // one day — the capacity window silently excluded "today" whenever today
+  // was the window's last day (Sunday), zeroing out allocatedHours/overload
+  // alerts for anyone with a task due today. Use local Y-M-D parts instead,
+  // consistent with getMonday()'s local-time semantics.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 export async function getCapacityOverview(orgId: string): Promise<CapacityOverview> {
