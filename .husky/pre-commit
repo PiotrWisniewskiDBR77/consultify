@@ -25,4 +25,29 @@ if ! bash scripts/check-artefakt.sh; then
   exit 1
 fi
 
+# 3) Crimson w kanonie TRIADY list (docs/ui-standards/TRIADA_KANON.md część C) —
+#    przeniesione z .claude/hooks/check-triada.sh (2026-07-19, było lokalne-tylko).
+STAGED_TRIADA=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/(components|views)/.*\.(ts|tsx)$')
+if [ -n "$STAGED_TRIADA" ]; then
+  if ! bash scripts/check-triada.sh $STAGED_TRIADA; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: nowe primary-*/c-accent (crimson) w ekranie listowym (kanon TRIADA)." >&2
+    echo "     SSOT: docs/ui-standards/TRIADA_KANON.md część C. Napraw albo dopisz świadomy wyjątek" >&2
+    echo "     do scripts/triada-allowlist.txt, i commituj ponownie." >&2
+    exit 1
+  fi
+fi
+
+# 4) Doktryna gęstości (docs/ui-standards/DOKTRYNA_GESTOSCI.md §3/§1) —
+#    przeniesione z .claude/hooks/check-gestosc.sh (2026-07-19, było lokalne-tylko).
+STAGED_ALL_TSX=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(ts|tsx)$')
+if [ -n "$STAGED_ALL_TSX" ]; then
+  if ! bash scripts/check-gestosc.sh $STAGED_ALL_TSX; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: regresja mechaniczna doktryny gęstości (plik-duplikat / komponent" >&2
+    echo "     bez callera / zdublowana akcja pasek+kebab). SSOT: docs/ui-standards/DOKTRYNA_GESTOSCI.md." >&2
+    exit 1
+  fi
+fi
+
 exit 0

@@ -1,0 +1,9 @@
+# triada-allowlist.txt — wyjątki od check-triada.sh (VF0-2, 2026-07-19).
+# Przeniesiony razem ze scripts/check-triada.sh z .claude/hooks/ (2026-07-19,
+# .claude/ jest gitignored — hook+allowlist żyły tylko lokalnie per-sesja).
+# Jeden wzorzec ścieżki na linię (dopasowanie shellowym globem do ścieżki pliku,
+# np. */src/components/brand/Logo.tsx albo */src/components/brand/*).
+# Linie zaczynające się od # oraz puste są ignorowane.
+# Na start PUSTA — żadnych plików nie znaleziono, które legalnie potrzebują
+# c-accent/primary-100/200/300 poza kanonem (brand/logo). Dopisz tu ścieżkę
+# TYLKO ze świadomą decyzją (np. świadomy hardkod loga marki), nie żeby ominąć hook.
