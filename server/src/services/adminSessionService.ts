@@ -264,10 +264,10 @@ class AdminSessionServiceClass {
         SELECT
           COUNT(*) as total,
           SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
-          SUM(CASE WHEN is_active = 1 AND mfa_verified = 1 THEN 1 ELSE 0 END) as mfaVerified,
-          SUM(CASE WHEN is_active = 1 AND session_type = 'jit' THEN 1 ELSE 0 END) as jitActive,
-          SUM(CASE WHEN is_active = 1 AND session_type = 'break_glass' THEN 1 ELSE 0 END) as breakGlassActive,
-          COUNT(DISTINCT user_id) as uniqueAdmins
+          SUM(CASE WHEN is_active = 1 AND mfa_verified = 1 THEN 1 ELSE 0 END) as "mfaVerified",
+          SUM(CASE WHEN is_active = 1 AND session_type = 'jit' THEN 1 ELSE 0 END) as "jitActive",
+          SUM(CASE WHEN is_active = 1 AND session_type = 'break_glass' THEN 1 ELSE 0 END) as "breakGlassActive",
+          COUNT(DISTINCT user_id) as "uniqueAdmins"
         FROM admin_sessions
       `);
       return {
@@ -283,7 +283,7 @@ class AdminSessionServiceClass {
         SELECT
           COUNT(*) as total,
           SUM(CASE WHEN expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END) as active,
-          COUNT(DISTINCT admin_user_id) as uniqueAdmins
+          COUNT(DISTINCT admin_user_id) as "uniqueAdmins"
         FROM admin_sessions
       `);
       return {

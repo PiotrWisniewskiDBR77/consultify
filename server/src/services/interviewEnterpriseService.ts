@@ -599,7 +599,7 @@ class InterviewEnterpriseService {
     const now = new Date().toISOString();
 
     const lastVersion = await queryHelpers.queryOne<any>(
-      `SELECT MAX(version) as maxV FROM organization_context_versions WHERE organization_id = ?`,
+      `SELECT MAX(version) as "maxV" FROM organization_context_versions WHERE organization_id = ?`,
       [orgId]
     );
     const version = (lastVersion?.maxV || 0) + 1;

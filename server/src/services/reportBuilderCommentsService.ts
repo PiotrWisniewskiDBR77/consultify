@@ -234,7 +234,7 @@ export async function createComment(params: CreateCommentParams): Promise<Commen
   let threadPosition = 0;
   if (parentCommentId) {
     const maxPos = await queryOne<{ maxPos: number }>(
-      `SELECT COALESCE(MAX(thread_position), 0) as maxPos FROM report_builder_comments WHERE parent_comment_id = ?`,
+      `SELECT COALESCE(MAX(thread_position), 0) as "maxPos" FROM report_builder_comments WHERE parent_comment_id = ?`,
       [parentCommentId]
     );
     threadPosition = (maxPos?.maxPos || 0) + 1;
