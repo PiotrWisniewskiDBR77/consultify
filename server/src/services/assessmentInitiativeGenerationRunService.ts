@@ -419,7 +419,7 @@ export class AssessmentInitiativeGenerationRunService {
       `SELECT i.id,
               COALESCE(i.title, i.name) as title,
               UPPER(COALESCE(i.status,'DRAFT')) as status,
-              COALESCE(l.created_at, i.created_at) as createdAt
+              COALESCE(l.created_at, i.created_at) as "createdAt"
        FROM assessment_initiative_links l
        JOIN assessment_initiative_batches b ON b.id = l.batch_id
        JOIN initiatives i ON i.id = l.initiative_id
