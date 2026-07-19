@@ -138,7 +138,7 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                       WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
-                    END as projectName,
+                    END as "projectName",
                     framework_data as "frameworkData",
                     completion_percent,
                     answers_json,
@@ -203,7 +203,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                       WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
-                    END as projectName,
+                    END as "projectName",
                     a.framework_data as "frameworkData",
                     a.completion_percent,
                     a.answers_json,
@@ -321,7 +321,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
                       WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
-                    END as projectName,
+                    END as "projectName",
                     framework_data as "frameworkData",
                     completion_percent,
                     answers_json,
