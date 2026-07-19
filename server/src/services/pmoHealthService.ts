@@ -212,11 +212,11 @@ async function getTaskCounts(projectId: string): Promise<TaskCounts> {
   try {
     const row = await DbPromise.get<TaskCountRow>(
       db,
-      `SELECT 
-                SUM(CASE WHEN due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as overdueCount,
-                SUM(CASE WHEN due_date >= ? AND due_date <= ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as dueSoonCount,
-                SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as blockedCount
-            FROM tasks 
+      `SELECT
+                SUM(CASE WHEN due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as "overdueCount",
+                SUM(CASE WHEN due_date >= ? AND due_date <= ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as "dueSoonCount",
+                SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as "blockedCount"
+            FROM tasks
             WHERE project_id = ?`,
       [today, today, dueSoonDate, projectId]
     );
@@ -241,10 +241,10 @@ async function getDecisionCounts(projectId: string): Promise<DecisionCounts> {
   try {
     const row = await DbPromise.get<DecisionCountRow>(
       db,
-      `SELECT 
-                SUM(CASE WHEN status IN ('pending', 'escalated') THEN 1 ELSE 0 END) as pendingCount,
-                SUM(CASE WHEN status IN ('pending', 'escalated') AND COALESCE(deadline, created_at) < ? THEN 1 ELSE 0 END) as overdueCount
-            FROM decisions 
+      `SELECT
+                SUM(CASE WHEN status IN ('pending', 'escalated') THEN 1 ELSE 0 END) as "pendingCount",
+                SUM(CASE WHEN status IN ('pending', 'escalated') AND COALESCE(deadline, created_at) < ? THEN 1 ELSE 0 END) as "overdueCount"
+            FROM decisions
             WHERE project_id = ?`,
       [nowIso, projectId]
     );
@@ -266,10 +266,10 @@ async function getInitiativeCounts(projectId: string): Promise<InitiativeCounts>
   try {
     const row = await DbPromise.get<InitiativeCountRow>(
       db,
-      `SELECT 
-                SUM(CASE WHEN risk_level = 'HIGH' OR status = 'AT_RISK' THEN 1 ELSE 0 END) as atRiskCount,
-                SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as blockedCount
-            FROM initiatives 
+      `SELECT
+                SUM(CASE WHEN risk_level = 'HIGH' OR status = 'AT_RISK' THEN 1 ELSE 0 END) as "atRiskCount",
+                SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as "blockedCount"
+            FROM initiatives
             WHERE project_id = ?`,
       [projectId]
     );
