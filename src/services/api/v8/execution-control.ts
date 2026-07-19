@@ -169,6 +169,8 @@ export interface V8ExecutionCapacityWeek {
   capacityHours: number;
   allocatedHours: number;
   availableHours: number;
+  /** 0..100; org-wide average utilization for that week. */
+  utilizationPercent?: number;
 }
 
 export interface V8ExecutionTimelineUpdatePayload {

@@ -177,6 +177,10 @@ interface GovernedCapacityWeek {
   capacityHours: number;
   allocatedHours: number;
   availableHours: number;
+  /** 0..100; org-wide average utilization for that week (real data from
+   * workloadCapacityService — #77 wiring fix 2026-07-19). Optional so older
+   * cached/legacy payloads without it still type-check. */
+  utilizationPercent?: number;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -3301,9 +3305,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const atRisk = wsTotal ? wsAtRisk : Math.max(totalInit - onTrack - delayed, 0);
     const onTimePercent = totalInit > 0 ? Math.round((onTrack / totalInit) * 100) : null;
 
-    // Obłożenie: brak twardego silnika utilization → utilizationPercent=null
-    // (empty-state). Przeciążenia z capacityAlerts, headcount z unikalnych
-    // wykonawców zadań, unassigned z workstreamów.
+    // Obłożenie (#77 wiring fix 2026-07-19): realny silnik istnieje
+    // (workloadCapacityService.getCapacityTimeline, DB-backed) i jest już
+    // pobierany do `capacityTimeline` (org-wide, tydzień[0] = bieżący tydzień
+    // ISO). utilizationPercent = realna wartość tego tygodnia; brak danych
+    // (pusta tablica / capacityHours=0, np. brak project_members) → nadal
+    // null/empty-state, zero zmyślonych liczb. Przeciążenia z capacityAlerts,
+    // headcount z unikalnych wykonawców zadań, unassigned z workstreamów.
+    const currentWeekCapacity = capacityTimeline[0] ?? null;
+    const utilizationPercent =
+      currentWeekCapacity && currentWeekCapacity.capacityHours > 0
+        ? (currentWeekCapacity.utilizationPercent ??
+          Math.round((currentWeekCapacity.allocatedHours / currentWeekCapacity.capacityHours) * 100))
+        : null;
     const criticalCapacity = capacityAlerts.filter((a) => a.severity === 'critical').length;
     const headcount = new Set(
       tasks.map((tk) => (tk as any).assigneeId || (tk as any).assignee_id).filter(Boolean)
@@ -3389,7 +3403,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }
         : null,
       people: {
-        utilizationPercent: null,
+        utilizationPercent,
         overallocatedCount: criticalCapacity,
         underutilizedCount: 0,
         unassignedInitiatives: execSnapshot?.workstreams?.unassignedInitiatives ?? 0,
@@ -3405,6 +3419,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     portfolioMetrics,
     actionCenter,
     capacityAlerts,
+    capacityTimeline,
     decisions,
     tasks,
     dashboardBaseInitiatives,
