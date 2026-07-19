@@ -117,25 +117,33 @@ export class BillingQueryService {
 
   async getBillingModel(orgId: string): Promise<BillingModel> {
     const deps = this.deps();
+    // RED invoices.amount (billing/seat variant): this used to join
+    // organization_seats and select `os.billing_model` — that column never
+    // existed on organization_seats (it only has id/organization_id/user_id/
+    // seat_type/status/created_at, see migrations 000_initdb_core_tables.sql
+    // and 900_prod_missing_tables_hotfix.sql). On Postgres that raised
+    // 42703 (undefined_column) on every call; since the only callers
+    // (usageService.recordTokenUsage/recordStorageUsage) invoke this inside
+    // a try/catch that logs-and-swallows, PAYG/hybrid usage recording was
+    // silently skipped for 100% of organizations regardless of their real
+    // billing model. The real billing model lives on organization_billing
+    // (billing_rail) and subscription_plans (billing_model) — no join to
+    // organization_seats is needed for this lookup.
     const row = await (deps.db.get<{
-      billing_model: string | null;
       plan_billing_model: string | null;
       billing_rail: string | null;
     }>(
-      `SELECT os.billing_model, sp.billing_model as plan_billing_model, ob.billing_rail
-             FROM organization_seats os
-             LEFT JOIN organization_billing ob ON os.organization_id = ob.organization_id
+      `SELECT sp.billing_model as plan_billing_model, ob.billing_rail
+             FROM organization_billing ob
              LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
-             WHERE os.organization_id = ?`,
+             WHERE ob.organization_id = ?`,
       [orgId]
     ) as Promise<{
-      billing_model: string | null;
       plan_billing_model: string | null;
       billing_rail: string | null;
     } | null>);
     return {
-      billingModel:
-        row?.billing_rail || row?.billing_model || row?.plan_billing_model || 'subscription',
+      billingModel: row?.billing_rail || row?.plan_billing_model || 'subscription',
     };
   }
 

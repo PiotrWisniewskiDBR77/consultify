@@ -89,7 +89,9 @@ interface InvoiceRow {
   organization_name?: string;
   invoice_number?: string;
   status: string;
-  amount?: number;
+  // NOTE: `invoices` has never had an `amount` column (see 030_multi_currency.sql.sql /
+  // 160_configuration_enhancements.sql / confirmed on parity :5443) — only subtotal,
+  // tax_amount, total, amount_due, amount_paid. Do not add `amount` back here.
   subtotal?: number;
   tax_amount?: number;
   total?: number;
@@ -130,7 +132,11 @@ function normalizeInvoiceLineItems(lineItems: any[]) {
 function mapInvoiceRow(inv: InvoiceRow) {
   const lineItems = parseJsonField<any[]>(inv.line_items, []);
   const metadata = parseJsonField<Record<string, unknown>>(inv.metadata, {});
-  const subtotal = Number(inv.subtotal ?? inv.amount ?? 0);
+  // RED invoices.amount: `inv.amount` never exists on the invoices row (see
+  // InvoiceRow above) — it read as `undefined` forever, silently masking any
+  // invoice with a null/zero subtotal down to $0 instead of falling back to a
+  // real column. Map to amount_due/total, which do exist.
+  const subtotal = Number(inv.subtotal ?? inv.amount_due ?? inv.total ?? 0);
   const taxAmount = Number(inv.tax_amount ?? 0);
   const total = Number(inv.total ?? subtotal + taxAmount);
 
