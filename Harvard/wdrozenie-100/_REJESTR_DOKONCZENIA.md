@@ -35,14 +35,14 @@
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | 55 | 3 | 2 | 1 | 1 | 62 |
+| A · Harvard (H1-H6) | 56 | 3 | 2 | 0 | 1 | 62 |
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
 | C · Oxford (O1-O8) | 36 | 23 | 11 | 0 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 50 | 5 | 24 | 7 | 2 | 88 |
-| **SUMA** | **175** | **53** | **61** | **11** | **4** | **304** |
+| E · Przekroje (+nowe) | 50 | 7 | 22 | 7 | 2 | 88 |
+| **SUMA** | **176** | **55** | **59** | **10** | **4** | **304** |
 
-**Postęp: 186/304 rozstrzygnięte (61%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 14 decyzji 🔵/⬜DEC rozstrzygnięte przez Piotra — K1-K8 domknięte; +3 rozstrzygnięte (K1/K2/K6→✅), K3/K4/K5/K7 = decyzja✅+wykonanie🟡; Oxford 4 wiersze 🔵→✅. Blok ↓.**
+**Postęp: 186/304 rozstrzygnięte (61%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
 
 ### ★ DECYZJE 2026-07-19 (druga sesja taryfowa) — 14 decyzji 🔵/⬜DEC rozstrzygniętych przez Piotra (dowód: rozmowa robocza 07-19, materiał `_SESJA1_ODBIOR_OXFORD.md §3`)
 **DoD decyzji = decyzja Piotra wpisana. Kanon §5 K1-K8 domknięte.**
@@ -57,7 +57,12 @@
 - **6 martwych `build<Tool>DeepenPrompt` → ✅ decyzja: USUŃ** (0 callerów, mechanizm pokryty `deepeningLadder.ts`; czysty dług — JA robi bez pytania). Oxford wiersz O3 🔵→✅.
 - **O7.1 CARD_CONTENT_FORMULA → ✅** (potwierdzone twarda-brama, już `353fca6bb2`). Oxford wiersz O7 🔵→✅.
 - **Licznik:** C · Oxford 🔵 3→0 (+3 ✅). E · Przekroje ⬜ 7→ (K1/K2/K6 +3✅, K3/K4/K5/K7 +4🟡). SUMA rozstrzygnięte 183→186 (61%). RAZEM 304 bez zmian.
-- **NOWA ROBOTA WYKONAWCZA ze zdecydowanych (⬜/🟡 do zjazdu falami):** K3-exec (kasacja śmieci demo) · K4-wiring (AI-fill 10 sekcji) · K5-gen (3 poziomy SWOT/PPTX) · K7-exec (kasacja 179 org) · martwe-buildDeepen-rm (JA cleanup).
+- **★ +4 decyzje (druga runda 07-19, poza Kanon §5):**
+  - **T7 rodzina 46 lazy-wrapperów / 42 self-import → ✅ decyzja: USUŃ MARTWE** (bez await-fix — to deadlock, [[finding_lazyloader_46_self_resolving_hang_2026-07-15]]). Wykonanie🟡 JA falami.
+  - **I1-I3 generatory inicjatyw → ✅ decyzja: GREENLIGHT TYLKO I1** (actionable dedup za flagą; I2/I3 WSTRZYMANE — pełna unifikacja regresuje jakość AI w Tools albo blast na Interview, [[finding_two_initiative_generators_divergence]]). Wykonanie🟡.
+  - **CMMI/LEAN v1 (D-B) → ✅ decyzja: „wkrótce" na v1** (trio DRD/SIRI/ADMA flagowe; pełna impl. post-v1). 🔵→✅.
+  - **B7-D forward-port demo→PROD (Londyn) → decyzja: PROD ZAMROŻONY** („produkcji na razie nie ruszamy"). Odroczone, PROD nietknięty; pozostaje ⬜ jako przyszła praca.
+- **NOWA ROBOTA WYKONAWCZA ze zdecydowanych (⬜/🟡 do zjazdu falami):** K3-exec (kasacja śmieci demo) · K4-wiring (AI-fill 10 sekcji) · K5-gen (3 poziomy SWOT/PPTX) · K7-exec (kasacja 179 org) · martwe-buildDeepen-rm · **T7 usuń-martwe-wrappery · I1 actionable-dedup** (wszystko na demo, PROD zamrożony).
 
 ### FALA-W9 (2026-07-19, deploy 38eda846ab, demo-safe-2026-07-19) — 3 gałęzie, bramki zielone (server tsc 146/204 0-nowych, kolory/artefakt PASS, eslint 0, boot 4/4) — DOMKNIĘCIE KODOWALNEGO OGONA
 - **★ sweep cichych degradacji** — smoking gun: `DbPromise fallback=true` łyka 42703 (`does not exist`) BEZ logu → panel pusty bez alarmu (gorsze niż 500). **8 realnych user-facing bugów naprawionych**: `task_dependencies` predecessor/successor→from/to (graf/Gantt), `users.full_name`×4 (AI-analytics/feedback/quality), `projects.progress/end_date` (500), zespół projektu, report-builder, `initiative_kpis.latest_value`→fałszywe 404 „KPI not found". Dowód niepustych danych na parity. `38bec1bdb2`.
@@ -303,7 +308,7 @@ Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra ·
 | H6.13 | Eksport PDF | 🟡 | JA | serwisy są, żywy dowód |
 | H6.14 | Dataset Atelier | ✅ | — | seed+README |
 | H6.15 | D-K M10 w GA | ✅ | — | |
-| — | CMMI/LEAN v1 | 🔵 | — | decyzja D-B (Konstytucja) |
+| — | CMMI/LEAN v1 | ✅ | — | D-B 07-19: „wkrótce" na v1, pełna impl. post-v1 (trio DRD/SIRI/ADMA flagowe) |
 
 ---
 
@@ -446,11 +451,11 @@ F0-8 sweep ikon 🟡 (lucide-only ✓).
 ### B7 · Forward-port Londyn (2) — ★bez tego prod nie dostaje NIC
 | ID | Zadanie | S | Akcja |
 |---|---|---|---|
-| B7-D | Decyzja startu + bramka D-G (per-krok zgoda) | ⬜ | DEC |
+| B7-D | Decyzja startu + bramka D-G (per-krok zgoda) | ⬜ | DEC 07-19: PROD ZAMROŻONY („produkcji na razie nie ruszamy") — forward-port odroczony, PROD nietknięty |
 | B7-X | Wykonanie per-SHA 1581 commitów (0 wstecz — bezpieczne) | ⬜ | JA J24 (po B7-D) |
 
 ### Ogony „145" (7)
-#24b-d kalendarz ⬜(po ENV E4) · I1-I3 kreatory ⬜(DEC greenlight, ADR gotowy) · #82b RECONCILE ⬜DEC ·
+#24b-d kalendarz ⬜(po ENV E4) · I1-I3 kreatory 🟡(07-19: greenlight TYLKO I1 actionable-dedup za flagą; I2/I3 wstrzymane — pełna unifikacja regresuje jakość Tools; JA wykonanie) · #82b RECONCILE ⬜DEC ·
 #28/25/30/35 role PM ⬜DEC · #71 chipy ⬜DEC · #77 silnik obłożenia ⬜JA · presence-write ⬜JA ·
 (§27 backlog admin 🔵 — decyzja 07-13 „zostaw").
 
@@ -468,7 +473,7 @@ K5 SWOT×3/PPTX×3 ✅decyzja(3 poziomy krótka/średnia/pełna)/🟡gen · K6 p
 ### Długi techniczne (10)
 T1 256 testów ⬜JA-flota · T2 SLA F3/F5 E2E ❓JA · T3 (=ogony enforce, patrz wyżej) · T4 #77 (j.w.) ·
 T5 sanitizer tytuły+tool_sessions ⬜JA · T6 permissionService domknąć-jako-OK ⬜JA ·
-T7 wrappery 42+46 ⬜DEC→JA · T8 (=presence-write) · T9 taski-w-tle (facilitation/EmptyState/SCIM DDL/reportContentGenerator/KnownTool) ⬜JA×5 · T10 migracje renumeracja+presentation_cards+baseline 🟡JA J4.
+T7 wrappery 42+46 🟡(07-19 decyzja: USUŃ MARTWE — bez await-fix=deadlock; JA falami) · T8 (=presence-write) · T9 taski-w-tle (facilitation/EmptyState/SCIM DDL/reportContentGenerator/KnownTool) ⬜JA×5 · T10 migracje renumeracja+presentation_cards+baseline 🟡JA J4.
 
 ### Kalendarz (3)
 📅 03.08 ELKOMTECH (ODB O2; PROD per-zgoda) ⬜ · 📅 04.08 audyt ISO (Piotr) ⬜ · 📅 ~10.08 flip „Certified" (JA) ⬜.
