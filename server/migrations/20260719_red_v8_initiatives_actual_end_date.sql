@@ -1,0 +1,24 @@
+-- RED-V8 (odbiór 2026-07-19, rewir routery v8): kolumna initiatives.actual_end_date
+-- jest referencjonowana przez 5 ścieżek kodu, ale NIE ISTNIEJE w schemacie demo/parity.
+--
+-- Objaw (masked schema-500 / "undefined-po-cichu"):
+--   • GET  /api/v8/execution-control/baseline-variance/:initiativeId
+--       — surowy SELECT ... actual_end_date ... rzuca 42703; DbPromise.all ma
+--         fallback=true → połyka błąd i zwraca [] → handler oddaje 404
+--         "Initiative not found" mimo że inicjatywa istnieje (feature nigdy nie działa).
+--   • POST /api/v8/execution-control/timeline-update  (field = 'actual_end_date')
+--       — SELECT ${field} / UPDATE ${field} → to samo 42703 połknięte → masked 404.
+--   • services/v8/planningPortfolioReadService.ts (SELECT i.*) → initiative.actual_end_date
+--       = undefined → pole actualEndDate w portfolio zawsze puste (silent-undefined).
+--   • services/delayDetectionService.ts / riskDetectionService.ts — już GUARD-ują
+--       przez getTableColumns() (`NULL as actual_end_date`), co potwierdza, że kolumna
+--       jest zamierzona, lecz brakująca w tym środowisku.
+--   • services/initiative/initiativeLifecycleCanon.ts — czyta row.actual_end_date.
+--
+-- Fix: addytywna, idempotentna kolumna (zgodna typem z siblingami planned_end_date /
+-- end_date = TIMESTAMP WITHOUT TIME ZONE). Na demo (jeśli już dodana innym torem) = no-op.
+-- Prefiks daty (8 cyfr) → wpada w autorun DatabaseInitializer /^(7\d{2}|\d{8})_/.
+-- Bez backfillu (decyzja produktowa: z czego wyprowadzić „faktyczny koniec" —
+-- end_date vs completed_at — poza zakresem tej naprawy schema-500).
+
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS actual_end_date TIMESTAMP WITHOUT TIME ZONE;
