@@ -621,9 +621,9 @@ export class LLMController {
       const metricsRow = (await dbGet(
         `
                 SELECT 
-                    COUNT(*) as totalRequests,
-                    AVG(latency_ms) as avgLatencyMs,
-                    SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as successRate
+                    COUNT(*) as "totalRequests",
+                    AVG(latency_ms) as "avgLatencyMs",
+                    SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as "successRate"
                 FROM ai_usage_logs 
                 WHERE created_at > datetime('now', '-24 hours')
             `,
@@ -1177,10 +1177,10 @@ export class LLMController {
       const totals = (await dbGet(
         `
                 SELECT 
-                    COUNT(*) as totalCalls,
-                    COALESCE(SUM(tokens_used), 0) as totalTokens,
-                    COALESCE(AVG(latency_ms), 0) as avgLatency,
-                    COALESCE(SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*), 0), 0) as errorRate
+                    COUNT(*) as "totalCalls",
+                    COALESCE(SUM(tokens_used), 0) as "totalTokens",
+                    COALESCE(AVG(latency_ms), 0) as "avgLatency",
+                    COALESCE(SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*), 0), 0) as "errorRate"
                 FROM ai_usage_logs 
                 WHERE created_at > datetime('now', '-' || ? || ' days')
             `,
@@ -1772,8 +1772,8 @@ export class LLMController {
                 SELECT 
                     COUNT(*) as calls,
                     COALESCE(SUM(tokens_used), 0) as tokens,
-                    COALESCE(AVG(latency_ms), 0) as avgLatency
-                FROM ai_usage_logs 
+                    COALESCE(AVG(latency_ms), 0) as "avgLatency"
+                FROM ai_usage_logs
                 WHERE date(created_at) = date('now')
             `,
         []
@@ -1838,8 +1838,8 @@ export class LLMController {
         `
                 SELECT 
                     provider,
-                    COALESCE(SUM(tokens_used), 0) as totalTokens,
-                    SUM(CASE WHEN estimated_cost_usd IS NOT NULL THEN estimated_cost_usd ELSE 0 END) as totalEstimatedCostUsd
+                    COALESCE(SUM(tokens_used), 0) as "totalTokens",
+                    SUM(CASE WHEN estimated_cost_usd IS NOT NULL THEN estimated_cost_usd ELSE 0 END) as "totalEstimatedCostUsd"
                 FROM ai_usage_logs 
                 WHERE created_at >= date('now', 'start of month')
                   AND status = 'success'
