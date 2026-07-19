@@ -1458,7 +1458,7 @@ class ManagementReportsService {
 
   async createReportVersion(reportId, content, aiNarrative, aiWarnings, userId, summary) {
     const currentVersionRow = await get(
-      `SELECT MAX(version_number) as versionNumber FROM management_report_versions WHERE report_id = ?`,
+      `SELECT MAX(version_number) as "versionNumber" FROM management_report_versions WHERE report_id = ?`,
       [reportId]
     );
     const nextVersion = (currentVersionRow?.versionNumber || 0) + 1;
