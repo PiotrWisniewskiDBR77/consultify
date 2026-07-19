@@ -23,14 +23,14 @@ Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko
    zmienia TYLKO centrum (A Canvas·B Dokument·C Rekord·D Matryca·E Deck). Przy każdej pracy nad
    artefaktem użyj skilla `consultify-artefakty`. Pułapka: `primary-*` KAŻDY numer = crimson
    (hook `check-artefakt.sh` — zbudowany 2026-07-18 — blokuje w powłoce). Odbiór = DoD §18.1
-   oczami. Plan: `_PROJEKT_B_VEGAS.md`.
+   oczami. Plan: `Harvard/wdrozenie-100/_PROJEKT_B_VEGAS.md`.
 7. **★ PIOTR NIGDY NIE JEST PIERWSZYM TESTEREM WIZUALNYM (nienaruszalne — powód: załamanie 07-11, „gwiazda").**
    Zanim Piotr zobaczy JAKIKOLWIEK ekran wizualny: (a) prototyp → wstępny OK Piotra; (b) JA renderuję realny
    ekran + robię ZRZUT sam (dev-render/harness z mock-danymi, bez logowania Piotra — wzór: harness EV
    football-field); (c) zrzut czysty (zero gwiazdek/ozdób, tokeny c-*, zgodny z prototypem); (d) DOPIERO wtedy
    Piotr patrzy — do AKCEPTU, nie do odkrywania zepsucia. Zakaz „włącz flagę i zobacz" jako pierwszego
    sprawdzenia. Wygląd tylko za flagą (default OFF) do akceptu. Po akcepcie → flaga domyślna + re-tag punktu.
-8. **★ PRZYCISK COFANIA (`_RUNBOOK_COFANIA.md`).** Bezpieczny punkt = tag `demo-safe-<data>` (ostatni stan
+8. **★ PRZYCISK COFANIA (`Harvard/wdrozenie-100/_RUNBOOK_COFANIA.md`).** Bezpieczny punkt = tag `demo-safe-<data>` (ostatni stan
    zaakceptowany przez Piotra), re-tagowany po każdej akcept-partii. Dramat wizualny→flaga OFF (natychmiast);
    zły deploy→Railway rollback/`git revert`; nuklearne→restore-commit DO PRZODU (checkout tagu→commit→push,
    NIGDY force-push na demo). Migracje sesji addytywne=bez rollbacku.
@@ -71,6 +71,9 @@ Dane demo = twarz produktu: probe'y sprzątają po sobie, zero rekordów testowy
    NIGDY `feat/tp-forms-polish`, NIGDY `tp-*`/`deliverables-w1`/`harvard-noc` (skażony re-skin nocy 3/4).
 
 ## FINISZ 8 NARZĘDZI (aktywny program)
-SSOT: `Harvard/wdrozenie-100/_PLANY_KONCOWE_2026-07-07/00_PLAN_DOKONCZENIA_FINAL.md` (fazy 0-5, decyzje P-1…P-10).
+SSOT: `Harvard/wdrozenie-100/_FINISZ_MASTER_PLAN.md` (jedyny punkt wejścia dla domknięcia Harvard/Vegas/Oxford;
+zastępuje martwą ścieżkę „_PLANY_KONCOWE_2026-07-07 / 00_PLAN_DOKONCZENIA_FINAL.md" — ten plik powstał na
+innej gałęzi (fed1bbba1f), nigdy nie wszedł na `origin/demo`; jeśli „fazy 0-5, decyzje P-1…P-10" to inny,
+bardziej szczegółowy dokument — zweryfikuj z Piotrem i popraw wskazanie).
 Kończąc/audytując silnik·Teresę·kolaborację narzędzia → skill `consultify-finisz-modulu`.
 Promocja na demo / migracja bazy → skill `consultify-promocja-demo` (demo=święte, merge nie force).
