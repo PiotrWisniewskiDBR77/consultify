@@ -277,7 +277,7 @@ function getSiriPathwayRecommendation(
   const toLevel = SIRI_MATURITY_LEVELS.find((l) => l.level === clamped + 1);
   if (!fromLevel || !toLevel) return genericFallback('siri', dimensionId, currentLevel, lang);
 
-  const knowledge = getSIRIKnowledge(dimensionId, clamped + 1);
+  const knowledge = getSIRIKnowledge(dimensionId, clamped + 1, lang);
 
   const fromLabel = `${fromLevel.level} (${fromLevel.title})`;
   const toLabel = `${toLevel.level} (${toLevel.title})`;
@@ -336,7 +336,7 @@ function getAdmaPathwayRecommendation(
   const toLevel = ADMA_MATURITY_LEVELS.find((l) => l.level === clamped + 1);
   if (!fromLevel || !toLevel) return genericFallback('adma', dimensionId, currentLevel, lang);
 
-  const knowledge = getADMAKnowledge(dimensionId, clamped + 1);
+  const knowledge = getADMAKnowledge(dimensionId, clamped + 1, lang);
 
   const fromLabel = `${fromLevel.level} (${fromLevel.title})`;
   const toLabel = `${toLevel.level} (${toLevel.title})`;
