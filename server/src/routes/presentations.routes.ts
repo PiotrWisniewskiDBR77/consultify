@@ -10,6 +10,7 @@ import path from 'path';
 import PDFDocument from 'pdfkit';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
+import { ZodError } from 'zod';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
@@ -1416,8 +1417,26 @@ router.post(
       }
     }
 
-    const result = await generateDeck(deckId, outline, setup, orgId);
-    res.json({ success: true, data: result });
+    try {
+      const result = await generateDeck(deckId, outline, setup, orgId);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      // RED-J W6 bug #2 — registerArtifactOrigin() (called deep inside
+      // generateDeck()) does a raw RegisterArtifactOriginParamsSchema.parse()
+      // and throws an uncaught ZodError when required fields (e.g.
+      // originRecordId) are missing from `setup`. That surfaced as a 500
+      // instead of a client-input 400 — map it here, same pattern as
+      // execution.routes.ts::handleExecutionError / my-work.routes.ts.
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid deck generation payload',
+          code: 'VALIDATION_ERROR',
+          details: error.issues,
+        });
+      }
+      throw error;
+    }
   })
 );
 

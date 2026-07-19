@@ -352,7 +352,8 @@ export function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
     items.push(...arc);
   }
 
-  for (const source of setup.sourceArtifacts) {
+  const sourceArtifactsForLoop = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
+  for (const source of sourceArtifactsForLoop) {
     switch (source.type) {
       case 'initiative_portfolio':
         items.push({
@@ -1126,7 +1127,10 @@ function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
     'assessment',
   ];
   const hasDataCard = enabled.some((o) => dataIntents.includes(o.intent));
-  const hasDataSource = setup.sourceArtifacts.some((s) =>
+  const validateOutlineSourceArtifacts = Array.isArray(setup.sourceArtifacts)
+    ? setup.sourceArtifacts
+    : [];
+  const hasDataSource = validateOutlineSourceArtifacts.some((s) =>
     ['kpi_roi', 'initiative_portfolio', 'assessment', 'raid'].includes(s.type)
   );
   if (hasDataCard && !hasDataSource) {
@@ -1137,7 +1141,7 @@ function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
     );
   }
 
-  const manualOrUnreadySources = setup.sourceArtifacts.filter(
+  const manualOrUnreadySources = validateOutlineSourceArtifacts.filter(
     (source) => !source.id || source.id.startsWith('manual-') || source.readiness !== 'ready'
   );
   if (manualOrUnreadySources.length > 0) {

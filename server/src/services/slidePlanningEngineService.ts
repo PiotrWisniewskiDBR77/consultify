@@ -148,8 +148,8 @@ function intentKeyMessage(intent: SlideIntent, isPl: boolean): string | undefine
 
 function createModeFor(setup: DeckSetup, hasTemplateOutline: boolean): DeckCreateMode {
   if (setup.templateId || hasTemplateOutline) return 'template-first';
-  if ((setup.sourceArtifacts || []).some((source) => source.artifactId || source.id))
-    return 'artifact-first';
+  const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
+  if (sourceArtifacts.some((source) => source.artifactId || source.id)) return 'artifact-first';
   return 'blank-brief';
 }
 
