@@ -15,6 +15,7 @@ import { getDatabase } from '../../database/index.js';
 import { activityService } from '../../services/ActivityService.js';
 import adminSessionService from '../../services/adminSessionService.js';
 import complianceService from '../../services/complianceService.js';
+import dataRetentionAdminService from '../../services/dataRetentionAdminService.js';
 import feedbackService from '../../services/feedbackService.js';
 import integrationService from '../../services/integrationService.js';
 import invitationService from '../../services/invitationService.js';
@@ -186,7 +187,7 @@ export const deps: {
   CustomerSuccessService: { getNotes: async () => [] } as any,
   FeedbackService: feedbackService as any,
   UserAdoptionService: userAdoptionService as any,
-  DataRetentionService: { getPolicy: async () => ({}) } as any,
+  DataRetentionService: dataRetentionAdminService as any,
   ConsentManagementService: { getConsents: async () => [] } as any,
   AutomationEngineService: { getRules: async () => [] } as any,
   EmailTemplateService: { getTemplates: async () => [] } as any,
