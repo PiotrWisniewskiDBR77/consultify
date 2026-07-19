@@ -49,6 +49,7 @@ export type GeneratorType =
   | 'process_summary'
   | 'process_brief'
   | 'process_savings'
+  | 'edit_step'
   | 'vsm_generator'
   | 'sticky_summarize'
   | 'vsm_future_state'
@@ -93,6 +94,7 @@ const GENERATOR_STATUS_MAP: Record<GeneratorType, 'real' | 'partial' | 'cross-to
   process_summary: 'real',
   process_brief: 'partial',
   process_savings: 'partial',
+  edit_step: 'real',
   vsm_generator: 'real',
   sticky_summarize: 'real',
   vsm_future_state: 'real',

@@ -7,6 +7,7 @@ import {
   Plus,
   Rocket,
   Settings,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
@@ -110,6 +111,8 @@ export function getNodeContextActions(opts: {
   onOpenProperties: () => void;
   onAutoLayout?: () => void;
   onConvertInitiative?: () => void;
+  /** J26 (Kanał 2): open AI "rewrite this step" flow for the node. */
+  onAIRewriteStep?: () => void;
 }): ContextMenuAction[] {
   const items: ContextMenuAction[] = [
     // Open / inspect
@@ -144,6 +147,20 @@ export function getNodeContextActions(opts: {
       icon: <LayoutGrid size={14} />,
       onClick: opts.onAutoLayout,
       disabled: opts.locked,
+    });
+  }
+
+  // AI group (canon K6: Open → Context → AI → Convert → Danger). J26 (Kanał 2):
+  // "rewrite this step" — AI modifies the EXISTING step in place (Propose→Accept),
+  // distinct from the manual "Edit label" above.
+  if (opts.onAIRewriteStep) {
+    items.push({
+      id: 'ai-rewrite-step',
+      label: tr(opts.isPl, 'aiRewriteStep', 'AI: rewrite step'),
+      icon: <Sparkles size={14} />,
+      onClick: opts.onAIRewriteStep,
+      disabled: opts.locked,
+      separatorBefore: true,
     });
   }
 

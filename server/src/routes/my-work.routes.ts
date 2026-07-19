@@ -5644,6 +5644,8 @@ const IdeaAIGenerateBodySchema = z.object({
     'process_summary',
     'vsm_generator',
     'vsm_future_state',
+    // J26 (Kanał 2): rewrite an existing process step in place
+    'edit_step',
   ]),
   tool: z.enum(['process_flow', 'mindmap', 'table', 'whiteboard']),
   context: z.object({

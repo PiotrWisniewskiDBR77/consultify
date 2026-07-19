@@ -486,6 +486,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── New UI state: panels, context menu, export dialog ─────────────────
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
+  // J26 (Kanał 2): when set, the AI panel's prompt drives `edit_step` (rewrite
+  // this existing step in place) instead of the free-prompt generator.
+  const [rewriteStepId, setRewriteStepId] = useState<string | null>(null);
   const [showReadbackPanel, setShowReadbackPanel] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
@@ -695,6 +698,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isGenerating: isAIGenerating,
     error: aiError,
     createProposal,
+    createStepRewriteProposal,
     resolveProposal,
     dismiss: dismissProposal,
   } = useProcessFlowAIProposal({
@@ -722,6 +726,44 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     },
     [locked, createProposal]
   );
+
+  // J26 (Kanał 2): open the AI panel targeted at ONE step. The panel's prompt
+  // becomes the rewrite instruction; `handleAIPanelGenerate` routes it to the
+  // `edit_step` generator while `rewriteStepId` is set.
+  const openStepRewrite = useCallback(
+    (nodeId: string) => {
+      if (locked || !nodeId) return;
+      setRewriteStepId(nodeId);
+      setShowAIPanel(true);
+    },
+    [locked]
+  );
+
+  const handleAIPanelGenerate = useCallback(
+    (prompt: string) => {
+      if (rewriteStepId) {
+        createStepRewriteProposal({ nodeId: rewriteStepId, instruction: prompt });
+        return;
+      }
+      createProposal(prompt);
+    },
+    [rewriteStepId, createStepRewriteProposal, createProposal]
+  );
+
+  // Clear the step-rewrite target after the proposal resolves or is dismissed,
+  // so the next free-prompt generation is not mistargeted at a step.
+  const handleAIPanelResolve = useCallback(
+    (action: 'accept' | 'reject') => {
+      resolveProposal(action);
+      setRewriteStepId(null);
+    },
+    [resolveProposal]
+  );
+
+  const handleAIPanelDismiss = useCallback(() => {
+    dismissProposal();
+    setRewriteStepId(null);
+  }, [dismissProposal]);
 
   // ── Selection tracking ─────────────────────────────────────────────────
   const handleSelectionUpdate = useCallback(
@@ -2939,10 +2981,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="absolute right-0 top-0 bottom-0 w-96 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {t('myWorkIdeas.processFlowTool.aiProposal')}
+              {rewriteStepId
+                ? t('myWorkIdeas.processFlowTool.aiRewriteStep', 'AI: rewrite step')
+                : t('myWorkIdeas.processFlowTool.aiProposal')}
             </span>
             <button
-              onClick={() => setShowAIPanel(false)}
+              onClick={() => {
+                setShowAIPanel(false);
+                setRewriteStepId(null);
+              }}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
               aria-label={t('myWorkIdeas.processFlowTool.close')}
             >
@@ -2954,15 +3001,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             isGenerating={isAIGenerating}
             error={aiError}
             isPl={!!isPl}
-            onAccept={() => resolveProposal('accept')}
-            onReject={() => resolveProposal('reject')}
+            onAccept={() => handleAIPanelResolve('accept')}
+            onReject={() => handleAIPanelResolve('reject')}
             onEditPrompt={() => {
               // Back to the prompt form (the panel keeps the previous prompt
               // in its draft); the user edits and regenerates explicitly.
-              dismissProposal();
+              handleAIPanelDismiss();
             }}
-            onDismiss={dismissProposal}
-            onGenerate={createProposal}
+            onDismiss={handleAIPanelDismiss}
+            onGenerate={handleAIPanelGenerate}
           />
         </div>
       )}
@@ -3130,6 +3177,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     setShowPropertiesPanel(true);
                   },
                   onAutoLayout: () => handleAutoLayout(),
+                  onAIRewriteStep: () => openStepRewrite(contextMenu.nodeId!),
                   onConvertInitiative: onQuickAction
                     ? () => handleConvert('pf_convert_initiative')
                     : undefined,
