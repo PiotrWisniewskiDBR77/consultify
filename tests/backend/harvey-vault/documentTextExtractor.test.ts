@@ -15,7 +15,7 @@ import {
   extractTextFromBuffer,
   isSupportedIngest,
   resolveFormat,
-} from '../../src/services/documentTextExtractor.js';
+} from '../../../server/src/services/documentTextExtractor.js';
 
 // --- fixtures ---------------------------------------------------------------
 

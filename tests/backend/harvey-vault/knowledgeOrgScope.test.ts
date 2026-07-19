@@ -53,18 +53,18 @@ const mockRun = vi.fn(async (sql: string, params: unknown[]) => {
   return { changes };
 });
 
-vi.mock('../../src/utils/DbPromise.js', () => ({
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   all: (sql: string, params: unknown[]) => mockAll(sql, params),
   run: (sql: string, params: unknown[]) => mockRun(sql, params),
   get: vi.fn(),
 }));
 
-vi.mock('../../src/utils/Logger.js', () => ({
+vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
 // ensureKnowledgeSchema wykonuje DDL — w teście no-op przez powyższy mock run.
-import KnowledgeService from '../../src/services/KnowledgeService.js';
+import KnowledgeService from '../../../server/src/services/KnowledgeService.js';
 
 const ORG_A = 'org-aaaa';
 const ORG_B = 'org-bbbb';
