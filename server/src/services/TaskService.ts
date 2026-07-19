@@ -4,6 +4,7 @@
  * Handles all task-related business logic with full type safety
  */
 
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import type { Task, TaskPriority, TaskStatus, User } from '../types/index.js';
@@ -115,14 +116,33 @@ export class TaskService {
       await this.verifyProjectAccess(validated.projectId, userId);
     }
 
+    // tasks.id and tasks.organization_id are NOT NULL with no DB default, so the
+    // INSERT must supply both (Postgres rejects the row otherwise — SQLite was
+    // lenient here). Generate the id (canon: uuidv4, like TaskController) and
+    // resolve organization_id from the creating user's org — a task belongs to
+    // its creator's organization. Deriving it here keeps every caller correct
+    // (interview-insights handoff, CQRS CreateTaskHandler) without threading an
+    // extra argument through each one.
+    const id = uuidv4();
+    const orgResult = await this.db.query<{ organization_id: string | null }>(
+      `SELECT organization_id FROM users WHERE id = $1`,
+      [userId]
+    );
+    const organizationId = orgResult.rows[0]?.organization_id;
+    if (!organizationId) {
+      throw new NotFoundError('User organization');
+    }
+
     const result = await this.db.query<TaskRow>(
       `INSERT INTO tasks (
-                project_id, title, description, status, priority,
+                id, organization_id, project_id, title, description, status, priority,
                 assignee_id, due_date, estimated_hours, tags, initiative_id,
                 created_by
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
              RETURNING *`,
       [
+        id,
+        organizationId,
         validated.projectId || null, // projectId is optional
         validated.title,
         validated.description || null,
