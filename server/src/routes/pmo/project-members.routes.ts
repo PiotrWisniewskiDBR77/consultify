@@ -1,6 +1,12 @@
 /**
  * Project Members Routes
  * API endpoints for managing project team members
+ *
+ * Schema note (RED-G / RED-D W5/W6, 2026-07-19): the live `project_members`
+ * table has columns `project_role` / `created_at` / `added_by_id` — NOT the
+ * `role` / `joined_at` / `added_by` names this file originally used. Every
+ * query below is aliased/renamed to the real columns while keeping the JSON
+ * response contract (`role`, `joined_at`) unchanged for callers.
  */
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -50,12 +56,12 @@ router.get(
     try {
       const members = await dbAll(
         `
-    SELECT pm.id, pm.user_id, pm.role, pm.permissions, pm.joined_at,
+    SELECT pm.id, pm.user_id, pm.project_role AS role, pm.permissions, pm.created_at AS joined_at,
            u.first_name, u.last_name, u.email, u.avatar_url
     FROM project_members pm
     JOIN users u ON pm.user_id = u.id
     WHERE pm.project_id = ?
-    ORDER BY pm.role DESC, pm.joined_at ASC
+    ORDER BY pm.project_role DESC, pm.created_at ASC
   `,
         [projectId],
         { fallback: false }
@@ -122,7 +128,7 @@ router.post(
       const id = uuidv4();
       const result = await dbRun(
         `
-    INSERT INTO project_members (id, project_id, user_id, role, permissions, added_by, joined_at)
+    INSERT INTO project_members (id, project_id, user_id, project_role, permissions, added_by_id, created_at)
     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
   `,
         [id, projectId, userId, role, JSON.stringify(permissions || []), requesterId],
@@ -173,7 +179,7 @@ router.put(
       const params: any[] = [];
 
       if (role !== undefined) {
-        updates.push('role = ?');
+        updates.push('project_role = ?');
         params.push(role);
       }
       if (permissions !== undefined) {
@@ -318,7 +324,7 @@ router.post(
         const id = uuidv4();
         await dbRun(
           `
-      INSERT INTO project_members (id, project_id, user_id, role, added_by, joined_at)
+      INSERT INTO project_members (id, project_id, user_id, project_role, added_by_id, created_at)
       VALUES (?, ?, ?, ?, ?, datetime('now'))
     `,
           [id, projectId, existingUser.id, role, requesterId],
