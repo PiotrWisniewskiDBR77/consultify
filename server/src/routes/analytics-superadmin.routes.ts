@@ -663,22 +663,22 @@ router.get(
       const stats = (await dbGet(
         `
           SELECT
-            COUNT(*) as totalMetrics,
-            SUM(CASE WHEN bm.is_active = true OR bm.is_active = 1 THEN 1 ELSE 0 END) as activeMetrics,
+            COUNT(*) as "totalMetrics",
+            SUM(CASE WHEN bm.is_active = true OR bm.is_active = 1 THEN 1 ELSE 0 END) as "activeMetrics",
             COUNT(DISTINCT bm.category) as categories,
-            SUM(CASE 
-                  WHEN bm.target_value IS NOT NULL 
-                   AND latest.value IS NOT NULL 
-                   AND latest.value >= bm.target_value 
+            SUM(CASE
+                  WHEN bm.target_value IS NOT NULL
+                   AND latest.value IS NOT NULL
+                   AND latest.value >= bm.target_value
                   THEN 1 ELSE 0 END
-            ) as onTarget,
-            SUM(CASE 
-                  WHEN bm.target_value IS NOT NULL 
-                   AND latest.value IS NOT NULL 
+            ) as "onTarget",
+            SUM(CASE
+                  WHEN bm.target_value IS NOT NULL
+                   AND latest.value IS NOT NULL
                    AND latest.value < bm.target_value
                    AND latest.value >= (bm.target_value * 0.8)
                   THEN 1 ELSE 0 END
-            ) as needsAttention,
+            ) as "needsAttention",
             SUM(CASE 
                   WHEN bm.target_value IS NOT NULL 
                    AND latest.value IS NOT NULL 

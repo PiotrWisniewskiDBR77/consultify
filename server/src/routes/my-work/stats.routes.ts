@@ -60,8 +60,8 @@ router.get(
     );
     const onTime = await queryHelpers.queryOne<{ onTime: number; totalDone: number }>(
       `SELECT
-         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as onTime,
-         SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as totalDone
+         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as "onTime",
+         SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as "totalDone"
        FROM tasks
        WHERE organization_id = ? AND assignee_id = ? AND completed_at IS NOT NULL AND completed_at >= ?`,
       [orgId, userId, sinceIso]
@@ -79,8 +79,8 @@ router.get(
     );
     const prevOnTime = await queryHelpers.queryOne<{ onTime: number; totalDone: number }>(
       `SELECT
-         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as onTime,
-         SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as totalDone
+         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as "onTime",
+         SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as "totalDone"
        FROM tasks
        WHERE organization_id = ? AND assignee_id = ? AND completed_at IS NOT NULL AND completed_at >= ? AND completed_at < ?`,
       [orgId, userId, prevSinceIso, sinceIso]
