@@ -23,11 +23,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseDiagramPackage } from '@/components/MyWork/canvas/diagramInterop';
 
+// IdeaExportMenu.tsx calls t() for these two governance-copy keys with NO
+// fallback argument (convention differs from most of the component, which
+// always passes a fallback) — relies entirely on the real locale resources
+// (public/locales/en/translation.json). The naive mock below has no access
+// to those resources, so it must special-case the keys under test here
+// rather than reproduce the raw i18n key (component-drift note, T1/fala1).
+const I18N_KEY_OVERRIDES: Record<string, string> = {
+  'myWorkIdeas.exportMenu.exportBlockedWhiteboardGovernance':
+    'Export blocked by whiteboard governance.',
+};
+
 vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: () => undefined },
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string'
+        ? fallback
+        : (fallback?.defaultValue ?? I18N_KEY_OVERRIDES[_key] ?? _key),
   }),
 }));
 

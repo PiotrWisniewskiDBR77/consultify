@@ -45,6 +45,13 @@ vi.mock('@/services/api/v8/finance', () => ({
     getModelOutputs: vi.fn(),
     getModelValidations: vi.fn(),
     updateModel: vi.fn(),
+    // M16/6.5 — ModelVersionHistory (mounted unconditionally under the
+    // `modelVersioning` flag, default ON per financeFeatureFlags.ts DEFAULT_ON)
+    // is a real child of FinancialModelWorkspace and calls these on mount.
+    // Missing from this mock → synchronous "is not a function" TypeError
+    // that crashed every test in this file (test-stale, added after M16/6.5).
+    getModelVersions: vi.fn().mockResolvedValue({ versions: [], count: 0 }),
+    getModelVersionDiff: vi.fn().mockResolvedValue({ diff: null }),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);

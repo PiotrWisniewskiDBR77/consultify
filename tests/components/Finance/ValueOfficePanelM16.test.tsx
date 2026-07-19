@@ -90,8 +90,14 @@ describe('ValueOfficePanel — epic F3 (Value Bridge Waterfall + Portfolio Prior
     vi.clearAllMocks();
   });
 
-  it('renders with default example initiatives when no props given (panel is never empty)', async () => {
-    // Injected fetchers resolve immediately so the panel doesn't stay in loading state
+  // Component-drift note (T1/fala1): ValueOfficePanel no longer falls back to
+  // internal SAMPLE_INITIATIVES demo data when no `initiatives` prop is given
+  // — per the "NIE renderujemy danych demo" comment in ValueOfficePanel.tsx
+  // (§empty state, `effectiveInitiatives = initiatives ?? []`), this is a
+  // deliberate real-data-only decision (memory: "pusty stan zamiast sample",
+  // dev-render verified 2026-07-16). With no initiatives it now renders the
+  // honest empty state and skips the bridge/portfolio fetchers entirely.
+  it('renders the honest empty state (not sample data) when no initiatives prop given', async () => {
     const bridgeFetcher = vi.fn().mockResolvedValue(makeBridgeResponse());
     const portfolioFetcher = vi.fn().mockResolvedValue(makePortfolioResponse(['demo-1', 'demo-2']));
 
@@ -104,10 +110,11 @@ describe('ValueOfficePanel — epic F3 (Value Bridge Waterfall + Portfolio Prior
 
     // Panel mounts and is not in failed state
     expect(screen.getByTestId('value-office-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('value-office-empty')).toBeInTheDocument();
 
-    // Fetchers were called (with the internal SAMPLE_INITIATIVES since no initiatives prop given)
-    await waitFor(() => expect(bridgeFetcher).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(portfolioFetcher).toHaveBeenCalledTimes(1));
+    // No real initiatives → no demo/sample fallback → fetchers are never called.
+    expect(bridgeFetcher).not.toHaveBeenCalled();
+    expect(portfolioFetcher).not.toHaveBeenCalled();
   });
 
   it('calls bridgeFetcher with provided initiatives', async () => {

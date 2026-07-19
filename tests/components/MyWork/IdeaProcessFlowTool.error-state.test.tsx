@@ -8,9 +8,28 @@ import { describe, expect, it, vi } from 'vitest';
 const apiGetMyIdeaMapMock = vi.fn();
 const toastErrorMock = vi.fn();
 
+// IdeaProcessFlowTool.tsx calls t() for these two banner-copy keys with NO
+// fallback argument — relies on real locale resources (public/locales/en/
+// translation.json). The naive mock has no access to those resources, so it
+// must special-case the keys asserted on below rather than echo the raw i18n
+// key (component-drift note, T1/fala1).
+const I18N_KEY_OVERRIDES: Record<string, string> = {
+  'myWorkIdeas.processFlowTool.readOnlyMode': 'Read-only mode',
+  'myWorkIdeas.processFlowTool.youCanReviewFlowButEditing':
+    'You can review the flow, but editing and saving are currently disabled.',
+  'myWorkIdeas.processFlowTool.processFlowTemporarilyUnavailable':
+    'Process flow is temporarily unavailable.',
+  'myWorkIdeas.processFlowTool.thisDoesMeanProcessEmptyRetry':
+    'This does not mean the process is empty. Retry loading the map and check again.',
+  'myWorkIdeas.processFlowTool.retry': 'Retry',
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string'
+        ? fallback
+        : (fallback?.defaultValue ?? I18N_KEY_OVERRIDES[_key] ?? _key),
     i18n: { language: 'en' },
   }),
 }));

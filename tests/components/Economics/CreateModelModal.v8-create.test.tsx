@@ -81,7 +81,9 @@ describe('CreateModelModal V8 create seam', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create from statement' }));
+    // Mode toggle button was relabeled "Ground on statement" (see
+    // CreateModelModal.tsx:202) — test previously targeted its old label.
+    fireEvent.click(screen.getByRole('button', { name: 'Ground on statement' }));
     fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'pack-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
@@ -113,7 +115,9 @@ describe('CreateModelModal V8 create seam', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create from statement' }));
+    // Mode toggle button was relabeled "Ground on statement" (see
+    // CreateModelModal.tsx:202) — test previously targeted its old label.
+    fireEvent.click(screen.getByRole('button', { name: 'Ground on statement' }));
     fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'pack-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 

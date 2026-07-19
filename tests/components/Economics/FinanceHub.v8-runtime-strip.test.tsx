@@ -304,17 +304,28 @@ describe('FinanceHub V8 runtime strip', () => {
     } as any);
   });
 
+  // NOTE (T1/fala1 component-drift fix): the always-visible "V8 Ingestion /
+  // Escalations / Linkages / Gate pass" pills were collapsed into a single
+  // "Data health" Menu3DropdownChip (TRIADA_KANON §A3/§15.3 — see comment
+  // above `v8HealthItems` in FinanceHub.tsx). The pill labels also changed
+  // ("V8 Ingestion" → "Processed imports", "Gate pass" → "Gate pass rate").
+  // The chip must be opened (click) before its items are queryable — they
+  // render into a portalled panel, not inline.
+  const openHealthChip = () => fireEvent.click(screen.getByTestId('finance-v8-health-chip'));
+
   it('shows governed runtime pills and keeps them after switching tabs', async () => {
     renderWithProviders(<FinanceHub />);
 
     await waitFor(() => {
       expect(V8FinanceApi.getDashboard).toHaveBeenCalled();
-      expect(screen.getByText('V8 Ingestion')).toBeInTheDocument();
+      expect(screen.getByTestId('finance-v8-health-chip')).toBeInTheDocument();
     });
 
+    openHealthChip();
+    expect(screen.getByText('Processed imports')).toBeInTheDocument();
     expect(screen.getByText('Escalations')).toBeInTheDocument();
     expect(screen.getByText('Linkages')).toBeInTheDocument();
-    expect(screen.getByText('Gate pass')).toBeInTheDocument();
+    expect(screen.getByText('Gate pass rate')).toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Prediction' }));
@@ -323,7 +334,10 @@ describe('FinanceHub V8 runtime strip', () => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('prediction');
     });
 
-    expect(screen.getByText('V8 Ingestion')).toBeInTheDocument();
+    // fireEvent.click only dispatches a "click" event (no "mousedown"), so the
+    // dropdown's outside-pointer-close listener never fires here — the panel
+    // stays open across the tab switches below; no need to re-open it.
+    expect(screen.getByText('Processed imports')).toBeInTheDocument();
     expect(screen.getByText('Linkages')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Enterprise valuation' }));
@@ -336,20 +350,22 @@ describe('FinanceHub V8 runtime strip', () => {
     expect(screen.getByText('75%')).toBeInTheDocument();
   });
 
-  it('keeps the finance runtime strip visible with unavailable markers when the dashboard fails', async () => {
+  it('hides the V8 health chip (instead of showing unavailable markers) when the dashboard fails', async () => {
     vi.mocked(V8FinanceApi.getDashboard).mockRejectedValue(new Error('dashboard down'));
 
     renderWithProviders(<FinanceHub />);
 
     await waitFor(() => {
       expect(V8FinanceApi.getDashboard).toHaveBeenCalled();
-      expect(screen.getByText('V8 Ingestion')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Escalations')).toBeInTheDocument();
-    expect(screen.getByText('Linkages')).toBeInTheDocument();
-    expect(screen.getByText('Gate pass')).toBeInTheDocument();
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(4);
+    // FinanceHub.tsx gates the whole chip on `v8Dashboard` being truthy
+    // (`isFinanceRuntimeV8 && v8Dashboard && <Menu3DropdownChip .../>`) — on a
+    // non-fallback dashboard error, v8Dashboard is set back to null and the
+    // chip does not render at all (no "unavailable" placeholder pills).
+    expect(screen.queryByTestId('finance-v8-health-chip')).not.toBeInTheDocument();
+    // The rest of the hub keeps working — the tab strip is unaffected.
+    expect(screen.getByRole('button', { name: 'Statements' })).toBeInTheDocument();
   });
 
   it('routes import-complete statement-pack lookup through the governed V8 seam first', async () => {
@@ -376,7 +392,10 @@ describe('FinanceHub V8 runtime strip', () => {
     renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Import statement' }));
+    // Two "Import statement" buttons legitimately coexist now: the persistent
+    // Menu-2 primary CTA and the StandardTable empty-state action button.
+    // Both wire to the same setShowImportWizard(true) handler — click either.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Import statement' })[0]);
     fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
 
     await waitFor(() => {
@@ -421,7 +440,10 @@ describe('FinanceHub V8 runtime strip', () => {
     renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Import statement' }));
+    // Two "Import statement" buttons legitimately coexist now: the persistent
+    // Menu-2 primary CTA and the StandardTable empty-state action button.
+    // Both wire to the same setShowImportWizard(true) handler — click either.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Import statement' })[0]);
     fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
 
     await waitFor(() => {
