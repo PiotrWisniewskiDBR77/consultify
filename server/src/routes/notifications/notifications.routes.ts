@@ -329,7 +329,15 @@ router.patch(
       const next = await service.getPreferences(userId);
       return res.json(next || {});
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] updatePreferences failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.status(500).json({
+        error: 'Failed to update notification preferences',
+        code: 'NOTIFICATIONS_PREFERENCES_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -406,7 +414,14 @@ router.patch(
       await service.dismiss(req.params.id, userId);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] dismiss failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to dismiss notification', code: 'NOTIFICATIONS_DISMISS_FAILED' });
     }
   })
 );
@@ -427,7 +442,15 @@ router.post(
       const count = await service.markAllAsRead(userId);
       return res.json({ success: true, count });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] markAllAsRead failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.status(500).json({
+        error: 'Failed to mark all notifications as read',
+        code: 'NOTIFICATIONS_MARK_ALL_READ_FAILED',
+      });
     }
   })
 );
@@ -448,7 +471,12 @@ router.get(
       );
       return res.json(escalations);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Enrichment read (project escalations panel) — degrade to safe default instead of 500.
+      logger.warn('[Notifications] getEscalations degraded', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.json([]);
     }
   })
 );
@@ -476,7 +504,14 @@ router.post(
       const result = await service.runAutoEscalation(req.params.projectId);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write (triggers escalation actions) — never fail-soft.
+      logger.error('[Notifications] runAutoEscalation failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to run escalations', code: 'NOTIFICATIONS_ESCALATION_RUN_FAILED' });
     }
   })
 );
@@ -497,7 +532,14 @@ router.delete(
       await service.delete(req.params.id, userId);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] delete failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to delete notification', code: 'NOTIFICATIONS_DELETE_FAILED' });
     }
   })
 );
@@ -522,7 +564,14 @@ router.get(
       }
       return res.json(notification);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Primary content read (the notification itself, not enrichment) — never fail-soft.
+      logger.error('[Notifications] getById failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to load notification', code: 'NOTIFICATIONS_GET_FAILED' });
     }
   })
 );
@@ -544,7 +593,12 @@ router.get(
       const comments = await service.getComments(req.params.id, userId);
       return res.json(comments);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Enrichment read (side comment thread) — degrade to safe default instead of 500.
+      logger.warn('[Notifications] getComments degraded', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.json([]);
     }
   })
 );
@@ -570,7 +624,14 @@ router.post(
       const comment = await service.addComment(req.params.id, userId, content, priority);
       return res.json(comment);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] addComment failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to add comment', code: 'NOTIFICATIONS_COMMENT_CREATE_FAILED' });
     }
   })
 );
@@ -592,7 +653,14 @@ router.delete(
       await service.deleteComment(req.params.commentId, userId);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] deleteComment failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to delete comment', code: 'NOTIFICATIONS_COMMENT_DELETE_FAILED' });
     }
   })
 );
@@ -614,7 +682,12 @@ router.get(
       const log = await service.getActivityLog(req.params.id, userId);
       return res.json(log);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Enrichment read (audit-trail side panel) — degrade to safe default instead of 500.
+      logger.warn('[Notifications] getActivityLog degraded', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res.json([]);
     }
   })
 );
@@ -673,7 +746,14 @@ router.post(
       await service.snoozeNotification(req.params.id, userId, snoozeUntil);
       return res.json({ success: true, snoozedUntil: snoozeUntil });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] snoozeNotification failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to snooze notification', code: 'NOTIFICATIONS_SNOOZE_FAILED' });
     }
   })
 );
@@ -701,7 +781,14 @@ router.patch(
       await service.updateChecklist(req.params.id, userId, checklist);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] updateChecklist failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to update checklist', code: 'NOTIFICATIONS_CHECKLIST_UPDATE_FAILED' });
     }
   })
 );
@@ -731,7 +818,14 @@ router.patch(
       });
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Write — never fail-soft; surface a real error with a code.
+      logger.error('[Notifications] updateWorksheetDraft failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to save worksheet draft', code: 'NOTIFICATIONS_WORKSHEET_UPDATE_FAILED' });
     }
   })
 );
@@ -756,7 +850,14 @@ router.get(
       }
       return res.json(entity);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      // Primary content read (the linked entity itself, not enrichment) — never fail-soft.
+      logger.error('[Notifications] getSourceEntity failed', {
+        err,
+        correlationId: resolveNotificationsCorrelationId(req),
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to load source entity', code: 'NOTIFICATIONS_SOURCE_ENTITY_FAILED' });
     }
   })
 );
