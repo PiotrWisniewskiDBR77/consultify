@@ -11,10 +11,7 @@ import { Client, Pool, type PoolClient, type PoolConfig } from 'pg';
 import databaseConfig from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import { recordQueryPerformance } from '../utils/queryHelpers.js';
-import {
-  getConflictTarget,
-  resolveConflictTargetSql,
-} from './conflictTargets.js';
+import { getConflictTarget, resolveConflictTargetSql } from './conflictTargets.js';
 import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
