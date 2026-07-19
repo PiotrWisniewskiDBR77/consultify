@@ -371,6 +371,23 @@ const router = Router();
  */
 const GENERIC_5XX_MESSAGE = 'An unexpected error occurred. Please try again later.';
 
+/**
+ * Shape check for internal service "domain codes" thrown as `Error(message)`
+ * (e.g. `template_not_found`, `share_link_scope_forbidden`) — the deliberate,
+ * bounded control-flow convention used across `documentStudio/*Service.ts`.
+ *
+ * Several handlers below pass `err.message` straight into the JSON body when
+ * it doesn't match one of a handful of explicitly-checked codes. Without this
+ * guard an unexpected exception (LLM SDK failure, DB-driver error, a bug)
+ * would leak its raw free-text message to the client (H6.4 500-leak sweep,
+ * fala 3). A lowercase snake_case code never contains that free text — real
+ * exception messages have spaces/punctuation/uppercase — so this is a safe,
+ * future-proof allowlist-by-shape rather than an exhaustive code enumeration.
+ */
+function isSafeErrorCode(message: string): boolean {
+  return /^[a-z][a-z0-9_]{0,63}$/.test(message);
+}
+
 const logoUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: DOCUMENT_ASSET_MAX_BYTES },
@@ -431,12 +448,15 @@ router.post(
         : planDocument({ intake });
       res.json({ outline: result.outline, llmRefined: useLlm });
     } catch (err) {
-      logger.warn('[DocumentStudio] plan failed', {
-        message: err instanceof Error ? err.message : String(err),
+      logger.error('[DocumentStudio] plan failed', {
+        err,
+        correlationId: (req as any).correlationId,
       });
+      const rawMessage = err instanceof Error ? err.message : String(err);
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'Failed to plan document outline';
       res.status(400).json({
         error: 'plan_failed',
-        message: err instanceof Error ? err.message : 'Failed to plan document outline',
+        message,
       });
     }
   })
@@ -820,8 +840,12 @@ router.post(
       const result = draftTemplate({ organizationId, userId, input });
       res.json({ template: result.template, llmRefined: false });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'template_plan_failed';
-      logger.warn('[DocumentStudio] template plan failed', { message });
+      logger.warn('[DocumentStudio] template plan failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      const rawMessage = err instanceof Error ? err.message : 'template_plan_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'template_plan_failed';
       res.status(400).json({ error: 'template_plan_failed', message });
     }
   })
@@ -872,7 +896,14 @@ router.post(
       const template = approveTemplate({ templateId, organizationId, userId, notes });
       res.json({ template });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'template_approve_failed';
+      const rawMessage = err instanceof Error ? err.message : 'template_approve_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'template_approve_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] template approve failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status =
         message === 'template_not_found' ? 404 : message === 'template_deprecated' ? 409 : 400;
       res.status(status).json({ error: message });
@@ -902,7 +933,14 @@ router.post(
       const template = deprecateTemplate({ templateId, organizationId, userId, reason });
       res.json({ template });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'template_deprecate_failed';
+      const rawMessage = err instanceof Error ? err.message : 'template_deprecate_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'template_deprecate_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] template deprecate failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status = message === 'template_not_found' ? 404 : 400;
       res.status(status).json({ error: message });
     }
@@ -1163,8 +1201,12 @@ router.post(
       });
       res.status(201).json({ pack });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'source_pack_draft_failed';
-      logger.warn('[DocumentStudio] source pack draft failed', { message });
+      const rawMessage = err instanceof Error ? err.message : 'source_pack_draft_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'source_pack_draft_failed';
+      logger.warn('[DocumentStudio] source pack draft failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
       res.status(400).json({ error: 'source_pack_draft_failed', message });
     }
   })
@@ -3516,7 +3558,14 @@ router.post(
       });
       res.json({ proposal });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const rawMessage = err instanceof Error ? err.message : 'proposal_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'proposal_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] local edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status =
         message === 'artifact_not_found' ||
         message === 'section_not_found' ||
@@ -3611,8 +3660,12 @@ router.put(
         });
         return;
       }
-      const message = err instanceof Error ? err.message : 'manual_save_failed';
-      logger.error('[DocumentStudio] manual content save failed', { message });
+      const rawMessage = err instanceof Error ? err.message : 'manual_save_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'manual_save_failed';
+      logger.error('[DocumentStudio] manual content save failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
       res.status(400).json({ error: message });
     }
   })
@@ -3713,7 +3766,14 @@ router.post(
       });
       res.json({ proposal });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const rawMessage = err instanceof Error ? err.message : 'proposal_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'proposal_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] section edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status =
         message === 'artifact_not_found' || message === 'section_not_found' ? 404 : 400;
       res.status(status).json({ error: message });
@@ -3749,7 +3809,14 @@ router.post(
       });
       res.json({ proposal });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const rawMessage = err instanceof Error ? err.message : 'proposal_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'proposal_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] global edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status = message === 'artifact_not_found' ? 404 : 400;
       res.status(status).json({ error: message });
     }
@@ -3788,7 +3855,14 @@ router.post(
       });
       res.json({ proposal });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const rawMessage = err instanceof Error ? err.message : 'proposal_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'proposal_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] methodology edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       // `no_methodology_sections` is a 400 — the artifact exists but
       // the document type does not surface methodology-aligned sections
       // (e.g. a pure executive_memo with no methodology kind blocks).
@@ -3831,7 +3905,14 @@ router.post(
       });
       res.json({ proposal });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const rawMessage = err instanceof Error ? err.message : 'proposal_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'proposal_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] source edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status = message === 'artifact_not_found' ? 404 : 400;
       res.status(status).json({ error: message });
     }
@@ -3871,7 +3952,14 @@ router.post(
       });
       res.json({ proposal });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const rawMessage = err instanceof Error ? err.message : 'proposal_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'proposal_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] transformative edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       // `document_has_no_sections` mirrors the global-route behavior: a
       // freshly-skeletoned artifact with zero sections cannot be
       // transformatively rewritten because there is nothing to rewrite.
@@ -3904,7 +3992,14 @@ router.post(
       });
       res.json(result);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'approve_failed';
+      const rawMessage = err instanceof Error ? err.message : 'approve_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'approve_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] approve edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status =
         message === 'artifact_not_found' || message === 'proposal_not_found' ? 404 : 400;
       res.status(status).json({ error: message });
@@ -3935,7 +4030,14 @@ router.post(
       });
       res.json({ proposal });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'reject_failed';
+      const rawMessage = err instanceof Error ? err.message : 'reject_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'reject_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] reject edit proposal failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       const status = message === 'proposal_not_found' ? 404 : 400;
       res.status(status).json({ error: message });
     }
@@ -4084,7 +4186,14 @@ router.post(
       });
       res.status(201).json({ asset });
     } catch (err) {
-      const code = err instanceof Error ? err.message : 'asset_invalid';
+      const rawCode = err instanceof Error ? err.message : 'asset_invalid';
+      const code = isSafeErrorCode(rawCode) ? rawCode : 'asset_invalid';
+      if (code !== rawCode) {
+        logger.error('[DocumentStudio] logo registration failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       res.status(400).json({ error: code });
     }
   })
@@ -4118,7 +4227,14 @@ router.post(
       });
       res.status(201).json({ asset });
     } catch (err) {
-      const code = err instanceof Error ? err.message : 'asset_invalid';
+      const rawCode = err instanceof Error ? err.message : 'asset_invalid';
+      const code = isSafeErrorCode(rawCode) ? rawCode : 'asset_invalid';
+      if (code !== rawCode) {
+        logger.error('[DocumentStudio] logo registration failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       res.status(400).json({ error: code });
     }
   })
@@ -4172,7 +4288,14 @@ router.get(
       const asset = getAssetById({ assetId, organizationId });
       res.json({ asset });
     } catch (err) {
-      const code = err instanceof Error ? err.message : 'asset_not_found';
+      const rawCode = err instanceof Error ? err.message : 'asset_not_found';
+      const code = isSafeErrorCode(rawCode) ? rawCode : 'asset_not_found';
+      if (code !== rawCode) {
+        logger.error('[DocumentStudio] get asset failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       res.status(code === 'asset_not_found' ? 404 : 400).json({ error: code });
     }
   })
@@ -4197,7 +4320,14 @@ router.post(
       });
       res.json({ asset });
     } catch (err) {
-      const code = err instanceof Error ? err.message : 'asset_not_found';
+      const rawCode = err instanceof Error ? err.message : 'asset_not_found';
+      const code = isSafeErrorCode(rawCode) ? rawCode : 'asset_not_found';
+      if (code !== rawCode) {
+        logger.error('[DocumentStudio] archive asset failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       res.status(code === 'asset_not_found' ? 404 : 400).json({ error: code });
     }
   })
@@ -4216,7 +4346,14 @@ router.get(
       const audit = listAssetAudit(assetId, organizationId);
       res.json({ audit });
     } catch (err) {
-      const code = err instanceof Error ? err.message : 'asset_not_found';
+      const rawCode = err instanceof Error ? err.message : 'asset_not_found';
+      const code = isSafeErrorCode(rawCode) ? rawCode : 'asset_not_found';
+      if (code !== rawCode) {
+        logger.error('[DocumentStudio] asset audit failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
       res.status(code === 'asset_not_found' ? 404 : 400).json({ error: code });
     }
   })
@@ -4263,8 +4400,12 @@ router.post(
       });
       res.status(201).json({ shareLink: link });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'share_link_create_failed';
-      logger.warn('[DocumentStudio] share-link create failed', { message });
+      const rawMessage = err instanceof Error ? err.message : 'share_link_create_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_create_failed';
+      logger.warn('[DocumentStudio] share-link create failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
       res.status(400).json({ error: 'share_link_create_failed', message });
     }
   })
@@ -4356,12 +4497,16 @@ router.post(
       });
       res.json({ shareLink: revoked });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'share_link_revoke_failed';
+      const rawMessage = err instanceof Error ? err.message : 'share_link_revoke_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_revoke_failed';
       if (message === 'share_link_not_found') {
         res.status(404).json({ error: message });
         return;
       }
-      logger.warn('[DocumentStudio] share-link revoke failed', { message });
+      logger.warn('[DocumentStudio] share-link revoke failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
       res.status(400).json({ error: 'share_link_revoke_failed', message });
     }
   })
@@ -4421,7 +4566,8 @@ router.post(
       });
       res.json({ shareLink: rotated });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'share_link_rotate_failed';
+      const rawMessage = err instanceof Error ? err.message : 'share_link_rotate_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_rotate_failed';
       if (message === 'share_link_not_found') {
         res.status(404).json({ error: message });
         return;
@@ -4430,7 +4576,10 @@ router.post(
         res.status(409).json({ error: message });
         return;
       }
-      logger.warn('[DocumentStudio] share-link rotate failed', { message });
+      logger.warn('[DocumentStudio] share-link rotate failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
       res.status(400).json({ error: 'share_link_rotate_failed', message });
     }
   })
@@ -4494,7 +4643,8 @@ documentShareLinkPublicRoutes.post(
       const session = await createShareLinkEditSession({ token, consumerFingerprint });
       res.status(201).json({ session });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'share_link_edit_session_failed';
+      const rawMessage = err instanceof Error ? err.message : 'share_link_edit_session_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_edit_session_failed';
       if (message === 'share_link_invalid_or_expired') {
         res.status(404).json({ error: message });
         return;
@@ -4506,6 +4656,12 @@ documentShareLinkPublicRoutes.post(
       if (message === 'token_required' || message === 'consumer_fingerprint_required') {
         res.status(400).json({ error: message });
         return;
+      }
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] public share-link edit-session failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
       }
       res.status(400).json({ error: 'share_link_edit_session_failed', message });
     }
@@ -4553,7 +4709,8 @@ documentShareLinkPublicRoutes.post(
           .json({ error: err.code, message: err.message });
         return;
       }
-      const message = err instanceof Error ? err.message : 'share_link_comment_create_failed';
+      const rawMessage = err instanceof Error ? err.message : 'share_link_comment_create_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_comment_create_failed';
       if (message === 'share_link_not_found' || message === 'share_link_edit_session_invalid') {
         res.status(404).json({ error: message });
         return;
@@ -4561,6 +4718,12 @@ documentShareLinkPublicRoutes.post(
       if (message === 'share_link_scope_forbidden' || message === 'share_link_not_active') {
         res.status(403).json({ error: message });
         return;
+      }
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] public share-link comment create failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
       }
       res.status(400).json({ error: 'share_link_comment_create_failed', message });
     }
@@ -4600,7 +4763,8 @@ documentShareLinkPublicRoutes.post(
           .json({ error: err.code, message: err.message });
         return;
       }
-      const message = err instanceof Error ? err.message : 'share_link_comment_reply_failed';
+      const rawMessage = err instanceof Error ? err.message : 'share_link_comment_reply_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_comment_reply_failed';
       if (message === 'share_link_not_found' || message === 'share_link_edit_session_invalid') {
         res.status(404).json({ error: message });
         return;
@@ -4608,6 +4772,12 @@ documentShareLinkPublicRoutes.post(
       if (message === 'share_link_scope_forbidden' || message === 'share_link_not_active') {
         res.status(403).json({ error: message });
         return;
+      }
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] public share-link comment reply failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
       }
       res.status(400).json({ error: 'share_link_comment_reply_failed', message });
     }
