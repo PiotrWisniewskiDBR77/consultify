@@ -1,4 +1,13 @@
-import { Brain, Lightbulb, Link2, MessageCircle, PenLine, Sparkles, Wand2, Zap } from 'lucide-react';
+import {
+  Brain,
+  Lightbulb,
+  Link2,
+  MessageCircle,
+  PenLine,
+  Sparkles,
+  Wand2,
+  Zap,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

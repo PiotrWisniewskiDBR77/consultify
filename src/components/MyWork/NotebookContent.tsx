@@ -82,7 +82,6 @@ import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
 import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
-import { NotebookInlineAIMenu } from './notebook/NotebookInlineAIMenu';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
@@ -92,6 +91,7 @@ import {
   type NotebookConvertTarget,
   NotebookHamburgerMenu,
 } from './notebook/NotebookHamburgerMenu';
+import { NotebookInlineAIMenu } from './notebook/NotebookInlineAIMenu';
 import {
   detectMentionTrigger,
   INITIAL_MENTION_STATE,

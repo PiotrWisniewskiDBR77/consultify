@@ -639,17 +639,12 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         setSection(response.section);
       } else {
         setSection(null);
-        setSectionError(
-          t('finance.pack.section.empty', 'The report section came back empty.')
-        );
+        setSectionError(t('finance.pack.section.empty', 'The report section came back empty.'));
       }
     } catch {
       setSection(null);
       setSectionError(
-        t(
-          'finance.pack.section.failed',
-          'Could not generate the report section. Please try again.'
-        )
+        t('finance.pack.section.failed', 'Could not generate the report section. Please try again.')
       );
     } finally {
       setSectionLoading(false);
@@ -874,7 +869,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               else setShowSection(false);
             }}
             disabled={sectionLoading}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/[0.04]"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:text-c-text-secondary dark:hover:bg-white/[0.04]"
             title={t(
               'finance.pack.section.tooltip',
               'Generate the finance report section (scenarios, value tree, portfolio advisory, trend)'
@@ -964,7 +959,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 )}
               </div>
             ) : (
-              <div className="max-h-64 divide-y divide-slate-200/40 overflow-y-auto dark:divide-white/[0.04]">
+              <div className="max-h-64 divide-y divide-c-border/60 overflow-y-auto dark:divide-white/[0.04]">
                 {lineage.entries.map((entry) => (
                   <div key={`${entry.category}-${entry.id}`} className="px-4 py-2">
                     <div className="flex items-center justify-between gap-2">
@@ -1006,9 +1001,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
 
         {/* O4.2-O4.6 — Collapsible report-section result (scenarios / value tree / portfolio / trend) */}
         {showSection && (
-          <div className="border-t border-slate-200/50 dark:border-white/[0.05]">
+          <div className="border-t border-c-border dark:border-white/[0.05]">
             {sectionLoading ? (
-              <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="px-4 py-3 text-xs text-c-text-muted">
                 {t('finance.pack.section.loading', 'Composing report section…')}
               </div>
             ) : sectionError ? (
@@ -1016,7 +1011,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 {sectionError}
               </div>
             ) : !section ? (
-              <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="px-4 py-3 text-xs text-c-text-muted">
                 {t('finance.pack.section.emptyHint', 'No report section yet.')}
               </div>
             ) : (
@@ -1024,11 +1019,11 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 {/* Headline + verdict */}
                 {(section.headline || section.verdict) && (
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-[12px] font-medium text-slate-800 dark:text-slate-100">
+                    <span className="text-[12px] font-medium text-c-text dark:text-c-text">
                       {section.headline}
                     </span>
                     {section.verdict && (
-                      <span className="inline-flex shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                      <span className="inline-flex shrink-0 rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary dark:bg-white/[0.06] dark:text-c-text-secondary">
                         {section.verdict}
                       </span>
                     )}
@@ -1038,10 +1033,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 {/* O4.2 — scenario levers */}
                 {section.scenarios?.available && (section.scenarios.outcomes?.length ?? 0) > 0 && (
                   <div>
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                       {t('finance.pack.section.scenarios', 'Scenarios (O4.2)')}
                     </div>
-                    <div className="divide-y divide-slate-200/40 dark:divide-white/[0.04]">
+                    <div className="divide-y divide-c-border/60 dark:divide-white/[0.04]">
                       {section.scenarios.outcomes!.map((o) => {
                         const recommended =
                           section.scenarios?.recommendation?.chosenId === o.leverId;
@@ -1050,22 +1045,20 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                             key={o.leverId}
                             className="flex items-center justify-between gap-2 py-1"
                           >
-                            <span className="flex items-center gap-1.5 text-[11px] text-slate-700 dark:text-slate-200">
+                            <span className="flex items-center gap-1.5 text-[11px] text-c-text-secondary">
                               {recommended && (
-                                <span className="inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                <span className="inline-flex rounded-full bg-c-success/10 px-1.5 py-0.5 text-[9px] font-semibold text-c-success dark:bg-c-success/10 dark:text-c-success">
                                   {t('finance.pack.section.recommended', 'Recommended')}
                                 </span>
                               )}
                               {o.leverName || o.leverId}
                             </span>
-                            <span className="tabular-nums text-[11px] text-slate-600 dark:text-slate-300">
-                              {typeof o.metric === 'number'
-                                ? o.metric.toLocaleString()
-                                : '—'}
+                            <span className="tabular-nums text-[11px] text-c-text-secondary">
+                              {typeof o.metric === 'number' ? o.metric.toLocaleString() : '—'}
                               {typeof o.deltaVsStatusQuo === 'number' &&
                                 o.deltaVsStatusQuo !== 0 && (
                                   <span
-                                    className={`ml-1 text-[10px] ${o.deltaVsStatusQuo > 0 ? 'text-emerald-500' : 'text-danger-500'}`}
+                                    className={`ml-1 text-[10px] ${o.deltaVsStatusQuo > 0 ? 'text-c-success' : 'text-danger-500'}`}
                                   >
                                     ({o.deltaVsStatusQuo > 0 ? '+' : ''}
                                     {o.deltaVsStatusQuo.toLocaleString()})
@@ -1082,10 +1075,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 {/* O4.3 — value tree */}
                 {section.valueTree?.available && section.valueTree.tree && (
                   <div>
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                       {t('finance.pack.section.valueTree', 'Value tree (O4.3)')}
                     </div>
-                    <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                    <div className="text-[11px] text-c-text-secondary">
                       {t('finance.pack.section.grossValue', 'Gross value')}:{' '}
                       <span className="tabular-nums font-medium">
                         {typeof section.valueTree.tree.gross === 'number'
@@ -1093,7 +1086,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                           : '—'}
                       </span>
                       {(section.valueTree.tree.components?.length ?? 0) > 0 && (
-                        <span className="ml-1 text-slate-500">
+                        <span className="ml-1 text-c-text-muted">
                           ·{' '}
                           {t('finance.pack.section.components', '{{count}} components', {
                             count: section.valueTree.tree.components!.length,
@@ -1102,7 +1095,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                       )}
                     </div>
                     {section.valueTree.narrative && (
-                      <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                      <div className="mt-0.5 text-[10px] text-c-text-muted">
                         {section.valueTree.narrative}
                       </div>
                     )}
@@ -1112,21 +1105,21 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 {/* O4.4 — portfolio advisory */}
                 {section.portfolioAdvisory?.available && section.portfolioAdvisory.advisory && (
                   <div>
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                       {t('finance.pack.section.portfolio', 'Portfolio advisory (O4.4)')}
                     </div>
-                    <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                    <div className="text-[11px] text-c-text-secondary">
                       {t('finance.pack.section.initiatives', '{{count}} initiatives', {
                         count: section.portfolioAdvisory.itemCount ?? 0,
                       })}
                       {section.portfolioAdvisory.advisory.budgetVerdict && (
-                        <span className="ml-1 text-slate-500">
+                        <span className="ml-1 text-c-text-muted">
                           · {section.portfolioAdvisory.advisory.budgetVerdict}
                         </span>
                       )}
                     </div>
                     {section.portfolioAdvisory.advisory.conclusion && (
-                      <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                      <div className="mt-0.5 text-[10px] text-c-text-muted">
                         {section.portfolioAdvisory.advisory.conclusion}
                       </div>
                     )}
@@ -1136,29 +1129,28 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 {/* O4.6 — trend */}
                 {section.trend?.available && (section.trend.lines?.length ?? 0) > 0 && (
                   <div>
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                       {t('finance.pack.section.trend', 'Trend (O4.6)')}
                     </div>
-                    <div className="divide-y divide-slate-200/40 dark:divide-white/[0.04]">
-                      {section.trend.lines!
-                        .filter((l) => (l.trend?.periods ?? 0) >= 2)
+                    <div className="divide-y divide-c-border/60 dark:divide-white/[0.04]">
+                      {section.trend
+                        .lines!.filter((l) => (l.trend?.periods ?? 0) >= 2)
                         .map((l) => (
                           <div
                             key={l.lineCode}
                             className="flex items-center justify-between gap-2 py-1 text-[11px]"
                           >
-                            <span className="text-slate-700 dark:text-slate-200">{l.lineCode}</span>
-                            <span className="text-slate-600 dark:text-slate-300">
+                            <span className="text-c-text-secondary">{l.lineCode}</span>
+                            <span className="text-c-text-secondary">
                               {l.trend?.direction || '—'}
                               {typeof l.trend?.cagrPct === 'number' && (
-                                <span className="ml-1 tabular-nums text-slate-500">
+                                <span className="ml-1 tabular-nums text-c-text-muted">
                                   {l.trend.cagrPct > 0 ? '+' : ''}
                                   {l.trend.cagrPct.toFixed(1)}%
                                 </span>
                               )}
-                              <span className="ml-1 text-[10px] text-slate-400">
-                                ({l.trend?.periods}{' '}
-                                {t('finance.pack.section.periods', 'periods')})
+                              <span className="ml-1 text-[10px] text-c-text-muted">
+                                ({l.trend?.periods} {t('finance.pack.section.periods', 'periods')})
                               </span>
                             </span>
                           </div>
@@ -1300,7 +1292,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   </div>
                   <div className="flex-1 overflow-auto">
                     {sourceFiles.length > 0 ? (
-                      <div className="divide-y divide-slate-200/40 dark:divide-white/[0.04]">
+                      <div className="divide-y divide-c-border/60 dark:divide-white/[0.04]">
                         {sourceFiles.map((file) => {
                           const isActiveFile = selectedStatement?.id === file.id;
                           const statusColor =

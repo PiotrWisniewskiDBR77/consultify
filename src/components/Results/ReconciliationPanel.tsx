@@ -9,14 +9,7 @@
  * Matches the ROITrackingView navy-900 dark "Tech Sexy" conventions.
  */
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  DownloadCloud,
-  RefreshCw,
-  Scale,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, DownloadCloud, RefreshCw, Scale } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -121,11 +114,11 @@ function formatPercent(value: number | null): string {
  * (emerald), undetermined is unknown (slate).
  */
 const VERDICT_TONE: Record<V8PostMortemVerdict, { bg: string; text: string }> = {
-  'market-driven': { bg: 'bg-sky-500/10', text: 'text-sky-400' },
-  'execution-driven': { bg: 'bg-amber-500/10', text: 'text-amber-400' },
-  mixed: { bg: 'bg-amber-500/10', text: 'text-amber-300' },
-  'on-plan': { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
-  undetermined: { bg: 'bg-slate-500/10', text: 'text-slate-400' },
+  'market-driven': { bg: 'bg-c-info/10', text: 'text-c-info' },
+  'execution-driven': { bg: 'bg-c-warning/10', text: 'text-c-warning' },
+  mixed: { bg: 'bg-c-warning/10', text: 'text-c-warning' },
+  'on-plan': { bg: 'bg-c-success/10', text: 'text-c-success' },
+  undetermined: { bg: 'bg-c-surface-raised', text: 'text-c-text-muted' },
 };
 
 /** 0..1 share → `NN%`. */
@@ -366,10 +359,11 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       width: '22%',
       render: (row: TableRow) => {
         const pm = row.postMortem as V8ReconciliationPostMortem | null;
-        if (!pm) return <span className="text-xs text-slate-500">—</span>;
+        if (!pm) return <span className="text-xs text-c-text-muted">—</span>;
         const tone = VERDICT_TONE[pm.verdict] ?? VERDICT_TONE.undetermined;
-        const explanation =
-          i18n.language?.startsWith('pl') ? pm.explanation?.pl : pm.explanation?.en;
+        const explanation = i18n.language?.startsWith('pl')
+          ? pm.explanation?.pl
+          : pm.explanation?.en;
         return (
           <div className="flex flex-col gap-1" title={explanation || undefined}>
             <span
@@ -377,8 +371,9 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
             >
               {verdictLabel(pm.verdict)}
             </span>
-            <span className="text-[11px] tabular-nums text-slate-500 dark:text-c-text-muted">
-              {t('results.reconciliation.postmortem.marketShort', 'Market')} {formatShare(pm.marketShare)}
+            <span className="text-[11px] tabular-nums text-c-text-muted">
+              {t('results.reconciliation.postmortem.marketShort', 'Market')}{' '}
+              {formatShare(pm.marketShare)}
               {' · '}
               {t('results.reconciliation.postmortem.executionShort', 'Exec')}{' '}
               {formatShare(pm.executionShare)}
@@ -433,7 +428,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
               type="button"
               onClick={handlePull}
               disabled={!canPull || pulling}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-c-border px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-c-text-secondary hover:bg-slate-100 dark:hover:bg-c-surface-raised hover:text-slate-800 dark:hover:text-c-text disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-50"
               title={
                 canPull
                   ? t(
