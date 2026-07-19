@@ -102,17 +102,18 @@ export class LtvAnalyticsService {
                ) rev ON o.id = rev.organization_id
                WHERE sp.is_active = 1
                GROUP BY sp.id`
-        : `SELECT 
-                o.billing_country as segment,
+        : `SELECT
+                bts.billing_country as segment,
                 COUNT(DISTINCT o.id) as customer_count,
                 AVG(COALESCE(rev.total_revenue, 0)) as avg_revenue
                FROM organizations o
+               LEFT JOIN billing_tax_settings bts ON bts.organization_id = o.id
                LEFT JOIN (
                    SELECT organization_id, SUM(total) as total_revenue
                    FROM invoices WHERE status = 'paid'
                    GROUP BY organization_id
                ) rev ON o.id = rev.organization_id
-               GROUP BY o.billing_country`;
+               GROUP BY bts.billing_country`;
 
     const rows = await this.db.all<{
       segment: string;

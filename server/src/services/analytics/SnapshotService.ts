@@ -53,12 +53,34 @@ export class SnapshotService {
 
     const snapshotId = `snap-${this.uuidGenerator()}`;
 
+    // Postgres parity note: mrr_snapshots has a UNIQUE constraint on
+    // snapshot_date (not id — id is a fresh uuid every call), so the upsert
+    // must target snapshot_date explicitly. The SQLite `INSERT OR REPLACE`
+    // form was auto-adapted by PostgresDatabase.adaptQuery() with
+    // `ON CONFLICT (id)` (first column in the INSERT list), which never
+    // matches on a same-day re-run and instead 500s with 23505
+    // (duplicate key value violates unique constraint
+    // "mrr_snapshots_snapshot_date_key") — verified against parity :5443.
+    // Also fixed: the column is `by_plan`, not `mrr_by_plan` (42703 — column
+    // does not exist).
     await this.db.run(
-      `INSERT OR REPLACE INTO mrr_snapshots (
+      `INSERT INTO mrr_snapshots (
                 id, snapshot_date, total_mrr, new_mrr, expansion_mrr, contraction_mrr,
                 churn_mrr, reactivation_mrr, total_customers, new_customers, churned_customers,
-                mrr_by_plan, net_mrr_change
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                by_plan, net_mrr_change
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (snapshot_date) DO UPDATE SET
+                total_mrr = EXCLUDED.total_mrr,
+                new_mrr = EXCLUDED.new_mrr,
+                expansion_mrr = EXCLUDED.expansion_mrr,
+                contraction_mrr = EXCLUDED.contraction_mrr,
+                churn_mrr = EXCLUDED.churn_mrr,
+                reactivation_mrr = EXCLUDED.reactivation_mrr,
+                total_customers = EXCLUDED.total_customers,
+                new_customers = EXCLUDED.new_customers,
+                churned_customers = EXCLUDED.churned_customers,
+                by_plan = EXCLUDED.by_plan,
+                net_mrr_change = EXCLUDED.net_mrr_change`,
       [
         snapshotId,
         today,
