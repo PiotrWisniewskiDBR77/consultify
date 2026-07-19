@@ -42,20 +42,58 @@
 > TEGO SAMEGO pliku (A: 27 nie 62 · D: 8 nie 30 · E: wypisane tylko 42 z 88). Poniżej stan uczciwy
 > w 3 poziomach dowodu. Liczby (i)/(iii) to ZAKRESY do finalnej weryfikacji z re-itemizacją tabel.
 
-| Sekcja | ✅ dowód-runtime | 🟠 zbud.-nieodebr. | ⬜/🟡/❓ otwarte | 🔵 poza-v1 | RAZEM | wcześniej ✅ |
-|---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | ~15–20 | ~20 | ~15 (H4=5 ZAMROŻ · H6.11 blocker) | 0 | 62 | ~~62~~ |
-| B · Harvey (HP-0…27) | ~22–24 | ~2–3 (HP-23 poza CI) | ~2 (HP-20 0/3 · HP-5) | 1 | 28 | ~~27~~ |
-| C · Oxford (O1-O8) | ~30–40 | ~25–35 (odbiór delegowany) | ~3 (19→15 Q-bank) | 1 | 70 | ~~69~~ |
-| D · Vegas (F0-F6+V7) | 8 | 7 (SPEC-A za flagą OFF) | ~15 | 26 | 56 | ~~30~~ |
-| E · Przekroje (+nowe) | ~25–35 | ~10–15 (parity-only) | ~30 (❗ tylko 42/88 wyitemizowane) | 16 | 88 | ~~72~~ |
-| **SUMA** | **≈ 98–127** | **≈ 64–85** | **≈ 65** | **44** | **304** | ~~260~~ |
+> **★ AKTUALIZACJA 2026-07-19 WIECZÓR (FLOTA NAPRAWCZA):** po audycie 5 krytyków flota ~20 robotników
+> domknęła realne pozycje z DOWODEM runtime i wdrożyła na demo w 3 partiach (`effc1d4d71` → `12fe9c45d9`
+> → `9ba6b16d58`). Poniżej liczniki podniesione WYŁĄCZNIE o pozycje z twardym dowodem (test/parity/E2E).
+> Wizualne (Vegas 7 SPEC-A, O4 panel, K4-UI, K5-UI, M27 tabele, T9) NADAL 🟠 — odbiór Piotra jutro rano
+> (galerie wyrenderowane, reguła #7). Szczegóły: blok WIECZÓR ↓.
 
-**★★★ STAN UCZCIWY 2026-07-19: ~32–42% z twardym dowodem runtime (≈98–127/304); ~55–70% licząc też
-kod zbudowany-ale-nieodebrany (🟠).** Deklarowane wcześniej „304/304 = 100%" WYCOFANE jako inflacja
-nagłówkowa (patrz blok KORETA ↓ i `scratchpad/FABLE_SYNTEZA.md`). Aplikacja NIE jest atrapą — rdzeń
-Harvey (82/82 unit), silniki Oxford (żywy LLM), RED-hardening (na demo), fundamenty Vegas są REALNE;
-zawyżenie było w KSIĘGOWOŚCI statusów, nie w produkcie. Plan dojścia do prawdziwego ~90%: blok PLAN ↓.
+| Sekcja | ✅ dowód-runtime | 🟠 zbud.-nieodebr. | ⬜/🟡/❓ otwarte | 🔵 poza-v1 | RAZEM | rano→wieczór |
+|---|---|---|---|---|---|---|
+| A · Harvard (H1-H6) | ~22–28 (Teresa-live+Excel-hard) | ~18 | ~14 (H4=5 ZAMROŻ · H6.11 blocker) | 0 | 62 | ~15→~25 |
+| B · Harvey (HP-0…27) | ~23–25 (HP-23→CI) | ~2 (HP-16 evid 4/8) | ~2 (HP-20 1/3 · HP-5) | 1 | 28 | ~22→~24 |
+| C · Oxford (O1-O8) | ~34–42 (deepening=19 · K5 backend) | ~25–30 (odbiór deleg.) | ~2 | 1 | 70 | ~30→~38 |
+| D · Vegas (F0-F6+V7) | 8 | 7 (SPEC-A za flagą — jutro) | ~15 | 26 | 56 | 8→8 |
+| E · Przekroje (+nowe) | ~38–44 (TaskCreate·risk·schema×3·404·TZ·Invoice·#77·T5) | ~8 | ~22 (89 wyitemizowane, patrz E_REITEMIZACJA) | 16 | 89 | ~30→~40 |
+| **SUMA** | **≈ 125–147** | **≈ 60–70** | **≈ 55** | **44** | **305** | ~110→~135 |
+
+**★★★ STAN UCZCIWY 2026-07-19 WIECZÓR: ~41–48% z twardym dowodem runtime (≈125–147/305); ~62–72% z kodem
+zbudowanym-nieodebranym (🟠).** Poranne „304/304=100%" pozostaje WYCOFANE (inflacja — blok KOREKTA ↓).
+Nocna flota podniosła twarde-✅ z ~110 do ~135 realnymi fixami (nie edycją .md). POZOSTAŁA LUKA do ~90%
+to teraz GŁÓWNIE: (c) odbiór wizualny Piotra jutro rano (Vegas/O4/K4-UI/K5-UI/M27 — galerie gotowe) +
+(d) kalendarz/PROD/ENV. Kod nie-wizualny = niemal wyczerpany. Aplikacja NIE jest atrapą (dowody ↓).
+
+### ★★★ WIECZÓR 07-19 — FLOTA NAPRAWCZA PO AUDYCIE (3 partie na demo, każdy ✅ z dowodem runtime)
+> Piotr: „ruszaj 20 agentami, bez ściemniania". Każda pozycja niżej ma test/parity/E2E — zero edycji licznika bez kodu.
+> Bramki każdej partii: server tsc 146 (0-nowych), eslint 0, FE nietknięty. demo-safe re-tag po każdej.
+
+**Partia 1 (`effc1d4d71`):**
+- **Excel-hardened** WQ-07/08/09 (walidacja formuł/repair-loop/P&L) — 115/115 testów parity. `port/excel-workbook` był czystym nadzbiorem, nie split-brain.
+- **InvoiceService** → `invoices.line_items` JSON (był pisany pod martwą migrację 030) — E2E czerwone-przed/zielone-po na realnym schemacie PG. ★stary unit-test był fałszywy (SQLite in-memory).
+- **schema-drift ×3**: `assessments.type` (generated col — „column type does not exist"), `ai_user_memory` +6 kolumn (ciche padanie pamięci AI), `ai_budgets` +kolumny +**`is_active` integer→boolean** (drugi tor driftu) — wszystkie czerwone→zielone parity.
+- **#77 capacity + presence-write** — E2E 4/4 (overload 30h/critical policzone; realtime_presence zapis/heartbeat/disconnect).
+- **HP-23** testy Vault → CI (`tests/backend/harvey-vault`, 11/11 w domyślnym runie — było „poza include").
+- **T5 sanitizer** — dowód `tool_sessions.name` (5/5, regresja złapana). Fix był z poprz. sesji; dowód uzupełniony.
+- **InitiativeSimilarity** — E2E ranking semantyczny (0.84 dup/0.75 sim/niepowiązane odfiltrowane).
+- **hooki** check-triada/gestosc `.claude/`(gitignored)→`scripts/` w repo + package.json/husky (CLAUDE.md przestaje kłamać o hookach).
+
+**Partia 2 (`12fe9c45d9`):**
+- **★ llmService 404-bomba** — `normalizeBaseUrl` over-strip `/v1` na KAŻDYM callu anthropic; fix z 07-19 ZGINĄŁ (ulotny worktree), NIE był na demo. Naprawione OBA pliki (llmService żywa ścieżka + providerSentinel bliźniak), 14/14, regresja odtworzona. ★PROD centerbeam do sprawdzenia (endpoint).
+- **★ TaskService.createTask** — INSERT pomijał `id`+`organization_id` (NOT NULL, SQLite-izm) → 2 żywe ścieżki tworzenia tasków padały. Fix uuid+org, RED→GREEN parity.
+- **K4 backend** — AI-uzupełnienie 19/19 sekcji (2 endpointy); 3 realne bugi kontraktu naprawione (`raciescalation` literówka, `history`, `initiativeTeam` → 3 sekcje rzucały 400). 43/43 + żywy model.
+- **risk_register** utworzona (7 zapytań callerów przeszło). ★market_trends/pmo_domains=martwy kod (zero callerów, NIE tworzone).
+- **HP-20** benchmark — root-cause: używał generycznego promptu zamiast persony Teresy; po fixie 1/3 PASS (pierwszy realny). Skalowanie 3→100=🔵 (koszt).
+
+**Partia 3 (`9ba6b16d58`):**
+- **★ Teresa tworzy z czatu — DOWÓD LIVE** (`teresa-live-toolcall.e2e.test.ts`): żywy model→tool-call `generate_deliverable`→rekord w DB dla note/mindmap/table (3/3). To był największy 🟡 Harvard (test był `skip(true)`); teraz dowiedziony.
+- **TZ-fix capacity** (`workloadCapacityService.formatDate`) — `toISOString()` na dacie z lokalnych komponentów cofał okno o 1 dzień w PL (UTC+); zerował obłożenie gdy „dziś"=ostatni dzień okna. Fix lokalne Y-M-D. z77 4/4 (było 2/4).
+- **K5** 3 poziomy szczegółowości (short/medium/full) — backend na demo; dowód test 11/11 + żywy LLM (2/292→4/767→6/7981 znaków). UI wyboru=🟠 jutro.
+
+**FINDINGI (uczciwe, nie ✅ na siłę):** HP-16 panel adwersaryjny NAPRAWDĘ = **53/100** (nie zmyślone 88; tylko 4/8 narzędzi ma evidence) → `scratchpad/PANEL_HP16_REAL.md`. Oxford „19→15 Q-bank" NIE była fabrykacją (jest 19: 15 plików + 4 QuestionBank; krytyk nie zgrepował `O3_DEEPENING_MAP.md`). O4 „API bez UI" = stale (FE czyta z `/report-section`, nie `/lineage`). Re-itemizacja E: 89 pozycji (`scratchpad/E_REITEMIZACJA.md`).
+
+**🟠 ODBIÓR PIOTRA JUTRO RANO (galerie wyrenderowane — reguła #7):** Vegas 7 SPEC-A (artifact `2c1776c5`) · O4 panel (`scratchpad/o4_shots`) · K4-UI (przyciski uzupełnij-AI per sekcja) · K5-UI (wybór poziomu) · M27 tabele SuperAdmin · T9 EmptyState. NIE flipnięto żadnej flagi wizualnej.
+
+**NIEDOKOŃCZONE (flota padła na limit sesji 21:10, wznowić po resecie):** HP-16 evidence-close (migracja note gotowa, testy nie dobiegły) · T7 martwe wrappery (46 `createCachedLazyService` + M24 AdminSidebar) · T-series remainder (T1 256 testów, T3, T10) · scope_change_log (sesja Piotra) · ReconciliationPanel Variance-unit bug (task_40565a38).
 
 **07-19 worker-oxford-o5:** Oxford ⬜ 11→5 (-6), ✅ 46→50 (+4), 🟡 13→15 (+2). Cztery ⬜ były STALE (już zbudowane+testowane E2E, tabela nierozsynchronizowana z osobnymi wpisami w tym samym pliku): O2.5 (deck-conclusion-slide + narrativeEngine test dodany), O1-Benchmark/DRD (`drdIndustryBenchmark.ts`), O1-Generator-inicjatyw SIRI+ADMA (`assessmentInitiativeService.ts` framework-agnostyczny). Dwa ⬜→🟡 z realnym fixem kodu: O5.4 (bug — kontekst ekranu był zawsze PO ANGIELSKU w PL-personie, naprawione 17 wpisów + test), O5.6 (audyt macierzy pokrycia Wywiadu GOTOWY, czeka DEC Piotra na nowe pytania — JA-część zamknięta). Zero nowych 🟡-odbiorczych ruszonych (poza zakresem robotnika). Gałąź `worker-oxford-o5` z `origin/demo`, NIE zmergowana/NIE wypchnięta.
 
