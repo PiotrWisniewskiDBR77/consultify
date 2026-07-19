@@ -151,9 +151,16 @@ const FILLER_PATTERNS: { re: RegExp; label: string }[] = [
 /**
  * Generic "Improve X" / "poprawić X" titles with no substance (§A6, §C1).
  * A bare verb + noun with no metric / mechanism = filler title.
+ *
+ * NOTE: the trailing boundary is `(?=\s|$)`, not `\b` — JS `\b` is defined in
+ * terms of ASCII `\w` ([A-Za-z0-9_]), so a Polish infinitive ending in a
+ * diacritic (poprawić, usprawnić, zoptymalizować) is NOT a word char to the
+ * regex engine and `\b` silently fails to match right after it, letting the
+ * exact generic titles this rule exists to catch slip through. Found +
+ * fixed during the O7 acceptance audit (2026-07-19).
  */
 const GENERIC_TITLE_RE =
-  /^(improve|enhance|optimi[sz]e|better|fix|poprawi[cć]|usprawni[cć]|zoptymalizowa[cć]|popraw|usprawnij)\b/i;
+  /^(improve|enhance|optimi[sz]e|better|fix|poprawi[cć]|usprawni[cć]|zoptymalizowa[cć]|popraw|usprawnij)(?=\s|$)/i;
 
 function words(text: string): string[] {
   return String(text || '')
