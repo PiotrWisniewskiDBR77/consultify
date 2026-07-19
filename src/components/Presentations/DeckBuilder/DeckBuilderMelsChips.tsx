@@ -32,6 +32,7 @@ import {
   FileSearch,
   History,
   MessageSquare,
+  MonitorPlay,
   Palette,
   Play,
   Share2,
@@ -66,6 +67,7 @@ export interface DeckBuilderTopBarChipsLabels {
   share?: string;
   agent?: string;
   run?: string;
+  presenter?: string;
 }
 
 export interface DeckBuilderTopBarChipsHandlers {
@@ -80,8 +82,13 @@ export interface DeckBuilderTopBarChipsHandlers {
   onToggleComments?: () => void;
   onShare?: () => void;
   onToggleAgent?: () => void;
-  /** Primary chip — "Present" for the deck lane. */
+  /** Primary chip — "Present" (audience fullscreen) for the deck lane. */
   onRun?: () => void;
+  /**
+   * J12-S2 — presenter view (speaker notes + next slide + timer). Distinct
+   * from the primary "Present" chip; folds into the overflow (⋯) menu.
+   */
+  onPresenter?: () => void;
 }
 
 export interface DeckBuilderTopBarChipsState {
@@ -120,6 +127,7 @@ const DEFAULT_LABELS: Required<Omit<DeckBuilderTopBarChipsLabels, 'internalLabel
   share: 'Share',
   agent: 'Teresa',
   run: 'Present',
+  presenter: 'Presenter view',
 };
 
 const VERDICT_TONE: Record<NonNullable<DeckGovernanceVerdict>, TopBarChipDotTone> = {
@@ -211,6 +219,16 @@ export function buildDeckBuilderTopBarChips(args: {
       icon: FileSearch,
       onClick: handlers.onAudit,
       disabled: !handlers.onAudit,
+      group: 'overflow',
+    },
+    {
+      // J12-S2 — presenter view. Kept out of the primary "Present" chip (which
+      // runs the audience fullscreen) and folded into the overflow (⋯) menu.
+      id: 'presenter',
+      label: L.presenter,
+      icon: MonitorPlay,
+      onClick: handlers.onPresenter,
+      disabled: !handlers.onPresenter || state.runEnabled === false,
       group: 'overflow',
     },
     {

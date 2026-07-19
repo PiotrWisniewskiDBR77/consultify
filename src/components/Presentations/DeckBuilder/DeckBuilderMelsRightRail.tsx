@@ -68,8 +68,16 @@ export function buildDeckBuilderRightRailTools(args: {
    * OFF) — patrz DeckBuilder.tsx. false/undefined → pasek 1:1 jak przed HP-17.
    */
   includeEvidence?: boolean;
+  /**
+   * J12-S3 (Honest-UI): pokaż narzędzie „Media" TYLKO gdy wołający dostarczył
+   * jego panel. DeckBuilder NIE renderuje panelu media (biblioteka mediów jest
+   * dostępna z panelu „Blocks" → overlay MediaLibraryBrowser), więc ikona Media
+   * nie może wisieć na pasku otwierając pusty panel. false/undefined → brak
+   * ikony Media (mirror includeEvidence).
+   */
+  includeMedia?: boolean;
 }): RightRailToolDescriptor[] {
-  const { state = {}, labels = {}, includeEvidence = false } = args;
+  const { state = {}, labels = {}, includeEvidence = false, includeMedia = false } = args;
   const L = { ...DEFAULT_LABELS, ...labels };
 
   const activityBadge =
@@ -83,7 +91,7 @@ export function buildDeckBuilderRightRailTools(args: {
 
   const tools: RightRailToolDescriptor[] = [
     { id: 'blocks', label: L.blocks, icon: LayoutGrid },
-    { id: 'media', label: L.media, icon: Image },
+    ...(includeMedia ? [{ id: 'media', label: L.media, icon: Image }] : []),
     {
       id: 'comments',
       label: L.comments,
