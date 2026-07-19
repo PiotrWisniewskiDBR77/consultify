@@ -8,6 +8,22 @@ import { validateInsightCard } from './cardContentFormulaValidator.js';
 /** Prefix marking a readiness reason that comes from the §D20 verbatim-citation gate. */
 const CITATION_GATE_PREFIX = 'CITATION_GATE:';
 
+/**
+ * §D20 verbatim-citation gate hardness valve. Default ON — current behaviour:
+ * a finding on the client-report path that lacks a verbatim quote HARD-BLOCKS
+ * readiness. Mirrors `CARD_CONTENT_HARD_GATE` (fail-open valve): the flag EXISTS
+ * so the gate can be softened IMMEDIATELY, without a redeploy, if it starts
+ * false-blocking legitimate report packs in production. OFF
+ * (`0|false|off|no|disabled`, case-insensitive) → citation-gate reasons degrade
+ * to WARNINGS (graceful) instead of HARD blockers. Value unset/empty/other → ON.
+ */
+export function isInterviewReportCitationHardGateEnabled(): boolean {
+  const raw = String(process.env.INTERVIEW_REPORT_CITATION_HARD_GATE ?? '')
+    .trim()
+    .toLowerCase();
+  return !['0', 'false', 'off', 'no', 'disabled'].includes(raw);
+}
+
 /** An analyst paraphrase, not a source voice — mirrors validator §3.14. */
 const CITATION_PARAPHRASE_RE =
   /^\s*(respondent|rozmówc[ay]|rozmowc[ay]|badan[ya]|uczestnik|klient|osoba)\s+(opisa|wskaza|podkreśl|zwróci|stwierdzi|zauważ|mówi|twierdzi|sugeruj|przyzna|okre[śs]l)/i;
@@ -992,13 +1008,19 @@ export function evaluateInterviewReportPackReadiness(
     });
   }
 
-  // §D20 hybrid gate — verbatim-citation failures BLOCK the client-report path.
+  // §D20 hybrid gate — verbatim-citation failures BLOCK the client-report path by
+  // default. Soft valve (INTERVIEW_REPORT_CITATION_HARD_GATE=off): degrade the same
+  // reasons to WARNINGS so the report path stays usable (graceful) instead of
+  // hard-blocking. Default ON preserves current behaviour; fail-open on demand.
+  const citationGateHard = isInterviewReportCitationHardGateEnabled();
   for (const reason of reportPack.degradedReasons || []) {
     if (reason.startsWith(CITATION_GATE_PREFIX)) {
-      blockers.push({
-        severity: 'blocker',
-        message: reason.slice(CITATION_GATE_PREFIX.length).trim(),
-      });
+      const message = reason.slice(CITATION_GATE_PREFIX.length).trim();
+      if (citationGateHard) {
+        blockers.push({ severity: 'blocker', message });
+      } else {
+        warnings.push({ severity: 'warning', message });
+      }
     }
   }
 
