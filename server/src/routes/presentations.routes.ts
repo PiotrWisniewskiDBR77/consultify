@@ -6340,11 +6340,9 @@ const presentationMediaUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_PRESENTATION_MEDIA_BYTES, files: 1 },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_PRESENTATION_MEDIA_MIME_TYPES.has(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Unsupported file type. Only PNG, JPEG, GIF and WebP are allowed.'), false);
-    }
+    // Reject unsupported types by declining the file (cb signature here accepts null only);
+    // the handler returns a 4xx with an explicit message when no file survives the filter.
+    cb(null, ALLOWED_PRESENTATION_MEDIA_MIME_TYPES.has(file.mimetype));
   },
 });
 
