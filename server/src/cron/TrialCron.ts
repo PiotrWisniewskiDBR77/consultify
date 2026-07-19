@@ -59,7 +59,9 @@ class TrialCron {
   private async ensureDeps(): Promise<Dependencies> {
     if (!this.deps.demoService) {
       try {
-        // TODO(T7): dead self-import wrapper (real impl never existed) — this path is a 503/fallback victim. Build a real service before relying on it. Ref: finding_42_self_import_wrappers_services_2026-07-15.
+        // T7b-1 (2026-07-19): demoService.cleanupExpiredDemos now has a REAL implementation
+        // (was a dead self-import wrapper — finding_42_self_import_wrappers_services_2026-07-15).
+        // The try/catch below is now genuine fail-soft, not a guaranteed-dead path.
         const loaded = await import('../services/demoService.js').then((m) => m.default || m);
         this.deps.demoService = (await Promise.resolve(loaded)) as any;
       } catch (error: unknown) {

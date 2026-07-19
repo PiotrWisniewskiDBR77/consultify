@@ -58,7 +58,8 @@ class BackupCron {
 
   private async ensureDeps(): Promise<Dependencies> {
     if (!this.deps.backupService) {
-      // TODO(T7): dead self-import wrapper (real impl never existed) — this path is a 503/fallback victim. Build a real service before relying on it. Ref: finding_42_self_import_wrappers_services_2026-07-15.
+      // T7b-2 (2026-07-19): backupService now has a REAL implementation (logical JSON export
+      // + manifest) — was a dead self-import wrapper (finding_42_self_import_wrappers_services_2026-07-15).
       this.deps.backupService = await import('../services/backupService.js').then(
         (m) => m.default || m
       );

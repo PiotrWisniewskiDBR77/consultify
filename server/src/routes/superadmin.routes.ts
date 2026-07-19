@@ -2309,7 +2309,9 @@ router.post(
   requireSuperAdminCapability('platform_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      // TODO(T7): dead self-import wrapper (real impl never existed) — this path is a 503/fallback victim. Build a real service before relying on it. Ref: finding_42_self_import_wrappers_services_2026-07-15.
+      // T7b-2 (2026-07-19): backupService is now a REAL implementation
+      // (finding_42_self_import_wrappers_services_2026-07-15). The 503 catch below is genuine
+      // fail-soft, no longer a guaranteed-dead self-import wrapper.
       const BackupService = await import('../services/backupService.js').then(
         (m) => m.default || m
       );
