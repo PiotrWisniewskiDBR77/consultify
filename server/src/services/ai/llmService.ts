@@ -897,8 +897,26 @@ export class LLMService {
     const toolCalls: ToolCall[] = [];
     if (result.steps) {
       for (const step of result.steps) {
-        if (step.toolCalls) {
-          toolCalls.push(...(step.toolCalls as any));
+        // ai-sdk v6 splits a step's tool activity into two separate arrays —
+        // `step.toolCalls[]` (toolCallId + toolName + `input`, NO result) and
+        // `step.toolResults[]` (toolCallId + `output`). v4/v5 used `args`/
+        // `result` and (in the old API) merged both onto the same tool-call
+        // object; v6's toolCalls entries never carry a result at all, so the
+        // output must be looked up from toolResults by toolCallId. Without
+        // this join, tc.result/tc.output are ALWAYS undefined on v6 — the
+        // args fix alone (input→args) is not sufficient.
+        const outputByCallId = new Map<string, unknown>();
+        for (const tr of ((step as any).toolResults || []) as any[]) {
+          outputByCallId.set(tr.toolCallId, tr.output ?? tr.result);
+        }
+        for (const tc of ((step as any).toolCalls || []) as any[]) {
+          toolCalls.push({
+            toolName: tc.toolName,
+            args: tc.input ?? tc.args,
+            result: outputByCallId.has(tc.toolCallId)
+              ? outputByCallId.get(tc.toolCallId)
+              : (tc.output ?? tc.result),
+          });
         }
       }
     }
