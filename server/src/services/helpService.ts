@@ -299,9 +299,16 @@ class HelpService {
       showAgainAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
     }
 
+    // NOTE: real unique constraint on tooltip_dismissals is (user_id, tooltip_id), not `id`
+    // (id is a freshly generated UUID per call). Without an explicit conflict target on the
+    // real constraint, Postgres never replaces the prior dismissal row — it just accumulates
+    // duplicates and downstream reads of the latest dismiss_duration/show_again_at go stale.
     await db.run(
-      `INSERT OR REPLACE INTO tooltip_dismissals (id, user_id, tooltip_id, dismiss_duration, show_again_at)
-             VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO tooltip_dismissals (id, user_id, tooltip_id, dismiss_duration, show_again_at)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT (user_id, tooltip_id) DO UPDATE SET
+               dismiss_duration = EXCLUDED.dismiss_duration,
+               show_again_at = EXCLUDED.show_again_at`,
       [id, userId, tooltipId, duration, showAgainAt]
     );
   }

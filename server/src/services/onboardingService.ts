@@ -573,8 +573,12 @@ class OnboardingService {
     const db = await this.getDb();
     const id = uuidv4();
 
+    // NOTE: real unique constraint on user_tooltips_seen is (user_id, tooltip_id), not `id`
+    // (id is a freshly generated UUID per call). Conflict target must reference the actual
+    // constraint or Postgres inserts a duplicate row every time instead of no-op'ing.
     await db.run(
-      `INSERT OR IGNORE INTO user_tooltips_seen (id, user_id, tooltip_id) VALUES (?, ?, ?)`,
+      `INSERT INTO user_tooltips_seen (id, user_id, tooltip_id) VALUES (?, ?, ?)
+       ON CONFLICT (user_id, tooltip_id) DO NOTHING`,
       [id, userId, tooltipId]
     );
   }

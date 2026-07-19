@@ -211,9 +211,17 @@ export async function setOrgFinanceSettings(
   orgId: string,
   settings: Record<string, any>
 ): Promise<void> {
+  // NOTE: organization_settings' real PK is the composite (organization_id, setting_key).
+  // A single-column ON CONFLICT (organization_id) is not a valid conflict target for that
+  // constraint — Postgres raises "no unique or exclusion constraint matching the ON CONFLICT
+  // specification". dbRun() defaults to fallback:true (swallows the error), so this used to
+  // silently no-op on every call and finance settings were never actually persisted.
   await dbRun(
-    `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
-     VALUES (?, 'finance', ?, datetime('now'))`,
+    `INSERT INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
+     VALUES (?, 'finance', ?, datetime('now'))
+     ON CONFLICT (organization_id, setting_key) DO UPDATE SET
+       setting_value = EXCLUDED.setting_value,
+       updated_at = EXCLUDED.updated_at`,
     [orgId, JSON.stringify(settings)]
   );
 }

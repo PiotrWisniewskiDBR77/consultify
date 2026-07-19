@@ -1210,8 +1210,8 @@ export const AIMemoryManager = {
     const stats: any = await get(
       `
             SELECT 
-                COUNT(*) as totalInteractions,
-                AVG(CASE WHEN json_extract(metadata, '$.rating') = 'positive' THEN 1 ELSE 0 END) as positiveRate
+                COUNT(*) as "totalInteractions",
+                AVG(CASE WHEN json_extract(metadata, '$.rating') = 'positive' THEN 1 ELSE 0 END) as "positiveRate"
             FROM ai_feedback
             WHERE user_id = ?
             AND created_at >= datetime('now', '-30 days')

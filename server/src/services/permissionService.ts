@@ -496,11 +496,21 @@ export async function grantPermission(
   }
 
   const id = uuidv4();
+  // NOTE: real unique constraint on org_user_permissions is
+  // (user_id, organization_id, permission_key), not `id` (a freshly generated UUID per
+  // call). Without an explicit conflict target on the real constraint, Postgres never
+  // replaces the prior GRANT/REVOKE row for this (user, org, permission) — it accumulates
+  // duplicates and hasPermission()/getUserPermissions() above (no ORDER BY) can then read
+  // a stale grant_type instead of the latest one.
   await DbPromise.run(
     db,
-    `INSERT OR REPLACE INTO org_user_permissions 
+    `INSERT INTO org_user_permissions
          (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
-         VALUES (?, ?, ?, ?, 'GRANT', ?, datetime('now'))`,
+         VALUES (?, ?, ?, ?, 'GRANT', ?, datetime('now'))
+         ON CONFLICT (user_id, organization_id, permission_key) DO UPDATE SET
+           grant_type = EXCLUDED.grant_type,
+           granted_by = EXCLUDED.granted_by,
+           created_at = EXCLUDED.created_at`,
     [id, userId, orgId, permissionKey, grantedBy],
     { fallback: false }
   );
@@ -535,11 +545,17 @@ export async function revokePermission(
   }
 
   const id = uuidv4();
+  // See NOTE in grantPermission() above: conflict target must be the real unique
+  // constraint (user_id, organization_id, permission_key), not `id`.
   await DbPromise.run(
     db,
-    `INSERT OR REPLACE INTO org_user_permissions 
+    `INSERT INTO org_user_permissions
          (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
-         VALUES (?, ?, ?, ?, 'REVOKE', ?, datetime('now'))`,
+         VALUES (?, ?, ?, ?, 'REVOKE', ?, datetime('now'))
+         ON CONFLICT (user_id, organization_id, permission_key) DO UPDATE SET
+           grant_type = EXCLUDED.grant_type,
+           granted_by = EXCLUDED.granted_by,
+           created_at = EXCLUDED.created_at`,
     [id, userId, orgId, permissionKey, revokedBy],
     { fallback: false }
   );
