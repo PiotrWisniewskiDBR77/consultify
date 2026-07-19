@@ -28549,6 +28549,18 @@
       "sourceType_note": "Note",
       "sourceType_report": "Report",
       "sourceType_presentation": "Presentation"
+    },
+    "inlineAi": {
+      "trigger": "Improve with Teresa",
+      "approve": "Approve",
+      "reject": "Reject",
+      "working": "Teresa is working…",
+      "close": "Close",
+      "error": "AI error. Please try again.",
+      "empty": "AI returned no content. Please try again.",
+      "proposalFailed": "Failed to create AI proposal.",
+      "executeFailed": "AI error. Please try again.",
+      "approveFailed": "Failed to approve."
     }
   },
   "myWorkMindmap": {
@@ -28572,7 +28584,8 @@
       "deepenTopic": "Deepen topic",
       "summarizeBranch": "Summarize branch",
       "whatIfAnalysis": "What-if analysis",
-      "suggestLinks": "Suggest links"
+      "suggestLinks": "Suggest links",
+      "rewriteNode": "AI: Rewrite this node"
     },
     "align": {
       "align-left": "Align left",
@@ -28811,7 +28824,8 @@
         "convert": "Convert",
         "convertBranch": "Convert branch to...",
         "styleData": "Style & data"
-      }
+      },
+      "ctx_ai_rewrite_node": "AI: Rewrite this node"
     },
     "health": {
       "balance": "Balance",

@@ -29609,6 +29609,18 @@
       "sourceType_note": "Notatka",
       "sourceType_report": "Raport",
       "sourceType_presentation": "Prezentacja"
+    },
+    "inlineAi": {
+      "trigger": "Popraw z Teresą",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "working": "Teresa pracuje…",
+      "close": "Zamknij",
+      "error": "Błąd AI. Spróbuj ponownie.",
+      "empty": "AI nie zwróciło treści. Spróbuj ponownie.",
+      "proposalFailed": "Nie udało się utworzyć propozycji AI.",
+      "executeFailed": "Błąd AI. Spróbuj ponownie.",
+      "approveFailed": "Nie udało się zatwierdzić."
     }
   },
   "myWorkMindmap": {
@@ -29632,7 +29644,8 @@
       "deepenTopic": "Pogłęb temat",
       "summarizeBranch": "Podsumuj gałąź",
       "whatIfAnalysis": "What-if analiza",
-      "suggestLinks": "Zasugeruj powiązania"
+      "suggestLinks": "Zasugeruj powiązania",
+      "rewriteNode": "AI: Przeredaguj węzeł"
     },
     "align": {
       "align-left": "Wyrównaj do lewej",
@@ -29871,7 +29884,8 @@
         "convert": "Konwersja",
         "convertBranch": "Konwertuj gałąź na...",
         "styleData": "Wygląd i dane"
-      }
+      },
+      "ctx_ai_rewrite_node": "AI: Przeredaguj węzeł"
     },
     "health": {
       "balance": "Balans",

@@ -120,6 +120,8 @@ export type FunnelEventName =
   | 'notebook_action_item_created'
   | 'notebook_action_items_bulk_created'
   | 'notebook_ai_command_prompt_used'
+  | 'notebook_inline_ai_rewrite_proposed'
+  | 'notebook_inline_ai_rewrite_accepted'
   | 'notebook_checklist_bulk_convert'
   | 'notebook_context_panel_opened'
   | 'notebook_pulse_picker_opened'

@@ -982,27 +982,48 @@ class NotebookService {
       | 'insert'
       | 'replace'
       | 'append';
-    const nextBlock = normalizeNotebookBlock(safeParseJson(proposalRow.block_content));
+    // J26 (two-channel doctrine): fragment-level replace. The stored
+    // `blockContent` may carry optional targeting metadata for the inline
+    // "select → rewrite" flow (NotebookInlineAIMenu):
+    //   `_replaceRange`  = { from, to } — inclusive top-level block indices to swap out.
+    //   `_replaceBlocks` = explicit replacement blocks (preserves paragraph structure).
+    // Both keys are stripped before the block is persisted. When absent,
+    // `replace` keeps its legacy whole-document semantics (backward compatible).
+    const rawBlock = safeParseJson(proposalRow.block_content);
+    const replaceRange = extractReplaceRange(rawBlock);
+    const replaceBlocks = extractReplaceBlocks(rawBlock);
+    const nextBlock = normalizeNotebookBlock(rawBlock);
     const existingBlocks = Array.isArray(currentDoc.content) ? currentDoc.content : [];
 
-    const taggedBlock: Record<string, unknown> = {
-      ...nextBlock,
-      provenance: {
-        type: 'ai_transform' as P07Provenance,
-        actor: proposalRow.actor_id,
-        proposalId: proposalRow.id,
-        inputPointers: [proposalRow.page_id],
-        timestamp: new Date().toISOString(),
-      } satisfies BlockProvenance,
-    };
+    const provenance = {
+      type: 'ai_transform' as P07Provenance,
+      actor: proposalRow.actor_id,
+      proposalId: proposalRow.id,
+      inputPointers: [proposalRow.page_id],
+      timestamp: new Date().toISOString(),
+    } satisfies BlockProvenance;
+
+    const replacementBlocks: Array<Record<string, unknown>> = (
+      replaceBlocks && replaceBlocks.length > 0 ? replaceBlocks : [nextBlock]
+    ).map((b) => ({ ...b, provenance }));
 
     let updatedBlocks = existingBlocks;
     if (proposalType === 'replace') {
-      updatedBlocks = [taggedBlock];
+      if (replaceRange && existingBlocks.length > 0) {
+        const from = Math.max(0, Math.min(replaceRange.from, existingBlocks.length - 1));
+        const to = Math.max(from, Math.min(replaceRange.to, existingBlocks.length - 1));
+        updatedBlocks = [
+          ...existingBlocks.slice(0, from),
+          ...replacementBlocks,
+          ...existingBlocks.slice(to + 1),
+        ];
+      } else {
+        updatedBlocks = replacementBlocks;
+      }
     } else if (proposalType === 'append') {
-      updatedBlocks = [...existingBlocks, taggedBlock];
+      updatedBlocks = [...existingBlocks, ...replacementBlocks];
     } else {
-      updatedBlocks = [taggedBlock, ...existingBlocks];
+      updatedBlocks = [...replacementBlocks, ...existingBlocks];
     }
 
     const nextDoc = { ...currentDoc, type: 'doc', content: updatedBlocks };
@@ -1072,6 +1093,43 @@ function normalizeNotebookBlock(block: Record<string, unknown>): Record<string, 
     type: 'paragraph',
     content: [{ type: 'text', text }],
   };
+}
+
+/**
+ * J26: extract + strip the optional `_replaceRange` targeting hint from a
+ * proposal block. Mutates `block` so the metadata never lands in the stored doc.
+ */
+function extractReplaceRange(
+  block: Record<string, unknown>
+): { from: number; to: number } | null {
+  const raw = (block as any)._replaceRange;
+  delete (block as any)._replaceRange;
+  if (raw && typeof raw === 'object') {
+    const from = Number((raw as any).from);
+    const to = Number((raw as any).to);
+    if (Number.isFinite(from) && Number.isFinite(to) && from >= 0 && to >= from) {
+      return { from: Math.floor(from), to: Math.floor(to) };
+    }
+  }
+  return null;
+}
+
+/**
+ * J26: extract + strip the optional `_replaceBlocks` array (explicit replacement
+ * blocks that preserve paragraph structure). Mutates `block`.
+ */
+function extractReplaceBlocks(
+  block: Record<string, unknown>
+): Array<Record<string, unknown>> | null {
+  const raw = (block as any)._replaceBlocks;
+  delete (block as any)._replaceBlocks;
+  if (Array.isArray(raw)) {
+    const blocks = raw
+      .filter((b) => b && typeof b === 'object')
+      .map((b) => normalizeNotebookBlock(b as Record<string, unknown>));
+    return blocks.length > 0 ? blocks : null;
+  }
+  return null;
 }
 
 function blockToMarkdown(block: Record<string, unknown>): string {

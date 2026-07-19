@@ -4629,6 +4629,18 @@ function MindMapInner({
       if (action === 'ctx_ai_expand' || action === 'ctx_ai_deepen') {
         handleAIExpand(ctxNode?.id);
       }
+      if (action === 'ctx_ai_rewrite_node' && ctxNode) {
+        // J26 (channel 2): direct node rewrite via the Propose→Accept path.
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-rewrite-node', {
+            detail: {
+              ideaId,
+              nodeId: ctxNode.id,
+              nodeLabel: String(ctxNode.data?.label || ''),
+            },
+          })
+        );
+      }
       if (action === 'ctx_what_if') setShowWhatIf(true);
       if (action === 'ctx_vote_up') {
         if (ctxNode && ctxNode.type === 'idea') {
