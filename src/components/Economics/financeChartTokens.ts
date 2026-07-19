@@ -125,6 +125,19 @@ export function useFinanceChartColors(): FinanceChartColors {
   return colors;
 }
 
+/**
+ * Read `--motion-base` (or any `--motion-*` duration token) and return it as a
+ * plain millisecond number — Recharts' `animationDuration` needs a number, it
+ * cannot resolve `var()`. VF2-1 data-viz chrome mini-kanon (FINANCE_VISUAL_CANON
+ * §6): chart-entry animation duration must track the design-system motion
+ * token, not a Recharts-default magic number (~1500ms).
+ */
+export function readMotionMs(name: string, fallbackMs: number): number {
+  const raw = readCssToken(name, `${fallbackMs}ms`);
+  const parsed = parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : fallbackMs;
+}
+
 /** Convert `#rrggbb` (or `#rgb`) to an rgba() string; null if not a hex color. */
 export function hexToRgba(hex: string, alpha: number): string | null {
   const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());

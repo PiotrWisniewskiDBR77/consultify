@@ -59,3 +59,16 @@ Wszystkie: czysty SVG (bez ciężkich libów), responsywne (viewBox), props-driv
 
 ## 5. ZGODNOŚĆ
 Nowe komponenty NIE łamią `CANON.md` (typografia/spacing/focus) ani `TABLE_AND_PREVIEW_CANON.md` (tabele drill-down). Czerwień wg budżetu czerwieni. Każdy nowy wykres w M16 MUSI być jednym z §3 lub rozszerzać kanon (PR aktualizuje ten plik).
+
+## 6. DATA-VIZ CHROME — mini-kanon (VF2-1)
+Dotyczy "obudowy" KAŻDEGO wykresu M16/Results (osie, legenda, tooltip, animacja wejścia, pusty stan) — niezależnie od tego, który prymityw z §3 jest użyty pod spodem. Cel: wykres wygląda jak część Consultify, nie domyślny Recharts.
+
+- **Osie/etykiety = typografia `L5`** (§C7 TRIADA_KANON: 11px caption). Recharts: `tick={{ fontSize: 11 }}`; wartości liczbowe `tabular-nums`. Nie 12px/13px — to `L4`/`L3`, za ciężkie dla osi.
+- **Legenda = chipy wg TRIADY**, nie goły swatch+tekst Rechartsa. Użyj `<Legend content={<ChartLegendChips />} />` (`src/components/Economics/charts/ChartLegendChips.tsx`) — pigułka `rounded-full`, kropka koloru serii + label `L5`. Tylko gdy >1 seria (reguła §4 bez zmian; 1 seria = brak legendy).
+- **Tooltip = `--elevation-2`.** Cień z tokenu (`box-shadow: var(--elevation-2)`), tło `--c-surface`, ramka `--c-border`, `border-radius` spójny z panelem (`rounded-xl`/`rounded-lg`). Recharts: `contentStyle={{ boxShadow: 'var(--elevation-2)', backgroundColor: 'var(--c-surface)', border: '1px solid var(--c-border)' }}`; własny `content` (custom tooltip component) → `shadow-[var(--elevation-2)]` zamiast Tailwind `shadow-xl`/`shadow-2xl`.
+- **Serie — DWA przypadki, nie mylić:**
+  1. Seria ma wbudowaną semantykę (plan/actual/cost/benefit/target/warning/variance) → kolor z §1 (`--fin-positive/-negative/-warning/-progress/-baseline/-accent`, resolwowane przez `useFinanceChartColors()`). Kolor NIESIE znaczenie — nigdy nie zamieniaj na `c-tag` tylko dla "spójności rampy".
+  2. Seria jest kategoryczna/bez wbudowanej semantyki (N inicjatyw, N portfeli, N węzłów) → `--c-tag-1..12` w **stałej kolejności** wg indeksu w danych (`ramp[i % 12]` z `readTagRamp()`/`useFinanceChartColors().ramp`), nigdy losowo ani ręcznie dobierany hex.
+- **Pusty stan wykresu = `EmptyState`** (`src/components/ui/composed/EmptyState.tsx`, `preset="noData"` `compact`) — nie zniknięcie sekcji / pusty div, gdy dane są puste ale panel jest aktywny. (Stan "jeszcze nie odpalono obliczenia" — prosty tekst wg §4 — to inny przypadek, zostaje bez zmian.)
+- **Zero gradientów/3D.** Flat fills wyłącznie z tokenów §1/`c-tag-*`; zakaz `linearGradient`/`radialGradient`/`filter: drop-shadow` na słupkach/obszarach, zakaz "3D bar/pie".
+- **Motion wejścia = `--motion-base`.** `animationDuration` z `readMotionMs('--motion-base', 180)` (`financeChartTokens.ts`), nie domyślne ~1500ms Rechartsa. `prefers-reduced-motion` → `isAnimationActive={false}` (hook `useReducedMotion()`, `src/hooks/useReducedMotion.ts`) — zero animacji, dane renderują się od razu.

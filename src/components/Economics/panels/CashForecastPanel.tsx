@@ -27,7 +27,8 @@ import {
   YAxis,
 } from 'recharts';
 
-import { useFinanceChartColors } from '@/components/Economics/financeChartTokens';
+import { readMotionMs, useFinanceChartColors } from '@/components/Economics/financeChartTokens';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import {
   type CashCurvePoint,
   type CashForecastResponse,
@@ -240,6 +241,8 @@ const PeriodsEditor: React.FC<PeriodsEditorProps> = ({ rows, onChange, t }) => {
 export const CashForecastPanel: React.FC = () => {
   const { t } = useTranslation();
   const colors = useFinanceChartColors();
+  const prefersReducedMotion = useReducedMotion();
+  const chartAnimationMs = prefersReducedMotion ? 0 : readMotionMs('--motion-base', 180);
 
   const [openingCash, setOpeningCash] = useState('250000');
   const [monthlyBurn, setMonthlyBurn] = useState('30000');
@@ -418,6 +421,13 @@ export const CashForecastPanel: React.FC = () => {
                   <Tooltip
                     formatter={(value: number) => fmtAmount(Number(value))}
                     labelFormatter={(label) => String(label)}
+                    contentStyle={{
+                      boxShadow: 'var(--elevation-2)',
+                      backgroundColor: 'var(--c-surface)',
+                      border: '1px solid var(--c-border)',
+                      borderRadius: '10px',
+                      fontSize: '11px',
+                    }}
                   />
                   <ReferenceLine y={0} stroke={colors.reference} strokeDasharray="4 4" />
                   {Number.isFinite(Number(minCash)) && Number(minCash) !== 0 && (
@@ -439,6 +449,8 @@ export const CashForecastPanel: React.FC = () => {
                     stroke={colors.net}
                     strokeWidth={2}
                     dot={{ r: 3 }}
+                    isAnimationActive={!prefersReducedMotion}
+                    animationDuration={chartAnimationMs}
                   />
                 </LineChart>
               </ResponsiveContainer>

@@ -40,9 +40,12 @@ import {
   YAxis,
 } from 'recharts';
 
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { Api } from '../../services/api';
+import { EmptyState } from '../ui/composed/EmptyState';
 import { LoadingState } from '../ui/primitives';
-import { useFinanceChartColors } from './financeChartTokens';
+import { ChartLegendChips } from './charts/ChartLegendChips';
+import { readMotionMs, useFinanceChartColors } from './financeChartTokens';
 
 interface BenefitTrackingEntry {
   id: string;
@@ -69,6 +72,8 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
   onClose,
 }) => {
   const chart = useFinanceChartColors();
+  const prefersReducedMotion = useReducedMotion();
+  const chartAnimationMs = prefersReducedMotion ? 0 : readMotionMs('--motion-base', 180);
   const [benefits, setBenefits] = useState<BenefitTrackingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showMeasurementModal, setShowMeasurementModal] = useState(false);
@@ -197,7 +202,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700">
+        <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-[var(--elevation-2)] border border-slate-200 dark:border-navy-700">
           <p className="font-bold text-navy-900 dark:text-white mb-2">{label}</p>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between gap-4">
@@ -292,22 +297,22 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
       </div>
 
       {/* Chart */}
-      {chartData.length > 0 && (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-            <BarChart2 size={20} className="text-blue-500" />
-            Plan vs Actual Comparison
-          </h3>
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <BarChart2 size={20} className="text-blue-500" />
+          Plan vs Actual Comparison
+        </h3>
+        {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={350}>
             <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-              <XAxis dataKey="period" tick={{ fill: chart.axis, fontSize: 12 }} />
+              <XAxis dataKey="period" tick={{ fill: chart.axis, fontSize: 11 }} />
               <YAxis
                 tickFormatter={(value) => formatCurrency(value).replace(' PLN', 'k')}
-                tick={{ fill: chart.axis, fontSize: 12 }}
+                tick={{ fill: chart.axis, fontSize: 11 }}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend />
+              <Legend content={<ChartLegendChips />} />
               <ReferenceLine y={0} stroke={chart.reference} strokeDasharray="3 3" />
 
               <Bar
@@ -316,6 +321,8 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                 fill={chart.target}
                 radius={[4, 4, 0, 0]}
                 barSize={30}
+                isAnimationActive={!prefersReducedMotion}
+                animationDuration={chartAnimationMs}
               />
               <Bar
                 dataKey="actual"
@@ -323,6 +330,8 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                 fill={chart.benefit}
                 radius={[4, 4, 0, 0]}
                 barSize={30}
+                isAnimationActive={!prefersReducedMotion}
+                animationDuration={chartAnimationMs}
               />
               <Line
                 type="monotone"
@@ -331,11 +340,15 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                 stroke={chart.warning}
                 strokeWidth={2}
                 dot={{ fill: chart.warning, r: 4 }}
+                isAnimationActive={!prefersReducedMotion}
+                animationDuration={chartAnimationMs}
               />
             </ComposedChart>
           </ResponsiveContainer>
-        </div>
-      )}
+        ) : (
+          <EmptyState preset="noData" compact />
+        )}
+      </div>
 
       {/* Tracking History Table */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">

@@ -15,9 +15,20 @@
  */
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-import { useFinanceChartColors } from '@/components/Economics/financeChartTokens';
+import { ChartLegendChips } from '@/components/Economics/charts/ChartLegendChips';
+import { readMotionMs, useFinanceChartColors } from '@/components/Economics/financeChartTokens';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import {
   type PortfolioRollup,
   postAttributionRollup,
@@ -75,6 +86,8 @@ export interface ValueAttributionPanelProps {
 export const ValueAttributionPanel: React.FC<ValueAttributionPanelProps> = ({ fetcher }) => {
   const { t } = useTranslation();
   const colors = useFinanceChartColors();
+  const prefersReducedMotion = useReducedMotion();
+  const chartAnimationMs = prefersReducedMotion ? 0 : readMotionMs('--motion-base', 180);
   const [rows, setRows] = useState<ContributionRow[]>(DEFAULT_ROWS);
 
   const [result, setResult] = useState<PortfolioRollup | null>(null);
@@ -302,7 +315,17 @@ export const ValueAttributionPanel: React.FC<ValueAttributionPanelProps> = ({ fe
                 <CartesianGrid stroke={colors.grid} strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="kpi" stroke={colors.axis} tick={{ fontSize: 11 }} />
                 <YAxis stroke={colors.axis} tick={{ fontSize: 11 }} tickFormatter={fmt} />
-                <Tooltip formatter={(value: number) => fmt(value)} />
+                <Tooltip
+                  formatter={(value: number) => fmt(value)}
+                  contentStyle={{
+                    boxShadow: 'var(--elevation-2)',
+                    backgroundColor: 'var(--c-surface)',
+                    border: '1px solid var(--c-border)',
+                    borderRadius: '10px',
+                    fontSize: '11px',
+                  }}
+                />
+                <Legend content={<ChartLegendChips />} />
                 <Bar
                   dataKey="attributed"
                   name={String(
@@ -310,6 +333,8 @@ export const ValueAttributionPanel: React.FC<ValueAttributionPanelProps> = ({ fe
                   )}
                   fill={colors.benefit}
                   radius={[4, 4, 0, 0]}
+                  isAnimationActive={!prefersReducedMotion}
+                  animationDuration={chartAnimationMs}
                 />
                 <Bar
                   dataKey="unexplained"
@@ -318,6 +343,8 @@ export const ValueAttributionPanel: React.FC<ValueAttributionPanelProps> = ({ fe
                   )}
                   fill={colors.warning}
                   radius={[4, 4, 0, 0]}
+                  isAnimationActive={!prefersReducedMotion}
+                  animationDuration={chartAnimationMs}
                 />
               </BarChart>
             </ResponsiveContainer>
