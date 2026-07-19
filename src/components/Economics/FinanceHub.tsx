@@ -39,7 +39,7 @@ import {
   Trash2,
   TrendingUp,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -67,13 +67,6 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { InitiativeStatus } from '@/types/core';
 
-import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
-import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
-import { ValuationWorkspace } from '../Benefits/ValuationWorkspace';
-import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
-import { FinancialModelWorkspace } from '../Finance/FinancialModelWorkspace';
-import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
-import { FinancialStatementPackWorkspace } from '../Finance/FinancialStatementPackWorkspace';
 import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import {
   FilterChip,
@@ -124,31 +117,122 @@ import { useFinanceData } from './hooks/useFinanceData';
 import { useFinanceLane } from './hooks/useFinanceLane';
 import { useFinanceRowActions } from './hooks/useFinanceRowActions';
 import { useFinanceSelection } from './hooks/useFinanceSelection';
-import { CreateAnalysisModal } from './modals/CreateAnalysisModal';
-import { CreateBudgetModal } from './modals/CreateBudgetModal';
-import { CreateModelModal } from './modals/CreateModelModal';
-import { CreateValuationModal } from './modals/CreateValuationModal';
-import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
-import { BankingValuePanel } from './panels/BankingValuePanel';
-import { CashForecastPanel } from './panels/CashForecastPanel';
-import { type DriverNode, DriverPlannerPanel } from './panels/DriverPlannerPanel';
-import { DriverTreePanel } from './panels/DriverTreePanel';
-import { EfficientFrontierPanel } from './panels/EfficientFrontierPanel';
-import { ExtendedRatiosPanel } from './panels/ExtendedRatiosPanel';
-import { HeadcountPlannerPanel } from './panels/HeadcountPlannerPanel';
-import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
-import { MonteCarloNpvPanel } from './panels/MonteCarloNpvPanel';
-import { RealOptionsPanel } from './panels/RealOptionsPanel';
-import { RollingForecastPanel } from './panels/RollingForecastPanel';
-import { ScenarioComputePanel } from './panels/ScenarioComputePanel';
-import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
-import { ValueAttributionPanel } from './panels/ValueAttributionPanel';
-import { ValueCapturePipelinePanel } from './panels/ValueCapturePipelinePanel';
-import { ValueLedgerPanel } from './panels/ValueLedgerPanel';
-import { type ValueOfficeInitiative, ValueOfficePanel } from './panels/ValueOfficePanel';
-import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
-import { VarianceNarrationPanel } from './panels/VarianceNarrationPanel';
-import { WhatIfSensitivityPanel } from './panels/WhatIfSensitivityPanel';
+import type { DriverNode } from './panels/DriverPlannerPanel';
+import type { ValueOfficeInitiative } from './panels/ValueOfficePanel';
+
+// ---------------------------------------------------------------------------
+// H5.1 perf (code-splitting): heavy, on-demand surfaces are lazy-loaded so the
+// FinanceHub critical-path chunk no longer bundles the full editor suite +
+// ~20 M16 value-tracking panels + create modals + import/export dialogs. Each
+// of these only ever renders behind a state/flag/tab gate, so splitting them
+// out shrinks first-paint without changing any behaviour, flags, or contracts.
+// The runtime gates (isFinanceFlagEnabled / activeTab / show* state) are
+// unchanged — only the module import boundary + a Suspense skeleton were added.
+// ---------------------------------------------------------------------------
+const BudgetWorkspace = lazy(() =>
+  import('../Benefits/BudgetWorkspace').then((m) => ({ default: m.BudgetWorkspace }))
+);
+const FinancialAnalysisWorkspace = lazy(() =>
+  import('../Benefits/FinancialAnalysisWorkspace').then((m) => ({
+    default: m.FinancialAnalysisWorkspace,
+  }))
+);
+const ValuationWorkspace = lazy(() =>
+  import('../Benefits/ValuationWorkspace').then((m) => ({ default: m.ValuationWorkspace }))
+);
+const ExportToOutputDialog = lazy(() =>
+  import('../Finance/ExportToOutputDialog').then((m) => ({ default: m.ExportToOutputDialog }))
+);
+const FinancialModelWorkspace = lazy(() =>
+  import('../Finance/FinancialModelWorkspace').then((m) => ({ default: m.FinancialModelWorkspace }))
+);
+const FinancialStatementImportWizard = lazy(() =>
+  import('../Finance/FinancialStatementImportWizard').then((m) => ({
+    default: m.FinancialStatementImportWizard,
+  }))
+);
+const FinancialStatementPackWorkspace = lazy(() =>
+  import('../Finance/FinancialStatementPackWorkspace').then((m) => ({
+    default: m.FinancialStatementPackWorkspace,
+  }))
+);
+const CreateAnalysisModal = lazy(() =>
+  import('./modals/CreateAnalysisModal').then((m) => ({ default: m.CreateAnalysisModal }))
+);
+const CreateBudgetModal = lazy(() =>
+  import('./modals/CreateBudgetModal').then((m) => ({ default: m.CreateBudgetModal }))
+);
+const CreateModelModal = lazy(() =>
+  import('./modals/CreateModelModal').then((m) => ({ default: m.CreateModelModal }))
+);
+const CreateValuationModal = lazy(() =>
+  import('./modals/CreateValuationModal').then((m) => ({ default: m.CreateValuationModal }))
+);
+const LinkInitiativeModal = lazy(() =>
+  import('./modals/LinkInitiativeModal').then((m) => ({ default: m.LinkInitiativeModal }))
+);
+const BankingValuePanel = lazy(() =>
+  import('./panels/BankingValuePanel').then((m) => ({ default: m.BankingValuePanel }))
+);
+const CashForecastPanel = lazy(() =>
+  import('./panels/CashForecastPanel').then((m) => ({ default: m.CashForecastPanel }))
+);
+const DriverPlannerPanel = lazy(() =>
+  import('./panels/DriverPlannerPanel').then((m) => ({ default: m.DriverPlannerPanel }))
+);
+const DriverTreePanel = lazy(() =>
+  import('./panels/DriverTreePanel').then((m) => ({ default: m.DriverTreePanel }))
+);
+const EfficientFrontierPanel = lazy(() =>
+  import('./panels/EfficientFrontierPanel').then((m) => ({ default: m.EfficientFrontierPanel }))
+);
+const ExtendedRatiosPanel = lazy(() =>
+  import('./panels/ExtendedRatiosPanel').then((m) => ({ default: m.ExtendedRatiosPanel }))
+);
+const HeadcountPlannerPanel = lazy(() =>
+  import('./panels/HeadcountPlannerPanel').then((m) => ({ default: m.HeadcountPlannerPanel }))
+);
+const InvestmentAppraisalPanel = lazy(() =>
+  import('./panels/InvestmentAppraisalPanel').then((m) => ({ default: m.InvestmentAppraisalPanel }))
+);
+const MonteCarloNpvPanel = lazy(() =>
+  import('./panels/MonteCarloNpvPanel').then((m) => ({ default: m.MonteCarloNpvPanel }))
+);
+const RealOptionsPanel = lazy(() =>
+  import('./panels/RealOptionsPanel').then((m) => ({ default: m.RealOptionsPanel }))
+);
+const RollingForecastPanel = lazy(() =>
+  import('./panels/RollingForecastPanel').then((m) => ({ default: m.RollingForecastPanel }))
+);
+const ScenarioComputePanel = lazy(() =>
+  import('./panels/ScenarioComputePanel').then((m) => ({ default: m.ScenarioComputePanel }))
+);
+const ValuationVisualsPanel = lazy(() =>
+  import('./panels/ValuationVisualsPanel').then((m) => ({ default: m.ValuationVisualsPanel }))
+);
+const ValueAttributionPanel = lazy(() =>
+  import('./panels/ValueAttributionPanel').then((m) => ({ default: m.ValueAttributionPanel }))
+);
+const ValueCapturePipelinePanel = lazy(() =>
+  import('./panels/ValueCapturePipelinePanel').then((m) => ({
+    default: m.ValueCapturePipelinePanel,
+  }))
+);
+const ValueLedgerPanel = lazy(() =>
+  import('./panels/ValueLedgerPanel').then((m) => ({ default: m.ValueLedgerPanel }))
+);
+const ValueOfficePanel = lazy(() =>
+  import('./panels/ValueOfficePanel').then((m) => ({ default: m.ValueOfficePanel }))
+);
+const VarianceBridgePanel = lazy(() =>
+  import('./panels/VarianceBridgePanel').then((m) => ({ default: m.VarianceBridgePanel }))
+);
+const VarianceNarrationPanel = lazy(() =>
+  import('./panels/VarianceNarrationPanel').then((m) => ({ default: m.VarianceNarrationPanel }))
+);
+const WhatIfSensitivityPanel = lazy(() =>
+  import('./panels/WhatIfSensitivityPanel').then((m) => ({ default: m.WhatIfSensitivityPanel }))
+);
 
 /**
  * Guard against raw JS Date `.toString()` leaking into a statement title
@@ -2858,6 +2942,7 @@ export const FinanceHub: React.FC = () => {
                 : 'p-4'
             }
           >
+            <Suspense fallback={<div className="p-6"><LoadingState template="panel" /></div>}>
             {isBudgetPrediction ? (
               <BudgetWorkspace
                 initialBudgetId={getBudgetRawId(activeDocument.id)}
@@ -2915,6 +3000,7 @@ export const FinanceHub: React.FC = () => {
                 />
               </div>
             )}
+            </Suspense>
           </div>
         </div>
       </div>
@@ -3040,11 +3126,13 @@ export const FinanceHub: React.FC = () => {
     // hides the app navigation. See H2.9 / H2.10.
     if (showImportWizard)
       return (
-        <FinancialStatementImportWizard
-          embedded
-          onClose={() => setShowImportWizard(false)}
-          onComplete={handleImportWizardComplete}
-        />
+        <Suspense fallback={<div className="p-6"><LoadingState template="panel" /></div>}>
+          <FinancialStatementImportWizard
+            embedded
+            onClose={() => setShowImportWizard(false)}
+            onComplete={handleImportWizardComplete}
+          />
+        </Suspense>
       );
     if (loadingTab)
       return (
@@ -3104,7 +3192,9 @@ export const FinanceHub: React.FC = () => {
           </div>
           {isFinanceFlagEnabled('investmentAppraisal') && (
             <div className="px-6 pb-6">
-              <InvestmentAppraisalPanel />
+              <Suspense fallback={<LoadingState template="panel" />}>
+                <InvestmentAppraisalPanel />
+              </Suspense>
             </div>
           )}
         </>
@@ -3169,7 +3259,9 @@ export const FinanceHub: React.FC = () => {
           </div>
           {isFinanceFlagEnabled('valueOffice') && (
             <div className="px-6 pb-4">
-              <ValueOfficePanel initiatives={valueOfficeInitiatives} />
+              <Suspense fallback={<LoadingState template="panel" />}>
+                <ValueOfficePanel initiatives={valueOfficeInitiatives} />
+              </Suspense>
             </div>
           )}
           {isFinanceFlagEnabled('driverPlanner') && (
@@ -3177,7 +3269,9 @@ export const FinanceHub: React.FC = () => {
               {/* No model exists yet on this empty-state branch, so there is no
                   real forecast to decompose — the panel renders its empty state
                   prompting model selection (no synthetic sample). */}
-              <DriverPlannerPanel />
+              <Suspense fallback={<LoadingState template="panel" />}>
+                <DriverPlannerPanel />
+              </Suspense>
             </div>
           )}
         </>
@@ -3240,6 +3334,7 @@ export const FinanceHub: React.FC = () => {
       return (
         <div className="flex flex-col">
           {_baseView}
+          <Suspense fallback={<div className="px-4 pb-6"><LoadingState template="panel" /></div>}>
           <div className="flex flex-col gap-4 px-4 pb-6">
             {_showInvest && <InvestmentAppraisalPanel />}
             {_showValue && <ValueOfficePanel initiatives={valueOfficeInitiatives} />}
@@ -3262,6 +3357,7 @@ export const FinanceHub: React.FC = () => {
             {_showBanking && <BankingValuePanel />}
             {_showExtendedRatios && <ExtendedRatiosPanel />}
           </div>
+          </Suspense>
         </div>
       );
     }
@@ -3379,6 +3475,7 @@ export const FinanceHub: React.FC = () => {
         />
       )}
 
+      <Suspense fallback={null}>
       {showCreateModelModal && (
         <CreateModelModal
           availableStatements={readyStatementRows}
@@ -3477,6 +3574,7 @@ export const FinanceHub: React.FC = () => {
           }}
         />
       )}
+      </Suspense>
     </>
   );
 };
