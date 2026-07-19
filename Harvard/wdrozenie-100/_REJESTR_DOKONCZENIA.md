@@ -31,18 +31,36 @@
    wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
    = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
 
-## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W7)
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W8)
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
 | A · Harvard (H1-H6) | 55 | 3 | 2 | 1 | 1 | 62 |
 | B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 31 | 23 | 11 | 5 | 0 | 70 |
+| C · Oxford (O1-O8) | 33 | 23 | 11 | 3 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 42 | 1 | 31 | 7 | 2 | 83 |
-| **SUMA** | **162** | **49** | **68** | **16** | **4** | **299** |
+| E · Przekroje (+nowe) | 45 | 1 | 28 | 7 | 2 | 83 |
+| **SUMA** | **167** | **49** | **65** | **14** | **4** | **299** |
 
-**Postęp: 178/299 rozstrzygnięte (60%).** (RAZEM 296→299: +3 nowe RED; Oxford C skok 21→31✅ przez proof-sweepy O1/O2/O3/O7/O8 — patrz FALA-W7. Uwaga: ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) to osobna oś, nienaruszona.)
+**Postęp: 181/299 rozstrzygnięte (61%).** Start sesji 2026-07-19: 120/265 (45%). ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś.
+
+### FALA-W8 (2026-07-19, deploy 8d1edda57e, demo-safe-2026-07-19) — 7 gałęzi + B13-deploy-osobny, bramki zielone (server tsc 146/204 0-nowych, FE tc 0, kolory/artefakt PASS, eslint 0, boot 4/4)
+**★ Decyzje Piotra 2026-07-19 zaksięgowane:**
+- **O2.1 CONCLUSION_LAYER_STANDARD v1.0** 🔵→✅ — ZATWIERDZONY jako obowiązujący (już wdrożony 3 powierzchniami). Klaster O2 domknięty.
+- **O7.1 CARD_CONTENT_FORMULA** 🔵→✅ — decyzja: TWARDA BRAMA. Wpięta z podwójnym zaworem: blokuje TYLKO wąską listę „pusta/placeholder" (KPI/hipoteza/lang zostają doradcze), env-flag `CARD_CONTENT_HARD_GATE` default ON + fail-open gdy walidator rzuca (zepsuty walidator NIGDY nie wywala lejka). 7/7 E2E. `353fca6bb2`.
+- **B13 baseline_gap** — WDROŻONE OSOBNO (`248eeb220a`, boot 6/6 po pełnym build-window, no-op na demo=TROLLEY). Dług migracyjny fresh-env domknięty. `25c4d8655d`.
+- Następny duży krok: **SESJA#1** — materiały gotowe: `_SESJA1_ODBIOR_OXFORD.md` (promptbook O1 6 dowodów + tabela ~70 pozycji Oxford + 10 decyzji z rekomendacjami + wizualne-vs-silnik + checklist 2-3h). `ba3fb44bc5`.
+
+**★ Kodowalny ogon (RED/hardening) — sięga dna:**
+- **ai-operations reszta 7/7** SQLite→PG (13/13 endpointów ai-ops domknięte; +dryf users.name/timestamp-text/feature→action). 16/16.
+- **axis_data guard** ★krytyczny — clamp zapis+odczyt+render (>100% w raporcie klienta NIEMOŻLIWE, dowód actual:100→≤7) + parytet SIRI/ADMA + docs. Chroni podpis Piotra pod raportem.
+- **fail-soft batch5** — 42 handlery (superadmin/notifications); gołych 500 ~81→43.
+- **red-misc** (calendar/audit/health/vault) — 2 500 (system_health_alerts operator/enabled mig + notification_rules is_active literał→TRUE); rewir 75+ endpointów poza tym CZYSTY = sygnał utwardzenia.
+- **aiWatchdog** — martwy job (import-as-call, coordinator wypatroszony w ESM-migracji) wyłączony czysto; jedyny taki wzorzec w server/src.
+
+**★ NOWE/otwarte RED (⬜):** ~43 gołych 500 (fail-soft batch6+) · `interviewInsightReportPackService` reportPath-hard (opcjonalny twardy gate) · 6 martwych buildDeepen (🔵). Łowy 500-tek: ~50 realnych naprawionych łącznie przez 10 rewirów (klasa legacy-migracje-nie-odpalają domknięta na demo).
+
+**W toku (chipy Piotra):** initiative-batches INSERT org_id · conversations.context-os 500 · TaskService.createTask · notification_outbox · risk_register · normalizeBaseUrl(/v1).
 
 ### FALA-W7 (2026-07-19, deploy d27d0fef6c, demo-safe-2026-07-19) — 11 gałęzi, bramki zielone (server tsc 146/204 0-nowych, FE tc 0, kolory/artefakt PASS, eslint 0, boot 4/4 = 2 migracje autorun OK)
 **★ Oxford proof-sweep (5 clusterów, wzorzec O4-cluster) — dowód kod+E2E dla ~13 pozycji 🟡→✅:**
