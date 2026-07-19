@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import verifyToken from '../../middleware/auth.middleware.js';
+import { mutationAbortCanary } from '../../middleware/mutationGuard.middleware.js';
 import { attachV8Context, requireV8OrgContext } from '../../middleware/v8Auth.middleware.js';
 import { v8OrgGate } from '../../middleware/v8FeatureGate.middleware.js';
 import { v8MetricsMiddleware } from '../../middleware/v8Metrics.middleware.js';
@@ -55,12 +56,15 @@ v8Router.use('/admin/shadow', shadowRoutes);
 // Partner Portal has its own partner-org authorization boundary. Keep the V8
 // partner bridge available even when the tenant-wide V8 flag is disabled, so
 // partner reads do not degrade to 404 before partner scope can be resolved.
-v8Router.use('/partner', attachV8Context, v8MetricsMiddleware, partnerRoutes);
+v8Router.use('/partner', attachV8Context, v8MetricsMiddleware, mutationAbortCanary, partnerRoutes);
 
 // Non-admin routes require org-level V8 enablement
 v8Router.use(v8OrgGate);
 v8Router.use(attachV8Context);
 v8Router.use(v8MetricsMiddleware);
+// H5.4 — canary: logs (does not block) when a client disconnects mid-mutation.
+// Opt-in via ENABLE_MUTATION_ABORT_GUARD=true (see mutationGuard.middleware.ts).
+v8Router.use(mutationAbortCanary);
 
 v8Router.use('/health', healthRoutes);
 v8Router.use('/advisory', advisoryRoutes);
