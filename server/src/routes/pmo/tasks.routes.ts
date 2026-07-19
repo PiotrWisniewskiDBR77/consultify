@@ -352,9 +352,12 @@ router.post(
     );
 
     const deps = await DbPromise.all<Record<string, unknown>>(
+      // Silent-degr fix: `predecessor_id` does not exist on Postgres (real cols
+      // are from_task_id/to_task_id). COALESCE(<nonexistent>, real) errors the
+      // whole statement (42703) -> DbPromise fallback swallows -> deps always [].
       `SELECT td.*
        FROM task_dependencies td
-       JOIN tasks t ON t.id = COALESCE(td.predecessor_id, td.from_task_id)
+       JOIN tasks t ON t.id = td.from_task_id
        WHERE t.organization_id = ? AND t.${filterCol} = ?`,
       [orgId, filterVal]
     );
@@ -581,7 +584,12 @@ router.get(
          FROM task_dependencies td
          WHERE td.predecessor_id IN (${taskRows.map(() => '?').join(',')})
             OR td.successor_id IN (${taskRows.map(() => '?').join(',')})`,
-        [...taskRows.map((t) => t.id), ...taskRows.map((t) => t.id)]
+        [...taskRows.map((t) => t.id), ...taskRows.map((t) => t.id)],
+        // Silent-degr fix: force throw on the legacy-schema attempt so the
+        // catch{} fallback (from_task_id/to_task_id) actually runs. With the
+        // default fallback=true, the 42703 (predecessor_id missing) was
+        // swallowed to [] and the working fallback query never executed.
+        { fallback: false }
       );
     } catch {
       depRows = await DbPromise.all<{ pred: string; succ: string; dep_type: string; lag: number }>(
@@ -727,7 +735,12 @@ router.get(
          FROM task_dependencies td
          WHERE td.predecessor_id IN (${taskRows.map(() => '?').join(',')})
             OR td.successor_id IN (${taskRows.map(() => '?').join(',')})`,
-        [...taskRows.map((t) => t.id), ...taskRows.map((t) => t.id)]
+        [...taskRows.map((t) => t.id), ...taskRows.map((t) => t.id)],
+        // Silent-degr fix: force throw on the legacy-schema attempt so the
+        // catch{} fallback (from_task_id/to_task_id) actually runs. With the
+        // default fallback=true, the 42703 (predecessor_id missing) was
+        // swallowed to [] and the working fallback query never executed.
+        { fallback: false }
       );
     } catch {
       depRows = await DbPromise.all<{ pred: string; succ: string; dep_type: string; lag: number }>(

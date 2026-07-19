@@ -2243,9 +2243,12 @@ router.get(
     const { kpiId } = req.params;
 
     const kpi = await dbGet(
+      // Silent-degr fix: initiative_kpis has `current_value`, not `latest_value`.
+      // The bogus column errored the whole SELECT -> dbGet fallback -> null ->
+      // handler returned a false 404 "KPI not found" for KPIs that exist.
       `SELECT ik.*, ik.id as kpi_id,
               COALESCE(ik.name, ik.id) as name,
-              ik.target_value, ik.baseline_value, ik.latest_value,
+              ik.target_value, ik.baseline_value, ik.current_value AS latest_value,
               ik.measurement_frequency, ik.updated_at, ik.created_at
        FROM initiative_kpis ik
        WHERE ik.id = ? AND ik.organization_id = ?`,

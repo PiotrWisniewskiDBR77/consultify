@@ -220,8 +220,8 @@ router.get(
       // Get usage by user
       const userUsage = await dbAll(
         `
-            SELECT 
-                u.full_name as user_name,
+            SELECT
+                COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.display_name, u.email) as user_name,
                 u.email,
                 COUNT(*) as request_count,
                 SUM(a.tokens_used) as total_tokens,
@@ -230,7 +230,7 @@ router.get(
             LEFT JOIN users u ON a.user_id = u.id
             WHERE a.organization_id = ?
             AND a.created_at > datetime('now', '-${daysBack} days')
-            GROUP BY a.user_id
+            GROUP BY a.user_id, u.first_name, u.last_name, u.display_name, u.email
             ORDER BY total_tokens DESC
             LIMIT 20
         `,

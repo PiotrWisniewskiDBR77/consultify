@@ -874,7 +874,7 @@ router.get('/sources/tool', async (req: Request, res: Response, next: NextFuncti
       db.all(
         `SELECT ts.id, ts.name, ts.tool_type, ts.status, ts.completion_percent,
                 ts.confidence_avg, ts.created_at, ts.updated_at,
-                u.name as "creatorName"
+                COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.display_name, u.email) as "creatorName"
          FROM tool_sessions ts
          LEFT JOIN users u ON u.id = ts.created_by
          WHERE ts.organization_id = ?
@@ -922,7 +922,7 @@ router.get('/sources/tool/:sourceId', async (req: Request, res: Response, next: 
 
     const session = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT ts.*, u.name as "creatorName"
+        `SELECT ts.*, COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.display_name, u.email) as "creatorName"
            FROM tool_sessions ts
            LEFT JOIN users u ON u.id = ts.created_by
            WHERE ts.id = ? AND ts.organization_id = ?`,
