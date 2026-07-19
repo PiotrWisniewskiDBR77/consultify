@@ -7043,6 +7043,11 @@
       "chatTooltip": "Opens a blank AI chat for this hub.",
       "connectionError": "Connection error"
     },
+    "newModal": {
+      "comingSoonBadge": "Coming soon",
+      "comingSoonToast": "This framework is coming soon.",
+      "comingSoonError": "This framework is coming soon and cannot be started yet."
+    },
     "notes": "Notes",
     "notesPlaceholder": "Key observations, context, rationale for the score...",
     "evidence": "Evidence",

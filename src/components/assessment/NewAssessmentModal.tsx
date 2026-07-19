@@ -6,6 +6,7 @@
 import { Activity, AlertCircle, Cpu, Database, Layers, Loader2, Workflow, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { isFrameworkComingSoon } from '@/services/frameworkRegistry';
@@ -104,6 +105,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const { currentProjectId } = useAppStore();
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -162,7 +164,9 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
     // Honest gate (decision D-B): coming-soon frameworks (CMMI/LEAN) never start
     // a session, even if the disabled card is bypassed.
     if (isFrameworkComingSoon(framework)) {
-      toast('This framework is coming soon.', { icon: '🔜' });
+      toast(t('assessment.newModal.comingSoonToast', 'This framework is coming soon.'), {
+        icon: '🔜',
+      });
       return;
     }
     setSelectedFramework(framework);
@@ -176,7 +180,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
     });
     setAssessmentName(`${frameworkData?.shortName || framework} Assessment - ${dateStr}`);
     setStep(2);
-  }, []);
+  }, [t]);
 
   // Handle back to framework selection
   const handleBack = useCallback(() => {
@@ -197,7 +201,12 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
       // Honest gate (decision D-B): never create a session for a coming-soon
       // framework, even if selection state was set out-of-band.
       if (isFrameworkComingSoon(selectedFramework)) {
-        setError('This framework is coming soon and cannot be started yet.');
+        setError(
+          t(
+            'assessment.newModal.comingSoonError',
+            'This framework is coming soon and cannot be started yet.'
+          )
+        );
         return;
       }
 
@@ -240,7 +249,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
         setIsSubmitting(false);
       }
     },
-    [selectedFramework, assessmentName, currentProjectId, onSuccess, onClose]
+    [selectedFramework, assessmentName, currentProjectId, onSuccess, onClose, t]
   );
 
   // Get selected framework data
@@ -321,7 +330,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                       <span className="text-c-text font-medium">{framework.name}</span>
                       {framework.comingSoon && (
                         <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-c-surface-raised text-c-text-secondary border border-slate-500/30">
-                          Coming soon
+                          {t('assessment.newModal.comingSoonBadge', 'Coming soon')}
                         </span>
                       )}
                     </div>
