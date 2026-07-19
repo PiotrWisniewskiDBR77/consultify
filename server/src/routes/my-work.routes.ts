@@ -1032,8 +1032,8 @@ router.get(
     const onlyOpen = String(req.query.onlyOpen ?? 'true') !== 'false';
     const taskCols = await getTableColumns('tasks');
     const customFieldsSelect = taskCols.has('custom_fields_json')
-      ? 't.custom_fields_json as customFields'
-      : 'NULL as customFields';
+      ? 't.custom_fields_json as "customFields"'
+      : 'NULL as "customFields"';
     // Mirror the Initiatives/Decisions `?source` lineage filter (e.g.
     // ?source=interview_insight). No-ops when the source_type column is absent.
     const tSourceTypeSelect = taskCols.has('source_type') ? 't.source_type' : 'NULL as source_type';
@@ -1686,15 +1686,15 @@ router.get(
           ? 'body as body'
           : `'' as body`;
       const notifEntityTypeSelect = notifCols.has('entity_type')
-        ? 'entity_type as entityType'
+        ? 'entity_type as "entityType"'
         : notifCols.has('entityType')
-          ? 'entityType as entityType'
-          : 'NULL as entityType';
+          ? 'entityType as "entityType"'
+          : 'NULL as "entityType"';
       const notifEntityIdSelect = notifCols.has('entity_id')
-        ? 'entity_id as entityId'
+        ? 'entity_id as "entityId"'
         : notifCols.has('entityId')
-          ? 'entityId as entityId'
-          : 'NULL as entityId';
+          ? 'entityId as "entityId"'
+          : 'NULL as "entityId"';
 
       return (
         (await queryHelpers.queryAll<any>(

@@ -112,25 +112,25 @@ router.get(
         ? 'body as body'
         : `'' as body`;
     const notifEntityTypeSelect = notifCols.has('entity_type')
-      ? 'entity_type as entityType'
+      ? 'entity_type as "entityType"'
       : notifCols.has('entityType')
-        ? 'entityType as entityType'
-        : 'NULL as entityType';
+        ? 'entityType as "entityType"'
+        : 'NULL as "entityType"';
     const notifEntityIdSelect = notifCols.has('entity_id')
-      ? 'entity_id as entityId'
+      ? 'entity_id as "entityId"'
       : notifCols.has('entityId')
-        ? 'entityId as entityId'
-        : 'NULL as entityId';
+        ? 'entityId as "entityId"'
+        : 'NULL as "entityId"';
     const notifProjectIdSelect = notifCols.has('project_id')
-      ? 'project_id as projectId'
+      ? 'project_id as "projectId"'
       : notifCols.has('projectId')
-        ? 'projectId as projectId'
-        : 'NULL as projectId';
+        ? 'projectId as "projectId"'
+        : 'NULL as "projectId"';
     const notifProjectNameSelect = notifCols.has('project_name')
-      ? 'project_name as projectName'
+      ? 'project_name as "projectName"'
       : notifCols.has('projectName')
-        ? 'projectName as projectName'
-        : 'NULL as projectName';
+        ? 'projectName as "projectName"'
+        : 'NULL as "projectName"';
     const notifSeveritySelect = notifCols.has('severity') ? 'severity' : `'INFO' as severity`;
 
     const rows =
