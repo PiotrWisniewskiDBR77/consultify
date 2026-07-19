@@ -317,18 +317,9 @@ describe('Downstream services use OrganizationContextService (no bypass)', () =>
     expect(content).not.toContain('SELECT name, industry, size, country FROM organizations');
   });
 
-  it('competitiveIntelligenceService uses OrganizationContextService', async () => {
-    const fs = await import('fs');
-    const path = await import('path');
-    const filePath = path.resolve(
-      __dirname, '..', '..', '..', 'server/src/services/competitiveIntelligenceService.ts'
-    );
-    const content = fs.readFileSync(filePath, 'utf-8');
-
-    expect(content).toContain('OrganizationContextService');
-    expect(content).toContain('buildResolvedContext');
-    expect(content).not.toContain('SELECT industry FROM organizations WHERE id = ?');
-  });
+  // competitiveIntelligenceService.ts removed (E-DEAD-01, Fable audit 2026-07):
+  // wrote to market_trends, a table that is never created — dead service, 0 live
+  // callers (grep confirmed pre-removal). File deleted; regression check retired.
 
   it('assessment-workflow-v2 uses OrganizationContextService for industry', async () => {
     const fs = await import('fs');
