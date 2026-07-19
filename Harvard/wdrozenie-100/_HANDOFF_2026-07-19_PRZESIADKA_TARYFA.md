@@ -3,9 +3,10 @@
 > **Cel dokumentu:** ciągłość bez utraty kontekstu przy zmianie planu/sesji. Nowa sesja
 > START = przeczytaj `_REJESTR_DOKONCZENIA.md` (SSOT, liczniki + fale) + ten handoff.
 
-## STAN NA TERAZ
-- **Demo tip / demo-safe-2026-07-19 = `e5100ceba1`** (rejestr W8; kod `8d1edda57e`). Wszystkie 9 deployów sesji boot-zielone.
-- **Postęp: 181/299 rozstrzygnięte (61%)** — start sesji 120/265 (45%). Liczniki w rejestrze §LICZNIKI.
+## STAN NA TERAZ (po W9 — FINAŁ sesji)
+- **Demo tip / demo-safe-2026-07-19 = `da3fb86381`** (rejestr W9; kod `38eda846ab`). Wszystkie **10 deployów** sesji boot-zielone.
+- **Postęp: 183/304 rozstrzygnięte (60%)** — start sesji 120/265 (45%). Liczniki w rejestrze §LICZNIKI.
+- **Kodowalny backlog WYCZERPANY** — red-final trafił rewir czysty, fail-soft 166→1. Dalej = Piotr-gated (SESJA#1/decyzje/Vegas) + chipy.
 - **PROD (Londyn / centerbeam) NIETKNIĘTE.** Wszystko szło na demo (TROLLEY-shared staging).
 
 ## CO ZROBIONE W SESJI (fale W2b→W9)
@@ -29,8 +30,8 @@ Decyzje Piotra 07-19: O2.1 CONCLUSION_LAYER ✅ · O7.1 karty=twarda-brama ✅ �
 Env robotnika (parity :5443): `DATABASE_URL=postgres://consultinity:consultinity@localhost:5443/consultinity NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=true JWT_SECRET=development_secret_key_change_in_production_abc123xyz` (+ANTHROPIC_API_KEY z .env.staging.local dla LLM).
 
 ## GAŁĘZIE GOTOWE / W TOKU (do zebrania w nowej sesji)
-- **W9 (w toku, integrować):** `failsoft-batch6` (gołe 500 do zera) · `red-final` (ostatni sweep rewirów) · `sweep-silent-degr` (ciche degradacje TOP-5). Bazowane na `e5100ceba1`.
-- **6 chipów Piotra (osobne sesje, sprawdzić czy dostarczyły gałąź):** initiative-batches INSERT org_id · conversations.context-os 500 · TaskService.createTask · notification_outbox drain · risk_register · normalizeBaseUrl(/v1). Jak gotowe → harvest jak każdą gałąź (protokół wyżej).
+- **W9 — WDROŻONE** (`da3fb86381`): failsoft-batch6, red-final, sweep-silent-degr już na demo. Nic do harvestu.
+- **6 chipów Piotra (osobne sesje, sprawdzić czy dostarczyły gałąź):** initiative-batches INSERT org_id · conversations.context-os 500 · TaskService.createTask · notification_outbox drain · risk_register · normalizeBaseUrl(/v1). Jak gotowe → harvest jak każdą gałąź (protokół wyżej). To JEDYNE otwarte gałęzie kodu.
 
 ## CO ZOSTAJE (39% — NIE „więcej kodu ode mnie")
 1. **SESJA#1 (Piotr, 2-3h) — NAJWYŻSZA DŹWIGNIA.** Materiał: `_SESJA1_ODBIOR_OXFORD.md`. Odblokowuje ~30-40 pozycji Oxford (O1/O3/O5/O6 czekają na odbiór, nie na kod). Po odbiorze → flip 🟡→✅ w rejestrze.
