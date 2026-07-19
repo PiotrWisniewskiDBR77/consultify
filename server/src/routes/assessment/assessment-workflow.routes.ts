@@ -232,8 +232,8 @@ router.get('/:assessmentId/status', async (req: AuthRequest, res: Response) => {
       isOverdue,
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting status:', err);
-    res.status(500).json({ error: 'Failed to get workflow status', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting status', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać statusu przepływu pracy', code: 'ASSESSMENT_WORKFLOW_GET_WORKFLOW_STATUS_FAILED' });
   }
 });
 
@@ -298,8 +298,8 @@ router.post('/:assessmentId/initialize', async (req: AuthRequest, res: Response)
       canApprove: false,
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error initializing workflow:', err);
-    res.status(500).json({ error: 'Failed to initialize workflow', message: err.message });
+    logger.error('[AssessmentWorkflow] Error initializing workflow', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zainicjować przepływu pracy', code: 'ASSESSMENT_WORKFLOW_INITIALIZE_WORKFLOW_FAILED' });
   }
 });
 
@@ -391,8 +391,8 @@ router.post('/:assessmentId/submit-for-review', async (req: AuthRequest, res: Re
       },
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error submitting for review:', err);
-    res.status(500).json({ error: 'Failed to submit for review', message: err.message });
+    logger.error('[AssessmentWorkflow] Error submitting for review', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się przesłać do recenzji', code: 'ASSESSMENT_WORKFLOW_SUBMIT_FOR_REVIEW_FAILED' });
   }
 });
 
@@ -472,8 +472,8 @@ router.post('/:assessmentId/approve', async (req: AuthRequest, res: Response) =>
       },
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error approving:', err);
-    res.status(500).json({ error: 'Failed to approve', message: err.message });
+    logger.error('[AssessmentWorkflow] Error approving', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zatwierdzić', code: 'ASSESSMENT_WORKFLOW_APPROVE_FAILED' });
   }
 });
 
@@ -542,8 +542,8 @@ router.post('/:assessmentId/reject', async (req: AuthRequest, res: Response) => 
       },
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error rejecting:', err);
-    res.status(500).json({ error: 'Failed to reject', message: err.message });
+    logger.error('[AssessmentWorkflow] Error rejecting', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się odrzucić', code: 'ASSESSMENT_WORKFLOW_REJECT_FAILED' });
   }
 });
 
@@ -592,8 +592,8 @@ router.get('/:assessmentId/versions', async (req: AuthRequest, res: Response) =>
 
     res.json({ versions: parsedVersions });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting versions:', err);
-    res.status(500).json({ error: 'Failed to get versions', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting versions', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać wersji', code: 'ASSESSMENT_WORKFLOW_GET_VERSIONS_FAILED' });
   }
 });
 
@@ -695,8 +695,8 @@ router.post('/:assessmentId/versions', async (req: AuthRequest, res: Response) =
       snapshot,
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error creating version snapshot:', err);
-    res.status(500).json({ error: 'Failed to create assessment version', message: err.message });
+    logger.error('[AssessmentWorkflow] Error creating version snapshot', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się utworzyć wersji oceny', code: 'ASSESSMENT_WORKFLOW_CREATE_ASSESSMENT_VERSION_FAILED' });
   }
 });
 
@@ -743,8 +743,8 @@ router.get(
         diff,
       });
     } catch (err: any) {
-      logger.error('[AssessmentWorkflow] Error diffing versions:', err);
-      res.status(500).json({ error: 'Failed to diff assessment versions', message: err.message });
+    logger.error('[AssessmentWorkflow] Error diffing versions', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się porównać wersji oceny', code: 'ASSESSMENT_WORKFLOW_DIFF_ASSESSMENT_VERSIONS_FAILED' });
     }
   }
 );
@@ -800,8 +800,8 @@ router.get('/:assessmentId/history', async (req: AuthRequest, res: Response) => 
 
     res.json({ history });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting history:', err);
-    res.status(500).json({ error: 'Failed to get history', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting history', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać historii', code: 'ASSESSMENT_WORKFLOW_GET_HISTORY_FAILED' });
   }
 });
 
@@ -874,8 +874,8 @@ router.post('/:assessmentId/restore/:version', async (req: AuthRequest, res: Res
       newVersion,
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error restoring version:', err);
-    res.status(500).json({ error: 'Failed to restore version', message: err.message });
+    logger.error('[AssessmentWorkflow] Error restoring version', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się przywrócić wersji', code: 'ASSESSMENT_WORKFLOW_RESTORE_VERSION_FAILED' });
   }
 });
 
@@ -934,8 +934,8 @@ router.get('/pending-reviews', async (req: AuthRequest, res: Response) => {
 
     res.json({ reviews: enrichedReviews });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting pending reviews:', err);
-    res.status(500).json({ error: 'Failed to get pending reviews', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting pending reviews', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać oczekujących recenzji', code: 'ASSESSMENT_WORKFLOW_GET_PENDING_REVIEWS_FAILED' });
   }
 });
 
@@ -965,8 +965,8 @@ router.post('/reviews/:reviewId/start', async (req: AuthRequest, res: Response) 
 
     res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error starting review:', err);
-    res.status(500).json({ error: 'Failed to start review', message: err.message });
+    logger.error('[AssessmentWorkflow] Error starting review', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się rozpocząć recenzji', code: 'ASSESSMENT_WORKFLOW_START_REVIEW_FAILED' });
   }
 });
 
@@ -1039,8 +1039,8 @@ router.post('/reviews/:reviewId/submit', async (req: AuthRequest, res: Response)
 
     res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error submitting review:', err);
-    res.status(500).json({ error: 'Failed to submit review', message: err.message });
+    logger.error('[AssessmentWorkflow] Error submitting review', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się przesłać recenzji', code: 'ASSESSMENT_WORKFLOW_SUBMIT_REVIEW_FAILED' });
   }
 });
 
@@ -1142,8 +1142,8 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
 
     res.json({ logs: parsedLogs });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting activity logs:', err);
-    res.status(500).json({ error: 'Failed to get activity logs', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting activity logs', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać dziennika aktywności', code: 'ASSESSMENT_WORKFLOW_GET_ACTIVITY_LOGS_FAILED' });
   }
 });
 
@@ -1191,8 +1191,8 @@ router.post('/:assessmentId/log-activity', async (req: AuthRequest, res: Respons
 
     res.status(201).json({ id: logId, success: true });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error logging activity:', err);
-    res.status(500).json({ error: 'Failed to log activity', message: err.message });
+    logger.error('[AssessmentWorkflow] Error logging activity', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zapisać aktywności', code: 'ASSESSMENT_WORKFLOW_LOG_ACTIVITY_FAILED' });
   }
 });
 
@@ -1259,8 +1259,8 @@ router.get('/:assessmentId/my-role', async (req: AuthRequest, res: Response) => 
 
     res.json(roleInfo);
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting user role:', err);
-    res.status(500).json({ error: 'Failed to get user role', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting user role', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać roli użytkownika', code: 'ASSESSMENT_WORKFLOW_GET_USER_ROLE_FAILED' });
   }
 });
 
@@ -1307,8 +1307,8 @@ router.get('/:assessmentId/roles', async (req: AuthRequest, res: Response) => {
 
     res.json({ roles });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting assessment roles:', err);
-    res.status(500).json({ error: 'Failed to get roles', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting assessment roles', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać ról', code: 'ASSESSMENT_WORKFLOW_GET_ROLES_FAILED' });
   }
 });
 
@@ -1372,8 +1372,8 @@ router.post('/:assessmentId/roles', async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(roleRecord);
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error assigning role:', err);
-    res.status(500).json({ error: 'Failed to assign role', message: err.message });
+    logger.error('[AssessmentWorkflow] Error assigning role', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się przypisać roli', code: 'ASSESSMENT_WORKFLOW_ASSIGN_ROLE_FAILED' });
   }
 });
 
@@ -1416,8 +1416,8 @@ router.delete('/:assessmentId/roles/:targetUserId', async (req: AuthRequest, res
 
     res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error removing role:', err);
-    res.status(500).json({ error: 'Failed to remove role', message: err.message });
+    logger.error('[AssessmentWorkflow] Error removing role', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się usunąć roli', code: 'ASSESSMENT_WORKFLOW_REMOVE_ROLE_FAILED' });
   }
 });
 
@@ -1569,8 +1569,8 @@ router.get('/:assessmentId/access-requests', async (req: AuthRequest, res: Respo
 
     res.json({ requests });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error getting access requests:', err);
-    res.status(500).json({ error: 'Failed to get access requests', message: err.message });
+    logger.error('[AssessmentWorkflow] Error getting access requests', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać wniosków o dostęp', code: 'ASSESSMENT_WORKFLOW_GET_ACCESS_REQUESTS_FAILED' });
   }
 });
 
@@ -1792,8 +1792,8 @@ router.delete(
 
       res.json({ success: true });
     } catch (err: any) {
-      logger.error('[AssessmentWorkflow] Error cancelling access request:', err);
-      res.status(500).json({ error: 'Failed to cancel access request', message: err.message });
+    logger.error('[AssessmentWorkflow] Error cancelling access request', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się anulować wniosku o dostęp', code: 'ASSESSMENT_WORKFLOW_CANCEL_ACCESS_REQUEST_FAILED' });
     }
   }
 );
