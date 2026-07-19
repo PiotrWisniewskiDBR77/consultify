@@ -551,10 +551,10 @@ router.get(
         []
       ),
       safeDbAll<any>(
-        `SELECT connector_type, status, COUNT(*) as count
+        `SELECT connector_id, status, COUNT(*) as count
          FROM integrations
-         GROUP BY connector_type, status
-         ORDER BY connector_type ASC`,
+         GROUP BY connector_id, status
+         ORDER BY connector_id ASC`,
         [],
         []
       ),
@@ -581,7 +581,7 @@ router.get(
       { enabledCount: number; disabledCount: number; totalCount: number }
     >();
     connectors.forEach((row) => {
-      const key = String(row.connector_type || 'unknown');
+      const key = String(row.connector_id || 'unknown');
       const current = connectorGroups.get(key) || {
         enabledCount: 0,
         disabledCount: 0,
@@ -1029,13 +1029,13 @@ router.post(
     const { connectorId } = req.params;
 
     const affected = await dbAll(
-      'SELECT DISTINCT organization_id FROM integrations WHERE connector_type = $1 AND status != $2',
+      'SELECT DISTINCT organization_id FROM integrations WHERE connector_id = $1 AND status != $2',
       [connectorId, 'disabled']
     );
 
     await executeAtomicGatedAction(req, res, 'emergency_connector_kill', async () => {
       await dbRun(
-        'UPDATE integrations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE connector_type = $2',
+        'UPDATE integrations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE connector_id = $2',
         ['disabled', connectorId],
         { fallback: false }
       );
