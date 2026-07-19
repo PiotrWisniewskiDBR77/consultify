@@ -67,8 +67,8 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
 
     res.json({ assessments });
   } catch (err: any) {
-    logger.error('[Assessments] Error fetching assessments:', err);
-    res.status(500).json({ error: 'Failed to fetch assessments', message: err.message });
+    logger.error('[Assessments] Error fetching assessments', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać ocen', code: 'ASSESSMENTS_FETCH_ASSESSMENTS_FAILED' });
   }
 });
 
@@ -111,8 +111,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 
     res.json({ assessment });
   } catch (err: any) {
-    logger.error('[Assessments] Error fetching assessment:', err);
-    res.status(500).json({ error: 'Failed to fetch assessment', message: err.message });
+    logger.error('[Assessments] Error fetching assessment', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać oceny', code: 'ASSESSMENTS_FETCH_ASSESSMENT_FAILED' });
   }
 });
 
@@ -154,8 +154,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (err: any) {
-    logger.error('[Assessments] Error creating assessment:', err);
-    res.status(500).json({ error: 'Failed to create assessment', message: err.message });
+    logger.error('[Assessments] Error creating assessment', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się utworzyć oceny', code: 'ASSESSMENTS_CREATE_ASSESSMENT_FAILED' });
   }
 });
 
@@ -185,8 +185,8 @@ router.put('/:id/status', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true, id, status });
   } catch (err: any) {
-    logger.error('[Assessments] Error updating status:', err);
-    res.status(500).json({ error: 'Failed to update status', message: err.message });
+    logger.error('[Assessments] Error updating status', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zaktualizować statusu', code: 'ASSESSMENTS_UPDATE_STATUS_FAILED' });
   }
 });
 
@@ -214,8 +214,8 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (err: any) {
-    logger.error('[Assessments] Error deleting assessment:', err);
-    res.status(500).json({ error: 'Failed to delete assessment', message: err.message });
+    logger.error('[Assessments] Error deleting assessment', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się usunąć oceny', code: 'ASSESSMENTS_DELETE_ASSESSMENT_FAILED' });
   }
 });
 
@@ -245,8 +245,8 @@ router.post('/:id/complete', async (req: AuthRequest, res: Response) => {
     logger.info(`[Assessments] Completed assessment: ${id}`);
     res.json({ success: true, ...result });
   } catch (err: any) {
-    logger.error('[Assessments] Error completing assessment:', err);
-    res.status(500).json({ error: 'Failed to complete assessment', message: err.message });
+    logger.error('[Assessments] Error completing assessment', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zakończyć oceny', code: 'ASSESSMENTS_COMPLETE_ASSESSMENT_FAILED' });
   }
 });
 
@@ -313,8 +313,8 @@ router.post('/:id/generate-initiatives', async (req: AuthRequest, res: Response)
     );
     res.json({ success: true, ...result });
   } catch (err: any) {
-    logger.error('[Assessments] Error generating initiatives:', err);
-    res.status(500).json({ error: 'Failed to generate initiatives', message: err.message });
+    logger.error('[Assessments] Error generating initiatives', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować inicjatyw', code: 'ASSESSMENTS_GENERATE_INITIATIVES_FAILED' });
   }
 });
 
@@ -346,8 +346,8 @@ router.post('/:id/responses/:questionId', async (req: AuthRequest, res: Response
 
     res.json({ success: true, responseId });
   } catch (err: any) {
-    logger.error('[Assessments] Error saving response:', err);
-    res.status(500).json({ error: 'Failed to save response', message: err.message });
+    logger.error('[Assessments] Error saving response', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zapisać odpowiedzi', code: 'ASSESSMENTS_SAVE_RESPONSE_FAILED' });
   }
 });
 
@@ -373,8 +373,8 @@ router.get('/:id/responses', async (req: AuthRequest, res: Response) => {
 
     res.json({ responses });
   } catch (err: any) {
-    logger.error('[Assessments] Error fetching responses:', err);
-    res.status(500).json({ error: 'Failed to fetch responses', message: err.message });
+    logger.error('[Assessments] Error fetching responses', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać odpowiedzi', code: 'ASSESSMENTS_FETCH_RESPONSES_FAILED' });
   }
 });
 
@@ -400,8 +400,8 @@ router.get('/frameworks/list', async (req: AuthRequest, res: Response) => {
 
     res.json({ frameworks });
   } catch (err: any) {
-    logger.error('[Assessments] Error fetching frameworks:', err);
-    res.status(500).json({ error: 'Failed to fetch frameworks', message: err.message });
+    logger.error('[Assessments] Error fetching frameworks', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać frameworków', code: 'ASSESSMENTS_FETCH_FRAMEWORKS_FAILED' });
   }
 });
 
@@ -427,8 +427,8 @@ router.get('/frameworks/:frameworkId/questions', async (req: AuthRequest, res: R
 
     res.json({ questions });
   } catch (err: any) {
-    logger.error('[Assessments] Error fetching questions:', err);
-    res.status(500).json({ error: 'Failed to fetch questions', message: err.message });
+    logger.error('[Assessments] Error fetching questions', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać pytań', code: 'ASSESSMENTS_FETCH_QUESTIONS_FAILED' });
   }
 });
 
