@@ -432,9 +432,9 @@ export class ArtifactConversionService {
           confidenceLevel:
             String(payload.confidenceLevel || conversion.confidenceLevel || '') || null,
           problemStatement: String(payload.problemStatement || '') || null,
-          deliverables: payload.deliverables || [],
-          successCriteria: payload.successCriteria || [],
-          keyRisks: payload.keyRisks || [],
+          deliverables: (payload.deliverables as string[]) || [],
+          successCriteria: (payload.successCriteria as string[]) || [],
+          keyRisks: (payload.keyRisks as unknown[]) || [],
           sourceType: 'artifact',
           sourceId: artifactSourceId || null,
         },

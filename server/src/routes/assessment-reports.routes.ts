@@ -684,7 +684,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       })),
     });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error listing reports', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error listing reports', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się pobrać raportów', code: 'ASSESSMENT_REPORTS_FETCH_REPORTS_FAILED' });
   }
 });
@@ -725,7 +725,7 @@ router.get('/templates', async (req: AuthRequest, res: Response) => {
       })),
     });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error listing templates', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error listing templates', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się pobrać szablonów', code: 'ASSESSMENT_REPORTS_FETCH_TEMPLATES_FAILED' });
   }
 });
@@ -827,7 +827,7 @@ router.post('/:reportId/generate-initiatives', async (req: AuthRequest, res: Res
 
     return res.status(202).json({ runId: run.runId, assessmentId });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error creating report-only initiatives run', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error creating report-only initiatives run', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się rozpocząć generowania', code: 'ASSESSMENT_REPORTS_START_GENERATION_FAILED' });
   }
 });
@@ -929,7 +929,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ id, builderReportId });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error creating report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error creating report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się utworzyć raportu', code: 'ASSESSMENT_REPORTS_CREATE_REPORT_FAILED' });
   }
 });
@@ -1013,7 +1013,7 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
       createdBy: reportRow.created_by || null,
     });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error fetching full report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error fetching full report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się pobrać raportu', code: 'ASSESSMENT_REPORTS_FETCH_REPORT_FAILED' });
   }
 });
@@ -1166,7 +1166,7 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(html);
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error generating DRD report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error generating DRD report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się wygenerować raportu DRD', code: 'ASSESSMENT_REPORTS_GENERATE_DRD_REPORT_FAILED' });
   }
 });
@@ -1381,7 +1381,7 @@ Requirements:
 
     return res.json({ success: true, reportId, templateId: resolvedTemplateId });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error generating report', { err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error generating report', { err, correlationId: (res.req as any)?.correlationId });
     return notConfigured(res, { details: { code: 'ASSESSMENT_REPORTS_GENERATE_FAILED' } });
   }
 });
@@ -1425,7 +1425,7 @@ router.get('/:reportId/sections', async (req: AuthRequest, res: Response) => {
       })),
     });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error listing sections', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error listing sections', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się pobrać sekcji', code: 'ASSESSMENT_REPORTS_FETCH_SECTIONS_FAILED' });
   }
 });
@@ -1495,7 +1495,7 @@ router.post('/:reportId/sections', async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error creating section', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error creating section', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się utworzyć sekcji', code: 'ASSESSMENT_REPORTS_CREATE_SECTION_FAILED' });
   }
 });
@@ -1559,7 +1559,7 @@ router.put('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Respo
 
     return res.json({ success: true, version: nextVersion, updatedAt: new Date().toISOString() });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error updating section', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error updating section', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się zaktualizować sekcji', code: 'ASSESSMENT_REPORTS_UPDATE_SECTION_FAILED' });
   }
 });
@@ -1584,7 +1584,7 @@ router.delete('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Re
 
     return res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error deleting section', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error deleting section', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się usunąć sekcji', code: 'ASSESSMENT_REPORTS_DELETE_SECTION_FAILED' });
   }
 });
@@ -1619,7 +1619,7 @@ router.put('/:reportId/sections/reorder', async (req: AuthRequest, res: Response
 
     return res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error reordering sections', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error reordering sections', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się zmienić kolejności sekcji', code: 'ASSESSMENT_REPORTS_REORDER_SECTIONS_FAILED' });
   }
 });
@@ -1747,7 +1747,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
 
     return res.json({ success: true, content: next, version: nextVersion });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error AI action', { err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error AI action', { err, correlationId: (res.req as any)?.correlationId });
     return notConfigured(res, { details: { code: 'ASSESSMENT_REPORTS_AI_ACTION_FAILED' } });
   }
 });
@@ -1775,7 +1775,7 @@ router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, re
     );
     return res.json({ history: rows });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error fetching history', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error fetching history', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się pobrać historii', code: 'ASSESSMENT_REPORTS_FETCH_HISTORY_FAILED' });
   }
 });
@@ -1844,7 +1844,7 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
         return notConfigured(res);
       }
     } catch (callErr: any) {
-      logger.error('[AssessmentReports] Error ai-edit (LLM call)', { err: callErr, correlationId: (req as any).correlationId });
+      logger.error('[AssessmentReports] Error ai-edit (LLM call)', { err: callErr, correlationId: (res.req as any)?.correlationId });
       return notConfigured(res, { details: { code: 'ASSESSMENT_REPORTS_AI_EDIT_CALL_FAILED' } });
     }
 
@@ -1859,7 +1859,7 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, content: editedContent, version: nextVersion });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error ai-edit', { err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error ai-edit', { err, correlationId: (res.req as any)?.correlationId });
     return notConfigured(res, { details: { code: 'ASSESSMENT_REPORTS_AI_EDIT_FAILED' } });
   }
 });
@@ -1924,7 +1924,7 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
       updatedAt: report.updated_at,
     });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error fetching report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error fetching report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się pobrać raportu', code: 'ASSESSMENT_REPORTS_FETCH_REPORT_FAILED' });
   }
 });
@@ -1973,7 +1973,7 @@ router.put('/:reportId', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error updating report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error updating report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się zaktualizować raportu', code: 'ASSESSMENT_REPORTS_UPDATE_REPORT_FAILED' });
   }
 });
@@ -2023,7 +2023,7 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error deleting report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error deleting report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się usunąć raportu', code: 'ASSESSMENT_REPORTS_DELETE_REPORT_FAILED' });
   }
 });
@@ -2055,7 +2055,7 @@ router.post('/:reportId/finalize', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error finalizing report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error finalizing report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się sfinalizować raportu', code: 'ASSESSMENT_REPORTS_FINALIZE_REPORT_FAILED' });
   }
 });
@@ -2163,7 +2163,7 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, gatesSynced: !!reportRow.assessmentId });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error approving report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error approving report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się zatwierdzić raportu', code: 'ASSESSMENT_REPORTS_APPROVE_REPORT_FAILED' });
   }
 });
@@ -2230,7 +2230,7 @@ router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, newStatus: 'DRAFT' });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error rejecting report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error rejecting report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się odrzucić raportu', code: 'ASSESSMENT_REPORTS_REJECT_REPORT_FAILED' });
   }
 });
@@ -2271,7 +2271,7 @@ router.post('/:reportId/send-back', async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, newStatus: 'DRAFT' });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error sending back report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error sending back report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się odesłać raportu', code: 'ASSESSMENT_REPORTS_SEND_BACK_REPORT_FAILED' });
   }
 });
@@ -2323,7 +2323,7 @@ router.post('/:reportId/utilize', async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, newStatus: 'UTILIZED' });
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error utilizing report', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error utilizing report', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się wykorzystać raportu', code: 'ASSESSMENT_REPORTS_UTILIZE_REPORT_FAILED' });
   }
 });
@@ -2364,7 +2364,7 @@ router.get('/:reportId/export/pdf', async (_req: AuthRequest, res: Response) => 
     res.setHeader('Content-Type', 'application/pdf');
     return res.sendFile(filePath);
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error exporting PDF', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error exporting PDF', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się wyeksportować raportu', code: 'ASSESSMENT_REPORTS_EXPORT_REPORT_FAILED' });
   }
 });
@@ -2405,7 +2405,7 @@ router.get('/:reportId/export/pptx', async (_req: AuthRequest, res: Response) =>
     );
     return res.sendFile(filePath);
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error exporting PPTX', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error exporting PPTX', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się wyeksportować raportu', code: 'ASSESSMENT_REPORTS_EXPORT_REPORT_FAILED' });
   }
 });
@@ -2462,7 +2462,7 @@ router.get('/:reportId/export/excel', async (_req: AuthRequest, res: Response) =
     );
     return res.sendFile(filePath);
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error exporting Excel', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error exporting Excel', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się wyeksportować raportu', code: 'ASSESSMENT_REPORTS_EXPORT_REPORT_FAILED' });
   }
 });
@@ -2730,7 +2730,7 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     return res.send(result.buffer);
   } catch (err: any) {
-    logger.error('[AssessmentReports] Error exporting deck', { err: err, correlationId: (req as any).correlationId });
+    logger.error('[AssessmentReports] Error exporting deck', { err: err, correlationId: (res.req as any)?.correlationId });
     res.status(500).json({ error: 'Nie udało się wygenerować prezentacji', code: 'ASSESSMENT_REPORTS_GENERATE_DECK_FAILED' });
   }
 });
