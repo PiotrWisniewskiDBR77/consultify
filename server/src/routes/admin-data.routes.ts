@@ -83,7 +83,7 @@ router.get(
                 u.id as "userId",
                 u.first_name || ' ' || u.last_name as "userName",
                 u.email,
-                COALESCE(aus.tier, 'STANDARD') as currentTier,
+                COALESCE(aus.tier, 'STANDARD') as "currentTier",
                 COALESCE(aus.requests_count, 0) as usage,
                 COALESCE(aus.cost_usd, 0) as cost
             FROM users u
@@ -149,7 +149,7 @@ router.get(
     }>(
       `
             SELECT 
-                'user' as entityType,
+                'user' as "entityType",
                 aus.user_id as "entityId",
                 u.first_name || ' ' || u.last_name as "entityName",
                 SUM(aus.requests_count) as requests,
@@ -177,7 +177,7 @@ router.get(
     }>(
       `
             SELECT 
-                'project' as entityType,
+                'project' as "entityType",
                 aus.project_id as "entityId",
                 p.name as "entityName",
                 SUM(aus.requests_count) as requests,

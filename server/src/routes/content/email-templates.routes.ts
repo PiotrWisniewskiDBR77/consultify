@@ -73,7 +73,7 @@ router.get(
                     COALESCE(et.status, 'DRAFT') as status,
                     et.category_id as "categoryId",
                     et.language_code as "languageCode",
-                    COALESCE(et.usage_count, 0) as usageCount,
+                    COALESCE(et.usage_count, 0) as "usageCount",
                     cc.name as "categoryName",
                     cc.color as "categoryColor"
                 FROM email_templates et
@@ -175,7 +175,7 @@ router.get(
                     et.category_id as "categoryId",
                     et.language_code as "languageCode",
                     et.variables_schema as "variablesSchema",
-                    COALESCE(et.usage_count, 0) as usageCount,
+                    COALESCE(et.usage_count, 0) as "usageCount",
                     et.published_at as "publishedAt",
                     et.published_by as "publishedBy",
                     cc.name as "categoryName",
