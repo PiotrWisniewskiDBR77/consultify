@@ -40,7 +40,7 @@ import type {
 } from '../../types/myWorkRoofPackage.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
-import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
+import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../../utils/htmlEntities.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
@@ -1008,8 +1008,14 @@ router.post(
         projectId,
         visibility,
         title,
-        safeJsonString(req.body?.contentJson, JSON.stringify({ type: 'doc', content: [] })),
-        typeof req.body?.contentText === 'string' ? req.body.contentText : null,
+        safeJsonString(
+          deepDecodeHtmlEntities(req.body?.contentJson),
+          JSON.stringify({ type: 'doc', content: [] })
+        ),
+        // Z139 (full scope): decode before storing, mirroring my-work/notebook.routes.ts.
+        typeof req.body?.contentText === 'string'
+          ? decodeHtmlEntities(req.body.contentText)
+          : null,
         JSON.stringify(parseTagsArray(req.body?.tags)),
         typeof req.body?.icon === 'string' ? req.body.icon : null,
         typeof req.body?.maturity === 'string' ? req.body.maturity : 'seed',
@@ -1350,10 +1356,15 @@ router.put(
     if (req.body?.contentJson !== undefined) {
       set(
         'content_json',
-        safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] }))
+        safeJsonString(
+          deepDecodeHtmlEntities(req.body.contentJson),
+          JSON.stringify({ type: 'doc', content: [] })
+        )
       );
     }
-    if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
+    // Z139 (full scope): decode before storing, mirroring my-work/notebook.routes.ts.
+    if (typeof req.body?.contentText === 'string')
+      set('content_text', decodeHtmlEntities(req.body.contentText));
     if (notebookCols.has('maturity') && typeof req.body?.maturity === 'string')
       set('maturity', req.body.maturity);
     if (notebookCols.has('icon') && typeof req.body?.icon === 'string') set('icon', req.body.icon);
