@@ -114,7 +114,7 @@ export async function getPublicAnnaFunnelSummary(days = 30): Promise<{
     rows = (await dbAll(
       `SELECT id, event_type, source, metadata, created_at
        FROM conversion_events
-       WHERE source = ? AND created_at > datetime('now', '-' || ? || ' days')
+       WHERE source = ? AND created_at > NOW() - make_interval(days => ?)
        ORDER BY created_at DESC
        LIMIT 500`,
       ['landing_anna', days]

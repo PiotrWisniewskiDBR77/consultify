@@ -303,15 +303,15 @@ export async function getEventTimeSeries(
 
   const rows = await DbPromise.all<TimeSeriesRow>(
     db,
-    `SELECT 
+    `SELECT
             date(created_at) as date,
             COUNT(*) as count
         FROM metrics_events
         WHERE event_type = ?
-          AND created_at >= datetime('now', ?)
+          AND created_at >= NOW() - make_interval(days => ?)
         GROUP BY date(created_at)
         ORDER BY date ASC`,
-    [eventType, `-${days} days`]
+    [eventType, days]
   );
 
   return rows;

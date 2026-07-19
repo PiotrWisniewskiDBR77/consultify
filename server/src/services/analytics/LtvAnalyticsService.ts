@@ -42,7 +42,7 @@ export class LtvAnalyticsService {
                     COALESCE(SUM(i.total), 0) as total_revenue,
                     CASE 
                         WHEN o.created_at IS NOT NULL 
-                        THEN MAX(1, CAST((julianday('now') - julianday(o.created_at)) / 30 AS INTEGER))
+                        THEN GREATEST(1, CAST((julianday('now') - julianday(o.created_at)) / 30 AS INTEGER))
                         ELSE 1
                     END as lifespan_months
                 FROM organizations o
