@@ -125,8 +125,15 @@ router.post(
 
       return res.json({ suggestions });
     } catch (err: any) {
-      logger.error('[SmartFollowup] Generate error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to generate follow-ups' });
+      // H6.4 fail-soft: follow-up suggestions are a non-critical AI enrichment
+      // (podpowiedzi) on top of an already-delivered chat response — degrade to
+      // an empty suggestion list instead of a 500 that would surface as a UI error
+      // for something the user never explicitly asked for.
+      logger.warn('[SmartFollowup] Generate degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ suggestions: [], degraded: true });
     }
   })
 );

@@ -72,10 +72,17 @@ router.get(
       const data = await MegatrendService.getBaselineTrends(industry);
       return res.json(data);
     } catch (err: any) {
-      logger.error('[Megatrend] baseline error', err);
       const unavailable = respondIfUnavailable(res, err);
       if (unavailable) return unavailable;
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+      // Unexpected (not the known "not configured" path) — code + log with
+      // correlationId, no err.message leak to the client.
+      logger.error('[Megatrend] baseline error', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się pobrać megatrendów', code: 'MEGATREND_BASELINE_FAILED' });
     }
   })
 );
@@ -96,10 +103,15 @@ router.get(
       const data = await MegatrendService.getRadarData(industry);
       return res.json(data);
     } catch (err: any) {
-      logger.error('[Megatrend] radar error', err);
       const unavailable = respondIfUnavailable(res, err);
       if (unavailable) return unavailable;
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+      logger.error('[Megatrend] radar error', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się pobrać danych radaru', code: 'MEGATREND_RADAR_FAILED' });
     }
   })
 );
@@ -122,10 +134,15 @@ router.get(
       }
       return res.json(detail);
     } catch (err: any) {
-      logger.error('[Megatrend] detail error', err);
       const unavailable = respondIfUnavailable(res, err);
       if (unavailable) return unavailable;
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+      logger.error('[Megatrend] detail error', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się pobrać szczegółów trendu', code: 'MEGATREND_DETAIL_FAILED' });
     }
   })
 );
@@ -152,8 +169,14 @@ router.post(
       const created = await MegatrendService.createCustomTrend(req.body, companyId);
       return res.status(201).json(created);
     } catch (err: any) {
-      logger.error('[Megatrend] create custom error', err);
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+      // Write — NEVER fail-soft. Code + log with correlationId, no err.message leak.
+      logger.error('[Megatrend] create custom error', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się utworzyć trendu', code: 'MEGATREND_CUSTOM_CREATE_FAILED' });
     }
   })
 );
@@ -183,8 +206,14 @@ router.put(
       }
       return res.json(updated);
     } catch (err: any) {
-      logger.error('[Megatrend] update custom error', err);
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+      // Write — NEVER fail-soft.
+      logger.error('[Megatrend] update custom error', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zaktualizować trendu', code: 'MEGATREND_CUSTOM_UPDATE_FAILED' });
     }
   })
 );

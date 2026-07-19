@@ -91,8 +91,14 @@ router.post(
 
       return res.status(201).json(insight);
     } catch (err: any) {
-      logger.error('[PinnedInsights] Pin error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to pin insight' });
+      // Write — NEVER fail-soft. Real error with a stable code, no err.message leak.
+      logger.error('[PinnedInsights] Pin error:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się przypiąć insightu', code: 'PINNED_INSIGHTS_PIN_FAILED' });
     }
   })
 );
@@ -124,8 +130,13 @@ router.get(
 
       return res.json({ insights, total: insights.length });
     } catch (err: any) {
-      logger.error('[PinnedInsights] List error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to list pinned insights' });
+      // Read — side panel enrichment (pinned insights list). Fail-soft: degrade to
+      // an empty list instead of breaking the panel with a 500.
+      logger.warn('[PinnedInsights] List degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ insights: [], total: 0, degraded: true });
     }
   })
 );
@@ -155,8 +166,15 @@ router.patch(
 
       return res.json(updated);
     } catch (err: any) {
-      logger.error('[PinnedInsights] Update error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to update pinned insight' });
+      // Write — NEVER fail-soft.
+      logger.error('[PinnedInsights] Update error:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować insightu',
+        code: 'PINNED_INSIGHTS_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -174,8 +192,14 @@ router.delete(
       await pinnedInsightsService.unpinInsight(req.params.id, req.userId!);
       return res.json({ success: true, deleted: req.params.id });
     } catch (err: any) {
-      logger.error('[PinnedInsights] Unpin error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to unpin insight' });
+      // Write — NEVER fail-soft.
+      logger.error('[PinnedInsights] Unpin error:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się odpiąć insightu', code: 'PINNED_INSIGHTS_UNPIN_FAILED' });
     }
   })
 );
