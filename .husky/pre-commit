@@ -50,4 +50,19 @@ if [ -n "$STAGED_ALL_TSX" ]; then
   fi
 fi
 
+# 5) Klasa .sql.sql (backlog E-SQL-01) — migracje z podwójnym rozszerzeniem
+#    nigdy się nie odpalają (patrz server/migrations/never-ran/README.md);
+#    zero-tolerance na nowe pliki tej klasy poza never-ran/. Odpala się tylko
+#    gdy commit dotyka server/migrations/.
+STAGED_MIGRATIONS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^server/migrations/')
+if [ -n "$STAGED_MIGRATIONS" ]; then
+  if ! bash scripts/check-sqlsql.sh $STAGED_MIGRATIONS; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: nowy plik *.sql.sql w server/migrations/ (poza never-ran/)." >&2
+    echo "     Ta klasa jest martwa z zasady (backlog E-SQL-01, DECYZJA CTO-4). Pojedyncze" >&2
+    echo "     rozszerzenie .sql dla realnej migracji, albo never-ran/ dla świadomie martwej." >&2
+    exit 1
+  fi
+fi
+
 exit 0
