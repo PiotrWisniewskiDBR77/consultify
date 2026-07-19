@@ -36,13 +36,25 @@
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
 | A · Harvard (H1-H6) | 61 | 1 | 0 | 0 | 0 | 62 |
-| B · Harvey (HP-0…27) | 22 | 4 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 39 | 20 | 11 | 0 | 0 | 70 |
-| D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 60 | 5 | 14 | 7 | 2 | 88 |
-| **SUMA** | **194** | **48** | **49** | **10** | **3** | **304** |
+| B · Harvey (HP-0…27) | 23 | 3 | 2 | 0 | 0 | 28 |
+| C · Oxford (O1-O8) | 46 | 13 | 11 | 0 | 0 | 70 |
+| D · Vegas (F0-F6+V7) | 18 | 18 | 18 | 1 | 1 | 56 |
+| E · Przekroje (+nowe) | 64 | 5 | 10 | 7 | 2 | 88 |
+| **SUMA** | **212** | **40** | **41** | **8** | **3** | **304** |
 
-**Postęp: 204/304 rozstrzygnięte (67%).** Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
+**Postęp: 220/304 rozstrzygnięte (72%).** ★ FALA 4-6 + VEGAS-FABLE (blok ↓): Oxford O4.1-4.7→✅(dowód runtime) · Harvey HP-2→✅ · RED Fala4/5 (brakujące tabele/SQLite-izmy/100-alias InitiativeController) · **Vegas: plan Fable (44 zadania) + B-P1/B-P2 sign-off Piotra + Faza 0 fundamentów WDROŻONA**. Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
+
+### ★★★ VEGAS-FABLE + FALA 4-6 2026-07-19 (sesja armii cd.) — demo-safe `1c97db682d` (220/304, 72%)
+**★ SESJA STRATEGICZNA FABLE (Vegas UI/UX klasy światowej):** audyt+research (Apple/Google/OpenAI) → werdykt: wytyczne ~85% klasy światowej (TRIADA jedyna z pełnym cyklem), plan 56-zadań NIEWYSTARCZAJĄCY → **przepisany na 44 zadania z kryteriami** (5 faz). Luka centralna: klasa światowa = komplet STANÓW + mierzalna EGZEKUCJA + spójny RYTM(tokeny) + WYJŚCIE do klienta (nie ładniejsze ekrany). Plan: `scratchpad/VEGAS_FABLE_PLAN.md` (do wniesienia na demo). Werdykt: crimson-leak `c-accent` 1588× hook nie łapał = pułapka #1 otwarta.
+**★ DECYZJE PIOTRA:** **B-P1 Doktryna Gęstości → AKCEPT** (buduj egzekucję) · **B-P2 D-I Editor Shell → SIGN-OFF** (galeria 10 artefaktów light+dark zaakceptowana → Faza 1 rollout odblokowana). Galeria: artifact `e8a718f2`.
+**★ FAZA 0 FUNDAMENTÓW — WDROŻONA (Fala 6, `1c97db682d`, FE tsc 0/kolory/artefakt/eslint PASS, boot 4/4):**
+- VF0-1 SSOT konsolidacja (CANON.md §7.1 indeks, 3 martwe ścieżki CLAUDE.md, `check-ssot-paths.sh`) · VF0-4/5/6 tokeny motion/elevation/state-layer (`--motion-*/--elevation-*/--state-*` w index.css+tailwind) · VF0-7 a11y-gate (`check-a11y-jsx.cjs` baseline 724/399, `check-a11y-focus.cjs` diff-gate, CI wired) · VF0-10 biblioteka stanów (Empty/Error/Skeleton/**StreamingState** Teresy; ★naprawił crimson-leak w EmptyState) · 11 render-screenów artefaktów SPEC-A (dev-render).
+- VF0-2 crimson-hook + VF0-12 gęstość-hook+skill: `.claude/` gitignored → skopiowane do checkoutu lokalnie (nie idą przez git). Skill `consultify-gestosc` aktywny.
+- **Zostaje Faza 1** (rollout 12 artefaktów batchami ≤3, powłoka+stany+a11y per artefakt) + VF0-8/9/11 (klawiatura/mikro-interakcje/style-guide) + VF0-6b (FilterableTable state-layers) + elevation-apply (dark zrzuty).
+**★ FALA 4 (`a89e0b577a`):** 4 brakujące tabele (`20260719_red_*`: task_escalations/dunning_notifications/subscription_history/email_template_versions — koniec 42P01) + SQLite-izmy→PG (adapter `adaptQuery` date('now'), GREATEST, make_interval) + ★fix mojego błędu Fala2 (`800_` nie pasował do runnera `/^(7\d{2}|\d{8})_/` → przemianowany, migracja SLA realnie ruszyła).
+**★ FALA 5 (`93fa3951cc`):** alias-sweep — `InitiativeController` **100/100 aliasów** (wszyscy konsumenci czytali camelCase, PG zwracał lowercase→undefined) + planningPortfolioReadService 4 + assessmentInitiativeGen 1; dowód parity, 0 konsumentów lowercase=bezpieczne.
+**★ Oxford O4.1-4.7 → ✅** (weryfikator runtime: wszystkie wpięte, testy j21-oxford-o4 4/4 + business-case realny LLM 1/1 + businessCase unit 23/23). **Harvey HP-2 → ✅** (agentAudit round-trip 4/4 e2e). **HP-16** kod OK ale zostaje 🟡 (brak panelu adwersaryjnego=proces).
+**★ NOWE FINDINGI:** `InsightViewer.fmtPanelDate` RangeError→ErrorBoundary (chip) · harness dev-render potrzebuje lazy-load (kolizja fetch-mocków — naprawione izolowanym `gallery.html`) · `.claude/` gitignored=hooki nie przez git · elevation w dark niepodpięte (wymaga zrzutów).
 
 ### ★★ FALA-ARMY 2026-07-19 (druga sesja, 12 robotników Opus/Sonnet, 2 deploye) — demo-safe `531ce7e62b`
 **Cel Piotra: domknięcie 4 modułów + czyste repo. PROD ZAMROŻONY — wszystko na demo. Bramki zielone (server tsc 146=baseline 0-nowych, kolory/artefakt/list-canon PASS, eslint 0). Boot: Fala1 4/4, Fala2 6/6 (11 migracji, gitSha potwierdzony).**
