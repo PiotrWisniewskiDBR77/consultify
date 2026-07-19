@@ -349,7 +349,23 @@ router.post(
     const connector = CONNECTORS[connectorId];
     if (!connector) return res.status(400).json({ error: 'Unknown connector' });
 
-    const result = await connectIntegration(orgId, connectorId, config);
+    // RED-SYNC (2026-07-19): integrationHubService.connectIntegration() throws
+    // a plain Error (not an HTTP-aware error) when a connector-specific
+    // required config field is missing (e.g. `domain` for gmail/outlook).
+    // Before this fix that propagated to the generic Express error handler
+    // as an uncaught 500 for what is really a 400 (bad/incomplete request
+    // body) — reachable by any authed user who omits a connector's required
+    // config field.
+    let result: Awaited<ReturnType<typeof connectIntegration>>;
+    try {
+      result = await connectIntegration(orgId, connectorId, config);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid connector configuration';
+      if (/^Missing required field:|^Unknown connector:/.test(message)) {
+        return res.status(400).json({ error: message });
+      }
+      throw error;
+    }
     await setIntegrationOwner({
       integrationId: result.id,
       organizationId: orgId,
