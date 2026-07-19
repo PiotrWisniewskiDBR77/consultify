@@ -1349,12 +1349,23 @@ router.post(
         );
       }
 
-      // Create a synthetic batch so history is consistent
+      // Create a synthetic batch so history is consistent.
+      // organization_id is NOT NULL with no DB default (Postgres) — omitting it
+      // 500s with 23502. assessment.organization_id is already loaded above.
       await db.run(
         `INSERT INTO assessment_initiative_batches (
-          id, assessment_id, methodology_id, initiatives_count, include_chat_context, generated_by, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [batchId, String(assessmentId), 'manual', 1, 0, String(userId), now]
+          id, assessment_id, organization_id, methodology_id, initiatives_count, include_chat_context, generated_by, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          batchId,
+          String(assessmentId),
+          String(assessment.organization_id),
+          'manual',
+          1,
+          0,
+          String(userId),
+          now,
+        ]
       );
 
       // Link row — używa id zwróconego z lejka (krytyczne: link nie może być sierotą).

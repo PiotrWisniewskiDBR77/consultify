@@ -97,6 +97,7 @@ async function insertBatch(params: {
   batchId: string;
   runId: string;
   assessmentId: string;
+  organizationId: string;
   methodologyId: string;
   initiativesCount: number;
   includeChatContext: boolean;
@@ -108,6 +109,7 @@ async function insertBatch(params: {
   const baseAllowedWhenUnknown = new Set([
     'id',
     'assessment_id',
+    'organization_id',
     'methodology_id',
     'initiatives_count',
     'include_chat_context',
@@ -126,6 +128,10 @@ async function insertBatch(params: {
 
   push('id', params.batchId);
   push('assessment_id', params.assessmentId);
+  // organization_id is NOT NULL with no DB default (Postgres) — omitting it
+  // 500s with 23502. Caller (processRun) already has organizationId from the
+  // run row.
+  push('organization_id', params.organizationId);
   push('methodology_id', params.methodologyId);
   push('initiatives_count', params.initiativesCount);
   push('include_chat_context', params.includeChatContext ? 1 : 0);
@@ -617,6 +623,7 @@ export class AssessmentInitiativeGenerationRunService {
           batchId,
           runId,
           assessmentId,
+          organizationId,
           methodologyId,
           initiativesCount: batchCount,
           includeChatContext,

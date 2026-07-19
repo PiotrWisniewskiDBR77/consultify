@@ -1530,6 +1530,10 @@ export class AssessmentController {
       };
       pushBatch('id', batchId);
       pushBatch('assessment_id', assessmentId);
+      // organization_id is NOT NULL with no DB default (Postgres) — omitting it
+      // 500s with 23502. Resolve from the authenticated user's org, same as
+      // TaskService.createTask fix (2e7edff335).
+      pushBatch('organization_id', user.organizationId);
       pushBatch('methodology_id', methodologyId);
       pushBatch('initiatives_count', count);
       pushBatch('include_chat_context', includeChatContext ? 1 : 0);
