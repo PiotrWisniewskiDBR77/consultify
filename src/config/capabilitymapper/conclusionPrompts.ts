@@ -14,7 +14,6 @@
 
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 
-import { localizeLadder } from './index';
 import {
   buildW2SourcingSequence,
   type CapabilityMapperData,
@@ -108,22 +107,4 @@ Return JSON:
   "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedCapabilityIds":["cap-id"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}],
   "selfCheck": {"signature":"pass|fail","formulaComplete":"pass|fail","numbersFromFacts":"pass|fail","falsifiable":"pass|fail","tradeoffPresent":"pass|fail","effectHasHorizon":"pass|fail"}
 }`;
-}
-
-/**
- * Builds the deepening prompt for a single sourcing-archetype rung — used when
- * the user asks AI to "think deeper" on how to source a specific capability.
- */
-export function buildCapabilityMapperDeepenPrompt(
-  archetype: Parameters<typeof localizeLadder>[0],
-  rungId: 'surface' | 'evidence' | 'quantification' | 'risk-capability',
-  isPolish: boolean
-): string | null {
-  const rungs = localizeLadder(archetype, isPolish);
-  const rung = rungs.find((r) => r.id === rungId);
-  if (!rung) return null;
-
-  return `${rung.question}\n\n${
-    isPolish ? 'Kontekst konsultanta' : 'Consultant framing'
-  }: ${rung.rationale}`;
 }

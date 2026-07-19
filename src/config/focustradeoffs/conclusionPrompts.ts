@@ -20,7 +20,6 @@ import {
   buildOpportunityCostPromptBlock,
   detectAntiFocus,
 } from './focusOpportunityCostMatrix';
-import { localizeLadder } from './index';
 import { buildW2MoveSequence, rankPriorities } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
@@ -134,22 +133,4 @@ Return JSON:
   "initiatives": [{"title":"...","description":"...","type":"strategic|operational|defensive|growth","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["priority-id"]}],
   "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedMoveIds":[],"linkedPriorityIds":["priority-id"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
-}
-
-/**
- * Builds the deepening prompt for a single lane rung — used when the user
- * asks AI to "think deeper" on a specific focus decision (pursue / defer / drop).
- */
-export function buildFocusDeepenPrompt(
-  lane: Parameters<typeof localizeLadder>[0],
-  rungId: 'surface' | 'evidence' | 'quantification' | 'risk-capability',
-  isPolish: boolean
-): string | null {
-  const rungs = localizeLadder(lane, isPolish);
-  const rung = rungs.find((r) => r.id === rungId);
-  if (!rung) return null;
-
-  return `${rung.question}\n\n${
-    isPolish ? 'Kontekst konsultanta' : 'Consultant framing'
-  }: ${rung.rationale}`;
 }

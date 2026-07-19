@@ -17,7 +17,6 @@ import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { GrowthPathsData } from '@/store/useToolStore';
 
 import { buildAnsoffQuestionBankPromptRules } from './ansoffQuestionBank';
-import { localizeLadder } from './index';
 import { buildW2MoveSequence, detectGrowthPathGaps, rankGrowthPaths } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
@@ -106,22 +105,4 @@ Return JSON:
   "comparisons": [{"title":"...","insight":"...","linkedQuadrants":["marketPenetration"],"recommendation":"...","priority":"high|medium|low","confidence":4}],
   "moves": [{"title":"...","category":"scale-core|enter-market|build-product|diversify|validate-first","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedOptionIds":[],"linkedQuadrants":["marketPenetration"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}]
 }`;
-}
-
-/**
- * Builds the deepening prompt for a single quadrant rung — used when the user
- * asks AI to "think deeper" on a specific Ansoff direction.
- */
-export function buildAnsoffDeepenPrompt(
-  quadrant: Parameters<typeof localizeLadder>[0],
-  rungId: 'surface' | 'evidence' | 'quantification' | 'risk-capability',
-  isPolish: boolean
-): string | null {
-  const rungs = localizeLadder(quadrant, isPolish);
-  const rung = rungs.find((r) => r.id === rungId);
-  if (!rung) return null;
-
-  return `${rung.question}\n\n${
-    isPolish ? 'Kontekst konsultanta' : 'Consultant framing'
-  }: ${rung.rationale}`;
 }

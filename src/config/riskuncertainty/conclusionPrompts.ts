@@ -16,7 +16,6 @@
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { RiskUncertaintyData } from '@/store/useToolStore';
 
-import { localizeLadder } from './index';
 import { buildW2MoveSequence, rankRisks } from './moveValidator';
 import { assessRiskEvidence, buildRiskStaircasePromptRules } from './riskInsightStaircase';
 import { buildRiskMatrix, buildRiskMatrixPromptRules } from './riskMatrixEngine';
@@ -166,22 +165,4 @@ Return JSON:
   "initiatives": [{"title":"...","description":"...","type":"strategic|operational","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":[]}],
   "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedRiskIds":[],"linkedScenarioIds":[],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
-}
-
-/**
- * Builds the deepening prompt for a single dimension rung — used when the user
- * asks AI to "think deeper" on assumptions, risks, or scenarios.
- */
-export function buildRiskDeepenPrompt(
-  dimension: Parameters<typeof localizeLadder>[0],
-  rungId: 'surface' | 'evidence' | 'quantification' | 'response-capability',
-  isPolish: boolean
-): string | null {
-  const rungs = localizeLadder(dimension, isPolish);
-  const rung = rungs.find((r) => r.id === rungId);
-  if (!rung) return null;
-
-  return `${rung.question}\n\n${
-    isPolish ? 'Kontekst konsultanta' : 'Consultant framing'
-  }: ${rung.rationale}`;
 }
