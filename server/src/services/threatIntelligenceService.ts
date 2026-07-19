@@ -92,16 +92,16 @@ class ThreatIntelligenceServiceClass {
 
   async getStats(): Promise<any> {
     const row = await this.db.get(`
-      SELECT 
-        COUNT(*) as totalThreats,
-        SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) as blockedCount,
+      SELECT
+        COUNT(*) as "totalThreats",
+        SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) as "blockedCount",
         SUM(CASE WHEN threat_level = 'CRITICAL' OR threat_level = 'critical' THEN 1 ELSE 0 END) as critical,
         SUM(CASE WHEN threat_level = 'HIGH' OR threat_level = 'high' THEN 1 ELSE 0 END) as high,
         SUM(CASE WHEN threat_level = 'MEDIUM' OR threat_level = 'medium' THEN 1 ELSE 0 END) as medium,
         SUM(CASE WHEN threat_level = 'LOW' OR threat_level = 'low' THEN 1 ELSE 0 END) as low,
-        SUM(CASE WHEN threat_type = 'ip' OR threat_type = 'malicious_ip' OR indicator LIKE '%.%.%.%' THEN 1 ELSE 0 END) as ipCount,
-        SUM(CASE WHEN (threat_type = 'domain' OR threat_type = 'suspicious_domain') AND indicator NOT LIKE '%.%.%.%' THEN 1 ELSE 0 END) as domainCount,
-        AVG(reputation_score) as avgReputation
+        SUM(CASE WHEN threat_type = 'ip' OR threat_type = 'malicious_ip' OR indicator LIKE '%.%.%.%' THEN 1 ELSE 0 END) as "ipCount",
+        SUM(CASE WHEN (threat_type = 'domain' OR threat_type = 'suspicious_domain') AND indicator NOT LIKE '%.%.%.%' THEN 1 ELSE 0 END) as "domainCount",
+        AVG(reputation_score) as "avgReputation"
       FROM threat_intelligence
     `);
     return {
