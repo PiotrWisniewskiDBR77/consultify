@@ -155,8 +155,7 @@ router.get(
       // Postgres returns COUNT/SUM (bigint) as strings — coerce to Number.
       const totalReqs = Number(errorRate.total ?? 0) || 0;
       const errorCount = Number(errorRate.errors ?? 0) || 0;
-      const errorRatePercent =
-        totalReqs > 0 ? ((errorCount / totalReqs) * 100).toFixed(2) : '0.00';
+      const errorRatePercent = totalReqs > 0 ? ((errorCount / totalReqs) * 100).toFixed(2) : '0.00';
 
       return res.json({
         success: true,
@@ -384,8 +383,7 @@ router.get(
           avgLatency: Math.round(Number(metrics.avg_latency ?? 0) || 0),
           minLatency: Number(metrics.min_latency ?? 0) || 0,
           maxLatency: Number(metrics.max_latency ?? 0) || 0,
-          successRate:
-            totalRequests > 0 ? ((successful / totalRequests) * 100).toFixed(2) : '100',
+          successRate: totalRequests > 0 ? ((successful / totalRequests) * 100).toFixed(2) : '100',
           avgTokens: Math.round(Number(metrics.avg_tokens ?? 0) || 0),
         },
       });
@@ -1423,7 +1421,11 @@ router.get(
             GROUP BY model
             ORDER BY cost DESC
             LIMIT 1
-        `).catch(() => null)) as { model?: string; requests?: number | string; cost?: number | string } | null;
+        `).catch(() => null)) as {
+        model?: string;
+        requests?: number | string;
+        cost?: number | string;
+      } | null;
       const costOptimization = costOptimizationRow
         ? { model: costOptimizationRow.model, cost: Number(costOptimizationRow.cost ?? 0) || 0 }
         : null;

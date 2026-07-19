@@ -330,7 +330,13 @@ router.get('/attribution', async (req, res) => {
       err,
       correlationId: (req as Request & { correlationId?: string }).correlationId,
     });
-    return res.json({ channels: [], totalTrials: 0, totalPaid: 0, overallConversionRate: 0, degraded: true });
+    return res.json({
+      channels: [],
+      totalTrials: 0,
+      totalPaid: 0,
+      overallConversionRate: 0,
+      degraded: true,
+    });
   }
 });
 
@@ -567,7 +573,13 @@ router.get('/help', async (req, res) => {
       err,
       correlationId: (req as Request & { correlationId?: string }).correlationId,
     });
-    return res.json({ byPlaybook: [], totalStarted: 0, totalCompleted: 0, overallCompletionRate: 0, degraded: true });
+    return res.json({
+      byPlaybook: [],
+      totalStarted: 0,
+      totalCompleted: 0,
+      overallCompletionRate: 0,
+      degraded: true,
+    });
   }
 });
 

@@ -780,9 +780,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać preferencji AI dla skrzynki', code: 'SETTINGS_INBOX_AI_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać preferencji AI dla skrzynki',
+        code: 'SETTINGS_INBOX_AI_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -855,9 +856,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać dostawców AI', code: 'SETTINGS_AI_PROVIDERS_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać dostawców AI',
+        code: 'SETTINGS_AI_PROVIDERS_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -938,9 +940,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać trybu nie przeszkadzać', code: 'SETTINGS_DND_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać trybu nie przeszkadzać',
+        code: 'SETTINGS_DND_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -1036,9 +1039,10 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać preferencji powiadomień', code: 'SETTINGS_NOTIFICATIONS_SAVE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać preferencji powiadomień',
+        code: 'SETTINGS_NOTIFICATIONS_SAVE_FAILED',
+      });
     }
   })
 );
@@ -1209,9 +1213,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać dźwięków powiadomień', code: 'SETTINGS_SOUND_PREFERENCES_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać dźwięków powiadomień',
+        code: 'SETTINGS_SOUND_PREFERENCES_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -1297,9 +1302,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać podsumowania powiadomień', code: 'SETTINGS_DIGEST_PREFERENCES_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać podsumowania powiadomień',
+        code: 'SETTINGS_DIGEST_PREFERENCES_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -3353,9 +3359,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać preferencji pulpitu', code: 'SETTINGS_DASHBOARD_PREFERENCES_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać preferencji pulpitu',
+        code: 'SETTINGS_DASHBOARD_PREFERENCES_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -3476,9 +3483,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać preferencji pracy', code: 'SETTINGS_WORK_PREFERENCES_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać preferencji pracy',
+        code: 'SETTINGS_WORK_PREFERENCES_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -3584,9 +3592,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zapisać godzin pracy', code: 'SETTINGS_WORKING_HOURS_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać godzin pracy',
+        code: 'SETTINGS_WORKING_HOURS_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -3708,9 +3717,10 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się utworzyć podpisu', code: 'SETTINGS_SIGNATURE_CREATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć podpisu',
+        code: 'SETTINGS_SIGNATURE_CREATE_FAILED',
+      });
     }
   })
 );
@@ -3821,9 +3831,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się ustawić domyślnego podpisu', code: 'SETTINGS_SIGNATURE_SET_DEFAULT_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się ustawić domyślnego podpisu',
+        code: 'SETTINGS_SIGNATURE_SET_DEFAULT_FAILED',
+      });
     }
   })
 );
@@ -5925,9 +5936,10 @@ router.delete(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Failed to disconnect account', code: 'SETTINGS_ACCOUNT_DISCONNECT_FAILED' });
+      return res.status(500).json({
+        error: 'Failed to disconnect account',
+        code: 'SETTINGS_ACCOUNT_DISCONNECT_FAILED',
+      });
     }
   })
 );

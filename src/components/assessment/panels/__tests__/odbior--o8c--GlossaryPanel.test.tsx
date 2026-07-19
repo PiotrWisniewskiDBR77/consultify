@@ -40,7 +40,9 @@ describe('O8.3 — GlossaryPanel renders real glossary content', () => {
 
     fireEvent.change(search, { target: { value: 'swot' } });
     expect(screen.getByText('SWOT')).toBeInTheDocument();
-    expect(screen.queryByText('MECE (Mutually Exclusive, Collectively Exhaustive)')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('MECE (Mutually Exclusive, Collectively Exhaustive)')
+    ).not.toBeInTheDocument();
 
     fireEvent.change(search, { target: { value: 'zzz-no-such-term' } });
     expect(screen.getByText('No results.')).toBeInTheDocument();

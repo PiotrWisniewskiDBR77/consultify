@@ -1504,9 +1504,7 @@ export async function generateDeck(
     // time so background generation reflects late env changes. Never throws.
     if (process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true') {
       try {
-        const { buildDeckConclusionSlide } = await import(
-          './deliverables/deckConclusionSlide.js'
-        );
+        const { buildDeckConclusionSlide } = await import('./deliverables/deckConclusionSlide.js');
         let conclusionLlm: unknown = null;
         try {
           const mod = await import('./ai/llmService.js');

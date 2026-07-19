@@ -1131,7 +1131,9 @@ router.post(
       // throughout presentations.routes.ts) rather than letting it fall
       // through to asyncHandler's default 500.
       if (error instanceof Error && error.message === 'Deck not found') {
-        return res.status(404).json({ success: false, error: 'Deck not found', code: 'DECK_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ success: false, error: 'Deck not found', code: 'DECK_NOT_FOUND' });
       }
       if (error instanceof Error && error.message === 'Invalid slide index') {
         return res

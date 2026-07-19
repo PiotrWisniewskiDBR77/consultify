@@ -10,16 +10,17 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { ADMA_PILLARS } from '@/services/admaStructure';
+import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { SIRI_BUILDING_BLOCKS } from '@/services/siriStructure';
+
 import {
-  DRD_AXIS_WHY_HINTS,
   ADMA_PILLAR_WHY_HINTS,
-  SIRI_BLOCK_WHY_HINTS,
+  DRD_AXIS_WHY_HINTS,
   GENERIC_WHY_HINT,
   getDRDAxisWhyHint,
   getWhyThisMattersHint,
+  SIRI_BLOCK_WHY_HINTS,
 } from '../whyThisMatters';
 
 describe('O8.1 — why-this-matters hints: real coverage against live structures', () => {

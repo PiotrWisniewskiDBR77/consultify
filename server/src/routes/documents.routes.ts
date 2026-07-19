@@ -299,7 +299,12 @@ router.get(
       return res
         .status(500)
         .json(
-          buildDocumentsFailClosedError(req, 500, 'DOCUMENTS_GET_FAILED', 'Failed to load document.')
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_GET_FAILED',
+            'Failed to load document.'
+          )
         );
     }
   })
@@ -586,7 +591,12 @@ router.put(
       return res
         .status(500)
         .json(
-          buildDocumentsFailClosedError(req, 500, 'DOCUMENTS_MOVE_FAILED', 'Failed to move document.')
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_MOVE_FAILED',
+            'Failed to move document.'
+          )
         );
     }
   })
@@ -629,7 +639,12 @@ router.delete(
       return res
         .status(500)
         .json(
-          buildDocumentsFailClosedError(req, 500, 'DOCUMENTS_DELETE_FAILED', 'Failed to delete document.')
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_DELETE_FAILED',
+            'Failed to delete document.'
+          )
         );
     }
   })
