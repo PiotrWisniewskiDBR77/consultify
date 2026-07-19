@@ -42,25 +42,27 @@
 > TEGO SAMEGO pliku (A: 27 nie 62 · D: 8 nie 30 · E: wypisane tylko 42 z 88). Poniżej stan uczciwy
 > w 3 poziomach dowodu. Liczby (i)/(iii) to ZAKRESY do finalnej weryfikacji z re-itemizacją tabel.
 
-> **★ AKTUALIZACJA 2026-07-19 WIECZÓR (FLOTA NAPRAWCZA):** po audycie 5 krytyków flota ~20 robotników
-> domknęła realne pozycje z DOWODEM runtime i wdrożyła na demo w 3 partiach (`effc1d4d71` → `12fe9c45d9`
-> → `9ba6b16d58`). Poniżej liczniki podniesione WYŁĄCZNIE o pozycje z twardym dowodem (test/parity/E2E).
+> **★ AKTUALIZACJA 2026-07-19 WIECZÓR+NOC (FLOTA NAPRAWCZA, sprint 5h):** po audycie 5 krytyków flota
+> ~20 robotników (ciągły pipeline, plan Fable `BACKLOG_FABLE.md`) domknęła realne pozycje z DOWODEM runtime
+> i wdrożyła na demo w **8 PARTIACH** (`effc1d4d71` → `12fe9c45d9` → `9ba6b16d58` → `2c09b90825` →
+> `5f0cb2077e` → `ba9a20b72b` → `82b1d717b6` → `274f0b44e8`). Każda partia: bramki server tsc 146/eslint 0,
+> boot-poll, demo-safe re-tag. Liczniki podniesione WYŁĄCZNIE o pozycje z twardym dowodem (test/parity/E2E).
 > Wizualne (Vegas 7 SPEC-A, O4 panel, K4-UI, K5-UI, M27 tabele, T9) NADAL 🟠 — odbiór Piotra jutro rano
-> (galerie wyrenderowane, reguła #7). Szczegóły: blok WIECZÓR ↓.
+> (galerie wyrenderowane, reguła #7). Szczegóły: bloki WIECZÓR + SPRINT-NOC ↓.
 
-| Sekcja | ✅ dowód-runtime | 🟠 zbud.-nieodebr. | ⬜/🟡/❓ otwarte | 🔵 poza-v1 | RAZEM | rano→wieczór |
+| Sekcja | ✅ dowód-runtime | 🟠 zbud.-nieodebr. | ⬜/🟡/❓ otwarte | 🔵 poza-v1 | RAZEM | rano→noc |
 |---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | ~22–28 (Teresa-live+Excel-hard) | ~18 | ~14 (H4=5 ZAMROŻ · H6.11 blocker) | 0 | 62 | ~15→~25 |
-| B · Harvey (HP-0…27) | ~23–25 (HP-23→CI) | ~2 (HP-16 evid 4/8) | ~2 (HP-20 1/3 · HP-5) | 1 | 28 | ~22→~24 |
-| C · Oxford (O1-O8) | ~34–42 (deepening=19 · K5 backend) | ~25–30 (odbiór deleg.) | ~2 | 1 | 70 | ~30→~38 |
+| A · Harvard (H1-H6) | ~28–34 (Teresa 8/8·Excel·H2.3/15/17·H6.11) | ~14 | ~10 (H4=5 ZAMROŻ) | 0 | 62 | ~15→~31 |
+| B · Harvey (HP-0…27) | ~24–26 (HP-23·HP-16 6/8·HP-20 1/3) | ~2 | ~2 (HP-5) | 1 | 28 | ~22→~25 |
+| C · Oxford (O1-O8) | ~38–46 (deepening=19·K5·O2-CI·O6·#71 chips·M14/email) | ~22–26 (odbiór deleg.) | ~2 | 1 | 70 | ~30→~42 |
 | D · Vegas (F0-F6+V7) | 8 | 7 (SPEC-A za flagą — jutro) | ~15 | 26 | 56 | 8→8 |
-| E · Przekroje (+nowe) | ~38–44 (TaskCreate·risk·schema×3·404·TZ·Invoice·#77·T5) | ~8 | ~22 (89 wyitemizowane, patrz E_REITEMIZACJA) | 16 | 89 | ~30→~40 |
-| **SUMA** | **≈ 125–147** | **≈ 60–70** | **≈ 55** | **44** | **305** | ~110→~135 |
+| E · Przekroje (+nowe) | ~48–56 (adaptQuery·TaskCreate·batch·404·TZ·Invoice·#77·T5·knowledge·dead-code·D-01·alias·outbox·risk·schema×3·context-os·lazyRoute·sqlsql·M27-SA) | ~6 | ~19 | 16 | 89 | ~30→~52 |
+| **SUMA** | **≈ 146–170** | **≈ 51–55** | **≈ 48** | **44** | **305** | ~110→~158 |
 
-**★★★ STAN UCZCIWY 2026-07-19 WIECZÓR: ~41–48% z twardym dowodem runtime (≈125–147/305); ~62–72% z kodem
+**★★★ STAN UCZCIWY 2026-07-19 NOC: ~48–56% z twardym dowodem runtime (≈146–170/305); ~65–74% z kodem
 zbudowanym-nieodebranym (🟠).** Poranne „304/304=100%" pozostaje WYCOFANE (inflacja — blok KOREKTA ↓).
-Nocna flota podniosła twarde-✅ z ~110 do ~135 realnymi fixami (nie edycją .md). POZOSTAŁA LUKA do ~90%
-to teraz GŁÓWNIE: (c) odbiór wizualny Piotra jutro rano (Vegas/O4/K4-UI/K5-UI/M27 — galerie gotowe) +
+Sprint 5h (8 partii) podniósł twarde-✅ z ~110 do ~158 realnymi fixami z dowodem (nie edycją .md). POZOSTAŁA
+LUKA do ~90% to teraz GŁÓWNIE: (c) odbiór wizualny Piotra jutro rano (Vegas/O4/K4-UI/K5-UI/M27 — galerie gotowe) +
 (d) kalendarz/PROD/ENV. Kod nie-wizualny = niemal wyczerpany. Aplikacja NIE jest atrapą (dowody ↓).
 
 ### ★★★ WIECZÓR 07-19 — FLOTA NAPRAWCZA PO AUDYCIE (3 partie na demo, każdy ✅ z dowodem runtime)
@@ -94,6 +96,18 @@ to teraz GŁÓWNIE: (c) odbiór wizualny Piotra jutro rano (Vegas/O4/K4-UI/K5-UI
 **🟠 ODBIÓR PIOTRA JUTRO RANO (galerie wyrenderowane — reguła #7):** Vegas 7 SPEC-A (artifact `2c1776c5`) · O4 panel (`scratchpad/o4_shots`) · K4-UI (przyciski uzupełnij-AI per sekcja) · K5-UI (wybór poziomu) · M27 tabele SuperAdmin · T9 EmptyState. NIE flipnięto żadnej flagi wizualnej.
 
 **NIEDOKOŃCZONE (flota padła na limit sesji 21:10, wznowić po resecie):** HP-16 evidence-close (migracja note gotowa, testy nie dobiegły) · T7 martwe wrappery (46 `createCachedLazyService` + M24 AdminSidebar) · T-series remainder (T1 256 testów, T3, T10) · scope_change_log (sesja Piotra) · ReconciliationPanel Variance-unit bug (task_40565a38).
+
+### ★★★ SPRINT-NOC 07-19 (partie 4-8, dedykowane okno 5h, plan Fable BACKLOG_FABLE.md) — kontynuacja po WIECZÓR
+> Po resecie limitu Piotr: „5h tylko ja, 20 agentów, ciągły pipeline, statusy prawdziwe". Fable=plan+nadzór, Opus/Sonnet=wykonanie, ja=integracja+bramki+deploy. Każdy ✅ z dowodem runtime; wizualne NIE ruszane (odbiór jutro).
+
+**Partia 4 (`2c09b90825`):** T7 martwy kod 46 plików usunięte (dowód 0-callerów) · **HP-16 evidence 1/8→5/8** (note/mindmap/deck/doc+process_flow, migracja 20260719_note) · **batch-INSERT 3 bugi** (`assessment_initiative_batches` bez organization_id NOT NULL, RED→GREEN) · knowledge.routes 20× 500-leak sanityzowany · Variance-unit bug · AboutView ROI Wariant A (akcept Piotra) · context-os (NIE bug — mock testu) · lazyRouteLoader (bug martwy, 5 routerów odzyskane, test 5/5) · Oxford-O6 GUS/Eurostat dowód ≥2 branże.
+**Partia 5 (`5f0cb2077e`):** outbox-drain (dren NIE ISTNIAŁ — powiadomienia gniły w PENDING; dodany cron+test) · .sql.sql archiwizacja 61 plików→never-ran/ + CI-guard · martwe serwisy competitiveIntelligence(574l)+pmoDomainRegistry-DB(usunięte) · Teresa-tools 4/4 (whiteboard/process_flow/deck/document create-from-chat — **wszystkie 8/8 typów dowiedzione**).
+**Partia 6 (`ba9a20b72b`):** **adaptQuery rejestr 51 conflict-targetów** (heurystyka ON-CONFLICT brała 1. kolumnę=źródło ~6 bugów; naprawione organization_settings/invoices-id-churn/task_dependencies/role_permissions…; warn-loud dla niezarejestrowanych, EXPLAIN-parity 20/20+unit 13/13) · check-ssot-paths → husky.
+**Partia 7 (`82b1d717b6`):** aisdk-v6 tool-call fields (`input`/`output`+join toolResults — greeni teresa-live 3/3, była RED na demo) · alias-sweep-A 2 realne bugi (analytics-superadmin stats zawsze-0, my-work onTimeRate zawsze-0) · Harvard H2.3/H2.15/H2.17 regression-testy (H2.15/17 były fałszywe ❓).
+**Partia 8 (`274f0b44e8`):** D-01 stuby: 12/37 z żywym UI → uczciwe 501 (test 15/15) · **HP-16 sheet-evidence → 6/8** (migracja 20260719_sheet, table/whiteboard=świadome 🔵) · K7-harness `cleanup-orphan-demo-orgs.ts` (dry-run+backup+guard, dla 179 sierot demo — czeka OK Piotra).
+
+**Ustalenia/fold (już-na-demo, nie nowy kod):** #24 Oxford-O2 testy 44/44 w CI (fałszywy ❓) · #34 #71-chipy DONE akcept Piotra 07-14 (flaga ON) · #35 M27-email✅(migr 793)+M14 „27/35=zadania vs ~18=ekrany" · #23 worker-oxford-o5 cała-na-demo · #16 market_trends/pmo_domains=martwe. **Decyzje Piotra 07-19-noc:** AboutView-A · K3/K7 kasuj(skrypt gotowy) · grafika-jutro · wave7-usuń · O5.6-nowe-pytania · H4-formalnie🔵. **Wstrzymane CTO:** T10 fresh-env fix (demo już zmigrowane, zero korzyści+ryzyko bootu) · O5.6-migracja (INSERT OR IGNORE→przepisać na ON CONFLICT, runner=raw db.query) · DbPromise-strict (worker utknął).
+**Rotacja w toku przy zapisie:** #8 HP-16-E2E-asercje · #21 alias-sweep-B · M27-superadmin(provision-script). Backlog rezerwa: T1-testy(46 dryf komponentów), #29/30.
 
 **07-19 worker-oxford-o5:** Oxford ⬜ 11→5 (-6), ✅ 46→50 (+4), 🟡 13→15 (+2). Cztery ⬜ były STALE (już zbudowane+testowane E2E, tabela nierozsynchronizowana z osobnymi wpisami w tym samym pliku): O2.5 (deck-conclusion-slide + narrativeEngine test dodany), O1-Benchmark/DRD (`drdIndustryBenchmark.ts`), O1-Generator-inicjatyw SIRI+ADMA (`assessmentInitiativeService.ts` framework-agnostyczny). Dwa ⬜→🟡 z realnym fixem kodu: O5.4 (bug — kontekst ekranu był zawsze PO ANGIELSKU w PL-personie, naprawione 17 wpisów + test), O5.6 (audyt macierzy pokrycia Wywiadu GOTOWY, czeka DEC Piotra na nowe pytania — JA-część zamknięta). Zero nowych 🟡-odbiorczych ruszonych (poza zakresem robotnika). Gałąź `worker-oxford-o5` z `origin/demo`, NIE zmergowana/NIE wypchnięta.
 
