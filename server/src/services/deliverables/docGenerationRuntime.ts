@@ -1565,6 +1565,10 @@ export async function startDoc(params: {
             outline,
             sourceRefs: stored.intake.sourceHints,
             useLlm: true,
+            // DOC-2: never persist a placeholder Studio artifact — on prose
+            // degradation this throws before the wave5 write, so the best-effort
+            // catch below leaves no orphan (the draft still has streamed content).
+            failIfPlaceholderProse: true,
           });
           streamedArtifactId = materialized.artifactId;
           await registerDocArtifactBestEffort({
@@ -1620,6 +1624,12 @@ export async function startDoc(params: {
         outline,
         sourceRefs: stored.intake.sourceHints,
         useLlm: true,
+        // DOC-2: on prose degradation, fail BEFORE the wave5 row is written so
+        // the throw does not orphan a placeholder document. The polished
+        // anti-placeholder gate below stays as the authoritative final check for
+        // the happy path (real content still renders scaffolding that must be
+        // stripped first).
+        failIfPlaceholderProse: true,
       });
       setDocRuntime(draft.id, {
         state: 'validating',

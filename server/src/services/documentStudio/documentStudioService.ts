@@ -371,6 +371,17 @@ export interface MaterializeDocumentParams {
   projectId?: string | null;
   useLlm?: boolean;
   /**
+   * DOC-2 (E2E): anti-orphan guard. When `true` AND `useLlm` prose generation
+   * degraded to placeholders (i.e. a `llm_prose_fallback` warning was recorded),
+   * THROW *before* persisting the wave5 row instead of writing a placeholder-
+   * laden document. Without this, the chat-doc path (`docGenerationRuntime`)
+   * persisted the row here and only THEN hit its anti-placeholder gate — the
+   * throw left an orphan `wave5_artifacts` row behind. Default `false` keeps the
+   * legacy silent-degrade behaviour for every other caller (document-studio
+   * route, canvas bridge), whose contracts do not expect a hard throw.
+   */
+  failIfPlaceholderProse?: boolean;
+  /**
    * When set, hydrate the outline and FormattingSchema from an approved
    * registered template (Mode 3). The template must belong to the same
    * organization as the call site; cross-tenant template IDs are rejected.
@@ -651,6 +662,23 @@ export async function materializeDocumentArtifact(
   }
 
   const generationWarnings = warningsCollector.list();
+
+  // DOC-2 (E2E): anti-orphan guard. When the caller opts in AND prose
+  // enrichment degraded to placeholders (a `llm_prose_fallback` warning), refuse
+  // to persist a placeholder-laden document. Throwing HERE — before
+  // `createWave5Artifact` — is what makes materialization atomic for the chat-doc
+  // path: previously the row was written unconditionally and the caller's
+  // anti-placeholder gate threw only afterwards, orphaning the wave5 row.
+  // Default-off, so every other caller keeps its silent-degrade contract.
+  if (
+    params.failIfPlaceholderProse &&
+    params.useLlm &&
+    generationWarnings.some((w) => w.code === 'llm_prose_fallback')
+  ) {
+    throw new Error(
+      'Generacja treści nie powiodła się (LLM niedostępny) — dokument nie został wypełniony'
+    );
+  }
 
   const markdown = renderSchemaToMarkdown(provisionalSchema);
 
