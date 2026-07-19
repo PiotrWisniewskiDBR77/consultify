@@ -16,6 +16,7 @@ import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSource
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
+import { ErrorState as SpecAErrorState, SkeletonState } from '@/components/shared/states';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
@@ -69,6 +70,12 @@ import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
+
+// VF1-7 (SPEC-A wzorzec Deck): gate for the shared/states swap on the
+// loading/error guards below (SkeletonState variant="deck" / ErrorState).
+// Default OFF until Piotr accepts on screenshots (reguła #7 — Piotr nie jest
+// pierwszym testerem wizualnym). Zero change in behaviour while OFF.
+const VF1_DECK_SPECA = import.meta.env.VITE_VF1_DECK_SPECA === 'true';
 
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
@@ -1027,8 +1034,91 @@ export const DeckBuilder: React.FC = () => {
     }
   }, [activeCardIndex, handleRewriteCard, t]);
 
+  // ── VF1-7 a11y: Esc = zamknij najwyższą nakładkę / wróć (kanon §12.2/§17,
+  // "Esc → zamknij drawer/modal; pełna strona → route poprzedni") ──────────
+  // Skips when typing in a field. Modals that already own Escape
+  // (PresentMode, DeckGovernanceCardModal, DeckAuditLogModal, CommandPalette)
+  // are left alone here to avoid double-firing; overlays that do NOT yet
+  // self-close on Escape are closed here instead of falling through to
+  // "back", so Esc never skips a level. No visual change (keyboard-only).
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (presentMode !== 'off' || commandPaletteOpen || governanceModalOpen || auditLogOpen) {
+        return;
+      }
+      if (themeSwitcherOpen) {
+        setThemeSwitcherOpen(false);
+        return;
+      }
+      if (versionHistoryOpen) {
+        setVersionHistoryOpen(false);
+        return;
+      }
+      if (qualityGatesOpen) {
+        setQualityGatesOpen(false);
+        return;
+      }
+      if (analyticsOpen) {
+        setAnalyticsOpen(false);
+        return;
+      }
+      if (shareModalOpen) {
+        setShareModalOpen(false);
+        return;
+      }
+      if (mediaLibraryOpen) {
+        setMediaLibraryOpen(false);
+        return;
+      }
+      if (teresaOpen) {
+        setTeresaOpen(false);
+        return;
+      }
+      handleBackToPresentations();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    presentMode,
+    commandPaletteOpen,
+    governanceModalOpen,
+    auditLogOpen,
+    themeSwitcherOpen,
+    versionHistoryOpen,
+    qualityGatesOpen,
+    analyticsOpen,
+    shareModalOpen,
+    mediaLibraryOpen,
+    teresaOpen,
+    handleBackToPresentations,
+  ]);
+
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
+      // VF1-7 (SPEC-A): shared/states ErrorState with a real exit (onBack),
+      // gated — visual change needs Piotr's screenshot sign-off (reguła #7).
+      if (VF1_DECK_SPECA) {
+        return (
+          <div className="h-screen flex items-center justify-center bg-c-surface px-6">
+            <SpecAErrorState
+              title={t('presentations.builder.loadFailed', 'Failed to load deck')}
+              description={loadError}
+              onRetry={() => window.location.reload()}
+              onBack={handleBackToPresentations}
+              backLabel={t('presentations.builder.back', 'Back to presentations')}
+            />
+          </div>
+        );
+      }
       return (
         <div className="h-screen flex items-center justify-center bg-c-surface px-6">
           <ErrorState
@@ -1036,6 +1126,21 @@ export const DeckBuilder: React.FC = () => {
             message={loadError}
             retry={() => window.location.reload()}
           />
+        </div>
+      );
+    }
+
+    // VF1-7 (SPEC-A): ad-hoc spinner → SkeletonState variant="deck" (shared/states,
+    // the exact archetype-E shape) — gated, same reguła #7 as the error branch above.
+    if (VF1_DECK_SPECA) {
+      return (
+        <div className="h-screen flex items-center justify-center bg-c-surface px-6 py-10">
+          <div className="w-full max-w-3xl">
+            <SkeletonState
+              variant="deck"
+              label={t('presentations.builder.loading', 'Loading deck...')}
+            />
+          </div>
         </div>
       );
     }

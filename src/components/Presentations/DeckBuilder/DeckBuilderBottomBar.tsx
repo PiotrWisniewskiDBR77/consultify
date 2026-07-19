@@ -32,7 +32,7 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
 
       <button
         onClick={onQuickEdits}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <Sparkles size={12} />
         {t('presentations.builder.bottomBar.quickEdits', 'Ask Teresa')}
@@ -40,8 +40,13 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
 
       <button
         onClick={onToggleNotes}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs ${
-          notesOpen ? 'bg-c-accent-soft text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'
+        aria-pressed={notesOpen}
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+          // VF1-7: was crimson `bg-c-accent-soft` — active/toggle state is neutral
+          // chrome (canonical c-focus tint, matches RightRail.tsx's active tool style).
+          notesOpen
+            ? 'bg-c-focus/10 text-c-focus-solid'
+            : 'text-c-text-muted hover:bg-c-surface-raised'
         }`}
       >
         <FileText size={12} />

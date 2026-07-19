@@ -89,7 +89,9 @@ const ConfidentialityBadge: React.FC<{
       <Shield size={14} className={color} />
       <span className="hidden md:inline">{label}</span>
       {isRecentAgentActivity && (
-        <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
+        // VF1-7: was a raw violet Tailwind palette dot — recent-AI-activity
+        // accent → c-info (skill consultify-artefakty: "Akcent AI/info = c-info").
+        <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-c-info animate-pulse" />
       )}
     </div>
   );
@@ -135,6 +137,18 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
+  }, [moreOpen]);
+
+  // VF1-7 a11y — close the "⋯" overflow menu on Escape (kanon §12.3: "Esc →
+  // zamknij drawer/modal"). Owns its Escape locally so DeckBuilder's
+  // page-level Esc handler doesn't need to know about this menu.
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMoreOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [moreOpen]);
 
   // R4 — secondary/governance actions consolidated into the overflow menu.
@@ -185,7 +199,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       {/* Back / Exit */}
       <button
         onClick={goToPresentations}
-        className="flex-shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised hover:text-c-text transition-colors"
+        className="flex-shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         title={t('presentations.builder.exit', 'Exit to Presentations')}
         aria-label={t('presentations.builder.exit', 'Exit to Presentations')}
       >
@@ -196,7 +210,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <div className="flex items-center gap-1.5 text-sm text-c-text-muted min-w-0 flex-1">
         <button
           onClick={goToPresentations}
-          className="flex-shrink-0 hover:text-c-text transition-colors"
+          className="flex-shrink-0 hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
         >
           {t('presentations.builder.title', 'Deck Builder')}
         </button>
@@ -213,7 +227,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         ) : (
           <button
             onClick={() => setEditing(true)}
-            className="text-c-text font-medium truncate hover:text-c-text-secondary"
+            className="text-c-text font-medium truncate hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
           >
             {title || t('presentations.builder.untitled', 'Untitled Deck')}
           </button>
@@ -228,7 +242,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         <button
           onClick={onUndo}
           disabled={!canUndo}
-          className="p-1.5 rounded-lg hover:bg-c-surface-raised disabled:opacity-30 text-c-text-muted"
+          className="p-1.5 rounded-lg hover:bg-c-surface-raised disabled:opacity-30 text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           title={`${t('presentations.builder.topBar.undo', 'Undo')} (⌘Z)`}
         >
           <Undo2 size={16} />
@@ -236,7 +250,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         <button
           onClick={onRedo}
           disabled={!canRedo}
-          className="p-1.5 rounded-lg hover:bg-c-surface-raised disabled:opacity-30 text-c-text-muted"
+          className="p-1.5 rounded-lg hover:bg-c-surface-raised disabled:opacity-30 text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           title={`${t('presentations.builder.topBar.redo', 'Redo')} (⇧⌘Z)`}
         >
           <Redo2 size={16} />
@@ -254,7 +268,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <button
         onClick={onTheme}
         data-testid="deck-theme-btn"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <Palette size={14} />
         <span className="hidden md:inline">{t('presentations.builder.topBar.theme', 'Theme')}</span>
@@ -265,7 +279,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         <div className="relative" ref={moreRef}>
           <button
             onClick={() => setMoreOpen((v) => !v)}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised"
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             title={t('presentations.builder.topBar.more', 'More')}
             aria-label={t('presentations.builder.topBar.more', 'More')}
             aria-haspopup="menu"
@@ -282,7 +296,9 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
           {moreOpen && (
             <div
               role="menu"
-              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl p-1 z-50"
+              // VF1-7: light-mode border was a raw slate Tailwind palette shade —
+              // now a token border (dark-mode hairline left as-is, not touched here).
+              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-c-surface border border-c-border-subtle dark:border-white/[0.03] rounded-lg shadow-xl p-1 z-50"
             >
               {overflowItems.map((item) => (
                 <button
@@ -292,7 +308,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
                     setMoreOpen(false);
                     item.onClick();
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-c-text hover:bg-c-surface-raised"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {item.icon}
                   <span className="flex-1 text-left">{item.label}</span>
@@ -309,7 +325,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <button
         onClick={onShare}
         data-testid="deck-share-btn"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <Share2 size={14} />
         <span className="hidden md:inline">{t('presentations.builder.topBar.share', 'Share')}</span>
@@ -317,9 +333,12 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onToggleAgent}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+        aria-pressed={agentOpen}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+          // VF1-7: was crimson `bg-c-accent-soft` — active/toggle state is neutral
+          // chrome (canonical c-focus tint, matches RightRail.tsx's active tool style).
           agentOpen
-            ? 'bg-c-accent-soft text-c-text'
+            ? 'bg-c-focus/10 text-c-focus-solid'
             : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
       >
@@ -332,7 +351,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <button
         onClick={onPresent}
         data-testid="deck-present-btn"
-        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-c-surface text-c-text hover:bg-c-surface-raised"
+        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-c-surface text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <Monitor size={14} />
         <span>{t('presentations.builder.topBar.present', 'Present')}</span>
