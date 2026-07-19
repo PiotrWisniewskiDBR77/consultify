@@ -87,7 +87,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <Loader2 className="animate-spin text-c-info" size={32} />
       </div>
     );
   }
