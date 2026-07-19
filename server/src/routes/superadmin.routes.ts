@@ -1699,15 +1699,15 @@ router.get(
     const requests = await dbAll(
       `SELECT 
                 gr.id,
-                gr.user_id as userId,
-                u.email as userEmail,
+                gr.user_id as "userId",
+                u.email as "userEmail",
                 gr.type,
                 gr.status,
                 gr.reason,
-                gr.download_url as downloadUrl,
-                gr.scheduled_at as scheduledAt,
-                gr.created_at as createdAt,
-                gr.completed_at as completedAt
+                gr.download_url as "downloadUrl",
+                gr.scheduled_at as "scheduledAt",
+                gr.created_at as "createdAt",
+                gr.completed_at as "completedAt"
              FROM gdpr_requests gr
              LEFT JOIN users u ON gr.user_id = u.id
              ORDER BY gr.created_at DESC

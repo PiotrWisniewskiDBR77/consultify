@@ -3435,7 +3435,7 @@ router.get(
       await ensureEmailSignaturesTable();
 
       const signatures = await dbAll(
-        `SELECT id, name, content, is_default as isDefault, created_at as createdAt 
+        `SELECT id, name, content, is_default as "isDefault", created_at as "createdAt" 
                  FROM email_signatures WHERE user_id = ? ORDER BY is_default DESC, created_at DESC`,
         [userId]
       );
@@ -4410,7 +4410,7 @@ router.get(
     await ensureSettingsTemplatesTable();
 
     const templates = await dbAll(
-      `SELECT id, name, description, icon, type, settings_data as settingsData, created_at as createdAt
+      `SELECT id, name, description, icon, type, settings_data as "settingsData", created_at as "createdAt"
              FROM settings_templates 
              WHERE user_id = ? AND is_active = 1
              ORDER BY created_at DESC`,
@@ -4613,8 +4613,8 @@ router.get(
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    let query = `SELECT id, category, setting_key as setting, action, old_value as oldValue, 
-                     new_value as newValue, device, ip_address as ipAddress, created_at as timestamp
+    let query = `SELECT id, category, setting_key as setting, action, old_value as "oldValue", 
+                     new_value as "newValue", device, ip_address as "ipAddress", created_at as timestamp
                      FROM settings_audit_log 
                      WHERE user_id = ? AND created_at >= ?`;
     const params: any[] = [userId, startDate.toISOString()];
@@ -4899,9 +4899,9 @@ router.get(
       await ensureUserApiKeysTable();
 
       const keys = await dbAll(
-        `SELECT id, name, key_prefix as keyPrefix, permissions, rate_limit as rateLimit,
-                      last_used_at as lastUsedAt, expires_at as expiresAt, is_active as isActive,
-                      created_at as createdAt
+        `SELECT id, name, key_prefix as "keyPrefix", permissions, rate_limit as "rateLimit",
+                      last_used_at as "lastUsedAt", expires_at as "expiresAt", is_active as "isActive",
+                      created_at as "createdAt"
                FROM user_api_keys WHERE user_id = ? ORDER BY created_at DESC`,
         [userId]
       );
@@ -5117,9 +5117,9 @@ router.get(
       await ensureUserWebhooksTable();
 
       const webhooks = await dbAll(
-        `SELECT id, name, url, events, is_active as isActive,
-                    last_triggered_at as lastTriggeredAt, last_status as lastStatus,
-                    failure_count as failureCount, created_at as createdAt
+        `SELECT id, name, url, events, is_active as "isActive",
+                    last_triggered_at as "lastTriggeredAt", last_status as "lastStatus",
+                    failure_count as "failureCount", created_at as "createdAt"
              FROM user_webhooks WHERE user_id = ? ORDER BY created_at DESC`,
         [userId]
       );

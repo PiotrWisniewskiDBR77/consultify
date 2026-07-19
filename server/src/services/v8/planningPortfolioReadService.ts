@@ -422,17 +422,17 @@ export async function getInitiativeTaskDependenciesRead(
     rows = await queryHelpers.queryAll(
       `SELECT
         td.id,
-        td.predecessor_id as fromTaskId,
-        td.successor_id as toTaskId,
+        td.predecessor_id as "fromTaskId",
+        td.successor_id as "toTaskId",
         ${TASK_DEPENDENCY_SQL_SELECT},
         td.notes,
-        td.created_at as createdAt,
-        f.title as fromTitle,
-        f.status as fromStatus,
-        f.priority as fromPriority,
-        t.title as toTitle,
-        t.status as toStatus,
-        t.priority as toPriority
+        td.created_at as "createdAt",
+        f.title as "fromTitle",
+        f.status as "fromStatus",
+        f.priority as "fromPriority",
+        t.title as "toTitle",
+        t.status as "toStatus",
+        t.priority as "toPriority"
       FROM task_dependencies td
       JOIN tasks f ON f.id = td.predecessor_id
       JOIN tasks t ON t.id = td.successor_id
@@ -449,17 +449,17 @@ export async function getInitiativeTaskDependenciesRead(
     rows = await queryHelpers.queryAll(
       `SELECT
         td.id,
-        td.from_task_id as fromTaskId,
-        td.to_task_id as toTaskId,
+        td.from_task_id as "fromTaskId",
+        td.to_task_id as "toTaskId",
         ${TASK_DEPENDENCY_SQL_SELECT},
         td.notes,
-        td.created_at as createdAt,
-        f.title as fromTitle,
-        f.status as fromStatus,
-        f.priority as fromPriority,
-        t.title as toTitle,
-        t.status as toStatus,
-        t.priority as toPriority
+        td.created_at as "createdAt",
+        f.title as "fromTitle",
+        f.status as "fromStatus",
+        f.priority as "fromPriority",
+        t.title as "toTitle",
+        t.status as "toStatus",
+        t.priority as "toPriority"
       FROM task_dependencies td
       JOIN tasks f ON f.id = td.from_task_id
       JOIN tasks t ON t.id = td.to_task_id
@@ -565,11 +565,11 @@ export async function getInitiativeWatchersRead(
     return await queryHelpers.queryAll(
       `SELECT
         w.id,
-        w.initiative_id as initiativeId,
-        w.user_id as userId,
-        w.created_at as createdAt,
-        u.first_name as firstName,
-        u.last_name as lastName,
+        w.initiative_id as "initiativeId",
+        w.user_id as "userId",
+        w.created_at as "createdAt",
+        u.first_name as "firstName",
+        u.last_name as "lastName",
         u.email as email
       FROM initiative_watchers w
       JOIN initiatives i ON i.id = w.initiative_id
@@ -602,13 +602,13 @@ export async function getInitiativeGateRolesRead(
     explicitRoles = await queryHelpers.queryAll(
       `SELECT
         gr.id,
-        gr.initiative_id as initiativeId,
-        gr.gate_role as gateRole,
-        gr.user_id as userId,
-        gr.assigned_by as assignedBy,
-        gr.assigned_at as assignedAt,
-        u.first_name as firstName,
-        u.last_name as lastName,
+        gr.initiative_id as "initiativeId",
+        gr.gate_role as "gateRole",
+        gr.user_id as "userId",
+        gr.assigned_by as "assignedBy",
+        gr.assigned_at as "assignedAt",
+        u.first_name as "firstName",
+        u.last_name as "lastName",
         u.email
       FROM initiative_gate_roles gr
       LEFT JOIN users u ON u.id = gr.user_id
@@ -669,16 +669,16 @@ export async function getInitiativeStatusHistoryRead(
       rows = await queryHelpers.queryAll(
         `SELECT
           h.id,
-          h.initiative_id as initiativeId,
-          h.from_status as fromStatus,
-          h.to_status as toStatus,
-          h.changed_by as changedBy,
+          h.initiative_id as "initiativeId",
+          h.from_status as "fromStatus",
+          h.to_status as "toStatus",
+          h.changed_by as "changedBy",
           h.reason,
-          h.gate_type as gateType,
-          h.created_at as createdAt,
-          u.first_name as changedByFirstName,
-          u.last_name as changedByLastName,
-          u.email as changedByEmail
+          h.gate_type as "gateType",
+          h.created_at as "createdAt",
+          u.first_name as "changedByFirstName",
+          u.last_name as "changedByLastName",
+          u.email as "changedByEmail"
         FROM initiative_status_history h
         LEFT JOIN users u ON u.id = h.changed_by
         WHERE h.initiative_id = ? AND h.organization_id = ?
@@ -700,16 +700,16 @@ export async function getInitiativeStatusHistoryRead(
       rows = await queryHelpers.queryAll(
         `SELECT
           h.id,
-          h.initiative_id as initiativeId,
-          h.from_status as fromStatus,
-          h.to_status as toStatus,
-          h.changed_by as changedBy,
+          h.initiative_id as "initiativeId",
+          h.from_status as "fromStatus",
+          h.to_status as "toStatus",
+          h.changed_by as "changedBy",
           h.reason,
           NULL as gateType,
-          h.changed_at as createdAt,
-          u.first_name as changedByFirstName,
-          u.last_name as changedByLastName,
-          u.email as changedByEmail
+          h.changed_at as "createdAt",
+          u.first_name as "changedByFirstName",
+          u.last_name as "changedByLastName",
+          u.email as "changedByEmail"
         FROM initiative_status_history h
         LEFT JOIN users u ON u.id = h.changed_by
         JOIN initiatives i ON i.id = h.initiative_id AND i.organization_id = ?
@@ -734,12 +734,12 @@ export async function getInitiativeHistoryRead(
     return await queryHelpers.queryAll(
       `SELECT
         h.id,
-        h.initiative_id as initiativeId,
-        h.action as eventType,
-        h.changed_by as actorId,
-        h.changed_at as createdAt,
-        h.old_value as oldValue,
-        h.new_value as newValue,
+        h.initiative_id as "initiativeId",
+        h.action as "eventType",
+        h.changed_by as "actorId",
+        h.changed_at as "createdAt",
+        h.old_value as "oldValue",
+        h.new_value as "newValue",
         h.notes
       FROM initiative_history h
       LEFT JOIN initiatives i ON i.id = h.initiative_id
@@ -766,10 +766,10 @@ export async function getInitiativeCommentsRead(
       `SELECT
         c.id,
         c.content,
-        c.user_id as authorId,
-        c.created_at as createdAt,
-        u.first_name as firstName,
-        u.last_name as lastName,
+        c.user_id as "authorId",
+        c.created_at as "createdAt",
+        u.first_name as "firstName",
+        u.last_name as "lastName",
         u.email as email
       FROM initiative_comments c
       LEFT JOIN users u ON u.id = c.user_id
@@ -806,18 +806,18 @@ export async function getInitiativeResourcesRead(
   return queryHelpers.queryAll(
     `SELECT
       r.id,
-      r.initiative_id as initiativeId,
-      r.user_id as userId,
+      r.initiative_id as "initiativeId",
+      r.user_id as "userId",
       r.name,
       r.role,
-      r.allocation_percentage as allocationPercentage,
-      r.start_date as startDate,
-      r.end_date as endDate,
+      r.allocation_percentage as "allocationPercentage",
+      r.start_date as "startDate",
+      r.end_date as "endDate",
       r.notes,
       r.source,
-      u.first_name as firstName,
-      u.last_name as lastName,
-      u.avatar_url as avatarUrl
+      u.first_name as "firstName",
+      u.last_name as "lastName",
+      u.avatar_url as "avatarUrl"
     FROM initiative_resources r
     LEFT JOIN users u ON r.user_id = u.id
     WHERE r.initiative_id = ? AND r.organization_id = ?`,
@@ -888,7 +888,7 @@ export async function getInitiativeGateReadinessRead(
   if (projectId) {
     try {
       const members = await queryHelpers.queryAll(
-        `SELECT user_id as userId, project_role as projectRole
+        `SELECT user_id as "userId", project_role as "projectRole"
          FROM project_members WHERE project_id = ?`,
         [projectId]
       );
@@ -907,7 +907,7 @@ export async function getInitiativeGateReadinessRead(
     if (steeringBoardEnabled) {
       try {
         const boardMembers = await queryHelpers.queryAll(
-          `SELECT user_id as userId
+          `SELECT user_id as "userId"
            FROM project_steering_board_members
            WHERE project_id = ? AND UPPER(member_type) IN ('CHAIR','BOARD_MEMBER')`,
           [projectId]
@@ -1327,15 +1327,15 @@ export async function getInitiativeBudgetItemsRead(
   return queryHelpers.queryAll(
     `SELECT
       id,
-      initiative_id as initiativeId,
+      initiative_id as "initiativeId",
       category,
-      cost_type as costType,
+      cost_type as "costType",
       amount,
       currency,
       description,
       source,
-      created_at as createdAt,
-      updated_at as updatedAt
+      created_at as "createdAt",
+      updated_at as "updatedAt"
     FROM initiative_budget_items
     WHERE initiative_id = ? AND organization_id = ?
     ORDER BY created_at ASC`,
@@ -1350,18 +1350,18 @@ export async function getInitiativeToolsRead(
   return queryHelpers.queryAll(
     `SELECT
       id,
-      initiative_id as initiativeId,
+      initiative_id as "initiativeId",
       name,
       category,
       vendor,
-      license_cost as licenseCost,
-      license_type as licenseType,
+      license_cost as "licenseCost",
+      license_type as "licenseType",
       status,
       notes,
       source,
-      cost_type as costType,
-      created_at as createdAt,
-      updated_at as updatedAt
+      cost_type as "costType",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
     FROM initiative_tools
     WHERE initiative_id = ? AND organization_id = ?
     ORDER BY created_at ASC`,
@@ -1376,21 +1376,21 @@ export async function getInitiativeIntangibleAssetsRead(
   return queryHelpers.queryAll(
     `SELECT
       id,
-      initiative_id as initiativeId,
-      asset_type as assetType,
+      initiative_id as "initiativeId",
+      asset_type as "assetType",
       name,
       provider,
       cost,
       currency,
-      valid_from as validFrom,
-      valid_until as validUntil,
+      valid_from as "validFrom",
+      valid_until as "validUntil",
       status,
       beneficiaries,
       notes,
       source,
-      cost_type as costType,
-      created_at as createdAt,
-      updated_at as updatedAt
+      cost_type as "costType",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
     FROM initiative_intangible_assets
     WHERE initiative_id = ? AND organization_id = ?
     ORDER BY created_at ASC`,
@@ -1406,24 +1406,24 @@ export async function getInitiativeRaidRead(
   return queryHelpers.queryAll(
     `SELECT
       r.id,
-      r.initiative_id as initiativeId,
+      r.initiative_id as "initiativeId",
       LOWER(r.type) as type,
       r.title,
       r.description,
       r.status,
       r.impact as severity,
       r.probability,
-      r.risk_score as riskScore,
-      r.score_category as scoreCategory,
-      r.owner_id as ownerId,
-      r.due_date as dueDate,
-      r.mitigation_plan as mitigationPlan,
-      r.response_strategy as responseStrategy,
-      r.mitigation_owner_id as mitigationOwnerId,
-      r.mitigation_due_date as mitigationDueDate,
-      r.mitigation_status as mitigationStatus,
-      r.created_at as createdAt,
-      r.updated_at as updatedAt
+      r.risk_score as "riskScore",
+      r.score_category as "scoreCategory",
+      r.owner_id as "ownerId",
+      r.due_date as "dueDate",
+      r.mitigation_plan as "mitigationPlan",
+      r.response_strategy as "responseStrategy",
+      r.mitigation_owner_id as "mitigationOwnerId",
+      r.mitigation_due_date as "mitigationDueDate",
+      r.mitigation_status as "mitigationStatus",
+      r.created_at as "createdAt",
+      r.updated_at as "updatedAt"
     FROM raid_items r
     WHERE r.organization_id = ? AND r.initiative_id = ?
     ORDER BY r.updated_at DESC

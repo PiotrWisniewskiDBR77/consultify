@@ -1158,7 +1158,7 @@ class ManagementReportsService {
 
   async getTypesAnalytics(organizationId) {
     const rows = await all(
-      `SELECT report_type as reportType, COUNT(*) as total
+      `SELECT report_type as "reportType", COUNT(*) as total
        FROM management_reports WHERE organization_id = ?
        GROUP BY report_type`,
       [organizationId]

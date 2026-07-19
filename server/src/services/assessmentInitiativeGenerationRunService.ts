@@ -179,7 +179,7 @@ async function fetchExistingLinkedInitiatives(
   assessmentId: string
 ): Promise<Array<{ id?: string; title?: string; status?: string; reportId?: string }>> {
   const rows = await queryHelpers.queryAll<any>(
-    `SELECT i.id, COALESCE(i.title, i.name) as title, i.status, i.report_id as reportId
+    `SELECT i.id, COALESCE(i.title, i.name) as title, i.status, i.report_id as "reportId"
      FROM assessment_initiative_links l
      LEFT JOIN initiatives i ON l.initiative_id = i.id
      WHERE l.assessment_id = ?
@@ -392,9 +392,9 @@ export class AssessmentInitiativeGenerationRunService {
 
   static async listRuns(assessmentId: string, organizationId: string): Promise<any[]> {
     const rows = await queryHelpers.queryAll<any>(
-      `SELECT id, assessment_id as assessmentId, report_id as reportId, mode, methodology_id as methodologyId,
-              requested_count as requestedCount, batch_size as batchSize, status, created_by as createdBy,
-              inputs_json as inputsJson, created_at as createdAt, updated_at as updatedAt
+      `SELECT id, assessment_id as "assessmentId", report_id as "reportId", mode, methodology_id as "methodologyId",
+              requested_count as "requestedCount", batch_size as "batchSize", status, created_by as "createdBy",
+              inputs_json as "inputsJson", created_at as "createdAt", updated_at as "updatedAt"
        FROM assessment_initiative_generation_runs
        WHERE assessment_id = ? AND organization_id = ?
        ORDER BY created_at DESC
