@@ -426,8 +426,8 @@ router.get('/:token/pdf', async (req: Request, res: Response, next: NextFunction
     );
     return res.sendFile(filePath);
   } catch (err: any) {
-    logger.error('[ReportBuilderPublic] Error downloading public PDF:', err);
-    return res.status(500).json({ error: 'Failed to generate PDF', message: err.message });
+    logger.error('[ReportBuilderPublic] Error downloading public PDF', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować PDF', code: 'REPORT_BUILDER_PUBLIC_GENERATE_PDF_FAILED' });
   }
 });
 
@@ -509,8 +509,8 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
     );
     return res.send(pptxResult.buffer);
   } catch (err: any) {
-    logger.error('[ReportBuilderPublic] Error downloading public PPTX:', err);
-    return res.status(500).json({ error: 'Failed to generate PPTX', message: err.message });
+    logger.error('[ReportBuilderPublic] Error downloading public PPTX', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować PPTX', code: 'REPORT_BUILDER_PUBLIC_GENERATE_PPTX_FAILED' });
   }
 });
 
@@ -583,8 +583,8 @@ router.get('/:token/docx', async (req: Request, res: Response, next: NextFunctio
     );
     return res.sendFile(filePath);
   } catch (err: any) {
-    logger.error('[ReportBuilderPublic] Error downloading public DOCX:', err);
-    return res.status(500).json({ error: 'Failed to generate DOCX', message: err.message });
+    logger.error('[ReportBuilderPublic] Error downloading public DOCX', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wygenerować DOCX', code: 'REPORT_BUILDER_PUBLIC_GENERATE_DOCX_FAILED' });
   }
 });
 
