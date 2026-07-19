@@ -9,7 +9,19 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  emitFacilitationEnded,
+  emitFacilitationPhase,
+  emitFacilitationTimer,
+} from '../realtime/facilitationRealtime.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+
+import {
+  canTransition,
+  isKnownPhase,
+  InvalidPhaseTransitionError,
+  UnknownPhaseError,
+} from './facilitationPhaseMachine.js';
 
 // ============================================================
 // Service
@@ -279,28 +291,134 @@ class RealtimePlatformService {
     );
   }
 
+  // T9-1: normalise the shared-timer payload and mirror its deadline into the
+  // first-class `timer_ends_at` column so late joiners and the WS broadcast can
+  // resolve it without parsing JSON.
+  //
+  // The live client sends `{ timerEndsAt: <epoch ms | null>, timerSeconds, updatedBy }`
+  // (toggleSessionTimer) but READS `timerState.endsAt` on rehydrate — a latent
+  // mismatch that meant joiners never picked up a running timer. We normalise both
+  // spellings: whatever comes in as `timerEndsAt` OR `endsAt` becomes the canonical
+  // `endsAt` (and we keep `timerEndsAt` for backward-compat), plus a `running` flag.
   async updateTimerState(sessionId: string, timerState: object) {
+    const incoming = (timerState ?? {}) as Record<string, unknown>;
+    const raw = incoming.endsAt ?? incoming.timerEndsAt;
+    const endsAt = typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? raw : null;
+    const running = endsAt != null && endsAt > Date.now();
+
+    const normalized = { ...incoming, endsAt, timerEndsAt: endsAt, running };
+
+    // Persist the deadline via to_timestamp(epoch_seconds) so the tz-less
+    // `timer_ends_at` column stores the same wall-clock convention as its siblings
+    // created_at/ended_at (which come from CURRENT_TIMESTAMP) and round-trips
+    // correctly through node-pg. NULL clears it (stop).
     await queryHelpers.queryRun(
-      `UPDATE tool_facilitation_sessions SET timer_state=$1 WHERE id=$2`,
-      [JSON.stringify(timerState), sessionId]
+      `UPDATE tool_facilitation_sessions
+         SET timer_state=$1,
+             timer_ends_at = CASE WHEN $2::double precision IS NULL THEN NULL
+                                  ELSE to_timestamp($2::double precision) END
+       WHERE id=$3`,
+      [JSON.stringify(normalized), endsAt != null ? endsAt / 1000 : null, sessionId]
     );
-    return { ok: true };
+
+    try {
+      emitFacilitationTimer({
+        sessionId,
+        timerEndsAt: endsAt,
+        timerState: normalized,
+        at: new Date().toISOString(),
+      });
+    } catch {
+      /* broadcast is best-effort; never fail the mutation on a WS hiccup */
+    }
+    return { ok: true, timerEndsAt: endsAt, running, timerState: normalized };
   }
 
-  async updatePhase(sessionId: string, phase: string) {
+  /** Explicit start: arm the shared timer for `durationSeconds` from now. */
+  async startTimer(sessionId: string, durationSeconds: number, updatedBy?: string) {
+    const secs = Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : 300;
+    const endsAt = Date.now() + secs * 1000;
+    return this.updateTimerState(sessionId, {
+      endsAt,
+      timerSeconds: secs,
+      ...(updatedBy ? { updatedBy } : {}),
+    });
+  }
+
+  /** Explicit stop: clear the shared timer deadline. */
+  async stopTimer(sessionId: string, updatedBy?: string) {
+    return this.updateTimerState(sessionId, {
+      endsAt: null,
+      ...(updatedBy ? { updatedBy } : {}),
+    });
+  }
+
+  // T9-1: validate the phase against the state machine before persisting.
+  // `currentPhase` (the row's existing current_phase) lets us enforce lifecycle
+  // transitions; pass it from the route which already fetched the session.
+  // Throws UnknownPhaseError (→400) / InvalidPhaseTransitionError (→409).
+  async updatePhase(sessionId: string, phase: string, currentPhase?: string | null) {
+    if (!isKnownPhase(phase)) throw new UnknownPhaseError(phase);
+    if (!canTransition(currentPhase, phase)) {
+      throw new InvalidPhaseTransitionError(currentPhase ?? '', phase);
+    }
     await queryHelpers.queryRun(
       `UPDATE tool_facilitation_sessions SET current_phase=$1 WHERE id=$2`,
       [phase, sessionId]
     );
-    return { ok: true };
+    try {
+      emitFacilitationPhase({ sessionId, phase, at: new Date().toISOString() });
+    } catch {
+      /* best-effort broadcast */
+    }
+    return { ok: true, phase };
   }
 
+  // T9-1: end = the terminal "closed" state. Freezes the session (status='ended';
+  // route-level guards then reject further mutations) and returns a roll-up of the
+  // session's turnout so the facilitator sees what was produced.
   async endFacilitationSession(sessionId: string) {
-    await queryHelpers.queryRun(
-      `UPDATE tool_facilitation_sessions SET status='ended', ended_at=CURRENT_TIMESTAMP WHERE id=$1`,
+    const updated = await queryHelpers.queryFirst<{ ended_at: string }>(
+      `UPDATE tool_facilitation_sessions
+         SET status='ended', ended_at=CURRENT_TIMESTAMP, timer_ends_at=NULL
+       WHERE id=$1 RETURNING ended_at`,
       [sessionId]
     );
-    return { ok: true };
+    const summary = await this.getFacilitationSummary(sessionId);
+    const endedAt = updated?.ended_at ?? new Date().toISOString();
+    try {
+      emitFacilitationEnded({ sessionId, endedAt, summary, at: new Date().toISOString() });
+    } catch {
+      /* best-effort broadcast */
+    }
+    return { ok: true, status: 'ended', endedAt, summary };
+  }
+
+  /**
+   * Turnout roll-up for a facilitation session: distinct participants (union of
+   * assigned roles and vote casters), plus vote and outcome counts.
+   */
+  async getFacilitationSummary(sessionId: string) {
+    const row = await queryHelpers.queryFirst<{
+      participants: number;
+      votes: number;
+      outcomes: number;
+    }>(
+      `SELECT
+         (SELECT COUNT(*) FROM (
+            SELECT user_id AS uid FROM tool_facilitation_roles WHERE facilitation_session_id=$1
+            UNION
+            SELECT voter_id AS uid FROM tool_facilitation_votes WHERE facilitation_session_id=$1
+         ) AS people)::int AS participants,
+         (SELECT COUNT(*) FROM tool_facilitation_votes WHERE facilitation_session_id=$1)::int AS votes,
+         (SELECT COUNT(*) FROM tool_facilitation_outcomes WHERE facilitation_session_id=$1)::int AS outcomes`,
+      [sessionId]
+    );
+    return {
+      participants: row?.participants ?? 0,
+      votes: row?.votes ?? 0,
+      outcomes: row?.outcomes ?? 0,
+    };
   }
 
   async castVote(

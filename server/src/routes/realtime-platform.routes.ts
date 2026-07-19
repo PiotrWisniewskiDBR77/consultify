@@ -7,6 +7,10 @@ import { type Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  InvalidPhaseTransitionError,
+  UnknownPhaseError,
+} from '../services/facilitationPhaseMachine.js';
 import { realtimePlatformService } from '../services/realtimePlatformService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -93,6 +97,20 @@ const ensureFacilitatorControl = async (
   }
   if (isSessionOwner || isOrgAdmin || isExistingFacilitator) return true;
   res.status(403).json(forbidden);
+  return false;
+};
+
+// T9-1: an ENDED (closed) facilitation session is frozen — no phase/timer/vote/role
+// mutation is allowed after it is closed. Returns true (and writes 409) when the
+// session is ended, so the caller can `if (rejectIfEnded(...)) return;`.
+const rejectIfEnded = (res: Response, session: unknown): boolean => {
+  if ((session as { status?: string })?.status === 'ended') {
+    res.status(409).json({
+      error: 'This facilitation session has ended and is read-only',
+      code: 'REALTIME_FACILITATION_SESSION_ENDED',
+    });
+    return true;
+  }
   return false;
 };
 
@@ -630,6 +648,7 @@ router.put(
         }))
       )
         return;
+      if (rejectIfEnded(res, session)) return;
       res.json(
         await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState)
       );
@@ -680,8 +699,21 @@ router.put(
         }))
       )
         return;
-      res.json(await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase));
+      if (rejectIfEnded(res, session)) return;
+      const currentPhase =
+        (session as { current_phase?: string | null }).current_phase ?? null;
+      res.json(
+        await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase, currentPhase)
+      );
     } catch (error) {
+      if (error instanceof UnknownPhaseError) {
+        res.status(400).json({ error: error.message, code: error.code });
+        return;
+      }
+      if (error instanceof InvalidPhaseTransitionError) {
+        res.status(409).json({ error: error.message, code: error.code });
+        return;
+      }
       if (isRealtimeSubstrateUnavailableError(error)) {
         res.status(503).json({
           error: 'Facilitation substrate is temporarily unavailable',
@@ -764,6 +796,8 @@ router.post(
         });
         return;
       }
+      // T9-1: a closed session is frozen — reject the participant mutation.
+      if (rejectIfEnded(res, session)) return;
       // No facilitator gate here (deliberate): casting a vote is ordinary participation,
       // not session control. The voter is always the authenticated requester — voterId is
       // taken from id.userId, never the body — so a member can only ever vote as
@@ -870,6 +904,7 @@ router.post(
         }))
       )
         return;
+      if (rejectIfEnded(res, session)) return;
 
       const r = await realtimePlatformService.assignRole(req.params.sessionId, p.data);
       res.status(201).json(r);
