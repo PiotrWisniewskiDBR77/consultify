@@ -9,12 +9,21 @@
  * Matches the ROITrackingView navy-900 dark "Tech Sexy" conventions.
  */
 
-import { AlertTriangle, CheckCircle2, Clock, RefreshCw, Scale } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  DownloadCloud,
+  RefreshCw,
+  Scale,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
   shouldFallbackToLegacyResults,
+  type V8PostMortemVerdict,
+  type V8ReconciliationPostMortem,
   type V8ReconciliationStatus,
   V8ResultsApi,
   type V8ResultsReconciliationItem,
@@ -106,6 +115,25 @@ function formatPercent(value: number | null): string {
   return `${sign}${value.toFixed(1)}%`;
 }
 
+/**
+ * Verdict → neutral/semantic tone. Deliberately NO crimson/primary: a market-driven
+ * gap is external (neutral), execution/mixed is actionable (amber), on-plan is good
+ * (emerald), undetermined is unknown (slate).
+ */
+const VERDICT_TONE: Record<V8PostMortemVerdict, { bg: string; text: string }> = {
+  'market-driven': { bg: 'bg-sky-500/10', text: 'text-sky-400' },
+  'execution-driven': { bg: 'bg-amber-500/10', text: 'text-amber-400' },
+  mixed: { bg: 'bg-amber-500/10', text: 'text-amber-300' },
+  'on-plan': { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  undetermined: { bg: 'bg-slate-500/10', text: 'text-slate-400' },
+};
+
+/** 0..1 share → `NN%`. */
+function formatShare(fraction: number | null | undefined): string {
+  if (fraction == null || !Number.isFinite(fraction)) return '—';
+  return `${Math.round(fraction * 100)}%`;
+}
+
 const StatusChip: React.FC<{ status: V8ReconciliationStatus; label: string }> = ({
   status,
   label,
@@ -125,10 +153,12 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
   initiativeId,
   refreshNonce,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [overview, setOverview] = useState<V8ResultsReconciliationOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
+  const [pulling, setPulling] = useState(false);
+  const [pullError, setPullError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -156,6 +186,44 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     fetchData();
   }, [fetchData, refreshNonce]);
 
+  const items: V8ResultsReconciliationItem[] = overview?.items ?? [];
+
+  // Mappings for a re-pull are rebuilt from the reconciliations already on screen
+  // (kpiId + driverKey + projected). A row only has a driverKey once the engine has
+  // reconciled it, so this refreshes realized-vs-projected against the latest ROI
+  // entries for THIS initiative. First-time mappings are created upstream (Finance/M16).
+  const pullMappings = useMemo(
+    () =>
+      items
+        .filter((it) => !!it.driverKey)
+        .map((it) => ({
+          kpiId: it.kpiId,
+          driverKey: it.driverKey as string,
+          projectedValue: it.projectedValue,
+        })),
+    [items]
+  );
+  const canPull = !!initiativeId && pullMappings.length > 0;
+
+  const handlePull = useCallback(async () => {
+    if (!initiativeId || pullMappings.length === 0) return;
+    setPulling(true);
+    setPullError(null);
+    try {
+      await V8ResultsApi.pullReconciliation({ initiativeId, mappings: pullMappings });
+      await fetchData();
+    } catch {
+      setPullError(
+        t(
+          'results.reconciliation.pullFailed',
+          'Could not pull and reconcile actuals. Please try again.'
+        )
+      );
+    } finally {
+      setPulling(false);
+    }
+  }, [initiativeId, pullMappings, fetchData, t]);
+
   const statusLabel = useCallback(
     (status: V8ReconciliationStatus): string => {
       switch (status) {
@@ -173,16 +241,34 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     [t]
   );
 
+  const verdictLabel = useCallback(
+    (verdict: V8PostMortemVerdict): string => {
+      switch (verdict) {
+        case 'market-driven':
+          return t('results.reconciliation.postmortem.marketDriven', 'Market-driven');
+        case 'execution-driven':
+          return t('results.reconciliation.postmortem.executionDriven', 'Execution-driven');
+        case 'mixed':
+          return t('results.reconciliation.postmortem.mixed', 'Mixed');
+        case 'on-plan':
+          return t('results.reconciliation.postmortem.onPlan', 'On plan');
+        case 'undetermined':
+        default:
+          return t('results.reconciliation.postmortem.undetermined', 'Undetermined');
+      }
+    },
+    [t]
+  );
+
   const [reconciliationFilters, setReconciliationFilters] = useState<FilterChip[]>([]);
 
-  const items: V8ResultsReconciliationItem[] = overview?.items ?? [];
   const summary = overview?.summary;
 
   const reconciliationColumns: TableColumn[] = [
     {
       id: 'kpiName',
       label: t('results.reconciliation.col.kpi', 'KPI'),
-      width: '35%',
+      width: '26%',
       render: (row: TableRow) => (
         <div className="flex items-center gap-2">
           {row.hasMismatch && <AlertTriangle size={13} className="shrink-0 text-danger-400" />}
@@ -193,7 +279,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'reconciliationStatus',
       label: t('results.reconciliation.col.status', 'Status'),
-      width: '18%',
+      width: '14%',
       filterable: true,
       filterOptions: [
         {
@@ -227,7 +313,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'projectedValue',
       label: t('results.reconciliation.col.projected', 'Projected'),
-      width: '15%',
+      width: '12%',
       align: 'right',
       render: (row: TableRow) => (
         <span className="tabular-nums text-slate-700 dark:text-c-text-secondary">
@@ -238,7 +324,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'realizedValue',
       label: t('results.reconciliation.col.realized', 'Realized'),
-      width: '15%',
+      width: '12%',
       align: 'right',
       render: (row: TableRow) => (
         <span className="tabular-nums text-slate-700 dark:text-c-text-secondary">
@@ -249,7 +335,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'varianceAbsolute',
       label: t('results.reconciliation.col.variance', 'Variance'),
-      width: '17%',
+      width: '14%',
       align: 'right',
       render: (row: TableRow) => {
         const varianceTone =
@@ -272,10 +358,40 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
         );
       },
     },
+    {
+      // O4.7 — market-vs-execution post-mortem (verdict + market/execution split +
+      // explanation on hover). Present only for engine-reconciled rows.
+      id: 'postMortem',
+      label: t('results.reconciliation.col.postmortem', 'Post-mortem'),
+      width: '22%',
+      render: (row: TableRow) => {
+        const pm = row.postMortem as V8ReconciliationPostMortem | null;
+        if (!pm) return <span className="text-xs text-slate-500">—</span>;
+        const tone = VERDICT_TONE[pm.verdict] ?? VERDICT_TONE.undetermined;
+        const explanation =
+          i18n.language?.startsWith('pl') ? pm.explanation?.pl : pm.explanation?.en;
+        return (
+          <div className="flex flex-col gap-1" title={explanation || undefined}>
+            <span
+              className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${tone.bg} ${tone.text}`}
+            >
+              {verdictLabel(pm.verdict)}
+            </span>
+            <span className="text-[11px] tabular-nums text-slate-500 dark:text-c-text-muted">
+              {t('results.reconciliation.postmortem.marketShort', 'Market')} {formatShare(pm.marketShare)}
+              {' · '}
+              {t('results.reconciliation.postmortem.executionShort', 'Exec')}{' '}
+              {formatShare(pm.executionShare)}
+            </span>
+          </div>
+        );
+      },
+    },
   ];
 
   const reconciliationRows: TableRow[] = items.map((item) => ({
     id: item.reconciliationId,
+    postMortem: item.conclusion?.postMortem ?? null,
     kpiName:
       item.kpiName ||
       t('results.reconciliation.unnamedKpi', 'KPI {{id}}', { id: item.kpiId.slice(0, 8) }),
@@ -312,6 +428,28 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
               })}
             </span>
           )}
+          {initiativeId && (
+            <button
+              type="button"
+              onClick={handlePull}
+              disabled={!canPull || pulling}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-c-border px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-c-text-secondary hover:bg-slate-100 dark:hover:bg-c-surface-raised hover:text-slate-800 dark:hover:text-c-text disabled:cursor-not-allowed disabled:opacity-50"
+              title={
+                canPull
+                  ? t(
+                      'results.reconciliation.pull.hint',
+                      'Pull realized ROI actuals and reconcile them against the finance model'
+                    )
+                  : t(
+                      'results.reconciliation.pull.disabledHint',
+                      'No mapped reconciliations to refresh yet'
+                    )
+              }
+            >
+              <DownloadCloud size={12} className={pulling ? 'animate-pulse' : ''} />
+              {t('results.reconciliation.pull.cta', 'Pull & reconcile')}
+            </button>
+          )}
           <button
             type="button"
             onClick={fetchData}
@@ -322,6 +460,12 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
           </button>
         </div>
       </div>
+
+      {pullError && (
+        <div className="border-b border-danger-500/20 bg-danger-500/5 px-4 py-2 text-xs text-danger-400">
+          {pullError}
+        </div>
+      )}
 
       {/* Body */}
       {loading ? (

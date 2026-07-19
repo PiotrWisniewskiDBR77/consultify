@@ -4,6 +4,7 @@ import {
   Calculator,
   ChevronDown,
   ChevronRight,
+  FileBarChart,
   FileText,
   PanelRightClose,
   PanelRightOpen,
@@ -62,6 +63,51 @@ interface FinanceReportLineage {
   generatedAt: string;
   assumptions: FinanceLineageAssumption[];
   entries: FinanceReportLineageEntry[];
+}
+
+/**
+ * O4.2-O4.6 — partial FE mirror of the server `FinanceReportSection` (only the fields
+ * this panel renders). Surfaces the four engine outputs that had NO reachable UI:
+ * scenario levers (O4.2), value tree (O4.3), portfolio advisory (O4.4), trend (O4.6).
+ */
+interface FinanceReportSectionData {
+  headline?: string;
+  verdict?: string;
+  scenarios?: {
+    available: boolean;
+    outcomes?: Array<{
+      leverId: string;
+      leverName?: string;
+      metric?: number;
+      deltaVsStatusQuo?: number;
+      risk?: string;
+    }>;
+    recommendation?: { chosenId?: string } | null;
+  };
+  valueTree?: {
+    available: boolean;
+    forLeverId?: string | null;
+    tree?: { gross?: number; components?: unknown[] } | null;
+    narrative?: string | null;
+  };
+  portfolioAdvisory?: {
+    available: boolean;
+    itemCount?: number;
+    advisory?: {
+      conclusion?: string;
+      budgetVerdict?: string;
+      totalCapex?: number;
+      sequence?: unknown[];
+    } | null;
+  };
+  trend?: {
+    available: boolean;
+    lines?: Array<{
+      lineCode: string;
+      trend?: { periods?: number; direction?: string; cagrPct?: number } | null;
+    }>;
+    note?: string;
+  };
 }
 
 interface PackDetail {
@@ -368,6 +414,12 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   const [lineageLoading, setLineageLoading] = useState(false);
   const [lineage, setLineage] = useState<FinanceReportLineage | null>(null);
   const [lineageLoaded, setLineageLoaded] = useState(false);
+
+  // O4.2-O4.6 — "Generuj sekcję raportu": POST report-section (silnik→papier) + render.
+  const [showSection, setShowSection] = useState(false);
+  const [sectionLoading, setSectionLoading] = useState(false);
+  const [section, setSection] = useState<FinanceReportSectionData | null>(null);
+  const [sectionError, setSectionError] = useState<string | null>(null);
   const statementRequestSeq = useRef(0);
   const explainRequestSeq = useRef(0);
 
@@ -571,6 +623,38 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
       return next;
     });
   }, [lineageLoaded, loadLineage]);
+
+  // O4.2-O4.6 — compose + publish the finance report section, then render the four
+  // engine outputs (scenarios/value-tree/portfolio/trend) that previously had no UI.
+  const generateSection = useCallback(async () => {
+    setShowSection(true);
+    setSectionLoading(true);
+    setSectionError(null);
+    try {
+      const response = (await Api.post(
+        `/api/finance-statements/packs/${statementPackId}/report-section`,
+        {}
+      )) as { section?: FinanceReportSectionData } | null;
+      if (response?.section) {
+        setSection(response.section);
+      } else {
+        setSection(null);
+        setSectionError(
+          t('finance.pack.section.empty', 'The report section came back empty.')
+        );
+      }
+    } catch {
+      setSection(null);
+      setSectionError(
+        t(
+          'finance.pack.section.failed',
+          'Could not generate the report section. Please try again.'
+        )
+      );
+    } finally {
+      setSectionLoading(false);
+    }
+  }, [statementPackId, t]);
 
   const sourceFiles = useMemo(() => {
     return childStatements.map((s) => ({
@@ -782,6 +866,33 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             {showLineage ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
           </button>
 
+          {/* O4.2-O4.6 — Generate report section (silnik→papier): scenarios + value tree + portfolio + trend */}
+          <button
+            type="button"
+            onClick={() => {
+              if (!showSection) void generateSection();
+              else setShowSection(false);
+            }}
+            disabled={sectionLoading}
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/[0.04]"
+            title={t(
+              'finance.pack.section.tooltip',
+              'Generate the finance report section (scenarios, value tree, portfolio advisory, trend)'
+            )}
+          >
+            <FileBarChart size={11} />
+            <span className="hidden lg:inline">
+              {t('finance.pack.section.cta', 'Report section')}
+            </span>
+            {sectionLoading ? (
+              <RefreshCw size={11} className="animate-spin" />
+            ) : showSection ? (
+              <ChevronDown size={11} />
+            ) : (
+              <ChevronRight size={11} />
+            )}
+          </button>
+
           {/* Separator */}
           <div className="mx-1 h-5 w-px bg-slate-200/60 dark:bg-white/[0.06]" />
 
@@ -888,6 +999,173 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               <div className="border-t border-slate-200/40 px-4 py-2 text-[10px] text-slate-500 dark:border-white/[0.04] dark:text-slate-400">
                 {t('finance.pack.sectionAssumptionsPrefix', 'Section assumptions: ')}
                 {lineage.assumptions.map((a) => a.key).join(', ')}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* O4.2-O4.6 — Collapsible report-section result (scenarios / value tree / portfolio / trend) */}
+        {showSection && (
+          <div className="border-t border-slate-200/50 dark:border-white/[0.05]">
+            {sectionLoading ? (
+              <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                {t('finance.pack.section.loading', 'Composing report section…')}
+              </div>
+            ) : sectionError ? (
+              <div className="px-4 py-3 text-xs text-danger-500 dark:text-danger-300">
+                {sectionError}
+              </div>
+            ) : !section ? (
+              <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                {t('finance.pack.section.emptyHint', 'No report section yet.')}
+              </div>
+            ) : (
+              <div className="max-h-80 space-y-3 overflow-y-auto px-4 py-3">
+                {/* Headline + verdict */}
+                {(section.headline || section.verdict) && (
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[12px] font-medium text-slate-800 dark:text-slate-100">
+                      {section.headline}
+                    </span>
+                    {section.verdict && (
+                      <span className="inline-flex shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                        {section.verdict}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* O4.2 — scenario levers */}
+                {section.scenarios?.available && (section.scenarios.outcomes?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('finance.pack.section.scenarios', 'Scenarios (O4.2)')}
+                    </div>
+                    <div className="divide-y divide-slate-200/40 dark:divide-white/[0.04]">
+                      {section.scenarios.outcomes!.map((o) => {
+                        const recommended =
+                          section.scenarios?.recommendation?.chosenId === o.leverId;
+                        return (
+                          <div
+                            key={o.leverId}
+                            className="flex items-center justify-between gap-2 py-1"
+                          >
+                            <span className="flex items-center gap-1.5 text-[11px] text-slate-700 dark:text-slate-200">
+                              {recommended && (
+                                <span className="inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                  {t('finance.pack.section.recommended', 'Recommended')}
+                                </span>
+                              )}
+                              {o.leverName || o.leverId}
+                            </span>
+                            <span className="tabular-nums text-[11px] text-slate-600 dark:text-slate-300">
+                              {typeof o.metric === 'number'
+                                ? o.metric.toLocaleString()
+                                : '—'}
+                              {typeof o.deltaVsStatusQuo === 'number' &&
+                                o.deltaVsStatusQuo !== 0 && (
+                                  <span
+                                    className={`ml-1 text-[10px] ${o.deltaVsStatusQuo > 0 ? 'text-emerald-500' : 'text-danger-500'}`}
+                                  >
+                                    ({o.deltaVsStatusQuo > 0 ? '+' : ''}
+                                    {o.deltaVsStatusQuo.toLocaleString()})
+                                  </span>
+                                )}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* O4.3 — value tree */}
+                {section.valueTree?.available && section.valueTree.tree && (
+                  <div>
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('finance.pack.section.valueTree', 'Value tree (O4.3)')}
+                    </div>
+                    <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                      {t('finance.pack.section.grossValue', 'Gross value')}:{' '}
+                      <span className="tabular-nums font-medium">
+                        {typeof section.valueTree.tree.gross === 'number'
+                          ? section.valueTree.tree.gross.toLocaleString()
+                          : '—'}
+                      </span>
+                      {(section.valueTree.tree.components?.length ?? 0) > 0 && (
+                        <span className="ml-1 text-slate-500">
+                          ·{' '}
+                          {t('finance.pack.section.components', '{{count}} components', {
+                            count: section.valueTree.tree.components!.length,
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    {section.valueTree.narrative && (
+                      <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                        {section.valueTree.narrative}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* O4.4 — portfolio advisory */}
+                {section.portfolioAdvisory?.available && section.portfolioAdvisory.advisory && (
+                  <div>
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('finance.pack.section.portfolio', 'Portfolio advisory (O4.4)')}
+                    </div>
+                    <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                      {t('finance.pack.section.initiatives', '{{count}} initiatives', {
+                        count: section.portfolioAdvisory.itemCount ?? 0,
+                      })}
+                      {section.portfolioAdvisory.advisory.budgetVerdict && (
+                        <span className="ml-1 text-slate-500">
+                          · {section.portfolioAdvisory.advisory.budgetVerdict}
+                        </span>
+                      )}
+                    </div>
+                    {section.portfolioAdvisory.advisory.conclusion && (
+                      <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                        {section.portfolioAdvisory.advisory.conclusion}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* O4.6 — trend */}
+                {section.trend?.available && (section.trend.lines?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('finance.pack.section.trend', 'Trend (O4.6)')}
+                    </div>
+                    <div className="divide-y divide-slate-200/40 dark:divide-white/[0.04]">
+                      {section.trend.lines!
+                        .filter((l) => (l.trend?.periods ?? 0) >= 2)
+                        .map((l) => (
+                          <div
+                            key={l.lineCode}
+                            className="flex items-center justify-between gap-2 py-1 text-[11px]"
+                          >
+                            <span className="text-slate-700 dark:text-slate-200">{l.lineCode}</span>
+                            <span className="text-slate-600 dark:text-slate-300">
+                              {l.trend?.direction || '—'}
+                              {typeof l.trend?.cagrPct === 'number' && (
+                                <span className="ml-1 tabular-nums text-slate-500">
+                                  {l.trend.cagrPct > 0 ? '+' : ''}
+                                  {l.trend.cagrPct.toFixed(1)}%
+                                </span>
+                              )}
+                              <span className="ml-1 text-[10px] text-slate-400">
+                                ({l.trend?.periods}{' '}
+                                {t('finance.pack.section.periods', 'periods')})
+                              </span>
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
