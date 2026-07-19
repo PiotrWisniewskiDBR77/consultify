@@ -170,8 +170,8 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
 
     res.json({ assessments: normalized });
   } catch (err: any) {
-    logger.error('[AssessmentHub] Error fetching assessments:', err);
-    res.status(500).json({ error: 'Failed to fetch assessments', message: err.message });
+    logger.error('[AssessmentHub] Error fetching assessments', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać ocen', code: 'ASSESSMENT_HUB_FETCH_ASSESSMENTS_FAILED' });
   }
 });
 
@@ -244,8 +244,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 
     res.json({ assessments: normalized });
   } catch (err: any) {
-    logger.error('[AssessmentHub] Error:', err);
-    res.status(500).json({ error: 'Failed to fetch assessments', message: err.message });
+    logger.error('[AssessmentHub] Error', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać ocen', code: 'ASSESSMENT_HUB_FETCH_ASSESSMENTS_FAILED' });
   }
 });
 
@@ -352,8 +352,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (err: any) {
-    logger.error('[AssessmentHub] Error fetching assessment:', err);
-    res.status(500).json({ error: 'Failed to fetch assessment', message: err.message });
+    logger.error('[AssessmentHub] Error fetching assessment', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać oceny', code: 'ASSESSMENT_HUB_FETCH_ASSESSMENT_FAILED' });
   }
 });
 
@@ -395,8 +395,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (err: any) {
-    logger.error('[AssessmentHub] Error creating assessment:', err);
-    res.status(500).json({ error: 'Failed to create assessment', message: err.message });
+    logger.error('[AssessmentHub] Error creating assessment', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się utworzyć oceny', code: 'ASSESSMENT_HUB_CREATE_ASSESSMENT_FAILED' });
   }
 });
 
@@ -426,8 +426,8 @@ router.put('/:id/status', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true, id, status });
   } catch (err: any) {
-    logger.error('[AssessmentHub] Error updating status:', err);
-    res.status(500).json({ error: 'Failed to update status', message: err.message });
+    logger.error('[AssessmentHub] Error updating status', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zaktualizować statusu', code: 'ASSESSMENT_HUB_UPDATE_STATUS_FAILED' });
   }
 });
 
@@ -455,8 +455,8 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (err: any) {
-    logger.error('[AssessmentHub] Error deleting assessment:', err);
-    res.status(500).json({ error: 'Failed to delete assessment', message: err.message });
+    logger.error('[AssessmentHub] Error deleting assessment', { err: err, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się usunąć oceny', code: 'ASSESSMENT_HUB_DELETE_ASSESSMENT_FAILED' });
   }
 });
 
