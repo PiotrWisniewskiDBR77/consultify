@@ -3547,8 +3547,13 @@ router.get(
 
       return res.json(shaped);
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching signals:', err);
-      return res.status(500).json({ error: err.message });
+      // Read — signal popover badge (unread system alerts). Fail-soft: degrade to
+      // an empty list instead of breaking the superadmin header with a 500.
+      logger.warn('[SuperAdmin] Signals fetch degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json([]);
     }
   })
 );
@@ -3572,8 +3577,16 @@ router.get(
             `);
       return res.json(stages || []);
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error fetching lifecycle stages:', err);
-      return res.status(500).json({ error: err.message });
+      // Fail-closed — primary content of the lifecycle admin screen (not a side
+      // enrichment). Code + log with correlationId, no err.message leak.
+      logger.error('[SuperAdmin] Error fetching lifecycle stages:', {
+        err,
+        correlationId: (_req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać etapów cyklu życia klienta',
+        code: 'SUPERADMIN_LIFECYCLE_STAGES_FETCH_FAILED',
+      });
     }
   })
 );
@@ -3600,8 +3613,15 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      logger.error('[SuperAdmin] Error creating lifecycle stage:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[SuperAdmin] Error creating lifecycle stage:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć etapu cyklu życia',
+        code: 'SUPERADMIN_LIFECYCLE_STAGE_CREATE_FAILED',
+      });
     }
   })
 );

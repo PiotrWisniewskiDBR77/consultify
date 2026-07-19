@@ -397,8 +397,24 @@ router.get(
         },
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching regional preferences:', err);
-      return res.status(500).json({ error: err.message });
+      // Read — regional preferences panel. Fail-soft: degrade to safe defaults
+      // instead of breaking the settings screen with a 500.
+      logger.warn('[settings] Regional preferences fetch degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        preferences: {
+          timezone: 'UTC',
+          units: 'metric',
+          currency: 'USD',
+          numberFormat: 'en-US',
+          dateFormat: 'DD/MM/YYYY',
+          timeFormat: '24h',
+          firstDayOfWeek: 'monday',
+        },
+        degraded: true,
+      });
     }
   })
 );
@@ -436,8 +452,15 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating regional preferences:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft. Real error with a stable code, no err.message leak.
+      logger.error('[settings] Error updating regional preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać preferencji regionalnych',
+        code: 'SETTINGS_REGIONAL_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -479,8 +502,20 @@ router.get(
         },
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching notification preferences:', err);
-      return res.status(500).json({ error: err.message });
+      // Read — notification preferences panel. Fail-soft: degrade to safe defaults.
+      logger.warn('[settings] Notification preferences fetch degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        preferences: {
+          email: true,
+          push: true,
+          inApp: true,
+          digest: 'daily',
+        },
+        degraded: true,
+      });
     }
   })
 );
@@ -519,8 +554,15 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating notification preferences:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[settings] Error updating notification preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać preferencji powiadomień',
+        code: 'SETTINGS_NOTIFICATIONS_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -571,8 +613,25 @@ router.get(
         },
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching quiet hours:', err);
-      return res.status(500).json({ error: err.message });
+      // Read — quiet hours panel. Fail-soft: degrade to safe defaults.
+      logger.warn('[settings] Quiet hours fetch degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        preferences: {
+          enabled: false,
+          startTime: '22:00',
+          endTime: '08:00',
+          daysOfWeek: [0, 6],
+          allowUrgent: true,
+          allowMentions: false,
+          allowDirectMessages: false,
+          autoReplyEnabled: false,
+          autoReplyMessage: '',
+        },
+        degraded: true,
+      });
     }
   })
 );
@@ -605,8 +664,15 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating quiet hours:', err);
-      return res.status(500).json({ error: err.message });
+      // Write — NEVER fail-soft.
+      logger.error('[settings] Error updating quiet hours:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać godzin ciszy',
+        code: 'SETTINGS_QUIET_HOURS_UPDATE_FAILED',
+      });
     }
   })
 );
