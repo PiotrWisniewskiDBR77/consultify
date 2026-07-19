@@ -51,16 +51,16 @@ export function buildDeps(hasNotifiedCol: boolean): DueBreachDeps {
       const nowIso = now.toISOString();
       const notifiedSelect = hasNotifiedCol ? `t.${NOTIFIED_COL}` : 'NULL';
       const rows = await queryHelpers.queryAll<any>(
-        `SELECT t.id          AS itemId,
-                t.title       AS itemTitle,
-                t.due_date    AS dueDate,
+        `SELECT t.id          AS "itemId",
+                t.title       AS "itemTitle",
+                t.due_date    AS "dueDate",
                 t.status      AS status,
-                t.initiative_id AS initiativeId,
-                i.organization_id AS organizationId,
-                i.owner_business_id  AS ownerBusinessId,
-                i.owner_execution_id AS ownerExecutionId,
-                i.sponsor_id         AS sponsorId,
-                ${notifiedSelect} AS lastNotifiedDueDate
+                t.initiative_id AS "initiativeId",
+                i.organization_id AS "organizationId",
+                i.owner_business_id  AS "ownerBusinessId",
+                i.owner_execution_id AS "ownerExecutionId",
+                i.sponsor_id         AS "sponsorId",
+                ${notifiedSelect} AS "lastNotifiedDueDate"
          FROM tasks t
          JOIN initiatives i ON i.id = t.initiative_id
          WHERE t.due_date IS NOT NULL
