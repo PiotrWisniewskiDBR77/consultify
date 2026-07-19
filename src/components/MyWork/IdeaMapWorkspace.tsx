@@ -749,8 +749,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         xform_to_flow: 'process_flow',
         xform_to_table: 'table',
       };
-      if (XFORM_MAP[action]) {
-        const targetTool = XFORM_MAP[action];
+      // H2.3 fix: the mind-map "→ Process Flow (branch)" context-menu action
+      // (convertBranch → 'convert_process_flow') carries explicit branch
+      // nodeIds instead of a live canvas selection. Route it through the same
+      // transform pipeline as xform_to_flow so the branch is actually
+      // converted, not just a bare tool switch with nothing carried over.
+      const explicitNodeIds = Array.isArray(eventDetail?.nodeIds)
+        ? (eventDetail!.nodeIds as string[])
+        : undefined;
+      if (XFORM_MAP[action] || (action === 'convert_process_flow' && explicitNodeIds)) {
+        const targetTool = XFORM_MAP[action] || 'process_flow';
         trackFunnelEvent('ideas_cross_system_transform', {
           from: activeTool,
           to: targetTool,
@@ -758,7 +766,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         });
 
         const sel = selectionRef.current;
-        const selectedIds = sel.ids || [];
+        const selectedIds = explicitNodeIds || sel.ids || [];
         const liveNodes = graphNodesRef.current || [];
         const liveEdges = graphEdgesRef.current || [];
         const selectedSet = new Set(selectedIds);

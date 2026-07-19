@@ -4734,11 +4734,11 @@ function MindMapInner({
       if (action === 'ctx_subtree_convert_task_set') convertBranch('task_set', ctxNode?.id);
       if (action === 'ctx_subtree_convert_initiative') convertBranch('initiative', ctxNode?.id);
       if (action === 'ctx_subtree_convert_process_flow') {
-        window.dispatchEvent(
-          new CustomEvent('idea-workspace-quick-action', {
-            detail: { action: 'switch_to_process_flow', nodeId: ctxNode?.id },
-          })
-        );
+        // H2.3 fix: route through convertBranch (like every other subtree
+        // conversion) so the branch's nodes/edges are actually transformed
+        // into Process Flow, instead of just switching the active tool with
+        // nothing carried over.
+        convertBranch('process_flow', ctxNode?.id);
       }
       if (action === 'ctx_add_image') {
         if (ctxNode && ctxNode.type === 'idea') {
@@ -5240,17 +5240,12 @@ function MindMapInner({
               ctx_subtree_convert_tasks: 'task_set',
               ctx_subtree_convert_task_set: 'task_set',
               ctx_subtree_convert_initiative: 'initiative',
+              // H2.3 fix: was a bare tool-switch with no data carried over;
+              // route through convertBranch like every other subtree target.
+              ctx_subtree_convert_process_flow: 'process_flow',
             };
             if (SUBTREE_MAP[action]) {
               convertBranch(SUBTREE_MAP[action], floatingToolbarInfo.nodeId);
-              return;
-            }
-            if (action === 'ctx_subtree_convert_process_flow') {
-              window.dispatchEvent(
-                new CustomEvent('idea-workspace-quick-action', {
-                  detail: { action: 'switch_to_process_flow', nodeId: floatingToolbarInfo.nodeId },
-                })
-              );
               return;
             }
             window.dispatchEvent(
