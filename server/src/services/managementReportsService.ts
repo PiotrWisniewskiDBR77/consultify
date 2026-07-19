@@ -390,6 +390,7 @@ class ManagementReportsService {
       scope: 'PROJECT',
       summary: `${project.name} delivered ${statusSummary.tasksCompleted} tasks with ${statusSummary.tasksBlocked} blockers.`,
       aiEnhancement: options.aiEnhancement,
+      organizationId: options.organizationId || project.organization_id,
     });
 
     const report = await this.saveReport({
@@ -587,6 +588,7 @@ class ManagementReportsService {
       scope,
       summary: content.executiveSummary,
       aiEnhancement: options.aiEnhancement,
+      organizationId,
     });
 
     const report = await this.saveReport({
@@ -713,6 +715,7 @@ class ManagementReportsService {
       scope: 'PORTFOLIO',
       summary: content.executiveSummary,
       aiEnhancement: options.aiEnhancement,
+      organizationId,
     });
 
     const report = await this.saveReport({
@@ -862,6 +865,7 @@ class ManagementReportsService {
       scope: options.scope || 'PROJECT',
       summary: content.executiveSummary,
       aiEnhancement: options.aiEnhancement,
+      organizationId,
     });
 
     const report = await this.saveReport({
@@ -1344,7 +1348,7 @@ class ManagementReportsService {
     return next.toISOString();
   }
 
-  async generateAiNarrative({ reportType, scope, summary, aiEnhancement }) {
+  async generateAiNarrative({ reportType, scope, summary, aiEnhancement, organizationId }) {
     if (!aiEnhancement) {
       return { narrative: summary, warnings: [] };
     }
@@ -1353,7 +1357,8 @@ class ManagementReportsService {
     }
 
     try {
-      // TODO(T7): dead self-import wrapper (real impl never existed) — this path is a 503/fallback victim. Build a real service before relying on it. Ref: finding_42_self_import_wrappers_services_2026-07-15.
+      // REJESTR T7b-3/4 (2026-07-19): aiExecutiveReporting.ts now has a real implementation
+      // (one grounded llmService call, tier STANDARD, fail-soft) — see that file's header.
       const aiModule = await import('./aiExecutiveReporting.js');
       const aiService = aiModule.default || aiModule;
       if (
@@ -1365,6 +1370,7 @@ class ManagementReportsService {
           type: reportType,
           scope,
           summary,
+          organizationId,
         });
         return { narrative: result?.narrative || summary, warnings: result?.warnings || [] };
       }

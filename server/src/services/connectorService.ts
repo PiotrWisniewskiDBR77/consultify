@@ -11,9 +11,45 @@ import { v4 as uuidv4 } from 'uuid';
 
 import db from '../database/Database.js';
 import * as auditLogger from '../utils/auditLogger.js';
-// TODO(T7): dead self-import wrapper (real impl never existed) — this path is a 503/fallback victim. Build a real service before relying on it. Ref: finding_42_self_import_wrappers_services_2026-07-15.
-import connectorRegistry from './connectorRegistry.js';
 import secretsVault from './secretsVault.js';
+
+// REJESTR T7b-3/4 (2026-07-19): `./connectorRegistry.js` was a self-import wrapper
+// (`import service from './connectorRegistry.js'` inside connectorRegistry.ts itself —
+// resolves to its own file under tsx's extensionless resolution, so `service` was always
+// undefined at runtime; every call below was a guaranteed crash). Traced the whole chain
+// (connectorRegistry -> connectorAdapter) end-to-end: connectorAdapter.ts had zero real
+// importers anywhere in server/src or client/src, and this file (connectorService.ts) had
+// no importer other than connectorAdapter.ts. The live `/api/connectors` route
+// (server/src/routes/integrations/connectors.routes.ts) uses raw SQL against a different
+// `connectors` table and never touches this service. The `connectors` / `org_connector_configs`
+// tables this file's CRUD methods query have no migration anywhere — so even the DB-backed
+// parts of this service (getCatalog/getOrgConfigs/connect/...) cannot run against the real
+// schema today. Deleted the dead wrapper (connectorRegistry.ts) and the dead orchestrator
+// (server/src/ai/connectorAdapter.ts, 0 consumers) rather than keep them compiling. Per
+// instruction, keeping this file itself intact/self-consistent (not deleting) — replaced the
+// phantom registry with a small static catalog so getConnector()/validateCredentials() at
+// least behave honestly instead of throwing on `undefined`. This does NOT make the service
+// reachable — it remains unwired to any live route; wiring it up is a separate decision.
+const CONNECTOR_CATALOG: Record<string, { name: string; requiredFields: string[] }> = {
+  slack: { name: 'Slack', requiredFields: ['token'] },
+  jira: { name: 'Jira', requiredFields: ['apiKey', 'baseUrl', 'email'] },
+  teams: { name: 'Microsoft Teams', requiredFields: ['token'] },
+  hubspot: { name: 'HubSpot', requiredFields: ['apiKey'] },
+  google_calendar: { name: 'Google Calendar', requiredFields: ['accessToken', 'refreshToken'] },
+};
+
+const connectorRegistry = {
+  getConnector: (connectorKey: string) => {
+    const entry = CONNECTOR_CATALOG[connectorKey];
+    return entry ? { key: connectorKey, ...entry } : null;
+  },
+  validateCredentials: (connectorKey: string, secrets: Record<string, unknown> = {}) => {
+    const entry = CONNECTOR_CATALOG[connectorKey];
+    if (!entry) return { valid: false, missing: ['unknown_connector'] };
+    const missing = entry.requiredFields.filter((field) => !secrets?.[field]);
+    return { valid: missing.length === 0, missing };
+  },
+};
 
 // Dependency injection container
 const deps = {
