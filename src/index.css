@@ -141,6 +141,60 @@
     --c-chart-7-rgb: 110 138 47;
     --c-chart-8: #5f7488; /* slate        4.84:1 (AA text) */
     --c-chart-8-rgb: 95 116 136;
+
+    /* ========================================================================
+     * VF0-4 MOTION TOKENS — canonical duration/easing scale (Vegas Faza 0).
+     * Consumed via tailwind.config.js `transitionDuration.fast/base/slow` +
+     * `transitionTimingFunction.standard` → utility classes `duration-fast`,
+     * `duration-base`, `duration-slow`, `ease-standard`. Values sit close to
+     * the ad-hoc literal `duration-150`/`duration-200` classes they replace
+     * across `standard/` — a static screenshot can't show a ms delta, so this
+     * is a pure literal→token refactor (zero visual change).
+     * `--motion-ease` equals Tailwind's own default `ease` timing function,
+     * so adding the explicit class is also a no-op today.
+     * ======================================================================== */
+    --motion-fast: 120ms;
+    --motion-base: 180ms;
+    --motion-slow: 220ms;
+    --motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ========================================================================
+     * VF0-5 ELEVATION TOKENS — canonical shadow scale, MAPPED 1:1 to the
+     * EXISTING `hig-*` / `hig-dark-*` box-shadow values already declared in
+     * tailwind.config.js — zero new shadow shapes introduced. Consumed via
+     * `boxShadow.elevation-0..3` → `shadow-elevation-0..3`. Dark overrides
+     * live in the `.dark` block below (literal shadow strings, not derived
+     * from other vars, so they can't auto-adapt like color tokens do).
+     *   0 = flat/resting surface (e.g. table row) — no shadow.
+     *   1 = hig-md    — raised card, resting (StandardGridCard/StandardKanbanCard).
+     *   2 = hig-hover  — raised card hover / popover-kebab-dropdown.
+     *   3 = hig-2xl   — modal (reserved; no in-scope consumer today).
+     * NOTE (VF0 pitfall — see robotnik report): NONE of these are applied to
+     * an existing component in this pass. Every real candidate found in scope
+     * (StandardGridCard/StandardKanbanCard `shadow-token-card`, NModeCardState/
+     * NModeCardManager dropdown `shadow-lg`) is currently THEME-INVARIANT
+     * (same shadow in light+dark), while the correct hig-dark-* mapping below
+     * is NOT invariant — swapping would visibly change the dark-mode shadow.
+     * Applying it would violate this batch's "zrzut identyczny" criterion, so
+     * the tokens are defined+wired but left unconsumed pending a dedicated,
+     * screenshot-approved visual pass (CLAUDE.md rule #7).
+     * ======================================================================== */
+    --elevation-0: none;
+    --elevation-1: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06); /* == hig-md */
+    --elevation-2: 0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06); /* == hig-hover */
+    --elevation-3: 0 25px 50px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.06); /* == hig-2xl */
+
+    /* ========================================================================
+     * VF0-6 STATE-LAYER TOKENS — hover/press/selected via `color-mix`, NOT
+     * `c-*-soft` (only `--c-accent-soft` exists, brand-specific). Built from
+     * `--c-text` so they auto-adapt per theme (no `.dark` override needed —
+     * `var(--c-text)` already resolves differently there). Percentages picked
+     * to approximate the ad-hoc neutral overlay hovers they replace (e.g.
+     * StandardPreview's old pin-button `bg-slate-100` / `dark:bg-white/[0.10]`).
+     * ======================================================================== */
+    --state-hover: color-mix(in srgb, var(--c-text) 6%, transparent);
+    --state-press: color-mix(in srgb, var(--c-text) 10%, transparent);
+    --state-selected: color-mix(in srgb, var(--c-text) 8%, transparent);
   }
 
   .dark {
@@ -269,6 +323,15 @@
     --c-chart-7-rgb: 168 179 95;
     --c-chart-8: #93a6bc; /* slate        */
     --c-chart-8-rgb: 147 166 188;
+
+    /* VF0-5 ELEVATION — dark overrides (== hig-dark-md / hig-hover-dark /
+     * hig-dark-xl). NOT currently consumed by any component — see the
+     * :root block comment (VF0 pitfall) for why. */
+    --elevation-1: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3); /* == hig-dark-md */
+    --elevation-2: 0 8px 16px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3); /* == hig-hover-dark */
+    --elevation-3: 0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25); /* == hig-dark-xl */
+    /* --state-hover/-press/-selected NOT redeclared here — the :root formula
+     * already reads var(--c-text), which resolves to the dark value here. */
   }
 }
 

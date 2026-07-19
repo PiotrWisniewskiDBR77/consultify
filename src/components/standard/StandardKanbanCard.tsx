@@ -131,7 +131,7 @@ export const StandardKanbanCard: React.FC<StandardKanbanCardProps> = ({
       data-testid={`standard-kanban-card-${card.id}`}
       className={cn(
         'group rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 cursor-pointer select-none',
-        'border-l-[3px] shadow-token-card hover:shadow-token-card-hover transition-shadow duration-150',
+        'border-l-[3px] shadow-token-card hover:shadow-token-card-hover transition-shadow duration-fast ease-standard',
         URGENCY_ACCENT[urgency],
         urgency === 'critical' && 'bg-danger-500/[0.04] dark:bg-danger-500/[0.06]',
         isDragging && 'opacity-40',
