@@ -36,6 +36,7 @@ import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
 import CapabilityGateDemoScreen from './screens/capability-gate-demo';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
+import DecisionRecordScreen from './screens/decision-record';
 import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
 import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
 import EvFootballFieldScreen from './screens/ev-football-field';
@@ -225,6 +226,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'crimson-mywork-wave2': {
     label: 'Crimson Wave #2 (MyWork) — CTA/aktywne bg-c-accent → neutralne (PRZED/PO)',
     render: () => <CrimsonMyWorkWave2Screen />,
+  },
+  'decision-record': {
+    label:
+      'VF1-4 — REALNY <DecisionDetailView> (archetyp C·Rekord, SPEC-A powłoka) N-mode; &ff_vf1DecisionSpeca=1 wraz z VITE_VF1_DECISION_SPECA=true dla stanów gated',
+    render: () => <DecisionRecordScreen />,
   },
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',

@@ -59,6 +59,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import { SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import {
   ArtifactRightPanel,
@@ -185,6 +186,12 @@ interface DecisionDetailViewProps {
   onClose: () => void;
   onSaved?: (data: any) => void;
 }
+
+// VF1-4 (SPEC-A wzorzec, wg VF1-1 Task): gate for the visible loading-guard
+// swap (ad-hoc spinner → shared/states SkeletonState, record archetype).
+// Default OFF until Piotr accepts on screenshots (reguła #7).
+// See docs/ui-standards/TRIADA_KANON.md + ARTIFACT_ANATOMY_STANDARD.md §18.1.
+const VF1_DECISION_SPECA = import.meta.env.VITE_VF1_DECISION_SPECA === 'true';
 
 type ConsequenceTimeline = {
   d7: string;
@@ -1592,7 +1599,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return {
         icon: <Flag size={12} />,
         label: t('decisions.detail.activityLog.statusChange', 'Status change'),
-        style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
+        // VF1-4: was crimson `primary-*` — distinct hue from escalated/deferred/comment/deadline.
+        style: 'text-c-info bg-c-info/10 border-c-info/30',
       };
     if (type === 'edit')
       return {
@@ -4061,7 +4069,7 @@ Use userId only from this list:
       <button
         onClick={() => setAiMenuOpenField((prev) => (prev === fieldKey ? null : fieldKey))}
         disabled={isDecisionStageLocked || !!aiFieldLoading[fieldKey]}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         title={t('decisions.detail.refine.aiActionsTitle', 'AI actions for this field')}
       >
         {aiFieldLoading[fieldKey] ? (
@@ -5001,7 +5009,68 @@ Use userId only from this list:
     },
   ];
 
+  // ── VF1-4 a11y: Esc = back/zamknij (kanon §12.3/§17) ─────────────────────
+  // Skips when typing in a field or while a local dropdown/draft editor is
+  // open (those own their close-affordance); keyboard-only, no visual change.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (
+        editingStakeholderId ||
+        editingReminderId ||
+        editingEscalationId ||
+        editingAlternativeId ||
+        showInitiativeDropdown ||
+        showStatusDropdown ||
+        showPriorityDropdown ||
+        showCategoryDropdown ||
+        showDelegationModal ||
+        showFollowUp ||
+        aiMenuOpenField
+      ) {
+        return;
+      }
+      onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    onClose,
+    editingStakeholderId,
+    editingReminderId,
+    editingEscalationId,
+    editingAlternativeId,
+    showInitiativeDropdown,
+    showStatusDropdown,
+    showPriorityDropdown,
+    showCategoryDropdown,
+    showDelegationModal,
+    showFollowUp,
+    aiMenuOpenField,
+  ]);
+
+  // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
+  // VF1-4 (SPEC-A): swap ad-hoc spinner for the shared shared/states library
+  // (record archetype) — gated (visible change, needs Piotr's screenshot
+  // sign-off per reguła #7).
   if (loading) {
+    if (VF1_DECISION_SPECA) {
+      return (
+        <div className="flex h-full items-center justify-center bg-c-bg p-8">
+          <div className="w-full max-w-xl">
+            <SkeletonState variant="record" />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
         <LoadingState variant="spinner" />
@@ -5409,7 +5478,7 @@ Use userId only from this list:
                                     }}
                                     readOnly={isDecisionStageLocked}
                                     rows={isDescriptionExpanded ? 10 : 6}
-                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                     placeholder={t(
                                       'decisions.detail.scope.descriptionPlaceholder',
                                       'Describe the decision scope (what exactly is being decided)...'
@@ -5465,7 +5534,7 @@ Use userId only from this list:
                                     }
                                     readOnly={isDecisionStageLocked}
                                     rows={isContextExpanded ? 8 : 5}
-                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] transition-colors"
                                     placeholder={t(
                                       'decisions.detail.scope.contextPlaceholder',
                                       'Additional explanation, assumptions, constraints (optional)...'
@@ -5542,7 +5611,7 @@ Use userId only from this list:
                                   </p>
                                   <button
                                     onClick={addAlternative}
-                                    className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
+                                    className="text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors"
                                   >
                                     + {t('decisions.detail.options.addOption', 'Add option')}
                                   </button>
@@ -5677,7 +5746,7 @@ Use userId only from this list:
                                                   );
                                                 }
                                               }}
-                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                               placeholder={t(
                                                 'decisions.detail.options.addProPlaceholder',
                                                 '+ Add pro'
@@ -5744,7 +5813,7 @@ Use userId only from this list:
                                                   );
                                                 }
                                               }}
-                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                               placeholder={t(
                                                 'decisions.detail.options.addConPlaceholder',
                                                 '+ Add con'
@@ -6048,7 +6117,7 @@ Use userId only from this list:
                                           },
                                         });
                                       }}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                       + {t('decisions.detail.governance.addPerson', 'Add person')}
                                     </button>
@@ -6127,7 +6196,7 @@ Use userId only from this list:
                                                     setEditingStakeholderId(s.id);
                                                     setStakeholderDraft({ ...s });
                                                   }}
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.activityLog.edit',
                                                     'Edit'
@@ -6187,7 +6256,7 @@ Use userId only from this list:
                                           enabled: true,
                                         });
                                       }}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                       +{' '}
                                       {t('decisions.detail.governance.addReminder', 'Add reminder')}
@@ -6284,7 +6353,7 @@ Use userId only from this list:
                                                       normalizeReminderRule({ ...r })
                                                     );
                                                   }}
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.activityLog.edit',
                                                     'Edit'
@@ -6350,7 +6419,7 @@ Use userId only from this list:
                                         );
                                         setEditingEscalationId('__new__');
                                       }}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                       +{' '}
                                       {t(
@@ -6474,7 +6543,7 @@ Use userId only from this list:
                                                     setEditingEscalationId(rule.id);
                                                     setEscalationDraft({ ...rule });
                                                   }}
-                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text disabled:opacity-40"
                                                   title={t(
                                                     'decisions.detail.activityLog.edit',
                                                     'Edit'
@@ -6537,7 +6606,7 @@ Use userId only from this list:
                                       <button
                                         disabled={isDecisionStageLocked || isSuggestingStakeholders}
                                         onClick={suggestStakeholderDraftAI}
-                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                       >
                                         {isSuggestingStakeholders ? (
                                           <Loader2 size={12} className="animate-spin" />
@@ -6692,7 +6761,7 @@ Use userId only from this list:
                                               onClick={channel.toggle}
                                               className={`${channelChipClass} ${
                                                 channel.active
-                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                  ? 'border-c-border-strong text-c-text bg-c-surface-raised'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                             >
@@ -6735,7 +6804,7 @@ Use userId only from this list:
                                                 }}
                                                 className={`${channelChipClass} ${
                                                   selected
-                                                    ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                    ? 'border-c-border-strong text-c-text bg-c-surface-raised'
                                                     : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                                 }`}
                                                 title={channel.scope}
@@ -6845,7 +6914,7 @@ Use userId only from this list:
                                       <button
                                         disabled={isDecisionStageLocked || isSuggestingReminders}
                                         onClick={suggestReminderDraftAI}
-                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                       >
                                         {isSuggestingReminders ? (
                                           <Loader2 size={12} className="animate-spin" />
@@ -7013,7 +7082,7 @@ Use userId only from this list:
                                                 }
                                                 className={`${channelChipClass} ${
                                                   enabled
-                                                    ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                    ? 'border-c-border-strong text-c-text bg-c-surface-raised'
                                                     : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                                 }`}
                                               >
@@ -7058,7 +7127,7 @@ Use userId only from this list:
                                                 }
                                                 className={`${channelChipClass} ${
                                                   enabled
-                                                    ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                    ? 'border-c-border-strong text-c-text bg-c-surface-raised'
                                                     : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                                 }`}
                                                 title={channel.scope}
@@ -7187,7 +7256,7 @@ Use userId only from this list:
                                       <button
                                         disabled={isDecisionStageLocked || isSuggestingEscalations}
                                         onClick={suggestEscalationDraftAI}
-                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                       >
                                         {isSuggestingEscalations ? (
                                           <Loader2 size={12} className="animate-spin" />
@@ -7384,7 +7453,7 @@ Use userId only from this list:
                                               }
                                               className={`${channelChipClass} ${
                                                 enabled
-                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                  ? 'border-c-border-strong text-c-text bg-c-surface-raised'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                             >
@@ -7428,7 +7497,7 @@ Use userId only from this list:
                                               }
                                               className={`${channelChipClass} ${
                                                 enabled
-                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                  ? 'border-c-border-strong text-c-text bg-c-surface-raised'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                               title={channel.scope}
