@@ -549,6 +549,25 @@ export function adaptQuery(sql: string): string {
     "date_trunc('month', CURRENT_DATE)"
   );
 
+  // Replace date('now', 'start of day') with CURRENT_DATE (date() already truncates to day)
+  adapted = adapted.replace(
+    /date\s*\(\s*['"]now['"]\s*,\s*['"]start\s+of\s+day['"]\s*\)/gi,
+    'CURRENT_DATE'
+  );
+
+  // Replace date('now', '-N <unit>') → (CURRENT_DATE - INTERVAL 'N <unit>')
+  // and date('now', '+N <unit>') → (CURRENT_DATE + INTERVAL 'N <unit>')
+  // Mirrors the datetime('now', ...) handling above, for the date()-flavored calls
+  // used by analytics/cron queries (e.g. date('now', '-6 months')).
+  adapted = adapted.replace(
+    /date\s*\(\s*['"]now['"]\s*,\s*['"]-(\d+)\s+(minutes?|hours?|days?|months?|years?|seconds?)['"]\s*\)/gi,
+    (_match, n, unit) => `(CURRENT_DATE - INTERVAL '${n} ${unit}')`
+  );
+  adapted = adapted.replace(
+    /date\s*\(\s*['"]now['"]\s*,\s*['"](?:\+)?(\d+)\s+(minutes?|hours?|days?|months?|years?|seconds?)['"]\s*\)/gi,
+    (_match, n, unit) => `(CURRENT_DATE + INTERVAL '${n} ${unit}')`
+  );
+
   // Replace date('now') with CURRENT_DATE
   adapted = adapted.replace(/date\s*\(\s*['"]now['"]\s*\)/g, 'CURRENT_DATE');
 
