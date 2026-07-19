@@ -41,6 +41,9 @@ export type EvidenceArtifactType =
   // HP-16 domknięcie (note) — patrz migracja 931_artifact_evidence_note_type.sql,
   // która rozszerza CHECK artifact_evidence.artifact_type o tę samą wartość.
   | 'note'
+  // HP-16 domknięcie (sheet/arkusz) — patrz migracja
+  // 20260719_artifact_evidence_sheet_type.sql (rozszerza CHECK o 'sheet').
+  | 'sheet'
   | 'other';
 
 export type EvidenceSourceType =

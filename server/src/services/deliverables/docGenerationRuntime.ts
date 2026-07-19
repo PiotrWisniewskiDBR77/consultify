@@ -32,6 +32,8 @@ import type {
   DocumentOutline,
   DocumentSourceRef,
 } from '../documentStudio/documentStudioTypes.js';
+import { safePersistEvidenceContract } from '../evidence/evidenceContractBridge.js';
+import { buildSheetEvidenceContract } from '../evidence/sheetEvidenceContract.js';
 import { registerArtifactOrigin } from '../v8/artifactRegistryService.js';
 import {
   createDraft,
@@ -1045,6 +1047,30 @@ export async function startSheet(params: {
         warnings: sheetWarnings,
         sectionCount: table.rowCount,
       });
+
+      // HP-16 domknięcie — realny EvidenceContract dla arkusza (poprzednio BRAK:
+      // sheet był jedynym z 8 narzędzi Teresy bez kontraktu, bo generuje w tle 202+poll).
+      // DETERMINISTYCZNIE, zero LLM, zero I/O — patrz `buildSheetEvidenceContract`.
+      // Sygnały reużyte z pipeline'u wyżej: `sheetFacts` (grounded?), `tableSchemaB4`
+      // (premium?), `stored.sourceRefs` (źródła), `table.rowCount`.
+      const sheetEvidence = buildSheetEvidenceContract({
+        sourceRefs: stored.sourceRefs,
+        seedText: stored.intent,
+        grounded: sheetFacts !== null,
+        premium: tableSchemaB4 !== null,
+        rowCount: table.rowCount,
+      });
+      // HP-17 bridge — fire-and-forget persist do `artifact_evidence`
+      // (artifactType='sheet'), mirror wzorca deck/note. Błąd zapisu koperty NIE
+      // MOŻE zepsuć generacji arkusza (już zapisany przez updateDraft powyżej).
+      void safePersistEvidenceContract(sheetEvidence, {
+        organizationId: params.organizationId,
+        artifactType: 'sheet',
+        artifactId: draft.id,
+        service: 'docGenerationRuntime.startSheet',
+        createdBy: params.userId,
+      }).catch(() => {});
+
       // P1-4 (audyt): bez tego arkusze z czatu nie istnieją w Outputs Library.
       try {
         await registerArtifactOrigin({
