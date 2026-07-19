@@ -836,7 +836,7 @@ router.post('/:assessmentId/restore/:version', async (req: AuthRequest, res: Res
     // Create new version with restored data
     const currentMaxVersion = await new Promise<number>((resolve, reject) => {
       db.get(
-        `SELECT MAX(version) as maxVersion FROM assessment_versions WHERE assessment_id = ?`,
+        `SELECT MAX(version) as "maxVersion" FROM assessment_versions WHERE assessment_id = ?`,
         [assessmentId],
         (err: Error | null, row: any) => {
           if (err) reject(err);
@@ -910,7 +910,7 @@ router.get('/pending-reviews', async (req: AuthRequest, res: Response) => {
           r.completed_at as "completedAt",
           r.due_date as "dueDate",
           a.name as "assessmentName",
-          'DRD Assessment' as projectName,
+          'DRD Assessment' as "projectName",
           r.message as "requestedMessage"
         FROM assessment_reviews r
         LEFT JOIN assessments a ON r.assessment_id = a.id
@@ -1078,7 +1078,7 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
             al.new_value as details,
             al.ip_address as "ipAddress",
             u.email as "userEmail",
-            COALESCE(u.first_name || ' ' || u.last_name, u.email) as userName
+            COALESCE(u.first_name || ' ' || u.last_name, u.email) as "userName"
           FROM activity_logs al
           LEFT JOIN users u ON al.user_id = u.id
           WHERE al.organization_id = ?
@@ -1107,7 +1107,7 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
               al.details,
               al.ip_address as "ipAddress",
               u.email as "userEmail",
-              COALESCE(u.first_name || ' ' || u.last_name, u.email) as userName
+              COALESCE(u.first_name || ' ' || u.last_name, u.email) as "userName"
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             WHERE al.resource_id = ? 

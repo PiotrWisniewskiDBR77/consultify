@@ -49,9 +49,9 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                       WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
-                    END as projectName,
+                    END as "projectName",
                     COALESCE(json_extract(framework_data, '$.progress'), 0) as progress,
-                    COALESCE(json_extract(framework_data, '$.overallScore'), 0) as overallScore
+                    COALESCE(json_extract(framework_data, '$.overallScore'), 0) as "overallScore"
                 FROM assessments 
                 WHERE organization_id = ?
                 ORDER BY updated_at DESC`,
@@ -94,8 +94,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
                     created_at as "createdAt",
                     updated_at as "updatedAt",
                     'DRD' as type,
-                    'Digital Readiness Diagnosis' as projectName
-                FROM assessments 
+                    'Digital Readiness Diagnosis' as "projectName"
+                FROM assessments
                 WHERE id = ? AND organization_id = ?`,
         [id, organizationId],
         (err: Error | null, row: any) => {
