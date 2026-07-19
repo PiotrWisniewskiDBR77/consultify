@@ -34,7 +34,62 @@ const PROSE_BLOCK_TYPES = new Set(['paragraph', 'callout', 'bullet_list', 'numbe
 // 'standard' = tier rozwiązywany przez LLMConfigService (llmService.resolveModelConfig);
 // dawne 'default' nie jest tierem, więc call padał natychmiast bez providera.
 const MODEL_DEFAULT = 'standard';
-const MAX_TOKENS_DEFAULT = 4096;
+
+// DOC-1 (E2E): dawniej JEDEN wielki prompt prosił model o WSZYSTKIE bloki naraz
+// (np. 9 sekcji prozy + tabele GFM po polsku). Taka pojedyncza generacja regularnie
+// przekraczała 30 s (twardy `timeoutMs: 30000` w aiService.generateChatResponse) →
+// AbortSignal.timeout → „AI chat generation failed" → fail-soft oddawał placeholdery
+// → brama anty-placeholder w docGenerationRuntime.startDoc rzucała „Generacja treści
+// nie powiodła się". Sheet/deck działały, bo generują mniej na jedno wywołanie
+// (arkusz = jedna zwięzła tabela; deck = per-slajd). Naprawa: chunking — dzielimy
+// bloki na małe partie tak, by KAŻDE wywołanie LLM kończyło się grubo poniżej limitu
+// 30 s, a partie puszczamy RÓWNOLEGLE (z ograniczoną współbieżnością), żeby łączny
+// czas mieścił się w budżecie odpytywania statusu (~150 s). Cała generacja biegnie
+// w tle (watchdog 8 min).
+// Ile prose-bloków w jednej partii do modelu. Zmierzone empirycznie (repro E2E,
+// polska proza konsultingowa + tabele GFM): partia 3 bloków bywała ~26 s i
+// pojedyncze wywołania przekraczały limit 30 s. Partia 2 bloków to ~12–15 s —
+// bezpieczny ~2× zapas do limitu.
+const PROSE_BATCH_SIZE = 2;
+/** Górny cap tokenów na jedną partię (bloki tabelaryczne bywają kosztowne). */
+const MAX_TOKENS_PER_BATCH = 4096;
+/** Budżet tokenów na blok w partii (tabele GFM potrzebują zapasu). */
+const TOKENS_PER_BLOCK = 700;
+/** Próby na jedną partię — jedno ponowienie łapie sporadyczny wolny/nieudany call. */
+const MAX_BATCH_ATTEMPTS = 2;
+/**
+ * Ile partii leci równolegle. Sekwencyjnie 5–7 partii × ~15–25 s przekraczało
+ * 150 s budżetu odpytywania (E2E: doc utykał w 'validating'). Współbieżność 4
+ * ścina łączny czas do ~2 fal (~40–60 s) — bezpiecznie dla limitów/tokenów
+ * providera, a każde wywołanie i tak jest osobno strzeżone (withGuards, breaker).
+ */
+const BATCH_CONCURRENCY = 4;
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += Math.max(1, size)) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+/**
+ * Run `tasks` with at most `limit` in flight at once. Preserves no ordering
+ * guarantees on completion; each task is self-contained (writes only its own
+ * keys), so interleaving is safe. Never rejects — individual task rejections are
+ * the task's own responsibility (ours swallow + record).
+ */
+async function runWithConcurrency(tasks: Array<() => Promise<void>>, limit: number): Promise<void> {
+  let cursor = 0;
+  const workers: Array<Promise<void>> = [];
+  const worker = async (): Promise<void> => {
+    while (cursor < tasks.length) {
+      const idx = cursor++;
+      await tasks[idx]();
+    }
+  };
+  const n = Math.max(1, Math.min(limit, tasks.length));
+  for (let i = 0; i < n; i++) workers.push(worker());
+  await Promise.all(workers);
+}
 
 export interface GenerateBlockProseOptions {
   enable?: boolean;
@@ -189,79 +244,121 @@ export async function generateBlockProse(
   const targets = collectTargets(schema);
   if (targets.length === 0) return schema;
 
-  // Scale token budget with block count: tables take ~400-600 tokens each.
-  // Cap at 8192 to stay within provider limits.
-  const dynamicMaxTokens =
-    options.maxTokens ?? Math.min(8192, Math.max(MAX_TOKENS_DEFAULT, targets.length * 550));
+  const model = options.model || MODEL_DEFAULT;
+  const systemPrompt = buildSystemPrompt(schema);
 
-  let response: { content: string };
-  try {
-    response = await generateChatResponse({
-      systemPrompt: buildSystemPrompt(schema),
-      messages: [{ role: 'user', content: buildUserPrompt(schema, intake, sourceRefs, targets) }],
-      model: options.model || MODEL_DEFAULT,
-      maxTokens: dynamicMaxTokens,
-    });
-  } catch (err) {
-    // Kontrakt: nigdy nie rzucamy — ale porażka nie może być niewidzialna w logach
-    // (silnik prozy padał po cichu i nikt tego nie zauważył).
-    const message = err instanceof Error ? err.message : String(err);
-    console.warn(`[DocumentBlockProse] LLM prose generation failed, returning stubs: ${message}`);
-    // A4 — record the degradation so it is visible to the user, not just
-    // in server logs. Behaviour unchanged: the deterministic stubs are
-    // still returned.
-    options.warnings?.record({
-      code: 'llm_prose_fallback',
-      scope: 'document',
-      message: `LLM prose generation failed; deterministic placeholders retained (${message}).`,
-    });
-    return schema;
-  }
-
-  const parsed = safeParseJson(response.content);
-  if (!parsed || !Array.isArray(parsed.blocks)) {
-    // A4 — the call succeeded but returned an unusable payload (empty /
-    // invalid JSON / wrong shape). This is the same silent degrade path:
-    // record it.
-    options.warnings?.record({
-      code: 'llm_prose_fallback',
-      scope: 'document',
-      message: 'LLM prose response was empty or unparseable; deterministic placeholders retained.',
-    });
-    return schema;
-  }
+  // DOC-1 fix: CHUNKING. Split targets into small batches so each LLM call
+  // stays well under aiService's hard 30 s timeout. A caller-supplied
+  // `options.maxTokens` (legacy explicit budget) forces a SINGLE call for
+  // backwards-compatibility; otherwise we chunk. The batches run sequentially
+  // — the whole generation is a background job (watchdog budget 8 min), so a
+  // handful of ~10 s calls is safe, and no single call risks the abort.
+  const batches = options.maxTokens
+    ? [targets]
+    : chunk(targets, PROSE_BATCH_SIZE);
 
   // Build a blockId -> generated payload map, restricted to known targets.
   const targetById = new Map(targets.map((t) => [t.blockId, t]));
   const generated = new Map<string, { text?: string; items?: string[] }>();
-  for (const entry of parsed.blocks) {
-    if (!isRecord(entry) || typeof entry.blockId !== 'string') continue;
-    const target = targetById.get(entry.blockId);
-    if (!target) continue;
-    if (target.kind === 'items') {
-      if (!Array.isArray(entry.items)) continue;
-      const items = entry.items
-        .map((i) => (typeof i === 'string' ? i.trim() : ''))
-        .filter((i) => i.length > 0);
-      if (items.length === 0) continue;
-      generated.set(entry.blockId, { items });
-    } else {
-      if (typeof entry.text !== 'string') continue;
-      const text = entry.text.trim();
-      if (text.length === 0) continue;
-      generated.set(entry.blockId, { text });
-    }
-  }
+  // Any batch that failed (LLM error / unparseable / no usable entries) means
+  // the document will still carry placeholders — record a SINGLE fallback
+  // warning so the degradation stays visible (A4) and the caller's
+  // anti-placeholder guard (DOC-2) can refuse to persist an orphan.
+  let anyBatchDegraded = false;
 
-  if (generated.size === 0) {
-    // A4 — parsed JSON carried no entries that mapped to a known prose
-    // target. Same silent-degrade class: the deterministic stubs survive.
+  // Each batch is an independent task; they run with bounded concurrency so the
+  // total wall-time stays within the caller's status-poll budget while every
+  // single LLM call remains small enough to finish under the 30 s abort.
+  const runBatch = async (batch: ProseTargetBlock[]): Promise<void> => {
+    const maxTokens = options.maxTokens
+      ? options.maxTokens
+      : Math.min(MAX_TOKENS_PER_BATCH, Math.max(1024, batch.length * TOKENS_PER_BLOCK));
+    const userPrompt = buildUserPrompt(schema, intake, sourceRefs, batch);
+    const batchIds = new Set(batch.map((t) => t.blockId));
+
+    let matchedInBatch = 0;
+    for (let attempt = 1; attempt <= MAX_BATCH_ATTEMPTS && matchedInBatch === 0; attempt++) {
+      let response: { content: string };
+      try {
+        response = await generateChatResponse({
+          systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+          model,
+          maxTokens,
+        });
+      } catch (err) {
+        // Kontrakt: nigdy nie rzucamy — pojedyncza partia może paść (timeout /
+        // transient), a pozostałe i tak wypełnią swoje bloki (częściowy sukces >
+        // totalna porażka). Ponawiamy raz zanim uznamy partię za zdegradowaną.
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn(
+          `[DocumentBlockProse] LLM prose batch attempt ${attempt}/${MAX_BATCH_ATTEMPTS} failed (${batch.length} blocks): ${message}`
+        );
+        continue;
+      }
+
+      const parsed = safeParseJson(response.content);
+      if (!parsed || !Array.isArray(parsed.blocks)) continue;
+
+      for (const entry of parsed.blocks) {
+        if (!isRecord(entry) || typeof entry.blockId !== 'string') continue;
+        // Only accept ids that belong to THIS batch — protects against a model
+        // that echoes stale ids from another batch's prompt.
+        if (!batchIds.has(entry.blockId)) continue;
+        const target = targetById.get(entry.blockId);
+        if (!target) continue;
+        if (target.kind === 'items') {
+          if (!Array.isArray(entry.items)) continue;
+          const items = entry.items
+            .map((i) => (typeof i === 'string' ? i.trim() : ''))
+            .filter((i) => i.length > 0);
+          if (items.length === 0) continue;
+          generated.set(entry.blockId, { items });
+          matchedInBatch++;
+        } else {
+          if (typeof entry.text !== 'string') continue;
+          const text = entry.text.trim();
+          if (text.length === 0) continue;
+          generated.set(entry.blockId, { text });
+          matchedInBatch++;
+        }
+      }
+    }
+    // The batch did not fully fill (LLM error / empty / unparseable / wrong ids /
+    // partial payload) — the unfilled blocks keep their deterministic stubs, so
+    // the document is degraded. Marking on `< batch.length` (not just `=== 0`)
+    // keeps this signal consistent with the caller's anti-placeholder gate, which
+    // throws on ANY remaining stub.
+    if (matchedInBatch < batch.length) anyBatchDegraded = true;
+  };
+
+  await runWithConcurrency(
+    batches.map((batch) => () => runBatch(batch)),
+    BATCH_CONCURRENCY
+  );
+
+  if (anyBatchDegraded) {
+    // A4 — a batch degraded to stubs; keep the degradation visible. Records a
+    // single 'llm_prose_fallback' regardless of how many batches failed.
     options.warnings?.record({
       code: 'llm_prose_fallback',
       scope: 'document',
       message:
-        'LLM prose response matched no document blocks; deterministic placeholders retained.',
+        'LLM prose generation partially failed; some sections retained deterministic placeholders.',
     });
+  }
+
+  if (generated.size === 0) {
+    // A4 — nothing at all mapped to a known prose target across all batches.
+    // Same silent-degrade class: the deterministic stubs survive unchanged.
+    if (!anyBatchDegraded) {
+      options.warnings?.record({
+        code: 'llm_prose_fallback',
+        scope: 'document',
+        message:
+          'LLM prose response matched no document blocks; deterministic placeholders retained.',
+      });
+    }
     return schema;
   }
 
