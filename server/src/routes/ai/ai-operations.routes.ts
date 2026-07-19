@@ -275,14 +275,27 @@ router.post(
 
       const runResult = await dbRun(
         `
-            UPDATE ai_health_alerts 
-            SET resolved_at = datetime('now'), resolution = ?, resolved_by = ?
+            UPDATE ai_health_alerts
+            SET resolved_at = now(), resolution = ?, resolved_by = ?
             WHERE id = ?
         `,
         [resolution || 'Manual resolution', userId, id]
-      );
+      ).catch((err: unknown) => ({
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      }));
 
       if (!runResult.success) {
+        // ai_health_alerts is absent in some deployments — degrade to an honest
+        // empty-state 200 rather than surfacing a 500 for a missing relation.
+        const errMsg = String(runResult.error || '');
+        if (/does not exist|no such table|relation .* does not exist|42P01/i.test(errMsg)) {
+          return res.json({
+            success: true,
+            degraded: true,
+            message: 'Alerting store unavailable in this deployment; nothing to resolve',
+          });
+        }
         throw new Error(runResult.error || 'Failed to update alert');
       }
 
@@ -413,54 +426,56 @@ router.get(
       let groupBy: string;
       switch (period) {
         case '24h':
-          timeFilter = "datetime('now', '-24 hours')";
-          groupBy = "strftime('%Y-%m-%d %H:00', created_at)";
+          timeFilter = "now() - interval '24 hours'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD HH24:00')";
           break;
         case '7d':
-          timeFilter = "datetime('now', '-7 days')";
-          groupBy = "strftime('%Y-%m-%d', created_at)";
+          timeFilter = "now() - interval '7 days'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD')";
           break;
         case '30d':
-          timeFilter = "datetime('now', '-30 days')";
-          groupBy = "strftime('%Y-%m-%d', created_at)";
+          timeFilter = "now() - interval '30 days'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD')";
           break;
         case '90d':
-          timeFilter = "datetime('now', '-90 days')";
-          groupBy = "strftime('%Y-%m-%d', created_at)";
+          timeFilter = "now() - interval '90 days'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD')";
           break;
         default:
-          timeFilter = "datetime('now', '-24 hours')";
-          groupBy = "strftime('%Y-%m-%d %H:00', created_at)";
+          timeFilter = "now() - interval '24 hours'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD HH24:00')";
       }
 
-      const trends = (await dbAll(`
-            SELECT 
+      const trends = ((await dbAll(`
+            SELECT
                 ${groupBy} as timestamp,
                 COUNT(*) as requests,
                 AVG(latency_ms) as avg_latency,
                 SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful
-            FROM ai_request_log 
+            FROM ai_usage_logs
             WHERE created_at > ${timeFilter}
             GROUP BY ${groupBy}
             ORDER BY timestamp ASC
-        `).catch(() => [])) as Array<{
+        `).catch(() => [])) ?? []) as Array<{
         timestamp?: string;
         requests?: number;
         avg_latency?: number;
         successful?: number;
       }>;
 
+      // Postgres returns COUNT/SUM (bigint) and AVG (numeric) as strings — coerce.
       return res.json({
         success: true,
-        data: trends.map((t) => ({
-          timestamp: t.timestamp,
-          requests: t.requests,
-          avgLatency: Math.round(t.avg_latency || 0),
-          successRate:
-            t.requests && t.requests > 0
-              ? (((t.successful || 0) / t.requests) * 100).toFixed(2)
-              : '100',
-        })),
+        data: trends.map((t) => {
+          const requests = Number(t.requests ?? 0) || 0;
+          const successful = Number(t.successful ?? 0) || 0;
+          return {
+            timestamp: t.timestamp,
+            requests,
+            avgLatency: Math.round(Number(t.avg_latency ?? 0) || 0),
+            successRate: requests > 0 ? ((successful / requests) * 100).toFixed(2) : '100',
+          };
+        }),
       });
     } catch (error: unknown) {
       logger.error('[AI Operations] Error getting performance trends:', error);
@@ -587,42 +602,43 @@ router.get(
       let timeFilter: string;
       switch (period) {
         case 'week':
-          timeFilter = "datetime('now', '-7 days')";
+          timeFilter = "now() - interval '7 days'";
           break;
         case 'month':
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
           break;
         case 'quarter':
-          timeFilter = "datetime('now', '-90 days')";
+          timeFilter = "now() - interval '90 days'";
           break;
         default:
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
       }
 
-      const trends = (await dbAll(`
-            SELECT 
-                strftime('%Y-%m-%d', created_at) as date,
+      const trends = ((await dbAll(`
+            SELECT
+                to_char(created_at, 'YYYY-MM-DD') as date,
                 SUM(tokens_used) as tokens,
-                SUM(cost_usd) as cost,
+                SUM(estimated_cost_usd) as cost,
                 COUNT(*) as requests
-            FROM ai_request_log 
+            FROM ai_usage_logs
             WHERE created_at > ${timeFilter}
-            GROUP BY strftime('%Y-%m-%d', created_at)
+            GROUP BY to_char(created_at, 'YYYY-MM-DD')
             ORDER BY date ASC
-        `).catch(() => [])) as Array<{
+        `).catch(() => [])) ?? []) as Array<{
         date?: string;
         tokens?: number;
         cost?: number;
         requests?: number;
       }>;
 
+      // Postgres returns COUNT/SUM (bigint) and SUM(numeric) as strings — coerce.
       return res.json({
         success: true,
         data: trends.map((t) => ({
           date: t.date,
-          tokens: t.tokens || 0,
-          cost: parseFloat((t.cost || 0).toFixed(4)),
-          requests: t.requests,
+          tokens: Number(t.tokens ?? 0) || 0,
+          cost: parseFloat((Number(t.cost ?? 0) || 0).toFixed(4)),
+          requests: Number(t.requests ?? 0) || 0,
         })),
       });
     } catch (error: unknown) {
@@ -650,33 +666,39 @@ router.get(
       let timeFilter: string;
       switch (period) {
         case 'week':
-          timeFilter = "datetime('now', '-7 days')";
+          timeFilter = "now() - interval '7 days'";
           break;
         case 'month':
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
           break;
         default:
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
       }
 
-      const topUsers = (await dbAll(
+      // Postgres requires every non-aggregated SELECT column in GROUP BY
+      // (SQLite tolerated bare u.name/u.email) — group by all three.
+      const topUsers = ((await dbAll(
         `
-            SELECT 
+            SELECT
                 l.user_id,
-                u.name as user_name,
+                COALESCE(
+                    NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''),
+                    u.display_name,
+                    u.email
+                ) as user_name,
                 u.email,
                 SUM(l.tokens_used) as tokens,
-                SUM(l.cost_usd) as cost,
+                SUM(l.estimated_cost_usd) as cost,
                 COUNT(*) as requests
-            FROM ai_request_log l
+            FROM ai_usage_logs l
             LEFT JOIN users u ON l.user_id = u.id
             WHERE l.created_at > ${timeFilter}
-            GROUP BY l.user_id
+            GROUP BY l.user_id, u.first_name, u.last_name, u.display_name, u.email
             ORDER BY cost DESC
             LIMIT ?
         `,
         [parseInt(limit as string)]
-      ).catch(() => [])) as Array<{
+      ).catch(() => [])) ?? []) as Array<{
         user_id?: string;
         user_name?: string;
         email?: string;
@@ -685,15 +707,16 @@ router.get(
         requests?: number;
       }>;
 
+      // Postgres returns COUNT/SUM (bigint) and SUM(numeric) as strings — coerce.
       return res.json({
         success: true,
         data: topUsers.map((u) => ({
           userId: u.user_id,
           userName: u.user_name || 'Unknown',
           email: u.email,
-          tokens: u.tokens || 0,
-          cost: parseFloat((u.cost || 0).toFixed(4)),
-          requests: u.requests,
+          tokens: Number(u.tokens ?? 0) || 0,
+          cost: parseFloat((Number(u.cost ?? 0) || 0).toFixed(4)),
+          requests: Number(u.requests ?? 0) || 0,
         })),
       });
     } catch (error: unknown) {
@@ -805,34 +828,36 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      const history = (await dbAll(`
-            SELECT 
-                strftime('%Y-%m-%d', created_at) as date,
+      const history = ((await dbAll(`
+            SELECT
+                to_char(created_at, 'YYYY-MM-DD') as date,
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful,
                 AVG(latency_ms) as avg_latency
-            FROM ai_request_log 
-            WHERE created_at > datetime('now', '-30 days')
-            GROUP BY strftime('%Y-%m-%d', created_at)
+            FROM ai_usage_logs
+            WHERE created_at > now() - interval '30 days'
+            GROUP BY to_char(created_at, 'YYYY-MM-DD')
             ORDER BY date ASC
-        `).catch(() => [])) as Array<{
+        `).catch(() => [])) ?? []) as Array<{
         date?: string;
         total?: number;
         successful?: number;
         avg_latency?: number;
       }>;
 
+      // Postgres returns COUNT/SUM (bigint) and AVG (numeric) as strings — coerce.
       return res.json({
         success: true,
-        data: history.map((h) => ({
-          date: h.date,
-          availability:
-            h.total && h.total > 0
-              ? parseFloat((((h.successful || 0) / h.total) * 100).toFixed(2))
-              : 100,
-          avgLatency: Math.round(h.avg_latency || 0),
-          requests: h.total,
-        })),
+        data: history.map((h) => {
+          const total = Number(h.total ?? 0) || 0;
+          const successful = Number(h.successful ?? 0) || 0;
+          return {
+            date: h.date,
+            availability: total > 0 ? parseFloat(((successful / total) * 100).toFixed(2)) : 100,
+            avgLatency: Math.round(Number(h.avg_latency ?? 0) || 0),
+            requests: total,
+          };
+        }),
       });
     } catch (error: unknown) {
       logger.error('[AI Operations] Error getting SLA history:', error);
@@ -863,49 +888,62 @@ router.get(
       let timeFilter: string;
       switch (period) {
         case 'week':
-          timeFilter = "datetime('now', '-7 days')";
+          timeFilter = "now() - interval '7 days'";
           break;
         case 'month':
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
           break;
         case 'quarter':
-          timeFilter = "datetime('now', '-90 days')";
+          timeFilter = "now() - interval '90 days'";
           break;
         default:
-          timeFilter = "datetime('now', '-30 days')";
+          timeFilter = "now() - interval '30 days'";
       }
 
-      const [byFeature, byModel, byTimeOfDay] = await Promise.all([
+      // ai_usage_logs stores the feature/operation under the `action` column.
+      const [byFeatureRaw, byModelRaw, byTimeOfDayRaw] = await Promise.all([
         dbAll(`
-                SELECT 
-                    feature,
+                SELECT
+                    action as feature,
                     COUNT(*) as requests,
                     AVG(latency_ms) as avg_latency
-                FROM ai_request_log 
+                FROM ai_usage_logs
                 WHERE created_at > ${timeFilter}
-                GROUP BY feature
+                GROUP BY action
                 ORDER BY requests DESC
             `).catch(() => []),
         dbAll(`
-                SELECT 
+                SELECT
                     model,
                     COUNT(*) as requests,
                     SUM(tokens_used) as tokens
-                FROM ai_request_log 
+                FROM ai_usage_logs
                 WHERE created_at > ${timeFilter}
                 GROUP BY model
                 ORDER BY requests DESC
             `).catch(() => []),
         dbAll(`
-                SELECT 
-                    strftime('%H', created_at) as hour,
+                SELECT
+                    to_char(created_at, 'HH24') as hour,
                     COUNT(*) as requests
-                FROM ai_request_log 
+                FROM ai_usage_logs
                 WHERE created_at > ${timeFilter}
-                GROUP BY strftime('%H', created_at)
+                GROUP BY to_char(created_at, 'HH24')
                 ORDER BY hour
             `).catch(() => []),
       ]);
+
+      // Postgres returns COUNT/SUM (bigint) and AVG (numeric) as strings — coerce.
+      const byFeature = ((byFeatureRaw as Array<any>) ?? []).map((f) => ({
+        feature: f.feature,
+        requests: Number(f.requests ?? 0) || 0,
+        avgLatency: Math.round(Number(f.avg_latency ?? 0) || 0),
+      }));
+      const byModel = ((byModelRaw as Array<any>) ?? []).map((m) => ({
+        model: m.model,
+        requests: Number(m.requests ?? 0) || 0,
+        tokens: Number(m.tokens ?? 0) || 0,
+      }));
 
       return res.json({
         success: true,
@@ -913,10 +951,12 @@ router.get(
           period,
           byFeature,
           byModel,
-          byTimeOfDay: (byTimeOfDay as Array<{ hour?: string; requests?: number }>).map((t) => ({
-            hour: parseInt(t.hour || '0'),
-            requests: t.requests,
-          })),
+          byTimeOfDay: ((byTimeOfDayRaw as Array<{ hour?: string; requests?: number }>) ?? []).map(
+            (t) => ({
+              hour: parseInt(t.hour || '0'),
+              requests: Number(t.requests ?? 0) || 0,
+            })
+          ),
         },
       });
     } catch (error: unknown) {
@@ -947,25 +987,25 @@ router.get(
 
       switch (period) {
         case '24h':
-          requestTimeFilter = "datetime('now', '-24 hours')";
-          eventTimeFilter = "datetime('now', '-24 hours')";
-          groupBy = "strftime('%Y-%m-%d %H:00', created_at)";
+          requestTimeFilter = "now() - interval '24 hours'";
+          eventTimeFilter = "now() - interval '24 hours'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD HH24:00')";
           break;
         case '7d':
-          requestTimeFilter = "datetime('now', '-7 days')";
-          eventTimeFilter = "datetime('now', '-7 days')";
-          groupBy = "strftime('%Y-%m-%d', created_at)";
+          requestTimeFilter = "now() - interval '7 days'";
+          eventTimeFilter = "now() - interval '7 days'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD')";
           break;
         case '90d':
-          requestTimeFilter = "datetime('now', '-90 days')";
-          eventTimeFilter = "datetime('now', '-90 days')";
-          groupBy = "strftime('%Y-%m-%d', created_at)";
+          requestTimeFilter = "now() - interval '90 days'";
+          eventTimeFilter = "now() - interval '90 days'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD')";
           break;
         case '30d':
         default:
-          requestTimeFilter = "datetime('now', '-30 days')";
-          eventTimeFilter = "datetime('now', '-30 days')";
-          groupBy = "strftime('%Y-%m-%d', created_at)";
+          requestTimeFilter = "now() - interval '30 days'";
+          eventTimeFilter = "now() - interval '30 days'";
+          groupBy = "to_char(created_at, 'YYYY-MM-DD')";
           break;
       }
 
@@ -986,10 +1026,10 @@ router.get(
             SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed_requests,
             AVG(latency_ms) as avg_latency_ms,
             SUM(tokens_used) as total_tokens,
-            SUM(cost_usd) as total_cost,
+            SUM(estimated_cost_usd) as total_cost,
             COUNT(DISTINCT provider) as providers_used,
             COUNT(DISTINCT model) as models_used
-          FROM ai_request_log
+          FROM ai_usage_logs
           WHERE created_at > ${requestTimeFilter}
         `).catch(() => ({
           total_requests: 0,
@@ -1009,8 +1049,8 @@ router.get(
             SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed,
             AVG(latency_ms) as avg_latency_ms,
             SUM(tokens_used) as tokens,
-            SUM(cost_usd) as cost
-          FROM ai_request_log
+            SUM(estimated_cost_usd) as cost
+          FROM ai_usage_logs
           WHERE created_at > ${requestTimeFilter}
           GROUP BY ${groupBy}
           ORDER BY bucket ASC
@@ -1023,8 +1063,8 @@ router.get(
             SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed,
             AVG(latency_ms) as avg_latency_ms,
             SUM(tokens_used) as tokens,
-            SUM(cost_usd) as cost
-          FROM ai_request_log
+            SUM(estimated_cost_usd) as cost
+          FROM ai_usage_logs
           WHERE created_at > ${requestTimeFilter}
           GROUP BY provider
           ORDER BY requests DESC
@@ -1038,7 +1078,7 @@ router.get(
             AVG(latency_ms) as avg_latency_ms,
             MAX(timestamp) as last_event_at
           FROM llm_health_events
-          WHERE timestamp > ${eventTimeFilter}
+          WHERE timestamp::timestamptz > ${eventTimeFilter}
           GROUP BY provider
         `).catch(() => []),
         dbAll(`
@@ -1048,7 +1088,6 @@ router.get(
             is_active,
             health_status,
             last_health_check,
-            avg_latency_ms,
             model_id
           FROM llm_providers
           ORDER BY provider ASC, name ASC
@@ -1059,9 +1098,9 @@ router.get(
             model,
             COUNT(*) as requests,
             SUM(tokens_used) as tokens,
-            SUM(cost_usd) as cost,
+            SUM(estimated_cost_usd) as cost,
             AVG(latency_ms) as avg_latency_ms
-          FROM ai_request_log
+          FROM ai_usage_logs
           WHERE created_at > ${requestTimeFilter}
           GROUP BY provider, model
           ORDER BY requests DESC
@@ -1072,7 +1111,7 @@ router.get(
             provider,
             COALESCE(NULLIF(error_message, ''), 'Unknown error') as error_message,
             COUNT(*) as occurrences
-          FROM ai_request_log
+          FROM ai_usage_logs
           WHERE created_at > ${requestTimeFilter}
             AND status = 'error'
           GROUP BY provider, COALESCE(NULLIF(error_message, ''), 'Unknown error')
@@ -1089,7 +1128,7 @@ router.get(
             error_message,
             timestamp
           FROM llm_health_events
-          WHERE timestamp > ${eventTimeFilter}
+          WHERE timestamp::timestamptz > ${eventTimeFilter}
           ORDER BY provider ASC, timestamp ASC
         `).catch(() => []),
       ]);
