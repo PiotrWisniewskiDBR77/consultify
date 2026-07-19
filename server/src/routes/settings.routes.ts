@@ -5183,13 +5183,22 @@ router.post(
 
     const keyHash = hashApiKey(apiKey);
 
+    // user_api_keys.provider and .encrypted_key are NOT NULL with no DB default
+    // (Postgres rejects the row; SQLite let both slide). Both columns exist for
+    // the BYOK (bring-your-own-LLM-key) feature, which nothing in this codebase
+    // currently inserts into — this endpoint mints a personal Consultify API
+    // token instead, verified via key_hash (apiKeyAuth.middleware.ts never reads
+    // provider/encrypted_key). Use a sentinel provider so these rows stay
+    // distinguishable from a real BYOK row, and reuse the already-computed hash
+    // rather than fabricating a second "encrypted" value with no real meaning.
     assertDbRunSuccess(
       await dbRun(
-        `INSERT INTO user_api_keys (id, user_id, name, key_hash, key_prefix, permissions, rate_limit, expires_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO user_api_keys (id, user_id, provider, encrypted_key, name, key_hash, key_prefix, permissions, rate_limit, expires_at)
+             VALUES (?, ?, 'consultify_api', ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           userId,
+          keyHash,
           name,
           keyHash,
           keyPrefix,

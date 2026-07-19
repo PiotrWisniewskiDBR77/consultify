@@ -48,10 +48,14 @@ router.post(
     const { requestedPermission, reason } = req.body;
     if (!requestedPermission) return res.status(400).json({ error: 'Permission required' });
     const id = uuidv4();
+    // permission_requests.request_type is NOT NULL with no DB default (Postgres
+    // rejects the row; SQLite let it slide). This route only models one kind of
+    // request (an ad-hoc permission grant), so mirror that into request_type —
+    // there's no CHECK constraint restricting it to a fixed enum.
     await dbRun(
       `
-    INSERT INTO permission_requests (id, user_id, organization_id, requested_permission, reason, status, created_at)
-    VALUES (?, ?, ?, ?, ?, 'pending', datetime('now'))
+    INSERT INTO permission_requests (id, user_id, organization_id, request_type, requested_permission, reason, status, created_at)
+    VALUES (?, ?, ?, 'permission_grant', ?, ?, 'pending', datetime('now'))
   `,
       [id, userId, orgId, requestedPermission, reason || '']
     );
