@@ -13,7 +13,7 @@ const mockGetTimelineWarningsSnapshot = vi.fn();
 const mockDetectDelaySignals = vi.fn();
 const mockGetPersistedDelaySignals = vi.fn();
 const mockPersistDelaySignals = vi.fn();
-const mockGetLevelingAlerts = vi.fn();
+const mockGetOverloadAlerts = vi.fn();
 const mockGetCapacityTimeline = vi.fn();
 const mockGetInitiativeBudgetSummary = vi.fn();
 const mockGetPortfolioBudgetSummary = vi.fn();
@@ -40,7 +40,7 @@ vi.mock('../../../services/delayDetectionService.js', () => ({
 }));
 
 vi.mock('../../../services/workloadCapacityService.js', () => ({
-  getLevelingAlerts: (...args: unknown[]) => mockGetLevelingAlerts(...args),
+  getOverloadAlerts: (...args: unknown[]) => mockGetOverloadAlerts(...args),
   getCapacityTimeline: (...args: unknown[]) => mockGetCapacityTimeline(...args),
 }));
 
@@ -156,7 +156,7 @@ describe('V8 execution-control read-only routes', () => {
     mockDetectDelaySignals.mockResolvedValue([]);
     mockGetPersistedDelaySignals.mockResolvedValue([]);
     mockPersistDelaySignals.mockResolvedValue({ persisted: 0, alertsSent: 0 });
-    mockGetLevelingAlerts.mockResolvedValue([]);
+    mockGetOverloadAlerts.mockResolvedValue([]);
     mockGetCapacityTimeline.mockResolvedValue([]);
     mockGetInitiativeBudgetSummary.mockResolvedValue(null);
     mockGetPortfolioBudgetSummary.mockResolvedValue({ totals: { planned: 0, actual: 0 } });
@@ -355,7 +355,11 @@ describe('V8 execution-control read-only routes', () => {
   });
 
   it('GET /api/v8/execution-control/capacity/leveling-alerts returns org-scoped alerts', async () => {
-    mockGetLevelingAlerts.mockResolvedValue([
+    // ★ #77 wiring fix (2026-07-19): route now calls getOverloadAlerts (hours-based,
+    // matches the ExecutionHub.tsx V8ExecutionCapacityAlert contract) instead of
+    // getLevelingAlerts (allocation%-based `{overloaded,underutilized,unfilledRoles}`
+    // object — never an array, which silently emptied capacityAlerts app-wide).
+    mockGetOverloadAlerts.mockResolvedValue([
       {
         userId: 'u1',
         name: 'Alex',
@@ -373,16 +377,21 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
     expect(res.body.data?.alerts).toHaveLength(1);
-    expect(mockGetLevelingAlerts).toHaveBeenCalledWith(ORG);
+    expect(mockGetOverloadAlerts).toHaveBeenCalledWith(ORG, 'week');
   });
 
-  it('GET /api/v8/execution-control/capacity/timeline returns org-scoped weeks', async () => {
+  it('GET /api/v8/execution-control/capacity/timeline returns org-scoped weeks mapped to hours contract', async () => {
+    // ★ #77 wiring fix (2026-07-19): getCapacityTimeline() (real service) returns
+    // {weekStart, totalCapacity, totalAllocated, utilizationPercent} — the route
+    // maps these to {capacityHours, allocatedHours, availableHours} because that's
+    // what the ONLY frontend consumer (ExecutionHub.tsx GovernedCapacityWeek /
+    // V8ExecutionCapacityWeek + ReportDocumentView "4-week horizon" table) reads.
     mockGetCapacityTimeline.mockResolvedValue([
       {
         weekStart: '2026-03-23',
-        capacityHours: 40,
-        allocatedHours: 28,
-        availableHours: 12,
+        totalCapacity: 40,
+        totalAllocated: 28,
+        utilizationPercent: 70,
       },
     ]);
 
@@ -394,6 +403,13 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
     expect(res.body.data?.weeks).toHaveLength(1);
+    expect(res.body.data?.weeks[0]).toEqual({
+      weekStart: '2026-03-23',
+      capacityHours: 40,
+      allocatedHours: 28,
+      availableHours: 12,
+      utilizationPercent: 70,
+    });
     expect(mockDbGet).toHaveBeenCalledWith(
       `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
       ['init-1', ORG],

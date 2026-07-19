@@ -37,7 +37,7 @@ import {
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
-import { getCapacityTimeline, getLevelingAlerts } from '../services/workloadCapacityService.js';
+import { getCapacityTimeline, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -893,6 +893,11 @@ router.post(
 // V4-EXEC-04: Capacity leveling & timeline
 // ================================================================
 
+// ★ #77 wiring fix (2026-07-19): see matching handler + rationale in
+// server/src/routes/v8/execution-control.routes.ts — this legacy fallback
+// (used when the v8 endpoint 4xx/5xx's, see `shouldFallbackToLegacyExecutionControl`
+// in ExecutionHub.tsx) had the identical getLevelingAlerts/getOverloadAlerts
+// shape mismatch, so capacityAlerts silently emptied via this path too.
 router.get(
   '/capacity/leveling-alerts',
   verifyToken,
@@ -901,8 +906,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const alerts = await getLevelingAlerts(orgId);
-    return res.json(alerts);
+    const alerts = await getOverloadAlerts(orgId, 'week');
+    return res.json({ alerts });
   })
 );
 
@@ -915,7 +920,14 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { initiativeId } = req.query;
-    const weeks = await getCapacityTimeline(orgId, initiativeId as string | undefined);
+    const rawWeeks = await getCapacityTimeline(orgId, initiativeId as string | undefined);
+    const weeks = rawWeeks.map((w) => ({
+      weekStart: w.weekStart,
+      capacityHours: w.totalCapacity,
+      allocatedHours: w.totalAllocated,
+      availableHours: Math.round((w.totalCapacity - w.totalAllocated) * 10) / 10,
+      utilizationPercent: w.utilizationPercent,
+    }));
     return res.json({ weeks });
   })
 );

@@ -39,7 +39,7 @@ import {
   getExecutionControlTowerQueues,
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
 } from '../../services/v8ExecutionControlTowerService.js';
-import { getCapacityTimeline, getLevelingAlerts } from '../../services/workloadCapacityService.js';
+import { getCapacityTimeline, getOverloadAlerts } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -496,12 +496,28 @@ router.post(
 
 /**
  * GET /api/v8/execution-control/capacity/leveling-alerts
+ *
+ * ★ #77 wiring fix (2026-07-19): this endpoint's name predates a function
+ * split in workloadCapacityService (getLevelingAlerts = cross-initiative
+ * allocation% leveling vs getOverloadAlerts = hours-based overload with
+ * severity/suggestion). The ONLY frontend consumer (ExecutionHub.tsx
+ * `V8ExecutionControlApi.getCapacityLevelingAlerts()`, typed as
+ * `V8ExecutionCapacityAlert[]` = userId/name/capacityHours/allocatedHours/
+ * overloadHours/severity/suggestion) expects the getOverloadAlerts shape.
+ * Calling getLevelingAlerts here returned `{overloaded,underutilized,
+ * unfilledRoles}` under the `alerts` key — never an array — so
+ * normalizeExecutionArrayEnvelope() silently resolved it to `[]` on every
+ * request. That emptied capacityAlerts app-wide: Execution health score's
+ * "capacity" dimension was pinned at 100 (never reflected real overload),
+ * ExecutionSummaryOneLook Kokpit's overallocatedCount stayed 0, and the
+ * "Governed capacity alerts" report table always rendered empty. Fixed by
+ * calling the function whose shape actually matches the contract.
  */
 router.get(
   '/capacity/leveling-alerts',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const alerts = await getLevelingAlerts(organizationId);
+    const alerts = await getOverloadAlerts(organizationId, 'week');
     return res.json({
       data: { alerts },
       meta: executionControlMeta(),
@@ -511,6 +527,15 @@ router.get(
 
 /**
  * GET /api/v8/execution-control/capacity/timeline
+ *
+ * ★ #77 wiring fix (2026-07-19): getCapacityTimeline() returns
+ * `{weekStart, totalCapacity, totalAllocated, utilizationPercent}` but the
+ * only frontend consumer (ExecutionHub.tsx GovernedCapacityWeek /
+ * V8ExecutionCapacityWeek) reads `{weekStart, capacityHours, allocatedHours,
+ * availableHours}` — field names never matched, so every week rendered
+ * `undefined` in the "4-week horizon" report table. Map at the route
+ * boundary rather than renaming the shared service's output (also consumed
+ * by executionControl.routes.ts legacy fallback with the same expectation).
  */
 router.get(
   '/capacity/timeline',
@@ -531,7 +556,14 @@ router.get(
         });
       }
     }
-    const weeks = await getCapacityTimeline(organizationId, initiativeId);
+    const rawWeeks = await getCapacityTimeline(organizationId, initiativeId);
+    const weeks = rawWeeks.map((w) => ({
+      weekStart: w.weekStart,
+      capacityHours: w.totalCapacity,
+      allocatedHours: w.totalAllocated,
+      availableHours: Math.round((w.totalCapacity - w.totalAllocated) * 10) / 10,
+      utilizationPercent: w.utilizationPercent,
+    }));
     return res.json({
       data: { weeks },
       meta: executionControlMeta(),
