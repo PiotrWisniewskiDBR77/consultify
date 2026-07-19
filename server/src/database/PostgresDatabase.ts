@@ -11,6 +11,10 @@ import { Client, Pool, type PoolClient, type PoolConfig } from 'pg';
 import databaseConfig from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import { recordQueryPerformance } from '../utils/queryHelpers.js';
+import {
+  getConflictTarget,
+  resolveConflictTargetSql,
+} from './conflictTargets.js';
 import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
@@ -626,12 +630,33 @@ export function adaptQuery(sql: string): string {
     if (match) {
       const tableName = match[1];
       const columns = match[2].split(',').map((c) => c.trim());
-      // Find primary key or first column as conflict target
-      const conflictColumn = columns[0]; // Simplified - assumes first column is key
+      const firstColumn = columns[0]; // legacy heuristic: assumes first column is key
+      // Prefer the explicit conflict-target registry; unregistered tables warn
+      // loudly and fall back to the historical first-column behaviour.
+      const registered = getConflictTarget(tableName);
+      const conflictColumns = registered && registered.length > 0 ? [...registered] : [firstColumn];
+      if (!registered || registered.length === 0) {
+        // Emits the loud once-per-table warning without changing behaviour.
+        resolveConflictTargetSql(tableName, firstColumn, 'REPLACE');
+      }
+      // For registered targets, never overwrite the conflict-key columns — nor
+      // the surrogate `id` primary key — in the DO UPDATE SET (standard upsert
+      // practice: avoids churning invoices.id on every Stripe re-sync when the
+      // real key is stripe_invoice_id). For the unregistered fallback the target
+      // IS the first column and EXCLUDED equals the existing value, so keeping
+      // the full column set preserves legacy behaviour exactly.
+      const targetSet = new Set(conflictColumns.map((c) => c.toLowerCase()));
+      let setColumns = registered
+        ? columns.filter((col) => {
+            const lc = col.toLowerCase();
+            return !targetSet.has(lc) && lc !== 'id';
+          })
+        : columns;
+      if (setColumns.length === 0) setColumns = columns; // degenerate: every column is a key
       adapted = adapted.replace(/INSERT\s+OR\s+REPLACE\s+INTO/i, 'INSERT INTO');
       // Add ON CONFLICT clause - this is a simplified version
       // Full implementation would need to parse VALUES and UPDATE SET properly
-      adapted += ` ON CONFLICT (${conflictColumn}) DO UPDATE SET ${columns.map((col) => `${col} = EXCLUDED.${col}`).join(', ')}`;
+      adapted += ` ON CONFLICT (${conflictColumns.join(', ')}) DO UPDATE SET ${setColumns.map((col) => `${col} = EXCLUDED.${col}`).join(', ')}`;
     } else {
       // Fallback: just remove INSERT OR REPLACE and add basic ON CONFLICT
       adapted = adapted.replace(/INSERT\s+OR\s+REPLACE/i, 'INSERT');
@@ -659,11 +684,15 @@ export function adaptQuery(sql: string): string {
     // Match: INSERT INTO table (columns) ... VALUES (values)
     // Use non-greedy matching with [\s\S] to handle newlines and match balanced parentheses
 
-    // Extract the column list first to get the first column for conflict target
-    const insertMatch = adapted.match(/INSERT\s+INTO\s+\w+\s*\(([\s\S]+?)\)/i);
+    // Extract the table name + column list to resolve the conflict target.
+    const insertMatch = adapted.match(/INSERT\s+INTO\s+(\w+)\s*\(([\s\S]+?)\)/i);
     if (insertMatch) {
-      const columns = insertMatch[1];
+      const tableName = insertMatch[1];
+      const columns = insertMatch[2];
       const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+      // Registry-driven conflict target; unregistered tables warn loudly and
+      // fall back to the historical first-column heuristic (zero behaviour change).
+      const conflictTarget = resolveConflictTargetSql(tableName, firstColumn, 'IGNORE');
 
       // Find the position of VALUES in the INSERT statement
       const valuesMatch = adapted.match(/\bVALUES\s*\(/i);
@@ -684,21 +713,21 @@ export function adaptQuery(sql: string): string {
           const afterValues = adapted.substring(valuesEndPos);
           // Double-check: VALUES should be in beforeValues, not afterValues
           if (beforeValues.includes('VALUES') && !beforeValues.includes('ON CONFLICT')) {
-            adapted = `${beforeValues} ON CONFLICT (${firstColumn}) DO NOTHING${afterValues}`;
+            adapted = `${beforeValues} ON CONFLICT (${conflictTarget}) DO NOTHING${afterValues}`;
           }
         } else {
           // Fallback: Use regex if we can't find balanced parentheses
           adapted = adapted.replace(
             /(VALUES\s*\([\s\S]+?\))/i,
-            (match) => `${match} ON CONFLICT (${firstColumn}) DO NOTHING`
+            (match) => `${match} ON CONFLICT (${conflictTarget}) DO NOTHING`
           );
         }
       } else {
         // Fallback: Use regex for simpler cases
         // Match INSERT INTO ... (columns) ... VALUES (values) with flexible whitespace
         adapted = adapted.replace(
-          /(INSERT\s+INTO\s+\w+\s*\([\s\S]+?\))\s+(VALUES\s*\([\s\S]+?\))/gi,
-          (match, insertPart, valuesPart) => {
+          /(INSERT\s+INTO\s+(\w+)\s*\([\s\S]+?\))\s+(VALUES\s*\([\s\S]+?\))/gi,
+          (match, insertPart, matchedTable, valuesPart) => {
             // Skip if already has ON CONFLICT
             if (match.includes('ON CONFLICT')) {
               return match;
@@ -706,10 +735,17 @@ export function adaptQuery(sql: string): string {
             // Extract first column from column list
             const columnsMatch = insertPart.match(/\(([\s\S]+?)\)/);
             if (columnsMatch) {
-              const columns = columnsMatch[1];
-              const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+              const innerColumns = columnsMatch[1];
+              const innerFirstColumn = innerColumns.split(',')[0].trim().split(/\s+/)[0];
+              // Resolve per matched statement (a multi-statement string may hit
+              // several tables); unregistered tables warn + keep first-column.
+              const innerTarget = resolveConflictTargetSql(
+                matchedTable,
+                innerFirstColumn,
+                'IGNORE'
+              );
               // Add ON CONFLICT after VALUES clause
-              return `${insertPart} ${valuesPart} ON CONFLICT (${firstColumn}) DO NOTHING`;
+              return `${insertPart} ${valuesPart} ON CONFLICT (${innerTarget}) DO NOTHING`;
             }
             return match;
           }
