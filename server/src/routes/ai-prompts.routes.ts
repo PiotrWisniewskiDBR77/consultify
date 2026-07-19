@@ -228,17 +228,23 @@ router.post(
 
       const id = randomUUID();
 
+      // FIX (NOT-NULL sweep): ai_system_prompts.key/content and ai_prompt_versions.content
+      // are NOT NULL with no DB default (Postgres) — omitting them 500s with 23502. `key`
+      // is unique (ai_system_prompts_key_key); mirror `name` into it, same convention as
+      // the canonical AIPromptsController.createPrompt.
       const runResult1 = await dbRun(
         `
-            INSERT INTO ai_system_prompts 
-            (id, name, category, description, template, variables, is_active, version, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
+            INSERT INTO ai_system_prompts
+            (id, key, name, category, description, content, template, variables, is_active, version, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
         `,
         [
           id,
           name,
+          name,
           category,
           description,
+          resolvedTemplate,
           resolvedTemplate,
           JSON.stringify(variables || []),
           is_active !== false ? 1 : 0,
@@ -252,10 +258,10 @@ router.post(
       // Create initial version record
       const runResult2 = await dbRun(
         `
-            INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
-            VALUES (?, ?, 1, ?, datetime('now'), ?)
+            INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, created_at, created_by)
+            VALUES (?, ?, 1, ?, ?, datetime('now'), ?)
         `,
-        [randomUUID(), id, resolvedTemplate, userId]
+        [randomUUID(), id, resolvedTemplate, resolvedTemplate, userId]
       );
 
       if (!runResult2.success) {
@@ -341,10 +347,10 @@ router.put(
       if (resolvedTemplate && resolvedTemplate !== existing.template) {
         const runResult2 = await dbRun(
           `
-                INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
-                VALUES (?, ?, ?, ?, datetime('now'), ?)
+                INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, created_at, created_by)
+                VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
             `,
-          [randomUUID(), id, newVersion, resolvedTemplate, userId]
+          [randomUUID(), id, newVersion, resolvedTemplate, resolvedTemplate, userId]
         );
 
         if (!runResult2.success) {
@@ -576,10 +582,10 @@ router.post(
       // Record the restore as a new version
       const runResult2 = await dbRun(
         `
-            INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
-            VALUES (?, ?, ?, ?, datetime('now'), ?)
+            INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, created_at, created_by)
+            VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
         `,
-        [randomUUID(), id, newVersion, versionRecord.template, userId]
+        [randomUUID(), id, newVersion, versionRecord.template, versionRecord.template, userId]
       );
 
       if (!runResult2.success) {
@@ -641,8 +647,8 @@ router.post(
       );
 
       await dbRun(
-        `INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by) VALUES (?, ?, ?, ?, datetime('now'), ?)`,
-        [randomUUID(), id, newVersion, versionRecord.template, userId]
+        `INSERT INTO ai_prompt_versions (id, prompt_id, version, content, template, created_at, created_by) VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
+        [randomUUID(), id, newVersion, versionRecord.template, versionRecord.template, userId]
       );
 
       logger.info(

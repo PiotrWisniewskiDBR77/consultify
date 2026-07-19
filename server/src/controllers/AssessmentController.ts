@@ -1947,10 +1947,23 @@ export class AssessmentController {
         generatedAt: now,
       };
 
+      // FIX (NOT-NULL sweep): assessment_reports.organization_id is NOT NULL with no
+      // DB default (Postgres) — omitting it 500s with 23502. Resolve from the
+      // already-fetched assessment (same org already enforced by the WHERE above).
       await queryHelpers.queryRun(
-        `INSERT INTO assessment_reports (id, assessment_id, version, status, content_json, created_by, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, assessmentId, newVersion, 'DRAFT', JSON.stringify(reportContent), user.id, now, now]
+        `INSERT INTO assessment_reports (id, assessment_id, organization_id, version, status, content_json, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          assessmentId,
+          user.organizationId,
+          newVersion,
+          'DRAFT',
+          JSON.stringify(reportContent),
+          user.id,
+          now,
+          now,
+        ]
       );
 
       res.json({

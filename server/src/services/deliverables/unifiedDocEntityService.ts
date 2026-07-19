@@ -306,11 +306,13 @@ export async function commitDraftToArtifact(params: {
         );
         // Wersja w wave5_artifact_versions (jeśli tabela istnieje).
         try {
+          // FIX (NOT-NULL sweep): wave5_artifact_versions.created_by is NOT NULL
+          // with no DB default (Postgres) — omitting it 500s with 23502.
           await dbRun(
             `INSERT INTO wave5_artifact_versions (
-              version_id, artifact_id, organization_id, version, content, provenance_json
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), artifactId, organizationId, version, draft.content_json, '{}'],
+              version_id, artifact_id, organization_id, version, content, provenance_json, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), artifactId, organizationId, version, draft.content_json, '{}', committedBy],
             { fallback: false }
           );
         } catch (verErr) {

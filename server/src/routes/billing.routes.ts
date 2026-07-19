@@ -1119,13 +1119,24 @@ router.post(
       const { metricName, quantity, metadata } = req.body;
 
       const id = uuidv4();
+      // FIX (NOT-NULL sweep): usage_records.type/amount are NOT NULL with no DB
+      // default (Postgres) — this endpoint only wrote the newer metric_name/quantity
+      // pair, which 500s with 23502. Mirror into the legacy type/amount columns too.
       await dbRun(
         `
             INSERT INTO usage_records (
-                id, organization_id, metric_name, quantity, metadata
-            ) VALUES (?, ?, ?, ?, ?)
+                id, organization_id, type, amount, metric_name, quantity, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
-        [id, req.user!.organizationId, metricName, quantity, JSON.stringify(metadata || {})]
+        [
+          id,
+          req.user!.organizationId,
+          metricName,
+          Math.round(Number(quantity) || 0),
+          metricName,
+          quantity,
+          JSON.stringify(metadata || {}),
+        ]
       );
 
       res.json({ success: true, id });

@@ -1212,10 +1212,13 @@ router.post(
           original.project_id,
           { createdBy: userId ? String(userId) : null }
         );
+        // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
+        // (Postgres) — this best-effort fallback only wrote `title`, which 500s
+        // with 23502.
         await queryHelpers.queryRun(
-          `INSERT INTO initiatives (id, organization_id, project_id, title, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'DRAFT', ?, ?)`,
-          [newId, String(orgId), fallbackProjectId, newTitle, now, now]
+          `INSERT INTO initiatives (id, organization_id, project_id, title, name, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?)`,
+          [newId, String(orgId), fallbackProjectId, newTitle, newTitle, now, now]
         );
         return res.status(201).json({ id: newId });
       }

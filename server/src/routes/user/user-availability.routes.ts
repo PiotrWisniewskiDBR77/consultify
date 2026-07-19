@@ -2,6 +2,7 @@
  * User Availability Routes
  */
 import { Request, Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -47,10 +48,13 @@ router.put(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const json = JSON.stringify(req.body);
+    // FIX (NOT-NULL sweep): user_availability.id is NOT NULL with no DB default
+    // (Postgres) — omitting it 500s with 23502 on first insert per user (the
+    // ON CONFLICT UPDATE path never touches id, so a fresh uuid here is safe).
     await dbRun(
-      `INSERT INTO user_availability (user_id, settings, updated_at) VALUES (?, ?, datetime('now'))
+      `INSERT INTO user_availability (id, user_id, settings, updated_at) VALUES (?, ?, ?, datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')`,
-      [req.user?.id, json, json]
+      [uuidv4(), req.user?.id, json, json]
     );
     res.json({ success: true });
   })

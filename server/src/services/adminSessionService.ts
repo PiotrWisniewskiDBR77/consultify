@@ -162,13 +162,17 @@ class AdminSessionServiceClass {
     const expiresAt = data?.expiresAt || this.computeExpiresAt(data?.expiresInHours, sessionType);
 
     try {
+      // FIX (NOT-NULL sweep): admin_sessions.admin_user_id is NOT NULL with no DB
+      // default (Postgres) — only the separate nullable `user_id` column was
+      // written, which 500s with 23502.
       await this.db.run(
         `INSERT INTO admin_sessions
-          (id, user_id, session_token, expires_at, created_at, mfa_verified, is_active, ip_address, user_agent,
+          (id, admin_user_id, user_id, session_token, expires_at, created_at, mfa_verified, is_active, ip_address, user_agent,
            session_type, requested_capability, justification, break_glass_reason, approved_by, created_by)
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
+          adminId,
           adminId,
           sessionToken,
           expiresAt,

@@ -215,14 +215,18 @@ Analyze the above interview data and generate structured insights.`;
     // write never throws on a DB provisioned only for the Gen-2 base schema.
     await ensureInferenceInsightColumns();
 
+    // FIX (NOT-NULL sweep): interview_insights.created_by is NOT NULL with no DB
+    // default (Postgres) — this loop never wrote it, which 500s with 23502. The
+    // run row (fetched above) carries the original requester's id.
+    const insightCreatedBy = (run as any).created_by || 'system';
     for (const insight of insights) {
       const insightId = uuidv4();
       await dbRun(
         `INSERT INTO interview_insights
          (id, organization_id, title, category, content, status,
           structured_content, evidence_links, unknowns, counterpoints, assumptions,
-          confidence_score, inference_run_id, insight_category, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          confidence_score, inference_run_id, insight_category, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           insightId,
           organizationId,
@@ -237,6 +241,7 @@ Analyze the above interview data and generate structured insights.`;
           insight.confidenceScore,
           runId,
           insight.category,
+          insightCreatedBy,
           now,
           now,
         ]

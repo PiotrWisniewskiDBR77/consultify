@@ -1188,24 +1188,31 @@ export class InitiativeController {
       if (changes.length > 0) {
         try {
           const historyId = uuidv4();
+          // FIX (NOT-NULL sweep): initiative_history has no organization_id/actor_name/
+          // changes columns (real schema: id, initiative_id, action, old_value, new_value,
+          // changed_by, changed_at, notes) — the previous statement targeted columns that
+          // don't exist (42703) AND omitted changed_by (NOT NULL, no default → 23502 even
+          // if the column names had matched). Both errors were swallowed by the try/catch
+          // below, so every write here silently no-op'd. Map to the real columns and keep
+          // the rich diff payload in `notes` (same convention as the two other call sites
+          // below and in initiativeGovernanceService.ts).
           await queryHelpers.queryRun(
-            `INSERT INTO initiative_history (id, initiative_id, organization_id, action, actor_id, actor_name, changes, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO initiative_history (id, initiative_id, action, changed_by, changed_at, notes)
+             VALUES (?, ?, ?, ?, ?, ?)`,
             [
               historyId,
               id,
-              orgId,
               'fields_updated',
-              actorId || null,
-              actorName || null,
-              JSON.stringify(
-                changes.map((c) => ({
+              actorId || 'system',
+              now,
+              JSON.stringify({
+                actorName: actorName || null,
+                changes: changes.map((c) => ({
                   field: c.field,
                   from: c.oldValue,
                   to: c.newValue,
-                }))
-              ),
-              now,
+                })),
+              }),
             ]
           );
         } catch {
@@ -2196,23 +2203,25 @@ export class InitiativeController {
       // Log to initiative_history (general audit)
       try {
         const histId = uuidv4();
+        // FIX (NOT-NULL sweep, same as fields_updated above): real columns are
+        // id, initiative_id, action, changed_by, changed_at, notes — no organization_id/
+        // actor_name/changes columns exist, and changed_by is NOT NULL with no default.
         await queryHelpers.queryRun(
-          `INSERT INTO initiative_history (id, initiative_id, organization_id, action, actor_id, actor_name, changes, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO initiative_history (id, initiative_id, action, changed_by, changed_at, notes)
+           VALUES (?, ?, ?, ?, ?, ?)`,
           [
             histId,
             id,
-            orgId,
             'status_changed',
-            actorId || null,
-            actorName || null,
+            actorId || 'system',
+            now,
             JSON.stringify({
+              actorName: actorName || null,
               from: currentStatus,
               to: nextStatus,
               reason: reason || null,
               gate: gate || null,
             }),
-            now,
           ]
         );
       } catch {

@@ -472,17 +472,22 @@ export class ArtifactConversionService {
           ]
         );
       } catch {
+        // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
+        // (Postgres) — this catch-fallback only wrote `title`, which 500s with
+        // 23502 (the primary insert above already writes both title and name).
+        const fallbackTitle = String(payload.title || conversion.sourceArtifactTitle);
         await queryHelpers.queryRun(
           `INSERT INTO initiatives (
-            id, organization_id, project_id, title, summary, hypothesis, status,
+            id, organization_id, project_id, title, name, summary, hypothesis, status,
             confidence_level, problem_statement, deliverables, success_criteria, key_risks,
             source_type, source_id, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             initiativeId,
             params.organizationId,
             conversion.projectId ?? null,
-            String(payload.title || conversion.sourceArtifactTitle),
+            fallbackTitle,
+            fallbackTitle,
             String(payload.summary || ''),
             String(payload.hypothesis || ''),
             InitiativeStatus.DRAFT,

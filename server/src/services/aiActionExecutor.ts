@@ -1093,10 +1093,23 @@ const AIActionExecutor = {
     const taskId = uuidv4();
     const { title, description, assigneeId, dueDate } = draftContent;
 
+    // FIX (NOT-NULL sweep): tasks.organization_id is NOT NULL with no DB default
+    // (Postgres) — this AI-action executor omitted it entirely, which 500s with
+    // 23502. `action.organization_id` is the established convention elsewhere
+    // in this file.
     await dbRun(
-      `INSERT INTO tasks (id, project_id, title, description, assignee_id, due_date, status, created_by)
-                VALUES (?, ?, ?, ?, ?, ?, 'TODO', ?)`,
-      [taskId, action.project_id, title, description, assigneeId, dueDate, action.user_id]
+      `INSERT INTO tasks (id, organization_id, project_id, title, description, assignee_id, due_date, status, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'TODO', ?)`,
+      [
+        taskId,
+        action.organization_id,
+        action.project_id,
+        title,
+        description,
+        assigneeId,
+        dueDate,
+        action.user_id,
+      ]
     );
 
     // Post-creation notification (best-effort)

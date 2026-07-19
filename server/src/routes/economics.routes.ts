@@ -1640,14 +1640,17 @@ router.post(
       const anchoredProjectId = await resolveInitiativeProjectId(orgId, analysis.project_id, {
         createdBy: req.user?.id ?? null,
       });
+      // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
+      // (Postgres) — this branch only wrote `title`, which 500s with 23502.
       await dbRun(
         `INSERT INTO initiatives (
-        id, organization_id, project_id, title, summary, status, cost_capex, cost_opex, expected_roi, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, organization_id, project_id, title, name, summary, status, cost_capex, cost_opex, expected_roi, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           initiativeId,
           orgId,
           anchoredProjectId,
+          decodedAnalysisName,
           decodedAnalysisName,
           analysis.description || null,
           normalizeStatusForDb('DRAFT'),

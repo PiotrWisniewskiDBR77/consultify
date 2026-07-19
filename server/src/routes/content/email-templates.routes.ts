@@ -252,19 +252,23 @@ router.post(
       const now = new Date().toISOString();
       const variablesJson = JSON.stringify(availableVariables || []);
 
+      // FIX (NOT-NULL sweep): email_templates.html_content is NOT NULL with no DB
+      // default (Postgres) — only the legacy `body_html` (which does have a default)
+      // was written, so this 500s with 23502. Mirror htmlContent into both columns.
       await dbRun(
         `
                 INSERT INTO email_templates (
-                    id, template_key, name, subject, body_html, body_text, 
+                    id, template_key, name, subject, html_content, body_html, body_text,
                     variables, category_id, language_code, status, version,
                     is_active, is_default, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', 1, 1, 0, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', 1, 1, 0, ?, ?)
             `,
         [
           id,
           templateKey,
           name,
           subject,
+          htmlContent || '',
           htmlContent || '',
           textContent || '',
           variablesJson,
@@ -572,19 +576,22 @@ router.post(
       const clonedName = newName || `${original.name} (Copy)`;
       const clonedKey = `${original.template_key}_copy_${Date.now()}`;
 
+      // FIX (NOT-NULL sweep): email_templates.html_content is NOT NULL with no DB
+      // default (Postgres) — this clone only copied the legacy body_html column.
       await dbRun(
         `
                 INSERT INTO email_templates (
-                    id, template_key, name, subject, body_html, body_text,
+                    id, template_key, name, subject, html_content, body_html, body_text,
                     variables, category_id, language_code, status, version,
                     is_active, is_default, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', 1, 1, 0, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', 1, 1, 0, ?, ?)
             `,
         [
           newId,
           clonedKey,
           clonedName,
           original.subject,
+          original.html_content || original.body_html,
           original.body_html,
           original.body_text,
           original.variables,

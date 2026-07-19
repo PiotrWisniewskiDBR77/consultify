@@ -375,10 +375,22 @@ const probeM14M15Handoff: HealthProbe = {
     const now = new Date().toISOString();
     try {
       await dbRun(
+        // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
+        // (Postgres) — this probe only wrote `title`, which 500s with 23502.
         `INSERT INTO initiatives (
-           id, organization_id, project_id, title, summary, status, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [initiativeId, organizationId, null, label('INITIATIVE'), 'health probe', 'DONE', now, now]
+           id, organization_id, project_id, title, name, summary, status, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          initiativeId,
+          organizationId,
+          null,
+          label('INITIATIVE'),
+          label('INITIATIVE'),
+          'health probe',
+          'DONE',
+          now,
+          now,
+        ]
       );
 
       const kpi = await createKPI({
@@ -735,13 +747,16 @@ const probeInitiativeToExecutionRoundTrip: HealthProbe = {
     const now = new Date().toISOString();
     try {
       await dbRun(
+        // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
+        // (Postgres) — this probe only wrote `title`, which 500s with 23502.
         `INSERT INTO initiatives (
-           id, organization_id, project_id, title, summary, status, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+           id, organization_id, project_id, title, name, summary, status, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           initiativeId,
           organizationId,
           null,
+          label('EXEC-INITIATIVE'),
           label('EXEC-INITIATIVE'),
           'health probe',
           'IN_PROGRESS',
@@ -791,13 +806,16 @@ const probeExecutionClosureToResultsRoundTrip: HealthProbe = {
     const now = new Date().toISOString();
     try {
       await dbRun(
+        // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
+        // (Postgres) — this probe only wrote `title`, which 500s with 23502.
         `INSERT INTO initiatives (
-           id, organization_id, project_id, title, summary, status, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+           id, organization_id, project_id, title, name, summary, status, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           initiativeId,
           organizationId,
           null,
+          label('CLOSURE-INITIATIVE'),
           label('CLOSURE-INITIATIVE'),
           'health probe',
           'DONE',

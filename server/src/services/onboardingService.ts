@@ -485,14 +485,19 @@ class OnboardingService {
         const anchoredProjectId = await resolveInitiativeProjectId(organizationId, null, {
           createdBy: userId ?? null,
         });
+        // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
+        // (Postgres) — this branch only wrote `title`, which 500s with 23502.
+        // Mirror title into name, same convention as createInitiativeService.ts /
+        // InitiativeController.ts.
         await this.runAsync(
           `INSERT INTO initiatives
-           (id, organization_id, project_id, title, summary, hypothesis, created_by, created_from, created_from_plan_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'AI_ONBOARDING', ?)`,
+           (id, organization_id, project_id, title, name, summary, hypothesis, created_by, created_from, created_from_plan_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'AI_ONBOARDING', ?)`,
           [
             id,
             organizationId,
             anchoredProjectId,
+            decodedInitTitle,
             decodedInitTitle,
             initiative.summary || '',
             initiative.hypothesis || '',

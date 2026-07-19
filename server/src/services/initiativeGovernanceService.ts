@@ -379,16 +379,20 @@ class InitiativeGovernanceService {
       } catch {
         citations = [];
       }
+      // FIX (NOT-NULL sweep, same class as InitiativeController.ts fields_updated/
+      // status_changed): initiative_history has no organization_id/actor_name/changes
+      // columns, and changed_by is NOT NULL with no default — the previous statement
+      // 42703'd on the nonexistent columns before changed_by was even checked, and the
+      // failure was swallowed by this try/catch (auditWritten stayed false silently).
       await queryHelpers.queryRun(
-        `INSERT INTO initiative_history (id, initiative_id, organization_id, action, actor_id, actor_name, changes, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        `INSERT INTO initiative_history (id, initiative_id, action, changed_by, changed_at, notes)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
         [
           histId,
           blueprint.initiative_id,
-          orgId,
           'ai_blueprint_applied',
-          userId,
-          null,
+          userId || 'system',
+          appliedAt,
           JSON.stringify({
             proposalId: blueprintId,
             actorId: userId,
@@ -405,7 +409,6 @@ class InitiativeGovernanceService {
             },
             citations,
           }),
-          appliedAt,
         ]
       );
       auditWritten = true;

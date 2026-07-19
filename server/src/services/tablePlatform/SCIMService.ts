@@ -96,12 +96,15 @@ export class SCIMService {
     const name = scimUser.name || {};
 
     const db = getDatabase();
+    // FIX (NOT-NULL sweep): users.id is NOT NULL with no DB default (Postgres) —
+    // omitting it 500s with 23502 on first provision (the ON CONFLICT UPDATE path
+    // never touches id, so a fresh uuid here is safe for existing users too).
     const result = await db.query(
-      `INSERT INTO users (email, first_name, last_name, organization_id, role, status)
-       VALUES ($1, $2, $3, $4, 'member', 'active')
-       ON CONFLICT (email) DO UPDATE SET first_name = $2, last_name = $3, status = 'active'
+      `INSERT INTO users (id, email, first_name, last_name, organization_id, role, status)
+       VALUES ($1, $2, $3, $4, $5, 'member', 'active')
+       ON CONFLICT (email) DO UPDATE SET first_name = $3, last_name = $4, status = 'active'
        RETURNING *`,
-      [email, name.givenName || '', name.familyName || '', organizationId]
+      [crypto.randomUUID(), email, name.givenName || '', name.familyName || '', organizationId]
     );
 
     return this.toSCIMUser(result.rows[0]);

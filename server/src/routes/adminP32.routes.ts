@@ -1660,7 +1660,7 @@ async function readAdminAccessCodes(orgId: string) {
   }));
 }
 
-async function createAdminAccessCode(orgId: string, body: any) {
+async function createAdminAccessCode(orgId: string, body: any, createdBy?: string | null) {
   const errors: string[] = [];
   const role = normalizeOrganizationRole(body?.role || 'MEMBER');
   if (!ADMIN_PEOPLE_ROLES.has(role) || role === 'OWNER') {
@@ -1681,10 +1681,13 @@ async function createAdminAccessCode(orgId: string, body: any) {
   const id = uuidv4();
   const code = generateTenantAccessCode();
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
+  // FIX (NOT-NULL sweep): access_codes.created_by is NOT NULL with no DB default
+  // (Postgres) — the local ensureAdminAccessCodeTables() CREATE TABLE IF NOT EXISTS
+  // predates that column, so this 500s with 23502 against the real migrated schema.
   await dbRun(
-    `INSERT INTO access_codes (id, organization_id, code, role, max_uses, current_uses, expires_at, created_at)
-     VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))`,
-    [id, orgId, code, role, maxUses, expiresAt]
+    `INSERT INTO access_codes (id, organization_id, code, role, max_uses, current_uses, expires_at, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, 0, ?, ?, datetime('now'))`,
+    [id, orgId, code, role, maxUses, expiresAt, createdBy || 'system']
   );
 
   return {
@@ -2189,7 +2192,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res) => {
     const actor = await getAdminActor(req, res, ['people:write']);
     if (!actor) return;
-    const outcome = await createAdminAccessCode(actor.orgId, req.body || {});
+    const outcome = await createAdminAccessCode(actor.orgId, req.body || {}, actor.actorId);
     if ('validationErrors' in outcome)
       return sendValidationError(res, outcome.validationErrors || []);
 
