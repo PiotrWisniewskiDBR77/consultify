@@ -2983,10 +2983,19 @@ router.post(
     const requestId = uuidv4();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
 
+    // gdpr_requests.organization_id is NOT NULL with no DB default (Postgres was
+    // strict here, SQLite let it slide) — resolve it from the requesting user's
+    // own org rather than threading it through every caller.
+    const orgRow = await dbGet(`SELECT organization_id FROM users WHERE id = ?`, [userId]);
+    const organizationId = orgRow?.organization_id;
+    if (!organizationId) {
+      return res.status(404).json({ error: 'User organization not found' });
+    }
+
     // Create request record
     await dbRun(
-      `INSERT INTO gdpr_requests (id, user_id, type, status, expires_at) VALUES (?, ?, 'export', 'processing', ?)`,
-      [requestId, userId, expiresAt]
+      `INSERT INTO gdpr_requests (id, organization_id, user_id, type, status, expires_at) VALUES (?, ?, ?, 'export', 'processing', ?)`,
+      [requestId, organizationId, userId, expiresAt]
     );
 
     // Gather user data (this would ideally be done async in a job queue)
@@ -3146,9 +3155,17 @@ router.post(
     // Schedule deletion for 30 days from now (grace period)
     const scheduledAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
+    // gdpr_requests.organization_id is NOT NULL with no DB default (Postgres
+    // rejects the row; SQLite let it slide) — resolve from the user's own org.
+    const orgRow = await dbGet(`SELECT organization_id FROM users WHERE id = ?`, [userId]);
+    const organizationId = orgRow?.organization_id;
+    if (!organizationId) {
+      return res.status(404).json({ error: 'User organization not found' });
+    }
+
     await dbRun(
-      `INSERT INTO gdpr_requests (id, user_id, type, status, reason, scheduled_at) VALUES (?, ?, 'deletion', 'scheduled', ?, ?)`,
-      [requestId, userId, reason || '', scheduledAt]
+      `INSERT INTO gdpr_requests (id, organization_id, user_id, type, status, reason, scheduled_at) VALUES (?, ?, ?, 'deletion', 'scheduled', ?, ?)`,
+      [requestId, organizationId, userId, reason || '', scheduledAt]
     );
 
     logger.info(

@@ -51,12 +51,25 @@ router.post(
       // Create export request record
       const requestId = `dsr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
+      // gdpr_requests.organization_id and .type are NOT NULL with no DB default
+      // (Postgres rejects the row; SQLite let both slide). `type` is also the
+      // column the superadmin Legal Panel (superadmin.routes.ts GET
+      // /gdpr/requests) displays — leaving it null hid every export/deletion
+      // request created through this router from that panel.
+      const orgRow = (await db.get('SELECT organization_id FROM users WHERE id = ?', [userId])) as {
+        organization_id: string;
+      } | null;
+      const organizationId = orgRow?.organization_id;
+      if (!organizationId) {
+        return res.status(404).json({ error: 'User organization not found' });
+      }
+
       await db.run(
         `
-      INSERT INTO gdpr_requests (id, user_id, request_type, status, requested_at, format, options)
-      VALUES (?, ?, 'EXPORT', 'PENDING', datetime('now'), ?, ?)
+      INSERT INTO gdpr_requests (id, organization_id, user_id, type, request_type, status, requested_at, format, options)
+      VALUES (?, ?, ?, 'export', 'EXPORT', 'PENDING', datetime('now'), ?, ?)
     `,
-        [requestId, userId, format, JSON.stringify({ includeAIData, includeActivityLogs })]
+        [requestId, organizationId, userId, format, JSON.stringify({ includeAIData, includeActivityLogs })]
       );
 
       logger.info(`[DataExport] Export request created: ${requestId} for user ${userId}`);
@@ -252,11 +265,19 @@ router.post(
       const { reason, confirmationEmail } = req.body;
 
       // Verify email matches
-      const user = (await db.get('SELECT email FROM users WHERE id = ?', [userId])) as {
+      const user = (await db.get('SELECT email, organization_id FROM users WHERE id = ?', [
+        userId,
+      ])) as {
         email: string;
+        organization_id: string;
       } | null;
       if (!user || user.email !== confirmationEmail) {
         return res.status(400).json({ error: 'Email confirmation does not match' });
+      }
+      // gdpr_requests.organization_id and .type are NOT NULL with no DB default
+      // (Postgres rejects the row; SQLite let both slide) — see /request above.
+      if (!user.organization_id) {
+        return res.status(404).json({ error: 'User organization not found' });
       }
 
       const requestId = `del-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -267,10 +288,10 @@ router.post(
 
       await db.run(
         `
-      INSERT INTO gdpr_requests (id, user_id, request_type, status, requested_at, scheduled_date, options)
-      VALUES (?, ?, 'DELETE', 'SCHEDULED', datetime('now'), ?, ?)
+      INSERT INTO gdpr_requests (id, organization_id, user_id, type, request_type, status, requested_at, scheduled_date, options)
+      VALUES (?, ?, ?, 'deletion', 'DELETE', 'SCHEDULED', datetime('now'), ?, ?)
     `,
-        [requestId, userId, scheduledDate.toISOString(), JSON.stringify({ reason })]
+        [requestId, user.organization_id, userId, scheduledDate.toISOString(), JSON.stringify({ reason })]
       );
 
       logger.info(`[DataExport] Deletion request created: ${requestId} for user ${userId}`);
