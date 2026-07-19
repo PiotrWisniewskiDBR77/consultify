@@ -81,8 +81,8 @@ router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Re
       lastVerified: mfaConfig?.last_verified_at || null,
     });
   } catch (error: any) {
-    logger.error('[MFA] Failed to get MFA status:', error);
-    res.status(500).json({ error: 'Failed to get MFA status', message: error.message });
+    logger.error('[MFA] Failed to get MFA status:', { err: error, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się pobrać statusu MFA', code: 'MFA_STATUS_FAILED' });
   }
 });
 
@@ -124,8 +124,8 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
       message: 'Scan the QR code with your authenticator app, then verify with a code',
     });
   } catch (error: any) {
-    logger.error('[MFA] Failed to setup MFA:', error);
-    res.status(500).json({ error: 'Failed to setup MFA', message: error.message });
+    logger.error('[MFA] Failed to setup MFA:', { err: error, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się skonfigurować MFA', code: 'MFA_SETUP_FAILED' });
   }
 });
 
@@ -184,8 +184,8 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
       warning: 'Save these backup codes securely. They can only be shown once.',
     });
   } catch (error: any) {
-    logger.error('[MFA] Failed to verify MFA setup:', error);
-    res.status(500).json({ error: 'Failed to verify MFA setup', message: error.message });
+    logger.error('[MFA] Failed to verify MFA setup:', { err: error, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się zweryfikować konfiguracji MFA', code: 'MFA_VERIFY_SETUP_FAILED' });
   }
 });
 
@@ -250,8 +250,8 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
 
     res.json({ success: true, verified: true });
   } catch (error: any) {
-    logger.error('[MFA] Verification failed:', error);
-    res.status(500).json({ error: 'Verification failed', message: error.message });
+    logger.error('[MFA] Verification failed:', { err: error, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Weryfikacja nie powiodła się', code: 'MFA_VERIFY_FAILED' });
   }
 });
 
@@ -295,8 +295,8 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
 
     res.json({ success: true, message: 'MFA has been disabled' });
   } catch (error: any) {
-    logger.error('[MFA] Failed to disable MFA:', error);
-    res.status(500).json({ error: 'Failed to disable MFA', message: error.message });
+    logger.error('[MFA] Failed to disable MFA:', { err: error, correlationId: (req as any).correlationId });
+    res.status(500).json({ error: 'Nie udało się wyłączyć MFA', code: 'MFA_DISABLE_FAILED' });
   }
 });
 
@@ -347,8 +347,8 @@ router.post(
         warning: 'Previous backup codes have been invalidated. Save these new codes securely.',
       });
     } catch (error: any) {
-      logger.error('[MFA] Failed to regenerate backup codes:', error);
-      res.status(500).json({ error: 'Failed to regenerate backup codes', message: error.message });
+      logger.error('[MFA] Failed to regenerate backup codes:', { err: error, correlationId: (req as any).correlationId });
+      res.status(500).json({ error: 'Nie udało się wygenerować nowych kodów zapasowych', code: 'MFA_REGENERATE_CODES_FAILED' });
     }
   }
 );
