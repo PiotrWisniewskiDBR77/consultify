@@ -120,6 +120,7 @@ Każda egzekwowalna reguła wskazuje swój **jedyny** plik implementacji:
 ```
 docs/ui-standards/
 ├── CANON.md                  ← TEN PLIK — jedyny autorytet i front
+├── TRIADA_KANON.md           ← ★★★ SSOT ekranów LISTOWYCH (Menu·Tabela·Preview·Kanban) — patrz §7.1
 ├── 00-foundation/            ← tokeny, kolor, typografia, język wizualny, motion
 ├── 01-shell-layout/          ← app shell, topbar, tryby D/N/C, artifact shell
 ├── 02-components/            ← katalog WSZYSTKICH komponentów współdzielonych
@@ -128,10 +129,16 @@ docs/ui-standards/
 └── _archive/                 ← historia: plany migracji, audyty, evidence (NIE prawo)
 ```
 
+### 7.1 SSOT poza warstwami 00-03 (ustanowione po v3.0 — dopisane tu, żeby nawigacja nie kłamała)
+
+- **[`TRIADA_KANON.md`](TRIADA_KANON.md)** — ★★★ absolutny kanon ekranów LISTOWYCH (Menu 1/2/3 · Tabela · Preview · Kanban), ustanowiony przez właściciela 2026-07-04 na żywych ekranach My Work. Implementacja: `src/components/standard/` (StandardModuleBar · StandardTable · StandardPreview). Uzupełnia (nie konkuruje z) `03-modules/TABLE_AND_PREVIEW_CANON.md`. Egzekwowanie: `scripts/check-list-canon.sh`.
+- **[`ARTIFACT_ANATOMY_STANDARD.md`](../../Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md)** — SSOT ekranów-ARTEFAKTÓW (SPEC-A: Canvas·Dokument·Rekord·Matryca·Deck), analogiczny do TRIADA dla list. **Uwaga lokalizacji:** żyje poza tym drzewem, w `Harvard/wdrozenie-100/` (nie `docs/ui-standards/`) — historyczny artefakt organizacji repo, nie przenosimy bez osobnej decyzji. Egzekwowanie: `scripts/check-artefakt.sh`.
+- **`DOKTRYNA_GESTOSCI.md`** (siostra powyższych dwóch — gęstość/ilość elementów na ekranie) — **status: DRAFT czeka na akcept Piotra (2026-07-11), istnieje na ten moment tylko jako plik roboczy poza `origin/demo`** (nie scalony do tej gałęzi). Celowo BEZ linku tutaj — dodanie linku do nieistniejącego pliku złamałoby `npm run docs:links`. Gdy Piotr zaakceptuje i plik wejdzie na `origin/demo` w `docs/ui-standards/`, dopisz tu do niego prawdziwy link markdown.
+
 ### Warstwy szczegółu
 - **`00-foundation/`** — `color-system.md` · `visual-language.md` · `light-mode-readability.md` · `canvas-mode.md` · `artifact-identity-map.md`
 - **`01-shell-layout/`** — `presentation-modes.md` (tryby D/N/C) · `n-mode-card-standard.md` · `shared-nmode-sections-standard.md` · `artifact-shell.md` · `artifact-shell-future-standard.md` · `app-topbar-standard-v3.md`
-- **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `help-*` · `workspace-3-tools-strip.md` · `navigation-permissions-canon.md` (nawigacja cross-tool + bramki uprawnień, ref sweepu L1) …
+- **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `empty-loading-states.md` (stany empty/loading uczciwe — CANON §4.1/§5) · `help-*` · `workspace-3-tools-strip.md` · `navigation-permissions-canon.md` (nawigacja cross-tool + bramki uprawnień, ref sweepu L1) …
 - **`03-modules/`** — `TABLE_AND_PREVIEW_CANON.md` · `BLOCK_TYPES_CANON.md` · `INSIGHT_CANON.md` · `INITIATIVE_CANON.md` · `TIMELINE_CALENDAR_CANON.md` · `module-hub-standard.md` · `interactive-board-standard.md` · `tools-library-detail-standard.md`
 
 ### Aneks
@@ -151,6 +158,7 @@ Każdy agent (Claude, Cursor) **musi przeczytać ten kanon przed pracą nad UI**
 
 | Data | Wersja | Zmiana |
 |---|---|---|
+| 2026-07-19 | v3.0 | **VF0-1 (konsolidacja SSOT):** §7.1 nowa — dopisano nawigację do 2 SSOT ustanowionych PO v3.0, które CANON dotąd przemilczał mimo że CLAUDE.md już je traktuje jako obowiązujące: `TRIADA_KANON.md` (kanon list, 2026-07-04) i `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (kanon artefaktów SPEC-A, poza drzewem `docs/`). Dopisano `empty-loading-states.md` do warstwy `02-components` (był plikiem-sierotą bez wpisu w §7). `DOKTRYNA_GESTOSCI.md` (siostrzana doktryna gęstości) **NIE dostała linku** — DRAFT nieistniejący jeszcze na `origin/demo` (żyje poza tą gałęzią); dodanie linku złamałoby `npm run docs:links`. Zero usuniętych duplikatów ` 2.md` — audyt VF0-1 nie znalazł żadnych w tym katalogu (poprzednie sprzątanie z Fazy 3 było kompletne). |
 | 2026-06-29 | v3.0 | **Dodano warstwę** `02-components/navigation-permissions-canon.md` (T2.1 sweep L1) — konsoliduje nawigację cross-tool (hamburger-wzorzec Notatnika, jeden Command Row, wspólny rail Ideas + prefiksy) + bramki uprawnień (beta/pilot/role/flagi) jako referencję dla sweepu L1 z macierzy 4 poziomów. Addytywne (referuje CANON §4.5 + workspace-3-tools-strip + TABLE canon; zero złamanych linków). |
 | 2026-06-14 | v3.0 | **Faza 1** — Konsolidacja autorytetu: `CANON.md` jako jedyny front; scalone README (indeks) + Golden (treść→warstwy) + Operating (governance §3–5,8) + Canon V3 (legacy). Dodany doc↔kod binding (§6). Hierarchia prawdy rozstrzygnięta (§2). |
 | 2026-06-14 | v3.0 | **Faza 2** — Rozdział prawo/historia: 9 plików procesu + `evidence/`/`automation/`/`migration-backlog/` → `_archive/` (git mv). `.cursorrules` punkt wejścia → CANON. Repoint referencji, zero-dangling zweryfikowane w całym `docs/`. |
