@@ -37,12 +37,28 @@
 |---|---|---|---|---|---|---|
 | A · Harvard (H1-H6) | 52 | 5 | 3 | 1 | 1 | 62 |
 | B · Harvey (HP-0…27) | 21 | 5 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 12 | 45 | 11 | 2 | 0 | 70 |
+| C · Oxford (O1-O8) | 14 | 43 | 11 | 2 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 12 | 18 | 22 | 3 | 1 | 56 |
 | E · Przekroje (+nowe) | 26 | 2 | 17 | 7 | 2 | 54 |
-| **SUMA** | **123** | **75** | **55** | **13** | **4** | **270** |
+| **SUMA** | **125** | **73** | **55** | **13** | **4** | **270** |
 
-**Postęp: 136/270 rozstrzygnięte (50%).** (RAZEM 265→270: +5 nowych RED wykrytych w falach — patrz niżej.)
+**Postęp: 138/270 rozstrzygnięte (51%).** (RAZEM 265→270: +5 nowych RED wykrytych w falach — patrz niżej.)
+
+### O6.2/O6.3 🟡→✅ (2026-07-19) — benchmark finansowy z dowodem
+`oxford-o6-benchmark` (77691e2771/6d06a04739) był już zmergowany na `origin/demo` (ancestor
+potwierdzony, merge-base = tip gałęzi) — nie wymagał forward-portu. Dowód dodany: nowy acceptance
+test `tests/acceptance/o6-benchmark-financial.e2e.test.ts` (prefiks `odbior--o6--`, parity :5443) —
+seeduje realną organizację (industry='Produkcja przemysłowa…'), realny pakiet+statement Balance
+Sheet (CURRENT_ASSETS=900000/CURRENT_LIABILITIES=1000000 → 0.9x, celowo poniżej p25=1.1x), montuje
+REALNY router `finance-statements.routes.ts` za REALNYM `verifyToken`, wywołuje `GET /:id/ratios` →
+`computeRatios`→`buildRatioBenchmark`→`financeIndustryBenchmarks.getRatioBenchmark`/
+`buildSourceMetadata`. Asercje: benchmark p25/median/p75 = dokładnie wartości z
+`INDUSTRY_BENCHMARK_PROFILES['industrial-manufacturing'].CURRENT_RATIO` (nie fabrykowane w locie),
+`disclaimerPl/En` + `refreshOwnerPl/En` niepuste i cytują n≥10/DBR77, plus druga asercja wołająca
+`benchmarkFinancial()` bezpośrednio z tą samą wartością — zgodny werdykt `below-p25` (jedno źródło
+prawdy, brak dryfu). 2/2 testy PASS + 35/35 istniejący unit `financeIndustryBenchmarks.test.ts` PASS.
+Bramki: server tsc 146/204 0-nowych, esbuild/eslint czyste na nowym pliku. Gałąź `o6-finish`
+(worktree, NIE push) — commit dowodu poniżej.
 
 ### FALA-W3 (2026-07-19, deploy eca4ecc5ea, demo-safe-2026-07-19) — 10 gałęzi (9 kod + smoke), bramki zielone (FE tsc 0/0, server 146/204 0-nowych, kolory/canon/artefakt PASS, eslint 0 błędów)
 - **H5.2+H5.3** 🟡→✅ — TOP-10 N+1 zmapowane, 3 najgorętsze naprawione batch-queryem (teams/pmoRoles/reconciliation) + util `withRequestTimeout` (504 na raportach/eksporcie/AI). 5/5 E2E.
@@ -241,12 +257,12 @@ Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra ·
 | O5.5 | Rejestr promptów | ✅ | — | flip Piotra 07-15 |
 | O5.6 | Macierz pokrycia Wywiadu | ⬜ | JA |
 
-### O6 · Benchmarki branżowe (3) — 3/3 zbudowane+wpięte
+### O6 · Benchmarki branżowe (3) — 3/3 zbudowane+wpięte, 2/3 z dowodem (07-19)
 | ID | S | Akcja | Dowód |
 |---|---|---|---|
-| O6.1 profile 7/7 w raporcie | 🟡 | DEC K6/P3 | ddcfd03e4a |
-| O6.2 per-industry zakresy | 🟡 | JA weryf. | 917aaef042 |
-| O6.3 źródła+refresh owner | 🟡 | JA | 77691e2771 |
+| O6.1 profile 7/7 w raporcie | 🟡 | DEC K6/P3 (czeka decyzję Piotra — wpięcie w raport) | ddcfd03e4a |
+| O6.2 per-industry zakresy | ✅ | JA weryf. | 917aaef042 (build) + `tests/acceptance/o6-benchmark-financial.e2e.test.ts` (dowód 07-19, real HTTP+DB, p25/median/p75 dopasowane 1:1 do `INDUSTRY_BENCHMARK_PROFILES`) |
+| O6.3 źródła+refresh owner | ✅ | JA | 77691e2771 (build, już na demo) + tenże acceptance test — `disclaimerPl/En`+`refreshOwnerPl/En` realnie surowe na `GET /:id/ratios`, + `benchmarkFinancial()` direct-call zgodny werdykt |
 
 ### O7 · Standardy treści (3)
 | ID | S | Akcja | Notatka |
