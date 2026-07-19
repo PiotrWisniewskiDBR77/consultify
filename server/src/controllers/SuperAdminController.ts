@@ -2066,7 +2066,7 @@ const getApiKeys = catchAsync(async (req, res, next) => {
             SELECT
                 k.id,
                 k.organization_id as "organizationId",
-                NULL as organizationName,
+                NULL as "organizationName",
                 k.user_id as "userId",
                 k.name as name,
                 k.description as description,
