@@ -30,6 +30,11 @@ import { seed, SEED } from './seed.mjs';
 const PREFIX = 'odbior--o6--';
 const PACK_ID = `${PREFIX}pack`;
 const STMT_ID = `${PREFIX}stmt`;
+// Second industry (retail-ecommerce) — proves the endpoint returns a DIFFERENT
+// real, named-source band for a different org.industry free-text, not a
+// hardcoded/fixture value that happens to match one industry.
+const PACK_ID2 = `${PREFIX}pack2`;
+const STMT_ID2 = `${PREFIX}stmt2`;
 
 let app: Express;
 let server: Server;
@@ -147,6 +152,11 @@ describe('O6.2/O6.3 — financial industry benchmark real-runtime wiring', () =>
       ]);
       await client.query(`DELETE FROM financial_statements WHERE id = $1`, [STMT_ID]);
       await client.query(`DELETE FROM financial_statement_packs WHERE id = $1`, [PACK_ID]);
+      await client.query(`DELETE FROM financial_statement_values WHERE statement_id = $1`, [
+        STMT_ID2,
+      ]);
+      await client.query(`DELETE FROM financial_statements WHERE id = $1`, [STMT_ID2]);
+      await client.query(`DELETE FROM financial_statement_packs WHERE id = $1`, [PACK_ID2]);
       // Restore the org's pre-test industry so this file doesn't leak state
       // into other acceptance files sharing SEED.ORG_ID.
       await client.query(`UPDATE organizations SET industry = $1 WHERE id = $2`, [
@@ -243,4 +253,91 @@ describe('O6.2/O6.3 — financial industry benchmark real-runtime wiring', () =>
     // 'sourced' bands come from named public sources, not DBR77 transactions.
     expect(result.sourceMetadata!.disclaimer.pl).toMatch(/NIE benchmark statystyczny|Damodaran|GUS/);
   });
+
+  it('a SECOND industry (retail-ecommerce) gets its own real, distinct GUS/Eurostat-sourced band through the SAME real endpoint (proves >= 2 branż, not a single hardcoded fixture)', async () => {
+    const client = pgClient();
+    await client.connect();
+    try {
+      // Re-point the SAME seeded org to a retail free-text label —
+      // resolveBenchmarkIndustry maps 'sklep'/'handel detaliczny' -> 'retail-ecommerce'.
+      await client.query(`UPDATE organizations SET industry = $1 WHERE id = $2`, [
+        'Sklep internetowy — handel detaliczny odzieżą',
+        SEED.ORG_ID,
+      ]);
+
+      const lineRows = await client.query<{ id: string; line_code: string }>(
+        `SELECT id, line_code FROM financial_statement_lines
+         WHERE line_code IN ('CURRENT_ASSETS', 'CURRENT_LIABILITIES')`
+      );
+      const lineIdByCode = new Map(lineRows.rows.map((r) => [r.line_code, r.id]));
+      const currentAssetsLineId = lineIdByCode.get('CURRENT_ASSETS')!;
+      const currentLiabilitiesLineId = lineIdByCode.get('CURRENT_LIABILITIES')!;
+
+      await client.query(`DELETE FROM financial_statement_values WHERE statement_id = $1`, [
+        STMT_ID2,
+      ]);
+      await client.query(`DELETE FROM financial_statements WHERE id = $1`, [STMT_ID2]);
+      await client.query(`DELETE FROM financial_statement_packs WHERE id = $1`, [PACK_ID2]);
+
+      await client.query(
+        `INSERT INTO financial_statement_packs
+           (id, organization_id, entity_name, period_start, period_end, period_label,
+            currency, pack_status, pack_readiness_status, source_statement_count)
+         VALUES ($1, $2, 'Odbior O6 Retail Sp. z o.o.', '2025-01-01', '2025-12-31', 'FY2025', 'PLN', 'confirmed', 'ready', 1)`,
+        [PACK_ID2, SEED.ORG_ID]
+      );
+      await client.query(
+        `INSERT INTO financial_statements
+           (id, organization_id, entity_name, statement_type, period_start, period_end,
+            period_label, currency, status, readiness_status, statement_pack_id)
+         VALUES ($1, $2, 'Odbior O6 Retail Sp. z o.o.', 'BS', '2025-01-01', '2025-12-31', 'FY2025', 'PLN', 'confirmed', 'ready', $3)`,
+        [STMT_ID2, SEED.ORG_ID, PACK_ID2]
+      );
+      // CURRENT_ASSETS / CURRENT_LIABILITIES = 700,000 / 1,000,000 = 0.7x —
+      // deliberately BELOW the retail-ecommerce CURRENT_RATIO p25 (0.9x, see
+      // INDUSTRY_BENCHMARK_PROFILES['retail-ecommerce'].ratios.CURRENT_RATIO).
+      await client.query(
+        `INSERT INTO financial_statement_values
+           (id, statement_id, canonical_line_id, original_label, value, confidence, mapping_status, value_origin)
+         VALUES
+           ($1, $2, $3, 'Aktywa obrotowe', 700000, 1, 'manual', 'manual'),
+           ($4, $2, $5, 'Zobowiązania krótkoterminowe', 1000000, 1, 'manual', 'manual')`,
+        [`${STMT_ID2}-ca`, STMT_ID2, currentAssetsLineId, `${STMT_ID2}-cl`, currentLiabilitiesLineId]
+      );
+    } finally {
+      await client.end();
+    }
+
+    const res = await request(app)
+      .get(`/api/finance-statements/${STMT_ID2}/ratios`)
+      .set('Authorization', `Bearer ${token}`);
+
+    // eslint-disable-next-line no-console
+    console.log('[o6-2nd-industry] /ratios status', res.status, JSON.stringify(res.body).slice(0, 1500));
+    expect(res.status).toBe(200);
+
+    const ratios: any[] = res.body?.ratios;
+    const currentRatio = ratios.find((r) => r.code === 'CURRENT_RATIO');
+    expect(currentRatio).toBeTruthy();
+    expect(currentRatio.value).toBe(0.7);
+
+    const bench = currentRatio.benchmark;
+    expect(bench).toBeTruthy();
+    expect(bench.origin).toBe('industry');
+    // Different industry resolved from the free-text org.industry label.
+    expect(bench.industry).toBe('retail-ecommerce');
+    expect(bench.industryLabelPl).toMatch(/retail|handel/i);
+
+    // Real, checked-in retail-ecommerce band — numerically DIFFERENT from the
+    // industrial-manufacturing band asserted in the first test (1.1/1.5/2.1),
+    // proving this is not one fixture reused under a different label.
+    expect(bench.p25).toBe(0.9);
+    expect(bench.median).toBe(1.2);
+    expect(bench.p75).toBe(1.6);
+    expect(bench.source).toMatch(/GUS|Eurostat/);
+    expect(bench.asOf).toBeTruthy();
+
+    expect(currentRatio.value).toBeLessThan(bench.p25);
+    expect(currentRatio.status).toBe('critical');
+  }, 30_000);
 });
