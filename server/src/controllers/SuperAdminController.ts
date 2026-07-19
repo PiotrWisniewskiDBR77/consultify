@@ -2042,22 +2042,22 @@ const getApiKeys = catchAsync(async (req, res, next) => {
     const query = `
             SELECT 
                 k.id, 
-                k.organization_id as organizationId, 
-                o.name as organizationName,
-                k.user_id as userId,
+                k.organization_id as "organizationId", 
+                o.name as "organizationName",
+                k.user_id as "userId",
                 k.name as name, 
                 k.description as description,
-                k.key_prefix as keyPrefix,
-                k.key_type as keyType,
+                k.key_prefix as "keyPrefix",
+                k.key_type as "keyType",
                 k.scopes as scopes,
-                k.allowed_ips as allowedIps,
-                k.is_active as isActive, 
-                k.usage_count as usageCount, 
-                k.last_used_at as lastUsedAt,
-                k.created_at as createdAt,
-                k.expires_at as expiresAt,
-                k.rate_limit_per_minute as rateLimitPerMinute,
-                k.rate_limit_per_day as rateLimitPerDay
+                k.allowed_ips as "allowedIps",
+                k.is_active as "isActive", 
+                k.usage_count as "usageCount", 
+                k.last_used_at as "lastUsedAt",
+                k.created_at as "createdAt",
+                k.expires_at as "expiresAt",
+                k.rate_limit_per_minute as "rateLimitPerMinute",
+                k.rate_limit_per_day as "rateLimitPerDay"
             FROM api_keys k
             LEFT JOIN organizations o ON k.organization_id = o.id
             ORDER BY k.created_at DESC
@@ -2065,22 +2065,22 @@ const getApiKeys = catchAsync(async (req, res, next) => {
     const fallbackQuery = `
             SELECT
                 k.id,
-                k.organization_id as organizationId,
+                k.organization_id as "organizationId",
                 NULL as organizationName,
-                k.user_id as userId,
+                k.user_id as "userId",
                 k.name as name,
                 k.description as description,
-                k.key_prefix as keyPrefix,
-                k.key_type as keyType,
+                k.key_prefix as "keyPrefix",
+                k.key_type as "keyType",
                 k.scopes as scopes,
-                k.allowed_ips as allowedIps,
-                k.is_active as isActive,
-                k.usage_count as usageCount,
-                k.last_used_at as lastUsedAt,
-                k.created_at as createdAt,
-                k.expires_at as expiresAt,
-                k.rate_limit_per_minute as rateLimitPerMinute,
-                k.rate_limit_per_day as rateLimitPerDay
+                k.allowed_ips as "allowedIps",
+                k.is_active as "isActive",
+                k.usage_count as "usageCount",
+                k.last_used_at as "lastUsedAt",
+                k.created_at as "createdAt",
+                k.expires_at as "expiresAt",
+                k.rate_limit_per_minute as "rateLimitPerMinute",
+                k.rate_limit_per_day as "rateLimitPerDay"
             FROM api_keys k
             ORDER BY k.created_at DESC
         `;

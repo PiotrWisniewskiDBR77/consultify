@@ -1251,7 +1251,7 @@ export class LLMController {
                     COALESCE(tokens_used, 0) as tokens,
                     COALESCE(latency_ms, 0) as latency,
                     CASE WHEN status = 'error' THEN error_message ELSE NULL END as error,
-                    created_at as createdAt
+                    created_at as "createdAt"
                 FROM ai_usage_logs 
                 ORDER BY created_at DESC
                 LIMIT ? OFFSET ?

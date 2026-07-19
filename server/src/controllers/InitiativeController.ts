@@ -192,7 +192,7 @@ const getInitiativeNotificationRecipients = async (
   // Watchers (if feature enabled)
   try {
     const watcherRows = await queryHelpers.queryAll(
-      `SELECT w.user_id as userId
+      `SELECT w.user_id as "userId"
        FROM initiative_watchers w
        JOIN initiatives i ON i.id = w.initiative_id
        WHERE w.initiative_id = ? AND i.organization_id = ?`,
@@ -206,7 +206,7 @@ const getInitiativeNotificationRecipients = async (
   // Stakeholders (RACI)
   try {
     const stakeholderRows = await queryHelpers.queryAll(
-      `SELECT s.user_id as userId
+      `SELECT s.user_id as "userId"
        FROM initiative_stakeholders s
        JOIN initiatives i ON i.id = s.initiative_id
        WHERE s.initiative_id = ? AND i.organization_id = ? AND s.user_id IS NOT NULL`,
@@ -1838,7 +1838,7 @@ export class InitiativeController {
       // - at least 1 KPI must exist, and at least 1 KPI must have target + unit
       if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
         const row = await queryHelpers.queryOne(
-          `SELECT owner_business_id as ownerBusinessId FROM initiatives WHERE id = ? AND organization_id = ?`,
+          `SELECT owner_business_id as "ownerBusinessId" FROM initiatives WHERE id = ? AND organization_id = ?`,
           [id, orgId]
         );
         const ownerBusinessId = (row as any)?.ownerBusinessId
@@ -4094,17 +4094,17 @@ export class InitiativeController {
       const milestones = await queryHelpers.queryAll(
         `SELECT 
           id,
-          initiative_id as initiativeId,
+          initiative_id as "initiativeId",
           name,
           description,
-          target_date as targetDate,
-          actual_date as actualDate,
+          target_date as "targetDate",
+          actual_date as "actualDate",
           status,
-          order_index as orderIndex,
-          is_gate as isGate,
-          gate_decision_id as gateDecisionId,
-          created_at as createdAt,
-          updated_at as updatedAt
+          order_index as "orderIndex",
+          is_gate as "isGate",
+          gate_decision_id as "gateDecisionId",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
         FROM initiative_milestones 
         WHERE initiative_id = ?
         ORDER BY order_index ASC`,
@@ -4316,7 +4316,7 @@ export class InitiativeController {
       }
 
       const initiative = await queryHelpers.queryOne(
-        `SELECT id, baseline_version as baselineVersion, schedule_baseline_id as scheduleBaselineId
+        `SELECT id, baseline_version as "baselineVersion", schedule_baseline_id as "scheduleBaselineId"
          FROM initiatives WHERE id = ? AND organization_id = ?`,
         [initiativeId, orgId]
       );
@@ -4329,11 +4329,11 @@ export class InitiativeController {
         `SELECT
           id,
           version,
-          status_at_baseline as statusAtBaseline,
-          planned_start_date as plannedStartDate,
-          planned_end_date as plannedEndDate,
-          created_by as createdBy,
-          created_at as createdAt
+          status_at_baseline as "statusAtBaseline",
+          planned_start_date as "plannedStartDate",
+          planned_end_date as "plannedEndDate",
+          created_by as "createdBy",
+          created_at as "createdAt"
         FROM initiative_schedule_baselines
         WHERE initiative_id = ? AND organization_id = ?
         ORDER BY version DESC`,
@@ -4370,12 +4370,12 @@ export class InitiativeController {
         `SELECT
           id,
           version,
-          status_at_baseline as statusAtBaseline,
-          planned_start_date as plannedStartDate,
-          planned_end_date as plannedEndDate,
+          status_at_baseline as "statusAtBaseline",
+          planned_start_date as "plannedStartDate",
+          planned_end_date as "plannedEndDate",
           snapshot,
-          created_by as createdBy,
-          created_at as createdAt
+          created_by as "createdBy",
+          created_at as "createdAt"
         FROM initiative_schedule_baselines
         WHERE initiative_id = ? AND organization_id = ? AND version = ?
         LIMIT 1`,
@@ -4387,7 +4387,7 @@ export class InitiativeController {
       }
 
       const current = await queryHelpers.queryOne(
-        `SELECT planned_start_date as plannedStartDate, planned_end_date as plannedEndDate
+        `SELECT planned_start_date as "plannedStartDate", planned_end_date as "plannedEndDate"
          FROM initiatives WHERE id = ? AND organization_id = ?`,
         [initiativeId, orgId]
       );
@@ -4436,18 +4436,18 @@ export class InitiativeController {
       const resources = await queryHelpers.queryAll(
         `SELECT 
           r.id,
-          r.initiative_id as initiativeId,
-          r.user_id as userId,
+          r.initiative_id as "initiativeId",
+          r.user_id as "userId",
           r.name,
           r.role,
-          r.allocation_percentage as allocationPercentage,
-          r.start_date as startDate,
-          r.end_date as endDate,
+          r.allocation_percentage as "allocationPercentage",
+          r.start_date as "startDate",
+          r.end_date as "endDate",
           r.notes,
           r.source,
-          u.first_name as firstName,
-          u.last_name as lastName,
-          u.avatar_url as avatarUrl
+          u.first_name as "firstName",
+          u.last_name as "lastName",
+          u.avatar_url as "avatarUrl"
         FROM initiative_resources r
         LEFT JOIN users u ON r.user_id = u.id
         WHERE r.initiative_id = ? AND r.organization_id = ?`,
@@ -4632,15 +4632,15 @@ export class InitiativeController {
       const items = await queryHelpers.queryAll(
         `SELECT
           id,
-          initiative_id as initiativeId,
+          initiative_id as "initiativeId",
           category,
-          cost_type as costType,
+          cost_type as "costType",
           amount,
           currency,
           description,
           source,
-          created_at as createdAt,
-          updated_at as updatedAt
+          created_at as "createdAt",
+          updated_at as "updatedAt"
         FROM initiative_budget_items
         WHERE initiative_id = ? AND organization_id = ?
         ORDER BY created_at ASC`,
@@ -4776,18 +4776,18 @@ export class InitiativeController {
       const items = await queryHelpers.queryAll(
         `SELECT
           id,
-          initiative_id as initiativeId,
+          initiative_id as "initiativeId",
           name,
           category,
           vendor,
-          license_cost as licenseCost,
-          license_type as licenseType,
+          license_cost as "licenseCost",
+          license_type as "licenseType",
           status,
           notes,
           source,
-          cost_type as costType,
-          created_at as createdAt,
-          updated_at as updatedAt
+          cost_type as "costType",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
         FROM initiative_tools
         WHERE initiative_id = ? AND organization_id = ?
         ORDER BY created_at ASC`,
@@ -4950,21 +4950,21 @@ export class InitiativeController {
       const items = await queryHelpers.queryAll(
         `SELECT
           id,
-          initiative_id as initiativeId,
-          asset_type as assetType,
+          initiative_id as "initiativeId",
+          asset_type as "assetType",
           name,
           provider,
           cost,
           currency,
-          valid_from as validFrom,
-          valid_until as validUntil,
+          valid_from as "validFrom",
+          valid_until as "validUntil",
           status,
           beneficiaries,
           notes,
           source,
-          cost_type as costType,
-          created_at as createdAt,
-          updated_at as updatedAt
+          cost_type as "costType",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
         FROM initiative_intangible_assets
         WHERE initiative_id = ? AND organization_id = ?
         ORDER BY created_at ASC`,
@@ -5161,17 +5161,17 @@ export class InitiativeController {
       const rows = await queryHelpers.queryAll(
         `SELECT 
           s.id,
-          s.initiative_id as initiativeId,
-          s.user_id as userId,
-          s.external_name as externalName,
-          s.external_email as externalEmail,
+          s.initiative_id as "initiativeId",
+          s.user_id as "userId",
+          s.external_name as "externalName",
+          s.external_email as "externalEmail",
           s.role,
-          s.raci_type as raciType,
-          s.influence_level as influenceLevel,
-          s.interest_level as interestLevel,
-          s.created_at as createdAt,
-          u.first_name as firstName,
-          u.last_name as lastName,
+          s.raci_type as "raciType",
+          s.influence_level as "influenceLevel",
+          s.interest_level as "interestLevel",
+          s.created_at as "createdAt",
+          u.first_name as "firstName",
+          u.last_name as "lastName",
           u.email as email
         FROM initiative_stakeholders s
         JOIN initiatives i ON i.id = s.initiative_id
@@ -5368,11 +5368,11 @@ export class InitiativeController {
       const rows = await queryHelpers.queryAll(
         `SELECT
           w.id,
-          w.initiative_id as initiativeId,
-          w.user_id as userId,
-          w.created_at as createdAt,
-          u.first_name as firstName,
-          u.last_name as lastName,
+          w.initiative_id as "initiativeId",
+          w.user_id as "userId",
+          w.created_at as "createdAt",
+          u.first_name as "firstName",
+          u.last_name as "lastName",
           u.email as email
         FROM initiative_watchers w
         JOIN initiatives i ON i.id = w.initiative_id
@@ -5441,7 +5441,7 @@ export class InitiativeController {
       }
 
       const row = await queryHelpers.queryOne(
-        `SELECT w.id, w.user_id as userId FROM initiative_watchers w
+        `SELECT w.id, w.user_id as "userId" FROM initiative_watchers w
          JOIN initiatives i ON i.id = w.initiative_id
          WHERE w.id = ? AND w.initiative_id = ? AND i.organization_id = ?`,
         [watcherId, initiativeId, orgId]
@@ -5482,24 +5482,24 @@ export class InitiativeController {
     const rows = await queryHelpers.queryAll(
       `SELECT
           r.id,
-          r.initiative_id as initiativeId,
+          r.initiative_id as "initiativeId",
           LOWER(r.type) as type,
           r.title,
           r.description,
           r.status,
           r.impact as severity,
           r.probability,
-          r.risk_score as riskScore,
-          r.score_category as scoreCategory,
-          r.owner_id as ownerId,
-          r.due_date as dueDate,
+          r.risk_score as "riskScore",
+          r.score_category as "scoreCategory",
+          r.owner_id as "ownerId",
+          r.due_date as "dueDate",
           r.mitigation_plan,
           r.response_strategy,
           r.mitigation_owner_id,
           r.mitigation_due_date,
           r.mitigation_status,
-          r.created_at as createdAt,
-          r.updated_at as updatedAt
+          r.created_at as "createdAt",
+          r.updated_at as "updatedAt"
         FROM raid_items r
         WHERE r.organization_id = ? AND r.initiative_id = ?
         ORDER BY r.updated_at DESC
@@ -5691,12 +5691,12 @@ export class InitiativeController {
       const rows = await queryHelpers.queryAll(
         `SELECT 
           h.id,
-          h.initiative_id as initiativeId,
-          h.action as eventType,
-          h.changed_by as actorId,
-          h.changed_at as createdAt,
-          h.old_value as oldValue,
-          h.new_value as newValue,
+          h.initiative_id as "initiativeId",
+          h.action as "eventType",
+          h.changed_by as "actorId",
+          h.changed_at as "createdAt",
+          h.old_value as "oldValue",
+          h.new_value as "newValue",
           h.notes
         FROM initiative_history h
         LEFT JOIN initiatives i ON i.id = h.initiative_id
@@ -5744,13 +5744,13 @@ export class InitiativeController {
         explicitRoles = await queryHelpers.queryAll(
           `SELECT
             gr.id,
-            gr.initiative_id as initiativeId,
-            gr.gate_role as gateRole,
-            gr.user_id as userId,
-            gr.assigned_by as assignedBy,
-            gr.assigned_at as assignedAt,
-            u.first_name as firstName,
-            u.last_name as lastName,
+            gr.initiative_id as "initiativeId",
+            gr.gate_role as "gateRole",
+            gr.user_id as "userId",
+            gr.assigned_by as "assignedBy",
+            gr.assigned_at as "assignedAt",
+            u.first_name as "firstName",
+            u.last_name as "lastName",
             u.email
           FROM initiative_gate_roles gr
           LEFT JOIN users u ON u.id = gr.user_id
@@ -6090,7 +6090,7 @@ export class InitiativeController {
       if (projectId) {
         try {
           const members = await queryHelpers.queryAll(
-            `SELECT user_id as userId, project_role as projectRole
+            `SELECT user_id as "userId", project_role as "projectRole"
              FROM project_members WHERE project_id = ?`,
             [projectId]
           );
@@ -6109,7 +6109,7 @@ export class InitiativeController {
         if (steeringBoardEnabled) {
           try {
             const boardMembers = await queryHelpers.queryAll(
-              `SELECT user_id as userId
+              `SELECT user_id as "userId"
                FROM project_steering_board_members
                WHERE project_id = ? AND UPPER(member_type) IN ('CHAIR','BOARD_MEMBER')`,
               [projectId]
@@ -6507,16 +6507,16 @@ export class InitiativeController {
           rows = await queryHelpers.queryAll(
             `SELECT
               h.id,
-              h.initiative_id as initiativeId,
-              h.from_status as fromStatus,
-              h.to_status as toStatus,
-              h.changed_by as changedBy,
+              h.initiative_id as "initiativeId",
+              h.from_status as "fromStatus",
+              h.to_status as "toStatus",
+              h.changed_by as "changedBy",
               h.reason,
-              h.gate_type as gateType,
-              h.created_at as createdAt,
-              u.first_name as changedByFirstName,
-              u.last_name as changedByLastName,
-              u.email as changedByEmail
+              h.gate_type as "gateType",
+              h.created_at as "createdAt",
+              u.first_name as "changedByFirstName",
+              u.last_name as "changedByLastName",
+              u.email as "changedByEmail"
             FROM initiative_status_history h
             LEFT JOIN users u ON u.id = h.changed_by
             WHERE h.initiative_id = ? AND h.organization_id = ?
@@ -6536,16 +6536,16 @@ export class InitiativeController {
             rows = await queryHelpers.queryAll(
               `SELECT
                 h.id,
-                h.initiative_id as initiativeId,
-                h.from_status as fromStatus,
-                h.to_status as toStatus,
-                h.changed_by as changedBy,
+                h.initiative_id as "initiativeId",
+                h.from_status as "fromStatus",
+                h.to_status as "toStatus",
+                h.changed_by as "changedBy",
                 h.reason,
                 NULL as gateType,
-                h.changed_at as createdAt,
-                u.first_name as changedByFirstName,
-                u.last_name as changedByLastName,
-                u.email as changedByEmail
+                h.changed_at as "createdAt",
+                u.first_name as "changedByFirstName",
+                u.last_name as "changedByLastName",
+                u.email as "changedByEmail"
               FROM initiative_status_history h
               LEFT JOIN users u ON u.id = h.changed_by
               JOIN initiatives i ON i.id = h.initiative_id AND i.organization_id = ?
@@ -6589,10 +6589,10 @@ export class InitiativeController {
             SELECT
               c.id,
               c.content,
-              c.user_id as authorId,
-              c.created_at as createdAt,
-              u.first_name as firstName,
-              u.last_name as lastName,
+              c.user_id as "authorId",
+              c.created_at as "createdAt",
+              u.first_name as "firstName",
+              u.last_name as "lastName",
               u.email as email
             FROM initiative_comments c
             LEFT JOIN users u ON u.id = c.user_id

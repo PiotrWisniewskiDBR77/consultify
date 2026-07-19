@@ -958,11 +958,11 @@ export class ProjectController {
 
       const rows = await queryHelpers.queryAll<any>(
         `SELECT pm.*,
-                u.first_name as firstName,
-                u.last_name as lastName,
+                u.first_name as "firstName",
+                u.last_name as "lastName",
                 u.email as email,
-                u.avatar_url as avatarUrl,
-                u.role as accountRole
+                u.avatar_url as "avatarUrl",
+                u.role as "accountRole"
          FROM project_members pm
          JOIN users u ON u.id = pm.user_id
          WHERE pm.project_id = ?
@@ -1234,7 +1234,7 @@ export class ProjectController {
       let board: any = null;
       try {
         board = await queryHelpers.queryOne(
-          `SELECT project_id as projectId, enabled, quorum_rule as quorumRule, sla_hours as slaHours
+          `SELECT project_id as "projectId", enabled, quorum_rule as "quorumRule", sla_hours as "slaHours"
            FROM project_steering_board WHERE project_id = ?`,
           [projectId]
         );
@@ -1245,8 +1245,8 @@ export class ProjectController {
       let members: any[] = [];
       try {
         members = await queryHelpers.queryAll(
-          `SELECT m.user_id as userId, m.member_type as memberType,
-                  u.first_name as firstName, u.last_name as lastName, u.email as email, u.avatar_url as avatarUrl
+          `SELECT m.user_id as "userId", m.member_type as "memberType",
+                  u.first_name as "firstName", u.last_name as "lastName", u.email as email, u.avatar_url as "avatarUrl"
            FROM project_steering_board_members m
            JOIN users u ON u.id = m.user_id
            WHERE m.project_id = ?
@@ -1287,7 +1287,7 @@ export class ProjectController {
 
       try {
         const existing = await queryHelpers.queryOne(
-          `SELECT project_id as projectId FROM project_steering_board WHERE project_id = ?`,
+          `SELECT project_id as "projectId" FROM project_steering_board WHERE project_id = ?`,
           [projectId]
         );
         if (existing) {

@@ -264,10 +264,10 @@ class TierAutoAssignmentJob {
     return new Promise((resolve) => {
       db.all(
         `SELECT 
-                    u.id as userId,
-                    u.name as userName,
+                    u.id as "userId",
+                    u.name as "userName",
                     u.email,
-                    u.organization_id as organizationId,
+                    u.organization_id as "organizationId",
                     COALESCE(uas.selected_tier, 'BUDGET') as currentTier,
                     COALESCE((
                         SELECT SUM(tokens_used) 
@@ -297,7 +297,7 @@ class TierAutoAssignmentJob {
   async getEnabledOrganizations() {
     return new Promise((resolve) => {
       db.all(
-        `SELECT DISTINCT o.id as organizationId, o.name as organizationName
+        `SELECT DISTINCT o.id as "organizationId", o.name as "organizationName"
                  FROM organizations o
                  JOIN organization_ai_settings oas ON o.id = oas.organization_id
                  WHERE oas.auto_tier_enabled = 1`,

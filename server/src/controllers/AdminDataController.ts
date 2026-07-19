@@ -26,8 +26,8 @@ export class AdminDataController {
 
       const sql = `
             SELECT 
-                u.id as userId,
-                u.first_name || ' ' || u.last_name as userName,
+                u.id as "userId",
+                u.first_name || ' ' || u.last_name as "userName",
                 u.email,
                 COALESCE(aus.tier, 'STANDARD') as currentTier,
                 COALESCE(aus.requests_count, 0) as usage,
@@ -77,8 +77,8 @@ export class AdminDataController {
         `
             SELECT 
                 'user' as entityType,
-                aus.user_id as entityId,
-                u.first_name || ' ' || u.last_name as entityName,
+                aus.user_id as "entityId",
+                u.first_name || ' ' || u.last_name as "entityName",
                 SUM(aus.requests_count) as requests,
                 SUM(aus.tokens_used) as tokens,
                 SUM(aus.cost_usd) as cost
@@ -96,8 +96,8 @@ export class AdminDataController {
         `
             SELECT 
                 'project' as entityType,
-                aus.project_id as entityId,
-                p.name as entityName,
+                aus.project_id as "entityId",
+                p.name as "entityName",
                 SUM(aus.requests_count) as requests,
                 SUM(aus.tokens_used) as tokens,
                 SUM(aus.cost_usd) as cost

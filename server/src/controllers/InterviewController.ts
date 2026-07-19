@@ -7776,21 +7776,21 @@ ${JSON.stringify(questions || [], null, 2)}
 
     const rows = await queryHelpers.queryAll(
       `SELECT
-         q.id as questionId,
-         q.session_id as sessionId,
+         q.id as "questionId",
+         q.session_id as "sessionId",
          q.category,
-         q.question_text as questionText,
-         q.answer_text as answerText,
-         q.voice_transcript as voiceTranscript,
-         q.context_note as contextNote,
-         q.answer_knowledge_doc_id as answerKnowledgeDocId,
-         q.context_note_knowledge_doc_id as contextNoteKnowledgeDocId,
+         q.question_text as "questionText",
+         q.answer_text as "answerText",
+         q.voice_transcript as "voiceTranscript",
+         q.context_note as "contextNote",
+         q.answer_knowledge_doc_id as "answerKnowledgeDocId",
+         q.context_note_knowledge_doc_id as "contextNoteKnowledgeDocId",
          q.status,
-         q.confidence_score as confidenceScore,
-         s.name as sessionName,
-         s.template_id as templateId,
-         s.project_id as projectId,
-         t.name as templateName
+         q.confidence_score as "confidenceScore",
+         s.name as "sessionName",
+         s.template_id as "templateId",
+         s.project_id as "projectId",
+         t.name as "templateName"
        FROM interview_questions q
        JOIN interview_sessions s ON s.id = q.session_id
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
@@ -7809,15 +7809,15 @@ ${JSON.stringify(questions || [], null, 2)}
 
     const evidenceRows = await queryHelpers.queryAll(
       `SELECT
-         e.id as evidenceId,
-         e.session_id as sessionId,
-         e.question_id as questionId,
+         e.id as "evidenceId",
+         e.session_id as "sessionId",
+         e.question_id as "questionId",
          e.title,
          e.description,
-         e.evidence_type as evidenceType,
-         e.knowledge_document_id as knowledgeDocumentId,
-         s.name as sessionName,
-         s.template_id as templateId
+         e.evidence_type as "evidenceType",
+         e.knowledge_document_id as "knowledgeDocumentId",
+         s.name as "sessionName",
+         s.template_id as "templateId"
        FROM interview_evidence e
        JOIN interview_sessions s ON s.id = e.session_id
        WHERE s.organization_id = ?
