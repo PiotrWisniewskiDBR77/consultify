@@ -166,15 +166,29 @@ class FinanceEnterpriseService {
       if (model) assumptionsSnapshot = model.assumptions_json || '{}';
     }
 
+    // financial_model_versions.version and .snapshot_data are NOT NULL with no
+    // DB default — legacy predecessors of version_number and the three
+    // *_snapshot columns this method already populates (schema evolved,
+    // constraints on the old columns never got relaxed). Reuse the values
+    // already computed above rather than inventing new ones: version mirrors
+    // version_number, snapshot_data mirrors the combined snapshot JSON.
+    const snapshotData = JSON.stringify({
+      assumptions: JSON.parse(assumptionsSnapshot || '{}'),
+      events: JSON.parse(eventsSnapshot || '[]'),
+      outputs: JSON.parse(outputsSnapshot || '{}'),
+    });
+
     await queryHelpers.queryRun(
       `INSERT INTO financial_model_versions
-       (id, organization_id, model_id, version_number, parent_version_id, scenario_label, assumptions_snapshot, events_snapshot, outputs_snapshot, status, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)`,
+       (id, organization_id, model_id, version, version_number, snapshot_data, parent_version_id, scenario_label, assumptions_snapshot, events_snapshot, outputs_snapshot, status, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)`,
       [
         id,
         orgId,
         data.modelId,
         versionNumber,
+        versionNumber,
+        snapshotData,
         data.parentVersionId || null,
         data.scenarioLabel || 'base',
         assumptionsSnapshot,
