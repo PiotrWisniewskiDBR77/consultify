@@ -31,18 +31,36 @@
    wskaźnik w MEMORY.md, handoff po każdej sesji odwołuje się do ID. Nowa sesja Claude
    = przeczytaj nagłówek + LICZNIKI + sekcję nad którą pracuje.
 
-## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-18)
+## LICZNIKI (aktualizuj przy każdej zmianie; stan 2026-07-19 po W2b)
 
 | Sekcja | ✅ | 🟡 | ⬜ | 🔵 | ❓ | RAZEM |
 |---|---|---|---|---|---|---|
-| A · Harvard (H1-H6) | 45 | 12 | 3 | 1 | 1 | 62 |
+| A · Harvard (H1-H6) | 49 | 8 | 3 | 1 | 1 | 62 |
 | B · Harvey (HP-0…27) | 21 | 5 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 8 | 49 | 11 | 2 | 0 | 70 |
+| C · Oxford (O1-O8) | 11 | 46 | 11 | 2 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 11 | 19 | 22 | 3 | 1 | 56 |
-| E · Przekroje (+nowe) | 22 | 6 | 12 | 7 | 2 | 49 |
-| **SUMA** | **107** | **91** | **50** | **13** | **4** | **265** |
+| E · Przekroje (+nowe) | 25 | 3 | 12 | 7 | 2 | 49 |
+| **SUMA** | **117** | **81** | **50** | **13** | **4** | **265** |
 
-**Postęp: 120/265 rozstrzygnięte (45%).**
+**Postęp: 130/265 rozstrzygnięte (49%).**
+
+### FALA-W2b (2026-07-19, deploy fcbba5df4a, demo-safe-2026-07-19) — 15 gałęzi, 38 commitów, wszystkie bramki zielone
+- **H3.2** 🟡→✅ — 19/19 Active tools: create/save/reload/conclusion E2E (`h32-19tools.e2e.test.ts`, parity :5443). Finding: `ensureToolsSchema()` szum `42701` (nieblokujący).
+- **H3.7** 🟡→✅ — CMMI/RapidLEAN honest-„wkrótce" potwierdzone (frameworkRegistry SSOT); dopięto i18n badge/toast w NewAssessmentModal.
+- **H4.4** 🟡→✅ — M13 create→DRAFT→dokument→timeline E2E (`h44-m13-flow`). ★Naprawione 3 realne bugi aliasów (getMilestones zwracał undefined; createMilestone order_index zawsze 1).
+- **H5.1** 🟡→✅ — FinanceHub perf: code-split -58% ścieżki krytycznej (4120→1723 KB), 7 granic Suspense+skeleton; fetche już były Promise.all.
+- **H1.6** — ⬜ z ★RED: endpoint istnieje ale `execution_started_at` nie istnieje na Postgres (migr. 061 w dialekcie SQLite) → 500; + case split-brain executing/EXECUTING. Test-dowód dołączony (relaunch B6-klasa naprawy).
+- **O1.8** (SIRI/ADMA generator) 🟡→✅ — H1.3 framework-agnostyczny, dowód per framework (`o1-siri-adma-initiatives`).
+- **O2.5** 🟡→✅ — slajd „Wnioski" K1→K4 w deck-generatorze za flagą ENABLE_DECK_CONCLUSION_SLIDE (grounded+walidowany).
+- **O4.7** 🟡→✅ — resultsROIService `k.unit` (nieistniejąca kolumna→zawsze pusto) naprawione + O4.2-4.6 4 wyjścia silnika dostały UI (ReconciliationPanel post-mortem + Finance report-section).
+- **T7b-2 backup** 🟡→✅ — realny backupService (JSON-eksport tabel→storage+manifest, restore=uczciwe 501), 6/6 E2E.
+- **T9-2** 🟡→✅ — SCIM DDL parity na TROLLEY (updated_at/last_synced_at/indeksy/UNIQUE) + tr() dwujęzyczność potwierdzona testem PL≠EN.
+- **E-systemic sweep** 🟡→✅ — 657 unquoted camelCase aliasów w 36 plikach cudzysłowionych (Postgres case-fold→undefined); spot-dowód na `initiatives`.
+- **HP-2** — test E2E agenta audytowego + agent-audit alias fix (agentAuditStore).
+- **J26 Kanał-2** — Notatnik AI-replace fragmentu + MindMap rename + Process-Flow edit_step (doktryna dwóch kanałów, część S).
+- Bramki: FE tsc 0/0 · server tsc baseline 146/204 0-nowych · kolory PASS (nowe sekcje O4 zmapowane na c-*) · list-canon/artefakt PASS · eslint 0 błędów.
+
+**Padło na limicie 9:00 (relaunch W3):** B6 H5.2/5.3 · B7 H6.3 · B8 T7b-democleanup · B10 T7b-PM-AI/connectors · B11 T9-facilitation · B13 T10-migracje · B15 WB-komentarze · B16 Deck-S-fixy · B17 O3-focus/dead · B19 V7-8-smoke · B20 reportPdf+decode · A22 J25-klikane · DOC-1 generateBlockProse.
 (≈50×🟡→✅ w Oxfordzie) + E1 env (ożywia oś Teresy) + SESJA#1 decyzji.**
 
 Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra · `ODB`=odbiór Piotra.
