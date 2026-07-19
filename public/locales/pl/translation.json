@@ -6205,6 +6205,11 @@
       "chatTooltip": "Otwiera pusty czat AI dla tego huba.",
       "connectionError": "Błąd połączenia"
     },
+    "newModal": {
+      "comingSoonBadge": "Wkrótce",
+      "comingSoonToast": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji.",
+      "comingSoonError": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji."
+    },
     "notes": "Notatki",
     "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
     "evidence": "Dowody (evidence)",
