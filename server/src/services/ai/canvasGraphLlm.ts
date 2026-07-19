@@ -1251,6 +1251,69 @@ export function buildProcessFlowEvidenceContract(
   return { sources, assumptions: [], risks, confidence, toVerify };
 }
 
+/** Opcje dla notatki — brak grafu (prosta proza), jedyny realny sygnał to
+ * czy `generateNoteContent` zwróciła prawdziwą prozę LLM czy caller spadł
+ * na surowy intent (patrz `generateDeliverable.ts` — `proseBody || intent`). */
+export interface NoteEvidenceOptions {
+  /** 'llm' gdy `generateNoteContent` zwróciła treść (≥40 znaków, patrz jej guard);
+   * 'intent' gdy LLM niedostępny/odrzucony i notatka to surowy tekst prośby. */
+  source: 'llm' | 'intent';
+  /** Surowy tekst prośby (intent||title) — jedyny realny "input" tego narzędzia. */
+  seedText: string;
+  /** Długość finalnego ciała notatki (`noteBody.length`) — sygnał kompletności. */
+  bodyLength: number;
+}
+
+/**
+ * Notatnik (note) — HP-16 domknięcie (poprzednio BRAK, patrz
+ * `PANEL_HP16_REAL.md` pkt 5: commit `2cd4c674b8` twierdził że note ma
+ * evidence, `docs-teresa.e2e.test.ts` miało 0 wystąpień słowa "evidence").
+ *
+ * Notatka nie ma grafu/struktury do przeszukania — jedyne realne sygnały to:
+ *   - `seedText` (intent||title) jako jedyne źródło (sourceCount ∈ {0,1} ⇒
+ *     confidence nigdy nie wejdzie w 'high', bramka `deriveConfidence` wymaga
+ *     sourceCount≥3 — uczciwe, notatka z jednego zdania NIE jest "wysoką
+ *     pewnością", zero zgadywania).
+ *   - `source==='intent'` (LLM nie wygenerował prozy, `generateNoteContent`
+ *     zwróciła null) → jakość twardo ograniczona (analogicznie do fallbacku
+ *     skeleton w mapie/procesie), ryzyko + toVerify wpisane wprost.
+ *   - `bodyLength` — realny licznik długości treści, nie ocena LLM.
+ */
+export function buildNoteEvidenceContract(opts: NoteEvidenceOptions): EvidenceContract {
+  const seed = String(opts.seedText || '').trim();
+  const sources: EvidenceContractSource[] = [];
+  if (seed) sources.push({ type: 'chat_intent', title: seed.slice(0, 120) });
+
+  const risks: string[] = [];
+  const toVerify: string[] = [];
+
+  if (opts.source === 'intent') {
+    risks.push(
+      'Notatka zbudowana z surowego tekstu prośby (LLM niedostępny/zwrócił zbyt krótką treść) — brak rozwiniętej prozy (teza+sekcje).'
+    );
+    toVerify.push(
+      'Zweryfikuj treść notatki — nie przeszła przez generator prozy, może być jedynie powtórzeniem prośby.'
+    );
+  }
+
+  if (!seed) {
+    toVerify.push(
+      'Notatka powstała bez treściowego kontekstu (pusty intent/tytuł) — uzupełnij ręcznie.'
+    );
+  }
+
+  const qualityScore =
+    opts.source === 'llm' ? (opts.bodyLength >= 40 ? 100 : 40) : opts.bodyLength > 0 ? 20 : 0;
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps: opts.source === 'intent' ? 1 : 0,
+    qualityScore,
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
+}
+
 export default {
   generateMindmapGraph,
   generateProcessFlowGraph,
@@ -1260,4 +1323,5 @@ export default {
   isFragmentLabel,
   buildMindmapEvidenceContract,
   buildProcessFlowEvidenceContract,
+  buildNoteEvidenceContract,
 };

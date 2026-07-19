@@ -38,6 +38,9 @@ export type EvidenceArtifactType =
   | 'project'
   | 'source'
   | 'assessment'
+  // HP-16 domknięcie (note) — patrz migracja 931_artifact_evidence_note_type.sql,
+  // która rozszerza CHECK artifact_evidence.artifact_type o tę samą wartość.
+  | 'note'
   | 'other';
 
 export type EvidenceSourceType =

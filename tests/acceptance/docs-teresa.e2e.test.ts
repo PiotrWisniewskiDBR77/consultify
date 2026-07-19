@@ -119,9 +119,16 @@ afterAll(async () => {
       ]);
     }
     if (createdNotebookIds.length) {
+      // HP-16 domknięcie — note teraz persystuje EvidenceEnvelope (artifactType='note').
+      await client
+        .query('DELETE FROM artifact_evidence WHERE artifact_id = ANY($1)', [createdNotebookIds])
+        .catch(() => {});
       await client.query('DELETE FROM notebook_pages WHERE id = ANY($1)', [createdNotebookIds]);
     }
     if (createdIdeaIds.length) {
+      await client
+        .query('DELETE FROM artifact_evidence WHERE artifact_id = ANY($1)', [createdIdeaIds])
+        .catch(() => {});
       await client
         .query('DELETE FROM my_idea_maps WHERE idea_id = ANY($1)', [createdIdeaIds])
         .catch(() => {});
@@ -350,12 +357,13 @@ describe('Acceptance: WORD — Document Studio (real runtime)', () => {
 describe('Acceptance: TERESA — twórz-z-czatu (real service, real LLM, real DB)', () => {
   const RELIABILITY_RUNS = 3;
 
-  it(`note: ${RELIABILITY_RUNS}x generateDeliverable({type:'note'}) materializes a real notebook_pages row`, async () => {
+  it(`note: ${RELIABILITY_RUNS}x generateDeliverable({type:'note'}) materializes a real notebook_pages row + a real EvidenceContract (HP-16 domknięcie)`, async () => {
     const { generateDeliverable } = await import(
       '../../server/src/services/ai/tools/generateDeliverable.js'
     );
 
     let successCount = 0;
+    let evidenceRowSuccessCount = 0;
     const client = pgClient();
     await client.connect();
     try {
@@ -384,6 +392,16 @@ describe('Acceptance: TERESA — twórz-z-czatu (real service, real LLM, real DB
         expect(draftId).toBeTruthy();
         createdNotebookIds.push(draftId);
 
+        // HP-16 domknięcie — real EvidenceContract shape, synchronous return
+        // value (mirrors mindmap/process_flow — `buildNoteEvidenceContract`
+        // in canvasGraphLlm.ts, wired in generateDeliverable.ts's note branch).
+        // Previously (PANEL_HP16_REAL.md pkt 5): 0 code, 0 assertion here.
+        const noteEvidence = (result as any).evidence;
+        expect(noteEvidence).toBeTruthy();
+        expect(['low', 'medium', 'high']).toContain(noteEvidence?.confidence);
+        expect(Array.isArray(noteEvidence?.sources)).toBe(true);
+        expect(Array.isArray(noteEvidence?.toVerify)).toBe(true);
+
         const { rows } = await client.query(
           `SELECT id, title, organization_id FROM notebook_pages WHERE id = $1`,
           [draftId]
@@ -393,23 +411,45 @@ describe('Acceptance: TERESA — twórz-z-czatu (real service, real LLM, real DB
         } else {
           console.warn(`[TERESA note] run ${i}: no real DB row for draftId=${draftId}`);
         }
+
+        // HP-17 bridge — safePersistEvidenceContract is fire-and-forget (`void
+        // ...`) inside generateDeliverable, same pattern as process_flow/mindmap
+        // — short grace window before asserting the artifact_evidence row landed.
+        let noteEvidenceRowFound = false;
+        for (let attempt = 0; attempt < 4 && !noteEvidenceRowFound; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 750));
+          const evRows = await client.query(
+            `SELECT confidence FROM artifact_evidence WHERE artifact_id = $1 AND artifact_type = 'note'`,
+            [draftId]
+          );
+          noteEvidenceRowFound = evRows.rows.length === 1;
+        }
+        if (noteEvidenceRowFound) {
+          evidenceRowSuccessCount++;
+        } else {
+          console.warn(
+            `[TERESA note] run ${i}: HP-17 bridge did not persist an artifact_evidence row for ${draftId} within 3s`
+          );
+        }
       }
     } finally {
       await client.end();
     }
 
     console.log(
-      `[TERESA note] reliability: ${successCount}/${RELIABILITY_RUNS} (${Math.round((successCount / RELIABILITY_RUNS) * 100)}%)`
+      `[TERESA note] reliability: ${successCount}/${RELIABILITY_RUNS} (${Math.round((successCount / RELIABILITY_RUNS) * 100)}%) evidence-row: ${evidenceRowSuccessCount}/${RELIABILITY_RUNS} (HP-16/HP-17 domknięcie)`
     );
     expect(successCount).toBeGreaterThan(0);
+    expect(evidenceRowSuccessCount).toBeGreaterThan(0);
   }, 120_000);
 
-  it(`mindmap: ${RELIABILITY_RUNS}x generateDeliverable({type:'mindmap'}) materializes a real my_ideas/my_idea_maps row`, async () => {
+  it(`mindmap: ${RELIABILITY_RUNS}x generateDeliverable({type:'mindmap'}) materializes a real my_ideas/my_idea_maps row + a real EvidenceContract`, async () => {
     const { generateDeliverable } = await import(
       '../../server/src/services/ai/tools/generateDeliverable.js'
     );
 
     let successCount = 0;
+    let evidenceRowSuccessCount = 0;
     const client = pgClient();
     await client.connect();
     try {
@@ -435,6 +475,16 @@ describe('Acceptance: TERESA — twórz-z-czatu (real service, real LLM, real DB
         const draftId = String((result as any).draftId || '');
         expect(draftId).toBeTruthy();
 
+        // HP-16 (7/8) — real EvidenceContract shape, synchronous return value
+        // (buildMindmapEvidenceContract, canvasGraphLlm.ts). This is the axis
+        // the panel found already REALNY — this test just adds the missing
+        // hard assertion (previously docs-teresa had 0 evidence assertions).
+        const mindmapEvidence = (result as any).evidence;
+        expect(mindmapEvidence).toBeTruthy();
+        expect(['low', 'medium', 'high']).toContain(mindmapEvidence?.confidence);
+        expect(Array.isArray(mindmapEvidence?.sources)).toBe(true);
+        expect(Array.isArray(mindmapEvidence?.toVerify)).toBe(true);
+
         // draftId is a REAL my_ideas.id only when server-side materialize
         // succeeded; on any materialize error the code falls back to a
         // client-mount id (`chat-mindmap-<ts>`) which never hits the DB.
@@ -444,12 +494,34 @@ describe('Acceptance: TERESA — twórz-z-czatu (real service, real LLM, real DB
         ]);
         if (rows.length === 1 && rows[0].organization_id === SEED.ORG_ID) {
           const mapRows = await client.query(
-            `SELECT id, nodes_json FROM my_idea_maps WHERE idea_id = $1`,
+            `SELECT id, nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = $1`,
             [draftId]
           );
           if (mapRows.rows.length > 0) {
             successCount++;
             createdIdeaIds.push(draftId);
+
+            const extensions = JSON.parse(mapRows.rows[0].extensions_json || '{}');
+            expect(extensions.evidence).toBeTruthy();
+
+            // HP-17 bridge — fire-and-forget persist, same grace-window pattern
+            // as process_flow/note.
+            let mindmapEvidenceRowFound = false;
+            for (let attempt = 0; attempt < 4 && !mindmapEvidenceRowFound; attempt++) {
+              await new Promise((resolve) => setTimeout(resolve, 750));
+              const evRows = await client.query(
+                `SELECT confidence FROM artifact_evidence WHERE artifact_id = $1 AND artifact_type = 'canvas'`,
+                [draftId]
+              );
+              mindmapEvidenceRowFound = evRows.rows.length === 1;
+            }
+            if (mindmapEvidenceRowFound) {
+              evidenceRowSuccessCount++;
+            } else {
+              console.warn(
+                `[TERESA mindmap] run ${i}: HP-17 bridge did not persist an artifact_evidence row for ${draftId} within 3s`
+              );
+            }
           } else {
             console.warn(`[TERESA mindmap] run ${i}: my_ideas row exists but no my_idea_maps row`);
           }
@@ -464,9 +536,10 @@ describe('Acceptance: TERESA — twórz-z-czatu (real service, real LLM, real DB
     }
 
     console.log(
-      `[TERESA mindmap] reliability: ${successCount}/${RELIABILITY_RUNS} (${Math.round((successCount / RELIABILITY_RUNS) * 100)}%)`
+      `[TERESA mindmap] reliability: ${successCount}/${RELIABILITY_RUNS} (${Math.round((successCount / RELIABILITY_RUNS) * 100)}%) evidence-row: ${evidenceRowSuccessCount}/${RELIABILITY_RUNS}`
     );
     expect(successCount).toBeGreaterThan(0);
+    expect(evidenceRowSuccessCount).toBeGreaterThan(0);
   }, 180_000);
 
   // NOTE: a test asserting `ENABLE_DELIVERABLES_LIGHT=false -> feature_disabled`

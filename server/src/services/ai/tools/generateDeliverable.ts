@@ -29,6 +29,7 @@ import { createNote } from '../../notebookService.js';
 import { hasPresentationCapability } from '../../presentationAccessPolicyService.js';
 import {
   buildMindmapEvidenceContract,
+  buildNoteEvidenceContract,
   buildProcessFlowEvidenceContract,
   generateMindmapGraph,
   generateNoteContent,
@@ -505,7 +506,8 @@ export async function generateDeliverable(
       // an empty shell). Fail-soft to the raw intent if generation fails.
       const proseBody = await generateNoteContent(intent, params.title, language === 'pl');
       const noteBody = proseBody || intent;
-      logger.info(`[generate_deliverable] note content source=${proseBody ? 'llm' : 'intent'}`);
+      const noteContentSource: 'llm' | 'intent' = proseBody ? 'llm' : 'intent';
+      logger.info(`[generate_deliverable] note content source=${noteContentSource}`);
 
       const created = await createNote({
         organizationId: orgId,
@@ -514,6 +516,25 @@ export async function generateDeliverable(
         body: noteBody,
         source: 'chat',
       });
+
+      // HP-16 domknięcie — realny EvidenceContract dla notatki (wcześniej BRAK,
+      // patrz `Harvard/wdrozenie-100/.../PANEL_HP16_REAL.md` pkt 5: commit
+      // `2cd4c674b8` twierdził że note ma evidence, ale nie miała — 0 kodu, 0
+      // asercji). Zero LLM-zgadywania — patrz `buildNoteEvidenceContract`.
+      const evidence = buildNoteEvidenceContract({
+        source: noteContentSource,
+        seedText: intent || title,
+        bodyLength: noteBody.length,
+      });
+      // HP-17 bridge — fire-and-forget persist do `artifact_evidence`
+      // (artifactType='note'), mirror wzorca mindmap/process_flow powyżej.
+      void safePersistEvidenceContract(evidence, {
+        organizationId: orgId,
+        artifactType: 'note',
+        artifactId: created.id,
+        service: 'canvasGraphLlm.generateNoteContent',
+        createdBy: userId,
+      }).catch(() => {});
 
       try {
         context.onDeliverable?.({
@@ -524,6 +545,7 @@ export async function generateDeliverable(
           title: created.title,
           noteId: created.id,
           scorerContent: `${created.title}\n\n${intent || ''}`.trim(),
+          evidence,
         });
       } catch (emitErr) {
         logger.warn(
@@ -534,7 +556,7 @@ export async function generateDeliverable(
       }
 
       logger.info(
-        `[generate_deliverable] note created id=${created.id} title="${title.slice(0, 80)}"`
+        `[generate_deliverable] note created id=${created.id} title="${title.slice(0, 80)}" evidence=${evidence.confidence}`
       );
 
       return {
@@ -544,6 +566,7 @@ export async function generateDeliverable(
         title: created.title,
         generationId: created.id,
         draftId: created.id,
+        evidence,
         message:
           language === 'en'
             ? `A note titled "${created.title}" was saved to the Notebook.`

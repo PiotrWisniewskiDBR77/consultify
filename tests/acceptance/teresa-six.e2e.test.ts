@@ -456,6 +456,31 @@ describe('Acceptance: TERESA axis — deck (generateDeliverable type=presentatio
         evidence(
           `[DECK] GREEN presentation_decks.id=${deckId} status=ready slide_count=${rows[0].slide_count} deck_json.length=${String(rows[0].deck_json).length}`
         );
+
+        // HP-16/HP-17 — buildDeckEvidenceContract (presentationGeneratorService.ts)
+        // persists AFTER the background generateDeck() reaches status='ready',
+        // NOT synchronously in generateDeliverable()'s return value (unlike
+        // mindmap/process_flow above) — so poll artifact_evidence with the same
+        // grace-window pattern as the process_flow bridge check.
+        let deckEvidenceRow: { confidence: string } | undefined;
+        for (let attempt = 0; attempt < 5 && !deckEvidenceRow; attempt++) {
+          await sleep(1000);
+          const evClient = pgClient();
+          await evClient.connect();
+          try {
+            const evRows = await evClient.query(
+              `SELECT confidence FROM artifact_evidence WHERE artifact_id = $1 AND artifact_type = 'deck'`,
+              [deckId]
+            );
+            if (evRows.rows.length === 1) deckEvidenceRow = evRows.rows[0];
+          } finally {
+            await evClient.end();
+          }
+        }
+        expect(deckEvidenceRow).toBeTruthy();
+        evidence(
+          `[DECK] GREEN artifact_evidence row present artifact_id=${deckId} artifact_type=deck confidence=${deckEvidenceRow?.confidence} (HP-16/HP-17)`
+        );
       } else {
         evidence(
           `[DECK] finding: generation did not reach 'ready' within 180s — status()=${(final as any)?.state} db.status=${rows[0].status} error=${(final as any)?.error ?? '(none)'}`
@@ -569,6 +594,27 @@ describe('Acceptance: TERESA axis — document (generateDeliverable type=documen
         expect(String(rows[0].content_md || '').length).toBeGreaterThan(80);
         evidence(
           `[DOC] GREEN work_canvas_drafts.id=${draftId} wave5_artifacts.artifact_id=${wave5Id} schema.artifactId=${schema.artifactId} (match) draft.content_md.length=${String(rows[0].content_md || '').length} wave5.content_md.length=${String(artRows.rows[0].content_md || '').length}`
+        );
+
+        // HP-16/HP-17 — buildDocumentEvidenceContract (documentContentGenerator.ts)
+        // rides in provisionalSchema.evidence BEFORE createWave5Artifact persists
+        // contentJson, so it survives as `schema.evidence` on `content_json_native`;
+        // documentStudioService.ts then persists it as an EvidenceEnvelope
+        // (artifact_evidence, artifactType='document', artifactId=wave5Id) inside
+        // the SAME background materialize call — no extra grace window needed
+        // (unlike deck, where evidence is computed only once status='ready').
+        expect(schema.evidence).toBeTruthy();
+        expect(['low', 'medium', 'high']).toContain(schema.evidence?.confidence);
+        expect(Array.isArray(schema.evidence?.sources)).toBe(true);
+        expect(Array.isArray(schema.evidence?.toVerify)).toBe(true);
+
+        const docEvRows = await client2.query(
+          `SELECT confidence FROM artifact_evidence WHERE artifact_id = $1 AND artifact_type = 'document'`,
+          [wave5Id]
+        );
+        expect(docEvRows.rows).toHaveLength(1);
+        evidence(
+          `[DOC] GREEN artifact_evidence row present artifact_id=${wave5Id} artifact_type=document confidence=${docEvRows.rows[0]?.confidence} schema.evidence.confidence=${schema.evidence?.confidence} (HP-16/HP-17)`
         );
       } else {
         evidence(
