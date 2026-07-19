@@ -34,8 +34,9 @@ const VARIANT_CLASSES: Record<ActionVariant, string> = {
   danger:
     'border-danger-400/30 dark:border-danger-500/20 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10',
   neutral: 'border-c-border text-c-text-secondary hover:bg-state-hover',
-  // AI = teal (canon: no crimson/primary-* as UI accent — see NModeToolbar/AIConsultantPanel).
-  ai: 'border-teal-400/30 dark:border-teal-500/20 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15',
+  // AI = c-info token (canon: no crimson/primary-* as UI accent; AI accent
+  // tokenized to c-info, matching TaskDetailView AI badges — VF1-1 wzorzec).
+  ai: 'border-c-info/30 text-c-info bg-c-info/10 hover:bg-c-info/15',
 };
 
 const VARIANT_LOADING_CLASS: Record<ActionVariant, string> = {
@@ -44,7 +45,7 @@ const VARIANT_LOADING_CLASS: Record<ActionVariant, string> = {
   danger:
     'border-danger-400/30 dark:border-danger-500/20 text-danger-600 dark:text-danger-400 bg-danger-500/10',
   neutral: 'border-c-border text-c-text-secondary bg-c-surface-raised',
-  ai: 'border-teal-400/30 dark:border-teal-500/20 text-teal-600 dark:text-teal-300 bg-teal-500/10',
+  ai: 'border-c-info/30 text-c-info bg-c-info/10',
 };
 
 const ActionButton: React.FC<{ action: NModeAction; isPolish: boolean; className?: string }> = ({

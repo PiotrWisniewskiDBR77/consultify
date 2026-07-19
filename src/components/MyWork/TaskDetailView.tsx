@@ -2064,8 +2064,8 @@ Return ONLY the final comment text.`;
         : status === 'in_progress'
           ? 'border-blue-400/70 dark:border-blue-500/50'
           : status === 'review'
-            ? // VF1-1: align to STATUS_CONFIG.review (sky) — was crimson `primary-*`.
-              'border-sky-400/70 dark:border-sky-500/50'
+            ? // VF1-1: review = c-info token (informational blue) — was crimson `primary-*`.
+              'border-c-info/70 dark:border-c-info/50'
             : 'border-slate-200 dark:border-navy-600/60';
   const priorityAlertBorderClass =
     priority === 'critical'
@@ -2252,8 +2252,9 @@ Return ONLY the final comment text.`;
       assignment: {
         icon: <User size={10} />,
         label: t('myWork.taskDetail.activityType.assigned', 'Assigned'),
-        // VF1-1: was crimson `primary-*` — distinct hue from created/status/comment.
-        style: 'border-violet-300/50 bg-violet-500/10 text-violet-600',
+        // VF1-1: was crimson `primary-*` — categorical c-tag-3 (violet), distinct
+        // hue from created(emerald)/status(blue)/comment(amber) neighbors.
+        style: 'border-c-tag-3/50 bg-c-tag-3/10 text-c-tag-3',
       },
       comment: {
         icon: <MessageSquare size={10} />,
@@ -3293,7 +3294,7 @@ Return ONLY the final comment text.`;
                             },
                           });
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400/80 transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors"
                       >
                         + {t('myWork.taskDetail.addPerson', 'Add person')}
                       </button>
@@ -3364,7 +3365,7 @@ Return ONLY the final comment text.`;
                                         setEditingStakeholderId(s.id);
                                         setStakeholderDraft({ ...s });
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text"
                                       title={t('myWork.taskDetail.title7', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3413,7 +3414,7 @@ Return ONLY the final comment text.`;
                             enabled: true,
                           });
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400/80 transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors"
                       >
                         + {t('myWork.taskDetail.addReminder', 'Add reminder')}
                       </button>
@@ -3496,7 +3497,7 @@ Return ONLY the final comment text.`;
                                           } as ReminderRuleWithDelivery)
                                         );
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text"
                                       title={t('myWork.taskDetail.title9', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -3548,7 +3549,7 @@ Return ONLY the final comment text.`;
                           );
                           setEditingEscalationId('__new__');
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400/80 transition-colors"
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors"
                       >
                         + {t('myWork.taskDetail.addEscalation', 'Add escalation')}
                       </button>
@@ -3644,7 +3645,7 @@ Return ONLY the final comment text.`;
                                         setEditingEscalationId(rule.id);
                                         setEscalationDraft({ ...rule });
                                       }}
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-text"
                                       title={t('myWork.taskDetail.title11', 'Edit')}
                                     >
                                       <Edit3 size={13} />
@@ -4841,7 +4842,7 @@ Return ONLY the final comment text.`;
                           key={channel.key}
                           type="button"
                           onClick={channel.toggle}
-                          className={`${channelChipClass} ${channel.active ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${channel.active ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                         >
                           {channel.label}
                         </button>
@@ -4875,7 +4876,7 @@ Return ONLY the final comment text.`;
                                 },
                               });
                             }}
-                            className={`${channelChipClass} ${selected ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${selected ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}
@@ -5092,7 +5093,7 @@ Return ONLY the final comment text.`;
                                     : coreChannels.includes('email'),
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                           >
                             {channel.label}
                           </button>
@@ -5131,7 +5132,7 @@ Return ONLY the final comment text.`;
                                 },
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}
@@ -5387,7 +5388,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                         >
                           {channel.label}
                         </button>
@@ -5423,7 +5424,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                           title={channel.scope}
                         >
                           {channel.label}
