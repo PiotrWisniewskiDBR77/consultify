@@ -30,6 +30,8 @@ import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
+import { SkeletonState } from '@/components/shared/states';
+import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { getCanvasBg } from './canvas/canvasBackground';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
@@ -616,6 +618,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  // VF1 SPEC-A canvas skeleton — default OFF, gated per rule #7.
+  const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   const currentUser = useAppStore((state) => state.currentUser);
   const { dialog: confirmDialog, confirm: showConfirm } = useConfirmDialog();
   const currentUserId = String(currentUser?.id || 'current-user');
@@ -3227,21 +3231,28 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
       {/* Canvas */}
       {loading ? (
-        <div className="flex-1 flex flex-col gap-4 p-6">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-32 bg-c-surface-raised rounded-xl animate-pulse" />
-            <div className="h-8 w-24 bg-c-surface-raised rounded-xl animate-pulse" />
-            <div className="h-8 w-20 bg-c-surface-raised rounded-xl animate-pulse" />
+        vf1CanvasSpecAEnabled ? (
+          // VF1 SPEC-A (flag OFF default): canonical A·Canvas skeleton.
+          <div className="flex-1">
+            <SkeletonState variant="canvas" />
           </div>
-          <div className="flex-1 grid grid-cols-3 gap-4">
-            <div className="h-40 bg-c-surface-raised rounded-2xl animate-pulse" />
-            <div className="h-32 bg-c-surface-raised rounded-2xl animate-pulse mt-8" />
-            <div className="h-36 bg-c-surface-raised rounded-2xl animate-pulse mt-4" />
-            <div className="h-28 bg-c-surface-raised rounded-2xl animate-pulse" />
-            <div className="h-44 bg-c-surface-raised rounded-2xl animate-pulse" />
-            <div className="h-24 bg-c-surface-raised rounded-2xl animate-pulse mt-6" />
+        ) : (
+          <div className="flex-1 flex flex-col gap-4 p-6">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-32 bg-c-surface-raised rounded-xl animate-pulse" />
+              <div className="h-8 w-24 bg-c-surface-raised rounded-xl animate-pulse" />
+              <div className="h-8 w-20 bg-c-surface-raised rounded-xl animate-pulse" />
+            </div>
+            <div className="flex-1 grid grid-cols-3 gap-4">
+              <div className="h-40 bg-c-surface-raised rounded-2xl animate-pulse" />
+              <div className="h-32 bg-c-surface-raised rounded-2xl animate-pulse mt-8" />
+              <div className="h-36 bg-c-surface-raised rounded-2xl animate-pulse mt-4" />
+              <div className="h-28 bg-c-surface-raised rounded-2xl animate-pulse" />
+              <div className="h-44 bg-c-surface-raised rounded-2xl animate-pulse" />
+              <div className="h-24 bg-c-surface-raised rounded-2xl animate-pulse mt-6" />
+            </div>
           </div>
-        </div>
+        )
       ) : (
         <div className="flex-1 relative">
           <WhiteboardSessionPanel

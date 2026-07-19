@@ -23,7 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { LoadingState } from '@/components/shared/states';
+import { LoadingState, SkeletonState } from '@/components/shared/states';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
@@ -36,6 +36,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
+import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import {
   type ArtifactLinkRole,
@@ -2758,6 +2759,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
   // legacy render is byte-for-byte unchanged.
   const melsCanvasEnabled = isMelsCanvasEnabled();
+  // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
+  const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   const melsCanvasChips = useMemo(
     () =>
       melsCanvasEnabled
@@ -3102,7 +3105,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   if (loading) {
     return (
       <div className="h-full w-full bg-[var(--c-surface)] p-6">
-        <LoadingState template="panel" />
+        {/* VF1 SPEC-A (flag OFF default): A·Canvas artifacts load into the
+            canonical canvas skeleton; legacy panel skeleton stays default. */}
+        {vf1CanvasSpecAEnabled ? (
+          <SkeletonState variant="canvas" />
+        ) : (
+          <LoadingState template="panel" />
+        )}
       </div>
     );
   }
