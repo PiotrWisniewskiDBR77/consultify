@@ -23,8 +23,8 @@ function main(): void {
   const packService = read(root, 'server/src/services/financialStatementPackService.ts');
   const documentIntel = read(root, 'server/src/services/documentIntelligenceService.ts');
   const contract = read(root, 'docs/product/STATEMENT_READY_CONTRACT.md');
-  const migration = read(root, 'server/migrations/668_statement_ready_contract.sql');
-  const migrationRebuild = read(root, 'server/migrations/669_statement_import_rebuild.sql');
+  const migration = read(root, 'server/migrations/never-ran/668_statement_ready_contract.sql');
+  const migrationRebuild = read(root, 'server/migrations/never-ran/669_statement_import_rebuild.sql');
   const packMigration = read(root, 'server/migrations/20260316_financial_statement_packs.sql');
 
   const checks: Check[] = [

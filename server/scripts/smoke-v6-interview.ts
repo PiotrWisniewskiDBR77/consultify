@@ -31,18 +31,18 @@ function main(): void {
   // A01: Canonical V6 data contract
   checks.push({
     name: 'V6-A01 Migration 665: template foundation schema',
-    pass: fileExists(root, 'server/migrations/665_v6_interview_templates_foundation.sql'),
+    pass: fileExists(root, 'server/migrations/never-ran/665_v6_interview_templates_foundation.sql'),
   });
   checks.push({
     name: 'V6-A01 Migration 666: runtime answers schema',
-    pass: fileExists(root, 'server/migrations/666_v6_interview_runtime_answers.sql'),
+    pass: fileExists(root, 'server/migrations/never-ran/666_v6_interview_runtime_answers.sql'),
   });
   checks.push({
     name: 'V6-A01 Migration 668: question helper fields',
-    pass: fileExists(root, 'server/migrations/668_v6_interview_question_helper_fields.sql'),
+    pass: fileExists(root, 'server/migrations/never-ran/668_v6_interview_question_helper_fields.sql'),
   });
 
-  const m666 = read(root, 'server/migrations/666_v6_interview_runtime_answers.sql');
+  const m666 = read(root, 'server/migrations/never-ran/666_v6_interview_runtime_answers.sql');
   checks.push({
     name: 'V6-A01 Runtime schema has voice/evidence columns',
     pass: includesAll(m666, ['answer_type', 'allow_voice', 'allow_file_upload', 'voice_transcript', 'voice_transcript_status', 'answer_payload', 'context_note']),
@@ -223,13 +223,17 @@ function main(): void {
   // ── WS-F: Library & Delivery ──────────────────────────────────────────────
 
   // F01: Seed templates
+  // NOTE (E-MIG6XX): the original 669_v6_seed_system_templates.sql never actually ran on the
+  // live DB -- it predates the boot autorun regex (/^(7\d{2}|\d{8})_.*\.sql$/) and used
+  // SQLite-only `INSERT OR IGNORE`, so it is archived to never-ran/ as dead/historical. The
+  // Postgres-native, autorun-eligible replacement is 20260720_seed_v6_interview_library_templates.sql.
   checks.push({
     name: 'V6-F01 18 system templates seeded',
-    pass: fileExists(root, 'server/migrations/669_v6_seed_system_templates.sql'),
+    pass: fileExists(root, 'server/migrations/20260720_seed_v6_interview_library_templates.sql'),
   });
-  if (fileExists(root, 'server/migrations/669_v6_seed_system_templates.sql')) {
-    const seed = read(root, 'server/migrations/669_v6_seed_system_templates.sql');
-    const templateCount = (seed.match(/INSERT OR IGNORE INTO interview_library_templates/g) || []).length;
+  if (fileExists(root, 'server/migrations/20260720_seed_v6_interview_library_templates.sql')) {
+    const seed = read(root, 'server/migrations/20260720_seed_v6_interview_library_templates.sql');
+    const templateCount = (seed.match(/^INSERT INTO interview_library_templates$/gm) || []).length;
     checks.push({
       name: `V6-F01 Seed has ${templateCount} template INSERTs (expect 18)`,
       pass: templateCount >= 18,
@@ -312,7 +316,7 @@ function main(): void {
   // ── Migration integrity ───────────────────────────────────────────────────
   checks.push({
     name: 'V6 Migration 670: insights three-layer columns',
-    pass: fileExists(root, 'server/migrations/670_v6_interview_insights_three_layer.sql'),
+    pass: fileExists(root, 'server/migrations/never-ran/670_v6_interview_insights_three_layer.sql'),
   });
 
   // ── QuestionsList types ───────────────────────────────────────────────────
