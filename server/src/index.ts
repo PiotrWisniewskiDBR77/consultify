@@ -2042,6 +2042,17 @@ if (startServer && shouldStartHttpServer) {
       } catch (err: any) {
         logger.warn('[Server] Chat Projects Realtime not available:', err?.message);
       }
+
+      // T9-1: Whiteboard facilitation realtime (Socket.IO /facilitation namespace) —
+      // broadcasts phase advances, shared-timer arm/stop, and session-ended to
+      // participants so they refresh without polling.
+      try {
+        const { facilitationRealtime } = await import('./realtime/facilitationRealtime.js');
+        await facilitationRealtime.init(io);
+        logger.info('[Server] Facilitation Realtime (Socket.IO /facilitation) initialized');
+      } catch (err: any) {
+        logger.warn('[Server] Facilitation Realtime not available:', err?.message);
+      }
     } catch (err: any) {
       logger.warn('[Server] Table Platform Realtime not available:', err?.message);
     }
