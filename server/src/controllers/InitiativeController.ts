@@ -20,6 +20,10 @@ import {
 } from '../constants/initiativeStatuses.js';
 import activityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import {
+  assertCardMeetsFormula,
+  CardContentGateError,
+} from '../services/cardContentFormulaValidator.js';
 import { fireClosureHandoff } from '../services/executionResultsBridge.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
@@ -621,6 +625,43 @@ export class InitiativeController {
           code: 'INITIATIVE_PROJECT_REQUIRED',
         });
         return;
+      }
+
+      // ── O7.1 TWARDA BRAMA (przed zapisem, obie ścieżki: funnel i raw-insert) ──
+      // Decyzja Piotra: inicjatywa poniżej progu formuły NIE powstaje. Egzekwuje
+      // TYLKO wąską listę blokującą (brak tytułu / placeholder-filler) — reguły
+      // kompletności/heurystyki pozostają doradcze, więc lekki quick-create nie
+      // jest blokowany. FAIL-OPEN gdy walidator rzuci (bug). Zawór:
+      // CARD_CONTENT_HARD_GATE (default ON). Umieszczone TU (a nie tylko w funnelu),
+      // bo INITIATIVE_FUNNEL_ENABLED jest domyślnie OFF → to raw-insert jest ŻYWĄ
+      // ścieżką na demo (weryfikuj realny runtime, nie flagi).
+      try {
+        const b = req.body as Record<string, unknown>;
+        assertCardMeetsFormula(
+          'initiative',
+          {
+            title: b.title,
+            problem_statement: b.problemStatement,
+            hypothesis: b.hypothesis,
+            summary: b.summary,
+            description: b.description,
+            business_value: b.businessValue,
+          },
+          {
+            onValidatorError: (err) =>
+              logger.warn(
+                `[InitiativeController] hard-gate walidator rzucił wyjątek — FAIL-OPEN, karta przechodzi: ${
+                  (err as Error)?.message || err
+                }`
+              ),
+          }
+        );
+      } catch (gateErr) {
+        if (gateErr instanceof CardContentGateError) {
+          res.status(gateErr.statusCode).json(gateErr.toResponse());
+          return;
+        }
+        throw gateErr;
       }
 
       // Uspójnienie F1 — single creation funnel (flag-gated rollout). When enabled,

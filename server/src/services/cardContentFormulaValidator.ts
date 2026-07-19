@@ -1200,3 +1200,177 @@ export function buildRepairBriefFromVerdict(verdict: FormulaVerdict): string {
     lines.join('\n')
   );
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// HARD GATE (OXFORD O7.1) — decyzja Piotra: strażnik jakości kart przestaje być
+// wyłącznie DORADCZY i staje się TWARDĄ BRAMĄ. Karta poniżej progu formuły NIE
+// powstaje.
+//
+// ⚠️ BEZPIECZEŃSTWO LEJKA (powód, dla którego było doradcze): źle zrobiona brama
+// może zablokować cały lejek tworzenia. Ta brama jest zaprojektowana BEZPIECZNIE:
+//
+//   1. BLOKUJE TYLKO na wąskiej, JAWNEJ liście kodów (`CARD_GATE_BLOCKING_CODES`)
+//      — genuine „karta jest zepsuta/pusta/ma placeholder". Reguły KOMPLETNOŚCI,
+//      które legalnie fałszują na rzadkich kartach ręcznych (initiative.kpi_*,
+//      initiative.raid_mix) oraz HEURYSTYKI podatne na false-positive
+//      (initiative.hypothesis_format „Jeśli…to…bo", *.lang_pl na 2 stopwordach)
+//      są CELOWO POZA listą — pozostają doradcze. Fail-SAFE: kod naruszenia,
+//      którego NIE MA na liście, NIGDY nie blokuje, nawet gdy jego severity=hard.
+//   2. ZAWÓR: env-flag `CARD_CONTENT_HARD_GATE` (default ON — to decyzja Piotra —
+//      ale flaga ISTNIEJE, żeby dało się NATYCHMIAST wyłączyć bramę, gdy produkcja
+//      zacznie fałszywie blokować). OFF → stare zachowanie doradcze.
+//   3. FAIL-OPEN NA BŁĄD WALIDATORA: jeśli sam walidator rzuci wyjątek (bug),
+//      `assertCardMeetsFormula` łyka wyjątek i PRZEPUSZCZA kartę — zepsuty
+//      walidator NIGDY nie wywali lejka (dokładnie obawa z komentarza F3.2).
+//   4. Przy blokadzie: strukturalny błąd 422 z LISTĄ konkretnych naruszeń + jak
+//      poprawić — user MUSI wiedzieć CO poprawić (nie goły 500/400).
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Kody naruszeń, na których brama MA PRAWO zablokować. Świadomie WĘŻSZE niż
+ * „każde hard": to defekty integralności TREŚCI, które czynią kartę faktycznie
+ * niekompletną/renderowalno-niebezpieczną:
+ *   - brak tytułu (pusta tożsamość karty),
+ *   - brak podsumowania (pusta karta Insight),
+ *   - niekompletny material_quality (ryzyko crashu InsightViewer, §A6.2),
+ *   - placeholder/wypełniacz (Lorem ipsum / TODO / [nawias] / „insert text here").
+ *
+ * NIE ma tu: initiative.kpi_baseline_target / initiative.raid_mix (fałszują na
+ * rzadkiej karcie ręcznej — zablokowałyby lejek quick-create), initiative.
+ * hypothesis_format ani *.lang_pl (heurystyki podatne na false-positive). Te
+ * pozostają doradcze — brama ich NIE egzekwuje.
+ */
+export const CARD_GATE_BLOCKING_CODES: ReadonlySet<string> = new Set<string>([
+  'insight.title_present',
+  'insight.summary_present',
+  'insight.material_quality_complete',
+  'insight.no_filler',
+  'initiative.title_present',
+  'initiative.no_filler',
+]);
+
+/**
+ * Czy twarda brama jest włączona. Default ON (decyzja O7.1). Wyłączenie zaworu:
+ * `CARD_CONTENT_HARD_GATE` = `0|false|off|no|disabled` (case-insensitive).
+ * Wartość nieustawiona/pusta/inna → ON.
+ */
+export function isCardHardGateEnabled(): boolean {
+  const raw = String(process.env.CARD_CONTENT_HARD_GATE ?? '')
+    .trim()
+    .toLowerCase();
+  return !['0', 'false', 'off', 'no', 'disabled'].includes(raw);
+}
+
+/** Naruszenia, na których brama zablokuje: hard ∧ na jawnej liście blokującej. */
+export function blockingViolations(
+  verdict: FormulaVerdict,
+  blockingCodes: ReadonlySet<string> = CARD_GATE_BLOCKING_CODES
+): FormulaViolation[] {
+  return verdict.violations.filter((v) => v.severity === 'hard' && blockingCodes.has(v.code));
+}
+
+/**
+ * Błąd bramy treści — mapowany przez kontrolery na HTTP 422 (statusCode) z listą
+ * naruszeń. Niesie kod maszynowy, wynik, próg i CZYTELNE komunikaty PL + wskazówki.
+ */
+export class CardContentGateError extends Error {
+  readonly statusCode = 422;
+  readonly code = 'CARD_CONTENT_FORMULA_VIOLATION';
+  readonly kind: CardKind;
+  readonly score: number;
+  readonly passThreshold: number;
+  /** Naruszenia, które SPOWODOWAŁY blokadę (hard ∧ blokujące). */
+  readonly violations: FormulaViolation[];
+  /** Wszystkie naruszenia z werdyktu (dla pełnego kontekstu/logu). */
+  readonly allViolations: FormulaViolation[];
+
+  constructor(verdict: FormulaVerdict, blocking: FormulaViolation[]) {
+    super(
+      `Karta (${verdict.kind}) nie spełnia CARD_CONTENT_FORMULA — ${blocking.length} ` +
+        `naruszenie(a) blokujące: ${blocking.map((v) => v.code).join(', ')}.`
+    );
+    this.name = 'CardContentGateError';
+    this.kind = verdict.kind;
+    this.score = verdict.score;
+    this.passThreshold = verdict.passThreshold;
+    this.violations = blocking;
+    this.allViolations = verdict.violations;
+  }
+
+  /** Ciało odpowiedzi HTTP 422 — lista naruszeń + jak poprawić. */
+  toResponse(): {
+    error: string;
+    code: string;
+    kind: CardKind;
+    score: number;
+    passThreshold: number;
+    violations: { code: string; severity: ViolationSeverity; message: string }[];
+    hint: string;
+  } {
+    return {
+      error:
+        'Karta nie spełnia standardu treści (CARD_CONTENT_FORMULA) i nie może zostać utworzona. ' +
+        'Popraw poniższe braki i spróbuj ponownie.',
+      code: this.code,
+      kind: this.kind,
+      score: this.score,
+      passThreshold: this.passThreshold,
+      violations: this.violations.map((v) => ({
+        code: v.code,
+        severity: v.severity,
+        message: v.message,
+      })),
+      hint: this.violations.map((v) => `• ${v.message}`).join('\n'),
+    };
+  }
+}
+
+/**
+ * Egzekwuj bramę na GOTOWYM werdykcie. Rzuca `CardContentGateError` (422), gdy
+ * zawór jest ON i werdykt niesie naruszenia blokujące. W przeciwnym razie zwraca
+ * werdykt bez zmian (soft/advisory nigdy nie blokuje).
+ *
+ * KONTRAKT FAIL-OPEN: ta funkcja zakłada, że `verdict` policzono POMYŚLNIE. Jeśli
+ * liczenie werdyktu rzuci (bug walidatora), wołający NIE MOŻE tu wejść — użyj
+ * `assertCardMeetsFormula`, które łyka wyjątek walidatora i przepuszcza kartę.
+ */
+export function enforceCardContentGate(
+  verdict: FormulaVerdict,
+  opts: { blockingCodes?: ReadonlySet<string> } = {}
+): FormulaVerdict {
+  if (!isCardHardGateEnabled()) return verdict; // zawór OFF → doradczo
+  const blocking = blockingViolations(verdict, opts.blockingCodes);
+  if (blocking.length === 0) return verdict;
+  throw new CardContentGateError(verdict, blocking);
+}
+
+/**
+ * Pełna, BEZPIECZNA brama: policz werdykt i wyegzekwuj go.
+ *
+ *   - Walidator rzuca wyjątek (bug) → ŁYK + zwróć `null` (FAIL-OPEN: karta
+ *     przechodzi; zepsuty walidator nie blokuje lejka). `onValidatorError`
+ *     pozwala wołającemu zalogować to zdarzenie.
+ *   - Werdykt ma naruszenia blokujące ∧ zawór ON → rzuca `CardContentGateError`
+ *     (422). Wołający mapuje na HTTP/oznacza generację jako failed.
+ *   - Inaczej → zwraca werdykt (może nieść soft violations — tylko sygnał).
+ */
+export function assertCardMeetsFormula(
+  kind: CardKind,
+  card: InsightCardData | InitiativeCardInput | null | undefined,
+  opts: {
+    reportPath?: boolean;
+    blockingCodes?: ReadonlySet<string>;
+    onValidatorError?: (err: unknown) => void;
+  } = {}
+): FormulaVerdict | null {
+  let verdict: FormulaVerdict;
+  try {
+    verdict = validateCard(kind, card, { reportPath: opts.reportPath });
+  } catch (err) {
+    // FAIL-OPEN — zepsuty walidator NIGDY nie wywala lejka.
+    opts.onValidatorError?.(err);
+    return null;
+  }
+  // Poza try/catch: intencjonalny 422 MA się propagować (to nie jest bug walidatora).
+  return enforceCardContentGate(verdict, { blockingCodes: opts.blockingCodes });
+}

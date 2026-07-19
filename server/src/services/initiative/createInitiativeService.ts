@@ -23,6 +23,7 @@ import {
   isRequireInitiativeProjectEnabled,
   resolveOrCreateSystemPortfolioProject,
 } from '../initiativeProjectPolicyService.js';
+import { assertCardMeetsFormula } from '../cardContentFormulaValidator.js';
 import { type InitiativeCardData, validateCardStructure } from './initiativeCardValidators.js';
 
 export interface CreateInitiativeInput {
@@ -173,6 +174,35 @@ export async function createInitiative(
       createdBy: options.actor?.id ?? null,
     });
   }
+
+  // ── O7.1 TWARDA BRAMA (przed zapisem) ──────────────────────────────────────
+  // Decyzja Piotra: karta poniżej progu formuły NIE powstaje. Egzekwujemy TYLKO
+  // wąską listę naruszeń blokujących (CARD_GATE_BLOCKING_CODES: brak tytułu /
+  // placeholder-filler) — reguły KOMPLETNOŚCI (kpi/raid/scope/milestones) i
+  // heurystyki (hypothesis_format, lang_pl) pozostają DORADCZE poniżej, więc
+  // rzadka karta quick-create NIGDY nie jest tu blokowana. Gdy walidator sam
+  // rzuci wyjątek (bug) → assertCardMeetsFormula łyka go i PRZEPUSZCZA kartę
+  // (fail-open), a intencjonalny CardContentGateError(422) propaguje do wołającego
+  // (kontroler mapuje na HTTP 422 przez statusCode). Zawór: CARD_CONTENT_HARD_GATE.
+  assertCardMeetsFormula(
+    'initiative',
+    {
+      title,
+      problem_statement: data.problemStatement ?? undefined,
+      hypothesis: data.hypothesis ?? undefined,
+      summary: data.summary ?? undefined,
+      description: data.description ?? undefined,
+      business_value: data.businessValue ?? undefined,
+    },
+    {
+      onValidatorError: (err) =>
+        logger.warn(
+          `[createInitiativeService] hard-gate walidator rzucił wyjątek — FAIL-OPEN, karta przechodzi: ${
+            (err as Error)?.message || err
+          }`
+        ),
+    }
+  );
 
   const id = uuidv4();
   const now = new Date().toISOString();

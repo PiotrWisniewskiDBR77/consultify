@@ -18,6 +18,7 @@ import {
 } from './ai/insightTypePromptRegistry.js';
 import { llmService } from './ai/llmService.js';
 import {
+  assertCardMeetsFormula,
   buildRepairBriefFromVerdict,
   type FormulaVerdict,
   validateInsightCard,
@@ -2477,6 +2478,37 @@ Rules:
       // Render markdown for the legacy `content` column (backward compat)
       const markdownContent = this.renderV6ContentAsMarkdown(v6Data);
       const materialQuality = this.buildMaterialQuality(sessionData, v6Data);
+
+      // ── O7.1 TWARDA BRAMA (po doradczej auto-naprawie, PRZED zapisem) ─────────
+      // Decyzja Piotra: karta poniżej progu formuły NIE powstaje. Ścieżka AI ma już
+      // pętlę re-generacji (auto-repair powyżej z feedbackiem naruszeń). Jeśli po
+      // niej karta NADAL niesie naruszenie BLOKUJĄCE (brak tytułu/podsumowania/
+      // material_quality, placeholder-filler), assertCardMeetsFormula rzuca
+      // CardContentGateError — łapie go zewnętrzny catch (poniżej) i oznacza insight
+      // jako 'failed' z czytelnym error_message (karta NIE zapisuje się jako
+      // completed). FAIL-OPEN gdy walidator sam rzuci (bug) → karta przechodzi.
+      // Zawór: CARD_CONTENT_HARD_GATE (default ON).
+      assertCardMeetsFormula(
+        'insight',
+        {
+          title: insightTitle,
+          executive_summary: v6Data.executive_summary,
+          themes: v6Data.themes,
+          issues: v6Data.issues,
+          opportunities: v6Data.opportunities,
+          signals: v6Data.signals,
+          evidence_map: v6Data.evidence_map,
+          missing_data: v6Data.missing_data,
+          material_quality: materialQuality,
+        },
+        {
+          onValidatorError: (validatorErr) =>
+            logger.warn(
+              `[InterviewInsightService] hard-gate walidator rzucił wyjątek — FAIL-OPEN, insight przechodzi:`,
+              (validatorErr as Error)?.message || validatorErr
+            ),
+        }
+      );
 
       await db.run(
         `UPDATE interview_insights
