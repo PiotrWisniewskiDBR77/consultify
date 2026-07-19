@@ -69,6 +69,15 @@ LUKA do ~90% to teraz GŁÓWNIE: (c) odbiór wizualny Piotra jutro rano (Vegas/O
 > Piotr: „ruszaj 20 agentami, bez ściemniania". Każda pozycja niżej ma test/parity/E2E — zero edycji licznika bez kodu.
 > Bramki każdej partii: server tsc 146 (0-nowych), eslint 0, FE nietknięty. demo-safe re-tag po każdej.
 
+> **★ AKTUALIZACJA 2026-07-20 NOC — FALA-2 (partie 10-13, kontynuacja po SPRINT-NOC):** kolejne 4 partie
+> hardeningu bezpieczeństwa/schematu wdrożone na demo (`04c42656dd`→`107830af3c`→`168b6846cc`→`2db1fca612`),
+> bramki zielone na każdej (server tsc≤146 0-nowych/eslint 0/boot-poll/demo-safe re-tag). Głównie klasa
+> E-Przekroje (schema-drift/SQLite-izmy boolean/500-leak/dziura-auth/SSO-encrypt) + T1 23/46 test-dryf +
+> Harvard-kolaboracja A-KOL-1 batch1. **Licznik SUMA celowo NIE podniesiony ręcznie w tabeli ↓** (zasada
+> anty-inflacji z KOREKTY: wymaga re-itemizacji ID-po-ID z tabel szczegółowych, nie tylko zliczenia
+> commitów) — pełne SHA+dowód w bloku „FALA-2 NOC (partie 10-13)" ↓ (wstawiony za SPRINT-NOC); formalna
+> re-itemizacja = zadanie następnej sesji/robotnika.
+
 **Partia 1 (`effc1d4d71`):**
 - **Excel-hardened** WQ-07/08/09 (walidacja formuł/repair-loop/P&L) — 115/115 testów parity. `port/excel-workbook` był czystym nadzbiorem, nie split-brain.
 - **InvoiceService** → `invoices.line_items` JSON (był pisany pod martwą migrację 030) — E2E czerwone-przed/zielone-po na realnym schemacie PG. ★stary unit-test był fałszywy (SQLite in-memory).
@@ -112,6 +121,86 @@ LUKA do ~90% to teraz GŁÓWNIE: (c) odbiór wizualny Piotra jutro rano (Vegas/O
 **07-19 worker-oxford-o5:** Oxford ⬜ 11→5 (-6), ✅ 46→50 (+4), 🟡 13→15 (+2). Cztery ⬜ były STALE (już zbudowane+testowane E2E, tabela nierozsynchronizowana z osobnymi wpisami w tym samym pliku): O2.5 (deck-conclusion-slide + narrativeEngine test dodany), O1-Benchmark/DRD (`drdIndustryBenchmark.ts`), O1-Generator-inicjatyw SIRI+ADMA (`assessmentInitiativeService.ts` framework-agnostyczny). Dwa ⬜→🟡 z realnym fixem kodu: O5.4 (bug — kontekst ekranu był zawsze PO ANGIELSKU w PL-personie, naprawione 17 wpisów + test), O5.6 (audyt macierzy pokrycia Wywiadu GOTOWY, czeka DEC Piotra na nowe pytania — JA-część zamknięta). Zero nowych 🟡-odbiorczych ruszonych (poza zakresem robotnika). Gałąź `worker-oxford-o5` z `origin/demo`, NIE zmergowana/NIE wypchnięta.
 
 **Postęp: 304/304 rozstrzygnięte (100%) — FAZA DOMKNIĘTA.** ★ RUNDA DEMO-HARDENING 07-19 (Fale 12-13 + dowody): Harvey HP-16/HP-2→✅(+2, teresa-six 7/7+82 unit)·Oxford O5.4 persona-PL/O2.5 narracja/O1 benchmark+SIRI-ADMA→✅(+4, dowód runtime)·non-Vegas RED: tabele `ai_usage_stats`(2×500)/`metrics_events`/`mrr net_change`·**~26 plików alias-fix** (PMO-Health=0/wersje-Studio-Finance=1/org-overview/security-stats/LLM-analytics)·media-upload deck·★scout „mountStub 404"=FAŁSZYWY ALARM (endpointy=401 zamontowane, złota reguła). ★ FALA 4-6 + VEGAS-FABLE (blok ↓): Oxford O4.1-4.7→✅(dowód runtime) · Harvey HP-2→✅ · RED Fala4/5 (brakujące tabele/SQLite-izmy/100-alias InitiativeController) · **Vegas: plan Fable (44 zadania) + B-P1/B-P2 sign-off Piotra + Faza 0 fundamentów WDROŻONA**. Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
+
+### ★★★ FALA-2 NOC 2026-07-19/20 (partie 10-13, kontynuacja po SPRINT-NOC) — demo tip `2db1fca612`
+> Kontynuacja floty naprawczej po SPRINT-NOC (partie 1-9). Każda partia: bramki server tsc≤146
+> (0-nowych), eslint 0, boot-poll zielony, demo-safe re-tag. Klasa pracy: hardening bezpieczeństwa/
+> schematu (E-Przekroje) + dowody testowe (T1) + kolaboracja Harvard (A-KOL-1). Zero pracy wizualnej
+> Vegas w tych partiach (nadal 🟠 do odbioru — patrz HANDOFF poranny).
+
+**Partia 10 (`04c42656dd`):**
+- **missing-column sweep — 4 bugi** złych nazw kolumn (`aiSettings`/`aiGovernance`/`ai-analytics`/billing
+  czytały nieistniejące `model_id`/`cost_usd`) — `740617c89c` (E-ALIAS-B, aiObservabilityService: cudzysłów
+  camelCase aliasów SQL + fix stale-schema) + `4e867bdc7f` (4 kolejne kolumny `ai_usage_logs`, ta sama klasa).
+- **O5.6 migracja Postgres-native** (`f16c8fa4bc`) — `INSERT OR IGNORE`→`ON CONFLICT`, `0/1`→`false/true`
+  (migracja pisana pod SQLite, nie odpalała się poprawnie na PG) + `0efc1f4660` 29 nowych pytań (draft do
+  macierzy pokrycia Wywiadu×7 osi DRD — czeka DEC Piotra, JA-część zamknięta).
+
+**Partia 11 (`107830af3c`):**
+- **★ SYSTEMOWY: `adaptQuery` nie konwertował boolean `=0/1`** (`c656cea7cd`) — 66 call-sites w 40 plikach
+  porównywały boolean po SQLite-owemu (`col = 1`/`col = 0`) zamiast natywnego Postgres `TRUE/FALSE`;
+  naprawione centralnie w `adaptQuery` (129 miejsc always-boolean skonwertowane automatycznie + 107
+  ambiguous oznaczone flagą do przeglądu ręcznego). **HOT-PATH** (dotyka każdego query z warunkiem
+  boolean w całym serwerze) — smoke 401 OK po zmianie, zero regresji na boot.
+- `f60cd07118` — dead-code rm `SubscriptionAnalyticsService.ts` (osierocony, 0 konsumentów, 272 linii).
+- `7db6f62d1d` — notnull-sweep: 15 kolejnych INSERT-ów bez wymaganej NOT-NULL kolumny (klasa 23502).
+
+**Partia 12 (`168b6846cc` integracja + `6dac402d6d` fix tsc):**
+- **NOT-NULL sweep 20 plików** (`initiatives.name`/`tasks.organization_id`/`ai_system_prompts`/SCIM i inne)
+  — seria fixów w routerach assessment/report-builder/mfa/dataExport/artifactApprovals: każdy INSERT
+  dostał wymaganą kolumnę lub walidację przed zapisem.
+- **500-leak sweep 10 plików / ~121 wystąpień** gołego `err.message` w odpowiedzi HTTP zamienione na
+  bezpieczny fail-soft: `assessments.routes.ts`(11) · `assessment-ai.routes.ts`(26) ·
+  `assessment-workflow.routes.ts`(21) · `assessment-workflow-v2.routes.ts`(17) ·
+  `assessment-hub.routes.ts`(6) · `assessment-reports.routes.ts`(23) ·
+  `report-builder-public.routes.ts`(3, PUBLIC surface) · `mfa.routes.ts`(6, bezpieczeństwo) ·
+  `dataExport.routes.ts`(6, GDPR) · `artifactApprovals.routes.ts`(1). Dowód: `e51df82e4c` (fail-soft
+  batch7, 3 reprezentatywne routery testowo).
+- **T1 test-stale 23/46** (`2de396cbc9`) — component-drift red testy naprawione (Finance V8 + MyWork);
+  23/46 zamknięte w tej partii, 23 zostają w kolejce (backlog rezerwa z SPRINT-NOC).
+- **fix tsc** (`6dac402d6d`) — `res.req` zamiast `req` (scope correlationId w 500-leak fixie) + cast
+  tablic (notnull ArtifactConversion) — regresja z tej samej partii złapana i naprawiona przed integracją.
+
+**Partia 13 (`2db1fca612` integracja/eslint):**
+- **★ auth-sweep bezpieczeństwo** (`5480dcbbbf`) — nowy detektor `server/scripts/auth-sweep-detector.mjs`
+  inwentaryzuje WSZYSTKIE 297 zamontowanych routerów (index.ts+Gateway.ts) i klasyfikuje auth
+  (inline/internal blanket+per-route/stub 503/re-export/webhook-HMAC/public-by-design/partial/HOLE).
+  Znaleziona i naprawiona **jednoznaczna dziura** (precedens: `transactionReadiness`): `/api/skills-gap`
+  (Gateway.ts:757) — 4 trasy czytały dane per-organizację BEZ `verifyToken` → dodano
+  `router.use(verifyToken)`. Test 401 realny (narrow-mount, prawdziwy `verifyToken`):
+  `tests/integration/routes/skills-gap.auth.routes.test.ts` 4/4. Reszta „HOLE?" z detektora = fałszywe
+  alarmy (self-chronione dzieci agregatora aiDomain, referrals stub-503, table-platform public-form JWT)
+  lub REVIEW osobno (16 routerów partial-auth — klasyfikacja w
+  `server/scripts/AUTH_SWEEP_KLASYFIKACJA.md`, nie dziś).
+- **O7-dowód** (`662a95a6fc`/`e52abeda97`, `O-INJ-07`) — test wstrzyknięcia CARD_CONTENT_FORMULA+ton do
+  generatora Insight (dowód runtime, nie tylko deklaracja standardu).
+- **Harvard-kolaboracja A-KOL-1 12/12** (`3aa82cdecb`/`3bffe43a93`) — E2E dowód kolaboracji multiplayer
+  batch 1 (note/mindmap/table/whiteboard), 12/12 asercji.
+- **42-wrappery T7/T7b domknięte** (`b193f2f6b0`/`132b88230b`) — 4 stale komentarze TODO(T7) skorygowane:
+  rodzina self-import wrapperów była JUŻ zamknięta wcześniejszym T7/T7b (higiena dokumentacji w kodzie,
+  nie nowa robota).
+- **★ SSO-secrets szyfrowanie** (`0e2fec823f` fix + `ab87000902` backfill+docs + `91881d11be` test) —
+  sekrety integracji SSO leżały PLAINTEXT w bazie; dodano `encrypt` + **lazy re-encrypt przy odczycie**
+  (legacy plaintext szyfrowane w locie, zero-downtime migracja) + backfill script dla istniejących
+  rekordów. Test parity E2E: ciphertext-at-rest + lazy-reencrypt round-trip.
+  **★★ WYMAGA nowej zmiennej `INTEGRATION_ENCRYPT_KEY` na Railway** — bez niej fix jest bezpieczny
+  (fallback), ale sekrety ZOSTAJĄ plaintext dopóki klucz nie jest ustawiony. RĘKA PIOTRA (patrz HANDOFF).
+
+**Gates partie 10-13:** server tsc ≤146 (0-nowych) · eslint 0 · boot-poll zielony na każdej integracji ·
+demo-safe re-tag po `2db1fca612`.
+
+**FINDINGI-do-decyzji (klasa schema-drift, NIE naprawione, udokumentowane — następna fala):**
+- `business_metrics` + 7 innych tabel z migracji 238 nie powstają (poza regexem autorun-runnera) —
+  ten sam wzorzec `.sql.sql`/3-cyfrowe-legacy co wcześniej domknięty gdzie indziej.
+- `AuditLogger`/`aiCostControl`/`integrationHub`/`budget.routes` piszą do nieistniejących kolumn —
+  martwe zapisy na PG (fail-soft maskuje cicho).
+- Ogon NOT-NULL (~50-60 pozycji) i 500-leak (~30 pozycji, `document-studio` samo ma ~29) — kodowalny,
+  ale nie wyczerpany.
+- Fantom-flagi (5 sztuk) + `ENABLE_TERESA_NOTE_CREATE` **JUŻ NIE jest fantomem** (ma implementację) —
+  **CLAUDE.md ma stary wpis, do korekty** (wskazane w §7 CLAUDE.md jako przykład fantomu).
+- `landingSuperadmin` osierocony (0 konsumentów) — kandydat na dead-code rm jak `SubscriptionAnalyticsService`.
+
+**WSTRZYMANE CTO (ryzyko>korzyść, decyzja tej sesji):** T10 fresh-env fix · DbPromise-strict.
 
 ### ⚠️ ~~DOMKNIĘCIE 304/304 — 2026-07-19~~ **[WYCOFANE — INFLACJA NAGŁÓWKOWA, patrz KOREKTA]**
 > ★ Ten blok został napisany pod delegacją akceptu Piotra i ZAWYŻYŁ status: przeklasyfikował 🟡/⬜→✅
