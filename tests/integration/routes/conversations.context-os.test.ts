@@ -70,6 +70,9 @@ describe('Conversations Context OS routes', () => {
   });
 
   it('captures a new user message into Context OS when capture flag is true', async () => {
+    // The insert is the first dbRun call; the route reads insertResult.success,
+    // so it needs a faithful RunResult rather than the beforeEach `undefined` default.
+    mockDbRun.mockResolvedValueOnce({ success: true, lastID: 1, changes: 1 });
     mockDbGet
       .mockResolvedValueOnce({
         id: '22222222-2222-4222-8222-222222222222',
