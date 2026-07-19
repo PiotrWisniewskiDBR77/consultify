@@ -3290,14 +3290,19 @@ export class InitiativeController {
         return;
       }
 
-      if (initiative.status !== 'approved') {
+      // Case-insensitive gate: legacy REST chain zapisuje 'approved' (lowercase),
+      // nowszy/kanoniczny path 'APPROVED' (uppercase). Oba muszą móc wystartować.
+      if (String(initiative.status).toUpperCase() !== 'APPROVED') {
         res.status(400).json({ error: `Cannot start execution from status: ${initiative.status}` });
         return;
       }
 
+      // RED #1 (H1.6): status kanoniczny = UPPERCASE 'EXECUTING' (constants/initiativeStatuses.ts,
+      // realne dane na parity, ExecutionController.getExecutionSummary filtruje IN ('EXECUTING',...)).
+      // Lowercase 'executing' byłby NIEWIDOCZNY dla GET execution summary (case split-brain).
       await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
-                status = 'executing',
+        `UPDATE initiatives SET
+                status = 'EXECUTING',
                 execution_started_at = CURRENT_TIMESTAMP,
                 updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
@@ -3308,7 +3313,7 @@ export class InitiativeController {
         success: true,
         message: 'Initiative execution started',
         initiativeId,
-        newStatus: 'executing',
+        newStatus: 'EXECUTING',
       });
     }
   );
