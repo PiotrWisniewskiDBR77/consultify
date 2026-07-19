@@ -698,6 +698,34 @@ describe('Acceptance: TERESA axis — sheet (generateDeliverable type=sheet)', (
         evidence(
           `[SHEET] GREEN work_canvas_drafts.id=${draftId} kind=table content_md.length=${content.length} gfm-pipe-rows=${tableRows}`
         );
+
+        // HP-16/HP-17 (B-HP16-S, 39b88f0178) — buildSheetEvidenceContract
+        // (services/evidence/sheetEvidenceContract.ts) is computed and persisted
+        // INSIDE docGenerationRuntime.startSheet(), fire-and-forget
+        // (safePersistEvidenceContract) right after updateDraft() — same
+        // background-materialize timing as deck (evidence lands only once the
+        // draft itself is durable), NOT synchronous in generateDeliverable()'s
+        // return value (unlike table/whiteboard/process_flow/mindmap/note).
+        // So: same grace-window poll pattern as the DECK block above.
+        let sheetEvidenceRow: { confidence: string } | undefined;
+        for (let attempt = 0; attempt < 5 && !sheetEvidenceRow; attempt++) {
+          await sleep(1000);
+          const evClient = pgClient();
+          await evClient.connect();
+          try {
+            const evRows = await evClient.query(
+              `SELECT confidence FROM artifact_evidence WHERE artifact_id = $1 AND artifact_type = 'sheet'`,
+              [draftId]
+            );
+            if (evRows.rows.length === 1) sheetEvidenceRow = evRows.rows[0];
+          } finally {
+            await evClient.end();
+          }
+        }
+        expect(sheetEvidenceRow).toBeTruthy();
+        evidence(
+          `[SHEET] GREEN artifact_evidence row present artifact_id=${draftId} artifact_type=sheet confidence=${sheetEvidenceRow?.confidence} (HP-16/HP-17, B-HP16-S)`
+        );
       } else {
         evidence(
           `[SHEET] finding: generation did not reach 'draft' within 90s — status()=${(final as any)?.state} error=${(final as any)?.error ?? '(none)'} content-so-far=${content.slice(0, 200)}`

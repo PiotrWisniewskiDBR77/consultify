@@ -99,3 +99,75 @@ Poprzednie „88/100" było zawyżone o ~35 pkt na osi DoD.
 3. **Asercje E2E dla deck/document/mindmap** w teresa-six (wzorzec z process_flow już jest — skopiować blok expect). Dziś tylko 1/8 narzędzi ma twardy dowód E2E kontraktu.
 4. **Rejestr:** przepisać wiersz HP-16 z „evidence 8/8 panel ✅ 88/100" na „evidence 4/8 narzędzi + 4 generatory, panel REALNY 53/100 (oś DoD) / ~72 (oś jakości), plik: PANEL_HP16_REAL.md". Decyzja Piotra: czy DoD zostaje „8 narzędzi" (wtedy 🟡), czy zostaje przedefiniowany na „8 generatorów" (wtedy ✅ z adnotacją).
 5. **Table/whiteboard:** zostawić poza zakresem (uczciwe, niska wartość evidence dla pustych canvasów), ale wpisać jako jawną decyzję 🔵 w rejestrze, nie chować w komentarzu kodu.
+
+---
+
+## RE-SCORE 2026-07-19 (wieczór) — po B-HP16-N / B-HP16-S / B-HP16-E2E
+
+**Zakres zmiany od score 53/100 powyżej:**
+- `78fdc5c4dc` **B-HP16-N**: `buildNoteEvidenceContract` (wzorzec mindmap) + `safePersistEvidenceContract(artifactType:'note')` w ścieżce `note` `generateDeliverable.ts` + E2E asercje note+mindmap w `docs-teresa.e2e.test.ts`.
+- `39b88f0178` **B-HP16-S**: `buildSheetEvidenceContract` (deterministyczny, zero LLM/I/O) + persist w `docGenerationRuntime.startSheet()` (artifactType='sheet') + migracja `20260719_artifact_evidence_sheet_type.sql` (CHECK += 'sheet').
+- **B-HP16-E2E (ten robotnik, gałąź `fix/hp16-e2e-assertions`)**: jedyny brakujący twardy dowód E2E — blok SHEET w `tests/acceptance/teresa-six.e2e.test.ts` miał TYLKO asercje materializacji (GFM markdown), zero asercji evidence/`artifact_evidence`. Dołożony blok (wzorzec DECK — grace-window poll 5×1s na `artifact_type='sheet'`, `expect(sheetEvidenceRow).toBeTruthy()`).
+
+**Weryfikacja runtime (parity `:5443`, NIE docs/commit-message — złota reguła), ten dowód:**
+
+```
+$ npx vitest run --config vitest.acceptance.config.ts tests/acceptance/teresa-six.e2e.test.ts
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+
+[TABLE] GREEN my_ideas.id=idea-1784493320665-c1bb082b ... preferred_tool=table nodes=6
+[WHITEBOARD] GREEN my_ideas.id=idea-1784493336010-9009f2a0 ... preferred_tool=whiteboard nodes=30
+[PROCESS_FLOW] GREEN ... evidence.confidence=high extensions.evidence=present
+[PROCESS_FLOW] GREEN artifact_evidence row present (HP-17 bridge)
+[DECK] GREEN presentation_decks.id=8cd2db8ede484990beee0a14190a86e1 status=ready slide_count=11
+[DECK] GREEN artifact_evidence row present artifact_type=deck confidence=0.25 (HP-16/HP-17)
+[DOC] GREEN work_canvas_drafts + wave5_artifacts.artifact_id match, schema.artifactId=match
+[DOC] GREEN artifact_evidence row present artifact_type=document confidence=0.25 schema.evidence.confidence=low
+[SHEET] GREEN work_canvas_drafts.id=76ae1427-4615-455c-b018-e90cd798b122 kind=table gfm-pipe-rows=7
+[SHEET] GREEN artifact_evidence row present artifact_id=76ae1427-... artifact_type=sheet confidence=0.25 (HP-16/HP-17, B-HP16-S)
+
+$ npx vitest run --config vitest.acceptance.config.ts tests/acceptance/docs-teresa.e2e.test.ts -t "note:|mindmap:"
+ Test Files  1 passed (1)
+      Tests  2 passed | 9 skipped (11)
+[TERESA note]    reliability: 3/3 (100%) evidence-row: 3/3
+[TERESA mindmap] reliability: 3/3 (100%) evidence-row: 3/3
+```
+
+Wszystkie 6 narzędzi z evidence (mindmap · note · process_flow · deck · document · sheet) mają teraz **twardą asercję E2E** (`expect(...).toBeTruthy()` / `toContain` na kontrakcie + wiersz `artifact_evidence` przeczytany z realnej bazy), nie tylko unit-mock. Table/whiteboard pozostają świadomie 🔵 poza zakresem HP-16 (decyzja CTO #6 backlogu `B-HP16-E2E`, materializacja realna i GREEN, kontraktu evidence celowo brak — niska wartość dla pustych canvasów).
+
+### Re-ocena 6/8 narzędzi (zakres DoD po decyzji CTO: 6 z evidence, 2 formalnie 🔵)
+
+| # | Narzędzie | Poprzednio | Teraz | Powód zmiany |
+|---|---|---|---|---|
+| 1 | Mind Map | 9/10 | **10/10** | jedyny minus był „E2E nie asertuje evidence" — NIEPRAWDA już (linie 478-539 `docs-teresa.e2e.test.ts`), zweryfikowane GREEN 3/3 ten run |
+| 2 | Process Flow | 10/10 | **10/10** | bez zmian (był już wzorcem) |
+| 3 | Deck | 8/10 | **10/10** | minus był „brak asercji E2E dla decka" — teraz JEST (`teresa-six.e2e.test.ts`, dodane wcześniej niż ten robotnik), zweryfikowane GREEN |
+| 4 | Document (Word) | 8/10 | **10/10** | j.w. — asercja E2E już istnieje i jest GREEN (`schema.evidence` + `artifact_evidence` query) |
+| 5 | Notatnik (note) | 1/10 | **10/10** | B-HP16-N domknął kontrakt+persist+E2E; reliability 3/3 (100%), evidence-row 3/3 — parytet z mindmap |
+| 6 | Excel/Sheet | 1/10 | **9/10** | B-HP16-S domknął kontrakt+persist; E2E asercja dodana TERAZ (ten robotnik) i GREEN — ale tylko 1 pojedynczy run (bez pętli reliability jak note/mindmap, poza zakresem tego zadania) → −1 do czasu dowodu wielokrotnego |
+| — | Tabela (table) | 1/10 | **🔵 N/A** | poza zakresem HP-16 (decyzja CTO), materializacja realna GREEN — nieliczona do sumy |
+| — | Whiteboard | 1/10 | **🔵 N/A** | j.w. |
+
+**Suma 6 narzędzi z evidence: 59/60** (poprzednio na starej osi 8/8: 39/80, ale ta oś liczyła table/whiteboard jako braki wbrew jawnej decyzji zakresu — myląca).
+
+### Infrastruktura i proces (przeliczone)
+
+| Oś | Poprzednio | Teraz | Powód |
+|---|---|---|---|
+| Kontrakt HP-14 | 5/5 | 5/5 | bez zmian |
+| Łańcuch persystencji → UI | 5/5 | 5/5 | bez zmian (+ `sheet`/`note` dodane do `EvidenceArtifactType` union + CHECK migracje, zweryfikowane realnym INSERT na `:5443`) |
+| Testy realne | 4/5 | **5/5** | poprzedni −1 był za brak asercji evidence w `docs-teresa`/`teresa-six` — teraz WSZYSTKIE 6 osi mają twardą asercję E2E, zweryfikowane GREEN w tym runie (nie deklaracja) |
+| Uczciwość raportowania | 0/5 | **3/5** | (a) fabrykacja panelu — naprawiona strukturalnie (ten dokument istnieje i jest re-scorowany zamiast zastępowany); (c) fałszywe twierdzenie o note-evidence — teraz PRAWDZIWE (dowód powyżej). Wciąż −2: (b) nazwy branchy/commitów typu `harvey(hp16-8of8)` / `wire-hp16-evidence-8of8` sugerują „8/8 narzędzi" mimo że rzeczywisty zakres to 6 narzędzi + 2×🔵 — ryzyko mylącej lektury przez kogoś, kto czyta tylko commit log, nie ten dokument |
+
+**Infrastruktura+proces: 18/20**
+
+### SCORE KOŃCOWY (re-score): **77/80 → normalizowane 96/100** (oś DoD „6/8 narzędzi + 2×🔵", zgodnie z decyzją CTO #6 backlogu B-HP16-E2E)
+
+Metodologia normalizacji: suma (59 narzędzia + 18 infra) / (60+20 max) × 100 = 77/80 × 100 = 96,25 → **96/100** (floor, konserwatywnie). Oczekiwanie zadania było „≥85 przy 6/8+2🔵" — spełnione z zapasem, bo ostatnia realna luka (SHEET bez asercji E2E) była jedynym brakującym elementem i została domknięta w tym zadaniu.
+
+**Co NIE jest 10/10 i dlaczego (żeby nie zawyżać):**
+- Sheet 9/10 — tylko jeden zweryfikowany przebieg (brak pętli reliability jak note/mindmap; deck też nie ma pętli, ale deck miał więcej wcześniejszych cykli przeglądu).
+- Uczciwość 3/5 — historyczne nazwy branchy/commitów nadal sugerują „8/8" mimo że SSOT (ten plik) mówi 6/8+2🔵; nie naprawiono retroaktywnie (git history niezmienna, tylko udokumentowane tutaj).
+
+**Rekomendacja dla rejestru (`_REJESTR_DOKONCZENIA.md`, wiersz HP-16):** „evidence 6/8 narzędzi (mindmap/note/process_flow/deck/document/sheet) z twardą asercją E2E GREEN na parity :5443 + table/whiteboard 🔵 formalnie poza zakresem (decyzja CTO) — panel REALNY 96/100 (oś 6/8+2🔵), plik: `PANEL_HP16_REAL_2026-07-19.md` (re-score sekcja na końcu pliku)."
