@@ -85,11 +85,12 @@ describe('AI routes: /chat (REAL integration)', () => {
     );
   });
 
-  it('POST /api/ai/chat returns 500 when orchestrator throws', async function () {
+  it('POST /api/ai/chat returns 500 when orchestrator throws (H6.4: coded, no err.message leak)', async function () {
     if (!canListen) this.skip();
     processMessage.mockRejectedValueOnce(new Error('boom'));
     const res = await request(makeApp()).post('/api/ai/chat').send({ message: 'x' });
     expect(res.status).toBe(500);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'boom' }));
+    expect(res.body).toEqual(expect.objectContaining({ code: 'AI_CHAT_FAILED' }));
+    expect(JSON.stringify(res.body)).not.toContain('boom');
   });
 });
