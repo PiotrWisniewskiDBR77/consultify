@@ -11,7 +11,12 @@ import crypto from 'crypto';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import { decryptSecret, encryptSecret } from '../../utils/secretEncryption.js';
+import {
+  decryptSecret,
+  encryptSecret,
+  encryptionEnabled,
+  isEncrypted,
+} from '../../utils/secretEncryption.js';
 
 export interface SAMLConfig {
   entityId: string;
@@ -75,7 +80,49 @@ export class SSOService {
       organizationId,
     ]);
     const row = result.rows[0] as SSOConfigRow | undefined;
-    return row ? this.decryptRow(row) : null;
+    if (!row) return null;
+    // Lazy re-encrypt: upgrade legacy plaintext rows to ciphertext at rest the
+    // first time they are read (only when a key is configured). Fail-soft — a
+    // failed upgrade never blocks the read.
+    await this.maybeReencrypt(row);
+    return this.decryptRow(row);
+  }
+
+  /**
+   * If encryption is enabled and this row's secret is still stored as legacy
+   * plaintext, re-encrypt it in place. Zero API-contract change: the returned
+   * (decrypted) view is identical; only the at-rest representation upgrades.
+   * Never throws — any failure is logged and the read proceeds.
+   */
+  private async maybeReencrypt(row: SSOConfigRow): Promise<void> {
+    try {
+      if (!encryptionEnabled()) return;
+      const config = row.config as any;
+      const field = row.provider === 'saml' ? 'certificate' : 'clientSecret';
+      const value = config?.[field];
+      if (typeof value !== 'string' || !value || isEncrypted(value)) return;
+
+      const upgraded = { ...config, [field]: encryptSecret(value) };
+      // Guard against a no-op write if encryptSecret returned plaintext for any
+      // reason (would loop nothing, but avoid the pointless UPDATE).
+      if (!isEncrypted(upgraded[field])) return;
+
+      const db = getDatabase();
+      await db.query('UPDATE tp_sso_configs SET config = $2 WHERE id = $1', [
+        row.id,
+        JSON.stringify(upgraded),
+      ]);
+      // Reflect the upgrade in the in-memory row so decryptRow round-trips it.
+      row.config = upgraded;
+      logger.info('[SSOService] re-encrypted legacy plaintext SSO secret at rest', {
+        organizationId: row.organization_id,
+        provider: row.provider,
+      });
+    } catch (err) {
+      logger.error('[SSOService] lazy re-encrypt of SSO secret failed (read proceeds)', {
+        error: (err as Error).message,
+      });
+    }
   }
 
   private decryptRow(row: SSOConfigRow): SSOConfigRow {

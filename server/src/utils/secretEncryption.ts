@@ -41,6 +41,24 @@ function getKey(): Buffer | null {
 }
 
 /**
+ * True when a valid encryption key is configured (encrypt-at-rest is active).
+ * Callers use this to decide whether lazy re-encryption of legacy plaintext
+ * rows is worth attempting.
+ */
+export function encryptionEnabled(): boolean {
+  return getKey() !== null;
+}
+
+/**
+ * True when `stored` is in the encrypted "enc:iv:ct:tag" format. A false result
+ * means the value is legacy plaintext (or empty) and — when encryptionEnabled()
+ * — a candidate for lazy re-encryption.
+ */
+export function isEncrypted(stored: string | null | undefined): boolean {
+  return typeof stored === 'string' && stored.startsWith(ENC_PREFIX);
+}
+
+/**
  * Encrypt a plaintext secret. Returns "enc:<iv>:<ct>:<tag>" or the original
  * plaintext if no key is configured.
  */
