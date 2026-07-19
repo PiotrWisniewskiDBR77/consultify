@@ -363,7 +363,7 @@ class ManagementReportRepository {
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
-                    SUM(CASE WHEN status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgress,
+                    SUM(CASE WHEN status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as "inProgress",
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked,
                     SUM(CASE WHEN due_date < date('now') AND status != 'DONE' THEN 1 ELSE 0 END) as overdue
                 FROM tasks WHERE project_id = ?
@@ -383,8 +383,8 @@ class ManagementReportRepository {
         `
                 SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN status IN ('EXECUTING', 'DONE') THEN 1 ELSE 0 END) as onTrack,
-                    SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as atRisk
+                    SUM(CASE WHEN status IN ('EXECUTING', 'DONE') THEN 1 ELSE 0 END) as "onTrack",
+                    SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as "atRisk"
                 FROM initiatives WHERE project_id = ?
             `,
         [projectId],
