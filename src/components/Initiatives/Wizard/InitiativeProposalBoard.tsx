@@ -242,7 +242,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                           setDismissed((s) => new Set(s).add(i));
                           onSkipDuplicate?.(p);
                         }}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:border-navy-700 dark:text-slate-300 dark:hover:bg-navy-800"
+                        className="rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                       >
                         {isPolish ? 'Pomiń duplikat' : 'Skip duplicate'}
                       </button>
@@ -250,7 +250,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                       <button
                         type="button"
                         onClick={() => dismiss(i, p)}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised"
                       >
                         {t('initiatives.initiativeProposalBoard.dismiss')}
                       </button>
