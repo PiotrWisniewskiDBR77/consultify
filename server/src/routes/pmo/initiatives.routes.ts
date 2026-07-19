@@ -2421,9 +2421,8 @@ router.post(
         return res.status(400).json({ error: 'sectionKey is required' });
       }
 
-      const { generateInitiativeSectionFill, normalizeFillSectionKey } = await import(
-        '../../services/ai/initiativeSectionFill.js'
-      );
+      const { generateInitiativeSectionFill, normalizeFillSectionKey } =
+        await import('../../services/ai/initiativeSectionFill.js');
 
       if (!normalizeFillSectionKey(String(sectionKey))) {
         // Sekcja ma natywne AI (albo nieznana) — kieruj do /generate-section.
@@ -2453,11 +2452,9 @@ router.post(
         grounded.status ??= initiative.status || '';
       }
 
-      const result = await generateInitiativeSectionFill(
-        String(sectionKey),
-        grounded,
-        { language: context.language || 'en' }
-      );
+      const result = await generateInitiativeSectionFill(String(sectionKey), grounded, {
+        language: context.language || 'en',
+      });
 
       return res.json(result);
     } catch (err: any) {

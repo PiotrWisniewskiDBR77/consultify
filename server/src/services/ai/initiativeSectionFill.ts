@@ -24,8 +24,8 @@
  * @see server/src/services/initiativeGenerationService.ts (wzór wywołania LLM + doktryna)
  */
 
-import { type CardContentValidationResult, validateCardContent } from '../cardContentValidator.js';
 import logger from '../../utils/Logger.js';
+import { type CardContentValidationResult, validateCardContent } from '../cardContentValidator.js';
 
 // ── Klucze sekcji (kanoniczne + aliasy z frontendu) ──────────────────────────
 
@@ -338,7 +338,8 @@ function buildUserPrompt(
   if (ctx.status) contextLines.push(`- Status: ${ctx.status}`);
   if (ctx.scope) contextLines.push(`- Zakres: ${String(ctx.scope).slice(0, 800)}`);
   if (ctx.kpis) contextLines.push(`- KPI/kryteria sukcesu: ${String(ctx.kpis).slice(0, 800)}`);
-  if (ctx.teamContext) contextLines.push(`- Zespół (kontekst): ${String(ctx.teamContext).slice(0, 800)}`);
+  if (ctx.teamContext)
+    contextLines.push(`- Zespół (kontekst): ${String(ctx.teamContext).slice(0, 800)}`);
   if (ctx.relatedTasks)
     contextLines.push(`- Powiązane zadania: ${String(ctx.relatedTasks).slice(0, 1200)}`);
   if (ctx.existingItems)
