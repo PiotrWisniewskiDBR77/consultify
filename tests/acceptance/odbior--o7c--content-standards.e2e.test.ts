@@ -56,6 +56,7 @@ import {
 import {
   buildPersonaPrompt,
   detectLanguage,
+  getAvailableEmphases,
   getScreenEmphasis,
 } from '../../server/src/ai/persona.js';
 
@@ -384,6 +385,33 @@ describe('O7.3 — Teresa persona prompt: PL/EN consulting tone is REALLY author
     const withoutScreen = buildPersonaPrompt(null, 'en');
     expect(withScreen).toContain('Strategic Consultant');
     expect(withScreen.length).toBeGreaterThan(withoutScreen.length);
+  });
+
+  it('O5.4 fix: screen-emphasis overlay is Polish when lang=pl, not silently English (all screens)', () => {
+    // Regression guard: buildPersonaPrompt used to append emphasis.instructions
+    // (always English) verbatim regardless of `lang`, so a PL conversation on
+    // e.g. the assessment screen got an all-Polish persona EXCEPT the
+    // "### Kontekst ekranu" block, which stayed in English. Every screen in
+    // SCREEN_EMPHASIS must now carry a PL instructionsPl and the PL build must
+    // surface it, not the English `instructions` string.
+    for (const screen of Object.keys(getAvailableEmphases())) {
+      const emphasis = getScreenEmphasis(screen)!;
+      expect(emphasis.instructionsPl, `missing instructionsPl for screen "${screen}"`).toBeTruthy();
+
+      const plPrompt = buildPersonaPrompt(screen, 'pl');
+      expect(plPrompt, `PL prompt for "${screen}" should contain its Polish overlay`).toContain(
+        emphasis.instructionsPl!
+      );
+      expect(
+        plPrompt,
+        `PL prompt for "${screen}" should NOT leak the English overlay text`
+      ).not.toContain(emphasis.instructions);
+    }
+
+    // Spot-check: assessment screen names the consultant role in Polish, not English.
+    const plAssessment = buildPersonaPrompt('assessment', 'pl');
+    expect(plAssessment).toContain('Konsultant Strategiczny');
+    expect(plAssessment).not.toContain('Strategic Consultant');
   });
 
   it('responseStyle option measurably changes the prompt (concise vs executive are distinct directives)', () => {

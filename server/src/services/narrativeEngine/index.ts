@@ -14,7 +14,7 @@
 import logger from '../../utils/Logger.js';
 import { buildDiscoursePlan } from './discoursePlan.js';
 import { extractFacts } from './factExtraction.js';
-import { realizeLinguistically } from './linguisticRealization.js';
+import { buildSystemPrompt, realizeLinguistically } from './linguisticRealization.js';
 import { selectObservations } from './observationSelection.js';
 import { runPostChecks } from './postChecks.js';
 import type {
@@ -39,6 +39,7 @@ export type {
 
 export {
   buildDiscoursePlan,
+  buildSystemPrompt,
   extractFacts,
   realizeLinguistically,
   runPostChecks,

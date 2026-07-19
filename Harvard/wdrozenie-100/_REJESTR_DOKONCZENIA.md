@@ -37,12 +37,14 @@
 |---|---|---|---|---|---|---|
 | A · Harvard (H1-H6) | 61 | 1 | 0 | 0 | 0 | 62 |
 | B · Harvey (HP-0…27) | 23 | 3 | 2 | 0 | 0 | 28 |
-| C · Oxford (O1-O8) | 46 | 13 | 11 | 0 | 0 | 70 |
+| C · Oxford (O1-O8) | 50 | 15 | 5 | 0 | 0 | 70 |
 | D · Vegas (F0-F6+V7) | 18 | 18 | 18 | 1 | 1 | 56 |
 | E · Przekroje (+nowe) | 64 | 5 | 10 | 7 | 2 | 88 |
-| **SUMA** | **212** | **40** | **41** | **8** | **3** | **304** |
+| **SUMA** | **216** | **42** | **35** | **8** | **3** | **304** |
 
-**Postęp: 220/304 rozstrzygnięte (72%).** ★ FALA 4-6 + VEGAS-FABLE (blok ↓): Oxford O4.1-4.7→✅(dowód runtime) · Harvey HP-2→✅ · RED Fala4/5 (brakujące tabele/SQLite-izmy/100-alias InitiativeController) · **Vegas: plan Fable (44 zadania) + B-P1/B-P2 sign-off Piotra + Faza 0 fundamentów WDROŻONA**. Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
+**07-19 worker-oxford-o5:** Oxford ⬜ 11→5 (-6), ✅ 46→50 (+4), 🟡 13→15 (+2). Cztery ⬜ były STALE (już zbudowane+testowane E2E, tabela nierozsynchronizowana z osobnymi wpisami w tym samym pliku): O2.5 (deck-conclusion-slide + narrativeEngine test dodany), O1-Benchmark/DRD (`drdIndustryBenchmark.ts`), O1-Generator-inicjatyw SIRI+ADMA (`assessmentInitiativeService.ts` framework-agnostyczny). Dwa ⬜→🟡 z realnym fixem kodu: O5.4 (bug — kontekst ekranu był zawsze PO ANGIELSKU w PL-personie, naprawione 17 wpisów + test), O5.6 (audyt macierzy pokrycia Wywiadu GOTOWY, czeka DEC Piotra na nowe pytania — JA-część zamknięta). Zero nowych 🟡-odbiorczych ruszonych (poza zakresem robotnika). Gałąź `worker-oxford-o5` z `origin/demo`, NIE zmergowana/NIE wypchnięta.
+
+**Postęp: 224/304 rozstrzygnięte (74%).** ★ FALA 4-6 + VEGAS-FABLE (blok ↓): Oxford O4.1-4.7→✅(dowód runtime) · Harvey HP-2→✅ · RED Fala4/5 (brakujące tabele/SQLite-izmy/100-alias InitiativeController) · **Vegas: plan Fable (44 zadania) + B-P1/B-P2 sign-off Piotra + Faza 0 fundamentów WDROŻONA**. Start sesji 2026-07-19: 120/265 (45%). ★ FALA-ARMY (12 robotników, 2 deploye demo) domknęła +17 pozycji — blok ↓. (Uwaga: liczniki per-ID w tabelach szczegółowych mogą być lekko stale — snapshot 07-18; nadrzędny licznik przeliczony realnie.) ✅ Oxford = dowód kod+E2E; wizualny odbiór Piotra (Vegas/SESJA#1) = osobna oś. (RAZEM 299→304: +5 nowych RED z sweepu cichych degradacji.) **DECYZJE 07-19 (druga sesja): 18 decyzji rozstrzygniętych przez Piotra — Kanon §5 K1-K8 + T7/I1-I3/CMMI-LEAN/B7-D. Oxford 4× 🔵→✅, CMMI 🔵→✅; wykonania→🟡. rozstrzygnięte(✅+🔵)=186; +7 realnych ⬜→✅/🟡 zamknięć decyzyjnych. PROD zamrożony. Blok ↓.**
 
 ### ★★★ VEGAS FAZA 1 ROLLOUT 2026-07-19 (Fale 7-11, ~25 robotników) — 7 artefaktów SPEC-A + fundamenty follow-up
 **Demo-safe łańcuch `c7b310c2dc`→`c0020bbd23`→`1e10acdede` (Fala 11 buduje). Wszystkie bramki zielone (server tsc 146=baseline, FE tsc 0, colors NIE ROSNĄ, check-artefakt PASS, eslint 0). Artefakty ZA FLAGAMI `VITE_VF1_*_SPECA` OFF → odbiór reguła #7 (galerie) → flip.**
@@ -391,13 +393,17 @@ Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra ·
 | Kanon | 🟡(P1-P5!) | ✅? | ✅? | DEC K1 + ODB O6 |
 | Q-bank | 🟡(699 zmerg.) | ✅ | ✅ | ODB O6 |
 | Scoring | 🟡 | ✅ | ✅ | ODB O6 |
-| Benchmark | ⬜ | ✅ | 🟡(próg FoF) | JA |
+| Benchmark | ✅ (był ⬜, STALE) | ✅ | 🟡(próg FoF) | — |
 | Raport+narrator LLM | 🟡(zbud.+RAG) | 🟡 | 🟡 | ODB O6 |
 | Mapa/radar | 🟡 | ✅ | ✅ | ODB |
 | Ścieżka N→N+1 | 🟡 NOWE zbud. | 🟡 | 🟡 | ODB |
-| Generator inicjatyw z wyniku | 🟡 | ⬜ | ⬜ | JA |
+| Generator inicjatyw z wyniku | 🟡 | ✅ (był ⬜, STALE) | ✅ (był ⬜, STALE) | — |
 
 (SIRI/ADMA „✅?" = statusy z 07-01 sprzed metody dowodowej — przy odbiorze O6 potwierdzić.)
+
+**★ Weryfikacja robotnika oxford-o5 (07-19, worker-oxford-o5):** dwa ⬜ powyżej były stale — realnie ZBUDOWANE i przetestowane E2E z realną bazą (parity :5443), niezauważone bo commit „O1.8"/inne rejestr-wpisy (wiersz FALA-W2b) nie zsynchronizowały tę tabelę:
+- **Benchmark/DRD** — `server/src/services/report/drdIndustryBenchmark.ts` (8D BIC/FoF profile overlay), wpięte w `drdReportModel.ts`/`drdReportHtml.ts` (renderIndustryBenchmark → 9. strona raportu). Dowód: `tests/unit/services/drdIndustryBenchmark.test.ts` (10/10) + `tests/acceptance/o1-drd-report-benchmark.e2e.test.ts` (3/3, realna baza :5443, 153s).
+- **Generator inicjatyw SIRI/ADMA** — `assessmentInitiativeService.ts` jest framework-agnostyczny (`AssessmentType = 'DRD'|'SIRI'|'ADMA'|'CMMI'|'LEAN'`). Dowód: `tests/acceptance/o1-siri-adma-initiatives.e2e.test.ts` (3/3, realna baza :5443) — zgodne z wpisem „O1.8 🟡→✅" w FALA-W2b (linia ~268), który ta tabela nie odzwierciedlała.
 
 ### O2 · Standard wniosków (5)
 | ID | Zadanie | S | Akcja | Dowód |
@@ -406,7 +412,7 @@ Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra ·
 | O2.2 | Wdrożenie: assessmenty ×3 | 🟡 | ODB | d775f13946 |
 | O2.3 | Wdrożenie: 19/19 tooli + fix serwerowy | 🟡 | ODB | 6712546ad8+df5a1cf58a |
 | O2.4 | Wdrożenie: finanse | 🟡 | JA weryf. UI | ef636ee09b |
-| O2.5 | Narracja deck/generatorów | ⬜ | JA | brak dowodu |
+| O2.5 | Narracja deck/generatorów | ✅ (był ⬜ „brak dowodu") | JA | (a) deck-slide „Wnioski" K1→K4 za `ENABLE_DECK_CONCLUSION_SLIDE`, `tests/acceptance/o25-deck-conclusion.e2e.test.ts` 3/3 realna baza — już zgłoszone jako ✅ w FALA-W2b, ta tabela nie zsynchronizowana; (b) worker-oxford-o5: L4 `narrativeEngine` system prompt (dzielony przez presentationGeneratorService+reportGenerationService) niesie answer-first/anty-fabrykację/assumption-label (be1c9b8a5b) — brakujący test dodany `tests/unit/narrativeEngineConclusionLayer.test.ts` 9/9 (buildSystemPrompt eksportowany + L5 runPostChecks asercja INVENTED_NUMBER/HEDGING_NO_EVIDENCE) |
 
 ### O3 · Q-banki 19 narzędzi — 19/19 ZBUDOWANE+zmergowane (74bdf2762e i in.)
 | Pozycje | S | Akcja | Notatka |
@@ -426,15 +432,15 @@ Akcje: `JA`=robię bez pytania · `ENV`=Piotr Railway · `DEC`=decyzja Piotra ·
 | O4.6 | Trend+driver+prognoza | 🟡 | JA | 8f432229d5 |
 | O4.7 | Post-mortem R-v-P | 🟡 | JA | j.w. |
 
-### O5 · Biblioteka promptów (6): 1✅
+### O5 · Biblioteka promptów (6): 1✅ 5🟡 0⬜ (07-19 worker-oxford-o5: O5.4/O5.6 ⬜→🟡, realny bug naprawiony w O5.4, patrz notatki per-wiersz)
 | ID | Zadanie | S | Akcja |
 |---|---|---|---|
 | O5.1 | Sekcje inicjatyw (core 7/7 z promptem; 12 podniesionych) | 🟡 | JA weryf. DB |
 | O5.2 | Guidance DRD/SIRI/ADMA parity | 🟡 | JA | 87d74fa0f6 |
 | O5.3 | Briefy generatorów | 🟡 | JA |
-| O5.4 | Persona Teresy przegląd | ⬜ | JA+ODB |
+| O5.4 | Persona Teresy przegląd | 🟡 (był ⬜; realny bug JA-naprawiony, ODB=akcept tonu na żywo zostaje) | ODB | worker-oxford-o5: przegląd `server/src/ai/persona.ts` znalazł realny bug — `SCREEN_EMPHASIS` (kontekst ekranu) był ZAWSZE po angielsku nawet w PL-personie (jedyna sekcja promptu, która nie przełączała języka). Naprawione: 17 wpisów dostało `instructionsPl`, `buildPersonaPrompt` wybiera wg `lang`. Dowód: `tests/acceptance/odbior--o7c--content-standards.e2e.test.ts` nowy test pętli po wszystkich ekranach (20/20 PASS, było 19/19). Zostaje ODB: akcept tonu Teresy na żywej rozmowie (SESJA#1) — subiektywna jakość głosu, nie kod. |
 | O5.5 | Rejestr promptów | ✅ | — | flip Piotra 07-15 |
-| O5.6 | Macierz pokrycia Wywiadu | ⬜ | JA |
+| O5.6 | Macierz pokrycia Wywiadu | 🟡 (był ⬜; audyt GOTOWY, czeka DEC Piotra) | DEC | `docs/standards/INTERVIEW_COVERAGE_MATRIX.md` (be1c9b8a5b, 07-18) — macierz 7 osi DRD × 270 pytań M10, PARITY :5443 zweryfikowane. Wynik: 2/7 osi mocne, 3 martwe (Digital Products/Business Models/Cybersecurity), AI Maturity prawie martwa (jedyne pytanie w draft). Kończy się 3 otwartymi pytaniami dla Piotra (struktura nowych szablonów / promocja draftu / kolejność PL). JA-część (audyt) GOTOWA; implementacja nowych pytań czeka na DEC. |
 
 ### O6 · Benchmarki branżowe (3) — 3/3 zbudowane+wpięte, 2/3 z dowodem (07-19)
 | ID | S | Akcja | Dowód |
