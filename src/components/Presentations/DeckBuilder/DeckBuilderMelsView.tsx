@@ -134,14 +134,17 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   // wołający dostarczył jego panel (DeckBuilder robi to za flagą ff_evidencePanel,
   // default OFF). Brak panelu → pasek 1:1 jak przed HP-17.
   const includeEvidence = rightRailPanels.evidence != null;
+  // J12-S3 (Honest-UI): „Media" na pasku TYLKO gdy wołający dostarczył panel.
+  const includeMedia = rightRailPanels.media != null;
   const rightTools = useMemo(
     () =>
       buildDeckBuilderRightRailTools({
         state: rightRailState,
         labels: rightRailLabels,
         includeEvidence,
+        includeMedia,
       }),
-    [rightRailState, rightRailLabels, includeEvidence]
+    [rightRailState, rightRailLabels, includeEvidence, includeMedia]
   );
 
   const shell = (
