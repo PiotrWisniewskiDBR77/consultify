@@ -2389,6 +2389,103 @@ router.post('/review-section', requireInitiativeWriteAccess(), async (req: any, 
 });
 
 /**
+ * POST /api/initiatives/generate-section-fill
+ *
+ * K4 (decyzja właściciela 2026-07-19): AI-„uzupełnij" UNIWERSALNIE na sekcjach
+ * inicjatywy, które NIE mają natywnego AI (team, raci, dependencies, milestones,
+ * timeline, technical, tasks, attachments, comments, activity). Sekcje z AI
+ * dalej używają `/generate-section`. Ten endpoint uzupełnia lukę wg
+ * `services/ai/initiativeSectionFill.ts` (prompty w kodzie, doktryna BCG).
+ *
+ * ★ ZA FLAGĄ default OFF (`INITIATIVE_SECTION_AIFILL`) — reguła #7: nic wizualnie
+ * nowego przed odbiorem Piotra. Gdy flaga OFF → 503 notConfigured (jak brak AI).
+ *
+ * Body: { initiativeId, sectionKey, language?, existingItems?, relatedTasks?, teamContext?, ... }
+ * Governance jak `/generate-section` (auth + org scope + requireInitiativeWriteAccess).
+ */
+router.post(
+  '/generate-section-fill',
+  requireInitiativeWriteAccess(),
+  async (req: any, res: any) => {
+    // Flaga default OFF — bez implementacji zmiany zachowania przed akceptem Piotra.
+    if (process.env.INITIATIVE_SECTION_AIFILL !== 'true') {
+      return notConfigured(req, res);
+    }
+
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { sectionKey, initiativeId, ...context } = req.body || {};
+      if (!sectionKey) {
+        return res.status(400).json({ error: 'sectionKey is required' });
+      }
+
+      const { generateInitiativeSectionFill, normalizeFillSectionKey } = await import(
+        '../../services/ai/initiativeSectionFill.js'
+      );
+
+      if (!normalizeFillSectionKey(String(sectionKey))) {
+        // Sekcja ma natywne AI (albo nieznana) — kieruj do /generate-section.
+        return res.status(400).json({
+          error: `Section "${sectionKey}" is not handled by generate-section-fill; use /generate-section.`,
+          code: 'SECTION_NOT_FILLABLE',
+        });
+      }
+
+      // Ugruntowanie: gdy podano initiativeId, dociągnij podstawowy kontekst z bazy
+      // (org-scoped). Body-provided context ma pierwszeństwo (UI może już go znać).
+      const grounded: Record<string, any> = { ...context };
+      if (initiativeId) {
+        const initiative = (await queryHelpers.queryOne(
+          `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [String(initiativeId), String(orgId)]
+        )) as any;
+        if (!initiative) {
+          return res.status(404).json({ error: 'Initiative not found' });
+        }
+        grounded.initiativeId = String(initiativeId);
+        grounded.initiativeName ??= initiative.name || initiative.title || 'Initiative';
+        grounded.summary ??= initiative.summary || initiative.description || '';
+        grounded.problemStatement ??= initiative.problem_statement || '';
+        grounded.category ??= initiative.category || '';
+        grounded.module ??= initiative.module || '';
+        grounded.status ??= initiative.status || '';
+      }
+
+      const result = await generateInitiativeSectionFill(
+        String(sectionKey),
+        grounded,
+        { language: context.language || 'en' }
+      );
+
+      return res.json(result);
+    } catch (err: any) {
+      const statusCodeRaw = Number(err?.statusCode ?? err?.status ?? 500);
+      const statusCode =
+        Number.isFinite(statusCodeRaw) && statusCodeRaw >= 100 && statusCodeRaw <= 599
+          ? statusCodeRaw
+          : 500;
+
+      if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
+        return notConfigured(req, res);
+      }
+
+      return res
+        .status(statusCode)
+        .json(
+          buildPmoInitiativesFailClosedError(
+            req,
+            statusCode,
+            'PMO_INITIATIVES_SECTION_FILL_FAILED',
+            'Failed to generate section fill content.'
+          )
+        );
+    }
+  }
+);
+
+/**
  * POST /api/initiatives/readiness-analysis
  * AI-powered readiness analysis for the next gate
  * Body: { initiativeId }
