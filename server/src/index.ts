@@ -1972,6 +1972,20 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Feedback SLA sweep not started:', err?.message);
     }
 
+    // E-OUTBOX-01: notification_outbox drain. Opt-OUT (on by default) — rows
+    // enqueued by slaService.ts (approval-assignment escalations) etc. sat in
+    // PENDING forever with nothing draining the table; this loop delivers
+    // each row (dedupe_key collapses duplicates to a single send) and marks
+    // it SENT/FAILED.
+    try {
+      const { startNotificationOutboxDrainCron } = await import(
+        './services/notificationOutboxService.js'
+      );
+      startNotificationOutboxDrainCron();
+    } catch (err: any) {
+      logger.warn('[Server] Notification outbox drain not started:', err?.message);
+    }
+
     // Slack Command Center progress feed (Filar 4 / F3): batched #cf-progress
     // flush every 15 min. Fail-soft; sends nothing when the buffer is empty or
     // Slack is unconfigured.
