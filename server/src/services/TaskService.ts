@@ -8,6 +8,8 @@ import { z } from 'zod';
 
 import type { Task, TaskPriority, TaskStatus, User } from '../types/index.js';
 import { AuthorizationError, NotFoundError } from '../types/index.js';
+import { send as sendNotification } from './notificationService.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // VALIDATION SCHEMAS (Zod)
@@ -303,12 +305,42 @@ export class TaskService {
     }
   }
 
+  /**
+   * H6.3: routed through notificationService.send() instead of a raw INSERT so
+   * task assignment notifications get the shared idempotency guard (dedup_key
+   * = type + entity ref, scoped per recipient, 60s window — see
+   * NotificationService.claimDedupSlot). This closes two real duplicate risks
+   * that the old raw INSERT had none of:
+   *  - double-click / client retry on create-task or update-task-assignee
+   *  - a race between two concurrent updateTask calls that both read the same
+   *    stale `existingTask.assigneeId` before either UPDATE lands, so both
+   *    conclude "assignee changed" and both call notifyAssignee.
+   * Also fail-safe (swallow + log) so a notification hiccup never fails the
+   * task create/update it was attached to — the task write already committed.
+   */
   private async notifyAssignee(taskId: string, assigneeId: string): Promise<void> {
-    await this.db.query(
-      `INSERT INTO notifications (user_id, type, category, title, message, link)
-             VALUES ($1, 'info', 'task', 'New task assigned', 'You have been assigned a new task', $2)`,
-      [assigneeId, `/tasks/${taskId}`]
-    );
+    try {
+      const orgResult = await this.db.query<{ organization_id: string | null }>(
+        `SELECT organization_id FROM users WHERE id = $1`,
+        [assigneeId]
+      );
+      const organizationId = orgResult.rows[0]?.organization_id || '';
+
+      await sendNotification({
+        userId: assigneeId,
+        organizationId,
+        type: 'TASK_ASSIGNED',
+        title: 'New task assigned',
+        body: 'You have been assigned a new task',
+        entityType: 'task',
+        entityId: taskId,
+        actionUrl: `/tasks/${taskId}`,
+        isActionable: true,
+        dedupeKey: `task-assigned:${taskId}:${assigneeId}`,
+      });
+    } catch (err) {
+      logger.warn(`[TaskService] notifyAssignee failed for task=${taskId} assignee=${assigneeId}:`, err);
+    }
   }
 
   private async trackStatusChange(
