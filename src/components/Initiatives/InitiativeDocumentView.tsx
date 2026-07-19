@@ -74,6 +74,7 @@ import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode'
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { LoadingState } from '@/components/ui/primitives';
@@ -115,6 +116,7 @@ import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
+import { isVf1InitSpecAEnabled } from '@/utils/vf1InitSpecAFlag';
 import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
@@ -9610,11 +9612,72 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     ];
   }, [activeSectionAiBusy, runActiveSectionAi, handleGenerateAI, activeNSection, isGeneratingAI]);
 
+  // A11y (SPEC-A, unconditional): Esc closes the artifact (calls onBack), but
+  // ONLY when it would otherwise do nothing else — skip when focus is in an
+  // editable field (the field owns Esc) or any overlay/dropdown/modal is open
+  // (those must close first). Guards prevent Esc from yanking the user out of
+  // the whole card mid-edit or while a menu is open.
+  const anyOverlayOpen =
+    showSectionsMenu ||
+    showNewMenu ||
+    showExportMenu ||
+    showToolbarKebab ||
+    showMoreMenu ||
+    showStatusDropdown ||
+    showPriorityDropdown ||
+    showPhaseDropdown ||
+    showApprovalWorkflow ||
+    aiPanelOpen ||
+    presentOpen ||
+    showExportDialog ||
+    showCreateKpi ||
+    showCreateResource ||
+    showCreateTask ||
+    showCreateDecision ||
+    showCreateRaid ||
+    showRaidAIModal ||
+    showCommentsAIModal;
+  useEffect(() => {
+    if (!onBack) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (anyOverlayOpen) return;
+      const el = document.activeElement as HTMLElement | null;
+      if (el) {
+        const tag = el.tagName;
+        if (
+          tag === 'INPUT' ||
+          tag === 'TEXTAREA' ||
+          tag === 'SELECT' ||
+          el.isContentEditable ||
+          el.getAttribute('role') === 'textbox'
+        ) {
+          return;
+        }
+      }
+      onBack();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onBack, anyOverlayOpen]);
+
   // ==========================================
   // LOADING & ERROR STATES
   // ==========================================
 
   if (isLoading) {
+    // SPEC-A (VF1, flag default OFF): content-shaped record skeleton instead of
+    // a bare centered spinner, so the load reads as "an initiative card is
+    // arriving" rather than a generic wait. OFF = the original spinner, 1:1.
+    if (isVf1InitSpecAEnabled()) {
+      return (
+        <div className="h-full overflow-y-auto bg-c-bg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <SkeletonState variant="record" />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center h-96">
         <LoadingState variant="spinner" className="py-0" />
@@ -9624,6 +9687,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   if (error || !initiative) {
     const message = error || t('initiatives.document.notFound', 'Initiative not found');
+    // SPEC-A (VF1, flag default OFF): whole-surface ErrorState with a clear exit
+    // (retry + go back). Description is a fixed human sentence — never the raw
+    // `message` (SPEC-A ErrorState hard rule). OFF = the original HubWorkAreaLoadError.
+    if (isVf1InitSpecAEnabled()) {
+      return (
+        <ErrorState
+          title={t('initiatives.document.failedToLoad', 'Failed to load initiative card.')}
+          description={t(
+            'initiatives.document.loadFailedDesc',
+            'The card may have been moved or removed, or the connection dropped. Try again, or go back.'
+          )}
+          onRetry={() => {
+            void fetchAll();
+          }}
+          onBack={onBack || undefined}
+        />
+      );
+    }
     return (
       <HubWorkAreaLoadError
         title={t('initiatives.document.failedToLoad', 'Failed to load initiative card.')}
