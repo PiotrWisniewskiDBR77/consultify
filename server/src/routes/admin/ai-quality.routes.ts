@@ -190,7 +190,10 @@ router.get(
       const countResult = (await dbGet(
         // Robust to the SELECT-list content (regex, not an exact literal) so the
         // user_name expression can change without silently breaking the count.
-        query.replace(/SELECT[\s\S]*?FROM ai_feedback f/, 'SELECT COUNT(*) as count FROM ai_feedback f'),
+        query.replace(
+          /SELECT[\s\S]*?FROM ai_feedback f/,
+          'SELECT COUNT(*) as count FROM ai_feedback f'
+        ),
         params
       )) as { count: number } | null;
 
