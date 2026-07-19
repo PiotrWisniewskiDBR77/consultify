@@ -312,8 +312,8 @@ import userSecurityAdvancedRoutes from './routes/user/user-security-advanced.rou
 import userGoalsRoutes from './routes/user/userGoals.routes.js';
 import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
-import v8Router from './routes/v8/index.js';
 import { managerRouter as v8ExecutionControlManagerRouter } from './routes/v8/execution-control.routes.js';
+import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import v10TeresaRoutes from './routes/v10/teresa.routes.js';
 import verifyRoutes from './routes/verify.routes.js';
