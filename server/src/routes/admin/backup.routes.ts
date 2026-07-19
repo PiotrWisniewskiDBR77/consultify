@@ -116,8 +116,18 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
       (m) => m.default || m
     );
     const { backupId } = req.body;
-    await BackupService.restoreBackup(backupId);
-    return res.json({ success: true, message: 'Restore completed' });
+    // Restore execution is v2. Answer 501 (honest "not implemented") with the
+    // read-only restore-info describing what a restore WOULD do — never a
+    // 503 crash. See services/backupService.ts (BackupNotImplementedError).
+    const info = await BackupService.getRestoreInfo(backupId);
+    return res.status(501).json({
+      success: false,
+      code: 'RESTORE_NOT_IMPLEMENTED',
+      message: info.message,
+      backupId: info.backupId,
+      found: info.found,
+      manifest: info.manifest,
+    });
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for restore');
     return respondBackupUnavailable(
