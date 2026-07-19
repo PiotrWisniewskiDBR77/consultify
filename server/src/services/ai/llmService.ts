@@ -225,7 +225,9 @@ async function getLLMConfigService(): Promise<{
   } | null;
 }
 
-function normalizeBaseUrl(endpoint?: string): string | undefined {
+// Exported so tests can exercise the real over-strip-regression guard directly
+// (rather than re-implementing the logic in a test double).
+export function normalizeBaseUrl(endpoint?: string): string | undefined {
   if (!endpoint) return undefined;
   let base = String(endpoint).trim();
   if (!base) return undefined;
@@ -233,13 +235,16 @@ function normalizeBaseUrl(endpoint?: string): string | undefined {
 
   // Many DB rows store full "chat completions" endpoints, but provider SDKs expect a base URL.
   // Example: https://openrouter.ai/api/v1/chat/completions -> https://openrouter.ai/api/v1
-  const suffixes = [
-    '/chat/completions',
-    '/v1/chat/completions',
-    '/v1/completions',
-    '/v1/responses',
-    '/v1/messages',
-  ];
+  //
+  // IMPORTANT: strip ONLY the trailing operation path, and leave any /vN version
+  // segment intact. A previous version of this list included '/v1/messages' etc.
+  // as whole suffixes, which over-stripped the /v1 too — e.g.
+  // https://api.anthropic.com/v1/messages -> bare https://api.anthropic.com.
+  // @ai-sdk/anthropic then POSTs to `${baseURL}/messages` with no /v1 -> 404 on
+  // EVERY anthropic call whenever the DB endpoint included the full path (see
+  // llmConfigService.ts's defaultEndpoint seed). providerSentinel.ts has an
+  // identical twin of this function, fixed the same way.
+  const suffixes = ['/chat/completions', '/completions', '/responses', '/messages'];
   const lower = base.toLowerCase();
   for (const s of suffixes) {
     if (lower.endsWith(s)) {
@@ -308,13 +313,24 @@ function getProviderSync(modelConfig: ModelConfig) {
       if (!envAnthropic && !effectiveApiKey) {
         throw new Error('No Anthropic API key configured (set ANTHROPIC_API_KEY).');
       }
+      // @ai-sdk/anthropic v3 default base URL omits the `/v1` segment, so
+      // env-key calls hit https://api.anthropic.com/messages → 404 → the SDK
+      // surfaces it as "Invalid JSON response". Pin the correct base (honoring
+      // a DB/endpoint override) the same way deepseek/zai/qwen do below.
+      //
+      // normalizeBaseUrl only strips the trailing operation path — it does NOT
+      // guarantee the remainder ends in /vN (a DB/env override can legitimately
+      // be a bare host, e.g. https://api.anthropic.com with no version). Guard
+      // against that here so we never end up POSTing to `${baseURL}/messages`
+      // without /v1 in front of it.
+      const anthropicBase = normalizedBaseUrl
+        ? /\/v\d+$/i.test(normalizedBaseUrl)
+          ? normalizedBaseUrl
+          : `${normalizedBaseUrl}/v1`
+        : 'https://api.anthropic.com/v1';
       return createAnthropic({
         apiKey: envAnthropic || effectiveApiKey,
-        // @ai-sdk/anthropic v3 default base URL omits the `/v1` segment, so
-        // env-key calls hit https://api.anthropic.com/messages → 404 → the SDK
-        // surfaces it as "Invalid JSON response". Pin the correct base (honoring
-        // a DB/endpoint override) the same way deepseek/zai/qwen do below.
-        baseURL: normalizedBaseUrl || 'https://api.anthropic.com/v1',
+        baseURL: anthropicBase,
       });
     }
     case 'deepseek':
