@@ -13,6 +13,17 @@
  * Fail-open by construction on the CLIENT side: if this gateway does not attach
  * or the socket cannot connect, the Notebook keeps working in solo mode and the
  * FE useNotebookPresence hook just reports `disconnected`. Never blocks editing.
+ *
+ * ★ presence-write (2026-07-19, registry T8): until now, presence lived ONLY
+ * in the in-memory `noteRooms` Map — real for peers on the SAME server
+ * process, invisible across instances (no horizontal-scaling safety) and gone
+ * on every restart, with no REST fallback if a client's WS never connects
+ * (unlike the Idea Table presence at my-work.routes.ts `/my-ideas/:id/presence`,
+ * which is DB-backed via realtimePlatformService against `realtime_presence`).
+ * This gateway now ALSO writes (best-effort, fail-open — never blocks the
+ * WS broadcast/room logic) to that same `realtime_presence` table under
+ * channel `notebook-${noteId}`, giving the notebook a durable presence record
+ * with the same shape/guarantees the Idea Table already has.
  */
 
 import type { Server as HttpServer } from 'http';
@@ -111,6 +122,77 @@ function cleanupUser(ws: PresenceSocket, noteId: string) {
     noteRooms.delete(noteId);
   } else if (user) {
     broadcast(noteId, { type: 'presence:left', userId: user.userId });
+  }
+}
+
+/** Whether some OTHER socket in the room still belongs to this user (multi-tab). */
+function hasOtherSocketForUser(
+  room: Map<PresenceSocket, PresenceUser> | undefined,
+  userId: string,
+  exclude: PresenceSocket
+): boolean {
+  if (!room) return false;
+  for (const [sock, u] of room) {
+    if (sock !== exclude && u.userId === userId) return true;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// presence-write (T8) — best-effort DB persistence, mirrors the Idea Table
+// presence pattern (my-work.routes.ts `/my-ideas/:id/presence` →
+// realtimePlatformService). Never throws into the WS handlers: a DB hiccup
+// degrades to "presence not durable this tick", it must NEVER drop the room
+// or the live broadcast.
+// ---------------------------------------------------------------------------
+
+function presenceChannelId(noteId: string): string {
+  return `notebook-${noteId}`;
+}
+
+async function writePresenceJoin(noteId: string, user: PresenceUser): Promise<void> {
+  try {
+    const realtimePlatformService = (await import('../services/realtimePlatformService.js'))
+      .default;
+    await realtimePlatformService.upsertPresence(presenceChannelId(noteId), {
+      userId: user.userId,
+      userName: user.name,
+      userColor: user.color,
+    });
+  } catch (err) {
+    logger.warn('[NotebookCollabWs] presence-write join degraded', {
+      noteId,
+      userId: user.userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+async function writePresenceHeartbeat(noteId: string, userId: string): Promise<void> {
+  try {
+    const realtimePlatformService = (await import('../services/realtimePlatformService.js'))
+      .default;
+    await realtimePlatformService.heartbeatPresence(presenceChannelId(noteId), userId);
+  } catch (err) {
+    logger.warn('[NotebookCollabWs] presence-write heartbeat degraded', {
+      noteId,
+      userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+async function writePresenceLeave(noteId: string, userId: string): Promise<void> {
+  try {
+    const realtimePlatformService = (await import('../services/realtimePlatformService.js'))
+      .default;
+    await realtimePlatformService.disconnectPresence(presenceChannelId(noteId), userId);
+  } catch (err) {
+    logger.warn('[NotebookCollabWs] presence-write leave degraded', {
+      noteId,
+      userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -329,6 +411,7 @@ export function attachNotebookCollabWs(server: HttpServer): void {
       lastSeen: Date.now(),
     };
     room.set(ws, user);
+    void writePresenceJoin(noteId, user);
 
     ws.on('pong', () => {
       ws.__alive = true;
@@ -346,11 +429,13 @@ export function attachNotebookCollabWs(server: HttpServer): void {
             user.isOnline = true;
             broadcast(noteId, { type: 'presence:joined', user: serializeUser(user) }, ws);
             sendPresenceList(noteId, ws);
+            void writePresenceJoin(noteId, user);
             break;
           }
 
           case 'presence:heartbeat': {
             user.lastSeen = Date.now();
+            void writePresenceHeartbeat(noteId, user.userId);
             break;
           }
 
@@ -365,6 +450,9 @@ export function attachNotebookCollabWs(server: HttpServer): void {
 
           case 'presence:leave': {
             broadcast(noteId, { type: 'presence:left', userId: user.userId }, ws);
+            if (!hasOtherSocketForUser(noteRooms.get(noteId), user.userId, ws)) {
+              void writePresenceLeave(noteId, user.userId);
+            }
             break;
           }
 
@@ -377,7 +465,11 @@ export function attachNotebookCollabWs(server: HttpServer): void {
     });
 
     ws.on('close', () => {
+      const stillPresentElsewhere = hasOtherSocketForUser(noteRooms.get(noteId), user.userId, ws);
       cleanupUser(ws, noteId);
+      if (!stillPresentElsewhere) {
+        void writePresenceLeave(noteId, user.userId);
+      }
       logger.info(`[NotebookCollabWs] Client left note ${noteId} (user=${user.userId})`);
     });
 
