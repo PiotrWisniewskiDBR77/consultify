@@ -22,7 +22,12 @@ import type { AreaScores, DrdReportMeta } from './drdReportModel';
  * loudly (this should never legitimately happen) so the bad write gets fixed
  * at the source.
  */
-function clampAxisLevel(raw: number, max: number, axisLabel: string, field: 'actual' | 'target'): number {
+function clampAxisLevel(
+  raw: number,
+  max: number,
+  axisLabel: string,
+  field: 'actual' | 'target'
+): number {
   if (!Number.isFinite(raw)) return 0;
   if (raw < 0 || raw > max) {
     // eslint-disable-next-line no-console

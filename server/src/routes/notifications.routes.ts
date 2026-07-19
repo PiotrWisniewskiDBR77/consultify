@@ -121,9 +121,10 @@ router.patch(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Failed to mark notification as read', code: 'NOTIFICATIONS_MARK_READ_FAILED' });
+      return res.status(500).json({
+        error: 'Failed to mark notification as read',
+        code: 'NOTIFICATIONS_MARK_READ_FAILED',
+      });
     }
   })
 );

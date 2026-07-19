@@ -19,11 +19,11 @@ import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { CreateInitiativeSchema } from '../../validators/initiative.validators.js';
 import auditEventsService from '../AuditEventsService.js';
+import { assertCardMeetsFormula } from '../cardContentFormulaValidator.js';
 import {
   isRequireInitiativeProjectEnabled,
   resolveOrCreateSystemPortfolioProject,
 } from '../initiativeProjectPolicyService.js';
-import { assertCardMeetsFormula } from '../cardContentFormulaValidator.js';
 import { type InitiativeCardData, validateCardStructure } from './initiativeCardValidators.js';
 
 export interface CreateInitiativeInput {

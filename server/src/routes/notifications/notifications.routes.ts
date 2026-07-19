@@ -786,9 +786,10 @@ router.patch(
         err,
         correlationId: resolveNotificationsCorrelationId(req),
       });
-      return res
-        .status(500)
-        .json({ error: 'Failed to update checklist', code: 'NOTIFICATIONS_CHECKLIST_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Failed to update checklist',
+        code: 'NOTIFICATIONS_CHECKLIST_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -823,9 +824,10 @@ router.patch(
         err,
         correlationId: resolveNotificationsCorrelationId(req),
       });
-      return res
-        .status(500)
-        .json({ error: 'Failed to save worksheet draft', code: 'NOTIFICATIONS_WORKSHEET_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Failed to save worksheet draft',
+        code: 'NOTIFICATIONS_WORKSHEET_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -855,9 +857,10 @@ router.get(
         err,
         correlationId: resolveNotificationsCorrelationId(req),
       });
-      return res
-        .status(500)
-        .json({ error: 'Failed to load source entity', code: 'NOTIFICATIONS_SOURCE_ENTITY_FAILED' });
+      return res.status(500).json({
+        error: 'Failed to load source entity',
+        code: 'NOTIFICATIONS_SOURCE_ENTITY_FAILED',
+      });
     }
   })
 );

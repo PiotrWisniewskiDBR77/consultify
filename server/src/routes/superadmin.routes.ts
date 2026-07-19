@@ -3968,9 +3968,10 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się utworzyć playbooka', code: 'SUPERADMIN_PLAYBOOK_CREATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć playbooka',
+        code: 'SUPERADMIN_PLAYBOOK_CREATE_FAILED',
+      });
     }
   })
 );
@@ -4011,9 +4012,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zaktualizować playbooka', code: 'SUPERADMIN_PLAYBOOK_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować playbooka',
+        code: 'SUPERADMIN_PLAYBOOK_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -4035,9 +4037,10 @@ router.delete(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się usunąć playbooka', code: 'SUPERADMIN_PLAYBOOK_DELETE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się usunąć playbooka',
+        code: 'SUPERADMIN_PLAYBOOK_DELETE_FAILED',
+      });
     }
   })
 );
@@ -4079,9 +4082,10 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się wykonać playbooka', code: 'SUPERADMIN_PLAYBOOK_EXECUTE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się wykonać playbooka',
+        code: 'SUPERADMIN_PLAYBOOK_EXECUTE_FAILED',
+      });
     }
   })
 );
@@ -4250,9 +4254,10 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się utworzyć kontraktu', code: 'SUPERADMIN_CONTRACT_CREATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć kontraktu',
+        code: 'SUPERADMIN_CONTRACT_CREATE_FAILED',
+      });
     }
   })
 );
@@ -4314,9 +4319,10 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się zaktualizować kontraktu', code: 'SUPERADMIN_CONTRACT_UPDATE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować kontraktu',
+        code: 'SUPERADMIN_CONTRACT_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -4338,9 +4344,10 @@ router.delete(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się usunąć kontraktu', code: 'SUPERADMIN_CONTRACT_DELETE_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się usunąć kontraktu',
+        code: 'SUPERADMIN_CONTRACT_DELETE_FAILED',
+      });
     }
   })
 );
