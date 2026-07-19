@@ -16,6 +16,7 @@ import {
   validatePyramidQuestionBank,
   validateScqa,
 } from '../../src/config/narrativeengine';
+import { buildNarrativeEngineConversationProtocol } from '../../src/hooks/discovery/toolAi/narrativeEngine';
 import type { NarrativeEngineData, NarrativePillar } from '../../src/store/useToolStore';
 
 // ---------------------------------------------------------------------------
@@ -484,5 +485,46 @@ describe('buildNarrativeConclusionPrompt — backward-compatible pyramid integra
     ['"summary"', '"threads"', '"moves"', '"initiatives"', '"outputCandidates"'].forEach((key) => {
       expect(prompt).toContain(key);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REJESTR (o3-cluster-proof, dowód dla o3-focus-dead #2): the chat mentor for
+// the "pillars" step must carry the SAME laddered pyramid question bank
+// (thesis/scqa/pyramid/evidence tracks) as the wizard, mirroring
+// buildMarketForcesConversationProtocol's multi-track concatenation. Was
+// wired in commit 71732e300d (o3-focus-dead) but never asserted by a test —
+// the underlying narrativeEnginePyramid suite only covered the ladder
+// content itself, not that buildNarrativeEngineConversationProtocol reaches
+// runtime through useToolAI.ts's interviewProtocol ternary.
+// ---------------------------------------------------------------------------
+describe('buildNarrativeEngineConversationProtocol', () => {
+  it('is a no-op ("") for steps other than "pillars"', () => {
+    expect(buildNarrativeEngineConversationProtocol(undefined)).toBe('');
+    expect(buildNarrativeEngineConversationProtocol('mission')).toBe('');
+    expect(buildNarrativeEngineConversationProtocol('input')).toBe('');
+    expect(buildNarrativeEngineConversationProtocol('threads')).toBe('');
+    expect(buildNarrativeEngineConversationProtocol('outputs')).toBe('');
+  });
+
+  it('concatenates all 4 pyramid category ladders for the "pillars" step', () => {
+    const protocol = buildNarrativeEngineConversationProtocol('pillars', 'en');
+    expect(protocol).toContain('INTERVIEW PROTOCOL');
+    // One track per category: governing thought -> SCQA -> MECE pyramid ->
+    // evidence — single source of truth shared with pyramidQuestionBank.ts.
+    expect(protocol).toContain('THESIS');
+    expect(protocol).toContain('th1-surface');
+    expect(protocol).toContain('SCQA');
+    expect(protocol).toContain('sc1-situation');
+    expect(protocol).toContain('PYRAMID');
+    expect(protocol).toContain('py1-grouping');
+    expect(protocol).toContain('EVIDENCE');
+    expect(protocol).toContain('ev1-proof');
+  });
+
+  it('localizes the ladder into Polish when language="pl"', () => {
+    const protocol = buildNarrativeEngineConversationProtocol('pillars', 'pl');
+    expect(protocol).toContain('th1-surface');
+    expect(protocol.length).toBeGreaterThan(0);
   });
 });
