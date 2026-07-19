@@ -97,7 +97,7 @@ router.post(
       `
     INSERT INTO notification_rules (id, organization_id, name, description, event_type,
                                     conditions, actions, is_active, priority, created_by, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, datetime('now'))
+    VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, datetime('now'))
   `,
       [
         id,
