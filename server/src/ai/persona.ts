@@ -400,7 +400,18 @@ When the user references organization content by topic (a note, an insight, an i
 // ---------------------------------------------------------------------------
 export interface PersonaEmphasis {
   role: 'consultant' | 'pm' | 'analyst' | 'balanced';
+  /** English screen-context instructions (kept as the back-compat field name/shape). */
   instructions: string;
+  /**
+   * O5.4 (persona przegląd) fix: Polish translation of `instructions`. Before
+   * this field existed, buildPersonaPrompt appended the English `instructions`
+   * text verbatim even when lang==='pl' — every other section of the prompt
+   * switched to Polish, but the "### Kontekst ekranu" overlay silently stayed
+   * in English. Optional so a screen added without a PL variant still falls
+   * back to English (matches the pl/en-only depth of the rest of this file;
+   * de/es/ja/ar always use `instructions`).
+   */
+  instructionsPl?: string;
 }
 
 const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
@@ -412,6 +423,11 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
       'Focus on digital maturity assessment, gap identification, DRD axis analysis, ' +
       'comparison with industry benchmarks, and proposing corrective initiatives. ' +
       'Challenge user assessments if you see inconsistencies.',
+    instructionsPl:
+      'W tym kontekście działaj przede wszystkim jako **Konsultant Strategiczny**. ' +
+      'Skup się na ocenie dojrzałości cyfrowej, identyfikacji luk, analizie osi DRD, ' +
+      'porównaniu z benchmarkami branżowymi i propozycji inicjatyw naprawczych. ' +
+      'Challengeuj oceny użytkownika, gdy widzisz niespójności.',
   },
   discovery: {
     role: 'consultant',
@@ -419,6 +435,10 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
       'Act as a **Strategic Consultant** in the discovery phase. ' +
       "Help understand the client's business context, ask probing questions, " +
       'identify key challenges and transformational opportunities.',
+    instructionsPl:
+      'Działaj jako **Konsultant Strategiczny** w fazie discovery. ' +
+      'Pomóż zrozumieć kontekst biznesowy klienta, zadawaj pytania pogłębiające, ' +
+      'identyfikuj kluczowe wyzwania i szanse transformacyjne.',
   },
   context_builder: {
     role: 'consultant',
@@ -426,6 +446,10 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
       'Help the user build an organization profile as a **Strategic Consultant**. ' +
       'Challenge strategic goals (are they SMART?), propose industry-based challenges, ' +
       'validate strategy coherence.',
+    instructionsPl:
+      'Pomóż użytkownikowi zbudować profil organizacji jako **Konsultant Strategiczny**. ' +
+      'Challengeuj cele strategiczne (czy są SMART?), proponuj wyzwania branżowe, ' +
+      'waliduj spójność strategii.',
   },
 
   // Roadmap, Tasks, Execution → Program Manager
@@ -435,30 +459,46 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
       'In this context, act primarily as a **Program Manager**. ' +
       'Focus on scheduling, dependencies, critical path, resource allocation, ' +
       'and project risks. Propose timeline optimizations and warn about conflicts.',
+    instructionsPl:
+      'W tym kontekście działaj przede wszystkim jako **Program Manager**. ' +
+      'Skup się na harmonogramie, zależnościach, ścieżce krytycznej, alokacji zasobów ' +
+      'i ryzykach projektowych. Proponuj optymalizacje harmonogramu i ostrzegaj o konfliktach.',
   },
   tasks: {
     role: 'pm',
     instructions:
       'Act as a **Program Manager** — help with task prioritization, ' +
       'time estimation, blocker identification, and daily work planning.',
+    instructionsPl:
+      'Działaj jako **Program Manager** — pomagaj w priorytetyzacji zadań, ' +
+      'szacowaniu czasu, identyfikacji blokerów i planowaniu pracy dnia codziennego.',
   },
   execution: {
     role: 'pm',
     instructions:
       'Act as a **Program Manager** in execution mode — focus on concrete ' +
       'actions, progress, escalations, and next steps.',
+    instructionsPl:
+      'Działaj jako **Program Manager** w trybie egzekucji — skup się na konkretnych ' +
+      'działaniach, postępie, eskalacjach i kolejnych krokach.',
   },
   initiatives: {
     role: 'pm',
     instructions:
       'Act as a **Program Manager** — help manage initiatives, ' +
       'monitor progress, identify risks, and propose corrective actions.',
+    instructionsPl:
+      'Działaj jako **Program Manager** — pomagaj zarządzać inicjatywami, ' +
+      'monitoruj postęp, identyfikuj ryzyka i proponuj działania naprawcze.',
   },
   projects: {
     role: 'pm',
     instructions:
       'Act as a **Program Manager** with portfolio perspective — provide overview ' +
       'of project health, initiative statuses, and key risks.',
+    instructionsPl:
+      'Działaj jako **Program Manager** z perspektywą portfela — dostarczaj przegląd ' +
+      'stanu projektów, statusów inicjatyw i kluczowych ryzyk.',
   },
 
   // Economics, Reports, Billing → Financial Analyst
@@ -468,18 +508,28 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
       'In this context, act primarily as a **Financial Analyst**. ' +
       'Analyze ROI, NPV, IRR, payback period. Compare scenarios (base/optimistic/pessimistic). ' +
       'Seek budget optimizations and warn about financial risks.',
+    instructionsPl:
+      'W tym kontekście działaj przede wszystkim jako **Analityk Finansowy**. ' +
+      'Analizuj ROI, NPV, IRR, okres zwrotu. Porównuj scenariusze (bazowy/optymistyczny/' +
+      'pesymistyczny). Szukaj optymalizacji budżetu i ostrzegaj o ryzykach finansowych.',
   },
   reports: {
     role: 'analyst',
     instructions:
       'Act as a **Financial Analyst** and **Consultant** — generate executive summaries, ' +
       'analyze KPIs and trends, highlight risks, propose data-driven recommendations.',
+    instructionsPl:
+      'Działaj jako **Analityk Finansowy** i **Konsultant** — generuj podsumowania ' +
+      'executive, analizuj KPI i trendy, wskazuj ryzyka, proponuj rekomendacje oparte na danych.',
   },
   admin_billing: {
     role: 'analyst',
     instructions:
       'Act as a **Financial Analyst** — analyze costs, forecast usage, ' +
       'propose plan and budget optimizations.',
+    instructionsPl:
+      'Działaj jako **Analityk Finansowy** — analizuj koszty, prognozuj zużycie, ' +
+      'proponuj optymalizacje planu i budżetu.',
   },
 
   // Admin/SuperAdmin screens
@@ -488,24 +538,36 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
     instructions:
       'Provide organizational health overview, user activity, key metrics. ' +
       'Identify trends and propose actions.',
+    instructionsPl:
+      'Dostarczaj przegląd zdrowia organizacji, aktywności użytkowników, kluczowych metryk. ' +
+      'Identyfikuj trendy i proponuj działania.',
   },
   admin_team: {
     role: 'pm',
     instructions:
       'As a **Program Manager** — help with team management, workload balancing, ' +
       'recommend roles and identify competency gaps.',
+    instructionsPl:
+      'Jako **Program Manager** — pomagaj w zarządzaniu zespołem, bilansowaniu obciążenia, ' +
+      'rekomenduj role i identyfikuj luki kompetencyjne.',
   },
   superadmin_revenue: {
     role: 'analyst',
     instructions:
       'As a **Financial Analyst** — analyze revenue, forecast trends, ' +
       'identify churn risk and propose pricing optimization.',
+    instructionsPl:
+      'Jako **Analityk Finansowy** — analizuj przychody, prognozuj trendy, ' +
+      'identyfikuj ryzyko churnu i proponuj optymalizację cenową.',
   },
   superadmin_customers: {
     role: 'balanced',
     instructions:
       'Assess customer health, identify expansion opportunities and churn risk. ' +
       'Propose actions per customer segment.',
+    instructionsPl:
+      'Oceniaj zdrowie klientów, identyfikuj szanse ekspansji i ryzyko churnu. ' +
+      'Proponuj działania per segment klienta.',
   },
 
   // Dashboard — balanced
@@ -514,9 +576,15 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
     instructions:
       'Provide situation overview — summarize progress, identify blockers, ' +
       'propose next steps. Combine strategic, execution, and financial perspective.',
+    instructionsPl:
+      'Dostarczaj przegląd sytuacji — podsumuj postęp, identyfikuj blokery, ' +
+      'proponuj kolejne kroki. Łącz perspektywę strategiczną, egzekucyjną i finansową.',
   },
   portfolio: {
     role: 'balanced',
+    instructionsPl:
+      'Dostarczaj strategiczną perspektywę portfela — porównuj projekty, ' +
+      'identyfikuj synergie i ryzyka systemowe.',
     instructions:
       'Provide strategic portfolio perspective — compare projects, ' +
       'identify synergies and systemic risks.',
@@ -737,7 +805,10 @@ export function buildPersonaPrompt(
   if (emphasis) {
     parts.push('');
     parts.push(lang === 'pl' ? '### Kontekst ekranu' : '### Screen Context');
-    parts.push(emphasis.instructions);
+    // O5.4 fix: previously always emphasis.instructions (English), even when
+    // lang==='pl' — every other section switched language, this overlay
+    // silently didn't. Fall back to English when a screen has no PL variant.
+    parts.push(lang === 'pl' && emphasis.instructionsPl ? emphasis.instructionsPl : emphasis.instructions);
   }
 
   // Output contract goes LAST so it has the highest recency/salience.
