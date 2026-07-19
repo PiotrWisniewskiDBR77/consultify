@@ -58,6 +58,8 @@ import {
 } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
+import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import TeresaMark from '../shared/TeresaMark';
@@ -335,6 +337,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
+  const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   const currentUser = useAppStore((state) => state.currentUser);
   const isDarkFlow = useIsDark();
   const { dialog: bulkDeleteDialog, confirm: confirmBulkDelete } = useConfirmDialog();
@@ -2349,19 +2353,33 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       </div>
 
       {loadError && !loading && nodes.length === 0 && (
-        <div className="px-4 pt-3">
-          <EmptyStateInline
-            icon={AlertTriangle}
-            dashed={false}
-            message={t('myWorkIdeas.processFlowTool.processFlowTemporarilyUnavailable')}
-            hint={t('myWorkIdeas.processFlowTool.thisDoesMeanProcessEmptyRetry')}
-            action={{
-              label: t('myWorkIdeas.processFlowTool.retry'),
-              onClick: hydrate,
-            }}
-            className="mb-2"
-          />
-        </div>
+        vf1CanvasSpecAEnabled ? (
+          // VF1 SPEC-A (flag OFF default): canonical full-surface canvas error
+          // with retry EXIT; legacy inline block stays default.
+          <div className="flex-1">
+            <ErrorState
+              compact
+              title={t('myWorkIdeas.processFlowTool.processFlowTemporarilyUnavailable')}
+              description={t('myWorkIdeas.processFlowTool.thisDoesMeanProcessEmptyRetry')}
+              onRetry={hydrate}
+              retryLabel={t('myWorkIdeas.processFlowTool.retry')}
+            />
+          </div>
+        ) : (
+          <div className="px-4 pt-3">
+            <EmptyStateInline
+              icon={AlertTriangle}
+              dashed={false}
+              message={t('myWorkIdeas.processFlowTool.processFlowTemporarilyUnavailable')}
+              hint={t('myWorkIdeas.processFlowTool.thisDoesMeanProcessEmptyRetry')}
+              action={{
+                label: t('myWorkIdeas.processFlowTool.retry'),
+                onClick: hydrate,
+              }}
+              className="mb-2"
+            />
+          </div>
+        )
       )}
 
       {locked && (
@@ -2633,9 +2651,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {/* Canvas */}
       {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="animate-spin text-slate-600" size={24} />
-        </div>
+        vf1CanvasSpecAEnabled ? (
+          // VF1 SPEC-A (flag OFF default): canonical A·Canvas skeleton.
+          <div className="flex-1">
+            <SkeletonState variant="canvas" />
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="animate-spin text-c-text-secondary" size={24} />
+          </div>
+        )
       ) : (
         <div ref={flowContainerRef} className="flex-1 relative">
           <div className="absolute inset-0">
@@ -2658,11 +2683,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               round-trips through hydration (bug L-04). Solid c-* tokens only
               (no /alpha suffix — those don't emit rules for hex-valued c-*
               tokens, see finding_c_token_alpha_colormix). */}
-          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm px-1 py-0.5">
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-c-border dark:border-white/[0.03] bg-c-surface shadow-sm px-1 py-0.5">
             <button
               type="button"
               onClick={() => setShowGrid((prev) => !prev)}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 showGrid
                   ? 'text-c-info bg-c-surface-raised'
                   : 'text-c-text-muted hover:bg-c-surface-raised'
@@ -2676,7 +2701,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               type="button"
               onClick={() => setSnapToGridEnabled((prev) => !prev)}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 snapToGridEnabled
                   ? 'text-c-info bg-c-surface-raised'
                   : 'text-c-text-muted hover:bg-c-surface-raised'
