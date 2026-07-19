@@ -1094,6 +1094,10 @@ export const DeckBuilder: React.FC = () => {
             onShare: () => setShareModalOpen(true),
             onToggleAgent: () => setTeresaOpen((v) => !v),
             onRun: () => setPresentMode('fullscreen'),
+            // J12-S2 — presenter view (notes + next-slide + timer). The primary
+            // "Present" chip runs the audience fullscreen ('show'); presenter is
+            // a distinct mode, surfaced as an overflow (⋯) chip. ESC exits both.
+            onPresenter: () => setPresentMode('presenter'),
           }}
           topBarState={
             {
@@ -1313,6 +1317,7 @@ export const DeckBuilder: React.FC = () => {
                 onClose={() => setCommandPaletteOpen(false)}
                 onInsertBlock={handleInsertBlock}
                 onPresent={() => setPresentMode('fullscreen')}
+                onPresentPresenter={() => setPresentMode('presenter')}
                 onExport={handleExport}
                 onToggleAgent={() => setTeresaOpen((v) => !v)}
                 onOpenTheme={() => setThemeSwitcherOpen(true)}
@@ -1607,6 +1612,7 @@ export const DeckBuilder: React.FC = () => {
           onClose={() => setCommandPaletteOpen(false)}
           onInsertBlock={handleInsertBlock}
           onPresent={() => setPresentMode('fullscreen')}
+          onPresentPresenter={() => setPresentMode('presenter')}
           onExport={handleExport}
           onToggleAgent={() => setTeresaOpen((v) => !v)}
           onOpenTheme={() => setThemeSwitcherOpen(true)}

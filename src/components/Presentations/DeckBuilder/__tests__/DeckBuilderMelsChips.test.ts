@@ -9,7 +9,6 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { MELS_CHIP_ORDER } from '../../../shared/ExecutiveModuleShell/ChipDescriptor';
 import { buildDeckBuilderTopBarChips } from '../DeckBuilderMelsChips';
 
 describe('buildDeckBuilderTopBarChips', () => {
@@ -23,12 +22,51 @@ describe('buildDeckBuilderTopBarChips', () => {
         onGovernance: vi.fn(),
         onAnalytics: vi.fn(),
         onAudit: vi.fn(),
+        onToggleComments: vi.fn(),
         onShare: vi.fn(),
         onToggleAgent: vi.fn(),
         onRun: vi.fn(),
+        onPresenter: vi.fn(),
       },
     });
-    expect(chips.map((c) => c.id)).toEqual([...MELS_CHIP_ORDER]);
+    // Builder emits chips in declaration order; TopBar re-tiers them
+    // (primary/secondary/overflow) at render time. `comments` and `presenter`
+    // are deck-specific chips beyond the shared MELS_CHIP_ORDER canon.
+    // J12-S2: `presenter` (overflow) sits between `audit` and `share`.
+    expect(chips.map((c) => c.id)).toEqual([
+      'internal',
+      'theme',
+      'history',
+      'qa',
+      'governance',
+      'analytics',
+      'audit',
+      'presenter',
+      'share',
+      'comments',
+      'agent',
+      'run',
+    ]);
+  });
+
+  it('J12-S2: presenter chip is an overflow chip wired to onPresenter', () => {
+    const onPresenter = vi.fn();
+    const chips = buildDeckBuilderTopBarChips({ handlers: { onPresenter } });
+    const presenter = chips.find((c) => c.id === 'presenter');
+    expect(presenter?.group).toBe('overflow');
+    expect(presenter?.disabled).toBe(false);
+    presenter?.onClick?.();
+    expect(onPresenter).toHaveBeenCalledTimes(1);
+  });
+
+  it('J12-S2: presenter chip is disabled when no handler / empty deck', () => {
+    const noHandler = buildDeckBuilderTopBarChips({ handlers: {} });
+    expect(noHandler.find((c) => c.id === 'presenter')?.disabled).toBe(true);
+    const emptyDeck = buildDeckBuilderTopBarChips({
+      handlers: { onPresenter: vi.fn() },
+      state: { runEnabled: false },
+    });
+    expect(emptyDeck.find((c) => c.id === 'presenter')?.disabled).toBe(true);
   });
 
   it('confidentiality dot tone tracks supplied state', () => {

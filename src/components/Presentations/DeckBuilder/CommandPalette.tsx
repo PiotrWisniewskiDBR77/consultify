@@ -9,6 +9,7 @@ import {
   Image,
   LayoutGrid,
   List,
+  MonitorPlay,
   Palette,
   Play,
   Plus,
@@ -36,6 +37,8 @@ interface CommandPaletteProps {
   onClose: () => void;
   onInsertBlock: (type: string) => void;
   onPresent: () => void;
+  /** J12-S2 — presenter view (notes + next-slide + timer), distinct from the audience fullscreen. */
+  onPresentPresenter?: () => void;
   onExport: (format: 'pdf' | 'pptx' | 'png') => void;
   onToggleAgent: () => void;
   onOpenTheme: () => void;
@@ -49,6 +52,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onClose,
   onInsertBlock,
   onPresent,
+  onPresentPresenter,
   onExport,
   onToggleAgent,
   onOpenTheme,
@@ -149,6 +153,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         shortcut: '⌘P',
         action: onPresent,
       },
+      ...(onPresentPresenter
+        ? [
+            {
+              id: 'present_presenter',
+              label: 'Present (presenter view)',
+              description: 'Speaker notes, next slide & timer',
+              category: 'export' as const,
+              icon: <MonitorPlay size={14} />,
+              action: onPresentPresenter,
+            },
+          ]
+        : []),
       {
         id: 'export_pdf',
         label: 'Export as PDF',
@@ -190,7 +206,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         action: onToggleAgent,
       },
     ],
-    [onInsertBlock, onPresent, onExport, onToggleAgent, onOpenTheme, onAddCard, onShare]
+    [
+      onInsertBlock,
+      onPresent,
+      onPresentPresenter,
+      onExport,
+      onToggleAgent,
+      onOpenTheme,
+      onAddCard,
+      onShare,
+    ]
   );
 
   const filtered = useMemo(() => {
