@@ -48,19 +48,17 @@ const GroupTab: React.FC<GroupTabProps> = ({ label, count, active, onClick }) =>
   <button
     type="button"
     onClick={onClick}
-    className={`group inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors ${
+    className={`group inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
       active
-        ? 'bg-primary-500/10 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300'
-        : 'text-slate-500 hover:bg-slate-200/60 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-navy-800/60 dark:hover:text-slate-200'
+        ? 'bg-c-surface-raised text-c-text'
+        : 'text-c-text-muted hover:bg-state-hover hover:text-c-text-secondary'
     }`}
   >
     <span className="whitespace-nowrap">{label}</span>
     {count > 0 && (
       <span
         className={`inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
-          active
-            ? 'bg-primary-500/20 text-primary-700 dark:text-primary-300'
-            : 'bg-slate-200/70 text-slate-500 dark:bg-navy-700/70 dark:text-slate-400'
+          active ? 'bg-c-border-subtle text-c-text' : 'bg-c-surface-raised text-c-text-muted'
         }`}
       >
         {count}
