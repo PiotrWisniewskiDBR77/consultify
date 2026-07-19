@@ -735,8 +735,12 @@ router.get(
 
       return res.json({ preferences: { threshold: 0.85 } });
     } catch (err: any) {
-      logger.error('[settings] Error fetching inbox AI preferences:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment read — degrade to safe default instead of failing the whole response.
+      logger.warn('[settings] Error fetching inbox AI preferences, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ preferences: { threshold: 0.85 }, degraded: true });
     }
   })
 );
@@ -772,8 +776,13 @@ router.put(
 
       return res.json({ success: true, preferences });
     } catch (err: any) {
-      logger.error('[settings] Error updating inbox AI preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating inbox AI preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać preferencji AI dla skrzynki', code: 'SETTINGS_INBOX_AI_UPDATE_FAILED' });
     }
   })
 );
@@ -807,8 +816,11 @@ router.get(
 
       return res.json({ providers: [] });
     } catch (err: any) {
-      logger.error('[settings] Error fetching personal AI providers:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching personal AI providers, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ providers: [], degraded: true });
     }
   })
 );
@@ -839,8 +851,13 @@ router.put(
 
       return res.json({ success: true, providers });
     } catch (err: any) {
-      logger.error('[settings] Error updating personal AI providers:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating personal AI providers:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać dostawców AI', code: 'SETTINGS_AI_PROVIDERS_UPDATE_FAILED' });
     }
   })
 );
@@ -882,8 +899,11 @@ router.get(
         until: null,
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching DND settings:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching DND settings, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ enabled: false, until: null, degraded: true });
     }
   })
 );
@@ -914,8 +934,13 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating DND settings:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating DND settings:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać trybu nie przeszkadzać', code: 'SETTINGS_DND_UPDATE_FAILED' });
     }
   })
 );
@@ -967,8 +992,11 @@ router.get(
 
       return res.json(defaultNotificationPreferences);
     } catch (err: any) {
-      logger.error('[settings] Error fetching notification preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching notification preferences, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ ...defaultNotificationPreferences, degraded: true });
     }
   })
 );
@@ -1004,8 +1032,13 @@ router.post(
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error saving notification preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error saving notification preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać preferencji powiadomień', code: 'SETTINGS_NOTIFICATIONS_SAVE_FAILED' });
     }
   })
 );
@@ -1042,8 +1075,11 @@ router.get(
 
       return res.json(defaultEmailNotificationPreferences);
     } catch (err: any) {
-      logger.error('[settings] Error fetching email notification preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching email notification preferences, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ ...defaultEmailNotificationPreferences, degraded: true });
     }
   })
 );
@@ -1079,8 +1115,14 @@ router.put(
       logger.info(`[settings] Email notification preferences updated for user ${userId}`);
       return res.json({ success: true, preferences });
     } catch (err: any) {
-      logger.error('[settings] Error updating email notification preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating email notification preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać preferencji powiadomień e-mail',
+        code: 'SETTINGS_EMAIL_NOTIFICATIONS_UPDATE_FAILED',
+      });
     }
   })
 );
@@ -1125,8 +1167,11 @@ router.get(
 
       return res.json(defaultSoundPreferences);
     } catch (err: any) {
-      logger.error('[settings] Error fetching sound preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching sound preferences, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ ...defaultSoundPreferences, degraded: true });
     }
   })
 );
@@ -1160,8 +1205,13 @@ router.put(
       logger.info(`[settings] Notification sounds updated for user ${userId}`);
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating sound preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating sound preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać dźwięków powiadomień', code: 'SETTINGS_SOUND_PREFERENCES_UPDATE_FAILED' });
     }
   })
 );
@@ -1205,8 +1255,11 @@ router.get(
 
       return res.json(defaultDigestPreferences);
     } catch (err: any) {
-      logger.error('[settings] Error fetching digest preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching digest preferences, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ ...defaultDigestPreferences, degraded: true });
     }
   })
 );
@@ -1240,8 +1293,13 @@ router.put(
       logger.info(`[settings] Notification digest updated for user ${userId}`);
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating digest preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating digest preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać podsumowania powiadomień', code: 'SETTINGS_DIGEST_PREFERENCES_UPDATE_FAILED' });
     }
   })
 );
@@ -3232,8 +3290,29 @@ router.get(
         },
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching dashboard preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching dashboard preferences, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        preferences: {
+          defaultLandingPage: 'ai-assistant',
+          showGreeting: true,
+          compactMode: false,
+          autoRefreshInterval: 0,
+          liveUpdates: false,
+          widgets: {
+            tasks: true,
+            initiatives: true,
+            calendar: true,
+            aiInsights: true,
+            recentActivity: true,
+            quickActions: true,
+            metrics: true,
+          },
+        },
+        degraded: true,
+      });
     }
   })
 );
@@ -3270,8 +3349,13 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating dashboard preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating dashboard preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać preferencji pulpitu', code: 'SETTINGS_DASHBOARD_PREFERENCES_UPDATE_FAILED' });
     }
   })
 );
@@ -3328,8 +3412,30 @@ router.get(
         },
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching work preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching work preferences, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        preferences: {
+          defaultProjectView: 'kanban',
+          defaultTaskSort: 'priority',
+          weekStartDay: 'monday',
+          showCompletedTasks: false,
+          showSubtasks: true,
+          autoArchiveDays: 30,
+          taskDefaultDueDays: 7,
+          defaultTimeTracking: 'none',
+          defaultTaskPriority: 'medium',
+          defaultReminderBefore: '1day',
+          defaultSnoozeDuration: '1hour',
+          autoSnoozeOverdue: false,
+          enableFocusMode: true,
+          focusModeBlocksNotifications: true,
+          defaultFocusDuration: 25,
+        },
+        degraded: true,
+      });
     }
   })
 );
@@ -3366,8 +3472,13 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating work preferences:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating work preferences:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać preferencji pracy', code: 'SETTINGS_WORK_PREFERENCES_UPDATE_FAILED' });
     }
   })
 );
@@ -3418,8 +3529,23 @@ router.get(
         },
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching working hours:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching working hours, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({
+        timezone: 'Europe/Warsaw',
+        schedule: {
+          monday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          tuesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          wednesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          thursday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          friday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          saturday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+          sunday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+        },
+        degraded: true,
+      });
     }
   })
 );
@@ -3454,8 +3580,13 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating working hours:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating working hours:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać godzin pracy', code: 'SETTINGS_WORKING_HOURS_UPDATE_FAILED' });
     }
   })
 );
@@ -3510,8 +3641,11 @@ router.get(
         signatures: signatures.map((s: any) => ({ ...s, isDefault: !!s.isDefault })),
       });
     } catch (err: any) {
-      logger.error('[settings] Error fetching signatures:', err);
-      return res.status(500).json({ error: err.message });
+      logger.warn('[settings] Error fetching signatures, degrading', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ signatures: [], degraded: true });
     }
   })
 );
@@ -3570,8 +3704,13 @@ router.post(
         },
       });
     } catch (err: any) {
-      logger.error('[settings] Error creating signature:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error creating signature:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się utworzyć podpisu', code: 'SETTINGS_SIGNATURE_CREATE_FAILED' });
     }
   })
 );
@@ -3620,8 +3759,13 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error updating signature:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error updating signature:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się zapisać podpisu', code: 'SETTINGS_SIGNATURE_UPDATE_FAILED' });
     }
   })
 );
@@ -3673,8 +3817,13 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error setting default signature:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error setting default signature:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się ustawić domyślnego podpisu', code: 'SETTINGS_SIGNATURE_SET_DEFAULT_FAILED' });
     }
   })
 );
@@ -3706,8 +3855,13 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[settings] Error deleting signature:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[settings] Error deleting signature:', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się usunąć podpisu', code: 'SETTINGS_SIGNATURE_DELETE_FAILED' });
     }
   })
 );
@@ -5767,8 +5921,13 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error(`[settings] Failed to disconnect ${provider}: ${err.message}`);
-      return res.status(500).json({ error: 'Failed to disconnect account' });
+      logger.error(`[settings] Failed to disconnect ${provider}`, {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to disconnect account', code: 'SETTINGS_ACCOUNT_DISCONNECT_FAILED' });
     }
   })
 );
