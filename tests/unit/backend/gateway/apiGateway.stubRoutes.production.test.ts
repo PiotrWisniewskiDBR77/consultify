@@ -6,7 +6,7 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 }));
 
 describe('ApiGateway: stub routes are disabled in production by default', () => {
-  it('does not mount stub routes when NODE_ENV=production', async () => {
+  it('does not mount stub routes when NODE_ENV=production (no live demo UI caller)', async () => {
     const origEnv = process.env.NODE_ENV;
     const origEnable = process.env.ENABLE_STUB_ROUTES;
     const origMockBilling = process.env.MOCK_BILLING;
@@ -28,7 +28,11 @@ describe('ApiGateway: stub routes are disabled in production by default', () => 
       .filter(Boolean);
 
     expect(mountedPaths).toContain('/api/auth');
-    expect(mountedPaths).not.toContain('/api/help-analytics');
+    // D-01 (2026-07-19): confirmed via FE grep that no live demo UI calls this
+    // path — it correctly stays fully unmounted (no honest-501 either), same
+    // as before this fix. See apiGateway.stubRoutes.d01HonestStub.test.ts for
+    // the paths that DO have a live caller and now get an honest 501.
+    expect(mountedPaths).not.toContain('/api/daily-brief');
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining('Stub route disabled in production')
     );

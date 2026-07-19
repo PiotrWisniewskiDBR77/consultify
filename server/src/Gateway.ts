@@ -364,9 +364,51 @@ export class ApiGateway {
     // In production we should NOT expose those paths by default.
     const isProduction = process.env.NODE_ENV === 'production';
     const enableStubRoutes = !isProduction || process.env.ENABLE_STUB_ROUTES === 'true';
+
+    // D-01 (Fable sprint 2026-07-19, decyzja CTO "501-honest zamiast fantomu"):
+    // when a mountStub()'d router is disabled (prod + ENABLE_STUB_ROUTES unset —
+    // this IS the current state on demo), the path is simply never mounted, so a
+    // request falls through to Express's generic 404 (or, worse, client code
+    // treats the 404 as an empty state and renders a silent blank screen).
+    // For the subset below, a grep of src/ FE callers (fetch/axios/Api.* call
+    // sites) confirmed a LIVE button/screen on demo hits this exact path and is
+    // NOT already served by another, earlier-mounted non-stub router at an
+    // overlapping prefix (verified per-name, see D-01 worker report). For only
+    // these names we mount an honest 501 instead of leaving the path silently
+    // unmounted. Everything else in the 37-strong mountStub() list keeps the
+    // prior (silent, log-only) behavior — confirmed to have NO live demo caller,
+    // so touching it would be scope creep, not a fix.
+    // Zero new functionality: this does not change behavior when
+    // enableStubRoutes is true, and does not add/enable any feature — it only
+    // replaces an unstructured 404 with a structured, honest 501 + PL message.
+    const STUB_NAMES_WITH_LIVE_UI_ON_DEMO = new Set<string>([
+      'auditLogRoutes', // src/services/api.ts (audit-logs) — EnterpriseAuditLog.tsx, organizationContextWorker.api.ts
+      'integrationsRoutes', // IntegrationHealthDashboard.tsx, NotificationChannelsSettings.tsx, IntegrationSettings.tsx (webhook-subscriptions)
+      'governanceAdminRoutes', // PermissionManager.tsx — GET/PUT /api/governance/users/:userId/permissions (not served by pmo/governance.routes.ts)
+      'contextRoutes', // ContextReadinessGate.tsx
+      'rapidleanRoutes', // RapidLeanWorkspace.tsx
+      'locationsRoutes', // LocationFilter.tsx (MyWork)
+      'statusRoutes', // StatusPageView.tsx
+      'workqueueRoutes', // MyApprovalsView.tsx
+      'multiFrameworkAssessmentRoutes', // MultiFrameworkStageGateModal.tsx, useMultiFrameworkStore.ts
+      'notificationSettingsRoutes', // NotificationSettings.tsx (MyWork)
+      'helpAnalyticsRoutes', // HelpAnalyticsDashboard.tsx (admin view)
+      'consultantRoutes', // ConsultantPanelView.tsx, ConsultantInviteView.tsx
+    ]);
+
     const mountStub = (mountPath: string, router: any, name: string) => {
       if (enableStubRoutes) {
         app.use(mountPath, router);
+      } else if (STUB_NAMES_WITH_LIVE_UI_ON_DEMO.has(name)) {
+        logger.warn(
+          `[ApiGateway] Stub route disabled in production but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
+        );
+        app.use(mountPath, (_req, res) => {
+          res.status(501).json({
+            error: 'not_implemented',
+            message: 'Ta funkcja jest tymczasowo niedostępna w tym środowisku.',
+          });
+        });
       } else {
         logger.warn(`[ApiGateway] Stub route disabled in production: ${mountPath} (${name})`);
       }
