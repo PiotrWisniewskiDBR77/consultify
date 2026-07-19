@@ -187,6 +187,42 @@ describe('generateReportDocument — live-data contract (M14/S6)', () => {
     expect(typeof doc.ragLabel).toBe('string');
   });
 
+  // T9-2: explicit PL vs EN diff — proves the `tr()` bilingual pattern in
+  // reportContentGenerator.ts actually branches on `isPolish`, not just that
+  // both calls return *a* string. Same ctx/typeId, only the locale flips.
+  it('PL and EN outputs differ (ragLabel, section headings, summary) for the same ctx', () => {
+    const ctx = emptyCtx();
+    ctx.totalInitiatives = 3;
+    ctx.blocked = [{ id: 'b1', name: 'Alpha', reason: 'Budget frozen' }];
+    ctx.riskSignals = [{ title: 'Supplier delay', severity: 'high' }];
+
+    const base = {
+      typeId: 'weekly-exec' as const,
+      title: 'Report',
+      audience: 'PMO',
+      ctx,
+    };
+
+    const en = generateReportDocument({ ...base, isPolish: false });
+    const pl = generateReportDocument({ ...base, isPolish: true });
+
+    // Overall RAG bucket is language-independent (computed from ctx, not prose).
+    expect(en.rag).toBe(pl.rag);
+
+    // But every rendered string differs by locale.
+    expect(en.ragLabel).not.toBe(pl.ragLabel);
+    expect(en.ragLabel).toBe('At Risk');
+    expect(pl.ragLabel).toBe('Zagrożony');
+
+    expect(en.summary).not.toBe(pl.summary);
+
+    const enHeadings = en.sections.map((s) => s.heading);
+    const plHeadings = pl.sections.map((s) => s.heading);
+    expect(enHeadings).not.toEqual(plHeadings);
+    expect(enHeadings).toContain('Progress Summary');
+    expect(plHeadings).toContain('Podsumowanie postępu');
+  });
+
   it('reportDocumentToMarkdown emits the title as H1', () => {
     const doc = generateReportDocument({
       typeId: 'weekly-exec',
