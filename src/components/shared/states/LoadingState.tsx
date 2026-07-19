@@ -121,7 +121,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
         aria-busy="true"
         className={`flex flex-col items-center justify-center gap-3 py-16 text-[var(--c-text-muted)] ${className}`.trim()}
       >
-        <Loader2 size={28} className="animate-spin text-[var(--c-accent)]" aria-hidden />
+        <Loader2 size={28} className="animate-spin text-[var(--c-text-muted)]" aria-hidden />
         <span className="text-sm">{srLabel}</span>
       </div>
     );

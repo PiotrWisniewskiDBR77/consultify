@@ -84,7 +84,10 @@ const ActionButton: React.FC<{
     'inline-flex items-center gap-2 rounded-token-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--c-surface)]';
   const emphasisCls =
     emphasis === 'primary'
-      ? 'bg-[var(--c-accent)] text-white hover:brightness-95'
+      ? // Neutral filled CTA (dark fill in light mode, light inverse in dark mode) —
+        // NEVER the brand crimson accent token here: this shell is shared across every screen and
+        // brand accent is reserved for deliberate brand moments, not default CTAs.
+        'bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90'
       : 'border border-[var(--c-border)] bg-[var(--c-surface)] text-[var(--c-text)] hover:bg-[var(--c-surface-raised)]';
   return (
     <button type="button" onClick={spec.onClick} className={`${base} ${emphasisCls}`}>
