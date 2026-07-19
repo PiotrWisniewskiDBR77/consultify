@@ -722,8 +722,10 @@ router.get(
       events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
       res.json({ events });
     } catch (err: any) {
-      logger.error('[calendar-unified]', err);
-      res.status(500).json({ error: err?.message || 'Failed to load unified calendar' });
+      logger.error('[calendar-unified] failed', { err, correlationId: (req as any).correlationId });
+      res
+        .status(500)
+        .json({ error: 'Failed to load unified calendar', code: 'MY_WORK_CALENDAR_UNIFIED_FAILED' });
     }
   })
 );

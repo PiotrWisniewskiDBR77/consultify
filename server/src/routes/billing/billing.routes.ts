@@ -1586,8 +1586,11 @@ router.post(
 
       return res.json({ success: true, subscription });
     } catch (error: any) {
-      logger.error('[Billing] Subscribe error:', error);
-      return res.status(500).json({ error: error?.message || 'Failed to subscribe' });
+      logger.error('[Billing] Subscribe error', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({ error: 'Failed to subscribe', code: 'BILLING_SUBSCRIBE_FAILED' });
     }
   })
 );
@@ -1608,8 +1611,11 @@ router.post(
       const subscription = await BillingService.changePlan(orgId, newPlanId);
       return res.json({ success: true, subscription });
     } catch (error: any) {
-      logger.error('[Billing] Change plan error:', error);
-      return res.status(500).json({ error: error?.message || 'Failed to change plan' });
+      logger.error('[Billing] Change plan error', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({ error: 'Failed to change plan', code: 'BILLING_CHANGE_PLAN_FAILED' });
     }
   })
 );
@@ -1628,8 +1634,13 @@ router.post(
       const result = await BillingService.cancelSubscription(orgId);
       return res.json({ success: true, result });
     } catch (error: any) {
-      logger.error('[Billing] Cancel subscription error:', error);
-      return res.status(500).json({ error: error?.message || 'Failed to cancel subscription' });
+      logger.error('[Billing] Cancel subscription error', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to cancel subscription', code: 'BILLING_CANCEL_SUBSCRIPTION_FAILED' });
     }
   })
 );

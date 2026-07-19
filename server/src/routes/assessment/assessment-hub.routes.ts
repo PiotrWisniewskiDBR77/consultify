@@ -283,8 +283,11 @@ router.get('/canonical-index', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true, items });
   } catch (err: any) {
-    logger.error('[AssessmentHub] canonical-index error:', err);
-    res.status(500).json({ error: err?.message || 'Failed to fetch index' });
+    logger.error('[AssessmentHub] canonical-index error', {
+      err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({ error: 'Failed to fetch index', code: 'ASSESSMENT_CANONICAL_INDEX_FAILED' });
   }
 });
 

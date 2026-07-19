@@ -649,8 +649,14 @@ router.post('/:assessmentId/access-requests', async (req, res) => {
 
     return res.status(201).json(request);
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error creating access request:', err);
-    return res.status(500).json({ error: err.message || 'Failed to create access request' });
+    logger.error('[AssessmentWorkflowV2] Error creating access request', {
+      err,
+      correlationId: (req as any).correlationId,
+    });
+    return res.status(500).json({
+      error: 'Failed to create access request',
+      code: 'ASSESSMENT_ACCESS_REQUEST_CREATE_FAILED',
+    });
   }
 });
 
@@ -719,8 +725,14 @@ router.post(
 
       return res.json({ request: updated, assessmentId: String(assessmentId) });
     } catch (err: any) {
-      logger.error('[AssessmentWorkflowV2] Error approving access request:', err);
-      return res.status(500).json({ error: err.message || 'Failed to approve access request' });
+      logger.error('[AssessmentWorkflowV2] Error approving access request', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Failed to approve access request',
+        code: 'ASSESSMENT_ACCESS_REQUEST_APPROVE_FAILED',
+      });
     }
   }
 );
@@ -748,8 +760,14 @@ router.post(
 
       return res.json({ request: updated, assessmentId: String(assessmentId) });
     } catch (err: any) {
-      logger.error('[AssessmentWorkflowV2] Error rejecting access request:', err);
-      return res.status(500).json({ error: err.message || 'Failed to reject access request' });
+      logger.error('[AssessmentWorkflowV2] Error rejecting access request', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Failed to reject access request',
+        code: 'ASSESSMENT_ACCESS_REQUEST_REJECT_FAILED',
+      });
     }
   }
 );
@@ -797,8 +815,14 @@ router.post('/:assessmentId/access-requests/:requestId/cancel', async (req, res)
     if (!ok) return res.status(404).json({ error: 'Request not found or not cancellable' });
     return res.json({ ok: true });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error cancelling access request:', err);
-    return res.status(500).json({ error: err.message || 'Failed to cancel access request' });
+    logger.error('[AssessmentWorkflowV2] Error cancelling access request', {
+      err,
+      correlationId: (req as any).correlationId,
+    });
+    return res.status(500).json({
+      error: 'Failed to cancel access request',
+      code: 'ASSESSMENT_ACCESS_REQUEST_CANCEL_FAILED',
+    });
   }
 });
 
@@ -855,8 +879,11 @@ router.post('/:assessmentId/roles', validateBody(AssignAssessmentRoleSchema), as
 
     return res.status(201).json({ role: record });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error assigning role:', err);
-    return res.status(500).json({ error: err.message || 'Failed to assign role' });
+    logger.error('[AssessmentWorkflowV2] Error assigning role', {
+      err,
+      correlationId: (req as any).correlationId,
+    });
+    return res.status(500).json({ error: 'Failed to assign role', code: 'ASSESSMENT_ROLE_ASSIGN_FAILED' });
   }
 });
 
@@ -903,8 +930,13 @@ router.put(
 
       return res.json({ role: record });
     } catch (err: any) {
-      logger.error('[AssessmentWorkflowV2] Error updating role:', err);
-      return res.status(500).json({ error: err.message || 'Failed to update role' });
+      logger.error('[AssessmentWorkflowV2] Error updating role', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to update role', code: 'ASSESSMENT_ROLE_UPDATE_FAILED' });
     }
   }
 );
@@ -946,8 +978,11 @@ router.delete('/:assessmentId/roles/:userId', async (req, res) => {
 
     return res.json({ ok: true });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error removing role:', err);
-    return res.status(500).json({ error: err.message || 'Failed to remove role' });
+    logger.error('[AssessmentWorkflowV2] Error removing role', {
+      err,
+      correlationId: (req as any).correlationId,
+    });
+    return res.status(500).json({ error: 'Failed to remove role', code: 'ASSESSMENT_ROLE_REMOVE_FAILED' });
   }
 });
 
@@ -1329,8 +1364,13 @@ router.post(
         initiative: { id: createdInitiativeId, title, status: 'DRAFT', batchId },
       });
     } catch (err: any) {
-      logger.error('[AssessmentWorkflowV2] Error creating manual initiative:', err);
-      return res.status(500).json({ error: err.message || 'Failed to create initiative' });
+      logger.error('[AssessmentWorkflowV2] Error creating manual initiative', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Failed to create initiative', code: 'ASSESSMENT_MANUAL_INITIATIVE_CREATE_FAILED' });
     }
   }
 );

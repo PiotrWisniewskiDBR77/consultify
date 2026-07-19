@@ -158,8 +158,10 @@ router.post(
 
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[HelpFeedback] Error:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[HelpFeedback] Error', { err, correlationId: (req as any).correlationId });
+      return res
+        .status(500)
+        .json({ error: 'Failed to submit feedback', code: 'HELP_FEEDBACK_SUBMIT_FAILED' });
     }
   })
 );

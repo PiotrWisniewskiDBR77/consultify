@@ -115,8 +115,9 @@ router.get(
       );
       return res.json({ users: mappedUsers });
     } catch (err: any) {
-      logger.error('[users] Error searching users:', err);
-      return res.status(500).json({ error: err.message });
+      // Enrichment (typeahead search) — degraded 200 zamiast wywracania pickera.
+      logger.warn('[users] search degraded', { err, correlationId: (req as any).correlationId });
+      return res.json({ users: [], degraded: true });
     }
   })
 );
@@ -148,8 +149,8 @@ router.get(
 
       return res.json({ success: true, data: users || [] });
     } catch (err: any) {
-      logger.error('[users] Error fetching users:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[users] Error fetching users', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Failed to fetch users', code: 'USERS_LIST_FAILED' });
     }
   })
 );
@@ -177,8 +178,8 @@ router.get(
 
       return res.json({ success: true, data: user });
     } catch (err: any) {
-      logger.error('[users] Error fetching user:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[users] Error fetching user', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Failed to fetch user', code: 'USERS_GET_FAILED' });
     }
   })
 );
@@ -228,8 +229,8 @@ router.put(
       logger.info(`[users] User ${id} updated`);
       return res.json({ success: true, data: updates });
     } catch (err: any) {
-      logger.error('[users] Error updating user:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[users] Error updating user', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Failed to update user', code: 'USERS_UPDATE_FAILED' });
     }
   })
 );
@@ -295,8 +296,8 @@ router.post(
           fs.unlinkSync(filePath);
         }
       }
-      logger.error('[users] Error uploading avatar:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[users] Error uploading avatar', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Failed to upload avatar', code: 'USERS_AVATAR_UPLOAD_FAILED' });
     }
   })
 );
@@ -347,8 +348,8 @@ router.delete(
       logger.info(`[users] Avatar removed for user ${id}`);
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[users] Error removing avatar:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[users] Error removing avatar', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Failed to remove avatar', code: 'USERS_AVATAR_REMOVE_FAILED' });
     }
   })
 );
@@ -388,8 +389,8 @@ router.delete(
       logger.info(`[users] User ${id} deleted`);
       return res.json({ success: true });
     } catch (err: any) {
-      logger.error('[users] Error deleting user:', err);
-      return res.status(500).json({ error: err.message });
+      logger.error('[users] Error deleting user', { err, correlationId: (req as any).correlationId });
+      return res.status(500).json({ error: 'Failed to delete user', code: 'USERS_DELETE_FAILED' });
     }
   })
 );

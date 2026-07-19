@@ -40,6 +40,7 @@ import {
 import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -682,8 +683,15 @@ router.post(
       );
 
       await logSyncError(orgId, intId, err as Error, runId);
+      logger.error('[syncHub] sync failed', {
+        err,
+        correlationId: (req as any).correlationId,
+        syncRunId: runId,
+      });
 
-      return res.status(500).json({ error: errorMsg, syncRunId: runId });
+      return res
+        .status(500)
+        .json({ error: 'Sync failed', code: 'SYNC_HUB_SYNC_FAILED', syncRunId: runId });
     }
   })
 );

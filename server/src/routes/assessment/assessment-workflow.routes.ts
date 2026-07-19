@@ -1508,8 +1508,14 @@ router.post('/:assessmentId/access-requests', async (req: AuthRequest, res: Resp
 
     res.status(201).json(request);
   } catch (err: any) {
-    logger.error('[AssessmentWorkflow] Error creating access request:', err);
-    res.status(500).json({ error: err.message || 'Failed to create access request' });
+    logger.error('[AssessmentWorkflow] Error creating access request', {
+      err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Failed to create access request',
+      code: 'ASSESSMENT_ACCESS_REQUEST_CREATE_FAILED',
+    });
   }
 });
 
@@ -1659,8 +1665,14 @@ router.post(
 
       res.json(request);
     } catch (err: any) {
-      logger.error('[AssessmentWorkflow] Error approving access request:', err);
-      res.status(500).json({ error: err.message || 'Failed to approve access request' });
+      logger.error('[AssessmentWorkflow] Error approving access request', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      res.status(500).json({
+        error: 'Failed to approve access request',
+        code: 'ASSESSMENT_ACCESS_REQUEST_APPROVE_FAILED',
+      });
     }
   }
 );
@@ -1743,8 +1755,14 @@ router.post(
 
       res.json(request);
     } catch (err: any) {
-      logger.error('[AssessmentWorkflow] Error rejecting access request:', err);
-      res.status(500).json({ error: err.message || 'Failed to reject access request' });
+      logger.error('[AssessmentWorkflow] Error rejecting access request', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      res.status(500).json({
+        error: 'Failed to reject access request',
+        code: 'ASSESSMENT_ACCESS_REQUEST_REJECT_FAILED',
+      });
     }
   }
 );
