@@ -159,15 +159,15 @@ router.get('/:assessmentId/status', async (req: AuthRequest, res: Response) => {
       db.get(
         `SELECT 
           id,
-          assessment_id as assessmentId,
-          project_id as projectId,
-          organization_id as organizationId,
+          assessment_id as "assessmentId",
+          project_id as "projectId",
+          organization_id as "organizationId",
           status,
-          current_version as currentVersion,
-          created_by as createdBy,
-          created_at as createdAt,
-          updated_at as updatedAt,
-          sla_deadline as slaDeadline
+          current_version as "currentVersion",
+          created_by as "createdBy",
+          created_at as "createdAt",
+          updated_at as "updatedAt",
+          sla_deadline as "slaDeadline"
         FROM assessment_workflows
         WHERE assessment_id = ? AND organization_id = ?`,
         [assessmentId, organizationId],
@@ -567,12 +567,12 @@ router.get('/:assessmentId/versions', async (req: AuthRequest, res: Response) =>
       db.all(
         `SELECT 
           id,
-          assessment_id as assessmentId,
+          assessment_id as "assessmentId",
           version,
           data,
-          created_at as createdAt,
-          created_by as createdBy,
-          change_log as changeLog
+          created_at as "createdAt",
+          created_by as "createdBy",
+          change_log as "changeLog"
         FROM assessment_versions
         WHERE assessment_id = ?
         ORDER BY version DESC`,
@@ -781,10 +781,10 @@ router.get('/:assessmentId/history', async (req: AuthRequest, res: Response) => 
       db.all(
         `SELECT 
           id,
-          workflow_id as workflowId,
-          from_status as fromStatus,
-          to_status as toStatus,
-          triggered_by as triggeredBy,
+          workflow_id as "workflowId",
+          from_status as "fromStatus",
+          to_status as "toStatus",
+          triggered_by as "triggeredBy",
           reason,
           timestamp
         FROM assessment_workflow_transitions
@@ -899,19 +899,19 @@ router.get('/pending-reviews', async (req: AuthRequest, res: Response) => {
       db.all(
         `SELECT 
           r.id,
-          r.workflow_id as workflowId,
-          r.assessment_id as assessmentId,
-          r.reviewer_id as reviewerId,
+          r.workflow_id as "workflowId",
+          r.assessment_id as "assessmentId",
+          r.reviewer_id as "reviewerId",
           r.status,
           r.feedback,
           r.rating,
-          r.assigned_at as assignedAt,
-          r.started_at as startedAt,
-          r.completed_at as completedAt,
-          r.due_date as dueDate,
-          a.name as assessmentName,
+          r.assigned_at as "assignedAt",
+          r.started_at as "startedAt",
+          r.completed_at as "completedAt",
+          r.due_date as "dueDate",
+          a.name as "assessmentName",
           'DRD Assessment' as projectName,
-          r.message as requestedMessage
+          r.message as "requestedMessage"
         FROM assessment_reviews r
         LEFT JOIN assessments a ON r.assessment_id = a.id
         WHERE r.reviewer_id = ?
@@ -1071,13 +1071,13 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
           `SELECT 
             al.id,
             al.created_at as timestamp,
-            al.user_id as userId,
+            al.user_id as "userId",
             al.action,
-            al.entity_type as resourceType,
-            al.entity_id as resourceId,
+            al.entity_type as "resourceType",
+            al.entity_id as "resourceId",
             al.new_value as details,
-            al.ip_address as ipAddress,
-            u.email as userEmail,
+            al.ip_address as "ipAddress",
+            u.email as "userEmail",
             COALESCE(u.first_name || ' ' || u.last_name, u.email) as userName
           FROM activity_logs al
           LEFT JOIN users u ON al.user_id = u.id
@@ -1100,13 +1100,13 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
             `SELECT 
               al.id,
               al.timestamp,
-              al.user_id as userId,
+              al.user_id as "userId",
               al.action_type as action,
-              al.resource_type as resourceType,
-              al.resource_id as resourceId,
+              al.resource_type as "resourceType",
+              al.resource_id as "resourceId",
               al.details,
-              al.ip_address as ipAddress,
-              u.email as userEmail,
+              al.ip_address as "ipAddress",
+              u.email as "userEmail",
               COALESCE(u.first_name || ' ' || u.last_name, u.email) as userName
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id

@@ -318,17 +318,17 @@ export class AIPlaybooksController {
                     apt.title,
                     apt.description,
                     COALESCE(apt.status, 'DRAFT') as status,
-                    apt.trigger_signal as triggerSignal,
-                    apt.estimated_duration_mins as estimatedDurationMins,
+                    apt.trigger_signal as "triggerSignal",
+                    apt.estimated_duration_mins as "estimatedDurationMins",
                     COALESCE(apt.version, 1) as version,
-                    apt.template_graph as templateGraph,
-                    apt.created_at as createdAt,
+                    apt.template_graph as "templateGraph",
+                    apt.created_at as "createdAt",
                     COALESCE(apt.updated_at, apt.created_at) as updatedAt,
                     COALESCE(apt.usage_count, 0) as usageCount,
-                    apt.success_rate as successRate,
-                    apt.category_id as categoryId,
-                    cc.name as categoryName,
-                    cc.color as categoryColor
+                    apt.success_rate as "successRate",
+                    apt.category_id as "categoryId",
+                    cc.name as "categoryName",
+                    cc.color as "categoryColor"
                 FROM ai_playbook_templates apt
                 LEFT JOIN content_categories cc ON apt.category_id = cc.id
                 WHERE 1=1
@@ -397,10 +397,10 @@ export class AIPlaybooksController {
                 SELECT 
                     id, key, title, description, 
                     COALESCE(status, 'DRAFT') as status,
-                    trigger_signal as triggerSignal,
-                    estimated_duration_mins as estimatedDurationMins,
+                    trigger_signal as "triggerSignal",
+                    estimated_duration_mins as "estimatedDurationMins",
                     COALESCE(version, 1) as version,
-                    created_at as createdAt,
+                    created_at as "createdAt",
                     COALESCE(updated_at, created_at) as updatedAt
                 FROM ai_playbook_templates
                 WHERE COALESCE(status, 'DRAFT') = 'PUBLISHED'
@@ -528,14 +528,14 @@ export class AIPlaybooksController {
                 SELECT 
                     apt.id, apt.key, apt.title, apt.description,
                     COALESCE(apt.status, 'DRAFT') as status,
-                    apt.trigger_signal as triggerSignal,
-                    apt.estimated_duration_mins as estimatedDurationMins,
+                    apt.trigger_signal as "triggerSignal",
+                    apt.estimated_duration_mins as "estimatedDurationMins",
                     COALESCE(apt.version, 1) as version,
-                    apt.template_graph as templateGraph,
-                    apt.created_at as createdAt,
+                    apt.template_graph as "templateGraph",
+                    apt.created_at as "createdAt",
                     COALESCE(apt.updated_at, apt.created_at) as updatedAt,
                     COALESCE(apt.usage_count, 0) as usageCount,
-                    apt.success_rate as successRate
+                    apt.success_rate as "successRate"
                 FROM ai_playbook_templates apt
                 WHERE apt.id = ?
             `,
@@ -845,14 +845,14 @@ export class AIPlaybooksController {
       const runs = await dbAll(
         `
                 SELECT 
-                    apr.id, apr.template_id as templateId,
-                    apt.key as templateKey, apt.title as templateTitle,
-                    apr.organization_id as organizationId,
-                    apr.correlation_id as correlationId,
-                    apr.initiated_by as initiatedBy,
-                    apr.status, apr.started_at as startedAt,
-                    apr.completed_at as completedAt,
-                    apr.created_at as createdAt
+                    apr.id, apr.template_id as "templateId",
+                    apt.key as "templateKey", apt.title as "templateTitle",
+                    apr.organization_id as "organizationId",
+                    apr.correlation_id as "correlationId",
+                    apr.initiated_by as "initiatedBy",
+                    apr.status, apr.started_at as "startedAt",
+                    apr.completed_at as "completedAt",
+                    apr.created_at as "createdAt"
                 FROM ai_playbook_runs apr
                 LEFT JOIN ai_playbook_templates apt ON apr.template_id = apt.id
                 WHERE apr.organization_id = ? OR ? IS NULL

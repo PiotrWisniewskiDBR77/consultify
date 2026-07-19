@@ -76,14 +76,14 @@ router.get(
           t.description,
           t.status,
           t.priority,
-          t.due_date as dueDate,
-          t.task_type as taskType,
-          t.project_id as projectId,
-          p.name as projectName,
-          t.initiative_id as initiativeId,
-          i.name as initiativeName,
-          t.created_at as createdAt,
-          t.updated_at as updatedAt
+          t.due_date as "dueDate",
+          t.task_type as "taskType",
+          t.project_id as "projectId",
+          p.name as "projectName",
+          t.initiative_id as "initiativeId",
+          i.name as "initiativeName",
+          t.created_at as "createdAt",
+          t.updated_at as "updatedAt"
         FROM tasks t
         LEFT JOIN projects p ON t.project_id = p.id
         LEFT JOIN initiatives i ON t.initiative_id = i.id

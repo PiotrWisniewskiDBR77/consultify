@@ -88,7 +88,7 @@ async function readSteeringBoardContext(
     if (!enabled) return { enabled: false, memberType: null };
 
     const member = await queryHelpers.queryOne(
-      `SELECT member_type as memberType FROM project_steering_board_members WHERE project_id = ? AND user_id = ?`,
+      `SELECT member_type as "memberType" FROM project_steering_board_members WHERE project_id = ? AND user_id = ?`,
       [projectId, userId]
     );
     const memberType = normalizeUpper(
@@ -106,10 +106,10 @@ async function readProjectMembership(
 ): Promise<ProjectMembershipContext | null> {
   try {
     const row = await queryHelpers.queryOne(
-      `SELECT project_role as projectRole,
-              is_invoked as isInvoked,
-              consultant_profile as consultantProfile,
-              engagement_type as engagementType
+      `SELECT project_role as "projectRole",
+              is_invoked as "isInvoked",
+              consultant_profile as "consultantProfile",
+              engagement_type as "engagementType"
        FROM project_members
        WHERE project_id = ? AND user_id = ?`,
       [projectId, userId]
@@ -138,7 +138,7 @@ async function readInitiativeGateRoleAssignments(
   // Explicit gate role assignments
   try {
     const rows = await queryHelpers.queryAll(
-      `SELECT gate_role as gateRole, user_id as userId
+      `SELECT gate_role as "gateRole", user_id as "userId"
        FROM initiative_gate_roles WHERE initiative_id = ?`,
       [initiativeId]
     );
@@ -187,7 +187,7 @@ export async function resolveInitiativeAccessContext(
   currentUserRoleHint?: string | null
 ): Promise<InitiativeAccessContext> {
   const initiative = await queryHelpers.queryOne(
-    `SELECT id, project_id as projectId
+    `SELECT id, project_id as "projectId"
      FROM initiatives WHERE id = ? AND organization_id = ?`,
     [initiativeId, orgId]
   );

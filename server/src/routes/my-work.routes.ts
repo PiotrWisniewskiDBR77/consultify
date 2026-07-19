@@ -1055,15 +1055,15 @@ router.get(
           t.description,
           t.status,
           t.priority,
-          t.due_date as dueDate,
-          t.initiative_id as initiativeId,
-          i.name as initiativeName,
-          p.name as projectName,
-          t.assignee_id as assigneeId,
-          a.first_name as assigneeFirstName,
-          a.last_name as assigneeLastName,
-          a.avatar_url as assigneeAvatarUrl,
-          t.estimated_hours as estimatedHours,
+          t.due_date as "dueDate",
+          t.initiative_id as "initiativeId",
+          i.name as "initiativeName",
+          p.name as "projectName",
+          t.assignee_id as "assigneeId",
+          a.first_name as "assigneeFirstName",
+          a.last_name as "assigneeLastName",
+          a.avatar_url as "assigneeAvatarUrl",
+          t.estimated_hours as "estimatedHours",
           t.checklist,
           ${tSourceTypeSelect} as "sourceType",
           ${tSourceIdSelect} as "sourceId",
@@ -1571,12 +1571,12 @@ router.get(
     const overdueTasksPromise = queryHelpers
       .queryAll<any>(
         `
-        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
-               t.initiative_id as initiativeId, i.name as initiativeName,
-               t.blocked_reason as blockedReason,
-               t.blocked_by_decision_id as blockedByDecisionId,
-               t.blocked_at as blockedAt,
-               t.created_at as createdAt
+        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as "dueDate",
+               t.initiative_id as "initiativeId", i.name as "initiativeName",
+               t.blocked_reason as "blockedReason",
+               t.blocked_by_decision_id as "blockedByDecisionId",
+               t.blocked_at as "blockedAt",
+               t.created_at as "createdAt"
         FROM tasks t
         LEFT JOIN initiatives i ON t.initiative_id = i.id
         WHERE t.organization_id = ?
@@ -1595,13 +1595,13 @@ router.get(
     const blockedTasksPromise = queryHelpers
       .queryAll<any>(
         `
-        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
-               t.initiative_id as initiativeId, i.name as initiativeName,
-               t.blocked_reason as blockedReason,
-               t.blocked_by_decision_id as blockedByDecisionId,
-               t.blocked_at as blockedAt,
-               t.updated_at as updatedAt,
-               t.created_at as createdAt
+        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as "dueDate",
+               t.initiative_id as "initiativeId", i.name as "initiativeName",
+               t.blocked_reason as "blockedReason",
+               t.blocked_by_decision_id as "blockedByDecisionId",
+               t.blocked_at as "blockedAt",
+               t.updated_at as "updatedAt",
+               t.created_at as "createdAt"
         FROM tasks t
         LEFT JOIN initiatives i ON t.initiative_id = i.id
         WHERE t.organization_id = ?
@@ -1625,10 +1625,10 @@ router.get(
     const assignedOpenTasksPromise = queryHelpers
       .queryAll<any>(
         `
-        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
-               t.initiative_id as initiativeId, i.name as initiativeName,
-               t.updated_at as updatedAt,
-               t.created_at as createdAt
+        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as "dueDate",
+               t.initiative_id as "initiativeId", i.name as "initiativeName",
+               t.updated_at as "updatedAt",
+               t.created_at as "createdAt"
         FROM tasks t
         LEFT JOIN initiatives i ON t.initiative_id = i.id
         WHERE t.organization_id = ?
@@ -1659,8 +1659,8 @@ router.get(
       return (
         (await queryHelpers.queryAll<any>(
           `
-        SELECT d.id, d.title, d.description, d.type as decisionType, d.status, ${decisionPrioritySelect}, d.deadline as dueDate, d.created_at as createdAt,
-               p.name as projectName
+        SELECT d.id, d.title, d.description, d.type as "decisionType", d.status, ${decisionPrioritySelect}, d.deadline as "dueDate", d.created_at as "createdAt",
+               p.name as "projectName"
         FROM decisions d
         LEFT JOIN projects p ON d.project_id = p.id
         WHERE d.organization_id = ?
@@ -1707,7 +1707,7 @@ router.get(
           ${notifPrioritySelect},
           ${notifEntityTypeSelect},
           ${notifEntityIdSelect},
-          created_at as createdAt
+          created_at as "createdAt"
         FROM notifications
         WHERE user_id = ?
           AND ${notifReadExpr} = 0

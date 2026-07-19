@@ -424,9 +424,9 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT t.id, t.title, t.updated_at as completedAt, 
-                       u.id as completedById, u.first_name || ' ' || u.last_name as completedByName,
-                       i.id as initiativeId, i.title as initiativeTitle
+                SELECT t.id, t.title, t.updated_at as "completedAt", 
+                       u.id as "completedById", u.first_name || ' ' || u.last_name as "completedByName",
+                       i.id as "initiativeId", i.title as "initiativeTitle"
                 FROM tasks t
                 LEFT JOIN users u ON t.assignee_id = u.id
                 LEFT JOIN initiatives i ON t.initiative_id = i.id
@@ -456,7 +456,7 @@ class ManagementReportRepository {
       this.db.all(
         `
                 SELECT t.id, t.title, t.progress, t.due_date,
-                       u.id as assigneeId, u.first_name || ' ' || u.last_name as assigneeName
+                       u.id as "assigneeId", u.first_name || ' ' || u.last_name as "assigneeName"
                 FROM tasks t
                 LEFT JOIN users u ON t.assignee_id = u.id
                 WHERE t.project_id = ? AND t.status = 'IN_PROGRESS'
@@ -483,7 +483,7 @@ class ManagementReportRepository {
       this.db.all(
         `
                 SELECT t.id, t.title, t.blocked_reason, t.updated_at,
-                       u.id as ownerId, u.first_name || ' ' || u.last_name as ownerName
+                       u.id as "ownerId", u.first_name || ' ' || u.last_name as "ownerName"
                 FROM tasks t
                 LEFT JOIN users u ON t.assignee_id = u.id
                 WHERE t.project_id = ? AND t.status = 'BLOCKED'
@@ -509,7 +509,7 @@ class ManagementReportRepository {
       this.db.all(
         `
                 SELECT d.id, d.title, d.description, d.type as decision_type, d.status, d.created_at,
-                       u.id as ownerId, u.first_name || ' ' || u.last_name as ownerName
+                       u.id as "ownerId", u.first_name || ' ' || u.last_name as "ownerName"
                 FROM decisions d
                 LEFT JOIN users u ON d.decision_maker_id = u.id
                 WHERE d.project_id = ? AND d.status IN ('pending', 'escalated')
@@ -535,7 +535,7 @@ class ManagementReportRepository {
       this.db.all(
         `
                 SELECT t.id, t.title, t.due_date, t.priority,
-                       u.id as assigneeId, u.first_name || ' ' || u.last_name as assigneeName
+                       u.id as "assigneeId", u.first_name || ' ' || u.last_name as "assigneeName"
                 FROM tasks t
                 LEFT JOIN users u ON t.assignee_id = u.id
                 WHERE t.project_id = ? 
@@ -651,7 +651,7 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT r.*, u.first_name || ' ' || u.last_name as ownerName
+                SELECT r.*, u.first_name || ' ' || u.last_name as "ownerName"
                 FROM risk_register r
                 LEFT JOIN users u ON r.owner_id = u.id
                 WHERE r.project_id = ? AND r.status NOT IN ('resolved', 'accepted')
@@ -671,7 +671,7 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT d.*, u.first_name || ' ' || u.last_name as requestedByName
+                SELECT d.*, u.first_name || ' ' || u.last_name as "requestedByName"
                 FROM decisions d
                 LEFT JOIN users u ON d.requested_by = u.id
                 WHERE d.project_id = ? 
@@ -692,7 +692,7 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT id, title as name, due_date as plannedDate, status
+                SELECT id, title as name, due_date as "plannedDate", status
                 FROM initiatives
                 WHERE project_id = ? AND is_milestone = 1 AND status != 'DONE'
                 ORDER BY due_date ASC
@@ -711,7 +711,7 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT id, gate_type as name, gate_type as gateType, target_date as plannedDate, status
+                SELECT id, gate_type as name, gate_type as "gateType", target_date as "plannedDate", status
                 FROM stage_gates
                 WHERE project_id = ? AND status != 'PASSED'
                 ORDER BY target_date ASC

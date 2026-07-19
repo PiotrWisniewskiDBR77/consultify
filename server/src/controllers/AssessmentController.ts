@@ -1652,7 +1652,7 @@ export class AssessmentController {
           `SELECT i.id,
                   COALESCE(i.title, i.name) as title,
                   i.status,
-                  i.report_id as reportId
+                  i.report_id as "reportId"
            FROM assessment_initiative_links l
            LEFT JOIN initiatives i ON l.initiative_id = i.id
            WHERE l.assessment_id = ?
@@ -1668,7 +1668,7 @@ export class AssessmentController {
               `SELECT id,
                       COALESCE(title, name) as title,
                       status,
-                      report_id as reportId
+                      report_id as "reportId"
                FROM initiatives
                WHERE report_id = ?
                   OR (source_type = 'assessment_report' AND source_id = ?)

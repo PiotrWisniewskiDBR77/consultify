@@ -80,8 +80,8 @@ router.get(
     }>(
       `
             SELECT 
-                u.id as userId,
-                u.first_name || ' ' || u.last_name as userName,
+                u.id as "userId",
+                u.first_name || ' ' || u.last_name as "userName",
                 u.email,
                 COALESCE(aus.tier, 'STANDARD') as currentTier,
                 COALESCE(aus.requests_count, 0) as usage,
@@ -150,8 +150,8 @@ router.get(
       `
             SELECT 
                 'user' as entityType,
-                aus.user_id as entityId,
-                u.first_name || ' ' || u.last_name as entityName,
+                aus.user_id as "entityId",
+                u.first_name || ' ' || u.last_name as "entityName",
                 SUM(aus.requests_count) as requests,
                 SUM(aus.tokens_used) as tokens,
                 SUM(aus.cost_usd) as cost
@@ -178,8 +178,8 @@ router.get(
       `
             SELECT 
                 'project' as entityType,
-                aus.project_id as entityId,
-                p.name as entityName,
+                aus.project_id as "entityId",
+                p.name as "entityName",
                 SUM(aus.requests_count) as requests,
                 SUM(aus.tokens_used) as tokens,
                 SUM(aus.cost_usd) as cost
@@ -250,8 +250,8 @@ router.get(
                 se.id,
                 se.type,
                 se.severity,
-                se.user_id as userId,
-                u.email as userEmail,
+                se.user_id as "userId",
+                u.email as "userEmail",
                 se.details,
                 se.resolved,
                 se.created_at as timestamp,
@@ -335,8 +335,8 @@ router.get(
                 ae.action_type as type,
                 json_extract(ae.metadata_json, '$.description') as description,
                 ae.ts as timestamp,
-                u.email as userEmail,
-                u.first_name || ' ' || u.last_name as userName
+                u.email as "userEmail",
+                u.first_name || ' ' || u.last_name as "userName"
             FROM audit_events ae
             LEFT JOIN users u ON ae.actor_user_id = u.id
             WHERE ae.org_id = ?
@@ -420,15 +420,15 @@ router.get(
       `
             SELECT 
                 us.id,
-                us.user_id as userId,
-                u.email as userEmail,
-                u.first_name || ' ' || u.last_name as userName,
-                us.device_info as deviceName,
-                us.ip_address as ipAddress,
+                us.user_id as "userId",
+                u.email as "userEmail",
+                u.first_name || ' ' || u.last_name as "userName",
+                us.device_info as "deviceName",
+                us.ip_address as "ipAddress",
                 us.location,
-                us.is_current as isCurrent,
-                us.last_active_at as lastActivity,
-                us.created_at as createdAt
+                us.is_current as "isCurrent",
+                us.last_active_at as "lastActivity",
+                us.created_at as "createdAt"
             FROM user_sessions us
             JOIN users u ON us.user_id = u.id
             WHERE u.organization_id = ?
@@ -469,14 +469,14 @@ router.get(
       `
             SELECT 
                 lh.id,
-                lh.user_id as userId,
-                u.email as userEmail,
-                u.first_name || ' ' || u.last_name as userName,
-                lh.ip_address as ipAddress,
-                lh.user_agent as userAgent,
+                lh.user_id as "userId",
+                u.email as "userEmail",
+                u.first_name || ' ' || u.last_name as "userName",
+                lh.ip_address as "ipAddress",
+                lh.user_agent as "userAgent",
                 lh.location,
                 lh.status,
-                lh.failure_reason as failureReason,
+                lh.failure_reason as "failureReason",
                 lh.created_at as timestamp
             FROM login_history lh
             JOIN users u ON lh.user_id = u.id
@@ -540,7 +540,7 @@ router.get(
                 standard,
                 status,
                 findings_count as findings,
-                generated_at as generatedAt
+                generated_at as "generatedAt"
             FROM compliance_reports
             WHERE organization_id = ?
             ORDER BY generated_at DESC
@@ -577,11 +577,11 @@ router.get(
                 id,
                 name,
                 description,
-                based_on as basedOn,
-                sections_count as sectionsCount,
-                checkpoints_count as checkpointsCount,
-                created_at as createdAt,
-                updated_at as updatedAt
+                based_on as "basedOn",
+                sections_count as "sectionsCount",
+                checkpoints_count as "checkpointsCount",
+                created_at as "createdAt",
+                updated_at as "updatedAt"
             FROM custom_compliance_templates
             WHERE organization_id = ?
             ORDER BY updated_at DESC
@@ -622,9 +622,9 @@ router.get(
                 name,
                 description,
                 color,
-                members_count as membersCount,
+                members_count as "membersCount",
                 permissions,
-                created_at as createdAt
+                created_at as "createdAt"
             FROM user_groups
             WHERE organization_id = ?
             ORDER BY name ASC
@@ -679,18 +679,18 @@ router.get(
                 se.id,
                 se.title,
                 se.description,
-                se.event_type as eventType,
-                se.start_time as startTime,
-                se.end_time as endTime,
+                se.event_type as "eventType",
+                se.start_time as "startTime",
+                se.end_time as "endTime",
                 se.location,
-                se.is_all_day as isAllDay,
+                se.is_all_day as "isAllDay",
                 se.status,
-                se.project_id as projectId,
-                p.name as projectName,
+                se.project_id as "projectId",
+                p.name as "projectName",
                 se.attendees,
-                se.created_by as createdBy,
-                u.email as creatorEmail,
-                u.first_name || ' ' || u.last_name as creatorName
+                se.created_by as "createdBy",
+                u.email as "creatorEmail",
+                u.first_name || ' ' || u.last_name as "creatorName"
             FROM scheduled_events se
             LEFT JOIN projects p ON se.project_id = p.id
             LEFT JOIN users u ON se.created_by = u.id

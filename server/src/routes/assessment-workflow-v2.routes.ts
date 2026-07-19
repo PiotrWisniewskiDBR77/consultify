@@ -1366,23 +1366,23 @@ router.get('/:assessmentId/gate-decisions', async (req, res) => {
       const rows = await db.all<any>(
         `SELECT 
           gd.id,
-          gd.gate_type as gateType,
-          gd.from_status as fromStatus,
-          gd.to_status as toStatus,
-          gd.approver_role as approverRole,
-          gd.assignee_id as assigneeId,
+          gd.gate_type as "gateType",
+          gd.from_status as "fromStatus",
+          gd.to_status as "toStatus",
+          gd.approver_role as "approverRole",
+          gd.assignee_id as "assigneeId",
           gd.status,
-          gd.requested_at as requestedAt,
-          gd.requested_by as requestedBy,
-          gd.request_comment as requestComment,
-          gd.decided_at as decidedAt,
-          gd.decided_by as decidedBy,
-          gd.decision_comment as decisionComment,
-          gd.reminder_count as reminderCount,
-          u_assignee.display_name as assigneeName,
-          u_assignee.email as assigneeEmail,
-          u_requester.display_name as requesterName,
-          u_requester.email as requesterEmail
+          gd.requested_at as "requestedAt",
+          gd.requested_by as "requestedBy",
+          gd.request_comment as "requestComment",
+          gd.decided_at as "decidedAt",
+          gd.decided_by as "decidedBy",
+          gd.decision_comment as "decisionComment",
+          gd.reminder_count as "reminderCount",
+          u_assignee.display_name as "assigneeName",
+          u_assignee.email as "assigneeEmail",
+          u_requester.display_name as "requesterName",
+          u_requester.email as "requesterEmail"
         FROM assessment_gate_decisions gd
         LEFT JOIN users u_assignee ON u_assignee.id = gd.assignee_id
         LEFT JOIN users u_requester ON u_requester.id = gd.requested_by

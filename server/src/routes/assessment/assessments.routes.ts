@@ -36,11 +36,11 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
       db.all(
         `SELECT 
                     id,
-                    organization_id as organizationId,
+                    organization_id as "organizationId",
                     name,
                     status,
-                    created_at as createdAt,
-                    updated_at as updatedAt,
+                    created_at as "createdAt",
+                    updated_at as "updatedAt",
                     COALESCE(framework_type, 'DRD') as type,
                     CASE COALESCE(framework_type, 'DRD')
                       WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
@@ -87,12 +87,12 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       db.get(
         `SELECT 
                     id,
-                    organization_id as organizationId,
+                    organization_id as "organizationId",
                     name,
                     description,
                     status,
-                    created_at as createdAt,
-                    updated_at as updatedAt,
+                    created_at as "createdAt",
+                    updated_at as "updatedAt",
                     'DRD' as type,
                     'Digital Readiness Diagnosis' as projectName
                 FROM assessments 
@@ -388,7 +388,7 @@ router.get('/frameworks/list', async (req: AuthRequest, res: Response) => {
 
     const frameworks = await new Promise<any[]>((resolve, reject) => {
       db.all(
-        `SELECT id, name, display_name as displayName, description, is_licensed as isLicensed, license_holder as licenseHolder
+        `SELECT id, name, display_name as "displayName", description, is_licensed as "isLicensed", license_holder as "licenseHolder"
                  FROM assessment_frameworks WHERE is_active = 1`,
         [],
         (err: Error | null, rows: any[]) => {

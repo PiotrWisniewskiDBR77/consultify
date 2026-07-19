@@ -29,7 +29,7 @@ export async function autoStartScheduledInitiatives(options: { limit?: number } 
 
   // Select candidates. Use ISO string comparison (works for ISO timestamps).
   const rows = await queryHelpers.queryAll<any>(
-    `SELECT id, organization_id as organizationId, status, planned_start_date as plannedStartDate, start_date as startDate
+    `SELECT id, organization_id as "organizationId", status, planned_start_date as "plannedStartDate", start_date as "startDate"
      FROM initiatives
      WHERE UPPER(status) = 'SCHEDULED'
      ORDER BY COALESCE(planned_start_date, start_date) ASC

@@ -141,7 +141,7 @@ router.get(
     const query = String(q || '').trim();
     if (!query) {
       const data = await dbAll<any>(
-        `SELECT id, category_id as categoryId, title, status, created_at as createdAt, updated_at as updatedAt
+        `SELECT id, category_id as "categoryId", title, status, created_at as "createdAt", updated_at as "updatedAt"
          FROM help_articles
          WHERE status = 'published'
          ORDER BY updated_at DESC
@@ -153,7 +153,7 @@ router.get(
 
     const like = `%${query}%`;
     const data = await dbAll<any>(
-      `SELECT id, category_id as categoryId, title, status, created_at as createdAt, updated_at as updatedAt
+      `SELECT id, category_id as "categoryId", title, status, created_at as "createdAt", updated_at as "updatedAt"
        FROM help_articles
        WHERE status = 'published' AND (title LIKE ? OR body LIKE ?)
        ORDER BY updated_at DESC
@@ -174,7 +174,7 @@ router.get(
     await ensureHelpSchema();
 
     const categories = await dbAll<any>(
-      `SELECT id, name, sort_order as sortOrder FROM help_categories ORDER BY sort_order ASC, name ASC`,
+      `SELECT id, name, sort_order as "sortOrder" FROM help_categories ORDER BY sort_order ASC, name ASC`,
       []
     ).catch(() => []);
 

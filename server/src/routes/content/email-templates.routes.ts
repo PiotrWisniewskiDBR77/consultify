@@ -59,23 +59,23 @@ router.get(
       let query = `
                 SELECT 
                     et.id,
-                    et.template_key as templateKey,
+                    et.template_key as "templateKey",
                     et.name,
                     et.subject,
-                    et.body_html as htmlContent,
-                    et.body_text as textContent,
-                    et.variables as availableVariables,
-                    et.is_active as isActive,
-                    et.is_default as isDefault,
-                    et.created_at as createdAt,
-                    et.updated_at as updatedAt,
+                    et.body_html as "htmlContent",
+                    et.body_text as "textContent",
+                    et.variables as "availableVariables",
+                    et.is_active as "isActive",
+                    et.is_default as "isDefault",
+                    et.created_at as "createdAt",
+                    et.updated_at as "updatedAt",
                     COALESCE(et.version, 1) as version,
                     COALESCE(et.status, 'DRAFT') as status,
-                    et.category_id as categoryId,
-                    et.language_code as languageCode,
+                    et.category_id as "categoryId",
+                    et.language_code as "languageCode",
                     COALESCE(et.usage_count, 0) as usageCount,
-                    cc.name as categoryName,
-                    cc.color as categoryColor
+                    cc.name as "categoryName",
+                    cc.color as "categoryColor"
                 FROM email_templates et
                 LEFT JOIN content_categories cc ON et.category_id = cc.id
                 WHERE 1=1
@@ -160,26 +160,26 @@ router.get(
         `
                 SELECT 
                     et.id,
-                    et.template_key as templateKey,
+                    et.template_key as "templateKey",
                     et.name,
                     et.subject,
-                    et.body_html as htmlContent,
-                    et.body_text as textContent,
-                    et.variables as availableVariables,
-                    et.is_active as isActive,
-                    et.is_default as isDefault,
-                    et.created_at as createdAt,
-                    et.updated_at as updatedAt,
+                    et.body_html as "htmlContent",
+                    et.body_text as "textContent",
+                    et.variables as "availableVariables",
+                    et.is_active as "isActive",
+                    et.is_default as "isDefault",
+                    et.created_at as "createdAt",
+                    et.updated_at as "updatedAt",
                     COALESCE(et.version, 1) as version,
                     COALESCE(et.status, 'DRAFT') as status,
-                    et.category_id as categoryId,
-                    et.language_code as languageCode,
-                    et.variables_schema as variablesSchema,
+                    et.category_id as "categoryId",
+                    et.language_code as "languageCode",
+                    et.variables_schema as "variablesSchema",
                     COALESCE(et.usage_count, 0) as usageCount,
-                    et.published_at as publishedAt,
-                    et.published_by as publishedBy,
-                    cc.name as categoryName,
-                    cc.color as categoryColor
+                    et.published_at as "publishedAt",
+                    et.published_by as "publishedBy",
+                    cc.name as "categoryName",
+                    cc.color as "categoryColor"
                 FROM email_templates et
                 LEFT JOIN content_categories cc ON et.category_id = cc.id
                 WHERE et.id = ?
@@ -771,9 +771,9 @@ router.get(
       const versions = await dbAll(
         `
                 SELECT 
-                    id, version, name, subject, change_type as changeType,
-                    changed_by as changedBy, change_notes as changeNotes,
-                    status_at_version as statusAtVersion, created_at as createdAt
+                    id, version, name, subject, change_type as "changeType",
+                    changed_by as "changedBy", change_notes as "changeNotes",
+                    status_at_version as "statusAtVersion", created_at as "createdAt"
                 FROM email_template_versions
                 WHERE template_id = ?
                 ORDER BY version DESC
@@ -804,8 +804,8 @@ router.get(
       const { contentType } = req.query as { contentType?: string };
 
       let query = `
-                SELECT id, name, slug, description, content_type as contentType,
-                       color, icon, sort_order as sortOrder, is_active as isActive
+                SELECT id, name, slug, description, content_type as "contentType",
+                       color, icon, sort_order as "sortOrder", is_active as "isActive"
                 FROM content_categories
                 WHERE is_active = 1
             `;
@@ -839,7 +839,7 @@ router.get(
       const { contentType } = req.query as { contentType?: string };
 
       let query = `
-                SELECT id, name, slug, content_type as contentType, color, usage_count as usageCount
+                SELECT id, name, slug, content_type as "contentType", color, usage_count as "usageCount"
                 FROM content_tags
                 WHERE is_active = 1
             `;

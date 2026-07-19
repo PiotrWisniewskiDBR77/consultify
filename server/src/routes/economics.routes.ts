@@ -3040,7 +3040,7 @@ router.get(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const rows = await dbAll<any>(
       `SELECT bi.initiative_id as id, i.title, i.status,
-              bi.revenue_uplift as revenueUplift, bi.cost_savings as costSavings, bi.capex_required as capexRequired
+              bi.revenue_uplift as "revenueUplift", bi.cost_savings as "costSavings", bi.capex_required as "capexRequired"
        FROM budget_initiative_links bi
        JOIN initiatives i ON i.id = bi.initiative_id
        WHERE bi.budget_id = ? AND bi.organization_id = ?`,
