@@ -28,3 +28,26 @@ fali Vegas uruchom to ZANIM Piotr zobaczy cokolwiek — łapie przypadkowy dryf 
 - `lib/devserver.mjs` — start/stop Vite (`dev-render/vite.config.ts`, retry na 504 cold-start).
 - `lib/compare.mjs` — dwuwarstwowe porównanie: pixelmatch (jeśli jest) → fallback grid-hash+rozmiar.
 - `__shots__/baseline/` — zaakceptowany stan (w gicie, `git add -f`). `current/`,`diff/` — efemeryczne (gitignore).
+
+## TODO(a11y, VF0-7) — axe-core NIE wpięty (2026-07-19)
+`axe-core` nie jest w `package.json`/`node_modules` (sprawdzone przy okazji VF0-7 a11y
+gate — patrz `scripts/check-a11y-jsx.cjs`, `scripts/check-a11y-focus.cjs`). Harness ten
+JUŻ istnieje (`playwright` jest zainstalowany, ten runner startuje `chromium` per ekran),
+więc gdy `axe-core` (lub `@axe-core/playwright`) zostanie dodany do `node_modules`, wpięcie
+jest tanie — NIE budować nowego harnessu:
+1. `npm i -D @axe-core/playwright` (albo `axe-core` + ręczny `page.evaluate(axe.run)`).
+2. W `run.mjs`, w tej samej pętli co `page.screenshot(...)` (po `loadScreen`, przed/po
+   zrzucie), dorzucić `new AxeBuilder({ page }).analyze()` i zebrać wynik obok `cmp`
+   w `results` (dodać pole `axe: { critical, serious, ... }`).
+3. Próg bramki: **critical=0** (fail gdy `violations` z `impact==='critical'` > 0);
+   `serious`/`moderate`/`minor` na razie tylko raportować (ratchet do rozważenia
+   analogicznie do `check:colors`/`check:a11y-jsx`, jeśli critical=0 okaże się zbyt
+   hałaśliwy na starcie).
+4. Raport: dopisać sekcję axe do `__shots__/report.json` (per ekran×motyw), żeby FAIL
+   pokazywał który ekran/reguła, tak jak dziś pokazuje `diffRatio`.
+5. `npm run` wrapper: dodać do `package.json` obok istniejącego rannera (na razie ten
+   suite nie ma osobnego `npm run test:visual:v7-8` wpisu — sprawdź czy trzeba dodać).
+
+Do czasu instalacji `axe-core`: NIE ma automatycznego axe-gate. Mechaniczna a11y-bramka
+na dziś = `check:a11y-jsx` (ratchet, jsx-a11y-style regex) + `check:a11y-focus`
+(diff-based, outline-none bez focus-visible) — patrz `scripts/`.

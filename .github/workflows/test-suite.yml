@@ -39,6 +39,11 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          # check:a11y-focus (VF0-7) diffs against the PR base / previous commit —
+          # needs history beyond the default depth-1 shallow clone (same pattern
+          # as the test-impact job below).
+          fetch-depth: 50
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -59,6 +64,13 @@ jobs:
 
       - name: Hardcoded-color ratchet gate (VEGAS V7.7)
         run: npm run check:colors
+
+      - name: a11y jsx ratchet gate (VF0-7)
+        run: npm run check:a11y-jsx
+
+      - name: a11y focus-visible gate (VF0-7, diff vs base)
+        run: npm run check:a11y-focus -- --base "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'HEAD~1' }}"
+
       - name: Job duration
         if: always()
         run: |
