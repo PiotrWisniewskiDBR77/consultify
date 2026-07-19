@@ -708,7 +708,7 @@ export async function getRunsByOrg(
     params.push(stateFilter);
   }
   if (initiativeId) {
-    sql += ` AND json_extract(metadata, '$.initiativeId') = ?`;
+    sql += ` AND metadata::jsonb->>'initiativeId' = ?`;
     params.push(initiativeId);
   }
   sql += ` ORDER BY updated_at DESC LIMIT ?`;
@@ -730,7 +730,7 @@ export async function getActiveRuns(
                AND state NOT IN ('completed', 'cancelled', 'expired')`;
   const params: unknown[] = [organizationId];
   if (initiativeId) {
-    sql += ` AND json_extract(metadata, '$.initiativeId') = ?`;
+    sql += ` AND metadata::jsonb->>'initiativeId' = ?`;
     params.push(initiativeId);
   }
   sql += ` ORDER BY created_at DESC`;

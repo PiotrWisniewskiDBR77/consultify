@@ -267,11 +267,19 @@ export async function setAnnaLPConfig(
   };
 
   await dbRun(
-    `INSERT OR REPLACE INTO v8_anna_lp_configs (
+    `INSERT INTO v8_anna_lp_configs (
       config_id, organization_id, identity_role, conversation_contract,
       platform_integration_ref, ai_governance_ref, degraded_state_behavior,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (organization_id, identity_role) DO UPDATE SET
+      config_id = EXCLUDED.config_id,
+      conversation_contract = EXCLUDED.conversation_contract,
+      platform_integration_ref = EXCLUDED.platform_integration_ref,
+      ai_governance_ref = EXCLUDED.ai_governance_ref,
+      degraded_state_behavior = EXCLUDED.degraded_state_behavior,
+      created_at = EXCLUDED.created_at,
+      updated_at = EXCLUDED.updated_at`,
     [
       config.configId,
       config.organizationId,
@@ -331,11 +339,20 @@ export async function setDemoTrialConfig(
   };
 
   await dbRun(
-    `INSERT OR REPLACE INTO v8_demo_trial_configs (
+    `INSERT INTO v8_demo_trial_configs (
       config_id, organization_id, narrative_version, trial_duration,
       demo_scenarios, onboarding_flow_ref, is_refreshed,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (organization_id) DO UPDATE SET
+      config_id = EXCLUDED.config_id,
+      narrative_version = EXCLUDED.narrative_version,
+      trial_duration = EXCLUDED.trial_duration,
+      demo_scenarios = EXCLUDED.demo_scenarios,
+      onboarding_flow_ref = EXCLUDED.onboarding_flow_ref,
+      is_refreshed = EXCLUDED.is_refreshed,
+      created_at = EXCLUDED.created_at,
+      updated_at = EXCLUDED.updated_at`,
     [
       config.configId,
       config.organizationId,

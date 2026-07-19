@@ -1086,7 +1086,7 @@ export async function getInitiativeGateReadinessRead(
 
     try {
       const riskCount = await queryHelpers.queryOne(
-        `SELECT COUNT(*) as c FROM initiative_raids WHERE initiative_id = ? AND type = 'RISK'`,
+        `SELECT COUNT(*) as c FROM raid_items WHERE initiative_id = ? AND type = 'RISK'`,
         [initiativeId]
       );
       addCheck(
