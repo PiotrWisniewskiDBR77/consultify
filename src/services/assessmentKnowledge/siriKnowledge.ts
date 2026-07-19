@@ -152,6 +152,58 @@ export const SIRI_LEVEL_MEANINGS: Record<
   },
 };
 
+/**
+ * PL counterpart of SIRI_LEVEL_MEANINGS (OXFORD O8 — SIRI/ADMA parity with DRD,
+ * which has always shipped PL as the default). Mirrors the EN meanings 1:1, HBS-
+ * consultant tone, plain language, no filler.
+ */
+export const SIRI_LEVEL_MEANINGS_PL: Record<
+  number,
+  { title: string; meaning: string; evidencePattern: string }
+> = {
+  0: {
+    title: 'Nierozpoczęty',
+    meaning:
+      'Brak jakiegokolwiek sformalizowanego podejścia. Procesy są doraźne, nieudokumentowane albo nie istnieją. Brak świadomości Przemysłu 4.0 w tym wymiarze.',
+    evidencePattern: 'Brak dokumentacji, brak KPI, wyłącznie ręczne/papierowe procesy pracy.',
+  },
+  1: {
+    title: 'Zdefiniowany',
+    meaning:
+      'Podstawowe procesy są udokumentowane i zrozumiałe. Istnieje wstępna standaryzacja, ale wykonanie jest niespójne. Mogą występować pojedyncze, izolowane narzędzia cyfrowe.',
+    evidencePattern:
+      'Istnieją SOP-y lub mapy procesów; używane są podstawowe narzędzia (arkusze, samodzielne oprogramowanie); dostępne materiały szkoleniowe.',
+  },
+  2: {
+    title: 'Cyfrowy',
+    meaning:
+      'Kluczowe procesy są ucyfrowione z podstawowym monitoringiem. Automatyzacja obsługuje rutynowe zadania. Dane są zbierane, ale analiza ogranicza się do raportowania opisowego.',
+    evidencePattern:
+      'Systemy cyfrowe w codziennym użyciu (MES, ERP, CRM); dashboardy pokazujące KPI; zautomatyzowane przepływy dla zadań powtarzalnych.',
+  },
+  3: {
+    title: 'Zintegrowany',
+    meaning:
+      'Systemy są zintegrowane między funkcjami. Dane przepływają w czasie rzeczywistym między działami. Decyzje opierają się na analityce danych. Współpraca międzyfunkcyjna jest standardem.',
+    evidencePattern:
+      'Zintegrowane platformy (ERP-MES-CRM); dashboardy czasu rzeczywistego; udokumentowane przepływy danych między systemami; procesy cyfrowe obejmujące zespoły.',
+  },
+  4: {
+    title: 'Zautomatyzowany',
+    meaning:
+      'Zaawansowana automatyzacja z analityką predykcyjną. AI wspiera decyzje. Procesy same się dostrajają na podstawie danych. Działania proaktywne zamiast reaktywnych.',
+    evidencePattern:
+      'Modele AI/ML w produkcyjnym użyciu; aktywne utrzymanie predykcyjne; zautomatyzowane wsparcie decyzji; mierzalny zwrot z inwestycji cyfrowych.',
+  },
+  5: {
+    title: 'Inteligentny',
+    meaning:
+      'Samo-optymalizujące się systemy działają autonomicznie. Ciągła innowacja jest częścią codzienności. Organizacja prowadzi transformację branży i tworzy nową wartość cyfrową.',
+    evidencePattern:
+      'Autonomiczne operacje; systemy samo-uczące się; udokumentowany pipeline innowacji; wyniki przewyższające benchmarki branżowe; cyfrowe strumienie przychodu.',
+  },
+};
+
 // ============================================
 // EVIDENCE GUIDANCE PER DIMENSION
 // ============================================
@@ -223,6 +275,73 @@ const DIMENSION_EVIDENCE_GUIDANCE: Record<string, Record<number, string>> = {
   },
 };
 
+const DIMENSION_EVIDENCE_GUIDANCE_PL: Record<string, Record<number, string>> = {
+  operations: {
+    0: 'Sprawdź brak systemów śledzenia produkcji. Czy zlecenia produkcyjne są papierowe?',
+    1: 'Zweryfikuj udokumentowane SOP-y i podstawowe narzędzia planowania produkcji (liczy się nawet arkusz kalkulacyjny).',
+    2: 'Potwierdź, że MES lub odpowiednik jest realnie używany. Czy metryki OEE są śledzone cyfrowo?',
+    3: 'Potwierdź integrację ERP-MES. Czy dane produkcyjne płyną do planowania biznesowego w czasie rzeczywistym?',
+    4: 'Sprawdź harmonogramowanie sterowane AI lub predykcyjne systemy jakości. Czy decyzje są zautomatyzowane?',
+    5: 'Zweryfikuj autonomiczne sterowanie produkcją. Czy systemy same się optymalizują bez udziału człowieka?',
+  },
+  supply_chain: {
+    0: 'Potwierdź, że zakupy i logistyka są ręczne (telefon, e-mail, papierowe zamówienia).',
+    1: 'Sprawdź podstawowe moduły ERP do zakupów. Czy istnieje baza dostawców?',
+    2: 'Zweryfikuj aktywne EDI lub e-zaopatrzenie. Czy magazyn jest ucyfrowiony?',
+    3: 'Sprawdź platformę end-to-end widoczności łańcucha dostaw. Czy można śledzić zamówienia między warstwami?',
+    4: 'Sprawdź prognozowanie popytu oparte na AI lub autonomiczne wyzwalacze zaopatrzenia.',
+    5: 'Zweryfikuj samo-organizujący się łańcuch dostaw z traceability blockchain i autonomicznym trasowaniem.',
+  },
+  product_lifecycle: {
+    0: 'Czy projekty produktów są przechowywane lokalnie lub na papierze? Brak kontroli wersji?',
+    1: 'Sprawdź podstawowe użycie CAD i systemy zarządzania dokumentami.',
+    2: 'Zweryfikuj system PLM/PDM z integracją CAD i zarządzaniem BOM.',
+    3: 'Sprawdź zintegrowany PLM z możliwościami symulacji i cyfrowymi makietami.',
+    4: 'Sprawdź cyfrowego bliźniaka produktu i inżynierię systemów opartą na modelu.',
+    5: 'Zweryfikuj innowację produktową sterowaną AI z autonomiczną optymalizacją projektu.',
+  },
+  automation: {
+    0: 'Potwierdź, że operacje są w pełni ręczne, wyłącznie narzędzia ręczne.',
+    1: 'Sprawdź podstawowe maszyny CNC lub PLC. Czy są jakiekolwiek procesy półautomatyczne?',
+    2: 'Sprawdź roboty przemysłowe, systemy SCADA i zautomatyzowany transport materiałów.',
+    3: 'Zweryfikuj elastyczne komórki produkcyjne, koboty i wdrożenia AGV/AMR.',
+    4: 'Sprawdź roboty sterowane AI i systemy utrzymania predykcyjnego.',
+    5: 'Sprawdź w pełni autonomiczne linie produkcyjne (zdolność do produkcji „lights-out").',
+  },
+  connectivity: {
+    0: 'Potwierdź, że systemy są izolowane, brak łączności sieciowej między maszynami.',
+    1: 'Sprawdź podstawowe LAN/WiFi i wspólne dyski. Czy istnieje jakakolwiek łączność maszyn?',
+    2: 'Zweryfikuj wdrożone czujniki IIoT. Czy edge computing jest w użyciu?',
+    3: 'Sprawdź konwergencję IT/OT. Czy istnieje platforma chmurowa z architekturą API-first?',
+    4: 'Sprawdź sieci 5G/prywatne i wdrożenie digital thread.',
+    5: 'Zweryfikuj sieci mesh z autonomiczną inteligencją brzegową we wszystkich systemach.',
+  },
+  intelligence: {
+    0: 'Potwierdź brak jakiejkolwiek zdolności analitycznej. Całe raportowanie jest ręczne.',
+    1: 'Sprawdź podstawowe raportowanie (arkusze, statyczne dashboardy).',
+    2: 'Zweryfikuj platformę BI lub hurtownię danych z analityką opisową.',
+    3: 'Sprawdź analitykę predykcyjną i modele ML w aktywnym użyciu.',
+    4: 'Sprawdź AI/ML na dużą skalę z analityką preskryptywną i wsparciem decyzji w czasie rzeczywistym.',
+    5: 'Zweryfikuj autonomiczne podejmowanie decyzji przez AI z systemami samo-uczącymi się.',
+  },
+  talent_readiness: {
+    0: 'Potwierdź brak cyfrowego programu szkoleniowego. Nauka jest doraźna.',
+    1: 'Sprawdź podstawowe plany szkoleń i inwentarz kompetencji.',
+    2: 'Zweryfikuj wdrożony LMS. Czy kompetencje cyfrowe są formalnie oceniane?',
+    3: 'Sprawdź ramę kompetencji i program cyfrowej akademii.',
+    4: 'Sprawdź spersonalizowane przez AI ścieżki nauki i narzędzia szkoleniowe VR/AR.',
+    5: 'Zweryfikuj kulturę samodzielnej nauki z rynkiem wiedzy wewnątrz organizacji.',
+  },
+  structure_management: {
+    0: 'Potwierdź tradycyjną hierarchię bez cyfrowego zarządzania.',
+    1: 'Sprawdź podstawowy dokument strategii cyfrowej i wstępne ramy zarządzania.',
+    2: 'Zweryfikuj istnienie biura transformacji cyfrowej z dashboardami KPI.',
+    3: 'Sprawdź zwinną strukturę organizacyjną z zarządzaniem danymi i zarządzaniem innowacją.',
+    4: 'Sprawdź model organizacji platformowej i ramy zarządzania AI.',
+    5: 'Zweryfikuj adaptacyjną organizację z samo-organizującymi się zespołami.',
+  },
+};
+
 // ============================================
 // COMMON MISTAKES PER DIMENSION
 // ============================================
@@ -270,6 +389,49 @@ const DIMENSION_COMMON_MISTAKES: Record<string, string[]> = {
   ],
 };
 
+const DIMENSION_COMMON_MISTAKES_PL: Record<string, string[]> = {
+  operations: [
+    'Ocena na podstawie posiadania narzędzia, a nie faktycznego codziennego użycia i integracji z procesem.',
+    'Mylenie posiadania licencji MES z funkcjonującym, produkującym dane wdrożeniem MES.',
+    'Pomijanie podprocesów: operacje obejmują planowanie, wykonanie, jakość i utrzymanie ruchu.',
+  ],
+  supply_chain: [
+    'Ocena wyłącznie logistyki wewnętrznej bez uwzględnienia integracji z dostawcami i klientami.',
+    'Mylenie śledzenia zamówień w ERP z prawdziwą widocznością łańcucha dostaw end-to-end.',
+    'Pomijanie cyfryzacji zakupów — SCM to nie tylko zarządzanie magazynem.',
+  ],
+  product_lifecycle: [
+    'Utożsamianie użycia CAD z dojrzałością PLM. PLM obejmuje cały cykl życia produktu.',
+    'Pomijanie kontroli wersji i współpracy — dzielenie się plikami to nie PLM.',
+    'Pomijanie połączenia między danymi projektowymi, produkcyjnymi i serwisowymi.',
+  ],
+  automation: [
+    'Ocena maszyn CNC jako zaawansowanej automatyzacji, gdy nadal wymagają pełnej ręcznej obsługi.',
+    'Mylenie izolowanych komórek robotycznych ze zintegrowanymi, elastycznymi systemami produkcyjnymi.',
+    'Pomijanie interfejsu człowiek-maszyna — koboty i AMR-y wymagają odpowiedniej oceny integracji.',
+  ],
+  connectivity: [
+    'Zakładanie, że dostęp do internetu oznacza dojrzałość łączności. Liczy się przepływ danych maszyna-maszyna.',
+    'Pomijanie bezpieczeństwa sieci OT przy ocenie konwergencji IT/OT.',
+    'Ocena adopcji chmury bez weryfikacji faktycznych możliwości strumieniowania danych w czasie rzeczywistym.',
+  ],
+  intelligence: [
+    'Mylenie dashboardów z analityką. Raportowanie opisowe to nie analityka predykcyjna.',
+    'Ocena pilotaży AI jako rozwiązań produkcyjnych. Sprawdź, czy modele są w codziennych procesach decyzyjnych.',
+    'Pomijanie jakości danych — dojrzałość analityczna zależy od czystych, zarządzanych pipeline’ów danych.',
+  ],
+  talent_readiness: [
+    'Utożsamianie posiadania LMS z kulturą uczenia się. Sprawdź faktyczny udział i wpływ.',
+    'Ocena świadomości kadry zarządzającej jako gotowości całej organizacji. Oceń też kompetencje na hali.',
+    'Pomijanie zarządzania zmianą. Szkolenie bez adopcji kulturowej ma ograniczony wpływ.',
+  ],
+  structure_management: [
+    'Mylenie dokumentu strategii cyfrowej z jej realizacją i zarządzaniem.',
+    'Ocena komitetu jako biura transformacji. Sprawdź faktyczny mandat i budżet.',
+    'Pomijanie zaangażowania średniej kadry zarządzającej — luka strategia-wykonanie to częsty problem.',
+  ],
+};
+
 // ============================================
 // OVERRIDES (empty by default, fill as needed)
 // ============================================
@@ -282,9 +444,20 @@ const SIRI_KNOWLEDGE_OVERRIDES: Partial<
 // HELPER FUNCTIONS
 // ============================================
 
-function defaultQuestions(dimension: SIRIDimension, level: number): [string, string, string] {
+function defaultQuestions(
+  dimension: SIRIDimension,
+  level: number,
+  lang: 'pl' | 'en' = 'en'
+): [string, string, string] {
   const dimName = dimension.name;
   const levelTitle = SIRI_MATURITY_LEVELS[level]?.title || `Level ${level}`;
+  if (lang === 'pl') {
+    return [
+      `W wymiarze „${dimName}" — czy poziom ${level} ("${levelTitle}") jest osiągnięty zgodnie z opisem?`,
+      `Czy możemy pokazać dowód dla poziomu ${level} (np. system, metryki, proces, dokumentacja)?`,
+      `Czy jest to stosowane konsekwentnie w całej organizacji (nie tylko jako pilotaż lub odosobniony przypadek)?`,
+    ];
+  }
   return [
     `In "${dimName}", is level ${level} ("${levelTitle}") achieved as described?`,
     `Can we show evidence for level ${level} (e.g. system, metrics, process, documentation)?`,
@@ -292,9 +465,12 @@ function defaultQuestions(dimension: SIRIDimension, level: number): [string, str
   ];
 }
 
-function defaultExample(dimension: SIRIDimension, level: number): string {
+function defaultExample(dimension: SIRIDimension, level: number, lang: 'pl' | 'en' = 'en'): string {
   const dimName = dimension.name;
   const levelTitle = SIRI_MATURITY_LEVELS[level]?.title || `Level ${level}`;
+  if (lang === 'pl') {
+    return `Przykład: w wymiarze „${dimName}" na poziomie ${level} ("${levelTitle}") dostarczamy konkretny artefakt potwierdzający dojrzałość (np. zrzut ekranu systemu, raport analityczny, dokumentację procesu, dowód KPI).`;
+  }
   return `Example: in "${dimName}" at level ${level} ("${levelTitle}"), we provide a concrete artifact confirming maturity (e.g. system screenshot, analytics report, process documentation, KPI evidence).`;
 }
 
@@ -309,14 +485,30 @@ function getTechnologies(dimensionId: string, level: number): string[] {
 // PUBLIC API
 // ============================================
 
-function getEvidenceGuidance(dimensionId: string, level: number): string {
+function getEvidenceGuidance(dimensionId: string, level: number, lang: 'pl' | 'en' = 'en'): string {
+  if (lang === 'pl') {
+    return (
+      DIMENSION_EVIDENCE_GUIDANCE_PL[dimensionId]?.[level] ||
+      DIMENSION_EVIDENCE_GUIDANCE[dimensionId]?.[level] ||
+      'Szukaj udokumentowanych procesów, systemów w aktywnym użyciu i mierzalnych efektów na tym poziomie.'
+    );
+  }
   return (
     DIMENSION_EVIDENCE_GUIDANCE[dimensionId]?.[level] ||
     'Look for documented processes, systems in active use, and measurable outcomes at this level.'
   );
 }
 
-function getCommonMistakes(dimensionId: string): string[] {
+function getCommonMistakes(dimensionId: string, lang: 'pl' | 'en' = 'en'): string[] {
+  if (lang === 'pl') {
+    return (
+      DIMENSION_COMMON_MISTAKES_PL[dimensionId] || [
+        'Upewnij się, że oceny odzwierciedlają rzeczywistą praktykę, nie aspiracje.',
+        'Weryfikuj dowodem, nie tylko percepcją zarządu.',
+        'Sprawdź spójność w całej organizacji.',
+      ]
+    );
+  }
   return (
     DIMENSION_COMMON_MISTAKES[dimensionId] || [
       'Ensure scores reflect actual practice, not aspirations.',
@@ -326,35 +518,56 @@ function getCommonMistakes(dimensionId: string): string[] {
   );
 }
 
-function getLevelMeaning(level: number): string {
+function getLevelMeaning(level: number, lang: 'pl' | 'en' = 'en'): string {
+  if (lang === 'pl') {
+    return SIRI_LEVEL_MEANINGS_PL[level]?.meaning || `Dojrzałość na poziomie ${level}.`;
+  }
   return SIRI_LEVEL_MEANINGS[level]?.meaning || `Level ${level} maturity.`;
 }
 
-export function getSIRIKnowledge(dimensionId: string, levelNumber: number): SIRILevelKnowledge {
+export function getSIRIKnowledge(
+  dimensionId: string,
+  levelNumber: number,
+  lang: 'pl' | 'en' = 'en'
+): SIRILevelKnowledge {
   const dimension = SIRI_DIMENSIONS.find((d) => d.id === dimensionId);
 
-  const fallback: SIRILevelKnowledge = {
-    questions: [
-      'Is this level achieved?',
-      'Do we have evidence that this level is met?',
-      'Is it consistently applied?',
-    ],
-    example: 'Example: provide evidence (system/metrics/documentation).',
-    suggestedTechnologies: ['KPI Dashboard', 'Process Documentation'],
-    evidenceGuidance: getEvidenceGuidance(dimensionId, levelNumber),
-    commonMistakes: getCommonMistakes(dimensionId),
-    levelMeaning: getLevelMeaning(levelNumber),
-  };
+  const fallback: SIRILevelKnowledge =
+    lang === 'pl'
+      ? {
+          questions: [
+            'Czy ten poziom jest osiągnięty?',
+            'Czy mamy dowód, że ten poziom jest spełniony?',
+            'Czy jest stosowany konsekwentnie?',
+          ],
+          example: 'Przykład: dostarcz dowód (system/metryki/dokumentacja).',
+          suggestedTechnologies: ['KPI Dashboard', 'Process Documentation'],
+          evidenceGuidance: getEvidenceGuidance(dimensionId, levelNumber, lang),
+          commonMistakes: getCommonMistakes(dimensionId, lang),
+          levelMeaning: getLevelMeaning(levelNumber, lang),
+        }
+      : {
+          questions: [
+            'Is this level achieved?',
+            'Do we have evidence that this level is met?',
+            'Is it consistently applied?',
+          ],
+          example: 'Example: provide evidence (system/metrics/documentation).',
+          suggestedTechnologies: ['KPI Dashboard', 'Process Documentation'],
+          evidenceGuidance: getEvidenceGuidance(dimensionId, levelNumber, lang),
+          commonMistakes: getCommonMistakes(dimensionId, lang),
+          levelMeaning: getLevelMeaning(levelNumber, lang),
+        };
 
   if (!dimension) return fallback;
 
   const base: SIRILevelKnowledge = {
-    questions: defaultQuestions(dimension, levelNumber),
-    example: defaultExample(dimension, levelNumber),
+    questions: defaultQuestions(dimension, levelNumber, lang),
+    example: defaultExample(dimension, levelNumber, lang),
     suggestedTechnologies: getTechnologies(dimensionId, levelNumber),
-    evidenceGuidance: getEvidenceGuidance(dimensionId, levelNumber),
-    commonMistakes: getCommonMistakes(dimensionId),
-    levelMeaning: getLevelMeaning(levelNumber),
+    evidenceGuidance: getEvidenceGuidance(dimensionId, levelNumber, lang),
+    commonMistakes: getCommonMistakes(dimensionId, lang),
+    levelMeaning: getLevelMeaning(levelNumber, lang),
   };
 
   const key: SIRIDimensionLevelKey = `${dimensionId}#${levelNumber}`;

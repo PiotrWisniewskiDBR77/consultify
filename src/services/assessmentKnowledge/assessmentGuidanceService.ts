@@ -146,13 +146,17 @@ interface RichKnowledge extends FrameworkLevelKnowledge {
 export function resolveKnowledge(
   framework: GuidanceFramework,
   dimensionId: string,
-  levelNumber: number
+  levelNumber: number,
+  language: 'pl' | 'en' = 'pl'
 ): RichKnowledge {
   const fw = String(framework || '').toLowerCase();
   try {
-    if (fw === 'siri') return getSIRIKnowledge(dimensionId, levelNumber) as RichKnowledge;
-    if (fw === 'adma') return getADMAKnowledge(dimensionId, levelNumber) as RichKnowledge;
-    if (fw === 'drd') return getDRDKnowledge(dimensionId, levelNumber) as RichKnowledge;
+    // OXFORD O8 — SIRI/ADMA now carry PL canon content mirroring DRD (which has
+    // always defaulted to PL). Thread the caller's language through instead of
+    // silently returning English facts inside an otherwise-Polish hint.
+    if (fw === 'siri') return getSIRIKnowledge(dimensionId, levelNumber, language) as RichKnowledge;
+    if (fw === 'adma') return getADMAKnowledge(dimensionId, levelNumber, language) as RichKnowledge;
+    if (fw === 'drd') return getDRDKnowledge(dimensionId, levelNumber, language) as RichKnowledge;
     return getFrameworkKnowledge(framework, dimensionId, levelNumber) as RichKnowledge;
   } catch {
     return {
@@ -416,7 +420,12 @@ export async function getAssessmentGuidance(
   options: AssessmentGuidanceOptions = {}
 ): Promise<AssessmentGuidanceOutput> {
   const { llm, timeoutMs = 20_000, logger } = options;
-  const knowledge = resolveKnowledge(input.framework, input.dimensionId, input.levelNumber);
+  const knowledge = resolveKnowledge(
+    input.framework,
+    input.dimensionId,
+    input.levelNumber,
+    input.language ?? 'pl'
+  );
   const fallback = () => deterministicGuidance(input, knowledge);
 
   if (!llm) return fallback();
