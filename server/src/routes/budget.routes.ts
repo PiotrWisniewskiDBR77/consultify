@@ -205,9 +205,14 @@ router.post(
     const orgId = req.user?.organizationId;
     const { projectId, category, plannedAmount, currency, periodStart, periodEnd } = req.body;
     const id = uuidv4();
-    await dbRun(
+    // `budgets.period_start`/`period_end` are NOT NULL with no DB default (real schema is the
+    // header object from migration 570_finance_analysis_budgeting_t052_t053) — this legacy flat
+    // contract lets callers omit them, so fall back to a sane default window rather than 500.
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const nextYearIso = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const result = await dbRun(
       `
-    INSERT INTO budgets (id, organization_id, project_id, category, planned_amount, 
+    INSERT INTO budgets (id, organization_id, project_id, category, planned_amount,
                          actual_amount, currency, period_start, period_end, created_at)
     VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, datetime('now'))
   `,
@@ -218,10 +223,19 @@ router.post(
         category || 'general',
         plannedAmount || 0,
         currency || 'USD',
-        periodStart,
-        periodEnd,
+        periodStart || todayIso,
+        periodEnd || nextYearIso,
       ]
     );
+    // dbRun() resolves { success: false, error } instead of throwing on a DB error (its default
+    // `fallback: true`) — this handler used to ignore that and always answer 201, silently
+    // reporting success even when the INSERT never happened (found while fixing the
+    // category/planned_amount/actual_amount schema-drift below: on the broken schema this
+    // returned 201 for a row that was never written).
+    if (!result.success) {
+      logger.error(`[Budget] Failed to create budget: ${result.error}`);
+      return res.status(500).json({ error: 'Failed to create budget' });
+    }
     logger.info(`[Budget] Created budget ${id}`);
     res.status(201).json({ success: true, id });
   })
@@ -250,7 +264,11 @@ router.put(
     }
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
     params.push(id);
-    await dbRun(`UPDATE budgets SET ${updates.join(', ')} WHERE id = ?`, params);
+    const result = await dbRun(`UPDATE budgets SET ${updates.join(', ')} WHERE id = ?`, params);
+    if (!result.success) {
+      logger.error(`[Budget] Failed to update budget ${id}: ${result.error}`);
+      return res.status(500).json({ error: 'Failed to update budget' });
+    }
     res.json({ success: true });
   })
 );
@@ -260,7 +278,11 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await dbRun('DELETE FROM budgets WHERE id = ?', [req.params.id]);
+    const result = await dbRun('DELETE FROM budgets WHERE id = ?', [req.params.id]);
+    if (!result.success) {
+      logger.error(`[Budget] Failed to delete budget ${req.params.id}: ${result.error}`);
+      return res.status(500).json({ error: 'Failed to delete budget' });
+    }
     res.json({ success: true });
   })
 );

@@ -261,6 +261,23 @@ class AICostControlServiceClass {
 
   // ==========================================
   // BUDGET MANAGEMENT
+  //
+  // ⚠️ SCHEMA DRIFT (fala 3, class 42703, 2026-07-19/20): every method below assumes an
+  // `ai_budgets` shape (scope_type / scope_id / monthly_limit_usd / auto_downgrade / reset_day)
+  // that has never existed on the real table. The real `ai_budgets` (see migrations
+  // 037_ai_budgets_init.sql + 20260719_red_ai_budgets_columns.sql) uses organization_id +
+  // budget_type + budget_limit + period, and is already fully — correctly — implemented by
+  // `aiBudgetService.ts` (wired live to routes/ai-budgets.routes.ts and routes/ai/ai-budgets.routes.ts).
+  // Grep confirms the ONLY live caller of this class is cron/Scheduler.ts calling
+  // `resetMonthlyUsage()` with no args, which only touches current_month_usage/updated_at (both
+  // real columns) — so nothing below is exercised in production today.
+  // NOT fixed here: renaming columns to match the real schema would make this class write into
+  // the same `ai_budgets` rows aiBudgetService owns, under colliding semantics (e.g. a 'tenant'
+  // scope row here is indistinguishable from an org-level 'cost'/'monthly' budget row there),
+  // risking double-counted budgets/limits if this class is ever wired up. That's a product/eng
+  // consolidation decision (retire this class in favor of aiBudgetService, or give it a
+  // non-colliding namespace), not a mechanical column fix — flagged rather than forced per
+  // CLAUDE.md ("martwy caller → zgłoś, nie forsuj").
   // ==========================================
 
   /**
