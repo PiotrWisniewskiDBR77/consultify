@@ -525,14 +525,59 @@ function timeoutGuard<T>(promise: Promise<T>, ms: number): Promise<T | { __timed
 }
 
 /**
+ * Fallback system prompt used ONLY when the real persona module
+ * (`server/src/ai/persona.ts` — `buildPersonaPrompt`, the SOT for Teresa's
+ * chat system prompt, threaded through `AIPipeline.ts` on every real chat
+ * route) fails to import. Kept intentionally generic/minimal — this is a
+ * degraded-mode safety net, not the path the benchmark is meant to exercise.
+ */
+const FALLBACK_SYSTEM_PROMPT =
+  'You are a senior management consultant answering a client task directly and concretely. Use only the information given in the task and context; never invent facts, figures, or sources.';
+
+/**
+ * HP-20 root-cause fix (2026-07-19): this used to hardcode a generic
+ * "senior management consultant" system prompt, which is NOT what any real
+ * Consultify route sends the model. The actual product persona — Teresa,
+ * `buildPersonaPrompt` in `server/src/ai/persona.ts`, wired into every real
+ * chat call via `AIPipeline.ts` — enforces the exact BCG doctrine (answer-
+ * first/Pyramid Principle, MECE, grounding, falsifiability) AND an explicit
+ * "Strategic Challenge Mode" that tells the model not to accept an inflated
+ * client maturity self-assessment without verifiable evidence — precisely
+ * the behaviour the consulting-benchmark judge grades for (see
+ * `benchmark/tasks/drd/*` binary criteria like `wymaga-weryfikowalnego-
+ * dowodu`). Skipping persona.ts made the graded-run measure a strawman
+ * prompt no user ever sees, not the real product's behaviour — that is the
+ * actual bug behind the "all-pass 0/3" result, not a genuine product
+ * quality gap. Building the system prompt via `buildPersonaPrompt(null, lang)`
+ * here makes `--generate` a faithful reproduction of what a user asking
+ * Teresa this exact question would receive.
+ */
+async function buildBenchmarkSystemPrompt(lang?: 'pl' | 'en'): Promise<string> {
+  try {
+    const mod = await import(/* @vite-ignore */ '../src/ai/persona.js');
+    const fn = (mod as { buildPersonaPrompt?: unknown }).buildPersonaPrompt;
+    if (typeof fn !== 'function') return FALLBACK_SYSTEM_PROMPT;
+    const built = (fn as (screen?: string | null, language?: string | null) => string)(
+      null,
+      lang ?? 'pl'
+    );
+    return typeof built === 'string' && built.trim().length > 0 ? built : FALLBACK_SYSTEM_PROMPT;
+  } catch {
+    return FALLBACK_SYSTEM_PROMPT;
+  }
+}
+
+/**
  * Calls the product's real LLM path with EXACTLY the firewalled payload
- * (`{ prompt, context }`) — never the raw task. Never throws: every failure
- * mode (missing import, empty response, rate limit, timeout, provider error)
- * is returned as a typed `GenerationOutcome`, matching the judge service's
- * own never-throws discipline.
+ * (`{ prompt, context }`) — never the raw task — using the real product
+ * persona system prompt (see `buildBenchmarkSystemPrompt` above). Never
+ * throws: every failure mode (missing import, empty response, rate limit,
+ * timeout, provider error) is returned as a typed `GenerationOutcome`,
+ * matching the judge service's own never-throws discipline.
  */
 async function generateProductAnswer(
-  payload: { prompt: string; context?: string }
+  payload: { prompt: string; context?: string },
+  lang?: 'pl' | 'en'
 ): Promise<GenerationOutcome> {
   const startedAt = Date.now();
 
@@ -567,14 +612,15 @@ async function generateProductAnswer(
     ? `${payload.prompt}\n\n---\nContext:\n${payload.context}`
     : payload.prompt;
 
+  const systemPrompt = await buildBenchmarkSystemPrompt(lang);
+
   try {
     const guarded = await timeoutGuard(
       generateChatResponse({
-        systemPrompt:
-          'You are a senior management consultant answering a client task directly and concretely. Use only the information given in the task and context; never invent facts, figures, or sources.',
+        systemPrompt,
         messages: [{ role: 'user', content: userContent }],
         model: generateModelTier(),
-        maxTokens: 2000,
+        maxTokens: 3000,
       }),
       generateTimeoutMs()
     );
@@ -913,7 +959,7 @@ async function run(): Promise<number> {
         );
         // Firewall: the ONLY thing the model-under-test sees is {prompt, context}.
         const payload = buildProductPromptPayload(record.task);
-        const gen = await generateProductAnswer(payload);
+        const gen = await generateProductAnswer(payload, record.task.lang);
         if (gen.status === 'ok' && gen.text) {
           modelAnswer = gen.text;
           generationSucceeded++;
