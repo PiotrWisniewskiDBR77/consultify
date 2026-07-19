@@ -1,10 +1,17 @@
 import { type Response, Router } from 'express';
 
-import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import * as gapService from '../services/skillsGapService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+
+// AUTH-SWEEP (E-AUTH-A): every route below reads org-scoped data via
+// req.organizationId / req.user (skills-gap by initiative & competency, plus a
+// snapshot write). Without auth these were reachable unauthenticated with an
+// empty orgId — the same class of gap as the transactionReadiness finding.
+// Blanket verifyToken: none of these endpoints are public by design.
+router.use(verifyToken);
 
 router.get(
   '/initiatives/:initiativeId',
