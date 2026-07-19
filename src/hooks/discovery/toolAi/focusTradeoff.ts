@@ -18,13 +18,41 @@ const FOCUS_HARD_RULES_BLOCK = `HARD RULES (CONCLUSION_LAYER_STANDARD §4):
 - Respond in the user's language (Polish or English) — professional partner tone, active voice.`;
 
 /**
+ * Conversation-layer protocol appended to the system prompt for the Focus &
+ * Trade-offs "priorities" step: the mentor in chat interviews with the SAME
+ * laddered question bank as the wizard (single source of truth), one
+ * competing option at a time, branching on answers. Mirrors
+ * buildDynamicSwotConversationProtocol / buildMarketForcesConversationProtocol
+ * / buildPortfolioConversationProtocol — this tool had the ladder content
+ * (focusQuestionBank.ts) and a per-option prompt builder
+ * (buildFocusOptionLadderPrompt below) but was never wired into the live chat
+ * mentor (O3 audit gap, closed here). Returns '' for other steps so it is a
+ * no-op there.
+ */
+export function buildFocusTradeoffConversationProtocol(
+  stepId: string | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  if (stepId !== 'priorities') return '';
+  const ladder = buildFocusLadderPromptBlock(language);
+  return `
+
+INTERVIEW PROTOCOL (laddered focus/trade-off question bank — the single source of truth for this step):
+When the user explores a competing option/direction in conversation, walk this ladder. Ask ONE question at a time; classify the answer into a branch key and follow the branch. Vague answer -> use the probe. Dig from surface -> evidence -> FORCED trade-off (name the specific alternative that loses) -> rejection justification. Do not accept level 3 without a NAMED alternative option — re-ask using the probe if the user says "everything" or names nothing. When a ladder path completes, propose the priority's scores (value/effort/fit) with its insight staircase and the named trade-off.
+
+${ladder}`;
+}
+
+/**
  * Laddered interview prompt for ONE competing option: the AI mentor walks the
  * q-bank (single source of truth with the wizard) — surface -> evidence ->
  * FORCED trade-off -> rejection justification — one question at a time,
  * branching on answers. Mirrors buildMarketForcesForceLadderPrompt in
- * marketForces.ts. Exported for the future interview-step wiring; not yet
- * called from promptRegistry.ts (the "full-session" and "conclusion" prompts
- * below already cover the current runtime flow).
+ * marketForces.ts. Exported for the future interview-step wiring; the
+ * "priorities" step now also gets the ladder via
+ * buildFocusTradeoffConversationProtocol above (wired into useToolAI.ts's
+ * sendMessage), mirroring how Porter keeps both a per-force prompt AND a
+ * conversation-protocol wrapper.
  */
 export function buildFocusOptionLadderPrompt(
   focusData: FocusTradeoffData | undefined,

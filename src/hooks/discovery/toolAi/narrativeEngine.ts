@@ -1,3 +1,7 @@
+import {
+  buildCategoryLadderPromptBlock,
+  type PyramidCategory,
+} from '@/config/narrativeengine/pyramidQuestionBank';
 import type {
   InitiativeDraft,
   NarrativeEngineData,
@@ -8,6 +12,35 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { GROUNDING_RULES_BOTH } from './groundingRules';
 import { pickW2SummaryFields } from './w2SummaryFields';
+
+const PYRAMID_CATEGORIES: PyramidCategory[] = ['thesis', 'scqa', 'pyramid', 'evidence'];
+
+/**
+ * Conversation-layer protocol appended to the system prompt for the Narrative
+ * Engine "pillars" step: the mentor in chat interviews with the SAME laddered
+ * pyramid question bank as the tests (pyramidQuestionBank.ts) — governing
+ * thought -> SCQA chain -> MECE pyramid decomposition -> evidence per
+ * argument. Mirrors buildMarketForcesConversationProtocol (which also
+ * concatenates several per-track ladders, one per Porter force here one per
+ * pyramid category) — this ladder had zero runtime callers (O3 audit gap,
+ * closed here). Returns '' for other steps so it is a no-op there.
+ */
+export function buildNarrativeEngineConversationProtocol(
+  stepId: string | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  if (stepId !== 'pillars') return '';
+  const ladders = PYRAMID_CATEGORIES.map(
+    (category) => `--- ${category.toUpperCase()} ---\n${buildCategoryLadderPromptBlock(category, language)}`
+  ).join('\n');
+  return `
+
+INTERVIEW PROTOCOL (laddered narrative-pyramid question bank — the single source of truth for this step):
+When the user builds a narrative pillar in conversation, walk this ladder. Ask ONE question at a time; classify the answer into a branch key and follow the branch. Sharpen the governing thought to one falsifiable, answer-first claim (thesis); check the situation -> complication -> question -> answer chain holds together (scqa); decompose the thought into a MECE set of supporting arguments (pyramid); force proof per argument or the honest "declared, unconfirmed" (evidence). When a ladder path completes, propose the pillar with its message, proof points, and evidence status.
+
+${ladders}`;
+}
+
 interface NarrativeEngineActionHandlers {
   updateInputData: (data: Partial<NarrativeEngineData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;

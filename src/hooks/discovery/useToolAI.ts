@@ -33,6 +33,7 @@ import {
 } from './toolAi/ambitionDecomposer';
 import {
   applyCapabilityMapperPendingAction,
+  buildCapabilityMapperConversationProtocol,
   buildCapabilityMapperFullSessionPrompt,
   buildCapabilityMapperGapsPrompt,
   buildCapabilityMapperRethinkPrompt,
@@ -48,6 +49,7 @@ import {
 } from './toolAi/dynamicSwot';
 import {
   applyFocusTradeoffPendingAction,
+  buildFocusTradeoffConversationProtocol,
   buildFocusTradeoffFullSessionPrompt,
   buildFocusTradeoffRethinkPrompt,
   buildFocusTradeoffTradeoffsPrompt,
@@ -68,6 +70,7 @@ import {
 } from './toolAi/marketForces';
 import {
   applyNarrativeEnginePendingAction,
+  buildNarrativeEngineConversationProtocol,
   buildNarrativeEngineFullSessionPrompt,
   buildNarrativeEngineRethinkPrompt,
   buildNarrativeEngineThreadsPrompt,
@@ -243,9 +246,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         const stepContext = currentStepDef
           ? `\n\nCURRENT STEP: ${currentStepDef.name}\nSTEP DESCRIPTION: ${currentStepDef.description}`
           : '';
-        // Dynamic SWOT / Market Forces / Value Chain / Portfolio Priority: the
-        // chat mentor interviews with each tool's laddered question bank (same
-        // source of truth as the wizard) during that tool's build step.
+        // Dynamic SWOT / Market Forces / Value Chain / Portfolio Priority /
+        // Focus & Trade-offs / Capability Mapper / Narrative Engine: the chat
+        // mentor interviews with each tool's laddered question bank (same
+        // source of truth as the wizard/tests) during that tool's build step.
         const interviewProtocol =
           toolType === 'dynamic-swot'
             ? buildDynamicSwotConversationProtocol(currentStepDef?.id)
@@ -255,7 +259,13 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                 ? buildMarketForcesConversationProtocol(currentStepDef?.id)
                 : toolType === 'portfolio-priority'
                   ? buildPortfolioConversationProtocol(currentStepDef?.id)
-                  : '';
+                  : toolType === 'focus-tradeoff'
+                    ? buildFocusTradeoffConversationProtocol(currentStepDef?.id)
+                    : toolType === 'capability-mapper'
+                      ? buildCapabilityMapperConversationProtocol(currentStepDef?.id)
+                      : toolType === 'narrative-engine'
+                        ? buildNarrativeEngineConversationProtocol(currentStepDef?.id)
+                        : '';
 
         await startStream(
           message,
