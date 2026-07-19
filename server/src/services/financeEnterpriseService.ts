@@ -139,7 +139,7 @@ class FinanceEnterpriseService {
     const now = new Date().toISOString();
 
     const lastVer = await queryHelpers.queryOne<any>(
-      `SELECT MAX(version_number) as maxV FROM financial_model_versions WHERE organization_id = ? AND model_id = ?`,
+      `SELECT MAX(version_number) as "maxV" FROM financial_model_versions WHERE organization_id = ? AND model_id = ?`,
       [orgId, data.modelId]
     );
     const versionNumber = (lastVer?.maxV || 0) + 1;
@@ -678,7 +678,7 @@ class FinanceEnterpriseService {
       .substring(0, 16);
 
     const lastVer = await queryHelpers.queryOne<any>(
-      `SELECT MAX(version) as maxV FROM financial_valuation_snapshots WHERE organization_id = ? AND model_id = ?`,
+      `SELECT MAX(version) as "maxV" FROM financial_valuation_snapshots WHERE organization_id = ? AND model_id = ?`,
       [orgId, data.modelId]
     );
     const version = (lastVer?.maxV || 0) + 1;
