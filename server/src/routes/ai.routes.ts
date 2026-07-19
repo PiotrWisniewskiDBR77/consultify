@@ -8692,8 +8692,34 @@ router.post(
 
       return res.json({ success: true, data: advisorResponse });
     } catch (err: any) {
-      logger.error('[Advisor] respond error:', err);
-      return res.status(500).json({ error: err?.message || 'Advisor processing failed' });
+      // Advisor copilot pipeline failed. Fail-soft degrade instead of a bare 500 (H6.4):
+      // return a structural, schema-valid AdvisorResponse in a degraded posture so the
+      // copilot surface stays usable and the client can render an honest fallback.
+      logger.error('[Advisor] respond error (fail-soft degrade):', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      const degradedResponse = normalizeToAdvisorResponse(
+        {
+          intent: 'unknown',
+          answer:
+            'Nie udało się teraz przetworzyć zapytania doradczego. Spróbuj ponownie za chwilę lub sprawdź konfigurację providerów AI.',
+          confidence: 0,
+          safetyNotes: ['advisor_degraded'],
+        },
+        { intent: 'unknown', purpose: context?.purpose }
+      );
+      degradedResponse.metadata = {
+        contextArtifacts: [],
+        ...degradedResponse.metadata,
+        latencyMs: Date.now() - startMs,
+      };
+      return res.json({
+        success: true,
+        degraded: true,
+        data: degradedResponse,
+        error: err?.message || 'Advisor processing failed',
+      });
     }
   })
 );
