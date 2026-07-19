@@ -393,9 +393,9 @@ router.get(
           `SELECT
               COUNT(*) as total,
               SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
-              SUM(CASE WHEN is_active = 1 AND mfa_verified = 1 THEN 1 ELSE 0 END) as mfaVerified,
-              SUM(CASE WHEN is_active = 1 AND session_type = 'jit' THEN 1 ELSE 0 END) as jitActive,
-              SUM(CASE WHEN is_active = 1 AND session_type = 'break_glass' THEN 1 ELSE 0 END) as breakGlassActive
+              SUM(CASE WHEN is_active = 1 AND mfa_verified = 1 THEN 1 ELSE 0 END) as "mfaVerified",
+              SUM(CASE WHEN is_active = 1 AND session_type = 'jit' THEN 1 ELSE 0 END) as "jitActive",
+              SUM(CASE WHEN is_active = 1 AND session_type = 'break_glass' THEN 1 ELSE 0 END) as "breakGlassActive"
            FROM admin_sessions`,
           [],
           { total: 0, active: 0, mfaVerified: 0, jitActive: 0, breakGlassActive: 0 }
@@ -417,8 +417,8 @@ router.get(
         ),
         safeDbGet(
           `SELECT
-              SUM(CASE WHEN legal_hold_enabled = 1 THEN 1 ELSE 0 END) as legalHolds,
-              SUM(CASE WHEN residency_region IS NULL OR residency_region = '' THEN 1 ELSE 0 END) as residencyReview
+              SUM(CASE WHEN legal_hold_enabled = 1 THEN 1 ELSE 0 END) as "legalHolds",
+              SUM(CASE WHEN residency_region IS NULL OR residency_region = '' THEN 1 ELSE 0 END) as "residencyReview"
            FROM org_policies`,
           [],
           { legalHolds: 0, residencyReview: 0 }
