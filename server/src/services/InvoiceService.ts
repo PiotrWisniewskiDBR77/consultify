@@ -181,7 +181,7 @@ export class InvoiceServiceClass {
    */
   async createInvoice(options: InvoiceOptions): Promise<Partial<Invoice>> {
     await this.#initDeps();
-    const { uuidv4, CurrencyService } = this.#deps!;
+    const { uuidv4 } = this.#deps!;
 
     const {
       organizationId,
@@ -198,33 +198,32 @@ export class InvoiceServiceClass {
     const invoiceId = uuidv4();
     const invoiceNumber = await this.generateInvoiceNumber();
 
-    // Calculate totals
-    let subtotal = 0;
-    for (const item of items) {
-      subtotal += item.quantity * item.unitPrice;
-    }
+    // Line items live in the invoices.line_items JSON column (matching the live
+    // billing router). There is no invoice_items table in the live schema, so we
+    // normalize into the same JSON shape the rest of the billing system reads.
+    const lineItems = items.map((item) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      amount: item.quantity * item.unitPrice,
+    }));
 
+    // Calculate totals
+    const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
     const taxAmount = Math.round(subtotal * (taxRate / 100));
     const total = subtotal + taxAmount;
 
-    // Get exchange rate to base currency
-    let exchangeRate = 1.0;
-    let baseTotal = total;
-
-    if (currency !== 'USD') {
-      const conversion = await CurrencyService.convertAmount(total, currency, 'USD');
-      exchangeRate = conversion.rate;
-      baseTotal = conversion.amount;
-    }
-
     const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
+    // Tax-rate/type and notes have no dedicated columns in the live invoices
+    // schema; preserve them in the metadata JSON instead of dropping them.
+    const metadata = { taxRate, taxType, notes };
+
     await this.dbRun(
-      `INSERT INTO invoices 
+      `INSERT INTO invoices
              (id, organization_id, invoice_number, status, subtotal, tax_amount, total, amount_due,
-              currency, exchange_rate, base_currency, base_total, tax_rate, tax_type,
-              due_date, billing_period_start, billing_period_end, notes)
-             VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, 'USD', ?, ?, ?, ?, ?, ?, ?)`,
+              currency, due_date, period_start, period_end, line_items, metadata)
+             VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         invoiceId,
         organizationId,
@@ -234,31 +233,13 @@ export class InvoiceServiceClass {
         total,
         total,
         currency,
-        exchangeRate,
-        baseTotal,
-        taxRate,
-        taxType,
         dueDate || defaultDueDate,
         billingPeriodStart,
         billingPeriodEnd,
-        notes,
+        JSON.stringify(lineItems),
+        JSON.stringify(metadata),
       ]
     );
-
-    for (const item of items) {
-      await this.dbRun(
-        `INSERT INTO invoice_items (id, invoice_id, description, quantity, unit_price, amount)
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          uuidv4(),
-          invoiceId,
-          item.description,
-          item.quantity,
-          item.unitPrice,
-          item.quantity * item.unitPrice,
-        ]
-      );
-    }
 
     return {
       id: invoiceId,
@@ -275,14 +256,23 @@ export class InvoiceServiceClass {
     await this.#initDeps();
     const { CurrencyService } = this.#deps!;
 
-    const invoice = await this.dbGet<Invoice>(`SELECT * FROM invoices WHERE id = ?`, [invoiceId]);
+    const invoice = await this.dbGet<Invoice & { line_items?: string }>(
+      `SELECT * FROM invoices WHERE id = ?`,
+      [invoiceId]
+    );
 
     if (!invoice) return null;
 
-    const items = await this.dbAll<InvoiceItem>(
-      `SELECT * FROM invoice_items WHERE invoice_id = ?`,
-      [invoiceId]
-    );
+    // Line items are stored as JSON on invoices.line_items (there is no
+    // invoice_items table in the live schema).
+    let items: InvoiceItem[] = [];
+    if (invoice.line_items) {
+      try {
+        items = JSON.parse(invoice.line_items) as InvoiceItem[];
+      } catch {
+        items = [];
+      }
+    }
 
     return {
       ...invoice,
@@ -437,7 +427,7 @@ export class InvoiceServiceClass {
     } = stripeInvoice;
 
     const org = await this.dbGet<{ id: string }>(
-      `SELECT id, billing_currency FROM organizations WHERE stripe_customer_id = ?`,
+      `SELECT id FROM organizations WHERE stripe_customer_id = ?`,
       [customer]
     );
 
