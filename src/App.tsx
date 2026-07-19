@@ -39,6 +39,14 @@ const PublicArtifactView = React.lazy(() => import('./views/PublicArtifactView')
 const SubscriberDashboardPage = React.lazy(
   () => import('./views/subscriber/SubscriberDashboardPage')
 );
+// Vegas Fala 0 (VF0-11) — living style guide (tokens/components/states),
+// dev-only tool for robotnicy + standing "reguła #7" reference. Lazy +
+// gated behind `isStyleGuideEnabled` below (default OFF): when the flag is
+// off the <Route> is never added to <Routes>, so this changes nothing about
+// the running app. No auth required, same reasoning as the other public
+// routes above (this is a design-system reference, not user data).
+const StyleGuidePage = React.lazy(() => import('./pages/dev/StyleGuide'));
+const isStyleGuideEnabled = import.meta.env.VITE_ENABLE_STYLEGUIDE === 'true';
 
 type AuthBootState = {
   inflightMeRequest: Promise<User | null> | null;
@@ -493,6 +501,23 @@ function AppContent() {
         {/* Audit Orchestrator now lives inside the authenticated app shell
             (AppRoutes → MainLayout) at /audit-programs, so it gets the nav +
             auth token. Removed the standalone route that bypassed auth. */}
+        {/* VF0-11 — living style guide, default OFF (VITE_ENABLE_STYLEGUIDE). */}
+        {isStyleGuideEnabled ? (
+          <Route
+            path="/dev/styleguide"
+            element={
+              <React.Suspense
+                fallback={
+                  <div className="flex h-screen items-center justify-center">
+                    <Loader2 className="animate-spin text-primary" />
+                  </div>
+                }
+              >
+                <StyleGuidePage />
+              </React.Suspense>
+            }
+          />
+        ) : null}
         <Route path="/*" element={<AppRoutes />} />
       </Routes>
     </>
