@@ -16,6 +16,18 @@
  * report, not re-derived here.
  *
  * Prefix for all rows this test writes: `odbior--j21--`.
+ *
+ * OXFORD O2 CLUSTER ADDENDUM (2026-07-19): the same `report-section` HTTP
+ * call this file already makes ALSO carries `section.conclusions` — the O2.4
+ * CONCLUSION LAYER (W3) wired by `financeReportConclusion.ts` into
+ * `financeReportSectionService.composeFinanceReportSection`. The 12-validator
+ * gate and `buildFinanceReportConclusions` were already proven at the unit
+ * level (`tests/unit/finance/financeReportConclusion.test.ts`,
+ * `tests/acceptance/oxford.e2e.test.ts` §3) — what was NOT yet proven live is
+ * that the REAL HTTP response for a REAL pack actually carries a
+ * publishable, grounded conclusion (not the historic TODO placeholder). The
+ * extra assertions below close that gap by reusing this test's EXISTING call
+ * — no new rows, no new prefix needed.
  */
 import { createServer, type Server } from 'node:http';
 
@@ -351,6 +363,23 @@ describe('J21 — Oxford O4.2-O4.7 real-runtime wiring', () => {
     const revenueTrend = section.trend.lines.find((l: any) => l.lineCode === 'REVENUE');
     expect(revenueTrend).toBeTruthy();
     expect(revenueTrend.trend.periods).toBeGreaterThanOrEqual(2);
+
+    // O2.4 — CONCLUSION LAYER (W3): the section carries a `conclusions` array,
+    // every entry already passed the SAME 12-validator hard gate the finance
+    // gate uses (`allHardPass === true` — nothing non-publishable can be in
+    // this array, `buildFinanceReportConclusions` filters with `continue`).
+    // Real numbers, not fabricated: every K1 headline number this test can
+    // observe must trace back to a ratio this pack actually computed.
+    expect(Array.isArray(section.conclusions)).toBe(true);
+    for (const c of section.conclusions) {
+      expect(c.validation.allHardPass).toBe(true);
+      expect(c.validation.failures).toEqual([]);
+      expect(typeof c.conclusion.headline).toBe('string');
+      expect(c.conclusion.headline.length).toBeGreaterThan(0);
+      expect(Array.isArray(c.conclusion.k3Actions)).toBe(true);
+      expect(c.conclusion.k3Actions.length).toBeGreaterThanOrEqual(1);
+      expect(c.conclusion.k3Actions.length).toBeLessThanOrEqual(3);
+    }
   });
 
   it('GET /packs/:id/report-section/lineage does NOT surface O4.2-O4.4/O4.6 (only ratio/reconcile/valuation) — confirms FE lineage panel cannot show them', async () => {
