@@ -266,11 +266,18 @@ const ensurePermission = async (
     const key = String(permissionKey || '').toUpperCase();
     if (key.startsWith('TOOLS_')) return true;
   }
+  // FIX (role-case family, continuation of AssessmentController fix): user.role on
+  // AuthenticatedUser is lowercase (mapRoleForAuthenticatedUser in auth.middleware.ts
+  // emits 'owner'/'administrator'/etc), while hasPermission()/ROLES compare against
+  // UPPERCASE ('OWNER'/'ADMIN'/...). Passing the raw lowercase role made hasPermission's
+  // own SUPERADMIN/OWNER bypass (permissionService.ts) silently fail, causing real
+  // OWNER users to fall through to a 403. Verified empirically against :5443:
+  // hasPermission(...,'owner') === false, hasPermission(...,'OWNER') === true.
   const allowed = await hasPermission(
     user.id,
     user.organizationId,
     permissionKey,
-    user.role as any
+    String(user.role || '').toUpperCase() as any
   );
   if (allowed) return true;
   const role = String(user.role || '').toUpperCase();
@@ -2351,7 +2358,16 @@ export class ToolController {
         return;
       }
 
-      if (comment.user_id !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER') {
+      // FIX (role-case family): user.role is lowercase on AuthenticatedUser
+      // (mapRoleForAuthenticatedUser emits 'owner'/'administrator'/...); this guard
+      // compared against uppercase literals directly, so a real OWNER could never
+      // delete another user's comment. Normalize before comparing.
+      const commentGuardRole = String(user.role || '').toUpperCase();
+      if (
+        comment.user_id !== user.id &&
+        commentGuardRole !== 'ADMIN' &&
+        commentGuardRole !== 'OWNER'
+      ) {
         res.status(403).json({ error: 'Forbidden' });
         return;
       }
