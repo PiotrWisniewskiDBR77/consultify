@@ -131,6 +131,49 @@ const detectIsPolish = (data: unknown): boolean => {
 };
 
 /**
+ * K5 (decyzja właściciela 07-19) — poziom szczegółowości generacji Discovery
+ * (SWOT itd.). Ten sam SWOT może powstać na trzech poziomach głębokości/ilości:
+ *   'short'  — krótka  (najmocniejsze sygnały, zwięźle)
+ *   'medium' — średnia (== dzisiejsze, bazowe zachowanie)
+ *   'full'   — pełna   (maksimum głębokości i pokrycia)
+ * Brak wartości === 'medium'.
+ */
+export type ToolDetailLevel = 'short' | 'medium' | 'full';
+
+/**
+ * Buduje dyrektywę poziomu doklejaną do promptu Discovery. Zwraca PUSTY string
+ * dla 'medium'/undefined → prompt pozostaje bajt-w-bajt identyczny jak dziś
+ * (pełna kompatybilność wsteczna). Steruje TYLKO głębokością/ilością treści,
+ * nie zmienia kontraktu JSON ani reguł grounding.
+ */
+export function buildDetailLevelDirective(
+  level: ToolDetailLevel | undefined,
+  isPolish: boolean
+): string {
+  if (level !== 'short' && level !== 'full') return '';
+  if (level === 'short') {
+    return isPolish
+      ? `POZIOM SZCZEGÓŁOWOŚCI: KRÓTKI — wersja gotowa na jeden slajd zarządu.
+- Ogranicz się do NAJMOCNIEJSZYCH sygnałów; utrzymaj minimalną wymaganą liczbę pozycji (dolny kraniec podanych zakresów).
+- Każdą pozycję jednym zdaniem; zero rozbudowanych uzasadnień poza tym, co konieczne.
+- Zachowaj cały wymagany kontrakt JSON i reguły dowodowe — skracasz treść, nie strukturę.`
+      : `DETAIL LEVEL: SHORT — a single board-slide version.
+- Keep only the STRONGEST signals; hold to the minimum required count (low end of any stated ranges).
+- One sentence per item; no expanded rationale beyond what is strictly necessary.
+- Preserve the full required JSON contract and evidence rules — you shorten content, not structure.`;
+  }
+  return isPolish
+    ? `POZIOM SZCZEGÓŁOWOŚCI: PEŁNY — maksymalna głębokość analityczna.
+- Wyczerp materiał sesji: górny kraniec podanych zakresów liczby pozycji, pełne pokrycie wątków.
+- Rozwiń uzasadnienia (dowód → znaczenie → implikacja) i pokaż powiązania między pozycjami.
+- Nie wymyślaj faktów ani liczb spoza dostarczonych danych — pogłębiasz analizę, nie fabrykujesz.`
+    : `DETAIL LEVEL: FULL — maximum analytical depth.
+- Exhaust the session material: top end of any stated item-count ranges, full coverage of threads.
+- Expand rationale (evidence → meaning → implication) and surface links between items.
+- Invent no facts or numbers beyond the provided data — you deepen the analysis, not fabricate it.`;
+}
+
+/**
  * Per-section / per-step suggestion prompt for every Discovery tool. All
  * branches below return a raw prompt string; `getToolSuggestionPrompt`
  * (the exported wrapper) appends GROUNDING_RULES_BOTH to any non-empty
@@ -860,11 +903,16 @@ Return JSON:
 export function getToolSuggestionPrompt(
   toolType: ToolType,
   stepId: string,
-  inputData: unknown
+  inputData: unknown,
+  level?: ToolDetailLevel
 ): string {
   const prompt = getToolSuggestionPromptInner(toolType, stepId, inputData);
   if (!prompt) return prompt;
-  return `${prompt}\n\n${GROUNDING_RULES_BOTH}`;
+  // K5 — dyrektywa poziomu wstrzykiwana MIĘDZY prompt a reguły grounding.
+  // Dla 'medium'/undefined directive='' → wynik identyczny jak dziś.
+  const directive = buildDetailLevelDirective(level, detectIsPolish(inputData));
+  const levelBlock = directive ? `${directive}\n\n` : '';
+  return `${prompt}\n\n${levelBlock}${GROUNDING_RULES_BOTH}`;
 }
 
 /**
@@ -1508,8 +1556,15 @@ Return JSON:
   return '';
 }
 
-export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
+export function getToolSummaryPrompt(
+  toolType: ToolType,
+  inputData: unknown,
+  level?: ToolDetailLevel
+): string {
   const prompt = getToolSummaryPromptInner(toolType, inputData);
   if (!prompt) return prompt;
-  return `${prompt}\n\n${GROUNDING_RULES_BOTH}`;
+  // K5 — dyrektywa poziomu; 'medium'/undefined → wynik identyczny jak dziś.
+  const directive = buildDetailLevelDirective(level, detectIsPolish(inputData));
+  const levelBlock = directive ? `${directive}\n\n` : '';
+  return `${prompt}\n\n${levelBlock}${GROUNDING_RULES_BOTH}`;
 }
