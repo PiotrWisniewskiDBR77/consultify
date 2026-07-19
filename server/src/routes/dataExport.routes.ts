@@ -79,8 +79,16 @@ router.post(
       if (error?.code === 'LEGAL_HOLD') {
         return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
       }
-      logger.error('[DataExport] Failed to create export request:', error);
-      res.status(500).json({ error: 'Failed to create export request', message: error.message });
+      logger.error('[DataExport] Failed to create export request:', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      res
+        .status(500)
+        .json({
+          error: 'Nie udało się utworzyć wniosku o eksport danych',
+          code: 'DATA_EXPORT_CREATE_REQUEST_FAILED',
+        });
     }
   }
 );
@@ -113,8 +121,16 @@ router.get(
 
       res.json(request);
     } catch (error: any) {
-      logger.error('[DataExport] Failed to get export status:', error);
-      res.status(500).json({ error: 'Failed to get export status', message: error.message });
+      logger.error('[DataExport] Failed to get export status:', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      res
+        .status(500)
+        .json({
+          error: 'Nie udało się pobrać statusu eksportu',
+          code: 'DATA_EXPORT_STATUS_FAILED',
+        });
     }
   }
 );
@@ -140,8 +156,16 @@ router.get('/requests', verifyToken, isAuthenticated, async (req: Request, res: 
 
     res.json(requests || []);
   } catch (error: any) {
-    logger.error('[DataExport] Failed to get export requests:', error);
-    res.status(500).json({ error: 'Failed to get export requests', message: error.message });
+    logger.error('[DataExport] Failed to get export requests:', {
+      err: error,
+      correlationId: (req as any).correlationId,
+    });
+    res
+      .status(500)
+      .json({
+        error: 'Nie udało się pobrać wniosków o eksport',
+        code: 'DATA_EXPORT_LIST_REQUESTS_FAILED',
+      });
   }
 });
 
@@ -198,8 +222,13 @@ router.get(
       if (error?.code === 'LEGAL_HOLD') {
         return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
       }
-      logger.error('[DataExport] Failed to download export:', error);
-      res.status(500).json({ error: 'Failed to download export', message: error.message });
+      logger.error('[DataExport] Failed to download export:', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      res
+        .status(500)
+        .json({ error: 'Nie udało się pobrać eksportu', code: 'DATA_EXPORT_DOWNLOAD_FAILED' });
     }
   }
 );
@@ -266,8 +295,16 @@ router.post(
       if (error?.code === 'LEGAL_HOLD') {
         return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
       }
-      logger.error('[DataExport] Failed to create deletion request:', error);
-      res.status(500).json({ error: 'Failed to create deletion request', message: error.message });
+      logger.error('[DataExport] Failed to create deletion request:', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      res
+        .status(500)
+        .json({
+          error: 'Nie udało się utworzyć wniosku o usunięcie danych',
+          code: 'DATA_EXPORT_CREATE_DELETION_FAILED',
+        });
     }
   }
 );
@@ -310,8 +347,16 @@ router.delete(
 
       res.json({ success: true, message: 'Deletion request cancelled' });
     } catch (error: any) {
-      logger.error('[DataExport] Failed to cancel deletion request:', error);
-      res.status(500).json({ error: 'Failed to cancel deletion request', message: error.message });
+      logger.error('[DataExport] Failed to cancel deletion request:', {
+        err: error,
+        correlationId: (req as any).correlationId,
+      });
+      res
+        .status(500)
+        .json({
+          error: 'Nie udało się anulować wniosku o usunięcie danych',
+          code: 'DATA_EXPORT_CANCEL_DELETION_FAILED',
+        });
     }
   }
 );
