@@ -88,7 +88,11 @@ import {
   buildPortfolioRethinkPrompt,
   buildPortfolioSynthesisPrompt,
 } from './toolAi/portfolioPriority';
-import { getToolSuggestionPrompt, getToolSummaryPrompt } from './toolAi/promptRegistry';
+import {
+  getToolSuggestionPrompt,
+  getToolSummaryPrompt,
+  type ToolDetailLevel,
+} from './toolAi/promptRegistry';
 import {
   applyRiskPendingAction,
   buildRiskFullSessionPrompt,
@@ -119,9 +123,10 @@ interface UseToolAIReturn {
 
   // Actions
   sendMessage: (message: string) => Promise<void>;
-  requestSuggestions: () => Promise<void>;
+  // K5 — opcjonalny poziom szczegółowości ('short'|'medium'|'full'); brak = dziś.
+  requestSuggestions: (level?: ToolDetailLevel) => Promise<void>;
   generateCorrelations: () => Promise<void>;
-  generateSummary: () => Promise<void>;
+  generateSummary: (level?: ToolDetailLevel) => Promise<void>;
   generateFullSession: () => Promise<void>;
   runPhaseAiAction: (actionId: ToolPhaseAiActionId) => Promise<void>;
   rethinkCard: (
@@ -285,12 +290,17 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   );
 
   // Request AI suggestions for current step
-  const requestSuggestions = useCallback(async () => {
+  const requestSuggestions = useCallback(async (level?: ToolDetailLevel) => {
     setError(null);
 
     if (!currentStepDef) return;
 
-    const prompt = getToolSuggestionPrompt(toolType, currentStepDef.id, currentSession?.inputData);
+    const prompt = getToolSuggestionPrompt(
+      toolType,
+      currentStepDef.id,
+      currentSession?.inputData,
+      level
+    );
 
     if (prompt) {
       setPendingAction('suggestions');
@@ -445,11 +455,11 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   }, [toolType, currentSession, sendMessage]);
 
   // Generate summary and initiatives
-  const generateSummary = useCallback(async () => {
+  const generateSummary = useCallback(async (level?: ToolDetailLevel) => {
     if (!currentSession) return;
 
     setError(null);
-    const prompt = getToolSummaryPrompt(toolType, currentSession.inputData);
+    const prompt = getToolSummaryPrompt(toolType, currentSession.inputData, level);
 
     if (prompt) {
       setPendingAction('summary');

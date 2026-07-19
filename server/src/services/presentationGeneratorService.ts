@@ -73,6 +73,16 @@ import * as artifactRegistryService from './v8/artifactRegistryService.js';
 // TYPES
 // ============================================================
 
+/**
+ * K5 (decyzja właściciela 07-19) — poziom szczegółowości generacji artefaktu.
+ * Ta sama prezentacja może powstać na trzech poziomach głębokości/ilości treści:
+ *   'short'  — krótka   (mniej slajdów w blank-brief arc + lżejsza gęstość treści)
+ *   'medium' — średnia  (== dzisiejsze, bazowe zachowanie)
+ *   'full'   — pełna    (gęstsza treść / więcej materiału per slajd)
+ * Brak wartości === 'medium' (pełna kompatybilność wsteczna: output identyczny jak dziś).
+ */
+export type DeckDetailLevel = 'short' | 'medium' | 'full';
+
 export interface DeckSetup {
   title: string;
   templateId?: string;
@@ -101,6 +111,13 @@ export interface DeckSetup {
   };
   sourcePack?: Record<string, unknown>;
   sourcePackStrict?: boolean;
+
+  /**
+   * K5 — poziom szczegółowości ('short' | 'medium' | 'full'). Opcjonalny.
+   * Brak === 'medium' (dzisiejsze zachowanie). Sterowany z endpointu
+   * `/generate/outline` (setup = req.body), więc `level` w body wystarczy.
+   */
+  level?: DeckDetailLevel;
 }
 
 export interface SourceArtifact {
@@ -349,7 +366,11 @@ export function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
         enabled: true,
       },
     ];
-    items.push(...arc);
+    // K5 — poziom 'short' skraca łuk narracyjny do rdzenia (problem → podejście →
+    // wyniki → rekomendacje), pomijając roadmapę i szczegółowe ryzyka. 'medium'/'full'
+    // oraz brak poziomu → pełny 6-slajdowy łuk (zachowanie dzisiejsze).
+    const arcForLevel = setup.level === 'short' ? arc.slice(0, 4) : arc;
+    items.push(...arcForLevel);
   }
 
   const sourceArtifactsForLoop = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
@@ -431,6 +452,24 @@ export function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
   // titles vs dense bullet cells) without forcing every caller to set
   // the densities explicitly. See `presentationStudioIntentDensityDefaultsService`.
   return items.map(applyIntentDensityDefaults);
+}
+
+/**
+ * K5 — nakłada globalną gęstość treści wynikającą z poziomu szczegółowości.
+ * Działa na KAŻDEJ ścieżce outline (default, template, template-family), bo
+ * wołane jest w `generateOutline` po zbudowaniu i zaplanowaniu slajdów.
+ *   'short'  → 'visual'   (mniej tekstu per slajd)
+ *   'full'   → 'document' (więcej tekstu per slajd)
+ *   'medium' / brak → outline NIETKNIĘTY (kompatybilność wsteczna — dziś).
+ * Poziom jest globalnym nadpisaniem: świadomie wygrywa z gęstością z intent-defaults.
+ */
+export function applyDeckDetailLevel(
+  outline: OutlineItem[],
+  level: DeckDetailLevel | undefined
+): OutlineItem[] {
+  if (level !== 'short' && level !== 'full') return outline;
+  const density: OutlineItem['density'] = level === 'short' ? 'visual' : 'document';
+  return outline.map((item) => ({ ...item, density }));
 }
 
 function getSourceKey(source: SourceArtifact): string {
@@ -1209,6 +1248,8 @@ export async function generateOutline(
 
   const planning = planSlides({ setup, outline, templateOutlineUsed });
   outline = planning.outline;
+  // K5 — globalna gęstość treści wg poziomu ('short'/'full'); 'medium'/brak = bez zmian.
+  outline = applyDeckDetailLevel(outline, setup.level);
   const narrativePlan = buildPresentationNarrativePlan({
     setup,
     outline,
