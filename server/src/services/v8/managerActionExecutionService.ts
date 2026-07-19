@@ -122,7 +122,7 @@ async function managerAuditLog(
 ) {
   try {
     await dbRun(
-      `INSERT INTO execution_audit_log (id, organization_id, entity_type, entity_id, action, old_value, new_value, reason, user_id, created_at)
+      `INSERT INTO manager_action_audit_log (id, organization_id, entity_type, entity_id, action, old_value, new_value, reason, user_id, created_at)
        VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, NOW())`,
       [
         `mgr-audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
