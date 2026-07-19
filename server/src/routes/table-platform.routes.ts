@@ -30,6 +30,7 @@ import { webhookDispatcher } from '../services/tablePlatform/WebhookDispatcherSe
 import { webhookRelayService } from '../services/tablePlatform/WebhookRelayService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 
 const upload = multer({
@@ -396,10 +397,13 @@ router.post('/bases', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(403).json({ error: 'Organization context required' });
     }
-    const { workspaceId, name } = req.body ?? {};
+    const { workspaceId, name: rawName } = req.body ?? {};
     if (!workspaceId || typeof workspaceId !== 'string') {
       return res.status(400).json({ error: 'workspaceId is required' });
     }
+    // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+    // middleware escaped, before storing.
+    const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
     const base = await MetadataService.createBase(
       workspaceId,
       organizationId,
@@ -453,10 +457,12 @@ router.patch('/bases/:baseId', requireBaseAccess, async (req: Request, res: Resp
   try {
     const authReq = req as AuthRequest;
     const { baseId } = req.params;
-    const { name } = req.body ?? {};
+    const { name: rawName } = req.body ?? {};
     if (!baseId) {
       return res.status(400).json({ error: 'baseId is required' });
     }
+    // T5 (Z139 follow-up): decode HTML entities before storing — see createBase.
+    const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
     const base = await MetadataService.updateBase(baseId, { name }, authReq.userId);
     if (!base) {
       return res.status(404).json({ error: 'Base not found' });
@@ -568,13 +574,18 @@ router.post(
       const authReq = req as AuthRequest;
       const userId = authReq.userId;
       const { baseId } = req.params;
-      const { name, description } = req.body ?? {};
+      const { name: rawName, description: rawDescription } = req.body ?? {};
       if (!baseId) {
         return res.status(400).json({ error: 'baseId is required' });
       }
-      if (!name || typeof name !== 'string') {
+      if (!rawName || typeof rawName !== 'string') {
         return res.status(400).json({ error: 'name is required' });
       }
+      // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+      // middleware escaped, before storing.
+      const name = decodeHtmlEntities(rawName);
+      const description =
+        typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
       const table = await MetadataService.createTable(baseId, name, description, userId);
       if (!table) {
         return res.status(500).json({ error: 'Failed to create table' });
@@ -594,10 +605,14 @@ router.patch(
     try {
       const authReq = req as AuthRequest;
       const { tableId } = req.params;
-      const { name, description } = req.body ?? {};
+      const { name: rawName, description: rawDescription } = req.body ?? {};
       if (!tableId) {
         return res.status(400).json({ error: 'tableId is required' });
       }
+      // T5 (Z139 follow-up): decode HTML entities before storing — see createTable.
+      const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
+      const description =
+        typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
       const table = await MetadataService.updateTable(
         tableId,
         { name, description },

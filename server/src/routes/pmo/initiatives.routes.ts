@@ -809,11 +809,23 @@ router.post(
       const orgId = req.user?.organizationId;
       if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
-        req.body;
-      if (!name || typeof name !== 'string' || !name.trim()) {
+      const {
+        name: rawName,
+        description: rawDescription,
+        parentProgramId,
+        status,
+        ownerUserId,
+        startDate,
+        endDate,
+      } = req.body;
+      if (!rawName || typeof rawName !== 'string' || !rawName.trim()) {
         return res.status(400).json({ error: 'name is required' });
       }
+      // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+      // middleware escaped, before storing — mirrors the initiatives title fix above.
+      const name = decodeHtmlEntities(rawName);
+      const description =
+        typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
 
       if (parentProgramId) {
         const parent = await queryHelpers.queryOne(
@@ -975,8 +987,19 @@ router.put(
       );
       if (!existing) return res.status(404).json({ error: 'Program not found' });
 
-      const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
-        req.body;
+      const {
+        name: rawName,
+        description: rawDescription,
+        parentProgramId,
+        status,
+        ownerUserId,
+        startDate,
+        endDate,
+      } = req.body;
+      // T5 (Z139 follow-up): decode HTML entities before storing — see POST /programs.
+      const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
+      const description =
+        typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
 
       if (parentProgramId === programId) {
         return res.status(400).json({ error: 'Program cannot be its own parent' });

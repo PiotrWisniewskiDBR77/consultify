@@ -33,6 +33,7 @@ import { z } from 'zod';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { llmService } from '../services/ai/llmService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -156,8 +157,14 @@ router.put('/sessions/:id', async (req: AuthRequest, res) => {
     { fallback: false }
   );
 
+  // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+  // middleware escaped, before storing the indexed `name` column — the DB
+  // should hold plain text like the notebook/tool_sessions fix.
+  const decodedName =
+    typeof session.name === 'string' ? decodeHtmlEntities(session.name) : (session.name ?? null);
+
   const values = {
-    name: session.name ?? null,
+    name: decodedName,
     conversation_id: session.conversationId ?? null,
     current_phase: session.currentPhase ?? 'welcome',
     outcome: session.outcome ?? null,

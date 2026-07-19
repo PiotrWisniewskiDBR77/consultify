@@ -23,6 +23,7 @@ import { hasPermission } from '../services/permissionService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { assessmentAuditLogger } from '../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -675,11 +676,15 @@ export class AssessmentController {
 
       await ensureAssessmentSchema();
 
-      const { assessmentType, name, projectId } = req.body;
-      if (!assessmentType || !name) {
+      const { assessmentType, name: rawName, projectId } = req.body;
+      if (!assessmentType || !rawName) {
         res.status(400).json({ error: 'assessmentType and name are required' });
         return;
       }
+      // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+      // middleware escaped, mirroring the notebook/tool_sessions.name fix — the
+      // DB should hold plain text, not a literal `&amp;`.
+      const name = decodeHtmlEntities(String(rawName));
 
       const validTypes: AssessmentType[] = ['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN'];
       if (!validTypes.includes(assessmentType)) {
@@ -911,7 +916,7 @@ export class AssessmentController {
       await ensureAssessmentSchema();
 
       const {
-        name,
+        name: rawName,
         answers,
         completionPercent,
         confidenceAvg,
@@ -920,6 +925,8 @@ export class AssessmentController {
         currentSectionId,
         navigation,
       } = req.body;
+      // T5 (Z139 follow-up): decode HTML entities before storing — see createAssessment.
+      const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
 
       const now = new Date().toISOString();
 

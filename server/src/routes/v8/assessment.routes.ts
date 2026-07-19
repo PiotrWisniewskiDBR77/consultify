@@ -20,6 +20,7 @@ import AssessmentWorkbenchService, {
 import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
@@ -285,7 +286,9 @@ router.post(
     const assessmentType = String(req.body?.assessmentType || '')
       .trim()
       .toUpperCase();
-    const name = String(req.body?.name || '').trim();
+    // T5 (Z139 follow-up): decode HTML entities the global input-sanitization
+    // middleware escaped, before storing — mirrors AssessmentController.createAssessment.
+    const name = decodeHtmlEntities(String(req.body?.name || '').trim());
     const projectId = req.body?.projectId ? String(req.body.projectId) : null;
 
     if (!assessmentType || !name) {
@@ -504,6 +507,10 @@ router.put(
         ? req.body.navigation
         : parseJsonSafely(existing.navigation_json, {});
     const now = new Date().toISOString();
+    // T5 (Z139 follow-up): decode HTML entities before storing — mirrors
+    // AssessmentController.updateAssessment.
+    const nextName =
+      typeof req.body?.name === 'string' ? decodeHtmlEntities(req.body.name) : (req.body?.name ?? null);
 
     await queryHelpers.queryRun(
       `UPDATE assessments
@@ -512,7 +519,7 @@ router.put(
            score_summary = ?, current_section_id = ?, navigation_json = ?, updated_by = ?, updated_at = ?
        WHERE id = ? AND organization_id = ?`,
       [
-        req.body?.name ?? null,
+        nextName,
         JSON.stringify(nextAnswers || {}),
         JSON.stringify(nextContextSnapshot || {}),
         nextCompletionPercent,
