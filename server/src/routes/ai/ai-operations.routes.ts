@@ -63,7 +63,7 @@ router.post(
       logger.error('[AI Operations] Tool packs indexing failed:', error);
       return res.status(500).json({
         error: 'Tool packs indexing failed',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -107,7 +107,7 @@ router.post(
       logger.error('[AI Operations] Product pills indexing failed:', error);
       return res.status(500).json({
         error: 'Product pills indexing failed',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -176,7 +176,7 @@ router.get(
       logger.error('[AI Operations] Error getting mission control status:', error);
       return res.status(500).json({
         error: 'Failed to get status',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -221,7 +221,7 @@ router.get(
       logger.error('[AI Operations] Error getting providers:', error);
       return res.status(500).json({
         error: 'Failed to get providers',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -249,7 +249,7 @@ router.get(
       logger.error('[AI Operations] Error getting alerts:', error);
       return res.status(500).json({
         error: 'Failed to get alerts',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -304,7 +304,7 @@ router.post(
       logger.error('[AI Operations] Error resolving alert:', error);
       return res.status(500).json({
         error: 'Failed to resolve alert',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -404,7 +404,7 @@ router.get(
       logger.error('[AI Operations] Error getting performance metrics:', error);
       return res.status(500).json({
         error: 'Failed to get metrics',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -481,7 +481,7 @@ router.get(
       logger.error('[AI Operations] Error getting performance trends:', error);
       return res.status(500).json({
         error: 'Failed to get trends',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -581,7 +581,7 @@ router.get(
       logger.error('[AI Operations] Error getting cost summary:', error);
       return res.status(500).json({
         error: 'Failed to get costs',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -645,7 +645,7 @@ router.get(
       logger.error('[AI Operations] Error getting cost trends:', error);
       return res.status(500).json({
         error: 'Failed to get trends',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -723,7 +723,7 @@ router.get(
       logger.error('[AI Operations] Error getting costs by user:', error);
       return res.status(500).json({
         error: 'Failed to get user costs',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -812,7 +812,7 @@ router.get(
       logger.error('[AI Operations] Error getting SLA status:', error);
       return res.status(500).json({
         error: 'Failed to get SLA status',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -863,7 +863,7 @@ router.get(
       logger.error('[AI Operations] Error getting SLA history:', error);
       return res.status(500).json({
         error: 'Failed to get SLA history',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -963,7 +963,7 @@ router.get(
       logger.error('[AI Operations] Error getting usage analytics:', error);
       return res.status(500).json({
         error: 'Failed to get analytics',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -1385,7 +1385,7 @@ router.get(
       logger.error('[AI Operations] Error getting LLM observatory analytics:', error);
       return res.status(500).json({
         error: 'Failed to get LLM observatory analytics',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -1496,7 +1496,7 @@ router.get(
       logger.error('[AI Operations] Error getting insights:', error);
       return res.status(500).json({
         error: 'Failed to get insights',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -1572,7 +1572,7 @@ router.get(
       logger.error('[AI Operations] Error getting summary:', error);
       return res.status(500).json({
         error: 'Failed to get summary',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })

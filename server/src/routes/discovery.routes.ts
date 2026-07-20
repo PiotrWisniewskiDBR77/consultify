@@ -328,7 +328,7 @@ router.post('/sessions/convert', async (req: AuthRequest, res) => {
       error: error instanceof Error ? error.message : String(error),
     });
     res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to convert discovery session',
+      error: 'Failed to convert discovery session',
     });
   }
 });
@@ -473,7 +473,7 @@ router.post('/extract', async (req: AuthRequest, res) => {
       error: error instanceof Error ? error.message : String(error),
     });
     res.status(500).json({
-      error: error instanceof Error ? error.message : 'Discovery extraction failed',
+      error: 'Discovery extraction failed',
     });
   }
 });

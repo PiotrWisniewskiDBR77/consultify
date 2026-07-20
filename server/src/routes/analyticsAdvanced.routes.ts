@@ -74,9 +74,7 @@ router.get(
       return res.json({ success: true, matrix });
     } catch (error: unknown) {
       logger.error('Cohort analysis error:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return res.status(500).json({ error: 'Unknown error' });
     }
   })
 );
@@ -103,9 +101,7 @@ router.get(
       return res.json({ success: true, flags });
     } catch (error: unknown) {
       logger.error('Experiment assignment error:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return res.status(500).json({ error: 'Unknown error' });
     }
   })
 );

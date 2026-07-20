@@ -141,7 +141,7 @@ router.get(
       logger.error('[AI Settings] Error getting superadmin settings:', error);
       return res.status(500).json({
         error: 'Failed to get settings',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -185,7 +185,7 @@ router.put(
       logger.error('[AI Settings] Error updating superadmin settings:', error);
       return res.status(500).json({
         error: 'Failed to update settings',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -228,7 +228,7 @@ router.get(
       logger.error('[AI Settings] Error getting org settings:', error);
       return res.status(500).json({
         error: 'Failed to get settings',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -286,7 +286,7 @@ router.put(
       logger.error('[AI Settings] Error updating org settings:', error);
       return res.status(500).json({
         error: 'Failed to update settings',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -390,7 +390,7 @@ router.put(
         logger.error('[AI Settings] Fallback persistence also failed:', fallbackError);
         return res.status(500).json({
           error: 'Failed to update settings',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          message: 'Unknown error',
         });
       }
     }
@@ -593,7 +593,7 @@ router.get(
       logger.error('[AI Settings] Error getting audit log:', error);
       return res.status(500).json({
         error: 'Failed to get audit log',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -639,7 +639,7 @@ router.get(
       logger.error('[AI Settings] Error getting org audit log:', error);
       return res.status(500).json({
         error: 'Failed to get audit log',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -716,7 +716,7 @@ router.get(
       logger.error('[AI Settings] Error getting user tiers:', error);
       return res.status(500).json({
         error: 'Failed to get user tiers',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -765,7 +765,7 @@ router.put(
       logger.error('[AI Settings] Error assigning user tier:', error);
       return res.status(500).json({
         error: 'Failed to assign tier',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -808,7 +808,7 @@ router.get(
       logger.error('[AI Settings] Error getting cost attribution:', error);
       return res.status(500).json({
         error: 'Failed to get costs',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -899,7 +899,7 @@ router.get(
       logger.error('[AI Settings] Error generating compliance report:', error);
       return res.status(500).json({
         error: 'Failed to generate report',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })
@@ -939,7 +939,7 @@ router.post(
       logger.error('[AI Settings] Error generating compliance report:', error);
       return res.status(500).json({
         error: 'Failed to generate report',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Unknown error',
       });
     }
   })

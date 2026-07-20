@@ -104,7 +104,7 @@ router.get(
       logger.error('[AI Prompts API] Error listing prompts:', error);
       return res.status(500).json({
         error: 'Failed to list prompts',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -135,7 +135,7 @@ router.get(
       logger.error('[AI Prompts API] Error listing categories:', error);
       return res.status(500).json({
         error: 'Failed to list categories',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -196,7 +196,7 @@ router.get(
       logger.error('[AI Prompts API] Error getting prompt:', error);
       return res.status(500).json({
         error: 'Failed to get prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -277,7 +277,7 @@ router.post(
       logger.error('[AI Prompts API] Error creating prompt:', error);
       return res.status(500).json({
         error: 'Failed to create prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -405,7 +405,7 @@ router.put(
       logger.error('[AI Prompts API] Error updating prompt:', error);
       return res.status(500).json({
         error: 'Failed to update prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -427,9 +427,10 @@ router.get(
       const normalizedVersions = normalizeVersions((versions as any[]) || []);
       return res.json({ success: true, data: normalizedVersions, versions: normalizedVersions });
     } catch (error: unknown) {
+      logger.error('[AI Prompts API] Error getting prompt versions:', error);
       return res.status(500).json({
         error: 'Failed to get prompt versions',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -465,7 +466,7 @@ router.delete(
       logger.error('[AI Prompts API] Error deleting prompt:', error);
       return res.status(500).json({
         error: 'Failed to delete prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -518,7 +519,7 @@ router.post(
       logger.error('[AI Prompts API] Error testing prompt:', error);
       return res.status(500).json({
         error: 'Failed to test prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -601,7 +602,7 @@ router.post(
       logger.error('[AI Prompts API] Error restoring version:', error);
       return res.status(500).json({
         error: 'Failed to restore version',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -664,7 +665,7 @@ router.post(
       logger.error('[AI Prompts] Rollback error:', error);
       return res.status(500).json({
         error: 'Failed to rollback prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -705,7 +706,7 @@ router.post(
       logger.error('[AI Prompts] Assemble error:', error);
       return res.status(500).json({
         error: 'Failed to assemble prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -785,7 +786,7 @@ router.post(
       logger.error('[AI Prompts] Create experiment error:', error);
       return res.status(500).json({
         error: 'Failed to create experiment',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })

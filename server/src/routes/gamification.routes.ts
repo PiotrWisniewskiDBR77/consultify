@@ -77,9 +77,7 @@ router.get(
       });
     } catch (error: unknown) {
       logger.error('Gamification profile error:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return res.status(500).json({ error: 'Unknown error' });
     }
   })
 );

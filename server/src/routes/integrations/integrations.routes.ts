@@ -719,7 +719,7 @@ router.post(
         });
         return res.status(201).json(result);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to connect';
+        const message = 'Failed to connect';
         if (message.includes('Unknown connector:')) {
           return res.status(404).json({ error: message });
         }
@@ -766,7 +766,7 @@ router.post(
         });
         return res.status(201).json(result);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to connect';
+        const message = 'Failed to connect';
         if (message.includes('Unknown connector:')) {
           return res.status(404).json({ error: message });
         }

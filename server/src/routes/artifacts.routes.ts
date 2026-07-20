@@ -1039,9 +1039,11 @@ router.post(
 
       return res.status(200).json({ data: started });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not start artifact review';
-      if (message.includes('cannot enter review before artifact validation passes')) {
-        return res.status(409).json({ error: message });
+      const rawMessage = error instanceof Error ? error.message : '';
+      if (rawMessage.includes('cannot enter review before artifact validation passes')) {
+        return res
+          .status(409)
+          .json({ error: 'Cannot enter review before artifact validation passes' });
       }
       throw error;
     }

@@ -112,9 +112,7 @@ router.get(
       });
     } catch (error: unknown) {
       logger.error('Trial Status Error:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return res.status(500).json({ error: 'Unknown error' });
     }
   })
 );
@@ -193,7 +191,19 @@ router.post(
       logger.error('Trial Conversion Error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       const status = message.includes('not found') ? 404 : message.includes('already') ? 409 : 500;
-      return res.status(status).json({ error: message });
+      const safeMessage =
+        status === 404
+          ? 'Trial not found'
+          : status === 409
+            ? 'Trial already converted'
+            : 'Trial conversion failed';
+      const code =
+        status === 404
+          ? 'TRIAL_NOT_FOUND'
+          : status === 409
+            ? 'TRIAL_ALREADY_CONVERTED'
+            : 'TRIAL_CONVERSION_FAILED';
+      return res.status(status).json({ error: safeMessage, code });
     }
   })
 );
@@ -248,9 +258,7 @@ router.post(
       });
     } catch (error: unknown) {
       logger.error('Transition Confirmation Error:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return res.status(500).json({ error: 'Unknown error' });
     }
   })
 );

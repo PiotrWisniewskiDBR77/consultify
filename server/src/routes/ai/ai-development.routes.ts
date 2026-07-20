@@ -141,7 +141,7 @@ router.get(
       logger.error('[AI Development] Error listing prompts:', error);
       return res.status(500).json({
         error: 'Failed to list prompts',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -169,7 +169,7 @@ router.get(
       logger.error('[AI Development] Error listing categories:', error);
       return res.status(500).json({
         error: 'Failed to list categories',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -221,7 +221,7 @@ router.get(
       logger.error('[AI Development] Error getting prompt:', error);
       return res.status(500).json({
         error: 'Failed to get prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -299,7 +299,7 @@ router.post(
       logger.error('[AI Development] Error creating prompt:', error);
       return res.status(500).json({
         error: 'Failed to create prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -383,7 +383,7 @@ router.put(
       logger.error('[AI Development] Error updating prompt:', error);
       return res.status(500).json({
         error: 'Failed to update prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -433,7 +433,7 @@ router.post(
       logger.error('[AI Development] Error testing prompt:', error);
       return res.status(500).json({
         error: 'Failed to test prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -475,7 +475,7 @@ router.get(
       logger.error('[AI Development] Error listing experiments:', error);
       return res.status(500).json({
         error: 'Failed to list experiments',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -510,7 +510,7 @@ router.post(
       logger.error('[AI Development] Error creating experiment:', error);
       return res.status(500).json({
         error: 'Failed to create experiment',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -536,7 +536,7 @@ router.get(
       logger.error('[AI Development] Error getting experiment:', error);
       return res.status(500).json({
         error: 'Failed to get experiment',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -567,7 +567,7 @@ router.post(
       logger.error('[AI Development] Error starting experiment:', error);
       return res.status(500).json({
         error: 'Failed to start experiment',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -594,7 +594,7 @@ router.post(
       logger.error('[AI Development] Error stopping experiment:', error);
       return res.status(500).json({
         error: 'Failed to stop experiment',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -625,7 +625,7 @@ router.get(
       logger.error('[AI Development] Error listing knowledge candidates:', error);
       return res.status(500).json({
         error: 'Failed to list candidates',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -657,7 +657,7 @@ router.post(
       logger.error('[AI Development] Error submitting candidate:', error);
       return res.status(500).json({
         error: 'Failed to submit candidate',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -684,7 +684,7 @@ router.put(
       logger.error('[AI Development] Error updating candidate status:', error);
       return res.status(500).json({
         error: 'Failed to update status',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -714,7 +714,7 @@ router.get(
       logger.error('[AI Development] Error getting approved ideas:', error);
       return res.status(500).json({
         error: 'Failed to get approved ideas',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -752,7 +752,7 @@ router.get(
       logger.error('[AI Development] Error getting intelligence config:', error);
       return res.status(500).json({
         error: 'Failed to get config',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -787,7 +787,7 @@ router.put(
       logger.error('[AI Development] Error updating intelligence config:', error);
       return res.status(500).json({
         error: 'Failed to update config',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })
@@ -851,7 +851,7 @@ router.get(
       logger.error('[AI Development] Error getting summary:', error);
       return res.status(500).json({
         error: 'Failed to get summary',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Unknown error',
       });
     }
   })

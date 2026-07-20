@@ -3744,8 +3744,7 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
       const errorRecord = error as { statusCode?: unknown; code?: unknown };
       if (errorRecord?.statusCode === 403) {
         return res.status(403).json({
-          error:
-            error instanceof Error ? error.message : 'Referenced entity is outside organization',
+          error: 'Referenced entity is outside organization',
           code: typeof errorRecord.code === 'string' ? errorRecord.code : 'CANVAS_FORBIDDEN',
           recoverable: true,
         });
@@ -3916,8 +3915,13 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
       })
     );
   } catch (error) {
+    logger.error('[work-canvas] apply_operation_failed', {
+      err: error,
+      correlationId: (req as unknown as { correlationId?: string }).correlationId,
+    });
     return res.status(400).json({
-      error: error instanceof Error ? error.message : 'Failed to apply Canvas operation',
+      error: 'Failed to apply Canvas operation',
+      code: 'CANVAS_OPERATION_APPLY_FAILED',
     });
   }
 });
@@ -4165,13 +4169,13 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
     const errorRecord = error as { statusCode?: unknown; code?: unknown };
     if (errorRecord?.statusCode === 403) {
       return res.status(403).json({
-        error: error instanceof Error ? error.message : 'Referenced entity is outside organization',
+        error: 'Referenced entity is outside organization',
         code: typeof errorRecord.code === 'string' ? errorRecord.code : 'CANVAS_FORBIDDEN',
         recoverable: true,
       });
     }
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to save Canvas to workspace',
+      error: 'Failed to save Canvas to workspace',
     });
   }
 });
@@ -4239,7 +4243,7 @@ router.post('/drafts/:draftId/create-output', async (req: AuthRequest, res) => {
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to create Canvas output',
+      error: 'Failed to create Canvas output',
     });
   }
 });
@@ -4340,7 +4344,7 @@ router.post('/drafts/:draftId/research/finalize-report', async (req: AuthRequest
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to finalize Canvas research report',
+      error: 'Failed to finalize Canvas research report',
     });
   }
 });
@@ -4489,7 +4493,7 @@ router.post('/drafts/:draftId/send-to-table-studio', async (req: AuthRequest, re
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to send Canvas to Table Studio',
+      error: 'Failed to send Canvas to Table Studio',
     });
   }
 });
@@ -4615,7 +4619,7 @@ router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to register Canvas in Outputs',
+      error: 'Failed to register Canvas in Outputs',
     });
   }
 });
@@ -4732,7 +4736,7 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to send Canvas to Document Studio',
+      error: 'Failed to send Canvas to Document Studio',
     });
   }
 });

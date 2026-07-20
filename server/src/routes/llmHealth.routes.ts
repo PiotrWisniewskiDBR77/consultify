@@ -159,7 +159,7 @@ router.get(
       logger.error('[LLMHealth] Error:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -236,7 +236,7 @@ router.get(
       logger.error('[LLMHealth] Error:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -297,7 +297,7 @@ router.post(
       logger.error('[LLMHealth] Test error:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -363,9 +363,10 @@ router.get(
           })),
       });
     } catch (error: unknown) {
+      logger.error('[LLM Health] Error building summary:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -448,7 +449,7 @@ router.get(
       logger.error('[LLMHealth] Status error:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -544,7 +545,7 @@ router.get(
       logger.error('[LLMHealth] Detailed error:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })

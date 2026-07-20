@@ -246,7 +246,7 @@ router.post(
       logger.error('[ActionDecisionsRoute] Error:', err);
       const status = (err as { status?: number })?.status || 400;
       return res.status(status).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -370,7 +370,7 @@ router.post(
     } catch (err: any) {
       logger.error('[ActionExecutionRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -435,7 +435,7 @@ router.post(
     } catch (err: any) {
       logger.error('[ActionDryRunRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -498,7 +498,7 @@ router.get(
     } catch (err: any) {
       logger.error('[AuditExportRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -561,7 +561,7 @@ router.get(
     } catch (err: any) {
       logger.error('[ExecutionsExportRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -610,7 +610,7 @@ router.get(
     } catch (err: any) {
       logger.error('[PolicyRulesRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -652,7 +652,7 @@ router.patch(
       }
       logger.error('[PolicyToggleRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -722,7 +722,7 @@ router.post(
     } catch (err: any) {
       logger.error('[PolicyCreateRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -751,7 +751,7 @@ router.get(
     } catch (err: any) {
       logger.error('[PolicyStatusRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -791,7 +791,7 @@ router.patch(
     } catch (err: any) {
       logger.error('[PolicyGlobalRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -843,7 +843,7 @@ router.post(
     } catch (err: any) {
       logger.error('[PolicyEvaluateRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -929,7 +929,7 @@ router.post(
       const unavailable = respondIfUnavailable(res, err, 'Async execution unavailable');
       if (unavailable) return unavailable;
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -980,7 +980,7 @@ router.get(
     } catch (err: any) {
       logger.error('[AsyncJobStatusRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -1026,16 +1026,18 @@ router.post(
     } catch (err: any) {
       const error = err as { code?: string; message?: string };
       if (error.code === 'JOB_NOT_FOUND') {
-        return res.status(404).json({ error: error.message });
+        return res.status(404).json({ error: 'Job not found', code: 'JOB_NOT_FOUND' });
       }
       if (error.code === 'JOB_INVALID_STATE') {
-        return res.status(400).json({ error: error.message });
+        return res
+          .status(400)
+          .json({ error: 'Job is not in a retryable state', code: 'JOB_INVALID_STATE' });
       }
       const unavailable = respondIfUnavailable(res, err, 'Async retry unavailable');
       if (unavailable) return unavailable;
       logger.error('[AsyncJobRetryRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -1081,14 +1083,16 @@ router.post(
     } catch (err: any) {
       const error = err as { code?: string; message?: string };
       if (error.code === 'JOB_NOT_FOUND') {
-        return res.status(404).json({ error: error.message });
+        return res.status(404).json({ error: 'Job not found', code: 'JOB_NOT_FOUND' });
       }
       if (error.code === 'JOB_INVALID_STATE') {
-        return res.status(400).json({ error: error.message });
+        return res
+          .status(400)
+          .json({ error: 'Job is not in a cancellable state', code: 'JOB_INVALID_STATE' });
       }
       logger.error('[AsyncJobCancelRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -1138,7 +1142,7 @@ router.get(
     } catch (err: any) {
       logger.error('[DeadLetterListRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -1179,7 +1183,7 @@ router.get(
     } catch (err: any) {
       logger.error('[JobStatsRoute] Error:', err);
       return res.status(500).json({
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
