@@ -2451,7 +2451,7 @@ router.delete(
     } catch (err: any) {
       logger.error('[ReportBuilder] Error removing section:', err);
       if (err.message?.includes('Cannot remove required')) {
-        return res.status(400).json({ error: err.message });
+        return res.status(400).json({ error: 'Cannot remove a required section' });
       }
       next(err);
     }
@@ -2556,7 +2556,7 @@ router.post('/:id/generate', async (req: Request, res: Response, next: NextFunct
   } catch (err: any) {
     logger.error('[ReportBuilder] Error generating report:', err);
     if (err.message?.includes('not found')) {
-      return res.status(404).json({ error: err.message });
+      return res.status(404).json({ error: 'Report not found' });
     }
     next(err);
   }
@@ -2597,7 +2597,7 @@ router.post(
     } catch (err: any) {
       logger.error('[ReportBuilder] Error generating section:', err);
       if (err.message?.includes('not found')) {
-        return res.status(404).json({ error: err.message });
+        return res.status(404).json({ error: 'Section not found' });
       }
       next(err);
     }
@@ -5219,7 +5219,7 @@ router.post(
       res.json({ variants, sections: variants[0]?.sections || [] });
     } catch (err: any) {
       if (err.message?.includes('not found')) {
-        return res.status(404).json({ error: err.message });
+        return res.status(404).json({ error: 'Report not found' });
       }
       logger.error('[ReportBuilder] Error proposing outline:', err);
       next(err);
@@ -5305,7 +5305,7 @@ router.post(
     } catch (err: any) {
       logger.error('[ReportBuilder] Error refreshing section:', err);
       if (err.message?.includes('not found')) {
-        return res.status(404).json({ error: err.message });
+        return res.status(404).json({ error: 'Section not found' });
       }
       next(err);
     }
@@ -5398,7 +5398,7 @@ router.post('/:id/refresh-all', async (req: Request, res: Response, next: NextFu
   } catch (err: any) {
     logger.error('[ReportBuilder] Error in refresh-all:', err);
     if (err.message?.includes('not found')) {
-      return res.status(404).json({ error: err.message });
+      return res.status(404).json({ error: 'Report not found' });
     }
     next(err);
   }
@@ -5420,7 +5420,7 @@ router.post(
       res.json({ results });
     } catch (err: any) {
       if (err.message?.includes('not found')) {
-        return res.status(404).json({ error: err.message });
+        return res.status(404).json({ error: 'Report not found' });
       }
       logger.error('[ReportBuilder] Error computing RAG:', err);
       next(err);

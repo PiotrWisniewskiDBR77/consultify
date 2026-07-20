@@ -99,10 +99,11 @@ router.post(
 
         results.success++;
       } catch (err: any) {
+        logger.error('[AdminBulk] Failed to import user row', { err, row });
         results.errors.push({
           row,
           email: user.email || '',
-          error: err.message || 'Failed to import',
+          error: 'Failed to import',
         });
         results.failed++;
       }

@@ -3474,7 +3474,10 @@ router.post(
       });
     } catch (error: any) {
       logger.error('[Feedback] Seed error:', error);
-      return res.status(500).json({ error: 'Failed to seed demo data', details: error.message });
+      return res.status(500).json({
+        error: 'Failed to seed demo data',
+        code: 'FEEDBACK_SEED_DEMO_DATA_FAILED',
+      });
     }
   })
 );

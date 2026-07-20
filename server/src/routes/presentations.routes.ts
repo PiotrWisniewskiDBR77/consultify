@@ -6352,11 +6352,10 @@ router.post(
     presentationMediaUpload.single('file')(req, res, (err: unknown) => {
       if (!err) return next();
       const isLimitError = err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE';
-      const message = isLimitError
-        ? 'Image too large (max 10MB)'
-        : err instanceof Error
-          ? err.message
-          : 'Upload failed';
+      if (!isLimitError) {
+        logger.warn('[Presentations] media upload rejected', { err });
+      }
+      const message = isLimitError ? 'Image too large (max 10MB)' : 'Upload failed';
       res.status(isLimitError ? 413 : 400).json({ success: false, error: message });
     });
   },

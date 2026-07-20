@@ -132,7 +132,7 @@ router.post(
     } catch (err: any) {
       logger.error('[HelpChat] Error:', err);
       return res.status(500).json({
-        error: err.message,
+        error: 'HelpChat request failed',
         message: getErrorMessage(req.body.context),
       });
     }

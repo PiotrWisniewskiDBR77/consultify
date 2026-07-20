@@ -200,7 +200,6 @@ router.post(
         success: false,
         error: 'Demo mode unavailable',
         code: 'DEMO_UNAVAILABLE',
-        message: error.message,
       });
     }
   })
@@ -289,7 +288,6 @@ router.get(
         success: false,
         error: 'Demo mode unavailable',
         code: 'DEMO_UNAVAILABLE',
-        message: error.message,
       });
     }
   })
@@ -345,7 +343,6 @@ router.get(
         success: false,
         error: 'Demo organization unavailable',
         code: 'DEMO_UNAVAILABLE',
-        message: error.message,
       });
     }
   })

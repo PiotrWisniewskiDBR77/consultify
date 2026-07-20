@@ -2194,7 +2194,7 @@ router.put(
       return res.json(updated);
     } catch (err: any) {
       if (err.message?.includes('system')) {
-        return res.status(403).json({ error: err.message });
+        return res.status(403).json({ error: 'Cannot modify system section types' });
       }
       return failInitiative500(
         res,
@@ -2237,7 +2237,7 @@ router.delete(
       return res.json({ success: true });
     } catch (err: any) {
       if (err.message?.includes('system')) {
-        return res.status(403).json({ error: err.message });
+        return res.status(403).json({ error: 'Cannot delete system section types' });
       }
       return failInitiative500(
         res,
