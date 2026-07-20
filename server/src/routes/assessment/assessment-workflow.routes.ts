@@ -1526,20 +1526,25 @@ router.post('/:assessmentId/presence', async (req: AuthRequest, res: Response) =
     );
 
     // Return all non-stale collaborators for this assessment.
+    // Age is computed DB-side (NOW() - last_activity) so it is immune to the
+    // driver's timezone parsing of TIMESTAMP-without-tz columns.
+    const activeSeconds = Math.round(PRESENCE_ACTIVE_WINDOW_MS / 1000);
+    const staleSeconds = Math.round(PRESENCE_STALE_WINDOW_MS / 1000);
     const rows = await dbAll(
       db,
-      `SELECT user_id, user_name, user_email, current_axis, current_view, last_activity, is_connected
+      `SELECT user_id, user_name, user_email, current_axis, current_view, last_activity,
+              is_connected,
+              EXTRACT(EPOCH FROM (NOW() - last_activity)) AS age_seconds
          FROM assessment_presence
         WHERE assessment_id = ? AND organization_id = ?
-          AND last_activity > NOW() - INTERVAL '5 minutes'
+          AND last_activity > NOW() - INTERVAL '${staleSeconds} seconds'
         ORDER BY last_activity DESC`,
       [assessmentId, organizationId]
     );
 
-    const now = Date.now();
     const collaborators = rows.map((r) => {
-      const last = r.last_activity ? new Date(r.last_activity) : new Date();
-      const ageMs = now - last.getTime();
+      const ageSeconds = Number(r.age_seconds);
+      const connected = r.is_connected === true || r.is_connected === 1;
       return {
         userId: r.user_id,
         userName: r.user_name || 'Unknown',
@@ -1547,10 +1552,9 @@ router.post('/:assessmentId/presence', async (req: AuthRequest, res: Response) =
         avatarColor: collabAvatarColor(r.user_id),
         currentAxis: r.current_axis || undefined,
         currentView: r.current_view || 'assessment',
-        lastActivity: last,
+        lastActivity: r.last_activity,
         isActive:
-          (r.is_connected === true || r.is_connected === 1) &&
-          ageMs <= PRESENCE_ACTIVE_WINDOW_MS,
+          connected && Number.isFinite(ageSeconds) && ageSeconds <= activeSeconds,
       };
     });
 
