@@ -117,10 +117,15 @@ const SYSTEM_ROLES = [
   },
 ];
 
-// Ensure custom_roles table exists
+// Ensure pmo_roles table exists (org-scoped PMO roles).
+// NOTE: intentionally NOT `custom_roles` — that name belongs to the GLOBAL RBAC
+// table (rbac.routes.ts + migration 200) with a different schema (display_name /
+// icon / base_role / role_type / scope, UNIQUE(name) only). Reusing it caused a
+// silent schema collision (42703 undefined_column) here. See migration
+// server/migrations/20260720_pmo_roles_table.sql. Postgres-native.
 const ensureTableExists = async () => {
   const createTableSQL = `
-        CREATE TABLE IF NOT EXISTS custom_roles (
+        CREATE TABLE IF NOT EXISTS pmo_roles (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -129,11 +134,13 @@ const ensureTableExists = async () => {
             level_label TEXT DEFAULT 'Custom',
             permissions TEXT, -- JSON array
             color TEXT DEFAULT 'gray',
-            is_system INTEGER DEFAULT 0,
+            is_system BOOLEAN DEFAULT FALSE,
             user_count INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            CONSTRAINT pmo_roles_org_name_unique UNIQUE (organization_id, name),
+            CONSTRAINT pmo_roles_org_fk FOREIGN KEY (organization_id)
+                REFERENCES organizations(id) ON DELETE CASCADE
         )
     `;
   await dbRun(createTableSQL, []);
@@ -202,7 +209,7 @@ router.get(
         user_count: number;
         created_at: string;
         updated_at: string;
-      }>(`SELECT * FROM custom_roles WHERE organization_id = ? ORDER BY level, name`, [orgId]);
+      }>(`SELECT * FROM pmo_roles WHERE organization_id = ? ORDER BY level, name`, [orgId]);
 
       const formattedCustomRoles = customRoles.map((r) => ({
         id: r.id,
@@ -265,7 +272,7 @@ router.get(
       user_count: number;
       created_at: string;
       updated_at: string;
-    }>(`SELECT * FROM custom_roles WHERE id = ? AND organization_id = ?`, [id, orgId]);
+    }>(`SELECT * FROM pmo_roles WHERE id = ? AND organization_id = ?`, [id, orgId]);
 
     if (!customRole) {
       return res.status(404).json({ error: 'Role not found' });
@@ -312,7 +319,7 @@ router.post(
 
     // Check for duplicate name
     const existing = await dbGet<{ id: string }>(
-      `SELECT id FROM custom_roles WHERE organization_id = ? AND LOWER(name) = LOWER(?)`,
+      `SELECT id FROM pmo_roles WHERE organization_id = ? AND LOWER(name) = LOWER(?)`,
       [orgId, name]
     );
 
@@ -324,7 +331,7 @@ router.post(
     const now = new Date().toISOString();
 
     const sql = `
-            INSERT INTO custom_roles (id, organization_id, name, description, level, level_label, permissions, color, created_at, updated_at)
+            INSERT INTO pmo_roles (id, organization_id, name, description, level, level_label, permissions, color, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
@@ -390,7 +397,7 @@ router.put(
 
     // Check if role exists
     const existing = await dbGet<{ id: string }>(
-      `SELECT id FROM custom_roles WHERE id = ? AND organization_id = ?`,
+      `SELECT id FROM pmo_roles WHERE id = ? AND organization_id = ?`,
       [id, orgId]
     );
 
@@ -402,7 +409,7 @@ router.put(
     const now = new Date().toISOString();
 
     const sql = `
-            UPDATE custom_roles SET
+            UPDATE pmo_roles SET
                 name = COALESCE(?, name),
                 description = COALESCE(?, description),
                 level = COALESCE(?, level),
@@ -471,7 +478,7 @@ router.delete(
       });
     }
 
-    const result = await dbRun(`DELETE FROM custom_roles WHERE id = ? AND organization_id = ?`, [
+    const result = await dbRun(`DELETE FROM pmo_roles WHERE id = ? AND organization_id = ?`, [
       id,
       orgId,
     ]);
