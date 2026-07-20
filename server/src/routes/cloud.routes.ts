@@ -352,13 +352,14 @@ router.post('/sources/:id/sync', verifyToken, async (req: AuthRequest, res: Resp
     let synced = 0;
     for (const file of files) {
       await dbRun(
-        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
-         VALUES (gen_random_uuid()::TEXT, ?, ?, ?, 'file', ?::JSONB, NOW())
-         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, local_id, metadata, last_sync_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, ?, 'file', ?, ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_type, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, last_sync_at = NOW()`,
         [
           req.params.id,
           file.id,
           `${source.provider}_file`,
+          file.id,
           JSON.stringify({
             name: file.name,
             mimeType: file.mimeType,

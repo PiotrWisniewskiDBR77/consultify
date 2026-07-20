@@ -772,10 +772,10 @@ async function jiraSyncAdapter(
     let synced = 0;
     for (const issue of issues as Array<{ key: string; fields?: Record<string, unknown> }>) {
       await db.run(
-        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, synced_at)
-         VALUES (gen_random_uuid()::TEXT, ?, ?, 'jira_issue', 'task', NOW())
-         ON CONFLICT (integration_id, external_id) DO UPDATE SET synced_at = NOW()`,
-        [integrationId, issue.key]
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, local_id, last_sync_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'jira_issue', 'task', ?, NOW())
+         ON CONFLICT (integration_id, external_type, external_id) DO UPDATE SET last_sync_at = NOW()`,
+        [integrationId, issue.key, issue.key]
       );
       synced++;
     }
@@ -818,10 +818,10 @@ async function slackSyncAdapter(
     let synced = 0;
     for (const ch of channels) {
       await db.run(
-        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
-         VALUES (gen_random_uuid()::TEXT, ?, ?, 'slack_channel', 'channel', ?::JSONB, NOW())
-         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
-        [integrationId, ch.id, JSON.stringify({ name: ch.name })]
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, local_id, metadata, last_sync_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'slack_channel', 'channel', ?, ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_type, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, last_sync_at = NOW()`,
+        [integrationId, ch.id, ch.id, JSON.stringify({ name: ch.name })]
       );
       synced++;
     }
@@ -857,10 +857,10 @@ async function teamsSyncAdapter(
     let synced = 0;
     for (const team of teams) {
       await db.run(
-        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
-         VALUES (gen_random_uuid()::TEXT, ?, ?, 'teams_team', 'team', ?::JSONB, NOW())
-         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
-        [integrationId, team.id, JSON.stringify({ displayName: team.displayName })]
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, local_id, metadata, last_sync_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'teams_team', 'team', ?, ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_type, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, last_sync_at = NOW()`,
+        [integrationId, team.id, team.id, JSON.stringify({ displayName: team.displayName })]
       );
       synced++;
     }
@@ -897,10 +897,10 @@ async function googleSyncAdapter(
     let synced = 0;
     for (const cal of calendars) {
       await db.run(
-        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
-         VALUES (gen_random_uuid()::TEXT, ?, ?, 'google_calendar', 'calendar', ?::JSONB, NOW())
-         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
-        [integrationId, cal.id, JSON.stringify({ summary: cal.summary })]
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, local_id, metadata, last_sync_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'google_calendar', 'calendar', ?, ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_type, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, last_sync_at = NOW()`,
+        [integrationId, cal.id, cal.id, JSON.stringify({ summary: cal.summary })]
       );
       synced++;
     }
@@ -1056,11 +1056,12 @@ async function cloudStorageSyncAdapter(
     let synced = 0;
     for (const file of files.slice(0, 100)) {
       await db.run(
-        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
-         VALUES (gen_random_uuid()::TEXT, ?, ?, 'cloud_file', 'file', ?::JSONB, NOW())
-         ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
+        `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, local_id, metadata, last_sync_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'cloud_file', 'file', ?, ?::JSONB, NOW())
+         ON CONFLICT (integration_id, external_type, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, last_sync_at = NOW()`,
         [
           integrationId,
+          file.id,
           file.id,
           JSON.stringify({
             name: file.name,
