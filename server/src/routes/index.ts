@@ -46,7 +46,6 @@ export { default as baselinesRoutes } from './baselines.routes.js';
 export { default as benchmarkRoutes } from './benchmark.routes.js';
 export { default as budgetRoutes } from './budget.routes.js';
 export { default as budgetsRoutes } from './budgets.routes.js';
-export { default as chaosRoutes } from './chaos.routes.js';
 export { default as chatProjectsRoutes } from './chat-projects.routes.js';
 export { default as cloudRoutes } from './cloud.routes.js';
 export { default as complianceRoutes } from './compliance.routes.js';
