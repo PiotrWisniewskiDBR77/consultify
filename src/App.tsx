@@ -9,8 +9,8 @@ import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
 import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
-import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 import { seedReviewModeFlags } from '@/utils/reviewModeSeed';
+import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
 import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
