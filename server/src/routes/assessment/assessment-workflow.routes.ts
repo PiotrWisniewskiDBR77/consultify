@@ -1197,6 +1197,492 @@ router.post('/:assessmentId/log-activity', async (req: AuthRequest, res: Respons
 });
 
 // =============================================================================
+// ASSESSMENT COLLABORATION ENDPOINTS (comments / presence / activities)
+// -----------------------------------------------------------------------------
+// Backs the FE contract consumed by:
+//   - src/components/assessment/AxisCommentsPanel.tsx  (comments)
+//   - src/hooks/useAssessmentCollaboration.tsx         (presence + activities)
+// Pattern mirrors Harvard-collab (idea_node_comments / realtime_presence).
+// =============================================================================
+
+// Consistent avatar color from userId (mirrors FE getAvatarColor palette)
+const COLLAB_AVATAR_COLORS = [
+  'bg-sky-500',
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-amber-500',
+  'bg-pink-500',
+  'bg-indigo-500',
+  'bg-blue-500',
+  'bg-danger-500',
+];
+function collabAvatarColor(userId: string): string {
+  let hash = 0;
+  const s = String(userId || '');
+  for (let i = 0; i < s.length; i++) {
+    hash = s.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return COLLAB_AVATAR_COLORS[Math.abs(hash) % COLLAB_AVATAR_COLORS.length];
+}
+
+// Presence is considered "active" if a heartbeat arrived within this window.
+const PRESENCE_ACTIVE_WINDOW_MS = 30_000;
+// Presence rows older than this are treated as stale / disconnected.
+const PRESENCE_STALE_WINDOW_MS = 5 * 60_000;
+
+// Idempotent, self-healing table bootstrap. Runs once per process. Guarantees
+// the endpoints work even on databases where the migration has not been applied.
+let collabTablesReady: Promise<void> | null = null;
+function ensureCollabTables(db: any): Promise<void> {
+  if (collabTablesReady) return collabTablesReady;
+  const runOne = (sql: string) =>
+    new Promise<void>((resolve, reject) => {
+      db.run(sql, [], (err: Error | null) => (err ? reject(err) : resolve()));
+    });
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS assessment_comments (
+      id TEXT PRIMARY KEY,
+      assessment_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      axis_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      author_name TEXT,
+      author_email TEXT,
+      comment TEXT NOT NULL,
+      parent_comment_id TEXT,
+      is_resolved BOOLEAN DEFAULT FALSE,
+      resolved_by TEXT,
+      resolved_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_assessment_comments_lookup ON assessment_comments (assessment_id, axis_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_assessment_comments_org ON assessment_comments (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS assessment_activities (
+      id TEXT PRIMARY KEY,
+      assessment_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      user_name TEXT,
+      activity_type TEXT NOT NULL,
+      data JSONB,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_assessment_activities_lookup ON assessment_activities (assessment_id, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_assessment_activities_org ON assessment_activities (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS assessment_presence (
+      id TEXT PRIMARY KEY,
+      assessment_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      user_name TEXT,
+      user_email TEXT,
+      current_axis TEXT,
+      current_view TEXT,
+      last_activity TIMESTAMP DEFAULT NOW(),
+      is_connected BOOLEAN DEFAULT TRUE,
+      UNIQUE (assessment_id, user_id)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_assessment_presence_lookup ON assessment_presence (assessment_id)`,
+  ];
+  collabTablesReady = (async () => {
+    for (const sql of statements) {
+      await runOne(sql);
+    }
+  })().catch((err) => {
+    // Reset so a later request can retry the bootstrap.
+    collabTablesReady = null;
+    throw err;
+  });
+  return collabTablesReady;
+}
+
+function dbAll(db: any, sql: string, params: any[]): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err: Error | null, rows: any[]) =>
+      err ? reject(err) : resolve(rows || [])
+    );
+  });
+}
+function dbRun(db: any, sql: string, params: any[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, (err: Error | null) => (err ? reject(err) : resolve()));
+  });
+}
+
+function genId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+/**
+ * GET /api/assessment-workflow/:assessmentId/comments?axisId=...
+ * Threaded discussion for an assessment axis (parents + nested replies).
+ */
+router.get('/:assessmentId/comments', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const axisId = req.query.axisId ? String(req.query.axisId) : null;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const db = getDatabase();
+    await ensureCollabTables(db);
+
+    const params: any[] = [organizationId, assessmentId];
+    let where = 'organization_id = ? AND assessment_id = ?';
+    if (axisId) {
+      where += ' AND axis_id = ?';
+      params.push(axisId);
+    }
+
+    const rows = await dbAll(
+      db,
+      `SELECT id, assessment_id, axis_id, user_id, author_name, author_email, comment,
+              parent_comment_id, is_resolved, resolved_by, resolved_at, created_at, updated_at
+         FROM assessment_comments
+        WHERE ${where}
+        ORDER BY created_at ASC`,
+      params
+    );
+
+    // Normalize booleans (Postgres → JS boolean; other adapters may return 0/1)
+    const normalized = rows.map((r) => ({
+      ...r,
+      is_resolved: r.is_resolved === true || r.is_resolved === 1 || r.is_resolved === '1',
+      replies: [] as any[],
+    }));
+
+    // Build threaded tree: top-level comments carry their replies[].
+    const byId = new Map<string, any>();
+    for (const c of normalized) byId.set(c.id, c);
+    const roots: any[] = [];
+    for (const c of normalized) {
+      if (c.parent_comment_id && byId.has(c.parent_comment_id)) {
+        byId.get(c.parent_comment_id).replies.push(c);
+      } else {
+        roots.push(c);
+      }
+    }
+
+    res.json({ comments: roots });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error getting comments:', err);
+    res.status(500).json({ error: 'Failed to get comments', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/comments
+ * Body: { axisId, comment, parentCommentId? }
+ */
+router.post('/:assessmentId/comments', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const { axisId, comment, parentCommentId } = req.body || {};
+    const userId = req.user?.id || 'user-default';
+    const organizationId = req.user?.organizationId || 'org-default';
+    const db = getDatabase();
+    await ensureCollabTables(db);
+
+    if (!axisId || !comment || !String(comment).trim()) {
+      return res.status(400).json({ error: 'axisId and comment are required' });
+    }
+
+    // Resolve author identity from users table (fallback to token claims).
+    let authorName = req.user?.name || null;
+    let authorEmail = req.user?.email || null;
+    try {
+      const userRows = await dbAll(
+        db,
+        `SELECT email, first_name, last_name FROM users WHERE id = ? LIMIT 1`,
+        [userId]
+      );
+      if (userRows[0]) {
+        const u = userRows[0];
+        authorEmail = authorEmail || u.email || null;
+        const composed = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+        authorName = authorName || composed || u.email || null;
+      }
+    } catch {
+      /* users lookup is best-effort */
+    }
+
+    const id = genId('acmt');
+    await dbRun(
+      db,
+      `INSERT INTO assessment_comments
+         (id, assessment_id, organization_id, axis_id, user_id, author_name, author_email,
+          comment, parent_comment_id, is_resolved, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, NOW(), NOW())`,
+      [
+        id,
+        assessmentId,
+        organizationId,
+        String(axisId),
+        userId,
+        authorName,
+        authorEmail,
+        String(comment).trim(),
+        parentCommentId || null,
+      ]
+    );
+
+    const rows = await dbAll(
+      db,
+      `SELECT id, assessment_id, axis_id, user_id, author_name, author_email, comment,
+              parent_comment_id, is_resolved, resolved_by, resolved_at, created_at, updated_at
+         FROM assessment_comments WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    const created = rows[0]
+      ? { ...rows[0], is_resolved: false, replies: [] }
+      : { id, assessment_id: assessmentId, axis_id: axisId, replies: [] };
+
+    res.status(201).json({ comment: created });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error creating comment:', err);
+    res.status(500).json({ error: 'Failed to create comment', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/comments/:commentId/resolve
+ * Marks a comment thread as resolved.
+ */
+router.post(
+  '/:assessmentId/comments/:commentId/resolve',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { assessmentId, commentId } = req.params;
+      const userId = req.user?.id || 'user-default';
+      const organizationId = req.user?.organizationId || 'org-default';
+      const db = getDatabase();
+      await ensureCollabTables(db);
+
+      await dbRun(
+        db,
+        `UPDATE assessment_comments
+            SET is_resolved = TRUE, resolved_by = ?, resolved_at = NOW(), updated_at = NOW()
+          WHERE id = ? AND assessment_id = ? AND organization_id = ?`,
+        [userId, commentId, assessmentId, organizationId]
+      );
+
+      res.json({ success: true, id: commentId, is_resolved: true });
+    } catch (err: any) {
+      logger.error('[AssessmentWorkflow] Error resolving comment:', err);
+      res.status(500).json({ error: 'Failed to resolve comment', message: err.message });
+    }
+  }
+);
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/presence
+ * Heartbeat. Body: { userId, userName, currentAxis?, currentView? }
+ * Returns { collaborators: CollaboratorPresence[] } for the assessment.
+ */
+router.post('/:assessmentId/presence', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const userId = String(req.body?.userId || req.user?.id || 'user-default');
+    const userName = req.body?.userName || req.user?.name || null;
+    const currentAxis = req.body?.currentAxis ?? null;
+    const currentView = req.body?.currentView || 'assessment';
+    const db = getDatabase();
+    await ensureCollabTables(db);
+
+    // Best-effort email enrichment for the presence row.
+    let userEmail = req.user?.email || null;
+    try {
+      const u = await dbAll(db, `SELECT email FROM users WHERE id = ? LIMIT 1`, [userId]);
+      if (u[0]?.email) userEmail = u[0].email;
+    } catch {
+      /* best-effort */
+    }
+
+    const presenceId = `${assessmentId}::${userId}`;
+    // Native upsert (explicit ON CONFLICT is left untouched by the PG adapter).
+    await dbRun(
+      db,
+      `INSERT INTO assessment_presence
+         (id, assessment_id, organization_id, user_id, user_name, user_email,
+          current_axis, current_view, last_activity, is_connected)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE)
+       ON CONFLICT (assessment_id, user_id) DO UPDATE SET
+          user_name = EXCLUDED.user_name,
+          user_email = EXCLUDED.user_email,
+          current_axis = EXCLUDED.current_axis,
+          current_view = EXCLUDED.current_view,
+          last_activity = NOW(),
+          is_connected = TRUE`,
+      [
+        presenceId,
+        assessmentId,
+        organizationId,
+        userId,
+        userName,
+        userEmail,
+        currentAxis,
+        currentView,
+      ]
+    );
+
+    // Return all non-stale collaborators for this assessment.
+    const rows = await dbAll(
+      db,
+      `SELECT user_id, user_name, user_email, current_axis, current_view, last_activity, is_connected
+         FROM assessment_presence
+        WHERE assessment_id = ? AND organization_id = ?
+          AND last_activity > NOW() - INTERVAL '5 minutes'
+        ORDER BY last_activity DESC`,
+      [assessmentId, organizationId]
+    );
+
+    const now = Date.now();
+    const collaborators = rows.map((r) => {
+      const last = r.last_activity ? new Date(r.last_activity) : new Date();
+      const ageMs = now - last.getTime();
+      return {
+        userId: r.user_id,
+        userName: r.user_name || 'Unknown',
+        userEmail: r.user_email || '',
+        avatarColor: collabAvatarColor(r.user_id),
+        currentAxis: r.current_axis || undefined,
+        currentView: r.current_view || 'assessment',
+        lastActivity: last,
+        isActive:
+          (r.is_connected === true || r.is_connected === 1) &&
+          ageMs <= PRESENCE_ACTIVE_WINDOW_MS,
+      };
+    });
+
+    res.json({ collaborators });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error updating presence:', err);
+    res.status(500).json({ error: 'Failed to update presence', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/presence/leave
+ * Body: { userId }
+ */
+router.post('/:assessmentId/presence/leave', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const userId = String(req.body?.userId || req.user?.id || 'user-default');
+    const db = getDatabase();
+    await ensureCollabTables(db);
+
+    await dbRun(
+      db,
+      `UPDATE assessment_presence
+          SET is_connected = FALSE, last_activity = NOW()
+        WHERE assessment_id = ? AND user_id = ? AND organization_id = ?`,
+      [assessmentId, userId, organizationId]
+    );
+
+    res.json({ success: true });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error on presence leave:', err);
+    res.status(500).json({ error: 'Failed to update presence', message: err.message });
+  }
+});
+
+/**
+ * GET /api/assessment-workflow/:assessmentId/activities?since=ISO
+ * Returns { activities: ActivityEvent[] } (newest first).
+ */
+router.get('/:assessmentId/activities', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const db = getDatabase();
+    await ensureCollabTables(db);
+
+    const limit = Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 200);
+    const params: any[] = [organizationId, assessmentId];
+    let sinceClause = '';
+    const sinceRaw = req.query.since ? String(req.query.since) : null;
+    if (sinceRaw) {
+      const sinceDate = new Date(sinceRaw);
+      if (!Number.isNaN(sinceDate.getTime())) {
+        sinceClause = ' AND created_at > ?';
+        params.push(sinceDate.toISOString());
+      }
+    }
+    params.push(limit);
+
+    const rows = await dbAll(
+      db,
+      `SELECT id, user_id, user_name, activity_type, data, created_at
+         FROM assessment_activities
+        WHERE organization_id = ? AND assessment_id = ?${sinceClause}
+        ORDER BY created_at DESC
+        LIMIT ?`,
+      params
+    );
+
+    const activities = rows.map((r) => ({
+      id: r.id,
+      type: r.activity_type,
+      userId: r.user_id,
+      userName: r.user_name || 'Unknown',
+      timestamp: r.created_at,
+      data: typeof r.data === 'string' ? safeJsonParse(r.data, {}) : r.data || {},
+    }));
+
+    res.json({ activities });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error getting activities:', err);
+    res.status(500).json({ error: 'Failed to get activities', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/activities
+ * Body: { type, data, userId, userName }
+ */
+router.post('/:assessmentId/activities', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const userId = String(req.body?.userId || req.user?.id || 'user-default');
+    const userName = req.body?.userName || req.user?.name || null;
+    const type = req.body?.type;
+    const data = req.body?.data || {};
+    const db = getDatabase();
+    await ensureCollabTables(db);
+
+    if (!type) {
+      return res.status(400).json({ error: 'type is required' });
+    }
+
+    const id = genId('aact');
+    await dbRun(
+      db,
+      `INSERT INTO assessment_activities
+         (id, assessment_id, organization_id, user_id, user_name, activity_type, data, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [id, assessmentId, organizationId, userId, userName, String(type), JSON.stringify(data)]
+    );
+
+    res.status(201).json({
+      activity: {
+        id,
+        type,
+        userId,
+        userName: userName || 'Unknown',
+        timestamp: new Date().toISOString(),
+        data,
+      },
+    });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error creating activity:', err);
+    res.status(500).json({ error: 'Failed to create activity', message: err.message });
+  }
+});
+
+// =============================================================================
 // PERMISSION & ROLE MANAGEMENT ENDPOINTS
 // =============================================================================
 
