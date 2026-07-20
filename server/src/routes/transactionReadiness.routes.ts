@@ -20,13 +20,18 @@ const router = Router();
 // Wiring (2026-07-15): router was defined but had NO auth middleware at all —
 // exposes cross-org ranking (ALL orgs' readiness scores) and per-org deal
 // scoring, so it must be super-admin only (matches analytics-superadmin.routes.ts
-// / admin/ai-observability.routes.ts pattern). Added here rather than only at
-// the Gateway mount point because this router's own paths mix two unrelated
-// top-level segments ('/organizations/:id/...' and '/transaction-readiness/...'),
-// which makes a single narrow Gateway-level path-prefix guard impossible without
-// risking over-broad '/api' matching.
-router.use(verifyToken);
-router.use(verifySuperAdmin);
+// / admin/ai-observability.routes.ts pattern).
+//
+// FIX (2026-07-20): the guards were previously attached with pathless
+// `router.use(...)`. Because this router is mounted at the '/api' ROOT
+// (see Gateway.ts — its own paths mix '/organizations/:id/...' and
+// '/transaction-readiness/...'), a pathless .use() ran for EVERY /api/*
+// request and verifySuperAdmin 403'd all non-superadmin traffic to every
+// route mounted after it (my-work, demo, partners, v8, ...). The guards
+// MUST stay scoped to this router's own two path segments only.
+const transactionReadinessGuards = [verifyToken, verifySuperAdmin] as const;
+router.use('/transaction-readiness', ...transactionReadinessGuards);
+router.use('/organizations/:id/transaction-readiness', ...transactionReadinessGuards);
 
 router.get(
   '/organizations/:id/transaction-readiness',
