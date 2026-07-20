@@ -47,7 +47,8 @@ router.post(
     // `title`/`frameworks` request bodies from older callers.
     const { name, title, framework, frameworks } = req.body;
     const resolvedName = name || title || 'MFA Assessment';
-    const requestedFramework = framework || (Array.isArray(frameworks) ? frameworks[0] : frameworks);
+    const requestedFramework =
+      framework || (Array.isArray(frameworks) ? frameworks[0] : frameworks);
     const resolvedFramework = ALLOWED_FRAMEWORKS.includes(requestedFramework)
       ? requestedFramework
       : 'DRD';
