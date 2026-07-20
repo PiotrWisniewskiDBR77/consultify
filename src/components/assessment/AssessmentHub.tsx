@@ -2377,7 +2377,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         rightControls={statusDropdownControl}
         commandRowContent={hubCommandRowContent}
       >
-        <div className="space-y-3">
+        {/* min-h-0 flex-1 overflow-hidden: without this the 'list' tab's
+            <StandardPreview> aside (h-full chain) collapses to content
+            height instead of stretching to the viewport — see the same
+            fix already applied in InitiativesHub. */}
+        <div className="min-h-0 flex-1 overflow-hidden space-y-3">
           {loadWarning &&
             !(activeTab === 'list' && !activeDocumentId && assessments.length === 0) && (
               <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
