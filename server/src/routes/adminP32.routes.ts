@@ -14,7 +14,7 @@ import {
   scimMappingsHasProjectId,
 } from '../services/scimGroupMappingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { flagOn } from '../utils/pgFlags.js';
 
 const router = Router();

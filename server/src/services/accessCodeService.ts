@@ -233,10 +233,12 @@ async function findAccessCodeRow(code: string): Promise<AccessCodeRow | undefine
   );
   if (byHash) return byHash;
 
-  return await DbPromise.get<AccessCodeRow>(
-    db,
-    `SELECT * FROM access_codes WHERE code_hash IS NULL AND code = ?`,
-    [code]
+  return (
+    (await DbPromise.get<AccessCodeRow>(
+      db,
+      `SELECT * FROM access_codes WHERE code_hash IS NULL AND code = ?`,
+      [code]
+    )) ?? undefined
   );
 }
 
