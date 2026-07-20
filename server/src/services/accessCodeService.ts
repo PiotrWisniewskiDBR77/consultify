@@ -255,15 +255,18 @@ export async function generateCode(params: GenerateCodeParams): Promise<Generate
 
   await DbPromise.run(
     db,
-    `INSERT INTO access_codes 
-         (id, code, code_hash, type, organization_id, created_by_user_id, created_by_consultant_id, target_email, max_uses, uses_count, expires_at, status, metadata_json, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'ACTIVE', ?, CURRENT_TIMESTAMP)`,
+    // `created_by` is the legacy (simple-model) creator column, kept populated for
+    // cross-compatibility with SuperAdmin/adminP32 list queries that still read it.
+    `INSERT INTO access_codes
+         (id, code, code_hash, type, organization_id, created_by, created_by_user_id, created_by_consultant_id, target_email, max_uses, uses_count, expires_at, status, metadata_json, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'ACTIVE', ?, CURRENT_TIMESTAMP)`,
     [
       id,
       code, // Store plaintext temporarily for backwards compat; can remove after migration
       codeHash,
       type,
       organizationId,
+      createdByUserId,
       createdByUserId,
       createdByConsultantId,
       targetEmail,
