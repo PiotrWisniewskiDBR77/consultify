@@ -624,6 +624,15 @@ const resolveCanonicalPersonalTaskIdentity = async (
     );
     if (exact) return identity;
 
+    // Same account (id matches), just a different org than the `users.organization_id`
+    // "home" column — e.g. an active org-switch to a multi-org membership. Trust the
+    // session's org, don't silently reroute personal-tasks to the home org (2026-07-20:
+    // this returned matches[0].organization_id unconditionally, so any multi-org user
+    // switched into a non-home org saw an empty Tasks list — data existed, just under
+    // the org the session actually pointed at).
+    const sameAccount = matches.find((row) => row.id === identity.userId);
+    if (sameAccount) return identity;
+
     if (matches.length === 1) {
       return { userId: matches[0].id, orgId: matches[0].organization_id };
     }
