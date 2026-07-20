@@ -129,7 +129,6 @@ import financeStatementsRoutes from './routes/finance-statements.routes.js';
 import financialModelingRoutes from './routes/financial-modeling.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
 import gdprRoutes from './routes/gdpr.routes.js';
-import genericReportsRoutes from './routes/generic-reports.routes.js';
 import governanceAdminRoutes from './routes/governanceAdmin.routes.js';
 import helpRoutes from './routes/help.routes.js';
 import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
@@ -913,7 +912,6 @@ export class ApiGateway {
         externalAssessmentsRoutes,
         'externalAssessmentsRoutes'
       );
-      app.use('/api/generic-reports', genericReportsRoutes);
       // Module 05 Inicjatywy — AI initiative generator. Promoted off `mountStub`
       // to a real mount: the prior path `/api/initiatives` collided with the PMO
       // initiatives router (mounted above) AND was production-disabled, so AI

@@ -66,7 +66,6 @@ export { default as featureFlagsRoutes } from './featureFlags.routes.js';
 export { default as feedbackRoutes } from './feedback.routes.js';
 export { default as gamificationRoutes } from './gamification.routes.js';
 export { default as gdprRoutes } from './gdpr.routes.js';
-export { default as genericReportsRoutes } from './generic-reports.routes.js';
 export { default as governanceAdminRoutes } from './governanceAdmin.routes.js';
 export { default as healthRoutes } from './healthRoutes.js';
 export { default as helpRoutes } from './help.routes.js';
