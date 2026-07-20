@@ -608,7 +608,11 @@ function normalizeAdminCodeRow(row: any): AdminCodeListRow {
  * Thin replacement for SuperAdminController's raw `SELECT * FROM access_codes`.
  */
 export async function listAllCodesAdmin(): Promise<AdminCodeListRow[]> {
-  const rows = await DbPromise.all<any>(db, `SELECT * FROM access_codes ORDER BY created_at DESC`, []);
+  const rows = await DbPromise.all<any>(
+    db,
+    `SELECT * FROM access_codes ORDER BY created_at DESC`,
+    []
+  );
   return rows.map(normalizeAdminCodeRow);
 }
 
