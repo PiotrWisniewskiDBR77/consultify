@@ -569,10 +569,7 @@ const ensureTeamTableExists = async () => {
 };
 
 /** Batch-resolve pmo_role_id values (system or org-scoped custom) to display info. */
-async function resolveRoleMap(
-  roleIds: string[],
-  orgId: string
-): Promise<Map<string, PmoRoleInfo>> {
+async function resolveRoleMap(roleIds: string[], orgId: string): Promise<Map<string, PmoRoleInfo>> {
   const map = new Map<string, PmoRoleInfo>();
 
   for (const role of SYSTEM_ROLES) {
@@ -681,8 +678,7 @@ router.get(
       };
 
       for (const member of members) {
-        const key =
-          member.pmoRole != null ? LEVEL_KEY_BY_NUMBER[member.pmoRole.level] : undefined;
+        const key = member.pmoRole != null ? LEVEL_KEY_BY_NUMBER[member.pmoRole.level] : undefined;
         (grouped[key || 'unassigned'] || grouped.unassigned).push(member);
       }
 
@@ -815,7 +811,9 @@ router.post(
 
     return res
       .status(201)
-      .json(row ? formatMember(row, roleMap) : { userId, pmoRoleId, allocationPercent: allocation });
+      .json(
+        row ? formatMember(row, roleMap) : { userId, pmoRoleId, allocationPercent: allocation }
+      );
   })
 );
 
