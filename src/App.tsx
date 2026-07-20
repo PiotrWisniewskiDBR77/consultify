@@ -10,6 +10,7 @@ import { Api } from '@/services/api';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
 import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
 import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
+import { seedReviewModeFlags } from '@/utils/reviewModeSeed';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
 import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
@@ -200,6 +201,14 @@ function AppContent() {
   useEffect(() => {
     document.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
   }, [i18n.language]);
+
+  // 2026-07-20 full-app acceptance pass: `?review=1` seeds localStorage
+  // flags ONCE (survives client-side navigation, unlike the query string
+  // itself) — replaces the console-paste kit that confused Piotr. Runs
+  // unconditionally, before login, so the very first page load catches it.
+  useEffect(() => {
+    seedReviewModeFlags();
+  }, []);
 
   // Apply saved accessibility preferences app-wide once the user is known, so
   // they take effect everywhere — not only while the Settings panel is mounted.
