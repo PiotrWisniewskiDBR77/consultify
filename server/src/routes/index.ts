@@ -90,7 +90,6 @@ export { default as megatrendRoutes } from './megatrend.routes.js';
 export { default as metricsRoutes } from './metrics.routes.js';
 export { default as mfaRoutes } from './mfa.routes.js';
 export { default as multiFrameworkAssessmentRoutes } from './multi-framework-assessment.routes.js';
-export { default as multiFrameworkWorkflowRoutes } from './multi-framework-workflow.routes.js';
 export { default as myWorkRoutes } from './my-work.routes.js';
 export { default as oauthRoutes } from './oauthRoutes.routes.js';
 export { default as onboardingRoutes } from './onboarding.routes.js';

@@ -175,7 +175,6 @@ import modelRegistryRoutes from './routes/modelRegistry.routes.js';
 import moduleAccessRoutes from './routes/module-access.routes.js';
 import moduleInterestRoutes from './routes/module-interest.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
-import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
 import notebookV4Routes from './routes/notebook.routes.js';
 import notificationRulesRoutes from './routes/notifications/notification-rules.routes.js';
@@ -935,11 +934,11 @@ export class ApiGateway {
         multiFrameworkAssessmentRoutes,
         'multiFrameworkAssessmentRoutes'
       );
-      mountStub(
-        '/api/assessment-workflow',
-        multiFrameworkWorkflowRoutes,
-        'multiFrameworkWorkflowRoutes'
-      );
+      // NOTE: A second mount at '/api/assessment-workflow' backed by
+      // multi-framework-workflow.routes.ts (table `multi_framework_workflows`,
+      // which does not exist in any migration — phantom) was removed here.
+      // It was fully dead: 0 frontend callers, and the real engine mounted
+      // above (assessmentWorkflowRoutes) already owns this path.
 
       // PMO routes
       app.use('/api/roadmap', gatewayVerifyToken, trialEntryGuard, roadmapRoutes);
