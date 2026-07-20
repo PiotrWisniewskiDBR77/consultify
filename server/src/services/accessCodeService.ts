@@ -56,6 +56,29 @@ interface GenerateCodeParams {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Params for the legacy-compat creation path (SuperAdminController / adminP32 /
+ * access-control.routes). Unlike generateCode(), this preserves the exact legacy
+ * feature set those three callers rely on: caller-supplied plaintext code,
+ * organization-scoped role string, and an explicit expiresAt timestamp instead
+ * of a day-count. It writes BOTH the hash-model columns (code_hash/uses_count/
+ * status/type) and the legacy columns (role/current_uses/is_active) so the row
+ * is immediately valid/visible to either engine.
+ */
+interface CreateLegacyCompatCodeParams {
+  code?: string | null;
+  organizationId: string | null;
+  createdByUserId?: string | null;
+  role?: string | null;
+  maxUses?: number | null;
+  expiresAt?: string | null;
+}
+
+interface CreateLegacyCompatCodeResult {
+  id: string;
+  code: string;
+}
+
 interface GenerateCodeResult {
   id: string;
   code: string;
@@ -101,7 +124,7 @@ interface AcceptCodeResult {
 interface AccessCodeRow {
   id: string;
   code: string;
-  code_hash: string;
+  code_hash: string | null;
   type: string;
   organization_id?: string | null;
   created_by_user_id?: string | null;
@@ -114,6 +137,11 @@ interface AccessCodeRow {
   metadata_json?: string;
   used_at?: string | null;
   created_at: string;
+  // Legacy-model columns — present on the same table (see dual-model
+  // reconciliation, 2026-07-20). Only meaningful for rows reached via the
+  // code_hash-IS-NULL fallback in findAccessCodeRow().
+  current_uses?: number | null;
+  is_active?: number | boolean | null;
 }
 
 interface CodeListRow {
@@ -127,6 +155,28 @@ interface CodeListRow {
   status: string;
   created_at: string;
   metadata_json?: string;
+}
+
+/**
+ * Normalized admin list row — unifies the hash-model columns (uses_count/status)
+ * with the legacy columns (current_uses/is_active/role) so admin UIs see a
+ * consistent shape regardless of which engine created the row.
+ */
+interface AdminCodeListRow {
+  id: string;
+  code: string;
+  type: string | null;
+  role: string | null;
+  organization_id?: string | null;
+  max_uses: number | null;
+  current_uses: number;
+  uses_count: number;
+  expires_at?: string | null;
+  status: string | null;
+  is_active: boolean;
+  created_at: string;
+  created_by?: string | null;
+  metadata: Record<string, unknown>;
 }
 
 // ==========================================
@@ -161,6 +211,33 @@ function safeParseJson(str: string | null | undefined): Record<string, unknown> 
   } catch {
     return {};
   }
+}
+
+/**
+ * Look up a row by code, hash-first with a legacy-plaintext fallback.
+ *
+ * Dual-model reconciliation (CTO decision, 2026-07-20): codes created by the
+ * legacy callers (SuperAdminController / adminP32 / access-control.routes)
+ * are backfilled with code_hash by migration 20260720_access_codes_reconcile.sql,
+ * but this fallback keeps validation working for any row that still has
+ * code_hash IS NULL (e.g. rows inserted directly, or created before the
+ * backfill ran on a given environment). Zero-risk: only reached when the hash
+ * lookup misses.
+ */
+async function findAccessCodeRow(code: string): Promise<AccessCodeRow | undefined> {
+  const codeHash = hashCode(code);
+  const byHash = await DbPromise.get<AccessCodeRow>(
+    db,
+    `SELECT * FROM access_codes WHERE code_hash = ?`,
+    [codeHash]
+  );
+  if (byHash) return byHash;
+
+  return await DbPromise.get<AccessCodeRow>(
+    db,
+    `SELECT * FROM access_codes WHERE code_hash IS NULL AND code = ?`,
+    [code]
+  );
 }
 
 /**
@@ -291,29 +368,24 @@ export async function generateCode(params: GenerateCodeParams): Promise<Generate
  * Uses hash lookup.
  */
 export async function validatePublic(code: string): Promise<ValidatePublicResult> {
-  const codeHash = hashCode(code);
-
-  const row = await DbPromise.get<{
-    type: string;
-    status: string;
-    expires_at?: string | null;
-    max_uses?: number | null;
-    uses_count?: number | null;
-    target_email?: string | null;
-  }>(
-    db,
-    `SELECT type, status, expires_at, max_uses, uses_count, target_email
-         FROM access_codes WHERE code_hash = ?`,
-    [codeHash]
-  );
+  const row = await findAccessCodeRow(code);
 
   // Constant-time-ish: always same code path for invalid
   if (!row) return { valid: false };
 
   const now = Date.now();
   const expired = row.expires_at && new Date(row.expires_at).getTime() < now;
-  const exhausted = (row.uses_count || 0) >= (row.max_uses || 1);
-  const active = row.status === CODE_STATUS.ACTIVE;
+  const usesCount = row.uses_count ?? row.current_uses ?? 0;
+  const exhausted = usesCount >= (row.max_uses || 1);
+  // Rows reached via the code_hash fallback (legacy callers, not yet
+  // reconciled by the backfill migration) may carry a stale/default
+  // hash-model `status` — trust the legacy is_active flag for those. Rows
+  // found by hash lookup are hash-model-native (or already reconciled), so
+  // `status` is authoritative there.
+  const active =
+    row.code_hash != null
+      ? row.status === CODE_STATUS.ACTIVE
+      : row.is_active !== 0 && row.is_active !== false;
 
   if (!active || expired || exhausted) return { valid: false };
 
@@ -328,18 +400,19 @@ export async function validatePublic(code: string): Promise<ValidatePublicResult
  * INTERNAL Validate - returns full record for service-to-service use.
  */
 export async function validateCode(code: string): Promise<ValidateCodeResult> {
-  const codeHash = hashCode(code);
-
-  const row = await DbPromise.get<AccessCodeRow>(
-    db,
-    `SELECT * FROM access_codes WHERE code_hash = ?`,
-    [codeHash]
-  );
+  const row = await findAccessCodeRow(code);
 
   if (!row) throw new Error('Invalid access code');
-  if (row.status !== CODE_STATUS.ACTIVE) throw new Error(`Code is ${row.status}`);
+  // See validatePublic() for why legacy (code_hash IS NULL) rows trust
+  // is_active instead of the possibly-stale/default hash-model `status`.
+  const active =
+    row.code_hash != null
+      ? row.status === CODE_STATUS.ACTIVE
+      : row.is_active !== 0 && row.is_active !== false;
+  if (!active) throw new Error(`Code is ${row.code_hash != null ? row.status : 'REVOKED'}`);
   if (row.expires_at && new Date(row.expires_at) < new Date()) throw new Error('Code has expired');
-  if (row.max_uses !== null && row.uses_count >= row.max_uses)
+  const usesCount = row.uses_count ?? row.current_uses ?? 0;
+  if (row.max_uses !== null && usesCount >= row.max_uses)
     throw new Error('Code reuse limit reached');
 
   return {
@@ -361,16 +434,11 @@ export async function validateCode(code: string): Promise<ValidateCodeResult> {
 export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeResult> {
   await initDeps();
   const { code, actorUserId, providedEmail = null, actorIp = null } = params;
-  const codeHash = hashCode(code);
 
   return await withImmediateTransaction(db, async () => {
-    // 1. Load row
-    const row = await DbPromise.get<AccessCodeRow>(
-      db,
-      `SELECT id, code, type, organization_id, target_email, expires_at, max_uses, uses_count, status, metadata_json, created_by_consultant_id
-             FROM access_codes WHERE code_hash = ?`,
-      [codeHash]
-    );
+    // 1. Load row — hash-first with legacy-plaintext fallback (dual-model
+    // reconciliation, see findAccessCodeRow()).
+    const row = await findAccessCodeRow(code);
 
     if (!row) return { ok: false, error: 'INVALID_CODE' };
 
@@ -385,17 +453,29 @@ export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeRe
       if (!pe || pe !== te) return { ok: false, error: 'EMAIL_MISMATCH' };
     }
 
-    // 3. Atomic consume with conditions
+    // 3. Atomic consume with conditions.
+    // - `code_hash IS NOT NULL AND status = 'ACTIVE'` is the original
+    //   hash-model condition, unchanged.
+    // - `code_hash IS NULL AND is_active <> 0` additively covers legacy rows
+    //   reached via the fallback lookup (their `status` may be a stale
+    //   default rather than a true reflection of is_active).
+    // - `current_uses` is incremented alongside `uses_count` so legacy
+    //   readers (SuperAdminController/adminP32/access-control.routes/
+    //   auth.routes) see consumption that happened through this engine.
     const result = await DbPromise.run(
       db,
       `UPDATE access_codes
-             SET uses_count = uses_count + 1,
-                 used_at = CASE WHEN uses_count + 1 >= max_uses THEN CURRENT_TIMESTAMP ELSE used_at END,
+             SET uses_count = COALESCE(uses_count, 0) + 1,
+                 current_uses = COALESCE(current_uses, 0) + 1,
+                 used_at = CASE WHEN COALESCE(uses_count, 0) + 1 >= max_uses THEN CURRENT_TIMESTAMP ELSE used_at END,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = ?
-               AND status = 'ACTIVE'
+               AND (
+                 (code_hash IS NOT NULL AND status = 'ACTIVE')
+                 OR (code_hash IS NULL AND COALESCE(is_active, 1) <> 0)
+               )
                AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
-               AND uses_count < max_uses`,
+               AND COALESCE(uses_count, 0) < max_uses`,
       [row.id]
     );
 
@@ -471,14 +551,127 @@ export async function listCodes(
 }
 
 /**
- * Revoke a code
+ * Revoke a code.
+ *
+ * Sets BOTH the hash-model `status` and the legacy `is_active` flag
+ * (dual-model reconciliation, 2026-07-20) so a revoke done through this
+ * service is visible to legacy readers (SuperAdminController / adminP32 /
+ * access-control.routes / auth.routes) without waiting for a migration.
+ * Returns the row-count affected so callers can 404 on an unknown id
+ * (previously the legacy callers each re-implemented this check inline).
  */
-export async function revokeCode(codeId: string): Promise<void> {
-  await DbPromise.run(
+export async function revokeCode(codeId: string): Promise<{ changes: number }> {
+  const result = await DbPromise.run(
     db,
-    `UPDATE access_codes SET status = ?, revoked_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    `UPDATE access_codes
+         SET status = ?, is_active = 0, revoked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
     [CODE_STATUS.REVOKED, codeId]
   );
+  return { changes: result.changes || 0 };
+}
+
+/**
+ * Normalize a raw access_codes row (whichever engine created it) into a
+ * single consistent admin-list shape. Used by listAllCodesAdmin() and
+ * listCodesByOrganization().
+ */
+function normalizeAdminCodeRow(row: any): AdminCodeListRow {
+  const usesCount = row.uses_count ?? row.current_uses ?? 0;
+  const isActive =
+    row.code_hash != null
+      ? row.status == null || row.status === CODE_STATUS.ACTIVE
+      : row.is_active !== 0 && row.is_active !== false;
+  return {
+    ...row,
+    id: row.id,
+    code: row.code,
+    type: row.type ?? null,
+    role: row.role ?? null,
+    organization_id: row.organization_id ?? null,
+    max_uses: row.max_uses != null ? Number(row.max_uses) : null,
+    current_uses: Number(row.current_uses ?? usesCount ?? 0),
+    uses_count: Number(usesCount),
+    expires_at: row.expires_at ?? null,
+    status: row.status ?? (isActive ? CODE_STATUS.ACTIVE : CODE_STATUS.REVOKED),
+    is_active: isActive,
+    created_at: row.created_at,
+    created_by: row.created_by ?? row.created_by_user_id ?? null,
+    metadata: safeParseJson(row.metadata_json),
+  };
+}
+
+/**
+ * Admin list: ALL access codes regardless of creator, hash-model or legacy.
+ * Thin replacement for SuperAdminController's raw `SELECT * FROM access_codes`.
+ */
+export async function listAllCodesAdmin(): Promise<AdminCodeListRow[]> {
+  const rows = await DbPromise.all<any>(db, `SELECT * FROM access_codes ORDER BY created_at DESC`, []);
+  return rows.map(normalizeAdminCodeRow);
+}
+
+/**
+ * Org-scoped admin list. Thin replacement for adminP32's raw per-organization
+ * SELECT.
+ */
+export async function listCodesByOrganization(organizationId: string): Promise<AdminCodeListRow[]> {
+  const rows = await DbPromise.all<any>(
+    db,
+    `SELECT * FROM access_codes WHERE organization_id = ? ORDER BY created_at DESC`,
+    [organizationId]
+  );
+  return rows.map(normalizeAdminCodeRow);
+}
+
+/**
+ * Legacy-compat creation path.
+ *
+ * generateCode() is the canon hash-model creator used by the Admin "generate
+ * access code" UI (accessCodes.routes.ts) — it always mints its own code and
+ * only understands the REFERRAL/INVITE/CONSULTANT/TRIAL type taxonomy, not
+ * the legacy organization-role model.
+ *
+ * SuperAdminController / adminP32 / access-control.routes need a superset of
+ * that: a caller-supplied plaintext code (SuperAdminController's admin UI
+ * lets an operator type a custom code), a role string persisted on the
+ * legacy `role` column (read downstream by access-control.routes' register
+ * flow and auth.routes' signup flow to assign the joining user's role), and
+ * an explicit `expiresAt` timestamp instead of a day-count.
+ *
+ * This writes both the hash-model columns (code_hash/uses_count/status/type)
+ * AND the legacy columns (role/current_uses/is_active) in one INSERT, so the
+ * row is valid/visible to either engine from the moment it is created —
+ * zero functional loss relative to the 3 raw-SQL INSERTs it replaces.
+ */
+export async function createLegacyCompatCode(
+  params: CreateLegacyCompatCodeParams
+): Promise<CreateLegacyCompatCodeResult> {
+  const id = `ac-${uuidv4()}`;
+  const code = params.code && params.code.trim() ? params.code.trim() : generateHumanCode('JOIN');
+  const codeHash = hashCode(code);
+  const role = params.role || 'USER';
+  const maxUses = params.maxUses || 1;
+
+  await DbPromise.run(
+    db,
+    `INSERT INTO access_codes
+         (id, code, code_hash, type, organization_id, created_by, created_by_user_id,
+          role, max_uses, uses_count, current_uses, expires_at, status, is_active, metadata_json, created_at)
+         VALUES (?, ?, ?, 'INVITE', ?, ?, ?, ?, ?, 0, 0, ?, 'ACTIVE', 1, '{}', CURRENT_TIMESTAMP)`,
+    [
+      id,
+      code,
+      codeHash,
+      params.organizationId,
+      params.createdByUserId || null,
+      params.createdByUserId || null,
+      role,
+      maxUses,
+      params.expiresAt || null,
+    ]
+  );
+
+  return { id, code };
 }
 
 // Default export for backward compatibility
@@ -492,6 +685,9 @@ const AccessCodeService = {
   acceptCode,
   listCodes,
   revokeCode,
+  listAllCodesAdmin,
+  listCodesByOrganization,
+  createLegacyCompatCode,
 };
 
 export default AccessCodeService;
