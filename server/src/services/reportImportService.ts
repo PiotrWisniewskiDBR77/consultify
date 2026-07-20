@@ -1718,13 +1718,19 @@ Respond in JSON format:
     const reportId = uuidv4();
     const reportData = this.mapToReport(scores, framework, metadata);
 
+    // Schema drift fix (Fala 4): the previous INSERT targeted non-existent
+    // columns (name / intent_config / sections_config / generated_content) and
+    // omitted NOT-NULL columns (source_id, title, report_type), so every import
+    // "confirm as report" failed. Map the legacy import shape onto the canonical
+    // report_builder_reports columns: name -> title, intent_config +
+    // sections_config -> config_json, generated_content -> generation_metadata.
     const sql = `
       INSERT INTO report_builder_reports (
         id, organization_id, project_id,
-        source_type, name, status,
-        intent_config, sections_config, generated_content,
-        created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        source_type, source_id, source_name, source_framework,
+        title, report_type, config_json, generation_metadata, status,
+        created_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `;
 
     await DbPromise.run(sql, [
@@ -1732,11 +1738,17 @@ Respond in JSON format:
       organizationId,
       projectId || null,
       reportData.source_type,
+      reportId,
       reportData.name,
-      reportData.status,
-      JSON.stringify(reportData.intent_config),
-      JSON.stringify(reportData.sections_config),
+      reportData.source_framework || null,
+      reportData.name,
+      'assessment_import',
+      JSON.stringify({
+        intent: reportData.intent_config,
+        sections: reportData.sections_config,
+      }),
       JSON.stringify(reportData.generated_content),
+      reportData.status,
       userId,
     ]);
 
