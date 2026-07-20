@@ -187,12 +187,7 @@ router.put(
              version = COALESCE(version, 1) + 1,
              updated_at = now()
        WHERE id = ? AND organization_id = ?`,
-      [
-        data !== undefined ? JSON.stringify(data) : null,
-        name ?? null,
-        req.params.id,
-        orgId,
-      ]
+      [data !== undefined ? JSON.stringify(data) : null, name ?? null, req.params.id, orgId]
     );
     if (!result.success) {
       res.status(500).json({ error: 'Failed to update assessment', details: result.error });
