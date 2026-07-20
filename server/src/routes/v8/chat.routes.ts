@@ -153,7 +153,7 @@ router.post(
       }
       if (err instanceof Error && err.message.includes('not found')) {
         return res.status(404).json({
-          error: err.message,
+          error: 'Resource not found',
           code: 'RESOURCE_NOT_FOUND',
         });
       }

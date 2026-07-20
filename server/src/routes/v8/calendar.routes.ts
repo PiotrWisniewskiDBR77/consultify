@@ -105,7 +105,7 @@ function mapErrorToHttp(err: unknown, res: Response): boolean {
   if (err instanceof Error) {
     const msg = err.message;
     if (/not found/i.test(msg)) {
-      res.status(404).json({ error: msg, code: 'P02_NOT_FOUND' });
+      res.status(404).json({ error: 'Resource not found', code: 'P02_NOT_FOUND' });
       return true;
     }
   }

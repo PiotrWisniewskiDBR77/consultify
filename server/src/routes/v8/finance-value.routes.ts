@@ -327,7 +327,10 @@ router.post(
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       logger.warn(`[V8:FinanceValue] createGate rejected: ${message}`);
-      return res.status(400).json({ error: message, code: 'VALUE_CAPTURE_GATE_CREATE_FAILED' });
+      return res.status(400).json({
+        error: 'Could not create value capture gate',
+        code: 'VALUE_CAPTURE_GATE_CREATE_FAILED',
+      });
     }
   })
 );
@@ -356,7 +359,7 @@ router.post(
       const notFound = message === 'Gate not found';
       logger.warn(`[V8:FinanceValue] advanceGate rejected for ${id}: ${message}`);
       return res.status(notFound ? 404 : 400).json({
-        error: message,
+        error: notFound ? 'Gate not found' : 'Could not advance value capture gate',
         code: notFound ? 'VALUE_CAPTURE_GATE_NOT_FOUND' : 'VALUE_CAPTURE_GATE_ADVANCE_REJECTED',
       });
     }

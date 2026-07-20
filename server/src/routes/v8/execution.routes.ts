@@ -60,7 +60,7 @@ function handleExecutionError(
   if (err instanceof Error) {
     if (err.message.includes('not found')) {
       return res.status(404).json({
-        error: err.message,
+        error: 'Resource not found',
         code: 'RESOURCE_NOT_FOUND',
       });
     }
@@ -71,7 +71,7 @@ function handleExecutionError(
       err.message.includes('Invalid resolution status')
     ) {
       return res.status(409).json({
-        error: err.message,
+        error: 'Invalid execution state transition',
         code: 'EXECUTION_STATE_CONFLICT',
       });
     }

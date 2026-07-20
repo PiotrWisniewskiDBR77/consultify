@@ -94,7 +94,7 @@ router.get(
       logger.error('[AI Nudges] Error fetching pending nudges:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -142,7 +142,7 @@ router.post(
       logger.error('[AI Nudges] Error tracking activity:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -186,7 +186,7 @@ router.post(
       logger.error('[AI Nudges] Error dismissing nudge:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -230,7 +230,7 @@ router.post(
       logger.error('[AI Nudges] Error marking nudge as acted:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })
@@ -274,7 +274,7 @@ router.post(
       logger.error('[AI Nudges] Error suppressing nudge type:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       });
     }
   })

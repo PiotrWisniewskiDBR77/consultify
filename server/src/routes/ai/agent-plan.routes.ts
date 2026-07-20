@@ -268,9 +268,10 @@ router.post(
     try {
       await agentPlannerService.approveStep(planId, stepIndex, userId);
     } catch (error: unknown) {
+      logger.warn('[agent-plan] approveStep rejected', { err: error, planId, stepIndex });
       return res.status(409).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Step not awaiting approval',
+        error: 'Step not awaiting approval',
       });
     }
 

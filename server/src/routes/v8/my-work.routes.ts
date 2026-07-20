@@ -406,7 +406,7 @@ function handleMyWorkRoofError(
 
   if (err instanceof Error && err.message.toLowerCase().includes('not found')) {
     return res.status(404).json({
-      error: err.message,
+      error: 'Resource not found',
       code: 'RESOURCE_NOT_FOUND',
     });
   }
@@ -1013,9 +1013,7 @@ router.post(
           JSON.stringify({ type: 'doc', content: [] })
         ),
         // Z139 (full scope): decode before storing, mirroring my-work/notebook.routes.ts.
-        typeof req.body?.contentText === 'string'
-          ? decodeHtmlEntities(req.body.contentText)
-          : null,
+        typeof req.body?.contentText === 'string' ? decodeHtmlEntities(req.body.contentText) : null,
         JSON.stringify(parseTagsArray(req.body?.tags)),
         typeof req.body?.icon === 'string' ? req.body.icon : null,
         typeof req.body?.maturity === 'string' ? req.body.maturity : 'seed',
@@ -1165,7 +1163,7 @@ router.post(
       return res
         .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
         .json({
-          error: error instanceof Error ? error.message : 'Attachment upload failed',
+          error: 'Attachment upload failed',
           code:
             error instanceof NotebookAttachmentMutationError
               ? error.code
@@ -1271,7 +1269,7 @@ router.delete(
       return res
         .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
         .json({
-          error: error instanceof Error ? error.message : 'Attachment delete failed',
+          error: 'Attachment delete failed',
           code:
             error instanceof NotebookAttachmentMutationError
               ? error.code

@@ -719,9 +719,9 @@ router.post(
         });
         return res.status(201).json(result);
       } catch (error) {
-        const message = 'Failed to connect';
-        if (message.includes('Unknown connector:')) {
-          return res.status(404).json({ error: message });
+        const rawMessage = error instanceof Error ? error.message : 'Failed to connect';
+        if (rawMessage.includes('Unknown connector:')) {
+          return res.status(404).json({ error: 'Unknown connector' });
         }
         throw error;
       }
@@ -766,9 +766,9 @@ router.post(
         });
         return res.status(201).json(result);
       } catch (error) {
-        const message = 'Failed to connect';
-        if (message.includes('Unknown connector:')) {
-          return res.status(404).json({ error: message });
+        const rawMessage = error instanceof Error ? error.message : 'Failed to connect';
+        if (rawMessage.includes('Unknown connector:')) {
+          return res.status(404).json({ error: 'Unknown connector' });
         }
         throw error;
       }

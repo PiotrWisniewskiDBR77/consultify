@@ -72,6 +72,7 @@ import {
   splitBenefit,
 } from '../../services/runRatePhasingService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -406,7 +407,8 @@ router.post(
       if (err instanceof DriverTreeCycleError) {
         return badRequest(res, err.message, 'DRIVER_TREE_CYCLE');
       }
-      return badRequest(res, (err as Error).message, 'DRIVER_TREE_INVALID_TREE');
+      logger.warn('[v8/finance-planning] driver tree evaluation failed', { err });
+      return badRequest(res, 'Invalid driver tree', 'DRIVER_TREE_INVALID_TREE');
     }
   })
 );
@@ -438,7 +440,8 @@ router.post(
       if (err instanceof DriverTreeCycleError) {
         return badRequest(res, err.message, 'DRIVER_TREE_CYCLE');
       }
-      return badRequest(res, (err as Error).message, 'DRIVER_TREE_INVALID_TREE');
+      logger.warn('[v8/finance-planning] driver tree evaluation failed', { err });
+      return badRequest(res, 'Invalid driver tree', 'DRIVER_TREE_INVALID_TREE');
     }
   })
 );
@@ -465,7 +468,8 @@ router.post(
       if (err instanceof DriverTreeCycleError) {
         return badRequest(res, err.message, 'DRIVER_TREE_CYCLE');
       }
-      return badRequest(res, (err as Error).message, 'DRIVER_TREE_INVALID_TREE');
+      logger.warn('[v8/finance-planning] driver tree evaluation failed', { err });
+      return badRequest(res, 'Invalid driver tree', 'DRIVER_TREE_INVALID_TREE');
     }
   })
 );

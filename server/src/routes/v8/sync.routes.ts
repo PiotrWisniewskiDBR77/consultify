@@ -858,9 +858,12 @@ router.post(
         meta: syncMutationMeta(),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update provider state';
-      if (message.includes('Invalid provider state transition')) {
-        return res.status(409).json({ error: message, code: 'INVALID_PROVIDER_STATE_TRANSITION' });
+      const rawMessage = error instanceof Error ? error.message : 'Failed to update provider state';
+      if (rawMessage.includes('Invalid provider state transition')) {
+        return res.status(409).json({
+          error: 'Invalid provider state transition',
+          code: 'INVALID_PROVIDER_STATE_TRANSITION',
+        });
       }
       throw error;
     }
@@ -2606,12 +2609,18 @@ router.post(
         meta: syncMutationMeta(),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to resolve auth escalation';
-      if (message.includes('not found')) {
-        return res.status(404).json({ error: message, code: 'AUTH_ESCALATION_NOT_FOUND' });
+      const rawMessage =
+        error instanceof Error ? error.message : 'Failed to resolve auth escalation';
+      if (rawMessage.includes('not found')) {
+        return res
+          .status(404)
+          .json({ error: 'Auth escalation not found', code: 'AUTH_ESCALATION_NOT_FOUND' });
       }
-      if (message.includes('already resolved')) {
-        return res.status(409).json({ error: message, code: 'AUTH_ESCALATION_ALREADY_RESOLVED' });
+      if (rawMessage.includes('already resolved')) {
+        return res.status(409).json({
+          error: 'Auth escalation already resolved',
+          code: 'AUTH_ESCALATION_ALREADY_RESOLVED',
+        });
       }
       throw error;
     }
@@ -2744,9 +2753,11 @@ router.post(
         meta: syncMutationMeta(),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update auth state';
-      if (message.includes('Invalid auth state transition')) {
-        return res.status(409).json({ error: message, code: 'INVALID_AUTH_TRANSITION' });
+      const rawMessage = error instanceof Error ? error.message : 'Failed to update auth state';
+      if (rawMessage.includes('Invalid auth state transition')) {
+        return res
+          .status(409)
+          .json({ error: 'Invalid auth state transition', code: 'INVALID_AUTH_TRANSITION' });
       }
       throw error;
     }
@@ -2813,12 +2824,14 @@ router.post(
         meta: syncMutationMeta(),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to resolve conflict';
-      if (message.includes('not found')) {
-        return res.status(404).json({ error: message, code: 'CONFLICT_NOT_FOUND' });
+      const rawMessage = error instanceof Error ? error.message : 'Failed to resolve conflict';
+      if (rawMessage.includes('not found')) {
+        return res.status(404).json({ error: 'Conflict not found', code: 'CONFLICT_NOT_FOUND' });
       }
-      if (message.includes('already resolved')) {
-        return res.status(409).json({ error: message, code: 'CONFLICT_ALREADY_RESOLVED' });
+      if (rawMessage.includes('already resolved')) {
+        return res
+          .status(409)
+          .json({ error: 'Conflict already resolved', code: 'CONFLICT_ALREADY_RESOLVED' });
       }
       throw error;
     }

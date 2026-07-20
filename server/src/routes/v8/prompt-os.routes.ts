@@ -38,19 +38,19 @@ function handlePromptOsError(
   if (err instanceof Error) {
     if (err.message.includes('not found')) {
       return res.status(404).json({
-        error: err.message,
+        error: 'Resource not found',
         code: 'RESOURCE_NOT_FOUND',
       });
     }
     if (err.message.includes('Cannot activate')) {
       return res.status(409).json({
-        error: err.message,
+        error: 'Cannot activate in the current state',
         code: 'PROMPT_OS_ACTIVATION_CONFLICT',
       });
     }
     if (err.message.includes('already rolled back')) {
       return res.status(409).json({
-        error: err.message,
+        error: 'Already rolled back',
         code: 'PROMPT_OS_ROLLBACK_CONFLICT',
       });
     }
