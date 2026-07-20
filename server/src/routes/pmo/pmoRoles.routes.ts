@@ -493,4 +493,360 @@ router.delete(
   })
 );
 
+// ==========================================
+// PROJECT TEAM BOARD
+// (src/components/Projects/ProjectTeamBoard.tsx)
+// ==========================================
+//
+// NOTE: dedicated `project_team_members` table (NOT the legacy free-text-role
+// `project_members` table from 542_...). See
+// server/migrations/20260720_project_team_members.sql for rationale.
+//
+// LEVEL_CONFIG in ProjectTeamBoard.tsx: 0=executive,1=manager,2=lead,3=member,4=stakeholder.
+
+const LEVEL_KEY_BY_NUMBER: Record<number, string> = {
+  0: 'executive',
+  1: 'manager',
+  2: 'lead',
+  3: 'member',
+  4: 'stakeholder',
+};
+
+// System roles have no Polish name column (SYSTEM_ROLES is EN-only) — small PL map
+// so `pmoRole.namePl` is always populated for the two Piotr-facing surfaces.
+const SYSTEM_ROLE_NAME_PL: Record<string, string> = {
+  'project-executive': 'Sponsor Projektu',
+  'project-manager': 'Kierownik Projektu',
+  'workstream-lead': 'Lider Strumienia',
+  'team-member': 'Członek Zespołu',
+  stakeholder: 'Interesariusz',
+  'portfolio-manager': 'Kierownik Portfela',
+};
+
+// Minimum viable "required roles" policy for team-completeness stats: a project
+// should have a Project Manager and at least one Team Member. Deliberately
+// simple v1 default (CTO decision) — can grow into an org-configurable policy later.
+const REQUIRED_ROLE_IDS = ['project-manager', 'team-member'];
+
+interface PmoRoleInfo {
+  id: string;
+  code: string;
+  name: string;
+  namePl: string;
+  level: number;
+}
+
+interface TeamMemberRow {
+  id: string;
+  user_id: string;
+  pmo_role_id: string | null;
+  allocation_percent: number;
+  start_date: string | null;
+  end_date: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+}
+
+const ensureTeamTableExists = async () => {
+  await dbRun(
+    `CREATE TABLE IF NOT EXISTS project_team_members (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            pmo_role_id TEXT,
+            allocation_percent INTEGER NOT NULL DEFAULT 100,
+            start_date DATE,
+            end_date DATE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            CONSTRAINT project_team_members_project_user_unique UNIQUE (project_id, user_id)
+        )`,
+    []
+  );
+};
+
+/** Batch-resolve pmo_role_id values (system or org-scoped custom) to display info. */
+async function resolveRoleMap(
+  roleIds: string[],
+  orgId: string
+): Promise<Map<string, PmoRoleInfo>> {
+  const map = new Map<string, PmoRoleInfo>();
+
+  for (const role of SYSTEM_ROLES) {
+    map.set(role.id, {
+      id: role.id,
+      code: role.id,
+      name: role.name,
+      namePl: SYSTEM_ROLE_NAME_PL[role.id] || role.name,
+      level: role.level,
+    });
+  }
+
+  const customIds = [...new Set(roleIds)].filter((id) => id && !map.has(id));
+  if (customIds.length > 0) {
+    const placeholders = customIds.map(() => '?').join(', ');
+    const customRoles = await dbAll<{
+      id: string;
+      name: string;
+      level: number;
+    }>(
+      `SELECT id, name, level FROM pmo_roles WHERE organization_id = ? AND id IN (${placeholders})`,
+      [orgId, ...customIds]
+    );
+    for (const row of customRoles) {
+      map.set(row.id, {
+        id: row.id,
+        code: row.id,
+        name: row.name,
+        namePl: row.name,
+        level: Number(row.level),
+      });
+    }
+  }
+
+  return map;
+}
+
+async function loadTeamRows(projectId: string, orgId: string): Promise<TeamMemberRow[]> {
+  return dbAll<TeamMemberRow>(
+    `SELECT
+        ptm.id AS id,
+        ptm.user_id AS user_id,
+        ptm.pmo_role_id AS pmo_role_id,
+        ptm.allocation_percent AS allocation_percent,
+        ptm.start_date AS start_date,
+        ptm.end_date AS end_date,
+        u.first_name AS first_name,
+        u.last_name AS last_name,
+        u.email AS email,
+        u.avatar_url AS avatar_url
+     FROM project_team_members ptm
+     JOIN users u ON u.id = ptm.user_id
+     WHERE ptm.project_id = ? AND ptm.organization_id = ?
+     ORDER BY ptm.created_at ASC`,
+    [projectId, orgId]
+  );
+}
+
+function formatMember(row: TeamMemberRow, roleMap: Map<string, PmoRoleInfo>) {
+  const roleInfo = row.pmo_role_id ? roleMap.get(row.pmo_role_id) || null : null;
+  const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
+
+  return {
+    userId: row.user_id,
+    userName: fullName || row.email || row.user_id,
+    userEmail: row.email || '',
+    userAvatar: row.avatar_url || undefined,
+    pmoRole: roleInfo,
+    allocationPercent: Number(row.allocation_percent) || 0,
+    startDate: row.start_date || undefined,
+    endDate: row.end_date || undefined,
+  };
+}
+
+/**
+ * GET /api/pmo-roles/projects/:projectId/team
+ * GET /api/pmo-roles/projects/:projectId/team?grouped=true
+ */
+router.get(
+  '/projects/:projectId/team',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureTeamTableExists();
+
+    const { projectId } = req.params;
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const rows = await loadTeamRows(projectId, orgId);
+    const roleMap = await resolveRoleMap(
+      rows.map((r) => r.pmo_role_id).filter((id): id is string => !!id),
+      orgId
+    );
+    const members = rows.map((row) => formatMember(row, roleMap));
+
+    if (req.query.grouped === 'true') {
+      const grouped: Record<string, ReturnType<typeof formatMember>[]> = {
+        executive: [],
+        manager: [],
+        lead: [],
+        member: [],
+        stakeholder: [],
+        unassigned: [],
+      };
+
+      for (const member of members) {
+        const key =
+          member.pmoRole != null ? LEVEL_KEY_BY_NUMBER[member.pmoRole.level] : undefined;
+        (grouped[key || 'unassigned'] || grouped.unassigned).push(member);
+      }
+
+      return res.json(grouped);
+    }
+
+    return res.json(members);
+  })
+);
+
+/**
+ * GET /api/pmo-roles/projects/:projectId/team/stats
+ */
+router.get(
+  '/projects/:projectId/team/stats',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureTeamTableExists();
+
+    const { projectId } = req.params;
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const rows = await loadTeamRows(projectId, orgId);
+    const roleMap = await resolveRoleMap(
+      rows.map((r) => r.pmo_role_id).filter((id): id is string => !!id),
+      orgId
+    );
+
+    const totalMembers = rows.length;
+    const totalAllocation = rows.reduce((sum, r) => sum + (Number(r.allocation_percent) || 0), 0);
+    const averageAllocation = totalMembers > 0 ? Math.round(totalAllocation / totalMembers) : 0;
+
+    const byLevel = { executive: 0, manager: 0, lead: 0, member: 0, stakeholder: 0 };
+    for (const row of rows) {
+      const roleInfo = row.pmo_role_id ? roleMap.get(row.pmo_role_id) : null;
+      if (!roleInfo) continue;
+      const key = LEVEL_KEY_BY_NUMBER[roleInfo.level] as keyof typeof byLevel | undefined;
+      if (key && key in byLevel) {
+        byLevel[key] += 1;
+      }
+    }
+
+    const assignedRoleIds = new Set(rows.map((r) => r.pmo_role_id).filter(Boolean));
+    const missing: { code: string; name: string }[] = [];
+    for (const requiredId of REQUIRED_ROLE_IDS) {
+      if (!assignedRoleIds.has(requiredId)) {
+        const role = SYSTEM_ROLES.find((r) => r.id === requiredId);
+        missing.push({ code: requiredId, name: role?.name || requiredId });
+      }
+    }
+
+    return res.json({
+      totalMembers,
+      totalAllocation,
+      averageAllocation,
+      byLevel,
+      requiredRoles: {
+        total: REQUIRED_ROLE_IDS.length,
+        filled: REQUIRED_ROLE_IDS.length - missing.length,
+        missing,
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/pmo-roles/projects/:projectId/team
+ * body: { userId, pmoRoleId, allocationPercent }
+ * Upserts a team member (idempotent by project_id+user_id).
+ */
+router.post(
+  '/projects/:projectId/team',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureTeamTableExists();
+
+    const { projectId } = req.params;
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { userId, pmoRoleId, allocationPercent } = req.body || {};
+    if (!userId || !pmoRoleId) {
+      return res.status(400).json({ error: 'userId and pmoRoleId are required' });
+    }
+
+    const project = await dbGet<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [projectId, orgId]
+    );
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const user = await dbGet<{ id: string }>(
+      `SELECT id FROM users WHERE id = ? AND organization_id = ?`,
+      [userId, orgId]
+    );
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const id = uuidv4();
+    const allocation = Number.isFinite(Number(allocationPercent)) ? Number(allocationPercent) : 100;
+
+    const result = await dbRun(
+      `INSERT INTO project_team_members
+          (id, organization_id, project_id, user_id, pmo_role_id, allocation_percent, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, now(), now())
+       ON CONFLICT (project_id, user_id) DO UPDATE SET
+          pmo_role_id = EXCLUDED.pmo_role_id,
+          allocation_percent = EXCLUDED.allocation_percent,
+          updated_at = now()`,
+      [id, orgId, projectId, userId, pmoRoleId, allocation]
+    );
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to add team member');
+    }
+
+    logger.info(`Team member upserted: user ${userId} on project ${projectId} (org ${orgId})`);
+
+    const rows = await loadTeamRows(projectId, orgId);
+    const row = rows.find((r) => r.user_id === userId);
+    const roleMap = await resolveRoleMap([pmoRoleId], orgId);
+
+    return res
+      .status(201)
+      .json(row ? formatMember(row, roleMap) : { userId, pmoRoleId, allocationPercent: allocation });
+  })
+);
+
+/**
+ * DELETE /api/pmo-roles/projects/:projectId/team/:userId
+ */
+router.delete(
+  '/projects/:projectId/team/:userId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureTeamTableExists();
+
+    const { projectId, userId } = req.params;
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const result = await dbRun(
+      `DELETE FROM project_team_members WHERE project_id = ? AND user_id = ? AND organization_id = ?`,
+      [projectId, userId, orgId]
+    );
+
+    if (!result.success || (result.changes || 0) === 0) {
+      return res.status(404).json({ error: 'Team member not found' });
+    }
+
+    logger.info(`Team member removed: user ${userId} from project ${projectId} (org ${orgId})`);
+
+    return res.json({ message: 'Team member removed successfully' });
+  })
+);
+
 export default router;
