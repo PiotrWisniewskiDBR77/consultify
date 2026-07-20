@@ -139,6 +139,20 @@ import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoDa
 // ARTIFACT_ANATOMY_STANDARD.md §18.1.
 const VF1_INSIGHT_SPECA = import.meta.env.VITE_VF1_INSIGHT_SPECA === 'true';
 
+/**
+ * Tryb prezentacji (PresentMode) — WYŁĄCZONY 2026-07-20 decyzją Piotra.
+ *
+ * Powód: renderuje strukturalną kartę Insightu jako jeden zlepiony akapit —
+ * waga wchodzi w zdanie jako „(severity: high)" zamiast pilla, sekcje sklejone
+ * bez hierarchii, etykiety wewnętrzne („Perspective lenses", „Divergence")
+ * wyciekają do treści klienckiej, tekst urywa się w połowie zdania.
+ * Piotr: „lepiej to wyłączyć niż takie coś pokazywać".
+ *
+ * Kod zostaje — przywrócić (`true`) po zadaniu C10 z planu wykonawczego
+ * (kontrakt renderu prezentacji): Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md
+ */
+const PRESENT_MODE_ENABLED = import.meta.env.VITE_PRESENT_MODE === 'true';
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type InsightPromptType =
@@ -8409,12 +8423,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               {/* Slot 7 — Present. Fork przeniesiony do kebaba wiersza w tabeli
                   Insights (InterviewHub → rowMenu), zgodnie z kanonem §9
-                  (akcje obiektu żyją w kebabie, nie w toolbarze edytora). */}
-              <ToolbarIconButton
-                icon={<Monitor size={14} />}
-                tooltip={t('interview.insightViewer.present')}
-                onClick={() => setPresentOpen(true)}
-              />
+                  (akcje obiektu żyją w kebabie, nie w toolbarze edytora).
+
+                  2026-07-20 (decyzja Piotra, przegląd MVP): UKRYTE.
+                  PresentMode renderuje strukturalną kartę jako zlepiony akapit —
+                  waga wchodzi w zdanie jako „(severity: high)" zamiast pilla,
+                  sekcje sklejone bez hierarchii, etykiety wewnętrzne
+                  („Perspective lenses", „Divergence") wyciekają do treści
+                  klienckiej, tekst urywa się w połowie zdania. Piotr: „lepiej to
+                  wyłączyć niż takie coś pokazywać".
+                  Przywrócić po zadaniu C10 (kontrakt renderu prezentacji) —
+                  Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md */}
+              {PRESENT_MODE_ENABLED && (
+                <ToolbarIconButton
+                  icon={<Monitor size={14} />}
+                  tooltip={t('interview.insightViewer.present')}
+                  onClick={() => setPresentOpen(true)}
+                />
+              )}
 
               {/* Slot 9 — AI Consultant (solid teal). #56 (D17): otwiera JEDEN
                   docked panel Teresy z kontekstem insightu + 5 akcji jako

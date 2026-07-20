@@ -56,7 +56,15 @@ export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
  * inside a module (My Work → Ideas). Same open/closed semantics as modules.
  */
 export const BETA_SUBAREA_STATUS: Record<string, BetaStatus> = {
-  MYWORK_IDEAS: 'open', // My Work → Ideas tab
+  // 2026-07-20 (decyzja Piotra, przegląd MVP): Ideas ZAMKNIĘTE dla klientów.
+  // Powód: podstawowa ścieżka nie działa — kreator „New Idea" otwiera zawsze
+  // mapę myśli niezależnie od wybranego narzędzia, szablony nie istnieją
+  // (`templateId: null` zawsze), 3 z 4 narzędzi są puste. Moduł nie jest
+  // testowalny, więc nie może być pokazywany klientom.
+  // BETA_ADMINS_EXEMPT=true → zespół (admin/owner/superadmin) zachowuje dostęp
+  // do dalszej pracy. Otworzyć po wykonaniu i odbiorze sekcji I planu:
+  // Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md
+  MYWORK_IDEAS: 'closed', // My Work → Ideas tab
 };
 
 export function getBetaStatus(id?: string | null): BetaStatus | undefined {
