@@ -282,6 +282,12 @@ class AICostControlServiceClass {
 
   /**
    * Set global monthly budget (SuperAdmin only)
+   *
+   * @deprecated DEAD CODE — writes `ai_budgets` with a scope_type/scope_id/monthly_limit_usd
+   * shape that does not match the real table (see schema-drift note above `BUDGET MANAGEMENT`).
+   * Zero live callers (verified 2026-07-20, fala 4). Use `aiBudgetService.ts` instead
+   * (wired to `routes/ai-budgets.routes.ts` / `routes/ai/ai-budgets.routes.ts`). Not removed to
+   * avoid touching this class's public surface; do not add new callers.
    */
   async setGlobalBudget(
     monthlyLimitUsd: number,
@@ -303,6 +309,9 @@ class AICostControlServiceClass {
 
   /**
    * Set tenant (organization) monthly budget
+   *
+   * @deprecated DEAD CODE — same `ai_budgets` schema-drift as `setGlobalBudget` above.
+   * Zero live callers (verified 2026-07-20, fala 4). Use `aiBudgetService.ts` instead.
    */
   async setTenantBudget(
     organizationId: string,
@@ -337,6 +346,11 @@ class AICostControlServiceClass {
 
   /**
    * Set project budget
+   *
+   * @deprecated DEAD CODE — same `ai_budgets` schema-drift as `setGlobalBudget` above.
+   * Zero live callers (verified 2026-07-20, fala 4). Use `aiBudgetService.ts` instead. Note this
+   * name also collides with the unrelated, live `budgetManagementService.setProjectBudget()`
+   * (different table/semantics — do not confuse the two).
    */
   async setProjectBudget(
     projectId: string,
@@ -366,6 +380,12 @@ class AICostControlServiceClass {
 
   /**
    * Get budget for a scope
+   *
+   * @deprecated DEAD CODE — same `ai_budgets` schema-drift as `setGlobalBudget` above (queries
+   * scope_type/scope_id columns that don't exist on the real table). Zero live callers (verified
+   * 2026-07-20, fala 4; `tests/unit/backend/aiCostControlService.test.js` only exercises a
+   * self-contained in-memory mock, not this class). Use `aiBudgetService.getBudget()` instead —
+   * same method name, different (real) implementation, do not confuse the two.
    */
   async getBudget(scopeType: ScopeType, scopeId: string | null = null): Promise<BudgetRow | null> {
     const sql = scopeId
@@ -379,6 +399,13 @@ class AICostControlServiceClass {
   /**
    * Check budget status and determine if action is allowed
    * Returns: { allowed, remainingBudget, shouldDowngrade, currentUsage, limit, isFrozen }
+   *
+   * @deprecated DEAD CODE — depends on `getBudget()` above, same `ai_budgets` schema-drift.
+   * Zero live callers (verified 2026-07-20, fala 4; the real enforcement path —
+   * `server/src/services/ai/AIPipeline.ts:307` — calls `aiBudgetService.checkBudget()` via
+   * `getAiBudgetService()`, not this class; `tests/unit/backend/aiCostControlService.test.js`
+   * only exercises a self-contained in-memory mock, not this class). Use
+   * `aiBudgetService.checkBudget()` instead — same method name, different (real) implementation.
    */
   async checkBudget(
     organizationId: string,
@@ -492,6 +519,12 @@ class AICostControlServiceClass {
 
   /**
    * Log AI usage for audit and billing
+   *
+   * @deprecated DEAD CODE — inserts into `ai_usage_log` and then calls the private
+   * `_updateBudgetUsage()` helper below, which writes `ai_budgets` with the same
+   * scope_type/scope_id schema-drift as `setGlobalBudget` above. Zero live callers (verified
+   * 2026-07-20, fala 4). Use `aiBudgetService.ts` (or the live usage-tracking service actually
+   * wired to the AI pipeline) instead; do not add new callers.
    */
   async logUsage(params: UsageLogParams): Promise<UsageLogResult> {
     const id = this.uuidv4Fn();
@@ -590,6 +623,12 @@ class AICostControlServiceClass {
 
   /**
    * Reset monthly usage (called by scheduler on reset_day)
+   *
+   * LIVE — this is the only method on this class with a real caller:
+   * `server/src/cron/Scheduler.ts` job8 calls `resetMonthlyUsage()` with no args (monthly cron,
+   * 1st of the month). With no `scopeType`, the UPDATE only touches `current_month_usage` /
+   * `updated_at`, which do exist on the real `ai_budgets` table — so this is NOT part of the
+   * schema-drift affecting the methods above. Do not deprecate; do not change behavior here.
    */
   async resetMonthlyUsage(scopeType: ScopeType | null = null): Promise<{ resetCount: number }> {
     const sql = scopeType
