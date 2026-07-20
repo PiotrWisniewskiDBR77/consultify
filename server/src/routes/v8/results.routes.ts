@@ -2584,11 +2584,31 @@ router.post(
       status: 'draft' as const,
     };
 
-    await dbRun(
-      `INSERT INTO results_kpi_report_snapshots (id, organization_id, kpi_id, snapshot_json, status, created_by, created_at)
-       VALUES (?, ?, ?, ?, 'draft', ?, ?)`,
-      [reportId, organizationId, kpiId, JSON.stringify(reportPayload), userId, now]
+    // `period_start` has no DB default and is NOT NULL; this is a single-point-in-time
+    // per-KPI report (no period range), so it is stamped with the creation date.
+    const insertResult = await dbRun(
+      `INSERT INTO results_kpi_report_snapshots
+         (id, organization_id, period_start, kpi_id, snapshot_json, status, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, 'draft', ?, ?)`,
+      [
+        reportId,
+        organizationId,
+        now.slice(0, 10),
+        kpiId,
+        JSON.stringify(reportPayload),
+        userId,
+        now,
+      ]
     );
+    if (!insertResult?.success) {
+      logger.error(
+        `[V8:Results] Failed to persist KPI report snapshot ${reportId}: ${insertResult?.error}`
+      );
+      return res.status(500).json({
+        error: 'Failed to persist report snapshot',
+        code: 'RESULTS_KPI_REPORT_PERSIST_FAILED',
+      });
+    }
 
     return res.json({ data: reportPayload, meta: p04Meta() });
   })

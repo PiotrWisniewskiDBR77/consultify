@@ -552,7 +552,7 @@ describe('P04 KPI Workflow Canon', () => {
       mockDbAll.mockResolvedValueOnce([
         { id: 'sig-1', severity: 'RED', deviation_summary: 'Revenue drop' },
       ]);
-      mockDbRun.mockResolvedValueOnce({ changes: 1 });
+      mockDbRun.mockResolvedValueOnce({ success: true, changes: 1 });
 
       const res = await request(app).post(`/api/v8/results/workflow/kpi/${KPI_ID}/report`).send({
         commentary: 'Revenue below target',
@@ -644,7 +644,7 @@ describe('P04 KPI Workflow Canon', () => {
       mockDbAll.mockResolvedValueOnce([
         { id: 'sig-e2e', severity: 'RED', deviation_summary: 'Revenue drop' },
       ]);
-      mockDbRun.mockResolvedValueOnce({ changes: 1 });
+      mockDbRun.mockResolvedValueOnce({ success: true, changes: 1 });
 
       const reportRes = await request(app)
         .post(`/api/v8/results/workflow/kpi/${KPI_ID}/report`)

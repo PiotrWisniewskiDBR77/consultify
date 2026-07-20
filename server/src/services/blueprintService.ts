@@ -374,7 +374,12 @@ export async function applyMilestoneDependencies(
     }
   }
 
-  // Apply dependency links between milestones
+  // Apply dependency links between milestones.
+  // NOTE: these are MILESTONE ids (source/target), not initiative ids — they cannot
+  // go into `initiative_dependencies` (initiative-to-initiative, hard NOT-NULL FKs to
+  // `initiatives(id)` on from_initiative_id/to_initiative_id). They are stored in the
+  // dedicated `initiative_milestone_dependencies` table instead (FK-scoped to
+  // `initiative_milestones`; see migration 20260720_fala4_kpi_snap_milestone_deps_ai_policies.sql).
   for (const ms of milestones) {
     if (ms.dependsOn && Array.isArray(ms.dependsOn)) {
       const msId = idMap.get(ms.templateKey || '');
@@ -384,12 +389,13 @@ export async function applyMilestoneDependencies(
         if (!depId) continue;
         try {
           await queryHelpers.queryRun(
-            `INSERT INTO initiative_dependencies (id, initiative_id, organization_id, source_id, target_id, dependency_type, created_at)
+            `INSERT INTO initiative_milestone_dependencies
+               (id, initiative_id, organization_id, source_milestone_id, target_milestone_id, dependency_type, created_at)
              VALUES (?, ?, ?, ?, ?, 'finish_to_start', ?)`,
             [uuidv4(), initiativeId, orgId, depId, msId, now]
           );
-        } catch {
-          // dependency table may not exist or have different schema
+        } catch (err: any) {
+          logger.warn(`[BlueprintService] Failed to create milestone dependency: ${err.message}`);
         }
       }
     }

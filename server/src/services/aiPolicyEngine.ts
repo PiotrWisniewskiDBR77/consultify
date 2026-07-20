@@ -3,6 +3,8 @@
  * AI Core Layer — Enterprise PMO Brain
  */
 
+import { v4 as uuidv4 } from 'uuid';
+
 import { get as dbGetOrig, run as dbRunOrig } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
@@ -324,10 +326,14 @@ const AIPolicyEngine = {
       throw new Error(`Invalid policy level: ${policyLevel}`);
     }
 
-    // Upsert
+    // Upsert. `id` has no DB default and is NOT NULL, so a fresh row needs one minted
+    // here; the ON CONFLICT target relies on the unique index added in migration
+    // 20260720_fala4_kpi_snap_milestone_deps_ai_policies.sql (organization_id previously
+    // had no unique/exclusion constraint, so this upsert always 42P10'd — see
+    // idx_ai_policies_organization_id_unique).
     return dbRun(
-      `INSERT INTO ai_policies (organization_id, policy_level, internet_enabled, audit_required, max_policy_level, default_ai_role, active_roles, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `INSERT INTO ai_policies (id, organization_id, policy_level, internet_enabled, audit_required, max_policy_level, default_ai_role, active_roles, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(organization_id) DO UPDATE SET
                 policy_level = COALESCE(?, policy_level),
                 internet_enabled = COALESCE(?, internet_enabled),
@@ -337,6 +343,7 @@ const AIPolicyEngine = {
                 active_roles = COALESCE(?, active_roles),
                 updated_at = CURRENT_TIMESTAMP`,
       [
+        uuidv4(),
         organizationId,
         policyLevel,
         internetEnabled ? 1 : 0,
