@@ -10,6 +10,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import managementReportsService from '../services/managementReportsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -262,7 +263,14 @@ router.patch(
       );
       return res.json({ success: true, report });
     } catch (error: any) {
-      return res.status(400).json({ error: error.message || 'Unable to update report' });
+      logger.warn('[ManagementReports] Update report failed', {
+        error,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(400).json({
+        error: 'Nie udało się zaktualizować raportu',
+        code: 'MANAGEMENT_REPORT_UPDATE_FAILED',
+      });
     }
   })
 );
