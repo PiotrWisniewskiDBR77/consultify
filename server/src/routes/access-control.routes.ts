@@ -13,6 +13,7 @@ import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import AccessCodeService from '../services/accessCodeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -269,28 +270,30 @@ router.post(
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const codeId = uuidv4();
-    const code = generateAccessCode();
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
       : null;
 
-    const runResult = await dbRun(
-      `INSERT INTO access_codes 
-        (id, organization_id, code, created_by, role, max_uses, expires_at, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [codeId, organizationId, code, userId, role || 'USER', maxUses || 1, expiresAt]
-    );
-
-    if (!runResult.success) {
-      throw new Error(runResult.error || 'Failed to create access code');
-    }
+    // Dual-model reconciliation (CTO decision, 2026-07-20): create via
+    // AccessCodeService.createLegacyCompatCode() instead of a raw INSERT, so
+    // the row also gets code_hash/uses_count/status populated and is
+    // immediately valid through accessCodeService's hash-lookup validate/
+    // accept paths — no change to this endpoint's response shape or to the
+    // code format (generateAccessCode() is passed through unchanged).
+    const created = await AccessCodeService.createLegacyCompatCode({
+      code: generateAccessCode(),
+      organizationId,
+      createdByUserId: userId,
+      role: role || 'USER',
+      maxUses: maxUses || 1,
+      expiresAt,
+    });
 
     return res.json({
       success: true,
       code: {
-        id: codeId,
-        code: code,
+        id: created.id,
+        code: created.code,
         role: role || 'USER',
         maxUses: maxUses || 1,
         expiresAt: expiresAt,
@@ -516,10 +519,15 @@ router.delete(
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const runResult = await dbRun('UPDATE access_codes SET is_active = 0 WHERE id = ?', [id]);
+    // Dual-model reconciliation (CTO decision, 2026-07-20): revoke via
+    // AccessCodeService.revokeCode(), which sets BOTH is_active AND the
+    // hash-model `status`, instead of a raw UPDATE that only touched
+    // is_active (leaving the code valid through accessCodeService's
+    // hash-lookup validate/accept paths).
+    const { changes } = await AccessCodeService.revokeCode(id);
 
-    if (!runResult.success) {
-      throw new Error(runResult.error || 'Failed to deactivate access code');
+    if (!changes) {
+      throw new Error('Failed to deactivate access code');
     }
 
     return res.json({ success: true, message: 'Access code deactivated' });

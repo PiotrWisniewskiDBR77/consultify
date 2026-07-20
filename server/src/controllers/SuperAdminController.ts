@@ -4,6 +4,7 @@
 // The @ts-nocheck remains only for the legacy handlers still in this file;
 // extracted domain controllers have full TypeScript checking.
 
+import AccessCodeService from '../services/accessCodeService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
 import { hasColumn } from '../utils/dbSchema.js';
@@ -1044,79 +1045,72 @@ const rejectAccessRequest = catchAsync(async (req, res, next) => {
 
 /**
  * GET Access Codes
+ *
+ * Dual-model reconciliation (CTO decision, 2026-07-20): access_codes carries
+ * both the hash-model (accessCodeService: code_hash/uses_count/status) and
+ * legacy (role/current_uses/is_active) columns on the same table. Business
+ * logic for reading/normalizing the row lives in AccessCodeService now,
+ * not as raw SQL here — see accessCodeService.listAllCodesAdmin().
  */
 const getAccessCodes = catchAsync(async (req, res, next) => {
-  deps.db.all(`SELECT * FROM access_codes ORDER BY created_at DESC`, [], (err, rows) => {
-    if (err) return next(new AppError(err.message, 500));
-    res.json(
-      (rows || []).map((r: any) => ({
-        ...r,
-        is_active: flagOn(r.is_active),
-        max_uses: r.max_uses != null ? Number(r.max_uses) : null,
-        current_uses: r.current_uses != null ? Number(r.current_uses) : 0,
-      }))
-    );
-  });
+  try {
+    const rows = await AccessCodeService.listAllCodesAdmin();
+    res.json(rows);
+  } catch (err: any) {
+    next(new AppError(err.message, 500));
+  }
 });
 
 /**
  * CREATE Access Code
+ *
+ * Switched to AccessCodeService.createLegacyCompatCode() (dual-model
+ * reconciliation, 2026-07-20): preserves the exact prior feature set
+ * (caller-supplied plaintext `code`, `role`, `maxUses`, `expiresAt`) while
+ * also writing code_hash/uses_count/status so the code is immediately valid
+ * through accessCodeService's hash-lookup validate/accept paths too.
  */
 const createAccessCode = catchAsync(async (req, res, next) => {
   const { code, role, maxUses, expiresAt, organizationId } = req.body;
-  const newCode = code || deps.uuid.v4().substring(0, 8).toUpperCase();
   const orgId = organizationId || req.user.organizationId || 'org-dbr77-system';
+  // Preserve the exact prior default-code format (8 uppercase hex chars from
+  // a uuid) rather than the service's own "JOIN-XXXXXX" fallback, so this
+  // caller's behavior is byte-for-byte unchanged when no custom code is given.
+  const newCode = code || deps.uuid.v4().substring(0, 8).toUpperCase();
 
-  deps.db.run(
-    `INSERT INTO access_codes(id, organization_id, code, created_by, role, max_uses, expires_at) VALUES(?, ?, ?, ?, ?, ?, ?)`,
-    [deps.uuid.v4(), orgId, newCode, req.user.id, role || 'USER', maxUses || 100, expiresAt],
-    function (err) {
-      if (err) return next(new AppError(err.message, 500));
-      res.json({ message: 'Access code created', code: newCode });
-    }
-  );
+  try {
+    const created = await AccessCodeService.createLegacyCompatCode({
+      code: newCode,
+      organizationId: orgId,
+      createdByUserId: req.user.id,
+      role: role || 'USER',
+      maxUses: maxUses || 100,
+      expiresAt: expiresAt || null,
+    });
+    res.json({ message: 'Access code created', code: created.code });
+  } catch (err: any) {
+    next(new AppError(err.message, 500));
+  }
 });
 
 /**
  * DEACTIVATE / REVOKE Access Code
  *
- * NOTE: The access codes schema has evolved over time (legacy vs engine).
- * We attempt a few compatible UPDATEs in order, so the operation works across deployments.
+ * Switched to AccessCodeService.revokeCode() (dual-model reconciliation,
+ * 2026-07-20): sets BOTH `status` and legacy `is_active` in one UPDATE,
+ * replacing the old 3-attempt cascading SQL (which existed to guess which
+ * schema generation was live — no longer needed now both column families
+ * always exist).
  */
 const deactivateAccessCode = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const nowIso = new Date().toISOString();
-
-  const attempts: Array<{ sql: string; params: any[] }> = [
-    // Newer "engine" schema (status + revoked_at + updated_at)
-    {
-      sql: `UPDATE access_codes SET status = 'REVOKED', revoked_at = ?, updated_at = ? WHERE id = ?`,
-      params: [nowIso, nowIso, id],
-    },
-    // Legacy schema (boolean flag)
-    {
-      sql: `UPDATE access_codes SET is_active = 0 WHERE id = ?`,
-      params: [id],
-    },
-    // Minimal fallback: expire immediately
-    {
-      sql: `UPDATE access_codes SET expires_at = ? WHERE id = ?`,
-      params: [nowIso, id],
-    },
-  ];
-
-  const runAttempt = (idx: number) => {
-    if (idx >= attempts.length) return next(new AppError('Failed to deactivate access code', 500));
-    const { sql, params } = attempts[idx];
-    deps.db.run(sql, params, function (err) {
-      if (err) return runAttempt(idx + 1);
-      // @ts-ignore - sqlite callback context
-      if (this?.changes === 0) return next(new AppError('Access code not found', 404));
-      res.json({ success: true });
-    });
-  };
-
-  runAttempt(0);
+  try {
+    const { changes } = await AccessCodeService.revokeCode(id);
+    if (!changes) return next(new AppError('Access code not found', 404));
+    res.json({ success: true });
+  } catch (err: any) {
+    next(new AppError(err.message || 'Failed to deactivate access code', 500));
+  }
 });
 
 /**

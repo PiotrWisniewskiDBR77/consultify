@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { getRequestAccessRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
+import AccessCodeService from '../services/accessCodeService.js';
 import adminAuditService from '../services/adminAuditService.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import {
@@ -13,7 +14,7 @@ import {
   scimMappingsHasProjectId,
 } from '../services/scimGroupMappingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { flagOn } from '../utils/pgFlags.js';
 
 const router = Router();
@@ -1638,15 +1639,15 @@ async function ensureAdminAccessCodeTables() {
 }
 
 async function readAdminAccessCodes(orgId: string) {
+  // ensureAdminAccessCodeTables() stays as a safety net for environments where
+  // migrations haven't run yet (CREATE TABLE IF NOT EXISTS is a no-op once the
+  // real migrated schema exists).
   await ensureAdminAccessCodeTables();
-  const rows = await dbAll<any>(
-    `SELECT id, organization_id, code, role, max_uses, current_uses, expires_at, created_at
-     FROM access_codes
-     WHERE organization_id = ?
-     ORDER BY created_at DESC`,
-    [orgId],
-    { fallback: true }
-  );
+  // Dual-model reconciliation (CTO decision, 2026-07-20): read via
+  // AccessCodeService.listCodesByOrganization() instead of raw SQL, so both
+  // hash-model (accessCodeService) and legacy-created codes for this org show
+  // up with a consistent shape.
+  const rows = await AccessCodeService.listCodesByOrganization(orgId);
 
   return (rows || []).map((row: any) => ({
     id: String(row.id),
@@ -1678,23 +1679,31 @@ async function createAdminAccessCode(orgId: string, body: any, createdBy?: strin
   if (errors.length) return { validationErrors: errors };
 
   await ensureAdminAccessCodeTables();
-  const id = uuidv4();
-  const code = generateTenantAccessCode();
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
-  // FIX (NOT-NULL sweep): access_codes.created_by is NOT NULL with no DB default
-  // (Postgres) — the local ensureAdminAccessCodeTables() CREATE TABLE IF NOT EXISTS
-  // predates that column, so this 500s with 23502 against the real migrated schema.
-  await dbRun(
-    `INSERT INTO access_codes (id, organization_id, code, role, max_uses, current_uses, expires_at, created_by, created_at)
-     VALUES (?, ?, ?, ?, ?, 0, ?, ?, datetime('now'))`,
-    [id, orgId, code, role, maxUses, expiresAt, createdBy || 'system']
-  );
+  // Dual-model reconciliation (CTO decision, 2026-07-20): create via
+  // AccessCodeService.createLegacyCompatCode() instead of a raw INSERT, so
+  // the row is valid/visible to both the legacy readers (this file's list
+  // above, access-control.routes, auth.routes) AND accessCodeService's
+  // hash-lookup validate/accept paths. `code` is pre-generated here to keep
+  // the existing "ORG-XXXXXXXX" tenant-code format callers may recognize;
+  // `createdBy || 'system'` preserves the prior fallback exactly (created_by
+  // is nullable now, but 'system' is the historical sentinel other code
+  // paths already expect).
+  const code = generateTenantAccessCode();
+  const created = await AccessCodeService.createLegacyCompatCode({
+    code,
+    organizationId: orgId,
+    createdByUserId: createdBy || 'system',
+    role,
+    maxUses,
+    expiresAt,
+  });
 
   return {
     code: {
-      id,
+      id: created.id,
       organizationId: orgId,
-      code,
+      code: created.code,
       role,
       maxUses,
       currentUses: 0,
