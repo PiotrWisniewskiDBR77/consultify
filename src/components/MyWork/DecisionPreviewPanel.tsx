@@ -399,6 +399,11 @@ export const DecisionPreviewFooter: React.FC<{
     tone: relationTone(r.type),
   }));
 
+  // Zgloszenie Piotra 2026-07-21: stopka Decision mial 7 widocznych przyciskow
+  // w 3 wierszach — lamie DOKTRYNA_GESTOSCI.md §1 ("toolbar <= 5 widocznych,
+  // 6+ -> obowiazkowy overflow") i §15 ("gesty i plytki, nie plaski wysyp").
+  // Decyzja Piotra: Zatwierdz/Odrzuc + Odloz zawsze widoczne (3), pozostale
+  // cztery (Wiecej info/Deleguj/Przypomnij/Eskaluj) -> menu "...".
   const actionRows: ActionRow[] = [
     ...(canAct
       ? [
@@ -424,34 +429,6 @@ export const DecisionPreviewFooter: React.FC<{
           },
         ]
       : []),
-    {
-      buttons: [
-        {
-          label: i18n.t('myWork.decisionPreview.label8', 'More info'),
-          icon: MessageSquare,
-          onClick: onMoreInfo,
-          colorScheme: 'neutral' as const,
-          flex: true,
-          shortcut: 'I',
-        },
-        // 'Remind' NIE powtarza sie tutaj — zyje wylacznie w rzedzie
-        // czas/eskalacja ponizej (Remind/Escalate/Snooze), zgodnie z SPEC-N
-        // §2.6 (anty-duplikacja). Wczesniej ten sam onRemind renderowal sie
-        // dwa razy, gdy canAct=false (widz bez uprawnien do zatwierdzania).
-        ...(canAct
-          ? [
-              {
-                label: i18n.t('myWork.decisionPreview.label9', 'Delegate'),
-                icon: UserPlus,
-                onClick: onDelegate,
-                colorScheme: 'neutral' as const,
-                flex: true,
-                shortcut: 'G',
-              },
-            ]
-          : []),
-      ],
-    },
   ];
 
   return (
@@ -480,14 +457,6 @@ export const DecisionPreviewFooter: React.FC<{
         <PreviewActionBar rows={actionRows} />
 
         <div className="flex gap-2">
-          <button onClick={onRemind} className={actionPillClass('neutral', 'flex-1')}>
-            <Bell size={14} />
-            {i18n.t('myWork.decisionPreview.remind', 'Remind')}
-          </button>
-          <button onClick={onEscalate} className={actionPillClass('amber', '')}>
-            <TrendingUp size={14} />
-            {i18n.t('myWork.decisionPreview.escalate', 'Escalate')}
-          </button>
           <div className="relative flex-1">
             <button
               onClick={onToggleSnooze}
@@ -517,6 +486,44 @@ export const DecisionPreviewFooter: React.FC<{
               </>
             ) : null}
           </div>
+
+          {/* Menu "..." teraz z PreviewActionBar (overflowActions) — jedno miejsce
+              w calym repo, nie reczny kod per ekran. Decyzja Piotra 2026-07-21:
+              tylko Zatwierdz/Odrzuc/Odloz zawsze widoczne (DOKTRYNA_GESTOSCI §1). */}
+          <PreviewActionBar
+            rows={[]}
+            overflowLabel={i18n.t('myWork.decisionPreview.moreActions', 'More actions')}
+            overflowActions={[
+              {
+                label: i18n.t('myWork.decisionPreview.label8', 'More info'),
+                icon: MessageSquare,
+                onClick: onMoreInfo,
+                colorScheme: 'neutral',
+              },
+              ...(canAct
+                ? [
+                    {
+                      label: i18n.t('myWork.decisionPreview.label9', 'Delegate'),
+                      icon: UserPlus,
+                      onClick: onDelegate,
+                      colorScheme: 'neutral' as const,
+                    },
+                  ]
+                : []),
+              {
+                label: i18n.t('myWork.decisionPreview.remind', 'Remind'),
+                icon: Bell,
+                onClick: onRemind,
+                colorScheme: 'neutral',
+              },
+              {
+                label: i18n.t('myWork.decisionPreview.escalate', 'Escalate'),
+                icon: TrendingUp,
+                onClick: onEscalate,
+                colorScheme: 'amber',
+              },
+            ]}
+          />
         </div>
       </div>
     </div>

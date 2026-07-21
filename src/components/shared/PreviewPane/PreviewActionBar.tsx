@@ -1,23 +1,14 @@
 import type { LucideIcon } from 'lucide-react';
-import React from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import React, { useState } from 'react';
 
-import { actionPillClass } from './previewStyles';
-
-type ColorScheme =
-  | 'emerald'
-  | 'blue'
-  | 'purple'
-  | 'amber'
-  | 'neutral'
-  | 'red'
-  | 'green'
-  | 'primary';
+import { actionPillClass, type PillColorScheme } from './previewStyles';
 
 export interface ActionButton {
   label: string;
   icon?: LucideIcon;
   onClick: () => void;
-  colorScheme: ColorScheme;
+  colorScheme: PillColorScheme;
   /** Stretch to fill available space (flex-1) */
   flex?: boolean;
   disabled?: boolean;
@@ -40,6 +31,23 @@ export interface ActionRow {
 export interface PreviewActionBarProps {
   rows?: ActionRow[];
   actions?: ActionRow[];
+  /**
+   * Akcje drugorzedne — chowane pod trigger "..." zamiast psuc gestosc stopki.
+   *
+   * KANON: DOKTRYNA_GESTOSCI.md §1/§15 — max 5 widocznych akcji, reszta w
+   * obowiazkowym overflow. Przed tym propem (dodanym 2026-07-21) kazdy ekran,
+   * ktory potrzebowal wiecej niz kilka akcji, pisal WLASNY przycisk "..." +
+   * dropdown recznie — DecisionPreviewPanel.tsx zrobil to osobno, a jego
+   * wlasny mockup porownawczy (dev-render) zrobil to SAM wieczor po raz drugi,
+   * inaczej. Ten prop istnieje, zeby trzeci raz sie nie zdarzyl: dolacz akcje
+   * tutaj, komponent renderuje trigger + menu za Ciebie, zawsze tak samo.
+   *
+   * Renderowane jako ikona-only przycisk doklejony do OSTATNIEGO wiersza z
+   * `rows` (albo jako samodzielny wiersz, gdy `rows` jest puste/pominiete).
+   */
+  overflowActions?: ActionButton[];
+  /** aria-label triggera overflow. Domyslnie angielski (icon-only, jak reszta ikon-buttonow w repo) — podaj przetlumaczony string, jesli ekran tego wymaga. */
+  overflowLabel?: string;
 }
 
 const GRID_COLS: Record<number, string> = {
@@ -49,7 +57,51 @@ const GRID_COLS: Record<number, string> = {
   5: 'grid-cols-5',
 };
 
-export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({ rows, actions }) => {
+const OverflowTrigger: React.FC<{
+  actions: ActionButton[];
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}> = ({ actions, label, open, onToggle, onClose }) => (
+  <div className="relative shrink-0">
+    <button onClick={onToggle} aria-label={label} className={actionPillClass('neutral', 'h-full')}>
+      <MoreHorizontal size={14} />
+    </button>
+    {open ? (
+      <>
+        <div className="fixed inset-0 z-dropdown" onClick={onClose} />
+        <div className="absolute right-0 top-full mt-2 z-overlay w-52 rounded-xl border border-c-border-subtle bg-c-surface-raised shadow-xl overflow-hidden">
+          {actions.map((btn, i) => {
+            const Icon = btn.icon;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  btn.onClick();
+                  onClose();
+                }}
+                disabled={btn.disabled}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs hover:bg-c-surface text-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {Icon ? <Icon size={14} /> : null}
+                {btn.label}
+              </button>
+            );
+          })}
+        </div>
+      </>
+    ) : null}
+  </div>
+);
+
+export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({
+  rows,
+  actions,
+  overflowActions,
+  overflowLabel = 'More actions',
+}) => {
+  const [overflowOpen, setOverflowOpen] = useState(false);
   const resolvedRows: Array<{ buttons: ActionButton[]; columns?: number }> = (
     rows ??
     actions ??
@@ -70,13 +122,40 @@ export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({ rows, action
         }
   );
 
+  // DOKTRYNA_GESTOSCI §1: >5 widocznych akcji lacznie (rows + trigger) wymaga
+  // overflow. Ostrzeżenie w konsoli dev, nie blokada — niektore ekrany moga
+  // miec uzasadniony wyjatek, ale maja o tym wiedziec w momencie budowy.
+  if (process.env.NODE_ENV !== 'production') {
+    const widocznychLacznie = resolvedRows.reduce((n, r) => n + r.buttons.length, 0);
+    if (widocznychLacznie > 5 && !overflowActions?.length) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[PreviewActionBar] ${widocznychLacznie} widocznych akcji (limit: 5, DOKTRYNA_GESTOSCI.md §1). ` +
+          `Przenies nadmiarowe do propa "overflowActions" zamiast pisac wlasny przycisk "...".`
+      );
+    }
+  }
+
+  const overflowProps = overflowActions?.length
+    ? {
+        actions: overflowActions,
+        label: overflowLabel,
+        open: overflowOpen,
+        onToggle: () => setOverflowOpen((v) => !v),
+        onClose: () => setOverflowOpen(false),
+      }
+    : null;
+
+  const ostatniIdx = resolvedRows.length - 1;
+
   return (
     <div className="space-y-2.5 py-1">
       {resolvedRows.map((row, rowIdx) => {
         const isGrid = row.columns && row.columns > 1;
         const containerClass = isGrid
           ? `grid ${GRID_COLS[row.columns!] ?? `grid-cols-${row.columns}`} gap-2`
-          : 'flex gap-2';
+          : 'flex gap-2 items-stretch';
+        const doklejOverflow = rowIdx === ostatniIdx && !!overflowProps;
 
         return (
           <div key={rowIdx} className={containerClass}>
@@ -109,9 +188,17 @@ export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({ rows, action
                 </button>
               );
             })}
+            {doklejOverflow ? <OverflowTrigger {...overflowProps!} /> : null}
           </div>
         );
       })}
+
+      {/* rows puste/pominiete, ale sa overflowActions — samodzielny wiersz z samym triggerem */}
+      {resolvedRows.length === 0 && overflowProps ? (
+        <div className="flex gap-2 justify-end">
+          <OverflowTrigger {...overflowProps} />
+        </div>
+      ) : null}
     </div>
   );
 };

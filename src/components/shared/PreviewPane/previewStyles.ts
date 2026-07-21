@@ -36,7 +36,7 @@ export const PREVIEW_RELATION_CHIP =
  * Po niej typ zostanie zwezony do piatki (dzis zwezenie zepsuloby 12 plikow
  * poza MyWork). MyWork jest juz czysty — 2026-07-21.
  */
-type PillColorScheme =
+export type PillColorScheme =
   | 'emerald'
   | 'amber'
   | 'neutral'

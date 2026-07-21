@@ -372,6 +372,46 @@ cztery naprawione i wypchnięte na demo tego samego wieczoru.
 zamiast tłumaczeń — nie crashuje, tylko pokazuje klucz jako tekst. Do dopisania jako osobne
 zgłoszenie w rejestrze (obszar WYW), nie do kodowania przy okazji.
 
+### 6B. Piotr patrzy na zrzut i widzi to, czego kod nie pokazuje
+
+Po naprawie wariantów Piotr spojrzał na ten sam ekran porównawczy i zapytał wprost: *„każdy
+z tych ekranów wygląda inaczej — strefy nie są tej samej wielkości, dolna część wygląda różnie."*
+Zmierzone (nie na oko): wysokość całej karty 579–684 px (18% rozstępu). Rozbite na górę
+(meta+opis, zależną od długości tekstu: 283–314 px, 11%) i dół (AI+powiązania+akcje,
+zależny od struktury: 288–371 px, **29%**) — problem w **prawie trzy razy większym stopniu**
+siedział w dole, nie w treści.
+
+Przyczyna: Decision miał **7 widocznych przycisków w 3 wierszach** — złamanie
+`DOKTRYNA_GESTOSCI.md` §1 („toolbar ≤5 widocznych, 6+ → obowiązkowy overflow") i §15
+(„gęsty i płytki, nie płaski wysyp"). Piotr rozstrzygnął: Zatwierdź/Odrzuć/Odłóż zostają
+zawsze widoczne (3), pozostałe cztery (Więcej info/Deleguj/Przypomnij/Eskaluj) → „…".
+
+**Ale zamiast naprawić to punktowo, Piotr zadał właściwe pytanie: „czy nie łatwiej zbudować
+komponent na nowo i podmienić wszystkie?"** Odpowiedź, po sprawdzeniu kodu: `PreviewActionBar`
+już jest współdzielony (11 modułów) — problemem nie był brak wspólnego komponentu, tylko
+brak w nim **jednej zdolności**: mechanizmu przepełnienia. Bez niej każdy ekran, który
+potrzebował „…", pisał je sam — i to jest dokładnie to, co się stało **dwa razy w jednym
+wieczorze** (raz w produkcji, raz w moim własnym mockupie porównawczym), zanim doszliśmy
+do tego zdania.
+
+**Naprawione u źródła (`PreviewActionBar.tsx`):** nowy prop `overflowActions` — komponent
+sam renderuje trigger „…" + menu, dołączony do ostatniego wiersza `rows` (albo jako
+samodzielny wiersz, gdy `rows` jest puste). Dev-mode `console.warn`, gdy widocznych akcji
+jest >5 bez użycia tego propa — **DOKTRYNA_GESTOSCI §1 wymuszona przez komponent, nie przez
+pamięć autora ekranu**. `DecisionPreviewPanel.tsx` i mockup porównawczy przepięte na ten
+prop; ręczny kod menu usunięty z obu miejsc. `PillColorScheme` ujednolicony (był
+zduplikowany jako lokalny `ColorScheme` w `PreviewActionBar.tsx` — druga kopia tego samego
+typu, którą trzeba by osobno pamiętać o synchronizacji z wycofaniem `purple/green/blue`).
+
+Zweryfikowane w przeglądarce: wysokość Decision 645→599 px, menu otwiera się i zamyka
+poprawnie, wszystkie 24 miejsca używające `PreviewActionBar` w repo nadal się kompilują.
+
+**Wniosek dla dalszej migracji (W3/W4):** ten sam wzorzec — dozbrojenie istniejącego,
+już-przyjętego komponentu jedną brakującą zdolnością, zamiast przebudowy ekranów od zera —
+jest właściwym podejściem też dla pełnych kart N. `NModeToolbar`/`NModeCardState` już
+istnieją; prawdopodobnie brakuje im tej samej klasy rzeczy (przepełnienie, rezerwacja
+sekcji), nie całkowitego zastąpienia.
+
 ---
 
 ## 7. Decyzje — moje propozycje i to, o co pytam
