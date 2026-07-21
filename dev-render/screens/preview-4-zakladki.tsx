@@ -190,8 +190,11 @@ const TASKS_ACTIONS: ActionRow[] = [
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ZAKŁADKA 4 — DECISIONS
-// Źródło: src/components/MyWork/DecisionPreviewPanel.tsx:402-457 (dwa wiersze)
-//   + ręczny trzeci wiersz 487-509 (Przypomnij / Eskaluj / Odłóż) POZA ActionBar
+// Źródło: src/components/MyWork/DecisionPreviewPanel.tsx (Zatwierdź/Odrzuć w
+//   PreviewActionBar) + ręczny wiersz Odłóż + menu "..." (Więcej info/Deleguj/
+//   Przypomnij/Eskaluj), POZA ActionBar. Skonsolidowane 2026-07-21 — zgloszenie
+//   Piotra: stopka miala 7 widocznych przyciskow w 3 wierszach (DOKTRYNA_GESTOSCI
+//   §1/§15). Teraz: 3 zawsze widoczne + 4 w overflow.
 // ═══════════════════════════════════════════════════════════════════════════
 const DECISIONS_PILLS: MetaPill[] = [
   { label: 'Status', value: 'Czeka na Ciebie', tone: 'warning' },
@@ -204,28 +207,16 @@ const DECISIONS_RELATIONS: RelationItem[] = [
   { label: 'Prezentacja dla zarządu', icon: Presentation, onClick: noop, type: 'deck' },
 ];
 
+// Zgloszenie Piotra 2026-07-21: stopka Decision miala 7 widocznych przyciskow
+// w 3 wierszach — lamie DOKTRYNA_GESTOSCI.md §1 (<=5 widocznych, 6+ -> overflow)
+// i §15 ("gesty i plytki, nie plaski wysyp"). Naprawione w DecisionPreviewPanel.tsx:
+// zostaja widoczne Zatwierdz/Odrzuc/Odloz (3), reszta (Wiecej info/Deleguj/
+// Przypomnij/Eskaluj) przeniesiona do menu "...". Ten mockup odwzorowuje NOWY stan.
 const DECISIONS_ACTIONS: ActionRow[] = [
   {
     buttons: [
       { label: 'Zatwierdź', icon: Check, onClick: noop, colorScheme: 'emerald', flex: true, shortcut: 'A' },
       { label: 'Odrzuć', icon: X, onClick: noop, colorScheme: 'red', flex: true, shortcut: 'R' },
-    ],
-  },
-  {
-    buttons: [
-      {
-        label: 'Więcej info',
-        icon: MessageSquare,
-        onClick: noop,
-        colorScheme: 'neutral',
-        flex: true,
-        shortcut: 'I',
-      },
-      { label: 'Deleguj', icon: UserPlus, onClick: noop, colorScheme: 'neutral', flex: true, shortcut: 'G' },
-      // 'Przypomnij' NIE powtarza sie tutaj (canAct=true -> Delegate, nie Remind;
-      // te dwie galezie sa WZAJEMNIE WYKLUCZAJACE w produkcji, DecisionPreviewPanel.tsx:433-449).
-      // Zyje wylacznie w rzedzie czas/eskalacja ponizej. Naprawiono realny duplikat
-      // 'Przypomnij' w produkcji (ten sam onRemind 2x gdy canAct=false) — patrz commit.
     ],
   },
 ];
@@ -398,22 +389,28 @@ export const Preview4ZakladkiScreen: React.FC = () => {
               />
               <PreviewRelations items={DECISIONS_RELATIONS} emptyLabel="Brak powiązań" />
               <PreviewActionBar rows={DECISIONS_ACTIONS} />
-              {/* Produkcja renderuje ten wiersz RĘCZNIE, poza <PreviewActionBar>
-                  (DecisionPreviewPanel.tsx:487-509) — odwzorowane 1:1, bo widać
-                  na nim jedyny w MyWork wariant `amber`. */}
+              {/* Odłóż: produkcja renderuje to RĘCZNIE (DecisionPreviewPanel.tsx) —
+                  ma wlasny dropdown presetow czasu (1h/4h/jutro/tydzien), ktorego
+                  generyczny overflow nie odwzorowuje. Menu "..." obok NIE jest
+                  juz reczna kopia — to PRAWDZIWY PreviewActionBar.overflowActions,
+                  ten sam kod co w produkcji (naprawione 2026-07-21 po zgloszeniu
+                  Piotra: trzecia reczna kopia tego samego menu w jednym wieczorze
+                  byla dokladnie tym, czego ten prop mial nie dopuscic). */}
               <div className="flex gap-2">
-                <button onClick={noop} className={actionPillClass('neutral', 'flex-1')}>
-                  <Bell size={14} />
-                  Przypomnij
-                </button>
-                <button onClick={noop} className={actionPillClass('amber', '')}>
-                  <TrendingUp size={14} />
-                  Eskaluj
-                </button>
                 <button onClick={noop} className={actionPillClass('neutral', 'flex-1')}>
                   <AlarmClockOff size={14} />
                   Odłóż
                 </button>
+                <PreviewActionBar
+                  rows={[]}
+                  overflowLabel="More actions"
+                  overflowActions={[
+                    { label: 'Więcej info', icon: MessageSquare, onClick: noop, colorScheme: 'neutral' },
+                    { label: 'Deleguj', icon: UserPlus, onClick: noop, colorScheme: 'neutral' },
+                    { label: 'Przypomnij', icon: Bell, onClick: noop, colorScheme: 'neutral' },
+                    { label: 'Eskaluj', icon: TrendingUp, onClick: noop, colorScheme: 'amber' },
+                  ]}
+                />
               </div>
             </Kolumna>
           </div>
@@ -441,6 +438,12 @@ export const Preview4ZakladkiScreen: React.FC = () => {
               <li>
                 • Cała rodzina planowania (Dziś · Tydzień · Później · Odłóż · Przypomnij ·
                 Deleguj · Zapisz · Notatka) jest neutralna.
+              </li>
+              <li>
+                • <strong className="text-c-text-primary">Decisions</strong>: 7 widocznych
+                przycisków w 3 wierszach → 3 (Zatwierdź/Odrzuć/Odłóż) + menu „…" (Więcej
+                info/Deleguj/Przypomnij/Eskaluj) — zgodnie z DOKTRYNA_GESTOSCI §1 (≤5
+                widocznych).
               </li>
             </ul>
           </footer>
