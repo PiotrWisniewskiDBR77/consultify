@@ -450,7 +450,7 @@ export const DecisionPreviewFooter: React.FC<{
                 label: i18n.t('myWork.decisionPreview.label10', 'Remind'),
                 icon: Bell,
                 onClick: onRemind,
-                colorScheme: 'blue' as const,
+                colorScheme: 'neutral' as const,
                 flex: true,
                 shortcut: 'M',
               },

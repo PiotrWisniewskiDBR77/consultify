@@ -1210,7 +1210,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             label: t('myWork.ideasList.label2', 'Convert'),
             icon: Sparkles,
             onClick: () => setConvertIdea(idea),
-            colorScheme: 'purple',
+            colorScheme: 'primary',
           },
           {
             label: t('myWork.ideasList.label3', 'Open Flow'),

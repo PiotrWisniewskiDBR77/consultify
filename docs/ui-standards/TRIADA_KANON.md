@@ -52,7 +52,9 @@ Moduł deklaruje bloki 1–3; bloki 4–5 dokłada komponent automatycznie.
 
 ## A8. PRZYCISK AKCJI (preview i wszędzie) — JEDEN komponent, 4 warianty
 Pigułka h-9 rounded-full, **widoczna ramka**, ikona + etykieta + (opcjonalnie) szary badge skrótu `[A]`.
-Warianty (ustabilizowane, niepodmienialne): **pozytywny** zielony tint · **destrukcyjny** czerwony tint · **uwaga** bursztynowy tint · **neutralny** ghost z ramką. Moduł wybiera wariant+etykietę+handler — nic więcej.
+Warianty (ustabilizowane, niepodmienialne): **pozytywny** zielony tint · **destrukcyjny** czerwony tint · **uwaga** bursztynowy tint · **neutralny** ghost z ramką · **główny** granatowo-biały kontrast (`primary`, **maks. jeden na preview**, nigdy crimson). Moduł wybiera wariant+etykietę+handler — nic więcej.
+
+**Wariant wybiera SKUTEK akcji, nie ekran.** Ta sama akcja wygląda identycznie w każdym module — pełna tabela skutek→wariant i lista wariantów wycofanych (`purple`/`green`/`blue`): `TABLE_AND_PREVIEW_CANON.md` §7.3b.
 > **D21 (Piotr, 2026-07-12):** przyciski akcji w preview = pill (`rounded-full`) — „taki jak Google i Apple". `rounded-lg` na przyciskach akcji w preview = naruszenie kanonu (SSOT tokenów: `PREVIEW_PILL_BASE` w `src/components/shared/PreviewPane/previewStyles.ts`).
 
 ## A9. KANBAN

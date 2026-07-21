@@ -1400,7 +1400,7 @@ const PreviewPane: React.FC<{
           label: i18n.t('myWork.inboxContent.label', 'Today'),
           icon: Zap,
           onClick: () => onTriage('accept_today'),
-          colorScheme: 'primary',
+          colorScheme: 'neutral',
           flex: true,
           shortcut: 'T',
         },

@@ -320,16 +320,44 @@ const rows = [{
 <PreviewActionBar rows={rows} />
 ```
 
-**Dozwolone `colorScheme`:** `'primary' | 'neutral' | 'emerald' | 'amber' | 'blue' | 'red'`
+**Dozwolone `colorScheme` — PIĘĆ, bez wyjątków (uzgodnione z A8 dnia 2026-07-21):**
+`'primary' | 'emerald' | 'amber' | 'red' | 'neutral'`
 
-| colorScheme | Kiedy używać |
-|---|---|
-| `primary` | Główna akcja CTA (Open, Submit, Assign) |
-| `neutral` | Drugorzędna (Edit, Duplicate, Export) |
-| `emerald` | Akcja potwierdzenia / Dzisiaj |
-| `amber` | Akcja odroczona / Snooze |
-| `blue` | Akcja informacyjna |
-| `red` | Destrukcyjna (Delete, Remove) |
+#### Wariant wybiera SKUTEK akcji, nie ekran (MUST)
+
+To jest reguła rozstrzygająca. Ta sama akcja ma wyglądać **identycznie w każdym module**;
+o wyglądzie decyduje to, **co przycisk robi z rekordem**, a nie to, na którym ekranie stoi.
+
+| Skutek akcji na rekordzie | Wariant | Przykłady |
+|---|---|---|
+| Zamyka sprawę pozytywnie | `emerald` — zielony tint | Zrobione · Zatwierdź · Akceptuj |
+| Odrzuca formalnie albo usuwa nieodwracalnie | `red` — czerwony tint | Odrzuć · Usuń |
+| Podnosi pilność, wciąga kogoś jeszcze | `amber` — bursztynowy tint | Eskaluj |
+| **Wszystko pozostałe** | `neutral` — ghost z ramką | Otwórz · Deleguj · Więcej info · Notatka · Zapisz · Przypomnij · **Dziś · Tydzień · Później · Odłóż** |
+| Jedyna główna akcja preview | `primary` — granatowo-biały kontrast | Konwertuj (Idea) |
+
+**`primary`: maksymalnie JEDEN przycisk w całym preview.** Dwa wypełnione przyciski = żaden nie
+jest główny. `primary` **nie jest crimsonem** — renderuje się jako `bg-navy-900` / biały na ciemnym
+(VISUAL_STANDARD §5.1, `previewStyles.ts` `COLOR_MAP.primary`). Wcześniejsza notatka w tym kanonie
+sugerowała inaczej — była błędna.
+
+**Rodzina planowania (Dziś · Tydzień · Później · Odłóż) idzie w całości na `neutral`.** To zbiór
+równorzędnych wyborów; wyróżnienie jednego z nich jest podpowiedzią, a nie stanem rzeczy.
+
+#### Warianty WYCOFANE (nie używać w nowym kodzie)
+
+| Wycofany | Dlaczego | Zamiast |
+|---|---|---|
+| `purple` | mapuje się na skalę `primary-*`, czyli **crimson #85182F** — łamie pułapkę nr 1 z CLAUDE.md | `primary` albo `neutral` |
+| `green` | duplikat `emerald`, dwa zielone o różnym odcieniu na sąsiednich ekranach | `emerald` |
+| `blue` | brak skutku, którego by nie pokrywał `neutral` | `neutral` |
+
+*Stan zastany 2026-07-21:* typ `PillColorScheme` dopuszczał **osiem** wartości, ten kanon
+dokumentował **sześć**, a TRIADA_KANON A8 mówił o **czterech**. Trzy dokumenty, trzy różne
+odpowiedzi — stąd rozjazd. Przykład skutku: „Konwertuj" w `IdeasTableContent` miał `primary`,
+a ten sam „Konwertuj" w `MyIdeasListContent` miał `purple` — jeden przycisk, jeden moduł,
+dwa kolory. Migracja: MyWork wyczyszczony 2026-07-21; pozostałe moduły do przejścia, dopiero
+po nich zwężamy typ `PillColorScheme` (dziś zwężenie zepsułoby 12 plików poza MyWork).
 
 **Niedozwolone:** własne `bg-*` / `text-*` klasy inline na przyciskach preview. Zero `bg-primary-500`, `bg-crimson-*`, `bg-green-500`, `bg-brand/*` na buttonach stopki.
 
