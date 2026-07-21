@@ -2540,16 +2540,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
             return (
               <div className="space-y-4">
-                <PreviewMetaCard pills={pills} trailing={trailing}>
-                  <div className="mt-2 text-sm font-semibold text-c-text leading-snug">
-                    {task.title}
-                    {isCompleted ? (
-                      <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                        ✓
-                      </span>
-                    ) : null}
-                  </div>
-                </PreviewMetaCard>
+                {/* canon §7.3 — tytul zyje WYLACZNIE w naglowku preview; META to stan, nie tresc. */}
+                <PreviewMetaCard pills={pills} trailing={trailing} />
 
                 <PreviewDetailsSection
                   text={detailsText}
@@ -2606,7 +2598,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     label: t('myWork.tasksList.label7', 'Today'),
                     icon: Zap,
                     onClick: () => handleTriageAcceptToday(task.id),
-                    colorScheme: 'emerald',
+                    colorScheme: 'neutral',
                     flex: true,
                     shortcut: 'T',
                   },
@@ -2614,7 +2606,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     label: t('myWork.tasksList.label8', 'Snooze'),
                     icon: Pause,
                     onClick: () => handleTriageSnooze(task.id),
-                    colorScheme: 'amber',
+                    colorScheme: 'neutral',
                     flex: true,
                     shortcut: 'Z',
                   },
@@ -2628,7 +2620,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       : t('myWork.tasksList.done', 'Done'),
                     icon: CheckCircle2,
                     onClick: () => handleToggleComplete(task.id, !isCompleted),
-                    colorScheme: 'green',
+                    colorScheme: 'emerald',
                     flex: true,
                     shortcut: 'D',
                   },

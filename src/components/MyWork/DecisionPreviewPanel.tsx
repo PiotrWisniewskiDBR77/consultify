@@ -450,7 +450,7 @@ export const DecisionPreviewFooter: React.FC<{
                 label: i18n.t('myWork.decisionPreview.label10', 'Remind'),
                 icon: Bell,
                 onClick: onRemind,
-                colorScheme: 'blue' as const,
+                colorScheme: 'neutral' as const,
                 flex: true,
                 shortcut: 'M',
               },
@@ -804,7 +804,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
 
   if (!decisionId) {
     return (
-      <aside className="w-[420px] flex-shrink-0 bg-c-bg h-full p-3">
+      <aside className="w-[clamp(340px,28%,480px)] flex-shrink-0 bg-c-bg h-full p-3">
         <PreviewPaneShell
           kicker={t('myWork.decisionPreview.kicker', 'Preview')}
           title={t('myWork.decisionPreview.title', 'Decision')}
@@ -821,7 +821,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
   }
 
   return (
-    <aside className="w-[420px] flex-shrink-0 bg-c-bg h-full p-3 overflow-hidden">
+    <aside className="w-[clamp(340px,28%,480px)] flex-shrink-0 bg-c-bg h-full p-3 overflow-hidden">
       <PreviewPaneShell
         kicker={
           mode === 'requests_pending'

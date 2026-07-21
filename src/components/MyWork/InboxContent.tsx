@@ -1400,7 +1400,7 @@ const PreviewPane: React.FC<{
           label: i18n.t('myWork.inboxContent.label', 'Today'),
           icon: Zap,
           onClick: () => onTriage('accept_today'),
-          colorScheme: 'primary',
+          colorScheme: 'neutral',
           flex: true,
           shortcut: 'T',
         },
@@ -1496,9 +1496,8 @@ const PreviewPane: React.FC<{
       actions={
         <button
           onClick={onOpen}
-          className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+          className="inline-flex items-center h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
         >
-          <Eye size={12} />
           {i18n.t('myWork.inboxContent.open', 'Open')}
         </button>
       }

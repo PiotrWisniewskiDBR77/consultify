@@ -661,8 +661,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
           emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
         />
 
-        <PreviewActionBar rows={actionRows} />
-
         {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown */}
         <div>
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
@@ -676,6 +674,8 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
             variant="inline"
           />
         </div>
+
+        <PreviewActionBar rows={actionRows} />
       </div>
     );
   };

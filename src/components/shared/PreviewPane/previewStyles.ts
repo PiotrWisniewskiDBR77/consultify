@@ -24,15 +24,30 @@ export const PREVIEW_RELATION_CHIP =
 
 // ── Color scheme helper for action pills ────────────────────────────────────
 
+/**
+ * Warianty pigulki akcji preview.
+ *
+ * KANON: TABLE_AND_PREVIEW_CANON.md §7.3b — dozwolone jest PIEC:
+ *   'primary' | 'emerald' | 'amber' | 'red' | 'neutral'
+ * Wariant wybiera SKUTEK akcji, nie ekran (tabela skutek->wariant w §7.3b).
+ * 'primary' = maks. JEDEN na preview, granatowo-bialy kontrast, nigdy crimson.
+ *
+ * Trzy ponizsze sa WYCOFANE i czekaja na migracje pozostalych modulow.
+ * Po niej typ zostanie zwezony do piatki (dzis zwezenie zepsuloby 12 plikow
+ * poza MyWork). MyWork jest juz czysty — 2026-07-21.
+ */
 type PillColorScheme =
   | 'emerald'
-  | 'blue'
-  | 'purple'
   | 'amber'
   | 'neutral'
   | 'red'
+  | 'primary'
+  /** @deprecated §7.3b — mapuje sie na skale primary-* (crimson). Uzyj 'primary' albo 'neutral'. */
+  | 'purple'
+  /** @deprecated §7.3b — duplikat 'emerald'. Uzyj 'emerald'. */
   | 'green'
-  | 'primary';
+  /** @deprecated §7.3b — brak wlasnego skutku. Uzyj 'neutral'. */
+  | 'blue';
 
 const COLOR_MAP: Record<PillColorScheme, string> = {
   emerald:
