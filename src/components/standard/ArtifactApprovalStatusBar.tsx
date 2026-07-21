@@ -28,6 +28,20 @@ export interface ArtifactApprovalStatusBarProps {
   currentUserId?: string;
   /** Whether the current user may approve/reject (role check owned by the caller). */
   canReview?: boolean;
+  /**
+   * Ukryj wlasny przycisk "Submit for review", bo karta oferuje TE SAMA akcje
+   * jako `primaryAction` w naglowku (SPEC-N §2.6 — jedna akcja, jedno miejsce).
+   *
+   * Dotyczy dzis WYLACZNIE Initiative: jej primary cyklu zycia to wlasnie
+   * "Submit for Review", wiec przycisk pojawial sie DWA RAZY na jednym ekranie
+   * (zgloszenie Piotra 2026-07-21 ze zrzutu demo). Decision ma w naglowku
+   * "Approve decision", Insight "Convert to initiative" — inne akcje, wiec
+   * u nich pasek zostaje bez zmian i prop jest zbedny.
+   *
+   * Pasek NADAL pokazuje stan zatwierdzenia (Draft/Review/Approved) — znika
+   * tylko zdublowany przycisk, nie informacja.
+   */
+  hideSubmitAction?: boolean;
   className?: string;
 }
 
@@ -53,6 +67,7 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
   artifactId,
   currentUserId,
   canReview = false,
+  hideSubmitAction = false,
   className,
 }) => {
   const { state, loading, error, actionPending, submitForReview, approve, reject } =
@@ -82,7 +97,9 @@ export const ArtifactApprovalStatusBar: React.FC<ArtifactApprovalStatusBarProps>
       {error ? <p className="text-[11px] text-c-danger">{error}</p> : null}
 
       <div className="flex flex-wrap items-center gap-1.5">
-        {(effectiveState === 'draft' || effectiveState === 'rejected') && currentUserId ? (
+        {(effectiveState === 'draft' || effectiveState === 'rejected') &&
+        currentUserId &&
+        !hideSubmitAction ? (
           <button
             type="button"
             className={buttonClass}

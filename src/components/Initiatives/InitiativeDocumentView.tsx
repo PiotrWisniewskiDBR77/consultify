@@ -10494,6 +10494,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     artifactId={initiativeId}
                     currentUserId={currentUser?.id}
                     canReview
+                    /* Naglowek karty ma juz primaryAction = ta sama akcja cyklu
+                       zycia ("Submit for Review", :10467). Bez tego przycisk
+                       renderowal sie DWA RAZY — zgloszenie Piotra 2026-07-21.
+                       Pasek zostaje: nadal niesie STAN zatwierdzenia. */
+                    hideSubmitAction
                   />
                 ) : null}
                 {/* SPEC-N §2.2 / pakiet M7 pkt 1 — POZIOMA SIATKA 7 PÓL USUNIĘTA.
