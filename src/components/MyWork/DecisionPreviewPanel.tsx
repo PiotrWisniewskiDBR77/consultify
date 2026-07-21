@@ -434,6 +434,10 @@ export const DecisionPreviewFooter: React.FC<{
           flex: true,
           shortcut: 'I',
         },
+        // 'Remind' NIE powtarza sie tutaj — zyje wylacznie w rzedzie
+        // czas/eskalacja ponizej (Remind/Escalate/Snooze), zgodnie z SPEC-N
+        // §2.6 (anty-duplikacja). Wczesniej ten sam onRemind renderowal sie
+        // dwa razy, gdy canAct=false (widz bez uprawnien do zatwierdzania).
         ...(canAct
           ? [
               {
@@ -445,16 +449,7 @@ export const DecisionPreviewFooter: React.FC<{
                 shortcut: 'G',
               },
             ]
-          : [
-              {
-                label: i18n.t('myWork.decisionPreview.label10', 'Remind'),
-                icon: Bell,
-                onClick: onRemind,
-                colorScheme: 'neutral' as const,
-                flex: true,
-                shortcut: 'M',
-              },
-            ]),
+          : []),
       ],
     },
   ];
