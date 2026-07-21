@@ -9604,7 +9604,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'properties',
         label: t('initiatives.panel.properties', 'Properties'),
         icon: Flag,
-        defaultOpen: false,
+        defaultOpen: true,
         children: (
           // Pola pochodzą z `nModePropertyFields` — TEJ SAMEJ tablicy, którą
           // wcześniej konsumował NModePropertiesStrip. Renderujemy je przez ich
@@ -9613,6 +9613,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           // miejsca, nie zamiana na tekst tylko-do-odczytu.
           <div className="rounded-lg border border-c-border-subtle overflow-hidden">
             <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-c-surface-raised">
+                  <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                    {t('initiatives.panel.property', 'Property')}
+                  </th>
+                  <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                    {t('initiatives.panel.value', 'Value')}
+                  </th>
+                </tr>
+              </thead>
               <tbody>
                 {nModePropertyFields.map((field, idx) => {
                   const last = idx === nModePropertyFields.length - 1;

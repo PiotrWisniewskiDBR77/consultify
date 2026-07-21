@@ -2013,7 +2013,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       children: (
         <div className="rounded-lg border border-c-border-subtle overflow-hidden">
           <table className="w-full text-xs border-collapse">
-            <tbody>
+            <thead>
+                <tr className="bg-c-surface-raised">
+                  <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                    {t('interview.workspace.property', 'Property')}
+                  </th>
+                  <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                    {t('interview.workspace.value', 'Value')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
               {properties.map((field, idx) => (
                 <tr key={field.id}>
                   <td

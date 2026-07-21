@@ -3305,7 +3305,9 @@
       "rightPanelAria": "Notification details panel",
       "panelProperties": "Properties",
       "panelHistory": "History",
-      "loading": "Loading…"
+      "loading": "Loading…",
+      "property": "Property",
+      "value": "Value"
     },
     "projects": {
       "failedToLoadProjects": "Failed to load projects",
@@ -6425,7 +6427,9 @@
       "aiReviewedAt": "Last AI review",
       "completedAt": "Completed",
       "sessionDetails": "Session details",
-      "latestReviewDecisionLabel": "Latest review decision"
+      "latestReviewDecisionLabel": "Latest review decision",
+      "property": "Property",
+      "value": "Value"
     },
     "categorySidebar": {
       "completed": "Completed",
@@ -9939,7 +9943,9 @@
       "raid": "RAID",
       "attachments": "Attachments",
       "presentationMode": "Presentation mode",
-      "deleteComment": "Delete comment"
+      "deleteComment": "Delete comment",
+      "property": "Property",
+      "value": "Value"
     }
   },
   "execution": {
@@ -32379,7 +32385,9 @@
       "errorTitle": "Could not load this tool",
       "errorBody": "The tool description could not be fetched. Check your connection and try again.",
       "errorRetry": "Try again",
-      "errorClose": "Close"
+      "errorClose": "Close",
+      "property": "Property",
+      "value": "Value"
     },
     "knownToolDetail": {
       "dynamicSwot": {
