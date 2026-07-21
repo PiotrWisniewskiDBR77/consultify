@@ -2451,7 +2451,9 @@
       "rightPanelAria": "Panel szczegółów powiadomienia",
       "panelProperties": "Właściwości",
       "panelHistory": "Historia",
-      "loading": "Wczytywanie…"
+      "loading": "Wczytywanie…",
+      "property": "Właściwość",
+      "value": "Wartość"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
@@ -5587,7 +5589,9 @@
       "aiReviewedAt": "Ostatnia ocena AI",
       "completedAt": "Zakończono",
       "sessionDetails": "Szczegóły sesji",
-      "latestReviewDecisionLabel": "Ostatnia decyzja recenzenta"
+      "latestReviewDecisionLabel": "Ostatnia decyzja recenzenta",
+      "property": "Właściwość",
+      "value": "Wartość"
     },
     "categorySidebar": {
       "completed": "Zakończona",
@@ -9101,7 +9105,9 @@
       "raid": "RAID",
       "attachments": "Załączniki",
       "presentationMode": "Tryb pokazu",
-      "deleteComment": "Usuń komentarz"
+      "deleteComment": "Usuń komentarz",
+      "property": "Właściwość",
+      "value": "Wartość"
     }
   },
   "execution": {
@@ -33439,7 +33445,9 @@
       "errorTitle": "Nie udało się wczytać narzędzia",
       "errorBody": "Nie pobraliśmy opisu tego narzędzia. Sprawdź połączenie i spróbuj ponownie.",
       "errorRetry": "Spróbuj ponownie",
-      "errorClose": "Zamknij"
+      "errorClose": "Zamknij",
+      "property": "Właściwość",
+      "value": "Wartość"
     },
     "knownToolDetail": {
       "dynamicSwot": {

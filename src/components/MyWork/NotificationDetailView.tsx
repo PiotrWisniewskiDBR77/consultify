@@ -2435,18 +2435,40 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       icon: Info,
       defaultOpen: true,
       children: (
-        <dl className="space-y-2.5">
-          {propertiesFields.map((field) => (
-            <div key={field.id} className="flex flex-col gap-1">
-              <dt className="text-[11px] font-medium uppercase tracking-wider text-c-text-muted">
-                {isPolish ? field.label.pl : field.label.en}
-              </dt>
-              <dd className="text-xs text-c-text">
-                {field.render ? field.render() : field.value || '—'}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        // Tabela Wlasciwosc/Wartosc — ten sam ksztalt co Task/Decision/Insight
+        // (wzorzec wskazany przez wlasciciela 2026-07-21). Wczesniej byla to lista
+        // definicyjna <dl> z etykietami nad wartosciami — ta sama tresc, inny uklad,
+        // przez co panel Notification wygladal inaczej niz pozostale karty.
+        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="bg-c-surface-raised">
+                <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                  {t('myWork.notificationDetail.property', 'Property')}
+                </th>
+                <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                  {t('myWork.notificationDetail.value', 'Value')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {propertiesFields.map((field, idx) => {
+                const last = idx === propertiesFields.length - 1;
+                const kraw = last ? '' : ' border-b border-c-border-subtle';
+                return (
+                  <tr key={field.id}>
+                    <td className={`text-left text-c-text-muted px-3 py-2${kraw}`}>
+                      {isPolish ? field.label.pl : field.label.en}
+                    </td>
+                    <td className={`text-right text-c-text px-3 py-2${kraw}`}>
+                      {field.render ? field.render() : field.value || '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ),
     },
     {
