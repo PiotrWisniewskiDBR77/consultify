@@ -630,7 +630,13 @@ const MOCK_EVIDENCE_ENVELOPE = {
 // zanim szerszy catch-all innego ekranu je połknie. Mechanizm żyje
 // wyłącznie w tym pliku (wzorzec z insight-artifact.tsx).
 const g = window as unknown as { __KARTA_INSIGHT_FETCH__?: boolean };
-if (!g.__KARTA_INSIGHT_FETCH__) {
+// ★ Router instalujemy TYLKO gdy TEN ekran jest wybrany w adresie.
+// main.tsx importuje WSZYSTKIE ekrany naraz, wiec bez tego warunku siedem
+// routerow podmienia window.fetch jeden po drugim; ostatni jest najbardziej
+// zewnetrzny i odpowiada WLASNYM fallbackiem zamiast oddac sterowanie dalej.
+// Skutek przed poprawka: karta-initiative dostawala koperte obcego ekranu.
+const __tenEkran = new URLSearchParams(window.location.search).get('screen') === 'karta-insight';
+if (__tenEkran && !g.__KARTA_INSIGHT_FETCH__) {
   g.__KARTA_INSIGHT_FETCH__ = true;
   setTimeout(() => {
     const realFetch = window.fetch.bind(window);

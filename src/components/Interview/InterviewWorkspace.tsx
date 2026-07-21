@@ -1862,7 +1862,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         label: { en: 'Last activity', pl: 'Aktywność' },
         type: 'text',
         value: session?.lastActivityAt
-          ? new Date(session.lastActivityAt).toLocaleDateString(t('interview.workspace.enUs'))
+          ? new Date(session.lastActivityAt).toLocaleDateString(t('interview.workspace.enUs', 'en-US'))
           : '-',
         onChange: () => {},
         readOnly: true,
@@ -2047,7 +2047,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {aiEvaluationUpdatedAt && (
                   <p className="text-xs opacity-80">
                     {t('interview.workspace.lastReview')}{' '}
-                    {new Date(aiEvaluationUpdatedAt).toLocaleString(t('interview.workspace.enUs'))}
+                    {new Date(aiEvaluationUpdatedAt).toLocaleString(t('interview.workspace.enUs', 'en-US'))}
                   </p>
                 )}
               </div>

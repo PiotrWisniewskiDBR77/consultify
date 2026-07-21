@@ -179,7 +179,13 @@ Api.updateNotificationWorksheet = (async () => ({
 // HTML-a z vite-dev-servera (który wywala JSON.parse w konsoli).
 // i18n `/locales/**` przepuszczamy do prawdziwego fetcha.
 const g = window as unknown as { __KARTA_NOTIFICATION_FETCH__?: boolean };
-if (!g.__KARTA_NOTIFICATION_FETCH__) {
+// ★ Router instalujemy TYLKO gdy TEN ekran jest wybrany w adresie.
+// main.tsx importuje WSZYSTKIE ekrany naraz, wiec bez tego warunku siedem
+// routerow podmienia window.fetch jeden po drugim; ostatni jest najbardziej
+// zewnetrzny i odpowiada WLASNYM fallbackiem zamiast oddac sterowanie dalej.
+// Skutek przed poprawka: karta-initiative dostawala koperte obcego ekranu.
+const __tenEkran = new URLSearchParams(window.location.search).get('screen') === 'karta-notification';
+if (__tenEkran && !g.__KARTA_NOTIFICATION_FETCH__) {
   g.__KARTA_NOTIFICATION_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {

@@ -7525,7 +7525,7 @@ Return ONLY the answer text (no markdown fences).`;
                   relations.push({
                     label: `${t('interview.hub.updated')}: ${new Date(
                       item.updatedAt || item.createdAt || ''
-                    ).toLocaleDateString(t('interview.hub.enUs'))}`,
+                    ).toLocaleDateString(t('interview.hub.enUs', 'en-US'))}`,
                     tone: 'text-slate-600 dark:text-slate-300',
                   });
 
@@ -8837,7 +8837,7 @@ Return ONLY the answer text (no markdown fences).`;
                       {insight.createdAt && (
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
-                          {new Date(insight.createdAt).toLocaleDateString(t('interview.hub.enUs'))}
+                          {new Date(insight.createdAt).toLocaleDateString(t('interview.hub.enUs', 'en-US'))}
                         </span>
                       )}
                       {findingsCount > 0 && (

@@ -447,7 +447,13 @@ Api.get = (async (url: string) => {
 // zamiast uderzać w nieistniejący backend dev-render i wywalać w konsoli błąd
 // parsowania JSON z ciała HTML. Pliki i18n (/locales/**) przechodzą do realnego fetcha.
 const g = window as unknown as { __KARTA_DECISION_FETCH__?: boolean };
-if (!g.__KARTA_DECISION_FETCH__) {
+// ★ Router instalujemy TYLKO gdy TEN ekran jest wybrany w adresie.
+// main.tsx importuje WSZYSTKIE ekrany naraz, wiec bez tego warunku siedem
+// routerow podmienia window.fetch jeden po drugim; ostatni jest najbardziej
+// zewnetrzny i odpowiada WLASNYM fallbackiem zamiast oddac sterowanie dalej.
+// Skutek przed poprawka: karta-initiative dostawala koperte obcego ekranu.
+const __tenEkran = new URLSearchParams(window.location.search).get('screen') === 'karta-decision';
+if (__tenEkran && !g.__KARTA_DECISION_FETCH__) {
   g.__KARTA_DECISION_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
