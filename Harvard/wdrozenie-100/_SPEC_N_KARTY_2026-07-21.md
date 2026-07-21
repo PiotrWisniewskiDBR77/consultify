@@ -350,6 +350,28 @@ Tool → Notification → Interview → Decision → Insight → Task → **Init
 **Warunek wejścia do W4:** każda z 7 kart ma ekran w harnessie `dev-render` i zrzut PRZED.
 Bez zrzutu PRZED nie da się uczciwie odebrać zrzutu PO.
 
+**Stan na 2026-07-21, wieczór:** harness zbudowany i zweryfikowany w przeglądarce — **8/8
+ekranów renderuje się** (7 kart + porównanie preview), jasny i ciemny motyw. Warunek wejścia
+do W4 spełniony.
+
+### 6A. Znaleziska z harnessu — naprawione na żywo (nie tylko zapisane)
+
+Budowa harnessu ujawniła cztery realne wady, których lektura kodu by nie złapała — dokładnie
+lekcja z fali N: *„esbuild przeszedł" nie jest dowodem, dowodem jest przeglądarka.* Wszystkie
+cztery naprawione i wypchnięte na demo tego samego wieczoru.
+
+| # | Gdzie | Co | Jak znalezione |
+|---|---|---|---|
+| 1 | harness, 7 ekranów | Router `window.fetch` instalowany na poziomie modułu; `main.tsx` importuje wszystkie karty naraz → routery nadpisywały się nawzajem, ostatni odpowiadał obcym fallbackiem | Initiative zwracała „Nie udało się załadować" mimo „esbuild OK" |
+| 2 | **produkt** — `InterviewWorkspace.tsx` + `InterviewHub.tsx` | `toLocaleDateString(t('...enUs'))` bez fallbacku — klucz istnieje tylko w en/pl; w de/es/ja/jp/ar i18next zwraca sam klucz → `RangeError: Invalid language tag` → **cały ekran w error-boundary** | Interview w error boundary w harnessie |
+| 3 | **produkt** — `NotificationDetailView.tsx:2521` | Przycisk „Analizuj z AI" miał `border-primary-400/text-primary-600/bg-primary-500` — pułapka nr 1 z CLAUDE.md, crimson na akcencie AI zamiast `c-info`/teal | zmierzony computed style w ciemnym motywie: `rgba(168,45,73)` |
+| 4 | **produkt** — `DecisionPreviewPanel.tsx` | Ten sam handler `onRemind` renderowany dwa razy, gdy `canAct=false` — dokładnie wzorzec z §2.6 (anty-duplikacja) | duplikat widoczny na ekranie porównawczym preview, policzony przez `querySelectorAll` |
+
+**Znalezisko zapisane, nienaprawione (poza zakresem tej tury):** ekran Interview w trybie
+`conversational` renderuje surowe klucze i18n (`interview.runtimeMode.conversational.pros/cons`)
+zamiast tłumaczeń — nie crashuje, tylko pokazuje klucz jako tekst. Do dopisania jako osobne
+zgłoszenie w rejestrze (obszar WYW), nie do kodowania przy okazji.
+
 ---
 
 ## 7. Decyzje — moje propozycje i to, o co pytam
