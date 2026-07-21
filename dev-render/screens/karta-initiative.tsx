@@ -52,7 +52,7 @@ useAppStore.setState({
 } as any);
 
 // Celowo BEZ prefiksu `init-showcase-` — chcemy realną ścieżkę fetchową.
-const INITIATIVE_ID = 'init-showcase-knowledge-hub-rollout'; // short-circuit demo-data w komponencie (initiativesDemoData.ts:179) — bez routera fetch
+const INITIATIVE_ID = 'init-smed-linia-pakowania';
 
 const daysFromNow = (days: number): string => {
   const d = new Date();
