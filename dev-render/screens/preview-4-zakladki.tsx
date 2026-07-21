@@ -141,7 +141,10 @@ const INBOX_ACTIONS: ActionRow[] = [
   {
     columns: 4,
     buttons: [
-      { label: 'Zrobione', icon: CheckCircle2, onClick: noop, colorScheme: 'neutral', shortcut: 'D' },
+      // 'Zrobione' zamyka sprawe pozytywnie — ten sam skutek co Tasks.'Zrobione' ponizej,
+      // wiec ten sam wariant emerald (§7.3b). Bylo 'neutral' — rozjazd znaleziony i naprawiony
+      // w InboxContent.tsx po zgloszeniu Piotra 2026-07-21 na tym wlasnie ekranie.
+      { label: 'Zrobione', icon: CheckCircle2, onClick: noop, colorScheme: 'emerald', shortcut: 'D' },
       { label: 'Zapisz', icon: Bookmark, onClick: noop, colorScheme: 'neutral', shortcut: 'S' },
       { label: 'Notatka', icon: FileText, onClick: noop, colorScheme: 'neutral', shortcut: 'N' },
       { label: 'Odrzuć', icon: Archive, onClick: noop, colorScheme: 'neutral', shortcut: 'X' },

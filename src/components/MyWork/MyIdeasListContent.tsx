@@ -1216,7 +1216,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             label: t('myWork.ideasList.label3', 'Open Flow'),
             icon: Workflow,
             onClick: () => openIdeaInProcessFlow(idea),
-            colorScheme: 'emerald',
+            // Nawigacyjne, nic nie zamyka -> neutral (§7.3b), zgodnie z tym samym
+            // przyciskiem w IdeasTableContent.tsx. Bylo 'emerald', rozjechane.
+            colorScheme: 'neutral',
           },
           {
             label: t('myWork.ideasList.label4', 'Delete'),
