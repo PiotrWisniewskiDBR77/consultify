@@ -2520,7 +2520,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     <button
                       onClick={() => handleAnalyzeWithAI(false)}
                       disabled={isAnalyzingWorksheet}
-                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-teal-400/50 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {isAnalyzingWorksheet ? (
                         <Loader2 size={13} className="animate-spin" />
