@@ -2327,6 +2327,7 @@
       "toastSuccess6": "Otwarto czat",
       "systemInstruction": "Jesteś asystentem PMO. Zwróć tylko poprawny JSON. Bez komentarzy, bez markdown. Pisz kontekstowo — nie generycznie.",
       "aIFilledNotificationContext": "AI wypełniło kontekst powiadomienia",
+      "aiSkippedEditedFields": "AI nie nadpisało pól, które właśnie edytowałeś",
       "failedToFillContext": "Nie udało się wypełnić kontekstu przez AI",
       "toastSuccess7": "Komentarz dodany",
       "toastError7": "Nie udało się dodać komentarza",

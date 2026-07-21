@@ -3181,6 +3181,7 @@
       "toastSuccess6": "Chat opened",
       "systemInstruction": "You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.",
       "aIFilledNotificationContext": "AI filled notification context",
+      "aiSkippedEditedFields": "AI did not overwrite fields you were editing",
       "failedToFillContext": "Failed to fill context with AI",
       "toastSuccess7": "Comment added",
       "toastError7": "Failed to add comment",

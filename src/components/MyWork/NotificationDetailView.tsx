@@ -206,6 +206,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const [worksheetSaving, setWorksheetSaving] = useState(false);
   const [lastSavedWorksheetSnapshot, setLastSavedWorksheetSnapshot] = useState<string>('');
   const [lastWorksheetSavedAt, setLastWorksheetSavedAt] = useState<string | null>(null);
+  // Ostatni zapis sie NIE powiodl. Wskaznik w naglowku musi wtedy powiedziec
+  // "Blad zapisu", a nie "Zapisano" — inaczej karta klamie o trwalosci tresci.
+  const [worksheetSaveFailed, setWorksheetSaveFailed] = useState(false);
 
   // N-mode active section
   const [activeNSection, setActiveNSection] = useState('whats-happening');
@@ -298,6 +301,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       return '';
     }
   }, [worksheetDraft]);
+
+  // Lustro biezacych szkicow w ref — potrzebne, zeby asynchroniczna odpowiedz AI
+  // mogla porownac stan pola SPRZED zapytania z tym, co jest w polu TERAZ.
+  // Bez tego closure AI widzi wartosci z chwili startu zapytania (stale) i nadpisuje
+  // to, co konsultant wpisal w miedzyczasie.
+  const worksheetDraftRef = useRef(worksheetDraft);
+  useEffect(() => {
+    worksheetDraftRef.current = worksheetDraft;
+  }, [worksheetDraft]);
+
+  // Snapshot tresci, ktora ostatnio NIE zapisala sie — blokada petli autozapisu.
+  const lastFailedWorksheetSnapshotRef = useRef<string | null>(null);
 
   const worksheetIsDirty = useMemo(() => {
     if (!notificationId) return false;
@@ -496,13 +511,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         await Api.updateNotificationWorksheet(notificationId, worksheetDraft);
         setLastSavedWorksheetSnapshot(worksheetSnapshot);
         setLastWorksheetSavedAt(new Date().toISOString());
+        setWorksheetSaveFailed(false);
+        lastFailedWorksheetSnapshotRef.current = null;
         if (!silent) {
           toast.success(t('myWork.notificationDetail.toastSuccess', 'Saved'));
         }
       } catch (e: any) {
-        if (!silent) {
-          toast.error(t('myWork.notificationDetail.toastError2', 'Failed to save'));
-        }
+        // Nieudany zapis MUSI byc widoczny. Autozapis (silent) tez — inaczej
+        // konsultant pracuje w przekonaniu, ze tresc jest bezpieczna.
+        console.error('[NotificationDetailView] Worksheet save failed:', e);
+        setWorksheetSaveFailed(true);
+        lastFailedWorksheetSnapshotRef.current = worksheetSnapshot;
+        toast.error(t('myWork.notificationDetail.toastError2', 'Failed to save'));
       } finally {
         setWorksheetSaving(false);
       }
@@ -516,6 +536,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     if (!worksheetIsDirty) return;
     if (worksheetSaving) return;
     if (loading) return;
+    // Ta sama tresc juz raz nie przeszla — nie mlocimy backendu co 1,2 s.
+    // Kolejna proba dopiero po zmianie tresci albo po recznym kliknieciu "Zapisz".
+    if (lastFailedWorksheetSnapshotRef.current === worksheetSnapshot) return;
 
     if (worksheetAutosaveTimerRef.current) clearTimeout(worksheetAutosaveTimerRef.current);
     worksheetAutosaveTimerRef.current = setTimeout(() => {
@@ -715,6 +738,23 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       if (!notification || isAnalyzingWorksheet) return;
       setIsAnalyzingWorksheet(true);
 
+      // Stan pol w chwili WYSLANIA zapytania. Odpowiedz AI wraca po kilku-kilkunastu
+      // sekundach; w tym czasie konsultant moze juz pisac. Pole, ktore zmienilo sie
+      // od startu zapytania, jest jego praca — AI go NIE nadpisuje.
+      const draftAtRequestStart = worksheetDraftRef.current;
+      const skippedFields: string[] = [];
+      const applyIfUntouched = (
+        field: keyof typeof draftAtRequestStart,
+        value: string,
+        setDraft: (v: string) => void
+      ) => {
+        if (worksheetDraftRef.current[field] !== draftAtRequestStart[field]) {
+          skippedFields.push(field);
+          return;
+        }
+        setDraft(value);
+      };
+
       try {
         const checklistSnapshot = actionChecklist
           .map((i) => `${i.completed ? '[x]' : '[ ]'} ${String(i.text || '').trim()}`)
@@ -816,18 +856,29 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
         const parsed = JSON.parse(jsonMatch[0]) as any;
 
-        // Apply all fields
+        // Apply all fields — z pominieciem tych, ktore uzytkownik edytowal w trakcie.
         if (typeof parsed.description === 'string' && parsed.description.trim()) {
-          setDescriptionDraft(parsed.description.trim());
+          applyIfUntouched('description', parsed.description.trim(), setDescriptionDraft);
         }
         if (typeof parsed.whyImportant === 'string' && parsed.whyImportant.trim()) {
-          setWhyImportantDraft(parsed.whyImportant.trim());
+          applyIfUntouched('whyImportant', parsed.whyImportant.trim(), setWhyImportantDraft);
         }
         if (typeof parsed.blocked === 'string' && parsed.blocked.trim()) {
-          setBlockedDraft(parsed.blocked.trim());
+          applyIfUntouched('blocked', parsed.blocked.trim(), setBlockedDraft);
         }
         if (typeof parsed.expectedAction === 'string' && parsed.expectedAction.trim()) {
-          setExpectedActionDraft(parsed.expectedAction.trim());
+          applyIfUntouched('expectedAction', parsed.expectedAction.trim(), setExpectedActionDraft);
+        }
+
+        if (skippedFields.length > 0) {
+          // Uczciwy komunikat zamiast cichego nadpisania: mowimy, ze AI odpuscilo pola.
+          toast(
+            t(
+              'myWork.notificationDetail.aiSkippedEditedFields',
+              'AI did not overwrite fields you were editing'
+            ),
+            { icon: 'ℹ️' }
+          );
         }
 
         const nextChecklist = Array.isArray(parsed.checklist)
@@ -1166,12 +1217,32 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const contract = notification ? buildNotificationContent(notification as any, t) : null;
   const aiAnalysis = generateAIAnalysis();
 
+  // ★ Klucz TRESCI zapisanego arkusza (nie tozsamosc obiektu `notification`).
+  //
+  // Efekty ponizej resetuja szkice pol do wartosci z serwera. Mialy w tablicy
+  // zaleznosci caly obiekt `notification` — a `handleMarkRead` robi
+  // `setNotification({ ...notification, isRead: true })`, czyli tworzy NOWY obiekt
+  // o tej samej tresci. Skutek zmierzony w harnessie: konsultant wpisywal tresc,
+  // klikal "Przeczytane" i pola natychmiast wracaly do tekstu z powiadomienia,
+  // po czym autozapis utrwalal ten powrot i naglowek pokazywal "Zapisano".
+  // Klucz tresciowy sprawia, ze reset nastepuje TYLKO gdy realnie zmieni sie
+  // zapisany arkusz — a nie przy kazdej podmianie obiektu w stanie.
+  const persistedWorksheetKey = useMemo(() => {
+    const ws = (notification as any)?.data?.worksheet;
+    try {
+      return JSON.stringify(ws ?? null);
+    } catch {
+      return '';
+    }
+  }, [notification]);
+
   // Keep expected action draft in sync with loaded notification (and language)
   useEffect(() => {
     const ws = (notification as any)?.data?.worksheet;
     const persisted = ws && typeof ws === 'object' ? (ws as any).expectedAction : undefined;
     setExpectedActionDraft(String(persisted ?? contract?.expectedAction ?? ''));
-  }, [notificationId, contract?.expectedAction, notification]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notificationId, contract?.expectedAction, persistedWorksheetKey]);
 
   // Keep "What's Happening" field drafts in sync
   useEffect(() => {
@@ -1182,13 +1253,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     setDescriptionDraft(String(persistedWhat ?? contract?.what ?? notification?.message ?? ''));
     setWhyImportantDraft(String(persistedWhy ?? contract?.whyImportant ?? ''));
     setBlockedDraft(String(persistedBlocked ?? contract?.blocked ?? ''));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     notificationId,
     contract?.what,
     contract?.whyImportant,
     contract?.blocked,
     notification?.message,
-    notification,
+    persistedWorksheetKey,
   ]);
 
   // Initialize worksheet baseline snapshot once per notification (for Save/dirty + autosave).
@@ -2525,6 +2597,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             onSave={handleSaveWorksheet}
             saving={worksheetSaving}
             isDirty={worksheetIsDirty}
+            // Gdy ostatni zapis padl, wskaznik ma mowic "Blad zapisu" (klikalny,
+            // ponawia) zamiast "Zapisano". Karta nie moze twierdzic, ze utrwalila
+            // tresc, ktorej backend nie przyjal.
+            saveState={
+              worksheetSaving
+                ? 'saving'
+                : worksheetSaveFailed
+                  ? 'error'
+                  : worksheetIsDirty
+                    ? 'dirty'
+                    : 'saved'
+            }
             onChat={handleOpenChat}
             onClose={onClose}
             statusDotColor={severityConfig.dotColor}
