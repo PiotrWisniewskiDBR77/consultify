@@ -7,6 +7,19 @@
 > Decision + dziedziczące (KPI · RAID · Milestone · Change Request · Stage Gate · Action Proposal).
 > **Nie dotyczy** wzorca W (8 narzędzi roboczych) ani Instrumentów.
 
+## 0A. SIEDEM kart, nie osiem — korekta klasyfikacji (Piotr, 2026-07-21)
+
+Inwentarz A1 liczył **8** kart i traktował „Tool Document" jako jedną z nich (archetyp B,
+do rozstrzygnięcia). **To był błąd klasyfikacji.** Rozróżnienie właściciela:
+
+- **Tool** = karta N. Obiekt pracy: ma stan, właściwości, powiązania, żyje w systemie. **Zostaje.**
+- **Tool Document** = **wynik**, nie karta. To zawsze będzie PowerPoint, Word albo Excel —
+  dostawa dla klienta. Nie ma powłoki artefaktu, bo nie jest artefaktem roboczym.
+  **Wypada z tej fali** i dostaje własny kontrakt renderu (bliżej ART-012 niż powłoki).
+
+**Objęte tym dokumentem (7):** Tool · Initiative · Insight · Interview Session · Decision ·
+Notification · Task.
+
 ---
 
 ## 0. Zasada rozstrzygająca — dlaczego ten dokument jest inny
@@ -226,7 +239,92 @@ walidatora. Kontrakt liczy się dopiero, gdy blokuje zapis.
 
 ---
 
-## 5. Bramka — co sprawdza hook
+## 4A. Warstwa dowodowa — co to jest i kogo obowiązuje
+
+**Po ludzku.** Karta twierdzi: *„Marża w cold chain spadła o 4 punkty przez rozdrobnienie floty"*.
+Pytanie klienta przy stole brzmi zawsze tak samo: **„skąd to wiecie?"** Dziś na większości kart nie
+ma odpowiedzi — treść wygenerowało AI z sesji i dokumentów, ale ścieżka powrotna nie istnieje.
+
+Warstwa dowodowa to **ta ścieżka powrotna**: przy każdej tezie widać, na czym się opiera — który
+wywiad, który dokument, która liczba. Nie akapit do czytania, tylko link do rozwinięcia.
+
+*Dlaczego to jest przewaga, a nie ozdoba:* konsultant, który nie umie w sekundę pokazać źródła,
+traci wiarygodność. Miro tego nie ma, Notion tego nie ma, żaden generyczny SaaS tego nie robi.
+
+**Obowiązuje: Insight · Initiative · każdą kartę, której treść generuje AI.**
+Initiative wchodzi wprost — bo inicjatywa bez odpowiedzi „z czego to wynika" jest pomysłem,
+nie inicjatywą, a to jest kluczowe narzędzie w tym produkcie.
+
+**Bramka nie blokuje pisania, blokuje promocję (MUST).** Brak dowodów **nie** blokuje zapisu
+roboczego. Blokuje dopiero **przejście do zatwierdzenia**. Piszesz swobodnie, system pyta o źródła
+w momencie, w którym karta ma iść dalej — tak jak działa dziś bramka jakości w wywiadach.
+
+---
+
+## 5. EGZEKUCJA — cztery bramki ★
+
+> To jest odpowiedź na postawiony wprost problem: *„nic w systemie nie broni się przed cofnięciem"*.
+> Kolejność od najmocniejszej. Każda następna łapie to, czego poprzednia z natury nie widzi.
+
+### 5.1 Typ — stany niedozwolone mają być niewyrażalne
+
+Najmocniejsza i darmowa w utrzymaniu: nie wymaga niczyjej pamięci ani dyscypliny.
+
+| Reguła | Realizacja w typie |
+|---|---|
+| Panel obowiązkowy | `rightPanel: RightPanelSections` (bez `?:`), rekord o stałych kluczach |
+| Jeden primary | `primaryAction: PrimaryActionConfig \| { intentionallyNone: true; reason: string }` |
+| Zarezerwowane sekcje | `NModeSectionId` = union **z wykluczonymi** `comments`/`history`/`activity-log` |
+| Kontrakt AI wymagany | `aiContract: NModeCardStateProps \| { none: true; reason: string }` |
+| Limit klasy S | `sections` walidowane długością względem `class: 'S' \| 'L'` |
+| Wycofany prop | typ `never`, nie komentarz |
+
+**Test:** karta bez panelu **nie kompiluje się**. Nie „jest niezgodna" — nie buduje się.
+
+### 5.2 Hook — to, czego typ nie widzi, bo dotyczy wyglądu
+
+`check-artefakt.sh` rozszerzony o: drugi element solid/filled CTA poza slotem primary · toolbar
+budowany poza `NModeToolbar` · `createPortal` z wnętrza powłoki · `primary-*` i `c-accent`
+w nowym kodzie (jest dziś, zostaje).
+
+### 5.3 Test zgodności — jedyna bramka łapiąca runtime
+
+**To jest bramka, której nam brakowało.** Fala N: agent wstawił `useCallback` z zależnością do
+`const`-a zadeklarowanego niżej → `ReferenceError` → cały widok w error-boundary. **Przeszło
+esbuild i tsc**, wywaliło się w przeglądarce.
+
+Jeden test parametryzowany rejestrem: dla **każdej** zarejestrowanej karty renderuje ją z danymi
+makietowymi i sprawdza:
+
+1. renderuje się bez wyjątku i bez error-boundary,
+2. dokładnie jeden element ma rolę primary,
+3. panel obecny, sekcje w kanonicznej kolejności, zwinięte poza Akcjami,
+4. żaden identyfikator akcji nie występuje dwa razy,
+5. żadna sekcja lewej kolumny nie ma zarezerwowanego id,
+6. liczba sekcji ≤ limit klasy,
+7. każda sekcja ma `aiContract`.
+
+**Nowa karta dopisana do rejestru jest testowana automatycznie — bez pisania testu.**
+
+### 5.4 Rejestr — system wie, co jest prawidłowym komponentem
+
+`src/components/standard/registry.ts` — jedno źródło: powierzchnia → komponent → sekcja
+standardu → bramka. Z niego korzystają jednocześnie: test §5.3, hook §5.2 i generowany
+przegląd „które ekrany są na standardzie".
+
+**Ekran bez wpisu w rejestrze nie przechodzi CI.** Stąd system *wie*, co jest prawidłowym
+komponentem — i ten sam mechanizm obsłuży każdy następny komponent, który zbudujemy.
+
+### 5.5 Bramka źródeł — dokumentacja ma nie kłamać
+
+`scripts/sprawdz-zrodla.mjs` (gotowe 2026-07-21): czyta 98 plików instruktażowych, wyciąga 824
+odwołania i sprawdza, czy każdy cytowany plik istnieje **na tej gałęzi**. Pierwszy bieg: **36 widm,
+13 w pięciu skillach.** Dokument cytowany jako SSOT, który nie istnieje, jest gorszy niż jego brak —
+agent zgaduje zamiast czytać.
+
+---
+
+## 5B. Bramka — co sprawdza hook
 
 Rozszerzenie `check-artefakt.sh` (dziś sprawdza tylko tokeny kolorystyczne):
 
@@ -245,8 +343,12 @@ Rozszerzenie `check-artefakt.sh` (dziś sprawdza tylko tokeny kolorystyczne):
 `W1 inwentarz` ✅ → **`W2 ten dokument`** → `W3 komponent` → `W4 migracja 8 kart` → `W5 bramka`.
 W rejestrze: ART-001 ✅ → ART-002 → ART-003 → ART-004…010 → ART-011.
 
-Kolejność migracji wg ciężaru (z A1): Tool → Notification → Interview → Tool Document → Decision
-→ Insight → Task → **Initiative** (najcięższa: 10 818 linii, brak panelu, 9 grup w toolbarze).
+Kolejność migracji wg ciężaru (z A1, **bez Tool Document** — patrz §0A):
+Tool → Notification → Interview → Decision → Insight → Task → **Initiative**
+(najcięższa: 10 818 linii, brak panelu, 9 grup w toolbarze).
+
+**Warunek wejścia do W4:** każda z 7 kart ma ekran w harnessie `dev-render` i zrzut PRZED.
+Bez zrzutu PRZED nie da się uczciwie odebrać zrzutu PO.
 
 ---
 
@@ -274,9 +376,13 @@ rozstrzyga, a to zmienia rozmiar fali o jedną czwartą.
 Podnosi poprzeczkę generatorowi: każda inicjatywa musiałaby wskazać, z czego wynika. Jakościowo
 to duży skok, ale wydłuża generowanie i może zablokować zapis kart, które dziś przechodzą.
 
-**P3. Czy przy migracji usuwamy martwy kod od razu, czy osobną falą?**
-~2500 linii w Task i Notification. Usunięcie przy okazji jest tańsze, ale powiększa diff każdej
-migracji i utrudnia odbiór na zrzutach.
+**Rozstrzygnięte przeze mnie (Piotr: „ty jesteś CTO, ty decydujesz"):**
+
+| # | Rzecz | Decyzja | Dlaczego |
+|---|---|---|---|
+| P1 | Tool / Tool Document w zakresie | **Tool zostaje jako karta N; Tool Document wypada** — jest wynikiem (PPT/Word/Excel), nie kartą | rozróżnienie Piotra 21.07; patrz §0A |
+| P2 | Warstwa dowodowa dla Initiative | **TAK, z bramką przy zatwierdzaniu** — nie blokuje pisania | inicjatywa bez „z czego to wynika" jest pomysłem; patrz §4A |
+| P3 | Martwy kod | **osobną falą, PO migracjach** | ~2500 linii w Task i Notification. Przy okazji byłoby taniej, ale każdy diff przestałby się nadawać do odbioru na zrzutach — a to jedyny mechanizm kontroli, który dziś realnie działa |
 
 ---
 
