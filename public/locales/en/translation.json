@@ -3299,7 +3299,13 @@
       "whyYouGotIt": "Why you got it",
       "minutesAgo": "{{count}}m ago",
       "hoursAgo": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago"
+      "daysAgo": "{{count}}d ago",
+      "primaryMarkRead": "Mark as read",
+      "moreActions": "More actions",
+      "rightPanelAria": "Notification details panel",
+      "panelProperties": "Properties",
+      "panelHistory": "History",
+      "loading": "Loading…"
     },
     "projects": {
       "failedToLoadProjects": "Failed to load projects",
@@ -4092,7 +4098,8 @@
         "deadline": "Deadline",
         "priority": "Priority"
       },
-      "email": "Email"
+      "email": "Email",
+      "actionsLiveInHeader": "All actions live in the card header"
     },
     "dependencies": {
       "toastError": "Select a source task first",
@@ -5116,6 +5123,12 @@
         "description": "AI presents a checklist of questions. Interviewee fills at their pace.",
         "pros": "Faster, self-service, async-friendly",
         "cons": "Shallower answers, less guidance"
+      },
+      "conversational": {
+        "title": "Conversational mode",
+        "description": "AI runs a free-flowing conversation and maps answers back to the scripted questions itself.",
+        "pros": "Natural flow, catches threads outside the script, lowest effort for the interviewee",
+        "cons": "Harder to reach full question coverage, mapping needs a later check"
       }
     },
     "reviewer": {
@@ -6101,6 +6114,7 @@
       "groupDeliverables": "Deliverables",
       "groupAudit": "Audit",
       "derivedFromPerspectives": "Derived from {{count}} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.",
+      "actionsLiveInHeaderAndToolbar": "Actions for this insight live in the header and toolbar.",
       "statusOptionLabel": {
         "draft": "Draft",
         "generating": "Generating",
@@ -6400,7 +6414,18 @@
         "sent_back": "Sent back",
         "approved": "Approved",
         "completed": "Completed"
-      }
+      },
+      "properties": "Properties",
+      "relations": "Relations",
+      "history": "History",
+      "noRelations": "No linked items",
+      "noHistoryYet": "No history yet",
+      "startedAt": "Started",
+      "lastActivityAt": "Last activity",
+      "aiReviewedAt": "Last AI review",
+      "completedAt": "Completed",
+      "sessionDetails": "Session details",
+      "latestReviewDecisionLabel": "Latest review decision"
     },
     "categorySidebar": {
       "completed": "Completed",
@@ -9892,6 +9917,29 @@
     "newButton": "New",
     "initiativeFullView": {
       "viewSource": "View source"
+    },
+    "panel": {
+      "actions": "Actions",
+      "properties": "Properties",
+      "relations": "Relations",
+      "noRelations": "No relations",
+      "source": "Source",
+      "evidence": "Sources & assumptions",
+      "comments": "Comments",
+      "noComments": "No comments",
+      "user": "User",
+      "commentPlaceholder": "Add a comment…",
+      "addComment": "Add",
+      "analyzeComments": "Analyze comments with AI",
+      "history": "History / AI",
+      "noHistory": "No history",
+      "ariaLabel": "Initiative details",
+      "tasks": "Tasks",
+      "decisions": "Decisions",
+      "raid": "RAID",
+      "attachments": "Attachments",
+      "presentationMode": "Presentation mode",
+      "deleteComment": "Delete comment"
     }
   },
   "execution": {
@@ -23464,6 +23512,9 @@
         "placeholderOps": "slack:#ops, jira:DRD",
         "placeholderDelivery": "slack:#delivery, jira:PROJ, webhook:ops",
         "placeholderIncident": "slack:#incident, jira:OPS, webhook:oncall"
+      },
+      "toolbar": {
+        "moreActions": "More actions"
       }
     }
   },
@@ -32320,7 +32371,15 @@
       "sectionPendingExpansion": "This section will be expanded in upcoming iterations.",
       "groupOverview": "Overview",
       "groupHowItWorks": "How it works",
-      "groupExample": "Example"
+      "groupExample": "Example",
+      "panelAriaLabel": "Tool details",
+      "panelProperties": "Properties",
+      "panelRelations": "Relations",
+      "panelRelationsEmpty": "No linked items yet — relations appear once you start a session.",
+      "errorTitle": "Could not load this tool",
+      "errorBody": "The tool description could not be fetched. Check your connection and try again.",
+      "errorRetry": "Try again",
+      "errorClose": "Close"
     },
     "knownToolDetail": {
       "dynamicSwot": {

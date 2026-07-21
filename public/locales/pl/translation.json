@@ -2445,7 +2445,13 @@
       "whyYouGotIt": "Dlaczego to dostałeś",
       "minutesAgo": "{{count}} min temu",
       "hoursAgo": "{{count}} godz. temu",
-      "daysAgo": "{{count}} dni temu"
+      "daysAgo": "{{count}} dni temu",
+      "primaryMarkRead": "Oznacz przeczytane",
+      "moreActions": "Więcej akcji",
+      "rightPanelAria": "Panel szczegółów powiadomienia",
+      "panelProperties": "Właściwości",
+      "panelHistory": "Historia",
+      "loading": "Wczytywanie…"
     },
     "projects": {
       "failedToLoadProjects": "Nie udało się wczytać projektów",
@@ -3238,7 +3244,8 @@
         "deadline": "Termin",
         "priority": "Priorytet"
       },
-      "email": "E-mail"
+      "email": "E-mail",
+      "actionsLiveInHeader": "Wszystkie akcje są w nagłówku karty"
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
@@ -4278,6 +4285,12 @@
         "description": "AI prezentuje checklistę pytań. Rozmówca wypełnia we własnym tempie.",
         "pros": "Szybszy, self-service, przyjazny dla async",
         "cons": "Płytsze odpowiedzi, mniej prowadzenia"
+      },
+      "conversational": {
+        "title": "Tryb konwersacyjny",
+        "description": "AI prowadzi swobodną rozmowę i sama mapuje odpowiedzi na pytania scenariusza.",
+        "pros": "Naturalny przebieg, wychwytuje wątki spoza scenariusza, najmniej wysiłku dla rozmówcy",
+        "cons": "Trudniej o pełne pokrycie pytań, wymaga późniejszej weryfikacji przypisań"
       }
     },
     "reviewer": {
@@ -5263,6 +5276,7 @@
       "groupDeliverables": "Dostarczane",
       "groupAudit": "Audyt",
       "derivedFromPerspectives": "Zbudowane z {{count}} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora.",
+      "actionsLiveInHeaderAndToolbar": "Akcje tego wniosku żyją w nagłówku i na pasku narzędzi.",
       "statusOptionLabel": {
         "draft": "Szkic",
         "generating": "Generowanie",
@@ -5562,7 +5576,18 @@
         "sent_back": "Do poprawy",
         "approved": "Zatwierdzony",
         "completed": "Zakończony"
-      }
+      },
+      "properties": "Właściwości",
+      "relations": "Powiązania",
+      "history": "Historia",
+      "noRelations": "Brak powiązanych elementów",
+      "noHistoryYet": "Brak historii",
+      "startedAt": "Rozpoczęto",
+      "lastActivityAt": "Ostatnia aktywność",
+      "aiReviewedAt": "Ostatnia ocena AI",
+      "completedAt": "Zakończono",
+      "sessionDetails": "Szczegóły sesji",
+      "latestReviewDecisionLabel": "Ostatnia decyzja recenzenta"
     },
     "categorySidebar": {
       "completed": "Zakończona",
@@ -9054,6 +9079,29 @@
     "newButton": "Nowy",
     "initiativeFullView": {
       "viewSource": "Zobacz źródło"
+    },
+    "panel": {
+      "actions": "Akcje",
+      "properties": "Właściwości",
+      "relations": "Powiązania",
+      "noRelations": "Brak powiązań",
+      "source": "Źródło",
+      "evidence": "Źródła i założenia",
+      "comments": "Komentarze",
+      "noComments": "Brak komentarzy",
+      "user": "Użytkownik",
+      "commentPlaceholder": "Dodaj komentarz…",
+      "addComment": "Dodaj",
+      "analyzeComments": "Analizuj komentarze z AI",
+      "history": "Historia / AI",
+      "noHistory": "Brak historii",
+      "ariaLabel": "Szczegóły inicjatywy",
+      "tasks": "Zadania",
+      "decisions": "Decyzje",
+      "raid": "RAID",
+      "attachments": "Załączniki",
+      "presentationMode": "Tryb pokazu",
+      "deleteComment": "Usuń komentarz"
     }
   },
   "execution": {
@@ -24504,6 +24552,9 @@
         "placeholderOps": "slack:#ops, jira:DRD",
         "placeholderDelivery": "slack:#delivery, jira:PROJ, webhook:ops",
         "placeholderIncident": "slack:#incident, jira:OPS, webhook:oncall"
+      },
+      "toolbar": {
+        "moreActions": "Więcej akcji"
       }
     }
   },
@@ -33380,7 +33431,15 @@
       "sectionPendingExpansion": "Ta sekcja zostanie uzupełniona w kolejnych iteracjach.",
       "groupOverview": "Przegląd",
       "groupHowItWorks": "Jak to działa",
-      "groupExample": "Przykład"
+      "groupExample": "Przykład",
+      "panelAriaLabel": "Szczegóły narzędzia",
+      "panelProperties": "Właściwości",
+      "panelRelations": "Powiązania",
+      "panelRelationsEmpty": "Brak powiązań — pojawią się po uruchomieniu sesji.",
+      "errorTitle": "Nie udało się wczytać narzędzia",
+      "errorBody": "Nie pobraliśmy opisu tego narzędzia. Sprawdź połączenie i spróbuj ponownie.",
+      "errorRetry": "Spróbuj ponownie",
+      "errorClose": "Zamknij"
     },
     "knownToolDetail": {
       "dynamicSwot": {

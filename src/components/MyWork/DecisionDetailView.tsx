@@ -94,6 +94,8 @@ import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
+// SPEC-N §2.4: jedyna dozwolona droga budowy toolbara karty.
+import { NModeToolbar, type NModeToolbarAction } from '../shared/NModeLayout/NModeToolbar';
 import type { NModeSection } from '../shared/NModeLayout/types';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
 import type {
@@ -1179,6 +1181,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   }, [escalationRules]);
 
   // NModeSection-compatible navigation sections (used by NModeLeftNav)
+  //
+  // SPEC-N §2.1 (zarezerwowane identyfikatory): `comments` · `history` ·
+  // `activity-log` NIE MOGA byc sekcja lewej nawigacji — naleza wylacznie do
+  // prawego panelu. Do 2026-07-21 Decision lamal to podwojnie: obie sekcje
+  // byly w lewej nawigacji (pelny canvas) I JEDNOCZESNIE w prawym panelu
+  // (skrocona lista 6/8 pozycji) — ten sam material renderowal sie dwa razy
+  // naraz. Rozstrzygniecie SPEC-N §2.6 (jedna akcja/tresc = jedno miejsce):
+  // zostaje to, co widoczne ZAWSZE, czyli prawy panel; sekcje znikaja z lewej
+  // nawigacji, a PELNA tresc (CommentsCanvas / ActivityLogCanvas) przenosi sie
+  // do panelu — patrz `rightPanelSections` nizej.
   const notionSections: Array<{
     id: string;
     label: { en: string; pl: string };
@@ -1206,14 +1218,59 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         label: { en: 'RACI & Escalation', pl: 'RACI i eskalacja' },
         icon: Users,
       },
-      { id: 'comments', label: { en: 'Comments', pl: 'Komentarze' }, icon: MessageSquare },
       {
         id: 'resources-links',
         label: { en: 'Attachments & Links', pl: 'Załączniki i powiązania' },
         icon: FolderOpen,
       },
-      { id: 'activity-log', label: { en: 'Activity Log', pl: 'Logi aktywności' }, icon: History },
     ],
+    []
+  );
+
+  // ── Kontrakt AI per sekcja (SPEC-N §2.5) ──────────────────────────────────
+  // Wymog: KAZDA sekcja deklaruje kontrakt AI albo jawne wykluczenie
+  // `{none, reason}`. Milczenie przestaje byc dopuszczalne — do dzis Decision
+  // deklarowal 4 z 8 sekcji, a RACI/Komentarze/Zalaczniki/Logi nie mowily nic.
+  //
+  // Decision renderuje centrum per-id (`activeNotionSection === '<id>'`), a nie
+  // z tablicy `sections[]` jak Task/Insight, wiec kontrakt nie da sie tu wpiac
+  // jako pole deklaracji sekcji. Ta mapa jest wiec jawnym, JEDNYM zrodlem:
+  // czyta ja slot `aiSectionButton` w NModeToolbar nizej (wiec nie jest martwym
+  // komentarzem — sekcja bez kontraktu po prostu nie dostaje przycisku AI).
+  // Po przepieciu karty na `StandardArtifactShell` (osobna fala) mapa przechodzi
+  // 1:1 w pole `aiContract` deklaracji sekcji.
+  //
+  // Zasieg = 8/8 pozycji: 6 sekcji lewej nawigacji + 2 sekcje prawego panelu
+  // (`comments`, `history`), ktore po §2.1 przestaly byc sekcjami lewej nawigacji,
+  // ale nadal sa sekcjami tej karty i podlegaja temu samemu wymogowi.
+  const decisionAiContract: Record<
+    string,
+    { kind: 'ai'; handler: 'options' | 'risk' | 'consequences' | 'raci' | 'comment' } | { kind: 'none'; reason: string }
+  > = useMemo(
+    () => ({
+      // — sekcje z realnym kontraktem AI (NModeCardState w centrum) —
+      'options-tradeoffs': { kind: 'ai', handler: 'options' },
+      'risk-impact': { kind: 'ai', handler: 'risk' },
+      consequences: { kind: 'ai', handler: 'consequences' },
+      'governance-escalation': { kind: 'ai', handler: 'raci' },
+      comments: { kind: 'ai', handler: 'comment' },
+      // — jawne wykluczenia —
+      // Zakres decyzji ma generacje opisu, ale prowadzi ja NModeCardState
+      // wewnatrz sekcji (onRegenerate), nie przycisk toolbara — dublowanie
+      // wejscia lamaloby §2.6.
+      'context-problem': {
+        kind: 'none',
+        reason: 'generacja prowadzona przez NModeCardState sekcji (onRegenerate), nie przez toolbar',
+      },
+      'resources-links': {
+        kind: 'none',
+        reason: 'pliki i powiazania wskazuje uzytkownik — AI nie ma czego wygenerowac',
+      },
+      history: {
+        kind: 'none',
+        reason: 'log zdarzen jest zapisem faktow, tresc generowana bylaby falszem',
+      },
+    }),
     []
   );
 
@@ -3650,7 +3707,7 @@ Use userId only from this list:
         'High risk of escalation and loss of delivery momentum'
       ),
     };
-  }, [i18n.language, blockedItemsCount, sortedRisks.length]);
+  }, [i18n.language, blockedItemsCount, sortedRisks.length, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   const buildConsequencesTemplate = (
     style: 'conservative' | 'executive' | 'action_forcing'
@@ -4742,18 +4799,11 @@ Use userId only from this list:
   // Kanon: Akcje · Właściwości · Powiązania · Komentarze · Historia/AI.
   // Wyłącznie odczyt istniejących stanów/handlerów; treść tokenami c-*.
   const dash = '—';
-  const fmtDateTime = (v?: string) => {
-    if (!v) return dash;
-    const d = new Date(v);
-    return Number.isNaN(d.getTime())
-      ? v
-      : d.toLocaleString(t('myWork.decisionDetail.dToLocaleString', 'en-US'), {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-  };
+  // `fmtDateTime` usuniete 2026-07-21 — jego JEDYNYMI konsumentami byly skrocone
+  // listy Komentarzy i Historii w tym panelu, zastapione pelnymi CommentsCanvas /
+  // ActivityLogCanvas (SPEC-N §2.1). Oba komponenty formatuja daty same.
+  // To nie jest sprzatanie legacy (fala po migracjach), tylko domkniecie wlasnej
+  // zmiany: helper osierocil sie w tym samym commicie.
   const rpKeyClass = 'text-xs text-c-text-muted shrink-0';
   const rpTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
   const rpTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
@@ -4778,21 +4828,24 @@ Use userId only from this list:
       // przycisk AI w tej sekcji był zbędnym duplikatem (Z29/Z30 go tu
       // zostawiły tylko z braku slotu M3 dla klasy S; teraz jest taniej).
       // Save+Delegate dzielą teraz jeden rząd (był z AI pomiędzy nimi).
+      //
+      // SPEC-N §2.6 (anty-duplikacja): 2026-07-21 zdjety takze SAVE. Ten sam
+      // handler (`handleSave`) renderowal sie tu ORAZ w naglowku
+      // (`NModeHeader.onSave`), ktory dodatkowo pokazuje stan zapisu
+      // ("Saved"/autosave przez `draftSavedLabel`). Zgodnie z zasada
+      // rozstrzygajaca zostaje miejsce, ktore niesie wiecej informacji i jest
+      // czescia powloki — naglowek; z panelu znika DUPLIKAT, nie funkcja.
       label: t('myWork.decisionDetail.label', 'Actions'),
       icon: Save,
       defaultOpen: true,
       children: (
-        <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => handleSave()} disabled={saving} className={rpBtn}>
-            <Save size={14} className="text-c-text-muted" />
-            {t('myWork.decisionDetail.save', 'Save')}
-          </button>
+        <div className="grid grid-cols-1 gap-2">
           <button type="button" onClick={() => setShowDelegationModal(true)} className={rpBtn}>
             <Share2 size={14} className="text-c-text-muted" />
             {t('myWork.decisionDetail.delegate', 'Delegate')}
           </button>
           {decisionId && (
-            <div className="col-span-2 flex items-center justify-between h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
+            <div className="flex items-center justify-between h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
               <span className="text-xs text-c-text-muted">
                 {t('myWork.decisionDetail.share', 'Share')}
               </span>
@@ -4959,24 +5012,57 @@ Use userId only from this list:
       icon: MessageSquare,
       defaultOpen: false,
       badge: comments.length,
-      isEmpty: comments.length === 0,
-      emptyLabel: t('myWork.decisionDetail.emptyLabel2', 'No comments'),
+      // SPEC-N §2.1/§2.6: PELNA tresc komentarzy (CommentsCanvas) — ta sama
+      // instancja, ktora do 2026-07-21 stala w centrum jako sekcja lewej
+      // nawigacji. Tam byla dubletem tej listy; teraz jest tu jedynym miejscem.
+      //
+      // `isEmpty`/`emptyLabel` CELOWO zdjete: ArtifactRightPanel podmienia nimi
+      // children w calosci, wiec przy zerowej liczbie komentarzy znikneloby
+      // takze pole pisania — nie dalo by sie dodac PIERWSZEGO komentarza.
+      // CommentsCanvas ma wlasny stan pusty, wiec nic sie nie gubi.
       children: (
-        <ul className="flex flex-col gap-3">
-          {comments.slice(0, 6).map((c) => (
-            <li key={c.id} className="flex flex-col gap-0.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-xs font-semibold text-c-text truncate">
-                  {c.authorName || t('myWork.decisionDetail.user', 'User')}
-                </span>
-                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
-                  {fmtDateTime(c.createdAt)}
-                </span>
-              </div>
-              <p className="text-xs text-c-text-muted line-clamp-3">{c.content}</p>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-2">
+          {/* Wejscie AI do komentarzy — przeniesione z bespoke "Inline ActionBar",
+              gdzie bylo pod warunkiem `activeNotionSection === 'comments'`; po
+              zdjeciu tej sekcji z lewej nawigacji warunek nigdy by nie zaszedl,
+              wiec funkcja zniknelaby uzytkownikowi (SPEC-N §2.6: znika duplikat,
+              nie funkcja). Akcent AI = c-info/teal, nigdy czerwien. */}
+          <button
+            type="button"
+            onClick={generateAIComment}
+            disabled={isDecisionStageLocked || isGeneratingAIComment}
+            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            title={t('decisions.detail.actions.generateCommentTitle', 'Generate AI comment')}
+          >
+            {isGeneratingAIComment ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <Sparkles size={13} />
+            )}
+            {t('decisions.detail.actions.aiComments', 'AI comments')}
+          </button>
+          <CommentsCanvas
+            comments={nModeComments}
+            onDeleteComment={handleDeleteComment}
+            dateFilter={commentDateFilter as DateFilter}
+            onDateFilterChange={(f) => setCommentDateFilter(f as CommentDateFilter)}
+            sortOrder={commentSortOrder as SortOrder}
+            onToggleSort={() => setCommentSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+            commentDraft={commentDraft}
+            onCommentDraftChange={setCommentDraft}
+            onSubmitComment={() => void submitCommentDraft()}
+            draftPriority={commentDraftPriority as CommentPriority}
+            onDraftPriorityChange={(p) => setCommentDraftPriority(p as CommentPriorityLevel)}
+            onAIEnhance={enhanceCommentDraftWithAI}
+            isAIEnhancing={isEnhancingCommentDraft}
+            locked={isDecisionStageLocked}
+            getPriorityDotClass={(p) => getPriorityDotClass(p as CommentPriorityLevel)}
+            getCommentPriority={(c) => getCommentPriority(c as unknown as Comment) as CommentPriority}
+            getPriorityButtonClass={(p, a) => getPriorityButtonClass(p as CommentPriorityLevel, a)}
+            getCommentPriorityLabel={(p) => getCommentPriorityLabel(p as CommentPriorityLevel)}
+            getCommentPriorityHint={(p) => getCommentPriorityHint(p as CommentPriorityLevel)}
+          />
+        </div>
       ),
     },
     {
@@ -4985,26 +5071,16 @@ Use userId only from this list:
       icon: History,
       defaultOpen: false,
       badge: activityLogSorted.length,
-      isEmpty: activityLogSorted.length === 0,
-      emptyLabel: t('myWork.decisionDetail.emptyLabel3', 'No history'),
+      // SPEC-N §2.1/§2.6: PELNA tresc logu (ActivityLogCanvas) — do 2026-07-21
+      // stala w centrum jako sekcja lewej nawigacji `activity-log`, a tutaj
+      // dublowal ja skrot 8 pozycji. `isEmpty` zdjete dla symetrii z sekcja
+      // Komentarzy — canvas ma wlasny stan pusty (statystyki + komunikat).
       children: (
-        <ul className="flex flex-col gap-2.5">
-          {activityLogSorted.slice(0, 8).map((entry) => (
-            <li key={entry.id} className="flex flex-col gap-0.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-xs text-c-text truncate">{entry.description}</span>
-                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
-                  {fmtDateTime(entry.timestamp)}
-                </span>
-              </div>
-              {entry.oldValue || entry.newValue ? (
-                <span className="text-[11px] text-c-text-muted truncate">
-                  {entry.oldValue ?? dash} → {entry.newValue ?? dash}
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <ActivityLogCanvas
+          entries={nModeActivityEntries}
+          stats={nModeActivityStats}
+          typeMeta={nModeActivityTypeMeta}
+        />
       ),
     },
   ];
@@ -5076,6 +5152,113 @@ Use userId only from this list:
         <LoadingState variant="spinner" />
       </div>
     );
+  }
+
+  // ── Zasilenie NModeToolbar (SPEC-N §2.4) ─────────────────────────────────
+  // Zwykle stale, NIE hooki — jestesmy PO wczesnym `return` bramki ladowania,
+  // wiec `useMemo` lamalby tu Rules of Hooks.
+  //
+  // Kontekst: do 2026-07-21 karta miala wlasny "Inline ActionBar" z komentarzem
+  // "kept for now, will migrate to NModeActionBar" (dlug nigdy nie splacony).
+  // SPEC-N §2.4 mowi wprost: jedna droga budowy toolbara — `NModeToolbar`.
+  // Mapowanie bespoke → sloty komponentu:
+  //   badge etapu workflow      → sectionsDropdown (lewa grupa)
+  //   przejscia workflow        → newButton        (lewa grupa)
+  //   etykieta aktywnej sekcji  → activeSectionLabel
+  //   kontekstowe AI sekcji     → aiSectionButton
+  //   Reject / Request info     → overflowActions  (drugorzedne, §2.4)
+
+  const activeSectionLabel = orderedNotionSections.find((s) => s.id === activeNotionSection)?.label[
+    isPolish ? 'pl' : 'en'
+  ];
+
+  // Kontraktowy przycisk AI aktywnej sekcji (§2.5). Sekcja z `{kind:'none'}`
+  // nie dostaje przycisku — dlatego mapa kontraktu jest realnym mechanizmem,
+  // a nie deklaracja do czytania.
+  const aiSectionSpec = decisionAiContract[activeNotionSection];
+  const aiSectionButton = (() => {
+    if (!aiSectionSpec || aiSectionSpec.kind !== 'ai') return undefined;
+    const cfg = {
+      options: {
+        onClick: generateAlternativesAI,
+        busy: isGeneratingAlternatives,
+        label: t('decisions.detail.actions.generateOptions', 'Generate options'),
+        title: t('decisions.detail.actions.generateOptionsTitle', 'Generate options with AI'),
+      },
+      risk: {
+        onClick: generateRisksAI,
+        busy: isGeneratingRisks,
+        label: t('decisions.detail.actions.analyzeRisks', 'Analyze risks'),
+        title: t('decisions.detail.actions.analyzeRisksTitle', 'Analyze risks with AI'),
+      },
+      consequences: {
+        onClick: () => generateConsequenceScenariosAI(),
+        busy: isGeneratingConsequenceScenarios,
+        label: t('decisions.detail.actions.analyzeConsequences', 'Analyze consequences'),
+        title: t(
+          'decisions.detail.actions.analyzeConsequencesTitle',
+          'Run AI consequence analysis'
+        ),
+      },
+      raci: {
+        onClick: suggestStakeholdersAI,
+        busy: isSuggestingStakeholders,
+        label: t('decisions.detail.actions.generateRaci', 'Generate RACI'),
+        title: t('decisions.detail.actions.generateRaciTitle', 'Generate RACI with AI'),
+      },
+      // `comment` po §2.1 nie moze byc aktywna sekcja lewej nawigacji — wpis
+      // zostaje dla kompletnosci mapy; przycisk AI komentarzy zyje w panelu.
+      comment: {
+        onClick: generateAIComment,
+        busy: isGeneratingAIComment,
+        label: t('decisions.detail.actions.aiComments', 'AI comments'),
+        title: t('decisions.detail.actions.generateCommentTitle', 'Generate AI comment'),
+      },
+    }[aiSectionSpec.handler];
+    return (
+      <button
+        type="button"
+        onClick={cfg.onClick}
+        disabled={isDecisionStageLocked || cfg.busy}
+        title={cfg.title}
+        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium border border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+      >
+        {cfg.busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+        {cfg.label}
+      </button>
+    );
+  })();
+
+  // Akcje drugorzedne pod "…" — komponent renderuje trigger i menu sam
+  // (§2.4); karta NIE pisze wlasnego "...".
+  const toolbarOverflowActions: NModeToolbarAction[] = [];
+  if (decisionId && isPending) {
+    // Primary = "Approve decision" w NModeHeader, wiec Reject i Request info sa
+    // z definicji drugorzedne. Przy okazji znika ich solid/kontrastowy wyglad —
+    // §2.3: poza slotem primary nic nie moze wygladac jak CTA.
+    toolbarOverflowActions.push(
+      {
+        label: t('decisions.detail.actions.reject', 'Reject'),
+        icon: X,
+        onClick: handleReject,
+      },
+      {
+        label: t('decisions.detail.actions.requestInfo', 'Request info'),
+        icon: HelpCircle,
+        onClick: handleRequestMoreInfo,
+      }
+    );
+  }
+  if (activeNotionSection === 'options-tradeoffs') {
+    // Druga akcja AI tej samej sekcji ("omow opcje z Teresa"). Slot
+    // `aiSectionButton` jest JEDEN, wiec zamiast dokladac drugi przycisk obok
+    // (plaski wysyp — DOKTRYNA_GESTOSCI) ladzie ja w overflow. Funkcja zostaje.
+    toolbarOverflowActions.push({
+      label: t('decisions.detail.actions.analyzeOptions', 'Analyze options'),
+      icon: Sparkles,
+      onClick: handleAnalyzeOptionsWithAI,
+      disabled: isDecisionStageLocked,
+    });
   }
 
   return (
@@ -5173,196 +5356,76 @@ Use userId only from this list:
                   </div>
                 )}
 
-                {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
-                {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
+                {/* ── Toolbar karty (SPEC-N §2.4: jedna droga budowy) ──────
+                    Bylo: bespoke "Inline ActionBar" z komentarzem "kept for now,
+                    will migrate to NModeActionBar" — migracja nigdy nie doszla do
+                    skutku, wiec Decision byl jedna z kart budujacych pasek recznie
+                    z <div>. Teraz pasek stawia `NModeToolbar`; karta deklaruje
+                    tylko TRESC slotow, a komponent narzuca uklad, gestosc i overflow.
+                    Read mode ("do pokazania klientowi"): caly pasek akcji znika. */}
                 {!readMode && (
-                  <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
-                    {decisionId && (
-                      <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                          {t('decisions.detail.workflow.label', 'Workflow')}
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
-                        >
-                          {t(
-                            `decisions.detail.workflowStage.${workflowStatus}`,
-                            workflowMeta.label.en
-                          )}
-                        </span>
-                        {workflowActions.map((action) => (
-                          <button
-                            key={action.id}
-                            type="button"
-                            onClick={action.onClick}
-                            disabled={workflowActionLoading}
-                            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                              action.tone === 'primary'
-                                ? 'border border-c-info/50 bg-c-info/10 text-c-info hover:bg-c-info/15'
-                                : action.tone === 'success'
-                                  ? 'border border-emerald-400/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300'
-                                  : 'border border-slate-300/60 text-slate-600 hover:bg-slate-100 dark:border-navy-600/60 dark:text-slate-300 dark:hover:bg-navy-800'
-                            }`}
-                          >
-                            {workflowActionLoading ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : null}
-                            {action.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {/* Action buttons for pending decisions */}
-                    {decisionId && isPending && (
-                      <div className="flex items-center gap-2">
-                        {/* Approve = M1 primary (NModeHeader.primaryAction) per Formuła §9; workflow keeps secondary actions */}
-                        <button
-                          onClick={handleReject}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
-                        >
-                          <X size={13} /> {t('decisions.detail.actions.reject', 'Reject')}
-                        </button>
-                        <button
-                          onClick={handleRequestMoreInfo}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                        >
-                          <HelpCircle size={13} />{' '}
-                          {t('decisions.detail.actions.requestInfo', 'Request info')}
-                        </button>
-                        {/* 'Delegate' NIE powtarza sie tutaj — zyje wylacznie w panelu
-                            prawym, sekcja Actions (linia ~4792), ktora jest widoczna w
-                            KAZDYM statusie. Ten wiersz renderuje sie tylko gdy isPending,
-                            wiec Delegate wystepowal na ekranie DWA RAZY naraz w stanie
-                            Proposed — zgloszenie Piotra 2026-07-21 na tej dokladnie karcie. */}
-                        {activeNotionSection === 'options-tradeoffs' && (
-                          <button
-                            onClick={generateAlternativesAI}
-                            disabled={isDecisionStageLocked || isGeneratingAlternatives}
-                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                              isGeneratingAlternatives
-                                ? 'border-c-info/50 text-c-info bg-c-info/10'
-                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
-                            } disabled:opacity-40 disabled:cursor-not-allowed`}
-                            title={t(
-                              'decisions.detail.actions.generateOptionsTitle',
-                              'Generate options with AI'
-                            )}
-                          >
-                            {isGeneratingAlternatives ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Sparkles size={13} />
-                            )}
-                            {t('decisions.detail.actions.generateOptions', 'Generate options')}
-                          </button>
-                        )}
-                        {activeNotionSection === 'options-tradeoffs' && (
-                          <button
-                            onClick={handleAnalyzeOptionsWithAI}
-                            disabled={isDecisionStageLocked}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            title={t(
-                              'decisions.detail.actions.analyzeOptionsTitle',
-                              'Discuss and analyze these options with Teresa'
-                            )}
-                          >
-                            <Sparkles size={13} />
-                            {t('decisions.detail.actions.analyzeOptions', 'Analyze options')}
-                          </button>
-                        )}
-                        {activeNotionSection === 'risk-impact' && (
-                          <button
-                            onClick={generateRisksAI}
-                            disabled={isDecisionStageLocked || isGeneratingRisks}
-                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                              isGeneratingRisks
-                                ? 'border-c-info/50 text-c-info bg-c-info/10'
-                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
-                            } disabled:opacity-40 disabled:cursor-not-allowed`}
-                            title={t(
-                              'decisions.detail.actions.analyzeRisksTitle',
-                              'Analyze risks with AI'
-                            )}
-                          >
-                            {isGeneratingRisks ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Sparkles size={13} />
-                            )}
-                            {t('decisions.detail.actions.analyzeRisks', 'Analyze risks')}
-                          </button>
-                        )}
-                        {activeNotionSection === 'governance-escalation' && (
-                          <button
-                            onClick={suggestStakeholdersAI}
-                            disabled={isDecisionStageLocked || isSuggestingStakeholders}
-                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                              isSuggestingStakeholders
-                                ? 'border-c-info/50 text-c-info bg-c-info/10'
-                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
-                            } disabled:opacity-40 disabled:cursor-not-allowed`}
-                            title={t(
-                              'decisions.detail.actions.generateRaciTitle',
-                              'Generate RACI with AI'
-                            )}
-                          >
-                            {isSuggestingStakeholders ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Sparkles size={13} />
-                            )}
-                            {t('decisions.detail.actions.generateRaci', 'Generate RACI')}
-                          </button>
-                        )}
-                        {activeNotionSection === 'comments' && (
-                          <button
-                            onClick={generateAIComment}
-                            disabled={isDecisionStageLocked || isGeneratingAIComment}
-                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                              isGeneratingAIComment
-                                ? 'border-c-info/50 text-c-info bg-c-info/10'
-                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
-                            } disabled:opacity-40 disabled:cursor-not-allowed`}
-                            title={t(
-                              'decisions.detail.actions.generateCommentTitle',
-                              'Generate AI comment'
-                            )}
-                          >
-                            {isGeneratingAIComment ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Sparkles size={13} />
-                            )}
-                            {t('decisions.detail.actions.aiComments', 'AI comments')}
-                          </button>
-                        )}
-                        {activeNotionSection === 'consequences' && (
-                          <button
-                            onClick={() => generateConsequenceScenariosAI()}
-                            disabled={isDecisionStageLocked || isGeneratingConsequenceScenarios}
-                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                              isGeneratingConsequenceScenarios
-                                ? 'border-c-info/50 text-c-info bg-c-info/10'
-                                : 'border-c-info/50 text-c-info bg-c-info/10 hover:bg-c-info/15'
-                            } disabled:opacity-40 disabled:cursor-not-allowed`}
-                            title={t(
-                              'decisions.detail.actions.analyzeConsequencesTitle',
-                              'Run AI consequence analysis'
-                            )}
-                          >
-                            {isGeneratingConsequenceScenarios ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Sparkles size={13} />
-                            )}
-                            {t(
-                              'decisions.detail.actions.analyzeConsequences',
-                              'Analyze consequences'
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    )}
+                  <div className="px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface">
+                    <NModeToolbar
+                      isPolish={isPolish}
+                      activeSectionLabel={activeSectionLabel}
+                      aiSectionButton={aiSectionButton}
+                      overflowActions={
+                        toolbarOverflowActions.length > 0 ? toolbarOverflowActions : undefined
+                      }
+                      overflowLabel={t('decisions.detail.toolbar.moreActions', 'More actions')}
+                      /* Sloty lewej grupy niosa GRUPY kontrolek, wiec licznik gestosci
+                         komponentu policzylby je jako 1 — podajemy realna liczbe
+                         widocznych akcji, zeby dev-warn nie klamal w dol. */
+                      visibleActionCount={
+                        (decisionId ? workflowActions.length : 0) + (aiSectionButton ? 1 : 0)
+                      }
+                      sectionsDropdown={
+                        decisionId ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+                              {t('decisions.detail.workflow.label', 'Workflow')}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
+                            >
+                              {t(
+                                `decisions.detail.workflowStage.${workflowStatus}`,
+                                workflowMeta.label.en
+                              )}
+                            </span>
+                          </span>
+                        ) : undefined
+                      }
+                      newButton={
+                        decisionId && workflowActions.length > 0 ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {workflowActions.map((action) => (
+                              <button
+                                key={action.id}
+                                type="button"
+                                onClick={action.onClick}
+                                disabled={workflowActionLoading}
+                                /* §2.3: zaden z tych przyciskow nie jest solid — solid
+                                   CTA istnieje wylacznie w slocie primary naglowka
+                                   ("Approve decision"). */
+                                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
+                                  action.tone === 'primary'
+                                    ? 'border border-c-info/50 bg-c-info/10 text-c-info hover:bg-c-info/15'
+                                    : action.tone === 'success'
+                                      ? 'border border-c-success/50 bg-c-success/10 text-c-success hover:bg-c-success/15'
+                                      : 'border border-c-border-subtle text-c-text-secondary hover:bg-state-hover'
+                                }`}
+                              >
+                                {workflowActionLoading ? (
+                                  <Loader2 size={13} className="animate-spin" />
+                                ) : null}
+                                {action.label}
+                              </button>
+                            ))}
+                          </span>
+                        ) : undefined
+                      }
+                    />
                   </div>
                 )}
 
@@ -6877,7 +6940,11 @@ Use userId only from this list:
                                         setEditingStakeholderId(null);
                                         setStakeholderDraft(null);
                                       }}
-                                      className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                                      /* SPEC-N §2.3 (R1): stonowane z solid navy/white CTA na neutralny
+                                         outline na tokenach c-*. Poza slotem primary
+                                         naglowka nic na tej karcie nie moze wygladac jak CTA;
+                                         to Zapisz w modalu, nie decyzja karty. */
+                                      className="px-3 py-1.5 rounded-md text-xs font-medium border border-c-border-strong text-c-text hover:bg-state-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                     >
                                       {t('decisions.detail.stakeholderModal.save', 'Save')}
                                     </button>
@@ -7219,7 +7286,11 @@ Use userId only from this list:
                                         setEditingReminderId(null);
                                         setReminderDraft(null);
                                       }}
-                                      className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                                      /* SPEC-N §2.3 (R1): stonowane z solid navy/white CTA na neutralny
+                                         outline na tokenach c-*. Poza slotem primary
+                                         naglowka nic na tej karcie nie moze wygladac jak CTA;
+                                         to Zapisz w modalu, nie decyzja karty. */
+                                      className="px-3 py-1.5 rounded-md text-xs font-medium border border-c-border-strong text-c-text hover:bg-state-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                     >
                                       {t('decisions.detail.stakeholderModal.save', 'Save')}
                                     </button>
@@ -7587,7 +7658,11 @@ Use userId only from this list:
                                         setEditingEscalationId(null);
                                         setEscalationDraft(null);
                                       }}
-                                      className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                                      /* SPEC-N §2.3 (R1): stonowane z solid navy/white CTA na neutralny
+                                         outline na tokenach c-*. Poza slotem primary
+                                         naglowka nic na tej karcie nie moze wygladac jak CTA;
+                                         to Zapisz w modalu, nie decyzja karty. */
+                                      className="px-3 py-1.5 rounded-md text-xs font-medium border border-c-border-strong text-c-text hover:bg-state-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                                     >
                                       {t('decisions.detail.stakeholderModal.save', 'Save')}
                                     </button>
@@ -7598,44 +7673,10 @@ Use userId only from this list:
                           </div>
                         )}
 
-                        {/* ── Section: Comments (shared CommentsCanvas) ──── */}
-                        {activeNotionSection === 'comments' && (
-                          <CommentsCanvas
-                            comments={nModeComments}
-                            onDeleteComment={handleDeleteComment}
-                            dateFilter={commentDateFilter as DateFilter}
-                            onDateFilterChange={(f) => setCommentDateFilter(f as CommentDateFilter)}
-                            sortOrder={commentSortOrder as SortOrder}
-                            onToggleSort={() =>
-                              setCommentSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-                            }
-                            commentDraft={commentDraft}
-                            onCommentDraftChange={setCommentDraft}
-                            onSubmitComment={() => void submitCommentDraft()}
-                            draftPriority={commentDraftPriority as CommentPriority}
-                            onDraftPriorityChange={(p) =>
-                              setCommentDraftPriority(p as CommentPriorityLevel)
-                            }
-                            onAIEnhance={enhanceCommentDraftWithAI}
-                            isAIEnhancing={isEnhancingCommentDraft}
-                            locked={isDecisionStageLocked}
-                            getPriorityDotClass={(p) =>
-                              getPriorityDotClass(p as CommentPriorityLevel)
-                            }
-                            getCommentPriority={(c) =>
-                              getCommentPriority(c as unknown as Comment) as CommentPriority
-                            }
-                            getPriorityButtonClass={(p, a) =>
-                              getPriorityButtonClass(p as CommentPriorityLevel, a)
-                            }
-                            getCommentPriorityLabel={(p) =>
-                              getCommentPriorityLabel(p as CommentPriorityLevel)
-                            }
-                            getCommentPriorityHint={(p) =>
-                              getCommentPriorityHint(p as CommentPriorityLevel)
-                            }
-                          />
-                        )}
+                        {/* SPEC-N §2.1: sekcja Komentarzy przeniesiona STAD do prawego
+                            panelu (jedyne miejsce). Zarezerwowane id `comments` nie moze
+                            byc sekcja lewej nawigacji, a canvas i skrot w panelu
+                            renderowaly sie do 2026-07-21 jednoczesnie. */}
 
                         {/* ── Section: Attachments & Links ─────────────────── */}
                         {activeNotionSection === 'resources-links' && (
@@ -7679,14 +7720,9 @@ Use userId only from this list:
                           <AIConnections entityType="decision" entityId={decisionId} />
                         )}
 
-                        {/* ── Section: Activity Log (shared ActivityLogCanvas) */}
-                        {activeNotionSection === 'activity-log' && (
-                          <ActivityLogCanvas
-                            entries={nModeActivityEntries}
-                            stats={nModeActivityStats}
-                            typeMeta={nModeActivityTypeMeta}
-                          />
-                        )}
+                        {/* SPEC-N §2.1: sekcja Logu aktywnosci przeniesiona STAD do
+                            prawego panelu (sekcja "History / AI"). Zarezerwowane id
+                            `activity-log` nie moze byc sekcja lewej nawigacji. */}
                       </motion.div>
                     </AnimatePresence>
                   </div>
