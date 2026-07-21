@@ -5229,12 +5229,11 @@ Use userId only from this list:
                           <HelpCircle size={13} />{' '}
                           {t('decisions.detail.actions.requestInfo', 'Request info')}
                         </button>
-                        <button
-                          onClick={() => setShowDelegationModal(true)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                        >
-                          <Share2 size={13} /> {t('decisions.detail.actions.delegate', 'Delegate')}
-                        </button>
+                        {/* 'Delegate' NIE powtarza sie tutaj — zyje wylacznie w panelu
+                            prawym, sekcja Actions (linia ~4792), ktora jest widoczna w
+                            KAZDYM statusie. Ten wiersz renderuje sie tylko gdy isPending,
+                            wiec Delegate wystepowal na ekranie DWA RAZY naraz w stanie
+                            Proposed — zgloszenie Piotra 2026-07-21 na tej dokladnie karcie. */}
                         {activeNotionSection === 'options-tradeoffs' && (
                           <button
                             onClick={generateAlternativesAI}
