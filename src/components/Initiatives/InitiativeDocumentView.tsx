@@ -9640,7 +9640,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           last ? rowVal.replace(' border-b border-c-border-subtle', '') : rowVal
                         }
                       >
-                        {field.render ? field.render() : String(field.value ?? dash)}
+                        {/* Kontrolki pochodza z POZIOMEGO paska wlasciwosci — tam mialy
+                            pelna szerokosc, wlasne tlo i ramke. W waskiej komorce panelu
+                            renderowaly sie jako ciemne prostokaty z sama kropka, bez
+                            czytelnej wartosci (zgloszenie wlasciciela 2026-07-21:
+                            'zobacz jak wyglada wzor, czyli decyzje i taski').
+                            Neutralizujemy chrome kontrolki, ZOSTAWIAJAC edytowalnosc:
+                            wartosc czyta sie jak tekst, jak w Task/Decision/Insight,
+                            ale nadal mozna ja zmienic. */}
+                        <span className="inline-flex max-w-full items-center justify-end [&_button]:h-auto [&_button]:border-0 [&_button]:bg-transparent [&_button]:p-0 [&_button]:text-xs [&_input]:h-auto [&_input]:w-auto [&_input]:border-0 [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-right [&_input]:text-xs [&_select]:h-auto [&_select]:w-auto [&_select]:max-w-full [&_select]:appearance-none [&_select]:truncate [&_select]:border-0 [&_select]:bg-transparent [&_select]:p-0 [&_select]:pr-4 [&_select]:text-right [&_select]:text-xs">
+                          {field.render ? field.render() : String(field.value ?? dash)}
+                        </span>
                       </td>
                     </tr>
                   );
