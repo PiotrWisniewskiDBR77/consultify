@@ -37,7 +37,6 @@ import {
   Paperclip,
   Save,
   Send,
-  Shield,
   Sparkles,
   Target,
   ThumbsUp,
@@ -57,6 +56,10 @@ import {
   NModeShell,
 } from '@/components/shared/NModeLayout';
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -474,7 +477,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       default:
         return t('interview.workspace.noReview');
     }
-  }, [aiEvaluation?.overallVerdict, isPolish]);
+    // `t` MUSI byc w zaleznosciach. Tlumaczenia ladowane sa asynchronicznie
+    // (HttpBackend); memo policzone PRZED ich zaladowaniem zwraca surowy klucz
+    // ('interview.workspace.noReview') i bez `t` w deps NIGDY sie nie przelicza —
+    // klucz zostaje na ekranie na stale. Znalezione wzrokiem w harnessie
+    // 2026-07-21; `isPolish` nie wystarcza, bo zmienia sie przy zmianie jezyka,
+    // a nie w momencie doczytania zasobu.
+  }, [aiEvaluation?.overallVerdict, isPolish, t]);
   const aiWeakAnswerMap = useMemo(() => aiEvaluation?.weakAnswerMap || [], [aiEvaluation]);
   const latestReviewDecision = useMemo(() => {
     const decisions = Array.isArray((assignmentInfo as any)?.reviewDecisionMemory)
@@ -539,7 +548,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       });
     });
     return out;
-  }, [questions, isPolish]);
+  }, [questions, isPolish, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   const runAiQualityReview = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -1888,7 +1897,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         label: { en: 'Send back', pl: 'Odeślij' },
         icon: AlertTriangle,
         variant: 'danger',
-        onClick: () => setShowSendBackForm(true),
+        // SPEC-N §2.6 — formularz „Odeślij" ma JEDNO miejsce w powłoce: sekcja
+        // Podgląd. Odkąd tryb pojedynczego pytania nie ma własnego top-baru,
+        // recenzent może kliknąć tę akcję będąc na sekcji Pytania — bez skoku
+        // formularz otwierałby się poza widokiem (akcja bez skutku na ekranie).
+        onClick: () => {
+          setActiveSection('overview');
+          setShowSendBackForm(true);
+        },
         disabled: isApproving || isSendingBack,
       });
     } else if (!isLocked) {
@@ -1932,6 +1948,156 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
     return out;
   })();
+
+  // ── PRAWY PANEL ARTEFAKTU (SPEC-N §2.2 — pole WYMAGANE, nie opcjonalne) ─────
+  //
+  // Do 2026-07-21 karta Interview byla jedna z pieciu bez prawego panelu w ogole
+  // (A1). Metadane sesji wisialy jako pozioma listwa `NModePropertiesStrip` pod
+  // naglowkiem — dokladnie ten sam antywzorzec, co pozioma siatka 7 pol w
+  // Initiative, ktory §2.2 nazywa „brakiem calej struktury".
+  //
+  // Kolejnosc sekcji jest kanoniczna (§11.2): Akcje · Wlasciwosci · Powiazania ·
+  // Komentarze · Historia. Interview deklaruje TRZY z nich, swiadomie:
+  //  · Akcje — NIE MA. Wszystkie akcje karty (Zatwierdz / Odeslij / Wyslij do
+  //    przegladu / Ocena AI / Markdown / Kopiuj) renderuje toolbar powloki
+  //    (`actions`), a Zapis i AI — naglowek. Powtorzenie ich tutaj byloby
+  //    duplikatem, ktory §2.6 zakazuje wprost. Funkcja nie znika — znika kopia.
+  //  · Komentarze — sesja wywiadu nie ma dzis w ogole watku komentarzy (brak
+  //    modelu i endpointu). Pusty akordeon udawalby zdolnosc, ktorej nie ma.
+  //
+  // ZRODLO WLASCIWOSCI: ta sama tablica `properties`, ktora wczesniej zasilala
+  // listwe poziomą. Listwa zostaje ZDJETA z `NModeShell` (prop `properties`
+  // pominięty) — inaczej te same pola renderowalyby sie dwa razy naraz.
+  const panelLocale = isPolish ? 'pl-PL' : 'en-US';
+  // Jawnie ustalony locale zamiast `t('…enUs')`: klucz istnieje tylko w pl/en,
+  // a w pozostalych jezykach i18next zwraca sam klucz → `Invalid language tag`
+  // → cala karta w error-boundary (znalezisko z harnessu, SPEC-N §6A poz. 2).
+  const formatPanelDate = (value?: string | null, withTime = false) => {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '—';
+    return withTime ? d.toLocaleString(panelLocale) : d.toLocaleDateString(panelLocale);
+  };
+
+  const historyEntries: Array<{ key: string; label: string; value: string }> = [
+    {
+      key: 'started',
+      label: t('interview.workspace.startedAt', 'Started'),
+      value: formatPanelDate(session?.startedAt),
+    },
+    {
+      key: 'lastActivity',
+      label: t('interview.workspace.lastActivityAt', 'Last activity'),
+      value: formatPanelDate(session?.lastActivityAt, true),
+    },
+    {
+      key: 'aiReview',
+      // Osobny klucz, NIE `lastReview` — tamten ma w tresci dwukropek
+      // („Ostatnia analiza:"), bo jest uzywany w zdaniu, a nie jako etykieta.
+      label: t('interview.workspace.aiReviewedAt', 'Last AI review'),
+      value: formatPanelDate(aiEvaluationUpdatedAt, true),
+    },
+    {
+      key: 'completed',
+      label: t('interview.workspace.completedAt', 'Completed'),
+      value: formatPanelDate(session?.completedAt),
+    },
+  ].filter((row) => row.value !== '—');
+
+  const rightPanelSections: ArtifactRightPanelSection[] = [
+    {
+      id: 'properties',
+      label: t('interview.workspace.properties', 'Properties'),
+      icon: ClipboardList,
+      defaultOpen: true,
+      children: (
+        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+          <table className="w-full text-xs border-collapse">
+            <tbody>
+              {properties.map((field, idx) => (
+                <tr key={field.id}>
+                  <td
+                    className={`px-3 py-2 align-top text-c-text-muted ${
+                      idx < properties.length - 1 ? 'border-b border-c-border-subtle' : ''
+                    }`}
+                  >
+                    {isPolish ? field.label.pl : field.label.en}
+                  </td>
+                  <td
+                    className={`px-3 py-2 align-top text-right font-medium text-c-text-secondary ${
+                      idx < properties.length - 1 ? 'border-b border-c-border-subtle' : ''
+                    }`}
+                  >
+                    {field.value || '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ),
+    },
+    {
+      id: 'relations',
+      label: t('interview.workspace.relations', 'Relations'),
+      icon: Link2,
+      defaultOpen: false,
+      badge: linkedItems.length,
+      // Uczciwie puste, nie udawane: gdy sesja nie ma powiazan, panel mowi to
+      // wprost zamiast renderowac pusty kontener (DoD §18.1 „stan pusty").
+      isEmpty: linkedItems.length === 0,
+      emptyLabel: t('interview.workspace.noRelations', 'No linked items'),
+      children: (
+        <ul className="flex flex-col gap-1.5">
+          {linkedItems.map((item) => (
+            <li
+              key={item.edgeId || item.id}
+              className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
+            >
+              <Link2 size={13} className="mt-0.5 shrink-0 text-c-text-muted" />
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-c-text-secondary truncate">{item.title}</p>
+                <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                  {String(item.type || '')}
+                  {item.status ? ` · ${item.status}` : ''}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      id: 'history',
+      label: t('interview.workspace.history', 'History'),
+      icon: Clock,
+      defaultOpen: false,
+      isEmpty: historyEntries.length === 0 && !latestReviewDecision,
+      emptyLabel: t('interview.workspace.noHistoryYet', 'No history yet'),
+      children: (
+        <div className="flex flex-col gap-2">
+          {historyEntries.map((row) => (
+            <div key={row.key} className="flex items-baseline justify-between gap-2">
+              <span className="text-xs text-c-text-muted">{row.label}</span>
+              <span className="text-xs font-medium tabular-nums text-c-text-secondary">
+                {row.value}
+              </span>
+            </div>
+          ))}
+          {latestReviewDecision && (
+            <div className="mt-1 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+              <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                {t('interview.workspace.latestReviewDecisionLabel', 'Latest review decision')}
+              </p>
+              <p className="text-xs font-medium text-c-text-secondary">
+                {String(latestReviewDecision.action || '—')}
+              </p>
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   const sections: NModeSection[] = (() => {
     const overview = (
@@ -2098,7 +2264,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 type="button"
                 onClick={handleSendBack}
                 disabled={!sendBackReason.trim() || isSendingBack}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                /* R1 / SPEC-N §2.3 — poza slotem primary NIC nie jest solid.
+                   Bylo `bg-amber-500 text-white` (pelne wypelnienie), czyli
+                   drugie CTA konkurujace wizualnie z akcja glowna powloki.
+                   Teraz: obrys + tinta ostrzegawcza — waga semantyczna zostaje
+                   (to nadal akcja ostrzegawcza), waga wizualna spada. */
+                className="inline-flex items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 py-1.5 text-xs font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
               >
                 {isSendingBack ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -2218,35 +2389,68 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             locked={isLocked}
           />
         ) : runtimeMode === 'single_question' ? (
-          activeCategory ? (
-            <InterviewSingleQuestionRuntime
-              questions={questions}
-              evidence={evidence}
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              onUpdateQuestion={handleUpdateQuestion}
-              onUploadFile={handleUploadFile}
-              onAddLink={handleAddLink}
-              onAddVoiceEvidence={handleAddVoiceEvidence}
-              onSubmitSession={handleSubmitSession}
-              onSaveAndExit={onClose}
-              sessionName={sessionName}
-              readOnly={isLocked}
-              isSubmitting={isSubmittingSession}
-              answerHistoryByQuestionId={answerHistoryByQuestionId}
-            />
-          ) : (
-            <Callout
-              variant="info"
-              title={t('interview.workspace.readyToStart')}
-              compact
-              action={{
-                label: t('interview.workspace.start'),
-                onClick: handleNextMissing,
-              }}
+          /* SPEC-N §7 decyzja #5 — JEDNA POWŁOKA, różni się CENTRUM.
+             Do 2026-07-21 tryb `single_question` robił `return` PRZED
+             `NModeShell` i budował własny bespoke top-bar (tytuł, status,
+             pasek postępu, Save/Approve/Send-back, przełącznik trybu) —
+             czyli drugą, konkurencyjną powłokę z duplikatami akcji
+             (łamanie §2.6 anty-duplikacja i §2.4 jedna droga budowy).
+             Teraz runtime „pytanie po pytaniu" renderuje się TUTAJ, wewnątrz
+             sekcji Pytania tej samej powłoki; wszystkie akcje mieszkają w
+             slotach powłoki (Save → NModeHeader, Approve/Send-back/Submit →
+             toolbar `actions`, postęp/metadane → prawy panel, zmiana trybu →
+             RuntimeModeSelector wyżej w tej sekcji).
+             Wariant `immersive` runtime'u ZOSTAJE (płaska lista wszystkich
+             pytań, bez bramki kategorii) — to jest właśnie „inne centrum".
+             Wymaga kontenera o ZNANEJ wysokości, bo w środku używa
+             `h-full` + `overflow-hidden`; w swobodnym przepływie dokumentu
+             zapadłby się do zera. */
+          /* Celowo `questions.length`, a NIE `totalQuestions`: to drugie sumuje
+             `categoryProgress`, wiec pytanie o kategorii spoza CATEGORY_ORDER
+             by sie nie policzylo i runtime dostalby pusty ekran mimo danych.
+             Usunieta galaz immersive liczyla tak samo — zachowanie bez zmian. */
+          questions.length > 0 ? (
+            /* Wysokosc zalezna od GESTOSCI, nie od trybu prezentacji (SPEC-N
+               §2.7 rozdziela te dwa pojecia): w N-mode runtime dostaje pelna
+               scene, w gestej tablicy C-mode musi zmiescic sie w kaflu obok
+               innych sekcji — inaczej rozjezdza plansze. To ten SAM komponent
+               i ta sama sciezka kodu, tylko inna gestosc. */
+            <div
+              className={
+                presentationMode === 'c'
+                  ? 'h-[420px] -mx-1'
+                  : 'h-[70vh] min-h-[540px] -mx-1'
+              }
             >
-              {t('interview.workspace.clickStartToJumpTo')}
-            </Callout>
+              <InterviewSingleQuestionRuntime
+                questions={questions}
+                evidence={evidence}
+                activeCategory={activeCategory || 'strategy'}
+                onCategoryChange={setActiveCategory}
+                onUpdateQuestion={handleUpdateQuestion}
+                onUploadFile={handleUploadFile}
+                onAddLink={handleAddLink}
+                onAddVoiceEvidence={handleAddVoiceEvidence}
+                onSubmitSession={handleSubmitSession}
+                onSaveAndExit={onClose}
+                sessionName={sessionName}
+                readOnly={isLocked}
+                isSubmitting={isSubmittingSession}
+                immersive
+                answerHistoryByQuestionId={answerHistoryByQuestionId}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 px-6">
+              <div className="max-w-md text-center space-y-4">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-c-surface-raised">
+                  <ClipboardList size={28} className="text-c-text-muted" />
+                </div>
+                <p className="text-sm text-c-text-muted">
+                  {t('interview.workspace.noQuestionsInThisSession')}
+                </p>
+              </div>
+            </div>
           )
         ) : (
           <>
@@ -2619,6 +2823,45 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return base;
   })();
 
+  // ── KONTRAKT AI PER SEKCJA (SPEC-N §2.5) ───────────────────────────────────
+  //
+  // §2.5 zada, by KAZDA sekcja deklarowala kontrakt AI albo jawne wykluczenie:
+  // „milczenie przestaje byc mozliwe". Interview to narzedzie AI-heavy, a mialo
+  // dotad jeden przycisk toolbara („Ocena AI") i zero deklaracji per sekcja.
+  //
+  // OGRANICZENIE, KTORE TRZEBA ZNAC: docelowo kontrakt ma byc POLEM sekcji
+  // (`aiContract` na `NModeSection`, §5.1 „stany niedozwolone maja byc
+  // niewyrazalne"). Typ `NModeSection` w `shared/NModeLayout/types.ts` tego pola
+  // JESZCZE NIE MA, a ten pakiet migracyjny nie ma prawa dotykac powloki.
+  // Dlatego kontrakt zyje na razie OBOK sekcji, w tej mapie, i jest pilnowany
+  // dev-warnem nizej. Gdy powloka dostanie pole `aiContract`, ta mapa przenosi
+  // sie 1:1 na deklaracje sekcji i znika stad — tresc juz jest ustalona.
+  const sectionAiContract: Record<
+    string,
+    { kind: 'generate' | 'review' | 'assist' } | { none: true; reason: string }
+  > = {
+    // AI realnie PISZE / ocenia:
+    overview: { kind: 'review' }, // ocena jakosci odpowiedzi + rekomendacje (runAiQualityReview)
+    questions: { kind: 'assist' }, // tryb konwersacyjny i pytanie-po-pytaniu prowadzi AI
+    summary: { kind: 'generate' }, // podsumowanie faktow wyprowadzane z odpowiedzi
+    // AI NIE pisze — jawne wykluczenie z powodem (§2.5):
+    notes: { none: true, reason: 'notatki wlasne konsultanta — zapis reczny, bez generacji' },
+    evidence: { none: true, reason: 'pliki i linki wgrywa czlowiek; AI ich nie tworzy' },
+    'company-facts': { none: true, reason: 'twarde dane o firmie — zrodlo zewnetrzne, nie model' },
+    stakeholders: { none: true, reason: 'lista osob — dane wprowadzane recznie' },
+    'open-gaps': { none: true, reason: 'luki wynikaja z pytan bez odpowiedzi, liczone, nie pisane' },
+  };
+
+  if (import.meta.env.DEV) {
+    const bezKontraktu = sections.filter((s) => !sectionAiContract[s.id]).map((s) => s.id);
+    if (bezKontraktu.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[SPEC-N §2.5] InterviewWorkspace: sekcje bez zadeklarowanego kontraktu AI: ${bezKontraktu.join(', ')}`
+      );
+    }
+  }
+
   // #11 — Pre-submit AI quality gate modal (shared across render branches).
   // L-07 / SPEC_13 §5.1 — when any hard-floor item is present the gate is a HARD
   // block: no "submit anyway" escape. Soft-only gates stay skippable.
@@ -2719,7 +2962,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     void handleSubmitSession({ bypassGate: true });
                   }}
                   disabled={isSubmittingSession}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                  /* R1 / SPEC-N §2.3 — „Wyslij mimo to" bylo jedynym solidem na
+                     tym ekranie (bg-navy-900 / surowy hex w dark), przez co
+                     UCIECZKA od bramki jakosci wygladala jak akcja zalecana,
+                     a „Wroc i popraw" — jak rezygnacja. Odwrocone: zalecana
+                     zostaje obrysowa (mocniejsza), ucieczka schodzi do ghost.
+                     Przy okazji znikaja navy-* i surowy hex na rzecz c-*. */
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
                 >
                   {isSubmittingSession ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -2736,222 +2985,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     </AnimatePresence>
   );
 
-  // ── Immersive single-question mode: bypass NModeShell entirely ──
-  if (runtimeMode === 'single_question') {
-    const answeredCount = questions.filter((q) => q.status === 'answered').length;
-    const totalCount = questions.length;
-    const progressPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
-
-    const ensureCategory = () => {
-      if (!activeCategory) {
-        const first = questions.find((q) => q.status !== 'answered') || questions[0];
-        if (first?.category) setActiveCategory(first.category);
-      }
-    };
-
-    return (
-      <>
-        {qualityGateModal}
-        <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-          {/* Minimal top bar */}
-          <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl">
-            <button
-              type="button"
-              onClick={onClose || (() => {})}
-              className="inline-flex items-center gap-1.5 text-xs text-c-text-muted hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-            >
-              <ChevronLeft size={16} />
-              {t('interview.workspace.back')}
-            </button>
-            <div className="h-4 w-px bg-white/[0.08]" />
-            <span className="text-sm font-medium text-c-text-secondary truncate max-w-[300px]">
-              {sessionName || t('interview.workspace.interviewSession')}
-            </span>
-            <EntityStatusChip
-              status={lifecycleStatus}
-              label={t(
-                `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
-                lifecycleConfig.label.en
-              )}
-            />
-            <div className="flex-1" />
-            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
-              {answeredCount}/{totalCount}
-            </span>
-            <div className="w-24 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-navy-900 transition-all duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
-              {progressPct}%
-            </span>
-            <div className="h-4 w-px bg-white/[0.08]" />
-            {isReviewerMode ? (
-              <>
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
-                  <Shield size={10} />
-                  {t('interview.workspace.review')}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleApprove}
-                  disabled={isApproving || !canApprove}
-                  title={!canApprove ? approveBlockedHint : undefined}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isApproving ? (
-                    <Loader2 size={13} className="animate-spin" />
-                  ) : (
-                    <ThumbsUp size={13} />
-                  )}
-                  {t('interview.workspace.approve')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowSendBackForm(true)}
-                  disabled={isSendingBack}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors disabled:opacity-50"
-                >
-                  <AlertTriangle size={13} />
-                  {t('interview.workspace.sendBack')}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors disabled:opacity-50"
-              >
-                {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                {t('interview.workspace.save')}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => handleRuntimeModeSelect('task_list')}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={t('interview.workspace.switchToListView')}
-            >
-              <ArrowRight size={13} />
-              {t('interview.workspace.list')}
-            </button>
-          </div>
-
-          {/* #7 — Approve pre-condition hint (immersive reviewer mode) */}
-          {isReviewerMode && !canApprove && (
-            <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 border-b border-amber-500/20 bg-amber-500/[0.06] text-[11px] font-medium text-amber-600 dark:text-amber-300">
-              <AlertTriangle size={12} />
-              {approveBlockedHint}
-            </div>
-          )}
-
-          {/* Send-back form (immersive mode) */}
-          {showSendBackForm && isReviewerMode && (
-            <div className="shrink-0 px-6 py-3 border-b border-white/[0.06] bg-amber-500/[0.04]">
-              <div className="max-w-2xl mx-auto space-y-3">
-                <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                  {t('interview.workspace.reasonForSendingBack')}
-                </p>
-                <textarea
-                  value={sendBackReason}
-                  onChange={(e) => setSendBackReason(e.target.value)}
-                  rows={2}
-                  className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
-                />
-                {sendBackMissingItems.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {sendBackMissingItems.map((item, idx) => (
-                      <label
-                        key={item.key}
-                        className="inline-flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={item.checked}
-                          onChange={() => {
-                            setSendBackMissingItems((prev) =>
-                              prev.map((it, i) =>
-                                i === idx ? { ...it, checked: !it.checked } : it
-                              )
-                            );
-                          }}
-                          className="rounded"
-                        />
-                        {item.label}
-                      </label>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSendBack}
-                    disabled={!sendBackReason.trim() || isSendingBack}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
-                  >
-                    {isSendingBack ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Send size={12} />
-                    )}
-                    {t('interview.workspace.sendBack')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSendBackForm(false);
-                      setSendBackReason('');
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors"
-                  >
-                    {t('interview.workspace.cancel')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Immersive runtime -- no category gate, flat question list */}
-          <div className="flex-1 min-h-0">
-            {totalCount > 0 ? (
-              <InterviewSingleQuestionRuntime
-                questions={questions}
-                evidence={evidence}
-                activeCategory={activeCategory || 'strategy'}
-                onCategoryChange={setActiveCategory}
-                onUpdateQuestion={handleUpdateQuestion}
-                onUploadFile={handleUploadFile}
-                onAddLink={handleAddLink}
-                onAddVoiceEvidence={handleAddVoiceEvidence}
-                onSubmitSession={handleSubmitSession}
-                onSaveAndExit={onClose}
-                sessionName={sessionName}
-                readOnly={isLocked}
-                isSubmitting={isSubmittingSession}
-                immersive
-                answerHistoryByQuestionId={answerHistoryByQuestionId}
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-20 px-6">
-                <div className="max-w-md text-center space-y-4">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-c-surface-raised">
-                    <ClipboardList size={28} className="text-c-text-muted" />
-                  </div>
-                  <p className="text-sm text-c-text-muted">
-                    {t('interview.workspace.noQuestionsInThisSession')}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </>
-    );
-  }
+  // SPEC-N §7 decyzja #5 — tu KIEDYS stal `if (runtimeMode === 'single_question')
+  // { return … }`, czyli druga powloka: wlasny top-bar z tytulem, statusem,
+  // paskiem postepu i DUPLIKATAMI Save / Approve / Send-back, calkowicie
+  // omijajaca NModeShell/NModeHeader. Usuniete — tryb pojedynczego pytania
+  // renderuje sie teraz WEWNATRZ tej samej powloki (sekcja „Pytania",
+  // wariant `immersive` runtime'u), a jego akcje mieszkaja w slotach powloki.
+  // Nie ma juz drugiej deklaracji tych samych akcji (SPEC-N §2.6).
 
   return (
     <>
@@ -2967,10 +3007,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           saving: isSaving,
           isDirty,
           onChat: handleOpenChat,
+          // MARTWE WPIECIE AI — naprawione. `onChat` istnial i dzialal
+          // (`handleOpenChat` otwiera czat z kontekstem sesji), ale
+          // `NModeHeader` renderuje przycisk AI tylko przy `showChatButton`
+          // (domyslnie `false`, back-compat). Przez to w narzedziu AI-heavy
+          // przycisk AI NIE RENDEROWAL SIE NIGDY — handler byl podpiety do
+          // niczego. DoD §18.1: slot AI jest staly, nie opcjonalny.
+          showChatButton: true,
           onClose: onClose || (() => {}),
           statusDotColor: statusConfig.color,
         }}
-        properties={properties}
+        // `properties` CELOWO pominiete — te same pola renderuje teraz sekcja
+        // Wlasciwosci prawego panelu (SPEC-N §2.2). Podanie obu naraz dalo by
+        // te sama tresc w dwoch miejscach (§2.6).
         sections={sections}
         actions={actions}
         actionsVisible={actions.length > 0}
@@ -2980,6 +3029,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         onPresentationModeChange={setPresentationMode}
         showModeSwitcher={true}
         buildArtifactCode={(type, id) => buildArtifactCode(type as any, id)}
+        rightPanel={
+          <ArtifactRightPanel
+            sections={rightPanelSections}
+            className="h-full border-l border-c-border-subtle"
+            ariaLabel={t('interview.workspace.sessionDetails', 'Session details')}
+          />
+        }
       >
         <div />
       </NModeShell>

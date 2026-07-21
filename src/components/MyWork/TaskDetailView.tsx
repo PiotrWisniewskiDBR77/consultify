@@ -215,6 +215,53 @@ const normalizePriority = (priority?: string | null): keyof typeof PRIORITY_CONF
   return 'medium';
 };
 
+// ── Kontrakt AI sekcji (SPEC-N §2.5) ─────────────────────────────────────────
+// Sekcja lewej kolumny MUSI wystąpić w dokładnie jednej z dwóch map poniżej:
+//   • TASK_AI_CARD_META      — kontrakt realny: NModeCardState (empty →
+//     generating → ai-draft → edited → done → error) + pasek Regeneruj/Edytuj/
+//     Zaakceptuj. Klucz musi mieć odpowiednik w CARD_BACKEND_KEY (generator
+//     serwera), inaczej „Regeneruj" nie ma dokąd pójść.
+//   • TASK_AI_CONTRACT_NONE  — jawne wykluczenie {none, reason}. Reason jest
+//     obowiązkowy i ma mówić PRAWDĘ o dzisiejszym stanie, nie życzenie.
+// Przed tą migracją kontrakt miały 4 z 10 sekcji, a pozostałe 6 milczało —
+// czego §2.5 zabrania wprost („milczenie przestaje być możliwe").
+type TaskAiCardKey = 'description-scope' | 'checklist' | 'dependencies' | 'evidence';
+
+const TASK_AI_CARD_META: Partial<
+  Record<string, { key: TaskAiCardKey; name: { en: string; pl: string } }>
+> = {
+  'description-scope': { key: 'description-scope', name: { en: 'Strategy', pl: 'Strategia' } },
+  checklist: { key: 'checklist', name: { en: 'Execution', pl: 'Wykonanie' } },
+  dependencies: { key: 'dependencies', name: { en: 'Dependencies', pl: 'Zależności' } },
+  evidence: { key: 'evidence', name: { en: 'Evidence', pl: 'Dowody' } },
+};
+
+const TASK_AI_CONTRACT_NONE: Record<string, { none: true; reason: string }> = {
+  implementation: {
+    none: true,
+    reason:
+      'AI działa tu ad-hoc (przycisk „Create Ideas" → generateIdeasAI), bez maszyny stanów: ' +
+      'brak klucza sekcji w CARD_BACKEND_KEY, więc nie ma czego regenerować ani akceptować. ' +
+      'Podpięcie pełnego kontraktu wymaga klucza po stronie taskSectionGenerationService.',
+  },
+  'risk-alternatives': {
+    none: true,
+    reason:
+      'Jak wyżej: „Analyze risks" → generateRisksAI jest jednorazowym wywołaniem bez stanu ' +
+      'ai-draft/edited/done. Kontrakt realny do dorobienia razem z kluczem backendu.',
+  },
+  governance: {
+    none: true,
+    reason:
+      'RACI i reguły eskalacji to decyzja organizacyjna człowieka; „Generate RACI" jest ' +
+      'podpowiedzią do ręcznej akceptacji, nie treścią kartową pisaną przez AI.',
+  },
+  'attachments-links': {
+    none: true,
+    reason: 'Załączniki i powiązania to fakty (pliki, linki do obiektów) — AI ich nie pisze.',
+  },
+};
+
 export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   taskId,
   onClose,
@@ -622,7 +669,12 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const reducedMotion = useReducedMotion();
   const motionDuration = reducedMotion ? 0 : 0.22;
   const [activeNSection, setActiveNSection] = useState('description-scope');
-  // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
+  // ── Read/Edit toggle (pasek pod Menu 1; karta klasy L) ─────────────────────
+  // SPEC-N §2.6 / plan K1: to NIE jest drugie „Menu 1" — prawdziwe Menu 1 to
+  // NModeHeader nad tym paskiem. Wcześniejsza nazwa („Menu 1, klasa S")
+  // dublowała nazwę powłoki i deklarowała złą klasę: Task ma 8 sekcji lewej
+  // kolumny, więc wg §2.1 (limit klasy S = 4) jest kartą klasy L — pełna
+  // strona, a drawer z listy to jego preview.
   // "Do pokazania klientowi": read = karty read-only (hideActions), główne pola
   // wyłączone, pasek akcji stanu (Reassign/Delay/Mark complete) ukryty.
   // Z31/#31: karta otwiera się DOMYŚLNIE na READ gdy już istnieje (taskId).
@@ -2132,26 +2184,39 @@ Return ONLY the final comment text.`;
         component: null,
       },
       {
-        id: 'comments',
-        icon: MessageSquare,
-        label: { en: 'Comments', pl: 'Komentarze' },
-        component: null,
-      },
-      {
         id: 'attachments-links',
         icon: FolderOpen,
         label: { en: 'Attachments & Links', pl: 'Załączniki i powiązania' },
         component: null,
       },
-      {
-        id: 'activity-log',
-        icon: History,
-        label: { en: 'Activity Log', pl: 'Aktywność' },
-        component: null,
-      },
+      // SPEC-N §2.1 — identyfikatory ZAREZERWOWANE dla prawego panelu:
+      // `comments` · `history` · `activity-log` nie mogą być sekcją lewej
+      // kolumny. Obie (Komentarze, Aktywność) zjechały stąd do
+      // `rightPanelSections` w PEŁNEJ formie (CommentsCanvas /
+      // ActivityLogCanvas) — nie jako skrót, żeby żadna funkcja nie zniknęła
+      // użytkownikowi (dodawanie komentarza, filtr, sort, AI-enhance).
     ],
     []
   );
+
+  // SPEC-N §2.5 + §5.3 pkt 7 — bramka pokrycia kontraktu AI. Dopóki nie ma
+  // typu, który wymusza deklarację na poziomie sekcji (to przyjdzie z
+  // StandardArtifactShell, fala F1), pilnuje tego asercja dev-mode: nowa
+  // sekcja dopisana bez wpisu w jednej z dwóch map krzyczy od razu, a nie
+  // dopiero na audycie za trzy tygodnie.
+  useEffect(() => {
+    if (!import.meta.env?.DEV) return;
+    const missing = taskNSections
+      .map((s) => s.id)
+      .filter((id) => !TASK_AI_CARD_META[id] && !TASK_AI_CONTRACT_NONE[id]);
+    if (missing.length > 0) {
+      console.warn(
+        '[TaskDetailView] SPEC-N §2.5: sekcje bez deklaracji kontraktu AI ' +
+          '(dodaj do TASK_AI_CARD_META albo TASK_AI_CONTRACT_NONE):',
+        missing
+      );
+    }
+  }, [taskNSections]);
 
   // ── CommentsCanvas props mapping ─────────────────────────────────────────
   const nModeComments: CommentItem[] = useMemo(
@@ -3676,32 +3741,8 @@ Return ONLY the final comment text.`;
           );
           break;
 
-        // ── 7. Comments (shared CommentsCanvas) ────────────────────────
-        case 'comments':
-          component = (
-            <CommentsCanvas
-              comments={nModeComments}
-              locked={isDone || readMode}
-              onDeleteComment={handleDeleteComment}
-              dateFilter={nCommentDateFilter}
-              onDateFilterChange={setNCommentDateFilter}
-              sortOrder={nCommentSortOrder}
-              onToggleSort={() => setNCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
-              commentDraft={nCommentDraft}
-              onCommentDraftChange={setNCommentDraft}
-              onSubmitComment={handleNModeSubmitComment}
-              draftPriority={nCommentPriority}
-              onDraftPriorityChange={setNCommentPriority}
-              onAIEnhance={generateAIComment}
-              isAIEnhancing={isGeneratingAIComment}
-              getPriorityDotClass={getPriorityDotClass}
-              getCommentPriority={getCommentPriority}
-              getPriorityButtonClass={getPriorityButtonClass}
-              getCommentPriorityLabel={getCommentPriorityLabel}
-              getCommentPriorityHint={getCommentPriorityHint}
-            />
-          );
-          break;
+        // ── 7. Komentarze: SPEC-N §2.1 — zarezerwowane id, sekcja przeniesiona
+        //      do prawego panelu (patrz `rightPanelSections`). Tu jej nie ma.
 
         // ── 8. Attachments & Links (rich canvas — same as Decision) ────
         case 'attachments-links':
@@ -3731,33 +3772,18 @@ Return ONLY the final comment text.`;
           );
           break;
 
-        // ── 9. Activity Log (shared ActivityLogCanvas) ─────────────────
-        case 'activity-log':
-          component = (
-            <ActivityLogCanvas
-              entries={nModeActivityEntries}
-              stats={nModeActivityStats}
-              typeMeta={nModeActivityTypeMeta}
-            />
-          );
-          break;
+        // ── 9. Aktywność: SPEC-N §2.1 — zarezerwowane id, sekcja przeniesiona
+        //      do prawego panelu (sekcja „Historia / AI"). Tu jej nie ma.
       }
 
       // ── Wzorzec N: opakuj sekcje AI-zapisywalne w NModeCardState ──────────
-      // (badge AI-draft + pasek ✨Regeneruj · ✎Edytuj · ✓Zaakceptuj). Pozostałe
-      // sekcje (governance/comments/attachments/activity-log) zostają bez zmian.
-      const AI_CARD_META: Partial<
-        Record<string, { key: AICardKey; name: { en: string; pl: string } }>
-      > = {
-        'description-scope': {
-          key: 'description-scope',
-          name: { en: 'Strategy', pl: 'Strategia' },
-        },
-        checklist: { key: 'checklist', name: { en: 'Execution', pl: 'Wykonanie' } },
-        dependencies: { key: 'dependencies', name: { en: 'Dependencies', pl: 'Zależności' } },
-        evidence: { key: 'evidence', name: { en: 'Evidence', pl: 'Dowody' } },
-      };
-      const cardMeta = AI_CARD_META[section.id];
+      // (badge AI-draft + pasek ✨Regeneruj · ✎Edytuj · ✓Zaakceptuj).
+      // SPEC-N §2.5: KAŻDA sekcja deklaruje kontrakt AI albo jawne wykluczenie
+      // {none, reason}. Milczenie (wcześniej 6 z 10 sekcji nie mówiło nic) nie
+      // jest już dopuszczalne — deklaracje pełne w TASK_AI_CARD_META +
+      // TASK_AI_CONTRACT_NONE (moduł, nad komponentem), pokrycie pilnuje
+      // asercja dev-mode niżej.
+      const cardMeta = TASK_AI_CARD_META[section.id];
       if (cardMeta) {
         const cKey = cardMeta.key;
         component = (
@@ -3838,8 +3864,7 @@ Return ONLY the final comment text.`;
     showCreateDecision,
     showDecisionSearch,
     blockedReason,
-    readMode,
-  ]);
+    readMode,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   // ── Card-management primitive (#52, wzorzec N §3.5) ───────────────────────
   // Same "nakładka" wiring as InsightViewer.tsx: `useCardLayout` (TASK_SPEC)
@@ -4102,18 +4127,9 @@ Return ONLY the final comment text.`;
             year: 'numeric',
           });
     };
-    const fmtDateTime = (v?: string) => {
-      if (!v) return dash;
-      const d = new Date(v);
-      return Number.isNaN(d.getTime())
-        ? v
-        : d.toLocaleString(t('myWork.taskDetail.dToLocaleString', 'en-US'), {
-            day: '2-digit',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          });
-    };
+    // (fmtDateTime usunięty: jedynymi konsumentami były skrócone listy
+    //  komentarzy i historii w panelu, zastąpione pełnymi kanwami — SPEC-N §2.1.
+    //  Kanwy formatują daty same.)
 
     const panelKeyClass = 'text-xs text-c-text-muted shrink-0';
     // Klasy komórek tabeli Właściwości (kanon panelu: tylko c-*, neutralnie)
@@ -4126,26 +4142,22 @@ Return ONLY the final comment text.`;
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
         id: 'actions',
-        // #27/#37: AI przeniesiony do nagłówka (NModeHeader, showChatButton) —
-        // header ma wolny slot obok Save/mode-switcher, więc rozpisany
-        // przycisk AI w tej sekcji był zbędnym duplikatem (Z29/Z30 go tu
-        // zostawiły tylko z braku slotu M3 dla klasy S; teraz jest taniej).
+        // #27/#37: AI przeniesiony do nagłówka (NModeHeader, showChatButton).
+        // SPEC-N §2.6 (anty-duplikacja): Save też ZNIKA stąd — ten sam handler
+        // `handleSave` renderował się w nagłówku (NModeHeader onSave, wraz ze
+        // wskaźnikiem „Zapisano HH:MM") i drugi raz tutaj. Zostaje ten, który
+        // jest widoczny ZAWSZE, czyli nagłówek; panel traci duplikat. Sekcja
+        // zostaje w kanonie §11.2 (Akcje jako pierwsza, jedyna otwarta) ze
+        // stanem pustym mówiącym wprost, gdzie akcje żyją.
         label: t('myWork.taskDetail.label8', 'Actions'),
         icon: Save,
         defaultOpen: true,
-        children: (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleSave()}
-              disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-            >
-              <Save size={14} className="text-c-text-muted" />
-              {t('myWork.taskDetail.save', 'Save')}
-            </button>
-          </div>
+        isEmpty: true,
+        emptyLabel: t(
+          'myWork.taskDetail.actionsLiveInHeader',
+          'All actions live in the card header'
         ),
+        children: null,
       },
       {
         id: 'properties',
@@ -4232,32 +4244,44 @@ Return ONLY the final comment text.`;
       },
       {
         id: 'comments',
+        // SPEC-N §2.1: `comments` to id ZAREZERWOWANE dla panelu — sekcja
+        // zeszła tu z lewej nawigacji. Świadomie w PEŁNEJ formie
+        // (CommentsCanvas), nie jako skrót „6 ostatnich": skrót zabrałby
+        // użytkownikowi dodawanie komentarza, filtr, sortowanie i AI-enhance,
+        // a zasada anty-duplikacji (§2.6) każe usuwać duplikat, nie funkcję.
         label: t('myWork.taskDetail.label11', 'Comments'),
         icon: MessageSquare,
         defaultOpen: false,
         badge: comments.length,
-        isEmpty: comments.length === 0,
-        emptyLabel: t('myWork.taskDetail.emptyLabel2', 'No comments'),
         children: (
-          <ul className="flex flex-col gap-3">
-            {comments.slice(0, 6).map((c) => (
-              <li key={c.id} className="flex flex-col gap-0.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-xs font-semibold text-c-text truncate">
-                    {c.authorName || t('myWork.taskDetail.user', 'User')}
-                  </span>
-                  <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
-                    {fmtDateTime(c.createdAt)}
-                  </span>
-                </div>
-                <p className="text-xs text-c-text-muted line-clamp-3">{c.content}</p>
-              </li>
-            ))}
-          </ul>
+          <CommentsCanvas
+            comments={nModeComments}
+            locked={isDone || readMode}
+            onDeleteComment={handleDeleteComment}
+            dateFilter={nCommentDateFilter}
+            onDateFilterChange={setNCommentDateFilter}
+            sortOrder={nCommentSortOrder}
+            onToggleSort={() => setNCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+            commentDraft={nCommentDraft}
+            onCommentDraftChange={setNCommentDraft}
+            onSubmitComment={handleNModeSubmitComment}
+            draftPriority={nCommentPriority}
+            onDraftPriorityChange={setNCommentPriority}
+            onAIEnhance={generateAIComment}
+            isAIEnhancing={isGeneratingAIComment}
+            getPriorityDotClass={getPriorityDotClass}
+            getCommentPriority={getCommentPriority}
+            getPriorityButtonClass={getPriorityButtonClass}
+            getCommentPriorityLabel={getCommentPriorityLabel}
+            getCommentPriorityHint={getCommentPriorityHint}
+          />
         ),
       },
       {
         id: 'history',
+        // SPEC-N §2.1: `activity-log` również zeszło tu z lewej nawigacji.
+        // Pełny ActivityLogCanvas (statystyki + filtry typów), bo skrót
+        // „8 ostatnich wpisów" gubił oba.
         label: t('myWork.taskDetail.label12', 'History / AI'),
         icon: History,
         defaultOpen: false,
@@ -4265,23 +4289,11 @@ Return ONLY the final comment text.`;
         isEmpty: activityLog.length === 0,
         emptyLabel: t('myWork.taskDetail.emptyLabel3', 'No history'),
         children: (
-          <ul className="flex flex-col gap-2.5">
-            {activityLog.slice(0, 8).map((entry) => (
-              <li key={entry.id} className="flex flex-col gap-0.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-xs text-c-text truncate">{entry.description}</span>
-                  <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
-                    {fmtDateTime(entry.timestamp)}
-                  </span>
-                </div>
-                {entry.oldValue || entry.newValue ? (
-                  <span className="text-[11px] text-c-text-muted truncate">
-                    {entry.oldValue ?? dash} → {entry.newValue ?? dash}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <ActivityLogCanvas
+            entries={nModeActivityEntries}
+            stats={nModeActivityStats}
+            typeMeta={nModeActivityTypeMeta}
+          />
         ),
       },
     ];
@@ -4322,7 +4334,11 @@ Return ONLY the final comment text.`;
 
               {/* ── N-Mode Content ──────────────────────────────── */}
               <div className="col-span-full space-y-4 mt-4">
-                {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
+                {/* ── Pasek kart + tryb Read/Edit ─────────────────────────────
+                    NIE „Menu 1" — prawdziwe Menu 1 to NModeHeader powyżej.
+                    Stara etykieta („Menu 1 (klasa S)") dublowała nazwę powłoki
+                    i niosła błędną klasę; Task jest klasą L (plan K1 do
+                    SPEC-N §2.1: 8 sekcji > limit 4 dla klasy S). ── */}
                 <div className="flex items-center justify-between">
                   {!readMode ? (
                     <NModeCardManager layout={taskCardLayout} isPolish={isPolish} />
@@ -4537,25 +4553,11 @@ Return ONLY the final comment text.`;
                         </button>
                       )}
 
-                      {activeNSection === 'comments' && (
-                        <button
-                          onClick={generateAIComment}
-                          disabled={isGeneratingAIComment}
-                          className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                            isGeneratingAIComment
-                              ? 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
-                              : 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]'
-                          } disabled:opacity-40 disabled:cursor-not-allowed`}
-                          title={t('myWork.taskDetail.title14', 'Generate AI comments')}
-                        >
-                          {isGeneratingAIComment ? (
-                            <Loader2 size={13} className="animate-spin" />
-                          ) : (
-                            <Sparkles size={13} />
-                          )}
-                          {t('myWork.taskDetail.aIComments', 'AI comments')}
-                        </button>
-                      )}
+                      {/* Sekcja „Komentarze" nie jest już sekcją lewej nawigacji
+                          (SPEC-N §2.1), więc ten warunkowy przycisk nigdy by się
+                          nie pokazał. Funkcja nie ginie: `generateAIComment` żyje
+                          dalej jako `onAIEnhance` wewnątrz CommentsCanvas
+                          w prawym panelu — czyli w miejscu widocznym ZAWSZE (§2.6). */}
 
                       {activeNSection === 'governance' && (
                         <button
@@ -4940,7 +4942,12 @@ Return ONLY the final comment text.`;
                     setEditingStakeholderId(null);
                     setStakeholderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                  /* SPEC-N §2.3 (R1): poza slotem primary nagłówka nic nie jest
+                     solid/filled CTA. Potwierdzenie modala zostaje wyraźniejsze
+                     od „Anuluj" (wypełniona powierzchnia + font-medium), ale
+                     przestaje konkurować z primary karty. Tokeny c-*, zero
+                     surowych navy/hex. */
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                 >
                   {t('myWork.taskDetail.save2', 'Save')}
                 </button>
@@ -5207,7 +5214,12 @@ Return ONLY the final comment text.`;
                     setEditingReminderId(null);
                     setReminderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                  /* SPEC-N §2.3 (R1): poza slotem primary nagłówka nic nie jest
+                     solid/filled CTA. Potwierdzenie modala zostaje wyraźniejsze
+                     od „Anuluj" (wypełniona powierzchnia + font-medium), ale
+                     przestaje konkurować z primary karty. Tokeny c-*, zero
+                     surowych navy/hex. */
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                 >
                   {t('myWork.taskDetail.save3', 'Save')}
                 </button>
@@ -5497,7 +5509,12 @@ Return ONLY the final comment text.`;
                     setEditingEscalationId(null);
                     setEscalationDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                  /* SPEC-N §2.3 (R1): poza slotem primary nagłówka nic nie jest
+                     solid/filled CTA. Potwierdzenie modala zostaje wyraźniejsze
+                     od „Anuluj" (wypełniona powierzchnia + font-medium), ale
+                     przestaje konkurować z primary karty. Tokeny c-*, zero
+                     surowych navy/hex. */
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                 >
                   {t('myWork.taskDetail.save4', 'Save')}
                 </button>

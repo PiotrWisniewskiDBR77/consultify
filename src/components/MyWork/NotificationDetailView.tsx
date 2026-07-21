@@ -33,6 +33,7 @@ import {
   MessageCircle,
   MessageSquare,
   Monitor,
+  MoreHorizontal,
   Scale,
   Sparkles,
   Target,
@@ -62,9 +63,13 @@ import { Api } from '../../services/api';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
 import TeresaMark from '../shared/TeresaMark';
+// SPEC-N §2.2 — prawy panel artefaktu (Akcje·Wlasciwosci·Powiazania·Komentarze·Historia).
+// Tu w wariancie SKROCONYM: Wlasciwosci + Historia (decyzja wlasciciela K2).
+// `NModePropertiesStrip` przestal byc importowany — 6 pol metadanych przenioslo sie
+// z poziomego paska pod naglowkiem do sekcji Wlasciwosci tego panelu.
+import { ArtifactRightPanel, type ArtifactRightPanelSection } from '../standard/ArtifactRightPanel';
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -262,8 +267,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const [isSnoozed, setIsSnoozed] = useState(false);
   const [snoozedUntil, setSnoozedUntil] = useState<string | null>(null);
 
-  // Mute dropdown
+  // Mute dropdown (uzywany juz TYLKO przez stary tryb 'c'; w trybie N pozycje
+  // "Wycisz to" / "Wycisz podobne" przeniesione do menu przepelnienia "…")
   const [showMuteMenu, setShowMuteMenu] = useState(false);
+
+  // SPEC-N §2.4 + DOKTRYNA_GESTOSCI §1 — menu przepelnienia paska akcji trybu N.
+  // Pasek mial 7 przyciskow plasko, bez "…". Widoczne zostaja maks 4, reszta tutaj.
+  const [showActionOverflow, setShowActionOverflow] = useState(false);
 
   // Save as note
   const [savingAsNote, setSavingAsNote] = useState(false);
@@ -314,13 +324,22 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     markAsRead();
   }, [notificationId]);
 
-  // Load comments & activity log when the section is activated (lazy)
+  // SPEC-N §2.1/§2.2 — Historia zyje teraz w PRAWYM PANELU, a nie w lewej nawigacji,
+  // wiec nie ma juz momentu "user kliknal sekcje activity-log", ktory ja doladowywal.
+  // Panel jest widoczny zawsze -> dane ciagniemy raz, po wczytaniu powiadomienia.
+  // (Komentarze: sekcja usunieta calkowicie wg K2 — lazy-load zostaje wylacznie
+  // dla starego trybu 'c', ktory ma wlasny akordeon komentarzy.)
+  useEffect(() => {
+    if (!notification) return;
+    if (activityLog.length === 0 && !activityLogLoading) {
+      loadActivityLog();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notification?.id]);
+
   useEffect(() => {
     if (activeNSection === 'comments' && comments.length === 0 && !commentsLoading) {
       loadComments();
-    }
-    if (activeNSection === 'activity-log' && activityLog.length === 0 && !activityLogLoading) {
-      loadActivityLog();
     }
   }, [activeNSection]);
 
@@ -927,6 +946,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             setShowSnoozeMenu(false);
           } else if (showMuteMenu) {
             setShowMuteMenu(false);
+          } else if (showActionOverflow) {
+            setShowActionOverflow(false);
           } else {
             onClose();
           }
@@ -952,6 +973,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     const handleClickOutside = () => {
       if (showSnoozeMenu) setShowSnoozeMenu(false);
       if (showMuteMenu) setShowMuteMenu(false);
+      if (showActionOverflow) setShowActionOverflow(false);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -960,7 +982,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('click', handleClickOutside);
     };
-  }, [notification, showSnoozeMenu, showMuteMenu]);
+  }, [notification, showSnoozeMenu, showMuteMenu, showActionOverflow]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -1286,33 +1308,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         badge: actionChecklist.filter((i) => i.completed).length,
         component: null,
       },
-      // Supporting (optional) — keep light by default
-      ...(commentsCount > 0
-        ? [
-            {
-              id: 'comments',
-              icon: MessageSquare,
-              label: { en: 'Comments', pl: 'Komentarze' },
-              badge: commentsCount,
-              component: null,
-            } as NModeSection,
-          ]
-        : []),
-      ...(activityCount > 0
-        ? [
-            {
-              id: 'activity-log',
-              icon: History,
-              label: { en: 'Activity Log', pl: 'Historia aktywności' },
-              badge: activityCount,
-              component: null,
-            } as NModeSection,
-          ]
-        : []),
+      // SPEC-N §2.1 — identyfikatory `comments` / `history` / `activity-log` sa
+      // ZAREZERWOWANE dla prawego panelu i NIE MOGA byc sekcja lewej nawigacji.
+      // Byly tu obie (comments + activity-log). Rozstrzygniecie wlasciciela (K2
+      // planu wdrozenia): powiadomienie to wiadomosc systemowa, a nie artefakt
+      // wspolpracy — sekcja Komentarzy znika CALKOWICIE (nie wedruje do panelu),
+      // a Historia aktywnosci trafia do prawego panelu (sekcja `history`).
+      // Bloki `case 'comments'` / `case 'activity-log'` nizej w
+      // `nModeSectionsWithContent` sa od teraz nieosiagalne — zostaja swiadomie:
+      // usuwanie martwego kodu to osobna fala PO migracjach (SPEC-N §7, P3),
+      // zeby diff tej zmiany dalo sie odebrac na zrzutach.
     ];
 
     return sections;
-  }, [notification?.type, notification?.data, actionChecklist, commentsCount, activityCount]);
+  }, [notification?.type, notification?.data, actionChecklist]);
 
   // Ensure active section is always valid (e.g. AI section may be hidden)
   useEffect(() => {
@@ -2185,8 +2194,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     submittingComment,
     activityLog,
     activityLogLoading,
-    isSnoozed,
-  ]);
+    isSnoozed,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   // ── Loading / 404 guards (AFTER all hooks to respect Rules of Hooks) ────
 
@@ -2306,6 +2314,167 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     },
   ];
 
+  // ── SPEC-N §2.3 — DOKLADNIE JEDEN primary, i to w Menu 1 ────────────────────
+  // Karta miala ZERO primary: cztery warianty CTA zrodla renderowaly sie w pasku
+  // akcji jako zwykle outline'y, rownorzednie z "Wycisz" czy "Zapisz jako notatke".
+  // Regula wyboru wg pakietu M2 pkt 3: jest zrodlo → "Otworz <zrodlo>"; brak
+  // zrodla → "Oznacz przeczytane". Slot primary jest JEDYNYM miejscem solid-CTA
+  // (klasa MENU_1_PRIMARY_CTA w NModeHeader), wiec akcja promowana tutaj NIE
+  // renderuje sie juz drugi raz w pasku akcji (§2.6 anty-duplikacja).
+  const hasSourceCta = contract.primaryCta.kind !== 'none';
+
+  const openPrimarySource = () => {
+    const cta = contract.primaryCta;
+    switch (cta.kind) {
+      case 'open_task':
+        onNavigateToSource?.('task', cta.id);
+        break;
+      case 'open_decision':
+        onNavigateToSource?.('decision', cta.id);
+        break;
+      case 'open_project':
+        onNavigateToSource?.('project', cta.id);
+        break;
+      case 'open_link':
+        window.open(cta.href, '_blank', 'noopener,noreferrer');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const primarySourceIcon = (
+    contract.primaryCta.kind === 'open_task'
+      ? CheckSquare
+      : contract.primaryCta.kind === 'open_decision'
+        ? Scale
+        : contract.primaryCta.kind === 'open_project'
+          ? FolderOpen
+          : ExternalLink
+  ) as React.FC<{ size?: number; className?: string }>;
+
+  // SPEC-N §2.8 — skrot musi byc odkrywalny. `M`/`D` mialy ZERO podpowiedzi na
+  // ekranie; `D` kasowal powiadomienie. Badge <kbd> renderujemy przy akcjach
+  // w pasku (nizej), a tooltip dubluje informacje dla czytnika ekranu i dla
+  // slotu primary, ktory badge'a nie ma — patrz DLUG w raporcie.
+  const markReadShortcutTitle = isPolish
+    ? 'Oznacz jako przeczytane (skrót: M)'
+    : 'Mark as read (shortcut: M)';
+  const deleteShortcutTitle = isPolish
+    ? 'Usuń powiadomienie (skrót: D — zapyta o potwierdzenie)'
+    : 'Delete notification (shortcut: D — asks for confirmation)';
+
+  const headerPrimaryAction = hasSourceCta
+    ? {
+        label: {
+          en: contract.primaryCta.label || 'Open source',
+          pl: contract.primaryCta.label || 'Otwórz źródło',
+        },
+        icon: primarySourceIcon,
+        onClick: openPrimarySource,
+      }
+    : {
+        // Osobny klucz od paskowego `markRead` ("Przeczytane" w pl to status,
+        // nie czasownik — slot primary musi mowic, co sie stanie po kliknieciu).
+        label: {
+          en: t('myWork.notificationDetail.primaryMarkRead', 'Mark as read'),
+          pl: t('myWork.notificationDetail.primaryMarkRead', 'Mark as read'),
+        },
+        icon: MailOpen as React.FC<{ size?: number; className?: string }>,
+        onClick: handleMarkRead,
+        disabled: notification.isRead,
+        title: {
+          en: 'Mark as read (shortcut: M)',
+          pl: 'Oznacz jako przeczytane (skrót: M)',
+        },
+      };
+
+  // ── SPEC-N §2.2 — prawy panel (wariant SKROCONY wg decyzji K2) ──────────────
+  // Wlasciwosci + Historia. BEZ Komentarzy (wiadomosc systemowa nie jest
+  // artefaktem wspolpracy — sekcja skasowana, nie przeniesiona) i BEZ Powiazan
+  // (powiadomienie nie ma realnych relacji; zrodlo pokazuje sekcja "Co sie dzieje").
+  //
+  // Odstepstwo od §2.2 ("wszystko zwiniete poza Akcjami") swiadome i nazwane:
+  // ten wariant nie ma sekcji Akcje (akcje zyja w pasku i w Menu 1), wiec przy
+  // domyslnym zwinieciu wszystkiego panel bylby po otwarciu pusty. Otwarte
+  // startowo sa Wlasciwosci; Historia zwinieta.
+  const historyEntries: {
+    id: string;
+    description: string;
+    timestamp: string;
+  }[] =
+    activityLog.length > 0
+      ? activityLog.map((entry) => ({
+          id: entry.id,
+          description: entry.userName
+            ? `${entry.userName}: ${entry.description}`
+            : entry.description,
+          timestamp: entry.createdAt,
+        }))
+      : [
+          {
+            id: 'created',
+            description: t('myWork.notificationDetail.description2', 'Notification created'),
+            timestamp: notification.createdAt,
+          },
+          ...(notification.readAt
+            ? [
+                {
+                  id: 'read',
+                  description: t('myWork.notificationDetail.description3', 'Marked as read'),
+                  timestamp: notification.readAt,
+                },
+              ]
+            : []),
+        ];
+
+  const rightPanelSections: ArtifactRightPanelSection[] = [
+    {
+      id: 'properties',
+      label: t('myWork.notificationDetail.panelProperties', 'Properties'),
+      icon: Info,
+      defaultOpen: true,
+      children: (
+        <dl className="space-y-2.5">
+          {propertiesFields.map((field) => (
+            <div key={field.id} className="flex flex-col gap-1">
+              <dt className="text-[11px] font-medium uppercase tracking-wider text-c-text-muted">
+                {isPolish ? field.label.pl : field.label.en}
+              </dt>
+              <dd className="text-xs text-c-text">
+                {field.render ? field.render() : field.value || '—'}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ),
+    },
+    {
+      id: 'history',
+      label: t('myWork.notificationDetail.panelHistory', 'History'),
+      icon: History,
+      defaultOpen: false,
+      badge: historyEntries.length,
+      isEmpty: !activityLogLoading && historyEntries.length === 0,
+      emptyLabel: t('myWork.notificationDetail.noActivityYet', 'No activity yet'),
+      children: activityLogLoading ? (
+        <div className="flex items-center gap-2 py-2 text-xs text-c-text-muted">
+          <Loader2 size={13} className="animate-spin" />
+          {t('myWork.notificationDetail.loading', 'Loading…')}
+        </div>
+      ) : (
+        <ol className="space-y-2.5">
+          {historyEntries.map((entry) => (
+            <li key={entry.id} className="flex flex-col gap-0.5">
+              <span className="text-xs text-c-text">{entry.description}</span>
+              <span className="text-[11px] text-c-text-muted">{formatDate(entry.timestamp)}</span>
+            </li>
+          ))}
+        </ol>
+      ),
+    },
+  ];
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ── RENDER ──────────────────────────────────────────────────────────────
   // ═══════════════════════════════════════════════════════════════════════════
@@ -2314,7 +2483,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-0">
-          {/* ── Header — shared NModeHeader ─────────────────────────────── */}
+          {/* ── Header — shared NModeHeader ───────────────────────────────
+               SPEC-N §2.3/§2.7 — USUNIETO prop `draftSavedLabel`. Jego typ mowi
+               wprost "Do not use for persistence state", a ta karta uzywala go do
+               live-timestampu zapisu ("Zapisano 14:32"). Powiadomienie jest
+               read-only (tytul ma `titleReadOnly`), wiec wskaznik zapisu w naglowku
+               wprowadzal w blad — zwlaszcza obok osobnego statusu cyklu zycia.
+               Edytowalna checklista ma wlasny, poprawny kanal: `isDirty`/`saving`.
+               `lastWorksheetSavedAt` nadal jest ustawiany w logice zapisu — nie
+               renderujemy go tylko w powloce. */}
           <NModeHeader
             title={
               notification.title || t('myWork.notificationDetail.notification', 'Notification')
@@ -2326,104 +2503,86 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             onSave={handleSaveWorksheet}
             saving={worksheetSaving}
             isDirty={worksheetIsDirty}
-            draftSavedLabel={
-              lastWorksheetSavedAt
-                ? isPolish
-                  ? `Zapisano ${new Date(lastWorksheetSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                  : `Saved ${new Date(lastWorksheetSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                : undefined
-            }
             onChat={handleOpenChat}
             onClose={onClose}
             statusDotColor={severityConfig.dotColor}
             presentationMode={presentationMode}
             onPresentationModeChange={setPresentationMode}
+            primaryAction={headerPrimaryAction}
           />
 
           {/* ═══════════ N MODE ═══════════════════════════════════════════
-               Layout: PropertiesStrip → ActionBar → 2-Pane (LeftNav + Canvas)
+               Uklad: ActionBar → 3-Pane (LeftNav + Canvas + PRAWY PANEL).
+
+               SPEC-N §2.2 — prawy panel jest czescia OBOWIAZKOWA powloki, a ta
+               karta nie miala go w ogole (jedna z 5 na 8). Wariant SKROCONY wg
+               decyzji wlasciciela (K2 planu wdrozenia): wiadomosc systemowa nie
+               jest artefaktem wspolpracy, wiec panel ma tylko Wlasciwosci
+               + Historie — bez Komentarzy (sekcja skasowana, nie przeniesiona)
+               i bez Powiazan (powiadomienie nie ma realnych relacji; pusta sekcja
+               "Powiazania" bylaby ceremonia, nie informacja — zrodlo pokazujemy
+               w tresci sekcji "Co sie dzieje").
+
+               SPEC-N §2.6 (anty-duplikacja) — poziomy `NModePropertiesStrip`
+               (6 pol pod naglowkiem) ZNIKA z trybu N. Te same 6 pol zyje teraz
+               w sekcji Wlasciwosci prawego panelu, ktory jest widoczny ZAWSZE.
+               To dokladnie defekt, ktory §2.2 wytyka Initiative ("poziomа siatka
+               7 pol pod naglowkiem" zamiast panelu). `propertiesFields` zostaje
+               jako jedyna deklaracja tych pol — karmi teraz sekcje Wlasciwosci
+               panelu (stary tryb 'c' ma wlasny akordeon, nie uzywal tego paska),
+               dlatego import `NModePropertiesStrip` znika z tego pliku.
                ═══════════════════════════════════════════════════════════════ */}
           {presentationMode === 'n' && (
             <div className="col-span-full space-y-4 mt-4">
-              {/* ── PropertiesStrip ─────────────────────────────────────── */}
-              <NModePropertiesStrip fields={propertiesFields} maxColumns={6} />
+              {/* ── ActionBar ────────────────────────────────────────────────
+                   SPEC-N §2.3 — DOKLADNIE JEDEN primary i zyje on w Menu 1
+                   (naglowek, prop `NModeHeader.primaryAction` wyzej), nie tutaj.
+                   Reguly wyboru wg pakietu M2 pkt 3: jest zrodlo → "Otworz …";
+                   brak zrodla → "Oznacz przeczytane". Wczesniej karta miala ZERO
+                   primary: cztery warianty CTA zrodla renderowaly sie tu jako
+                   zwykle outline'y, wiec nic nie prowadzilo uzytkownika.
+                   Zaden przycisk w tym pasku nie jest solid — solid ma prawo byc
+                   wylacznie slot primary.
 
-              {/* ── ActionBar ──────────────────────────────────────────── */}
+                   SPEC-N §2.4 + DOKTRYNA_GESTOSCI §1 — bylo 7 przyciskow plasko,
+                   bez przepelnienia. Widoczne zostaja maks 4 (Oznacz przeczytane
+                   gdy nie jest primary · Odloz · Usun · kontekstowe AI), a
+                   Zapisz jako notatke / Wycisz to / Wycisz podobne schodza pod "…".
+
+                   SPEC-N §2.8 — skroty maja byc odkrywalne: `M` i `D` dostaja
+                   widoczny badge <kbd> przy swojej akcji. `D` jest destrukcyjny,
+                   wiec przechodzi przez confirm() w `handleDelete` (bylo juz
+                   wczesniej — potwierdzone, nie dodane na nowo).
+
+                   DLUG (do raportu): ten pasek jest bespoke (<div>), nie
+                   `NModeToolbar`. Zakres M2 to naprawa defektow w istniejacej
+                   strukturze; migracja na wspolny komponent (wraz z jego propem
+                   `overflowActions`, ktory zastapilby recznie pisane menu nizej)
+                   to osobny krok. */}
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 <div className="flex items-center gap-2">
-                  {/* Primary CTA */}
-                  {contract.primaryCta.kind === 'open_task' && (
+                  {/* Oznacz przeczytane — TYLKO gdy nie jest primary w Menu 1
+                      (§2.6: jedna akcja = jedno miejsce). Badge [M] wg §2.8. */}
+                  {hasSourceCta && (
                     <button
-                      onClick={() => onNavigateToSource?.('task', (contract.primaryCta as any).id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-400/50 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                      onClick={handleMarkRead}
+                      disabled={notification.isRead}
+                      title={markReadShortcutTitle}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
-                      <CheckSquare size={13} />
-                      {contract.primaryCta.label}
+                      <MailOpen size={13} />
+                      {t('myWork.notificationDetail.markRead', 'Mark Read')}
+                      <kbd className="ml-1 px-1.5 py-0.5 rounded border border-c-border-subtle bg-c-surface-raised text-[10px] font-semibold leading-none text-c-text-muted">
+                        M
+                      </kbd>
                     </button>
                   )}
-                  {contract.primaryCta.kind === 'open_decision' && (
-                    <button
-                      onClick={() =>
-                        onNavigateToSource?.('decision', (contract.primaryCta as any).id)
-                      }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
-                    >
-                      <Scale size={13} />
-                      {contract.primaryCta.label}
-                    </button>
-                  )}
-                  {contract.primaryCta.kind === 'open_project' && (
-                    <button
-                      onClick={() =>
-                        onNavigateToSource?.('project', (contract.primaryCta as any).id)
-                      }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-400/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
-                    >
-                      <FolderOpen size={13} />
-                      {contract.primaryCta.label}
-                    </button>
-                  )}
-                  {contract.primaryCta.kind === 'open_link' && (
-                    <a
-                      href={(contract.primaryCta as any).href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
-                    >
-                      <ExternalLink size={13} />
-                      {contract.primaryCta.label}
-                    </a>
-                  )}
 
-                  {/* Mark Read */}
-                  <button
-                    onClick={handleMarkRead}
-                    disabled={notification.isRead}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <MailOpen size={13} />
-                    {t('myWork.notificationDetail.markRead', 'Mark Read')}
-                  </button>
-
-                  {/* Save as note */}
-                  <button
-                    onClick={handleSaveAsNote}
-                    disabled={savingAsNote}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {savingAsNote ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <FileText size={13} />
-                    )}
-                    {t('myWork.notificationDetail.saveAsNote', 'Save as note')}
-                  </button>
-
-                  {/* Snooze */}
+                  {/* Odloz (dropdown) */}
                   <div className="relative" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => setShowSnoozeMenu(!showSnoozeMenu)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                         isSnoozed
                           ? 'border-amber-400/50 text-amber-600 dark:text-amber-400 bg-amber-500/10'
                           : 'border-amber-300/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
@@ -2467,22 +2626,57 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     )}
                   </div>
 
-                  {/* Mute (dropdown) */}
+                  {/* Usun — badge [D] wg §2.8; potwierdzenie w handleDelete */}
+                  <button
+                    onClick={handleDelete}
+                    title={deleteShortcutTitle}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <Trash2 size={13} />
+                    {t('myWork.notificationDetail.delete', 'Delete')}
+                    <kbd className="ml-1 px-1.5 py-0.5 rounded border border-danger-400/40 bg-danger-500/10 text-[10px] font-semibold leading-none text-danger-600 dark:text-danger-400">
+                      D
+                    </kbd>
+                  </button>
+
+                  {/* Przepelnienie "…" — akcje drugorzedne (§2.4) */}
                   <div className="relative" onClick={(e) => e.stopPropagation()}>
                     <button
-                      onClick={() => setShowMuteMenu(!showMuteMenu)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      onClick={() => setShowActionOverflow(!showActionOverflow)}
+                      aria-haspopup="menu"
+                      aria-expanded={showActionOverflow}
+                      aria-label={t('myWork.notificationDetail.moreActions', 'More actions')}
+                      title={t('myWork.notificationDetail.moreActions', 'More actions')}
+                      className="inline-flex items-center justify-center h-[30px] w-[30px] rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
-                      <BellOff size={13} />
-                      {t('myWork.notificationDetail.mute', 'Mute')}
-                      <ChevronDown size={13} className="opacity-70" />
+                      <MoreHorizontal size={14} />
                     </button>
 
-                    {showMuteMenu && (
-                      <div className="absolute top-full left-0 mt-1 w-52 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl z-50 py-1">
+                    {showActionOverflow && (
+                      <div
+                        role="menu"
+                        className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl z-50 py-1"
+                      >
                         <button
+                          role="menuitem"
                           onClick={() => {
-                            setShowMuteMenu(false);
+                            setShowActionOverflow(false);
+                            handleSaveAsNote();
+                          }}
+                          disabled={savingAsNote}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {savingAsNote ? (
+                            <Loader2 size={12} className="animate-spin shrink-0" />
+                          ) : (
+                            <FileText size={12} className="text-slate-600 shrink-0" />
+                          )}
+                          {t('myWork.notificationDetail.saveAsNote', 'Save as note')}
+                        </button>
+                        <button
+                          role="menuitem"
+                          onClick={() => {
+                            setShowActionOverflow(false);
                             handleMuteThis();
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
@@ -2491,8 +2685,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           {t('myWork.notificationDetail.muteThis', 'Mute this')}
                         </button>
                         <button
+                          role="menuitem"
                           onClick={() => {
-                            setShowMuteMenu(false);
+                            setShowActionOverflow(false);
                             handleMuteSimilar();
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
@@ -2504,23 +2699,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     )}
                   </div>
 
-                  {/* Delete */}
-                  <button
-                    onClick={handleDelete}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
-                  >
-                    <Trash2 size={13} />
-                    {t('myWork.notificationDetail.delete', 'Delete')}
-                  </button>
-
-                  {/* Section-specific AI actions */}
+                  {/* Kontekstowe AI dla aktywnej sekcji — slot AI (§18.1).
+                      Akcent AI = teal/c-info, NIGDY crimson (pulapka nr 1 CLAUDE.md;
+                      ten przycisk mial primary-* i zostal naprawiony 21.07). Tint 10%,
+                      nie solid — solid rezerwuje §2.3 dla slotu primary. */}
                   {(activeNSection === 'ai-analysis' ||
                     activeNSection === 'whats-happening' ||
                     activeNSection === 'expected-action') && (
                     <button
                       onClick={() => handleAnalyzeWithAI(false)}
                       disabled={isAnalyzingWorksheet}
-                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-teal-400/50 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-teal-400/50 text-teal-600 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       {isAnalyzingWorksheet ? (
                         <Loader2 size={13} className="animate-spin" />
@@ -2533,7 +2722,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </div>
               </div>
 
-              {/* ── 2-Pane: LeftNav + Canvas ───────────────────────────── */}
+              {/* ── 3-Pane: LeftNav + Canvas + prawy panel (SPEC-N §2.2) ── */}
               <div className="flex gap-0 min-h-[60vh]">
                 <NModeLeftNav
                   sections={nModeSectionsWithContent}
@@ -2545,6 +2734,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   activeSection={activeNSection}
                   reducedMotion={reducedMotion}
                   motionDuration={motionDuration}
+                />
+                <ArtifactRightPanel
+                  ariaLabel={t(
+                    'myWork.notificationDetail.rightPanelAria',
+                    'Notification details panel'
+                  )}
+                  width={320}
+                  sections={rightPanelSections}
                 />
               </div>
             </div>

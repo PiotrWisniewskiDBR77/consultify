@@ -76,7 +76,12 @@ import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
+import { fetchEvidenceEnvelope } from '@/services/api/evidence.api';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -115,7 +120,6 @@ import {
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
-import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isVf1InitSpecAEnabled } from '@/utils/vf1InitSpecAFlag';
 import {
   getWorkflowStatusForInitiative,
@@ -142,7 +146,6 @@ import {
   NModeCBoard,
   NModeHeader,
   NModeLeftNav,
-  NModePropertiesStrip,
   type NModePropertyField,
   type NModeSection,
   NModeSectionWrapper,
@@ -158,14 +161,11 @@ import {
 } from '../shared/NModeLayout/AIConsultantPanel';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
-  ActivityLogCanvas,
   type ActivityLogEntry as NModeActivityLogEntry,
-  type ActivityStats,
   type ActivityTypeMeta,
   AttachmentsLinksCanvas,
   type CommentItem,
   type CommentPriority,
-  CommentsCanvas,
   type DateFilter,
   RaidCanvas as NModeRaidCanvas,
   type SortOrder,
@@ -281,21 +281,82 @@ const SECTION_AI_NOOP_IDS: ReadonlySet<string> = new Set([
   'suggested-changes',
 ]);
 
-const BCG_AI_SECTION_IDS: ReadonlySet<string> = new Set([
-  'initiative-definition', // Overview + Problem Definition (scope card)
-  'target-state-scope', // Target State & Success + Scope & Kill Criteria
-  'tasks', // Tasks & Milestones
-  'decisions', // Decisions
-  'risk-raid', // RAID Log
-  'gates', // Gates (readiness)
-  'financial-analysis', // Financial Analysis
-  'financial-impact', // Financial Impact
-  'kpi', // KPIs & Benefits
-  'resources', // Resources
-  'timeline', // Timeline (plan)
-  'dependencies', // Dependencies
-  'team', // Team / RACI people
-]);
+/**
+ * SPEC-N §2.5 — KONTRAKT AI PER SEKCJA, deklaracja KOMPLETNA (nie opt-in).
+ *
+ * Reguła standardu: „każda sekcja deklaruje kontrakt AI ALBO jawne wykluczenie.
+ * Milczenie przestaje być możliwe." Inwentarz A1 policzył tu 13/26 sekcji
+ * z kontraktem — pozostałe 13 nie mówiły NIC, więc z kodu nie dało się odczytać,
+ * czy brak afordancji AI jest decyzją, czy przeoczeniem.
+ *
+ * Ta mapa jest teraz JEDYNYM źródłem prawdy: `BCG_AI_SECTION_IDS` (używane przy
+ * doklejaniu NModeCardState) jest z niej WYPROWADZANE, a nie utrzymywane obok.
+ * Zachowanie runtime bez zmian — te same 13 sekcji dostają pasek
+ * Regeneruj·Edytuj·Zaakceptuj co przed zmianą. Nowa jest wyłącznie kompletność
+ * DEKLARACJI (27/27 id) i to, że każde wykluczenie ma powód zapisany w kodzie.
+ *
+ * `{ ai: true }`  = sekcja niesie kontrakt NModeCardState (stan + pasek akcji).
+ * `{ none: true }` = jawne wykluczenie + powód (SPEC-N §2.5 wymaga `reason`).
+ */
+type SectionAiContract = { ai: true } | { none: true; reason: string };
+
+const SECTION_AI_CONTRACT: Record<string, SectionAiContract> = {
+  // ── Kontrakt realny (13) — sekcje z generatorem w runSectionAi ─────────────
+  'initiative-definition': { ai: true }, // Overview + Problem Definition (scope card)
+  'target-state-scope': { ai: true }, // Target State & Success + Scope & Kill Criteria
+  tasks: { ai: true }, // Tasks & Milestones
+  decisions: { ai: true }, // Decisions
+  'risk-raid': { ai: true }, // RAID Log
+  gates: { ai: true }, // Gates (readiness)
+  'financial-analysis': { ai: true }, // Financial Analysis
+  'financial-impact': { ai: true }, // Financial Impact
+  kpi: { ai: true }, // KPIs & Benefits
+  resources: { ai: true }, // Resources
+  timeline: { ai: true }, // Timeline (plan)
+  dependencies: { ai: true }, // Dependencies
+  team: { ai: true }, // Team / RACI people
+
+  // ── Wykluczenia jawne (14) ────────────────────────────────────────────────
+  // Cztery poniżej są zsynchronizowane z SECTION_AI_NOOP_IDS: dispatch section-AI
+  // spada na handleGenerateAI (toast, nic nie zapisuje) — pokazanie „Regeneruj"
+  // obiecywałoby zdolność, której nie ma.
+  raci: { none: true, reason: 'no-op w runSectionAi — macierz RACI wypełnia zespół' },
+  'change-log': { none: true, reason: 'no-op w runSectionAi — dziennik zmian pisze system' },
+  'workstream-owners': { none: true, reason: 'no-op w runSectionAi — obsada strumieni to decyzja' },
+  'suggested-changes': {
+    none: true,
+    reason: 'no-op w runSectionAi — to lista propozycji AI, nie sekcja generowana',
+  },
+  'attachments-links': { none: true, reason: 'rejestr plików i powiązań, nie treść' },
+  'used-in': { none: true, reason: 'backlinki liczy system, nie generator' },
+  artifacts: { none: true, reason: 'rejestr wyjść z inicjatywy, nie treść' },
+  'deliverables-milestones': { none: true, reason: 'brak generatora w runSectionAi' },
+  okr: { none: true, reason: 'brak generatora w runSectionAi' },
+  'lessons-learned': { none: true, reason: 'pole ręczne — wnioski spisuje zespół po fakcie' },
+  hypothesis: {
+    none: true,
+    reason:
+      'ma generację przez handleGenerateAI (CTA w stanie pustym), ale NIE ma stanu karty ' +
+      '(ai-draft/edited) — świadomie nie obiecujemy paska Regeneruj·Edytuj·Zaakceptuj',
+  },
+  // Trzy poniżej opuściły lewą kolumnę i żyją w prawym panelu (SPEC-N §2.1/§2.2).
+  comments: { none: true, reason: 'sekcja prawego panelu (SPEC-N §2.1), nie centrum' },
+  'activity-log': { none: true, reason: 'sekcja prawego panelu (SPEC-N §2.1), nie centrum' },
+  evidence: {
+    none: true,
+    reason: 'sekcja prawego panelu (SPEC-N §2.2); treść z kontraktu dowodowego HP-16, nie z sekcji',
+  },
+};
+
+/**
+ * Wyprowadzone z SECTION_AI_CONTRACT — patrz komentarz wyżej. NIE dopisuj tu id
+ * ręcznie: dodanie sekcji do tej listy bez wpisu w mapie łamie §2.5.
+ */
+const BCG_AI_SECTION_IDS: ReadonlySet<string> = new Set(
+  Object.entries(SECTION_AI_CONTRACT)
+    .filter(([, contract]) => 'ai' in contract)
+    .map(([id]) => id)
+);
 
 interface ExpandableNarrativeFieldProps {
   value: string;
@@ -610,8 +671,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
   const [estimatedDurationMonths, setEstimatedDurationMonths] = useState<number | null>(null);
 
-  // Presentation mode (N/C) — shared hook with URL sync and localStorage persistence
-  const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
+  // ── SPEC-N §2.7 — DWA RÓŻNE POJĘCIA, DWIE RÓŻNE NAZWY ─────────────────────
+  // Inwentarz A1: „Initiative miesza gęstość N/C z fullscreen card-walk pod
+  // jednym słowem »Present«". Jedno słowo na dwie funkcje znaczy, że nikt (ani
+  // autor, ani user) nie wie, którą włącza. Standard rozstrzyga: osobne nazwy
+  // i osobne sloty.
+  //
+  //   densityMode: 'n' | 'c'            → GĘSTOŚĆ widoku, przełącznik w Menu 1
+  //                                        (NModeHeader.showModeSwitcher).
+  //   presentationMode: 'off'|'fullscreen' → TRYB POKAZU (PresentMode card-walk),
+  //                                        wejście z menu kebab, nie z nagłówka.
+  //
+  // Powłoka (NModeHeader) nadal nazywa swój prop `presentationMode` i przyjmuje
+  // 'n'|'c' — to jej dług nazewniczy, nie nasz; podajemy tam `densityMode`
+  // jawnie, żeby po stronie karty nie było już dwuznaczności.
+  const { mode: densityMode, setMode: setDensityMode } = usePresentationMode({
     entityType: 'initiative',
     syncURL: true,
   });
@@ -687,8 +761,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   }, [initiativeId]);
 
-  // Present mode (Phase A3) — fullscreen card-by-card walk of the canonical sections.
-  const [presentOpen, setPresentOpen] = useState(false);
+  // SPEC-N §2.7 — TRYB POKAZU (fullscreen card-walk), pojęcie ROZŁĄCZNE
+  // z `densityMode` ('n'|'c'). Typ jawny 'off'|'fullscreen' zamiast boolean
+  // `presentOpen`, żeby z nazwy stanu było widać, że to tryb prezentacji,
+  // a nie „otwarty panel".
+  const [presentationMode, setPresentationMode] = useState<'off' | 'fullscreen'>('off');
+  const isPresenting = presentationMode === 'fullscreen';
   // M13 Depth · Fala 1 — AI gate soft-block override modal state.
   const [gateAiOverride, setGateAiOverride] = useState<{
     targetStatus: string;
@@ -2847,6 +2925,40 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleStatusAction = async (action: StatusAction) => {
     // Warn if this transition moves the initiative to a different module
     const targetStatus = action.targetStatus as InitiativeStatus;
+
+    // ── SPEC-N §4A — BRAMKA DOWODOWA (miękka) ────────────────────────────────
+    // Zasada standardu: „Bramka nie blokuje pisania, blokuje promocję". Piszesz
+    // swobodnie; system pyta o źródła dopiero w momencie, w którym karta ma iść
+    // dalej — tak jak działa bramka jakości w wywiadach.
+    //
+    // MIĘKKA ŚWIADOMIE, nie z lenistwa: twarda blokada musi stać na serwerze
+    // (front da się obejść), a to osobne zgłoszenie do silnika — plan wdrożenia
+    // §0 wprost trzyma ją poza tą falą. Tu dajemy ostrzeżenie z możliwością
+    // kontynuowania.
+    //
+    // FAIL-OPEN: błąd sieci/braku endpointu → przepuszczamy. Bramka jakościowa
+    // nie może zamienić się w awarię blokującą pracę (ten sam wzorzec co
+    // gate-ai-check niżej).
+    if (
+      targetStatus === InitiativeStatus.REVIEW ||
+      targetStatus === InitiativeStatus.PENDING_REVIEW
+    ) {
+      try {
+        const envelope = await fetchEvidenceEnvelope('initiative', initiativeId);
+        const sourceCount = envelope?.sources?.length ?? 0;
+        const assumptionCount = envelope?.assumptions?.length ?? 0;
+        if (sourceCount === 0 && assumptionCount === 0) {
+          const proceed = window.confirm(
+            isPolish
+              ? 'Ta inicjatywa nie wskazuje źródeł. Kontynuować?'
+              : 'This initiative does not cite any sources. Continue?'
+          );
+          if (!proceed) return;
+        }
+      } catch {
+        /* fail-open — brak envelope nie może blokować przejścia statusu */
+      }
+    }
     if (willChangeModule(status, targetStatus)) {
       const targetModule = getModuleForStatus(targetStatus);
       const MODULE_NAMES: Record<string, { en: string; pl: string }> = {
@@ -5167,23 +5279,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         cHidden: relatedArtifacts.length === 0,
         component: null,
       },
-      {
-        id: 'comments',
-        icon: MessageSquare,
-        label: { en: 'Comments', pl: 'Komentarze' },
-        badge: comments.length > 0 ? comments.length : undefined,
-        cHidden: comments.length === 0,
-        component: null,
-      },
-      {
-        id: 'activity-log',
-        icon: History,
-        label: { en: 'Activity Log', pl: 'Dziennik aktywności' },
-        badge: history.length > 0 ? history.length : undefined,
-        cSpan: 2,
-        cHidden: history.length === 0,
-        component: null,
-      },
+      // SPEC-N §2.1 — ZAREZERWOWANE ID: `comments` · `history` · `activity-log`
+      // NIE MOGĄ być sekcją lewej kolumny; należą wyłącznie do prawego panelu.
+      // Były tu (R3, inwentarz A1) jako pełne sekcje canvas — zeszły do
+      // ArtifactRightPanel (sekcje `comments` i `history`, patrz
+      // initiativeRightPanelSections). Nie zniknęły użytkownikowi: panel jest
+      // widoczny ZAWSZE, a sekcja canvas była widoczna tylko po wybraniu jej
+      // w lewej nawigacji.
       // ── Canon sections added in Phase C (→ 21/21) ──────────────────────────
       {
         id: 'deliverables-milestones',
@@ -5229,20 +5331,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
     ];
 
-    // HP-17: sekcja „Źródła i założenia" (EvidencePanelSection artifactType=
-    // 'initiative') dokładana do listy sekcji TYLKO za flagą ff_evidencePanel
-    // (default OFF, src/utils/evidencePanelFlag.ts). OFF → sekcja nie istnieje
-    // → left-nav/canvas/C-board 1:1 jak przed HP-17. Silnik:
-    // assessmentInitiativeService.buildInitiativeEvidenceContract (HP-16).
-    if (isEvidencePanelEnabled()) {
-      allSections.push({
-        id: 'evidence',
-        icon: FileSearch,
-        label: { en: 'Sources & assumptions', pl: 'Źródła i założenia' },
-        cSpan: 2,
-        component: null,
-      });
-    }
+    // SPEC-N §2.2 — WARSTWA DOWODOWA jest sekcją PRAWEGO PANELU (między
+    // Powiązaniami a Komentarzami), nie sekcją lewej kolumny. HP-17 wpiął ją
+    // tutaj, bo panelu wtedy nie było; teraz jest — patrz
+    // initiativeRightPanelSections, sekcja `evidence`.
+    // Zmiana wobec HP-17: sekcja NIE jest już warunkowana flagą
+    // `ff_evidencePanel`. Decyzja właściciela P2 (SPEC-N §7): dla Initiative
+    // warstwa dowodowa jest OBOWIĄZKOWA — „inicjatywa bez odpowiedzi »z czego to
+    // wynika« jest pomysłem, nie inicjatywą". Brak dowodów pokazujemy jako
+    // uczciwy stan pusty, NIE jako ukrytą sekcję (§4A).
 
     // Group tabs (mirrors InsightViewer's bilingual groupLabels + groupIndexById).
     const groupLabels = isPolish
@@ -5731,8 +5828,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     pendingGates.length,
     canEditPriority,
     canEditOwner,
-    canEditTargetDate,
-  ]);
+    canEditTargetDate,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   // ==========================================
   // N-MODE: COMMENTS CANVAS ADAPTERS (identical to Task)
@@ -6131,22 +6227,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     [history]
   );
 
-  const nModeActivityStats: ActivityStats = useMemo(() => {
-    const total = history.length;
-    const edited = history.filter((e) =>
-      ['edit', 'status_change', 'update', 'field_change'].includes(e.eventType)
-    ).length;
-    const escalations = history.filter((e) =>
-      ['deadline', 'priority', 'escalated', 'gate_review', 'risk_added'].includes(e.eventType)
-    ).length;
-    const collaboration = history.filter((e) =>
-      ['comment', 'assignment', 'task_added', 'decision_added', 'stakeholder_added'].includes(
-        e.eventType
-      )
-    ).length;
-    return { total, edited, escalations, collaboration };
-  }, [history]);
-
   const nModeActivityTypeMeta = useCallback(
     (type: string): ActivityTypeMeta => {
       const MAP: Record<string, ActivityTypeMeta> = {
@@ -6240,6 +6320,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
   // N-MODE: SECTION CONTENT BUILDER
   // ==========================================
+
+  // SPEC-N §2.5 — bramka deweloperska: kontrakt AI musi być zadeklarowany dla
+  // KAŻDEJ sekcji. Milczenie (stan sprzed tej migracji: 13 z 26 sekcji nic nie
+  // deklarowało) przestaje być możliwe do przeoczenia — nowa sekcja bez wpisu
+  // w SECTION_AI_CONTRACT krzyczy w konsoli przy pierwszym renderze, a nie na
+  // odbiorze zrzutu. Ostrzeżenie, nie wyjątek: brak deklaracji jest defektem
+  // procesu, nie powodem do wywalenia karty użytkownikowi.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const bez = initiativeNSections
+      .map((sec) => sec.id)
+      .filter((id) => !(id in SECTION_AI_CONTRACT));
+    if (bez.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[InitiativeDocumentView] SPEC-N §2.5 — sekcje bez deklaracji kontraktu AI: ${bez.join(', ')}. ` +
+          'Dopisz je do SECTION_AI_CONTRACT ({ ai: true } albo { none: true, reason }).'
+      );
+    }
+  }, [initiativeNSections]);
 
   const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
     return initiativeNSections.map((section) => {
@@ -7503,271 +7603,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'comments': {
-          const selectedAddCount = commentsAiProposal
-            ? commentsAiProposal.add.reduce(
-                (sum, _a, idx) => sum + (commentsAiSelectedAddIdx[idx] ? 1 : 0),
-                0
-              )
-            : 0;
-          const selectedRemoveCount = commentsAiProposal
-            ? commentsAiProposal.remove.reduce(
-                (sum, r) => sum + (commentsAiSelectedRemoveIds[r.commentId] ? 1 : 0),
-                0
-              )
-            : 0;
-
-          component = (
-            <>
-              <CommentsCanvas
-                comments={nModeComments}
-                onDeleteComment={handleDeleteComment}
-                dateFilter={nCommentDateFilter}
-                onDateFilterChange={setNCommentDateFilter}
-                sortOrder={nCommentSortOrder}
-                onToggleSort={() => setNCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
-                commentDraft={nCommentDraft}
-                onCommentDraftChange={setNCommentDraft}
-                onSubmitComment={handleNModeSubmitComment}
-                draftPriority={nCommentPriority}
-                onDraftPriorityChange={setNCommentPriority}
-                onAIEnhance={() => handleGenerateAI('comments')}
-                isAIEnhancing={isGeneratingAI === 'comments'}
-                locked={!canEditCards}
-                getPriorityDotClass={getPriorityDotClass}
-                getCommentPriority={getCommentPriority}
-                getPriorityButtonClass={getPriorityButtonClass}
-                getCommentPriorityLabel={getCommentPriorityLabel}
-                getCommentPriorityHint={getCommentPriorityHint}
-              />
-
-              {/* AI proposal modal (Analyze with AI → add/remove) */}
-              {showCommentsAIModal && commentsAiProposal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-                  <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
-                    <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle">
-                      <div>
-                        <h3 className="text-sm font-semibold text-c-text">
-                          {t('initiatives.proposedCommentChangesAi2')}
-                        </h3>
-                        <p className="text-[11px] text-c-text-muted mt-0.5">
-                          {t('initiatives.selectItemsToAddRemoveThen2')}
-                        </p>
-                      </div>
-                      <button
-                        onClick={closeCommentsAIModal}
-                        className="p-2 rounded-lg text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                        title={t('initiatives.close2')}
-                        disabled={isCommentsAIProposing}
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-
-                    <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
-                      {commentsAiProposal.note ? (
-                        <Callout variant="purple" compact title={t('initiatives.ai2')}>
-                          {commentsAiProposal.note}
-                        </Callout>
-                      ) : null}
-
-                      {/* To remove (top) */}
-                      <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-semibold text-c-text-secondary">
-                            {t('initiatives.toRemove2')} ({commentsAiProposal.remove.length})
-                          </span>
-                          {commentsAiProposal.remove.length > 0 && (
-                            <button
-                              onClick={() =>
-                                setCommentsAiSelectedRemoveIds(
-                                  Object.fromEntries(
-                                    commentsAiProposal.remove.map((r) => [r.commentId, true])
-                                  ) as Record<string, boolean>
-                                )
-                              }
-                              className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
-                              disabled={isCommentsAIProposing}
-                            >
-                              {t('initiatives.selectAll2')}
-                            </button>
-                          )}
-                        </div>
-
-                        {commentsAiProposal.remove.length === 0 ? (
-                          <EmptyStateInline
-                            icon={Trash2}
-                            dashed={false}
-                            className="p-5"
-                            message={t('initiatives.noRemovalSuggestionsFromAi2')}
-                            hint={t('initiatives.ifTheThreadLooksGoodAi2')}
-                          />
-                        ) : (
-                          <div className="space-y-1.5">
-                            {commentsAiProposal.remove.map((r) => {
-                              const existing = comments.find(
-                                (c) => String((c as any)?.id) === String(r.commentId)
-                              );
-                              const title = existing
-                                ? String((existing as any)?.content || '').slice(0, 120)
-                                : r.commentId;
-                              return (
-                                <label
-                                  key={r.commentId}
-                                  className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={!!commentsAiSelectedRemoveIds[r.commentId]}
-                                    onChange={(e) =>
-                                      setCommentsAiSelectedRemoveIds((prev) => ({
-                                        ...prev,
-                                        [r.commentId]: e.target.checked,
-                                      }))
-                                    }
-                                    className="mt-1"
-                                    disabled={isCommentsAIProposing}
-                                  />
-                                  <div className="min-w-0">
-                                    <span className="text-sm font-medium text-c-text">
-                                      {title || r.commentId}
-                                    </span>
-                                    <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
-                                      {r.reason}
-                                    </p>
-                                  </div>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* To add */}
-                      <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-semibold text-c-text-secondary">
-                            {t('initiatives.toAdd2')} ({commentsAiProposal.add.length})
-                          </span>
-                          {commentsAiProposal.add.length > 0 && (
-                            <button
-                              onClick={() =>
-                                setCommentsAiSelectedAddIdx(
-                                  Object.fromEntries(
-                                    commentsAiProposal.add.map((_a, idx) => [idx, true])
-                                  ) as Record<number, boolean>
-                                )
-                              }
-                              className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
-                              disabled={isCommentsAIProposing}
-                            >
-                              {t('initiatives.selectAll2')}
-                            </button>
-                          )}
-                        </div>
-
-                        {commentsAiProposal.add.length === 0 ? (
-                          <EmptyStateInline
-                            icon={Plus}
-                            dashed={false}
-                            className="p-5"
-                            message={t('initiatives.noAdditionsProposed2')}
-                            hint={t('initiatives.ifTheThreadIsCompleteAi2')}
-                          />
-                        ) : (
-                          <div className="space-y-1.5">
-                            {commentsAiProposal.add.map((a, idx) => (
-                              <label
-                                key={idx}
-                                className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={!!commentsAiSelectedAddIdx[idx]}
-                                  onChange={(e) =>
-                                    setCommentsAiSelectedAddIdx((prev) => ({
-                                      ...prev,
-                                      [idx]: e.target.checked,
-                                    }))
-                                  }
-                                  className="mt-1"
-                                  disabled={isCommentsAIProposing}
-                                />
-                                <div className="min-w-0">
-                                  <span className="text-sm font-medium text-c-text whitespace-pre-wrap">
-                                    {a.content}
-                                  </span>
-                                  {a.rationale ? (
-                                    <p className="text-[11px] text-c-text-muted mt-1">
-                                      {a.rationale}
-                                    </p>
-                                  ) : null}
-                                </div>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Plan (bottom) */}
-                      <Callout
-                        variant="purple"
-                        title={t('initiatives.plan2')}
-                        compact
-                        className="rounded-xl"
-                      >
-                        <ul className="list-disc pl-4 space-y-1">
-                          <li>
-                            {isPolish
-                              ? `Usuń zaznaczone komentarze: ${selectedRemoveCount}.`
-                              : `Remove selected comments: ${selectedRemoveCount}.`}
-                          </li>
-                          <li>
-                            {isPolish
-                              ? `Dodaj zaznaczone komentarze: ${selectedAddCount}.`
-                              : `Add selected comments: ${selectedAddCount}.`}
-                          </li>
-                        </ul>
-                      </Callout>
-                    </div>
-
-                    <div className="px-5 py-4 border-t border-c-border-subtle flex items-center justify-end gap-2">
-                      <button
-                        onClick={closeCommentsAIModal}
-                        disabled={isCommentsAIProposing}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
-                      >
-                        {t('initiatives.cancel2')}
-                      </button>
-                      <button
-                        onClick={() => void applyCommentsAIProposal()}
-                        disabled={isCommentsAIProposing}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-50"
-                      >
-                        {isCommentsAIProposing ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : null}
-                        {t('initiatives.apply2')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          );
-          break;
-        }
-
-        case 'activity-log': {
-          component = (
-            <ActivityLogCanvas
-              entries={nModeActivityEntries}
-              stats={nModeActivityStats}
-              typeMeta={nModeActivityTypeMeta}
-            />
-          );
-          break;
-        }
+        // SPEC-N §2.1 — sekcja `comments` NIE JEST już sekcją centrum
+        // (zarezerwowane id → prawy panel). Treść żyje w
+        // initiativeRightPanelSections. Modal propozycji AI dla komentarzy
+        // („Analizuj z AI" → dodaj/usuń) przeniesiony do korzenia RENDER —
+        // obok modala RAID — bo `fixed inset-0` i tak nie zależy od miejsca
+        // w drzewie, a tutaj przestałby się renderować razem z sekcją.
+        //
+        // Sekcja `activity-log` — j.w., zeszła do panelu jako `history`.
+        // Sekcja `evidence` — j.w. (§2.2), zeszła do panelu między
+        // Powiązania a Komentarze.
 
         case 'kpi': {
           component = (
@@ -8614,19 +8459,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           );
           break;
         }
-        case 'evidence': {
-          // HP-17: karta „Źródła i założenia" (EvidencePanelSection,
-          // artifactType='initiative'). Sekcja istnieje TYLKO za flagą
-          // ff_evidencePanel (patrz initiativeNSections) — brak brancha OFF.
-          component = (
-            <EvidencePanelSection
-              artifactType="initiative"
-              artifactId={initiativeId}
-              isPolish={isPolish}
-            />
-          );
-          break;
-        }
       }
 
       // Canon Blok C / P0-9: every section is wrapped so it carries a uniform
@@ -8828,7 +8660,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     watchers,
     history,
     nModeActivityEntries,
-    nModeActivityStats,
     nModeActivityTypeMeta,
     // CommentsCanvas state
     nModeComments,
@@ -8932,8 +8763,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // Suggested changes (Faza 4)
     suggestedChanges,
     suggestedChangesLoading,
-    handleResolveSuggestedChange,
-  ]);
+    handleResolveSuggestedChange,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
     const ordered = (() => {
@@ -9225,7 +9055,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } finally {
       setIsExporting(null);
     }
-  }, [buildExportMarkdown, effectiveExportSelection, initiative, isPolish]);
+  }, [buildExportMarkdown, effectiveExportSelection, initiative, isPolish, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   const handleExportReportPDF = useCallback(async () => {
     setIsExporting('pdf');
@@ -9251,7 +9081,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // No server-side deck exists for an ad-hoc initiative, so "Deck" opens the
     // in-app Present mode walk of the selected sections (reuses the same mapping).
     setShowExportDialog(false);
-    setPresentOpen(true);
+    setPresentationMode('fullscreen');
   }, []);
 
   const handleExportNotebook = useCallback(async () => {
@@ -9570,6 +9400,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const sectionBusy = activeSectionAiBusy;
     return [
       {
+        // Pakiet M7 pkt 5 — jedyne, co zostało po zdjętym z paska przycisku
+        // „Propose next steps". Ta sama funkcja (Teresa + kontekst inicjatywy),
+        // jedno wejście AI zamiast dwóch nierozróżnialnych (SPEC-N §2.6).
+        id: 'next-steps',
+        label: 'Propose next steps',
+        labelPl: 'Zaproponuj kolejne kroki',
+        icon: <ArrowRight size={14} />,
+        onClick: () => void handleProposeNextStepsWithAI(),
+        busy: false,
+      },
+      {
         id: 'fill-empty',
         label: 'Fill empty',
         labelPl: 'Uzupełnij puste',
@@ -9610,7 +9451,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         busy: sectionBusy,
       },
     ];
-  }, [activeSectionAiBusy, runActiveSectionAi, handleGenerateAI, activeNSection, isGeneratingAI]);
+  }, [
+    activeSectionAiBusy,
+    runActiveSectionAi,
+    handleGenerateAI,
+    activeNSection,
+    isGeneratingAI,
+    handleProposeNextStepsWithAI,
+  ]);
 
   // A11y (SPEC-A, unconditional): Esc closes the artifact (calls onBack), but
   // ONLY when it would otherwise do nothing else — skip when focus is in an
@@ -9628,7 +9476,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     showPhaseDropdown ||
     showApprovalWorkflow ||
     aiPanelOpen ||
-    presentOpen ||
+    isPresenting ||
     showExportDialog ||
     showCreateKpi ||
     showCreateResource ||
@@ -9660,6 +9508,329 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onBack, anyOverlayOpen]);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PRAWY PANEL ARTEFAKTU (SPEC-N §2.2 · SPEC-A §11.2)
+  // ════════════════════════════════════════════════════════════════════════
+  //
+  // DLACZEGO to powstało: inwentarz A1 wykazał, że Initiative — największa
+  // i najważniejsza karta w produkcie — jako JEDYNA z ciężkich kart nie miała
+  // prawego panelu W OGÓLE (`ArtifactRightPanel`: 0 użyć w tym pliku).
+  // Właściwości leżały jako POZIOMA SIATKA 7 PÓL pod nagłówkiem, a Komentarze
+  // i Dziennik aktywności były sekcjami canvas w lewej kolumnie — czyli pod
+  // zarezerwowanymi id, których §2.1 tam zabrania.
+  //
+  // KANONICZNA KOLEJNOŚĆ (§11.2, bez odstępstw):
+  //   Akcje · Właściwości · Powiązania · [Dowody] · Komentarze · Historia/AI
+  // Sekcja `evidence` to JEDYNE dozwolone rozszerzenie poza piątkę i zawsze
+  // stoi między Powiązaniami a Komentarzami (§2.2).
+  //
+  // STAN DOMYŚLNY (R3): otwarte są WYŁĄCZNIE „Akcje". Reszta zwinięta.
+  //
+  // ANTY-DUPLIKACJA (§2.6) — co świadomie NIE trafiło do panelu:
+  //   · Zapisz — nagłówek (NModeHeader.onSave) niesie zapis i wskaźnik stanu;
+  //     druga kopia to dokładnie defekt, który M4/M5/M6 mają wycinać.
+  //   · Primary cyklu życia — Menu 1, jeden slot, bez powtórzeń.
+  //   · Eksport i akcje destrukcyjne — kebab paska; nie dublujemy ich tutaj.
+  //   · Fork i Tryb pokazu ZESZŁY tu Z PASKA (były ikonami-only z tooltipem):
+  //     panel jest widoczny zawsze, pasek chowa je w Podglądzie — więc wg
+  //     reguły „zostaje tam, gdzie widać zawsze" ich domem jest panel.
+  const initiativeRightPanelSections: ArtifactRightPanelSection[] = useMemo(() => {
+    const dash = '—';
+    const rowKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle align-top';
+    const rowVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
+    const panelBtn =
+      'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
+
+    const fmtDateTime = (value?: string | null) => {
+      if (!value) return dash;
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return dash;
+      // Stały locale zamiast t('...') — klucz z nazwą locale istnieje tylko
+      // w pl/en, a w de/es/ja/ar i18next zwraca sam klucz → RangeError
+      // i cały ekran w error-boundary (realny wypadek 21.07, InterviewWorkspace).
+      return d.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    };
+
+    const sourceTitle = initiative?.source_title || initiative?.sourceTitle || null;
+    const relationRows: { label: string; value: string }[] = [
+      { label: t('initiatives.panel.tasks', 'Tasks'), value: `${tasksDone}/${tasks.length}` },
+      { label: t('initiatives.panel.decisions', 'Decisions'), value: String(decisions.length) },
+      { label: t('initiatives.panel.raid', 'RAID'), value: String(raidItems.length) },
+      { label: t('initiatives.artifacts2', 'Artifacts'), value: String(relatedArtifacts.length) },
+      {
+        label: t('initiatives.panel.attachments', 'Attachments'),
+        value: String(attachments.length + linkedItems.length),
+      },
+    ];
+    const hasRelations =
+      tasks.length +
+        decisions.length +
+        raidItems.length +
+        relatedArtifacts.length +
+        attachments.length +
+        linkedItems.length >
+        0 || !!sourceTitle;
+
+    return [
+      {
+        id: 'actions',
+        label: t('initiatives.panel.actions', 'Actions'),
+        icon: Sparkles,
+        defaultOpen: true,
+        children: (
+          <div className="flex flex-col gap-2">
+            <button type="button" onClick={() => void handleFork()} className={panelBtn}>
+              <GitFork size={14} className="text-c-text-muted" />
+              {t('initiatives.fork2')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPresentationMode('fullscreen')}
+              className={panelBtn}
+            >
+              <Monitor size={14} className="text-c-text-muted" />
+              {t('initiatives.panel.presentationMode', 'Presentation mode')}
+            </button>
+          </div>
+        ),
+      },
+      {
+        id: 'properties',
+        label: t('initiatives.panel.properties', 'Properties'),
+        icon: Flag,
+        defaultOpen: false,
+        children: (
+          // Pola pochodzą z `nModePropertyFields` — TEJ SAMEJ tablicy, którą
+          // wcześniej konsumował NModePropertiesStrip. Renderujemy je przez ich
+          // własne `render()`, więc status/priorytet/właściciel/termin
+          // pozostają EDYTOWALNE dokładnie jak w siatce. To przeniesienie
+          // miejsca, nie zamiana na tekst tylko-do-odczytu.
+          <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                {nModePropertyFields.map((field, idx) => {
+                  const last = idx === nModePropertyFields.length - 1;
+                  return (
+                    <tr key={field.id}>
+                      <td
+                        className={
+                          last ? rowKey.replace(' border-b border-c-border-subtle', '') : rowKey
+                        }
+                      >
+                        {isPolish ? field.label.pl : field.label.en}
+                      </td>
+                      <td
+                        className={
+                          last ? rowVal.replace(' border-b border-c-border-subtle', '') : rowVal
+                        }
+                      >
+                        {field.render ? field.render() : String(field.value ?? dash)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ),
+      },
+      {
+        id: 'relations',
+        label: t('initiatives.panel.relations', 'Relations'),
+        icon: Link2,
+        defaultOpen: false,
+        isEmpty: !hasRelations,
+        emptyLabel: t('initiatives.panel.noRelations', 'No relations'),
+        children: (
+          <div className="flex flex-col gap-2">
+            {sourceTitle ? (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-c-text-muted shrink-0">
+                  {t('initiatives.panel.source', 'Source')}
+                </span>
+                <span className="text-xs text-c-text truncate">{sourceTitle}</span>
+              </div>
+            ) : null}
+            {relationRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between gap-2">
+                <span className="text-xs text-c-text-muted shrink-0">{row.label}</span>
+                <span className="text-xs text-c-text tabular-nums">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        ),
+      },
+      {
+        // SPEC-N §2.2/§4A — warstwa dowodowa. Decyzja właściciela P2: dla
+        // Initiative OBOWIĄZKOWA. Sekcja jest bezwarunkowa; gdy dowodów nie ma,
+        // EvidencePanelSection pokazuje uczciwy stan pusty („Brak
+        // zarejestrowanych źródeł i założeń"). Sekcja UKRYTA byłaby gorsza niż
+        // pusta: ukrywanie sugeruje, że pytanie „skąd to wiecie?" nie istnieje.
+        id: 'evidence',
+        label: t('initiatives.panel.evidence', 'Sources & assumptions'),
+        icon: FileSearch,
+        defaultOpen: false,
+        children: (
+          <EvidencePanelSection
+            artifactType="initiative"
+            artifactId={initiativeId}
+            isPolish={isPolish}
+          />
+        ),
+      },
+      {
+        id: 'comments',
+        label: t('initiatives.panel.comments', 'Comments'),
+        icon: MessageSquare,
+        defaultOpen: false,
+        badge: comments.length,
+        children: (
+          <div className="flex flex-col gap-3">
+            {nModeComments.length === 0 ? (
+              <p className="text-xs italic text-c-text-muted">
+                {t('initiatives.panel.noComments', 'No comments')}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {nModeComments.slice(0, 8).map((c) => (
+                  <li key={c.id} className="flex flex-col gap-0.5 group/comment">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-xs font-semibold text-c-text truncate">
+                        {c.authorName || t('initiatives.panel.user', 'User')}
+                      </span>
+                      <span className="flex items-center gap-1 shrink-0">
+                        <span className="text-[11px] text-c-text-muted tabular-nums">
+                          {fmtDateTime(c.createdAt)}
+                        </span>
+                        {/* Usuwanie komentarza — było w CommentsCanvas
+                            (`onDeleteComment`). Bez tego zejście komentarzy do
+                            panelu odebrałoby użytkownikowi zdolność, a reguła
+                            mówi: znika DUPLIKAT, nie funkcja. */}
+                        {canEditCards ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(c.id)}
+                            aria-label={t('initiatives.panel.deleteComment', 'Delete comment')}
+                            title={t('initiatives.panel.deleteComment', 'Delete comment')}
+                            className="p-0.5 rounded text-c-text-muted opacity-0 group-hover/comment:opacity-100 focus-visible:opacity-100 hover:text-c-danger transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        ) : null}
+                      </span>
+                    </div>
+                    <p className="text-xs text-c-text-muted line-clamp-3">{c.content}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {/* Kompozytor ZOSTAJE w panelu — bez niego zejście komentarzy
+                z canvas do panelu byłoby utratą funkcji, a nie przeniesieniem
+                (§2.6: znika duplikat, nie zdolność). */}
+            {canEditCards ? (
+              <div className="flex flex-col gap-2 pt-1 border-t border-c-border-subtle">
+                <textarea
+                  value={nCommentDraft}
+                  onChange={(e) => setNCommentDraft(e.target.value)}
+                  rows={2}
+                  placeholder={t('initiatives.panel.commentPlaceholder', 'Add a comment…')}
+                  className="w-full rounded-lg border border-c-border-subtle bg-transparent px-2 py-1.5 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] resize-y"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleNModeSubmitComment}
+                    disabled={!nCommentDraft.trim()}
+                    className={`${panelBtn} flex-1`}
+                  >
+                    {t('initiatives.panel.addComment', 'Add')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => requestCommentsAi()}
+                    disabled={!canUseAi || isCommentsAIProposing}
+                    title={t('initiatives.panel.analyzeComments', 'Analyze comments with AI')}
+                    className={panelBtn}
+                  >
+                    {isCommentsAIProposing ? (
+                      <Loader2 size={14} className="animate-spin text-c-info" />
+                    ) : (
+                      <Sparkles size={14} className="text-c-info" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: 'history',
+        label: t('initiatives.panel.history', 'History / AI'),
+        icon: History,
+        defaultOpen: false,
+        badge: nModeActivityEntries.length,
+        isEmpty: nModeActivityEntries.length === 0,
+        emptyLabel: t('initiatives.panel.noHistory', 'No history'),
+        children: (
+          <ul className="flex flex-col gap-2.5">
+            {nModeActivityEntries.slice(0, 10).map((entry) => {
+              const meta = nModeActivityTypeMeta(entry.type);
+              return (
+                <li key={entry.id} className="flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5 text-c-text-muted">{meta.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-xs text-c-text truncate">{entry.description}</span>
+                      <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
+                        {fmtDateTime(entry.timestamp)}
+                      </span>
+                    </div>
+                    {entry.oldValue || entry.newValue ? (
+                      <span className="text-[11px] text-c-text-muted truncate">
+                        {entry.oldValue ?? dash} → {entry.newValue ?? dash}
+                      </span>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ),
+      },
+    ];
+  }, [
+    isPolish,
+    t,
+    initiative,
+    initiativeId,
+    nModePropertyFields,
+    nModeComments,
+    nModeActivityEntries,
+    nModeActivityTypeMeta,
+    comments.length,
+    tasks.length,
+    tasksDone,
+    decisions.length,
+    raidItems.length,
+    relatedArtifacts.length,
+    attachments.length,
+    linkedItems.length,
+    canEditCards,
+    canUseAi,
+    isCommentsAIProposing,
+    nCommentDraft,
+    handleFork,
+    handleNModeSubmitComment,
+    handleDeleteComment,
+    requestCommentsAi,
+  ]);
 
   // ==========================================
   // LOADING & ERROR STATES
@@ -9726,7 +9897,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // the InitiativeCompactPanel renders the compact card/scroll surface. (Verified W2-30c.)
   // NOTE: the "legacy D-mode cards + scroll" block further down (the ternary's else
   // branch) is dead code — 'c' is fully handled here before that ternary is reached.
-  if (presentationMode === 'c') {
+  if (densityMode === 'c') {
     // Standard C (ClickUp-style dense board) — unified with the Insight detail
     // view via the shared NModeCBoard, driven by the SAME section data as the
     // N-mode left-nav/canvas. Header keeps the mode toggle so the user can flip
@@ -9751,8 +9922,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onChat={handleOpenChat}
                 onClose={onBack || (() => {})}
                 statusDotColor={statusMeta.dotColor}
-                presentationMode={presentationMode}
-                onPresentationModeChange={setPresentationMode}
+                presentationMode={densityMode}
+                onPresentationModeChange={setDensityMode}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction
@@ -9769,20 +9940,32 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 }
               />
 
-              <div className="col-span-full space-y-0 mt-4">
-                {/* HP-8 workflow-engine status bar (initiative) — behind
-                    ff_artifactApprovalUi. At OFF this is null and the view
-                    renders 1:1 as before (no new DOM, no visual change). */}
-                {isArtifactApprovalUiEnabled() && initiativeId ? (
-                  <ArtifactApprovalStatusBar
-                    artifactType="initiative"
-                    artifactId={initiativeId}
-                    currentUserId={currentUser?.id}
-                    canReview
+              {/* SPEC-N §2.2 — panel jest częścią POWŁOKI, więc obowiązuje
+                  w OBU gęstościach (N i C), nie tylko w N. Pozioma siatka
+                  właściwości zniknęła też tutaj — pola żyją w sekcji
+                  „Właściwości" panelu. */}
+              <div className="col-span-full mt-4 flex gap-4 items-start">
+                <div className="flex-1 min-w-0 space-y-0">
+                  {/* HP-8 workflow-engine status bar (initiative) — behind
+                      ff_artifactApprovalUi. At OFF this is null and the view
+                      renders 1:1 as before (no new DOM, no visual change). */}
+                  {isArtifactApprovalUiEnabled() && initiativeId ? (
+                    <ArtifactApprovalStatusBar
+                      artifactType="initiative"
+                      artifactId={initiativeId}
+                      currentUserId={currentUser?.id}
+                      canReview
+                    />
+                  ) : null}
+                  <NModeCBoard sections={orderedNModeSectionsWithContent} />
+                </div>
+                <div className="hidden xl:block shrink-0 sticky top-6 self-start">
+                  <ArtifactRightPanel
+                    sections={initiativeRightPanelSections}
+                    className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                    ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                   />
-                ) : null}
-                <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
-                <NModeCBoard sections={orderedNModeSectionsWithContent} />
+                </div>
               </div>
             </div>
           </div>
@@ -9794,6 +9977,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
   // RENDER
   // ==========================================
+
+  // Liczniki zaznaczeń dla modala propozycji AI komentarzy. Były lokalne
+  // w `case 'comments'` — po zejściu komentarzy do prawego panelu (SPEC-N §2.1)
+  // modal renderuje się w korzeniu, więc liczniki muszą być tutaj.
+  const commentsAiSelectedAddCount = commentsAiProposal
+    ? commentsAiProposal.add.reduce(
+        (sum, _a, idx) => sum + (commentsAiSelectedAddIdx[idx] ? 1 : 0),
+        0
+      )
+    : 0;
+  const commentsAiSelectedRemoveCount = commentsAiProposal
+    ? commentsAiProposal.remove.reduce(
+        (sum, r) => sum + (commentsAiSelectedRemoveIds[r.commentId] ? 1 : 0),
+        0
+      )
+    : 0;
 
   return (
     <InitiativeContext.Provider value={contextValue}>
@@ -10013,11 +10212,219 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           </div>
         </div>
       )}
+      {/* AI proposal modal (Analyze with AI → add/remove) */}
+      {showCommentsAIModal && commentsAiProposal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle">
+              <div>
+                <h3 className="text-sm font-semibold text-c-text">
+                  {t('initiatives.proposedCommentChangesAi2')}
+                </h3>
+                <p className="text-[11px] text-c-text-muted mt-0.5">
+                  {t('initiatives.selectItemsToAddRemoveThen2')}
+                </p>
+              </div>
+              <button
+                onClick={closeCommentsAIModal}
+                className="p-2 rounded-lg text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
+                title={t('initiatives.close2')}
+                disabled={isCommentsAIProposing}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
+              {commentsAiProposal.note ? (
+                <Callout variant="purple" compact title={t('initiatives.ai2')}>
+                  {commentsAiProposal.note}
+                </Callout>
+              ) : null}
+
+              {/* To remove (top) */}
+              <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-c-text-secondary">
+                    {t('initiatives.toRemove2')} ({commentsAiProposal.remove.length})
+                  </span>
+                  {commentsAiProposal.remove.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setCommentsAiSelectedRemoveIds(
+                          Object.fromEntries(
+                            commentsAiProposal.remove.map((r) => [r.commentId, true])
+                          ) as Record<string, boolean>
+                        )
+                      }
+                      className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
+                      disabled={isCommentsAIProposing}
+                    >
+                      {t('initiatives.selectAll2')}
+                    </button>
+                  )}
+                </div>
+
+                {commentsAiProposal.remove.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Trash2}
+                    dashed={false}
+                    className="p-5"
+                    message={t('initiatives.noRemovalSuggestionsFromAi2')}
+                    hint={t('initiatives.ifTheThreadLooksGoodAi2')}
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {commentsAiProposal.remove.map((r) => {
+                      const existing = comments.find(
+                        (c) => String((c as any)?.id) === String(r.commentId)
+                      );
+                      const title = existing
+                        ? String((existing as any)?.content || '').slice(0, 120)
+                        : r.commentId;
+                      return (
+                        <label
+                          key={r.commentId}
+                          className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!commentsAiSelectedRemoveIds[r.commentId]}
+                            onChange={(e) =>
+                              setCommentsAiSelectedRemoveIds((prev) => ({
+                                ...prev,
+                                [r.commentId]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                            disabled={isCommentsAIProposing}
+                          />
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium text-c-text">
+                              {title || r.commentId}
+                            </span>
+                            <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
+                              {r.reason}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* To add */}
+              <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-c-text-secondary">
+                    {t('initiatives.toAdd2')} ({commentsAiProposal.add.length})
+                  </span>
+                  {commentsAiProposal.add.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setCommentsAiSelectedAddIdx(
+                          Object.fromEntries(
+                            commentsAiProposal.add.map((_a, idx) => [idx, true])
+                          ) as Record<number, boolean>
+                        )
+                      }
+                      className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
+                      disabled={isCommentsAIProposing}
+                    >
+                      {t('initiatives.selectAll2')}
+                    </button>
+                  )}
+                </div>
+
+                {commentsAiProposal.add.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Plus}
+                    dashed={false}
+                    className="p-5"
+                    message={t('initiatives.noAdditionsProposed2')}
+                    hint={t('initiatives.ifTheThreadIsCompleteAi2')}
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {commentsAiProposal.add.map((a, idx) => (
+                      <label
+                        key={idx}
+                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!commentsAiSelectedAddIdx[idx]}
+                          onChange={(e) =>
+                            setCommentsAiSelectedAddIdx((prev) => ({
+                              ...prev,
+                              [idx]: e.target.checked,
+                            }))
+                          }
+                          className="mt-1"
+                          disabled={isCommentsAIProposing}
+                        />
+                        <div className="min-w-0">
+                          <span className="text-sm font-medium text-c-text whitespace-pre-wrap">
+                            {a.content}
+                          </span>
+                          {a.rationale ? (
+                            <p className="text-[11px] text-c-text-muted mt-1">{a.rationale}</p>
+                          ) : null}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Plan (bottom) */}
+              <Callout
+                variant="purple"
+                title={t('initiatives.plan2')}
+                compact
+                className="rounded-xl"
+              >
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>
+                    {isPolish
+                      ? `Usuń zaznaczone komentarze: ${commentsAiSelectedRemoveCount}.`
+                      : `Remove selected comments: ${commentsAiSelectedRemoveCount}.`}
+                  </li>
+                  <li>
+                    {isPolish
+                      ? `Dodaj zaznaczone komentarze: ${commentsAiSelectedAddCount}.`
+                      : `Add selected comments: ${commentsAiSelectedAddCount}.`}
+                  </li>
+                </ul>
+              </Callout>
+            </div>
+
+            <div className="px-5 py-4 border-t border-c-border-subtle flex items-center justify-end gap-2">
+              <button
+                onClick={closeCommentsAIModal}
+                disabled={isCommentsAIProposing}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+              >
+                {t('initiatives.cancel2')}
+              </button>
+              <button
+                onClick={() => void applyCommentsAIProposal()}
+                disabled={isCommentsAIProposing}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+              >
+                {isCommentsAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
+                {t('initiatives.apply2')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="h-full overflow-y-auto bg-c-bg">
         {/* ═══════════════════════════════════════════════════════════════
             N-MODE RENDER
             ═══════════════════════════════════════════════════════════════ */}
-        {presentationMode === 'n' ? (
+        {densityMode === 'n' ? (
           <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <NModeHeader
@@ -10033,8 +10440,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onChat={handleOpenChat}
                 onClose={onBack || (() => {})}
                 statusDotColor={statusMeta.dotColor}
-                presentationMode={presentationMode}
-                onPresentationModeChange={setPresentationMode}
+                presentationMode={densityMode}
+                onPresentationModeChange={setDensityMode}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
                 primaryAction={
                   primaryLifecycleAction
@@ -10069,7 +10476,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     canReview
                   />
                 ) : null}
-                <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
+                {/* SPEC-N §2.2 / pakiet M7 pkt 1 — POZIOMA SIATKA 7 PÓL USUNIĘTA.
+                    Był tu <NModePropertiesStrip fields={nModePropertyFields} />:
+                    status · faza · następna brama · priorytet · właściciel ·
+                    termin · źródło, rozłożone poziomo pod nagłówkiem. To był
+                    „największa pojedyncza luka strukturalna" z inwentarza A1 —
+                    właściwości artefaktu należą do akordeonu prawego panelu,
+                    nie do pasa pod tytułem.
+                    Te SAME pola (ta sama tablica `nModePropertyFields`, te same
+                    `render()`, ta sama edytowalność) renderuje teraz sekcja
+                    „Właściwości" w initiativeRightPanelSections. */}
 
                 {statusDriftUi ? (
                   <Callout variant="warning" compact title={t('initiatives.statusDrift2')}>
@@ -10082,13 +10498,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <InitiativeDraftJourney
                     hasContent={!!(summary?.trim() || description?.trim() || symptomDraft?.trim())}
                     taskCount={tasks.length}
-                    advanceActionLabel={
-                      stripStatusActions[0]
-                        ? isPolish
-                          ? stripStatusActions[0].labelPl || stripStatusActions[0].label
-                          : stripStatusActions[0].label
-                        : null
-                    }
                     onFillWithAi={() => setAiPanelOpen(true)}
                     onPlanTasks={() => {
                       setHiddenSectionIds((prev) => {
@@ -10099,11 +10508,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       });
                       setActiveNSection('tasks');
                     }}
-                    onAdvance={
-                      stripStatusActions[0]
-                        ? () => void handleStatusAction(stripStatusActions[0])
-                        : undefined
-                    }
+                    /* SPEC-N §2.6 (anty-duplikacja) — `onAdvance` USUNIĘTE.
+                       Był to DOKŁADNIE ten sam handler co primary w Menu 1
+                       (handleStatusAction(stripStatusActions[0]) ≡
+                       handleStatusAction(primaryLifecycleAction)), renderowany
+                       drugi raz w pasku journey. Reguła: akcja zostaje tam,
+                       gdzie jest widoczna ZAWSZE — a pasek journey pokazuje się
+                       tylko w statusie DRAFT i tylko póki user go nie zamknie.
+                       Primary w nagłówku jest bezwarunkowy, więc to on zostaje.
+                       `advanceActionLabel` też zdjęte: bez `onAdvance` krok i tak
+                       nie miał akcji, a etykieta obiecywała przycisk (patrz
+                       InitiativeDraftJourney.tsx — `cta` bez handlera).
+                       Kroki „Uzupełnij AI" i „Zaplanuj zadania" zostają: one NIE
+                       mają odpowiednika w nagłówku. */
                     onDismiss={dismissDraftJourney}
                   />
                 )}
@@ -10302,77 +10719,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           </div>
                         )}
 
-                        {/* Slot 3 — Export ▾ (destination selector) */}
-                        <div className="relative">
-                          <ToolbarGhostButton
-                            icon={<Download size={14} />}
-                            onClick={() => setShowExportMenu((v) => !v)}
-                            aria-expanded={showExportMenu}
-                          >
-                            <span>{t('initiatives.export2')}</span>
-                            <ChevronDown size={12} className="opacity-60" />
-                          </ToolbarGhostButton>
-                          {showExportMenu && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-40"
-                                onClick={() => setShowExportMenu(false)}
-                              />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
-                                {(
-                                  [
-                                    {
-                                      id: 'notebook',
-                                      label: { en: '→ Notebook', pl: '→ Notatnik' },
-                                      icon: NotebookPen,
-                                      onClick: () => void handleExportNotebook(),
-                                    },
-                                    {
-                                      id: 'deck',
-                                      label: { en: '→ Presentation', pl: '→ Prezentacja' },
-                                      icon: Presentation,
-                                      onClick: () => handleExportDeck(),
-                                    },
-                                    {
-                                      id: 'pdf',
-                                      label: { en: '→ PDF', pl: '→ PDF' },
-                                      icon: FileType,
-                                      onClick: () => void handleExportReportPDF(),
-                                    },
-                                    {
-                                      id: 'markdown',
-                                      label: { en: '→ Markdown', pl: '→ Markdown' },
-                                      icon: FileDown,
-                                      onClick: () => handleExportMarkdown(),
-                                    },
-                                    {
-                                      id: 'more',
-                                      label: { en: 'Smart Export…', pl: 'Eksport zaawansowany…' },
-                                      icon: FileText,
-                                      onClick: () => setShowExportDialog(true),
-                                    },
-                                  ] as const
-                                ).map((item) => {
-                                  const ItemIcon = item.icon;
-                                  return (
-                                    <button
-                                      key={item.id}
-                                      type="button"
-                                      onClick={() => {
-                                        setShowExportMenu(false);
-                                        item.onClick();
-                                      }}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised/60 transition-colors"
-                                    >
-                                      <ItemIcon size={13} className="shrink-0 opacity-70" />
-                                      <span>{isPolish ? item.label.pl : item.label.en}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        {/* SPEC-N §2.4 / DOKTRYNA_GESTOSCI §1 — „Eksport ▾" ZDJĘTY z paska.
+                            Pasek miał 9 grup kontrolek przy limicie 5 widocznych.
+                            Eksport przeniesiony do kebaba jako JEDNO wejście
+                            („Eksport…"), które otwiera Smart Export — a ten jest
+                            NADZBIOREM dawnego rozwijanego menu (te same 4 cele:
+                            Markdown/PDF/Deck/Notatnik + wybór sekcji). Żadna
+                            zdolność nie znika, znika jeden slot z paska. */}
 
                         {/* ── Divider · active section · ─────────────────────── */}
                         <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
@@ -10421,107 +10774,129 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           <ReadEditToggle readMode={readMode} onChange={setReadMode} />
                         </div>
 
-                        {/* Slot 6/7 — Fork · Present */}
-                        <ToolbarIconButton
-                          icon={<GitFork size={14} />}
-                          tooltip={t('initiatives.fork2')}
-                          onClick={() => void handleFork()}
-                        />
-                        <ToolbarIconButton
-                          icon={<Monitor size={14} />}
-                          tooltip={t('initiatives.present2')}
-                          onClick={() => setPresentOpen(true)}
-                        />
+                        {/* SPEC-N §2.4 — Fork i Tryb pokazu ZDJĘTE z paska.
+                            Obie były przyciskami ikona-only z samym tooltipem, więc
+                            kosztowały slot, a i tak nie były odkrywalne bez najechania.
+                            Ich nowy dom to sekcja „Akcje" prawego panelu — z etykietą
+                            tekstową i widoczne zawsze (§2.6: jedna akcja = jedno
+                            miejsce, wygrywa to widoczne zawsze). */}
 
-                        {/* Kebab — destructive actions (Block / Cancel / Archive / Delete) */}
-                        {(destructiveStatusActions.length > 0 || canArchiveDoc || canDeleteDoc) && (
-                          <div className="relative">
-                            <ToolbarIconButton
-                              icon={<MoreVertical size={14} />}
-                              tooltip={t('initiatives.more2')}
-                              onClick={() => setShowToolbarKebab((v) => !v)}
-                              aria-expanded={showToolbarKebab}
-                            />
-                            {showToolbarKebab && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-40"
-                                  onClick={() => setShowToolbarKebab(false)}
-                                />
-                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
-                                  {destructiveStatusActions.map((sa) => {
-                                    const KebabIcon =
-                                      sa.targetStatus === InitiativeStatus.CANCELLED
-                                        ? XCircle
-                                        : sa.targetStatus === InitiativeStatus.BLOCKED
-                                          ? Ban
-                                          : AlertTriangle;
-                                    return (
-                                      <button
-                                        key={sa.targetStatus}
-                                        type="button"
-                                        disabled={isMutating}
-                                        onClick={() => {
-                                          setShowToolbarKebab(false);
-                                          void handleStatusAction(sa);
-                                        }}
-                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
-                                      >
-                                        <KebabIcon size={13} className="shrink-0" />
-                                        <span>{isPolish ? sa.labelPl : sa.label}</span>
-                                      </button>
-                                    );
-                                  })}
-                                  {canArchiveDoc && (
+                        {/* Kebab (Menu 3) — kolejność wg §6.4: najpierw akcja neutralna
+                            (Eksport…), potem separator, na końcu destrukcyjne
+                            (Block / Cancel / Archive / Delete). Kebab jest teraz
+                            bezwarunkowy: „Eksport…" istnieje zawsze, więc dawny warunek
+                            „są akcje destrukcyjne?" chowałby również eksport.
+
+                            GĘSTOŚĆ PASKA PO ZMIANIE (DOKTRYNA_GESTOSCI §1, limit 5):
+                            widoczne akcje = Sekcje ▾ · Nowy ▾ · AI sekcji ·
+                            Read/Edit · AI Consultant = 5. Poza limitem liczą się
+                            (bo nie są akcjami): pigułka nawigacji Menu 3, etykieta
+                            aktywnej sekcji i sam trigger kebaba. */}
+                        <div className="relative">
+                          <ToolbarIconButton
+                            icon={<MoreVertical size={14} />}
+                            tooltip={t('initiatives.more2')}
+                            onClick={() => setShowToolbarKebab((v) => !v)}
+                            aria-expanded={showToolbarKebab}
+                          />
+                          {showToolbarKebab && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowToolbarKebab(false)}
+                              />
+                              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
+                                {/* Grupa neutralna (§6.4) — zeszła tu z paska.
+                                      JEDNO wejście „Eksport…" zamiast rozwijanego
+                                      menu z 5 pozycjami: otwiera Smart Export,
+                                      który jest nadzbiorem tamtych celów.
+                                      Fork i Tryb pokazu NIE są tutaj — mieszkają
+                                      w sekcji „Akcje" prawego panelu (§2.6: jedna
+                                      akcja = jedno miejsce, wygrywa to widoczne
+                                      zawsze). */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setShowToolbarKebab(false);
+                                    setShowExportDialog(true);
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                                >
+                                  <Download size={13} className="shrink-0 opacity-70" />
+                                  <span>{t('initiatives.export2')}…</span>
+                                </button>
+                                {(destructiveStatusActions.length > 0 ||
+                                  canArchiveDoc ||
+                                  canDeleteDoc) && (
+                                  <div className="my-1 border-t border-c-border-subtle" />
+                                )}
+                                {destructiveStatusActions.map((sa) => {
+                                  const KebabIcon =
+                                    sa.targetStatus === InitiativeStatus.CANCELLED
+                                      ? XCircle
+                                      : sa.targetStatus === InitiativeStatus.BLOCKED
+                                        ? Ban
+                                        : AlertTriangle;
+                                  return (
                                     <button
+                                      key={sa.targetStatus}
                                       type="button"
                                       disabled={isMutating}
                                       onClick={() => {
                                         setShowToolbarKebab(false);
-                                        void handleArchive();
-                                      }}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
-                                    >
-                                      <Archive size={13} className="shrink-0" />
-                                      <span>{t('initiatives.archiveAction')}</span>
-                                    </button>
-                                  )}
-                                  {canDeleteDoc && (
-                                    <button
-                                      type="button"
-                                      disabled={isMutating}
-                                      onClick={() => {
-                                        setShowToolbarKebab(false);
-                                        void handleDelete();
+                                        void handleStatusAction(sa);
                                       }}
                                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
                                     >
-                                      <Trash2 size={13} className="shrink-0" />
-                                      <span>{t('initiatives.delete2')}</span>
+                                      <KebabIcon size={13} className="shrink-0" />
+                                      <span>{isPolish ? sa.labelPl : sa.label}</span>
                                     </button>
-                                  )}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )}
+                                  );
+                                })}
+                                {canArchiveDoc && (
+                                  <button
+                                    type="button"
+                                    disabled={isMutating}
+                                    onClick={() => {
+                                      setShowToolbarKebab(false);
+                                      void handleArchive();
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+                                  >
+                                    <Archive size={13} className="shrink-0" />
+                                    <span>{t('initiatives.archiveAction')}</span>
+                                  </button>
+                                )}
+                                {canDeleteDoc && (
+                                  <button
+                                    type="button"
+                                    disabled={isMutating}
+                                    onClick={() => {
+                                      setShowToolbarKebab(false);
+                                      void handleDelete();
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
+                                  >
+                                    <Trash2 size={13} className="shrink-0" />
+                                    <span>{t('initiatives.delete2')}</span>
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
 
-                        {/* #33 — contextual AI-CTA ("Propose next steps"), opens the
-                            ONE docked Teresa panel via useOpenChatWithContext (D17).
-                            Deliberately separate from Slot 9 below, which still opens
-                            the legacy AIConsultantPanel (out of scope migration). */}
-                        {!readMode && (
-                          <ToolbarGhostButton
-                            onClick={() => void handleProposeNextStepsWithAI()}
-                            title={t(
-                              'initiatives.proposeNextStepsTitle',
-                              'Discuss next steps for this initiative with Teresa'
-                            )}
-                            icon={<Sparkles size={13} />}
-                          >
-                            <span>{t('initiatives.proposeNextSteps', 'Propose next steps')}</span>
-                          </ToolbarGhostButton>
-                        )}
+                        {/* SPEC-N §2.6 + pakiet M7 pkt 5 — DWA WEJŚCIA AI-CHAT SCALONE.
+                            Był tu drugi przycisk („Propose next steps"), który otwierał
+                            Teresę przez useOpenChatWithContext, obok przycisku poniżej
+                            otwierającego AIConsultantPanel. Kod sam przyznawał ten dług:
+                            „Deliberately separate… out of scope migration". Dla
+                            użytkownika były to dwa nierozróżnialne przyciski z tą samą
+                            ikoną Sparkles.
+                            Rozstrzygnięcie: JEDNO wejście AI = przycisk poniżej.
+                            Funkcja nie znika — „Zaproponuj kolejne kroki" jest teraz
+                            pierwszą akcją w AIConsultantPanel (patrz aiConsultantActions),
+                            czyli dokładnie tam, gdzie użytkownik szuka akcji AI. */}
 
                         {/* ── Slot 9: artifact-level AI (solid teal).
                             Read = ukryte: Podgląd ma być czysty do pokazania
@@ -10551,51 +10926,62 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   })()}
                 </div>
 
-                {/* LeftNav + Canvas */}
-                <div className="flex gap-0 min-h-[60vh]">
-                  <NModeLeftNav
-                    sections={orderedNModeSectionsWithContent}
-                    activeSection={activeNSection}
-                    onSectionChange={setActiveNSection}
-                    onSectionReorder={handleNModeSectionReorder}
-                  />
-                  <div className="flex-1 min-w-0 flex flex-col">
-                    {/* Active-section header — Mark Complete (Canon Warstwa 4 ·
+                {/* LeftNav + Canvas + dokowany prawy panel (SPEC-A §11.2).
+                    Panel ukryty <xl, żeby nie ściskać centrum na wąskich
+                    ekranach — ten sam próg co w TaskDetailView. */}
+                <div className="flex gap-4 min-h-[60vh] items-start">
+                  <div className="flex-1 min-w-0 flex gap-0">
+                    <NModeLeftNav
+                      sections={orderedNModeSectionsWithContent}
+                      activeSection={activeNSection}
+                      onSectionChange={setActiveNSection}
+                      onSectionReorder={handleNModeSectionReorder}
+                    />
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      {/* Active-section header — Mark Complete (Canon Warstwa 4 ·
                         SectionCard). Moved out of the toolbar; AI-signal only,
                         success-green, never locks fields. Nav ✓ + progress bar
                         stay wired via sectionCompletions + handleToggleSectionComplete. */}
-                    {activeNSection !== 'activity-log' && activeNSection !== 'comments' && (
-                      <div className="flex items-center justify-end px-1 pb-3">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleSectionComplete(activeNSection)}
-                          title={
-                            sectionCompletions[activeNSection]
-                              ? t('initiatives.markSectionAsNotComplete2')
-                              : t('initiatives.markSectionAsComplete2')
-                          }
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                            sectionCompletions[activeNSection]
-                              ? 'border-success-400/50 text-success-700 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20 hover:bg-success-100/60'
-                              : 'border-c-border-strong text-c-text-secondary hover:bg-c-surface-raised/60'
-                          }`}
-                        >
-                          {sectionCompletions[activeNSection] ? (
-                            <Undo2 size={13} />
-                          ) : (
-                            <CheckCircle2 size={13} />
-                          )}
-                          <span>
-                            {sectionCompletions[activeNSection]
-                              ? t('initiatives.reopen2')
-                              : t('initiatives.markComplete2')}
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                    <NModeCanvas
-                      sections={orderedNModeSectionsWithContent}
-                      activeSection={activeNSection}
+                      {activeNSection !== 'activity-log' && activeNSection !== 'comments' && (
+                        <div className="flex items-center justify-end px-1 pb-3">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSectionComplete(activeNSection)}
+                            title={
+                              sectionCompletions[activeNSection]
+                                ? t('initiatives.markSectionAsNotComplete2')
+                                : t('initiatives.markSectionAsComplete2')
+                            }
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              sectionCompletions[activeNSection]
+                                ? 'border-success-400/50 text-success-700 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20 hover:bg-success-100/60'
+                                : 'border-c-border-strong text-c-text-secondary hover:bg-c-surface-raised/60'
+                            }`}
+                          >
+                            {sectionCompletions[activeNSection] ? (
+                              <Undo2 size={13} />
+                            ) : (
+                              <CheckCircle2 size={13} />
+                            )}
+                            <span>
+                              {sectionCompletions[activeNSection]
+                                ? t('initiatives.reopen2')
+                                : t('initiatives.markComplete2')}
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                      <NModeCanvas
+                        sections={orderedNModeSectionsWithContent}
+                        activeSection={activeNSection}
+                      />
+                    </div>
+                  </div>
+                  <div className="hidden xl:block shrink-0 sticky top-6 self-start">
+                    <ArtifactRightPanel
+                      sections={initiativeRightPanelSections}
+                      className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                      ariaLabel={t('initiatives.panel.ariaLabel', 'Initiative details')}
                     />
                   </div>
                 </div>
@@ -10606,11 +10992,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       </div>
 
       {/* ── Present mode (Phase A3) — fullscreen card walk of canonical sections ── */}
-      {presentOpen && presentDeckCards.length > 0 && (
+      {isPresenting && presentDeckCards.length > 0 && (
         <PresentMode
           cards={presentDeckCards}
           title={String(initiative?.title || initiative?.name || 'Initiative')}
-          onExit={() => setPresentOpen(false)}
+          onExit={() => setPresentationMode('off')}
         />
       )}
 

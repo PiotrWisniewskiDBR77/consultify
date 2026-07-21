@@ -43,7 +43,8 @@ import {
   Radio,
   RefreshCw,
   Rocket,
-  Save,
+  // (usunięte) Save — ikona obsługiwała wyłącznie zdublowany przycisk Zapisz
+  // w sekcji Akcje prawego panelu (SPEC-N §2.6); zapis żyje w nagłówku.
   Scale,
   Send,
   ShieldAlert,
@@ -78,8 +79,9 @@ import {
 } from '@/components/shared/NModeLayout';
 import { AddCardMenu } from '@/components/shared/NModeLayout/NModeCardManager';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+// ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
+// nic nie jest solid; AI Consultant zjechał na wariant outline/split).
 import {
-  ToolbarAISolidButton,
   ToolbarAISplitButton,
   ToolbarGhostButton,
 } from '@/components/shared/NModeLayout/NModeToolbar';
@@ -756,11 +758,12 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     label: { en: 'Quality & Trust', pl: 'Jakość i zaufanie' },
     cSpan: 2,
   },
-  // TODO(#23c): move Comments into a drawer / secondary affordance and Activity
-  // into the header meta line; kept as Audit sections for now to avoid losing
-  // the existing CommentsCanvas / ActivityLogCanvas wiring.
-  { id: 'comments', icon: MessageSquare, label: { en: 'Comments', pl: 'Komentarze' } },
-  { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' }, cSpan: 2 },
+  // TODO(#23c) WYKONANY 2026-07-21 (SPEC-N §2.1 — zarezerwowane identyfikatory):
+  // `comments` i `activity-log` NIE MOGĄ być sekcją lewej kolumny — należą
+  // wyłącznie do prawego panelu. Do dziś renderowały się DWA RAZY: pełny canvas
+  // w centrum + skrót w panelu (§2.6 anty-duplikacja). Wpisy nav usunięte;
+  // treść nie zginęła — CommentsCanvas przeniesiony w PEŁNEJ formie do sekcji
+  // `comments` prawego panelu, aktywność do sekcji `history` (bez obcięcia).
 
   // ── Phase D: Canon sections → 23/23 ─────────────────────────────────────────
   {
@@ -1973,8 +1976,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     isPolish,
     readbackSummary.challenged,
     readbackSummary.unresolved,
-    v6Signals,
-  ]);
+    v6Signals,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   const analysisTopicsById = useMemo(
     () =>
@@ -2370,8 +2372,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     seedTeresaPrompt,
     setChatSystemPrompt,
     setChatContextActions,
-    openChatWithContext,
-  ]);
+    openChatWithContext,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   // Sprzątanie: akcje kontekstowe insightu nie mogą wyciekać do innych modułów.
   useEffect(() => {
@@ -2959,8 +2960,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     draftPriority,
     insightId,
     isPolish,
-    (currentUser as any)?.name,
-  ]);
+    (currentUser as any)?.name,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
   const handleDeleteComment = useCallback(
     (commentId: string) => {
@@ -3796,7 +3796,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             reportPack.status === 'in_review' ||
                             reportPack.status === 'published'
                           }
-                          className="rounded-xl bg-navy-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-navy-900"
+                          // SPEC-N §2.3 — poza slotem primary (nagłówek:
+                          // „Konwertuj na inicjatywę") żaden element powierzchni
+                          // artefaktu nie jest solid/filled. Był solid navy/biały
+                          // na całą szerokość; teraz neutralny outline na tokenach
+                          // c-* (ta sama akcja, słabszy głos wizualny).
+                          className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs font-semibold text-c-text transition hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {reportReviewSubmitting
                             ? t('interview.insightViewer.submitting')
@@ -6215,38 +6220,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
         // (removed) attachments-links — no backend contract for insight attachments/links
 
-        case 'comments':
-          component = (
-            <CommentsCanvas
-              comments={filteredComments}
-              onDeleteComment={handleDeleteComment}
-              dateFilter={commentDateFilter}
-              onDateFilterChange={setCommentDateFilter}
-              sortOrder={commentSortOrder}
-              onToggleSort={() => setCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
-              commentDraft={commentDraft}
-              onCommentDraftChange={setCommentDraft}
-              onSubmitComment={handleSubmitComment}
-              draftPriority={draftPriority}
-              onDraftPriorityChange={setDraftPriority}
-              getPriorityDotClass={getPriorityDotClass}
-              getCommentPriority={getCommentPriority}
-              getPriorityButtonClass={getPriorityButtonClass}
-              getCommentPriorityLabel={getCommentPriorityLabel}
-              getCommentPriorityHint={getCommentPriorityHint}
-            />
-          );
-          break;
-
-        case 'activity-log':
-          component = (
-            <ActivityLogCanvas
-              entries={nModeActivityEntries}
-              stats={activityStats}
-              typeMeta={activityTypeMeta}
-            />
-          );
-          break;
+        // (przeniesione) comments / activity-log — SPEC-N §2.1: zarezerwowane
+        // id nie renderują się w centrum. CommentsCanvas i lista aktywności
+        // żyją teraz w prawym panelu (rightPanelSections: 'comments' / 'history').
 
         // ── #22c — Consensus & Divergence Matrix ──────────────────────────────
         case 'consensus-divergence': {
@@ -7214,10 +7190,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         ? reportPack.degradedReasons.length || 1
         : reportPack?.worksheets.length,
       'candidate-triage': candidates.length || undefined,
-      comments: nComments.length,
+      // (SPEC-N §2.1) comments / activity-log nie są już sekcjami centrum —
+      // ich liczniki żyją na sekcjach prawego panelu.
       'material-quality': truthReviewSummary.publishBlockers.length || undefined,
       'source-pack': sourceSessions.length || undefined,
-      'activity-log': activityEntries.length,
       themes: v6Themes.length || undefined,
       'issues-risks': v6Issues.length || undefined,
       opportunities: v6Opportunities.length || undefined,
@@ -7234,13 +7210,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     // the one or two flagged alwaysShow.
     const definiteCounts: Record<string, number> = {
       'candidate-triage': candidates.length,
-      comments: nComments.length,
       themes: v6Themes.length,
       'issues-risks': v6Issues.length,
       opportunities: v6Opportunities.length,
       signals: v6Signals.length,
       'evidence-map': v6EvidenceMap.length,
-      'activity-log': activityEntries.length,
       // derived analytical sections — hidden until their data exists
       'consensus-divergence':
         consensusTopics.length + localOnlyTopics.length + contradictedTopics.length,
@@ -7318,10 +7292,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       'report-pack': 3,
       'consulting-narrative': 3,
       'executive-memo': 3,
-      // 4 — Audyt / Audit
+      // 4 — Audyt / Audit (comments/activity-log wyszły do prawego panelu, SPEC-N §2.1)
       'material-quality': 4,
-      comments: 4,
-      'activity-log': 4,
     };
 
     const order = groupLabels;
@@ -7857,61 +7829,39 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       return d.toISOString().slice(0, 10);
     }
   };
-  const fmtPanelDateTime = (v?: string) => {
-    if (!v) return panelDash;
-    const d = new Date(v);
-    if (Number.isNaN(d.getTime())) return v;
-    try {
-      return d.toLocaleString(panelLocale, {
-        day: '2-digit',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return d.toISOString().slice(0, 16).replace('T', ' ');
-    }
-  };
+  // (usunięte) fmtPanelDateTime — obsługiwało wyłącznie skróty komentarzy
+  // i historii w panelu; oba skróty zastąpione pełnymi canvasami (SPEC-N §2.1),
+  // które formatują daty same.
   const panelTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
   const panelTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
   const panelTdValLast = 'px-3 py-2 text-right text-c-text';
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
+      // SPEC-N §2.6 (anty-duplikacja: jedna akcja = jedno miejsce). Ta sekcja
+      // trzymała TRZY przyciski, z których KAŻDY miał drugie, zawsze widoczne
+      // wejście — ten sam handler renderowany dwa razy:
+      //   · Save            → nagłówek NModeShell (onSave + wskaźnik „Saved");
+      //   · Export          → toolbar, slot 3 „Export ▾" (openExportDialog);
+      //   · AI Consultant   → toolbar, slot 9 (openInsightConsultant).
+      // Reguła rozstrzygająca: zostaje miejsce widoczne ZAWSZE (nagłówek/toolbar),
+      // znika duplikat w panelu. Funkcja użytkownikowi nie znika — zmienia się
+      // tylko liczba wejść z dwóch na jedno.
+      //
+      // ⚠ DO ROZSTRZYGNIĘCIA PRZEZ WŁAŚCICIELA: po usunięciu trzech duplikatów
+      // w tej sekcji nie zostaje ŻADNA akcja, która nie byłaby duplikatem.
+      // Sekcja `actions` jest wymaganym kluczem panelu (SPEC-N §2.2), więc
+      // zostaje z uczciwym stanem pustym zamiast zniknąć po cichu — pustka jest
+      // widoczna na zrzucie i czeka na decyzję CO ma tu mieszkać. Strefa
+      // „Co dalej" (create-targets, ArtifactActionPanel) świadomie NIE jest tu
+      // przenoszona — to create-strip centrum wg §7.3a.
       id: 'actions',
       label: t('interview.insightViewer.actions'),
       icon: Sparkles,
       defaultOpen: true,
-      children: (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => handleSave()}
-            disabled={saving}
-            className="col-span-2 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-          >
-            <Save size={14} className="text-c-text-muted" />
-            {t('interview.insightViewer.save')}
-          </button>
-          <button
-            type="button"
-            onClick={openExportDialog}
-            disabled={exportRunning || !insight?.id}
-            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-          >
-            <Download size={14} className="text-c-text-muted" />
-            {t('interview.insightViewer.export')}
-          </button>
-          <button
-            type="button"
-            onClick={openInsightConsultant}
-            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-          >
-            <Sparkles size={14} className="text-c-text-muted" />
-            {t('interview.insightViewer.aiConsultant')}
-          </button>
-        </div>
-      ),
+      isEmpty: true,
+      emptyLabel: t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
+      children: null,
     },
     {
       id: 'properties',
@@ -8043,57 +7993,54 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       ),
     },
     {
+      // SPEC-N §2.1 + §2.6 — komentarze mieszkają WYŁĄCZNIE tutaj. Do 2026-07-21
+      // panel pokazywał skrót (6 pozycji, tylko do odczytu), a pełny CommentsCanvas
+      // stał drugi raz w lewej nawigacji. Skasowanie centrum bez przeniesienia
+      // canvasu odebrałoby użytkownikowi dodawanie/kasowanie/filtr/sortowanie
+      // komentarzy — a znikać ma DUPLIKAT, nie funkcja. Dlatego panel dostaje
+      // canvas w PEŁNEJ formie (ten sam komponent, te same handlery).
       id: 'comments',
       label: t('interview.insightViewer.comments'),
       icon: MessageSquare,
       defaultOpen: false,
       badge: nComments.length,
-      isEmpty: nComments.length === 0,
-      emptyLabel: t('interview.insightViewer.noComments'),
       children: (
-        <ul className="flex flex-col gap-3">
-          {nComments.slice(0, 6).map((c) => (
-            <li key={c.id} className="flex flex-col gap-0.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-xs font-semibold text-c-text truncate">
-                  {c.authorName || t('interview.insightViewer.user')}
-                </span>
-                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
-                  {fmtPanelDateTime(c.createdAt)}
-                </span>
-              </div>
-              <p className="text-xs text-c-text-muted line-clamp-3">{c.content}</p>
-            </li>
-          ))}
-        </ul>
+        <CommentsCanvas
+          comments={filteredComments}
+          onDeleteComment={handleDeleteComment}
+          dateFilter={commentDateFilter}
+          onDateFilterChange={setCommentDateFilter}
+          sortOrder={commentSortOrder}
+          onToggleSort={() => setCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+          commentDraft={commentDraft}
+          onCommentDraftChange={setCommentDraft}
+          onSubmitComment={handleSubmitComment}
+          draftPriority={draftPriority}
+          onDraftPriorityChange={setDraftPriority}
+          getPriorityDotClass={getPriorityDotClass}
+          getCommentPriority={getCommentPriority}
+          getPriorityButtonClass={getPriorityButtonClass}
+          getCommentPriorityLabel={getCommentPriorityLabel}
+          getCommentPriorityHint={getCommentPriorityHint}
+        />
       ),
     },
     {
+      // SPEC-N §2.1 + §2.6 — dziennik aktywności mieszka WYŁĄCZNIE tutaj.
+      // Analogicznie do komentarzy: panel pokazywał skrót (8 wpisów), a pełny
+      // ActivityLogCanvas stał drugi raz w lewej nawigacji. Zostaje canvas
+      // (wszystkie wpisy + karty statystyk + ikony typów), znika duplikat.
       id: 'history',
       label: t('interview.insightViewer.historyAi'),
       icon: History,
       defaultOpen: false,
       badge: activityEntries.length,
-      isEmpty: activityEntries.length === 0,
-      emptyLabel: t('interview.insightViewer.noHistory'),
       children: (
-        <ul className="flex flex-col gap-2.5">
-          {activityEntries.slice(0, 8).map((entry) => (
-            <li key={entry.id} className="flex flex-col gap-0.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-xs text-c-text truncate">{entry.description}</span>
-                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
-                  {fmtPanelDateTime(entry.timestamp)}
-                </span>
-              </div>
-              {entry.oldValue || entry.newValue ? (
-                <span className="text-[11px] text-c-text-muted truncate">
-                  {entry.oldValue ?? panelDash} → {entry.newValue ?? panelDash}
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <ActivityLogCanvas
+          entries={nModeActivityEntries}
+          stats={activityStats}
+          typeMeta={activityTypeMeta}
+        />
       ),
     },
   ];
@@ -8442,15 +8389,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 />
               )}
 
-              {/* Slot 9 — AI Consultant (solid teal). #56 (D17): otwiera JEDEN
-                  docked panel Teresy z kontekstem insightu + 5 akcji jako
-                  przyciski komend wewnątrz Teresy (openInsightConsultant), zamiast
-                  osobnego AIConsultantPanel. Stays teal/solid.
-                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji AI. */}
+              {/* Slot 9 — AI Consultant. #56 (D17): otwiera JEDEN docked panel
+                  Teresy z kontekstem insightu + 5 akcji jako przyciski komend
+                  wewnątrz Teresy (openInsightConsultant), zamiast osobnego
+                  AIConsultantPanel.
+                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji AI.
+
+                  2026-07-21 (SPEC-N §2.3): był `ToolbarAISolidButton` (solid teal).
+                  Formalnie zgodne — primary jest jeden, w nagłówku („Konwertuj na
+                  inicjatywę") — ale WIZUALNIE solid-teal konkurował z tym primary
+                  o uwagę. Reguła mówi o wyglądzie, nie o deklaracji: poza slotem
+                  primary żaden element nie jest solid/filled. Stąd stonowane do
+                  wariantu outline (`ToolbarAISplitButton` — teal border, ten sam
+                  akcent AI, zero czerwieni). Jedyne wejście do konsultanta AI —
+                  bliźniak w prawym panelu usunięty (§2.6). */}
               {!readMode && (
                 <>
                   <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
-                  <ToolbarAISolidButton
+                  <ToolbarAISplitButton
                     icon={<Sparkles size={14} />}
                     onClick={() => {
                       setExportMenuOpen(false);
@@ -8461,7 +8417,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     title={t('interview.insightViewer.aiConsultant')}
                   >
                     {t('interview.insightViewer.aiConsultant')}
-                  </ToolbarAISolidButton>
+                  </ToolbarAISplitButton>
                 </>
               )}
             </div>
@@ -8603,7 +8559,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <button
                   onClick={() => handleHandoffSubmit('create')}
                   disabled={handoffSubmitting}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+                  // SPEC-N §2.3 dotyczy POWIERZCHNI ARTEFAKTU (nagłówek·toolbar·
+                  // panel·centrum). To jest MODAL — osobna powierzchnia z własnym,
+                  // dokładnie jednym slotem primary („Utwórz nową inicjatywę");
+                  // drugi przycisk obok jest neutralny. Degradacja potwierdzenia
+                  // dialogu do outline byłaby regresją afordancji, nie porządkiem,
+                  // więc świadomie zostaje solid i jest oznaczona furtką bramki.
+                  // DO OBEJRZENIA PRZEZ WŁAŚCICIELA: jeśli reguła ma obejmować też
+                  // modale — zdejmij `karty-n-ok` i przenieś na tokeny neutralne.
+                  className={
+                    'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50' /* karty-n-ok */
+                  }
                 >
                   {handoffSubmitting ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -8825,7 +8791,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <button
                     onClick={runSmartExport}
                     disabled={exportRunning || exportSelectedIds.size === 0}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+                    // Jak wyżej (modal Smart Export): osobna powierzchnia, własny
+                    // jeden primary („Eksportuj") + neutralne „Anuluj". SPEC-N §2.3
+                    // adresuje powierzchnię artefaktu, nie dialogi — furtka bramki
+                    // z uzasadnieniem zamiast cichego naruszenia.
+                    className={
+                      'flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50' /* karty-n-ok */
+                    }
                   >
                     {exportRunning ? (
                       <Loader2 size={14} className="animate-spin" />

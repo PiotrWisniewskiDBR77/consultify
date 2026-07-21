@@ -1,8 +1,23 @@
-import { ArrowRight, CheckCircle2, FileText, HelpCircle, Lightbulb, Target } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  FileText,
+  HelpCircle,
+  Lightbulb,
+  Link2,
+  RefreshCw,
+  SlidersHorizontal,
+  Target,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
@@ -46,20 +61,37 @@ export function KnownToolDetailView(props: {
   const [loading, setLoading] = useState(true);
   const [tool, setTool] = useState<KnownTool | null>(null);
   const [starting, setStarting] = useState(false);
+  // SPEC-N §2.2 / DoD §18.1 — UCZCIWY STAN BŁĘDU.
+  // Wcześniej błąd API ustawiał tool=null i komponent leciał dalej do gałęzi
+  // domyślnej `sections`, renderując PEŁNĄ treść instruktażową tak, jakby dane
+  // się wczytały. To jest kłamstwo wobec użytkownika: widzi kompletny ekran,
+  // choć narzędzia nie ma. Teraz błąd ma własny stan i własny render.
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Licznik ponowień — bump wywołuje useEffect ponownie. Świadomie licznik,
+  // a nie wyciągnięty `useCallback` z loaderem: zero ryzyka TDZ/nieaktualnego
+  // domknięcia (lekcja fali N — `ReferenceError` przechodzący esbuild i tsc).
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const res = await Api.getKnownTool(toolType, { lang });
         if (!alive) return;
+        if (!res?.tool) {
+          setTool(null);
+          setLoadError('empty');
+          return;
+        }
         setTool(res.tool);
         trackFunnelEvent('known_tool_viewed', { toolType });
       } catch (e: any) {
         if (!alive) return;
         toast.error(e?.message || 'Failed to load tool');
         setTool(null);
+        setLoadError(e?.message || 'error');
       } finally {
         if (alive) setLoading(false);
       }
@@ -67,7 +99,7 @@ export function KnownToolDetailView(props: {
     return () => {
       alive = false;
     };
-  }, [toolType, lang]);
+  }, [toolType, lang, reloadKey]);
 
   const openKb = () => {
     setKnowledgeModuleIdOverride(toolType);
@@ -127,23 +159,31 @@ export function KnownToolDetailView(props: {
         readOnly: true,
       },
     ];
-  }, [isPolish, tool, toolType]);
+  }, [isPolish, tool, toolType, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
+  // SPEC-N §2.3 — dokładnie jeden primary, w nagłówku (Menu 1).
+  // „Startuj sesję" to GŁÓWNE CTA tej karty: cała karta jest bazą wiedzy, której
+  // jedynym wyjściem do pracy jest utworzenie sesji narzędzia. Dlatego akcja
+  // idzie do `header.primaryAction` (niżej), a NIE do toolbara.
+  const primaryAction = useMemo(
+    () => ({
+      label: { en: 'Start session', pl: 'Startuj sesję' },
+      icon: ArrowRight,
+      onClick: startSession,
+      disabled: starting || !tool || !tool.isActive,
+      title: {
+        en: 'Create a tool session and start working',
+        pl: 'Utwórz sesję narzędzia i rozpocznij pracę',
+      },
+    }),
+    [tool, starting]
+  );
+
+  // SPEC-N §2.6 (anty-duplikacja): „Startuj sesję" ŚWIADOMIE nie występuje tutaj —
+  // żyje wyłącznie w slocie primary nagłówka. Toolbar niesie już tylko akcję
+  // drugorzędną. Jedna akcja = jedno miejsce.
   const actions: NModeAction[] = useMemo(
     () => [
-      {
-        id: 'start',
-        label: { en: 'Start session', pl: 'Startuj sesję' },
-        icon: ArrowRight,
-        variant: 'success',
-        onClick: startSession,
-        disabled: starting || !tool || !tool.isActive,
-        loading: starting,
-        title: {
-          en: 'Create a tool session and start working',
-          pl: 'Utwórz sesję narzędzia i rozpocznij pracę',
-        },
-      },
       {
         id: 'help',
         label: { en: 'How to / Knowledge base', pl: 'How to / Baza wiedzy' },
@@ -1243,6 +1283,26 @@ export function KnownToolDetailView(props: {
       outcomes: 2, // 3-column outcome blocks
       example: 3, // wide 3-col case grids
     };
+    // ── SPEC-N §2.5 — KONTRAKT AI: jawne WYKLUCZENIE dla wszystkich 4 sekcji ──
+    // Reguła §2.5 mówi: każda sekcja deklaruje kontrakt AI albo jawne wykluczenie;
+    // milczenie jest zabronione. Tutaj deklarujemy wykluczenie —
+    //   aiContract: { none: true, reason: 'statyczna baza wiedzy' }
+    // dla goal · process · outcomes · example, we WSZYSTKICH sześciu wariantach
+    // narzędzi (wszystkie przechodzą przez ten jeden lejek `withGroup`).
+    //
+    // UZASADNIENIE (a nie tylko fakt): treść tych sekcji to kanoniczny opis
+    // metody doradczej pobierany z backendu (`Api.getKnownTool`) — identyczny dla
+    // każdego użytkownika i każdego projektu. Nie ma tu czego generować ani
+    // regenerować: AI pisząca „czym jest BCG matrix" produkowałaby wariancję tam,
+    // gdzie wariancja jest wadą. Karta Tool jest CZYTANA, nie współtworzona —
+    // treść współtworzona przez AI powstaje dopiero w SESJI narzędzia
+    // (przycisk primary „Startuj sesję"), która jest osobnym artefaktem.
+    //
+    // UWAGA dla następnej osoby: `NModeSection` nie ma dziś pola `aiContract`
+    // (typ w `shared/NModeLayout/types.ts`), a ten pakiet migracyjny ma zakaz
+    // edycji powłoki — więc deklaracja jest komentarzem, nie polem. Gdy fala F
+    // doda `aiContract` do typu (SPEC-N §5.1), przenieś ją tutaj jako pole:
+    // to jest jedyne miejsce, które trzeba zmienić.
     const withGroup = (list: NModeSection[]): NModeSection[] =>
       list.map((section) => ({
         ...section,
@@ -1421,7 +1481,115 @@ export function KnownToolDetailView(props: {
         component: exampleSection,
       },
     ]);
-  }, [tool, isPolish, toolType]);
+  }, [tool, isPolish, toolType, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+
+  // ── SPEC-N §2.2 — PRAWY PANEL (wcześniej nie istniał w ogóle) ──────────────
+  // Właściwości renderowały się jako `NModePropertiesStrip` (pozioma listwa pod
+  // nagłówkiem) — dokładnie ten anty-wzorzec, który §2.2 nazywa „brakiem całej
+  // struktury". Teraz jedno źródło (`properties`) zasila panel, a `properties`
+  // NIE jest już przekazywane do NModeShell, więc listwa znika (§2.6: jedna
+  // treść = jedno miejsce; powłoka pomija strip, gdy prop pominięty).
+  //
+  // Kolejność sekcji wg kanonu §11.2: Właściwości · Powiązania.
+  // ŚWIADOMIE NIEOBECNE:
+  //  · Akcje   — obie akcje karty mają już swoje jedyne miejsce (primary
+  //              w nagłówku, „Baza wiedzy" w toolbarze). Sekcja Akcje byłaby
+  //              trzecią kopią tych samych handlerów — złamanie §2.6.
+  //  · Komentarze — karta Tool nie jest artefaktem współpracy (to wspólna baza
+  //              wiedzy, nie obiekt jednego zespołu); nie ma czego komentować.
+  //  · Historia — karta jest READ-ONLY, nie ma zdarzeń edycji do pokazania.
+  //              Zgodnie z zakresem pakietu M1: sekcja NIEOBECNA, a nie pusta
+  //              ramka — pusty akordeon udaje funkcję, której nie ma.
+  const rightPanelSections: ArtifactRightPanelSection[] = useMemo(() => {
+    // Ostatni wiersz bez dolnej krawędzi — ramka tabeli już ją rysuje.
+    const rowKey = (last: boolean) =>
+      `px-3 py-2 align-top text-c-text-muted${last ? '' : ' border-b border-c-border-subtle'}`;
+    const rowVal = (last: boolean) =>
+      `px-3 py-2 text-right text-c-text${last ? '' : ' border-b border-c-border-subtle'}`;
+    return [
+      {
+        id: 'properties',
+        label: t('discoveryToolsMain.knownToolDetailView.panelProperties', 'Properties'),
+        icon: SlidersHorizontal,
+        defaultOpen: true,
+        children: (
+          <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                {properties.map((field, idx) => {
+                  const last = idx === properties.length - 1;
+                  return (
+                    <tr key={field.id}>
+                      <td className={rowKey(last)}>
+                        {isPolish ? field.label.pl : field.label.en}
+                      </td>
+                      <td className={rowVal(last)}>{field.value || '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ),
+      },
+      {
+        id: 'relations',
+        label: t('discoveryToolsMain.knownToolDetailView.panelRelations', 'Relations'),
+        icon: Link2,
+        defaultOpen: false,
+        // UCZCIWIE PUSTE: `Api.getKnownTool` nie zwraca dziś żadnych powiązań
+        // (sesji/insightów/inicjatyw) dla narzędzia z biblioteki. Sekcja mówi
+        // wprost „brak", zamiast udawać dane albo znikać bez śladu.
+        isEmpty: true,
+        emptyLabel: t(
+          'discoveryToolsMain.knownToolDetailView.panelRelationsEmpty',
+          'No linked items yet — relations appear once you start a session.'
+        ),
+        children: null,
+      },
+    ];
+  }, [properties, isPolish, t]);
+
+  // ── SPEC-N §2.2 / DoD §18.1 — uczciwy stan błędu ──────────────────────────
+  // Musi stać PO wszystkich hookach (reguła kolejności hooków) i PRZED renderem
+  // powłoki. `loading` obsługuje NModeShell, więc tu łapiemy wyłącznie „skończyło
+  // się ładowanie, a narzędzia nie ma".
+  if (!loading && (loadError || !tool)) {
+    return (
+      <div className="h-full min-h-0 flex flex-col items-center justify-center gap-3 px-6 text-center bg-c-bg">
+        <AlertTriangle size={28} className="text-c-warning" aria-hidden="true" />
+        <h2 className="text-base font-semibold text-c-text">
+          {t(
+            'discoveryToolsMain.knownToolDetailView.errorTitle',
+            'Could not load this tool'
+          )}
+        </h2>
+        <p className="max-w-sm text-sm text-c-text-secondary">
+          {t(
+            'discoveryToolsMain.knownToolDetailView.errorBody',
+            'The tool description could not be fetched. Check your connection and try again.'
+          )}
+        </p>
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          >
+            <RefreshCw size={14} className="text-c-text-muted" />
+            {t('discoveryToolsMain.knownToolDetailView.errorRetry', 'Try again')}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center h-8 px-3 rounded-lg text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          >
+            {t('discoveryToolsMain.knownToolDetailView.errorClose', 'Close')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <NModeShell
@@ -1438,14 +1606,28 @@ export function KnownToolDetailView(props: {
         saving: false,
         isDirty: false,
         onClose,
-        statusDotColor: 'bg-primary-400',
+        // SPEC-N §2.3 / CLAUDE.md pułapka nr 1 — kropka statusu używała wcześniej
+        // palety brandowej (crimson #85182F) w POWŁOCE. Czerwień jest zarezerwowana
+        // dla semantyki krytycznej; status narzędzia to nie awaria. Kropka niesie
+        // teraz realną informację: aktywne = c-success, nieaktywne = c-text-muted.
+        // (15 pozostałych wystąpień tej palety — A1 szacował 13 — siedzi w TREŚCI
+        // sekcji: kropki wypunktowania i gradienty kart. Poza zakresem M1,
+        // osobny sweep kolorów.)
+        statusDotColor: tool?.isActive ? 'bg-c-success' : 'bg-c-text-muted',
+        primaryAction,
       }}
-      properties={properties}
       sections={sections}
       actions={actions}
       actionsVisible={true}
       activeSection={activeSection}
       onSectionChange={setActiveSection}
+      rightPanel={
+        <ArtifactRightPanel
+          sections={rightPanelSections}
+          className="border-l border-c-border-subtle h-full"
+          ariaLabel={t('discoveryToolsMain.knownToolDetailView.panelAriaLabel', 'Tool details')}
+        />
+      }
     />
   );
 }
