@@ -1,0 +1,218 @@
+/**
+ * PRV-MYWORK — dev-render host dla PRAWDZIWEGO `<NotificationDetailView>`
+ * (src/components/MyWork/NotificationDetailView.tsx) — karta "Notification".
+ *
+ * Komponent NIE przyjmuje danych propsem — sam je fetchuje w `loadNotification()`
+ * (`Api.getNotificationById` → fallback `Api.getNotifications`), a następnie
+ * `loadSourceEntity()` / `loadComments()` / `loadActivityLog()` (te dwa ostatnie
+ * leniwie, dopiero po wejściu w sekcję). Propsy wymagane to tylko
+ * `notificationId` + `onClose`; `onNavigateToSource` jest opcjonalny.
+ *
+ * Dlatego stubujemy metody singletona `Api` (jest to zwykły `export const Api = {...}`,
+ * więc podmiana metody łata ten sam obiekt we wszystkich modułach — wzorzec 1:1
+ * z dev-render/screens/decision-record.tsx i melscanvas-workspace.tsx).
+ *
+ * `commentsCount` / `activityCount` czytane są z pól rekordu powiadomienia
+ * (`commentsCount` / `activityCount`) — bez nich sekcje "Komentarze" i
+ * "Historia aktywności" w ogóle nie pojawiłyby się w LeftNav (są warunkowe:
+ * `count > 0`). Ustawiamy je, żeby nadzorca zobaczył PEŁNY zestaw 5 sekcji.
+ *
+ * Typ `AI_RISK_DETECTED` jest dobrany świadomie: `nModeSections` włącza sekcję
+ * "Analiza AI" gdy `type` zawiera "AI" lub `data` ma riskLevel/recommendation/
+ * impact/confidence — mamy tu wszystkie te pola, więc widać wariant najbogatszy.
+ * `relatedObjectType: 'DECISION'` daje primaryCta `open_decision`.
+ *
+ * Komponent nie ma własnego providera — używa i18n (`useTranslation`),
+ * `useAppStore`, `useConversationStore`, `usePresentationMode` i react-hot-toast.
+ * `AppProviders` + `FeatureFlagsProvider` pokrywają to w całości, tak jak w
+ * pozostałych harnessach; `seedRealisticSession()` sadza currentUser.
+ *
+ * URL: ?screen=karta-notification[&lang=pl|en][&theme=light|dark]
+ */
+import React from 'react';
+
+import { NotificationDetailView } from '../../src/components/MyWork/NotificationDetailView';
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+import { AppProviders } from '../../src/providers/AppProviders';
+import { Api } from '../../src/services/api';
+import { seedRealisticSession } from '../mocks/seedStore';
+
+seedRealisticSession();
+
+const NOTIFICATION_ID = 'notif-dbr77-demo-1';
+const DECISION_ID = 'decision-dbr77-demo-1';
+
+const MOCK_NOTIFICATION = {
+  id: NOTIFICATION_ID,
+  type: 'AI_RISK_DETECTED',
+  title: 'Ryzyko poślizgu bramki G2 w projekcie „Automatyzacja raportów DRD"',
+  message:
+    'Analiza AI wykryła, że decyzja o architekturze generowania raportów czeka na ' +
+    'rozstrzygnięcie 9 dni przy planowanym buforze 3 dni. Blokuje to 4 zadania wdrożeniowe ' +
+    'i przesuwa bramkę G2 z 12.03 na co najmniej 24.03. Dwaj klienci enterprise mają ' +
+    'umowne terminy dostarczenia raportów w marcu.',
+  severity: 'WARNING' as const,
+  category: 'ai' as const,
+  isRead: false,
+  isActionable: true,
+  createdAt: '2026-07-20T08:12:00.000Z',
+  expiresAt: '2026-08-03T08:12:00.000Z',
+  actionLabel: 'Otwórz decyzję',
+  relatedObjectId: DECISION_ID,
+  relatedObjectType: 'DECISION' as const,
+  projectId: 'proj-drd-raporty',
+  projectName: 'DRD — Automatyzacja raportów',
+  // Liczniki: bez nich sekcje Komentarze / Historia nie wejdą do LeftNav.
+  commentsCount: 3,
+  activityCount: 4,
+  data: {
+    aiGenerated: true,
+    riskLevel: 'high',
+    confidence: 0.82,
+    impact:
+      'Poślizg bramki G2 o ~12 dni roboczych; ryzyko kar umownych u 2 klientów enterprise.',
+    recommendation:
+      'Zwołać 45-minutową sesję decyzyjną z właścicielem programu jeszcze w tym tygodniu ' +
+      'i zamknąć wybór na modelu hybrydowym (AI + recenzja konsultanta) — POC potwierdził ' +
+      'jakość, brakuje wyłącznie formalnej akceptacji.',
+    savings_annual: 96000,
+    blocked:
+      'Blokuje: 4 zadania wdrożeniowe (integracja szablonów, pipeline eksportu, testy UAT, ' +
+      'szkolenie zespołu klienta) oraz bramkę G2.',
+    contextLine:
+      'Program DRD — faza wyboru architektury po zakończonym POC (5 tygodni, 3 warianty).',
+    daysWaiting: 9,
+    owner: 'Anna Kowalska',
+  },
+};
+
+const MOCK_SOURCE_ENTITY = {
+  id: DECISION_ID,
+  type: 'decision',
+  title: 'Wybór podejścia do automatycznego generowania raportów DRD',
+  status: 'pending',
+  priority: 'high',
+  decider: 'Piotr Wiśniewski',
+  dueDate: '2026-07-24T16:00:00.000Z',
+  projectName: 'DRD — Automatyzacja raportów',
+};
+
+const MOCK_COMMENTS = [
+  {
+    id: 'notif-comment-1',
+    content:
+      'POC zamknięty, wariant hybrydowy wypadł najlepiej: 92% raportów bez poprawek ' +
+      'konsultanta. Materiał porównawczy wrzuciłam do folderu programu.',
+    createdAt: '2026-07-20T09:40:00.000Z',
+    user: { id: 'user-anna', firstName: 'Anna', lastName: 'Kowalska' },
+  },
+  {
+    id: 'notif-comment-2',
+    content:
+      'Od strony wdrożenia: model w pełni automatyczny wymaga jeszcze ok. 3 tygodni na ' +
+      'walidację danych źródłowych. Przy terminie marcowym to nierealne.',
+    createdAt: '2026-07-20T12:05:00.000Z',
+    user: { id: 'user-marek', firstName: 'Marek', lastName: 'Zieliński' },
+  },
+  {
+    id: 'notif-comment-3',
+    content:
+      'Zarezerwowałem slot na czwartek 10:00 — proszę o potwierdzenie, wtedy decyzja ' +
+      'zdąży przed bramką G2.',
+    createdAt: '2026-07-21T07:15:00.000Z',
+    user: { id: 'user-kasia', firstName: 'Katarzyna', lastName: 'Nowak' },
+  },
+];
+
+const MOCK_ACTIVITY_LOG = [
+  {
+    id: 'notif-log-1',
+    action: 'created',
+    description: 'Powiadomienie wygenerowane przez silnik ryzyka (reguła: decyzja > 7 dni)',
+    userName: 'Teresa (AI)',
+    createdAt: '2026-07-20T08:12:00.000Z',
+  },
+  {
+    id: 'notif-log-2',
+    action: 'commented',
+    description: 'Dodano komentarz z wynikami POC',
+    userName: 'Anna Kowalska',
+    createdAt: '2026-07-20T09:40:00.000Z',
+  },
+  {
+    id: 'notif-log-3',
+    action: 'assigned',
+    description: 'Przypisano właściciela decyzji: Piotr Wiśniewski',
+    userName: 'Anna Kowalska',
+    createdAt: '2026-07-20T14:22:00.000Z',
+  },
+  {
+    id: 'notif-log-4',
+    action: 'updated',
+    description: 'Podniesiono poziom ryzyka z medium na high (9 dzień oczekiwania)',
+    userName: 'Teresa (AI)',
+    createdAt: '2026-07-21T06:30:00.000Z',
+  },
+];
+
+Api.getNotificationById = (async () => MOCK_NOTIFICATION) as typeof Api.getNotificationById;
+Api.getNotifications = (async () => [MOCK_NOTIFICATION]) as typeof Api.getNotifications;
+Api.getNotificationSourceEntity = (async () =>
+  MOCK_SOURCE_ENTITY) as typeof Api.getNotificationSourceEntity;
+Api.getNotificationComments = (async () => MOCK_COMMENTS) as typeof Api.getNotificationComments;
+Api.getNotificationActivityLog = (async () =>
+  MOCK_ACTIVITY_LOG) as typeof Api.getNotificationActivityLog;
+
+// Mutacje: no-op, żeby kliknięcie w harnessie nie sypało błędem sieci.
+Api.markNotificationRead = (async () => ({
+  success: true,
+})) as unknown as typeof Api.markNotificationRead;
+Api.updateNotificationChecklist = (async () => ({
+  success: true,
+})) as unknown as typeof Api.updateNotificationChecklist;
+Api.updateNotificationWorksheet = (async () => ({
+  success: true,
+})) as unknown as typeof Api.updateNotificationWorksheet;
+
+// Siatka bezpieczeństwa: cokolwiek jeszcze ten ciężki ekran odpali na mount
+// (presence, AI /ai/chat, katalogi) dostaje neutralny pusty payload zamiast
+// HTML-a z vite-dev-servera (który wywala JSON.parse w konsoli).
+// i18n `/locales/**` przepuszczamy do prawdziwego fetcha.
+const g = window as unknown as { __KARTA_NOTIFICATION_FETCH__?: boolean };
+if (!g.__KARTA_NOTIFICATION_FETCH__) {
+  g.__KARTA_NOTIFICATION_FETCH__ = true;
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
+    if (url.includes('/api/') || url.includes('/notifications') || url.includes('/ai/')) {
+      return new Response(JSON.stringify({ data: [], items: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    return realFetch(input as RequestInfo, init);
+  };
+}
+
+export function KartaNotificationScreen(): React.ReactElement {
+  return (
+    <AppProviders>
+      <FeatureFlagsProvider showDevTools={false}>
+        <div
+          style={{ height: '100vh', width: '100vw', overflow: 'auto' }}
+          className="bg-white dark:bg-navy-900"
+        >
+          <NotificationDetailView
+            key={`notification-${NOTIFICATION_ID}`}
+            notificationId={NOTIFICATION_ID}
+            onClose={() => {}}
+            onNavigateToSource={() => {}}
+          />
+        </div>
+      </FeatureFlagsProvider>
+    </AppProviders>
+  );
+}
+
+export default KartaNotificationScreen;

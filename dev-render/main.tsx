@@ -70,9 +70,49 @@ import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
 import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
 import Wave5InternalCrimsonScreen from './screens/wave5-internal-crimson';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
+import KartaToolScreen from './screens/karta-tool';
+import KartaInitiativeScreen from './screens/karta-initiative';
+import KartaInsightScreen from './screens/karta-insight';
+import KartaInterviewScreen from './screens/karta-interview';
+import KartaDecisionScreen from './screens/karta-decision';
+import KartaNotificationScreen from './screens/karta-notification';
+import KartaTaskScreen from './screens/karta-task';
+import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'karta-tool': {
+    label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
+    render: () => <KartaToolScreen />,
+  },
+  'karta-initiative': {
+    label: 'KARTY N — Initiative (harness odbioru 2026-07-21)',
+    render: () => <KartaInitiativeScreen />,
+  },
+  'karta-insight': {
+    label: 'KARTY N — Insight (harness odbioru 2026-07-21)',
+    render: () => <KartaInsightScreen />,
+  },
+  'karta-interview': {
+    label: 'KARTY N — Interview Session (harness odbioru 2026-07-21)',
+    render: () => <KartaInterviewScreen />,
+  },
+  'karta-decision': {
+    label: 'KARTY N — Decision (harness odbioru 2026-07-21)',
+    render: () => <KartaDecisionScreen />,
+  },
+  'karta-notification': {
+    label: 'KARTY N — Notification (harness odbioru 2026-07-21)',
+    render: () => <KartaNotificationScreen />,
+  },
+  'karta-task': {
+    label: 'KARTY N — Task (harness odbioru 2026-07-21)',
+    render: () => <KartaTaskScreen />,
+  },
+  'preview-4-zakladki': {
+    label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
+    render: () => <PreviewZakladkiScreen />,
+  },
   'accent-soft-token-fix': {
     label: 'J23 — bg-c-accent-soft opacity bug fix (cTok): odznaka REKOMENDACJA tint vs pełny crimson',
     render: () => <AccentSoftTokenFixScreen />,
