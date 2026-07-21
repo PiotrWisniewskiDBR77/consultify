@@ -920,7 +920,9 @@ export function KnownToolDetailView(props: {
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-[11px] font-bold text-white">
+                {/* stonowane: bylo `bg-blue-600 text-white` (solid, bez wariantu dark) — konkurowalo
+                    wizualnie ze slotem primary. Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
                   {index + 1}
                 </div>
                 <div>
@@ -1028,7 +1030,9 @@ export function KnownToolDetailView(props: {
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-900 text-[11px] font-bold text-white">
+                {/* stonowane: bylo `bg-navy-900 text-white` (bez wariantu dark — numerator ginal
+                    na ciemnym tle). Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
                   {index + 1}
                 </div>
                 <div>
