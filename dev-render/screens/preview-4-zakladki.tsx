@@ -219,7 +219,10 @@ const DECISIONS_ACTIONS: ActionRow[] = [
         shortcut: 'I',
       },
       { label: 'Deleguj', icon: UserPlus, onClick: noop, colorScheme: 'neutral', flex: true, shortcut: 'G' },
-      { label: 'Przypomnij', icon: Bell, onClick: noop, colorScheme: 'neutral', flex: true, shortcut: 'M' },
+      // 'Przypomnij' NIE powtarza sie tutaj (canAct=true -> Delegate, nie Remind;
+      // te dwie galezie sa WZAJEMNIE WYKLUCZAJACE w produkcji, DecisionPreviewPanel.tsx:433-449).
+      // Zyje wylacznie w rzedzie czas/eskalacja ponizej. Naprawiono realny duplikat
+      // 'Przypomnij' w produkcji (ten sam onRemind 2x gdy canAct=false) — patrz commit.
     ],
   },
 ];
