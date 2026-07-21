@@ -1429,7 +1429,9 @@ const PreviewPane: React.FC<{
           label: i18n.t('myWork.inboxContent.label4', 'Done'),
           icon: CheckCircle2,
           onClick: () => onTriage('done'),
-          colorScheme: 'neutral',
+          // 'Zrobione' zamyka sprawe pozytywnie — ten sam skutek co Task.'Zrobione',
+          // wiec ten sam wariant (§7.3b). Bylo 'neutral', rozjechane z Task.
+          colorScheme: 'emerald',
           shortcut: 'D',
         },
         {
