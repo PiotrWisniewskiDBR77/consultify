@@ -52,7 +52,7 @@ useAppStore.setState({
 } as any);
 
 // Celowo BEZ prefiksu `init-showcase-` — chcemy realną ścieżkę fetchową.
-const INITIATIVE_ID = 'init-showcase-knowledge-hub-rollout'; // short-circuit demo-data w komponencie (initiativesDemoData.ts:179) — bez routera fetch
+const INITIATIVE_ID = 'init-smed-linia-pakowania';
 
 const daysFromNow = (days: number): string => {
   const d = new Date();
@@ -1062,7 +1062,13 @@ const V8_EMPTY = {
 };
 
 const g = window as unknown as { __KARTA_INITIATIVE_FETCH__?: boolean };
-if (!g.__KARTA_INITIATIVE_FETCH__) {
+// ★ Router instalujemy TYLKO gdy TEN ekran jest wybrany w adresie.
+// main.tsx importuje WSZYSTKIE ekrany naraz, wiec bez tego warunku siedem
+// routerow podmienia window.fetch jeden po drugim; ostatni jest najbardziej
+// zewnetrzny i odpowiada WLASNYM fallbackiem zamiast oddac sterowanie dalej.
+// Skutek przed poprawka: karta-initiative dostawala koperte obcego ekranu.
+const __tenEkran = new URLSearchParams(window.location.search).get('screen') === 'karta-initiative';
+if (__tenEkran && !g.__KARTA_INITIATIVE_FETCH__) {
   g.__KARTA_INITIATIVE_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
 
