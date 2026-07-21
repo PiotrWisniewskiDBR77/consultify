@@ -149,7 +149,8 @@ import {
   type NModePropertyField,
   type NModeSection,
   NModeSectionWrapper,
-  ToolbarAISolidButton,
+  // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
+  // nic nie jest solid; AI Consultant zjechał na wariant outline/split, :10932).
   ToolbarAISplitButton,
   ToolbarGhostButton,
   ToolbarIconButton,
@@ -10923,13 +10924,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             pierwszą akcją w AIConsultantPanel (patrz aiConsultantActions),
                             czyli dokładnie tam, gdzie użytkownik szuka akcji AI. */}
 
-                        {/* ── Slot 9: artifact-level AI (solid teal).
+                        {/* ── Slot 9: artifact-level AI.
                             Read = ukryte: Podgląd ma być czysty do pokazania
-                            klientowi, bez afordancji AI. */}
+                            klientowi, bez afordancji AI.
+
+                            2026-07-21 (SPEC-N §2.3, R1): był `ToolbarAISolidButton`
+                            (solid teal). Zmierzone w harnessie: tło `rgb(0,127,142)`
+                            — DOKŁADNIE ten sam kolor co CTA „Zaplanuj zadania"
+                            w pasku szkicu, więc dwa elementy o równej wadze krzyczały
+                            na jednym ekranie, a slot primary nagłówka bywa pusty.
+                            Reguła mówi o WYGLĄDZIE, nie o deklaracji: poza slotem
+                            primary żaden element nie jest solid/filled. Stąd
+                            stonowane do wariantu outline (`ToolbarAISplitButton` —
+                            teal border, ten sam akcent AI, zero czerwieni).
+                            Ten sam ruch i ta sama para (sekcja + artefakt na jednym
+                            wariancie) co w InsightViewer :8409 — karty mają czytać
+                            się jednakowo MIĘDZY sobą, nie tylko wewnątrz siebie. */}
                         {!readMode && (
                           <>
                             <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                            <ToolbarAISolidButton
+                            <ToolbarAISplitButton
                               onClick={() => {
                                 if (!canUseAi) {
                                   toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
@@ -10943,7 +10957,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               icon={<Sparkles size={14} />}
                             >
                               <span>{t('initiatives.aiConsultant4')}</span>
-                            </ToolbarAISolidButton>
+                            </ToolbarAISplitButton>
                           </>
                         )}
                       </div>
