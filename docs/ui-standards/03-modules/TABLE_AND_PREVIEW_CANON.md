@@ -235,6 +235,19 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 ### 7.2 Wymiary i separacja
 **MUST:** szerokość `clamp(340px, 28%, 480px)`. Separacja od tabeli = `gap-1.5`, **bez `border-l`**. Wrapper: `bg-slate-50 dark:bg-navy-950 p-3`. Karta wewnątrz: `rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] backdrop-blur`. Jeśli tabela `rounded-xl` → preview też `rounded-xl` (spójność „composite container").
 
+**MUST — wymiar pochodzi WYŁĄCZNIE z komponentu (dopisane 2026-07-21):** szerokość i odstęp
+ustawia `StandardPreview` / `PreviewPaneShell`. Ekran ich **nie nadpisuje**.
+
+- **Zakaz sztywnej szerokości** na kontenerze preview: `w-[420px]`, `w-[360px]`, `w-[460px]` itp.
+- **Zakaz `border-l`** jako separacji od tabeli — separuje wyłącznie `gap-1.5`.
+- **Zakaz własnego kontenera** tabela+preview per ekran; układ deklaruje komponent.
+
+*Powód (zgłoszenie właściciela 2026-07-21):* szpara między tabelą a preview miała różną
+szerokość w każdej zakładce My Work, bo każdy ekran ustawiał ją u siebie — w samym My Work
+znalazły się cztery różne sztywne szerokości (320/360/420/460 px). Inwentarz PRV-007/008 tego
+nie wykrył, bo badał anatomię stref (§7.3), a nie wymiary (§7.2). **Wymiar bez jednego źródła
+rozjeżdża się zawsze — nie jest to kwestia staranności autora ekranu.**
+
 ### 7.3 Anatomia — ŻELAZNY UKŁAD (góra→dół, MUST; SSOT: `PreviewPaneShell`)
 > **WZORZEC ZATWIERDZONY przez ownera 2026-06-07** na podglądzie Insight — referencja dla wszystkich
 > tabel. Kolejność jest sztywna i identyczna wszędzie. Strefa bez treści = ukryta (nie pusty box),
@@ -253,9 +266,16 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 ```
 
 1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + **akcje right (kolejność lewa→prawa):**
-   - **Ikona pin/kopiuj** — `Pin` lub `Copy` (lucide), `size-4`, icon-only ghost button. Pin = schowaj w skrótach / Kopiuj = skopiuj link do encji. Opcjonalnie jedno lub oba.
-   - **„Open" (ghost/outline pill) — JEDYNE „Open" w całym preview.** Klik = pełna karta + trwały tab w Menu 3.
+   - **Ikona `Pin`** (lucide), `size-4`, icon-only ghost button — **ZAWSZE, w każdym preview**. Pin = schowaj w skrótach.
+   - **„Open" (ghost/outline pill) — JEDYNE „Open" w całym preview.** Klik = pełna karta + trwały tab w Menu 3. **Bez ikony** — sam tekst.
    - **„×" (close)** — zawsze ostatni.
+
+   **Zamknięte opcjonalności (dopisane 2026-07-21).** Wcześniej ten punkt brzmiał „`Pin` lub `Copy`
+   … opcjonalnie jedno lub oba", a „Open" nie miał reguły co do ikony. Efekt: w My Work trzy zakładki
+   miały pinezkę, Inbox żadnej, i tylko Inbox miał ikonę oka przy „Open" (`InboxContent.tsx:1354`).
+   **Opcjonalność w kanonie zawsze zamienia się w rozjazd — zestaw akcji nagłówka jest odtąd zamknięty:
+   Pin · Open · ×, w tej kolejności, bez wariantów.** „Kopiuj link" przenosi się do ⋮ przy „Details",
+   gdzie mieszkają pozostałe operacje na treści.
 
 2. **Entity Meta Bar**: statusy/typ/sesje/priorytet/SLA/data (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
 
@@ -312,6 +332,35 @@ const rows = [{
 | `red` | Destrukcyjna (Delete, Remove) |
 
 **Niedozwolone:** własne `bg-*` / `text-*` klasy inline na przyciskach preview. Zero `bg-primary-500`, `bg-crimson-*`, `bg-green-500`, `bg-brand/*` na buttonach stopki.
+
+### 7.3c Deskryptor preview per zakładka (MUST; dopisane 2026-07-21)
+
+Tabele mają swój deskryptor (§15) — preview do dziś go nie miał. Bez niego pytanie „czy ta
+zakładka jest zgodna z §7.3?" **nie ma twardej odpowiedzi**, bo kanon opisuje kolejność stref,
+ale nie mówi, które strefy dana zakładka ma deklarować. Każda zakładka **MUSI** mieć wiersz w
+tabeli poniżej. Nowy ekran z preview bez wpisu = zgłoszenie niekompletne.
+
+**Reguła strefy „Co dalej" (zamyka opcjonalność z §7.3 pkt 4.3):** strefa jest **obowiązkowa
+wtedy i tylko wtedy, gdy encja ma zaimplementowaną konwersję na artefakt innego modułu**
+(istnieje realny handler tworzący Raport / Deck / Tabelę / Ideę / Notatkę / Inicjatywę).
+Sama przynależność do „source→destination" (§7.1) **nie wystarczy** — kryterium jest kod, nie
+klasyfikacja. Encja bez konwersji: strefa **nieobecna**, nie pusta.
+
+*Powód:* poprzednie brzmienie („opcjonalny, gdy encja jest źródłem cross-module") kwalifikowało
+wszystkie cztery zakładki My Work, a strefę miała jedna. Reguła, której nie da się sprawdzić
+w kodzie, nie jest regułą.
+
+| Zakładka | 2 META | 3 DETAILS ⋮ | 4 AI | 5 RELATIONS | 6 CO DALEJ | 7 AKCJE |
+|---|:--:|:--:|:--:|:--:|:--:|---|
+| My Work · **Ideas** | ✔ | ✔ | ✔ | ✔ | **✔ konwersja jest** | Konwertuj · Otwórz Flow |
+| My Work · **Inbox** | ✔ | ✔ | ✔ | ✔ | ✖ brak konwersji | rozstrzygnięcia → informacyjne → czas |
+| My Work · **Tasks** | ✔ | ✔ | ✔ | ✔ | ✖ brak konwersji | Dziś · Odłóż · Zrobione |
+| My Work · **Decisions** | ✔ | ✔ | ✔ | ✔ | ✖ brak konwersji | Zatwierdź/Odrzuć · Info/Deleguj · Czas |
+
+**Kolejność stref jest niezmienna** także wtedy, gdy strefa jest nieobecna — obecne strefy nie
+zamieniają się miejscami. Wpadka referencyjna: `IdeasTableContent.tsx:646-663` renderował
+AI → Relations → **Akcje → Co dalej**, czyli 6 i 7 zamienione, mimo że dwie linie wyżej
+komentarz cytował ten kanon. **Dowód, że proza nie egzekwuje — egzekwuje komponent.**
 
 ---
 
