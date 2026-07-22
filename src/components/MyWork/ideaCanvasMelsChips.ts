@@ -119,7 +119,8 @@ export function buildIdeaMenu1Chips(args: {
     label: isPolish ? 'Historia' : 'History',
     icon: History,
     group: 'overflow',
-    // No workspace-level version-history flow exists yet → honest disabled.
+    // Enabled once a version-history flow is wired (SnapshotHistory, all canvas
+    // tools). Stays honest-disabled only if the caller passes no handler.
     disabled: !handlers.onHistory,
     onClick: handlers.onHistory,
     tooltip: handlers.onHistory ? undefined : soon,
