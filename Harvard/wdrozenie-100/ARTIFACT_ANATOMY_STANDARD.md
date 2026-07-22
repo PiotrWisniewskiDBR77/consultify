@@ -802,6 +802,46 @@ Napisz powłokę raz (Menu 1/3 + kebab + prawy panel + preview + stany + overlay
 
 **Menu 1 `⑫` (dokł., lewa→prawa):** `←`back ikon-20 h-32 · `㊱`divider · ikona-typ 16 `c.text-secondary` · tytuł inline L2 (klik→`⑤`input) · `④`status-lifecycle · „Zapisano •" L5 `c.text-muted` ‖ (prawa) `[indeks]` ghost h-32 · `①`primary h-36.
 
+> **★ AKTUALIZACJA 2026-07-22 — kontrakt Menu 1 wg decyzji Piotra (D-A…D-D, fazy 1-2 wdrożone i odebrane).**
+> Powód: analiza `_ANALIZA_MENU1_KART_N_2026-07-22.md` (defekty D1-D13) + werdykt `_WERDYKT_KARTY_N_2026-07-22.md`.
+> Odbiór niezależny: `_ODBIOR_KARTY_N_2026-07-22/RAPORT.md` (7/7 kart PASS w Menu 1, oba motywy). Implementacja:
+> `src/components/shared/NModeLayout/NModeHeader.tsx`. Te cztery punkty **doprecyzowują** linię wyżej — nie zastępują jej.
+>
+> 1. **Status-lifecycle = ETYKIETA-PIGUŁKA z TEKSTEM, nie naga kropka (D-B).** Pigułka niesie słowo
+>    („Szkic"/„Do przeglądu"/„W recenzji"/„Zatwierdzona"/„Odrzucona"…), `shrink-0`, `whitespace-nowrap`,
+>    h-5 px-2 rounded-md, 11px medium. Ton→token c-* (mapa jak `ArtifactApprovalStatusBar.tsx:55-60`,
+>    `NModeHeader.tsx:50-57`), **crimson ZAKAZANY** (status ≠ semantyka krytyczna):
+>
+>    | Ton (`statusTone`) | Tło | Tekst | Dla stanów |
+>    |---|---|---|---|
+>    | `draft` / `neutral` | `c.surface-raised` | `c.text-muted` | Szkic, Archiwum, stany ciche |
+>    | `review` | `c.info` @15% (`color-mix`) | `c.info` | Do przeglądu / W recenzji |
+>    | `approved` | `c.success` @15% | `c.success` | Zatwierdzona / Aktywna / W realizacji |
+>    | `rejected` | `c.danger` @15% | `c.danger` | Odrzucona / Zablokowana |
+>
+>    Powód porzucenia kropki: kropka 12px bez podpisu **zapadała się do 0px** poniżej ~1200px na 3 kartach
+>    (D3/D4/D5) — element był, informacji nie było. Deprecated `statusDotColor` = martwy typem, nie destrukturyzowany.
+> 2. **Wskaźnik zapisu = TEKST NIEKLIKALNY, OSOBNO od statusu (D-C, CANON §4.2).** `<span>` `clickable=false`
+>    („Zapisywanie…"/„Zapisano"/„Błąd zapisu"), 12px, `c.text-muted` (błąd → `c.text-danger`), `shrink-0`.
+>    Autozapis (onBlur) zostaje. **Znika drugi przycisk akcji** obok primary, w który stara „Zapisz"-pigułka
+>    zamieniała się w trybie edycji (D7). To NIE jest kontrolka — to komunikat stanu.
+> 3. **Kod obiektu + permalink SCHODZĄ z paska do KEBABA `⋮` (menu przepełnienia, D-D).** Na pasku Menu 1
+>    **zero** przycisków kodu/permalinku. W kebabie dokładnie: „Skopiuj kod obiektu" + „Kopiuj link".
+>    Powód: rozpychały pasek 62→77px (D2) i wnosiły ukrytą czerwień (D9 — stary `ArtifactPermalinkButton`
+>    miał `hover:text-primary-400` = crimson). Kebab renderowany do `<body>` (wrapper paska = `overflow-hidden`).
+> 4. **Tytuł = TEKST z `truncate`/wielokropkiem, `⑤`input dopiero po kliknięciu (D6).** W spoczynku tytuł to
+>    `<span class="truncate">` (`min-w-0`), nie input — długi tytuł kończy się „…" zamiast rozpychać pasek
+>    ani rwać w połowie znaku. Klik → edycja inline (o ile `titleReadOnly=false`).
+>
+> **Tryb otwarcia (D-A) — reguła stanu, nie własność karty:** karta w stanie SZKIC/pusta → otwiera się w
+> **EDYCJI** (gotowa do pisania); karta ZATWIERDZONA/gotowa → **PODGLĄD** (czysta prezentacja klientowi).
+> Wyjątki twarde: **Tool** = tylko-do-odczytu z założenia; **Notification** = arkusz do wypełnienia (Edycja);
+> **Interview** = aktywny warsztat (Edycja). Reszta (Task·Decision·Insight·Initiative) wg reguły stanu.
+> *(Mapowanie stanów pośrednich „W recenzji"/„W realizacji" → do potwierdzenia — RAPORT §7 pkt 3.)*
+>
+> **Wysokość paska:** cel „bliżej 48-62" spełniony (chip zszedł do kebaba, 77px zniknęło); realnie 60-62px
+> (`py-3`) — zejście do kanonicznych 48px zmienia wszystkie 7 kart naraz i wymaga osobnego akceptu na zrzutach.
+
 **Menu 3:** nawigacja wewn. (klasa L) — `③`pill gdy sekcje równorzędne / `㉜`underline gdy pod-widoki; + view-local ‖ `①`[AI] (skraj prawy). **Klasa S: Menu 2+3 nie istnieją** — artefakt otwiera się jako `⑯`drawer/`⑮`modal, treść w prawym-panelu-jako-centrum.
 
 **Prawy panel `⑪` — sekcje `㉝`accordion (stała kolejność):**

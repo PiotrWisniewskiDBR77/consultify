@@ -7,6 +7,75 @@
 > Decision + dziedziczące (KPI · RAID · Milestone · Change Request · Stage Gate · Action Proposal).
 > **Nie dotyczy** wzorca W (8 narzędzi roboczych) ani Instrumentów.
 
+---
+
+## STAN 2026-07-22 — warstwa aktualna (NIE kasuj tego co niżej; dopisane, nie przepisane)
+
+> **Po co ta sekcja:** oryginał (nagłówek „Nic z tego nie jest zaimplementowane", §2.1 „usuwanie sekcji
+> 0 z 8", §2.2 „5 kart bez panelu", §2.3 „3 karty zero primary") opisywał stan **sprzed implementacji**.
+> Werdykt `_WERDYKT_KARTY_N_2026-07-22.md §5 pkt 13` wprost ostrzega: kto zaplanuje kolejną falę na
+> starym SPEC-N, **każe przepisać rzeczy, które już działają**. Ta warstwa mówi, co jest zrobione, żeby
+> tego uniknąć. Cała treść oryginału niżej ZOSTAJE jako historia i jako kontrakt typów/bramek (§5) — te
+> części są nadal aktualne.
+>
+> **Dowody:** `_ODBIOR_KARTY_N_2026-07-22/RAPORT.md` (niezależny odbiór, 14 zrzutów, viewport 1280×832,
+> izolowana przeglądarka) · implementacja `NModeHeader.tsx` · kanon: `ARTIFACT_ANATOMY_STANDARD.md §11.2`
+> („AKTUALIZACJA 2026-07-22", wdrożona z decyzji D-A…D-D Piotra).
+
+### Co ZROBIONO (fazy 1-2 — WYŁĄCZNIE Menu 1 / pasek nagłówka)
+
+Powłoka `NModeHeader.tsx` przebudowana wg decyzji Piotra 2026-07-22. Odbiór: **7/7 kart PASS w Menu 1,
+oba motywy.** Zakres = pasek nagłówka; CENTRUM i PRAWY PANEL kart **nietknięte** (patrz „Nadal otwarte").
+
+- **D-B status-etykieta-pigułka** (tekst + token c-*, nie naga kropka) — wdrożone na 7/7. Mapa tonów =
+  §11.2 „AKTUALIZACJA". Naprawia defekt „kropka 0px" (D3/D4/D5).
+- **D-C wskaźnik zapisu = tekst nieklikalny**, osobno od statusu — 7/7. Znika drugi przycisk akcji (D7).
+- **D-D kod obiektu + permalink → kebab `⋮`** — 7/7, na pasku 0 przycisków kodu/linku (D2/D9, w tym crimson permalinku).
+- **D6 tytuł `truncate`/wielokropek**, input po kliknięciu — 7/7.
+- **§2.3 „dokładnie jeden primary"** — **zrealizowane dla wszystkich 7** (Interview D11, Task D12,
+  Initiative — sloty, które wcześniej były puste, teraz mają primary). To unieważnia zdanie oryginału
+  „3 karty z 8 mają zero primary".
+- **D-A tryb otwarcia wg stanu** — wdrożony (szczegóły w tabeli niżej).
+
+### Stan per karta (7) — po fazach 1-2
+
+| Karta | Primary (jest? etykieta) | Tryb otwarcia (D-A) | Status-etykieta (ton) |
+|---|---|---|---|
+| **Tool** | ✅ „Startuj sesję" | Tylko-do-odczytu (wyjątek D-A) | „Aktywne" (success) |
+| **Notification** | ✅ „Otwórz dokument" | Edycja (wyjątek: arkusz do wypełnienia) | „Nowe" (info) |
+| **Interview** | ✅ „Zakończ wywiad" *(było 0 — D11)* | Edycja (wyjątek: aktywny warsztat) | „W trakcie" (info) |
+| **Decision** | ✅ „Zatwierdź decyzję" | Edycja (stan roboczy) | „Oczekująca" (info) |
+| **Insight** | ✅ „Konwertuj na inicjatywę" | ⚠️ Podgląd (in_review → do potwierdzenia) | „W recenzji" (info) |
+| **Task** | ✅ „Wyślij do przeglądu" *(było 0 przy readMode — D12)* | Edycja (stan roboczy) | „W trakcie" (info) |
+| **Initiative** | ✅ „Oznacz jako ukończone" *(było 0 w harnessie)* | ⚠️ Podgląd (executing → do potwierdzenia) | „W realizacji" (success) |
+
+Crimson w Menu 1: **0 trafień na 7/7** (skan klasy `primary-\d` + pomiar `getComputedStyle` = `rgb(133,24,47)`).
+
+### Nadal OTWARTE (fazy 1-2 tego NIE tknęły — kolejne fale)
+
+Menu 1 to jedyny domknięty obszar. Poniższe wymogi SPEC-N dotyczą CENTRUM/PANELU i **czekają**:
+
+- **§2.1 usuwanie sekcji lewej kolumny** — Decision/Task mają je w trybie Edycja (werdykt), reszta nie;
+  „0 z 8" z oryginału było już nieaktualne w dniu werdyktu. Pełny kontrakt `sectionManagement` niewdrożony.
+- **§2.2 prawy panel wymagany** — nie ruszony fazami 1-2; „5 kart bez panelu" wymaga osobnej weryfikacji
+  na żywej bazie (odbiór 07-22 był scoped do Menu 1).
+- **§2.4 `NModeToolbar` jako jedyna droga · §2.5 kontrakt AI per sekcja · §2.6 anty-duplikacja ·
+  §2.7 rozdział trybów + martwy kod · §2.8 odkrywalne skróty** — otwarte.
+- **§4 kontrakt treści** — otwarte (0 z 63 podpowiedzi komunikuje próg — werdykt §3 pkt 3).
+- **FAIL-e odbioru 07-22 (poza Menu 1, `RAPORT.md §4`):** Interview crimson w `RuntimeModeSelector.tsx`
+  (selektor trybu + badge „Rekomendowane" = #85182F) · Insight duplikaty kluczy React + 3× ten sam wpis
+  Powiązań · Insight karty „DZIAŁANIA" nakładają się i ucinają tekst @1280px. **Luka bezpiecznika:**
+  `check-artefakt.sh` nie skanuje centrum kart (`RuntimeModeSelector`), więc crimson tam przechodzi hook.
+
+### Zastrzeżenie metodyczne (z RAPORT §6/§8)
+
+Harness **omija serwer** (podmienia fetch) → trwałość zapisu, przejście bramy jakości i stan żywej bazy
+**niemierzalne**. Zarzut werdyktu „Notification gubi treść, meldując »Zapisano«" to mechanika/persistencja —
+z harnessu nie do potwierdzenia ani obalenia; do sprawdzenia na demo. Wskaźnik „Zapisano" jest teraz tekstem
+(D-C), więc jeśli persistencja padnie, komunikat i tak wprowadzi w błąd — osobny, mechaniczny wątek.
+
+---
+
 ## 0A. SIEDEM kart, nie osiem — korekta klasyfikacji (Piotr, 2026-07-21)
 
 Inwentarz A1 liczył **8** kart i traktował „Tool Document" jako jedną z nich (archetyp B,
