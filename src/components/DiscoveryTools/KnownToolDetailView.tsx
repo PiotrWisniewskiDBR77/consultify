@@ -18,6 +18,7 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
@@ -1632,11 +1633,6 @@ export function KnownToolDetailView(props: {
   //              Zgodnie z zakresem pakietu M1: sekcja NIEOBECNA, a nie pusta
   //              ramka — pusty akordeon udaje funkcję, której nie ma.
   const rightPanelSections: ArtifactRightPanelSection[] = useMemo(() => {
-    // Ostatni wiersz bez dolnej krawędzi — ramka tabeli już ją rysuje.
-    const rowKey = (last: boolean) =>
-      `px-3 py-2 align-top text-c-text-muted${last ? '' : ' border-b border-c-border-subtle'}`;
-    const rowVal = (last: boolean) =>
-      `px-3 py-2 text-right text-c-text${last ? '' : ' border-b border-c-border-subtle'}`;
     return [
       {
         id: 'properties',
@@ -1644,33 +1640,15 @@ export function KnownToolDetailView(props: {
         icon: SlidersHorizontal,
         defaultOpen: true,
         children: (
-          <div className="rounded-lg border border-c-border-subtle overflow-hidden">
-            <table className="w-full text-xs border-collapse">
-              <thead>
-                <tr className="bg-c-surface-raised">
-                  <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('discoveryToolsMain.knownToolDetailView.property', 'Property')}
-                  </th>
-                  <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('discoveryToolsMain.knownToolDetailView.value', 'Value')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {properties.map((field, idx) => {
-                  const last = idx === properties.length - 1;
-                  return (
-                    <tr key={field.id}>
-                      <td className={rowKey(last)}>
-                        {isPolish ? field.label.pl : field.label.en}
-                      </td>
-                      <td className={rowVal(last)}>{field.value || '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ArtifactPropertiesTable
+            propertyLabel={t('discoveryToolsMain.knownToolDetailView.property', 'Property')}
+            valueLabel={t('discoveryToolsMain.knownToolDetailView.value', 'Value')}
+            rows={properties.map((field) => ({
+              id: field.id,
+              label: isPolish ? field.label.pl : field.label.en,
+              value: field.value || '—',
+            }))}
+          />
         ),
       },
       {
