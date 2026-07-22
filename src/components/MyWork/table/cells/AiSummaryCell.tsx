@@ -77,7 +77,7 @@ export const AiSummaryCell: React.FC<AiSummaryCellProps> = ({
     >
       <Icon
         size={10}
-        className={`flex-shrink-0 ${manualOverride ? 'text-c-warning' : 'text-c-accent'}`}
+        className={`flex-shrink-0 ${manualOverride ? 'text-c-warning' : 'text-c-text-secondary'}`}
       />
       <span className="truncate">{display}</span>
     </span>
