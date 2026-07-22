@@ -101,7 +101,11 @@ export const STATUS_COLORS: Record<string, string> = {
 // `pf-connecting` wrapper class, toggled from onConnectStart/onConnectEnd).
 // Interactivity (pointer-events) is left to react-flow's own
 // `connectionindicator` class so locked/read-only canvases stay non-connectable.
-const HANDLE_CLASS =
+// Z23 (Fala 7): exported so every BPMN node variant (ActivityNode,
+// BPMNStartNode, BPMNEndNode, GatewayNode, SubprocessNode, DataObjectNode,
+// PoolNode) can reuse the exact same handle look — one visual source of
+// truth, no per-variant drift.
+export const HANDLE_CLASS =
   '!w-2.5 !h-2.5 !bg-c-border-strong !border !border-c-bg opacity-0 group-hover:opacity-100 transition-opacity duration-150';
 
 export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {

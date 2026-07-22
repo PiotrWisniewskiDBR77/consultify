@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+import { HANDLE_CLASS } from '../FlowNodeComponent';
+
 const FOLD = 12;
 const W = 60;
 const H = 70;
@@ -29,7 +31,7 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
 
   return (
     <div
-      className={`relative flex flex-col items-center ${selected ? 'drop-shadow-lg' : ''}`}
+      className={`group relative flex flex-col items-center ${selected ? 'drop-shadow-lg' : ''}`}
       onDoubleClick={() => {
         if (!data?.locked) {
           setEditValue(String(data?.label || ''));
@@ -75,13 +77,26 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
         )}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-c-border-strong" />
+      {/* Z23 (Fala 7): 4-side magnetic handles (Z17 parity). Bottom pair
+          predates this change and is untouched (unnamed source, named
+          target "target-bottom" — both load-bearing for existing edges).
+          Left/Top/Right did not exist before; Left/target is added id-less
+          since it's the only id-less target on this node (matches the
+          Z17 fallback-resolution convention), all other new handles get
+          explicit ids to avoid a second id-less handle of the same type. */}
+      <Handle type="source" position={Position.Bottom} className={HANDLE_CLASS} />
       <Handle
         type="target"
         position={Position.Bottom}
-        className="!w-2 !h-2 !bg-c-border-strong"
+        className={HANDLE_CLASS}
         id="target-bottom"
       />
+      <Handle type="target" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="source" id="left" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="target" id="top" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="source" id="top-source" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="source" id="right-source" position={Position.Right} className={HANDLE_CLASS} />
+      <Handle type="target" id="right" position={Position.Right} className={HANDLE_CLASS} />
     </div>
   );
 };

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+import { HANDLE_CLASS } from '../FlowNodeComponent';
+
 // warning / amber gateway accent — canonical design token (SSOT: --c-warning,
 // tailwind.config.js). Replaces stale stock-Tailwind hex (#f59e0b) frozen
 // before the HBS color remap. CSS var resolves in SVG stroke, light/dark aware.
@@ -38,7 +40,7 @@ export const GatewayNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative flex flex-col items-center ${selected ? 'drop-shadow-lg' : ''}`}
+      className={`group relative flex flex-col items-center ${selected ? 'drop-shadow-lg' : ''}`}
       onDoubleClick={() => {
         if (!data?.locked) {
           setEditValue(String(data?.label || ''));
@@ -87,31 +89,60 @@ export const GatewayNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         )}
       </div>
 
+      {/* Z23 (Fala 7): 4-side magnetic handles (Z17 parity). This node
+          already had one source per side (Left target excepted) with
+          explicit ids ("right"/"top"/"bottom") from earlier work — those
+          ids are load-bearing for existing persisted edges and are left
+          untouched. Only the missing target/source complements are added,
+          under new ids that cannot collide with the pre-existing ones. */}
+      <Handle type="target" position={Position.Left} className={HANDLE_CLASS} style={{ top: 25 }} />
       <Handle
-        type="target"
+        type="source"
+        id="left"
         position={Position.Left}
-        className="!w-2 !h-2 !bg-c-border-strong"
+        className={HANDLE_CLASS}
         style={{ top: 25 }}
       />
       <Handle
         type="source"
         id="right"
         position={Position.Right}
-        className="!w-2 !h-2 !bg-c-border-strong"
+        className={HANDLE_CLASS}
+        style={{ top: 25 }}
+      />
+      <Handle
+        type="target"
+        id="right-target"
+        position={Position.Right}
+        className={HANDLE_CLASS}
         style={{ top: 25 }}
       />
       <Handle
         type="source"
         id="top"
         position={Position.Top}
-        className="!w-2 !h-2 !bg-c-border-strong"
+        className={HANDLE_CLASS}
+        style={{ left: 25 }}
+      />
+      <Handle
+        type="target"
+        id="top-target"
+        position={Position.Top}
+        className={HANDLE_CLASS}
         style={{ left: 25 }}
       />
       <Handle
         type="source"
         id="bottom"
         position={Position.Bottom}
-        className="!w-2 !h-2 !bg-c-border-strong"
+        className={HANDLE_CLASS}
+        style={{ left: 25 }}
+      />
+      <Handle
+        type="target"
+        id="bottom-target"
+        position={Position.Bottom}
+        className={HANDLE_CLASS}
         style={{ left: 25 }}
       />
     </div>
