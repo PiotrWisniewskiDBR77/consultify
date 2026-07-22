@@ -3,14 +3,29 @@
  * Wrapper for AdminKnowledgeView documents tab
  */
 
-import { Edit2, FileText, RefreshCw, Search, Tag, Trash2, Upload, X } from 'lucide-react';
+import {
+  Building2,
+  Edit2,
+  FileText,
+  FolderKanban,
+  RefreshCw,
+  Search,
+  Tag,
+  Trash2,
+  Upload,
+  User,
+  X,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import { useAppStore } from '@/store/useAppStore';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 import { Api } from '../../../../services/api';
+
+type VaultScope = 'user' | 'project' | 'organization';
 
 interface Document {
   id: string;
@@ -22,6 +37,14 @@ interface Document {
   status: string;
   created_at: string;
   chunk_count?: number;
+  scope?: VaultScope;
+  project_id?: string | null;
+  owner_id?: string | null;
+}
+
+interface VaultProject {
+  id: string;
+  name: string;
 }
 
 const DOCUMENT_CATEGORIES = ['Best Practices', 'Methodology', 'Standards', 'Templates', 'Other'];
@@ -35,6 +58,17 @@ const SENSITIVITY_OPTIONS: Array<NonNullable<Document['sensitivity']>> = [
   'internal',
   'confidential',
 ];
+
+// ★ VLT-003 — 3 poziomy zakresu dokumentu Vault (VLT-001 backend). Kolejność
+// od najwęższego do najszerszego — tak samo w selektorze uploadu i w filtrze.
+const SCOPE_OPTIONS: Array<{ value: VaultScope; label: string; icon: typeof User }> = [
+  { value: 'user', label: 'Private (only me)', icon: User },
+  { value: 'project', label: 'Project', icon: FolderKanban },
+  { value: 'organization', label: 'Organization', icon: Building2 },
+];
+
+const scopeMeta = (scope?: VaultScope) =>
+  SCOPE_OPTIONS.find((o) => o.value === (scope || 'organization')) || SCOPE_OPTIONS[2];
 
 type JsonRecord = Record<string, unknown> & {
   data?: JsonRecord | unknown[];
@@ -108,6 +142,11 @@ const normalizeDocuments = (value: unknown): Document[] => {
           ? doc.sensitivity
           : 'internal';
 
+      const scope: Document['scope'] =
+        doc.scope === 'user' || doc.scope === 'project' || doc.scope === 'organization'
+          ? doc.scope
+          : 'organization';
+
       return {
         id: asText(doc.id, ''),
         filename: asText(doc.filename, 'Untitled document'),
@@ -121,9 +160,28 @@ const normalizeDocuments = (value: unknown): Document[] => {
         status: asText(doc.status, 'unknown'),
         created_at: asText(doc.created_at, ''),
         chunk_count: Number.isFinite(Number(doc.chunk_count)) ? Number(doc.chunk_count) : 0,
+        scope,
+        project_id:
+          doc.project_id === null || doc.project_id === undefined
+            ? null
+            : asText(doc.project_id, ''),
+        owner_id:
+          doc.owner_id === null || doc.owner_id === undefined ? null : asText(doc.owner_id, ''),
       };
     })
     .filter((doc) => doc.id);
+};
+
+const normalizeProjects = (value: unknown): VaultProject[] => {
+  const list = Array.isArray(value)
+    ? value
+    : getListPayload<Record<string, unknown>>(value, ['projects', 'items']);
+  return list
+    .map((p) => {
+      const rec = p as Record<string, unknown>;
+      return { id: asText(rec.id, ''), name: asText(rec.name, 'Untitled project') };
+    })
+    .filter((p) => p.id);
 };
 
 const getUploadedDocumentInfo = (value: unknown) => {
@@ -151,6 +209,7 @@ export interface DocumentsRAGTabProps {
 
 export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'superadmin' }) => {
   const isClient = variant === 'client';
+  const currentUserId = useAppStore((s) => s.currentUser?.id);
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -159,7 +218,11 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState('');
   const [uploadTags, setUploadTags] = useState('');
+  const [uploadScope, setUploadScope] = useState<VaultScope>('organization');
+  const [uploadProjectId, setUploadProjectId] = useState('');
+  const [projects, setProjects] = useState<VaultProject[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [scopeFilter, setScopeFilter] = useState<'' | VaultScope>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [editDocCategory, setEditDocCategory] = useState('');
@@ -168,16 +231,34 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
     useState<NonNullable<Document['ai_visibility']>>('allowed');
   const [editDocSensitivity, setEditDocSensitivity] =
     useState<NonNullable<Document['sensitivity']>>('internal');
+  const [editDocScope, setEditDocScope] = useState<VaultScope>('organization');
+  const [editDocProjectId, setEditDocProjectId] = useState('');
+  const [scopeImpact, setScopeImpact] = useState<{
+    checking: boolean;
+    becameOrgVisibleCount: number | null;
+  }>({ checking: false, becameOrgVisibleCount: null });
+
+  useEffect(() => {
+    Api.getProjects()
+      .then((data) => setProjects(normalizeProjects(data)))
+      .catch(() => setProjects([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadDocuments();
-  }, []);
+    // Filtr poziomu (scopeFilter) przekazuje ?scope= do GET — przeładowanie z serwera,
+    // nie filtrowanie po stronie klienta (patrz KRYTERIUM ODBIORU VLT-003).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scopeFilter]);
 
   const loadDocuments = async (options: { showLoading?: boolean } = {}) => {
     if (options.showLoading !== false) setLoading(true);
     setLoadError(null);
     try {
-      const data = await Api.getKnowledgeDocuments();
+      const data = await Api.getKnowledgeDocuments(
+        scopeFilter ? { scope: scopeFilter } : undefined
+      );
       const nextDocuments = normalizeDocuments(data);
       setDocuments(nextDocuments);
       return nextDocuments;
@@ -192,9 +273,21 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
     }
   };
 
+  // Czy bieżący user może zmienić poziom TEGO dokumentu — mirror backendu
+  // (canEditOwnPrivateDocument w knowledge.routes.ts): tylko własny prywatny
+  // dokument, poza tym superadmin-only (poza zakresem klienta).
+  const canChangeScope = (doc: Document | null) =>
+    !!doc && doc.scope === 'user' && !!currentUserId && doc.owner_id === currentUserId;
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) return;
+    if (uploadScope === 'project' && !uploadProjectId) {
+      const message = 'Select a project for project-level documents';
+      setActionError(message);
+      toast.error(message);
+      return;
+    }
 
     setUploading(true);
     setActionError(null);
@@ -206,7 +299,9 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
       const result = await Api.uploadKnowledgeDocument(
         uploadFile,
         uploadCategory || undefined,
-        tagsArray.length > 0 ? tagsArray : undefined
+        tagsArray.length > 0 ? tagsArray : undefined,
+        uploadScope,
+        uploadScope === 'project' ? uploadProjectId : undefined
       );
       const uploaded = getUploadedDocumentInfo(result);
       const refreshed = await loadDocuments({ showLoading: false });
@@ -220,6 +315,8 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
       setUploadFile(null);
       setUploadCategory('');
       setUploadTags('');
+      setUploadScope('organization');
+      setUploadProjectId('');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Upload failed';
       setActionError(message);
@@ -269,6 +366,69 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
       setEditDocSensitivity('internal');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Update failed';
+      setActionError(message);
+      toast.error(message);
+    }
+  };
+
+  // ★ VLT-003 — krok 1/2 zmiany zakresu: dry-run /scope-impact PRZED zapisem,
+  // żeby pokazać "X dokumentów stanie się widocznych dla całej organizacji"
+  // zanim cokolwiek się zmieni w bazie (warunek DEC-003).
+  const handleRequestScopeChange = async (nextScope: VaultScope) => {
+    if (!editingDoc) return;
+    if (nextScope === editingDoc.scope && nextScope !== 'project') {
+      setEditDocScope(nextScope);
+      return;
+    }
+    if (nextScope === 'project' && !editDocProjectId) {
+      // brak wyboru projektu jeszcze — nie sprawdzaj wpływu, poczekaj na wybór
+      setEditDocScope(nextScope);
+      setScopeImpact({ checking: false, becameOrgVisibleCount: null });
+      return;
+    }
+    setEditDocScope(nextScope);
+    setScopeImpact({ checking: true, becameOrgVisibleCount: null });
+    try {
+      const impact = await Api.getKnowledgeDocumentScopeImpact(editingDoc.id, nextScope);
+      setScopeImpact({ checking: false, becameOrgVisibleCount: impact.becameOrgVisibleCount });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to check scope impact';
+      setActionError(message);
+      toast.error(message);
+      setScopeImpact({ checking: false, becameOrgVisibleCount: null });
+    }
+  };
+
+  // ★ VLT-003 — krok 2/2: dopiero PO potwierdzeniu ostrzeżenia woła się faktyczny
+  // PATCH .../scope. Anulowanie w UI = po prostu nie wołaj tej funkcji (dokument
+  // zostaje bez zmian, patrz KRYTERIUM ODBIORU VLT-003).
+  const handleConfirmScopeChange = async () => {
+    if (!editingDoc) return;
+    if (editDocScope === 'project' && !editDocProjectId) {
+      const message = 'Select a project for project-level documents';
+      setActionError(message);
+      toast.error(message);
+      return;
+    }
+    try {
+      setActionError(null);
+      await Api.updateKnowledgeDocumentScope(
+        editingDoc.id,
+        editDocScope,
+        editDocScope === 'project' ? editDocProjectId : undefined
+      );
+      const refreshed = await loadDocuments({ showLoading: false });
+      const confirmed = refreshed?.some(
+        (doc) => doc.id === editingDoc.id && doc.scope === editDocScope
+      );
+      if (!confirmed) {
+        throw new Error('Knowledge document scope change was not confirmed by the server');
+      }
+      toast.success('Document level updated');
+      setScopeImpact({ checking: false, becameOrgVisibleCount: null });
+      setEditingDoc(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update document scope';
       setActionError(message);
       toast.error(message);
     }
@@ -393,6 +553,50 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Level
+              </label>
+              <select
+                data-testid="vault-upload-scope"
+                value={uploadScope}
+                onChange={(e) => {
+                  const next = e.target.value as VaultScope;
+                  setUploadScope(next);
+                  if (next !== 'project') setUploadProjectId('');
+                }}
+                className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+              >
+                {SCOPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {uploadScope === 'project' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Project
+                </label>
+                <select
+                  data-testid="vault-upload-project"
+                  value={uploadProjectId}
+                  onChange={(e) => setUploadProjectId(e.target.value)}
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                >
+                  <option value="">Select project...</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-slate-500 dark:text-slate-400 text-xs mt-3">
           Files are automatically chunked, embedded, and added to the vector store for AI retrieval.
@@ -420,6 +624,19 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
           {DOCUMENT_CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
+            </option>
+          ))}
+        </select>
+        <select
+          data-testid="vault-scope-filter"
+          value={scopeFilter}
+          onChange={(e) => setScopeFilter(e.target.value as '' | VaultScope)}
+          className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+        >
+          <option value="">All Levels</option>
+          {SCOPE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
             </option>
           ))}
         </select>
@@ -456,6 +673,18 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
                       <p className="text-slate-500 dark:text-slate-400 text-xs">
                         {new Date(doc.created_at).toLocaleDateString()}
                       </p>
+                      {(() => {
+                        const meta = scopeMeta(doc.scope);
+                        const ScopeIcon = meta.icon;
+                        return (
+                          <span
+                            data-testid="vault-scope-badge"
+                            className="inline-flex items-center gap-1 mt-1 mr-1 text-xs px-2 py-0.5 bg-slate-100 text-slate-700 dark:bg-navy-700/60 dark:text-slate-300 rounded"
+                          >
+                            <ScopeIcon size={10} /> {meta.label}
+                          </span>
+                        );
+                      })()}
                       {doc.category && (
                         <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300 rounded">
                           {doc.category}
@@ -492,6 +721,9 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
                         setEditDocTags(doc.tags?.join(', ') || '');
                         setEditDocVisibility(doc.ai_visibility || 'allowed');
                         setEditDocSensitivity(doc.sensitivity || 'internal');
+                        setEditDocScope(doc.scope || 'organization');
+                        setEditDocProjectId(doc.project_id || '');
+                        setScopeImpact({ checking: false, becameOrgVisibleCount: null });
                       }}
                       className="p-1.5 text-slate-600 hover:text-indigo-500 transition-colors"
                       title="Edit"
@@ -523,6 +755,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
                   setEditingDoc(null);
                   setEditDocCategory('');
                   setEditDocTags('');
+                  setScopeImpact({ checking: false, becameOrgVisibleCount: null });
                 }}
                 className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-200"
               >
@@ -530,6 +763,98 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
               </button>
             </div>
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Level
+                </label>
+                {canChangeScope(editingDoc) ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <select
+                        data-testid="vault-edit-scope"
+                        value={editDocScope}
+                        onChange={(e) => handleRequestScopeChange(e.target.value as VaultScope)}
+                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                      >
+                        {SCOPE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      {editDocScope === 'project' && (
+                        <select
+                          data-testid="vault-edit-project"
+                          value={editDocProjectId}
+                          onChange={(e) => {
+                            setEditDocProjectId(e.target.value);
+                            if (e.target.value) handleRequestScopeChange('project');
+                          }}
+                          className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                        >
+                          <option value="">Select project...</option>
+                          {projects.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    {scopeImpact.checking && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        Checking impact…
+                      </p>
+                    )}
+                    {!scopeImpact.checking &&
+                      editDocScope !== editingDoc.scope &&
+                      scopeImpact.becameOrgVisibleCount !== null && (
+                        <div
+                          role="alert"
+                          className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300"
+                        >
+                          {scopeImpact.becameOrgVisibleCount > 0 ? (
+                            <p>
+                              {scopeImpact.becameOrgVisibleCount} document
+                              {scopeImpact.becameOrgVisibleCount === 1 ? '' : 's'} will become
+                              visible to the whole organization.
+                            </p>
+                          ) : (
+                            <p>
+                              This change does not expose any document to the whole organization.
+                            </p>
+                          )}
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              type="button"
+                              data-testid="vault-scope-confirm"
+                              onClick={handleConfirmScopeChange}
+                              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-medium"
+                            >
+                              Confirm level change
+                            </button>
+                            <button
+                              type="button"
+                              data-testid="vault-scope-cancel"
+                              onClick={() => {
+                                setEditDocScope(editingDoc.scope || 'organization');
+                                setEditDocProjectId(editingDoc.project_id || '');
+                                setScopeImpact({ checking: false, becameOrgVisibleCount: null });
+                              }}
+                              className="px-3 py-1.5 bg-slate-100 dark:bg-navy-900 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium hover:bg-slate-200 dark:hover:bg-navy-700/60"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {scopeMeta(editingDoc.scope).label}
+                  </p>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Category
@@ -613,6 +938,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
                     setEditDocTags('');
                     setEditDocVisibility('allowed');
                     setEditDocSensitivity('internal');
+                    setScopeImpact({ checking: false, becameOrgVisibleCount: null });
                   }}
                   className="flex-1 py-2 bg-slate-100 dark:bg-navy-900 text-slate-700 dark:text-slate-200 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-navy-700/60"
                 >
