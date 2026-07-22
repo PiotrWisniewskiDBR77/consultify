@@ -30,7 +30,8 @@
 | `wip/falab-deck-template-backend` | B | `da53e8a17e` | Deck: nowy `presentationTemplateDraftService.ts` + `POST /api/presentations/templates/plan` (AI-draft outline, fail-soft wg wzorca Word) | czysty (nowy plik + 1 route) |
 | `wip/falac-tokeny-galerie` | C | `d4775db382`,`31c8f48be9`,`c9008c7bff` | Grafika: slate/navy→`c-*` w DeckTemplateGallery (14) + PresentationTemplateGovernanceView (31) | WIZUAL → zrzut do akceptu. Zgłoszone osobne: niebieskie aktywne-zakładki governance łamią kanon #3 |
 
-**Konsolidacja (następny krok):** rozwiąż kolizję Excel (A3 vs wip/excel-engine), scal 4 gałęzie do jednej integracyjnej od origin/demo, deploy jednym ruchem (za „tak" Piotra) → live-verify treści (Word/Deck/Excel z czatu) + wizual (galerie dev-render) + round-trip save-as-template. Agentów worktree: `.claude/worktrees/agent-*` (gałęzie `wip/*` widoczne z każdego worktree).
+**✅ KONSOLIDACJA ZROBIONA — gałąź `integr/dokumenty-fala-abc`** (od origin/demo, 4 workstreamy scalone, kolizja Excel A3↔§0.3 rozwiązała się auto-czysto [różne rejony pliku — OBIE zmiany współistnieją, zweryfikowane grepem], esbuild całości + threeScenarioPnL 17/17 zielone, 18 plików +1793/−105). **To jest CEL DEPLOYU** — jedna gałąź, jeden ruch.
+**Do domknięcia PO deployu (live, nie da się offline):** treść Word/Deck/Excel z czatu (§0.3 realnie działa?), matchWorkbookTemplate odpala się na „model 3-scenariusze"?, round-trip save-as-template (wymaga migracji `20260412_seed_business_templates.sql` na bazie!), wizual galerii (dev-render dark+light). Runbook: `_HANDOFF_FALA_A_2026-07-22.md` (rozszerz o te punkty).
 - **Punkt cofania** ostatniego deployu: `a42ee33280` (przed merge audytu). NIGDY force/reset na demo.
 
 ## 2. NAPRAWA AUDYTU (już na demo, `533d353896`) — co żyje
