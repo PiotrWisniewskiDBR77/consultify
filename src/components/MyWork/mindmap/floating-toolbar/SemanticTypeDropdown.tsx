@@ -36,7 +36,7 @@ export const SEMANTIC_TYPE_OPTIONS = [
     id: 'decision',
     iconEl: Diamond,
     labelEn: 'Decision point',
-    color: 'text-c-accent',
+    color: 'text-c-tag-2',
   },
   { id: 'option', iconEl: Star, labelEn: 'Option', color: 'text-c-info' },
   {

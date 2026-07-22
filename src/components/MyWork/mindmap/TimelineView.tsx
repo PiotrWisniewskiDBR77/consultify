@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
   exploring: 'bg-c-surface-raised border-c-info',
   validated: 'bg-c-surface-raised border-c-success',
   ready_to_convert: 'bg-c-surface-raised border-c-warning',
-  converted: 'bg-c-accent border-c-accent',
+  converted: 'bg-c-tag-2 border-c-tag-2',
 };
 
 export const TimelineView: React.FC<TimelineViewProps> = ({

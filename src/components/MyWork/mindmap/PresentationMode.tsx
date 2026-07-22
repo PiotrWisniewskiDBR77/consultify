@@ -54,7 +54,7 @@ const BRANCH_COLORS: Record<string, { bg: string; text: string; accent: string }
   },
   risks: {
     bg: ' ',
-    text: 'text-c-accent dark:text-c-accent',
+    text: 'text-c-danger dark:text-c-danger',
     accent: 'bg-c-surface',
   },
   experiments: {

@@ -48,32 +48,32 @@ const THEMES = [
   {
     id: 'default',
     labelEn: 'Default',
-    colors: ['#3b82f6', '#60a5fa', '#475569', '#e2e8f0'],
+    colors: ['var(--c-tag-10)', 'var(--c-info)', 'var(--c-tag-8)', 'var(--c-surface-raised)'],
   },
   {
     id: 'ocean',
     labelEn: 'Ocean',
-    colors: ['#0d9488', '#22d3ee', '#155e75', '#cffafe'],
+    colors: ['var(--c-tag-12)', 'var(--c-tag-1)', 'var(--c-info)', 'var(--c-surface-raised)'],
   },
   {
     id: 'forest',
     labelEn: 'Forest',
-    colors: ['#16a34a', '#34d399', '#166534', '#d1fae5'],
+    colors: ['var(--c-success)', 'var(--c-tag-6)', 'var(--c-success)', 'var(--c-surface-raised)'],
   },
   {
     id: 'sunset',
     labelEn: 'Sunset',
-    colors: ['#ea580c', '#fbbf24', '#9a3412', '#fef3c7'],
+    colors: ['var(--c-warning)', 'var(--c-tag-9)', 'var(--c-warning)', 'var(--c-surface-raised)'],
   },
   {
     id: 'midnight',
     labelEn: 'Midnight',
-    colors: ['#6366f1', '#a78bfa', '#312e81', '#e0e7ff'],
+    colors: ['var(--c-tag-2)', 'var(--c-tag-3)', 'var(--c-tag-2)', 'var(--c-surface-raised)'],
   },
   {
     id: 'minimal',
     labelEn: 'Minimal',
-    colors: ['#6b7280', '#9ca3af', '#374151', '#f3f4f6'],
+    colors: ['var(--c-tag-8)', 'var(--c-border-strong)', 'var(--c-text-secondary)', 'var(--c-surface-raised)'],
   },
 ] as const;
 
@@ -170,7 +170,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, width: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-c-accent"
+                  className="flex-1 h-1.5 accent-c-text"
                 />
                 <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.width || 200}
@@ -214,7 +214,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                       onClick={() => patchNode({ style: { ...nodeStyle, color: c } })}
                       className={`w-5 h-5 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${
                         nodeStyle.color === c
-                          ? 'border-c-accent ring-2 ring-c-accent'
+                          ? 'border-c-text ring-2 ring-c-border-strong'
                           : 'border-c-border-subtle dark:border-c-border-subtle'
                       }`}
                       style={{ backgroundColor: c }}
@@ -235,7 +235,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, fillOpacity: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-c-accent"
+                  className="flex-1 h-1.5 accent-c-text"
                 />
                 <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.fillOpacity ?? 100}%
@@ -291,7 +291,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
               type="checkbox"
               checked={autoLayout}
               onChange={(e) => setAutoLayout(e.target.checked)}
-              className="w-3.5 h-3.5 rounded accent-c-accent"
+              className="w-3.5 h-3.5 rounded accent-c-text"
             />
             <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
               {t('ideas.mindmap.autoLayoutChanges', 'Auto-layout on changes')}
