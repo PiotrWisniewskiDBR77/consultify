@@ -48,32 +48,32 @@ const THEMES = [
   {
     id: 'default',
     labelEn: 'Default',
-    colors: ['#3b82f6', '#60a5fa', '#475569', '#e2e8f0'],
+    colors: ['var(--c-tag-10)', 'var(--c-info)', 'var(--c-tag-8)', 'var(--c-surface-raised)'],
   },
   {
     id: 'ocean',
     labelEn: 'Ocean',
-    colors: ['#0d9488', '#22d3ee', '#155e75', '#cffafe'],
+    colors: ['var(--c-tag-12)', 'var(--c-tag-1)', 'var(--c-info)', 'var(--c-surface-raised)'],
   },
   {
     id: 'forest',
     labelEn: 'Forest',
-    colors: ['#16a34a', '#34d399', '#166534', '#d1fae5'],
+    colors: ['var(--c-success)', 'var(--c-tag-6)', 'var(--c-success)', 'var(--c-surface-raised)'],
   },
   {
     id: 'sunset',
     labelEn: 'Sunset',
-    colors: ['#ea580c', '#fbbf24', '#9a3412', '#fef3c7'],
+    colors: ['var(--c-warning)', 'var(--c-tag-9)', 'var(--c-warning)', 'var(--c-surface-raised)'],
   },
   {
     id: 'midnight',
     labelEn: 'Midnight',
-    colors: ['#6366f1', '#a78bfa', '#312e81', '#e0e7ff'],
+    colors: ['var(--c-tag-2)', 'var(--c-tag-3)', 'var(--c-tag-2)', 'var(--c-surface-raised)'],
   },
   {
     id: 'minimal',
     labelEn: 'Minimal',
-    colors: ['#6b7280', '#9ca3af', '#374151', '#f3f4f6'],
+    colors: ['var(--c-tag-8)', 'var(--c-border-strong)', 'var(--c-text-secondary)', 'var(--c-surface-raised)'],
   },
 ] as const;
 

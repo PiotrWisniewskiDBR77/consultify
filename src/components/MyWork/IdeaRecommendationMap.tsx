@@ -1701,12 +1701,12 @@ function MindMapInner({
       simplifiedMode
         ? {
             type: 'default',
-            style: { stroke: '#6366f1', strokeWidth: 1.5, opacity: 0.5 },
+            style: { stroke: 'var(--c-tag-2)', strokeWidth: 1.5, opacity: 0.5 },
             animated: false,
           }
         : {
             type: 'gradient',
-            style: { stroke: '#6366f1', strokeWidth: 2, opacity: 0.7 },
+            style: { stroke: 'var(--c-tag-2)', strokeWidth: 2, opacity: 0.7 },
             animated: true,
             data: { animated: true, showParticles: true },
           },
@@ -3685,7 +3685,7 @@ function MindMapInner({
         sourceHandle: connection.sourceHandle || undefined,
         targetHandle: connection.targetHandle || undefined,
         type: 'labeled',
-        style: { stroke: '#6366f1', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
+        style: { stroke: 'var(--c-tag-2)', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
         animated: false,
         data: {
           userCreated: true,
@@ -4831,7 +4831,7 @@ function MindMapInner({
           source: 'root',
           target: newId,
           type: 'gradient',
-          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          style: { stroke: 'var(--c-tag-8)', strokeWidth: 1.5, opacity: 0.5 },
           animated: true,
           data: { userCreated: true, edgeRole: 'structural' },
         } as any;
@@ -4863,7 +4863,7 @@ function MindMapInner({
           source: 'root',
           target: newId,
           type: 'gradient',
-          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          style: { stroke: 'var(--c-tag-8)', strokeWidth: 1.5, opacity: 0.5 },
           animated: true,
           data: { userCreated: true, edgeRole: 'structural' },
         } as any;
@@ -6102,10 +6102,10 @@ function MindMapInner({
                 if (!r) return n;
                 const sentimentColor =
                   r.sentiment === 'positive'
-                    ? '#22c55e'
+                    ? 'var(--c-success)'
                     : r.sentiment === 'negative'
-                      ? '#f43f5e'
-                      : '#94a3b8';
+                      ? 'var(--c-danger)'
+                      : 'var(--c-tag-8)';
                 return { ...n, data: { ...n.data, sentimentColor, sentiment: r.sentiment } };
               })
             );

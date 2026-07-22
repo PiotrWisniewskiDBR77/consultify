@@ -63,16 +63,50 @@ export function isRelationEdge(edge: Edge): boolean {
   return getEdgeRole(edge) === 'relation';
 }
 
+// NOTE: only `.edge` is actually consumed (style.stroke on ReactFlow edges);
+// bg/text/glow have no current renderer — kept as matching semantic tokens
+// for whichever family the key represents (no tint-graduation available via
+// var(), harmless since unread).
 export const BRANCH_COLORS: Record<
   string,
   { bg: string; text: string; edge: string; glow: string }
 > = {
-  strengths: { bg: '#dcfce7', text: '#166534', edge: '#22c55e', glow: '#bbf7d0' },
-  weaknesses: { bg: '#fee2e2', text: '#991b1b', edge: '#f43f5e', glow: '#fecaca' },
-  opportunities: { bg: '#dbeafe', text: '#1e40af', edge: '#3b82f6', glow: '#bfdbfe' },
-  threats: { bg: '#fef9c3', text: '#854d0e', edge: '#eab308', glow: '#fef08a' },
-  options: { bg: '#f3e8ff', text: '#6b21a8', edge: '#a855f7', glow: '#e9d5ff' },
-  uncategorized: { bg: '#f1f5f9', text: '#475569', edge: '#94a3b8', glow: '#e2e8f0' },
+  strengths: {
+    bg: 'var(--c-success)',
+    text: 'var(--c-success)',
+    edge: 'var(--c-success)',
+    glow: 'var(--c-success)',
+  },
+  weaknesses: {
+    bg: 'var(--c-danger)',
+    text: 'var(--c-danger)',
+    edge: 'var(--c-danger)',
+    glow: 'var(--c-danger)',
+  },
+  opportunities: {
+    bg: 'var(--c-info)',
+    text: 'var(--c-info)',
+    edge: 'var(--c-info)',
+    glow: 'var(--c-info)',
+  },
+  threats: {
+    bg: 'var(--c-warning)',
+    text: 'var(--c-warning)',
+    edge: 'var(--c-warning)',
+    glow: 'var(--c-warning)',
+  },
+  options: {
+    bg: 'var(--c-tag-3)',
+    text: 'var(--c-tag-3)',
+    edge: 'var(--c-tag-3)',
+    glow: 'var(--c-tag-3)',
+  },
+  uncategorized: {
+    bg: 'var(--c-tag-8)',
+    text: 'var(--c-tag-8)',
+    edge: 'var(--c-tag-8)',
+    glow: 'var(--c-tag-8)',
+  },
 };
 
 export function branchColor(key: string, colorOverride?: string) {
