@@ -104,7 +104,15 @@ const INITIATIVE = {
   id: INITIATIVE_ID,
   title: 'Skrócenie przezbrojeń linii pakowania L3 (SMED)',
   name: 'Skrócenie przezbrojeń linii pakowania L3 (SMED)',
-  status: 'IN_PROGRESS',
+  // ★ WIERNOŚĆ HARNESSU: było 'IN_PROGRESS' — NIE jest to poprawna wartość enuma
+  // InitiativeStatus (src/types/core.ts:735), więc rozwiązywała się do fallbacku
+  // DRAFT (InitiativeDocumentView.tsx: rawStatus∉enum → DRAFT). Skutek: (a) status
+  // w Menu 1 pokazywał „Szkic"/kropkę slate zamiast realnego stanu; (b) availableTransitions
+  // celowały w 'COMPLETED'/'ON_HOLD' (też spoza enuma) → getStatusActions(DRAFT) nie
+  // dawał żadnego dopasowania → primaryLifecycleAction=null → PUSTY slot primary.
+  // 'EXECUTING' to poprawny stan „w realizacji" (progress 42, kamienie w toku) i daje
+  // realny forward-primary „Oznacz jako ukończone" (EXECUTING→DONE).
+  status: 'EXECUTING',
   priority: 'high',
   progress: 42,
   axis: 'operational',
@@ -863,7 +871,7 @@ const HISTORY_EVENTS = [
     actorId: 'user-anna-kowalczyk',
     createdAt: daysFromNow(-38),
     oldValue: 'PLANNING',
-    newValue: 'IN_PROGRESS',
+    newValue: 'EXECUTING',
     notes: 'Zatwierdzenie budżetu 185 000 PLN i start prac.',
   },
   {
@@ -915,7 +923,7 @@ const STATUS_HISTORY = [
     id: 'sh-2',
     initiativeId: INITIATIVE_ID,
     fromStatus: 'PLANNING',
-    toStatus: 'IN_PROGRESS',
+    toStatus: 'EXECUTING',
     changedBy: 'user-anna-kowalczyk',
     changedByFirstName: 'Anna',
     changedByLastName: 'Kowalczyk',
@@ -938,19 +946,24 @@ const STATUS_HISTORY = [
  * podajemy pełne uprawnienia, jakie ma właściciel inicjatywy w toku.
  */
 const GATE_READINESS = {
-  currentStatus: 'IN_PROGRESS',
+  currentStatus: 'EXECUTING',
   userRoles: ['owner', 'sponsor'],
+  // ★ Cele transitions MUSZĄ być realnymi wartościami enuma i zgodne z
+  // VALID_TRANSITIONS[EXECUTING] = [BLOCKED, DONE, CANCELLED] (initiativeLifecycle.ts:41).
+  // Wcześniej 'COMPLETED'/'ON_HOLD' nie istniały w enumie → statusActions je odfiltrowywał.
+  // DONE = forward-primary („Oznacz jako ukończone") wykonalny przez sponsora (G4) →
+  // primary WIDOCZNY. BLOCKED = akcja destrukcyjna (kebab), nie primary.
   availableTransitions: [
     {
-      targetStatus: 'COMPLETED',
+      targetStatus: 'DONE',
       gate: 'G4',
       requiredRoles: ['sponsor'],
       assignedApprovers: [{ gateRole: 'sponsor', userId: 'user-anna-kowalczyk' }],
-      canCurrentUserExecute: false,
+      canCurrentUserExecute: true,
       hasAssignedApprover: true,
     },
     {
-      targetStatus: 'ON_HOLD',
+      targetStatus: 'BLOCKED',
       gate: null,
       requiredRoles: ['owner'],
       assignedApprovers: [{ gateRole: 'owner', userId: 'user-marek-zielinski' }],
@@ -970,8 +983,8 @@ const GATE_READINESS = {
     },
     ctaBar: {
       workflowActions: [
-        { targetStatus: 'COMPLETED', gate: 'G4' },
-        { targetStatus: 'ON_HOLD', gate: null },
+        { targetStatus: 'DONE', gate: 'G4' },
+        { targetStatus: 'BLOCKED', gate: null },
       ],
       contextCreateActions: ['task', 'decision', 'raid'],
       canUseAi: true,

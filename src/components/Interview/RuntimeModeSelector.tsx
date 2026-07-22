@@ -109,7 +109,7 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
               const next = order[(idx + 1) % order.length];
               onModeSelect(next);
             }}
-            className="flex items-center gap-1 text-xs font-medium text-[var(--c-accent)] hover:brightness-110 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] rounded-token-xs"
+            className="flex items-center gap-1 text-xs font-medium text-[var(--c-info)] hover:brightness-110 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] rounded-token-xs"
           >
             <ChevronRight size={14} className="rotate-90" />
             {t('interview.runtimeMode.switch')}
@@ -141,12 +141,12 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
               disabled={locked}
               className={`relative flex flex-col items-start gap-3 p-4 rounded-token-lg text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${
                 isSelected
-                  ? 'bg-[var(--c-accent-soft)] ring-1 ring-c-accent/40'
+                  ? 'bg-[var(--c-surface-raised)] border border-[var(--c-border)] ring-2 ring-[var(--c-focus-solid)]'
                   : 'bg-[var(--c-surface-raised)] hover:bg-[var(--c-surface)] border border-[var(--c-border-subtle)]'
               } ${locked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
             >
               {isRecommended && (
-                <span className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-token-pill text-[10px] font-medium bg-[var(--c-accent-soft)] text-[var(--c-accent)]">
+                <span className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-token-pill text-[10px] font-medium bg-[var(--c-info)] text-white">
                   <Sparkles size={10} />
                   {t('interview.runtimeMode.recommended')}
                 </span>
@@ -155,7 +155,7 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
                 <div
                   className={`shrink-0 w-10 h-10 rounded-token-md flex items-center justify-center ${
                     isSelected
-                      ? 'bg-[var(--c-accent-soft)] text-[var(--c-accent)]'
+                      ? 'bg-[var(--c-surface)] text-[var(--c-info)]'
                       : 'bg-[var(--c-surface)] text-[var(--c-text-secondary)]'
                   }`}
                 >
@@ -172,7 +172,7 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
                 <div
                   className={`shrink-0 w-5 h-5 rounded-token-pill flex items-center justify-center border-2 ${
                     isSelected
-                      ? 'border-[var(--c-accent)] bg-[var(--c-accent)]'
+                      ? 'border-[var(--c-info)] bg-[var(--c-info)]'
                       : 'border-[var(--c-border)]'
                   }`}
                 >

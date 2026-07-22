@@ -920,7 +920,9 @@ export function KnownToolDetailView(props: {
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-[11px] font-bold text-white">
+                {/* stonowane: bylo `bg-blue-600 text-white` (solid, bez wariantu dark) — konkurowalo
+                    wizualnie ze slotem primary. Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
                   {index + 1}
                 </div>
                 <div>
@@ -1028,7 +1030,9 @@ export function KnownToolDetailView(props: {
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-900 text-[11px] font-bold text-white">
+                {/* stonowane: bylo `bg-navy-900 text-white` (bez wariantu dark — numerator ginal
+                    na ciemnym tle). Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
                   {index + 1}
                 </div>
                 <div>
@@ -1616,14 +1620,18 @@ export function KnownToolDetailView(props: {
         saving: false,
         isDirty: false,
         onClose,
-        // SPEC-N §2.3 / CLAUDE.md pułapka nr 1 — kropka statusu używała wcześniej
-        // palety brandowej (crimson #85182F) w POWŁOCE. Czerwień jest zarezerwowana
-        // dla semantyki krytycznej; status narzędzia to nie awaria. Kropka niesie
-        // teraz realną informację: aktywne = c-success, nieaktywne = c-text-muted.
-        // (15 pozostałych wystąpień tej palety — A1 szacował 13 — siedzi w TREŚCI
-        // sekcji: kropki wypunktowania i gradienty kart. Poza zakresem M1,
-        // osobny sweep kolorów.)
-        statusDotColor: tool?.isActive ? 'bg-c-success' : 'bg-c-text-muted',
+        // D-B (2026-07-22) — status = ETYKIETA-PIGUŁKA z tekstem, nie naga kropka.
+        // Karta lokalizuje sama; ton mapuje na c-*. Stan domenowy narzędzia:
+        //   coming-soon → „Wkrótce" (neutral)  ·  aktywne → „Aktywne" (approved =
+        //   bg-c-success, przeniesione z byłego statusDotColor:1630)  ·  reszta →
+        //   „Nieaktywne" (neutral). Czerwień (rejected) nie występuje — status
+        //   biblioteczny to nie awaria (CLAUDE.md pułapka nr 1).
+        statusLabel: tool?.isComingSoon
+          ? t('discoveryToolsMain.knownToolDetailView.statusComingSoon', 'Coming soon')
+          : tool?.isActive
+            ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
+            : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive'),
+        statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
         primaryAction,
       }}
       sections={sections}

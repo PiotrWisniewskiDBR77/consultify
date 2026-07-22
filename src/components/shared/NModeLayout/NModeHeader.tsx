@@ -1,32 +1,32 @@
 /**
  * NModeHeader
  *
- * Standard header bar for all N-mode artifact detail views.
- * Contains: back button, title input, artifact code, permalink, save, chat, mode switcher.
+ * Standard header bar (Menu 1) for all N-mode artifact detail views.
+ * Contains: back button, title (text→input on click), status pill, save-state
+ * indicator, N/C mode switcher, ONE primary CTA, and an overflow (⋮) menu that
+ * holds "copy object code" + "copy link".
+ *
+ * Decisions 2026-07-22 (Piotr) implemented here:
+ *   D-B — status = labelled pill (statusLabel/statusTone, c-* tokens), not a bare dot.
+ *   D-C — save state = non-clickable text indicator (autosave on blur stays).
+ *   D-D — object code + permalink moved off the bar into the ⋮ kebab.
+ *   D6  — title truncates with ellipsis (view = text, click → input).
  *
  * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.1
+ * @see Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md §11.2 (kanon Menu 1)
  */
 
 import { motion } from 'framer-motion';
-import {
-  AlertTriangle,
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  Clock3,
-  Copy,
-  Loader2,
-  Save,
-  Sparkles,
-} from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import { ChevronLeft, Copy, Link2, MoreVertical, Sparkles } from 'lucide-react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { PresentationModeSwitcher } from '@/components/MyWork/shared/PresentationModeSwitcher';
-import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
-import type { ArtifactType } from '@/utils/artifactLinks';
+import { type ArtifactType, buildArtifactPermalink } from '@/utils/artifactLinks';
 
 import type { NModeHeaderConfig } from './types';
 
@@ -43,6 +43,121 @@ interface NModeHeaderProps extends NModeHeaderConfig {
   titleInputId?: string;
 }
 
+// ── Status pill tone → c-* classes ─────────────────────────────────────────
+// Same map as ArtifactApprovalStatusBar.tsx:55-60. c-* ONLY (no crimson/slate/
+// navy/hex). draft/neutral read as quiet surface; review/approved/rejected use
+// the info/success/danger tokens at a 15% tint so the pill never shouts.
+type StatusTone = NonNullable<NModeHeaderConfig['statusTone']>;
+const STATUS_PILL_CLASS: Record<StatusTone, string> = {
+  draft: 'bg-c-surface-raised text-c-text-muted',
+  review: 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info',
+  approved: 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success',
+  rejected: 'bg-[color-mix(in_srgb,var(--c-danger)_15%,transparent)] text-c-danger',
+  neutral: 'bg-c-surface-raised text-c-text-muted',
+};
+
+// ── Overflow (⋮) menu ───────────────────────────────────────────────────────
+// Portaled to <body>: the header wrapper is `overflow-hidden` (rounded card +
+// backdrop-blur), so an in-flow dropdown would be clipped. Fixed-positioned via
+// the trigger's rect, right-anchored. c-* tokens only; focus ring = c-focus.
+interface OverflowMenuItem {
+  id: string;
+  label: string;
+  icon: React.FC<{ size?: number; className?: string }>;
+  onClick: () => void;
+}
+
+const HeaderOverflowMenu: React.FC<{ items: OverflowMenuItem[]; ariaLabel: string }> = ({
+  items,
+  ariaLabel,
+}) => {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    const update = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (r) setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="p-2 rounded-xl text-c-text-secondary hover:bg-state-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+        title={ariaLabel}
+        aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <MoreVertical size={18} />
+      </button>
+      {open &&
+        pos &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-context-menu"
+              onClick={() => setOpen(false)}
+              aria-hidden="true"
+            />
+            <div
+              role="menu"
+              className="fixed z-context-menu min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface p-1 shadow-lg"
+              style={{ top: pos.top, right: pos.right }}
+            >
+              {items.map((it) => {
+                const Icon = it.icon;
+                return (
+                  <button
+                    key={it.id}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      it.onClick();
+                      setOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                  >
+                    <Icon size={14} className="shrink-0 text-c-text-muted" />
+                    <span className="min-w-0 flex-1 truncate">{it.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>,
+          document.body
+        )}
+    </div>
+  );
+};
+
 export const NModeHeader: React.FC<NModeHeaderProps> = ({
   title,
   onTitleChange,
@@ -57,7 +172,8 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   isDirty = false,
   onChat,
   onClose,
-  statusDotColor,
+  statusLabel,
+  statusTone = 'neutral',
   presentationMode,
   onPresentationModeChange,
   showModeSwitcher = true,
@@ -65,67 +181,91 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   titleInputId,
   primaryAction,
   showChatButton = false,
+  // NOTE: `statusDotColor` (deprecated, D-B) is intentionally NOT destructured
+  // or rendered — the bare dot is replaced by the status pill above. The prop
+  // stays in NModeHeaderConfig (accepted) so cards that still pass it typecheck.
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const [copiedId, setCopiedId] = useState(false);
+
+  // Title: text in view, <input> on click (D6). New artifacts (no id) open in
+  // edit mode + autofocus, preserving the old `autoFocus={!artifactId}`.
+  const [isEditingTitle, setIsEditingTitle] = useState(() => !artifactId);
+  const resolvedPlaceholder = titlePlaceholder
+    ? isPolish
+      ? titlePlaceholder.pl
+      : titlePlaceholder.en
+    : '';
+
   const artifactCode =
     artifactId && buildArtifactCode
       ? buildArtifactCode(artifactType, artifactId)
       : artifactId || '';
-  const copyArtifactId = useCallback(async () => {
+
+  const copyObjectCode = useCallback(async () => {
     if (!artifactCode) return;
     try {
       await navigator.clipboard.writeText(artifactCode);
-      setCopiedId(true);
-      setTimeout(() => setCopiedId(false), 1500);
+      toast.success(t('sharedComponents.nModeHeader.copyCodeSuccess'));
     } catch {
-      /* clipboard unavailable */
+      toast.error(t('sharedComponents.artifactPermalinkButton.copyFailed'));
     }
-  }, [artifactCode]);
+  }, [artifactCode, t]);
+
+  const copyPermalink = useCallback(async () => {
+    if (!artifactId) return;
+    try {
+      await navigator.clipboard.writeText(buildArtifactPermalink(artifactType, artifactId));
+      toast.success(t('sharedComponents.artifactPermalinkButton.copied'));
+    } catch {
+      toast.error(t('sharedComponents.artifactPermalinkButton.copyFailed'));
+    }
+  }, [artifactId, artifactType, t]);
+
+  const overflowItems: OverflowMenuItem[] = artifactId
+    ? [
+        {
+          id: 'copy-code',
+          label: t('sharedComponents.nModeHeader.copyObjectCode'),
+          icon: Copy,
+          onClick: () => void copyObjectCode(),
+        },
+        {
+          id: 'copy-link',
+          label: t('sharedComponents.nModeHeader.copyLink'),
+          icon: Link2,
+          onClick: () => void copyPermalink(),
+        },
+      ]
+    : [];
+
+  // Save state — non-clickable text (D-C). Autosave still fires on title blur.
   const effectiveSaveState = saveState || (saving ? 'saving' : isDirty ? 'dirty' : 'saved');
-  const saveCopy = {
+  const saveInfo = {
     saved: {
       label: t('sharedComponents.nModeHeader.savedLabel'),
       title: lastSavedLabel || t('sharedComponents.nModeHeader.savedTitle'),
-      className:
-        'bg-slate-100/70 dark:bg-navy-800/40 text-slate-600 dark:text-slate-500 border-transparent',
-      icon: CheckCircle2,
-      disabled: true,
     },
     saving: {
       label: t('sharedComponents.nModeHeader.savingLabel'),
       title: t('sharedComponents.nModeHeader.savingTitle'),
-      className:
-        'bg-blue-500/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
-      icon: Loader2,
-      disabled: true,
     },
     dirty: {
-      label: t('sharedComponents.nModeHeader.saveLabel'),
+      label: t('sharedComponents.nModeHeader.unsavedLabel'),
       title: t('sharedComponents.nModeHeader.dirtyTitle'),
-      className:
-        'bg-blue-500/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15 dark:hover:bg-blue-500/15 border-blue-500/20',
-      icon: Save,
-      disabled: false,
     },
     error: {
       label: t('sharedComponents.nModeHeader.saveFailedLabel'),
       title: t('sharedComponents.nModeHeader.saveFailedTitle'),
-      className:
-        'bg-danger-500/10 dark:bg-danger-500/10 text-danger-700 dark:text-danger-300 hover:bg-danger-500/15 dark:hover:bg-danger-500/15 border-danger-500/30',
-      icon: AlertTriangle,
-      disabled: false,
     },
   }[effectiveSaveState];
-  const SaveIcon = effectiveSaveState === 'saving' ? Loader2 : saveCopy.icon;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="col-span-full bg-slate-50/90 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl overflow-hidden"
+      className="col-span-full bg-c-surface-raised/90 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl overflow-hidden"
     >
       <div className="flex items-center gap-4 px-5 py-3">
         {/* Back button */}
@@ -138,74 +278,72 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           <ChevronLeft size={20} />
         </motion.button>
 
-        {/* Title area */}
-        <div className="flex-1 min-w-0 flex items-center gap-3">
-          {statusDotColor && <div className={`w-3 h-3 rounded-full ${statusDotColor} shadow-lg`} />}
-          <input
-            id={titleInputId}
-            type="text"
-            value={title}
-            onChange={(e) => !titleReadOnly && onTitleChange(e.target.value)}
-            onBlur={() => {
-              // Canon A1: auto-save on blur. Only fire when editable, there are
-              // unsaved changes, and we're not mid-save (avoid double-submit).
-              if (!titleReadOnly && isDirty && !saving && effectiveSaveState !== 'saving') {
-                onSave?.();
-              }
-            }}
-            readOnly={titleReadOnly}
-            className="flex-1 text-xl font-bold bg-transparent text-c-text placeholder-c-text-muted border-b-2 border-transparent focus:outline-none focus:border-c-focus-solid transition-colors"
-            placeholder={
-              titlePlaceholder ? (isPolish ? titlePlaceholder.pl : titlePlaceholder.en) : undefined
-            }
-            autoFocus={!artifactId}
-          />
-          {artifactId && (
-            <>
-              <button
-                type="button"
-                onClick={copyArtifactId}
-                title={t('sharedComponents.nModeHeader.copyArtifactId')}
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-surface-raised text-[10px] font-mono uppercase text-c-text-muted transition-colors hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-              >
-                {copiedId ? (
-                  <Check size={10} className="text-emerald-500" />
-                ) : (
-                  <Copy size={10} className="opacity-60" />
-                )}
-                {artifactCode}
-              </button>
-              <ArtifactPermalinkButton
-                artifactType={artifactType}
-                artifactId={artifactId}
-                isPolish={isPolish}
-                size={14}
-              />
-            </>
+        {/* Title area: title (truncate) · status pill · save-state text */}
+        <div className="flex-1 min-w-0 flex items-center gap-2.5">
+          {isEditingTitle && !titleReadOnly ? (
+            <input
+              id={titleInputId}
+              type="text"
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              onBlur={() => {
+                setIsEditingTitle(false);
+                // Canon A1: auto-save on blur. Only when there are unsaved
+                // changes and we're not mid-save (avoid double-submit).
+                if (isDirty && !saving && effectiveSaveState !== 'saving') {
+                  onSave?.();
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur();
+              }}
+              className="min-w-0 flex-1 text-xl font-bold bg-transparent text-c-text placeholder-c-text-muted border-b-2 border-transparent focus:outline-none focus:border-c-focus-solid transition-colors"
+              placeholder={resolvedPlaceholder || undefined}
+              autoFocus
+            />
+          ) : titleReadOnly ? (
+            <span
+              id={titleInputId}
+              className="min-w-0 truncate text-xl font-bold text-c-text"
+              title={title || resolvedPlaceholder}
+            >
+              {title || <span className="text-c-text-muted font-normal">{resolvedPlaceholder}</span>}
+            </span>
+          ) : (
+            <button
+              id={titleInputId}
+              type="button"
+              onClick={() => setIsEditingTitle(true)}
+              className="min-w-0 truncate rounded-sm text-left text-xl font-bold bg-transparent text-c-text border-b-2 border-transparent hover:border-c-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              title={title || resolvedPlaceholder}
+            >
+              {title || <span className="text-c-text-muted font-normal">{resolvedPlaceholder}</span>}
+            </button>
           )}
+
+          {/* Status lifecycle pill (D-B). Rendered only when the card supplies
+              a label; no bare dot fallback. */}
+          {statusLabel && (
+            <span
+              className={`inline-flex shrink-0 items-center h-5 px-2 rounded-md text-[11px] font-medium whitespace-nowrap ${STATUS_PILL_CLASS[statusTone]}`}
+            >
+              {statusLabel}
+            </span>
+          )}
+
+          {/* Save-state indicator — text, not a control (D-C). */}
+          <span
+            className={`shrink-0 whitespace-nowrap text-xs ${
+              effectiveSaveState === 'error' ? 'text-c-danger' : 'text-c-text-muted'
+            }`}
+            title={saveInfo.title}
+          >
+            {saveInfo.label}
+          </span>
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2">
-          {/* Save */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onSave}
-            disabled={saveCopy.disabled}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-fast ease-standard disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${saveCopy.className} ${saving ? 'opacity-70' : ''}`}
-            title={saveCopy.title}
-          >
-            <SaveIcon size={16} className={effectiveSaveState === 'saving' ? 'animate-spin' : ''} />
-            <span>{saveCopy.label}</span>
-          </motion.button>
-          {lastSavedLabel && effectiveSaveState === 'saved' ? (
-            <span className="hidden items-center gap-1 text-[11px] text-c-text-muted 2xl:inline-flex">
-              <Clock3 size={12} />
-              {lastSavedLabel}
-            </span>
-          ) : null}
-
+        <div className="flex items-center gap-2 shrink-0">
           {/* AI (#27/#37): header slot for klasa S (Task/Decision — no M3),
               opt-in via showChatButton so other NModeHeader consumers that
               already pass onChat (Notification/Initiative/Insight) are
@@ -226,7 +364,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           {/* Mode Switcher */}
           {showModeSwitcher && (
             <>
-              <div className="w-px h-6 bg-slate-200/50 dark:bg-navy-700/30" />
+              <div className="w-px h-6 bg-c-border-subtle" />
               <PresentationModeSwitcher
                 value={presentationMode}
                 onChange={onPresentationModeChange}
@@ -258,6 +396,13 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               </button>
             </>
           )}
+
+          {/* Overflow (⋮): copy object code + copy link (D-D). Only when the
+              artifact has an id (nothing to copy otherwise). */}
+          <HeaderOverflowMenu
+            items={overflowItems}
+            ariaLabel={t('sharedComponents.nModeHeader.moreActions')}
+          />
         </div>
       </div>
     </motion.div>

@@ -184,6 +184,28 @@ const STATUS_CONFIG = {
   },
 };
 
+// D-B (2026-07-22): lifecycle status → tone dla etykiety-pigułki w Menu 1
+// (NModeHeader statusLabel/statusTone, tokeny c-*). Odwzorowuje semantykę
+// kolorów STATUS_CONFIG bez surowego hexa: todo=szary (draft), in_progress /
+// review=niebieski info (review), done=zielony (approved), blocked=czerwony
+// (rejected). Tekst pigułki bierzemy z STATUS_CONFIG.label (już dwujęzyczny).
+const STATUS_TONE: Record<
+  keyof typeof STATUS_CONFIG,
+  'draft' | 'review' | 'approved' | 'rejected' | 'neutral'
+> = {
+  todo: 'draft',
+  in_progress: 'review',
+  review: 'review',
+  done: 'approved',
+  blocked: 'rejected',
+};
+
+// D-A (2026-07-22): tryb otwarcia zależy od STANU zadania, nie od samego
+// istnienia taskId (defekt D12). Zadanie zakończone ('done') otwiera się w
+// PODGLĄDZIE (czysta prezentacja); szkic / praca w toku (todo / in_progress /
+// review / blocked) otwiera się w EDYCJI, z widocznym primary „naprzód".
+const opensInPreview = (status: keyof typeof STATUS_CONFIG): boolean => status === 'done';
+
 const PRIORITY_CONFIG = {
   low: {
     label: { en: 'Low', pl: 'Niski' },
@@ -677,10 +699,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // strona, a drawer z listy to jego preview.
   // "Do pokazania klientowi": read = karty read-only (hideActions), główne pola
   // wyłączone, pasek akcji stanu (Reassign/Delay/Mark complete) ukryty.
-  // Z31/#31: karta otwiera się DOMYŚLNIE na READ gdy już istnieje (taskId).
-  // Wyjątek: świeżo tworzony task (brak taskId — jeszcze nie zapisany, więc
-  // z definicji pusty) → EDIT od razu.
-  // Drugi wyjątek (task właśnie utworzony i pusty, wiek < 2 min) — patrz loadTask.
+  // D-A / defekt D12 (2026-07-22): tryb otwarcia zależy od STANU zadania, nie od
+  // istnienia taskId — właściwą wartość ustawia loadTask po wczytaniu statusu
+  // (done → PODGLĄD; praca w toku → EDYCJA). Ta wartość początkowa to tylko
+  // zabezpieczenie na pierwszy render przed wczytaniem (i tak zasłonięty przez
+  // guard `loading`): nowy task (brak taskId) → EDYCJA od razu.
   const [readMode, setReadMode] = useState<boolean>(() => Boolean(taskId));
 
   useEffect(() => {
@@ -877,16 +900,20 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setSourceId(task.sourceId || task.source_id || null);
       setBlockedByDecisionId(task.blockedByDecisionId || '');
 
-      // Z31: świeżo utworzony task (bez opisu, wiek < 2 min) → otwórz na EDIT,
-      // nie READ (default). Tani sygnał — bez systemu uprawnień (to gate #28).
+      // D-A / defekt D12 (2026-07-22): tryb otwarcia zależy od STANU zadania,
+      // nie od samego istnienia taskId (poprzednio readMode = Boolean(taskId)
+      // → każde istniejące zadanie startowało bez primary). Zakończone ('done')
+      // → PODGLĄD; praca w toku (todo/in_progress/review/blocked) → EDYCJA
+      // z widocznym primary.
+      const loadedStatus = (task.status || 'todo') as keyof typeof STATUS_CONFIG;
+      // Z31: świeżo utworzony task (bez opisu, wiek < 2 min) → zawsze EDIT,
+      // niezależnie od stanu. Tani sygnał — bez systemu uprawnień (to gate #28).
       const createdAtMs = task.createdAt ? new Date(task.createdAt).getTime() : NaN;
       const isFreshAndEmpty =
         !task.description?.trim() &&
         !Number.isNaN(createdAtMs) &&
         Date.now() - createdAtMs < 2 * 60 * 1000;
-      if (isFreshAndEmpty) {
-        setReadMode(false);
-      }
+      setReadMode(isFreshAndEmpty ? false : opensInPreview(loadedStatus));
 
       // Set initiative name if found
       if (task.initiativeId) {
@@ -4325,7 +4352,8 @@ Return ONLY the final comment text.`;
                 onChat={handleOpenChat}
                 showChatButton
                 onClose={onClose}
-                statusDotColor={statusConfig.color}
+                statusLabel={statusConfig.label[isPolish ? 'pl' : 'en']}
+                statusTone={STATUS_TONE[status] || 'neutral'}
                 presentationMode={presentationMode}
                 onPresentationModeChange={setPresentationMode}
                 buildArtifactCode={buildArtifactCode}

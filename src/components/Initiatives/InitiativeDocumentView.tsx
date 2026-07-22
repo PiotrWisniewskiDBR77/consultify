@@ -149,7 +149,8 @@ import {
   type NModePropertyField,
   type NModeSection,
   NModeSectionWrapper,
-  ToolbarAISolidButton,
+  // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
+  // nic nie jest solid; AI Consultant zjechał na wariant outline/split, :10932).
   ToolbarAISplitButton,
   ToolbarGhostButton,
   ToolbarIconButton,
@@ -263,6 +264,30 @@ const toKpiNumber = (value?: string | null): number => {
  * (server/src/services/initiativeGenerationService.ts → REVIEW_PASS_THRESHOLD).
  */
 const REVIEW_PASS_THRESHOLD = 90;
+
+// ── D-B: status lifecycle → Menu 1 pill tone ────────────────────────────────
+// Header contract (faza 2): the card supplies statusLabel (already localized)
+// + statusTone; the shell maps tone → c-* tokens (draft/neutral = muted,
+// review = c-info, approved = c-success, rejected = c-danger). No bare dot,
+// no raw Tailwind palette. Initiative's 13-status lifecycle is folded into the
+// 4 semantic buckets: DRAFT = draft; awaiting-review = review; greenlit &
+// progressing = approved; problem/terminal-negative = rejected; ARCHIVED = neutral.
+type NModeStatusTone = 'draft' | 'review' | 'approved' | 'rejected' | 'neutral';
+const INITIATIVE_STATUS_TONE: Record<InitiativeStatus, NModeStatusTone> = {
+  [InitiativeStatus.DRAFT]: 'draft',
+  [InitiativeStatus.PENDING_REVIEW]: 'review',
+  [InitiativeStatus.REVIEW]: 'review',
+  [InitiativeStatus.PROMOTED]: 'approved',
+  [InitiativeStatus.PLANNING]: 'approved',
+  [InitiativeStatus.APPROVED]: 'approved',
+  [InitiativeStatus.SCHEDULED]: 'approved',
+  [InitiativeStatus.EXECUTING]: 'approved',
+  [InitiativeStatus.BLOCKED]: 'rejected',
+  [InitiativeStatus.DONE]: 'approved',
+  [InitiativeStatus.TRACKING]: 'approved',
+  [InitiativeStatus.CANCELLED]: 'rejected',
+  [InitiativeStatus.ARCHIVED]: 'neutral',
+};
 
 // Wzorzec N (§1 BCG) — sekcje-karty generowane przez AI, którym doklejamy
 // afordancję AI-draft (badge stanu + pasek Regeneruj·Edytuj·Zaakceptuj przez
@@ -1350,6 +1375,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       : InitiativeStatus.DRAFT
   ) as InitiativeStatus;
   const statusMeta = getStatusMeta(status);
+  // D-B: Menu 1 status pill. Label comes from INITIATIVE_STATUS_METADATA (already
+  // bilingual — no new i18n key, no raw key on screen); tone from the fold above.
+  const statusPillLabel = isPolish
+    ? INITIATIVE_STATUS_METADATA[status].labelPL
+    : INITIATIVE_STATUS_METADATA[status].label;
+  const statusPillTone = INITIATIVE_STATUS_TONE[status];
   // Status actions are driven by backend `gate-readiness-check` (source of truth).
   const statusActions = useMemo(() => {
     const transitions = gateReadiness?.availableTransitions || [];
@@ -1408,6 +1439,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // dalej obowiązuje (AND), więc read-mode nigdy nie „odblokuje" edycji.
   const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards && !readMode;
   const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
+  // D-A tryb otwarcia — set the card's OWN readMode once, on first load, from the
+  // lifecycle state: a committed initiative (anything past DRAFT) opens in PODGLĄD
+  // (clean presentation — readMode=true), a still-being-authored DRAFT opens ready
+  // to edit (readMode=false, the existing default). Because titleReadOnly tracks
+  // canEditCards (which folds readMode), the Menu 1 title follows the same rule:
+  // span in preview, click→input in edit — and the Edycja/Podgląd toggle stays
+  // consistent across title + body. A brand-new artifact (no id) always opens in
+  // edit. Runs once (ref-guarded) so it never fights a later manual toggle.
+  const didInitReadModeRef = useRef(false);
+  useEffect(() => {
+    if (didInitReadModeRef.current || !initiative) return;
+    didInitReadModeRef.current = true;
+    if (initiativeId && status !== InitiativeStatus.DRAFT) setReadMode(true);
+  }, [initiative, initiativeId, status]);
   // Document-interior lifecycle affordances (Archive / Delete). Visible only to
   // users with write access; server re-enforces (archive: lifecycle, delete:
   // DRAFT/CANCELLED only → 409 otherwise). Wires handleArchive/handleDelete,
@@ -4584,6 +4629,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   };
 
+  // D13 (Menu 1 audit 2026-07-22): Menu 1 NO LONGER wires `onChat` to NModeHeader.
+  // The header AI button renders only with `showChatButton`, so passing `onChat`
+  // alone was dead (same defect fixed on Interview — "MARTWE WPIECIE AI"). Here the
+  // fix is the OPPOSITE of Interview: Initiative is a card WITH Menu 3, so AI lives
+  // in Menu 3 + the Slot 9 AI Consultant panel + per-section AI CTAs. Adding a
+  // header button would be a THIRD, redundant AI entry point (§2.6 "ta sama treść
+  // w dwóch miejscach"). So we REMOVE the header wiring, not enable showChatButton.
+  // `handleOpenChat` stays alive: it's exported via InitiativeContext (contextValue)
+  // and consumed by section CTAs — this is NOT dead code.
   const handleOpenChat = () => {
     if (isChatCollapsed) toggleChatCollapse();
     updateWorkspaceFromView(AppView.INITIATIVE_GENERATOR, initiativeId, {
@@ -9939,9 +9993,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onSave={() => handleSave(false)}
                 saving={isMutating}
                 isDirty={hasUnsavedChanges}
-                onChat={handleOpenChat}
                 onClose={onBack || (() => {})}
-                statusDotColor={statusMeta.dotColor}
+                statusLabel={statusPillLabel}
+                statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
@@ -10457,9 +10511,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onSave={() => handleSave(false)}
                 saving={isMutating}
                 isDirty={hasUnsavedChanges}
-                onChat={handleOpenChat}
                 onClose={onBack || (() => {})}
-                statusDotColor={statusMeta.dotColor}
+                statusLabel={statusPillLabel}
+                statusTone={statusPillTone}
                 presentationMode={densityMode}
                 onPresentationModeChange={setDensityMode}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
@@ -10923,13 +10977,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             pierwszą akcją w AIConsultantPanel (patrz aiConsultantActions),
                             czyli dokładnie tam, gdzie użytkownik szuka akcji AI. */}
 
-                        {/* ── Slot 9: artifact-level AI (solid teal).
+                        {/* ── Slot 9: artifact-level AI.
                             Read = ukryte: Podgląd ma być czysty do pokazania
-                            klientowi, bez afordancji AI. */}
+                            klientowi, bez afordancji AI.
+
+                            2026-07-21 (SPEC-N §2.3, R1): był `ToolbarAISolidButton`
+                            (solid teal). Zmierzone w harnessie: tło `rgb(0,127,142)`
+                            — DOKŁADNIE ten sam kolor co CTA „Zaplanuj zadania"
+                            w pasku szkicu, więc dwa elementy o równej wadze krzyczały
+                            na jednym ekranie, a slot primary nagłówka bywa pusty.
+                            Reguła mówi o WYGLĄDZIE, nie o deklaracji: poza slotem
+                            primary żaden element nie jest solid/filled. Stąd
+                            stonowane do wariantu outline (`ToolbarAISplitButton` —
+                            teal border, ten sam akcent AI, zero czerwieni).
+                            Ten sam ruch i ta sama para (sekcja + artefakt na jednym
+                            wariancie) co w InsightViewer :8409 — karty mają czytać
+                            się jednakowo MIĘDZY sobą, nie tylko wewnątrz siebie. */}
                         {!readMode && (
                           <>
                             <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                            <ToolbarAISolidButton
+                            <ToolbarAISplitButton
                               onClick={() => {
                                 if (!canUseAi) {
                                   toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
@@ -10943,7 +11010,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               icon={<Sparkles size={14} />}
                             >
                               <span>{t('initiatives.aiConsultant4')}</span>
-                            </ToolbarAISolidButton>
+                            </ToolbarAISplitButton>
                           </>
                         )}
                       </div>

@@ -3181,6 +3181,7 @@
       "toastSuccess6": "Chat opened",
       "systemInstruction": "You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.",
       "aIFilledNotificationContext": "AI filled notification context",
+      "aiSkippedEditedFields": "AI did not overwrite fields you were editing",
       "failedToFillContext": "Failed to fill context with AI",
       "toastSuccess7": "Comment added",
       "toastError7": "Failed to add comment",
@@ -29726,7 +29727,12 @@
       "saveFailedLabel": "Save failed",
       "saveFailedTitle": "Save failed. Click to retry.",
       "copyArtifactId": "Copy artifact ID",
-      "aiAssistantTitle": "AI — open assistant"
+      "aiAssistantTitle": "AI — open assistant",
+      "unsavedLabel": "Unsaved",
+      "copyObjectCode": "Copy object code",
+      "copyLink": "Copy link",
+      "copyCodeSuccess": "Object code copied",
+      "moreActions": "More"
     },
     "nModeSectionWrapper": {
       "missingEvidence": "Missing evidence",
@@ -32387,7 +32393,10 @@
       "errorRetry": "Try again",
       "errorClose": "Close",
       "property": "Property",
-      "value": "Value"
+      "value": "Value",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "statusComingSoon": "Coming soon"
     },
     "knownToolDetail": {
       "dynamicSwot": {

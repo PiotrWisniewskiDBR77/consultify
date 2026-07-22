@@ -223,8 +223,25 @@ export interface NModeHeaderConfig {
   onClose: () => void;
   /** Deprecated: lifecycle/governance label. Do not use for persistence state. */
   draftSavedLabel?: string;
-  /** Status dot color CSS class (e.g. 'bg-emerald-400') */
+  /**
+   * @deprecated (D-B, 2026-07-22) — replaced by the labelled `statusLabel` pill.
+   * NModeHeader no longer renders this; the prop is kept so cards that still
+   * pass it typecheck. Migrate to `statusLabel` + `statusTone`, then drop.
+   */
   statusDotColor?: string;
+  /**
+   * Status lifecycle label shown as a c-* pill in Menu 1 (D-B, 2026-07-22),
+   * e.g. "Szkic" / "Do przeglądu" / "Zatwierdzona". Omit → no pill renders
+   * (no bare-dot fallback). Bilingual copy is the card's responsibility —
+   * pass the already-localised string.
+   */
+  statusLabel?: string;
+  /**
+   * Tone for the `statusLabel` pill → c-* classes (map mirrors
+   * ArtifactApprovalStatusBar). Defaults to 'neutral'. draft/neutral read as a
+   * quiet surface; review=info, approved=success, rejected=danger.
+   */
+  statusTone?: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral';
   /**
    * SPEC-A M1 primary CTA — ONE action rendered at the right edge of the
    * header (e.g. Insight: "Convert to initiative"). Omit to keep the header

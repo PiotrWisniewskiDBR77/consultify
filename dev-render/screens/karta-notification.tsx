@@ -163,16 +163,46 @@ Api.getNotificationComments = (async () => MOCK_COMMENTS) as typeof Api.getNotif
 Api.getNotificationActivityLog = (async () =>
   MOCK_ACTIVITY_LOG) as typeof Api.getNotificationActivityLog;
 
-// Mutacje: no-op, żeby kliknięcie w harnessie nie sypało błędem sieci.
+// ── Tryby awarii do testowania UCZCIWOŚCI wskaźnika zapisu ──────────────────
+// Karta gubiła treść i pokazywała „Zapisano". Naprawa musi być sprawdzalna, więc
+// harness umie na żądanie odtworzyć dwa warunki, których sam z siebie nie ma:
+//   &failsave=1  → zapis arkusza ZAWSZE pada. Oczekiwane: nagłówek pokazuje
+//                  „Błąd zapisu" (nie „Zapisano"), toast błędu, brak pętli ponowień.
+//   &aidelay=<ms> → auto-analiza AI zwraca POPRAWNY JSON po zadanym opóźnieniu.
+//                  Pozwala odtworzyć wyścig: piszesz w polu, po chwili wraca AI.
+//                  Oczekiwane: AI NIE nadpisuje pola, które w tym czasie zmieniłeś.
+const __params = new URLSearchParams(window.location.search);
+const __failSave = __params.get('failsave') === '1';
+const __aiDelay = Number(__params.get('aidelay') || 0);
+
 Api.markNotificationRead = (async () => ({
   success: true,
 })) as unknown as typeof Api.markNotificationRead;
 Api.updateNotificationChecklist = (async () => ({
   success: true,
 })) as unknown as typeof Api.updateNotificationChecklist;
-Api.updateNotificationWorksheet = (async () => ({
-  success: true,
-})) as unknown as typeof Api.updateNotificationWorksheet;
+Api.updateNotificationWorksheet = (async () => {
+  if (__failSave) throw new Error('Failed to update notification worksheet (harness failsave=1)');
+  return { success: true };
+}) as unknown as typeof Api.updateNotificationWorksheet;
+
+if (__aiDelay > 0) {
+  const AI_JSON = JSON.stringify({
+    description: 'TRESC-OD-AI opis sytuacji',
+    whyImportant: 'TRESC-OD-AI dlaczego to wazne',
+    blocked: 'TRESC-OD-AI co jest zablokowane',
+    expectedAction: 'TRESC-OD-AI oczekiwana akcja',
+    checklist: [],
+  });
+  const realPost = Api.post.bind(Api);
+  Api.post = (async (url: string, body?: unknown) => {
+    if (String(url).includes('/ai/chat')) {
+      await new Promise((r) => setTimeout(r, __aiDelay));
+      return { text: AI_JSON };
+    }
+    return realPost(url as never, body as never);
+  }) as unknown as typeof Api.post;
+}
 
 // Siatka bezpieczeństwa: cokolwiek jeszcze ten ciężki ekran odpali na mount
 // (presence, AI /ai/chat, katalogi) dostaje neutralny pusty payload zamiast
