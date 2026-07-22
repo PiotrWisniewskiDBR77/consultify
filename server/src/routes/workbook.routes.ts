@@ -190,6 +190,171 @@ async function ensureWorkbookSchema() {
 }
 
 /**
+ * Shared tail for any produced workbook (free-form `/generate` OR parametric
+ * `/templates/:id/build`): cache the buffer for download, persist metadata, and
+ * register/adopt the Outputs Library artifact — then return the JSON response
+ * payload. Factored out so the template path reuses the EXACT same persistence,
+ * caching and artifact-registration code as `/generate` (no duplication, one
+ * card per workbook). Fail-soft on persist/registration (logs, never throws).
+ */
+async function finalizeGeneratedWorkbook(params: {
+  result: {
+    id: string;
+    schema: any;
+    buffer: Buffer;
+    fileName: string;
+    validationErrors: string[];
+    classifiedErrors?: unknown;
+    qualityScore: number | null;
+    pipelineLog: unknown;
+    generatedAt: string;
+  };
+  user: { id: string; organizationId: string };
+  /** Stored in the `prompt` column (free-form prompt, or a template descriptor). */
+  promptText: string;
+  source: string;
+  projectId?: string | null;
+  sourceInitiativeId?: string | null;
+  conversationId?: string | null;
+  actionContract?: unknown;
+  sourcePack?: unknown;
+  evidenceRefs?: unknown;
+  artifactRunId?: string | null;
+}): Promise<Record<string, unknown>> {
+  const { result, user } = params;
+
+  // Cache the buffer for download
+  workbookCache.set(result.id, {
+    buffer: result.buffer,
+    fileName: result.fileName,
+    schema: result.schema,
+    createdAt: result.generatedAt,
+  });
+  pruneCache();
+
+  // Persist metadata
+  try {
+    await queryHelpers.queryRun(
+      `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        result.id,
+        user.organizationId,
+        result.schema.title,
+        result.schema.description || null,
+        params.promptText,
+        JSON.stringify(result.schema),
+        result.schema.sheets.length,
+        result.fileName,
+        result.buffer.length,
+        result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
+        result.qualityScore,
+        JSON.stringify(result.pipelineLog),
+        JSON.stringify(
+          params.actionContract && typeof params.actionContract === 'object'
+            ? params.actionContract
+            : {}
+        ),
+        JSON.stringify(
+          params.sourcePack && typeof params.sourcePack === 'object' ? params.sourcePack : {}
+        ),
+        JSON.stringify(Array.isArray(params.evidenceRefs) ? params.evidenceRefs : []),
+        user.id,
+        result.generatedAt,
+      ]
+    );
+  } catch (err) {
+    logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
+  }
+
+  // Register in V8 artifact registry (P19 Outputs Library integration)
+  let artifactId: string | null = null;
+  try {
+    const { registerArtifactOrigin, adoptRunArtifactForWorkbook } =
+      await import('../services/v8/artifactRegistryService.js');
+
+    const originSummary = {
+      title: result.schema.title,
+      description: result.schema.description || null,
+      sheetCount: result.schema.sheets.length,
+      exportFormat: 'xlsx',
+      source: params.source,
+      qualityScore: result.qualityScore,
+      sourceRefs: {
+        conversationId: params.conversationId || null,
+        initiativeId: params.sourceInitiativeId || null,
+        projectId: params.projectId || null,
+      },
+    };
+
+    // P-2 split-brain fix (excele lane): adopt an existing run's single artifact
+    // rather than minting a second Outputs card. One click = one card.
+    if (typeof params.artifactRunId === 'string' && params.artifactRunId.trim()) {
+      artifactId = await adoptRunArtifactForWorkbook({
+        runId: params.artifactRunId.trim(),
+        organizationId: user.organizationId,
+        workbookId: result.id,
+        title: result.schema.title || 'Untitled workbook',
+        originSummary,
+      });
+      if (artifactId) {
+        logger.info(
+          `[WorkbookRoutes] Adopted run ${params.artifactRunId} artifact ${artifactId} onto workbook ${result.id} (no duplicate card)`
+        );
+      }
+    }
+
+    // Fallback: standalone workbook (no run) OR the run had no adoptable artifact.
+    if (!artifactId) {
+      const registered = await registerArtifactOrigin({
+        organizationId: user.organizationId,
+        outputType: 'sheet',
+        artifactFamily: 'sheet',
+        originRuntime: 'sheet',
+        originRecordId: result.id,
+        titleSnapshot: result.schema.title || 'Untitled workbook',
+        ownerUserId: user.id,
+        createdBy: user.id,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        projectId: params.projectId || null,
+        sourceInitiativeId: params.sourceInitiativeId || null,
+        originSummary,
+      });
+      artifactId = registered?.artifactId ?? null;
+      if (artifactId) {
+        logger.info(
+          `[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`
+        );
+      }
+    }
+  } catch (err) {
+    logger.warn('[WorkbookRoutes] Failed to register workbook in artifact registry:', err);
+  }
+
+  return {
+    id: result.id,
+    title: result.schema.title,
+    description: result.schema.description,
+    sheets: result.schema.sheets.map((s: any) => ({
+      name: s.name,
+      purpose: s.purpose,
+      columnCount: s.columns.length,
+      rowCount: s.rows.length,
+    })),
+    fileName: result.fileName,
+    fileSize: result.buffer.length,
+    validationErrors: result.validationErrors,
+    classifiedErrors: result.classifiedErrors,
+    qualityScore: result.qualityScore,
+    pipelineLog: result.pipelineLog,
+    artifactId,
+    downloadUrl: `/api/workbook/${result.id}/download`,
+    generatedAt: result.generatedAt,
+  };
+}
+
+/**
  * POST /api/workbook/generate
  * Body: { prompt, researchContext?, language? }
  * Returns: { id, title, sheets, fileName, validationErrors }
@@ -257,134 +422,134 @@ router.post(
       language: language || req.headers['accept-language']?.split(',')[0],
     });
 
-    // Cache the buffer for download
-    workbookCache.set(result.id, {
-      buffer: result.buffer,
-      fileName: result.fileName,
-      schema: result.schema,
-      createdAt: result.generatedAt,
+    const payload = await finalizeGeneratedWorkbook({
+      result,
+      user,
+      promptText: prompt.trim(),
+      source: 'workbook_generator_p23d',
+      projectId: projectId || null,
+      sourceInitiativeId: sourceInitiativeId || null,
+      conversationId: conversationId || null,
+      actionContract,
+      sourcePack,
+      evidenceRefs,
+      artifactRunId: artifactRunId || null,
     });
-    pruneCache();
 
-    // Persist metadata
-    try {
-      await queryHelpers.queryRun(
-        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          result.id,
-          user.organizationId,
-          result.schema.title,
-          result.schema.description || null,
-          prompt.trim(),
-          JSON.stringify(result.schema),
-          result.schema.sheets.length,
-          result.fileName,
-          result.buffer.length,
-          result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
-          result.qualityScore,
-          JSON.stringify(result.pipelineLog),
-          JSON.stringify(
-            actionContract && typeof actionContract === 'object' ? actionContract : {}
-          ),
-          JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
-          JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
-          user.id,
-          result.generatedAt,
-        ]
-      );
-    } catch (err) {
-      logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
+    res.json(payload);
+  })
+);
+
+/**
+ * GET /api/workbook/templates
+ * Lists the registered PARAMETRIC model templates (live-formula workbooks) with
+ * their self-describing parameter descriptors, so a FE can render a form. C3.
+ */
+router.get(
+  '/templates',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
 
-    // Register in V8 artifact registry (P19 Outputs Library integration)
-    let artifactId: string | null = null;
-    try {
-      const { registerArtifactOrigin, adoptRunArtifactForWorkbook } =
-        await import('../services/v8/artifactRegistryService.js');
+    const { listWorkbookTemplates } = await import('../services/workbook/templates/index.js');
+    const templates = listWorkbookTemplates().map((t) => ({
+      id: t.id,
+      name: t.title,
+      description: t.description,
+      params: t.params,
+    }));
 
-      const originSummary = {
-        title: result.schema.title,
-        description: result.schema.description || null,
-        sheetCount: result.schema.sheets.length,
-        exportFormat: 'xlsx',
-        source: 'workbook_generator_p23d',
-        qualityScore: result.qualityScore,
-        sourceRefs: {
-          conversationId: conversationId || null,
-          initiativeId: sourceInitiativeId || null,
-          projectId: projectId || null,
-        },
-      };
+    res.json({ templates });
+  })
+);
 
-      // P-2 split-brain fix (excele lane): if this workbook was generated as the
-      // real .xlsx for an existing artifact run (the run already materialized a
-      // governed tp_tables sheet artifact), ADOPT that single artifact onto this
-      // workbook instead of creating a SECOND Outputs card. One click = one card.
-      if (typeof artifactRunId === 'string' && artifactRunId.trim()) {
-        artifactId = await adoptRunArtifactForWorkbook({
-          runId: artifactRunId.trim(),
-          organizationId: user.organizationId,
-          workbookId: result.id,
-          title: result.schema.title || 'Untitled workbook',
-          originSummary,
-        });
-        if (artifactId) {
-          logger.info(
-            `[WorkbookRoutes] Adopted run ${artifactRunId} artifact ${artifactId} onto workbook ${result.id} (no duplicate card)`
-          );
-        }
-      }
-
-      // Fallback: standalone workbook (no run, e.g. direct API caller) OR the run
-      // had no adoptable artifact — register a fresh canonical artifact.
-      if (!artifactId) {
-        const registered = await registerArtifactOrigin({
-          organizationId: user.organizationId,
-          outputType: 'sheet',
-          artifactFamily: 'sheet',
-          originRuntime: 'sheet',
-          originRecordId: result.id,
-          titleSnapshot: result.schema.title || 'Untitled workbook',
-          ownerUserId: user.id,
-          createdBy: user.id,
-          deliveryState: 'ready',
-          visibilityScope: 'organization',
-          projectId: projectId || null,
-          sourceInitiativeId: sourceInitiativeId || null,
-          originSummary,
-        });
-        artifactId = registered?.artifactId ?? null;
-        if (artifactId) {
-          logger.info(
-            `[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`
-          );
-        }
-      }
-    } catch (err) {
-      logger.warn('[WorkbookRoutes] Failed to register workbook in artifact registry:', err);
+/**
+ * POST /api/workbook/templates/:id/build
+ * Body: { params?: Record<string, unknown>, language?, projectId?, ... }
+ * Validates the flat params against the template's zod schema, builds the .xlsx
+ * DETERMINISTICALLY from the registered template (no LLM), then caches + persists
+ * + registers the artifact through the SAME path as /generate. C3.
+ */
+router.post(
+  '/templates/:id/build',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
 
-    res.json({
-      id: result.id,
-      title: result.schema.title,
-      description: result.schema.description,
-      sheets: result.schema.sheets.map((s: any) => ({
-        name: s.name,
-        purpose: s.purpose,
-        columnCount: s.columns.length,
-        rowCount: s.rows.length,
-      })),
-      fileName: result.fileName,
-      fileSize: result.buffer.length,
-      validationErrors: result.validationErrors,
-      classifiedErrors: result.classifiedErrors,
-      qualityScore: result.qualityScore,
-      pipelineLog: result.pipelineLog,
-      artifactId,
-      downloadUrl: `/api/workbook/${result.id}/download`,
-      generatedAt: result.generatedAt,
+    const { id } = req.params;
+    const {
+      params: rawParams,
+      projectId,
+      sourceInitiativeId,
+      conversationId,
+    } = req.body || {};
+
+    const { getWorkbookTemplate, buildTemplateParamsSchema } =
+      await import('../services/workbook/templates/index.js');
+    const entry = getWorkbookTemplate(id);
+    if (!entry) {
+      res.status(404).json({
+        error: `Unknown workbook template: "${id}"`,
+        classified: createP23Error('validation_failed', `No registered template with id "${id}"`),
+      });
+      return;
+    }
+
+    // Validate the flat param map against the template's descriptor-derived zod
+    // schema (unknown keys stripped, out-of-range/typed values rejected at the edge).
+    const schemaZod = buildTemplateParamsSchema(entry);
+    const parsed = schemaZod.safeParse(
+      rawParams && typeof rawParams === 'object' ? rawParams : {}
+    );
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid template parameters',
+        issues: parsed.error.issues.map((i) => ({
+          path: i.path.join('.'),
+          message: i.message,
+        })),
+        classified: createP23Error('validation_failed', 'Template parameter validation failed'),
+      });
+      return;
+    }
+
+    await ensureWorkbookSchema();
+
+    const { default: WorkbookGeneratorService } =
+      await import('../services/workbook/WorkbookGeneratorService.js');
+
+    let result;
+    try {
+      result = await WorkbookGeneratorService.generateFromTemplate({
+        templateId: id,
+        flatParams: parsed.data as Record<string, unknown>,
+      });
+    } catch (err) {
+      logger.error('[WorkbookRoutes] Template build failed:', err);
+      res.status(500).json({
+        error: 'Failed to build workbook from template',
+        classified: createP23Error('export_failed', err instanceof Error ? err.message : String(err)),
+      });
+      return;
+    }
+
+    const payload = await finalizeGeneratedWorkbook({
+      result,
+      user,
+      promptText: `[template:${id}] ${result.schema.title}`,
+      source: 'workbook_template_c3',
+      projectId: projectId || null,
+      sourceInitiativeId: sourceInitiativeId || null,
+      conversationId: conversationId || null,
     });
+
+    res.json(payload);
   })
 );
 
