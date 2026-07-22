@@ -17,13 +17,16 @@ import {
   Plus,
   Presentation,
   Table2,
+  Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { PresentationTemplateArchitectView } from '@/components/Presentations/PresentationTemplateArchitectView';
 import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
+import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -200,6 +203,17 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         label: t('rap.tabs.templates', 'Template Library'),
         icon: <BookTemplate size={16} />,
       },
+      // C2 (2026-07-22): Architekt szablonów Deck — TYLKO przy fladze ON
+      // (ff_deck_architect, default OFF). Przy OFF lista zakładek bajt-identyczna.
+      ...(isDeckArchitectEnabled()
+        ? [
+            {
+              id: 'template_architect' as ModuleTab,
+              label: t('presentations.tabs.templateArchitect', 'Architekt szablonów'),
+              icon: <Wand2 size={16} />,
+            },
+          ]
+        : []),
     ],
     [t]
   );
@@ -213,6 +227,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       presentations: t('rap.actions.newPresentation', 'New presentation'),
       outputs_sheets: '',
       templates: t('rap.actions.newTemplate', 'New template'),
+      template_architect: '',
     }),
     [t]
   );
@@ -1062,6 +1077,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      // C2: Architekt szablonów Deck (za flagą — zakładka nieosiągalna przy OFF).
+      case 'template_architect':
+        return (
+          <div className="h-full min-h-0 overflow-y-auto">
+            <PresentationTemplateArchitectView />
+          </div>
+        );
       case 'outputs_all':
       case 'outputs_mine':
       case 'outputs_review':
@@ -1173,7 +1195,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}
+        onNewItem={
+          activeTab === 'outputs_sheets' || activeTab === 'template_architect'
+            ? undefined
+            : handleNewItem
+        }
         newItemLabel={ctaLabels[activeTab]}
         newItemTestId="outputs-new-btn"
         availableViewModes={['table', 'grid']}

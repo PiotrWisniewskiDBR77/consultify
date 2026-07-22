@@ -14,6 +14,7 @@ export const RAP_TAB_TO_QUERY: Record<RapTab, string> = {
   presentations: 'presentations',
   outputs_sheets: 'sheets',
   templates: 'templates',
+  template_architect: 'template_architect',
 };
 
 export function parseRapTabFromQuery(raw: string | null): RapTab | null {
@@ -32,6 +33,7 @@ export function parseRapTabFromQuery(raw: string | null): RapTab | null {
     // links now land on Sheets, where the Data Sources sub-tab lives.
     data: 'outputs_sheets',
     templates: 'templates',
+    template_architect: 'template_architect',
   };
   return map[n] ?? null;
 }
