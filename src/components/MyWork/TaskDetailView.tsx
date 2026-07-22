@@ -60,6 +60,7 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -4231,10 +4232,7 @@ Return ONLY the final comment text.`;
     //  Kanwy formatują daty same.)
 
     const panelKeyClass = 'text-xs text-c-text-muted shrink-0';
-    // Klasy komórek tabeli Właściwości (kanon panelu: tylko c-*, neutralnie)
-    const tdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
-    const tdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
-    const tdValLast = 'px-3 py-2 text-right text-c-text';
+    // Pill wartości (status/priority) w tabeli Właściwości — kanon panelu: tylko c-*, neutralnie
     const pill =
       'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
 
@@ -4264,48 +4262,38 @@ Return ONLY the final comment text.`;
         icon: Flag,
         defaultOpen: true,
         children: (
-          <div className="rounded-lg border border-c-border-subtle overflow-hidden">
-            <table className="w-full text-xs border-collapse">
-              <thead>
-                <tr className="bg-c-surface-raised">
-                  <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('myWork.taskDetail.property', 'Property')}
-                  </th>
-                  <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('myWork.taskDetail.value', 'Value')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className={tdKey}>{t('myWork.taskDetail.status', 'Status')}</td>
-                  <td className={tdVal}>
-                    <span className={pill}>{statusLabel}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className={tdKey}>{t('myWork.taskDetail.priority', 'Priority')}</td>
-                  <td className={tdVal}>
-                    <span className={pill}>{priorityLabel}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className={tdKey}>{t('myWork.taskDetail.dueDate', 'Due date')}</td>
-                  <td className={`${tdVal} tabular-nums`}>{fmtDate(dueDate)}</td>
-                </tr>
-                <tr>
-                  <td className={tdKey}>{t('myWork.taskDetail.owner', 'Owner')}</td>
-                  <td className={tdVal}>{ownerFullName || dash}</td>
-                </tr>
-                <tr>
-                  <td className="px-3 py-2 text-c-text-muted">
-                    {t('myWork.taskDetail.initiative', 'Initiative')}
-                  </td>
-                  <td className={tdValLast}>{initiativeName || dash}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <ArtifactPropertiesTable
+            propertyLabel={t('myWork.taskDetail.property', 'Property')}
+            valueLabel={t('myWork.taskDetail.value', 'Value')}
+            rows={[
+              {
+                id: 'status',
+                label: t('myWork.taskDetail.status', 'Status'),
+                value: <span className={pill}>{statusLabel}</span>,
+              },
+              {
+                id: 'priority',
+                label: t('myWork.taskDetail.priority', 'Priority'),
+                value: <span className={pill}>{priorityLabel}</span>,
+              },
+              {
+                id: 'dueDate',
+                label: t('myWork.taskDetail.dueDate', 'Due date'),
+                value: fmtDate(dueDate),
+                mono: true,
+              },
+              {
+                id: 'owner',
+                label: t('myWork.taskDetail.owner', 'Owner'),
+                value: ownerFullName || dash,
+              },
+              {
+                id: 'initiative',
+                label: t('myWork.taskDetail.initiative', 'Initiative'),
+                value: initiativeName || dash,
+              },
+            ]}
+          />
         ),
       },
       {

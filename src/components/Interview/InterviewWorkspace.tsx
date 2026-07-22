@@ -60,6 +60,7 @@ import {
   useCardLayout,
 } from '@/components/shared/NModeLayout';
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -2150,40 +2151,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       icon: ClipboardList,
       defaultOpen: true,
       children: (
-        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-                <tr className="bg-c-surface-raised">
-                  <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('interview.workspace.property', 'Property')}
-                  </th>
-                  <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('interview.workspace.value', 'Value')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-              {properties.map((field, idx) => (
-                <tr key={field.id}>
-                  <td
-                    className={`px-3 py-2 align-top text-c-text-muted ${
-                      idx < properties.length - 1 ? 'border-b border-c-border-subtle' : ''
-                    }`}
-                  >
-                    {isPolish ? field.label.pl : field.label.en}
-                  </td>
-                  <td
-                    className={`px-3 py-2 align-top text-right font-medium text-c-text-secondary ${
-                      idx < properties.length - 1 ? 'border-b border-c-border-subtle' : ''
-                    }`}
-                  >
-                    {field.value || '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ArtifactPropertiesTable
+          propertyLabel={t('interview.workspace.property', 'Property')}
+          valueLabel={t('interview.workspace.value', 'Value')}
+          rows={properties.map((field) => ({
+            id: field.id,
+            label: isPolish ? field.label.pl : field.label.en,
+            value: field.value || '—',
+            mono: field.id === 'due' || field.id === 'progress',
+          }))}
+        />
       ),
     },
     {

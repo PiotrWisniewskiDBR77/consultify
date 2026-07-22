@@ -61,6 +61,7 @@ import { useTranslation } from 'react-i18next';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -4873,9 +4874,6 @@ Use userId only from this list:
   // To nie jest sprzatanie legacy (fala po migracjach), tylko domkniecie wlasnej
   // zmiany: helper osierocil sie w tym samym commicie.
   const rpKeyClass = 'text-xs text-c-text-muted shrink-0';
-  const rpTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
-  const rpTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
-  const rpTdValLast = 'px-3 py-2 text-right text-c-text';
   const rpPill =
     'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
   const rpBtn =
@@ -4933,48 +4931,41 @@ Use userId only from this list:
       icon: Flag,
       defaultOpen: true,
       children: (
-        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-c-surface-raised">
-                <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {t('myWork.decisionDetail.property', 'Property')}
-                </th>
-                <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {t('myWork.decisionDetail.value', 'Value')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className={rpTdKey}>{t('myWork.decisionDetail.status', 'Status')}</td>
-                <td className={rpTdVal}>
-                  <span className={rpPill}>
-                    {statusConfig.label[t('myWork.decisionDetail.en', 'en')]}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className={rpTdKey}>{t('myWork.decisionDetail.priority', 'Priority')}</td>
-                <td className={rpTdVal}>
-                  <span className={rpPill}>
-                    {priorityConfig.label[t('myWork.decisionDetail.en2', 'en')]}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className={rpTdKey}>{t('myWork.decisionDetail.dueDate', 'Due date')}</td>
-                <td className={`${rpTdVal} tabular-nums`}>{dueDate || dash}</td>
-              </tr>
-              <tr>
-                <td className="px-3 py-2 text-c-text-muted">
-                  {t('myWork.decisionDetail.decider', 'Decider')}
-                </td>
-                <td className={rpTdValLast}>{deciderDisplayName}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ArtifactPropertiesTable
+          propertyLabel={t('myWork.decisionDetail.property', 'Property')}
+          valueLabel={t('myWork.decisionDetail.value', 'Value')}
+          rows={[
+            {
+              id: 'status',
+              label: t('myWork.decisionDetail.status', 'Status'),
+              value: (
+                <span className={rpPill}>
+                  {statusConfig.label[t('myWork.decisionDetail.en', 'en')]}
+                </span>
+              ),
+            },
+            {
+              id: 'priority',
+              label: t('myWork.decisionDetail.priority', 'Priority'),
+              value: (
+                <span className={rpPill}>
+                  {priorityConfig.label[t('myWork.decisionDetail.en2', 'en')]}
+                </span>
+              ),
+            },
+            {
+              id: 'dueDate',
+              label: t('myWork.decisionDetail.dueDate', 'Due date'),
+              value: dueDate || dash,
+              mono: true,
+            },
+            {
+              id: 'decider',
+              label: t('myWork.decisionDetail.decider', 'Decider'),
+              value: deciderDisplayName,
+            },
+          ]}
+        />
       ),
     },
     {
