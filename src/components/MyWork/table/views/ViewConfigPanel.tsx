@@ -202,7 +202,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                     onClick={() => updateConfig({ viewType: vt.id })}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-colors ${
                       isActive
-                        ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                        ? 'bg-c-surface-raised text-c-text border border-c-border'
                         : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                     }`}
                   >
@@ -318,7 +318,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ galleryCardSize: s.id })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           config.galleryCardSize === s.id
-                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
@@ -387,7 +387,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ timelineZoom: z })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           (config.timelineZoom || 'week') === z
-                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
@@ -461,7 +461,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ ganttZoom: z })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           (config.ganttZoom || 'week') === z
-                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
@@ -498,7 +498,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ formLayout: l })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           (config.formLayout || 'single-column') === l
-                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
@@ -540,7 +540,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ chartType: ct })}
                         className={`px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors capitalize ${
                           (config.chartType || 'bar') === ct
-                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
