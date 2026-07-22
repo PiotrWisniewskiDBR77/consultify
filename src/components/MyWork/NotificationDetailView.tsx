@@ -159,16 +159,16 @@ const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   TASK_ASSIGNED: { icon: CheckSquare, color: 'text-blue-400' },
   TASK_OVERDUE: { icon: Clock, color: 'text-danger-400' },
   TASK_BLOCKED: { icon: AlertCircle, color: 'text-danger-400' },
-  DECISION_REQUIRED: { icon: Scale, color: 'text-primary-400' },
+  DECISION_REQUIRED: { icon: Scale, color: 'text-c-text-muted' },
   DECISION_OVERDUE: { icon: Scale, color: 'text-danger-400' },
   INITIATIVE_STARTED: { icon: Target, color: 'text-emerald-400' },
   INITIATIVE_STALLED: { icon: Target, color: 'text-amber-400' },
   INITIATIVE_COMPLETED: { icon: Target, color: 'text-emerald-400' },
   AI_RISK_DETECTED: { icon: AlertTriangle, color: 'text-amber-400' },
-  AI_RECOMMENDATION: { icon: Info, color: 'text-primary-400' },
+  AI_RECOMMENDATION: { icon: Info, color: 'text-c-text-muted' },
   AI_OVERLOAD_DETECTED: { icon: AlertTriangle, color: 'text-danger-400' },
   AI_DEPENDENCY_CONFLICT: { icon: AlertCircle, color: 'text-amber-400' },
-  SYSTEM_ALERT: { icon: Bell, color: 'text-slate-600' },
+  SYSTEM_ALERT: { icon: Bell, color: 'text-c-text-muted' },
   // App / billing comms
   PAYMENT_FAILED: { icon: CreditCard, color: 'text-danger-400' },
   USAGE_ALERT: { icon: AlertTriangle, color: 'text-amber-400' },
@@ -177,7 +177,7 @@ const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   BILLING_LIMIT_REACHED: { icon: AlertCircle, color: 'text-danger-400' },
   INVOICE_READY: { icon: CreditCard, color: 'text-emerald-400' },
   // DBR77 comms
-  DBR77_UPDATE: { icon: Megaphone, color: 'text-primary-400' },
+  DBR77_UPDATE: { icon: Megaphone, color: 'text-c-text-muted' },
   DBR77_RELEASE_NOTES: { icon: Megaphone, color: 'text-indigo-400' },
   DBR77_KB_NEW: { icon: BookOpen, color: 'text-emerald-400' },
   DBR77_INSTRUCTION: { icon: BookOpen, color: 'text-amber-400' },
@@ -1174,7 +1174,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       case 'TASK':
         return <CheckSquare size={14} className="text-blue-400" />;
       case 'DECISION':
-        return <Scale size={14} className="text-primary-400" />;
+        return <Scale size={14} className="text-c-text-muted" />;
       case 'INITIATIVE':
         return <Target size={14} className="text-emerald-400" />;
       case 'PROJECT':
@@ -1182,7 +1182,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       case 'GATE':
         return <Flag size={14} className="text-amber-400" />;
       default:
-        return <Bell size={14} className="text-slate-600" />;
+        return <Bell size={14} className="text-c-text-muted" />;
     }
   };
 
@@ -1321,8 +1321,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const SeverityIcon = severityConfig.icon;
   const typeKey = (notification?.type || '').toUpperCase();
   const typeConfig = notification
-    ? TYPE_ICONS[typeKey] || { icon: Bell, color: 'text-slate-600' }
-    : { icon: Bell, color: 'text-slate-600' };
+    ? TYPE_ICONS[typeKey] || { icon: Bell, color: 'text-c-text-muted' }
+    : { icon: Bell, color: 'text-c-text-muted' };
   const TypeIcon = typeConfig.icon;
   const contract = notification ? buildNotificationContent(notification as any, t) : null;
   const aiAnalysis = generateAIAnalysis();
@@ -2078,17 +2078,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           component = (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text">
                   {t('myWork.notificationDetail.comments', 'Comments')}
                   {comments.length > 0 && (
-                    <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
+                    <span className="ml-2 text-xs font-normal text-c-text-muted">
                       ({comments.length})
                     </span>
                   )}
                 </h2>
                 <button
                   onClick={handleAskAI}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-c-info hover:bg-c-info/10 transition-colors"
                 >
                   <Sparkles size={13} />
                   {t('myWork.notificationDetail.aIComment', 'AI comment')}
@@ -2111,7 +2111,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     'myWork.notificationDetail.writeACommentCmd',
                     'Write a comment... (Cmd+Enter to send)'
                   )}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 dark:focus:border-primary-500 transition-all"
+                  className="w-full px-3 py-2.5 rounded-xl border border-c-border bg-white/70 dark:bg-c-surface/70 text-sm text-c-text-secondary placeholder-c-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-c-focus/30 focus:border-c-focus transition-all"
                   rows={3}
                 />
                 <div className="flex justify-end">
@@ -2133,20 +2133,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Comments list */}
               {commentsLoading ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 size={20} className="animate-spin text-slate-600" />
+                  <Loader2 size={20} className="animate-spin text-c-text-muted" />
                 </div>
               ) : comments.length === 0 ? (
                 <div className="py-10 text-center">
                   <MessageCircle
                     size={28}
-                    className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
+                    className="mx-auto mb-2 text-c-text-muted"
                   />
-                  <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
+                  <p className="text-sm text-c-text-muted mb-4">
                     {t('myWork.notificationDetail.noCommentsYet', 'No comments yet')}
                   </p>
                   <button
                     onClick={handleOpenChat}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:border-primary-400 dark:hover:border-primary-400/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-c-info/30 text-c-info hover:border-c-info/50 hover:bg-c-info/5 transition-colors text-sm font-medium"
                   >
                     <MessageSquare size={14} />
                     {t('myWork.notificationDetail.openContextualChat', 'Open contextual chat')}
@@ -2157,21 +2157,21 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   {comments.map((comment) => (
                     <div
                       key={comment.id}
-                      className="group px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700/40 hover:border-slate-300/60 dark:hover:border-navy-600/60 transition-colors"
+                      className="group px-4 py-3 rounded-xl border border-c-border hover:border-c-border-strong transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         {/* Avatar */}
-                        <div className="w-7 h-7 rounded-full bg-primary-500/20 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-bold shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-c-info/20 text-c-info flex items-center justify-center text-xs font-bold shrink-0">
                           {(comment.user?.firstName || '?').charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           {/* Header row */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                              <span className="text-xs font-semibold text-c-text-secondary">
                                 {comment.user?.firstName} {comment.user?.lastName}
                               </span>
-                              <span className="text-[10px] text-slate-600 dark:text-slate-500">
+                              <span className="text-[10px] text-c-text-muted">
                                 {formatDate(comment.createdAt)}
                               </span>
                             </div>
@@ -2184,7 +2184,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </button>
                           </div>
                           {/* Body */}
-                          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mt-1 whitespace-pre-wrap">
+                          <p className="text-sm text-c-text-secondary leading-relaxed mt-1 whitespace-pre-wrap">
                             {comment.content}
                           </p>
                         </div>
@@ -2220,8 +2220,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             },
           };
           const defaultIcon = {
-            icon: <Bell size={14} className="text-slate-600" />,
-            bg: 'bg-slate-100 dark:bg-navy-800',
+            icon: <Bell size={14} className="text-c-text-muted" />,
+            bg: 'bg-c-surface-raised',
           };
 
           const realEntries = activityLog.map((entry) => {
@@ -2244,8 +2244,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               id: 'created',
               description: t('myWork.notificationDetail.description2', 'Notification created'),
               timestamp: notification.createdAt,
-              icon: <Bell size={14} className="text-slate-600" />,
-              iconBg: 'bg-slate-100 dark:bg-navy-800',
+              icon: <Bell size={14} className="text-c-text-muted" />,
+              iconBg: 'bg-c-surface-raised',
             });
             if (notification.readAt) {
               fallbackEntries.push({
@@ -2275,17 +2275,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           component = (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text">
                   {t('myWork.notificationDetail.activityLog', 'Activity Log')}
                   {allEntries.length > 0 && (
-                    <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
+                    <span className="ml-2 text-xs font-normal text-c-text-muted">
                       ({allEntries.length})
                     </span>
                   )}
                 </h2>
                 <button
                   onClick={loadActivityLog}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 >
                   <History size={13} />
                   {t('myWork.notificationDetail.refresh', 'Refresh')}
@@ -2294,27 +2294,27 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
               {/* Stat cards — compact */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+                <div className="rounded-xl border border-c-border bg-white/70 dark:bg-c-surface/70 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.entries', 'Entries')}
                   </p>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <p className="text-sm font-semibold text-c-text-secondary">
                     {allEntries.length}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+                <div className="rounded-xl border border-c-border bg-white/70 dark:bg-c-surface/70 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.comments2', 'Comments')}
                   </p>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <p className="text-sm font-semibold text-c-text-secondary">
                     {comments.length}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+                <div className="rounded-xl border border-c-border bg-white/70 dark:bg-c-surface/70 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.status', 'Status')}
                   </p>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <p className="text-sm font-semibold text-c-text-secondary">
                     {isSnoozed
                       ? t('myWork.notificationDetail.snoozed', 'Snoozed')
                       : notification.isRead
@@ -2327,12 +2327,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Activity feed */}
               {activityLogLoading ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 size={20} className="animate-spin text-slate-600" />
+                  <Loader2 size={20} className="animate-spin text-c-text-muted" />
                 </div>
               ) : allEntries.length === 0 ? (
                 <div className="py-10 text-center">
-                  <History size={28} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
-                  <p className="text-sm text-slate-600 dark:text-slate-500">
+                  <History size={28} className="mx-auto mb-2 text-c-text-muted" />
+                  <p className="text-sm text-c-text-muted">
                     {t('myWork.notificationDetail.noActivityYet', 'No activity yet')}
                   </p>
                 </div>
@@ -2346,10 +2346,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         {entry.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                        <p className="text-sm text-c-text-secondary">
                           {entry.description}
                         </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-500">
+                        <p className="text-xs text-c-text-muted">
                           {formatDate(entry.timestamp)}
                         </p>
                       </div>
@@ -2464,7 +2464,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-c-bg">
         <LoadingState variant="spinner" />
       </div>
     );
@@ -2472,12 +2472,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   if (!notification || !contract) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400 bg-white dark:bg-navy-950">
+      <div className="flex flex-col items-center justify-center h-full text-c-text-muted bg-white dark:bg-c-bg">
         <Bell size={48} className="mb-4 opacity-50" />
         <p>{t('myWork.notificationDetail.notificationNotFound', 'Notification not found')}</p>
         <button
           onClick={onClose}
-          className="mt-4 px-4 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+          className="mt-4 px-4 py-2 rounded-lg bg-c-surface-raised text-c-text-secondary dark:text-white hover:bg-c-surface-raised transition-colors"
         >
           {t('myWork.notificationDetail.goBack', 'Go Back')}
         </button>
@@ -2496,7 +2496,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       onChange: () => {},
       readOnly: true,
       render: () => (
-        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200">
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-surface-raised border border-c-border text-c-text-secondary">
           <TypeIcon size={12} className={typeConfig.color} />
           <span className="truncate">{notification.type.replace(/_/g, ' ')}</span>
         </div>
@@ -2766,7 +2766,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    <div className="min-h-screen bg-gradient-to-br from-c-surface-raised via-white to-c-surface-raised dark:from-c-bg dark:via-c-surface dark:to-c-bg">
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-0">
           {/* ── Header — shared NModeHeader ───────────────────────────────
@@ -2866,7 +2866,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                    strukturze; migracja na wspolny komponent (wraz z jego propem
                    `overflowActions`, ktory zastapilby recznie pisane menu nizej)
                    to osobny krok. */}
-              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
+              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-c-surface/80 backdrop-blur-xl border border-c-border">
                 <div className="flex items-center gap-2">
                   {/* Oznacz przeczytane — TYLKO gdy nie jest primary w Menu 1
                       (§2.6: jedna akcja = jedno miejsce). Badge [M] wg §2.8. */}
@@ -2903,7 +2903,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
                     {/* Snooze dropdown */}
                     {showSnoozeMenu && (
-                      <div className="absolute top-full left-0 mt-1 w-48 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl z-50 py-1">
+                      <div className="absolute top-full left-0 mt-1 w-48 rounded-xl bg-white dark:bg-c-surface border border-c-border shadow-xl z-50 py-1">
                         {[
                           { preset: '1h', label: t('myWork.notificationDetail.label', '1 hour') },
                           { preset: '4h', label: t('myWork.notificationDetail.label2', '4 hours') },
@@ -2913,15 +2913,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <button
                             key={option.preset}
                             onClick={() => handleSnooze(option.preset)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                           >
                             <Clock size={12} className="text-amber-500 shrink-0" />
                             {option.label}
                           </button>
                         ))}
                         {isSnoozed && snoozedUntil && (
-                          <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/40">
-                            <p className="text-[10px] text-slate-600 dark:text-slate-500">
+                          <div className="px-3 py-2 border-t border-c-border">
+                            <p className="text-[10px] text-c-text-muted">
                               {t('myWork.notificationDetail.snoozedUntil', 'Snoozed until')}:{' '}
                               {new Date(snoozedUntil).toLocaleString(
                                 t('myWork.notificationDetail.toLocaleString', 'en-US')
@@ -2962,7 +2962,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     {showActionOverflow && (
                       <div
                         role="menu"
-                        className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl z-50 py-1"
+                        className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-white dark:bg-c-surface border border-c-border shadow-xl z-50 py-1"
                       >
                         <button
                           role="menuitem"
@@ -2971,12 +2971,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             handleSaveAsNote();
                           }}
                           disabled={savingAsNote}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           {savingAsNote ? (
                             <Loader2 size={12} className="animate-spin shrink-0" />
                           ) : (
-                            <FileText size={12} className="text-slate-600 shrink-0" />
+                            <FileText size={12} className="text-c-text-muted shrink-0" />
                           )}
                           {t('myWork.notificationDetail.saveAsNote', 'Save as note')}
                         </button>
@@ -2986,9 +2986,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             setShowActionOverflow(false);
                             handleMuteThis();
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                         >
-                          <BellOff size={12} className="text-slate-600 shrink-0" />
+                          <BellOff size={12} className="text-c-text-muted shrink-0" />
                           {t('myWork.notificationDetail.muteThis', 'Mute this')}
                         </button>
                         <button
@@ -2997,9 +2997,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             setShowActionOverflow(false);
                             handleMuteSimilar();
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                         >
-                          <BellOff size={12} className="text-slate-600 shrink-0" />
+                          <BellOff size={12} className="text-c-text-muted shrink-0" />
                           {t('myWork.notificationDetail.muteSimilarType', 'Mute similar (type)')}
                         </button>
                       </div>
@@ -3073,17 +3073,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleSection('whats-happening')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
                           <Info size={18} className="text-blue-500 dark:text-blue-400" />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold text-c-text-secondary">
                           {t('myWork.notificationDetail.whatSHappening2', "What's happening")}
                         </span>
                       </div>
@@ -3097,7 +3097,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <motion.div
                           animate={{ rotate: expandedSections.has('whats-happening') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-600" />
+                          <ChevronDown size={18} className="text-c-text-muted" />
                         </motion.div>
                       </div>
                     </button>
@@ -3107,25 +3107,25 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
                           exit={{ height: 0 }}
-                          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          className="border-t border-c-border overflow-hidden"
                         >
                           <div className="p-5 space-y-4">
-                            <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                            <div className="text-lg font-semibold text-c-text">
                               {contract.what}
                             </div>
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-1">
+                              <div className="text-xs uppercase tracking-wide text-c-text-muted mb-1">
                                 {t('myWork.notificationDetail.whyItMatters2', 'Why it matters')}
                               </div>
-                              <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                              <div className="text-sm text-c-text-secondary leading-relaxed">
                                 {contract.whyImportant}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-1">
+                              <div className="text-xs uppercase tracking-wide text-c-text-muted mb-1">
                                 {t('myWork.notificationDetail.whatIsBlocked2', 'What is blocked')}
                               </div>
-                              <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                              <div className="text-sm text-c-text-secondary leading-relaxed">
                                 {contract.blocked}
                               </div>
                             </div>
@@ -3140,29 +3140,29 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleSection('ai-analysis')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
                           <TeresaMark
                             size={18}
-                            className="text-primary-500 dark:text-primary-400"
+                            className="text-c-info"
                           />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold text-c-text-secondary">
                           {t('myWork.notificationDetail.aIAnalysis2', 'AI Analysis')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Sparkles size={14} className="text-primary-400" />
+                        <Sparkles size={14} className="text-c-info" />
                         <motion.div
                           animate={{ rotate: expandedSections.has('ai-analysis') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-600" />
+                          <ChevronDown size={18} className="text-c-text-muted" />
                         </motion.div>
                       </div>
                     </button>
@@ -3172,18 +3172,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
                           exit={{ height: 0 }}
-                          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          className="border-t border-c-border overflow-hidden"
                         >
                           <div className="p-5 space-y-4">
                             <div className="flex items-center gap-3">
                               <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-danger-500/10 text-danger-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}
+                                className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-danger-500/10 text-danger-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-c-surface-raised0/10 text-c-text-muted'}`}
                               >
                                 {t('myWork.notificationDetail.priority2', 'Priority')}:{' '}
                                 {aiAnalysis.priority}
                               </span>
                               {aiAnalysis.confidence && (
-                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-c-info/10 text-c-info">
                                   {t('myWork.notificationDetail.confidence2', 'Confidence')}:{' '}
                                   {aiAnalysis.confidence}
                                 </span>
@@ -3194,20 +3194,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                            <div className="text-sm text-c-text-secondary leading-relaxed">
                               {aiAnalysis.impact}
                             </div>
-                            <div className="p-3 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20">
+                            <div className="p-3 rounded-xl bg-c-info/10 border border-c-info/20">
                               <div className="flex items-start gap-2">
-                                <Zap size={16} className="text-primary-500 mt-0.5 shrink-0" />
-                                <div className="text-sm text-primary-700 dark:text-primary-300">
+                                <Zap size={16} className="text-c-info mt-0.5 shrink-0" />
+                                <div className="text-sm text-c-info">
                                   {aiAnalysis.recommendation}
                                 </div>
                               </div>
                             </div>
                             <button
                               onClick={handleAskAI}
-                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors text-sm font-medium"
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors text-sm font-medium"
                             >
                               <MessageSquare size={14} />
                               {t(
@@ -3226,11 +3226,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleSection('expected-action')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/20 dark:to-blue-500/20">
@@ -3239,19 +3239,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             className="text-emerald-500 dark:text-emerald-400"
                           />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold text-c-text-secondary">
                           {t('myWork.notificationDetail.expectedAction2', 'Expected Action')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           {actionChecklist.filter((i) => i.completed).length}/
                           {actionChecklist.length}
                         </span>
                         <motion.div
                           animate={{ rotate: expandedSections.has('expected-action') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-600" />
+                          <ChevronDown size={18} className="text-c-text-muted" />
                         </motion.div>
                       </div>
                     </button>
@@ -3261,11 +3261,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
                           exit={{ height: 0 }}
-                          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          className="border-t border-c-border overflow-hidden"
                         >
                           <div className="p-5 space-y-4">
                             <div className="flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+                              <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                                 {t(
                                   'myWork.notificationDetail.whatNeedsToBe2',
                                   'What needs to be done'
@@ -3291,7 +3291,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               value={expectedActionDraft}
                               onChange={(e) => setExpectedActionDraft(e.target.value)}
                               rows={3}
-                              className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                              className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors"
                               placeholder={t(
                                 'myWork.notificationDetail.placeholder2',
                                 'Expected action...'
@@ -3299,11 +3299,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             />
 
                             <div className="flex items-center justify-between pt-1">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+                              <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                                 {t('myWork.notificationDetail.checklist2', 'Checklist')}
                               </label>
                               <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 tabular-nums">
+                                <span className="text-[11px] font-medium text-c-text-muted tabular-nums">
                                   {actionChecklist.filter((i) => i.completed).length}/
                                   {actionChecklist.length}
                                 </span>
@@ -3329,15 +3329,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 <button
                                   key={item.id}
                                   onClick={() => toggleChecklistItem(item.id)}
-                                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
+                                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-c-surface-raised hover:bg-c-surface-raised transition-colors text-left"
                                 >
                                   <div
-                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${item.completed ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 dark:border-navy-600'}`}
+                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${item.completed ? 'bg-emerald-500 border-emerald-500' : 'border-c-border'}`}
                                   >
                                     {item.completed && <Check size={12} className="text-white" />}
                                   </div>
                                   <span
-                                    className={`text-sm ${item.completed ? 'text-slate-500 dark:text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}
+                                    className={`text-sm ${item.completed ? 'text-c-text-muted line-through' : 'text-c-text-secondary'}`}
                                   >
                                     {item.text}
                                   </span>
@@ -3355,28 +3355,28 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleSection('comments')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
                           <MessageCircle size={18} className="text-amber-500 dark:text-amber-400" />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold text-c-text-secondary">
                           {t('myWork.notificationDetail.comments3', 'Comments')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-muted">
                           0
                         </span>
                         <motion.div
                           animate={{ rotate: expandedSections.has('comments') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-600" />
+                          <ChevronDown size={18} className="text-c-text-muted" />
                         </motion.div>
                       </div>
                     </button>
@@ -3386,15 +3386,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
                           exit={{ height: 0 }}
-                          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          className="border-t border-c-border overflow-hidden"
                         >
                           <div className="p-5 space-y-3">
-                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-3">
+                            <p className="text-sm text-c-text-muted text-center py-3">
                               {t('myWork.notificationDetail.noCommentsYet2', 'No comments yet')}
                             </p>
                             <button
                               onClick={handleOpenChat}
-                              className="w-full px-4 py-2.5 rounded-xl border border-dashed border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:border-primary-400 dark:hover:border-primary-400/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 transition-colors text-sm flex items-center justify-center gap-2"
+                              className="w-full px-4 py-2.5 rounded-xl border border-dashed border-c-info/30 text-c-info hover:border-c-info/50 hover:bg-c-info/5 transition-colors text-sm flex items-center justify-center gap-2"
                             >
                               <MessageSquare size={14} />
                               {t(
@@ -3413,28 +3413,28 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleSection('activity-log')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-slate-500/10 to-gray-500/10 dark:from-slate-500/20 dark:to-gray-500/20">
-                          <History size={18} className="text-slate-500 dark:text-slate-400" />
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-c-text-muted/10 to-gray-500/10 dark:from-c-text-muted/20 dark:to-gray-500/20">
+                          <History size={18} className="text-c-text-muted" />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold text-c-text-secondary">
                           {t('myWork.notificationDetail.activityLog2', 'Activity Log')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-muted">
                           1
                         </span>
                         <motion.div
                           animate={{ rotate: expandedSections.has('activity-log') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-600" />
+                          <ChevronDown size={18} className="text-c-text-muted" />
                         </motion.div>
                       </div>
                     </button>
@@ -3444,21 +3444,21 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
                           exit={{ height: 0 }}
-                          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          className="border-t border-c-border overflow-hidden"
                         >
                           <div className="p-5 space-y-3">
                             <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center shrink-0">
-                                <Bell size={14} className="text-slate-600" />
+                              <div className="w-8 h-8 rounded-full bg-c-surface-raised flex items-center justify-center shrink-0">
+                                <Bell size={14} className="text-c-text-muted" />
                               </div>
                               <div>
-                                <p className="text-sm text-slate-700 dark:text-slate-300">
+                                <p className="text-sm text-c-text-secondary">
                                   {t(
                                     'myWork.notificationDetail.notificationCreated',
                                     'Notification created'
                                   )}
                                 </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                <p className="text-xs text-c-text-muted">
                                   {formatDate(notification.createdAt)}
                                 </p>
                               </div>
@@ -3469,10 +3469,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                   <MailOpen size={14} className="text-emerald-500" />
                                 </div>
                                 <div>
-                                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                                  <p className="text-sm text-c-text-secondary">
                                     {t('myWork.notificationDetail.markedAsRead', 'Marked as read')}
                                   </p>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  <p className="text-xs text-c-text-muted">
                                     {formatDate(notification.readAt)}
                                   </p>
                                 </div>
@@ -3492,26 +3492,26 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleSection('control')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20">
-                          <Flag size={18} className="text-primary-500 dark:text-primary-400" />
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
+                          <Flag size={18} className="text-c-info" />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold text-c-text-secondary">
                           Control
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-slate-600 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                        <span className="text-[10px] font-mono text-c-text-muted bg-c-surface-raised/80 px-2 py-0.5 rounded-lg">
                           #notif-{notificationId.slice(0, 8)}
                         </span>
                         <motion.div animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}>
-                          <ChevronDown size={18} className="text-slate-600" />
+                          <ChevronDown size={18} className="text-c-text-muted" />
                         </motion.div>
                       </div>
                     </button>
@@ -3521,25 +3521,25 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
                           exit={{ height: 0 }}
-                          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          className="border-t border-c-border overflow-hidden"
                         >
                           <div className="p-4 space-y-3">
                             <div>
-                              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                              <label className="block text-xs text-c-text-muted mb-1">
                                 {t('myWork.notificationDetail.type3', 'Type')}
                               </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
                                 <TypeIcon size={14} className={typeConfig.color} />
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                <span className="text-sm font-medium text-c-text-secondary">
                                   {notification.type.replace(/_/g, ' ')}
                                 </span>
                               </div>
                             </div>
                             <div>
-                              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                              <label className="block text-xs text-c-text-muted mb-1">
                                 {t('myWork.notificationDetail.severity', 'Severity')}
                               </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
                                 <div
                                   className={`w-2.5 h-2.5 rounded-full ${severityConfig.color}`}
                                 />
@@ -3549,11 +3549,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               </div>
                             </div>
                             <div>
-                              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                              <label className="block text-xs text-c-text-muted mb-1">
                                 {t('myWork.notificationDetail.category', 'Category')}
                               </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
+                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
+                                <span className="text-sm font-medium text-c-text-secondary capitalize">
                                   {notification.category}
                                 </span>
                               </div>
@@ -3561,12 +3561,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             {(notification.projectName ||
                               (notification.data as any)?.projectName) && (
                               <div>
-                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                <label className="block text-xs text-c-text-muted mb-1">
                                   {t('myWork.notificationDetail.project', 'Project')}
                                 </label>
-                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
                                   <FolderOpen size={14} className="text-indigo-400" />
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                  <span className="text-sm font-medium text-c-text-secondary">
                                     {notification.projectName ||
                                       (notification.data as any)?.projectName}
                                   </span>
@@ -3574,21 +3574,21 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               </div>
                             )}
                             <div>
-                              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                              <label className="block text-xs text-c-text-muted mb-1">
                                 {t('myWork.notificationDetail.created', 'Created')}
                               </label>
-                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                                <Clock size={14} className="text-slate-600" />
-                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface-raised border border-c-border">
+                                <Clock size={14} className="text-c-text-muted" />
+                                <span className="text-sm text-c-text-secondary">
                                   {formatDate(notification.createdAt)}
                                 </span>
                               </div>
                             </div>
-                            <div className="pt-2 border-t border-slate-200 dark:border-navy-700 space-y-2">
+                            <div className="pt-2 border-t border-c-border space-y-2">
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleMuteSimilar}
-                                  className="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors flex items-center justify-center gap-2 text-sm"
+                                  className="flex-1 px-3 py-2 rounded-lg bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised transition-colors flex items-center justify-center gap-2 text-sm"
                                 >
                                   <BellOff size={14} />
                                   <span>{t('myWork.notificationDetail.mute2', 'Mute')}</span>
@@ -3613,24 +3613,24 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                    className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleSection('stakeholders')}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
                           <Users size={18} className="text-blue-500 dark:text-blue-400" />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold text-c-text-secondary">
                           {t('myWork.notificationDetail.stakeholders', 'Stakeholders')}
                         </span>
                       </div>
                       <motion.div
                         animate={{ rotate: expandedSections.has('stakeholders') ? 180 : 0 }}
                       >
-                        <ChevronDown size={18} className="text-slate-600" />
+                        <ChevronDown size={18} className="text-c-text-muted" />
                       </motion.div>
                     </button>
                     <AnimatePresence>
@@ -3639,41 +3639,41 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
                           exit={{ height: 0 }}
-                          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          className="border-t border-c-border overflow-hidden"
                         >
                           <div className="p-4 space-y-2">
                             {sourceEntity?.assignee && (
-                              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
+                              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-c-surface-raised">
                                 <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-500">
                                   {String(sourceEntity.assignee).charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                  <p className="text-sm font-medium text-c-text-secondary">
                                     {sourceEntity.assignee}
                                   </p>
-                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  <p className="text-[10px] text-c-text-muted">
                                     {t('myWork.notificationDetail.assignee', 'Assignee')}
                                   </p>
                                 </div>
                               </div>
                             )}
                             {sourceEntity?.decider && (
-                              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
-                                <div className="w-7 h-7 rounded-full bg-primary-500/20 flex items-center justify-center text-xs font-bold text-primary-500">
+                              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-c-surface-raised">
+                                <div className="w-7 h-7 rounded-full bg-c-info/20 flex items-center justify-center text-xs font-bold text-c-info">
                                   {String(sourceEntity.decider).charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                  <p className="text-sm font-medium text-c-text-secondary">
                                     {sourceEntity.decider}
                                   </p>
-                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  <p className="text-[10px] text-c-text-muted">
                                     {t('myWork.notificationDetail.decider', 'Decider')}
                                   </p>
                                 </div>
                               </div>
                             )}
                             {!sourceEntity?.assignee && !sourceEntity?.decider && (
-                              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-2">
+                              <p className="text-sm text-c-text-muted text-center py-2">
                                 {t(
                                   'myWork.notificationDetail.noStakeholdersAssigned',
                                   'No stakeholders assigned'
@@ -3692,20 +3692,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.25 }}
-                      className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                      className="bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border shadow-lg shadow-c-border/50 overflow-hidden"
                     >
                       <div className="flex items-center justify-between px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
                             <Info size={18} className="text-amber-500 dark:text-amber-400" />
                           </div>
-                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          <span className="text-sm font-semibold text-c-text-secondary">
                             {t('myWork.notificationDetail.whyYouGotIt', 'Why you got it')}
                           </span>
                         </div>
                       </div>
-                      <div className="border-t border-slate-200 dark:border-navy-700 p-4">
-                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      <div className="border-t border-c-border p-4">
+                        <p className="text-sm text-c-text-secondary leading-relaxed">
                           {contract.whyYouGotIt || String(notification.data?.whyYouGotIt || '')}
                         </p>
                       </div>
