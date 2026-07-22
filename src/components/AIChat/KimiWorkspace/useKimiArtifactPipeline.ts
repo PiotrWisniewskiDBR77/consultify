@@ -33,6 +33,7 @@ import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { downloadSheetArtifactXlsx } from '@/utils/sheetArtifactOpen';
+import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 
 import type { ArtifactPreview, KimiLane, TaskStep } from './KimiWorkspaceShell';
 import { loadTabelePreviewByTableId } from './tabele/loadTabelePreview';
@@ -635,8 +636,41 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                 downloadUrl: wbResult.downloadUrl,
                 qualityScore: wbResult.qualityScore,
                 pipelineLog: wbResult.pipelineLog,
+                // B3 fix (2026-07-22): cells/formulas load async right below —
+                // the grid area shows a spinner instead of nothing until then.
+                gridLoading: true,
+                gridError: null,
               });
               setContentGenerated(true);
+
+              // B3 fix (2026-07-22, workstream Excel): POST /generate only ever
+              // returned sheet metadata (name/columnCount/rowCount) — the actual
+              // cells + formulas live in the stored WorkbookSchema. Fetch it via
+              // the dedicated read endpoint and enrich the preview with a real
+              // grid (perSheetData) instead of making the user download the file
+              // to see a single cell.
+              Api.getWorkbookSchema(wbResult.id)
+                .then((schemaResult) => {
+                  const perSheetData = buildWorkbookGridSheets(schemaResult?.sheets);
+                  setPreview((prev) =>
+                    prev && prev.type === 'xlsx' && prev.workbookId === wbResult.id
+                      ? { ...prev, perSheetData, gridLoading: false, gridError: null }
+                      : prev
+                  );
+                })
+                .catch((err) => {
+                  console.warn('[KIMI] Failed to load workbook cell/formula schema:', err);
+                  setPreview((prev) =>
+                    prev && prev.type === 'xlsx' && prev.workbookId === wbResult.id
+                      ? {
+                          ...prev,
+                          gridLoading: false,
+                          gridError: 'Nie udało się wczytać podglądu komórek. Pobierz plik, aby zobaczyć zawartość.',
+                        }
+                      : prev
+                  );
+                });
+
               return true;
             }
           } catch (err) {

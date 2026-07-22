@@ -21,6 +21,7 @@ import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
+import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import { ExceleRightPanel } from './ExceleRightPanel';
@@ -128,6 +129,10 @@ export const ExceleView: React.FC = () => {
             { label: 'Format', value: 'XLSX' },
           ],
           sheetNames: sheets.map((s: any) => s.name || 'Sheet'),
+          // B3 fix (2026-07-22, workstream Excel): GET /workbook/:id already
+          // returns the full schema_json (cells + formulas) — no separate
+          // fetch needed here, just map it into the grid shape the shell renders.
+          perSheetData: buildWorkbookGridSheets(sheets),
           workbookId: artifactId,
           downloadUrl: `/api/workbook/${artifactId}/download`,
         });
