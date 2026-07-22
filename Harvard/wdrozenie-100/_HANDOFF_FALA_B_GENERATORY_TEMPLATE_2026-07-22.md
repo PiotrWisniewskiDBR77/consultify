@@ -9,13 +9,9 @@ Każde narzędzie: 3 tryby wejścia — **czysto/ręcznie · z AI (Teresa) · z 
 **ISTNIEJE (backend realny):**
 - `POST /api/document-studio/templates/plan` → `draftTemplateAsync({useLlm:true})` = **AI szkicuje szablon** z `TemplateDraftInput{purpose,...}`; wariant deterministyczny `draftTemplate`. Plik: `server/src/routes/document-studio.routes.ts:816`, `server/src/services/documentStudio/documentTemplateService.ts`.
 - Governance: approve/deprecate/audit/usage/feedback (`document-studio.routes.ts:855-1007`); Mode 3 generacja z zaakceptowanego szablonu; `content-blocks/:id/instantiate`.
-**BRAK:** FRONTEND — kreatora AI + ręcznego edytora struktury. FE dziś: tylko picker `approvedTemplates` w intake (`DocumentStudioIntakeForm.tsx`).
-**ZBUDOWAĆ (to jest WZORZEC):**
-1. Ekran/menu „Szablony" z akcją **„Utwórz szablon"** (3 tryby: czysto/AI/z istniejącego).
-2. Kreator AI: pole „opisz szablon" → woła `/templates/plan {useLlm:true}` → podgląd struktury → zapis (draft) → governance.
-3. Ręczny edytor struktury: sekcje/placeholdery/kolejność (backend `PUT /templates/:id` już przyjmuje strukturę — potwierdź callerów).
-4. Weryfikacja: dev-render ekranu (oba motywy) + live (utwórz szablon → użyj w Mode 3).
-**Ryzyko:** nie ruszać działającej generacji dokumentu (Mode 1/3) — dodajemy warstwę tworzenia szablonu obok.
+**★ KOREKTA (weryfikacja runtime 2026-07-22): FRONTEND TEŻ ISTNIEJE.** `src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx` (516 linii, „MVP-2, Mode 2 — draft/review/approve/deprecate") — wpięty jako zakładka `activeTab==='templates'` w `DocumentStudioView.tsx:394`; woła `planDocumentStudioTemplate` (`api.ts:701`→`POST /templates/plan`), approve/deprecate/list. Picker w intake to DODATEK, nie jedyny element. Backend endpointy: plan `:816`, `draftTemplate` `documentTemplateService.ts:267`, `draftTemplateAsync` `:345`, governance approve `:878`/deprecate `:915`/audit `:951`, `content-blocks/:id/instantiate` `:2475`, Mode 3 generacja `/generate` `:569` + `/generate/stream` `:658`. (Komentarz „MVP-1 only" w `server/.../documentStudioTypes.ts:7` jest PRZESTARZAŁY.)
+**→ Word generator jest NAJBLIŻEJ gotowego (score PRZED zaniżony w framework 4.4 — realnie wyżej).** ZBUDOWAĆ = **domknąć/wypolerować** Template Architect (nie budować od zera): sprawdź czy ma tryb ręcznego edytora struktury (sekcje/placeholdery), oba motywy, live-verify (utwórz szablon AI → użyj w Mode 3). To jest WZORZEC do klonowania na Deck/Excel.
+**Ryzyko:** nie ruszać działającej generacji dokumentu (Mode 1/3).
 
 ## 2. Generator tpl. PREZENTACJI (#1, PRZED 2.0) — KLON wzorca, dobudować backend
 **ISTNIEJE:** governance + clone (`presentations.routes.ts:956`); „zapisz jako szablon" gotowego decka (`SaveAsTemplateModal`).
@@ -24,11 +20,11 @@ Każde narzędzie: 3 tryby wejścia — **czysto/ręcznie · z AI (Teresa) · z 
 
 ## 3. Generator tpl. EXCEL (#3, PRZED 2.0) — KLON, podłączyć fundament
 **ISTNIEJE (fundament odłogiem — FANTOM):** `server/src/services/workbook/templates/index.ts` + `threeScenarioPnL.ts` = parametryczny rejestr `WORKBOOK_TEMPLATES` + `buildFromTemplate()` z gotowym szablonem „RZiS 3-scenariusze × 3 lata" (formuły łańcuchowe, arkusz Założeń). **ZERO callerów** — `WorkbookGeneratorService` go nie importuje (tylko testy).
-**BRAK:** „save as template" dla sheet zablokowane API 409 (`server/src/routes/artifacts.routes.ts:1052` — tylko report/presentation); `deliverableTemplateService.ts` brak branchu `sheet`.
+**BRAK:** „save as template" dla arkusza zablokowane API 409 (`server/src/routes/artifacts.routes.ts:1086-1090` — tylko report/presentation); `deliverableTemplateService.ts` typ = `'doc'|'deck'|'table'` (`:17`, arkusze = `'table'`), skip w `registerBuilderTemplateArtifactBestEffort` `:463-469` (brak mapowania ArtifactOriginRuntime dla tp_base_templates). Eksporty rejestru: `WORKBOOK_TEMPLATES` `templates/index.ts:45`, `buildFromTemplate` `:66`, `listWorkbookTemplates` `:58`.
 **ZBUDOWAĆ (najkrótsza droga = PODŁĄCZENIE):**
 1. Wepnij `buildFromTemplate` do `WorkbookGeneratorService` (LLM wybiera pasujący szablon zamiast projektować od zera).
-2. Zdejmij blokadę 409 dla `sheet` (`artifacts.routes.ts:1052`).
-3. Dodaj branch `outputType='sheet'` w `deliverableTemplateService.ts`.
+2. Zdejmij blokadę 409 dla arkusza (`artifacts.routes.ts:1086-1090`).
+3. Domknij branch `'table'` w `deliverableTemplateService.ts:463-469` (mapowanie origin runtime).
 4. FE = klon wzorca Word.
 **Uwaga (Fala A dotknęła):** `WorkbookGeneratorService.ts` już zmieniony w A3 — sprawdź konflikt przed pracą.
 
