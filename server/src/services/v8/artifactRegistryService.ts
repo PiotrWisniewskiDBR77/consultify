@@ -2304,7 +2304,8 @@ export async function getArtifactByOrigin(params: {
     | 'sheet'
     | 'native_artifact'
     | 'report_template'
-    | 'presentation_template';
+    | 'presentation_template'
+    | 'sheet_template';
   originRecordId: string;
   userId: string;
   roleKey?: string | null;

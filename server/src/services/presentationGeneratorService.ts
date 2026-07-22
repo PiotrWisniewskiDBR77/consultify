@@ -1505,6 +1505,19 @@ export async function generateDeck(
     // które inaczej dostają tylko generyczny deterministyczny szablon.
     const briefText = resolveDeckNarrativeBrief(setup) ?? '';
     const useBriefRewrite = briefText.length > 0;
+    // Fala A/A2 (2026-07-22): deck z czatu bez podpiętych źródeł pisał „brak danych"
+    // — Narrative Engine ma regułę założeń (linguisticRealization.ts:76), ale przy
+    // pustych faktach domyślnie wybierał „insufficient data". Wzmacniamy
+    // user_instruction, by dla decka-z-czatu preferował konkretną, decyzyjną treść
+    // z jawnymi założeniami zamiast pustki. NIE ruszamy współdzielonego silnika —
+    // tylko kanał autorski. Reguły anty-fabrykacji (post_check) i tak nadrzędne.
+    const briefInstruction = useBriefRewrite
+      ? `${briefText}\n\n${
+          setup.language === 'pl'
+            ? 'To pierwszy szkic prezentacji BEZ podpiętych źródeł danych. Napisz konkretną, decyzyjną treść osadzoną w temacie (answer-first) — NIE odpowiadaj „brak danych"/„niewystarczające dane". Każdą konkretną, niepopartą liczbę/procent/datę oznacz w nawiasie „(założenie)".'
+            : 'This is a first draft deck with NO attached data sources. Write concrete, decision-oriented content grounded in the topic (answer-first) — do NOT reply "insufficient data". Mark each specific unsupported number/percentage/date inline as "(assumption)".'
+        }`
+      : '';
     if (useBriefRewrite) {
       logger.info(
         `[PresentationGen] brief-grounded narrative ON (chat path): brief="${briefText.slice(0, 80)}"`
@@ -1537,7 +1550,7 @@ export async function generateDeck(
           section_title: slide.key_message || slide.intent,
           // Temat z czatu jako dyrektywa autora — Narrative Engine trzyma się
           // faktów (post_check odrzuca zmyślone liczby), ale pisze O TEMACIE.
-          ...(useBriefRewrite ? { user_instruction: briefText } : {}),
+          ...(useBriefRewrite ? { user_instruction: briefInstruction } : {}),
           aiPurpose:
             slide.intent === 'executive_summary' || slide.intent === 'key_messages'
               ? 'presentation_slide_copy'

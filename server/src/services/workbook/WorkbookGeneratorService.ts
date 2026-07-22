@@ -23,6 +23,11 @@ import {
 } from './WorkbookBuilder.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
 import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
+import {
+  buildFromTemplate,
+  listWorkbookTemplates,
+  type WorkbookTemplateId,
+} from './templates/index.js';
 
 // ---------------------------------------------------------------------------
 // Phase prompts
@@ -43,6 +48,7 @@ Given a user request, analyze it and produce a structured plan. Think step by st
    - Row-level calculations (e.g. Revenue * Margin = Profit)
 6. FORMATTING PLAN: Header colors, number formats, which rows are summaries, alternating colors.
 7. REALISTIC DATA: What sample data makes sense? Use realistic numbers for the domain.
+8. GROUNDING & ANTI-FABRICATION: Ground concrete figures in the provided research context when one is attached. Any specific number, percentage, or amount you plan to use that is NOT supported by that context is an assumption, not a fact — mark it (in the cell or the label that carries it) inline as "(założenie)" for Polish workbooks or "(assumption)" for English workbooks, in the workbook's own language. Never present a fabricated figure as a verified fact.
 
 Return your plan as a structured JSON:
 {
@@ -173,6 +179,28 @@ Return your review as JSON:
 PASS threshold: overall_score >= 3.5 AND no critical issues.
 If pass=false AND the issues are fixable, include the corrected schema in fixes_applied.
 Return ONLY the JSON. No markdown, no explanation.`;
+
+// ---------------------------------------------------------------------------
+// FALA B: model-template registry match — decides whether a registered,
+// hand-verified parametric template (e.g. threeScenarioPnL) fits the request
+// BETTER than designing a model from scratch, and if so extracts its params.
+// ---------------------------------------------------------------------------
+
+const TEMPLATE_MATCH_SYSTEM_PROMPT = `You are a template-matching assistant for a spreadsheet generator. You receive a user's request plus a list of registered, pre-built parametric model templates. Decide whether one of them fits the request, and if so extract its parameters.
+
+Rules:
+1. Only match a template when the request is CLEARLY asking for that exact kind of model. When unsure, do NOT match — return templateId: null. A generic or unrelated request must never be forced into a template.
+2. If no template fits, return {"templateId": null, "confidence": 0, "params": {}}.
+3. If a template fits, extract every parameter you can ground in the request or the attached research context. Omit any field you are not confident about — the template applies sane, labeled defaults for anything omitted.
+4. NEVER invent a specific numeric driver (growth rate, margin, revenue, etc.) that has no basis in the request or research context just to fill a field. Leaving it out (so the template default applies) is always safer than fabricating a number.
+5. For template "threeScenarioPnL" the params are: companyName (string), currencyCode ("PLN"|"EUR"|"USD"), startYear (number), baseRevenue (number), and base/bull/bear (each optional, all FRACTIONS e.g. 0.08 = 8%): revenueGrowthPct, cogsPct, opexPct, daPct, interestPct, taxRatePct.
+
+Return ONLY this JSON, no markdown, no explanation:
+{
+  "templateId": "threeScenarioPnL" | null,
+  "confidence": 0.0-1.0,
+  "params": { ...extracted fields only... }
+}`;
 
 const GENERATION_SYSTEM_PROMPT = `You are an expert spreadsheet architect. You receive a PLAN and must produce the final WorkbookSchema JSON.
 
@@ -453,6 +481,62 @@ class WorkbookGeneratorService {
     return response?.content || '';
   }
 
+  /**
+   * FALA B — model-template registry match (fail-soft).
+   *
+   * Cheap heuristic gate first (no LLM cost for the common case of a request
+   * that obviously isn't asking for a scenario-based financial model), then a
+   * small dedicated LLM call to decide + extract params ONLY when the
+   * heuristic fires. Any failure — no keyword hit, LLM error, unparsable
+   * response, unknown/null templateId, or a template build error — resolves
+   * to `null`, and the caller falls back to the existing PLAN→CONFIRM→GENERATE
+   * pipeline unchanged. This must never be able to break free-form generation.
+   */
+  private async matchWorkbookTemplate(
+    userPrompt: string,
+    researchContext: string | undefined,
+    llmParams: { userId: string; organizationId: string; projectId?: string }
+  ): Promise<{ id: WorkbookTemplateId; schema: WorkbookSchema } | null> {
+    // Keyword gate: PL + EN hints for a 3-scenario / Base-Bull-Bear P&L model.
+    const TEMPLATE_HINT_RE =
+      /(3\s*scenariusz|scenariusz(e|y)?|scenarios?|base[\s/-]*bull[\s/-]*bear|rachunek\s*wynik|rzis|p\s*&\s*l\b|p&l\b|profit\s*(and|&)\s*loss|model\s*finansow|financial\s*model)/i;
+    if (!TEMPLATE_HINT_RE.test(userPrompt)) return null;
+
+    try {
+      const catalog = listWorkbookTemplates()
+        .map((t) => `- id: "${t.id}" — ${t.title}: ${t.description}`)
+        .join('\n');
+      const userMessage = [
+        `Available templates:\n${catalog}`,
+        `User request:\n${userPrompt}`,
+        researchContext
+          ? `Research context (ground params in this data when relevant):\n${researchContext}`
+          : '',
+        'Return ONLY the JSON verdict.',
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+
+      const response = await this.callLLM(TEMPLATE_MATCH_SYSTEM_PROMPT, userMessage, llmParams, 2000);
+      const parsed = extractJsonFromResponse(response);
+      if (!parsed || typeof parsed !== 'object') return null;
+
+      const verdict = parsed as { templateId?: unknown; params?: unknown };
+      if (typeof verdict.templateId !== 'string' || !verdict.templateId) return null;
+
+      const templateId = verdict.templateId as WorkbookTemplateId;
+      const params = verdict.params && typeof verdict.params === 'object' ? verdict.params : {};
+
+      const schema = buildFromTemplate(templateId, params);
+      if (!schema) return null; // unknown id (e.g. LLM hallucinated one) — fall back
+
+      return { id: templateId, schema };
+    } catch (err) {
+      logger.warn('[WorkbookGenerator] Template match: extraction failed, falling back', err);
+      return null;
+    }
+  }
+
   // =========================================================================
   // Main pipeline: PLAN → CONFIRM → GENERATE → REVIEW → BUILD
   // =========================================================================
@@ -466,13 +550,71 @@ class WorkbookGeneratorService {
     logger.info(`[WorkbookGenerator] Starting 5-phase pipeline: ${id}`);
 
     let userPrompt = prompt;
-    if (researchContext) {
-      userPrompt = `${prompt}\n\nResearch context (use this data to populate the workbook):\n${researchContext}`;
+    // Coercion obronna (2026-07-22): nigdy nie wstrzykuj „[object Object]" —
+    // gdyby caller podał nie-string, serializujemy zamiast interpolować obiekt.
+    const researchText =
+      typeof researchContext === 'string'
+        ? researchContext
+        : researchContext
+          ? (() => {
+              try {
+                return JSON.stringify(researchContext);
+              } catch {
+                return '';
+              }
+            })()
+          : '';
+    if (researchText.trim()) {
+      userPrompt = `${prompt}\n\nResearch context (use this data to populate the workbook):\n${researchText}`;
     }
     if (language && language.startsWith('pl')) {
       userPrompt +=
         '\n\nUse Polish headers and labels where appropriate, but keep column keys in English.';
     }
+
+    // =====================================================================
+    // FALA B — model-template registry: heurystyka + LLM sprawdzają, czy
+    // prompt pasuje do gotowego parametrycznego szablonu (dziś: threeScenarioPnL
+    // — RZiS/P&L 3 scenariusze). Fail-soft: brak dopasowania / błąd ekstrakcji
+    // parametrów → null → dzisiejsza ścieżka PLAN→CONFIRM→GENERATE bez zmian.
+    // Dopasowanie POMIJA Fazy 1-3: LLM parametryzuje sprawdzony wzorzec zamiast
+    // projektować model od zera.
+    // =====================================================================
+    const templateMatch = await this.matchWorkbookTemplate(
+      userPrompt,
+      researchContext,
+      llmParams
+    ).catch((err) => {
+      logger.warn(
+        '[WorkbookGenerator] Template match failed, falling back to free-form generation',
+        err
+      );
+      return null;
+    });
+
+    let schema: WorkbookSchema;
+    // Declared here (not inside the free-form branch below) so Phase 4's
+    // critical-issue regeneration fallback can still reference it after the
+    // free-form branch closes. Stays '' on the template-match path (that
+    // fallback is never exercised there — a template schema is already valid).
+    let generationPrompt = '';
+
+    if (templateMatch) {
+      pipelineLog.push({
+        phase: 'template_match',
+        status: 'ok',
+        durationMs: 0,
+        detail: `Matched registered template "${templateMatch.id}" — skipping PLAN/CONFIRM/GENERATE (parametrized, not designed from scratch).`,
+      });
+      logger.info(`[WorkbookGenerator] Template match: using "${templateMatch.id}"`);
+      schema = templateMatch.schema;
+    } else {
+      pipelineLog.push({
+        phase: 'template_match',
+        status: 'skipped',
+        durationMs: 0,
+        detail: 'No registered template matched — using free-form PLAN→CONFIRM→GENERATE pipeline.',
+      });
 
     // =====================================================================
     // PHASE 1: PLAN — LLM analyzes request and decomposes into structure
@@ -596,10 +738,9 @@ class WorkbookGeneratorService {
     // PHASE 3: GENERATE — LLM produces the WorkbookSchema JSON
     // =====================================================================
     const p3Start = Date.now();
-    let schema: WorkbookSchema;
     const maxAttempts = 3;
 
-    const generationPrompt = confirmedPlan
+    generationPrompt = confirmedPlan
       ? `CONFIRMED PLAN:\n${confirmedPlan}\n\nORIGINAL USER REQUEST:\n${userPrompt}\n\nProduce the complete WorkbookSchema JSON following the confirmed plan. Return ONLY the JSON.`
       : `USER REQUEST:\n${userPrompt}\n\nProduce a complete WorkbookSchema JSON. Return ONLY the JSON.`;
 
@@ -659,6 +800,7 @@ class WorkbookGeneratorService {
     logger.info(
       `[WorkbookGenerator] Phase 3 GENERATE: OK — "${schema!.title}" with ${schema!.sheets.length} sheets`
     );
+    } // end: no template matched — free-form PLAN→CONFIRM→GENERATE branch
 
     // =====================================================================
     // PHASE 4: REVIEW — LLM self-reviews schema quality before build

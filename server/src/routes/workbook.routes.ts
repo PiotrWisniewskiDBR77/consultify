@@ -21,6 +21,72 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 
+/**
+ * Składa jeden czytelny string groundingu dla WorkbookGeneratorService z
+ * wszystkich dostępnych źródeł (naprawa 2026-07-22, Fala A/A3). Wcześniej
+ * `sourcePack`/`evidenceRefs` trafiały tylko do DB, a obiekt w `researchContext`
+ * dawał „[object Object]" w prompcie. Preferuje kształt ContextPack
+ * (key_points/data_points), inaczej bezpieczny JSON. Zwraca undefined gdy brak
+ * czegokolwiek (model wtedy jawnie oznacza założenia). Cap 6000 znaków.
+ */
+function buildWorkbookGrounding(input: {
+  researchContext?: unknown;
+  sourcePack?: unknown;
+  evidenceRefs?: unknown;
+}): string | undefined {
+  const parts: string[] = [];
+  const { researchContext, sourcePack, evidenceRefs } = input;
+
+  if (typeof researchContext === 'string' && researchContext.trim()) {
+    parts.push(researchContext.trim());
+  } else if (researchContext && typeof researchContext === 'object') {
+    try {
+      parts.push(JSON.stringify(researchContext));
+    } catch {
+      /* ignore non-serializable */
+    }
+  }
+
+  if (sourcePack && typeof sourcePack === 'object') {
+    const sp = sourcePack as {
+      key_points?: unknown;
+      data_points?: unknown;
+    };
+    const keyPoints = Array.isArray(sp.key_points) ? sp.key_points.map(String) : [];
+    const dataPoints = Array.isArray(sp.data_points)
+      ? (sp.data_points as Array<{ label?: unknown; value?: unknown; unit?: unknown }>).map((d) =>
+          `${String(d?.label ?? '')}: ${String(d?.value ?? '')}${d?.unit ? ` ${String(d.unit)}` : ''}`.trim()
+        )
+      : [];
+    const lines = [...keyPoints, ...dataPoints].map((l) => l.trim()).filter(Boolean);
+    if (lines.length) {
+      parts.push(`Fakty ze źródeł (podstawa liczb — nie zaprzeczaj im):\n- ${lines.join('\n- ')}`);
+    } else {
+      try {
+        parts.push(JSON.stringify(sourcePack));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  if (Array.isArray(evidenceRefs) && evidenceRefs.length) {
+    const refs = evidenceRefs
+      .map((e) => (typeof e === 'string' ? e : (() => {
+        try {
+          return JSON.stringify(e);
+        } catch {
+          return '';
+        }
+      })()))
+      .filter(Boolean);
+    if (refs.length) parts.push(`Dowody: ${refs.join('; ')}`);
+  }
+
+  const text = parts.join('\n\n').trim();
+  return text ? text.slice(0, 6000) : undefined;
+}
+
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
@@ -117,12 +183,19 @@ router.post(
     const { default: WorkbookGeneratorService } =
       await import('../services/workbook/WorkbookGeneratorService.js');
 
+    // Grounding (naprawa 2026-07-22, Fala A/A3): sourcePack/evidenceRefs były
+    // przyjmowane, ale przekazywane TYLKO do DB — nigdy do promptu LLM; a obiekt
+    // w researchContext dawał „[object Object]". Składamy jeden czytelny string ze
+    // wszystkich dostępnych źródeł, żeby liczby modelu miały podstawę, nie były
+    // zmyślane. WorkbookGeneratorService.generate przyjmuje researchContext:string.
+    const groundingText = buildWorkbookGrounding({ researchContext, sourcePack, evidenceRefs });
+
     const result = await WorkbookGeneratorService.generate({
       prompt: prompt.trim(),
       userId: user.id,
       organizationId: user.organizationId,
       projectId: projectId || null,
-      researchContext,
+      researchContext: groundingText,
       language: language || req.headers['accept-language']?.split(',')[0],
     });
 
