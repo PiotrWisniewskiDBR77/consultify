@@ -67,7 +67,10 @@ const LANE_META: Record<
   },
   excele: {
     icon: FileSpreadsheet,
-    route: '/tabele',
+    // /excele (nie /tabele) — inaczej „Zacznij nowy"/szablon w odsłoniętym Excelu
+    // odbija do Table Studio, nigdy nie docierając do silnika arkuszy (audyt
+    // 2026-07-22, Sheet #9). ExceleView czyta view=new/templatePrompt/artifactId.
+    route: '/excele',
     accentBg: 'bg-emerald-500/10',
     accentText: 'text-emerald-500',
   },
@@ -141,7 +144,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
   const laneLabel = useMemo(() => {
     if (lane === 'wordy') return t('kimi.artifactHome.laneLabel.wordy', 'Documents');
-    if (lane === 'excele') return t('kimi.artifactHome.laneLabel.excele', 'Tables');
+    if (lane === 'excele') return t('kimi.artifactHome.laneLabel.excele', 'Excel');
     if (lane === 'tabele') return t('kimi.artifactHome.laneLabel.tabele', 'Table Studio');
     return t('kimi.artifactHome.laneLabel.deck', 'Presentations');
   }, [lane, t]);
