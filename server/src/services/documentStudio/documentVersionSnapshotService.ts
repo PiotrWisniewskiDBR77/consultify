@@ -43,9 +43,115 @@ import type {
 } from './documentStudioTypes.js';
 import {
   __resetSnapshotRegistryDaoForTests,
+  deleteSnapshot as daoDeleteSnapshot,
   loadSnapshotsForOrg as daoLoadSnapshotsForOrg,
   persistSnapshot as daoPersistSnapshot,
 } from './documentVersionSnapshotRegistryDao.js';
+
+// =============================================================================
+// Epic E1 — automatic history (server-side auto-capture on autosave).
+//
+// The manual autosave path (`PUT /:artifactId/content` →
+// `updateDocumentManualContent`) calls `maybeAutoCaptureDocumentVersionSnapshot`
+// after every successful save. A snapshot is captured — origin `'autosave'`
+// — when EITHER:
+//
+//   - time threshold: `AUTO_SNAPSHOT_MIN_INTERVAL_MS` has elapsed since the
+//     artifact's most recent snapshot (any origin), OR
+//   - content threshold: the JSON-serialized `sections` length changed by
+//     more than `AUTO_SNAPSHOT_CONTENT_DELTA_RATIO` (15%) relative to the
+//     most recent snapshot's content length.
+//
+// An artifact with no snapshot yet always captures (there is nothing to
+// diff against, and "no history" is itself the condition auto-capture
+// exists to fix).
+//
+// Retention: `autosave`-origin snapshots are capped at
+// `AUTO_SNAPSHOT_RETENTION_LIMIT` (30) per artifact — the oldest
+// autosave snapshots are pruned once the cap is exceeded. `manual`,
+// `auto_status_change` and `rollback_revert` snapshots are never touched
+// by this cap (checked by origin, not by recency).
+// =============================================================================
+
+export const AUTO_SNAPSHOT_MIN_INTERVAL_MS = 10 * 60 * 1000;
+export const AUTO_SNAPSHOT_CONTENT_DELTA_RATIO = 0.15;
+export const AUTO_SNAPSHOT_RETENTION_LIMIT = 30;
+
+/** JSON-length proxy for "how much content is in here". Deliberately
+ *  simple — a byte-length delta is a fine proxy for "meaningful change"
+ *  without needing a real text/word diff. */
+function sectionsContentLength(schema: DocumentSchema): number {
+  try {
+    return JSON.stringify(schema?.sections ?? []).length;
+  } catch {
+    return 0;
+  }
+}
+
+export interface AutoSnapshotDecision {
+  shouldCapture: boolean;
+  reason: string;
+  /** ms since the previous snapshot, or null when there was none. */
+  elapsedMs: number | null;
+  /** content-length delta ratio vs the previous snapshot, or null when
+   *  there was no previous snapshot to diff against. */
+  deltaRatio: number | null;
+}
+
+/**
+ * Pure decision function (no I/O, no store access) — kept standalone so
+ * the threshold rule itself is unit-testable without the full
+ * hydration/registry machinery.
+ */
+export function decideAutoSnapshotCapture(params: {
+  previous: DocumentVersionSnapshot | null;
+  nextSchema: DocumentSchema;
+  now?: number;
+}): AutoSnapshotDecision {
+  const { previous, nextSchema } = params;
+  const now = params.now ?? Date.now();
+
+  if (!previous) {
+    return {
+      shouldCapture: true,
+      reason: 'autosave: first snapshot for this document',
+      elapsedMs: null,
+      deltaRatio: null,
+    };
+  }
+
+  const previousCapturedAtMs = new Date(previous.capturedAt).getTime();
+  const elapsedMs = Number.isFinite(previousCapturedAtMs) ? now - previousCapturedAtMs : null;
+
+  if (elapsedMs !== null && elapsedMs >= AUTO_SNAPSHOT_MIN_INTERVAL_MS) {
+    return {
+      shouldCapture: true,
+      reason: `autosave: ${Math.round(elapsedMs / 60000)} min since last snapshot`,
+      elapsedMs,
+      deltaRatio: null,
+    };
+  }
+
+  const prevLen = sectionsContentLength(previous.schema);
+  const nextLen = sectionsContentLength(nextSchema);
+  const deltaRatio = prevLen === 0 ? (nextLen > 0 ? 1 : 0) : Math.abs(nextLen - prevLen) / prevLen;
+
+  if (deltaRatio > AUTO_SNAPSHOT_CONTENT_DELTA_RATIO) {
+    return {
+      shouldCapture: true,
+      reason: `autosave: content length changed ${(deltaRatio * 100).toFixed(1)}%`,
+      elapsedMs,
+      deltaRatio,
+    };
+  }
+
+  return {
+    shouldCapture: false,
+    reason: 'autosave: below time and content-delta thresholds',
+    elapsedMs,
+    deltaRatio,
+  };
+}
 
 // =============================================================================
 // In-process registry (live cache) + write-through to Postgres DAO
@@ -328,6 +434,91 @@ export function getDocumentVersionSnapshotByNumber(
   const list = snapshotStore.get(key(organizationId, artifactId)) ?? [];
   const match = list.find((s) => s.versionNumber === versionNumber);
   return match ? cloneSnapshot(match) : null;
+}
+
+/**
+ * Prune `autosave`-origin snapshots down to `AUTO_SNAPSHOT_RETENTION_LIMIT`
+ * for a single artifact — oldest-first. Snapshots of any other origin
+ * (`manual`, `auto_status_change`, `rollback_revert`) are never selected
+ * for removal, regardless of age. Best-effort: the DAO delete is
+ * fire-and-forget, mirroring `persistSnapshot`'s write-through contract —
+ * a failed delete just leaves a stale row in Postgres for the next pass.
+ */
+function pruneAutoDocumentVersionSnapshots(organizationId: string, artifactId: string): void {
+  const k = key(organizationId, artifactId);
+  const list = snapshotStore.get(k);
+  if (!list || list.length === 0) return;
+
+  const autoSnapshots = list
+    .filter((s) => s.origin === 'autosave')
+    .sort((a, b) => a.versionNumber - b.versionNumber);
+
+  const excess = autoSnapshots.length - AUTO_SNAPSHOT_RETENTION_LIMIT;
+  if (excess <= 0) return;
+
+  const toRemove = autoSnapshots.slice(0, excess);
+  const removeIds = new Set(toRemove.map((s) => s.versionId));
+
+  snapshotStore.set(
+    k,
+    list.filter((s) => !removeIds.has(s.versionId))
+  );
+  for (const removed of toRemove) {
+    versionIndex.delete(removed.versionId);
+    void daoDeleteSnapshot(removed.versionId, organizationId).catch(() => undefined);
+  }
+}
+
+export interface MaybeAutoCaptureDocumentVersionSnapshotParams {
+  organizationId: string;
+  artifactId: string;
+  userId: string;
+  /** The freshly-saved schema (post-write). */
+  schema: DocumentSchema;
+  statusAtCapture: DocumentStatus;
+}
+
+/**
+ * Epic E1 — server-side auto-capture entry point. Called from the
+ * autosave path (`updateDocumentManualContent`) after every successful
+ * content save. Evaluates the time/content-delta rule via
+ * `decideAutoSnapshotCapture` against the artifact's most recent
+ * snapshot (any origin); when the rule fires, records an `'autosave'`
+ * snapshot and prunes old auto-snapshots back to the retention cap.
+ *
+ * Fail-soft by contract: ANY error here is swallowed and resolves to
+ * `null`. Auto-capture is a convenience layer over the document's
+ * durable save — it must never be able to turn a successful autosave
+ * into a failed request.
+ */
+export function maybeAutoCaptureDocumentVersionSnapshot(
+  params: MaybeAutoCaptureDocumentVersionSnapshotParams
+): DocumentVersionSnapshot | null {
+  try {
+    if (!params.organizationId || !params.artifactId || !params.userId || !params.schema) {
+      return null;
+    }
+
+    const previous = getMostRecentDocumentVersionSnapshot(params.artifactId, params.organizationId);
+    const decision = decideAutoSnapshotCapture({ previous, nextSchema: params.schema });
+    if (!decision.shouldCapture) return null;
+
+    const snapshot = createDocumentVersionSnapshot({
+      organizationId: params.organizationId,
+      artifactId: params.artifactId,
+      userId: params.userId,
+      schema: params.schema,
+      statusAtCapture: params.statusAtCapture,
+      reason: decision.reason,
+      origin: 'autosave',
+    });
+
+    pruneAutoDocumentVersionSnapshots(params.organizationId, params.artifactId);
+
+    return snapshot;
+  } catch {
+    return null;
+  }
 }
 
 // =============================================================================

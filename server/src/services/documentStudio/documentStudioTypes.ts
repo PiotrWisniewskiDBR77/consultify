@@ -1324,8 +1324,20 @@ export interface DocumentCommentSectionCounts {
  *   rollback_revert     Created right before a rollback overwrites the
  *                       current schema, so the operator never loses the
  *                       state they rolled away from.
+ *   autosave            Created automatically by the server on a
+ *                       content autosave (`PUT /:artifactId/content`)
+ *                       once a time or content-delta threshold is
+ *                       crossed since the last snapshot (Epic E1 —
+ *                       automatic history). Subject to a 30-snapshot
+ *                       retention cap per artifact; `manual` /
+ *                       `auto_status_change` / `rollback_revert`
+ *                       snapshots are never pruned by that cap.
  */
-export type DocumentVersionSnapshotOrigin = 'manual' | 'auto_status_change' | 'rollback_revert';
+export type DocumentVersionSnapshotOrigin =
+  | 'manual'
+  | 'auto_status_change'
+  | 'rollback_revert'
+  | 'autosave';
 
 /**
  * Frozen, addressable copy of a `DocumentSchema` at a point in time.
