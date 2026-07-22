@@ -4594,6 +4594,17 @@ export const Api = {
     await handleResponse(res, 'Failed to delete idea');
   },
 
+  duplicateMyIdea: async (id: string, opts?: { language?: string }): Promise<any> => {
+    const params = new URLSearchParams();
+    if (opts?.language) params.set('language', opts.language);
+    const qs = params.toString();
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}/duplicate${qs ? `?${qs}` : ''}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to duplicate idea');
+  },
+
   // --- My Ideas: Mind Map edges (persistent relationships) ---
   getMyIdeaEdges: async (ideaId: string | 'all', opts?: { kind?: string }): Promise<any> => {
     const params = new URLSearchParams();
