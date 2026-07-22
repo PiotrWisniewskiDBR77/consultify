@@ -310,6 +310,10 @@ interface IdeaProcessFlowToolProps {
   isFullscreen?: boolean;
   onOpenChat?: (prefill?: string) => void;
   onQuickAction?: (action: string, detail?: Record<string, any>) => void;
+  /** Z9: when true (mels canvas shell — Menu 1 shows the save indicator), the
+   *  ProcessFlowToolbar hides its own Save button to avoid duplication. Default
+   *  OFF → legacy layout unchanged. */
+  hideSaveIndicator?: boolean;
   onGraphChange?: (graph: {
     nodes: any[];
     edges: any[];
@@ -336,6 +340,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   onOpenChat,
   onQuickAction,
   onGraphChange,
+  hideSaveIndicator = false,
   externalRuntime,
 }) => {
   const { t, i18n } = useTranslation();
@@ -2322,6 +2327,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <ProcessFlowToolbar
           isPl={!!isPl}
           locked={locked}
+          hideSaveIndicator={hideSaveIndicator}
           flowMode={flowMode}
           setFlowMode={setFlowMode}
           semanticKit={semanticKit}

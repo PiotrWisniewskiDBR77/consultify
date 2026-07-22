@@ -602,6 +602,10 @@ interface IdeaWhiteboardToolProps {
   focusObjectId?: string | null;
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
+  /** Z9: when true (mels canvas shell — Menu 1 shows the save indicator), the
+   *  WhiteboardToolbar hides its own Save button to avoid duplication. Default
+   *  OFF → legacy layout unchanged. */
+  hideSaveIndicator?: boolean;
   onGraphChange?: (graph: {
     nodes: any[];
     edges: any[];
@@ -623,6 +627,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   onFullscreenToggle: externalOnFullscreenToggle,
   isFullscreen: externalIsFullscreen,
   onGraphChange,
+  hideSaveIndicator = false,
   title: ideaTitle = '',
   seedText: ideaSeedText = '',
   stage: ideaStage = '',
@@ -3236,6 +3241,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       <WhiteboardToolbar
         isPl={isPl}
         locked={locked}
+        hideSaveIndicator={hideSaveIndicator}
         saving={saving}
         loading={loading}
         whiteboardMode={whiteboardMode}

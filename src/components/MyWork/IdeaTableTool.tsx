@@ -186,6 +186,10 @@ interface IdeaTableToolProps {
   preferredViewId?: string | null;
   locked?: boolean;
   refreshToken?: number;
+  /** Z9: when true (mels canvas shell — Menu 1 shows the save indicator), the
+   *  TableToolbar hides its own Save button to avoid duplication. Default OFF →
+   *  legacy layout unchanged. */
+  hideSaveIndicator?: boolean;
   focusMode?: 'system' | 'object' | null;
   focusObjectId?: string | null;
   onSaved?: () => void;
@@ -215,6 +219,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   preferredViewId = null,
   locked = false,
   refreshToken,
+  hideSaveIndicator = false,
   focusMode,
   focusObjectId,
   onSaved,
@@ -1408,6 +1413,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           {usePlatform ? (
             <P15TableToolbar
               ideaId={ideaId}
+              hideSaveIndicator={hideSaveIndicator}
               nodesUndo={nodesUndo}
               onPlatformUndo={handlePlatformUndo}
               onCSVImport={handleCSVImport}
