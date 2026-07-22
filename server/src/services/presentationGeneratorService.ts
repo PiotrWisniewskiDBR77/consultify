@@ -118,6 +118,16 @@ export interface DeckSetup {
    * `/generate/outline` (setup = req.body), więc `level` w body wystarczy.
    */
   level?: DeckDetailLevel;
+
+  /**
+   * Wolny tekst prośby z czatu (Teresa) — TEMAT/brief, NIE źródło faktów (audyt
+   * 2026-07-22). Gdy obecny i brak „rich" sourceArtifacts (ścieżka czatu), wchodzi
+   * do Narrative Engine jako `user_instruction`, żeby treść slajdów była o temacie,
+   * a nie generyczna. Anty-fabrykacja (post_check) i tak odrzuci zmyślone liczby →
+   * spada na deterministyczny szablon. Kreator (ze źródłami) tego nie ustawia
+   * (zod w DeckSetupSchema ścina nieznane pola), więc zero regresji.
+   */
+  brief?: string;
 }
 
 export interface SourceArtifact {
@@ -1486,9 +1496,26 @@ export async function generateDeck(
       'next_steps',
       'recommendation_portfolio',
     ];
+    // Deck #2 (audyt 2026-07-22) — brief z czatu (setup.brief) grounduje TEMAT.
+    // Dyskryminator w `resolveDeckNarrativeBrief` (eksportowany, testowalny):
+    // aktywne TYLKO gdy jest brief i brak „rich" sourceArtifacts (ścieżka czatu);
+    // Kreator (ze źródłami) nie ustawia brief (zod ścina), więc zero regresji. Gdy
+    // aktywne: brief wchodzi jako user_instruction i poszerza bramkę na slajdy arc
+    // (root_cause/single_insight/performance_overview/roadmap/risk_management),
+    // które inaczej dostają tylko generyczny deterministyczny szablon.
+    const briefText = resolveDeckNarrativeBrief(setup) ?? '';
+    const useBriefRewrite = briefText.length > 0;
+    if (useBriefRewrite) {
+      logger.info(
+        `[PresentationGen] brief-grounded narrative ON (chat path): brief="${briefText.slice(0, 80)}"`
+      );
+    }
     for (let i = 0; i < slides.length; i++) {
       const slide = slides[i];
-      if (!narrativeIntents.includes(slide.intent)) continue;
+      const runNarrative = useBriefRewrite
+        ? shouldRunNarrativeRewrite(slide.intent, briefText)
+        : narrativeIntents.includes(slide.intent);
+      if (!runNarrative) continue;
       try {
         const engineInput: NarrativeEngineInput = {
           context_pack: contextPack,
@@ -1508,6 +1535,9 @@ export async function generateDeck(
           section_key: slide.intent,
           section_type: slide.intent,
           section_title: slide.key_message || slide.intent,
+          // Temat z czatu jako dyrektywa autora — Narrative Engine trzyma się
+          // faktów (post_check odrzuca zmyślone liczby), ale pisze O TEMACIE.
+          ...(useBriefRewrite ? { user_instruction: briefText } : {}),
           aiPurpose:
             slide.intent === 'executive_summary' || slide.intent === 'key_messages'
               ? 'presentation_slide_copy'
@@ -2015,6 +2045,35 @@ export function shouldRunNarrativeRewrite(intent: SlideIntent, instruction?: str
   const hasInstruction = typeof instruction === 'string' && instruction.trim().length > 0;
   if (hasInstruction) return true;
   return NARRATIVE_REWRITE_INTENTS.includes(intent);
+}
+
+/** Rich-source typy — obecność któregokolwiek = deck sterowany danymi (Kreator). */
+const DECK_RICH_SOURCE_TYPES = new Set<string>([
+  'initiative_portfolio',
+  'execution_status',
+  'kpi_roi',
+  'raid',
+  'assessment',
+  'tool_session',
+]);
+
+/**
+ * Deck #2 (audyt 2026-07-22) — czy użyć briefu z czatu jako dyrektywy narracyjnej.
+ * Zwraca przycięty brief GDY: (a) `setup.brief` niepusty ORAZ (b) brak „rich"
+ * sourceArtifacts. Inaczej `null`. To DYSKRYMINATOR chat-vs-Kreator: Kreator nie
+ * ustawia brief (zod ścina nieznane pola), a nawet gdyby — obecność realnego
+ * źródła wyłącza brief-rewrite, żeby deck ze źródłami trzymał treść z danych.
+ * Pure — eksportowany do testów. NIE czyni briefu źródłem faktów.
+ */
+export function resolveDeckNarrativeBrief(
+  setup: Pick<DeckSetup, 'brief' | 'sourceArtifacts'>
+): string | null {
+  const briefText = typeof setup.brief === 'string' ? setup.brief.trim() : '';
+  if (!briefText) return null;
+  const hasRichSource =
+    Array.isArray(setup.sourceArtifacts) &&
+    setup.sourceArtifacts.some((s) => DECK_RICH_SOURCE_TYPES.has(String((s as { type?: unknown }).type)));
+  return hasRichSource ? null : briefText;
 }
 
 export async function regenerateSlide(

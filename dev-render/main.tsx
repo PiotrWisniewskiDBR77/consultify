@@ -38,6 +38,8 @@ import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import DecisionRecordScreen from './screens/decision-record';
 import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
+import ExceleEngineRevealScreen from './screens/excele-engine-reveal';
+import WordIntakeUseLlmDefaultScreen from './screens/word-intake-uselm-default';
 import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import ExecutionChangeSignalsScreen from './screens/execution-change-signals';
@@ -81,6 +83,14 @@ import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'word-intake-uselm-default': {
+    label: 'DOKUMENTY — Word intake: domyślnie „Wygeneruj treść z AI" (audyt 2026-07-22, Word #8)',
+    render: () => <WordIntakeUseLlmDefaultScreen />,
+  },
+  'excele-engine-reveal': {
+    label: 'DOKUMENTY — Excel: silnik arkuszy pod /excele (home) (audyt 2026-07-22, Sheet #9)',
+    render: () => <ExceleEngineRevealScreen />,
+  },
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
     render: () => <KartaToolScreen />,
