@@ -491,8 +491,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       : [];
     return decisions.length > 0 ? decisions[decisions.length - 1] : null;
   }, [assignmentInfo]);
-  const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.in_progress;
-
   // #3 — True lifecycle status for the read-back pill. Unlike `currentStatus`
   // (which collapses sent_back → in_progress so the respondent can resume
   // editing), this preserves `sent_back` so the header pill clearly shows a
@@ -1949,6 +1947,52 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return out;
   })();
 
+  // ── STATUS-ETYKIETA (D-B 2026-07-22) ────────────────────────────────────────
+  // Menu 1 pokazuje ton+tekst cyklu zycia jako pigulke c-* (nie naga kropke).
+  // Tekst bierzemy z istniejacego, dwujezycznego STATUS_MAP (lifecycleConfig),
+  // wiec zero nowych kluczy i18n. Ton mapujemy z realnego lifecycleStatus:
+  // sent_back → rejected (czerwien semantyczna), approved/completed → success,
+  // in_progress/submitted → info (aktywna praca / w przegladzie), assigned → neutral.
+  const statusToneMap: Record<
+    string,
+    'draft' | 'review' | 'approved' | 'rejected' | 'neutral'
+  > = {
+    assigned: 'neutral',
+    in_progress: 'review',
+    submitted: 'review',
+    sent_back: 'rejected',
+    approved: 'approved',
+    completed: 'approved',
+  };
+  const headerStatusLabel = isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en;
+  const headerStatusTone = statusToneMap[lifecycleStatus] ?? 'neutral';
+
+  // ── PRIMARY CTA NAGLOWKA (D11 — karta nie miala ZADNEGO primary) ────────────
+  // Wybor akcji: "Zakoncz wywiad". Uzasadnienie: to TERMINALNE zdarzenie cyklu
+  // zycia warsztatu — `handleSubmitSession` domyka sesje (w trybie bez
+  // przypisania: status → 'completed', z bramka jakosci + ocena AI), analogicznie
+  // do Decision "Zatwierdz decyzje" (primary tylko gdy `isPending`). NIE
+  // wymyslamy nowej mechaniki (np. "Generuj insighty" nie ma handlera) — pinamy
+  // istniejacy, dzialajacy przeplyw.
+  // Warunkowanie stanem (jak Decision): primary znika gdy nie ma juz nic do
+  // zrobienia (locked: approved/completed) oraz gdy karte oglada recenzent
+  // (jego terminalna akcja "Zatwierdz" zyje juz w pasku `actions` — bez
+  // duplikatu, SPEC-N §2.6). W trybie przypisania submit tez zyje w `actions`
+  // ("Wyslij do przegladu"), wiec primary naglowka wypelnia dokladnie luke
+  // sesji BEZ przypisania (jak w tej karcie), gdzie pasek nie ma zadnego CTA.
+  const canFinishInterview =
+    Boolean(session?.id) && !isAssignmentMode && !isReviewerMode && !isLocked;
+  const headerPrimaryAction = canFinishInterview
+    ? {
+        label: { en: 'Complete interview', pl: 'Zakończ wywiad' },
+        icon: Check,
+        onClick: () => {
+          void handleSubmitSession();
+        },
+        disabled: isSaving || isSubmittingSession,
+      }
+    : undefined;
+
   // ── PRAWY PANEL ARTEFAKTU (SPEC-N §2.2 — pole WYMAGANE, nie opcjonalne) ─────
   //
   // Do 2026-07-21 karta Interview byla jedna z pieciu bez prawego panelu w ogole
@@ -3010,6 +3054,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         header={{
           title: sessionName,
           onTitleChange: setSessionName,
+          // D-A: Interview = aktywny warsztat → tryb EDYCJI (tytul edytowalny).
+          // Wyjatek: sesja zamknieta (approved/completed → isLocked) przechodzi
+          // w PODGLAD, wiec tytul staje sie tylko-do-odczytu.
+          titleReadOnly: isLocked,
           titlePlaceholder: { en: 'Session name...', pl: 'Nazwa sesji...' },
           artifactId: session?.id,
           artifactType: 'tool',
@@ -3025,7 +3073,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           // niczego. DoD §18.1: slot AI jest staly, nie opcjonalny.
           showChatButton: true,
           onClose: onClose || (() => {}),
-          statusDotColor: statusConfig.color,
+          // D-B: status jako etykieta-pigulka c-* (tekst + ton), nie naga kropka.
+          // statusDotColor jest @deprecated i nierenderowany — usuniety.
+          statusLabel: headerStatusLabel,
+          statusTone: headerStatusTone,
+          // D11: pojedynczy primary cyklu zycia ("Zakoncz wywiad").
+          primaryAction: headerPrimaryAction,
         }}
         // `properties` CELOWO pominiete — te same pola renderuje teraz sekcja
         // Wlasciwosci prawego panelu (SPEC-N §2.2). Podanie obu naraz dalo by
