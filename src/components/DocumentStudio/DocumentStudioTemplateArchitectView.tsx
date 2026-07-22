@@ -9,7 +9,16 @@
  * Governance contract is enforced server-side. This view is a thin client.
  */
 
-import { Archive, CheckCircle2, Loader2, Plus, ShieldAlert } from 'lucide-react';
+import {
+  Archive,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Plus,
+  ShieldAlert,
+  Trash2,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,14 +30,27 @@ import {
 } from '@/components/shared/ModuleHub';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
 import Button from '@/components/ui/primitives/Button';
+import { isTemplateStructureEditorEnabled } from '@/utils/templateEditorFlag';
 
 import {
   approveDocumentStudioTemplate,
   deprecateDocumentStudioTemplate,
   listDocumentStudioTemplates,
   planDocumentStudioTemplate,
+  reviseDocumentStudioTemplateStructure,
 } from './api';
-import type { DocumentTemplate, DocumentTypeKey, TemplateDraftInput } from './types';
+import {
+  insertSection,
+  makeBlankSection,
+  removeSection,
+  reorderSection,
+} from './templateStructureOps';
+import type {
+  DocumentTemplate,
+  DocumentTypeKey,
+  TemplateDraftInput,
+  TemplateSectionBlueprint,
+} from './types';
 
 function useDocumentTypeOptions(
   t: (key: string, def: string) => string
@@ -116,6 +138,61 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     () => templates.find((tpl) => tpl.templateId === selectedTemplateId) ?? null,
     [templates, selectedTemplateId]
   );
+
+  // C1 — manual structure editor (behind flag `?ff_tpl_editor=1`, default OFF).
+  // When OFF the section blueprint stays read-only and this whole surface is
+  // byte-identical to today. When ON, a DRAFT template's sections become
+  // editable (add / remove / move / rename) before approval.
+  const structureEditorEnabled = isTemplateStructureEditorEnabled();
+  const isEditableDraft = structureEditorEnabled && selectedTemplate?.status === 'draft';
+  const [editSections, setEditSections] = useState<TemplateSectionBlueprint[]>([]);
+  const [savingStructure, setSavingStructure] = useState(false);
+
+  // Reset the working copy whenever the selected draft (or its saved revision)
+  // changes. Keyed on templateId + updatedAt so a successful save re-syncs.
+  useEffect(() => {
+    setEditSections(
+      selectedTemplate ? selectedTemplate.sectionBlueprint.map((s) => ({ ...s })) : []
+    );
+  }, [selectedTemplate?.templateId, selectedTemplate?.updatedAt]);
+
+  const structureDirty = useMemo(() => {
+    if (!selectedTemplate) return false;
+    return JSON.stringify(editSections) !== JSON.stringify(selectedTemplate.sectionBlueprint);
+  }, [editSections, selectedTemplate]);
+
+  const hasBlankSectionTitle = useMemo(
+    () => editSections.some((s) => s.title.trim().length === 0),
+    [editSections]
+  );
+
+  const renameEditSection = (index: number, title: string): void => {
+    setEditSections((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], title };
+      return next;
+    });
+  };
+
+  const handleSaveStructure = async (): Promise<void> => {
+    if (!selectedTemplate) return;
+    setSavingStructure(true);
+    setError(null);
+    try {
+      const normalized = editSections.map((s) => ({ ...s, title: s.title.trim() }));
+      await reviseDocumentStudioTemplateStructure(selectedTemplate.templateId, normalized);
+      await refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.templateArchitect.errReviseStructure', 'Failed to save structure')
+      );
+    } finally {
+      setSavingStructure(false);
+    }
+  };
 
   // L-08 — canonical §27 table. Columns map to FilterableTable's conventions:
   // the `status` column auto-renders <EntityStatusChip>, and approve/deprecate
@@ -492,20 +569,142 @@ export const DocumentStudioTemplateArchitectView: React.FC<
 
         {selectedTemplate ? (
           <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
-            <div className="font-semibold text-c-text">
-              {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
-              {selectedTemplate.name}
-            </div>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-c-text">
-              {selectedTemplate.sectionBlueprint.map((section, idx) => (
-                <li key={`${selectedTemplate.templateId}-section-${idx}`}>
-                  <span className="font-medium">{section.title}</span>
-                  {section.purpose ? (
-                    <span className="text-xs text-c-text-secondary"> — {section.purpose}</span>
+            {isEditableDraft ? (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-semibold text-c-text">
+                    {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
+                    {selectedTemplate.name}
+                  </div>
+                  {structureDirty ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() =>
+                          setEditSections(selectedTemplate.sectionBlueprint.map((s) => ({ ...s })))
+                        }
+                        disabled={savingStructure}
+                      >
+                        {t('documentStudio.templateArchitect.resetStructure', 'Reset')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void handleSaveStructure()}
+                        disabled={
+                          savingStructure || hasBlankSectionTitle || editSections.length === 0
+                        }
+                      >
+                        {savingStructure
+                          ? t('documentStudio.templateArchitect.savingStructure', 'Saving…')
+                          : t('documentStudio.templateArchitect.saveStructure', 'Save structure')}
+                      </Button>
+                    </div>
                   ) : null}
-                </li>
-              ))}
-            </ol>
+                </div>
+                <ol className="mt-2 space-y-1">
+                  {editSections.map((section, idx) => (
+                    <li
+                      key={`${selectedTemplate.templateId}-edit-section-${idx}`}
+                      className="group flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-c-surface focus-within:bg-c-surface"
+                    >
+                      <span className="w-5 shrink-0 text-right text-xs tabular-nums text-c-text-secondary">
+                        {idx + 1}.
+                      </span>
+                      <input
+                        type="text"
+                        value={section.title}
+                        onChange={(e) => renameEditSection(idx, e.target.value)}
+                        aria-label={t(
+                          'documentStudio.templateArchitect.sectionTitleLabel',
+                          'Section title'
+                        )}
+                        placeholder={t(
+                          'documentStudio.templateArchitect.sectionTitlePlaceholder',
+                          'Section title'
+                        )}
+                        className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-c-text hover:border-c-border-subtle focus:border-c-focus-solid focus:bg-c-surface focus:outline-none focus:ring-2 focus:ring-c-focus"
+                      />
+                      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() => setEditSections((prev) => reorderSection(prev, idx, 'up'))}
+                          disabled={idx === 0}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.moveSectionUp',
+                            'Move section up'
+                          )}
+                          className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditSections((prev) => reorderSection(prev, idx, 'down'))
+                          }
+                          disabled={idx === editSections.length - 1}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.moveSectionDown',
+                            'Move section down'
+                          )}
+                          className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditSections((prev) => removeSection(prev, idx))}
+                          aria-label={t(
+                            'documentStudio.templateArchitect.removeSection',
+                            'Remove section'
+                          )}
+                          className="rounded p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditSections((prev) => insertSection(prev, undefined, makeBlankSection()))
+                  }
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {t('documentStudio.templateArchitect.addSection', 'Add section')}
+                </button>
+                {hasBlankSectionTitle ? (
+                  <p className="mt-1 text-xs text-c-text-secondary">
+                    {t(
+                      'documentStudio.templateArchitect.blankTitleHint',
+                      'Every section needs a title before you can save.'
+                    )}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <div className="font-semibold text-c-text">
+                  {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
+                  {selectedTemplate.name}
+                </div>
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-c-text">
+                  {selectedTemplate.sectionBlueprint.map((section, idx) => (
+                    <li key={`${selectedTemplate.templateId}-section-${idx}`}>
+                      <span className="font-medium">{section.title}</span>
+                      {section.purpose ? (
+                        <span className="text-xs text-c-text-secondary"> — {section.purpose}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
           </div>
         ) : null}
       </section>
