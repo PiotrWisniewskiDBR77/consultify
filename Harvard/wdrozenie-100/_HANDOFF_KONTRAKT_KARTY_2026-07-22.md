@@ -6,34 +6,34 @@
 
 ---
 
-## 0. STAN NA TERAZ (2026-07-22, koniec sesji)
+## 0. STAN NA TERAZ (2026-07-22, PO PROMOCJI NA DEMO)
 
 | | |
 |---|---|
-| **Gałąź robocza** | `fix/prv-mywork-preview` |
+| **Gałąź robocza** | `fix/prv-mywork-preview` (ZMERGOWANA na demo) |
 | **Worktree** | `.worktrees/prv-mywork` (WEWNĄTRZ repo — nie w /private/tmp, bywa czyszczone) |
 | **Baza** | `origin/demo` |
-| **Demo (żywe)** | `533d353896` (health: `curl -s https://demo.consultify.ai/api/health` → gitSha) |
-| **Gałąź ahead demo** | ~10 commitów (POC Decision + 5 migracji + docs) — NIE na demo, ZA FLAGĄ |
-| **Tag bezpieczeństwa** | `demo-safe-2026-07-22` (ostatni stan zaakceptowany przez Piotra) |
+| **Demo (żywe)** | `0d5bbfcade` ✅ LIVE (health potwierdzony: gitSha=0d5bbfcade, db+redis connected) |
+| **Tag bezpieczeństwa** | `demo-safe-2026-07-22` = `0d5bbfcade` (przesunięty tu z `a42ee33280` po akcepcie Piotra) |
 | **Harness** | `.claude/launch.json` → port 3220, `?screen=karta-<nazwa>&theme=dark\|light&lang=pl` |
-| **Flaga wyglądu** | `?cardContract=1` włącza nowy kontrakt (default OFF do akceptu Piotra) |
+| **Flaga wyglądu** | `?cardContract=1` (dev) / `VITE_VF1_*_CARD_CONTRACT` (build) — **default OFF, na żywym demo nic się nie zmienia** |
 
-**★ FLOTA `wgayit5k8` DOMKNĘŁA (koniec sesji).** Wszystkie 6 migracji zacommitowane + niezależny odbiór
-ze zrzutami (`_ODBIOR_MIGRACJI_6_2026-07-22/`, 20 PNG). Werdykt odbioru (tabela 6×4 w RAPORT.md):
-- **Task · Interview · Notification · Insight** — ✅ PASS (pełny wzorzec POC: rdzeń nieusuwalny, węższy
-  default z pickerem Rdzeń/Pełny, zero regresji przy fladze OFF). Insight z uwagą: 11 sekcji Phase-D jako
-  „extras" poza katalogiem — do dedupu z Piotrem (druga tura).
-- **Tool** — ✅ PASS* — renderuje czysto, ale deskryptor NIEWPIĘTY (Tool = klasa S read-only, brak systemu
-  kart/pickera; wpięcie to net-new mechanika, świadomie poza falą).
-- **Initiative** — ⚠️ CZĘŚCIOWE — deskryptor jest, ale NIEWPIĘTY w render (ON==OFF==24 kart); własny silnik
-  + katalog DB (`initiative_section_types`) świadomie NIE tknięty (uczciwość > połowiczna migracja DB).
-- Wszystko ZA FLAGĄ (`?cardContract=1`, default OFF), crimson w centrum = baseline bez wzrostu (dług
-  pre-existing, osobny sweep). Bramka struktura PASS wszędzie; `--strict` czerwony tylko z crimsona.
+**★ PROMOCJA WYKONANA (ta sesja, akcept Piotra „działaj").** Cała partia kontraktu kart NA DEMO za flagą OFF.
+Merge nie force w izolowanym worktree; demo posunęło się przede mną (`985e3b5e` = merge sesji DOKUMENTY Fala A/B/C)
+→ twarda weryfikacja: DOKŁADNIE 16 plików kontraktu kart, ZERO zgubienia roboty DOKUMENTY. esbuild 16/16 + check-
+list-canon + check-artefakt zielone. Werdykt odbioru (tabela 6×4 w `_ODBIOR_MIGRACJI_6_2026-07-22/RAPORT.md`,
+zrzuty obejrzane SAM reguła #7):
+- **Decision(POC) · Task · Interview · Notification · Insight** — ✅ PASS pełny wzorzec (rdzeń nieusuwalny,
+  węższy default z pickerem Rdzeń/Pełny, zero regresji przy OFF). Insight uwaga: 11 sekcji Phase-D jako „extras"
+  poza katalogiem — dedup w drugiej turze.
+- **Tool** — ✅ PASS pełny wzorzec — **WPIĘTY w tej sesji** (`TOOL_CARD_SPEC` w `useCardLayout`, commit `874f3c4bf2`;
+  5 zrzutów odbioru off/on light+dark+picker, obejrzane). Wcześniej deskryptor był orphanem — już nie.
+- **Initiative** — ⚠️ ETAP 1 na demo: rdzeń chroniony (odznaka „RDZEŃ", `INITIATIVE_CORE_BOARD_IDS`) DZIAŁA;
+  zwężenie+picker NIEWPIĘTE (ON==OFF==24 kart) — `INITIATIVE_MINIMAL_VISIBLE`/`buildInitiativeCardSets`
+  zdefiniowane a nieużyte; dotyka własnego silnika boardu + katalogu DB `initiative_section_types`. Etap 2 osobno.
 
-**PIERWSZY KROK NASTĘPCY:** obejrzyj 20 zrzutów SAM (reguła #7), napraw ewentualne FAIL-e, pokaż batch
-Piotrowi → akcept → promocja na demo. Zostaje do dokończenia: **Tool wpięcie** (jeśli Piotr chce) i
-**Initiative wpięcie + strona DB** (osobny, ostrożny pakiet — najtrudniejszy).
+**PIERWSZY KROK NASTĘPCY:** promocja domknięta — patrz §4 (Initiative etap 2, Insight dedup Phase-D, decyzja
+o domyślnej fladze zablokowana crimsonem, druga tura decyzji treści).
 
 ---
 
