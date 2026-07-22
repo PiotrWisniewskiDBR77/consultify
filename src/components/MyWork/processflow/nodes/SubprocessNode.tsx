@@ -53,7 +53,7 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
+          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-focus w-full"
         />
       ) : (
         <div className="text-xs font-medium text-c-text text-center">

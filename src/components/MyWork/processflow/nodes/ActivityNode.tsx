@@ -82,7 +82,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
+          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-focus w-full"
         />
       ) : (
         <div className="text-xs font-medium text-c-text text-center">
@@ -107,7 +107,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
             </span>
           )}
           {data?.fteCount && (
-            <span className="px-1.5 py-0.5 rounded-full bg-c-accent-soft text-[8px] font-bold text-c-accent">
+            <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised text-[8px] font-bold text-c-text-secondary">
               {data.fteCount} FTE
             </span>
           )}
