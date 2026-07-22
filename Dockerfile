@@ -90,9 +90,12 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 -G nodejs
 
 # Install security updates and required tools
+# su-exec: lets docker-entrypoint.sh start as root (to chown a mounted
+# Railway Volume, which is root-owned by default) then drop to the non-root
+# nodejs user for the actual node process — see docker-entrypoint.sh.
 RUN apk update && \
     apk upgrade --no-cache && \
-    apk add --no-cache dumb-init curl
+    apk add --no-cache dumb-init curl su-exec
 
 # Copy production dependencies
 COPY --from=deps /app/server/node_modules ./node_modules
@@ -104,8 +107,14 @@ COPY --from=backend-builder /app/package.json ./
 # Set ownership
 RUN chown -R nodejs:nodejs /app
 
-# Switch to non-root user
-USER nodejs
+# Entrypoint script
+COPY server/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# NOTE: intentionally NOT `USER nodejs` here — the container starts as root
+# so docker-entrypoint.sh can chown a mounted volume, then immediately drops
+# to nodejs via su-exec before running any application code. The node
+# process itself never runs as root.
 
 # Environment
 ENV NODE_ENV=production
@@ -118,9 +127,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # Expose port
 EXPOSE 3001
 
-# Use dumb-init for proper signal handling
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/src/index.js"]
+# docker-entrypoint.sh runs as root (chown volume), then execs
+# `su-exec nodejs dumb-init -- node dist/src/index.js` — app runs non-root.
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # ==========================================
 # STAGE 5: Production Frontend (nginx)
