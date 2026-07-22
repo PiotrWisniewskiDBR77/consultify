@@ -38,19 +38,20 @@ const MM_INTENT_PATTERNS: Array<{ pattern: RegExp; action: string }> = [
     action: 'mm_create',
   },
   {
-    pattern: /\b(rozwiń|eksploruj|rozgałęź|rozłóż)\s+(pomysł|węzeł|gałąź|temat|koncep)\b/i,
+    pattern:
+      /\b(rozwiń|eksploruj|rozgałęź|rozłóż)\s+(pomysł|węzeł|gałąź|temat|koncep)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'mm_expand_branch',
   },
   {
-    pattern: /\bdodaj\s+(gałąź|dziecko|pod-?temat|pod-?węzeł)\b/i,
+    pattern: /\bdodaj\s+(gałąź|dziecko|pod-?temat|pod-?węzeł)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'mm_add_child',
   },
   {
-    pattern: /\bdodaj\s+(sąsiad|rodzeństwo|alternatyw|równoległ)\b/i,
+    pattern: /\bdodaj\s+(sąsiad|rodzeństwo|alternatyw|równoległ)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'mm_add_sibling',
   },
   {
-    pattern: /\b(zmapuj|zwizualizuj)\s+(strukturę|hierarchię|zależności)\b/i,
+    pattern: /\b(zmapuj|zwizualizuj)\s+(strukturę|hierarchię|zależności)(?![a-ząćęłńóśźż0-9_])/i,
     action: 'mm_create',
   },
 ];
