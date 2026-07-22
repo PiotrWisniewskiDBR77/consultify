@@ -114,7 +114,12 @@ import { detectMindmapIntent } from './mindmapIntentDetector';
 import { OutputToolSelector } from './OutputToolSelector';
 import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectProcessFlowIntent } from './processFlowIntentDetector';
-import { detectExceleIntent, detectTableIntent, resolveSheetLane } from './tableIntentDetector';
+import {
+  detectExceleIntent,
+  detectTableIntent,
+  hasWorkbookLaneSignals,
+  resolveSheetLane,
+} from './tableIntentDetector';
 import {
   formatTeresaAdminDiagnostic,
   getTeresaEmptyResponseMessage,
@@ -2402,7 +2407,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // N-12: a prompt with an explicit document noun ("raport … tabela") is a
       // document-with-a-table, not a standalone workbook — let it fall through to
       // the Document gate below.
-      if (detectExceleIntent(text) && !hasStrongDocumentNoun(text)) {
+      // B2-brama (2026-07-22): prośba OBLICZENIOWA sformułowana przez „tabelę/
+      // arkusz" (np. „Zrób arkusz finansowy: model 3 scenariusze RZiS") też ma
+      // trafić do gałęzi excele → silnik formuł — detectExceleIntent sam jej nie
+      // łapie (wymaga literalnie „arkusz excel"), a bez tego prośba spadała do
+      // gałęzi tabeli i legacy panelu Table Builder. hasWorkbookLaneSignals jest
+      // JAWNYM dopasowaniem (bez defaultu) — „zrób tabelę zadań" tu nie wejdzie.
+      if (
+        (detectExceleIntent(text) || (detectTableIntent(text) && hasWorkbookLaneSignals(text))) &&
+        !hasStrongDocumentNoun(text)
+      ) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',

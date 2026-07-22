@@ -57,3 +57,22 @@ describe('resolveSheetLane', () => {
     });
   });
 });
+
+// B2-brama: jawny sygnał obliczeniowy (bez defaultu) — brama zewnętrzna czatu.
+import { detectExceleIntent, detectTableIntent, hasWorkbookLaneSignals } from '../../src/components/AIChat/tableIntentDetector';
+
+describe('hasWorkbookLaneSignals (brama zewnętrzna)', () => {
+  it('„Zrób arkusz finansowy: model 3 scenariusze RZiS" → brama przepuszcza do excele', () => {
+    const text = 'Zrób arkusz finansowy: model 3 scenariusze RZiS';
+    expect(detectExceleIntent(text)).toBe(false); // dotychczasowa luka
+    expect(detectTableIntent(text)).toBe(true);
+    expect(hasWorkbookLaneSignals(text)).toBe(true); // nowa brama łapie
+  });
+  it('„zrób tabelę zadań" → BEZ sygnału obliczeniowego (zostaje w gałęzi tabeli)', () => {
+    const text = 'zrób tabelę zadań';
+    expect(hasWorkbookLaneSignals(text)).toBe(false);
+  });
+  it('zwykły tekst bez tabeli → false (zero połykania)', () => {
+    expect(hasWorkbookLaneSignals('opowiedz mi o strategii firmy')).toBe(false);
+  });
+});

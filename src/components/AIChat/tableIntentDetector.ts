@@ -92,3 +92,17 @@ export function resolveSheetLane(message: string): 'workbook' | 'gfm' {
   if (GFM_LANE_PATTERNS.some((pattern) => pattern.test(message))) return 'gfm';
   return 'workbook';
 }
+
+/**
+ * B2-brama (2026-07-22, live-verify): JAWNY sygnał obliczeniowy — bez defaultu.
+ * `resolveSheetLane` domyślnie zwraca 'workbook' (bezpieczne WEWNĄTRZ gałęzi
+ * excele), więc NIE nadaje się na bramę zewnętrzną — połknąłby każdy tekst.
+ * Ten helper zwraca true TYLKO przy realnym dopasowaniu wzorca obliczeniowego
+ * (RZiS/scenariusze/prognoza/model finansowy/formuły/…). Użycie: brama w
+ * UnifiedChatPanel — „Zrób arkusz finansowy: model 3 scenariusze RZiS" ma
+ * wpadać do silnika formuł, mimo że detectExceleIntent go nie łapie
+ * (wymaga literalnie „arkusz excel"/„model finansowy").
+ */
+export function hasWorkbookLaneSignals(message: string): boolean {
+  return WORKBOOK_LANE_PATTERNS.some((pattern) => pattern.test(message));
+}
