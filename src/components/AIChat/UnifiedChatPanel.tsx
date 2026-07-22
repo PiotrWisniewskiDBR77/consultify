@@ -823,6 +823,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     return () => window.removeEventListener('canvas-patch-result', onPatchResult);
   }, [addChatMessage, i18n.language]);
 
+  // Z20 (fala4-z20-intercept): track which Idea Workspace canvas tool (if any)
+  // is currently mounted — IdeaMapWorkspace broadcasts this via
+  // 'idea-workspace-active-tool' (null when no idea doc / no matching tool is
+  // open). The mm/pf/wb chat interceptors below gate on this so a "create
+  // mind map/process/whiteboard" prompt only gets intercepted+local-actioned
+  // when the matching tool is actually open; otherwise it falls through to
+  // the normal LLM flow instead of silently no-op'ing.
+  const [activeIdeaWorkspaceTool, setActiveIdeaWorkspaceTool] = useState<string | null>(null);
+  useEffect(() => {
+    const onActiveIdeaTool = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { tool?: string | null } | undefined;
+      setActiveIdeaWorkspaceTool(detail?.tool ?? null);
+    };
+    window.addEventListener('idea-workspace-active-tool', onActiveIdeaTool);
+    return () => window.removeEventListener('idea-workspace-active-tool', onActiveIdeaTool);
+  }, []);
+
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
   // ========================================================================
@@ -3219,7 +3236,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Mind Map: intercept mind map / idea map intents
-      const mmAction = detectMindmapIntent(text);
+      // Z20: only when the Mind Map canvas is actually the open tool — otherwise
+      // 'idea-workspace-quick-action' has no listener and the prompt would
+      // silently no-op instead of reaching the LLM (see useEffect above).
+      const mmAction =
+        activeIdeaWorkspaceTool === 'mindmap' ? detectMindmapIntent(text) : null;
       if (mmAction) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
@@ -3250,7 +3271,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Process Flow: intercept process/workflow intents
-      const pfAction = detectProcessFlowIntent(text);
+      // Z20: gated on the Process Flow canvas actually being open — see mm
+      // gate above for why.
+      const pfAction =
+        activeIdeaWorkspaceTool === 'process_flow' ? detectProcessFlowIntent(text) : null;
       if (pfAction) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
@@ -3341,7 +3365,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
 
-      const wbAction = detectWhiteboardIntent(text);
+      // Whiteboard: intercept brainstorm/whiteboard/workshop intents.
+      // Z20: gated on the Whiteboard canvas actually being open — see mm
+      // gate above for why.
+      const wbAction =
+        activeIdeaWorkspaceTool === 'whiteboard' ? detectWhiteboardIntent(text) : null;
       if (wbAction) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
@@ -4106,6 +4134,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       mode,
       activeCanvasDocument,
       activeCanvasSelection,
+      activeIdeaWorkspaceTool,
       startStream,
       isDisabled,
       isDemo,
