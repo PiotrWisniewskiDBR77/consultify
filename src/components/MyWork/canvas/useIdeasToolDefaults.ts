@@ -38,10 +38,14 @@ export function getIdeasToolInteractionProps(
     panOnDrag: [0, 1, 2] as number[],
     selectionOnDrag: false,
     selectionMode: 'partial' as const,
+    // K9 (dynamika, parytet Miro/Figma): 2-palcowy scroll trackpada PRZESUWA widok
+    // (dotąd zawsze zoomował — zgłoszony ból). Zoom zostaje na pinch + Ctrl/Cmd+scroll
+    // (ReactFlow: gdy panOnScroll=true, plain-scroll panuje, a zoom wymaga modyfikatora).
     zoomOnScroll: true,
     zoomOnPinch: true,
     zoomOnDoubleClick: false,
-    panOnScroll: false,
+    panOnScroll: true,
+    panOnScrollMode: 'free' as const,
     preventScrolling: true,
     // Space+drag = temporary pan (ReactFlow built-in)
     panActivationKeyCode: 'Space' as const,
