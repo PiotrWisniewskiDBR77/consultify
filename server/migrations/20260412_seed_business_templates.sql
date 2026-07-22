@@ -24,40 +24,40 @@ ALTER TABLE v8_artifact_origin_links ADD CONSTRAINT v8_artifact_origin_links_ori
 
 INSERT INTO v8_output_artifacts (
   artifact_id, organization_id, output_type, artifact_family,
-  title_snapshot, owner_user_id, canonical_home, visibility_scope,
-  origin_summary_json, created_at, updated_at
+  title_snapshot, owner_user_id, created_by, canonical_home, visibility_scope,
+  origin_summary_json, created_at
 ) VALUES
-('bt-doc-weekly', '__system__', 'report', 'template', 'Weekly Execution Report', '__system__', 'outputs_library', 'organization',
+('bt-doc-weekly', '__system__', 'report', 'template', 'Weekly Execution Report', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Sprint progress tracking with KPIs, blockers, and next steps","structureBlueprint":["Executive Summary","KPI Dashboard","Sprint Progress","Blockers & Risks","Next Steps"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-doc-steering', '__system__', 'report', 'template', 'Steering Committee Brief', '__system__', 'outputs_library', 'organization',
+('bt-doc-steering', '__system__', 'report', 'template', 'Steering Committee Brief', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Executive summary for decision-makers with key metrics and recommendations","structureBlueprint":["Context","Key Metrics","Decisions Required","Recommendations","Timeline"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-doc-benefits', '__system__', 'report', 'template', 'Benefits Tracking Report', '__system__', 'outputs_library', 'organization',
+('bt-doc-benefits', '__system__', 'report', 'template', 'Benefits Tracking Report', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"KPI realization and ROI tracking across initiatives","structureBlueprint":["Benefits Overview","KPI Tracking","ROI Analysis","Variance Analysis","Forecast"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-doc-portfolio', '__system__', 'report', 'template', 'Portfolio Overview', '__system__', 'outputs_library', 'organization',
+('bt-doc-portfolio', '__system__', 'report', 'template', 'Portfolio Overview', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Cross-initiative health dashboard with RAG status","structureBlueprint":["Portfolio Summary","Initiative Status","Resource Utilization","Risk Heat Map","Strategic Alignment"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-doc-kickoff', '__system__', 'report', 'template', 'Project Kickoff Document', '__system__', 'outputs_library', 'organization',
+('bt-doc-kickoff', '__system__', 'report', 'template', 'Project Kickoff Document', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Project charter with goals, scope, team, and timeline","structureBlueprint":["Project Overview","Goals & Objectives","Scope","Team & Roles","Timeline & Milestones","Risks"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-doc-risk', '__system__', 'report', 'template', 'Risk Assessment Report', '__system__', 'outputs_library', 'organization',
+('bt-doc-risk', '__system__', 'report', 'template', 'Risk Assessment Report', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Comprehensive risk identification and mitigation planning","structureBlueprint":["Risk Summary","Risk Register","Impact Analysis","Mitigation Strategies","Monitoring Plan"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-doc-dd', '__system__', 'report', 'template', 'Due Diligence Report', '__system__', 'outputs_library', 'organization',
+('bt-doc-dd', '__system__', 'report', 'template', 'Due Diligence Report', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Investment analysis covering financials, operations, and market position","structureBlueprint":["Executive Summary","Financial Analysis","Operations Review","Market Position","Legal & Compliance","Recommendation"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-doc-market', '__system__', 'report', 'template', 'Market Analysis Report', '__system__', 'outputs_library', 'organization',
+('bt-doc-market', '__system__', 'report', 'template', 'Market Analysis Report', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Market sizing, competitive landscape, and trend analysis","structureBlueprint":["Market Overview","Market Sizing","Competitive Landscape","Trend Analysis","Opportunities & Threats","Recommendations"]}}',
- datetime('now'), datetime('now'));
+ now());
 
 -- Origin links for document templates
 INSERT INTO v8_artifact_origin_links (link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin)
@@ -77,40 +77,40 @@ VALUES
 
 INSERT INTO v8_output_artifacts (
   artifact_id, organization_id, output_type, artifact_family,
-  title_snapshot, owner_user_id, canonical_home, visibility_scope,
-  origin_summary_json, created_at, updated_at
+  title_snapshot, owner_user_id, created_by, canonical_home, visibility_scope,
+  origin_summary_json, created_at
 ) VALUES
-('bt-sheet-finmodel', '__system__', 'sheet', 'template', 'Financial Model', '__system__', 'outputs_library', 'organization',
+('bt-sheet-finmodel', '__system__', 'sheet', 'template', 'Financial Model', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"P&L + Balance Sheet + Cash Flow projections with linked formulas","structureBlueprint":["Assumptions","P&L","Balance Sheet","Cash Flow","Sensitivity Analysis"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-sheet-budget', '__system__', 'sheet', 'template', 'Budget Planning', '__system__', 'outputs_library', 'organization',
+('bt-sheet-budget', '__system__', 'sheet', 'template', 'Budget Planning', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Annual/quarterly budget template with variance tracking","structureBlueprint":["Budget Summary","Revenue","OpEx","CapEx","Variance Analysis"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-sheet-resource', '__system__', 'sheet', 'template', 'Resource Allocation Matrix', '__system__', 'outputs_library', 'organization',
+('bt-sheet-resource', '__system__', 'sheet', 'template', 'Resource Allocation Matrix', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Team capacity and project assignment tracker","structureBlueprint":["Team Overview","Allocation Grid","Utilization Metrics","Gap Analysis"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-sheet-risk', '__system__', 'sheet', 'template', 'Risk Register', '__system__', 'outputs_library', 'organization',
+('bt-sheet-risk', '__system__', 'sheet', 'template', 'Risk Register', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Risk log with probability, impact scoring, and ownership","structureBlueprint":["Risk Log","Scoring Matrix","Mitigation Actions","Status Tracking"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-sheet-timeline', '__system__', 'sheet', 'template', 'Project Timeline', '__system__', 'outputs_library', 'organization',
+('bt-sheet-timeline', '__system__', 'sheet', 'template', 'Project Timeline', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Gantt-style milestone tracker with dependencies","structureBlueprint":["Milestones","Tasks","Dependencies","Resources","Timeline View"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-sheet-competitive', '__system__', 'sheet', 'template', 'Competitive Analysis Matrix', '__system__', 'outputs_library', 'organization',
+('bt-sheet-competitive', '__system__', 'sheet', 'template', 'Competitive Analysis Matrix', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Feature comparison grid across competitors","structureBlueprint":["Competitor Overview","Feature Comparison","Pricing","Strengths & Weaknesses","Summary"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-sheet-recruit', '__system__', 'sheet', 'template', 'Recruitment Pipeline', '__system__', 'outputs_library', 'organization',
+('bt-sheet-recruit', '__system__', 'sheet', 'template', 'Recruitment Pipeline', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Candidate tracking with stages and evaluation criteria","structureBlueprint":["Open Positions","Pipeline","Evaluations","Offers","Analytics"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-sheet-okr', '__system__', 'sheet', 'template', 'OKR Tracking Sheet', '__system__', 'outputs_library', 'organization',
+('bt-sheet-okr', '__system__', 'sheet', 'template', 'OKR Tracking Sheet', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Objectives, key results, and quarterly progress tracking","structureBlueprint":["Objectives","Key Results","Progress Tracking","Scoring","Review Notes"]}}',
- datetime('now'), datetime('now'));
+ now());
 
 -- Origin links for sheet templates
 INSERT INTO v8_artifact_origin_links (link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin)
@@ -130,40 +130,40 @@ VALUES
 
 INSERT INTO v8_output_artifacts (
   artifact_id, organization_id, output_type, artifact_family,
-  title_snapshot, owner_user_id, canonical_home, visibility_scope,
-  origin_summary_json, created_at, updated_at
+  title_snapshot, owner_user_id, created_by, canonical_home, visibility_scope,
+  origin_summary_json, created_at
 ) VALUES
-('bt-deck-steering', '__system__', 'presentation', 'template', 'Steering Committee Deck', '__system__', 'outputs_library', 'organization',
+('bt-deck-steering', '__system__', 'presentation', 'template', 'Steering Committee Deck', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Board-level status presentation with key metrics and decisions","structureBlueprint":["Cover","Agenda","Executive Summary","Status Overview","Key Metrics","Decisions Required","Next Steps"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-deck-status', '__system__', 'presentation', 'template', 'Project Status Update', '__system__', 'outputs_library', 'organization',
+('bt-deck-status', '__system__', 'presentation', 'template', 'Project Status Update', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Weekly/monthly progress slides with RAG indicators","structureBlueprint":["Cover","Summary","Progress by Workstream","Milestones","Risks & Issues","Next Period Plan"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-deck-pitch', '__system__', 'presentation', 'template', 'Pitch Deck', '__system__', 'outputs_library', 'organization',
+('bt-deck-pitch', '__system__', 'presentation', 'template', 'Pitch Deck', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Investor / stakeholder pitch with problem, solution, and traction","structureBlueprint":["Cover","Problem","Solution","Market Size","Business Model","Traction","Team","Ask"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-deck-workshop', '__system__', 'presentation', 'template', 'Workshop Facilitation Deck', '__system__', 'outputs_library', 'organization',
+('bt-deck-workshop', '__system__', 'presentation', 'template', 'Workshop Facilitation Deck', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Interactive exercises, agenda, and facilitation guides","structureBlueprint":["Cover","Agenda","Icebreaker","Exercise 1","Break","Exercise 2","Debrief","Action Items"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-deck-qbr', '__system__', 'presentation', 'template', 'Quarterly Business Review', '__system__', 'outputs_library', 'organization',
+('bt-deck-qbr', '__system__', 'presentation', 'template', 'Quarterly Business Review', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"QBR metrics, achievements, and roadmap outlook","structureBlueprint":["Cover","Quarter Highlights","Revenue & Growth","Customer Metrics","Product Roadmap","Goals Next Quarter"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-deck-strategy', '__system__', 'presentation', 'template', 'Strategy Roadmap', '__system__', 'outputs_library', 'organization',
+('bt-deck-strategy', '__system__', 'presentation', 'template', 'Strategy Roadmap', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Vision, strategic goals, milestones, and execution plan","structureBlueprint":["Cover","Vision","Strategic Pillars","Roadmap Timeline","Resource Needs","Success Metrics"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-deck-invest', '__system__', 'presentation', 'template', 'Investment Case Deck', '__system__', 'outputs_library', 'organization',
+('bt-deck-invest', '__system__', 'presentation', 'template', 'Investment Case Deck', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"NPV/IRR/ROI analysis for investment decision support","structureBlueprint":["Cover","Investment Thesis","Financial Projections","NPV & IRR Analysis","Risk Assessment","Recommendation"]}}',
- datetime('now'), datetime('now')),
+ now()),
 
-('bt-deck-digital', '__system__', 'presentation', 'template', 'Digital Transformation Assessment', '__system__', 'outputs_library', 'organization',
+('bt-deck-digital', '__system__', 'presentation', 'template', 'Digital Transformation Assessment', '__system__', '__system__', 'outputs_library', 'organization',
  '{"template":{"scope":"application","status":"active","description":"Maturity assessment, gaps analysis, and transformation recommendations","structureBlueprint":["Cover","Current State","Maturity Assessment","Gap Analysis","Recommendations","Implementation Roadmap","Expected Impact"]}}',
- datetime('now'), datetime('now'));
+ now());
 
 -- Origin links for presentation templates
 INSERT INTO v8_artifact_origin_links (link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin)
