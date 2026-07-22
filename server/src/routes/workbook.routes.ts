@@ -14,6 +14,7 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
+import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -384,6 +385,137 @@ router.post(
       artifactId,
       downloadUrl: `/api/workbook/${result.id}/download`,
       generatedAt: result.generatedAt,
+    });
+  })
+);
+
+/**
+ * POST /api/workbook/blank
+ * Roboty tri-tryby (D3, tryb ①CZYSTO): tworzy MINIMALNY pusty skoroszyt
+ * (1 arkusz, puste komórki) BEZ pipeline'u AI. Reużywa istniejącego kanału:
+ * ten sam builder (buildWorkbookBuffer), ta sama tabela `generated_workbooks`,
+ * ten sam cache i rejestr artefaktów co `/generate` — różni się tylko tym, że
+ * schema jest deterministyczna i pusta zamiast generowana przez LLM.
+ * Zwraca kształt zgodny z `/generate` (id + downloadUrl), więc ExceleView
+ * może od razu pokazać podgląd/pobranie tą samą ścieżką.
+ */
+router.post(
+  '/blank',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    await ensureWorkbookSchema();
+
+    const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const title = rawTitle || 'Pusty arkusz';
+
+    // Minimalna, poprawna WorkbookSchema: jeden arkusz, zero kolumn/wierszy →
+    // ExcelJS materializuje czystą, pustą siatkę. To jest kształt, którego sam
+    // WorkbookGeneratorService używa jako fallbacku (Sheet1, columns:[], rows:[]).
+    const schema: WorkbookSchema = {
+      title,
+      sheets: [{ name: 'Arkusz1', columns: [], rows: [] }],
+    };
+
+    const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
+
+    let buffer: Buffer;
+    try {
+      buffer = await buildWorkbookBuffer(schema);
+    } catch (err) {
+      logger.error('[WorkbookRoutes] Failed to build blank workbook:', err);
+      res.status(500).json({ error: 'Failed to build blank workbook' });
+      return;
+    }
+
+    const id = uuidv4();
+    const fileName = `${title.replace(/\s+/g, '_')}.xlsx`;
+    const generatedAt = new Date().toISOString();
+
+    workbookCache.set(id, { buffer, fileName, schema, createdAt: generatedAt });
+    pruneCache();
+
+    // Persist metadata (best-effort — pobranie i tak działa z cache/rebuild).
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          user.organizationId,
+          title,
+          null,
+          '(pusty arkusz — tryb Czysto)',
+          JSON.stringify(schema),
+          schema.sheets.length,
+          fileName,
+          buffer.length,
+          null,
+          null,
+          JSON.stringify([]),
+          JSON.stringify({}),
+          JSON.stringify({}),
+          JSON.stringify([]),
+          user.id,
+          generatedAt,
+        ]
+      );
+    } catch (err) {
+      logger.warn('[WorkbookRoutes] Failed to persist blank workbook metadata:', err);
+    }
+
+    // Register in V8 artifact registry (Outputs Library), jak w `/generate`.
+    let artifactId: string | null = null;
+    try {
+      const { registerArtifactOrigin } = await import(
+        '../services/v8/artifactRegistryService.js'
+      );
+      const registered = await registerArtifactOrigin({
+        organizationId: user.organizationId,
+        outputType: 'sheet',
+        artifactFamily: 'sheet',
+        originRuntime: 'sheet',
+        originRecordId: id,
+        titleSnapshot: title,
+        ownerUserId: user.id,
+        createdBy: user.id,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        projectId: null,
+        sourceInitiativeId: null,
+        originSummary: {
+          title,
+          description: null,
+          sheetCount: schema.sheets.length,
+          exportFormat: 'xlsx',
+          source: 'workbook_blank_manual',
+        },
+      });
+      artifactId = registered?.artifactId ?? null;
+    } catch (err) {
+      logger.warn('[WorkbookRoutes] Failed to register blank workbook in artifact registry:', err);
+    }
+
+    res.status(201).json({
+      id,
+      title,
+      description: null,
+      sheets: schema.sheets.map((s) => ({
+        name: s.name,
+        purpose: undefined,
+        columnCount: s.columns.length,
+        rowCount: s.rows.length,
+      })),
+      fileName,
+      fileSize: buffer.length,
+      validationErrors: [],
+      artifactId,
+      downloadUrl: `/api/workbook/${id}/download`,
+      generatedAt,
     });
   })
 );
