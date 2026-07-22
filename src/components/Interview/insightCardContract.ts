@@ -40,14 +40,25 @@
  *     („w kodzie NIE ISTNIEJE") — ISTNIEJE i renderuje (InsightViewer.tsx:771 nav,
  *     :3581 case), DOC oznacza WYMAGANĄ. `statusKanonu:'rozjazd'` (wchłania
  *     truth-review-summary). ★ DO POTWIERDZENIA: rola 'dane' vs 'asystuje'.
- *   · Grupa 3 (11 „Phase-D: Canon 23/23") → `statusKanonu:'do-decyzji-piotra'`.
- *     Semantycznie DUBLUJĄ istniejące 16 (executive-memo↔executive-summary RDZEŃ,
- *     consulting-narrative↔consulting-readout, recommendations↔artifact-actions,
- *     key-findings↔candidate-triage, …). Adapter WYKLUCZA je ze spec (katalog+sets)
- *     → renderują się nadal jako „extras" (applyToSections dokleja nieznane na
- *     końcu, useCardLayout.ts:306-308) — ZERO utraty treści, ZERO regresji — ale
- *     NIE wchodzą do kanonicznego katalogu, dopóki Piotr nie orzeknie dedupu.
+ *   · Grupa 3 (9 „Phase-D: Canon 23/23") → `statusKanonu:'do-decyzji-piotra'`.
+ *     Semantycznie DUBLUJĄ istniejące 16 (consulting-narrative↔consulting-readout,
+ *     key-findings↔candidate-triage, tensions↔consensus-divergence, patterns↔themes,
+ *     stakeholder-map↔people, source-credibility↔source-pack, …). Adapter WYKLUCZA
+ *     je ze spec (katalog+sets) → renderują się nadal jako „extras" (applyToSections
+ *     dokleja nieznane na końcu, useCardLayout.ts:306-308) — ZERO utraty treści,
+ *     ZERO regresji — ale NIE wchodzą do kanonicznego katalogu, dopóki Piotr nie
+ *     orzeknie dedupu.
  *     ★ DO POTWIERDZENIA PIOTRA: dla każdej — osobna karta czy alias/duplikat?
+ *     ★ DECYZJA PIOTRA (Faza 0, 2026-07-22, DEDUP): 2 karty tej grupy dublowały
+ *     RDZEŃ wprost (nie zwykłą kartę domyślną/dodawalną) — `executive-memo`
+ *     (↔`executive-summary`) i `recommendations`(↔`artifact-actions`). Te dwie
+ *     SCALONO z rdzeniem: usunięte z `INSIGHT_CARDS` (żadna unikalna treść promptu/
+ *     progu do przeniesienia — obie miały wyłącznie zaślepkę „(Phase-D)", rdzeń już
+ *     niósł pełny prompt+próg). Nadal renderowane przez `INSIGHT_SECTIONS`
+ *     (nietknięte, poza zakresem tej migracji) jako „extras" na końcu — dokładnie
+ *     tak jak pozostałe 9 działały PRZED „domknięciem zwężenia" (zero regresji,
+ *     zero utraty treści). Katalog/picker „Sekcje ▾" NIE pokazuje już tych dwóch
+ *     jako osobnych, mylących duplikatów obok kart rdzenia. Pozostałe 9 BEZ ZMIAN.
  *
  * ── WĘŻSZY ZESTAW DOMYŚLNY (D-5, przepis §1A/§1B) ────────────────────────────
  * Domyślny = RDZEŃ (2) + spine analityczny (8: consulting-readout, themes,
@@ -85,7 +96,9 @@ import type {
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// (1) KATALOG KANONICZNY INSIGHT — 32 karty (= INSIGHT_SECTIONS, InsightViewer.tsx:671).
+// (1) KATALOG KANONICZNY INSIGHT — 30 kart (po Faza 0 DEDUP; INSIGHT_SECTIONS,
+//     InsightViewer.tsx:671, nadal renderuje 32 — `executive-memo`/`recommendations`
+//     scalone z rdzeniem, poza katalogiem, patrz nagłówek pliku i Grupa 3 niżej).
 //     Kolejność deklaracji = kolejność renderu (zero regresji układu). Grupa
 //     kompozycyjna (rdzeń/domyślna/dodawalna) wg przepisu §1A/§1B/§1D.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -436,11 +449,17 @@ const MATERIAL_QUALITY = definiujKarteKanoniczna({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// (1D grupa 3) — „Phase D: Canon 23/23" (11) — statusKanonu 'do-decyzji-piotra'.
-//     Renderowane (InsightViewer.tsx:783-824), lecz DUBLUJĄ semantycznie 16 wyżej.
-//     Adapter WYKLUCZA je ze spec (katalog+sets) → renderują jako „extras" (bez
-//     regresji), ale NIE wchodzą do kanonicznego katalogu do czasu dedupu z Piotrem.
+// (1D grupa 3) — „Phase D: Canon 23/23" (9, po dedupie Faza 0) — statusKanonu
+//     'do-decyzji-piotra'. Renderowane (InsightViewer.tsx:783-824), lecz DUBLUJĄ
+//     semantycznie 16 wyżej. Adapter WYKLUCZA je ze spec (katalog+sets) → renderują
+//     jako „extras" (bez regresji), ale NIE wchodzą do kanonicznego katalogu do
+//     czasu dedupu z Piotrem.
 //     ★ DO POTWIERDZENIA PIOTRA: dla każdej — osobna karta czy alias istniejącej?
+//     ★ DECYZJA PIOTRA (Faza 0, DEDUP): `executive-memo` i `recommendations`
+//     dublowały RDZEŃ wprost — SCALONE z rdzeniem, usunięte z tej grupy (patrz
+//     komentarz nagłówkowy pliku, sekcja Grupa 3). Definicje ich const USUNIĘTE
+//     poniżej; treść zachowana w kartach rdzenia (EXECUTIVE_SUMMARY/ARTIFACT_ACTIONS
+//     — już bogatsze niż zaślepki Phase-D, więc nic do przeniesienia).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const KEY_FINDINGS = definiujKarteKanoniczna({
@@ -455,17 +474,11 @@ const KEY_FINDINGS = definiujKarteKanoniczna({
   statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje candidate-triage „Findings & Evidence" (InsightViewer.tsx:785 vs :750)' },
 });
 
-const RECOMMENDATIONS = definiujKarteKanoniczna({
-  id: 'recommendations',
-  label: { en: 'Recommendations', pl: 'Rekomendacje' },
-  grupa: 'INSIGHT',
-  ikona: 'Rocket',
-  rolaAI: 'pisze',
-  aiPrompt: { szablon: 'Rekomendacje (Phase-D).', kluczPromptu: 'insight.recommendations' },
-  prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 22 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje artifact-actions (rdzeń) (InsightViewer.tsx:790 vs :673)' },
-});
+// USUNIĘTE (Faza 0, DEDUP): `recommendations` dublowało ARTIFACT_ACTIONS (rdzeń)
+// wprost. Scalone z rdzeniem — brak unikalnej treści do przeniesienia (miało
+// wyłącznie zaślepkę „Rekomendacje (Phase-D)."). Nadal renderowane przez
+// INSIGHT_SECTIONS (nietknięte) jako „extra" doklejane na końcu listy —
+// zero utraty treści, zero regresji (jak przed „domknięciem zwężenia").
 
 const TENSIONS = definiujKarteKanoniczna({
   id: 'tensions',
@@ -563,22 +576,21 @@ const CONSULTING_NARRATIVE = definiujKarteKanoniczna({
   statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje consulting-readout (InsightViewer.tsx:814 vs :685)' },
 });
 
-const EXECUTIVE_MEMO = definiujKarteKanoniczna({
-  id: 'executive-memo',
-  label: { en: 'Executive Memo', pl: 'Memo zarządcze' },
-  grupa: 'INSIGHT',
-  ikona: 'Sparkles',
-  rolaAI: 'pisze',
-  aiPrompt: { szablon: 'Memo zarządcze (Phase-D).', kluczPromptu: 'insight.executive-memo' },
-  prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 31 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje executive-summary (RDZEŃ!) (InsightViewer.tsx:820 vs :679)' },
-});
+// USUNIĘTE (Faza 0, DEDUP): `executive-memo` dublowało EXECUTIVE_SUMMARY (rdzeń!)
+// wprost. Scalone z rdzeniem — brak unikalnej treści do przeniesienia (miało
+// wyłącznie zaślepkę „Memo zarządcze (Phase-D)."). Nadal renderowane przez
+// INSIGHT_SECTIONS (nietknięte) jako „extra" doklejane na końcu listy —
+// zero utraty treści, zero regresji (jak przed „domknięciem zwężenia").
 
 /**
- * Deskryptor kanoniczny Insight — 32 karty (= INSIGHT_SECTIONS). Typ elementu to
- * `KanonicznaKarta`, więc tablica jest wiążąca: dopisanie karty bez kompletu pól
- * nie skompiluje się. Kolejność = kolejność renderu.
+ * Deskryptor kanoniczny Insight — 30 kart (INSIGHT_SECTIONS nadal renderuje 32;
+ * `executive-memo` i `recommendations` USUNIĘTE stąd Faza 0 DEDUP — dublowały
+ * RDZEŃ wprost, patrz komentarz nagłówkowy pliku i miejsce usunięcia w Grupie 3.
+ * Nadal renderowane przez InsightViewer jako „extras" nieznane katalogowi —
+ * zero utraty treści). Typ elementu to `KanonicznaKarta`, więc tablica jest
+ * wiążąca: dopisanie karty bez kompletu pól nie skompiluje się. Kolejność =
+ * kolejność renderu (z lukami po usuniętych 22/31 — pole `kolejnosc` jest
+ * czysto dokumentacyjne, nieużywane poza tym plikiem).
  */
 export const INSIGHT_CARDS: readonly KanonicznaKarta[] = [
   // 1A rdzeń
@@ -609,8 +621,8 @@ export const INSIGHT_CARDS: readonly KanonicznaKarta[] = [
   // 1D grupa 2 (AUDIT admit)
   MATERIAL_QUALITY,
   // 1D grupa 3 (Phase-D → do-decyzji, wykluczone ze spec)
+  // (executive-memo, recommendations USUNIĘTE Faza 0 DEDUP — scalone z rdzeniem)
   KEY_FINDINGS,
-  RECOMMENDATIONS,
   TENSIONS,
   PATTERNS,
   MENTAL_MODELS,
@@ -619,19 +631,24 @@ export const INSIGHT_CARDS: readonly KanonicznaKarta[] = [
   STAKEHOLDER_MAP,
   SOURCE_CREDIBILITY,
   CONSULTING_NARRATIVE,
-  EXECUTIVE_MEMO,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // (2) ADAPTER kanon → ArtifactCardSpec (zwężenie do modelu `useCardLayout`).
 //     `core` z `rola==='rdzen'`; węższy default = rdzeń+domyślna (10); „full" =
-//     WSZYSTKIE 32 karty (łącznie z 11 Phase-D). Phase-D wchodzą do katalogu jako
-//     `dodawalna` (rola w kompozycji), więc: ukryte w default (nie w secie),
-//     WŁĄCZALNE z pickera „≡ Sekcje ▾". To DOMKNIĘCIE ZWĘŻENIA (D-5): applyToSections
-//     przestaje traktować je jako „extras" doklejane zawsze-widoczne na koniec
-//     (useCardLayout.ts:306-308) — bo są już ZNANE katalogowi. `statusKanonu`
+//     WSZYSTKIE 30 kart deskryptora (łącznie z 9 Phase-D). Phase-D wchodzą do
+//     katalogu jako `dodawalna` (rola w kompozycji), więc: ukryte w default (nie
+//     w secie), WŁĄCZALNE z pickera „≡ Sekcje ▾". To DOMKNIĘCIE ZWĘŻENIA (D-5):
+//     applyToSections przestaje traktować je jako „extras" doklejane zawsze-widoczne
+//     na koniec (useCardLayout.ts:306-308) — bo są już ZNANE katalogowi. `statusKanonu`
 //     `do-decyzji-piotra` ZOSTAJE (semantyczny marker oczekującego dedupu treści —
 //     osobna decyzja Piotra), ale NIE wyklucza już karty ze spec.
+//     ★ WYJĄTEK (Faza 0 DEDUP): `executive-memo` i `recommendations` dublowały
+//     RDZEŃ wprost — SCALONE z rdzeniem i usunięte z `INSIGHT_CARDS` (nie tylko
+//     ukryte rolą). Dla nich domknięcie zwężenia się COFA: nie są już „znane
+//     katalogowi", więc InsightViewer nadal je renderuje (INSIGHT_SECTIONS
+//     nietknięty), ale jako „extras" doklejane na końcu — tak jak WSZYSTKIE
+//     Phase-D działały przed domknięciem zwężenia. Zero utraty treści.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Członkostwo karty w Insight (dokładnie jedno na kartę tego deskryptora). */
@@ -661,11 +678,13 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 
 /**
  * Buduje `ArtifactCardSpec` Insight z deskryptora kanonicznego.
- *   · catalog  = wszystkie 32 karty (id=render-id, core z rdzenia); Phase-D w środku,
+ *   · catalog  = wszystkie 30 kart (id=render-id, core z rdzenia); Phase-D w środku,
  *   · default  = RDZEŃ + domyślne (10 kart — węższy zestaw D-5; Phase-D poza, bo `dodawalna`),
- *   · full     = wszystkie 32 karty („Pełny").
+ *   · full     = wszystkie 30 kart („Pełny").
  * Phase-D (`do-decyzji-piotra`) są teraz w katalogu → ukryte w default, włączalne z
  * pickera; applyToSections nie dokleja ich już jako „extras" (domknięcie zwężenia).
+ * Wyjątek: `executive-memo`/`recommendations` (Faza 0 DEDUP) NIE są już w katalogu —
+ * scalone z rdzeniem, patrz (2) wyżej.
  */
 export function buildInsightCardSpec(): ArtifactCardSpec {
   const admitted = INSIGHT_CARDS;
@@ -696,17 +715,22 @@ export function buildInsightCardSpec(): ArtifactCardSpec {
 export const INSIGHT_CARD_SPEC: ArtifactCardSpec = buildInsightCardSpec();
 
 /**
- * Render-idy WSZYSTKICH 32 zadeklarowanych kart (admit + Phase-D) — do dev-only
+ * Render-idy WSZYSTKICH 30 zadeklarowanych kart (admit + Phase-D) — do dev-only
  * asercji „każda renderowana sekcja jest ZNANA kontraktowi" (sekcja bez wpisu =
- * prawdziwa sierota). Phase-D są znane (do-decyzji), więc nie wywołają ostrzeżenia.
+ * prawdziwa sierota). Pozostałe 9 Phase-D są znane (do-decyzji), więc nie wywołają
+ * ostrzeżenia. `executive-memo`/`recommendations` (Faza 0 DEDUP, scalone z rdzeniem)
+ * ŚWIADOMIE nie są tu — InsightViewer nadal je renderuje (nietknięty), więc dev-log
+ * je zgłosi jako 2 „orphans"/„extras" — OCZEKIWANE, dev-only, zero wpływu na produkt.
  */
 export const INSIGHT_CARD_RENDER_IDS: readonly string[] = INSIGHT_CARDS.map(renderId);
 
 /**
- * Render-idy 11 sekcji Phase-D (`do-decyzji-piotra`) — w katalogu jako `dodawalna`
- * (ukryte w default, włączalne z pickera). `statusKanonu` pozostaje markerem
- * oczekującego dedupu treści z Piotrem (osobna decyzja), NIE wyklucza już ze spec.
- * Lista używana przez dev-log InsightViewer do policzenia extras (ma być 0 — już w katalogu).
+ * Render-idy 9 sekcji Phase-D (`do-decyzji-piotra`, po Faza 0 DEDUP — było 11) —
+ * w katalogu jako `dodawalna` (ukryte w default, włączalne z pickera). `statusKanonu`
+ * pozostaje markerem oczekującego dedupu treści z Piotrem (osobna decyzja), NIE
+ * wyklucza już ze spec. Lista używana przez dev-log InsightViewer do policzenia
+ * extras (ma być 2, nie 0 — `executive-memo`/`recommendations`, scalone z rdzeniem
+ * i celowo poza katalogiem; pozostałe 9 nadal w katalogu = 0 dodatkowych extras z ich strony).
  */
 export const INSIGHT_PHASE_D_RENDER_IDS: readonly string[] = INSIGHT_CARDS.filter(
   (k) => k.statusKanonu.stan === 'do-decyzji-piotra'
