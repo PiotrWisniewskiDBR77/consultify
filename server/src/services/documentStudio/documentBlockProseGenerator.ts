@@ -165,7 +165,11 @@ function buildSystemPrompt(schema: DocumentSchema): string {
     `Communication register: ${schema.communicationRegister}. Density: ${schema.density}. Style: ${schema.languageStyle}.`,
     `Write in this language code: ${schema.language}.`,
     'Produce sharp, decision-oriented, MECE consulting prose — no filler, no hedging, no meta-commentary about being an AI.',
-    'Ground every factual claim in the provided sources. When a claim is NOT supported by the sources, phrase it as an explicit assumption (e.g. prefix "Assumption:") rather than asserting it as fact.',
+    // Format założeń (naprawa 2026-07-22): NIE prefiksuj zdań „Assumption:" —
+    // to daje „Assumption: … Assumption: …" w każdym zdaniu (obserwacja z demo).
+    // Oznaczaj TYLKO konkretną, niepopartą liczbę/procent/kwotę/datę/nazwaną wartość
+    // inline w nawiasie, w języku dokumentu: „(założenie)" / „(assumption)".
+    'Ground every factual claim in the provided sources. Write confident, decision-oriented consulting prose — do NOT hedge every sentence. When a SPECIFIC number, percentage, amount, date or named fact is NOT supported by the sources, mark just that value inline in parentheses in the document language — "(założenie)" for Polish, "(assumption)" for English (e.g. "redukcja błędów o 30% (założenie)"). Never prefix a whole sentence with "Assumption:" and never repeat the marker on consecutive sentences. Qualitative reasoning is stated plainly; if a section rests on a few key assumptions, you may name them once in a short lead-in, not sentence-by-sentence.',
     'For "text" blocks return a single tight paragraph. For "items" blocks return 2-5 crisp bullet points.',
     // N-9: tabelaryczne sekcje muszą dostać tabelę, nie samą prozę. Renderer
     // oddaje "text" verbatim, więc tabela GFM w polu "text" trafia do edytora.
@@ -189,7 +193,7 @@ function buildUserPrompt(
               `[S${i + 1}] ${ref.sourceTitle ?? ref.sourceId ?? ref.sourceType ?? 'source'}`
           )
           .join('\n')
-      : '(no source pack attached — flag all non-trivial claims as assumptions)';
+      : '(no source pack attached — write confident consulting prose; mark ONLY specific unsupported numbers/dates/named values inline with "(założenie)"/"(assumption)", do NOT prefix sentences with "Assumption:")';
   return [
     `Document title: ${schema.title}`,
     `Goal: ${schema.goal}`,
