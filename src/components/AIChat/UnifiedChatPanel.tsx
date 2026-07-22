@@ -114,7 +114,7 @@ import { detectMindmapIntent } from './mindmapIntentDetector';
 import { OutputToolSelector } from './OutputToolSelector';
 import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectProcessFlowIntent } from './processFlowIntentDetector';
-import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
+import { detectExceleIntent, detectTableIntent, resolveSheetLane } from './tableIntentDetector';
 import {
   formatTeresaAdminDiagnostic,
   getTeresaEmptyResponseMessage,
@@ -2485,8 +2485,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             note: string,
             // B2-parity: deliverable ref w metadata wiadomości — persystowane
             // server-side, dzięki czemu ArtifactChip w transkrypcie przeżywa reload.
+            // B2 (Excel): dla toru workbook chip niesie workbookId/downloadUrl —
+            // klik otwiera realny .xlsx (silnik formuł), nie draft canvasa.
             metadata?: {
-              deliverable: { kind: 'deck' | 'doc' | 'sheet'; generationId: string; title?: string };
+              deliverable: {
+                kind: 'deck' | 'doc' | 'sheet';
+                generationId: string;
+                title?: string;
+                workbookId?: string;
+                downloadUrl?: string;
+              };
             }
           ) => {
             const conversationId = useConversationStore.getState().activeConversationId;
@@ -2510,7 +2518,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             )
             .join('\n');
 
-          void (async () => {
+          // Stary tor (GFM 10×15, plan/startSheet) — wyodrębniony do funkcji, bo
+          // służy zarówno jako lane 'gfm' (prezentacja: tabela/lista), jak i jako
+          // FAIL-SOFT fallback, gdy silnik formuł (workbook) zawiedzie. Nietknięty
+          // względem poprzedniej wersji.
+          const runGfmSheetGeneration = async () => {
             try {
               const planned = await planSheetGeneration({
                 intent: text,
@@ -2597,7 +2609,76 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 error: err instanceof Error ? err.message : undefined,
               });
             }
-          })();
+          };
+
+          // NOWY tor (B2, workstream Excel): żądanie OBLICZENIOWE (model/budżet/
+          // P&L/prognoza/scenariusze/formuły) idzie do realnego 5-fazowego silnika
+          // WorkbookGeneratorService (żywe formuły .xlsx), a nie do płaskiej tabeli
+          // GFM. Prezentacja (tabela/lista) zostaje na starym torze GFM. Bramka:
+          // resolveSheetLane. FAIL-SOFT: błąd silnika → fallback na tor GFM, żeby
+          // czat NIGDY nie został bez artefaktu.
+          const runWorkbookGeneration = async () => {
+            // Silnik jest jednym długim wywołaniem (~30-120s) bez fazy planu —
+            // pokazujemy 'generating' od razu (checklista analogiczna do GFM).
+            updateSheetChecklist('generating');
+            try {
+              // Timeout: świadomie BEZ własnego — Api.generateWorkbook (jak lane
+              // 'excele' w useKimiArtifactPipeline) to zwykły fetch bez AbortController;
+              // silnik bywa długi, więc nie ucinamy go sztucznym limitem.
+              const wb = await Api.generateWorkbook({
+                prompt: text,
+                language: effectiveChatLanguage === 'pl' ? 'pl' : 'en',
+                conversationId: useConversationStore.getState().activeConversationId || undefined,
+              });
+              if (!wb?.id) throw new Error('workbook generation returned no id');
+
+              const sheetCount = Array.isArray(wb.sheets) ? wb.sheets.length : undefined;
+              const downloadUrl =
+                typeof wb.downloadUrl === 'string'
+                  ? wb.downloadUrl
+                  : `/api/workbook/${wb.id}/download`;
+
+              useConversationStore.getState().removeLocalMessage(progressMessageId);
+              persistSheetFinalNote(
+                deckGenerationChecklist({
+                  lang: uiLang,
+                  title: wb.title || sheetTitle,
+                  phase: 'draft',
+                  format: 'sheet',
+                  unitCount: sheetCount,
+                }),
+                // Chip w transkrypcie (reload-safe, server-side): niesie workbookId +
+                // downloadUrl → klik otwiera realny .xlsx (handleOpenDeliverableArtifact).
+                {
+                  deliverable: {
+                    kind: 'sheet',
+                    generationId: wb.id,
+                    title: wb.title || sheetTitle,
+                    workbookId: wb.id,
+                    downloadUrl,
+                  },
+                }
+              );
+              // Uwaga: workbook rejestruje się w Materiałach po stronie backendu
+              // (registerArtifactOrigin w /workbook/generate), więc NIE wołamy tu
+              // registerChatDeliverable — uniknięcie zdublowanej/źle typowanej karty
+              // oraz błędnego montażu draftu canvasa dla realnego .xlsx.
+            } catch (err: unknown) {
+              if (err instanceof DOMException && err.name === 'AbortError') return;
+              // FAIL-SOFT: silnik formuł padł → wracamy na sprawdzony tor GFM.
+              console.warn(
+                '[UnifiedChatPanel] Workbook engine failed, falling back to GFM sheet track:',
+                err
+              );
+              await runGfmSheetGeneration();
+            }
+          };
+
+          if (resolveSheetLane(text) === 'workbook') {
+            void runWorkbookGeneration();
+          } else {
+            void runGfmSheetGeneration();
+          }
           return;
         }
 
@@ -4548,7 +4629,22 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // canvas split-view with the chat-generated deliverable mounted + mark it
   // as the conversation's active artifact (persisted).
   const handleOpenDeliverableArtifact = useCallback(
-    (deliverable: { kind: 'deck' | 'doc' | 'sheet'; generationId: string; title?: string }) => {
+    (deliverable: {
+      kind: 'deck' | 'doc' | 'sheet';
+      generationId: string;
+      title?: string;
+      workbookId?: string;
+      downloadUrl?: string;
+    }) => {
+      // B2 (Excel): realny .xlsx z silnika formuł nie ma draftu canvasa — otwieramy
+      // wygenerowany skoroszyt bezpośrednio (wzorem Kimi ExceleView), zamiast
+      // montować nieistniejący draft. Rozpoznanie po obecności workbookId.
+      if (deliverable.workbookId) {
+        const url =
+          deliverable.downloadUrl || `/api/workbook/${deliverable.workbookId}/download`;
+        window.open(url, '_blank');
+        return;
+      }
       // Sheet = GFM-table markdown draft → same draft mount as doc.
       if (deliverable.kind === 'doc' || deliverable.kind === 'sheet') {
         setRequestedCanvasDeckId(null);

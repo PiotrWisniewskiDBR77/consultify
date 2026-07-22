@@ -7006,6 +7006,13 @@ export const Api = {
     prompt: string;
     researchContext?: string;
     language?: string;
+    // B2 (workstream Excel): optional grounding sources. The backend already
+    // reads these (POST /api/workbook/generate → buildWorkbookGrounding) and folds
+    // them into the LLM prompt so model numbers have a basis. The chat reroute may
+    // not send them yet — this is the type + pass-through so callers can.
+    sourcePack?: unknown;
+    evidenceRefs?: unknown[];
+    conversationId?: string;
     // P-2: when generated as the real .xlsx for an existing artifact run,
     // pass the run id so the backend adopts the single canonical Outputs card
     // instead of creating a duplicate (split-brain fix for the excele lane).
