@@ -251,5 +251,9 @@ describe('POST /api/document-studio/share-links/comments/list', () => {
       body: 'Question from the client about section 1',
       authorId: `share-link:${shareLinkId}`,
     });
+    // organizationId (internal tenant id) must never reach an
+    // anonymous share-link consumer — same invariant as `resolve`.
+    expect(res.body.comments[0].organizationId).toBeUndefined();
+    expect(JSON.stringify(res.body)).not.toContain(ORG);
   });
 });

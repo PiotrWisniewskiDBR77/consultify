@@ -4804,7 +4804,12 @@ documentShareLinkPublicRoutes.post(
     const comments = listDocumentComments(result.artifactId, result.organizationId, {
       hideDeleted: true,
     });
-    res.json({ comments });
+    // `DocumentComment` carries `organizationId` (internal tenant id) —
+    // every other public share-link response strips it (see `resolve`
+    // above), so strip it here too rather than leak the tenant id to
+    // an anonymous consumer through the comments feed.
+    const publicComments = comments.map(({ organizationId: _orgId, ...rest }) => rest);
+    res.json({ comments: publicComments });
   })
 );
 
