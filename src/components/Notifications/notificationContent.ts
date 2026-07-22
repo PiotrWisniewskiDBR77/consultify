@@ -116,44 +116,69 @@ const inferWhy = (n: NotificationLike, t: TFunction): string => {
 
   // Fallback: infer from type
   const nType = normalize(n.type).toUpperCase();
-  const daysOverdue = Number(n.data?.days_overdue || n.data?.daysOverdue || 0);
+  const data = n.data || {};
+  const daysOverdue = Number(data.days_overdue || data.daysOverdue || 0);
+  const taskTitle = normalize(
+    (data.task_title || data.taskTitle || data.entityName) as string | undefined
+  );
+  const riskLevel = normalize((data.riskLevel || data.risk_level) as string | undefined);
 
   if (nType.includes('OVERDUE') && daysOverdue > 0) {
     return daysOverdue === 1
       ? t(
           'notifications.content.why.overdueDay',
-          'Deadline passed {{count}} day ago — cost of inaction is rising.',
+          'Deadline passed {{count}} day ago. Every extra day of delay pushes the next step back by the same amount (no schedule buffer [assumption]).',
           { count: daysOverdue }
         )
       : t(
           'notifications.content.why.overdueDays',
-          'Deadline passed {{count}} days ago — cost of inaction is rising.',
+          'Deadline passed {{count}} days ago. Every extra day of delay pushes the next step back by the same amount (no schedule buffer [assumption]).',
           { count: daysOverdue }
         );
   }
   if (nType.includes('OVERDUE')) {
-    return t('notifications.content.why.overdue', 'Deadline passed — cost of inaction is rising.');
+    return t(
+      'notifications.content.why.overdue',
+      "Deadline passed — the exact number of days overdue isn't in the data. Open the linked item and check the due date before deciding on next steps."
+    );
   }
   if (nType.includes('DUE') || nType.includes('DUE_SOON')) {
     return t(
       'notifications.content.why.dueSoon',
-      'Deadline is approaching — needs a plan and confirmation.'
+      'Deadline is approaching. If it passes without an update, the system automatically raises this to critical priority after 3 days overdue — confirm the plan now to avoid that.'
     );
   }
   if (nType.includes('ESCALAT')) {
-    return t('notifications.content.why.escalated', 'No response triggered an escalation.');
+    return t(
+      'notifications.content.why.escalated',
+      'No response within the expected window triggered an automatic escalation — priority raised to high.'
+    );
   }
   if (nType.includes('BLOCKED')) {
-    return t('notifications.content.why.blocked', 'Blocked — requires immediate attention.');
+    return t(
+      'notifications.content.why.blocked',
+      'Blocked — the system flags this as critical priority. Every dependent step stays frozen until this specific blocker is removed.'
+    );
   }
   if (nType.includes('ASSIGN')) {
-    return t('notifications.content.why.assigned', 'New assignment — action required.');
+    return t(
+      'notifications.content.why.assigned',
+      'New assignment{{taskPart}} — it now counts against your workload; confirm scope today so the deadline stays realistic.',
+      { taskPart: taskTitle ? ` "${taskTitle}"` : '' }
+    );
   }
   if (nType.includes('AI_RISK')) {
-    return t('notifications.content.why.aiRisk', 'AI detected a risk — review the details.');
+    return t(
+      'notifications.content.why.aiRisk',
+      'AI detected a risk{{riskPart}} — verify the source data before deciding, the model can be wrong.',
+      { riskPart: riskLevel ? ` [${riskLevel}]` : '' }
+    );
   }
   if (nType.includes('AI')) {
-    return t('notifications.content.why.ai', 'AI suggests action — review the recommendation.');
+    return t(
+      'notifications.content.why.ai',
+      "AI generated a recommendation but didn't state a measured impact in the data — open the details and verify assumptions before applying it."
+    );
   }
   if (nType === 'PAYMENT_FAILED') {
     return t(
@@ -169,15 +194,16 @@ const inferWhy = (n: NotificationLike, t: TFunction): string => {
         | undefined
     );
     const pct = Number.isFinite(usedPct) && usedPct > 0 ? usedPct : undefined;
+    const remaining = pct !== undefined ? Math.max(0, 100 - pct) : undefined;
     return pct
       ? t(
           'notifications.content.why.usageAlertPct',
-          'You are approaching a limit ({{pct}}%) — plan actions (upgrade/cleanup/limits).',
-          { pct }
+          '{{pct}}% of the limit used — {{remaining}}% left. At 100% the feature stops working until you increase the limit, clean up data, or upgrade.',
+          { pct, remaining }
         )
       : t(
           'notifications.content.why.usageAlert',
-          'You are approaching a limit — plan actions (upgrade/cleanup/limits).'
+          "Approaching a limit — the exact usage percentage isn't in the data. Check the usage panel before deciding: upgrade, data cleanup, or raise the limit."
         );
   }
   if (nType === 'SUBSCRIPTION_CHANGE') {
@@ -205,12 +231,18 @@ const inferWhy = (n: NotificationLike, t: TFunction): string => {
     return t('notifications.content.why.dbr77Generic', 'DBR77 communication — review details.');
   }
   if (nType.includes('GATE')) {
-    return t('notifications.content.why.gate', 'Gate requires your GO/NO-GO decision.');
+    return t(
+      'notifications.content.why.gate',
+      'Gate requires your GO/NO-GO decision — downstream steps of the initiative stay paused until you decide.'
+    );
   }
   if (nType.includes('COMPLETED') || nType.includes('MILESTONE')) {
     return t('notifications.content.why.milestone', 'Milestone achieved.');
   }
-  return t('notifications.content.why.default', 'Requires action in the system.');
+  return t(
+    'notifications.content.why.default',
+    "No matching template for this notification type — open the linked record to see what's required."
+  );
 };
 
 /**
