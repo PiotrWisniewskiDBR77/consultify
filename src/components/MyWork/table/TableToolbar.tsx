@@ -394,7 +394,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     setRenamingViewId(null);
                   }
                 }}
-                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-c-surface border border-c-accent outline-none w-20"
+                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-c-surface border border-c-focus outline-none w-20"
               />
             ) : (
               <button
@@ -817,7 +817,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                       }}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${
                         it.active
-                          ? 'text-c-accent bg-c-accent-soft'
+                          ? 'text-c-text bg-c-surface-raised'
                           : 'text-c-text hover:bg-c-surface-raised'
                       }`}
                     >
