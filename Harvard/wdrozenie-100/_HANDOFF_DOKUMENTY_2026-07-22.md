@@ -66,6 +66,10 @@ Po deployu — **weryfikacja LIVE** (treści NIE da się offline, brak LLM lokal
 ## 6b. OTWARTE PUNKTY (dokończyć w świeżej sesji)
 - **Excel — reguła „(założenie)" w system-prompcie.** A3 (`21ac83f2a7`) naprawił tylko PRZEPŁYW groundingu (sourcePack→prompt), NIE dodał do `WorkbookGeneratorService.ts:31-71` (system prompt) reguły §0.3 „liczbę bez źródła oznacz (założenie)" — którą mają już Word (A1) i Deck (A2). Domknąć dla spójności wzorca, zanim uzna się Falę A merytorycznie kompletną.
 - Weryfikacja live całej Fali A po deployu (patrz `_HANDOFF_FALA_A_2026-07-22.md`, tabela PASS/FAIL).
+- **KOREKTY „audyty się starzeją" (weryfikacja runtime po napisaniu frameworku) — karta wyników ZANIŻONA, skoryguj przed produkcją:**
+  - **Deck menu/nawigacja lepsze niż w karcie:** ← powrót JUŻ podpięty (`DeckBuilder.tsx:317,1187`, commit `a838907d6f` 07-19), tryb prezentera DZIAŁA (`:1205`, `eead180f35`), `media` w rightRail = zamierzony guard nie bug, crimson-sweep chrome zrobiony (`ecfa635252`). Deck ① Menu/② Nawigacja realnie wyżej niż 4/5. Szczegóły: `_HANDOFF_FALA_C_POLISH_2026-07-22.md` §0.
+  - **Generator tpl. Word MA frontend** (Template Architect `DocumentStudioTemplateArchitectView.tsx`, wpięty `DocumentStudioView.tsx:394`) — score #2 zaniżony; domykać, nie budować od zera. Szczegóły: `_HANDOFF_FALA_B_*.md` §1.
+  - **Sprzeczność do rozstrzygnięcia:** `documentStudioTypes.ts:7` mówi „Mode 2/3 deferred", ale kod Mode 2/3 istnieje — zweryfikuj na żywym demo czy Mode 3 (generacja z szablonu) realnie działa, zanim budujesz na tym.
 
 ## 7. PAMIĘĆ (auto-recall, już zapisana)
 - `audyt-dokumenty-naprawa-2026-07-22.md` — audyt+naprawa+mandat.
