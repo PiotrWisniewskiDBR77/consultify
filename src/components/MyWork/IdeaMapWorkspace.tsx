@@ -2798,9 +2798,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
   // used by the ideas list (MyIdeasListContent) + the same confirm-dialog
   // pattern. "Duplikuj" (Api.duplicateMyIdea → deep-link into the new copy)
-  // and "Historia" (SnapshotHistory, mindmap only) are wired below too — no
-  // kebab entry is permanently disabled anymore except Historia for the three
-  // non-mindmap tools (SnapshotHistory operates on mindmap nodes/edges).
+  // and "Historia" (SnapshotHistory) are wired below too — no kebab entry is
+  // permanently disabled anymore. Historia works for every canvas tool: all
+  // four share one per-idea graph and snapshots now capture extensions.
   const { dialog: deleteIdeaDialog, confirm: confirmDeleteIdea } = useConfirmDialog();
   const handleDeleteIdea = useCallback(async () => {
     if (!realId) return;
@@ -2843,12 +2843,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // pattern as `handleImportGraph` (import), so it lands through the normal
   // autosave/versioning pipeline instead of a side-channel state set.
   const handleRestoreSnapshot = useCallback(
-    async (restoredNodes: any[], restoredEdges: any[]) => {
+    async (
+      restoredNodes: any[],
+      restoredEdges: any[],
+      restoredExtensions?: Record<string, unknown>
+    ) => {
+      // New snapshots carry the full tool-specific state (processFlow.lanes,
+      // whiteboard.drawingPaths/scenes/mode, table config), so restore rolls
+      // the WHOLE tool back — not just the shared nodes/edges. captureToolGraph
+      // deep-merges into the live extensions, and arrays (lanes, drawingPaths)
+      // are atomic so they replace the current value → a real rollback.
+      // Pre-extension snapshots have no extensions → fall back to re-asserting
+      // the live lanes (previous mindmap behaviour), which is non-destructive.
+      const hasExt =
+        restoredExtensions &&
+        typeof restoredExtensions === 'object' &&
+        Object.keys(restoredExtensions).length > 0;
+      const extensions = hasExt
+        ? restoredExtensions
+        : mergeWorkspaceExtensions({ processFlow: { lanes: graphLanes } }, {});
       graphRuntime.captureToolGraph(
         {
           nodes: restoredNodes as any[],
           edges: restoredEdges as any[],
-          extensions: mergeWorkspaceExtensions({ processFlow: { lanes: graphLanes } }, {}),
+          extensions,
         },
         { reason: 'semantic', immediate: true }
       );
@@ -2863,8 +2881,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
   // ── Menu 1 (top bar) chips — Z7 anatomy ─────────────────────────────────
   // Clean identity row: ghost Teresa (secondary) + kebab `⋯`. Real: Eksport +
-  // Historia (mindmap only) + Duplikuj + Usuń. Historia stays honest-disabled
-  // for Whiteboard/Process/Table (SnapshotHistory is mindmap nodes/edges only).
+  // Historia (all canvas tools) + Duplikuj + Usuń. Snapshots capture the shared
+  // graph + extensions, so restore is a full rollback on every tool.
   // The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot` below; the
   // per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
   const melsCanvasChips = useMemo(
@@ -2875,10 +2893,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             handlers: {
               onDiscuss: handleDiscussWithTeresa,
               onExport: () => setExportMenuOpen(true),
-              // Historia: real only for mindmap — SnapshotHistory operates on
-              // mindmap nodes/edges; other tools stay honest-disabled until
-              // generalized (separate, unscoped work).
-              onHistory: activeTool === 'mindmap' ? () => setSnapshotHistoryOpen(true) : undefined,
+              // Historia: enabled for every canvas tool. All four tools
+              // (mindmap/whiteboard/process_flow/table) share ONE per-idea graph
+              // (nodes/edges/extensions), and snapshots now capture extensions
+              // too — so restore rolls back the whole tool uniformly.
+              onHistory: () => setSnapshotHistoryOpen(true),
               onDuplicate: handleDuplicateIdea,
               onDelete: handleDeleteIdea,
               onSearch: () => setSearchOpen(true),
@@ -3919,13 +3938,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {/* Z-menu1-delete: Menu 1 kebab "Usuń" confirm dialog */}
         {deleteIdeaDialog}
 
-        {/* Z-menu1-history: Menu 1 kebab "Historia" — mindmap-only */}
+        {/* Z-menu1-history: Menu 1 kebab "Historia" — all canvas tools */}
         <SnapshotHistory
           open={snapshotHistoryOpen}
           onClose={() => setSnapshotHistoryOpen(false)}
           ideaId={realId || ''}
           currentNodes={graphNodes}
           currentEdges={graphEdges}
+          currentExtensions={graphRuntime.graph.extensions as Record<string, unknown>}
           onRestore={handleRestoreSnapshot}
         />
       </>
