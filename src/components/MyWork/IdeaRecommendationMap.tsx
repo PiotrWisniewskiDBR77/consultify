@@ -56,7 +56,9 @@ import {
 
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
+import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useCanvasSnapping } from './canvas/useCanvasSnapping';
 import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
@@ -134,7 +136,6 @@ import {
 } from './mindmap/NodeEnhancements';
 import { PaneContextMenu } from './mindmap/PaneContextMenu';
 import { PresentationMode } from './mindmap/PresentationMode';
-import { SmartGuidesOverlay } from './mindmap/SmartGuidesOverlay';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { applyStructureLayout } from './mindmap/StructureLayouts';
 import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
@@ -5016,6 +5017,23 @@ function MindMapInner({
   const virtualizationEnabled = isFeatureEnabled('mindmapVirtualization');
   const onlyRenderVisibleElements = shouldVirtualize(virtualizationEnabled, nodes.length);
 
+  // Z14: neighbour-edge magnetic snapping. Gated by the same opt-in as native
+  // grid (alignSnapEnabled flag AND the snapEnabled toggle) so the flag alone
+  // never changes drag behavior. Grid stays native (snapGrid 16) → gridEnabled
+  // false. Composed with the reparent onNodeDrag below (both run per frame).
+  const { onNodeDrag: onSnapNodeDrag } = useCanvasSnapping({
+    enabled: alignSnapEnabled && snapEnabled,
+    threshold: 6,
+    gridEnabled: false,
+  });
+  const onNodeDragCombined = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      onNodeDrag(event, node); // reparent drop-target highlight
+      onSnapNodeDrag(event, node); // magnetic neighbour snap (opt-in)
+    },
+    [onNodeDrag, onSnapNodeDrag]
+  );
+
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;
     if (contextMenu) return null;
@@ -5405,7 +5423,7 @@ function MindMapInner({
               onPaneContextMenu={onPaneContextMenu}
               onConnect={onConnect}
               onEdgeClick={onEdgeClick}
-              onNodeDrag={onNodeDrag}
+              onNodeDrag={onNodeDragCombined}
               onNodeDragStop={onNodeDragStop}
               {...(alignSnapEnabled && snapEnabled
                 ? { snapToGrid: true, snapGrid: [16, 16] as [number, number] }
@@ -5529,8 +5547,8 @@ function MindMapInner({
                   />
                 );
               })()}
-              {/* M06 Fala 3.1: alignment guides during drag (flag-gated, read-only). */}
-              {alignSnapEnabled && <SmartGuidesOverlay threshold={5} />}
+              {/* M06 Fala 3.1 / Z14: alignment guides during drag (flag-gated, read-only). */}
+              {alignSnapEnabled && <CanvasSnapGuides threshold={6} />}
               {showMiniMap && (
                 <MiniMap
                   nodeColor={miniMapNodeColor}
