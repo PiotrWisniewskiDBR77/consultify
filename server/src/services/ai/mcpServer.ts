@@ -169,7 +169,7 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
         .string()
         .optional()
         .describe(
-          'PRESENTATION only — who the deck is for. Fill it whenever the user names or implies the audience: "executive"/"board"/"zarząd"/"komitet" (leadership), "client"/"klient", or "investor"/"inwestor". Drives an executive vs professional narrative register — omitting it defaults to an internal register, so a board deck without this reads generic. Ignored for non-presentation types.'
+          'PRESENTATION and DOCUMENT — who the artifact is for. Fill it whenever the user names or implies the audience: "executive"/"board"/"zarząd"/"komitet" (leadership), "client"/"klient", or "investor"/"inwestor". For a deck it drives an executive vs professional register; for a document it grounds the prose ("written for the audience: …"). Omitting it defaults to an internal/generic register, so a board deliverable without this reads generic. Ignored for other types.'
         ),
       goal: z
         .string()

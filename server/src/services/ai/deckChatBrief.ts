@@ -153,6 +153,26 @@ export function deriveDeckTitle(intent: string, rawTitle?: string): string {
   return (s || fallback).slice(0, 120);
 }
 
+/**
+ * Czytelna ETYKIETA odbiorcy (dla dokumentów Word — `documentBlockProseGenerator`
+ * wstawia `schema.audience.join(', ')` wprost do promptu „written for the
+ * audience: …"). Zwraca ludzki label albo `null` (caller → fallback „internal
+ * stakeholders"). Odróżnij od `inferDeckAudience`, które mapuje na enum silnika deck.
+ */
+export function inferAudienceLabel(text: string, isPolish = true): string | null {
+  const a = inferDeckAudience(text);
+  switch (a) {
+    case 'executive':
+      return isPolish ? 'zarząd' : 'the board / executives';
+    case 'investor':
+      return isPolish ? 'inwestorzy' : 'investors';
+    case 'sponsor':
+      return isPolish ? 'klient' : 'the client';
+    default:
+      return null; // 'internal' — brak wyraźnego sygnału, nie zgaduj
+  }
+}
+
 export interface DeckBriefOverrides {
   audience?: string;
   goal?: string;

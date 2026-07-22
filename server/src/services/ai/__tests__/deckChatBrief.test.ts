@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   deriveDeckTitle,
+  inferAudienceLabel,
   inferDeckAudience,
   inferDeckGoal,
   resolveDeckBrief,
@@ -69,6 +70,21 @@ describe('deckChatBrief — deriveDeckTitle', () => {
   });
   it('fail-soft: pusty intent → pusty string (caller ma fallback)', () => {
     expect(deriveDeckTitle('')).toBe('');
+  });
+});
+
+describe('deckChatBrief — inferAudienceLabel (dla dokumentów Word)', () => {
+  it('zwraca ludzką etykietę PL dla rozpoznanego odbiorcy', () => {
+    expect(inferAudienceLabel('dokument dla zarządu', true)).toBe('zarząd');
+    expect(inferAudienceLabel('memo dla klienta', true)).toBe('klient');
+    expect(inferAudienceLabel('raport dla inwestora', true)).toBe('inwestorzy');
+  });
+  it('EN etykieta gdy isPolish=false', () => {
+    expect(inferAudienceLabel('a brief for the board', false)).toBe('the board / executives');
+  });
+  it('null gdy brak sygnału (caller → domyślne „internal stakeholders")', () => {
+    expect(inferAudienceLabel('notatka o statusie', true)).toBeNull();
+    expect(inferAudienceLabel('', true)).toBeNull();
   });
 });
 

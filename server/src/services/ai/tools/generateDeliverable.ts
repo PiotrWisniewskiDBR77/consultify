@@ -17,7 +17,7 @@
  */
 
 import { featureFlags } from '../../../config/FeatureFlags.js';
-import { resolveDeckBrief, type ResolvedDeckBrief } from '../deckChatBrief.js';
+import { inferAudienceLabel, resolveDeckBrief, type ResolvedDeckBrief } from '../deckChatBrief.js';
 import type { DeliverableFormat } from '../../../types/deliverablesGeneration.js';
 import logger from '../../../utils/Logger.js';
 import {
@@ -207,6 +207,19 @@ export async function generateDeliverable(
       : null;
   const title =
     deckBrief && deckBrief.title ? deckBrief.title : deriveTitle(params.title, intent, language);
+  // Word (doc): audience do promptu (audyt 2026-07-22) — downstream już wpięty
+  // (documentBlockProseGenerator „written for the audience: …"), brakowało tylko
+  // wejścia z czatu. Jawny audience od modelu WYGRYWA; inaczej etykieta z intentu.
+  // Bez sygnału → undefined (runtime spada na „internal stakeholders", bez regresji).
+  const docAudience: string[] | undefined =
+    format === 'doc'
+      ? params.audience && params.audience.trim()
+        ? [params.audience.trim()]
+        : (() => {
+            const label = inferAudienceLabel(intent, language === 'pl');
+            return label ? [label] : undefined;
+          })()
+      : undefined;
   const conversationId = context.conversationId ? String(context.conversationId) : undefined;
 
   // ── M06 Fala 2 · 2.3 — mind map (ff_teresaMindmap) ──────────────────────────
@@ -624,6 +637,9 @@ export async function generateDeliverable(
           title,
           language,
           conversationId,
+          // Word tylko — audience trafia do parseSetup→buildIntake→normalizeAudience
+          // →prompt. Sheet ignoruje (jego prompt nie używa audience).
+          ...(docAudience ? { audience: docAudience } : {}),
         };
 
   try {
