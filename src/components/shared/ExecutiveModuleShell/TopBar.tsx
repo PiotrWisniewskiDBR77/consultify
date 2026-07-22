@@ -37,6 +37,23 @@ interface TopBarProps {
   chips: TopBarChipDescriptor[];
   /** When true, the shell will sort chips by canonical MELS order. */
   respectMelsOrder?: boolean;
+  /**
+   * Optional identity adornment rendered BETWEEN the breadcrumb chevron and the
+   * title (e.g. a per-tool type icon). ADDITIVE — omit for the default row.
+   */
+  titleIconSlot?: React.ReactNode;
+  /**
+   * Optional slot rendered right AFTER the title, before the command cluster
+   * (e.g. a lifecycle stage chip + quiet save indicator). ADDITIVE — omit for
+   * the default row.
+   */
+  titleTrailingSlot?: React.ReactNode;
+  /**
+   * Optional prominent action rendered in the right command cluster alongside
+   * the primary chips (e.g. a "Convert ▾" dropdown the flat chip contract can't
+   * express). ADDITIVE — omit for the default row.
+   */
+  primaryActionSlot?: React.ReactNode;
   /** Right-cluster slot (presence indicators / version / status dot). */
   presenceSlot?: React.ReactNode;
   /** Optional className for the outer row. */
@@ -264,6 +281,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   backLabel,
   chips,
   respectMelsOrder = true,
+  titleIconSlot,
+  titleTrailingSlot,
+  primaryActionSlot,
   presenceSlot,
   className,
   testId,
@@ -315,6 +335,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="flex items-center gap-1.5 text-sm min-w-0 flex-1 text-slate-500 dark:text-slate-400">
         <span className="flex-shrink-0 truncate">{moduleLabel}</span>
         <ChevronRight size={14} className="flex-shrink-0" aria-hidden="true" />
+        {titleIconSlot}
         {editing && onTitleChange ? (
           <input
             autoFocus
@@ -346,12 +367,21 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
       </div>
 
+      {titleTrailingSlot ? (
+        <div
+          className="flex items-center gap-2 flex-shrink-0"
+          data-testid="mels-topbar-title-trailing"
+        >
+          {titleTrailingSlot}
+        </div>
+      ) : null}
+
       <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
         {secondaryChips.map((chip) => (
           <Chip key={chip.id} descriptor={chip} />
         ))}
         <OverflowMenu chips={overflowChips} />
-        {primaryChips.length > 0 ? (
+        {primaryChips.length > 0 || primaryActionSlot ? (
           <>
             {secondaryChips.length > 0 || overflowChips.length > 0 ? (
               <span aria-hidden="true" className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700" />
@@ -359,6 +389,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             {primaryChips.map((chip) => (
               <Chip key={chip.id} descriptor={chip} />
             ))}
+            {primaryActionSlot}
           </>
         ) : null}
       </div>
