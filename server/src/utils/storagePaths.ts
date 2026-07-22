@@ -49,12 +49,47 @@ export function baseStorageDir(): string {
   return process.cwd();
 }
 
-/** mkdir -p, sync, idempotent. Small helper to avoid repeating existsSync+mkdirSync everywhere. */
-function ensureDirSync(dir: string): string {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+/**
+ * mkdir -p, sync, idempotent, FAIL-SOFT. Small helper to avoid repeating
+ * existsSync+mkdirSync everywhere.
+ *
+ * HOTFIX 2026-07-22 (P0 incident): a freshly-attached Railway Volume is
+ * mounted root-owned by default — the app runs as non-root (`USER nodejs` in
+ * Dockerfile), so the FIRST mkdir under it throws EACCES. That's an
+ * unhandled exception at server boot (this helper is called eagerly from
+ * index.ts), which crash-loops the whole service — exactly the kind of
+ * storage-path failure this module was built to make harmless. Never let a
+ * directory-creation failure take the process down: on ANY error (EACCES,
+ * EROFS, quota, whatever), log a warning and fall back to the historic
+ * `process.cwd()`-rooted path (`relTail`) — the same location used before
+ * this module existed, so behavior degrades to "ephemeral but working"
+ * instead of "down". Once the volume's permissions are fixed, this silently
+ * starts using it again with zero further code changes.
+ */
+function ensureDirSync(preferredDir: string, relTail: string): string {
+  try {
+    if (!fs.existsSync(preferredDir)) {
+      fs.mkdirSync(preferredDir, { recursive: true });
+    }
+    fs.accessSync(preferredDir, fs.constants.W_OK);
+    return preferredDir;
+  } catch (err) {
+    const fallbackDir = path.join(process.cwd(), relTail);
+    try {
+      if (!fs.existsSync(fallbackDir)) {
+        fs.mkdirSync(fallbackDir, { recursive: true });
+      }
+    } catch {
+      // Fallback itself failed — nothing safer left to try; callers will hit
+      // their own write error naturally, but we still return a path rather
+      // than throwing from a low-level directory helper.
+    }
+    // eslint-disable-next-line no-console -- boot-time diagnostic, no logger wired here to avoid import cycles
+    console.warn(
+      `[storagePaths] "${preferredDir}" not writable (${(err as Error).message}) — falling back to ephemeral "${fallbackDir}". Fix volume permissions to persist.`
+    );
+    return fallbackDir;
   }
-  return dir;
 }
 
 /**
@@ -68,7 +103,8 @@ function ensureDirSync(dir: string): string {
  *   exportsDir('presentations', 'assets') -> <base>/exports/presentations/assets
  */
 export function exportsDir(...segments: string[]): string {
-  return ensureDirSync(path.join(baseStorageDir(), 'exports', ...segments));
+  const relTail = path.join('exports', ...segments);
+  return ensureDirSync(path.join(baseStorageDir(), relTail), relTail);
 }
 
 /**
@@ -80,7 +116,8 @@ export function exportsDir(...segments: string[]): string {
  *   uploadsDir('avatars')   -> <base>/uploads/avatars
  */
 export function uploadsDir(...segments: string[]): string {
-  return ensureDirSync(path.join(baseStorageDir(), 'uploads', ...segments));
+  const relTail = path.join('uploads', ...segments);
+  return ensureDirSync(path.join(baseStorageDir(), relTail), relTail);
 }
 
 /**

@@ -14,7 +14,7 @@
  *       historic "/uploads/..." / "/exports/..." DB values against it.
  */
 
-import { existsSync, mkdtempSync, rmSync } from 'fs';
+import { chmodSync, existsSync, mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -122,6 +122,44 @@ describe('storagePaths', () => {
     it('uploadsDir(...) creates the directory (mkdir -p) if missing', () => {
       process.env.STORAGE_DIR = scratchDir;
       const dir = uploadsDir('branding', 'org-1');
+      expect(existsSync(dir)).toBe(true);
+    });
+  });
+
+  describe('fail-soft on unwritable base dir (P0 hotfix 2026-07-22)', () => {
+    // Regression test for the incident: a freshly-mounted Railway Volume is
+    // root-owned by default, so mkdir under it throws EACCES for the
+    // non-root app user. That MUST NOT crash the process — it must fall back
+    // to the historic process.cwd()-rooted path instead.
+    let unwritableParent: string;
+
+    beforeEach(() => {
+      unwritableParent = mkdtempSync(path.join(tmpdir(), 'storage-paths-locked-'));
+      chmodSync(unwritableParent, 0o000);
+    });
+
+    afterEach(() => {
+      chmodSync(unwritableParent, 0o755);
+      rmSync(unwritableParent, { recursive: true, force: true });
+    });
+
+    it('exportsDir(...) falls back to process.cwd() instead of throwing when STORAGE_DIR is not writable', () => {
+      process.env.STORAGE_DIR = path.join(unwritableParent, 'volume');
+      let dir = '';
+      expect(() => {
+        dir = exportsDir('presentations');
+      }).not.toThrow();
+      expect(dir).toBe(path.join(process.cwd(), 'exports', 'presentations'));
+      expect(existsSync(dir)).toBe(true);
+    });
+
+    it('uploadsDir(...) falls back to process.cwd() instead of throwing when STORAGE_DIR is not writable', () => {
+      process.env.STORAGE_DIR = path.join(unwritableParent, 'volume');
+      let dir = '';
+      expect(() => {
+        dir = uploadsDir('avatars');
+      }).not.toThrow();
+      expect(dir).toBe(path.join(process.cwd(), 'uploads', 'avatars'));
       expect(existsSync(dir)).toBe(true);
     });
   });
