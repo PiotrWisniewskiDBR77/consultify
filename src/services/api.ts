@@ -4904,7 +4904,7 @@ export const Api = {
 
   createMyIdeaMapSnapshot: async (
     ideaId: string,
-    payload: { label: string; nodes: any[]; edges: any[] }
+    payload: { label: string; nodes: any[]; edges: any[]; extensions?: Record<string, unknown> }
   ): Promise<any> => {
     const res = await fetch(
       `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/snapshots`,
