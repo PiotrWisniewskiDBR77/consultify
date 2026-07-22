@@ -151,6 +151,17 @@ export interface PrzynaleznoscArtefaktu {
   readonly kolumna?: 'left' | 'right';
   /** Kolejność w kolumnie (nadzbiór B — `default_order`). */
   readonly kolejnosc?: number;
+  /**
+   * Id sekcji tak, jak RENDERUJE ją TEN artefakt — gdy różni się od kanonicznego
+   * `id` (rozwiązanie aliasu dedup, KANON §2.2). Kanoniczny `governance` renderuje
+   * się w Decision jako `governance-escalation` (`cardSets.ts:444`), `attachments`
+   * jako `resources-links` (`cardSets.ts:456`). Adapter kompozycji mapuje
+   * `idWArtefakcie ?? karta.id` na id sekcji artefaktu, więc layout kart nadal
+   * pokrywa 1:1 to, co artefakt renderuje (zero regresji), a katalog kanoniczny
+   * pozostaje zdeduplikowany. Pominięty ⇒ artefakt renderuje kartę pod jej
+   * kanonicznym `id`.
+   */
+  readonly idWArtefakcie?: string;
 }
 
 /**
