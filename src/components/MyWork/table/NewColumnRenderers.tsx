@@ -82,7 +82,7 @@ export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
             const url = prompt(t('ideas.table.fileUrlPrompt', 'URL (optional):'));
             onChange([...files, { name, url: url || undefined }]);
           }}
-          className="text-[9px] text-c-accent hover:text-c-accent font-semibold"
+          className="text-[9px] text-c-text-secondary hover:text-c-text font-semibold"
         >
           + {t('ideas.table.file', 'File')}
         </button>
