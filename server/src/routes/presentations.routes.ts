@@ -137,6 +137,10 @@ import {
 } from '../services/presentationSubscriberTokenManagementService.js';
 import { normalizeTemplatePayload } from '../services/presentationTemplateCompatibilityService.js';
 import {
+  draftPresentationTemplateAsync,
+  type PresentationTemplateDraftInput,
+} from '../services/presentationTemplateDraftService.js';
+import {
   applyLifecycleTransition,
   assertEditableLifecycle,
   computeLineageForClone,
@@ -939,6 +943,112 @@ router.get(
     );
     const templates = ((rows || []) as any[]).map((r: any) => normalizeTemplatePayload(r));
     res.json({ success: true, data: templates });
+  })
+);
+
+// ------------------------------------------------------------------
+// FALA B (2026-07-22): AI Template Architect for decks — mirrors the
+// Document Studio pattern (`POST /api/document-studio/templates/plan` ->
+// `draftTemplateAsync`). Builds a NEW draft template (outline of
+// {intent,title} slides + governance defaults) from a free-text purpose,
+// persists it as `lifecycle_state = 'draft'`, and hands it to the
+// EXISTING governance lifecycle (approve/deprecate/clone/audit) and the
+// existing manual editor (`PUT /templates/:id`, below) unchanged.
+// Route-ordering vs. `PUT /templates/:id` is irrelevant here (different
+// HTTP method + literal path, no `:id` collision); kept next to
+// `GET /templates` for readability, mirroring document-studio.routes.ts.
+// ------------------------------------------------------------------
+router.post(
+  '/templates/plan',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const input = (req.body?.input ?? null) as PresentationTemplateDraftInput | null;
+    if (!input || typeof input !== 'object' || typeof input.purpose !== 'string') {
+      res.status(400).json({ success: false, error: 'template input (purpose) is required' });
+      return;
+    }
+    const useLlm = req.body?.useLlm === true;
+
+    let draft;
+    try {
+      draft = await draftPresentationTemplateAsync({ input, useLlm });
+    } catch (err) {
+      logger.warn('[Presentations] Template plan failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      const message = err instanceof Error ? err.message : 'template_plan_failed';
+      res.status(400).json({ success: false, error: 'template_plan_failed', message });
+      return;
+    }
+
+    const { template, llmRefined } = draft;
+    const id = uuidv4().replace(/-/g, '');
+    // Base insert uses ONLY the migration-568 columns so template creation
+    // keeps working on installs where migration 767 (lifecycle + lineage)
+    // has not run yet. `lifecycle_state` defaults to `draft` either way
+    // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
+    await dbRun(
+      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
+      [
+        id,
+        orgId,
+        template.name,
+        template.description,
+        template.deckType,
+        template.audience,
+        template.goal,
+        template.languageDefault,
+        template.confidentialityDefault,
+        template.theme,
+        JSON.stringify(template.outlineJson),
+        template.maxSlides,
+        template.minSlides,
+        JSON.stringify(template.mustHaveIntents),
+        JSON.stringify(template.recommendedVisuals),
+        userId,
+      ]
+    );
+
+    // Epic C2 parity with /clone: a freshly drafted template is the root
+    // of its own lineage chain. Best-effort — never breaks creation when
+    // migration 767 has not run yet.
+    try {
+      await dbRun(`UPDATE presentation_templates SET lineage_root_id = ? WHERE id = ?`, [id, id]);
+    } catch (lineageError) {
+      logger.warn(
+        '[Presentations] Could not set template-plan lineage root (migration 767 may be pending)',
+        lineageError
+      );
+    }
+
+    // Best-effort audit ledger write, mirrors the /clone route: never
+    // breaks template creation when migration 767 has not run yet.
+    try {
+      await recordGovernanceEvent({
+        templateId: id,
+        organizationId: orgId,
+        eventType: 'submitted_for_approval',
+        fromState: null,
+        toState: 'draft',
+        actorId: userId,
+        actorRole: (req as any).user?.role || null,
+        reason: llmRefined ? 'Drafted by AI Template Architect' : 'Drafted (deterministic outline)',
+        metadata: { source: llmRefined ? 'ai_template_architect' : 'deterministic', purpose: input.purpose },
+      });
+    } catch (governanceError) {
+      logger.warn(
+        '[Presentations] Could not record template-plan governance event (migration 767 may be pending)',
+        governanceError
+      );
+    }
+
+    const row = await getTemplateForOrgOrSystem(id, orgId);
+    const normalized = row ? normalizeTemplatePayload(row) : { id, ...template };
+    res.json({ success: true, data: { template: normalized, llmRefined } });
   })
 );
 
