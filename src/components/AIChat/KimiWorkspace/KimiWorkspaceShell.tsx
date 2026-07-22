@@ -38,10 +38,16 @@ import type {
 } from '@/types/tabeleArtifact';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
+import { isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
 export type KimiLane = 'wordy' | 'excele' | 'prezentacje' | 'tabele';
+
+// B3 fix (2026-07-22, workstream Excel): render only the first N rows of a big
+// sheet by default — the "Show all" toggle un-caps the current sheet, the
+// download button stays available so a huge sheet doesn't force a slow render.
+const GRID_ROW_CAP = 100;
 
 export type TaskStepStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -84,6 +90,12 @@ export interface ArtifactPreview {
   downloadUrl?: string;
   qualityScore?: number | null;
   pipelineLog?: unknown;
+  // B3 fix (2026-07-22, workstream Excel): the real cell/formula grid
+  // (perSheetData above) loads async from GET /api/workbook/:id/schema after
+  // the fast metadata-only preview is already shown — these flags let the
+  // grid area render its own loading/error state independent of the rest.
+  gridLoading?: boolean;
+  gridError?: string | null;
   // Tabele (Table Studio Foundation block) extras — populated by Sprint 3 / EPIC-2.
   // All optional; Sprint 2 only registers the shape so consumers can compile.
   tableId?: string;
@@ -293,6 +305,14 @@ function ArtifactPreviewPane({
   // works. Give tabele the same working center input + Generate button.
   const usesChatOnlyStart = false;
   const [activeSheet, setActiveSheet] = useState(0);
+  // B3 fix (2026-07-22): xlsx grid renders only the first GRID_ROW_CAP rows by
+  // default (perf on big sheets) — this un-caps the CURRENT sheet on request.
+  // Reset whenever the visible sheet changes so switching tabs doesn't leave a
+  // huge render behind.
+  const [showAllRows, setShowAllRows] = useState(false);
+  React.useEffect(() => {
+    setShowAllRows(false);
+  }, [activeSheet]);
   const [goalInput, setGoalInput] = React.useState('');
   const [isStarting, setIsStarting] = React.useState(false);
 
@@ -501,23 +521,42 @@ function ArtifactPreviewPane({
                 ))}
               </div>
             )}
-            {(() => {
-              const sheetData = preview.perSheetData?.[activeSheet] ?? preview.tableData;
-              return sheetData && sheetData.columns.length > 0;
-            })() ? (
+            {preview.gridLoading ? (
               <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="p-8 text-center text-c-text-secondary">
+                  <Loader2 size={32} className="mx-auto mb-3 animate-spin" />
+                  <p className="text-sm font-medium">
+                    {t('kimi.xlsxGridLoading', 'Loading cells and formulas…')}
+                  </p>
+                </div>
+              </div>
+            ) : preview.gridError ? (
+              <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
+                <div className="p-8 text-center text-c-text-secondary">
+                  <AlertTriangle size={32} className="mx-auto mb-3 text-amber-500" />
+                  <p className="text-sm font-medium text-c-text">{preview.gridError}</p>
+                </div>
+              </div>
+            ) : (() => {
+                const sheetData = preview.perSheetData?.[activeSheet] ?? preview.tableData;
+                return sheetData && sheetData.columns.length > 0;
+              })() ? (
+              <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
+                <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
                   {(() => {
                     const sheetData = (preview.perSheetData?.[activeSheet] ?? preview.tableData)!;
+                    const visibleRows = showAllRows
+                      ? sheetData.rows
+                      : sheetData.rows.slice(0, GRID_ROW_CAP);
                     return (
                       <table
                         /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-xs"
                       >
-                        <thead>
+                        <thead className="sticky top-0 z-10">
                           <tr className="bg-c-surface-raised">
-                            {sheetData.columns.map((col) => (
+                            {sheetData.columns.map((col, ci) => (
                               <th
-                                key={col}
+                                key={`${col}-${ci}`}
                                 className="px-3 py-2 text-left font-medium text-c-text-secondary border-b border-c-border-subtle whitespace-nowrap"
                               >
                                 {col}
@@ -526,19 +565,28 @@ function ArtifactPreviewPane({
                           </tr>
                         </thead>
                         <tbody>
-                          {sheetData.rows.slice(0, 25).map((row, ri) => (
+                          {visibleRows.map((row, ri) => (
                             <tr
                               key={ri}
                               className="border-b border-c-border-subtle hover:bg-c-surface-raised"
                             >
-                              {sheetData.columns.map((col) => (
-                                <td
-                                  key={col}
-                                  className="px-3 py-1.5 text-c-text whitespace-nowrap max-w-[200px] truncate"
-                                >
-                                  {String(row[col] ?? '')}
-                                </td>
-                              ))}
+                              {sheetData.columns.map((col, ci) => {
+                                const raw = row[col];
+                                const isFormula = isFormulaDisplayValue(raw);
+                                return (
+                                  <td
+                                    key={`${col}-${ci}`}
+                                    title={isFormula ? raw : undefined}
+                                    className={`px-3 py-1.5 whitespace-nowrap max-w-[200px] truncate ${
+                                      isFormula
+                                        ? 'font-mono text-c-text-secondary'
+                                        : 'text-c-text'
+                                    }`}
+                                  >
+                                    {String(raw ?? '')}
+                                  </td>
+                                );
+                              })}
                             </tr>
                           ))}
                         </tbody>
@@ -548,13 +596,39 @@ function ArtifactPreviewPane({
                 </div>
                 {(() => {
                   const sheetData = preview.perSheetData?.[activeSheet] ?? preview.tableData;
-                  return sheetData && sheetData.rows.length > 25;
+                  return sheetData && sheetData.rows.length > GRID_ROW_CAP;
                 })() && (
-                  <div className="px-3 py-2 text-xs text-c-text-secondary text-center border-t border-c-border-subtle">
-                    {t('kimi.showingRows', 'Showing 25 of {{total}} rows', {
-                      total: (preview.perSheetData?.[activeSheet] ?? preview.tableData)!.rows
-                        .length,
-                    })}
+                  <div className="px-3 py-2 flex items-center justify-center gap-3 text-xs text-c-text-secondary border-t border-c-border-subtle">
+                    <span>
+                      {showAllRows
+                        ? t('kimi.showingAllRows', 'Showing all {{total}} rows', {
+                            total: (preview.perSheetData?.[activeSheet] ?? preview.tableData)!.rows
+                              .length,
+                          })
+                        : t('kimi.showingRows', 'Showing first {{cap}} of {{total}} rows', {
+                            cap: GRID_ROW_CAP,
+                            total: (preview.perSheetData?.[activeSheet] ?? preview.tableData)!.rows
+                              .length,
+                          })}
+                    </span>
+                    {!showAllRows && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllRows(true)}
+                        className="px-2 py-0.5 rounded-hig-xs font-medium text-c-text hover:bg-c-border-subtle transition-colors"
+                      >
+                        {t('kimi.showAllRows', 'Show all')}
+                      </button>
+                    )}
+                    {onDownload && (
+                      <button
+                        type="button"
+                        onClick={onDownload}
+                        className="px-2 py-0.5 rounded-hig-xs font-medium text-c-text hover:bg-c-border-subtle transition-colors"
+                      >
+                        {t('kimi.downloadInstead', 'Download file')}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

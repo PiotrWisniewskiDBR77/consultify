@@ -533,10 +533,83 @@ router.get(
 );
 
 /**
+ * GET /api/workbook/:id/schema
+ * B3 fix (2026-07-22, workstream Excel): the in-app spreadsheet preview used to
+ * show ONLY sheet metadata (name/columnCount/rowCount) — a user had to download
+ * the .xlsx to see a single cell. This returns the FULL WorkbookSchema (sheets →
+ * rows → cells, each cell carrying its display value and, when present, its
+ * formula as a plain string e.g. "SUM(B2:B10)") so the frontend can render a
+ * real read-only grid without downloading anything. Org-scoped; 404 when the
+ * workbook is unknown or belongs to another organization.
+ *
+ * Checks the in-memory `workbookCache` first (freshly generated workbook, not
+ * necessarily persisted yet) before falling back to the `generated_workbooks`
+ * table. Registered ABOVE the generic GET /:id below — Express tries routes in
+ * registration order, and /:id/schema is the more specific pattern.
+ */
+router.get(
+  '/:id/schema',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { id } = req.params;
+
+    const cached = workbookCache.get(id);
+    if (cached?.schema) {
+      res.json({
+        id,
+        title: cached.schema.title,
+        description: cached.schema.description ?? null,
+        sheets: Array.isArray(cached.schema.sheets) ? cached.schema.sheets : [],
+      });
+      return;
+    }
+
+    await ensureWorkbookSchema();
+
+    const row = await queryHelpers.queryOne<{ schema_json: string | null }>(
+      `SELECT schema_json FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!row?.schema_json) {
+      res.status(404).json({
+        error: 'Workbook not found or expired',
+        classified: createP23Error(
+          'access_denied',
+          `Workbook ${id} not found for this organization`
+        ),
+      });
+      return;
+    }
+
+    let schema: { title?: string; description?: string; sheets?: unknown[] } | null = null;
+    try {
+      schema = JSON.parse(row.schema_json);
+    } catch (err) {
+      logger.error(`[WorkbookRoutes] Stored schema for ${id} is not valid JSON:`, err);
+      res.status(500).json({ error: 'Stored workbook schema is corrupted' });
+      return;
+    }
+
+    res.json({
+      id,
+      title: schema?.title ?? null,
+      description: schema?.description ?? null,
+      sheets: Array.isArray(schema?.sheets) ? schema!.sheets : [],
+    });
+  })
+);
+
+/**
  * GET /api/workbook/:id
  * Returns workbook metadata (for reopen/preview without downloading binary).
- * Must be registered after all specific GET paths (/list, /:id/download)
- * to avoid the wildcard param matching them.
+ * Must be registered after all specific GET paths (/list, /:id/download,
+ * /:id/schema) to avoid the wildcard param matching them.
  */
 router.get(
   '/:id',

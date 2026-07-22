@@ -7035,6 +7035,23 @@ export const Api = {
     return handleResponse(res, 'Failed to list workbooks');
   },
 
+  // B3 fix (2026-07-22, workstream Excel): full cell/formula schema for the
+  // in-app read-only grid preview (see server/src/routes/workbook.routes.ts
+  // GET /:id/schema and src/utils/workbookGridPreview.ts).
+  getWorkbookSchema: async (
+    workbookId: string
+  ): Promise<{
+    id: string;
+    title: string | null;
+    description: string | null;
+    sheets: unknown[];
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${workbookId}/schema`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load workbook schema');
+  },
+
   // --- ASSESSMENT WORKFLOW ---
   createAssessmentSession: async (payload: {
     assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
