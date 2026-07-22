@@ -25,6 +25,7 @@ import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
+import { exportsDir } from '../utils/storagePaths.js';
 
 const router = Router();
 const notConfigured = (res: Response, details?: Record<string, unknown>) =>
@@ -512,9 +513,7 @@ const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => 
 };
 
 const ensureExportDir = async (): Promise<string> => {
-  const exportDir = path.resolve(process.cwd(), 'exports', 'assessment-reports');
-  await fs.promises.mkdir(exportDir, { recursive: true });
-  return exportDir;
+  return exportsDir('assessment-reports');
 };
 
 const writePdfReport = async (report: any, filePath: string): Promise<void> => {

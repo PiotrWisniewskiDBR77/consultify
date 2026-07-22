@@ -76,6 +76,7 @@ import * as reportsPresModelService from '../services/v8/reportsPresModelService
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
+import { exportsDir, uploadsDir } from '../utils/storagePaths.js';
 
 // ==========================================
 // HELPER: Auto-version + Notify on status change
@@ -1561,8 +1562,7 @@ router.delete(
 const chaosUploadStorage = multer.diskStorage({
   destination: (_req: Request, _file: Express.Multer.File, cb) => {
     const orgId = ((_req as any)?.user?.organizationId || 'unknown') as string;
-    const dir = path.join(process.cwd(), 'uploads', 'chaos', orgId);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const dir = uploadsDir('chaos', orgId);
     cb(null, dir);
   },
   filename: (_req: Request, file: Express.Multer.File, cb) => {
@@ -3142,9 +3142,7 @@ router.get('/:id/source-refs', async (req: Request, res: Response, next: NextFun
 // ==========================================
 
 const ensureExportDir = async (): Promise<string> => {
-  const exportDir = path.resolve(process.cwd(), 'exports', 'report-builder');
-  await fs.promises.mkdir(exportDir, { recursive: true });
-  return exportDir;
+  return exportsDir('report-builder');
 };
 
 interface AssessmentMatrixData {
