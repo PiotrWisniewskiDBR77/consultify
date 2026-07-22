@@ -23,6 +23,7 @@ import i18n from '../src/i18n';
 import AccentSoftTokenFixScreen from './screens/accent-soft-token-fix';
 import AdminCommandCenterPanelScreen from './screens/admin-command-center-panel';
 import AdminSsoSelfServiceCardScreen from './screens/admin-sso-self-service-card';
+import AgentPlanCanvasScreen from './screens/agent-plan-canvas';
 import AgentPlanViewScreen from './screens/agent-plan-view';
 import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
 import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
@@ -152,6 +153,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'HP-4 F3 — /agent-plan entry point (AgentManifestLauncher → AgentPlanPanel), ff_agentPlan; append &ff_agentPlan=1 to the URL',
     render: () => <AgentPlanViewScreen />,
+  },
+  'agent-plan-canvas': {
+    label:
+      'AGT-007 — AgentPlanCanvas przestawialny schemat (ścieżka ① 5-fazowy vs ② pusty), status planning',
+    render: () => <AgentPlanCanvasScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

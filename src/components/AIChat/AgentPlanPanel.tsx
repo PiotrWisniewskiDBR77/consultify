@@ -21,6 +21,25 @@
  * Serwis: server/src/routes/ai/agent-plan.routes.ts (cienki router) ->
  * agentPlannerService (kręgosłup istniejący, migracja 672). Ten panel NIE
  * zawiera żadnej logiki wykonania — tylko odczyt stanu + approve/cancel.
+ *
+ * ★ AGT-007 (2026-07-23) — sekcja "Plan" przestała być tylko-do-odczytu:
+ * dopóki plan jest w statusie `planning` (backend nie zdążył/nie zdołał
+ * jeszcze zlecić wykonania w tle — patrz komentarz w agent-plan.routes.ts
+ * "background dispatch best-effort"), user może DODAĆ/USUNĄĆ/PRZESTAWIĆ
+ * klocek schematu (`AgentPlanCanvas.tsx`, strzałki góra/dół — prostsze i
+ * solidniejsze niż drag&drop dla v1 liniowego, DEC-002). Po opuszczeniu
+ * `planning` (executing/completed/…) sekcja wraca do READ-ONLY listy kroków
+ * z prawdziwym statusem wykonania — edycja już wykonanego/trwającego kroku
+ * nie ma sensu operacyjnego.
+ *
+ * ★ BRAK ENDPOINTU BACKENDOWEGO do zapisu przestawionego schematu na
+ * istniejącym planie (5 endpointów w agent-plan.routes.ts: POST/GET/GET:id/
+ * approve-step/cancel — żadnego PATCH kroków). Dopóki go nie ma: edycja
+ * trzymana lokalnie w komponencie + `localStorage` (klucz per planId, żeby
+ * przeżyła odświeżenie strony — dowód "zmiana się utrwala" bez backendu).
+ * Kliknięcie "Uruchom" woła opcjonalny prop `onRunEditedSchema` (przyszłe
+ * wpięcie AGT-009/AGT-006 do realnego zapisu) i lokalnie zamraża canvas
+ * (read-only) — nie wysyła nic do backendu, bo nie ma dokąd.
  */
 import {
   CheckCircle2,
@@ -44,6 +63,8 @@ import {
   getAgentPlan,
 } from '@/services/api/agentPlan.api';
 
+import { AgentPlanCanvas, type PlanBlockKind, type PlanSchemaBlock } from './AgentPlanCanvas';
+
 export interface AgentPlanPanelProps {
   planId: string;
   /**
@@ -54,6 +75,54 @@ export interface AgentPlanPanelProps {
    */
   pollIntervalMs?: number;
   onClose?: () => void;
+  /**
+   * Wołane po kliknięciu "Uruchom" w edytowalnym schemacie (status
+   * `planning`) z ostatecznym, przestawionym układem klocków. Dziś brak
+   * backendu do wysyłki (patrz nagłówek pliku) — wołający (przyszłe AGT-009)
+   * decyduje co z tym zrobić. Gdy nieustawione, panel tylko zamraża canvas
+   * lokalnie po kliknięciu.
+   */
+  onRunEditedSchema?: (blocks: PlanSchemaBlock[]) => void;
+}
+
+const CANVAS_STORAGE_PREFIX = 'consultify:agentPlanCanvas:';
+
+/** Best-effort — brak localStorage (SSR/prywatny tryb bez pamięci) nie wysadza panelu. */
+function loadStoredBlocks(planId: string): PlanSchemaBlock[] | null {
+  try {
+    const raw = window.localStorage.getItem(CANVAS_STORAGE_PREFIX + planId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as PlanSchemaBlock[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredBlocks(planId: string, blocks: PlanSchemaBlock[]): void {
+  try {
+    window.localStorage.setItem(CANVAS_STORAGE_PREFIX + planId, JSON.stringify(blocks));
+  } catch {
+    // best-effort only — brak persystencji nie blokuje edycji w sesji
+  }
+}
+
+/** Konwersja realnych kroków planu (`AgentPlanStep`, backend) na edytowalne klocki schematu. */
+function stepsToBlocks(steps: AgentPlanStep[]): PlanSchemaBlock[] {
+  return steps.map((step) => {
+    const rawKind = step.toolInput?.blockKind;
+    const kind: PlanBlockKind =
+      rawKind === 'ai-teresa' || rawKind === 'vault-kontekst' || rawKind === 'brama-akceptu'
+        ? rawKind
+        : 'etap-modul';
+    const rawModule = step.toolInput?.module;
+    return {
+      id: step.id,
+      kind,
+      name: step.toolName,
+      moduleType: typeof rawModule === 'string' ? rawModule : undefined,
+    };
+  });
 }
 
 const TERMINAL_STATUSES = new Set(['completed', 'completed_with_errors', 'failed', 'cancelled']);
@@ -93,11 +162,14 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
   planId,
   pollIntervalMs = 2000,
   onClose,
+  onRunEditedSchema,
 }) => {
   const { t } = useTranslation();
   const [plan, setPlan] = useState<AgentPlan | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null); // stepId | 'cancel' | null
+  const [canvasBlocks, setCanvasBlocks] = useState<PlanSchemaBlock[] | null>(null);
+  const [schemaSubmitted, setSchemaSubmitted] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
@@ -127,6 +199,39 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [plan, load, pollIntervalMs]);
+
+  // Seed edytowalny canvas raz, gdy plan wejdzie w `planning` — localStorage
+  // wygrywa nad świeżymi krokami z serwera (user mógł już przestawić schemat
+  // przed odświeżeniem strony; to jest dowód "zmiana się utrwala" bez
+  // backendowego endpointu edycji, patrz nagłówek pliku).
+  useEffect(() => {
+    if (plan && plan.status === 'planning' && canvasBlocks === null) {
+      setCanvasBlocks(loadStoredBlocks(planId) ?? stepsToBlocks(plan.steps));
+    }
+    if (plan && plan.status !== 'planning' && canvasBlocks !== null) {
+      // Plan opuścił planning (np. dispatch w tle jednak wystartował) —
+      // wracamy do read-only widoku prawdziwych kroków wykonania.
+      setCanvasBlocks(null);
+      setSchemaSubmitted(false);
+    }
+  }, [plan, canvasBlocks, planId]);
+
+  const handleCanvasChange = useCallback(
+    (blocks: PlanSchemaBlock[]) => {
+      setCanvasBlocks(blocks);
+      saveStoredBlocks(planId, blocks);
+    },
+    [planId]
+  );
+
+  const handleRunSchema = useCallback(
+    (blocks: PlanSchemaBlock[]) => {
+      saveStoredBlocks(planId, blocks);
+      setSchemaSubmitted(true);
+      onRunEditedSchema?.(blocks);
+    },
+    [planId, onRunEditedSchema]
+  );
 
   const handleApprove = useCallback(
     async (step: AgentPlanStep) => {
@@ -179,6 +284,7 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
   const canCancel = !TERMINAL_STATUSES.has(plan.status);
   const progressPct =
     plan.totalSteps > 0 ? Math.round((plan.completedSteps / plan.totalSteps) * 100) : 0;
+  const isEditableSchema = plan.status === 'planning' && canvasBlocks !== null;
 
   return (
     <ArtifactRightPanel
@@ -187,8 +293,29 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
         {
           id: 'plan',
           label: t('agentPlan.section.plan', 'Plan'),
-          badge: plan.totalSteps,
-          children: (
+          badge: isEditableSchema ? (canvasBlocks?.length ?? 0) : plan.totalSteps,
+          children: isEditableSchema ? (
+            <div className="space-y-2">
+              <AgentPlanCanvas
+                blocks={canvasBlocks ?? []}
+                onChange={handleCanvasChange}
+                onRunSchema={handleRunSchema}
+                readOnly={schemaSubmitted}
+              />
+              {!schemaSubmitted ? (
+                <p className="text-[10px] text-c-text-muted pt-1">
+                  {t(
+                    'agentPlan.canvas.localOnlyNote',
+                    'Zapis lokalny w przeglądarce — zapis schematu w backendzie jeszcze nie istnieje.'
+                  )}
+                </p>
+              ) : (
+                <p className="text-[10px] text-c-success pt-1">
+                  {t('agentPlan.canvas.submittedNote', 'Schemat zatwierdzony do uruchomienia.')}
+                </p>
+              )}
+            </div>
+          ) : (
             <ol className="space-y-2">
               {plan.steps.map((step) => (
                 <li key={step.id} className="flex items-start gap-2 text-xs">
