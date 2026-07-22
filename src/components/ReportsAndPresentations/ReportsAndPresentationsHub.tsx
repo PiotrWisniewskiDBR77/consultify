@@ -9,6 +9,7 @@ import {
   BookTemplate,
   ChevronDown,
   ChevronUp,
+  FileSpreadsheet,
   FileText,
   Filter,
   LayoutGrid,
@@ -24,9 +25,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { ExceleParametricTemplates } from '@/components/AIChat/KimiWorkspace/ExceleParametricTemplates';
 import { PresentationTemplateArchitectView } from '@/components/Presentations/PresentationTemplateArchitectView';
 import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
+import { isWorkbookTemplatesEnabled } from '@/utils/workbookTemplatesFlag';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -214,6 +217,18 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             },
           ]
         : []),
+      // Gen. Excel nav (2026-07-22): rejestr parametrycznych szablonów Excela —
+      // zakładka TYLKO przy fladze (ff_workbook_templates, default OFF). Przy
+      // OFF lista zakładek bajt-identyczna.
+      ...(isWorkbookTemplatesEnabled()
+        ? [
+            {
+              id: 'workbook_templates' as ModuleTab,
+              label: t('rap.tabs.workbookTemplates', 'Generator szablonów Excel'),
+              icon: <FileSpreadsheet size={16} />,
+            },
+          ]
+        : []),
     ],
     [t]
   );
@@ -228,6 +243,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       outputs_sheets: '',
       templates: t('rap.actions.newTemplate', 'New template'),
       template_architect: '',
+      workbook_templates: '',
     }),
     [t]
   );
@@ -1084,6 +1100,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             <PresentationTemplateArchitectView />
           </div>
         );
+      // Gen. Excel nav: rejestr parametrycznych szablonów Excela (za flagą —
+      // zakładka nieosiągalna przy OFF).
+      case 'workbook_templates':
+        return (
+          <div className="h-full min-h-0 overflow-y-auto">
+            <ExceleParametricTemplates isPolish={isPolish} />
+          </div>
+        );
       case 'outputs_all':
       case 'outputs_mine':
       case 'outputs_review':
@@ -1196,7 +1220,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={
-          activeTab === 'outputs_sheets' || activeTab === 'template_architect'
+          activeTab === 'outputs_sheets' ||
+          activeTab === 'template_architect' ||
+          activeTab === 'workbook_templates'
             ? undefined
             : handleNewItem
         }

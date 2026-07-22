@@ -15,6 +15,7 @@ export const RAP_TAB_TO_QUERY: Record<RapTab, string> = {
   outputs_sheets: 'sheets',
   templates: 'templates',
   template_architect: 'template_architect',
+  workbook_templates: 'workbook_templates',
 };
 
 export function parseRapTabFromQuery(raw: string | null): RapTab | null {
@@ -34,6 +35,7 @@ export function parseRapTabFromQuery(raw: string | null): RapTab | null {
     data: 'outputs_sheets',
     templates: 'templates',
     template_architect: 'template_architect',
+    workbook_templates: 'workbook_templates',
   };
   return map[n] ?? null;
 }
