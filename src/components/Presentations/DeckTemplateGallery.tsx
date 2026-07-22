@@ -177,7 +177,8 @@ const TemplateCard: React.FC<{
   cloning: boolean;
 }> = ({ template, isExpanded, onToggle, onSelect, onClone, cloning }) => {
   const { t } = useTranslation();
-  const gradientClass = DECK_TYPE_COLORS[template.deck_type] || 'from-c-border-strong to-c-border-strong';
+  const gradientClass =
+    DECK_TYPE_COLORS[template.deck_type] || 'from-c-border-strong to-c-border-strong';
   const audienceI18n = AUDIENCE_I18N[template.audience];
   const audience = audienceI18n ? t(audienceI18n.key, audienceI18n.fallback) : undefined;
   const goalI18n = GOAL_I18N[template.goal];
