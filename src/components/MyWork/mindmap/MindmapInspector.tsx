@@ -170,7 +170,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, width: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-c-accent"
+                  className="flex-1 h-1.5 accent-c-text"
                 />
                 <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.width || 200}
@@ -214,7 +214,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                       onClick={() => patchNode({ style: { ...nodeStyle, color: c } })}
                       className={`w-5 h-5 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${
                         nodeStyle.color === c
-                          ? 'border-c-accent ring-2 ring-c-accent'
+                          ? 'border-c-text ring-2 ring-c-border-strong'
                           : 'border-c-border-subtle dark:border-c-border-subtle'
                       }`}
                       style={{ backgroundColor: c }}
@@ -235,7 +235,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, fillOpacity: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-c-accent"
+                  className="flex-1 h-1.5 accent-c-text"
                 />
                 <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.fillOpacity ?? 100}%

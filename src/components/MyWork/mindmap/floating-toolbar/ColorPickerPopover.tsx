@@ -36,7 +36,6 @@ export const PALETTE = [
   'var(--c-success)',
   'var(--c-warning)',
   'var(--c-danger)',
-  'var(--c-accent)',
   ...TAG_VARS,
 ];
 
@@ -114,7 +113,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
           step={5}
           value={opacity}
           onChange={handleOpacityChange}
-          className="w-full h-1 rounded-full accent-c-accent"
+          className="w-full h-1 rounded-full accent-c-text"
         />
       </div>
 
@@ -138,7 +137,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               onClick={() => handleColorClick(c)}
               className={`w-6 h-6 rounded-lg border-2 transition-all ${
                 currentColor === c
-                  ? 'border-c-accent scale-110'
+                  ? 'border-c-text scale-110'
                   : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle'
               }`}
               style={{ backgroundColor: c }}
@@ -159,7 +158,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               onClick={() => handleColorClick(c)}
               className={`w-[18px] h-[18px] rounded border transition-all ${
                 currentColor === c
-                  ? 'border-c-accent ring-1 ring-c-accent'
+                  ? 'border-c-text ring-1 ring-c-border-strong'
                   : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle'
               }`}
               style={{ backgroundColor: c }}
