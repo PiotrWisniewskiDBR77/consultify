@@ -5,25 +5,19 @@
 import { Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { voiceController } from '../controllers/voice.controller.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { detectSttProviderFromEnv, STT_ENV_KEYS } from '../services/ai/VoiceService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { uploadsDir } from '../utils/storagePaths.js';
 
 const router = Router();
 
-// Get directory paths
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../../uploads/voice');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Upload directory (was `path.join(__dirname, '../../../uploads/voice')` —
+// equivalent to `process.cwd()/uploads/voice` at runtime; routed through the
+// shared helper for G2 volume readiness, behavior unchanged without env).
+const uploadDir = uploadsDir('voice');
 
 // Configure Multer for audio uploads
 const storage = multer.diskStorage({

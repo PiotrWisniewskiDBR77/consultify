@@ -18,7 +18,6 @@ import { Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { getDatabase } from '../../database/index.js';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
@@ -26,6 +25,7 @@ import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js'
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
+import { uploadsDir } from '../../utils/storagePaths.js';
 
 const router = Router();
 
@@ -33,11 +33,10 @@ router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const baseUploadDir = path.join(__dirname, '../../../../uploads/assessment-level-attachments');
-if (!fs.existsSync(baseUploadDir)) fs.mkdirSync(baseUploadDir, { recursive: true });
+// Was `path.join(__dirname, '../../../../uploads/assessment-level-attachments')`
+// — equivalent to `process.cwd()/uploads/...` at runtime; routed through the
+// shared helper for G2 volume readiness (utils/storagePaths.ts).
+const baseUploadDir = uploadsDir('assessment-level-attachments');
 
 const storage = multer.diskStorage({
   destination: (req, _file, cb) => {
