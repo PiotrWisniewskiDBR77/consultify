@@ -17,7 +17,20 @@
  */
 
 import { motion } from 'framer-motion';
-import { ChevronLeft, Copy, Link2, MoreVertical, Sparkles } from 'lucide-react';
+import {
+  Bell,
+  CheckCircle2,
+  CheckSquare,
+  ChevronLeft,
+  Copy,
+  Lightbulb,
+  Link2,
+  MoreVertical,
+  Rocket,
+  Scale,
+  Sparkles,
+  Wrench,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
@@ -26,7 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { PresentationModeSwitcher } from '@/components/MyWork/shared/PresentationModeSwitcher';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
-import { type ArtifactType, buildArtifactPermalink } from '@/utils/artifactLinks';
+import { ARTIFACT_IDENTITY, type ArtifactType, buildArtifactPermalink } from '@/utils/artifactLinks';
 
 import type { NModeHeaderConfig } from './types';
 
@@ -54,6 +67,21 @@ const STATUS_PILL_CLASS: Record<StatusTone, string> = {
   approved: 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success',
   rejected: 'bg-[color-mix(in_srgb,var(--c-danger)_15%,transparent)] text-c-danger',
   neutral: 'bg-c-surface-raised text-c-text-muted',
+};
+
+// ── Ikona-typ artefaktu w Menu 1 (M1) ───────────────────────────────────────
+// Mapa nazw ikon z ARTIFACT_IDENTITY (SSOT tożsamości artefaktu) na komponenty
+// Lucide. Renderowana przed tytułem, 16px, c-text-muted (neutralna — to znacznik
+// typu, nie akcent). Nowy typ w ARTIFACT_IDENTITY z ikoną spoza tej mapy → brak
+// ikony (fallback null), bez błędu.
+const TYPE_ICON: Record<string, React.FC<{ size?: number; className?: string }>> = {
+  Scale, // decision
+  CheckSquare, // task
+  Bell, // notification
+  Lightbulb, // insight
+  Wrench, // tool
+  Rocket, // initiative
+  CheckCircle2, // interview / assessment
 };
 
 // ── Overflow (⋮) menu ───────────────────────────────────────────────────────
@@ -280,6 +308,14 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
 
         {/* Title area: title (truncate) · status pill · save-state text */}
         <div className="flex-1 min-w-0 flex items-center gap-2.5">
+          {/* Ikona-typ artefaktu (M1) — znacznik typu przed tytułem, neutralny. */}
+          {(() => {
+            const iconName = ARTIFACT_IDENTITY[artifactType]?.icon;
+            const TypeIcon = iconName ? TYPE_ICON[iconName] : undefined;
+            return TypeIcon ? (
+              <TypeIcon size={16} className="shrink-0 text-c-text-muted" aria-hidden />
+            ) : null;
+          })()}
           {isEditingTitle && !titleReadOnly ? (
             <input
               id={titleInputId}
