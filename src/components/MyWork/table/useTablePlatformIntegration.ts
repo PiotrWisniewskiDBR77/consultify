@@ -198,17 +198,36 @@ function applyLocalFilterSortGroup(
   }
 
   if (sort) {
-    processed = [...processed].sort((a, b) => {
-      const aVal = String(a?.data?.[sort.key] ?? a?.data?.label ?? a.id).toLowerCase();
-      const bVal = String(b?.data?.[sort.key] ?? b?.data?.label ?? b.id).toLowerCase();
-      const aNum = Number(a?.data?.[sort.key]);
-      const bNum = Number(b?.data?.[sort.key]);
-      if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
-        return sort.direction === 'asc' ? aNum - bNum : bNum - aNum;
-      }
-      const cmp = aVal.localeCompare(bVal);
-      return sort.direction === 'asc' ? cmp : -cmp;
-    });
+    // Fala 7 — sortowanie po kliknięciu w nagłówek (parytet Airtable):
+    // wartości puste ZAWSZE na końcu (niezależnie od kierunku), liczby porównywane
+    // numerycznie, reszta jako string lokalizowany (pl). Indeks oryginalny jako
+    // tie-breaker => sort stabilny nawet gdy Array.prototype.sort silnika nie
+    // gwarantuje stabilności (V8 gwarantuje, ale nie polegamy na tym milcząco).
+    const isEmptyVal = (v: unknown): boolean => v === null || v === undefined || v === '';
+    processed = processed
+      .map((row, index) => ({ row, index }))
+      .sort((a, b) => {
+        const aRaw = a.row?.data?.[sort.key];
+        const bRaw = b.row?.data?.[sort.key];
+        const aEmpty = isEmptyVal(aRaw);
+        const bEmpty = isEmptyVal(bRaw);
+        if (aEmpty && bEmpty) return a.index - b.index;
+        if (aEmpty) return 1; // puste zawsze na końcu
+        if (bEmpty) return -1;
+
+        const aNum = Number(aRaw);
+        const bNum = Number(bRaw);
+        if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
+          const cmp = aNum - bNum;
+          if (cmp !== 0) return sort.direction === 'asc' ? cmp : -cmp;
+          return a.index - b.index;
+        }
+
+        const cmp = String(aRaw).localeCompare(String(bRaw), 'pl', { sensitivity: 'base' });
+        if (cmp !== 0) return sort.direction === 'asc' ? cmp : -cmp;
+        return a.index - b.index;
+      })
+      .map((x) => x.row);
   }
 
   let grouped: Record<string, TableNode[]> | null = null;

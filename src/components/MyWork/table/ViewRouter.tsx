@@ -9,7 +9,9 @@
 import {
   AlertTriangle,
   Calendar,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Filter,
   GanttChart,
   Grid3X3,
@@ -46,7 +48,7 @@ import { PlatformCellRenderer } from './PlatformCellRenderer';
 import { StickyNoteView } from './StickyNoteView';
 import { useTableData } from './TableDataProvider';
 import { tpViewToLegacy } from './tablePlatformMappers';
-import type { ColumnDef, TableEdge, TableNode } from './tableTypes';
+import type { ColumnDef, FilterGroup, SortConfig, TableEdge, TableNode } from './tableTypes';
 import { TimelineView } from './TimelineView';
 import type { ViewLayout } from './useTableViews';
 import ViewErrorBoundary from './ViewErrorBoundary';
@@ -89,6 +91,13 @@ function cellId(rowId: string, fieldId: string): string {
   return `${rowId}:${fieldId}`;
 }
 
+// Fala 7 — id prefix for the per-column "quick filter" rule under the header,
+// kept distinct from ids the advanced FilterBuilder assigns (`${fieldId}-${operator}`)
+// so both UIs can add rules for the same column without clobbering each other.
+const QUICK_FILTER_PREFIX = 'quick-filter:';
+const quickFilterRuleId = (colKey: string): string => `${QUICK_FILTER_PREFIX}${colKey}`;
+const EMPTY_FILTER_GROUP: FilterGroup = { logic: 'and', rules: [] };
+
 // ── Platform grid (table layout) ─────────────────────────────────────────────
 
 export interface PlatformGridViewProps {
@@ -116,6 +125,19 @@ export interface PlatformGridViewProps {
   handleDeleteRow: (id: string) => void;
   handleInsertRow: (referenceId: string, direction: 'above' | 'below') => void;
   onExpandRecord?: (id: string) => void;
+  /**
+   * Fala 7 — sortowanie/filtr po kolumnie (parytet Airtable). Optional: the
+   * client-side sort/filter machinery already lives in
+   * `useTablePlatformIntegration`/`useTablePlatformViews` (single-column
+   * `SortConfig`, `FilterGroup` with the shared `evaluateFilterRule`) and
+   * flows into `processedRows` before it ever reaches this component — these
+   * props just let the header UI drive that existing state. Optional so
+   * existing dev-render harnesses that don't pass them keep compiling.
+   */
+  sort?: SortConfig | null;
+  setSort?: (sort: SortConfig | null) => void;
+  filters?: FilterGroup;
+  setFilters?: (filters: FilterGroup) => void;
 }
 
 // Exported as a dev-render/visual-test seam (K1 Airtable-parity row kebab is
@@ -141,6 +163,10 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   handleDeleteRow,
   handleInsertRow,
   onExpandRecord,
+  sort = null,
+  setSort,
+  filters = EMPTY_FILTER_GROUP,
+  setFilters,
 }) => {
   const { t, i18n } = useTranslation();
   // The kebab + note editor render inline pl/en strings via `isPl` (same
@@ -188,6 +214,48 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     return m;
   }, [rowsInRenderOrder]);
   const colKeys = useMemo(() => visibleColumns.map((c) => c.key), [visibleColumns]);
+
+  // Fala 7 — klik w nagłówek: cykl asc → desc → brak (natywna kolejność).
+  // Sort stanu jest scentralizowany w useTablePlatformIntegration (SortConfig
+  // pojedynczej kolumny) — to tylko UI trigger, patrz komentarz przy propsach.
+  const handleHeaderSortClick = useCallback(
+    (colKey: string) => {
+      if (!setSort) return;
+      if (!sort || sort.key !== colKey) {
+        setSort({ key: colKey, direction: 'asc' });
+      } else if (sort.direction === 'asc') {
+        setSort({ key: colKey, direction: 'desc' });
+      } else {
+        setSort(null);
+      }
+    },
+    [sort, setSort]
+  );
+
+  // Fala 7 — prosty filtr tekstowy "zawiera" pod nagłówkiem, per kolumna.
+  // Pusty input = brak reguły dla tej kolumny (usuwa ją z FilterGroup zamiast
+  // trzymać regułę z pustą wartością).
+  const quickFilterValue = useCallback(
+    (colKey: string): string => {
+      const rule = filters.rules.find((r) => r.id === quickFilterRuleId(colKey));
+      return typeof rule?.value === 'string' ? rule.value : '';
+    },
+    [filters]
+  );
+
+  const handleQuickFilterChange = useCallback(
+    (colKey: string, value: string) => {
+      if (!setFilters) return;
+      const id = quickFilterRuleId(colKey);
+      const rest = filters.rules.filter((r) => r.id !== id);
+      const rules =
+        value.trim().length > 0
+          ? [...rest, { id, column: colKey, operator: 'contains' as const, value }]
+          : rest;
+      setFilters({ logic: filters.logic ?? 'and', rules });
+    },
+    [filters, setFilters]
+  );
 
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [focusedColKey, setFocusedColKey] = useState<string | null>(null);
@@ -704,12 +772,38 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                     </th>
                   );
                 }
+                const activeSortDir = sort?.key === col.key ? sort.direction : null;
+                const filterValue = quickFilterValue(col.key);
                 return (
                   <th
                     key={col.key}
-                    className="border-b border-r border-c-border-subtle px-2 py-2 font-semibold text-c-text-secondary whitespace-nowrap"
+                    className="border-b border-r border-c-border-subtle px-2 py-1.5 align-top font-semibold text-c-text-secondary whitespace-nowrap"
                   >
-                    {col.header}
+                    <button
+                      type="button"
+                      onClick={() => handleHeaderSortClick(col.key)}
+                      title={t('ideas.table.viewRouter.sortColumn', 'Sortuj wg {{name}}', {
+                        name: col.header,
+                      })}
+                      className="flex w-full items-center gap-1 rounded px-0.5 py-0.5 text-left outline-none hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
+                    >
+                      <span className="truncate">{col.header}</span>
+                      {activeSortDir === 'asc' && (
+                        <ChevronUp className="h-3 w-3 shrink-0 text-c-text-muted" aria-hidden />
+                      )}
+                      {activeSortDir === 'desc' && (
+                        <ChevronDown className="h-3 w-3 shrink-0 text-c-text-muted" aria-hidden />
+                      )}
+                    </button>
+                    <input
+                      type="text"
+                      value={filterValue}
+                      onChange={(e) => handleQuickFilterChange(col.key, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder={t('ideas.table.viewRouter.filterColumn', 'Filtruj…')}
+                      aria-label={`${t('ideas.table.viewRouter.filterColumnAria', 'Filtruj wg')} ${col.header}`}
+                      className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-normal normal-case tracking-normal text-c-text outline-none placeholder:text-c-text-muted focus-visible:ring-2 focus-visible:ring-c-focus"
+                    />
                   </th>
                 );
               })}
@@ -933,9 +1027,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
     handleInsertRow,
     selectedRowIds,
     toggleRowSelection,
-    sort: _sort,
-    setSort: _setSort,
-    filters: _filters,
+    sort,
+    setSort,
+    filters,
+    setFilters,
     groupBy,
     platformFields,
     ui,
@@ -1242,6 +1337,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           handleDeleteRow={handleDeleteRow}
           handleInsertRow={handleInsertRow}
           onExpandRecord={onExpandRecord}
+          sort={sort}
+          setSort={setSort}
+          filters={filters}
+          setFilters={setFilters}
         />
       </ViewErrorBoundary>
     ) : (

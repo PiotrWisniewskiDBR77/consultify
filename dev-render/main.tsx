@@ -83,6 +83,7 @@ import KartaTaskScreen from './screens/karta-task';
 import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
 import IdeaTableToolPasteScreen from './screens/idea-table-tool-paste';
+import IdeaTableToolSortFilterScreen from './screens/idea-table-tool-sortfilter';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -108,6 +109,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
     render: () => <IdeaTableToolPasteScreen />,
+  },
+  'idea-table-tool-sortfilter': {
+    label:
+      'IDEE Table — Sortowanie po nagłówku + filtr per kolumna (PlatformGridView, Fala 7) — 2026-07-22',
+    render: () => <IdeaTableToolSortFilterScreen />,
   },
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
