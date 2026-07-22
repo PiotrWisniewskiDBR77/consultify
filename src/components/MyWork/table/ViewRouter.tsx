@@ -194,6 +194,12 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   const cellRefs = useRef(new Map<string, HTMLDivElement>());
   const pendingDomFocusRef = useRef(false);
 
+  // Z16 follow-up: {anchor, focus} rectangle for multi-cell selection.
+  // anchor = where the drag/shift-range started, focus = current end. A plain
+  // (non-shift) move always collapses this to anchor===focus (single cell).
+  type CellCoord = { rowId: string; colKey: string };
+  const [selRange, setSelRange] = useState<{ anchor: CellCoord; focus: CellCoord } | null>(null);
+
   // Default focus target: first cell, or re-clamp when the previously
   // focused row/column disappears (row deleted, column hidden, ...).
   useEffect(() => {
@@ -212,7 +218,82 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     if (moveDom) pendingDomFocusRef.current = true;
     setFocusedRowId(rowId);
     setFocusedColKey(colKey);
+    // Any plain (non-extending) focus move collapses a prior range selection —
+    // Airtable parity: arrows/click/tab/enter always narrow back to one cell.
+    setSelRange({ anchor: { rowId, colKey }, focus: { rowId, colKey } });
   }, []);
+
+  // Shift+arrow: extend the selection rectangle from the existing anchor
+  // (or the currently focused cell, if no range is active yet) to the new
+  // clamped focus cell. Does not enter edit mode.
+  const extendSelection = useCallback(
+    (dRow: number, dCol: number) => {
+      if (!focusedRowId || !focusedColKey) return;
+      const ri = flatRowIds.indexOf(focusedRowId);
+      const ci = colKeys.indexOf(focusedColKey);
+      if (ri < 0 || ci < 0) return;
+      const nri = Math.min(Math.max(ri + dRow, 0), flatRowIds.length - 1);
+      const nci = Math.min(Math.max(ci + dCol, 0), colKeys.length - 1);
+      const newFocus: CellCoord = { rowId: flatRowIds[nri], colKey: colKeys[nci] };
+      setSelRange((prev) => ({
+        anchor: prev?.anchor ?? { rowId: focusedRowId, colKey: focusedColKey },
+        focus: newFocus,
+      }));
+      pendingDomFocusRef.current = true;
+      setFocusedRowId(newFocus.rowId);
+      setFocusedColKey(newFocus.colKey);
+    },
+    [focusedRowId, focusedColKey, flatRowIds, colKeys]
+  );
+
+  // Shift+click: same rectangle extension, from mouse input. Handled on
+  // mousedown (with preventDefault) so the native focus event that would
+  // otherwise fire first doesn't collapse the range via focusCell.
+  const extendSelectionTo = useCallback(
+    (rowId: string, colKey: string) => {
+      setSelRange((prev) => ({
+        anchor: prev?.anchor ?? (focusedRowId && focusedColKey ? { rowId: focusedRowId, colKey: focusedColKey } : { rowId, colKey }),
+        focus: { rowId, colKey },
+      }));
+      pendingDomFocusRef.current = true;
+      setFocusedRowId(rowId);
+      setFocusedColKey(colKey);
+    },
+    [focusedRowId, focusedColKey]
+  );
+
+  // Rectangle bounds (row/col index range) for the active selection — null
+  // when there's no range or it's a single cell (focus ring already covers
+  // that case, no extra background needed).
+  const rangeBounds = useMemo(() => {
+    if (!selRange) return null;
+    const anchorRi = flatRowIds.indexOf(selRange.anchor.rowId);
+    const anchorCi = colKeys.indexOf(selRange.anchor.colKey);
+    const focusRi = flatRowIds.indexOf(selRange.focus.rowId);
+    const focusCi = colKeys.indexOf(selRange.focus.colKey);
+    if (anchorRi < 0 || anchorCi < 0 || focusRi < 0 || focusCi < 0) return null;
+    const minRi = Math.min(anchorRi, focusRi);
+    const maxRi = Math.max(anchorRi, focusRi);
+    const minCi = Math.min(anchorCi, focusCi);
+    const maxCi = Math.max(anchorCi, focusCi);
+    if (minRi === maxRi && minCi === maxCi) return null;
+    return { minRi, maxRi, minCi, maxCi };
+  }, [selRange, flatRowIds, colKeys]);
+
+  // Set of `cellId` strings inside the rectangle — built once per range
+  // change, sized to the range (not the whole grid), so per-cell lookup in
+  // renderCell stays O(1).
+  const rangeCellIds = useMemo(() => {
+    if (!rangeBounds) return null;
+    const ids = new Set<string>();
+    for (let r = rangeBounds.minRi; r <= rangeBounds.maxRi; r++) {
+      const rid = flatRowIds[r];
+      for (let c = rangeBounds.minCi; c <= rangeBounds.maxCi; c++) {
+        ids.add(cellId(rid, colKeys[c]));
+      }
+    }
+    return ids;
+  }, [rangeBounds, flatRowIds, colKeys]);
 
   const moveFocus = useCallback(
     (dRow: number, dCol: number) => {
@@ -248,10 +329,6 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   );
 
   // Ctrl/Cmd+C on a focused (non-editing) cell — copies its raw value.
-  // TODO(Z16): range selection (Shift+arrows) + TSV multi-cell copy not
-  // implemented here — single-cell copy only, to keep this patch reviewable.
-  // Follow-up should track a {anchor, focus} range alongside focusedRowId/
-  // focusedColKey and join rowById-ordered cells with \t / \n on copy.
   const copyCellValue = useCallback(
     (rowId: string, colKey: string) => {
       const row = rowById.get(rowId);
@@ -262,6 +339,32 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         .catch(() => {});
     },
     [rowById, isPl]
+  );
+
+  // Ctrl/Cmd+C dispatcher: when a multi-cell range is active, copy the whole
+  // rectangle as TSV (rows \n, columns \t), walking flatRowIds/colKeys in
+  // grid render order — reuses rowById + rangeBounds, no new row ordering.
+  // Falls back to single-cell copy otherwise (unchanged prior behaviour).
+  const copySelectionOrCell = useCallback(
+    (rowId: string, colKey: string) => {
+      if (rangeBounds) {
+        const cols = colKeys.slice(rangeBounds.minCi, rangeBounds.maxCi + 1);
+        const tsv = flatRowIds
+          .slice(rangeBounds.minRi, rangeBounds.maxRi + 1)
+          .map((rid) => {
+            const r = rowById.get(rid);
+            return cols.map((ck) => String(r?.data?.[ck] ?? '')).join('\t');
+          })
+          .join('\n');
+        void navigator.clipboard
+          ?.writeText(tsv)
+          .then(() => toast.success(isPl ? 'Skopiowano zakres' : 'Range copied'))
+          .catch(() => {});
+        return;
+      }
+      copyCellValue(rowId, colKey);
+    },
+    [rangeBounds, flatRowIds, colKeys, rowById, isPl, copyCellValue]
   );
 
   const copyRowToClipboard = useCallback(
@@ -343,6 +446,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       );
 
     const isFocused = focusedRowId === row.id && focusedColKey === col.key;
+    const inRange = !!rangeCellIds?.has(id);
 
     return (
       <div
@@ -354,8 +458,17 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         tabIndex={isFocused ? 0 : -1}
         className={`min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text ${
           isFocused ? 'ring-1 ring-c-focus' : ''
-        }`}
+        } ${inRange ? 'bg-c-info/10' : ''}`}
         onFocus={() => focusCell(row.id, col.key)}
+        onMouseDown={(e) => {
+          // Shift+click extends the range like shift+arrow; prevent the
+          // element's native focus (which would otherwise fire onFocus and
+          // collapse the range back to one cell before we can extend it).
+          if (e.shiftKey) {
+            e.preventDefault();
+            extendSelectionTo(row.id, col.key);
+          }
+        }}
         onDoubleClick={(e) => {
           e.stopPropagation();
           if (locked || pf?.isComputed) return;
@@ -369,25 +482,29 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
           }
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
             e.preventDefault();
-            copyCellValue(row.id, col.key);
+            copySelectionOrCell(row.id, col.key);
             return;
           }
           switch (e.key) {
             case 'ArrowUp':
               e.preventDefault();
-              moveFocus(-1, 0);
+              if (e.shiftKey) extendSelection(-1, 0);
+              else moveFocus(-1, 0);
               break;
             case 'ArrowDown':
               e.preventDefault();
-              moveFocus(1, 0);
+              if (e.shiftKey) extendSelection(1, 0);
+              else moveFocus(1, 0);
               break;
             case 'ArrowLeft':
               e.preventDefault();
-              moveFocus(0, -1);
+              if (e.shiftKey) extendSelection(0, -1);
+              else moveFocus(0, -1);
               break;
             case 'ArrowRight':
               e.preventDefault();
-              moveFocus(0, 1);
+              if (e.shiftKey) extendSelection(0, 1);
+              else moveFocus(0, 1);
               break;
             case 'Tab':
               e.preventDefault();
