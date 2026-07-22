@@ -1832,7 +1832,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                             <Rocket size={11} className="text-c-warning" />
                           )}
                           {item.type === 'similar_idea' && (
-                            <Lightbulb size={11} className="text-c-accent" />
+                            <Lightbulb size={11} className="text-c-tag-3" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
