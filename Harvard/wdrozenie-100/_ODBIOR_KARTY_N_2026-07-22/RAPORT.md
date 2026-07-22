@@ -12,6 +12,76 @@
 
 ---
 
+## ★ NAPRAWA 3 FAIL — wynik (re-przebieg 2026-07-22, po commitach `66db838`/`0d4139f`)
+
+> Niezależny re-przebieg **PO** naprawach — nie ufałem raportom napraw, zmierzyłem sam. Izolowany chromium,
+> viewport **1280×832**, DPR 2, `lang=pl`, motyw **light i dark**. Każdy pomiar z asercją `location.href`.
+> Skrypty (niecommitowane): `scratchpad/reprzebieg-karty-n.mjs`, `scratchpad/probe-powiazania.mjs`.
+> Crimson wykrywany jako podłańcuch `133, 24, 47` (#85182F, light) **oraz** `200, 50, 74` (#C8324A, dark)
+> w bg/color/border/box-shadow. Zrzuty nadpisane: `karta-{interview,insight}-{light,dark}.png` (4 nowe).
+
+| Wada | Werdykt | Skrót dowodu |
+|---|---|---|
+| **FAIL-1 · Interview: crimson jako zaznaczenie + badge** | ✅ **PASS** (light+dark) | zaznaczenie neutralne, badge `c-info`, 0 px kolizji, crimson=0 |
+| **FAIL-2 · Insight: klucze React (konsola) + duplikaty POWIĄZAŃ** | ✅ **PASS** (komponent) | konsola bez „same key"/ReferenceError; POWIĄZANIA = 1 wpis ·  ⚠ zastrzeżenie harnessu |
+| **FAIL-3 · Insight: kafle akcji nakładają się / ucięty tekst** | ✅ **PASS** (light+dark) | 6 kafli, 0 nakładań, 0 uciętych etykiet |
+
+### FAIL-1 → ✅ PASS
+Selektor `src/components/Interview/RuntimeModeSelector.tsx` (centrum karty). Zaznaczona karta „Tryb listy zadań":
+- **Zaznaczenie NEUTRALNE, zero crimson.** Light: tło `rgb(248,250,252)`=`c-surface-raised`, obwódka
+  `rgb(203,210,218)`=`c-border`, ring `rgb(37,99,235)`=`c-focus-solid` (niebieski). Dark: tło `rgb(21,33,59)`,
+  ring `rgb(91,141,239)`. Kółko-checkmark + ikona = `c-info` (`rgb(59,40,131)` light / `rgb(88,166,255)` dark).
+  **Crimson: w karcie 0, w całym selektorze 0, w całym centrum (`document.body`) 0** — ani `133,24,47`, ani `200,50,74`.
+- **Badge „Rekomendowane" = `c-info`, bez kolizji.** Tło `rgb(59,40,131)` light / `rgb(88,166,255)` dark, tekst
+  `rgb(255,255,255)`, crimson=∅. `insideOwnCard=true`; nakładanie na tytuł sąsiada = **0 px** (obie karty),
+  na kartę sąsiada = **0 px**. Badge w przepływie (`self-start`), nie `absolute`.
+- Kod: `RuntimeModeSelector.tsx:144` (zaznaczenie → surface/border/focus-solid), `:149` (badge → `bg-c-info text-white`,
+  `self-start` zamiast `absolute top-3 right-3`), `:158`/`:175` (`c-info`). Zrzuty: `karta-interview-{light,dark}.png`.
+
+### FAIL-3 → ✅ PASS
+`src/components/shared/artifact-actions/ArtifactActionPanel.tsx:735/747` — siatka
+`grid-cols-[repeat(auto-fill,minmax(160px,1fr))]`. 6 kafli („Utwórz raport/prezentację/tabelę/ideę/notatkę/inicjatywę"):
+**nakładania parami = 0** (`tileOverlaps=[]`), **żadna etykieta nie ucięta** (`scrollWidth==clientWidth==204`,
+brak `truncate`). Tekst pełny („Utwórz raport", nie „Utwór raport"). Identycznie light i dark.
+Zrzuty: `karta-insight-{light,dark}.png`.
+
+### FAIL-2 → ✅ PASS (komponent) + ⚠ zastrzeżenie harnessu
+- **Konsola czysta:** 0× „same key"/„two children with the same key", 0× `ReferenceError` — light i dark.
+  (Na Interview jedyny błąd `[OrgContext] orgs.find is not a function` = artefakt podmiany sieci przez harness (§6);
+  NIE ReferenceError, NIE error-boundary.)
+- **POWIĄZANIA bez duplikatów:** panel „Powiązania" (`InsightViewer.tsx:8002`) renderuje **dokładnie 1 wpis**
+  (`entryCount=1`, `uniqueEntries=1`). Dedup po `session.id` (`InsightViewer.tsx:1509`) zwija powtórzenia.
+  (Pomiar `span.truncate` dawał „2", bo węzły są zagnieżdżone — obwódka `:8004` + nazwa `:8006`, obie z klasą
+  `truncate`, więc 1 wpis = 2 dopasowania; policzenie WPISÓW `div.flex.items-center.justify-between` daje 1.)
+- ⚠ **Zastrzeżenie harnessu (NIE defekt komponentu, NIE jedna z 3 wad):** ten 1 wpis pokazuje nazwę sesji
+  **karty Interview** („Wywiad diagnostyczny — robotyzacja spawalni, Metalpol Kielce"), nie 3 sesje Insightu.
+  Przyczyna: oba ekrany dev-render patchują singleton `V8InterviewApi.getSession` na TOP-LEVEL **bez** strażnika
+  `__tenEkran` (`karta-interview.tsx:512` ignoruje `id` i zwraca stałą sesję), a `main.tsx` importuje
+  `karta-interview` (76) PO `karta-insight` (75) — override Interview wygrywa. W produkcji `getSession(id)`
+  zwraca poprawne sesje per-id → panel pokazałby 3 realne. To **wada wierności harnessu** (widoczna na zrzucie),
+  nie regresja naprawy FAIL-2. Do osobnego zgłoszenia.
+
+### Wspólne (obie karty)
+- **Brak error-boundary** (`errorBoundary=false`, brak „Coś poszło nie tak"/„Wystąpił błąd" w obu motywach).
+- **Brak surowych kluczy i18n** (`i18nKeyCandidates=[]`; brak `interview.runtimeMode`/`insightViewer`/`targetMeta`).
+  (Surowy angielski „Submit for review"/„Draft" na prawym panelu Insightu = znana obserwacja treści §5, NIE surowy
+  klucz i NIE jedna z 3 wad.)
+
+### `bash scripts/check-artefakt.sh --report`
+```
+✓ check-artefakt: brak nowych naruszeń crimson w powłoce artefaktów (aktualnie 5, baseline 17 — dług nie rośnie)
+── Karty N (SPEC-N §5B) — tryb RAPORTU ──
+  NotificationDetailView.tsx  ⚠ R1 (L2288)   ·   TaskDetailView.tsx  ⚠ R1 (L6247)
+  Razem: R1 (ostrzeżenia) 2 · R2+R3 (blokujące w strict) 0
+```
+Moje 3 naprawiane pliki (`RuntimeModeSelector`, `InsightViewer`, `ArtifactActionPanel`) **nie są flagowane**.
+2× R1 to inne karty (MyWork Notification/Task), pre-existing, niekrytyczne (§3).
+
+**Wniosek re-przebiegu: 3/3 FAIL naprawione, zweryfikowane wzrokiem + pomiarem w obu motywach.** Jedyne nowe
+znalezisko poboczne: wada wierności harnessu (kontaminacja `getSession` między ekranami dev-render) — poza zakresem 3 FAIL.
+
+---
+
 ## 1. Werdykt w jednym zdaniu
 
 **Menu 1 (pasek nagłówka) przeszedł czysto na WSZYSTKICH 7 kartach w OBU motywach** — decyzje Piotra
