@@ -21,6 +21,16 @@
   - `21ac83f2a7` A3 Excel — grounding sourcePack→prompt (workbook.routes.ts buildWorkbookGrounding + WorkbookGeneratorService.ts)
   - `2967d0932c` A2 Deck — koniec „brak danych", user_instruction z założeniami (presentationGeneratorService.ts ~1506-1540)
 - **Worktree:** `.worktrees/audyt-dokumenty-2026-07-22` (od origin/demo). node_modules = **symlink** do głównego repo (potrzebny do esbuild/tsx/vite). Wpis launch.json: `audyt-dokumenty-render` port 3021 (dev-render).
+
+### 1b. GAŁĘZIE WIP (2026-07-22, produkcja Fali A/B/C przez agentów — wszystkie od origin/demo, NIE pushowane, offline-verified [esbuild/testy], TREŚĆ/WIZUAL → live po deployu)
+| Gałąź | Fala | Commity | Zawartość | Uwaga |
+|---|---|---|---|---|
+| `prod/word-wzorzec-merytoryka` | A | `849c9ce876`,`21ac83f2a7`,`2967d0932c` (+docy) | Word/Excel-A3/Deck merytoryka (§0.3) | baza pod resztę |
+| `wip/excel-engine-template` | A+B | `c6e6421684`,`42badc1149`,`0c995db458` | Excel: §0.3 w prompcie + `matchWorkbookTemplate` (podłączenie WORKBOOK_TEMPLATES) + save-as-template arkusza (enum `sheet_template`, deliverableTemplateService `'table'`, 409 zdjęte) | ⚠️ **KOLIZJA z A3** — oba ruszają `WorkbookGeneratorService.ts`; scalać ostrożnie (A3=grounding data-flow, ten=§0.3 prompt + template match — logicznie komplementarne, rozwiąż konflikt ręcznie). ⚠️ save-as-template wymaga migracji `20260412_seed_business_templates.sql` na bazie |
+| `wip/falab-deck-template-backend` | B | `da53e8a17e` | Deck: nowy `presentationTemplateDraftService.ts` + `POST /api/presentations/templates/plan` (AI-draft outline, fail-soft wg wzorca Word) | czysty (nowy plik + 1 route) |
+| `wip/falac-tokeny-galerie` | C | `d4775db382`,`31c8f48be9`,`c9008c7bff` | Grafika: slate/navy→`c-*` w DeckTemplateGallery (14) + PresentationTemplateGovernanceView (31) | WIZUAL → zrzut do akceptu. Zgłoszone osobne: niebieskie aktywne-zakładki governance łamią kanon #3 |
+
+**Konsolidacja (następny krok):** rozwiąż kolizję Excel (A3 vs wip/excel-engine), scal 4 gałęzie do jednej integracyjnej od origin/demo, deploy jednym ruchem (za „tak" Piotra) → live-verify treści (Word/Deck/Excel z czatu) + wizual (galerie dev-render) + round-trip save-as-template. Agentów worktree: `.claude/worktrees/agent-*` (gałęzie `wip/*` widoczne z każdego worktree).
 - **Punkt cofania** ostatniego deployu: `a42ee33280` (przed merge audytu). NIGDY force/reset na demo.
 
 ## 2. NAPRAWA AUDYTU (już na demo, `533d353896`) — co żyje
