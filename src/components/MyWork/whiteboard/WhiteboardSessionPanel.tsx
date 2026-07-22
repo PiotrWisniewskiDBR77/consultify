@@ -45,7 +45,15 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
         : t('myWork.whiteboard.sessionPanel.roleObserver');
 
   return (
-    <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-[280px]">
+    // Whiteboard-only floating panel. `left-20` (not `left-3`) is deliberate:
+    // `CanvasLeftToolbar` (the vertically-centered tool rail shared by all 3
+    // canvases) also defaults to `left-3` when it has no measured `railLeftPx`,
+    // and sits at a higher stacking tier (`z-context-menu` > this panel's
+    // `z-20`) — so both anchored at the same spot meant the rail's opaque pill
+    // visually ate the left edge of every line here (every string in this file
+    // rendered with its first few characters occluded). Cleared past the
+    // rail's pill width instead of matching its anchor.
+    <div className="absolute top-3 left-20 z-20 flex flex-col gap-2 max-w-[280px]">
       <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <div>
