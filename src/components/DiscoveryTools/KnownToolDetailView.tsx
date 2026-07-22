@@ -260,16 +260,16 @@ export function KnownToolDetailView(props: {
       const safe = Array.isArray(items) ? items : [];
       if (safe.length === 0) {
         return (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.sectionPendingExpansion')}
           </div>
         );
       }
       return (
-        <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+        <ul className="space-y-2 text-sm text-c-text-secondary">
           {safe.map((v, idx) => (
             <li key={idx} className="flex items-start gap-2">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary-400" />
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-c-text-muted" />
               <span>{v}</span>
             </li>
           ))}
@@ -285,7 +285,7 @@ export function KnownToolDetailView(props: {
           {safe.map((v, idx) => (
             <span
               key={idx}
-              className="px-2.5 py-1 rounded-full text-xs font-medium bg-white/60 dark:bg-navy-900/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700"
+              className="px-2.5 py-1 rounded-full text-xs font-medium bg-c-surface-raised text-c-text-secondary border border-c-border"
             >
               {v}
             </span>
@@ -309,45 +309,45 @@ export function KnownToolDetailView(props: {
         {cases.map((item) => (
           <div
             key={item.title}
-            className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30"
+            className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
           >
             <div className={TEXT_L1}>{t('discoveryToolsMain.knownToolDetailView.case')}</div>
-            <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="mt-2 text-sm font-semibold text-c-text">
               {item.title}
             </h3>
-            <div className="mt-3 space-y-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+            <div className="mt-3 space-y-2 text-xs leading-relaxed text-c-text-secondary">
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-c-text">
                   {t('discoveryToolsMain.knownToolDetailView.context')}
                 </span>
                 {item.context}
               </div>
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-c-text">
                   {t('discoveryToolsMain.knownToolDetailView.question')}
                 </span>
                 {item.question}
               </div>
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-c-text">
                   {t('discoveryToolsMain.knownToolDetailView.evidence')}
                 </span>
                 {item.evidence.join(' ')}
               </div>
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-c-text">
                   {t('discoveryToolsMain.knownToolDetailView.aIDraft')}
                 </span>
                 {item.aiDraft}
               </div>
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-c-text">
                   {t('discoveryToolsMain.knownToolDetailView.afterApproval')}
                 </span>
                 {item.approvedUse}
               </div>
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-c-text">
                   {t('discoveryToolsMain.knownToolDetailView.outcome')}
                 </span>
                 {item.outcome}
@@ -360,14 +360,14 @@ export function KnownToolDetailView(props: {
 
     const goalSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
-          <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
+          <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningHeadline')}
           </div>
-          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningBody')}
           </div>
         </div>
@@ -419,8 +419,8 @@ export function KnownToolDetailView(props: {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
               {t('discoveryToolsMain.knownToolDetailView.whatToPrepareBeforeStarting')}
             </div>
             {bullets(
@@ -429,8 +429,8 @@ export function KnownToolDetailView(props: {
               }) as string[]
             )}
           </div>
-          <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
+          <div className="rounded-2xl border border-c-info/30 bg-c-info/5 p-4 dark:border-c-info/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-info">
               {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.dynamicLabel')}
             </div>
             {chipRow([
@@ -440,7 +440,7 @@ export function KnownToolDetailView(props: {
               'Recommended moves',
               'Outputs',
             ])}
-            <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
               {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.dynamicBody')}
             </div>
           </div>
@@ -451,11 +451,11 @@ export function KnownToolDetailView(props: {
     );
 
     const dynamicSwotStepsMeta = [
-      { id: 1, accent: 'bg-navy-900', tone: 'from-primary-500/12 to-crimson-700/5' },
+      { id: 1, accent: 'bg-c-info', tone: 'from-c-info/12 to-c-info/5' },
       { id: 2, accent: 'bg-sky-500', tone: 'from-sky-500/12 to-blue-500/5' },
       { id: 3, accent: 'bg-emerald-500', tone: 'from-emerald-500/12 to-blue-500/5' },
       { id: 4, accent: 'bg-amber-500', tone: 'from-amber-500/15 to-amber-500/5' },
-      { id: 5, accent: 'bg-navy-900', tone: 'from-primary-500/15 to-crimson-500/5' },
+      { id: 5, accent: 'bg-c-info', tone: 'from-c-info/15 to-c-info/5' },
     ];
     const dynamicSwotStepsTitles = [
       t('discoveryToolsMain.knownToolDetailView.missionBrief'),
@@ -484,8 +484,8 @@ export function KnownToolDetailView(props: {
                 key={step.id}
                 className={`rounded-2xl border transition-all duration-200 ${
                   isOpen
-                    ? `border-slate-300/70 bg-gradient-to-br ${step.tone} shadow-sm dark:border-white/15`
-                    : 'border-slate-200/50 bg-slate-50/50 hover:border-slate-300/70 hover:bg-slate-50/80 dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10'
+                    ? `border-c-border-strong bg-gradient-to-br ${step.tone} shadow-sm`
+                    : 'border-c-border-subtle bg-c-surface-raised/50 hover:border-c-border-strong hover:bg-c-surface-raised/80'
                 }`}
               >
                 <button
@@ -493,15 +493,15 @@ export function KnownToolDetailView(props: {
                   className="flex w-full items-center gap-3 p-3 text-left"
                   onClick={() => setOpenStep(isOpen ? null : step.id)}
                 >
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c-text text-[11px] font-bold text-c-bg">
                     {step.id}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    <div className="text-sm font-semibold text-c-text">
                       {step.title}
                     </div>
                     {!isOpen && (
-                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-0.5 text-xs text-c-text-muted">
                         {step.oneLiner}
                       </div>
                     )}
@@ -512,7 +512,7 @@ export function KnownToolDetailView(props: {
                     height="14"
                     viewBox="0 0 14 14"
                     fill="none"
-                    className={`shrink-0 text-slate-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`shrink-0 text-c-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   >
                     <path
                       d="M3 5.5l4 4 4-4"
@@ -524,11 +524,11 @@ export function KnownToolDetailView(props: {
                   </svg>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-slate-200/50 px-3 pb-4 pt-3 dark:border-white/5">
+                  <div className="border-t border-c-border-subtle px-3 pb-4 pt-3">
                     <div className="pl-10">
                       {bullets(step.items)}
                       {step.note ? (
-                        <div className="mt-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+                        <div className="mt-3 rounded-xl border border-c-border-subtle bg-c-surface-raised/70 px-3 py-2 text-sm text-c-text-secondary">
                           {step.note}
                         </div>
                       ) : null}
@@ -546,14 +546,14 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-c-text">
               {t('discoveryToolsMain.knownToolDetailView.workLogic')}
             </h2>
-            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+            <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.05]">
               Process
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.process.intro')}
           </div>
         </div>
@@ -569,7 +569,7 @@ export function KnownToolDetailView(props: {
               Quality
             </span>
           </div>
-          <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+          <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
             {(
               t('discoveryToolsMain.knownToolDetail.dynamicSwot.process.sessionQualityItems', {
                 returnObjects: true,
@@ -583,16 +583,16 @@ export function KnownToolDetailView(props: {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
+        <div className="rounded-2xl border border-c-info/30 bg-c-info/5 p-4 dark:border-c-info/40">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info">
               {t('discoveryToolsMain.knownToolDetailView.4CommonDecisionSituations')}
             </div>
-            <span className="inline-flex shrink-0 rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
+            <span className="inline-flex shrink-0 rounded-full border border-c-info/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-info dark:bg-white/[0.05]">
               Insight
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.process.decisionSituationsIntro')}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -634,7 +634,7 @@ export function KnownToolDetailView(props: {
               return (
                 <div key={item.label} className={`rounded-xl border ${a.border} ${a.bg} p-3`}>
                   <div className={`text-xs font-semibold ${a.title}`}>{item.label}</div>
-                  <div className="mt-1.5 text-[13px] leading-relaxed text-slate-700 dark:text-slate-200">
+                  <div className="mt-1.5 text-[13px] leading-relaxed text-c-text-secondary">
                     {item.desc}
                   </div>
                 </div>
@@ -652,7 +652,7 @@ export function KnownToolDetailView(props: {
               Tips
             </span>
           </div>
-          <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+          <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
             {(
               t('discoveryToolsMain.knownToolDetail.dynamicSwot.process.workingNotesItems', {
                 returnObjects: true,
@@ -686,11 +686,10 @@ export function KnownToolDetailView(props: {
 
     const colorMap = {
       violet: {
-        card: 'border-primary-200/70 bg-primary-500/5 dark:border-primary-900/40',
-        badge:
-          'border-primary-300/50 bg-white/70 text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200',
-        title: 'text-primary-700 dark:text-primary-300',
-        dot: 'bg-navy-900',
+        card: 'border-c-info/30 bg-c-info/5 dark:border-c-info/40',
+        badge: 'border-c-info/40 bg-white/70 text-c-info dark:bg-white/[0.05]',
+        title: 'text-c-info',
+        dot: 'bg-c-info',
       },
       sky: {
         card: 'border-sky-200/70 bg-sky-500/5 dark:border-sky-900/40',
@@ -726,14 +725,14 @@ export function KnownToolDetailView(props: {
       <div className="space-y-6">
         <div>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-c-text">
               {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
             </h2>
-            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+            <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:bg-white/[0.05]">
               Output
             </span>
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.outcomes.intro')}
           </div>
         </div>
@@ -758,26 +757,26 @@ export function KnownToolDetailView(props: {
 
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   <div>
-                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                       {t('discoveryToolsMain.knownToolDetailView.contains')}
                     </div>
-                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                    <div className="text-sm leading-relaxed text-c-text-secondary">
                       {block.what}
                     </div>
                   </div>
                   <div>
-                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                       {t('discoveryToolsMain.knownToolDetailView.whyItMatters')}
                     </div>
-                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                    <div className="text-sm leading-relaxed text-c-text-secondary">
                       {block.why}
                     </div>
                   </div>
                   <div>
-                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                       {t('discoveryToolsMain.knownToolDetailView.enablesNext')}
                     </div>
-                    <div className="text-sm leading-relaxed text-slate-900 dark:text-white">
+                    <div className="text-sm leading-relaxed text-c-text">
                       {block.next}
                     </div>
                   </div>
@@ -796,7 +795,7 @@ export function KnownToolDetailView(props: {
               Quality
             </span>
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <p className="mt-3 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.outcomes.qualityBody')}
           </p>
         </div>
@@ -805,11 +804,11 @@ export function KnownToolDetailView(props: {
 
     const exampleSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.example.intro')}
           </div>
         </div>
@@ -829,8 +828,8 @@ export function KnownToolDetailView(props: {
         )}
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
+          <div className="rounded-2xl bg-c-surface-raised p-4">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
               {t('discoveryToolsMain.knownToolDetailView.situationAndDecisionQuestion')}
             </div>
             {bullets(
@@ -839,8 +838,8 @@ export function KnownToolDetailView(props: {
               }) as string[]
             )}
           </div>
-          <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
+          <div className="rounded-2xl bg-c-surface-raised p-4">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
               {t('discoveryToolsMain.knownToolDetailView.keyInputSignals')}
             </div>
             {bullets(
@@ -852,8 +851,8 @@ export function KnownToolDetailView(props: {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
+          <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
               {t('discoveryToolsMain.knownToolDetailView.howTheMatrixLooks')}
             </div>
             {bullets(
@@ -874,10 +873,10 @@ export function KnownToolDetailView(props: {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
                 {t('discoveryToolsMain.knownToolDetailView.recommendedMoves')}
               </div>
               {bullets(
@@ -887,7 +886,7 @@ export function KnownToolDetailView(props: {
               )}
             </div>
             <div>
-              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
                 {t('discoveryToolsMain.knownToolDetailView.outputsFromTheSession')}
               </div>
               {bullets(
@@ -901,7 +900,7 @@ export function KnownToolDetailView(props: {
 
         <DynamicSwotLibraryGraphic isPolish={isPolish} variant="example" />
 
-        <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 text-sm text-slate-700 dark:border-emerald-900/50 dark:text-slate-300">
+        <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 text-sm text-c-text-secondary dark:border-emerald-900/50">
           {t('discoveryToolsMain.knownToolDetail.dynamicSwot.example.closingNote')}
         </div>
       </div>
@@ -909,14 +908,14 @@ export function KnownToolDetailView(props: {
 
     const marketGoalSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
-          <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
+          <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.marketForces.goal.positioningHeadline')}
           </div>
-          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.goal.positioningBody')}
           </div>
         </div>
@@ -944,12 +943,12 @@ export function KnownToolDetailView(props: {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
+        <div className="rounded-2xl border border-c-info/30 bg-c-info/5 p-4 dark:border-c-info/40">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-info">
             {t('discoveryToolsMain.knownToolDetailView.aIPhilosophy')}
           </div>
           {chipRow(['Market brief', 'Evidence', 'AI proposals', 'User approval', 'Initiatives'])}
-          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.goal.aiPhilosophyBody')}
           </div>
         </div>
@@ -961,10 +960,10 @@ export function KnownToolDetailView(props: {
     const marketProcessSection = (
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.workLogic')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.process.intro')}
           </div>
         </div>
@@ -976,19 +975,19 @@ export function KnownToolDetailView(props: {
           ).map(({ title, text }, index) => (
             <div
               key={title}
-              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+              className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
             >
               <div className="flex items-start gap-3">
                 {/* stonowane: bylo `bg-blue-600 text-white` (solid, bez wariantu dark) — konkurowalo
                     wizualnie ze slotem primary. Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c-text text-[11px] font-bold text-c-bg">
                   {index + 1}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="text-sm font-semibold text-c-text">
                     {title}
                   </div>
-                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{text}</div>
+                  <div className="mt-1 text-sm text-c-text-secondary">{text}</div>
                 </div>
               </div>
             </div>
@@ -1000,10 +999,10 @@ export function KnownToolDetailView(props: {
     const marketOutcomesSection = (
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.outcomes.intro')}
           </div>
         </div>
@@ -1020,7 +1019,7 @@ export function KnownToolDetailView(props: {
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
                 {title}
               </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
                 {text}
               </div>
             </div>
@@ -1031,11 +1030,11 @@ export function KnownToolDetailView(props: {
 
     const marketExampleSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.marketForces.example.intro')}
           </div>
         </div>
@@ -1058,14 +1057,14 @@ export function KnownToolDetailView(props: {
 
     const growthGoalSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
-          <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
+          <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.growthPaths.goal.positioningHeadline')}
           </div>
-          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-3 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.growthPaths.goal.positioningBody')}
           </div>
         </div>
@@ -1075,7 +1074,7 @@ export function KnownToolDetailView(props: {
 
     const growthProcessSection = (
       <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+        <h2 className="text-lg font-semibold text-c-text">
           {t('discoveryToolsMain.knownToolDetailView.workLogic')}
         </h2>
         <div className="grid gap-3">
@@ -1086,19 +1085,19 @@ export function KnownToolDetailView(props: {
           ).map(({ title, text }, index) => (
             <div
               key={title}
-              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+              className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
             >
               <div className="flex items-start gap-3">
-                {/* stonowane: bylo `bg-navy-900 text-white` (bez wariantu dark — numerator ginal
-                    na ciemnym tle). Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
+                {/* stonowane: bylo bg (slate/navy) + text-white bez wariantu dark — numerator ginal
+                    na ciemnym tle. Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c-text text-[11px] font-bold text-c-bg">
                   {index + 1}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="text-sm font-semibold text-c-text">
                     {title}
                   </div>
-                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{text}</div>
+                  <div className="mt-1 text-sm text-c-text-secondary">{text}</div>
                 </div>
               </div>
             </div>
@@ -1109,7 +1108,7 @@ export function KnownToolDetailView(props: {
 
     const growthOutcomesSection = (
       <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+        <h2 className="text-lg font-semibold text-c-text">
           {t('discoveryToolsMain.knownToolDetailView.whatTheSessionProduces')}
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
@@ -1120,12 +1119,12 @@ export function KnownToolDetailView(props: {
           ).map(({ title, text }) => (
             <div
               key={title}
-              className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40"
+              className="rounded-2xl border border-c-info/30 bg-c-info/5 p-4 dark:border-c-info/40"
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info">
                 {title}
               </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
                 {text}
               </div>
             </div>
@@ -1136,11 +1135,11 @@ export function KnownToolDetailView(props: {
 
     const growthExampleSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.example')}
           </h2>
-          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.growthPaths.example.intro')}
           </div>
         </div>
@@ -1163,11 +1162,11 @@ export function KnownToolDetailView(props: {
 
     const portfolioGoalSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.portfolioPriority.goal.positioningBody')}
           </div>
         </div>
@@ -1194,10 +1193,10 @@ export function KnownToolDetailView(props: {
         ].map(([title, text]) => (
           <div
             key={title}
-            className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30"
+            className="rounded-2xl border border-c-border-subtle bg-c-surface p-5"
           >
-            <div className="font-semibold text-slate-900 dark:text-white">{title}</div>
-            <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <div className="font-semibold text-c-text">{title}</div>
+            <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
               {text}
             </div>
           </div>
@@ -1215,7 +1214,7 @@ export function KnownToolDetailView(props: {
         ].map((text) => (
           <div
             key={text}
-            className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 text-sm text-slate-700 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300"
+            className="rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-sm text-c-text-secondary"
           >
             {text}
           </div>
@@ -1225,7 +1224,7 @@ export function KnownToolDetailView(props: {
 
     const portfolioExampleSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-sm leading-relaxed text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 text-sm leading-relaxed text-c-text-muted">
           {t('discoveryToolsMain.knownToolDetail.portfolioPriority.example.intro')}
         </div>
         {caseGrid(
@@ -1247,11 +1246,11 @@ export function KnownToolDetailView(props: {
 
     const riskGoalSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.whyUseIt')}
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.riskUncertainty.goal.positioningBody')}
           </div>
         </div>
@@ -1272,10 +1271,10 @@ export function KnownToolDetailView(props: {
         ].map(([title, text]) => (
           <div
             key={title}
-            className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30"
+            className="rounded-2xl border border-c-border-subtle bg-c-surface p-5"
           >
-            <div className="font-semibold text-slate-900 dark:text-white">{title}</div>
-            <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <div className="font-semibold text-c-text">{title}</div>
+            <div className="mt-2 text-sm leading-relaxed text-c-text-secondary">
               {text}
             </div>
           </div>
@@ -1293,7 +1292,7 @@ export function KnownToolDetailView(props: {
         ].map((text) => (
           <div
             key={text}
-            className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 text-sm text-slate-700 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300"
+            className="rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-sm text-c-text-secondary"
           >
             {text}
           </div>
@@ -1303,7 +1302,7 @@ export function KnownToolDetailView(props: {
 
     const riskExampleSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-sm leading-relaxed text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 text-sm leading-relaxed text-c-text-muted">
           {t('discoveryToolsMain.knownToolDetail.riskUncertainty.example.intro')}
         </div>
         {caseGrid(
