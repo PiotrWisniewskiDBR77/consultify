@@ -5511,6 +5511,11 @@ router.get(
         timestamp: new Date(r.createdAt).getTime(),
         nodes: data.nodes || [],
         edges: data.edges || [],
+        // Tool-specific state captured at snapshot time (may be absent on
+        // snapshots taken before extension-capture landed → restore falls back
+        // to preserving the live extensions).
+        extensions:
+          data.extensions && typeof data.extensions === 'object' ? data.extensions : undefined,
       };
     });
 
@@ -5539,6 +5544,9 @@ router.post(
       label: z.string().min(1).max(200),
       nodes: z.array(z.any()),
       edges: z.array(z.any()),
+      // Optional tool-specific state so restore rolls back the whole tool
+      // (whiteboard drawings/scenes, process-flow lanes, table config).
+      extensions: z.record(z.any()).optional(),
     });
 
     const parsed = schema.safeParse(req.body);
@@ -5552,6 +5560,7 @@ router.post(
       label: parsed.data.label,
       nodes: parsed.data.nodes,
       edges: parsed.data.edges,
+      extensions: parsed.data.extensions ?? null,
     });
 
     await req.emitAuditEvent?.({
