@@ -25,7 +25,9 @@
  *      (if the builder takes a nested shape) a `coerceParams` un-flattener.
  *   3. Add a focused read-back + math-verification test under `__tests__/`.
  *
- * Only `threeScenarioPnL` is implemented today; the map is the extension point.
+ * Three templates are registered today: `threeScenarioPnL` (flagship 3-scenario
+ * P&L), `operatingBudget` (12-month operating budget), and `dcfValuation`
+ * (Discounted Cash Flow valuation). The map is the extension point.
  */
 
 import { z } from 'zod';
@@ -39,10 +41,22 @@ import {
   type ScenarioDrivers,
   type ThreeScenarioPnLParams,
 } from './threeScenarioPnL.js';
+import {
+  buildOperatingBudgetSchema,
+  OPERATING_BUDGET_GENERAL_DEFAULTS,
+  OPERATING_BUDGET_DRIVER_DEFAULTS,
+  type OperatingBudgetParams,
+} from './operatingBudget.js';
+import {
+  buildDcfValuationSchema,
+  DCF_GENERAL_DEFAULTS,
+  DCF_DRIVER_DEFAULTS,
+  type DcfValuationParams,
+} from './dcfValuation.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
 /** Stable identifiers for registered model templates. */
-export type WorkbookTemplateId = 'threeScenarioPnL';
+export type WorkbookTemplateId = 'threeScenarioPnL' | 'operatingBudget' | 'dcfValuation';
 
 /** A FE-renderable, zod-validatable parameter type. */
 export type WorkbookTemplateParamType =
@@ -172,12 +186,223 @@ function buildThreeScenarioParams(): WorkbookTemplateParam[] {
 }
 
 // ---------------------------------------------------------------------------
+// operatingBudget — parameter descriptors
+// ---------------------------------------------------------------------------
+
+function buildOperatingBudgetParams(): WorkbookTemplateParam[] {
+  return [
+    {
+      name: 'companyName',
+      label: 'Nazwa spółki',
+      type: 'text',
+      default: OPERATING_BUDGET_GENERAL_DEFAULTS.companyName,
+      group: 'Ogólne',
+    },
+    {
+      name: 'currencyCode',
+      label: 'Waluta',
+      type: 'enum',
+      options: ['PLN', 'EUR', 'USD'],
+      default: OPERATING_BUDGET_GENERAL_DEFAULTS.currencyCode,
+      group: 'Ogólne',
+    },
+    {
+      name: 'startYear',
+      label: 'Rok budżetu',
+      type: 'integer',
+      default: new Date().getFullYear(),
+      min: 2000,
+      max: 2100,
+      step: 1,
+      group: 'Ogólne',
+    },
+    {
+      name: 'baseMonthlyRevenue',
+      label: 'Przychód m-c 1',
+      type: 'currency',
+      default: OPERATING_BUDGET_GENERAL_DEFAULTS.baseMonthlyRevenue,
+      min: 0,
+      step: 1000,
+      group: 'Przychody',
+    },
+    {
+      name: 'monthlyRevenueGrowthPct',
+      label: 'Wzrost przychodów m/m %',
+      type: 'percent',
+      default: OPERATING_BUDGET_DRIVER_DEFAULTS.monthlyRevenueGrowthPct,
+      min: -1,
+      max: 2,
+      step: 0.005,
+      group: 'Przychody',
+    },
+    {
+      name: 'variableCostPct',
+      label: 'Koszty zmienne % przychodów',
+      type: 'percent',
+      default: OPERATING_BUDGET_DRIVER_DEFAULTS.variableCostPct,
+      min: 0,
+      max: 1,
+      step: 0.005,
+      group: 'Koszty zmienne',
+    },
+    {
+      name: 'rentMonthly',
+      label: 'Czynsz (m-c 1)',
+      type: 'currency',
+      default: OPERATING_BUDGET_DRIVER_DEFAULTS.rentMonthly,
+      min: 0,
+      step: 100,
+      group: 'Koszty stałe',
+    },
+    {
+      name: 'salariesMonthly',
+      label: 'Wynagrodzenia (m-c 1)',
+      type: 'currency',
+      default: OPERATING_BUDGET_DRIVER_DEFAULTS.salariesMonthly,
+      min: 0,
+      step: 100,
+      group: 'Koszty stałe',
+    },
+    {
+      name: 'marketingMonthly',
+      label: 'Marketing (m-c 1)',
+      type: 'currency',
+      default: OPERATING_BUDGET_DRIVER_DEFAULTS.marketingMonthly,
+      min: 0,
+      step: 100,
+      group: 'Koszty stałe',
+    },
+    {
+      name: 'otherFixedMonthly',
+      label: 'Pozostałe koszty stałe (m-c 1)',
+      type: 'currency',
+      default: OPERATING_BUDGET_DRIVER_DEFAULTS.otherFixedMonthly,
+      min: 0,
+      step: 100,
+      group: 'Koszty stałe',
+    },
+    {
+      name: 'fixedCostGrowthPct',
+      label: 'Wzrost kosztów stałych m/m %',
+      type: 'percent',
+      default: OPERATING_BUDGET_DRIVER_DEFAULTS.fixedCostGrowthPct,
+      min: -1,
+      max: 2,
+      step: 0.005,
+      group: 'Koszty stałe',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// dcfValuation — parameter descriptors
+// ---------------------------------------------------------------------------
+
+function buildDcfValuationParams(): WorkbookTemplateParam[] {
+  return [
+    {
+      name: 'companyName',
+      label: 'Nazwa spółki',
+      type: 'text',
+      default: DCF_GENERAL_DEFAULTS.companyName,
+      group: 'Ogólne',
+    },
+    {
+      name: 'currencyCode',
+      label: 'Waluta',
+      type: 'enum',
+      options: ['PLN', 'EUR', 'USD'],
+      default: DCF_GENERAL_DEFAULTS.currencyCode,
+      group: 'Ogólne',
+    },
+    {
+      name: 'valuationYear',
+      label: 'Rok wyceny (rok 0)',
+      type: 'integer',
+      default: new Date().getFullYear(),
+      min: 2000,
+      max: 2100,
+      step: 1,
+      group: 'Ogólne',
+    },
+    {
+      name: 'fcf0',
+      label: 'FCF rok bazowy (rok 0)',
+      type: 'currency',
+      default: DCF_GENERAL_DEFAULTS.fcf0,
+      min: 0,
+      step: 1000,
+      group: 'Projekcja',
+    },
+    {
+      name: 'fcfGrowthPct',
+      label: 'Wzrost FCF (prognoza) % rocznie',
+      type: 'percent',
+      default: DCF_DRIVER_DEFAULTS.fcfGrowthPct,
+      min: -1,
+      max: 2,
+      step: 0.005,
+      group: 'Projekcja',
+    },
+    {
+      name: 'horizonYears',
+      label: 'Horyzont prognozy (lata)',
+      type: 'integer',
+      default: DCF_DRIVER_DEFAULTS.horizonYears,
+      min: 3,
+      max: 10,
+      step: 1,
+      group: 'Projekcja',
+    },
+    {
+      name: 'waccPct',
+      label: 'WACC (stopa dyskontowa) %',
+      type: 'percent',
+      default: DCF_DRIVER_DEFAULTS.waccPct,
+      min: 0.001,
+      max: 1,
+      step: 0.005,
+      group: 'Dyskontowanie',
+    },
+    {
+      name: 'terminalGrowthPct',
+      label: 'Wzrost terminalny (g) %',
+      type: 'percent',
+      default: DCF_DRIVER_DEFAULTS.terminalGrowthPct,
+      min: -0.5,
+      max: 0.5,
+      step: 0.005,
+      group: 'Dyskontowanie',
+    },
+    {
+      name: 'netDebt',
+      label: 'Dług netto',
+      type: 'currency',
+      default: DCF_DRIVER_DEFAULTS.netDebt,
+      step: 1000,
+      group: 'Mostek EV → Equity',
+    },
+    {
+      name: 'sharesOutstanding',
+      label: 'Liczba akcji',
+      type: 'number',
+      default: DCF_DRIVER_DEFAULTS.sharesOutstanding,
+      min: 1,
+      step: 1000,
+      group: 'Mostek EV → Equity',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
 /** The registry map: `templateId → entry`. */
 export const WORKBOOK_TEMPLATES: {
   threeScenarioPnL: WorkbookTemplateEntry<ThreeScenarioPnLParams>;
+  operatingBudget: WorkbookTemplateEntry<OperatingBudgetParams>;
+  dcfValuation: WorkbookTemplateEntry<DcfValuationParams>;
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
@@ -187,6 +412,22 @@ export const WORKBOOK_TEMPLATES: {
     params: buildThreeScenarioParams(),
     build: buildThreeScenarioPnLSchema,
     coerceParams: (flat) => unflattenDotted(flat) as ThreeScenarioPnLParams,
+  },
+  operatingBudget: {
+    id: 'operatingBudget',
+    title: 'Budżet operacyjny — 12 miesięcy',
+    description:
+      'Parametryczny budżet operacyjny 12-miesięczny: przychody→koszty zmienne→marża→koszty stałe (czynsz/wynagrodzenia/marketing/pozostałe)→koszty razem→wynik operacyjny→wynik narastająco→marża %, każda pozycja jako formuła, kolumna RAZEM (rok), wejścia na arkuszu Założenia, arkusz Podsumowanie.',
+    params: buildOperatingBudgetParams(),
+    build: buildOperatingBudgetSchema,
+  },
+  dcfValuation: {
+    id: 'dcfValuation',
+    title: 'Wycena DCF (Discounted Cash Flow)',
+    description:
+      'Prosta wycena metodą DCF: projekcja FCF na zadany horyzont→współczynnik dyskontowy→zdyskontowany FCF→wartość rezydualna (Gordon)→Enterprise Value→Equity Value→wartość na akcję, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusze Projekcja FCF i Wycena.',
+    params: buildDcfValuationParams(),
+    build: buildDcfValuationSchema,
   },
 };
 
@@ -301,5 +542,7 @@ export function buildTemplateParamsSchema(entry: WorkbookTemplateEntry): z.ZodTy
 
 export {
   buildThreeScenarioPnLSchema,
+  buildOperatingBudgetSchema,
+  buildDcfValuationSchema,
 };
-export type { ThreeScenarioPnLParams };
+export type { ThreeScenarioPnLParams, OperatingBudgetParams, DcfValuationParams };
