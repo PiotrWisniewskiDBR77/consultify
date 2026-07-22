@@ -13,6 +13,17 @@ import { EmbeddingService } from './ai/embeddingService.js';
 
 type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
+// ★ VLT-001: 3 poziomy przypisania dokumentu Vault (osoba/projekt/organizacja).
+export type VaultDocumentScope = 'user' | 'project' | 'organization';
+
+export interface VaultDocumentAccess {
+  userId?: string | null;
+  role?: string | null;
+  /** Jeżeli podane — filtruj do JEDNEGO poziomu; jeżeli brak — widok domyślny (patrz getDocuments). */
+  scope?: VaultDocumentScope | null;
+  projectId?: string | null;
+}
+
 const embeddingService = new EmbeddingService();
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
@@ -147,6 +158,20 @@ async function ensureKnowledgeSchema(): Promise<void> {
       [],
       { fallback: true } as any
     );
+
+    // ★ VLT-001: kolumny 3-poziomowego scope (osoba/projekt/organizacja) dopisane addytywnie
+    // do bazowego schematu Vault — wcześniej istniały tylko dzięki ALTER w
+    // ContextDocumentService.ensureSchema() (ta sama tabela, druga usługa), więc Vault zależał
+    // od kolejności inicjalizacji obcego serwisu. `fallback: true` + brak IF NOT EXISTS na
+    // dialekcie, który go nie wspiera, jest bezpieczne — DbPromise.run z fallback:true łyka błąd
+    // "column already exists" (patrz identyczny wzorzec: ContextDocumentService.ts:2389-2411).
+    const knowledgeDocsScopeColumns = [
+      `ALTER TABLE knowledge_docs ADD COLUMN owner_id TEXT`,
+      `ALTER TABLE knowledge_docs ADD COLUMN scope TEXT`,
+    ];
+    for (const statement of knowledgeDocsScopeColumns) {
+      await DbPromise.run(statement, [], { fallback: true } as any);
+    }
 
     // knowledge_chunks (local chunks store)
     await DbPromise.run(
@@ -565,21 +590,30 @@ const KnowledgeService = {
     fileSizeBytes: number,
     category: string | null,
     tags: string[] = [],
-    id?: string
+    id?: string,
+    ownerId?: string | null,
+    scope?: VaultDocumentScope | null
   ): Promise<string> {
     await ensureKnowledgeSchema();
     const docId = id || randomUUID();
     const filename = safeFilename(originalFilename);
+    // ★ VLT-001: scope ∈ {user,project,organization}; 'project' wymaga project_id (egzekwowane
+    // w warstwie routes — knowledge.routes.ts). Brak scope (stary caller) = 'organization'
+    // (zachowanie sprzed VLT-001: dokument widoczny dla całej organizacji).
+    const resolvedScope: VaultDocumentScope =
+      scope === 'user' || scope === 'project' || scope === 'organization' ? scope : 'organization';
     await DbPromise.run(
       `INSERT INTO knowledge_docs
-        (id, filename, filepath, organization_id, project_id, file_size_bytes, status, category, tags, chunk_count, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'indexing', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        (id, filename, filepath, organization_id, project_id, owner_id, scope, file_size_bytes, status, category, tags, chunk_count, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'indexing', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [
         docId,
         filename,
         filepath,
         organizationId,
-        projectId,
+        resolvedScope === 'project' ? projectId : null,
+        ownerId || null,
+        resolvedScope,
         Number.isFinite(Number(fileSizeBytes)) ? Number(fileSizeBytes) : null,
         category,
         JSON.stringify(tags || []),
@@ -652,11 +686,74 @@ const KnowledgeService = {
     return stored;
   },
 
-  async getDocuments(orgId: string, _userId?: string, _role?: string): Promise<any[]> {
+  /**
+   * ★ VLT-001 — odczyt Vault filtrowany wg 3 poziomów przypisania.
+   * Wzór logiki: ContextDocumentService.listAccessibleDocuments (:3789), rozszerzony o
+   * poziom 'organization' (którego tamta usługa w ogóle nie modeluje — jej `scope` to
+   * tylko 'project'|'user', patrz ContextDocumentService.ts:12). Dlatego logika NIE jest
+   * fizycznie reużyta stąd (patrz DZIENNIK VLT-001), tylko odtworzona z tym samym kształtem
+   * WHERE. Dokumenty sprzed VLT-001 mają `scope IS NULL` — traktowane jak 'organization'
+   * (to było ich faktyczne dotychczasowe zachowanie: widoczne dla całej organizacji).
+   */
+  async getDocuments(
+    orgId: string,
+    userId?: string,
+    _role?: string,
+    access?: {
+      scope?: VaultDocumentScope | null;
+      projectId?: string | null;
+      memberProjectIds?: string[];
+    }
+  ): Promise<any[]> {
     await ensureKnowledgeSchema();
+    const where: string[] = [
+      `(organization_id = ? OR organization_id IS NULL)`,
+      `deleted_at IS NULL`,
+    ];
+    const params: unknown[] = [orgId];
+
+    const requestedScope = access?.scope || null;
+    const projectId = access?.projectId || null;
+    const memberIds = (access?.memberProjectIds || []).filter(Boolean);
+
+    if (requestedScope === 'user') {
+      where.push(`scope = 'user'`);
+      where.push(`owner_id = ?`);
+      params.push(userId || null);
+    } else if (requestedScope === 'project') {
+      where.push(`scope = 'project'`);
+      if (projectId) {
+        where.push(`project_id = ?`);
+        params.push(projectId);
+      } else if (memberIds.length > 0) {
+        where.push(`project_id IN (${memberIds.map(() => '?').join(',')})`);
+        params.push(...memberIds);
+      } else {
+        where.push(`1 = 0`);
+      }
+    } else if (requestedScope === 'organization') {
+      where.push(`(scope = 'organization' OR scope IS NULL)`);
+    } else if (userId) {
+      // Widok domyślny (bez filtra poziomu): własne prywatne + organizacyjne/legacy +
+      // projektowe TYLKO dla projektów, w których user jest członkiem.
+      const projectClause =
+        memberIds.length > 0
+          ? `(scope = 'project' AND project_id IN (${memberIds.map(() => '?').join(',')}))`
+          : `1 = 0`;
+      where.push(
+        `((scope = 'user' AND owner_id = ?) OR (scope = 'organization' OR scope IS NULL) OR ${projectClause})`
+      );
+      params.push(userId);
+      if (memberIds.length > 0) params.push(...memberIds);
+    } else {
+      // Brak userId (np. aiContextBuilder — wywołanie wewnętrzne bez kontekstu usera):
+      // pokaż wszystko OPRÓCZ prywatnych dokumentów (nie ujawniaj cudzych 'user'-scope).
+      where.push(`(scope != 'user' OR scope IS NULL)`);
+    }
+
     const rows = await DbPromise.all<DocumentRow>(
-      `SELECT * FROM knowledge_docs WHERE (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200`,
-      [orgId],
+      `SELECT * FROM knowledge_docs WHERE ${where.join(' AND ')} ORDER BY created_at DESC LIMIT 200`,
+      params,
       { fallback: true } as any
     );
     return (rows || []).map(normalizeDocument);

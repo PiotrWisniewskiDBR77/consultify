@@ -17,10 +17,33 @@ import {
   extractTextFromFile as extractDocumentText,
   isSupportedIngest,
 } from '../services/documentTextExtractor.js';
-import KnowledgeService from '../services/KnowledgeService.js';
+import KnowledgeService, { type VaultDocumentScope } from '../services/KnowledgeService.js';
+// ★ VLT-001: reużyty tylko punktowo — sprawdzenie członkostwa w projekcie
+// (contextDocumentService.canAccessProject), NIE cały pipeline uploadAndIngest (dysproporcjonalne
+// wobec zakresu VLT-001, patrz DZIENNIK zadania). Ta sama tabela knowledge_docs, druga usługa.
+import contextDocumentService from '../services/organizationContext/ContextDocumentService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { uploadsDir } from '../utils/storagePaths.js';
+
+const VAULT_SCOPES: VaultDocumentScope[] = ['user', 'project', 'organization'];
+
+const parseVaultScope = (value: unknown): VaultDocumentScope | null => {
+  const s = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return (VAULT_SCOPES as string[]).includes(s) ? (s as VaultDocumentScope) : null;
+};
+
+/** Projekty, w których dany user jest członkiem (do domyślnego widoku Vault i filtra scope=project). */
+async function getMemberProjectIds(userId: string): Promise<string[]> {
+  if (!userId) return [];
+  const rows = await DbPromise.all<{ project_id: string }>(
+    `SELECT project_id FROM project_members WHERE user_id = ?`,
+    [userId],
+    { fallback: true } as any
+  );
+  return (rows || []).map((r) => String(r.project_id)).filter(Boolean);
+}
 
 // ==========================================
 // TYPES
@@ -683,13 +706,40 @@ router.post(
       tempPath = multerPath;
 
       const orgId = req.user?.organizationId;
-      // Force project_id = NULL for global knowledge docs (organization-level only)
-      const projectId = null;
+      const ownerId = req.user?.id;
+      const role = req.user?.role || 'USER';
 
       if (!orgId) {
         return res.status(401).json({ error: 'Unauthorized' });
         return;
       }
+
+      // ★ VLT-001: 3 poziomy przypisania — osoba/projekt/organizacja (dawniej zawsze wymuszone
+      // na organization/project_id=null, patrz DZIENNIK zadania). Brak `scope` w body (stary
+      // klient, przed VLT-003 UI) = 'organization', zachowanie identyczne jak przed VLT-001.
+      const requestedScope = parseVaultScope(req.body?.scope) || 'organization';
+      const rawProjectId =
+        typeof req.body?.project_id === 'string' && req.body.project_id.trim()
+          ? req.body.project_id.trim()
+          : typeof req.body?.projectId === 'string' && req.body.projectId.trim()
+            ? req.body.projectId.trim()
+            : null;
+
+      if (requestedScope === 'project') {
+        if (!rawProjectId) {
+          return res.status(400).json({ error: 'project_id wymagany dla scope=project' });
+        }
+        const canAccess = await contextDocumentService.canAccessProject({
+          organizationId: orgId,
+          userId: ownerId || '',
+          projectId: rawProjectId,
+          userRole: role,
+        });
+        if (!canAccess) {
+          return res.status(403).json({ error: 'Brak dostępu do projektu' });
+        }
+      }
+      const projectId = requestedScope === 'project' ? rawProjectId : null;
 
       // Move file to local storage (org-scoped; global docs => project_id NULL)
       const safeName = String(path.basename(originalname || 'document'))
@@ -722,7 +772,10 @@ router.post(
         projectId,
         size,
         category,
-        tags
+        tags,
+        undefined,
+        ownerId,
+        requestedScope
       );
 
       // Extract Text (HP-23: PDF/TXT/MD/CSV/DOCX/XLSX/PPTX — wspólny ekstraktor,
@@ -789,13 +842,39 @@ router.get(
         return;
       }
 
+      // ★ VLT-001: scope opcjonalny w query (?scope=user|project|organization&project_id=...).
+      // Brak scope = widok domyślny (własne prywatne + organizacyjne + projekty, których user
+      // jest członkiem). Bez tego GET dziś (przed VLT-001) ignorował userId/role całkowicie.
+      const requestedScope = parseVaultScope(req.query.scope);
+      const requestedProjectId =
+        typeof req.query.project_id === 'string' && req.query.project_id.trim()
+          ? req.query.project_id.trim()
+          : null;
+
+      if (requestedScope === 'project' && requestedProjectId && userId) {
+        const canAccess = await contextDocumentService.canAccessProject({
+          organizationId: orgId,
+          userId,
+          projectId: requestedProjectId,
+          userRole: role,
+        });
+        if (!canAccess) {
+          return res.status(403).json({ error: 'Brak dostępu do projektu' });
+        }
+      }
+
       let docs: any[];
       if (strategyId) {
         docs = await KnowledgeService.getDocumentsByStrategy(strategyId);
       } else if (category) {
         docs = await KnowledgeService.getDocumentsByCategory(orgId, category);
       } else {
-        docs = await KnowledgeService.getDocuments(orgId, userId, role);
+        const memberProjectIds = userId ? await getMemberProjectIds(userId) : [];
+        docs = await KnowledgeService.getDocuments(orgId, userId, role, {
+          scope: requestedScope,
+          projectId: requestedProjectId,
+          memberProjectIds,
+        });
       }
 
       // Parse JSON fields
