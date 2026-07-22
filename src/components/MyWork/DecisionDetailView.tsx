@@ -98,6 +98,9 @@ import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModeToolbar, type NModeToolbarAction } from '../shared/NModeLayout/NModeToolbar';
 import type { NModeSection } from '../shared/NModeLayout/types';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
+// POC (D-8): kompozycja kart Decision wyprowadzona z WIĄŻĄCEGO kontraktu karty
+// (cardContract.types.ts) zamiast z luźnego DECISION_SPEC — patrz decisionCardContract.ts.
+import { DECISION_CARD_RENDER_IDS, DECISION_CARD_SPEC } from './decisionCardContract';
 import type {
   ActivityLogEntry as NModeActivityLogEntry,
   ActivityStats,
@@ -194,6 +197,19 @@ interface DecisionDetailViewProps {
 // Default OFF until Piotr accepts on screenshots (reguła #7).
 // See docs/ui-standards/TRIADA_KANON.md + ARTIFACT_ANATOMY_STANDARD.md §18.1.
 const VF1_DECISION_SPECA = import.meta.env.VITE_VF1_DECISION_SPECA === 'true';
+
+// POC — kompozycja kart Decision przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
+// Default OFF (zero regresji na demo); w dev/harnessie włącza URL `?cardContract=1`
+// (Piotr nie jest pierwszym testerem wizualnym — reguła #7; ja renderuję zrzut sam).
+function useDecisionCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (import.meta.env.VITE_VF1_DECISION_CARD_CONTRACT === 'true') return true;
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    }
+    return false;
+  }, []);
+}
 
 type ConsequenceTimeline = {
   d7: string;
@@ -1301,7 +1317,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // content per-id via direct `activeNotionSection === '<id>'` checks (no
   // `sections[]` array like Task/Insight), so only `notionSections` (the nav
   // list) needs to be filtered/ordered — the content blocks stay untouched.
-  const decisionCardLayoutStorageKey = `decision:nmode:card-layout:v1:${decisionId ?? 'new'}`;
+  // POC (D-8): gdy włączony kontrakt, layout ma INNE znaczenie (węższy zestaw
+  // domyślny), więc namespace klucza jest osobny — stary 8-kartowy layout nie
+  // hydratuje się nad węższy domyślny, a wyłączenie flagi wraca do 'v1' bez utraty.
+  const decisionCardContractEnabled = useDecisionCardContractEnabled();
+  const decisionCardLayoutStorageKey = `decision:nmode:card-layout:${
+    decisionCardContractEnabled ? 'v2-contract' : 'v1'
+  }:${decisionId ?? 'new'}`;
   const initialDecisionCardLayout = useMemo<CardLayout | null>(() => {
     try {
       const raw = localStorage.getItem(decisionCardLayoutStorageKey);
@@ -1336,9 +1358,27 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
   const decisionCardLayout = useCardLayout({
     artifactType: 'decision',
+    // POC: gdy flaga ON, katalog + zestawy płyną z kontraktu kanonicznego
+    // (DECISION_CARD_SPEC — stała moduł-const, stabilna referencja); gdy OFF,
+    // `undefined` ⇒ useCardLayout czyta DEFAULT_CARD_SETS['decision'] jak dotąd.
+    spec: decisionCardContractEnabled ? DECISION_CARD_SPEC : undefined,
     initialLayout: initialDecisionCardLayout,
     onLayoutChange: persistDecisionCardLayout,
   });
+
+  // R2 (KONTRAKT §9): każda sekcja renderowana przez Decision ma wpis w katalogu
+  // kanonicznym i odwrotnie. Cichy dev-only sygnał rozjazdu id kod↔katalog —
+  // nie blokuje renderu, ale ostrzega, gdyby alias został źle zmapowany.
+  useEffect(() => {
+    if (!import.meta.env.DEV || !decisionCardContractEnabled) return;
+    const missing = notionSections
+      .map((s) => s.id)
+      .filter((id) => !DECISION_CARD_RENDER_IDS.includes(id));
+    if (missing.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[decisionCardContract] sekcje lewej nawigacji bez wpisu w katalogu:', missing);
+    }
+  }, [decisionCardContractEnabled, notionSections]);
 
   const orderedNotionSections = useMemo(
     () => decisionCardLayout.applyToSections(notionSections),

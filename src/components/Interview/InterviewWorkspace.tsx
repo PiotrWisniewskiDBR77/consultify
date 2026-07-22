@@ -49,11 +49,15 @@ import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
 import {
+  type CardLayout,
+  NModeActionBar,
   type NModeAction,
+  NModeCardManager,
   type NModePropertyField,
   type NModeSection,
   NModeSectionWrapper,
   NModeShell,
+  useCardLayout,
 } from '@/components/shared/NModeLayout';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import {
@@ -83,6 +87,10 @@ import {
 import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
 import { ConversationalPanel } from './ConversationalPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
+// MIGRACJA (D-8): kompozycja kart Interview wyprowadzona z WIĄŻĄCEGO kontraktu
+// karty (cardContract.types.ts) zamiast z luźnej tablicy NModeSection[] —
+// patrz interviewCardContract.ts. Za flagą (default OFF), zero regresji na demo.
+import { INTERVIEW_CARD_RENDER_IDS, INTERVIEW_CARD_SPEC } from './interviewCardContract';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 import { InterviewNote, NotesPanel } from './NotesPanel';
@@ -150,6 +158,20 @@ interface InterviewWorkspaceProps {
   onComplete?: (sessionId: string) => void;
   onSessionChange?: (session: InterviewSession) => void;
   onClose?: () => void;
+}
+
+// MIGRACJA (D-8, przepis §KROK 3) — kompozycja kart Interview przez WIĄŻĄCY
+// kontrakt karty. Default OFF (zero regresji na demo); w dev/harnessie włącza URL
+// `?cardContract=1` (Piotr nie jest pierwszym testerem wizualnym — reguła #7; ja
+// renderuję zrzut sam). Wzorzec 1:1 z POC Decision (useDecisionCardContractEnabled).
+function useInterviewCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (import.meta.env.VITE_VF1_INTERVIEW_CARD_CONTRACT === 'true') return true;
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    }
+    return false;
+  }, []);
 }
 
 // ==========================================
@@ -1751,6 +1773,48 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     );
   };
 
+  // ── MIGRACJA (D-8): kompozycja kart przez WIĄŻĄCY kontrakt karty ────────────
+  //
+  // Hooki MUSZĄ stać PRZED wczesnym returnem (isLoading/loadError niżej) —
+  // reguła hooków. `applyToSections` (nie-hook) wołamy dopiero przy budowie
+  // `sections` w gałęzi renderu. Wzorzec 1:1 z POC Decision (DecisionDetailView).
+  //
+  // OGRANICZENIE (przepis R2): `useCardLayout.artifactType` przyjmuje
+  // `NModeArtifactType` = 'insight'|'initiative'|'decision'|'task' — NIE ma
+  // 'interview' (rozjazd z `KartaNKey`, które 'interview' ma). Gdy flaga ON,
+  // `spec` (INTERVIEW_CARD_SPEC) NADPISUJE fallback, więc `artifactType` jest
+  // MARTWY (nie konsumowany); podajemy inertny literał. DO POTWIERDZENIA PIOTRA:
+  // czy `NModeArtifactType` ma dostać 'interview' (osobny pakiet — dotyka powłoki).
+  const interviewCardContractEnabled = useInterviewCardContractEnabled();
+  const interviewCardLayoutStorageKey = `interview:nmode:card-layout:${
+    interviewCardContractEnabled ? 'v2-contract' : 'v1'
+  }:${session?.id ?? 'new'}`;
+  const initialInterviewCardLayout = useMemo<CardLayout | null>(() => {
+    try {
+      const raw = localStorage.getItem(interviewCardLayoutStorageKey);
+      return raw ? (JSON.parse(raw) as CardLayout) : null;
+    } catch {
+      return null;
+    }
+  }, [interviewCardLayoutStorageKey]);
+  const persistInterviewCardLayout = useCallback(
+    (next: CardLayout) => {
+      try {
+        localStorage.setItem(interviewCardLayoutStorageKey, JSON.stringify(next));
+      } catch {
+        /* localStorage niedostępny — layout zostaje w pamięci sesji */
+      }
+    },
+    [interviewCardLayoutStorageKey]
+  );
+  const interviewCardLayout = useCardLayout({
+    // Inertny fallback (patrz wyżej) — nadpisany przez `spec` gdy flaga ON.
+    artifactType: 'insight',
+    spec: interviewCardContractEnabled ? INTERVIEW_CARD_SPEC : undefined,
+    initialLayout: initialInterviewCardLayout,
+    onLayoutChange: persistInterviewCardLayout,
+  });
+
   // ==========================================
   // LOADING STATE
   // ==========================================
@@ -2916,6 +2980,28 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     }
   }
 
+  // ── MIGRACJA (D-8): filtr+kolejność sekcji przez kontrakt karty ─────────────
+  // `applyToSections` (nie-hook) zwęża `sections` do zestawu z layoutu i porządku;
+  // rdzeń `questions` (core:true) jest nieusuwalny (removeCard przerywa). Flaga OFF
+  // ⇒ `sections` bez zmian (zero regresji na demo). Sekcje spoza layoutu (np.
+  // `summary` w trybie assignment nieobecny) nie znikają (useCardLayout:307).
+  const orderedSections = interviewCardContractEnabled
+    ? interviewCardLayout.applyToSections(sections)
+    : sections;
+
+  // R2 (przepis §9): każda sekcja renderowana ma wpis w katalogu kanonicznym i
+  // odwrotnie. Cichy dev-only sygnał rozjazdu id kod↔katalog (nie blokuje). Plain
+  // `if` (nie useEffect) — ten fragment biegnie PO wczesnym returnie (rules-of-hooks).
+  if (import.meta.env.DEV && interviewCardContractEnabled) {
+    const bezWpisu = sections
+      .map((s) => s.id)
+      .filter((id) => !INTERVIEW_CARD_RENDER_IDS.includes(id));
+    if (bezWpisu.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[interviewCardContract] sekcje bez wpisu w katalogu:', bezWpisu);
+    }
+  }
+
   // #11 — Pre-submit AI quality gate modal (shared across render branches).
   // L-07 / SPEC_13 §5.1 — when any hard-floor item is present the gate is a HARD
   // block: no "submit anyway" escape. Soft-only gates stay skippable.
@@ -3083,9 +3169,27 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         // `properties` CELOWO pominiete — te same pola renderuje teraz sekcja
         // Wlasciwosci prawego panelu (SPEC-N §2.2). Podanie obu naraz dalo by
         // te sama tresc w dwoch miejscach (§2.6).
-        sections={sections}
+        sections={orderedSections}
         actions={actions}
         actionsVisible={actions.length > 0}
+        // MIGRACJA (D-8): gdy flaga ON, pasek akcji dostaje picker kontraktu
+        // (Sekcje ▾ z przełącznikiem Rdzeń/Pełny + Nowa karta ▾), a istniejące
+        // akcje renderujemy obok (NModeActionBar) — nic nie ginie. Flaga OFF ⇒
+        // `undefined` ⇒ powłoka rysuje standardowy pasek jak dotąd (zero regresji).
+        renderActionBar={
+          interviewCardContractEnabled
+            ? () => (
+                <div className="flex items-center gap-2 min-h-[36px] flex-wrap">
+                  <NModeCardManager layout={interviewCardLayout} isPolish={isPolish} />
+                  {actions.length > 0 && (
+                    <div className="ml-auto">
+                      <NModeActionBar actions={actions} activeSection={activeSection} />
+                    </div>
+                  )}
+                </div>
+              )
+            : undefined
+        }
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         presentationMode={presentationMode}

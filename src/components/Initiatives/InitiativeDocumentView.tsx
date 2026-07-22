@@ -198,6 +198,13 @@ import {
   MODULE_CONFIG,
   SECTION_REGISTRY,
 } from './sections';
+// MIGRACJA (D-8): kompozycja kart Initiative wyprowadzona z WIĄŻĄCEGO kontraktu karty
+// (cardContract.types.ts) — patrz sections/initiativeCardContract.ts. Za flagą (default OFF).
+import {
+  INITIATIVE_CARD_RENDER_IDS,
+  INITIATIVE_CORE_BOARD_IDS,
+  isInitiativeCardContractEnabled,
+} from './sections/initiativeCardContract';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
 import type {
@@ -720,6 +727,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Canon Toolbar (Layer 3) — user-toggled section visibility for the left nav.
   // Drops section ids from the nav until restored ("Restore defaults").
   const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
+
+  // MIGRACJA (D-8): flaga kontraktu karty Initiative (default OFF; CLAUDE.md #7/#9).
+  // Wartość stała per-montaż (URL/localStorage/env), więc liczymy raz. Pod flagą:
+  // RDZEŃ (overview→board `initiative-definition`) staje się NIEUSUWALNY w pickerze „Sekcje".
+  const initiativeCardContractEnabled = useMemo(() => isInitiativeCardContractEnabled(), []);
   // Wzorzec N (§3) — per-section AI-draft state map. Sekcje generowane AI dostają
   // badge stanu (AI-draft/Edytowane/Gotowe) + pasek Regeneruj·Edytuj·Zaakceptuj.
   // Stan trzymany LOKALNIE (brak persystencji regenerateCount w backendzie sekcji);
@@ -2187,6 +2199,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     return { leftSections: left, rightSections: right };
   }, [sectionTypes, visibleSections, sectionOrder]);
+
+  // MIGRACJA (D-8) R2 — cichy sygnał dev: każdy renderowany klucz registry ma wpis
+  // w katalogu kanonicznym (INITIATIVE_CARD_RENDER_IDS) albo jest znanym martwym
+  // aliasem. Nie blokuje renderu; ostrzega, gdyby klucz kod↔katalog się rozjechał.
+  // Tylko dev + flaga (żeby nie hałasować w produkcie ani przy OFF).
+  useEffect(() => {
+    if (!import.meta.env.DEV || !initiativeCardContractEnabled) return;
+    const known = new Set<string>(INITIATIVE_CARD_RENDER_IDS);
+    const deadAliases = new Set(['initiativeTeam', 'linkedItems']);
+    const missing = [...leftSections, ...rightSections]
+      .map((st) => st.key)
+      .filter((key) => !known.has(key) && !deadAliases.has(key));
+    if (missing.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[initiativeCardContract] klucze registry bez wpisu w katalogu kanonicznym:', missing);
+    }
+  }, [initiativeCardContractEnabled, leftSections, rightSections]);
 
   // ── Suggested changes (Faza 4) — load + accept/reject (mini-gate) ──────────
   const loadSuggestedChanges = useCallback(async () => {
@@ -10694,21 +10723,38 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     </div>
                                     {grp.sections.map((s) => {
                                       const isEmpty = s.cHidden === true;
-                                      const isVisible = !hiddenSectionIds.has(s.id);
+                                      // MIGRACJA (D-8): RDZEŃ nieusuwalny pod flagą — sekcja boardu
+                                      // z rdzenia kontraktu (overview→`initiative-definition`) nie
+                                      // daje się ukryć; poza flagą zachowanie bez zmian.
+                                      const isCore =
+                                        initiativeCardContractEnabled &&
+                                        INITIATIVE_CORE_BOARD_IDS.has(s.id);
+                                      const isVisible = isCore || !hiddenSectionIds.has(s.id);
                                       const SectionIcon = s.icon;
                                       return (
                                         <button
                                           key={s.id}
                                           type="button"
-                                          onClick={() =>
+                                          disabled={isCore}
+                                          title={
+                                            isCore
+                                              ? isPolish
+                                                ? 'Karta rdzenia — nieusuwalna'
+                                                : 'Core card — cannot be hidden'
+                                              : undefined
+                                          }
+                                          onClick={() => {
+                                            if (isCore) return; // rdzeń: brak akcji ukrycia
                                             setHiddenSectionIds((prev) => {
                                               const next = new Set(prev);
                                               if (next.has(s.id)) next.delete(s.id);
                                               else next.add(s.id);
                                               return next;
-                                            })
-                                          }
-                                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-c-surface-raised/60 ${
+                                            });
+                                          }}
+                                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${
+                                            isCore ? 'cursor-default' : 'hover:bg-c-surface-raised/60'
+                                          } ${
                                             isEmpty ? 'text-c-text-muted' : 'text-c-text-secondary'
                                           }`}
                                         >
@@ -10725,7 +10771,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           <span className="flex-1 truncate">
                                             {isPolish ? s.label.pl : s.label.en}
                                           </span>
-                                          {isEmpty && (
+                                          {isCore && (
+                                            <span className="shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted">
+                                              {isPolish ? 'Rdzeń' : 'Core'}
+                                            </span>
+                                          )}
+                                          {isEmpty && !isCore && (
                                             <span className="shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium text-c-text-muted">
                                               {t('initiatives.empty3')}
                                             </span>

@@ -10,7 +10,7 @@ import {
   SlidersHorizontal,
   Target,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -26,18 +26,46 @@ import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
 
 import {
+  type CardLayout,
   type NModeAction,
+  type NModeArtifactType,
   type NModePropertyField,
   type NModeSection,
+  NModeActionBar,
+  NModeCardManager,
   NModeShell,
+  useCardLayout,
 } from '../shared/NModeLayout';
 import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
 import { GrowthPathsLibraryGraphic } from './GrowthPathsLibraryGraphic';
 import { MarketForcesLibraryGraphic } from './MarketForcesLibraryGraphic';
 import { PortfolioPriorityLibraryGraphic } from './PortfolioPriorityLibraryGraphic';
 import { RiskUncertaintyLibraryGraphic } from './RiskUncertaintyLibraryGraphic';
+import { TOOL_CARD_RENDER_IDS, TOOL_CARD_SPEC } from './toolCards.contract';
 
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
+
+// ── MIGRACJA (D-8, kontrakt karty) — Tool wpina WIĄŻĄCY kontrakt jako źródło
+// 4 sekcji centrum (Piotr 2026-07-22: analogicznie do zaakceptowanej migracji
+// Notification). Default OFF (zero regresji na demo); w dev/harnessie włącza
+// URL `?cardContract=1` (Piotr nie jest pierwszym testerem wizualnym — reguła
+// #7 CLAUDE.md; JA renderuję zrzut sam przed odbiorem).
+function useToolCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (import.meta.env.VITE_VF1_TOOL_CARD_CONTRACT === 'true') return true;
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    }
+    return false;
+  }, []);
+}
+
+// 'tool' NIE istnieje w NModeArtifactType (shared cardSets.ts:32 — dziś
+// 'insight'|'initiative'|'decision'|'task'). Pole `artifactType` jest INERTNE,
+// bo `spec` (TOOL_CARD_SPEC) zawsze zastępuje DEFAULT_CARD_SETS
+// (useCardLayout.ts:148-151) — identyczny placeholder jak w Notification
+// (NotificationDetailView.tsx:205), wspóldzielony plik świadomie nietknięty.
+const TOOL_ARTIFACT_TYPE = 'tool' as unknown as NModeArtifactType;
 
 export function KnownToolDetailView(props: {
   toolType: string;
@@ -1487,6 +1515,75 @@ export function KnownToolDetailView(props: {
     ]);
   }, [tool, isPolish, toolType, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
+  // ── MIGRACJA (D-8): layout kart centrum z WIĄŻĄCEGO kontraktu karty ────────
+  // Za flagą (default OFF). Gdy ON: katalog + zestawy płyną z TOOL_CARD_SPEC
+  // (węższy zestaw domyślny Cel/Proces/Rezultat — rola 'domyslna'; „Przykład"
+  // dodawalny z pickera „Sekcje ▾", rola 'dodawalna'). Gdy OFF:
+  // applyToSections/manager nie są używane ⇒ zachowanie 1:1 bez zmian (zero
+  // regresji na demo — reguła #7/#9 CLAUDE.md).
+  const toolCardContractEnabled = useToolCardContractEnabled();
+  // Osobny namespace klucza (v2-contract) — spójny z wzorcem Notification;
+  // wyłączenie flagi wraca do dawnej ścieżki bez utraty stanu.
+  const toolCardLayoutStorageKey = `tool:nmode:card-layout:v2-contract:${tool?.toolType || toolType}`;
+  const initialToolCardLayout = useMemo<CardLayout | null>(() => {
+    if (!toolCardContractEnabled) return null;
+    try {
+      const raw = localStorage.getItem(toolCardLayoutStorageKey);
+      return raw ? (JSON.parse(raw) as CardLayout) : null;
+    } catch {
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolCardLayoutStorageKey, toolCardContractEnabled]);
+  const persistToolCardLayout = useCallback(
+    (next: CardLayout) => {
+      if (!toolCardContractEnabled) return;
+      try {
+        localStorage.setItem(toolCardLayoutStorageKey, JSON.stringify(next));
+      } catch {
+        /* localStorage niedostępny — layout pozostaje w pamięci sesji */
+      }
+    },
+    [toolCardLayoutStorageKey, toolCardContractEnabled]
+  );
+
+  const toolCardLayout = useCardLayout({
+    // INERTNE gdy `spec` podany (patrz TOOL_ARTIFACT_TYPE wyżej).
+    artifactType: TOOL_ARTIFACT_TYPE,
+    spec: TOOL_CARD_SPEC,
+    initialLayout: initialToolCardLayout,
+    onLayoutChange: persistToolCardLayout,
+  });
+
+  // Sekcje przekazywane do NModeShell: gdy flaga ON, filtruj+porządkuj przez
+  // layout (węższy domyślny; „Przykład" dodawalny); gdy OFF, surowe `sections`
+  // bez zmian — to jest gwarancja zero regresji przy OFF.
+  const orderedToolSections = useMemo<NModeSection[]>(
+    () => (toolCardContractEnabled ? toolCardLayout.applyToSections(sections) : sections),
+    [toolCardContractEnabled, toolCardLayout, sections]
+  );
+
+  // Gdy flaga ON i aktywna sekcja została ukryta w pickerze — przeskocz na
+  // pierwszą widoczną (analogicznie do Notification).
+  useEffect(() => {
+    if (!toolCardContractEnabled) return;
+    const visibleIds = toolCardLayout.visibleOrderedIds;
+    if (visibleIds.length > 0 && !visibleIds.includes(activeSection)) {
+      setActiveSection(visibleIds[0]);
+    }
+  }, [toolCardContractEnabled, toolCardLayout.visibleOrderedIds, activeSection]);
+
+  // R2 (KONTRAKT §9): każda sekcja centrum renderowana przez Tool ma wpis w
+  // katalogu kanonicznym. Cichy dev-only sygnał rozjazdu id kod↔katalog.
+  useEffect(() => {
+    if (!import.meta.env.DEV || !toolCardContractEnabled) return;
+    const missing = sections.map((s) => s.id).filter((id) => !TOOL_CARD_RENDER_IDS.includes(id));
+    if (missing.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[toolCardContract] sekcje centrum bez wpisu w katalogu:', missing);
+    }
+  }, [toolCardContractEnabled, sections]);
+
   // ── SPEC-N §2.2 — PRAWY PANEL (wcześniej nie istniał w ogóle) ──────────────
   // Właściwości renderowały się jako `NModePropertiesStrip` (pozioma listwa pod
   // nagłówkiem) — dokładnie ten anty-wzorzec, który §2.2 nazywa „brakiem całej
@@ -1634,9 +1731,25 @@ export function KnownToolDetailView(props: {
         statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
         primaryAction,
       }}
-      sections={sections}
+      sections={orderedToolSections}
       actions={actions}
       actionsVisible={true}
+      // MIGRACJA (za flagą): dokłada picker kart „Sekcje ▾ / + Nowa karta ▾"
+      // obok istniejącej akcji „Baza wiedzy", bez zmiany domyślnego renderu
+      // toolbara gdy flaga OFF (replikuje `NModeActionBar` 1:1 — patrz
+      // NModeShell.tsx renderActionBar fallback).
+      renderActionBar={() => (
+        <div className="flex items-center gap-2">
+          {actions.length > 0 && (
+            <NModeActionBar actions={actions} activeSection={activeSection} />
+          )}
+          {toolCardContractEnabled && (
+            <div className="ml-auto">
+              <NModeCardManager layout={toolCardLayout} isPolish={isPolish} />
+            </div>
+          )}
+        </div>
+      )}
       activeSection={activeSection}
       onSectionChange={setActiveSection}
       rightPanel={

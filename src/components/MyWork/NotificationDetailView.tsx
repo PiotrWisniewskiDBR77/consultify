@@ -61,9 +61,19 @@ import { muteNotificationTypeForSession } from '@/utils/notificationMuteSession'
 
 import { Api } from '../../services/api';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
+import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
+import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
+import type { NModeArtifactType } from '../shared/NModeLayout/cardSets';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
+// MIGRACJA (D-8): kompozycja kart Notification wyprowadzona z WIĄŻĄCEGO kontraktu
+// karty (cardContract.types.ts) zamiast zahardkodowanego nModeSections — patrz
+// notificationCardContract.ts. Za flagą (default OFF), wzorzec = POC Decision.
+import {
+  NOTIFICATION_CARD_RENDER_IDS,
+  NOTIFICATION_CARD_SPEC,
+} from './notificationCardContract';
 import TeresaMark from '../shared/TeresaMark';
 // SPEC-N §2.2 — prawy panel artefaktu (Akcje·Wlasciwosci·Powiazania·Komentarze·Historia).
 // Tu w wariancie SKROCONYM: Wlasciwosci + Historia (decyzja wlasciciela K2).
@@ -173,6 +183,26 @@ const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
+
+// MIGRACJA — kompozycja kart Notification przez WIĄŻĄCY kontrakt karty (D-8).
+// Default OFF (zero regresji na demo); w dev/harnessie włącza URL `?cardContract=1`
+// (Piotr nie jest pierwszym testerem wizualnym — reguła #7; ja renderuję zrzut sam).
+function useNotificationCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (import.meta.env.VITE_VF1_NOTIFICATION_CARD_CONTRACT === 'true') return true;
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    }
+    return false;
+  }, []);
+}
+
+// 'notification' NIE istnieje w NModeArtifactType (shared cardSets.ts — poza zakresem
+// tej fali: nie edytuję wspóldzielonych plików równolegle). Pole `artifactType` jest
+// INERTNE, bo `spec` (NOTIFICATION_CARD_SPEC) zawsze zastępuje DEFAULT_CARD_SETS
+// (useCardLayout.ts:148-151). ★ DO POTWIERDZENIA PIOTRA: dodać 'notification' do
+// NModeArtifactType (osobny krok — wtedy placeholder znika).
+const NOTIFICATION_ARTIFACT_TYPE = 'notification' as unknown as NModeArtifactType;
 
 export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   notificationId,
@@ -2268,6 +2298,76 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     activityLogLoading,
     isSnoozed,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
+  // ── MIGRACJA (D-8): layout kart lewej nawigacji z WIĄŻĄCEGO kontraktu karty ──
+  // Za flagą (default OFF). Gdy ON: katalog + zestawy płyną z NOTIFICATION_CARD_SPEC
+  // (rdzeń nieusuwalny przez typ, węższy zestaw domyślny, picker „Sekcje"/„+ Nowa
+  // karta"). Gdy OFF: applyToSections/manager nie są używane ⇒ zachowanie bez zmian.
+  const notificationCardContractEnabled = useNotificationCardContractEnabled();
+  // Osobny namespace klucza (v2-contract) — węższy domyślny nie hydratuje się nad
+  // stary układ, a wyłączenie flagi wraca do dawnej ścieżki bez utraty stanu.
+  const notificationCardLayoutStorageKey = `notification:nmode:card-layout:v2-contract:${notificationId ?? 'new'}`;
+  const initialNotificationCardLayout = useMemo<CardLayout | null>(() => {
+    if (!notificationCardContractEnabled) return null;
+    try {
+      const raw = localStorage.getItem(notificationCardLayoutStorageKey);
+      return raw ? (JSON.parse(raw) as CardLayout) : null;
+    } catch {
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notificationCardLayoutStorageKey, notificationCardContractEnabled]);
+  const persistNotificationCardLayout = useCallback(
+    (next: CardLayout) => {
+      if (!notificationCardContractEnabled) return;
+      try {
+        localStorage.setItem(notificationCardLayoutStorageKey, JSON.stringify(next));
+      } catch {
+        /* localStorage niedostępny — layout pozostaje w pamięci sesji */
+      }
+    },
+    [notificationCardLayoutStorageKey, notificationCardContractEnabled]
+  );
+
+  const notificationCardLayout = useCardLayout({
+    // INERTNE gdy `spec` podany (patrz NOTIFICATION_ARTIFACT_TYPE wyżej).
+    artifactType: NOTIFICATION_ARTIFACT_TYPE,
+    spec: NOTIFICATION_CARD_SPEC,
+    initialLayout: initialNotificationCardLayout,
+    onLayoutChange: persistNotificationCardLayout,
+  });
+
+  // Sekcje przekazywane do LeftNav/Canvas: gdy flaga ON, filtruj+porządkuj przez
+  // layout (węższy domyślny; `ai-analysis` dodawalne z pickera); gdy OFF, surowe.
+  const orderedNModeSections = useMemo<NModeSection[]>(
+    () =>
+      notificationCardContractEnabled
+        ? notificationCardLayout.applyToSections(nModeSectionsWithContent)
+        : nModeSectionsWithContent,
+    [notificationCardContractEnabled, notificationCardLayout, nModeSectionsWithContent]
+  );
+
+  // Gdy flaga ON i aktywna sekcja została ukryta w pickerze — przeskocz na pierwszą widoczną.
+  useEffect(() => {
+    if (!notificationCardContractEnabled) return;
+    const visibleIds = notificationCardLayout.visibleOrderedIds;
+    if (visibleIds.length > 0 && !visibleIds.includes(activeNSection)) {
+      setActiveNSection(visibleIds[0]);
+    }
+  }, [notificationCardContractEnabled, notificationCardLayout.visibleOrderedIds, activeNSection]);
+
+  // R2 (KONTRAKT §9): każda sekcja nav renderowana przez Notification ma wpis w
+  // katalogu kanonicznym. Cichy dev-only sygnał rozjazdu id kod↔katalog.
+  useEffect(() => {
+    if (!import.meta.env.DEV || !notificationCardContractEnabled) return;
+    const missing = nModeSections
+      .map((s) => s.id)
+      .filter((id) => !NOTIFICATION_CARD_RENDER_IDS.includes(id));
+    if (missing.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[notificationCardContract] sekcje lewej nawigacji bez wpisu w katalogu:', missing);
+    }
+  }, [notificationCardContractEnabled, nModeSections]);
+
   // ── Loading / 404 guards (AFTER all hooks to respect Rules of Hooks) ────
 
   if (loading) {
@@ -2838,6 +2938,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       Akcent AI = teal/c-info, NIGDY crimson (pulapka nr 1 CLAUDE.md;
                       ten przycisk mial primary-* i zostal naprawiony 21.07). Tint 10%,
                       nie solid — solid rezerwuje §2.3 dla slotu primary. */}
+                  {/* MIGRACJA (za flagą): picker kart „Sekcje ▾ / + Nowa karta ▾"
+                      (rdzeń nieusuwalny, węższy domyślny). Crimson-safe (teal/c-focus). */}
+                  {notificationCardContractEnabled && (
+                    <div className="ml-auto">
+                      <NModeCardManager layout={notificationCardLayout} isPolish={isPolish} />
+                    </div>
+                  )}
                   {(activeNSection === 'ai-analysis' ||
                     activeNSection === 'whats-happening' ||
                     activeNSection === 'expected-action') && (
@@ -2860,12 +2967,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* ── 3-Pane: LeftNav + Canvas + prawy panel (SPEC-N §2.2) ── */}
               <div className="flex gap-0 min-h-[60vh]">
                 <NModeLeftNav
-                  sections={nModeSectionsWithContent}
+                  sections={orderedNModeSections}
                   activeSection={activeNSection}
                   onSectionChange={setActiveNSection}
                 />
                 <NModeCanvas
-                  sections={nModeSectionsWithContent}
+                  sections={orderedNModeSections}
                   activeSection={activeNSection}
                   reducedMotion={reducedMotion}
                   motionDuration={motionDuration}

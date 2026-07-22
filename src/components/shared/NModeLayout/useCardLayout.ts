@@ -52,6 +52,16 @@ export interface UseCardLayoutOptions {
   /** Artifact type — selects the catalog + default sets from DEFAULT_CARD_SETS. */
   artifactType: NModeArtifactType;
   /**
+   * Explicit spec override. When provided, it REPLACES `DEFAULT_CARD_SETS[artifactType]`
+   * as the source of catalog + named sets — the seam through which an artifact can feed
+   * a spec DERIVED FROM THE CANONICAL CARD CONTRACT (`cardContract.types.ts`) instead of
+   * the static `cardSets.ts` entry (POC Decision, `_KONTRAKT_KARTY_SSOT §9`). Must be a
+   * STABLE reference (module constant / memoized) — it feeds the memo that seeds the
+   * layout. Omitted ⇒ unchanged behaviour (reads DEFAULT_CARD_SETS), so every other
+   * artifact is untouched.
+   */
+  spec?: ArtifactCardSpec;
+  /**
    * Previously persisted layout to hydrate from. When omitted (or empty) the
    * hook builds the layout from the canonical default set (`sets[0]`).
    */
@@ -133,11 +143,11 @@ export interface UseCardLayoutResult {
 }
 
 export function useCardLayout(options: UseCardLayoutOptions): UseCardLayoutResult {
-  const { artifactType, initialLayout, onLayoutChange } = options;
+  const { artifactType, spec: specOverride, initialLayout, onLayoutChange } = options;
 
   const spec = useMemo<ArtifactCardSpec>(
-    () => DEFAULT_CARD_SETS[artifactType] ?? { catalog: [], sets: [] },
-    [artifactType]
+    () => specOverride ?? DEFAULT_CARD_SETS[artifactType] ?? { catalog: [], sets: [] },
+    [specOverride, artifactType]
   );
 
   const catalogById = useMemo(() => {
