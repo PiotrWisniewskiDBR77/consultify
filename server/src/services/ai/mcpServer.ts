@@ -165,6 +165,18 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
         .string()
         .optional()
         .describe('Optional title; if omitted one is derived from intent.'),
+      audience: z
+        .string()
+        .optional()
+        .describe(
+          'PRESENTATION only — who the deck is for. Fill it whenever the user names or implies the audience: "executive"/"board"/"zarząd"/"komitet" (leadership), "client"/"klient", or "investor"/"inwestor". Drives an executive vs professional narrative register — omitting it defaults to an internal register, so a board deck without this reads generic. Ignored for non-presentation types.'
+        ),
+      goal: z
+        .string()
+        .optional()
+        .describe(
+          'PRESENTATION only — the deck\'s purpose. Fill it when the user implies it: "decide" (a decision/recommendation/approval), "sell" (a pitch/offer/sales), "align" (build consensus), or "inform". Ignored for non-presentation types.'
+        ),
     }),
     returns: z.object({
       ok: z.boolean(),

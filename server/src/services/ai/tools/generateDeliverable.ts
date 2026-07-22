@@ -17,6 +17,7 @@
  */
 
 import { featureFlags } from '../../../config/FeatureFlags.js';
+import { resolveDeckBrief, type ResolvedDeckBrief } from '../deckChatBrief.js';
 import type { DeliverableFormat } from '../../../types/deliverablesGeneration.js';
 import logger from '../../../utils/Logger.js';
 import {
@@ -60,6 +61,13 @@ type GenerateDeliverableParams = {
   type: DeliverableKind;
   intent: string;
   title?: string;
+  /**
+   * Deck only — jawny odbiorca/cel podany przez model (opcjonalnie). Gdy obecne,
+   * WYGRYWA z wnioskowaniem z `intent` (patrz `resolveDeckBrief`). Ignorowane dla
+   * pozostałych typów.
+   */
+  audience?: string;
+  goal?: string;
 };
 
 /**
@@ -191,7 +199,14 @@ export async function generateDeliverable(
 
   const language: 'pl' | 'en' = context.language === 'en' ? 'en' : 'pl';
   const intent = String(params.intent || '').trim();
-  const title = deriveTitle(params.title, intent, language);
+  // Deck: wyprowadź brief (audience·goal·tytuł) z prośby zamiast hardkodu
+  // `internal/inform` i tytułu-polecenia (audyt 2026-07-22). Reszta typów bez zmian.
+  const deckBrief: ResolvedDeckBrief | null =
+    format === 'deck'
+      ? resolveDeckBrief(intent, { audience: params.audience, goal: params.goal, title: params.title })
+      : null;
+  const title =
+    deckBrief && deckBrief.title ? deckBrief.title : deriveTitle(params.title, intent, language);
   const conversationId = context.conversationId ? String(context.conversationId) : undefined;
 
   // ── M06 Fala 2 · 2.3 — mind map (ff_teresaMindmap) ──────────────────────────
@@ -594,8 +609,12 @@ export async function generateDeliverable(
       ? {
           title,
           language,
-          audience: 'internal',
-          goal: 'inform',
+          // Brief z prośby użytkownika (audyt 2026-07-22) — audience='executive'/
+          // 'sponsor' zapala register 'executive' w Narrative Engine; wcześniej
+          // sztywne 'internal'/'inform' gasiło go zawsze. `deckBrief` zawsze !== null
+          // w tej gałęzi (format === 'deck').
+          audience: deckBrief?.audience ?? 'internal',
+          goal: deckBrief?.goal ?? 'inform',
           theme: 'corporate',
           confidentiality: 'internal',
           sourceArtifacts: [],
@@ -716,7 +735,10 @@ export async function generateDeliverable(
     }
 
     logger.info(
-      `[generate_deliverable] created format=${format} gen=${generationId} title="${title.slice(0, 80)}"`
+      `[generate_deliverable] created format=${format} gen=${generationId} title="${title.slice(0, 80)}"` +
+        (deckBrief
+          ? ` audience=${deckBrief.audience}(${deckBrief.audienceSource}) goal=${deckBrief.goal}(${deckBrief.goalSource})`
+          : '')
     );
 
     // Zwrot dla modelu — KRÓTKI, zgodny z kontraktem persony (potwierdzaj fakt,
