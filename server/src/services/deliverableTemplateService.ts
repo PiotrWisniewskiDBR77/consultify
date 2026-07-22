@@ -440,10 +440,14 @@ function safeParseArray(raw: string): unknown[] {
  * rows are already readable org-wide via listDeliverableTemplates' own
  * `is_system = true OR organization_id = $1` clause).
  *
- * `table` templates (tp_base_templates) have no matching ArtifactOriginRuntime
- * value today (only 'report_template' / 'presentation_template' exist) —
- * registering them would require inventing a new origin runtime, which is
- * out of scope for this fix. They are skipped with a warning log.
+ * `table` templates (tp_base_templates — despite the DB name, these are the
+ * Excel/Arkusz templates surfaced in TemplateBuilder as "Arkusz (Excel)", see
+ * src/components/TemplateBuilder/templateBuilderModel.ts) now map to the
+ * 'sheet_template' origin runtime (Fala B, 2026-07-22) — the same value
+ * already used for the seeded bt-sheet-* business templates
+ * (server/migrations/20260412_seed_business_templates.sql), so the DB CHECK
+ * constraint on v8_artifact_origin_links.origin_runtime already allows it;
+ * only the TS enum (ArtifactOriginRuntimeValues) and this branch were behind.
  *
  * Registry write is best-effort and must never fail template creation — the
  * legacy table row is (and remains) the source of truth.
@@ -455,20 +459,73 @@ async function registerBuilderTemplateArtifactBestEffort(params: {
   description: string | null;
   sectionsJson?: string;
   outlineJson?: string;
+  schemaSnapshotJson?: string;
   organizationId: string;
   userId: string;
 }): Promise<void> {
   const { type, templateId, name, description, organizationId, userId } = params;
 
-  if (type === 'table') {
-    logger.warn(
-      `${LOG_PREFIX} skipping artifact-registry registration for table template ${templateId} — no ArtifactOriginRuntime mapping exists for tp_base_templates yet`
-    );
-    return;
-  }
-
   try {
     const now = new Date().toISOString();
+    if (type === 'table') {
+      let schemaSnapshot: unknown = {};
+      try {
+        schemaSnapshot = params.schemaSnapshotJson ? JSON.parse(params.schemaSnapshotJson) : {};
+      } catch {
+        schemaSnapshot = {};
+      }
+      // Arkusz templates store their structure as a flat column list
+      // (SheetColumn[] — src/components/TemplateBuilder/templateBuilderModel.ts)
+      // or, for a workbook-derived snapshot, a { sheets: [...] } shape. Surface
+      // whichever is present as a lightweight blueprint for the Template
+      // Library card — never fail registration if the shape doesn't match.
+      const columns = Array.isArray(schemaSnapshot)
+        ? schemaSnapshot
+        : Array.isArray((schemaSnapshot as any)?.columns)
+          ? (schemaSnapshot as any).columns
+          : [];
+      const sheets = Array.isArray((schemaSnapshot as any)?.sheets)
+        ? (schemaSnapshot as any).sheets
+        : [];
+
+      await registerArtifactOrigin({
+        organizationId,
+        outputType: 'sheet',
+        artifactFamily: 'template',
+        originRuntime: 'sheet_template',
+        originRecordId: templateId,
+        titleSnapshot: name,
+        ownerUserId: userId,
+        createdBy: userId,
+        deliveryState: 'draft',
+        visibilityScope: 'organization',
+        originSummary: {
+          template: {
+            scope: 'org',
+            status: 'draft',
+            description: description || '',
+            structureBlueprint:
+              sheets.length > 0
+                ? { sheets: sheets.map((s: any) => ({ name: s?.name || s?.title || '' })) }
+                : {
+                    columns: columns.map((c: any) => ({
+                      key: c?.key || c?.header || '',
+                      header: c?.header || c?.key || '',
+                    })),
+                  },
+            metadata: {
+              createdBy: userId,
+              createdAt: now,
+              updatedAt: now,
+              legacyTemplateId: templateId,
+            },
+          },
+          sourceTable: 'tp_base_templates',
+        },
+      });
+      return;
+    }
+
     if (type === 'doc') {
       const sections = safeParseArray(params.sectionsJson ?? '[]');
       await registerArtifactOrigin({
@@ -630,6 +687,7 @@ export async function createDeliverableTemplate(
     templateId: row.id,
     name,
     description: desc,
+    schemaSnapshotJson: schemaSnapshot,
     organizationId: orgId,
     userId,
   });
