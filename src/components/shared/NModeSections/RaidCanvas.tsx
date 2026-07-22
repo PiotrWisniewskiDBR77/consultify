@@ -474,9 +474,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
     <div className="space-y-5">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+        <h2 className="text-lg font-semibold text-c-text dark:text-white">
           {t('sharedComponents.raidCanvas.raidLog')}
-          <span className="ml-2 text-xs font-normal text-slate-600 dark:text-slate-500">
+          <span className="ml-2 text-xs font-normal text-c-text-secondary dark:text-c-text-muted">
             PMBOK / PRINCE2
           </span>
         </h2>
@@ -501,55 +501,55 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         {/* Health Score */}
         <div className={`p-2.5 rounded-xl text-center border ${healthBg}`}>
           <div className={`text-xl font-bold ${healthColor}`}>{healthScore}</div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="text-[9px] uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
             {t('sharedComponents.raidCanvas.health')}
           </div>
         </div>
         {/* Open */}
-        <div className="p-2.5 rounded-xl text-center border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30">
-          <div className="text-xl font-bold text-slate-700 dark:text-slate-200">
+        <div className="p-2.5 rounded-xl text-center border border-c-border/50 dark:border-c-border/50 bg-c-surface/30 dark:bg-c-surface/30">
+          <div className="text-xl font-bold text-c-text dark:text-c-text">
             {openItems.length}
           </div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="text-[9px] uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
             {t('sharedComponents.raidCanvas.open')}
           </div>
         </div>
         {/* Critical/High */}
         <div
-          className={`p-2.5 rounded-xl text-center border ${criticalItems.length > 0 ? 'border-danger-400/40 bg-danger-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+          className={`p-2.5 rounded-xl text-center border ${criticalItems.length > 0 ? 'border-danger-400/40 bg-danger-500/10' : 'border-c-border/50 dark:border-c-border/50 bg-c-surface/30 dark:bg-c-surface/30'}`}
         >
           <div
-            className={`text-xl font-bold ${criticalItems.length > 0 ? 'text-danger-500' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`text-xl font-bold ${criticalItems.length > 0 ? 'text-danger-500' : 'text-c-text dark:text-c-text'}`}
           >
             {criticalItems.length}
           </div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="text-[9px] uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
             {t('sharedComponents.raidCanvas.critical')}
           </div>
         </div>
         {/* Overdue */}
         <div
-          className={`p-2.5 rounded-xl text-center border ${overdueItems.length > 0 ? 'border-amber-400/40 bg-amber-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+          className={`p-2.5 rounded-xl text-center border ${overdueItems.length > 0 ? 'border-amber-400/40 bg-amber-500/10' : 'border-c-border/50 dark:border-c-border/50 bg-c-surface/30 dark:bg-c-surface/30'}`}
         >
           <div
-            className={`text-xl font-bold ${overdueItems.length > 0 ? 'text-amber-500' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`text-xl font-bold ${overdueItems.length > 0 ? 'text-amber-500' : 'text-c-text dark:text-c-text'}`}
           >
             {overdueItems.length}
           </div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="text-[9px] uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
             {t('sharedComponents.raidCanvas.overdue')}
           </div>
         </div>
         {/* Unowned */}
         <div
-          className={`p-2.5 rounded-xl text-center border ${unownedItems.length > 0 ? 'border-amber-400/40 bg-amber-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+          className={`p-2.5 rounded-xl text-center border ${unownedItems.length > 0 ? 'border-amber-400/40 bg-amber-500/10' : 'border-c-border/50 dark:border-c-border/50 bg-c-surface/30 dark:bg-c-surface/30'}`}
         >
           <div
-            className={`text-xl font-bold ${unownedItems.length > 0 ? 'text-amber-500' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`text-xl font-bold ${unownedItems.length > 0 ? 'text-amber-500' : 'text-c-text dark:text-c-text'}`}
           >
             {unownedItems.length}
           </div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="text-[9px] uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
             {t('sharedComponents.raidCanvas.unowned')}
           </div>
         </div>
@@ -569,14 +569,14 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
               className={`p-3 rounded-xl text-center transition-all border relative ${
                 isActive
                   ? `${meta.borderActive} ${meta.bgLight} ring-1`
-                  : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30 hover:border-slate-300/60 dark:hover:border-navy-600/60'
+                  : 'border-c-border/50 dark:border-c-border/50 bg-c-surface/30 dark:bg-c-surface/30 hover:border-c-border-strong/60 dark:hover:border-c-border-strong/60'
               }`}
             >
               <TypeIcon size={16} className={`mx-auto mb-1 ${meta.color}`} />
-              <div className="text-lg font-bold text-slate-700 dark:text-slate-200">
+              <div className="text-lg font-bold text-c-text dark:text-c-text">
                 {typeCounts[type]}
               </div>
-              <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <div className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                 {getTypeLabel(type)}
               </div>
               {/* Overdue badge */}
@@ -595,24 +595,24 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         <div>
           <button
             onClick={() => setShowHeatmap((p) => !p)}
-            className="text-[11px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mb-2"
+            className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors mb-2"
           >
             {showHeatmap
               ? t('sharedComponents.raidCanvas.hideRiskMatrix')
               : t('sharedComponents.raidCanvas.showPIMatrixPmbok')}
           </button>
           {showHeatmap && (
-            <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 p-3 bg-slate-50/20 dark:bg-navy-900/15">
-              <div className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-2 text-center">
+            <div className="rounded-xl border border-c-border/50 dark:border-c-border/50 p-3 bg-c-surface/20 dark:bg-c-surface/15">
+              <div className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted mb-2 text-center">
                 {t('sharedComponents.raidCanvas.probabilityImpactMatrix')}
               </div>
               <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr] gap-px">
                 {/* Header row */}
-                <div className="text-[9px] text-slate-600 p-1" />
+                <div className="text-[9px] text-c-text-secondary p-1" />
                 {(['low', 'medium', 'high', 'critical'] as const).map((i) => (
                   <div
                     key={`h-${i}`}
-                    className="text-[9px] text-center font-semibold text-slate-600 dark:text-slate-500 p-1 uppercase"
+                    className="text-[9px] text-center font-semibold text-c-text-secondary dark:text-c-text-muted p-1 uppercase"
                   >
                     {getLevelLabel(i)}
                   </div>
@@ -620,7 +620,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                 {/* Rows (probability: critical→low) */}
                 {(['critical', 'high', 'medium', 'low'] as const).map((p) => (
                   <React.Fragment key={`row-${p}`}>
-                    <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-500 p-1 uppercase flex items-center">
+                    <div className="text-[9px] font-semibold text-c-text-secondary dark:text-c-text-muted p-1 uppercase flex items-center">
                       {getLevelLabel(p)}
                     </div>
                     {(['low', 'medium', 'high', 'critical'] as const).map((i) => {
@@ -641,7 +641,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           title={cellItems.map((r) => r.title).join(', ') || `P:${p} I:${i}`}
                         >
                           {cellItems.length > 0 && (
-                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                            <span className="text-[10px] font-bold text-c-text dark:text-c-text">
                               {cellItems.length}
                             </span>
                           )}
@@ -651,7 +651,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                   </React.Fragment>
                 ))}
               </div>
-              <div className="flex items-center justify-between mt-2 text-[9px] text-slate-600 dark:text-slate-500">
+              <div className="flex items-center justify-between mt-2 text-[9px] text-c-text-secondary dark:text-c-text-muted">
                 <span>← {t('sharedComponents.raidCanvas.impact')} →</span>
                 <span>↑ {t('sharedComponents.raidCanvas.probability')}</span>
               </div>
@@ -661,7 +661,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       )}
 
       {/* ── Filter Tabs ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 border-b border-slate-200/50 dark:border-navy-700/50 pb-0.5">
+      <div className="flex items-center gap-1 border-b border-c-border/50 dark:border-c-border/50 pb-0.5">
         {filterTabs.map((tab) => (
           <button
             key={tab.key}
@@ -669,7 +669,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             className={`px-2.5 py-1.5 text-[11px] font-medium rounded-t-lg transition-colors ${
               typeFilter === tab.key
                 ? 'text-c-text border-b-2 border-c-info'
-                : 'text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                : 'text-c-text-secondary dark:text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted'
             }`}
           >
             {tab.label}
@@ -680,7 +680,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
       {/* ── Sort info ───────────────────────────────────────────────────── */}
       {filteredItems.length > 0 && (
-        <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
+        <div className="flex items-center justify-between text-[11px] text-c-text-secondary dark:text-c-text-muted">
           <span>{t('sharedComponents.raidCanvas.sortedByHighestImpactScore')}</span>
           <span>
             {filteredItems.length} / {items.length} {t('sharedComponents.raidCanvas.items')}
@@ -690,7 +690,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
       {/* ── Level legend + Add item ─────────────────────────────────────── */}
       <div className="py-2 flex items-center justify-between">
-        <div className="text-[10px] flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-500">
+        <div className="text-[10px] flex flex-wrap items-center gap-1.5 text-c-text-secondary dark:text-c-text-muted">
           <span>{t('sharedComponents.raidCanvas.levelLegend')}</span>
           {RAID_LEVEL_OPTIONS.map((level) => (
             <span
@@ -704,7 +704,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         {!locked && (
           <button
             onClick={() => onAddItem(typeFilter === 'all' ? 'risk' : typeFilter)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-navy-500 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border/60 dark:border-c-border-strong/50 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-c-text-muted hover:border-c-border-strong dark:hover:border-c-border-strong hover:bg-c-surface dark:hover:bg-c-surface-raised/50 transition-colors"
           >
             <Plus size={13} />
             {t('sharedComponents.raidCanvas.addItem')}
@@ -714,12 +714,12 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
       {/* ── Empty state ─────────────────────────────────────────────────── */}
       {items.length === 0 && (
-        <div className="py-6 text-center rounded-xl border border-dashed border-slate-300/50 dark:border-navy-600/50 bg-slate-50/10 dark:bg-navy-900/10">
-          <AlertTriangle size={20} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
-          <p className="text-sm text-slate-600 dark:text-slate-500 mb-1">
+        <div className="py-6 text-center rounded-xl border border-dashed border-c-border-strong/50 dark:border-c-border-strong/50 bg-c-surface/10 dark:bg-c-surface/10">
+          <AlertTriangle size={20} className="mx-auto mb-2 text-c-text-secondary dark:text-c-text-secondary" />
+          <p className="text-sm text-c-text-secondary dark:text-c-text-muted mb-1">
             {t('sharedComponents.raidCanvas.noRaidItemsYet')}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary dark:text-c-text-secondary">
             {t('sharedComponents.raidCanvas.emptyStateHint')}
           </p>
         </div>
@@ -727,7 +727,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
       {/* ── RAID Item Cards ─────────────────────────────────────────────── */}
       {filteredItems.length > 0 && (
-        <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
+        <div className="space-y-0 divide-y divide-c-border-strong/55 dark:divide-c-border-strong/65">
           {filteredItems.map((item) => {
             const isRisk = item.type === 'risk';
             const meta = RAID_TYPE_META[item.type];
@@ -746,7 +746,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       ? 'bg-amber-500/5 dark:bg-amber-500/5 ring-1 ring-amber-400/30'
                       : showConvert
                         ? 'bg-danger-500/5 dark:bg-danger-500/5 ring-1 ring-danger-400/20'
-                        : 'bg-slate-50/20 dark:bg-navy-900/25'
+                        : 'bg-c-surface/20 dark:bg-c-surface/25'
                   }`}
                 >
                   {/* ── Overdue / Materialized banner ──────────────────── */}
@@ -796,7 +796,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           value={item.title}
                           onChange={(e) => onUpdateItem(item.id, { title: e.target.value })}
                           readOnly={locked}
-                          className="flex-1 text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
+                          className="flex-1 text-sm font-medium bg-transparent text-c-text dark:text-white focus:outline-none placeholder-c-text-muted"
                           placeholder={t('sharedComponents.raidCanvas.itemTitlePlaceholder', {
                             typeLabel: getTypeLabel(item.type),
                             typeLabelLower: getTypeLabel(item.type).toLowerCase(),
@@ -825,7 +825,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         <button
                           onClick={() => onRemoveItem(item.id)}
                           disabled={locked}
-                          className="p-1 text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                          className="p-1 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                         >
                           <X size={12} />
                         </button>
@@ -838,7 +838,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                     >
                       {/* Type */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                           {t('sharedComponents.raidCanvas.type')}
                         </span>
                         <select
@@ -863,7 +863,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Probability — Risk only */}
                       {isRisk && (
                         <div className="space-y-1">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                             {t('sharedComponents.raidCanvas.probability')}
                           </span>
                           <select
@@ -885,7 +885,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Impact */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                           {t('sharedComponents.raidCanvas.impact')}
                         </span>
                         <select
@@ -906,14 +906,14 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Category */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                           {t('sharedComponents.raidCanvas.category')}
                         </span>
                         <select
                           value={item.category || 'business'}
                           onChange={(e) => onUpdateItem(item.id, { category: e.target.value })}
                           disabled={locked}
-                          className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
+                          className="w-full text-[11px] px-2 py-1 rounded-md bg-c-surface/70 dark:bg-c-surface-raised/70 border border-c-border/60 dark:border-c-border-strong/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
                         >
                           {categoryOptions.map((cat) => (
                             <option key={`c-${item.id}-${cat.value}`} value={cat.value}>
@@ -925,7 +925,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Status — type-specific options */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                           Status
                         </span>
                         <select
@@ -947,7 +947,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Response Strategy — Risk only (PMBOK) */}
                       {isRisk && (
                         <div className="space-y-1">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                             {t('sharedComponents.raidCanvas.responsePmbok')}
                           </span>
                           <select
@@ -958,7 +958,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                               })
                             }
                             disabled={locked}
-                            className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
+                            className="w-full text-[11px] px-2 py-1 rounded-md bg-c-surface/70 dark:bg-c-surface-raised/70 border border-c-border/60 dark:border-c-border-strong/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
                           >
                             {RESPONSE_STRATEGIES.map((s) => (
                               <option key={`rs-${item.id}-${s}`} value={s}>
@@ -975,7 +975,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Owner */}
                       <div className="space-y-1">
                         <span
-                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemUnowned ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
+                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemUnowned ? 'text-amber-500' : 'text-c-text-secondary dark:text-c-text-muted'}`}
                         >
                           <User size={9} />
                           {t('sharedComponents.raidCanvas.owner')}
@@ -990,7 +990,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             value={item.owner || ''}
                             onChange={(e) => onUpdateItem(item.id, { owner: e.target.value })}
                             disabled={locked}
-                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
+                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-c-surface/70 dark:bg-c-surface-raised/70 border text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid disabled:opacity-60 ${itemUnowned ? 'border-amber-400/50' : 'border-c-border/60 dark:border-c-border-strong/60'}`}
                           >
                             <option value="">{t('sharedComponents.raidCanvas.select')}</option>
                             {users.map((u) => (
@@ -1004,7 +1004,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             value={item.owner || ''}
                             onChange={(e) => onUpdateItem(item.id, { owner: e.target.value })}
                             readOnly={locked}
-                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
+                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-c-surface/70 dark:bg-c-surface-raised/70 border text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid ${itemUnowned ? 'border-amber-400/50' : 'border-c-border/60 dark:border-c-border-strong/60'}`}
                             placeholder={t('sharedComponents.raidCanvas.name')}
                           />
                         )}
@@ -1013,7 +1013,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Due Date */}
                       <div className="space-y-1">
                         <span
-                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
+                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-amber-500' : 'text-c-text-secondary dark:text-c-text-muted'}`}
                         >
                           <Calendar size={9} />
                           {t('sharedComponents.raidCanvas.dueDate')}
@@ -1028,17 +1028,17 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           value={item.dueDate || ''}
                           onChange={(e) => onUpdateItem(item.id, { dueDate: e.target.value })}
                           readOnly={locked}
-                          className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid ${
+                          className={`w-full text-[11px] px-2 py-1 rounded-md bg-c-surface/70 dark:bg-c-surface-raised/70 border text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid ${
                             itemOverdue
                               ? 'border-amber-400/60 text-amber-500 dark:text-amber-400'
-                              : 'border-slate-200/60 dark:border-navy-600/60'
+                              : 'border-c-border/60 dark:border-c-border-strong/60'
                           }`}
                         />
                       </div>
 
                       {/* Source */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500 flex items-center gap-1">
+                        <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted flex items-center gap-1">
                           <Shield size={9} />
                           {t('sharedComponents.raidCanvas.source')}
                         </span>
@@ -1046,7 +1046,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           value={item.source || ''}
                           onChange={(e) => onUpdateItem(item.id, { source: e.target.value })}
                           readOnly={locked}
-                          className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
+                          className="w-full text-[11px] px-2 py-1 rounded-md bg-c-surface/70 dark:bg-c-surface-raised/70 border border-c-border/60 dark:border-c-border-strong/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid"
                           placeholder={t('sharedComponents.raidCanvas.eGMeetingAuditAiWorkshop')}
                         />
                       </div>
@@ -1059,7 +1059,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Contingency */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                             {t('sharedComponents.raidCanvas.contingencyPlan')}
                           </span>
                           <AIFieldEnhancer
@@ -1076,7 +1076,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           onChange={(e) => onUpdateItem(item.id, { contingency: e.target.value })}
                           rows={3}
                           readOnly={locked}
-                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
+                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid resize-y"
                           placeholder={t(
                             'sharedComponents.raidCanvas.whatIsTheFallbackIfRiskMaterializes'
                           )}
@@ -1104,7 +1104,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Mitigation */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                             {t('sharedComponents.raidCanvas.mitigationPlan')}
                           </span>
                           <AIFieldEnhancer
@@ -1121,7 +1121,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           onChange={(e) => onUpdateItem(item.id, { mitigation: e.target.value })}
                           rows={3}
                           readOnly={locked}
-                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
+                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid resize-y"
                           placeholder={t(
                             'sharedComponents.raidCanvas.howDoWeReduceTheProbabilityOfThisRisk'
                           )}
@@ -1151,7 +1151,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                   {/* ── Proposed Action — ALL types ──────────────────────── */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                         {getActionLabel(item.type)}
                       </span>
                       <AIFieldEnhancer
@@ -1168,7 +1168,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       onChange={(e) => onUpdateItem(item.id, { proposedAction: e.target.value })}
                       rows={3}
                       readOnly={locked}
-                      className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
+                      className="w-full min-h-[72px] text-xs bg-transparent border-b border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary focus:outline-none focus:border-c-focus-solid resize-y"
                       placeholder={getActionPlaceholder(item.type)}
                     />
                     <div className="flex flex-wrap gap-1">

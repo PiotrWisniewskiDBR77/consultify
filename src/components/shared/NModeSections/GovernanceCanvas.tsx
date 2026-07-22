@@ -175,22 +175,22 @@ const deliveryBadgeLabels = (
 // ── CSS tokens ─────────────────────────────────────────────────────────────
 
 const TABLE_CARD =
-  'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
+  'bg-white/70 dark:bg-c-surface/70 rounded-2xl border border-c-border/60 dark:border-c-border/60 p-4 space-y-3 h-[340px] flex flex-col';
 const MODAL_OVERLAY = 'fixed inset-0 z-[120] flex items-center justify-center p-4';
 const MODAL_CLASS =
-  'relative w-full max-w-2xl rounded-3xl border border-slate-200/50 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
+  'relative w-full max-w-2xl rounded-3xl border border-c-border/50 dark:border-c-border/50 bg-white/95 dark:bg-c-surface/95 shadow-2xl p-6 space-y-5';
 const MODAL_HINT =
-  'rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
+  'rounded-xl border border-c-border/70 dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface-raised/50 px-3 py-2 text-xs text-c-text-secondary dark:text-c-text-secondary';
 const CHANNEL_CHIP =
   'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 const ADD_BTN =
-  'px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+  'px-2.5 py-1 rounded-lg text-xs font-medium border border-c-border-strong/60 dark:border-c-border-strong text-c-text-secondary hover:text-c-text hover:border-c-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 const AI_BTN =
   'px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 text-c-info hover:text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1';
 const TH =
-  'text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50';
+  'text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted border-b border-c-border/50 dark:border-c-border/50';
 const BADGE =
-  'px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400';
+  'px-1.5 py-0.5 rounded border border-c-border/60 dark:border-c-border/60 bg-c-surface/50 dark:bg-c-surface-raised/50 text-[10px] text-c-text-secondary dark:text-c-text-secondary';
 
 // ── Component ──────────────────────────────────────────────────────────────
 
@@ -387,8 +387,8 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
     selected: string[];
     onToggle: (key: string, next: boolean) => void;
   }> = ({ label, channels, selected, onToggle }) => (
-    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <div className="rounded-xl border border-c-border/70 dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface-raised/50 p-3 space-y-2">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
         {label}
       </div>
       <div className="flex flex-wrap gap-2">
@@ -403,7 +403,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               className={`${CHANNEL_CHIP} ${
                 isSelected
                   ? 'border-c-border text-c-text bg-c-surface-raised'
-                  : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                  : 'border-c-border-strong/70 text-c-text-secondary hover:border-c-border-strong/80'
               }`}
               title={ch.scope}
             >
@@ -419,7 +419,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
 
   return (
     <div className="space-y-8">
-      <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+      <h2 className="text-lg font-semibold text-c-text dark:text-white">
         {t('sharedComponents.governanceCanvas.raciEscalation')}
       </h2>
 
@@ -427,7 +427,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
         {/* ── RACI table ── */}
         <div className={TABLE_CARD}>
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+            <h3 className="text-base font-semibold text-c-text dark:text-c-text">
               {t('sharedComponents.governanceCanvas.raciResponsibilityMatrix')}
             </h3>
             <div className="inline-flex items-center gap-2">
@@ -471,23 +471,23 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+              <tbody className="divide-y divide-c-border/40 dark:divide-c-border/40">
                 {stakeholders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-xs text-slate-600">
+                    <td colSpan={5} className="py-6 text-center text-xs text-c-text-secondary">
                       {t('sharedComponents.governanceCanvas.noStakeholdersYet')}
                     </td>
                   </tr>
                 ) : (
                   stakeholders.map((s) => (
                     <tr key={s.id}>
-                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-c-text dark:text-c-text-secondary">
                         {s.userName || s.userId}
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {stakeholderRoleLabel(s.role)}
                       </td>
-                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                      <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-secondary">
                         {s.userEmail || '—'}
                       </td>
                       <td className="py-2 pr-2 text-xs">
@@ -507,7 +507,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingStakeholderId(s.id);
                               setStakeholderDraft({ ...s });
                             }}
-                            className="p-1 text-slate-600 hover:text-c-text disabled:opacity-40"
+                            className="p-1 text-c-text-secondary hover:text-c-text disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
@@ -517,7 +517,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setStakeholders((prev) => prev.filter((item) => item.id !== s.id))
                             }
-                            className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
+                            className="p-1 text-c-text-secondary hover:text-danger-500 disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.delete')}
                           >
                             <Trash2 size={13} />
@@ -535,7 +535,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
         {/* ── Reminders table ── */}
         <div className={TABLE_CARD}>
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+            <h3 className="text-base font-semibold text-c-text dark:text-c-text">
               {t('sharedComponents.governanceCanvas.reminders')}
             </h3>
             <div className="inline-flex items-center gap-2">
@@ -579,25 +579,25 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+              <tbody className="divide-y divide-c-border/40 dark:divide-c-border/40">
                 {reminders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-xs text-slate-600">
+                    <td colSpan={5} className="py-6 text-center text-xs text-c-text-secondary">
                       {t('sharedComponents.governanceCanvas.noRemindersYet')}
                     </td>
                   </tr>
                 ) : (
                   reminders.map((r) => (
                     <tr key={r.id}>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {r.type === 'before_due'
                           ? t('sharedComponents.governanceCanvas.beforeDue')
                           : t('sharedComponents.governanceCanvas.afterDue')}
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {r.days}
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {r.recipients}
                       </td>
                       <td className="py-2 pr-2 text-xs">
@@ -622,7 +622,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingReminderId(r.id);
                               setReminderDraft(normalizeReminderRule({ ...r }));
                             }}
-                            className="p-1 text-slate-600 hover:text-c-text disabled:opacity-40"
+                            className="p-1 text-c-text-secondary hover:text-c-text disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
@@ -632,7 +632,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setReminders((prev) => prev.filter((item) => item.id !== r.id))
                             }
-                            className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
+                            className="p-1 text-c-text-secondary hover:text-danger-500 disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.delete')}
                           >
                             <Trash2 size={13} />
@@ -650,7 +650,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
         {/* ── Escalation table ── */}
         <div className={TABLE_CARD}>
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+            <h3 className="text-base font-semibold text-c-text dark:text-c-text">
               {t('sharedComponents.governanceCanvas.escalationAndRules')}
             </h3>
             <div className="inline-flex items-center gap-2">
@@ -701,34 +701,34 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+              <tbody className="divide-y divide-c-border/40 dark:divide-c-border/40">
                 {escalationRules.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-xs text-slate-600">
+                    <td colSpan={8} className="py-6 text-center text-xs text-c-text-secondary">
                       {t('sharedComponents.governanceCanvas.noEscalationRulesYet')}
                     </td>
                   </tr>
                 ) : (
                   escalationRules.map((rule) => (
                     <tr key={rule.id}>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {rule.enabled
                           ? t('sharedComponents.governanceCanvas.enabled')
                           : t('sharedComponents.governanceCanvas.escalationDisabledState')}
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {rule.warningDays}/{rule.criticalDays} d
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {rule.afterDays} d
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {rule.escalateToName || '—'}
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {rule.message || '—'}
                       </td>
-                      <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2 pr-2 text-xs text-c-text-secondary dark:text-c-text-secondary">
                         {escalationModeLabel(rule.escalationMode)}
                       </td>
                       <td className="py-2 pr-2 text-xs">
@@ -748,7 +748,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingEscalationId(rule.id);
                               setEscalationDraft({ ...rule });
                             }}
-                            className="p-1 text-slate-600 hover:text-c-text disabled:opacity-40"
+                            className="p-1 text-c-text-secondary hover:text-c-text disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.edit')}
                           >
                             <Edit3 size={13} />
@@ -760,7 +760,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                                 prev.filter((item) => item.id !== rule.id)
                               )
                             }
-                            className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
+                            className="p-1 text-c-text-secondary hover:text-danger-500 disabled:opacity-40"
                             title={t('sharedComponents.governanceCanvas.delete')}
                           >
                             <Trash2 size={13} />
@@ -792,7 +792,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
           />
           <div className={`${MODAL_CLASS} min-h-[380px]`}>
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <h4 className="text-sm font-semibold text-c-text dark:text-c-text">
                 {editingStakeholderId === '__new__'
                   ? t('sharedComponents.governanceCanvas.addRaciPerson')
                   : t('sharedComponents.governanceCanvas.editRaciPerson')}
@@ -813,7 +813,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </button>
                 )}
                 <button
-                  className="p-1 text-slate-600 hover:text-slate-600"
+                  className="p-1 text-c-text-secondary hover:text-c-text-secondary"
                   onClick={() => {
                     setEditingStakeholderId(null);
                     setStakeholderDraft(null);
@@ -827,7 +827,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               {t('sharedComponents.governanceCanvas.stakeholderModalHint')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.person')}
                 <select
                   value={stakeholderDraft.userId}
@@ -842,7 +842,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       userEmail: selected?.email || stakeholderDraft.userEmail,
                     });
                   }}
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 >
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -851,7 +851,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   ))}
                 </select>
               </label>
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.role')}
                 <select
                   value={stakeholderDraft.role}
@@ -861,7 +861,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       role: e.target.value as StakeholderRole,
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 >
                   <option value="responsible">Responsible</option>
                   <option value="accountable">Accountable</option>
@@ -871,7 +871,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </label>
             </div>
             <div className="space-y-2 flex-1">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.notificationChannels')}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -921,7 +921,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   }}
                 />
               </div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                 {t('sharedComponents.governanceCanvas.syncTargets')}
                 <input
                   value={(stakeholderDraft.notificationSettings.syncTargets || []).join(', ')}
@@ -937,7 +937,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       },
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                   placeholder="slack:#ops, jira:DRD"
                 />
               </label>
@@ -948,13 +948,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   setEditingStakeholderId(null);
                   setStakeholderDraft(null);
                 }}
-                className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                className="px-3 py-1.5 rounded-md text-xs border border-c-border-strong/60 dark:border-c-border-strong text-c-text-secondary"
               >
                 {t('sharedComponents.governanceCanvas.cancel')}
               </button>
               <button
                 onClick={saveStakeholder}
-                className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                className="px-3 py-1.5 rounded-md text-xs bg-c-text text-c-bg hover:bg-c-text-secondary"
               >
                 {t('sharedComponents.governanceCanvas.save')}
               </button>
@@ -975,7 +975,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
           />
           <div className={`${MODAL_CLASS} min-h-[380px]`}>
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <h4 className="text-sm font-semibold text-c-text dark:text-c-text">
                 {editingReminderId === '__new__'
                   ? t('sharedComponents.governanceCanvas.addReminder')
                   : t('sharedComponents.governanceCanvas.editReminder')}
@@ -996,7 +996,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </button>
                 )}
                 <button
-                  className="p-1 text-slate-600 hover:text-slate-600"
+                  className="p-1 text-c-text-secondary hover:text-c-text-secondary"
                   onClick={() => {
                     setEditingReminderId(null);
                     setReminderDraft(null);
@@ -1010,7 +1010,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               {t('sharedComponents.governanceCanvas.reminderModalHint')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.type')}
                 <select
                   value={reminderDraft.type}
@@ -1020,7 +1020,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       type: e.target.value as 'before_due' | 'after_due',
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 >
                   <option value="before_due">
                     {t('sharedComponents.governanceCanvas.beforeDue')}
@@ -1030,7 +1030,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </option>
                 </select>
               </label>
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.days')}
                 <input
                   type="number"
@@ -1039,18 +1039,18 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   onChange={(e) =>
                     setReminderDraft({ ...reminderDraft, days: Number(e.target.value) || 0 })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 />
               </label>
             </div>
-            <label className="text-xs text-slate-500 dark:text-slate-400 block">
+            <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
               {t('sharedComponents.governanceCanvas.recipientsLabel')}
               <select
                 value={reminderDraft.recipients}
                 onChange={(e) =>
                   setReminderDraft({ ...reminderDraft, recipients: e.target.value as any })
                 }
-                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
               >
                 <option value="both">{t('sharedComponents.governanceCanvas.both')}</option>
                 <option value="stakeholders">
@@ -1060,7 +1060,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </select>
             </label>
             <div className="space-y-3">
-              <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+              <label className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary">
                 <input
                   type="checkbox"
                   checked={reminderDraft.enabled}
@@ -1117,7 +1117,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   }}
                 />
               </div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                 {t('sharedComponents.governanceCanvas.syncTargets')}
                 <input
                   value={ensureDeliveryConfig(
@@ -1137,18 +1137,18 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       },
                     });
                   }}
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                   placeholder="slack:#delivery, jira:PROJ, webhook:ops"
                 />
               </label>
             </div>
-            <label className="text-xs text-slate-500 dark:text-slate-400 block">
+            <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
               {t('sharedComponents.governanceCanvas.messageLabel')}
               <textarea
                 value={reminderDraft.message || ''}
                 onChange={(e) => setReminderDraft({ ...reminderDraft, message: e.target.value })}
                 rows={3}
-                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
               />
             </label>
             <div className="flex justify-end gap-2">
@@ -1157,13 +1157,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   setEditingReminderId(null);
                   setReminderDraft(null);
                 }}
-                className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                className="px-3 py-1.5 rounded-md text-xs border border-c-border-strong/60 dark:border-c-border-strong text-c-text-secondary"
               >
                 {t('sharedComponents.governanceCanvas.cancel')}
               </button>
               <button
                 onClick={saveReminder}
-                className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                className="px-3 py-1.5 rounded-md text-xs bg-c-text text-c-bg hover:bg-c-text-secondary"
               >
                 {t('sharedComponents.governanceCanvas.save')}
               </button>
@@ -1184,7 +1184,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
           />
           <div className={MODAL_CLASS}>
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <h4 className="text-sm font-semibold text-c-text dark:text-c-text">
                 {editingEscalationId === '__new__'
                   ? t('sharedComponents.governanceCanvas.addEscalationRule')
                   : t('sharedComponents.governanceCanvas.editEscalationRule')}
@@ -1205,7 +1205,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </button>
                 )}
                 <button
-                  className="p-1 text-slate-600 hover:text-slate-600"
+                  className="p-1 text-c-text-secondary hover:text-c-text-secondary"
                   onClick={() => {
                     setEditingEscalationId(null);
                     setEscalationDraft(null);
@@ -1219,7 +1219,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               {t('sharedComponents.governanceCanvas.escalationModalHint')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.warningThresholdDays')}
                 <input
                   type="number"
@@ -1231,10 +1231,10 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       warningDays: Number(e.target.value) || 0,
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 />
               </label>
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.criticalThresholdDays')}
                 <input
                   type="number"
@@ -1246,10 +1246,10 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       criticalDays: Number(e.target.value) || 0,
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 />
               </label>
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.escalateAfterDays')}
                 <input
                   type="number"
@@ -1261,10 +1261,10 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                       afterDays: Number(e.target.value) || 1,
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 />
               </label>
-              <label className="text-xs text-slate-500 dark:text-slate-400">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                 {t('sharedComponents.governanceCanvas.escalateTo')}
                 <select
                   value={escalationDraft.escalateTo}
@@ -1278,7 +1278,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                         : escalationDraft.escalateToName,
                     });
                   }}
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 >
                   <option value="">{t('sharedComponents.governanceCanvas.select')}</option>
                   {users.map((u) => (
@@ -1289,7 +1289,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 </select>
               </label>
             </div>
-            <label className="text-xs text-slate-500 dark:text-slate-400 block">
+            <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
               {t('sharedComponents.governanceCanvas.escalationMode')}
               <select
                 value={escalationDraft.escalationMode}
@@ -1299,7 +1299,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                     escalationMode: e.target.value as EscalationMode,
                   })
                 }
-                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
               >
                 {escalationModeOptions.map((mode) => (
                   <option key={mode.value} value={mode.value}>
@@ -1308,7 +1308,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 ))}
               </select>
             </label>
-            <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+            <label className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary">
               <input
                 type="checkbox"
                 checked={escalationDraft.enabled}
@@ -1361,7 +1361,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                 }}
               />
             </div>
-            <label className="text-xs text-slate-500 dark:text-slate-400 block">
+            <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
               {t('sharedComponents.governanceCanvas.syncTargets')}
               <input
                 value={ensureDeliveryConfig(escalationDraft.delivery).syncTargets.join(', ')}
@@ -1378,11 +1378,11 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                     },
                   });
                 }}
-                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
                 placeholder="slack:#ops, webhook:escalation"
               />
             </label>
-            <label className="text-xs text-slate-500 dark:text-slate-400 block">
+            <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
               {t('sharedComponents.governanceCanvas.message')}
               <textarea
                 value={escalationDraft.message || ''}
@@ -1390,7 +1390,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   setEscalationDraft({ ...escalationDraft, message: e.target.value })
                 }
                 rows={3}
-                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface-raised border border-c-border dark:border-c-border-strong"
               />
             </label>
             <div className="flex justify-end gap-2">
@@ -1399,13 +1399,13 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   setEditingEscalationId(null);
                   setEscalationDraft(null);
                 }}
-                className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                className="px-3 py-1.5 rounded-md text-xs border border-c-border-strong/60 dark:border-c-border-strong text-c-text-secondary"
               >
                 {t('sharedComponents.governanceCanvas.cancel')}
               </button>
               <button
                 onClick={saveEscalation}
-                className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                className="px-3 py-1.5 rounded-md text-xs bg-c-text text-c-bg hover:bg-c-text-secondary"
               >
                 {t('sharedComponents.governanceCanvas.save')}
               </button>
