@@ -154,14 +154,39 @@ interface TaskDetailViewProps {
 const VF1_TASK_SPECA = import.meta.env.VITE_VF1_TASK_SPECA === 'true';
 
 // MIGRACJA — kompozycja kart Task przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
-// Default OFF (zero regresji na demo); w dev/harnessie włącza URL `?cardContract=1`
-// (Piotr nie jest pierwszym testerem wizualnym — reguła #7; ja renderuję zrzut sam).
+// Default OFF (zero regresji na demo). Opt-in URL `?cardContract=1` oraz localStorage
+// `ff.cardContract` działają TAKŻE na produkcji (bez DEV guardu) — żeby Piotr mógł
+// włączyć kontrakt tylko sobie jednym linkiem, publiczność bez linku widzi demo bez
+// zmian. Kolejność: URL → localStorage → env → OFF. Wzór: isInitiativeCardContractEnabled.
+function parseCardContractFlag(raw: string | null | undefined): boolean | null {
+  if (raw === null || raw === undefined) return null;
+  const v = String(raw).trim().toLowerCase();
+  if (v === '1' || v === 'true' || v === 'on') return true;
+  if (v === '0' || v === 'false' || v === 'off') return false;
+  return null;
+}
+
 function useTaskCardContractEnabled(): boolean {
   return useMemo(() => {
-    if (import.meta.env.VITE_VF1_TASK_CARD_CONTRACT === 'true') return true;
-    if (import.meta.env.DEV && typeof window !== 'undefined') {
-      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        const q = parseCardContractFlag(
+          new URLSearchParams(window.location.search).get('cardContract')
+        );
+        if (q !== null) return q;
+      } catch {
+        /* ignore */
+      }
     }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const ls = parseCardContractFlag(window.localStorage.getItem('ff.cardContract'));
+        if (ls !== null) return ls;
+      } catch {
+        /* ignore */
+      }
+    }
+    if (import.meta.env.VITE_VF1_TASK_CARD_CONTRACT === 'true') return true;
     return false;
   }, []);
 }

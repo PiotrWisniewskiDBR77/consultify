@@ -150,16 +150,48 @@ import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoDa
 const VF1_INSIGHT_SPECA = import.meta.env.VITE_VF1_INSIGHT_SPECA === 'true';
 
 // MIGRACJA — kompozycja kart Insight przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
-// Default OFF (zero regresji na demo); w dev/harnessie włącza URL `?cardContract=1`
-// (Piotr nie jest pierwszym testerem wizualnym — reguła #7; nadzorca renderuje zrzut sam).
-// Flaga DEDYKOWANA (jak POC Decision/Task: VITE_VF1_*_CARD_CONTRACT), świadomie NIE
-// współdzielona z VF1_INSIGHT_SPECA — tamta bramkuje puste/skeleton/error stany (inny cel,
-// InsightViewer:7806/7819), a spinanie obu flag mieszałoby dwa niezależne odbiory.
+// Default OFF (zero regresji na demo). Kolejność opt-in (wzór Initiative
+// `isInitiativeCardContractEnabled`): URL `?cardContract=1` → localStorage
+// `ff.cardContract` → env `VITE_VF1_INSIGHT_CARD_CONTRACT` → OFF. BEZ guardu
+// `import.meta.env.DEV`, żeby Piotr włączył kontrakt na ŻYWYM demo jednym linkiem;
+// publiczność bez linku/localStorage/env widzi demo bez zmian (reguła #7 — nadzorca
+// renderuje zrzut sam). Flaga DEDYKOWANA (jak POC Decision/Task/Initiative:
+// VITE_VF1_*_CARD_CONTRACT), świadomie NIE współdzielona z VF1_INSIGHT_SPECA — tamta
+// bramkuje puste/skeleton/error stany (inny cel, InsightViewer:7806/7819).
+function parseInsightCardContractFlag(raw: string | null | undefined): boolean | null {
+  if (raw === null || raw === undefined) return null;
+  const v = String(raw).trim().toLowerCase();
+  if (v === '1' || v === 'true' || v === 'on') return true;
+  if (v === '0' || v === 'false' || v === 'off') return false;
+  return null;
+}
+
 function useInsightCardContractEnabled(): boolean {
   return useMemo(() => {
-    if (import.meta.env.VITE_VF1_INSIGHT_CARD_CONTRACT === 'true') return true;
-    if (import.meta.env.DEV && typeof window !== 'undefined') {
-      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        const q = parseInsightCardContractFlag(
+          new URLSearchParams(window.location.search).get('cardContract')
+        );
+        if (q !== null) return q;
+      } catch {
+        /* ignore */
+      }
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const ls = parseInsightCardContractFlag(window.localStorage.getItem('ff.cardContract'));
+        if (ls !== null) return ls;
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+      const env = parseInsightCardContractFlag(meta?.env?.VITE_VF1_INSIGHT_CARD_CONTRACT);
+      if (env !== null) return env;
+    } catch {
+      /* ignore */
     }
     return false;
   }, []);
@@ -1090,10 +1122,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   });
 
   // R2/R4 (przepis §2/§4): dev-only sygnał rozjazdu render↔katalog. Każda sekcja
-  // renderowana przez INSIGHT_SECTIONS ma być ZNANA kontraktowi (admit lub
-  // do-decyzji); brak wpisu = prawdziwa sierota. Osobno logujemy 11 „Phase-D"
-  // (extras poza katalogiem) — rozjazd 32/16, na który bramka strukturalna jest
-  // ślepa (przepis R4). Nie blokuje renderu.
+  // renderowana przez INSIGHT_SECTIONS ma być ZNANA kontraktowi; brak wpisu =
+  // prawdziwa sierota (orphan). „Extras" = sekcje renderowane, których NIE ma w
+  // SPEC.catalog → applyToSections doklejałby je zawsze-widoczne na koniec. Po
+  // domknięciu zwężenia (Phase-D w katalogu jako `dodawalna`) extras MA być 0.
   useEffect(() => {
     if (!import.meta.env.DEV || !insightCardContractEnabled) return;
     const known = new Set(INSIGHT_CARD_RENDER_IDS);
@@ -1102,10 +1134,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // eslint-disable-next-line no-console
       console.warn('[insightCardContract] sekcje renderowane bez wpisu w deskryptorze:', orphans);
     }
+    const catalogIds = new Set(INSIGHT_CARD_SPEC.catalog.map((c) => c.id));
+    const extras = INSIGHT_SECTIONS.map((s) => s.id).filter((id) => !catalogIds.has(id));
     // eslint-disable-next-line no-console
     console.info(
       `[insightCardContract] kontrakt ON — katalog ${INSIGHT_CARD_SPEC.catalog.length} kart, ` +
-        `Phase-D poza katalogiem (extras): ${INSIGHT_PHASE_D_RENDER_IDS.length}`
+        `Phase-D w katalogu (dodawalne): ${INSIGHT_PHASE_D_RENDER_IDS.length}, ` +
+        `renderowane poza katalogiem (extras): ${extras.length}`
     );
   }, [insightCardContractEnabled]);
 
