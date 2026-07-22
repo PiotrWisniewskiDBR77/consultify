@@ -63,8 +63,7 @@ const LIFECYCLE_TABS: ReadonlyArray<{
 ];
 
 const STATE_PILL: Record<TemplateLifecycleState, string> = {
-  draft:
-    'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-500/20 dark:text-slate-200 dark:border-slate-700',
+  draft: 'bg-c-surface text-c-text-secondary border-c-border-subtle',
   approved:
     'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-700',
   deprecated:
@@ -107,7 +106,7 @@ function formatTimestamp(value: string | null | undefined): string {
 function tabBadgeTone(active: boolean): string {
   return active
     ? 'bg-blue-600 text-white border-blue-600'
-    : 'bg-slate-200 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-700';
+    : 'bg-c-surface text-c-text-secondary border-c-border-subtle';
 }
 
 function statusBannerForFetch(status: TemplateGovernanceFetchStatus): {
@@ -127,7 +126,7 @@ function statusBannerForFetch(status: TemplateGovernanceFetchStatus): {
   }
   if (status === 'unavailable') {
     return {
-      tone: 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-700/40 dark:text-slate-200 dark:border-slate-600',
+      tone: 'bg-c-surface text-c-text border-c-border-subtle',
       icon: <AlertCircle size={16} />,
       title: 'Template governance storage is unavailable',
       body: 'Migration 767 may not have been applied yet, or the database is briefly unreachable. Lifecycle counts and the audit ledger will populate once it is back online.',
@@ -135,7 +134,7 @@ function statusBannerForFetch(status: TemplateGovernanceFetchStatus): {
   }
   if (status === 'not_found') {
     return {
-      tone: 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-700/40 dark:text-slate-200 dark:border-slate-600',
+      tone: 'bg-c-surface text-c-text border-c-border-subtle',
       icon: <AlertCircle size={16} />,
       title: 'Template not found',
       body: 'It may have been deleted, or it belongs to a different organization.',
@@ -334,17 +333,15 @@ const PresentationTemplateGovernanceView: React.FC = () => {
     <div className="space-y-6">
       <header className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Template Governance
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          <h1 className="text-2xl font-semibold text-c-text">Template Governance</h1>
+          <p className="mt-1 text-sm text-c-text-secondary">
             Manage template lifecycle, approval flow, and version lineage.
           </p>
         </div>
         <button
           type="button"
           onClick={onRefresh}
-          className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          className="inline-flex items-center gap-2 rounded-md border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-sm font-medium text-c-text-secondary shadow-sm hover:bg-state-hover"
         >
           <RefreshCcw size={14} />
           Refresh
@@ -352,7 +349,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
       </header>
 
       <nav
-        className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700"
+        className="flex flex-wrap gap-2 border-b border-c-border-subtle"
         aria-label="Lifecycle tabs"
       >
         {LIFECYCLE_TABS.map((tab) => {
@@ -365,7 +362,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
               className={`-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
                 active
                   ? 'border-blue-600 text-blue-700 dark:text-blue-300'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  : 'border-transparent text-c-text-muted hover:text-c-text-secondary'
               }`}
             >
               {tab.icon}
@@ -396,20 +393,20 @@ const PresentationTemplateGovernanceView: React.FC = () => {
 
       <section
         aria-label={`Templates in ${activeTab}`}
-        className="rounded-md border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+        className="rounded-md border border-c-border-subtle bg-c-surface-raised shadow-sm"
       >
         {loading ? (
-          <div className="flex items-center justify-center px-4 py-8 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-center px-4 py-8 text-sm text-c-text-muted">
             <Loader2 size={16} className="mr-2 animate-spin" />
             Loading templates…
           </div>
         ) : rows.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-4 py-8 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col items-center gap-2 px-4 py-8 text-sm text-c-text-muted">
             <FileCheck size={20} className="opacity-60" />
             <p>No templates in this lifecycle state for your organization.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+          <ul className="divide-y divide-c-border-subtle">
             {rows.map((row) => {
               const expanded = expandedTemplateId === row.id;
               return (
@@ -419,7 +416,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => onToggleExpand(row.id)}
-                        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-c-border-subtle text-c-text-secondary hover:bg-state-hover"
                         aria-expanded={expanded}
                         aria-controls={`gov-${row.id}`}
                         aria-label={expanded ? 'Collapse governance' : 'Expand governance'}
@@ -427,10 +424,10 @@ const PresentationTemplateGovernanceView: React.FC = () => {
                         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       </button>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                        <p className="truncate text-sm font-medium text-c-text">
                           {row.name || row.id}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-c-text-muted">
                           v{row.lineageVersion} · updated {formatTimestamp(row.updatedAt)}
                         </p>
                       </div>
@@ -445,7 +442,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => onToggleExpand(row.id)}
-                        className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                        className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-state-hover"
                       >
                         View governance
                       </button>
@@ -455,7 +452,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
                   {expanded ? (
                     <div
                       id={`gov-${row.id}`}
-                      className="space-y-4 border-t border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-900/40"
+                      className="space-y-4 border-t border-c-border-subtle bg-c-surface px-4 py-4"
                     >
                       {governanceBanner ? (
                         <div
@@ -470,7 +467,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
                       ) : null}
 
                       {governanceLoading ? (
-                        <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center text-sm text-c-text-muted">
                           <Loader2 size={14} className="mr-2 animate-spin" />
                           Loading governance details…
                         </div>
@@ -529,26 +526,26 @@ const LineagePanel: React.FC<LineagePanelProps> = ({ governance }) => {
           },
         ];
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+    <div className="rounded-md border border-c-border-subtle bg-c-surface-raised p-3">
+      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
         <GitBranch size={14} />
         Lineage chain
       </h3>
       <ol className="mt-2 space-y-1 text-sm">
         {chain.map((node, idx) => (
           <li key={node.id} className="flex items-center gap-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-c-surface text-xs font-semibold text-c-text-secondary">
               {node.lineageVersion}
             </span>
-            <span className="truncate text-slate-800 dark:text-slate-100">
-              {node.name || node.id}
-            </span>
+            <span className="truncate text-c-text">{node.name || node.id}</span>
             <span
               className={`ml-auto inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${STATE_PILL[node.lifecycleState]}`}
             >
               {node.lifecycleState}
             </span>
-            {idx < chain.length - 1 ? <ChevronRight size={12} className="text-slate-600" /> : null}
+            {idx < chain.length - 1 ? (
+              <ChevronRight size={12} className="text-c-text-secondary" />
+            ) : null}
           </li>
         ))}
       </ol>
@@ -563,33 +560,29 @@ interface ApprovalPanelProps {
 const ApprovalPanel: React.FC<ApprovalPanelProps> = ({ governance }) => {
   const { approval } = governance;
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+    <div className="rounded-md border border-c-border-subtle bg-c-surface-raised p-3">
+      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
         <ClipboardCheck size={14} />
         Approval status
       </h3>
       <dl className="mt-2 space-y-1 text-sm">
         <div className="flex justify-between gap-2">
-          <dt className="text-slate-500 dark:text-slate-400">Approved at</dt>
-          <dd className="text-slate-800 dark:text-slate-100">
-            {formatTimestamp(approval.approvedAt)}
-          </dd>
+          <dt className="text-c-text-muted">Approved at</dt>
+          <dd className="text-c-text">{formatTimestamp(approval.approvedAt)}</dd>
         </div>
         <div className="flex justify-between gap-2">
-          <dt className="text-slate-500 dark:text-slate-400">Approved by</dt>
-          <dd className="text-slate-800 dark:text-slate-100">{approval.approvedBy || '—'}</dd>
+          <dt className="text-c-text-muted">Approved by</dt>
+          <dd className="text-c-text">{approval.approvedBy || '—'}</dd>
         </div>
         {governance.lifecycleState === 'deprecated' ? (
           <>
             <div className="flex justify-between gap-2">
-              <dt className="text-slate-500 dark:text-slate-400">Deprecated at</dt>
-              <dd className="text-slate-800 dark:text-slate-100">
-                {formatTimestamp(approval.deprecatedAt)}
-              </dd>
+              <dt className="text-c-text-muted">Deprecated at</dt>
+              <dd className="text-c-text">{formatTimestamp(approval.deprecatedAt)}</dd>
             </div>
             <div className="flex justify-between gap-2">
-              <dt className="text-slate-500 dark:text-slate-400">Deprecated by</dt>
-              <dd className="text-slate-800 dark:text-slate-100">{approval.deprecatedBy || '—'}</dd>
+              <dt className="text-c-text-muted">Deprecated by</dt>
+              <dd className="text-c-text">{approval.deprecatedBy || '—'}</dd>
             </div>
             {approval.deprecationReason ? (
               <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
@@ -618,7 +611,7 @@ const ActionRow: React.FC<ActionRowProps> = ({ governance, onAction }) => {
   const canDeprecate = state === 'draft' || state === 'approved';
 
   return (
-    <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+    <div className="flex flex-wrap gap-2 border-t border-c-border-subtle pt-3">
       <button
         type="button"
         disabled={!canSubmit}
@@ -657,34 +650,30 @@ interface EventsPanelProps {
 const EventsPanel: React.FC<EventsPanelProps> = ({ events }) => {
   if (events.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-slate-300 px-3 py-3 text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
+      <div className="rounded-md border border-dashed border-c-border-subtle px-3 py-3 text-xs text-c-text-muted">
         No governance events recorded for this template yet.
       </div>
     );
   }
   return (
-    <div className="rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-      <h3 className="flex items-center gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:text-slate-300">
+    <div className="rounded-md border border-c-border-subtle bg-c-surface-raised">
+      <h3 className="flex items-center gap-2 border-b border-c-border-subtle px-3 py-2 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
         <Clock size={14} />
         Recent governance events
       </h3>
-      <ol className="divide-y divide-slate-200 dark:divide-slate-700">
+      <ol className="divide-y divide-c-border-subtle">
         {events.map((event) => (
           <li key={event.id} className="flex items-start gap-3 px-3 py-2 text-xs">
-            <span className="mt-0.5 flex-shrink-0 rounded-full bg-slate-100 p-1 text-slate-600 dark:bg-slate-700 dark:text-slate-200">
+            <span className="mt-0.5 flex-shrink-0 rounded-full bg-c-surface p-1 text-c-text-secondary">
               {EVENT_ICON[event.eventType]}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-slate-800 dark:text-slate-100">
-                {EVENT_LABEL[event.eventType]}
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="font-medium text-c-text">{EVENT_LABEL[event.eventType]}</p>
+              <p className="text-[11px] text-c-text-muted">
                 {formatTimestamp(event.createdAt)} · {event.actorRole || 'unknown role'}
                 {event.fromState && event.toState ? ` · ${event.fromState} → ${event.toState}` : ''}
               </p>
-              {event.reason ? (
-                <p className="mt-1 text-slate-700 dark:text-slate-300">{event.reason}</p>
-              ) : null}
+              {event.reason ? <p className="mt-1 text-c-text-secondary">{event.reason}</p> : null}
             </div>
           </li>
         ))}
@@ -733,37 +722,35 @@ const ActionModal: React.FC<ActionModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="template-governance-action-title"
-        className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+        className="w-full max-w-lg rounded-lg border border-c-border-subtle bg-c-surface-raised p-5 shadow-xl"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2
               id="template-governance-action-title"
-              className="text-base font-semibold text-slate-900 dark:text-slate-100"
+              className="text-base font-semibold text-c-text"
             >
               {ACTION_TITLE[modal.action]}
             </h2>
-            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            <p className="mt-1 text-xs text-c-text-secondary">
               {modal.templateName || modal.templateId}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="rounded p-1 text-c-text-secondary hover:bg-state-hover"
             aria-label="Close"
           >
             <X size={16} />
           </button>
         </div>
-        <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">
-          {ACTION_HINT[modal.action]}
-        </p>
-        <label className="mt-3 block text-xs font-medium text-slate-700 dark:text-slate-200">
+        <p className="mt-3 text-xs text-c-text-secondary">{ACTION_HINT[modal.action]}</p>
+        <label className="mt-3 block text-xs font-medium text-c-text-secondary">
           Reason {reasonRequired ? <span className="text-danger-600">*</span> : null}
         </label>
         <textarea
-          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+          className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text shadow-sm focus:border-c-focus focus:outline-none focus:ring-1 focus:ring-c-focus"
           rows={4}
           maxLength={REASON_MAX + 50}
           value={reason}
@@ -771,9 +758,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
           placeholder={reasonRequired ? 'Required — explain replacement / risk' : 'Optional'}
         />
         <div className="mt-1 flex items-center justify-between text-[11px]">
-          <span
-            className={`${overLimit ? 'text-danger-600' : 'text-slate-500 dark:text-slate-400'}`}
-          >
+          <span className={`${overLimit ? 'text-danger-600' : 'text-c-text-muted'}`}>
             {reason.length}/{REASON_MAX}
           </span>
         </div>
@@ -790,7 +775,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="rounded-md border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-state-hover"
             disabled={submitting}
           >
             Cancel
