@@ -45,10 +45,10 @@ Reguła #7 wymaga, żebyś renderował SAM. Sposób (sprawdzony 07-22):
 
 ## 5b. PARTIA PO W TOKU (agenci równolegli, 07-22 popołudnie)
 - **PO/1 zrobione i zacommitowane** na gałęzi `audyt-idee-2026-07-22` (commit `63b32f416a`): Mind Map orb zdjęty (K8), trackpad-pan włączony (K9, `useIdeasToolDefaults.ts`).
-- **3 agenci PO w izolowanych worktree'ach** (każdy commituje na SWOJĄ gałąź, NIE push, bez renderu — port był zajęty):
-  1. Whiteboard prawy-klik — dodaje operacje bazowe (Edytuj/Duplikuj/Kopiuj/Usuń/Lock/Warstwa) nad sekcją AI w menu kontekstowym canvasu.
-  2. Table prawy-klik — Wstaw wiersz nad/pod, Kopiuj, Rozwiń rekord.
-  3. Process toolbar — odchudzenie (Analyze&Validate + Manage-canvas do overflow/menu).
+- **3 agenci PO w izolowanych worktree'ach** (każdy commit na SWOJĄ gałąź, NIE push, bez renderu — port był zajęty). GAŁĘZIE DO INTEGRACJI:
+  1. ✅ Whiteboard prawy-klik — gałąź `worktree-agent-acfd08ac847f8e43e` commit `457f2753fb` (pliki: `IdeaCanvasContextMenu.tsx` + `IdeaWhiteboardTool.tsx`). Dodane: Edytuj/Duplikuj/Kopiuj/Na-wierzch/Pod-spód/Lock/Usuń nad sekcją AI; reużyte handlery paska selekcji; NOWE `bringSelectedToFront`/`sendSelectedToBack`; naprawiona synchronizacja selekcji prawym-klikiem.
+  2. ⏳ Table prawy-klik — w toku (Wstaw wiersz nad/pod, Kopiuj, Rozwiń rekord).
+  3. ✅ Process toolbar — gałąź `worktree-agent-a4ba735dbf206d5e6` commit `d3303857d5` (plik: `ProcessFlowToolbar.tsx`). Ściana 3-kol → minimalistyczny pasek + overflow „Więcej"; guidance truncate+tooltip; wyczyszczony dług crimson `c-accent`→navy.
 - **CO ROBI ŚWIEŻA SESJA:** `git worktree list` + `git branch` → znajdź gałęzie agentów (nazwy typu `claude/*`); dla każdej: przejrzyj diff, zintegruj do gałęzi roboczej IDEE, **wyrenderuj PRZED/PO harnessem (§4), zrzut** → dopiero potem Piotr ocenia (reguła #7). Żaden fix agenta NIE był renderowany — wymaga wizualnej weryfikacji przed pokazaniem.
 
 ## 6. REGUŁY (nienaruszalne)
