@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+import { HANDLE_CLASS } from '../FlowNodeComponent';
+
 /**
  * PoolNode — BPMN-style pool container (P14 semantic type: pool).
  * Rendered as a bordered rectangle with a vertical header bar showing
@@ -24,7 +26,7 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
 
   return (
     <div
-      className={`relative flex items-stretch min-w-[200px] min-h-[80px] rounded-lg border-2 border-c-border-strong bg-c-surface shadow-sm transition-shadow ${
+      className={`group relative flex items-stretch min-w-[200px] min-h-[80px] rounded-lg border-2 border-c-border-strong bg-c-surface shadow-sm transition-shadow ${
         selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       onDoubleClick={() => {
@@ -38,7 +40,20 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
         }
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
+      {/* Z23 (Fala 7): 4-side magnetic handles (Z17 parity). Both existing
+          unnamed handles (Left/target, Right/source) preserved id-less for
+          back-compat with pre-existing L→R edges. */}
+      <Handle type="target" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="source" id="left" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="target" id="top" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="source" id="top-source" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="target" id="bottom" position={Position.Bottom} className={HANDLE_CLASS} />
+      <Handle
+        type="source"
+        id="bottom-source"
+        position={Position.Bottom}
+        className={HANDLE_CLASS}
+      />
 
       <div className="w-7 flex-shrink-0 border-r border-c-border-strong bg-c-surface-raised flex items-center justify-center rounded-l-lg">
         {editing ? (
@@ -66,7 +81,8 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
         </span>
       </div>
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
+      <Handle type="source" position={Position.Right} className={HANDLE_CLASS} />
+      <Handle type="target" id="right" position={Position.Right} className={HANDLE_CLASS} />
     </div>
   );
 };

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+import { HANDLE_CLASS } from '../FlowNodeComponent';
+
 export const BPMNStartNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(data?.label || ''));
@@ -18,7 +20,7 @@ export const BPMNStartNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative flex flex-col items-center ${selected ? 'drop-shadow-lg' : ''}`}
+      className={`group relative flex flex-col items-center ${selected ? 'drop-shadow-lg' : ''}`}
       onDoubleClick={() => {
         if (!data?.locked) {
           setEditValue(String(data?.label || ''));
@@ -26,6 +28,23 @@ export const BPMNStartNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         }
       }}
     >
+      {/* Z23 (Fala 7): 4-side magnetic handles (Z17 parity). BPMN semantics
+          say a start event has no incoming flow, but the shared connector
+          model (like every other Process Flow node) exposes both source+
+          target on all 4 sides for consistent magnetic snapping. Left/target
+          did not exist before this change, so it is safely added id-less;
+          the pre-existing Right/source stays id-less too (back-compat). */}
+      <Handle type="target" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="source" id="left" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="target" id="top" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="source" id="top-source" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="target" id="bottom" position={Position.Bottom} className={HANDLE_CLASS} />
+      <Handle
+        type="source"
+        id="bottom-source"
+        position={Position.Bottom}
+        className={HANDLE_CLASS}
+      />
       <svg
         width={36}
         height={36}
@@ -66,7 +85,8 @@ export const BPMNStartNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         )}
       </div>
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
+      <Handle type="source" position={Position.Right} className={HANDLE_CLASS} />
+      <Handle type="target" id="right" position={Position.Right} className={HANDLE_CLASS} />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
-import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
+import { DEFAULT_LANE_COLOR, HANDLE_CLASS } from '../FlowNodeComponent';
 
 export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
   const [editing, setEditing] = useState(false);
@@ -22,7 +22,7 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border-2 border-dashed border-c-border-strong bg-c-surface shadow-sm transition-shadow ${
+      className={`group relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border-2 border-dashed border-c-border-strong bg-c-surface shadow-sm transition-shadow ${
         selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       style={{
@@ -41,7 +41,20 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
         }
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
+      {/* Z23 (Fala 7): 4-side magnetic handles (Z17 parity). Both existing
+          unnamed handles (Left/target, Right/source) preserved id-less for
+          back-compat with pre-existing L→R edges. */}
+      <Handle type="target" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="source" id="left" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="target" id="top" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="source" id="top-source" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="target" id="bottom" position={Position.Bottom} className={HANDLE_CLASS} />
+      <Handle
+        type="source"
+        id="bottom-source"
+        position={Position.Bottom}
+        className={HANDLE_CLASS}
+      />
 
       {editing ? (
         <input
@@ -87,7 +100,8 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
         </svg>
       </div>
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
+      <Handle type="source" position={Position.Right} className={HANDLE_CLASS} />
+      <Handle type="target" id="right" position={Position.Right} className={HANDLE_CLASS} />
     </div>
   );
 };
