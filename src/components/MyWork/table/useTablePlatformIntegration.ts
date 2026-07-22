@@ -111,8 +111,12 @@ export interface UseTablePlatformIntegrationReturn {
   handleFieldChange: (nodeId: string, field: string, value: unknown) => void;
   handleAddRow: () => void;
   handleBulkDelete: () => void;
-  handleDeleteRow: (id: string) => void;
+  /** K1/Airtable parity — row kebab: duplicate a single row (clones its data into a new record). */
   handleDuplicateRow: (id: string) => void;
+  /** K1/Airtable parity — row kebab: delete a single row (no selection needed). */
+  handleDeleteRow: (id: string) => void;
+  /** K1/Airtable parity — row kebab: insert a blank row above/below a reference row (client-ordered). */
+  handleInsertRow: (referenceId: string, direction: 'above' | 'below') => void;
 
   // Views
   viewLayout: ViewLayout;
@@ -428,26 +432,9 @@ export function useTablePlatformIntegration(
     })();
   }, [isActive, locked, selectedRowIds, bridge, onSelectionChange]);
 
-  // ── Single-row delete (row context menu) ──
-  const handleDeleteRow = useCallback(
-    (id: string) => {
-      if (!isActive || locked) return;
-      setLocalNodes((curr) => curr.filter((n) => n.id !== id));
-      setSelectedRowIds((prev) => {
-        if (!prev.has(id)) return prev;
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-      void (async () => {
-        const ok = await bridge.deleteRecord(id);
-        if (!ok) await bridge.refresh();
-      })();
-    },
-    [isActive, locked, bridge]
-  );
-
-  // ── Single-row duplicate (row context menu) ──
+  // K1/Airtable parity — row kebab: duplicate a single row (reuses the same
+  // temp-node-then-patch pattern as handleAddRow, seeded with the source data,
+  // inserted directly after the source row; label gets a "(copy)" suffix).
   const handleDuplicateRow = useCallback(
     (id: string) => {
       if (!isActive || locked) return;
@@ -459,15 +446,19 @@ export function useTablePlatformIntegration(
         id: tempId,
         type: source.type,
         data: {
-          ...(source.data || {}),
+          ...(source.data ?? {}),
           label: label ? `${label} ${t('ideas.table.copySuffix', '(copy)')}` : '',
           created_time: new Date().toISOString(),
         },
         position: { x: 0, y: 0 },
       };
-      setLocalNodes((curr) => [tempNode, ...curr]);
+      setLocalNodes((curr) => {
+        const idx = curr.findIndex((n) => n.id === id);
+        if (idx === -1) return [tempNode, ...curr];
+        return [...curr.slice(0, idx + 1), tempNode, ...curr.slice(idx + 1)];
+      });
       void (async () => {
-        const created = await bridge.createRecord(source.data || {});
+        const created = await bridge.createRecord({ ...(source.data ?? {}) });
         if (created) {
           const newNode = recordToNode(created, bridge.fields);
           setLocalNodes((curr) => curr.map((n) => (n.id === tempId ? newNode : n)));
@@ -477,6 +468,60 @@ export function useTablePlatformIntegration(
       })();
     },
     [isActive, locked, nodes, t, bridge]
+  );
+
+  // K1/Airtable parity — row kebab: delete a single row without requiring selection.
+  const handleDeleteRow = useCallback(
+    (id: string) => {
+      if (!isActive || locked) return;
+      setLocalNodes((curr) => curr.filter((n) => n.id !== id));
+      setSelectedRowIds((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        onSelectionChange?.(
+          next.size > 0 ? { type: 'row', count: next.size, ids: Array.from(next) } : EMPTY_SELECTION
+        );
+        return next;
+      });
+      void (async () => {
+        const ok = await bridge.deleteRecord(id);
+        if (!ok) await bridge.refresh();
+      })();
+    },
+    [isActive, locked, bridge, onSelectionChange]
+  );
+
+  // K1/Airtable parity — row kebab: insert a blank row directly above/below a
+  // reference row. Ordering is client-side (array position) — same durability
+  // caveat as handleAddRow's temp-node pattern; no server-side order field yet.
+  const handleInsertRow = useCallback(
+    (referenceId: string, direction: 'above' | 'below') => {
+      if (!isActive || locked) return;
+      const tempId = `temp-${Date.now()}`;
+      const tempNode: TableNode = {
+        id: tempId,
+        type: 'idea',
+        data: { label: '', status: 'todo', created_time: new Date().toISOString() },
+        position: { x: 0, y: 0 },
+      };
+      setLocalNodes((curr) => {
+        const idx = curr.findIndex((n) => n.id === referenceId);
+        if (idx === -1) return [tempNode, ...curr];
+        const insertAt = direction === 'above' ? idx : idx + 1;
+        return [...curr.slice(0, insertAt), tempNode, ...curr.slice(insertAt)];
+      });
+      void (async () => {
+        const created = await bridge.createRecord({});
+        if (created) {
+          const newNode = recordToNode(created, bridge.fields);
+          setLocalNodes((curr) => curr.map((n) => (n.id === tempId ? newNode : n)));
+        } else {
+          setLocalNodes((curr) => curr.filter((n) => n.id !== tempId));
+        }
+      })();
+    },
+    [isActive, locked, bridge]
   );
 
   const handleSave = useCallback(async () => {
@@ -560,8 +605,9 @@ export function useTablePlatformIntegration(
       handleFieldChange: NOOP_FN,
       handleAddRow: NOOP_FN,
       handleBulkDelete: NOOP_FN,
-      handleDeleteRow: NOOP_FN,
       handleDuplicateRow: NOOP_FN,
+      handleDeleteRow: NOOP_FN,
+      handleInsertRow: NOOP_FN,
       viewLayout: 'table',
       setViewLayout: NOOP_FN,
       savedViews: [],
@@ -623,8 +669,9 @@ export function useTablePlatformIntegration(
     handleFieldChange,
     handleAddRow,
     handleBulkDelete,
-    handleDeleteRow,
     handleDuplicateRow,
+    handleDeleteRow,
+    handleInsertRow,
     viewLayout: views.viewLayout,
     setViewLayout: views.setViewLayout,
     savedViews: views.savedViews,

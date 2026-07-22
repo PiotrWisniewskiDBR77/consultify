@@ -2698,7 +2698,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   />
                 </div>
               ) : usePlatform ? (
-                <P15ViewRouter onCSVImport={handleCSVImport} />
+                <P15ViewRouter
+                  onCSVImport={handleCSVImport}
+                  onExpandRecord={(id) => setExpandedRecordId(id)}
+                />
               ) : _loading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <Loader2 className="animate-spin text-c-text-muted" size={24} />
