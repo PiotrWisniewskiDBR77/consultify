@@ -2429,7 +2429,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         // Deliverables light (L3): arkusz powstaje w miejscu — tabela GFM jako
         // canvas draft kind='table' (edycja + XLSX/CSV + bridge do Table Studio),
         // zamiast redirectu do /tabele. Za flagą; off ⇒ legacy.
-        if (isDeliverablesLightEnabled()) {
+        // B2-gate (2026-07-22, live-verify): tor OBLICZENIOWY (workbook — silnik
+        // 5-fazowy z formułami) wchodzi tu NIEZALEŻNIE od flagi buildowej
+        // VITE_ENABLE_DELIVERABLES_LIGHT — inaczej reroute B2 był martwy na demo
+        // (env nieustawiony ⇒ legacy panel „AI Table Builder" z błędem workspaceId).
+        // Lane 'gfm' przy fladze OFF zostaje na legacy jak dotąd (zero regresji).
+        if (isDeliverablesLightEnabled() || resolveSheetLane(text) === 'workbook') {
           const sheetTitle = deckTitleFromIntent(
             text,
             t('chat.deliverable.sheetTitle', 'Sheet from chat')
