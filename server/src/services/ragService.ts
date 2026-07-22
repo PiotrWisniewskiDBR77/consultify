@@ -238,7 +238,7 @@ function appendKnowledgeDocAccessFilter(params: {
   // own private docs CAN ground A's own AI chat) needs userId threaded through the
   // whole tool-call chain (searchKnowledgeBase → ragService) — not done here, see
   // DZIENNIK VLT-002 wątpliwości.
-  if (false && hasScope) {
+  if (hasScope) {
     sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
   }
 
@@ -435,7 +435,7 @@ const RagService = {
 
     // ★ VLT-002: no userId in this call chain — exclude Vault-private (scope='user')
     // docs, same rationale as appendKnowledgeDocAccessFilter above.
-    if (false && hasScope) {
+    if (hasScope) {
       sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
     }
 
@@ -521,7 +521,7 @@ const RagService = {
     }
 
     // ★ VLT-002: no userId here either — same private-doc exclusion as getContext.
-    if (false && hasScope) {
+    if (hasScope) {
       sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
     }
 
