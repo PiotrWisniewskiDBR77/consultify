@@ -704,14 +704,25 @@ export function isInitiativeCardContractEnabled(): boolean {
       const params = new URLSearchParams(window.location.search);
       // Query akceptuje ALBO własny klucz, ALBO wspólny alias `cardContract`.
       const q = parseFlag(params.get(FLAG_QUERY) ?? params.get(FLAG_QUERY_ALIAS));
-      if (q !== null) return q;
+      if (q !== null) {
+        try {
+          window.localStorage.setItem('ff.cardContract', q ? '1' : '0');
+        } catch {
+          /* ignore */
+        }
+        return q;
+      }
     } catch {
       /* ignore */
     }
   }
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
-      const ls = parseFlag(window.localStorage.getItem(FLAG_LS));
+      // Wspólny klucz `ff.cardContract` (jeden link włącza wszystkie artefakty),
+      // z fallbackiem na własny FLAG_LS dla wstecznej kompatybilności.
+      const ls = parseFlag(
+        window.localStorage.getItem('ff.cardContract') ?? window.localStorage.getItem(FLAG_LS)
+      );
       if (ls !== null) return ls;
     } catch {
       /* ignore */
