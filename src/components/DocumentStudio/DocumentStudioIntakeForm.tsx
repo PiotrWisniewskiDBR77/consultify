@@ -7,8 +7,8 @@
  *   template; outline + formatting are hydrated server-side.
  */
 
-import { Loader2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Button from '@/components/ui/primitives/Button';
@@ -123,6 +123,12 @@ interface DocumentStudioIntakeFormProps {
   /** Non-blocking notice when the approved-template list could not be loaded.
    *  Mode 1 (free generation) stays fully available; the picker is just hidden. */
   templatesNotice?: string | null;
+  /** D1 tri-tryby: gdy true i są szablony — po wejściu ustaw fokus na pickerze
+   *  szablonów (użytkownik wybrał „Z szablonu"). Domyślnie false = bez zmiany. */
+  autoFocusTemplatePicker?: boolean;
+  /** D1 tri-tryby: gdy podane — renderuje link „← Wybór trybu" nad formularzem
+   *  (powrót do ekranu wyboru 3 trybów). Domyślnie brak = bez linku. */
+  onBackToModes?: () => void;
 }
 
 export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> = ({
@@ -131,8 +137,11 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   error,
   approvedTemplates,
   templatesNotice,
+  autoFocusTemplatePicker = false,
+  onBackToModes,
 }) => {
   const { t } = useTranslation();
+  const templatePickerRef = useRef<HTMLSelectElement | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [documentType, setDocumentType] = useState<DocumentTypeKey | ''>('');
@@ -162,6 +171,14 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       setAudience(selectedTemplate.audience.join(', '));
     }
   }, [selectedTemplate]);
+
+  // D1 tri-tryby: gdy wejście przez „Z szablonu" i picker jest dostępny —
+  // ustaw na nim fokus, żeby wybór trybu miał widoczny skutek.
+  useEffect(() => {
+    if (autoFocusTemplatePicker && hasTemplates) {
+      templatePickerRef.current?.focus();
+    }
+  }, [autoFocusTemplatePicker, hasTemplates]);
 
   const isValid = description.trim().length >= 10 && !loading;
 
@@ -195,6 +212,17 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       onSubmit={handleSubmit}
       className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6"
     >
+      {onBackToModes ? (
+        <button
+          type="button"
+          onClick={onBackToModes}
+          className="inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-c-text-secondary transition-colors hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          <ArrowLeft size={14} aria-hidden />
+          {t('documentStudio.intake.backToModes', 'Wybór trybu')}
+        </button>
+      ) : null}
+
       <div>
         <h2 className="text-lg font-semibold text-c-text">
           {inTemplateMode
@@ -229,6 +257,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             {t('documentStudio.intake.useTemplateLabel', 'Use approved template (optional)')}
           </span>
           <select
+            ref={templatePickerRef}
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
             className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"

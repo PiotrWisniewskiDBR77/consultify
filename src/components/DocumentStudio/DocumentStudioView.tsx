@@ -16,7 +16,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
+import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { LoadingState } from '@/components/ui/primitives';
+import { isTriModeEnabled } from '@/utils/triModeFlag';
 
 import {
   type DocumentStreamDoneEvent,
@@ -60,6 +62,13 @@ export const DocumentStudioView: React.FC = () => {
   const [searchParams] = useSearchParams();
   const artifactIdFromQuery = searchParams.get('artifactId');
   const artifactIdFromUrl = artifactIdFromPath || artifactIdFromQuery || undefined;
+
+  // D1 (roboty tri-tryby): jawny wybór 3 trybów na wejściu, tylko za flagą
+  // `ff_tri_tryby`. OFF → `triMode` false → gałąź intake renderuje wyłącznie
+  // dotychczasowy `DocumentStudioIntakeForm` (bajt-identycznie).
+  const triMode = isTriModeEnabled();
+  // 'choose' = ekran wyboru (Czysto/Z AI/Z szablonu); 'ai'/'template' = intake.
+  const [docEntryMode, setDocEntryMode] = useState<'choose' | 'ai' | 'template'>('choose');
 
   const [activeTab, setActiveTab] = useState<Tab>('generate');
   const [phase, setPhase] = useState<Phase>('intake');
@@ -308,8 +317,46 @@ export const DocumentStudioView: React.FC = () => {
     );
   };
 
+  // D1 tryb ①CZYSTO — pusty dokument otwarty w edytorze, BEZ AI. Nie ma osobnej
+  // ścieżki create-empty-draft w documentStudio API (zbadane), więc reużywamy
+  // istniejącego kanału materializacji z `useLlm:false` (deterministyczny builder,
+  // zero LLM) i minimalnym, jedno-sekcyjnym outlinem. Ląduje w fazie `document`
+  // (edytor TipTap), gdzie użytkownik pisze ręcznie.
+  const handleCreateEmptyDoc = useCallback(async (): Promise<void> => {
+    const emptyOutline: DocumentOutline = {
+      documentType: 'generic_document',
+      title: t('documentStudio.blank.title', 'Nowy dokument'),
+      sections: [
+        {
+          title: t('documentStudio.blank.section', 'Sekcja 1'),
+          level: 1,
+          purpose: '',
+          expectedLengthHint: 'short',
+        },
+      ],
+      recommendedDensity: 'concise',
+      recommendedRegister: 'professional',
+      recommendedLanguageStyle: 'formal',
+    };
+    const emptyIntake: DocumentIntake = {
+      title: t('documentStudio.blank.title', 'Nowy dokument'),
+      description: t(
+        'documentStudio.blank.description',
+        'Pusty dokument roboczy do samodzielnej edycji.'
+      ),
+      documentType: 'generic_document',
+      language: 'pl',
+      density: 'concise',
+    };
+    await runStreamingGeneration(
+      { intake: emptyIntake, outline: emptyOutline, useLlm: false },
+      emptyOutline
+    );
+  }, [runStreamingGeneration, t]);
+
   const handleStartOver = (): void => {
     setPhase('intake');
+    setDocEntryMode('choose');
     setIntake(null);
     setOutline(null);
     setUseLlm(false);
@@ -328,6 +375,12 @@ export const DocumentStudioView: React.FC = () => {
     setOutline(null);
     setError(null);
   };
+
+  // D1 tri-tryby: powrót z formularza intake do ekranu wyboru 3 trybów.
+  const handleBackToModes = useCallback((): void => {
+    setDocEntryMode('choose');
+    setError(null);
+  }, []);
 
   // L-07: the tab strip is expressed as MELS TopBar toggle chips so Document
   // Studio shares the same canonical chrome as the other executive modules
@@ -403,13 +456,51 @@ export const DocumentStudioView: React.FC = () => {
             className="flex-1"
           />
         ) : phase === 'intake' ? (
-          <DocumentStudioIntakeForm
-            onSubmit={handleIntakeSubmit}
-            loading={planning || generating}
-            error={phase === 'intake' ? error : null}
-            approvedTemplates={approvedTemplates}
-            templatesNotice={phase === 'intake' ? templatesError : null}
-          />
+          triMode && docEntryMode === 'choose' ? (
+            <TriModeChooser
+              busy={generating}
+              showTemplate={approvedTemplates.length > 0}
+              heading={t('documentStudio.tri.heading', 'Jak chcesz zacząć dokument?')}
+              subheading={t(
+                'documentStudio.tri.subheading',
+                'Wybierz tryb — wszystkie trzy są równorzędne.'
+              )}
+              clean={{
+                title: t('documentStudio.tri.cleanTitle', 'Czysto'),
+                desc: t(
+                  'documentStudio.tri.cleanDesc',
+                  'Pusty dokument w edytorze. Piszesz sam, bez AI.'
+                ),
+              }}
+              ai={{
+                title: t('documentStudio.tri.aiTitle', 'Z AI'),
+                desc: t(
+                  'documentStudio.tri.aiDesc',
+                  'Opisz dokument — Studio zaplanuje strukturę i pierwszą wersję.'
+                ),
+              }}
+              template={{
+                title: t('documentStudio.tri.templateTitle', 'Z szablonu'),
+                desc: t(
+                  'documentStudio.tri.templateDesc',
+                  'Zacznij od zatwierdzonego szablonu i dostosuj treść.'
+                ),
+              }}
+              onClean={handleCreateEmptyDoc}
+              onAi={() => setDocEntryMode('ai')}
+              onTemplate={() => setDocEntryMode('template')}
+            />
+          ) : (
+            <DocumentStudioIntakeForm
+              onSubmit={handleIntakeSubmit}
+              loading={planning || generating}
+              error={phase === 'intake' ? error : null}
+              approvedTemplates={approvedTemplates}
+              templatesNotice={phase === 'intake' ? templatesError : null}
+              autoFocusTemplatePicker={triMode && docEntryMode === 'template'}
+              onBackToModes={triMode ? handleBackToModes : undefined}
+            />
+          )
         ) : phase === 'outline' && outline ? (
           <DocumentStudioOutlinePanel
             outline={outline}
