@@ -214,11 +214,64 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
       expect(Object.keys(passedSteps[0]).sort()).toEqual(['toolInput', 'toolName']);
     });
 
-    it('rejects when neither manifestId nor steps are provided (400)', async () => {
+    it('rejects when neither manifestId, processId nor steps are provided (400)', async () => {
       const res = await request(createApp()).post('/api/ai/agent-plan').send({ title: 'Test plan' });
 
       expect(res.status).toBe(400);
       expect(createPlan).not.toHaveBeenCalled();
+    });
+
+    it('generates the classic 5-phase consulting process when processId=classic-5 (AGT-006)', async () => {
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Nowy projekt', processId: 'classic-5' });
+
+      expect(res.status).toBe(201);
+      expect(createPlan).toHaveBeenCalledTimes(1);
+      const passedSteps = createPlan.mock.calls[0][0].steps as Array<{
+        toolName: string;
+        toolInput: Record<string, unknown>;
+      }>;
+      // 5 faz klasycznego procesu we właściwej kolejności, z modułami/deliverables.
+      expect(passedSteps).toHaveLength(5);
+      expect(passedSteps.map((s) => s.toolInput.phase)).toEqual([
+        'Wejście / Kontraktowanie',
+        'Diagnoza',
+        'Rekomendacje',
+        'Wdrożenie',
+        'Zamknięcie',
+      ]);
+      expect(passedSteps.every((s) => typeof s.toolInput.module === 'string')).toBe(true);
+      expect(passedSteps.every((s) => typeof s.toolInput.deliverable === 'string')).toBe(true);
+      // Tylko toolName/toolInput trafia do persystencji (bez rationale itp.).
+      expect(Object.keys(passedSteps[0]).sort()).toEqual(['toolInput', 'toolName']);
+    });
+
+    it('generates the 4-step DRD variant when processId=drd (AGT-006)', async () => {
+      const plan = basePlan();
+      createPlan.mockResolvedValue(plan);
+      queueAdd.mockResolvedValue(undefined);
+
+      const res = await request(createApp())
+        .post('/api/ai/agent-plan')
+        .send({ title: 'Projekt DRD', processId: 'drd' });
+
+      expect(res.status).toBe(201);
+      const passedSteps = createPlan.mock.calls[0][0].steps as Array<{
+        toolName: string;
+        toolInput: Record<string, unknown>;
+      }>;
+      expect(passedSteps).toHaveLength(4);
+      expect(passedSteps.map((s) => s.toolInput.phase)).toEqual([
+        'Discovery',
+        'Ocena',
+        'Inicjatywy',
+        'Efekty',
+      ]);
     });
 
     it('lets explicit steps override PlanBuilder generation even when manifestId is present', async () => {
