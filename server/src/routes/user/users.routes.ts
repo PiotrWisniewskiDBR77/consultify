@@ -19,6 +19,7 @@ import { validateBody } from '../../middleware/validation.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { resolveStoredRelativePath, uploadsDir } from '../../utils/storagePaths.js';
 import { UpdateUserRoleSchema, UpdateUserSchema } from '../../validators/user.validators.js';
 
 const router = Router();
@@ -26,10 +27,7 @@ const router = Router();
 // Configure multer for avatar uploads
 const avatarStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads', 'avatars');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const uploadDir = uploadsDir('avatars');
     cb(null, uploadDir);
   },
   filename: (_req, file, cb) => {
@@ -132,7 +130,7 @@ router.post(
       }
 
       if (oldUser?.avatar_url && oldUser.avatar_url.startsWith('/uploads/')) {
-        const oldPath = path.join(process.cwd(), oldUser.avatar_url);
+        const oldPath = resolveStoredRelativePath(oldUser.avatar_url);
         if (fs.existsSync(oldPath)) {
           fs.unlinkSync(oldPath);
         }
@@ -142,7 +140,7 @@ router.post(
       return res.json({ success: true, avatarUrl });
     } catch (err: any) {
       if (req.file) {
-        const filePath = path.join(process.cwd(), 'uploads', 'avatars', req.file.filename);
+        const filePath = path.join(uploadsDir('avatars'), req.file.filename);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
@@ -183,7 +181,7 @@ router.delete(
       }
 
       if (user.avatar_url && user.avatar_url.startsWith('/uploads/')) {
-        const filePath = path.join(process.cwd(), user.avatar_url);
+        const filePath = resolveStoredRelativePath(user.avatar_url);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }

@@ -18,17 +18,14 @@ import { AuthRequest, requireRole, verifyToken } from '../middleware/auth.middle
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { resolveStoredRelativePath, uploadsDir } from '../utils/storagePaths.js';
 
 const router = Router();
 
 // Configure multer for avatar uploads
 const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads', 'avatars');
-    // Ensure directory exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const uploadDir = uploadsDir('avatars');
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -289,7 +286,7 @@ router.post(
 
       // Delete old avatar file if exists and is local
       if (oldUser?.avatar_url && oldUser.avatar_url.startsWith('/uploads/')) {
-        const oldPath = path.join(process.cwd(), oldUser.avatar_url);
+        const oldPath = resolveStoredRelativePath(oldUser.avatar_url);
         if (fs.existsSync(oldPath)) {
           fs.unlinkSync(oldPath);
         }
@@ -300,7 +297,7 @@ router.post(
     } catch (err: any) {
       // Clean up uploaded file on error
       if (req.file) {
-        const filePath = path.join(process.cwd(), 'uploads', 'avatars', req.file.filename);
+        const filePath = path.join(uploadsDir('avatars'), req.file.filename);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
@@ -345,7 +342,7 @@ router.delete(
 
       // Delete avatar file if it's a local file
       if (user.avatar_url && user.avatar_url.startsWith('/uploads/')) {
-        const filePath = path.join(process.cwd(), user.avatar_url);
+        const filePath = resolveStoredRelativePath(user.avatar_url);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
@@ -397,7 +394,7 @@ router.delete(
 
       // Delete avatar file if exists
       if (user?.avatar_url && user.avatar_url.startsWith('/uploads/')) {
-        const filePath = path.join(process.cwd(), user.avatar_url);
+        const filePath = resolveStoredRelativePath(user.avatar_url);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
