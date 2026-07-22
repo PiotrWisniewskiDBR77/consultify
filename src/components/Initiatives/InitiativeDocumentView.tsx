@@ -76,6 +76,7 @@ import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -9645,8 +9646,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   //     reguły „zostaje tam, gdzie widać zawsze" ich domem jest panel.
   const initiativeRightPanelSections: ArtifactRightPanelSection[] = useMemo(() => {
     const dash = '—';
-    const rowKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle align-top';
-    const rowVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
     const panelBtn =
       'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
 
@@ -9719,53 +9718,32 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           // własne `render()`, więc status/priorytet/właściciel/termin
           // pozostają EDYTOWALNE dokładnie jak w siatce. To przeniesienie
           // miejsca, nie zamiana na tekst tylko-do-odczytu.
-          <div className="rounded-lg border border-c-border-subtle overflow-hidden">
-            <table className="w-full text-xs border-collapse">
-              <thead>
-                <tr className="bg-c-surface-raised">
-                  <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('initiatives.panel.property', 'Property')}
-                  </th>
-                  <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                    {t('initiatives.panel.value', 'Value')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {nModePropertyFields.map((field, idx) => {
-                  const last = idx === nModePropertyFields.length - 1;
-                  return (
-                    <tr key={field.id}>
-                      <td
-                        className={
-                          last ? rowKey.replace(' border-b border-c-border-subtle', '') : rowKey
-                        }
-                      >
-                        {isPolish ? field.label.pl : field.label.en}
-                      </td>
-                      <td
-                        className={
-                          last ? rowVal.replace(' border-b border-c-border-subtle', '') : rowVal
-                        }
-                      >
-                        {/* Kontrolki pochodza z POZIOMEGO paska wlasciwosci — tam mialy
-                            pelna szerokosc, wlasne tlo i ramke. W waskiej komorce panelu
-                            renderowaly sie jako ciemne prostokaty z sama kropka, bez
-                            czytelnej wartosci (zgloszenie wlasciciela 2026-07-21:
-                            'zobacz jak wyglada wzor, czyli decyzje i taski').
-                            Neutralizujemy chrome kontrolki, ZOSTAWIAJAC edytowalnosc:
-                            wartosc czyta sie jak tekst, jak w Task/Decision/Insight,
-                            ale nadal mozna ja zmienic. */}
-                        <span className="inline-flex max-w-full items-center justify-end [&_button]:h-auto [&_button]:border-0 [&_button]:bg-transparent [&_button]:p-0 [&_button]:text-xs [&_input]:h-auto [&_input]:w-auto [&_input]:border-0 [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-right [&_input]:text-xs [&_select]:h-auto [&_select]:w-auto [&_select]:max-w-full [&_select]:appearance-none [&_select]:truncate [&_select]:border-0 [&_select]:bg-transparent [&_select]:p-0 [&_select]:pr-4 [&_select]:text-right [&_select]:text-xs">
-                          {field.render ? field.render() : String(field.value ?? dash)}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          //
+          // Rama tabeli (nagłówek Property/Value, ramki, ostatni wiersz bez
+          // dolnej linii) = `ArtifactPropertiesTable` — TA SAMA co Task/Decision/
+          // Insight (akcept Piotra 2026-07-22). Karta dostarcza tylko rows.
+          <ArtifactPropertiesTable
+            propertyLabel={t('initiatives.panel.property', 'Property')}
+            valueLabel={t('initiatives.panel.value', 'Value')}
+            rows={nModePropertyFields.map((field) => ({
+              id: field.id,
+              label: isPolish ? field.label.pl : field.label.en,
+              mono: field.id === 'targetDate',
+              value: (
+                // Kontrolki pochodza z POZIOMEGO paska wlasciwosci — tam mialy
+                // pelna szerokosc, wlasne tlo i ramke. W waskiej komorce panelu
+                // renderowaly sie jako ciemne prostokaty z sama kropka, bez
+                // czytelnej wartosci (zgloszenie wlasciciela 2026-07-21:
+                // 'zobacz jak wyglada wzor, czyli decyzje i taski').
+                // Neutralizujemy chrome kontrolki, ZOSTAWIAJAC edytowalnosc:
+                // wartosc czyta sie jak tekst, jak w Task/Decision/Insight,
+                // ale nadal mozna ja zmienic.
+                <span className="inline-flex max-w-full items-center justify-end [&_button]:h-auto [&_button]:border-0 [&_button]:bg-transparent [&_button]:p-0 [&_button]:text-xs [&_input]:h-auto [&_input]:w-auto [&_input]:border-0 [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-right [&_input]:text-xs [&_select]:h-auto [&_select]:w-auto [&_select]:max-w-full [&_select]:appearance-none [&_select]:truncate [&_select]:border-0 [&_select]:bg-transparent [&_select]:p-0 [&_select]:pr-4 [&_select]:text-right [&_select]:text-xs">
+                  {field.render ? field.render() : String(field.value ?? dash)}
+                </span>
+              ),
+            }))}
+          />
         ),
       },
       {
