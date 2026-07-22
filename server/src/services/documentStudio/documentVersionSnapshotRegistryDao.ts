@@ -126,6 +126,35 @@ export async function persistSnapshot(snapshot: DocumentVersionSnapshot): Promis
   }
 }
 
+/**
+ * Delete a single snapshot row (retention pruning of `autosave`-origin
+ * snapshots once an artifact exceeds the auto-snapshot cap). Best-effort:
+ * on any DAO failure the in-process registry has already dropped the
+ * snapshot from its cache/index, so a stale row simply survives in
+ * Postgres until the next successful prune pass — never surfaced to the
+ * caller as an error.
+ */
+export async function deleteSnapshot(
+  versionId: string,
+  organizationId: string
+): Promise<{ ok: boolean }> {
+  if (!versionId || !organizationId) return { ok: false };
+  try {
+    const result = await dbRun(
+      `DELETE FROM document_version_snapshots WHERE version_id = $1 AND organization_id = $2`,
+      [versionId, organizationId]
+    );
+    return { ok: result.success === true };
+  } catch (err) {
+    logger.warn('[DocumentStudio][SnapshotDao] deleteSnapshot failed', {
+      versionId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false };
+  }
+}
+
 /** @internal Test-only reset — best-effort DELETE of the snapshot table. */
 export async function __resetSnapshotRegistryDaoForTests(): Promise<void> {
   try {

@@ -138,6 +138,7 @@ import {
   getDocumentVersionSnapshotByNumber,
   getMostRecentDocumentVersionSnapshot,
   listDocumentVersionSnapshots,
+  maybeAutoCaptureDocumentVersionSnapshot,
   registerDocumentVersionSnapshotAuditPump,
 } from './documentVersionSnapshotService.js';
 
@@ -2412,6 +2413,31 @@ export async function updateDocumentManualContent(
       blockCount: nextSchema.sections.reduce((sum, s) => sum + s.blocks.length, 0),
     },
   });
+
+  // Epic E1 — automatic history. Best-effort, server-side auto-capture
+  // of a version snapshot on this autosave: a time threshold (>=10 min
+  // since the last snapshot) OR a significant content-length delta
+  // (>15% vs the last snapshot) triggers an `'autosave'`-origin
+  // snapshot, retained up to 30 per artifact (oldest auto-pruned;
+  // manual/status/rollback snapshots are never touched). The document
+  // save above has already fully committed by this point — a failure
+  // here (hydration, snapshot creation, or pruning) must NEVER surface
+  // as a save error, so the whole step is wrapped and swallowed. Awaited
+  // (not fire-and-forget) so the snapshot is durably visible to the
+  // history view immediately after this request resolves.
+  try {
+    await ensureDocumentVersionSnapshotsHydrated(params.organizationId);
+    const lifecycle = getDocumentStatusOrDefault(params.artifactId, params.organizationId);
+    maybeAutoCaptureDocumentVersionSnapshot({
+      organizationId: params.organizationId,
+      artifactId: params.artifactId,
+      userId: params.userId,
+      schema: nextSchema,
+      statusAtCapture: lifecycle.status,
+    });
+  } catch {
+    // fail-soft: auto-capture must never affect the autosave response.
+  }
 
   const readBack = await getDocumentArtifact(params.artifactId, params.organizationId);
   return { schema: readBack ?? nextSchema };
