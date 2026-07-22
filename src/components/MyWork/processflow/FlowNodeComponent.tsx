@@ -95,6 +95,15 @@ export const STATUS_COLORS: Record<string, string> = {
   blocked: 'bg-danger-500',
 };
 
+// Z17 (Fala 3): magnetic 4-side handles — Lucidchart-style connector parity.
+// Shared class: dots are invisible by default and fade in only on node hover
+// or while a connection is actively being dragged (see IdeaProcessFlowTool's
+// `pf-connecting` wrapper class, toggled from onConnectStart/onConnectEnd).
+// Interactivity (pointer-events) is left to react-flow's own
+// `connectionindicator` class so locked/read-only canvases stay non-connectable.
+const HANDLE_CLASS =
+  '!w-2.5 !h-2.5 !bg-c-border-strong !border !border-c-bg opacity-0 group-hover:opacity-100 transition-opacity duration-150';
+
 export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
   const shape: FlowShape = data?.shape || 'action';
   const laneColor: string = data?.laneColor || DEFAULT_LANE_COLOR;
@@ -197,7 +206,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-c-border-strong' : ''}`}
+      className={`group relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-c-border-strong' : ''}`}
       style={{
         borderLeftColor: laneColor,
         borderLeftWidth: shape === 'action' ? 4 : undefined,
@@ -226,7 +235,25 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         setShowTooltip(false);
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
+      {/* Z17 (Fala 3): 4-side magnetic handles (Lucidchart parity). The two
+          UNNAMED handles below (Left/target, Right/source further down) are
+          kept id-less on purpose — old persisted edges have no
+          sourceHandle/targetHandle and react-flow resolves an undefined
+          handle id to the sole id-less handle of that type on the node, so
+          this is what keeps every pre-Z17 edge rendering unchanged. All new
+          handles get an explicit id so they never collide with that
+          fallback. */}
+      <Handle type="target" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="source" id="left" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="target" id="top" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="source" id="top-source" position={Position.Top} className={HANDLE_CLASS} />
+      <Handle type="target" id="bottom" position={Position.Bottom} className={HANDLE_CLASS} />
+      <Handle
+        type="source"
+        id="bottom-source"
+        position={Position.Bottom}
+        className={HANDLE_CLASS}
+      />
 
       {/* Status dot */}
       {data?.status && data.status !== 'todo' && !isGhost && (
@@ -347,7 +374,8 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
+      <Handle type="source" position={Position.Right} className={HANDLE_CLASS} />
+      <Handle type="target" id="right" position={Position.Right} className={HANDLE_CLASS} />
 
       {/* Context tooltip on hover */}
       {showTooltip && !editing && !isGhost && (data?.owner || data?.description || hasMetrics) && (

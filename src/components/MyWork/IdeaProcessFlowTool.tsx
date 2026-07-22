@@ -17,6 +17,7 @@
  * Data lives in the shared IdeaWorkspaceGraph (nodes/edges/extensions.processFlow).
  */
 import 'reactflow/dist/style.css';
+import './processflow/processflow-canvas.css';
 
 import * as dagre from 'dagre';
 import {
@@ -380,6 +381,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [showKPIDashboard, setShowKPIDashboard] = useState(false);
   const [showMiniMap, setShowMiniMap] = useState(false);
+  // Z17 (Fala 3): true while the user is mid-drag on a connection line —
+  // toggles the `pf-connecting` class (processflow-canvas.css) so every
+  // node's 4-side handles light up as magnetic landing targets, not just
+  // the one under the cursor.
+  const [isConnectingEdge, setIsConnectingEdge] = useState(false);
   const [internalFullscreen, setInternalFullscreen] = useState(false);
   // M07 F5b B1: real grid/snap view-state (previously a hardcoded stub that
   // was written on save but never reflected actual UI state or restored).
@@ -2767,6 +2773,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onNodesChange={locked ? undefined : onNodesChange}
               onEdgesChange={locked ? undefined : onEdgesChange}
               onConnect={onConnect}
+              // Z17 (Fala 3): magnetic connector parity with Lucidchart —
+              // connectionMode="loose" already comes from
+              // getIdeasToolInteractionProps (spread below); connectionRadius
+              // widens the snap zone around each of the 4-side handles so
+              // dropping *near* one closes the connection, not just exactly
+              // on the 6px dot.
+              connectionRadius={40}
+              onConnectStart={() => setIsConnectingEdge(true)}
+              onConnectEnd={() => setIsConnectingEdge(false)}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               // react-flow v11 prop names (v12 renamed these to edgesReconnectable/onReconnect).
@@ -2825,7 +2840,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 }
               }}
               fitView={!pendingViewportRef.current}
-              className="bg-transparent"
+              className={`bg-transparent ${isConnectingEdge ? 'pf-connecting' : ''}`}
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
               {(() => {
