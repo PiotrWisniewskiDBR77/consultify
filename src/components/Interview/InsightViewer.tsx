@@ -173,7 +173,14 @@ function useInsightCardContractEnabled(): boolean {
         const q = parseInsightCardContractFlag(
           new URLSearchParams(window.location.search).get('cardContract')
         );
-        if (q !== null) return q;
+        if (q !== null) {
+          try {
+            window.localStorage.setItem('ff.cardContract', q ? '1' : '0');
+          } catch {
+            /* ignore */
+          }
+          return q;
+        }
       } catch {
         /* ignore */
       }
