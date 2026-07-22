@@ -217,7 +217,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           </div>
         </div>
         <div>
-          <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-navy-700 dark:bg-navy-900/40">
+          <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-200 bg-c-surface px-3 py-2 dark:border-navy-700">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
               {t('processFlow.propertiesPanel.orthogonalRouting', 'Orthogonal routing')}
             </span>
@@ -307,7 +307,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-c-accent focus:ring-c-info"
+                className="text-c-text focus:ring-c-info"
                 checked={gatewayKind === 'xor'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'xor')}
@@ -318,7 +318,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-c-accent focus:ring-c-info"
+                className="text-c-text focus:ring-c-info"
                 checked={gatewayKind === 'and'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'and')}

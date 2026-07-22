@@ -54,7 +54,7 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
       </svg>
 
       {selected && (
-        <div className="absolute top-0 left-0 w-[60px] h-[70px] ring-2 ring-c-accent rounded-sm pointer-events-none" />
+        <div className="absolute top-0 left-0 w-[60px] h-[70px] ring-2 ring-c-focus rounded-sm pointer-events-none" />
       )}
 
       <div className="mt-1 min-w-[50px] text-center">
@@ -68,7 +68,7 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
+            className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-focus w-full"
           />
         ) : (
           <span className="text-xs font-medium text-c-text">{data?.label || 'Document'}</span>

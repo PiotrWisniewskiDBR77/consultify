@@ -51,7 +51,7 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="bg-transparent text-[10px] font-bold text-c-text-secondary text-center outline-none border-b border-c-accent w-full [writing-mode:vertical-rl] rotate-180"
+            className="bg-transparent text-[10px] font-bold text-c-text-secondary text-center outline-none border-b border-c-focus w-full [writing-mode:vertical-rl] rotate-180"
           />
         ) : (
           <span className="text-[10px] font-bold text-c-text-secondary [writing-mode:vertical-rl] rotate-180 select-none whitespace-nowrap px-0.5">
