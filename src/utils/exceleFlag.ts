@@ -9,7 +9,7 @@
  * już wołany produkcyjnie z innego miejsca (`ArtifactActionPanel`). Audyt
  * `_AUDYT_DOKUMENTY_2026-07-22.md` — „najbardziej boli (Sheet)".
  *
- * Ta flaga (domyślnie OFF) pozwala odsłonić `ExceleView` pod `/excele` do
+ * Ta flaga (domyślnie ON od 2026-07-22 (akcept Piotra na zrzutach); kill-switch: ?ff_excele=0 lub env=false) pozwala odsłonić `ExceleView` pod `/excele` do
  * WIZUALNEGO AKCEPTU Piotra bez ruszania niczego na żywca: OFF → dokładnie
  * dzisiejsze zachowanie (redirect na Table Studio), zero regresji na `/tabele`.
  * Po akcepcie właściciela → domyślne ON (env) osobną decyzją.
@@ -37,7 +37,7 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parsed === null ? true : parsed;
   } catch {
     return false;
   }
