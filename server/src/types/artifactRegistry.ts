@@ -21,6 +21,11 @@ export const ArtifactOriginRuntimeValues = [
   'native_artifact',
   'report_template',
   'presentation_template',
+  // Fala B (2026-07-22): DB CHECK constraint already extended for this value
+  // (server/migrations/20260412_seed_business_templates.sql, seeded bt-sheet-*
+  // rows) — the TS enum just hadn't caught up. Mirrors report_template /
+  // presentation_template for sheet (Excel/arkusz) templates.
+  'sheet_template',
   'work_canvas',
 ] as const;
 export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];

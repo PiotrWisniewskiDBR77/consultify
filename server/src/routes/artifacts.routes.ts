@@ -1084,10 +1084,14 @@ router.post(
     if (!source) {
       return res.status(404).json({ error: 'Artifact not found' });
     }
-    if (source.originRuntime !== 'report' && source.originRuntime !== 'presentation') {
+    if (
+      source.originRuntime !== 'report' &&
+      source.originRuntime !== 'presentation' &&
+      source.originRuntime !== 'sheet'
+    ) {
       return res
         .status(409)
-        .json({ error: 'Only report or presentation outputs can be saved as templates' });
+        .json({ error: 'Only report, presentation or sheet outputs can be saved as templates' });
     }
 
     const templateScope = scope === 'org' ? 'org' : 'user';
@@ -1157,6 +1161,54 @@ router.post(
       });
 
       return res.status(201).json({ data: templateArtifact });
+    }
+
+    // sheet (arkusz Excel) → tp_base_templates via deliverableTemplateService
+    // (Fala B, 2026-07-22). Reuses the same 'table'-type template path the
+    // Template Builder already writes through — see
+    // server/src/services/deliverableTemplateService.ts createDeliverableTemplate
+    // — instead of duplicating the insert here, so the sheet_template origin
+    // mapping (registerBuilderTemplateArtifactBestEffort) is exercised for real.
+    if (source.originRuntime === 'sheet') {
+      const workbookId = String(source.originRecordId || '').trim();
+      const workbookRow = await dbGet<{ schema_json: string | null }>(
+        `SELECT schema_json FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+        [workbookId, organizationId]
+      );
+      if (!workbookRow) {
+        return res.status(404).json({ error: 'Source workbook not found' });
+      }
+
+      let schemaSnapshot: unknown = {};
+      try {
+        schemaSnapshot = workbookRow.schema_json ? JSON.parse(workbookRow.schema_json) : {};
+      } catch {
+        schemaSnapshot = {};
+      }
+
+      const deliverableTemplateService = await import('../services/deliverableTemplateService.js');
+      // createDeliverableTemplate mints its own tp_base_templates row id
+      // (gen_random_uuid()::text) — NOT the route-level `templateId` above
+      // (that one's scoped to the legacy report_template/presentation_template
+      // branches) — so use the id it actually returns to look the artifact up.
+      const createdTemplate = await deliverableTemplateService.createDeliverableTemplate(
+        'table',
+        name,
+        description || undefined,
+        { schema_snapshot: schemaSnapshot, category: 'excel' },
+        organizationId,
+        userId
+      );
+
+      const templateArtifact = await artifactRegistryService.getArtifactByOrigin({
+        organizationId,
+        originRuntime: 'sheet_template',
+        originRecordId: createdTemplate.id,
+        userId,
+        roleKey,
+      });
+
+      return res.status(201).json({ data: templateArtifact ?? createdTemplate });
     }
 
     // presentation → presentation_templates
