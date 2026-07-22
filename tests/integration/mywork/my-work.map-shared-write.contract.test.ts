@@ -254,6 +254,41 @@ describe('A1 (D-WB-2) — shared canonical board WRITE', () => {
     expect(res.body.currentVersion).toBe(5);
   });
 
+  // Z18 (Fala 4): POST /map/sync had a read-then-act gap — the pre-check compared
+  // baseVersion against a SELECT taken before the UPDATE, but the UPDATE's WHERE
+  // clause carried no version guard, so a write landing in between was silently
+  // clobbered. This mirrors the PUT /map "mid-air UPDATE race" test above to lock
+  // in the same atomic-UPDATE-with-version-guard fix for the sync endpoint.
+  it('POST /map/sync: mid-air UPDATE race (changes=0) → 409 (row moved under us)', async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({ ownerUserId: OWNER_ID })
+      .mockResolvedValueOnce(OWNER_MAP_V2)
+      // conflict re-fetch after 0-row UPDATE
+      .mockResolvedValueOnce({
+        id: 'map-owner',
+        version: 5,
+        nodesJson: JSON.stringify([NODE]),
+        edgesJson: '[]',
+        preferredTool: 'whiteboard',
+        extensionsJson: '{}',
+        schemaVersion: 3,
+      });
+    // baseVersion matches v2 (passes pre-check) but UPDATE affects 0 rows (someone bumped to v5)
+    mockQueryRun.mockResolvedValueOnce({ changes: 0 });
+
+    const res = await request(buildApp())
+      .post(`/api/my-work/my-ideas/${IDEA_ID}/map/sync`)
+      .send({ nodes: [NODE], edges: [EDGE], baseVersion: 2 });
+
+    expect(res.status).toBe(409);
+    expect(res.body.currentVersion).toBe(5);
+    // The UPDATE statement itself must carry the version guard (not just the pre-check).
+    const updateCall = mockQueryRun.mock.calls.find(([sql]) =>
+      /UPDATE my_idea_maps/i.test(String(sql))
+    );
+    expect(String(updateCall?.[0])).toMatch(/AND version = \?/i);
+  });
+
   // (c) cross-org → 404, no write.
   it('PUT /map: idea in another org (resolver returns null) → 404, no write', async () => {
     mockQueryOne.mockResolvedValueOnce(null); // resolveCanonicalMapOwner → not found in org
