@@ -203,6 +203,7 @@ import {
 import {
   INITIATIVE_CARD_RENDER_IDS,
   INITIATIVE_CORE_BOARD_IDS,
+  INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS,
   isInitiativeCardContractEnabled,
 } from './sections/initiativeCardContract';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
@@ -8848,6 +8849,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     suggestedChangesLoading,
     handleResolveSuggestedChange,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
 
+  // MIGRACJA (D-8, ETAP 2): zestaw id boardu tworzący „Rdzeń inicjatywy" =
+  // RDZEŃ nieusuwalny (overview→`initiative-definition`) + minimal domyślny
+  // (`target-state-scope`, `tasks`, `kpi`). Wspólne źródło dla seed-effectu i
+  // przycisków przełącznika Rdzeń/Pełny. Statyczne → deps [].
+  const initiativeCoreBoardIdSet = useMemo(
+    () => new Set<string>([...INITIATIVE_CORE_BOARD_IDS, ...INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS]),
+    []
+  );
+
+  // MIGRACJA (D-8, ETAP 2): SEED węższego defaultu za flagą. ON → ukryj wszystko
+  // poza rdzeniem+minimal (jednorazowo, nie walczy z userem po pierwszym ziarnie).
+  // OFF → no-op → hiddenSectionIds pozostaje new Set() → 24 sekcje jak dziś (gwarancja b).
+  const didSeedHiddenRef = useRef(false);
+  useEffect(() => {
+    if (!initiativeCardContractEnabled) return; // OFF => zero zmian
+    if (didSeedHiddenRef.current) return; // one-shot: nie walcz z userem
+    if (nModeSectionsWithContent.length === 0) return; // czekaj aż board znany
+    const hide = nModeSectionsWithContent
+      .map((s) => s.id)
+      .filter((id) => !initiativeCoreBoardIdSet.has(id));
+    setHiddenSectionIds(new Set(hide));
+    didSeedHiddenRef.current = true;
+  }, [initiativeCardContractEnabled, nModeSectionsWithContent, initiativeCoreBoardIdSet]);
+
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
     const ordered = (() => {
       if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
@@ -10716,6 +10741,63 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 onClick={() => setShowSectionsMenu(false)}
                               />
                               <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
+                                {/* MIGRACJA (D-8, ETAP 2): przełącznik zestawu domyślnego
+                                    Rdzeń / Pełny (za flagą). Stan aktywny = NEUTRALNY
+                                    (tokeny c-*, bez akcentu semantyki krytycznej). */}
+                                {initiativeCardContractEnabled &&
+                                  (() => {
+                                    const isRdzenActive =
+                                      hiddenSectionIds.size > 0 &&
+                                      nModeSectionsWithContent.every(
+                                        (s) =>
+                                          initiativeCoreBoardIdSet.has(s.id) ||
+                                          hiddenSectionIds.has(s.id)
+                                      ) &&
+                                      nModeSectionsWithContent.some((s) =>
+                                        hiddenSectionIds.has(s.id)
+                                      );
+                                    const isFullActive = hiddenSectionIds.size === 0;
+                                    const applyRdzen = () =>
+                                      setHiddenSectionIds(
+                                        new Set(
+                                          nModeSectionsWithContent
+                                            .map((s) => s.id)
+                                            .filter((id) => !initiativeCoreBoardIdSet.has(id))
+                                        )
+                                      );
+                                    const applyFull = () => setHiddenSectionIds(new Set());
+                                    const modeBtn = (active: boolean) =>
+                                      `flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                                        active
+                                          ? 'bg-c-surface-raised text-c-text'
+                                          : 'text-c-text-secondary hover:bg-c-surface-raised/60'
+                                      }`;
+                                    return (
+                                      <div className="border-b border-c-border-subtle px-3 pb-2 pt-1">
+                                        <div className="pb-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+                                          {isPolish ? 'Zestaw domyślny' : 'Default set'}
+                                        </div>
+                                        <div className="flex gap-1 rounded-lg border border-c-border-subtle bg-c-surface p-0.5">
+                                          <button
+                                            type="button"
+                                            aria-pressed={isRdzenActive}
+                                            onClick={applyRdzen}
+                                            className={modeBtn(isRdzenActive)}
+                                          >
+                                            {isPolish ? 'Rdzeń inicjatywy' : 'Core'}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            aria-pressed={isFullActive}
+                                            onClick={applyFull}
+                                            className={modeBtn(isFullActive)}
+                                          >
+                                            {isPolish ? 'Pełny' : 'Full'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
                                 {sectionGroups.map((grp) => (
                                   <div key={grp.group} className="py-0.5">
                                     <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">

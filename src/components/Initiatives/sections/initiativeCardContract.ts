@@ -685,6 +685,8 @@ export function buildInitiativeCanonicalCards(dbRows: SectionTypeInfo[]): Kanoni
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FLAG_QUERY = 'ff_initiativeCardContract';
+// ALIAS wspólny dla wszystkich 6 artefaktów: `?cardContract=1` włącza je naraz jednym linkiem.
+const FLAG_QUERY_ALIAS = 'cardContract';
 const FLAG_LS = 'ff.initiativeCardContract';
 const FLAG_ENV = 'VITE_VF1_INITIATIVE_CARD_CONTRACT';
 
@@ -699,7 +701,9 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 export function isInitiativeCardContractEnabled(): boolean {
   if (typeof window !== 'undefined' && window.location) {
     try {
-      const q = parseFlag(new URLSearchParams(window.location.search).get(FLAG_QUERY));
+      const params = new URLSearchParams(window.location.search);
+      // Query akceptuje ALBO własny klucz, ALBO wspólny alias `cardContract`.
+      const q = parseFlag(params.get(FLAG_QUERY) ?? params.get(FLAG_QUERY_ALIAS));
       if (q !== null) return q;
     } catch {
       /* ignore */
