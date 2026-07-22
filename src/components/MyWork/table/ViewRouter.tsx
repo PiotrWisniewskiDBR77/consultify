@@ -91,7 +91,7 @@ function cellId(rowId: string, fieldId: string): string {
 
 // ── Platform grid (table layout) ─────────────────────────────────────────────
 
-interface PlatformGridViewProps {
+export interface PlatformGridViewProps {
   processedRows: TableNode[];
   groupedRows: Record<string, TableNode[]> | null;
   visibleColumns: ColumnDef[];
@@ -118,7 +118,10 @@ interface PlatformGridViewProps {
   onExpandRecord?: (id: string) => void;
 }
 
-const PlatformGridView: React.FC<PlatformGridViewProps> = ({
+// Exported as a dev-render/visual-test seam (K1 Airtable-parity row kebab is
+// only reachable in-app when tablePlatformMetadataFirst has a live platform
+// base; the harness mounts this pure-presentational component with mock props).
+export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   processedRows,
   groupedRows,
   visibleColumns,
@@ -139,7 +142,14 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   handleInsertRow,
   onExpandRecord,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // The kebab + note editor render inline pl/en strings via `isPl` (same
+  // convention as the ViewRouter parent below). Without this the component
+  // throws `isPl is not defined` the moment it mounts — latent because in-app
+  // PlatformGridView only renders when tablePlatformMetadataFirst resolves a
+  // live base (none exist yet), so it was never exercised until the dev-render
+  // harness mounted it directly (audyt-idee-2026-07-22, CLAUDE.md #7 catch).
+  const isPl = i18n.language?.startsWith('pl');
 
   // K1/Airtable parity — row kebab (right-click on a row).
   const [rowMenu, setRowMenu] = useState<{ rowId: string; x: number; y: number } | null>(null);
