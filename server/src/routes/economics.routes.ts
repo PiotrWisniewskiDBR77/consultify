@@ -23,6 +23,7 @@ import {
   normalizeFinancialData,
   validateFinancialData,
 } from '../services/economicsFinancials.js';
+import { resolveStoredRelativePath } from '../utils/storagePaths.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
@@ -2733,7 +2734,7 @@ router.get(
 
     const exportPathRaw = String(row.export_path);
     const exportPathFs = exportPathRaw.startsWith('/exports/')
-      ? path.resolve(process.cwd(), exportPathRaw.replace(/^\//, ''))
+      ? resolveStoredRelativePath(exportPathRaw)
       : path.resolve(exportPathRaw);
     if (!fs.existsSync(exportPathFs)) return res.status(404).json({ error: 'File not found' });
 

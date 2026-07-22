@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { exportsDir } from '../../utils/storagePaths.js';
 import { routeImage } from '../deliverables/imageRouter.js';
 import { selectStockImageProvider } from '../deliverables/stockImageProvider.js';
 import type { SlideVisualSpec, UnifiedReportMeta } from '../report/pptx/types.js';
@@ -566,15 +567,7 @@ async function tryStockFallback(params: {
         if (buf.length > 0) {
           const fs = await import('fs');
           const path = await import('path');
-          const assetsDir = path.default.join(
-            process.cwd(),
-            'exports',
-            'presentations',
-            'assets',
-            params.deckId
-          );
-          if (!fs.default.existsSync(assetsDir))
-            fs.default.mkdirSync(assetsDir, { recursive: true });
+          const assetsDir = exportsDir('presentations', 'assets', params.deckId);
           const filename = `${params.filenamePrefix}_stock_${uuidv4().slice(0, 8)}.jpg`;
           assetPath = path.default.join(assetsDir, filename);
           fs.default.writeFileSync(assetPath, buf);
@@ -698,14 +691,7 @@ async function generateImageVisual(params: {
 
     const fs = await import('fs');
     const path = await import('path');
-    const assetsDir = path.default.join(
-      process.cwd(),
-      'exports',
-      'presentations',
-      'assets',
-      params.deckId
-    );
-    if (!fs.default.existsSync(assetsDir)) fs.default.mkdirSync(assetsDir, { recursive: true });
+    const assetsDir = exportsDir('presentations', 'assets', params.deckId);
     const filename = `${params.filenamePrefix}_${uuidv4().slice(0, 8)}.png`;
     const outPath = path.default.join(assetsDir, filename);
     fs.default.writeFileSync(outPath, buf);
