@@ -310,6 +310,10 @@ interface IdeaProcessFlowToolProps {
   isFullscreen?: boolean;
   onOpenChat?: (prefill?: string) => void;
   onQuickAction?: (action: string, detail?: Record<string, any>) => void;
+  /** Z9: when true (mels canvas shell — Menu 1 shows the save indicator), the
+   *  ProcessFlowToolbar hides its own Save button to avoid duplication. Default
+   *  OFF → legacy layout unchanged. */
+  hideSaveIndicator?: boolean;
   onGraphChange?: (graph: {
     nodes: any[];
     edges: any[];
@@ -336,6 +340,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   onOpenChat,
   onQuickAction,
   onGraphChange,
+  hideSaveIndicator = false,
   externalRuntime,
 }) => {
   const { t, i18n } = useTranslation();
@@ -2322,6 +2327,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <ProcessFlowToolbar
           isPl={!!isPl}
           locked={locked}
+          hideSaveIndicator={hideSaveIndicator}
           flowMode={flowMode}
           setFlowMode={setFlowMode}
           semanticKit={semanticKit}
@@ -2400,11 +2406,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {locked && (
         <div className="px-4 pt-3">
-          <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300">
-            <div className="font-medium text-slate-900 dark:text-slate-100">
+          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3 text-sm text-c-text-secondary">
+            <div className="font-medium text-c-text">
               {t('myWorkIdeas.processFlowTool.readOnlyMode')}
             </div>
-            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-xs text-c-text-muted">
               {t('myWorkIdeas.processFlowTool.youCanReviewFlowButEditing')}
             </div>
           </div>

@@ -2,7 +2,13 @@ import React from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
-import { STICKY_COLORS, STICKY_SIZES, useIsDark } from './whiteboardNodeHelpers';
+import {
+  resolveNodeAccentBg,
+  resolveNodeFontStyle,
+  STICKY_COLORS,
+  STICKY_SIZES,
+  useIsDark,
+} from './whiteboardNodeHelpers';
 import { WhiteboardNodeReactions } from './WhiteboardNodeReactions';
 
 export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
@@ -11,6 +17,9 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
   const color = STICKY_COLORS[colorIdx];
   const sizeKey = (data?.size as string) || 'm';
   const size = STICKY_SIZES[sizeKey] || STICKY_SIZES.m;
+  // Z15: per-element style overrides written by the floating style bar.
+  const accentBg = resolveNodeAccentBg(data?.accentColor);
+  const fontStyle = resolveNodeFontStyle(data);
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -52,6 +61,8 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
         ...(isDark
           ? { boxShadow: selected ? `${color.glow}, 0 0 24px rgba(168,85,247,0.2)` : color.glow }
           : {}),
+        // Z15: explicit per-element accent wins over the random creation color.
+        ...(accentBg || {}),
       }}
       onDoubleClick={() => {
         if (!data?.locked) {
@@ -80,7 +91,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
             }
           }}
           className="w-full bg-transparent text-xs font-medium text-c-text outline-none resize-none border-b border-c-border-strong"
-          style={{ minHeight: size.h - 40 }}
+          style={{ minHeight: size.h - 40, ...fontStyle }}
           rows={size.textRows}
         />
       ) : (
@@ -90,7 +101,10 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
               {String(data.semanticLabel)}
             </div>
           )}
-          <div className="text-xs font-medium text-c-text whitespace-pre-wrap break-words">
+          <div
+            className="text-xs font-medium text-c-text whitespace-pre-wrap break-words"
+            style={fontStyle}
+          >
             {data?.label || ''}
           </div>
         </div>

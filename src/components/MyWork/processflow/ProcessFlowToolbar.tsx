@@ -162,6 +162,11 @@ export interface ProcessFlowToolbarProps {
   guidance: { en: string; pl: string; stageEn: string; stagePl: string };
   onOpenChat?: () => void;
   onConvert?: (action: string) => void;
+  /** When true (Menu 1 owns the save indicator in the mels canvas shell), the
+   *  toolbar hides its own Save button to avoid duplicating the identity-row
+   *  save state. Save mechanics (autosave + handleSave) are untouched. Default
+   *  OFF → legacy layout renders exactly as before. */
+  hideSaveIndicator?: boolean;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -218,6 +223,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   guidance,
   onOpenChat,
   onConvert,
+  hideSaveIndicator = false,
 }) => {
   const { t } = useTranslation();
   const [overflowOpen, setOverflowOpen] = useState(false);
@@ -402,24 +408,33 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             <Redo2 size={14} />
           </button>
 
-          <div className="mx-0.5 h-5 w-px bg-c-border-subtle" />
+          {/* Z9: gdy Menu 1 (mels canvas shell) niesie własny wskaźnik zapisu
+              (IdeaSaveIndicator), toolbar chowa WŁASNY przycisk Zapisz (wraz z
+              dzielnikiem) — zero dubli. hideSaveIndicator=false (legacy) →
+              renderuje jak dotąd. Mechanika zapisu (autosave + handleSave) bez
+              zmian. */}
+          {!hideSaveIndicator && (
+            <>
+              <div className="mx-0.5 h-5 w-px bg-c-border-subtle" />
 
-          {/* Save (primary, always visible) */}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || locked}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-              saving || locked
-                ? 'bg-c-surface-raised text-c-text-muted'
-                : 'bg-c-text text-c-surface hover:brightness-110'
-            }`}
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {saving
-              ? t('processFlow.toolbar.saving', 'Saving…')
-              : t('processFlow.toolbar.save', 'Save')}
-          </button>
+              {/* Save (primary, always visible) */}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving || locked}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  saving || locked
+                    ? 'bg-c-surface-raised text-c-text-muted'
+                    : 'bg-c-text text-c-surface hover:brightness-110'
+                }`}
+              >
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                {saving
+                  ? t('processFlow.toolbar.saving', 'Saving…')
+                  : t('processFlow.toolbar.save', 'Save')}
+              </button>
+            </>
+          )}
           {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
               Mechanika sync (syncLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
 
