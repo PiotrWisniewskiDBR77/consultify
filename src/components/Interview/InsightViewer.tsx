@@ -132,6 +132,14 @@ import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
+// MIGRACJA (D-8): kompozycja kart Insight płynie z WIĄŻĄCEGO kontraktu karty
+// (cardContract.types.ts) zamiast z martwego mirrora INSIGHT_SPEC — patrz
+// insightCardContract.ts. Za flagą (default OFF); OFF ⇒ zero zmian.
+import {
+  INSIGHT_CARD_RENDER_IDS,
+  INSIGHT_CARD_SPEC,
+  INSIGHT_PHASE_D_RENDER_IDS,
+} from './insightCardContract';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
 // VF1-2 (SPEC-A wzorzec, analogicznie do VF1-1 Task): gate for visible
@@ -140,6 +148,22 @@ import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoDa
 // testerem wizualnym). See docs/ui-standards/TRIADA_KANON.md +
 // ARTIFACT_ANATOMY_STANDARD.md §18.1.
 const VF1_INSIGHT_SPECA = import.meta.env.VITE_VF1_INSIGHT_SPECA === 'true';
+
+// MIGRACJA — kompozycja kart Insight przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
+// Default OFF (zero regresji na demo); w dev/harnessie włącza URL `?cardContract=1`
+// (Piotr nie jest pierwszym testerem wizualnym — reguła #7; nadzorca renderuje zrzut sam).
+// Flaga DEDYKOWANA (jak POC Decision/Task: VITE_VF1_*_CARD_CONTRACT), świadomie NIE
+// współdzielona z VF1_INSIGHT_SPECA — tamta bramkuje puste/skeleton/error stany (inny cel,
+// InsightViewer:7806/7819), a spinanie obu flag mieszałoby dwa niezależne odbiory.
+function useInsightCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (import.meta.env.VITE_VF1_INSIGHT_CARD_CONTRACT === 'true') return true;
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    }
+    return false;
+  }, []);
+}
 
 /**
  * Tryb prezentacji (PresentMode) — WYŁĄCZONY 2026-07-20 decyzją Piotra.
@@ -1016,7 +1040,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // do `nModeSectionOrder`. Layout jest SSOT dla dodawania/usuwania/ukrywania kart;
   // istniejące `hiddenSectionIds` + `nModeSectionOrder` są z niego synchronizowane
   // niżej (minimalny blast-radius — reszta maszynerii bez zmian).
-  const cardLayoutStorageKey = `insight:nmode:card-layout:v1:${insight?.id ?? 'new'}`;
+  // MIGRACJA (D-8): gdy włączony kontrakt, layout ma INNE znaczenie (węższy zestaw
+  // domyślny — 10 kart), więc namespace klucza jest OSOBNY. Stary layout NIE hydratuje
+  // się nad węższy default, a wyłączenie flagi wraca do 'v1' bez utraty.
+  const insightCardContractEnabled = useInsightCardContractEnabled();
+  const cardLayoutStorageKey = `insight:nmode:card-layout:${
+    insightCardContractEnabled ? 'v2-contract' : 'v1'
+  }:${insight?.id ?? 'new'}`;
   const initialCardLayout = useMemo<CardLayout | null>(() => {
     try {
       const raw = localStorage.getItem(cardLayoutStorageKey);
@@ -1051,9 +1081,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const cardLayout = useCardLayout({
     artifactType: 'insight',
+    // MIGRACJA: flaga ON ⇒ katalog+zestawy z kontraktu kanonicznego (INSIGHT_CARD_SPEC —
+    // stała moduł-const, stabilna referencja); OFF ⇒ undefined ⇒ useCardLayout czyta
+    // DEFAULT_CARD_SETS['insight'] jak dotąd (pozostałe artefakty nietknięte).
+    spec: insightCardContractEnabled ? INSIGHT_CARD_SPEC : undefined,
     initialLayout: initialCardLayout,
     onLayoutChange: persistCardLayout,
   });
+
+  // R2/R4 (przepis §2/§4): dev-only sygnał rozjazdu render↔katalog. Każda sekcja
+  // renderowana przez INSIGHT_SECTIONS ma być ZNANA kontraktowi (admit lub
+  // do-decyzji); brak wpisu = prawdziwa sierota. Osobno logujemy 11 „Phase-D"
+  // (extras poza katalogiem) — rozjazd 32/16, na który bramka strukturalna jest
+  // ślepa (przepis R4). Nie blokuje renderu.
+  useEffect(() => {
+    if (!import.meta.env.DEV || !insightCardContractEnabled) return;
+    const known = new Set(INSIGHT_CARD_RENDER_IDS);
+    const orphans = INSIGHT_SECTIONS.map((s) => s.id).filter((id) => !known.has(id));
+    if (orphans.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[insightCardContract] sekcje renderowane bez wpisu w deskryptorze:', orphans);
+    }
+    // eslint-disable-next-line no-console
+    console.info(
+      `[insightCardContract] kontrakt ON — katalog ${INSIGHT_CARD_SPEC.catalog.length} kart, ` +
+        `Phase-D poza katalogiem (extras): ${INSIGHT_PHASE_D_RENDER_IDS.length}`
+    );
+  }, [insightCardContractEnabled]);
 
   // Editable fields
   const [title, setTitle] = useState('');
