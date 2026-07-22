@@ -563,7 +563,7 @@ const TYPE_METADATA: Record<
   },
   general_analysis: {
     icon: <Compass size={16} />,
-    color: 'slate',
+    color: 'muted',
     label: 'General Analysis',
     labelPl: 'Analiza Ogólna',
   },
@@ -640,8 +640,8 @@ const STATUS_CONFIG: Record<
   },
   draft: {
     label: { en: 'Draft', pl: 'Szkic' },
-    color: 'bg-slate-500',
-    textColor: 'text-slate-500',
+    color: 'bg-c-text-muted',
+    textColor: 'text-c-text-muted',
   },
   completed: {
     label: { en: 'Completed', pl: 'Ukończone' },
@@ -689,9 +689,9 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
     dot: 'bg-amber-500',
   },
   draft: {
-    bg: 'bg-slate-100 dark:bg-navy-800',
-    text: 'text-slate-600 dark:text-slate-300',
-    dot: 'bg-slate-500',
+    bg: 'bg-c-surface-raised',
+    text: 'text-c-text-secondary',
+    dot: 'bg-c-text-muted',
   },
   completed: {
     bg: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -3120,7 +3120,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const getPriorityDotClass = useCallback((p: CommentPriority) => {
     if (p === 'high') return 'bg-danger-500';
-    if (p === 'low') return 'bg-slate-400';
+    if (p === 'low') return 'bg-c-text-muted';
     return 'bg-blue-500';
   }, []);
 
@@ -3139,9 +3139,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       return 'border-blue-500/55 text-blue-600 dark:text-blue-300 dark:border-blue-500/35 bg-blue-500/10';
     }
     if (active && p === 'low') {
-      return 'border-slate-400/55 text-slate-600 dark:text-slate-300 dark:border-navy-500/35 bg-slate-500/10';
+      return 'border-c-border-strong text-c-text-secondary bg-c-text-muted/10';
     }
-    return 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-700 dark:text-slate-300';
+    return 'border-c-border text-c-text-muted hover:border-c-border-strong hover:text-c-text-secondary';
   }, []);
 
   const getCommentPriorityLabel = useCallback(
@@ -3308,16 +3308,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           return {
             icon: <MessageSquare size={12} />,
             label: t('interview.insightViewer.comment'),
-            style: 'bg-navy-900 text-white',
+            style: 'bg-c-tag-8 text-c-tag-foreground',
           };
         case 'edit':
           return {
             icon: <Sparkles size={12} />,
             label: t('interview.insightViewer.edit2'),
-            style: 'bg-slate-500 text-white',
+            style: 'bg-c-tag-2 text-c-tag-foreground',
           };
         default:
-          return { icon: <Clock size={12} />, label: type, style: 'bg-slate-400 text-white' };
+          return { icon: <Clock size={12} />, label: type, style: 'bg-c-tag-8 text-c-tag-foreground' };
       }
     },
     [isPolish]
@@ -3427,19 +3427,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
+                <div className="rounded-2xl border border-c-border-subtle bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-c-surface-raised/50">
                   <div className={TEXT_L1}>{t('interview.insightViewer.safeClaims')}</div>
                   <div className="mt-3 space-y-2">
                     {truthReviewSummary.safeClaims.length > 0 ? (
                       truthReviewSummary.safeClaims.map((finding) => (
                         <div
                           key={finding.id}
-                          className="text-sm text-slate-700 dark:text-slate-300"
+                          className="text-sm text-c-text-secondary"
                         >
-                          <div className="font-medium text-slate-900 dark:text-slate-100">
+                          <div className="font-medium text-c-text">
                             {finding.finding_statement}
                           </div>
-                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="mt-1 text-xs text-c-text-muted">
                             {finding.confidence_level} ·{' '}
                             {
                               finding.evidence_pointers.filter((pointer) => !pointer.isTombstone)
@@ -3458,7 +3458,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
+                <div className="rounded-2xl border border-c-border-subtle bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-c-surface-raised/50">
                   <div className="flex items-center justify-between gap-3">
                     <div className={TEXT_L1}>
                       {t('interview.insightViewer.publishHandoffBlockers')}
@@ -3489,7 +3489,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
+                <div className="rounded-2xl border border-c-border-subtle bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-c-surface-raised/50">
                   <div className="flex items-center justify-between gap-3">
                     <div className={TEXT_L1}>{t('interview.insightViewer.contradictions')}</div>
                     <button
@@ -3536,11 +3536,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </Callout>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-900/40 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.slate.300)] dark:shadow-[inset_3px_0_0_theme(colors.slate.600)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-[inset_3px_0_0_var(--c-border-strong)]">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-muted">
                     {t('interview.insightViewer.officialAnswers')}
                   </div>
-                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-2xl font-bold text-c-text">
                     {officialAnswers.length}
                   </div>
                 </div>
@@ -3548,7 +3548,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-danger-500 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks')}
                   </div>
-                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-2xl font-bold text-c-text">
                     {issuesReadout.length}
                   </div>
                 </div>
@@ -3556,7 +3556,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities')}
                   </div>
-                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-2xl font-bold text-c-text">
                     {hiddenSignals.length + opportunityReadout.length}
                   </div>
                 </div>
@@ -3567,7 +3567,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {evidenceQuotes.slice(0, 2).map((quote) => (
                     <div
                       key={quote}
-                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm italic text-slate-600 dark:text-slate-300"
+                      className="rounded-2xl bg-c-surface-raised px-4 py-3 text-sm italic text-c-text-secondary"
                     >
                       "{quote}"
                     </div>
@@ -3614,7 +3614,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     officialAnswers.map((item) => (
                       <div
                         key={item}
-                        className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-900/40 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.slate.300)] dark:shadow-[inset_3px_0_0_theme(colors.slate.600)]"
+                        className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary shadow-[inset_3px_0_0_var(--c-border-strong)]"
                       >
                         {item}
                       </div>
@@ -3635,7 +3635,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     issuesReadout.map((item) => (
                       <div
                         key={item}
-                        className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.danger.400)]"
+                        className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 text-sm text-c-text-secondary shadow-[inset_3px_0_0_theme(colors.danger.400)]"
                       >
                         {item}
                       </div>
@@ -3656,7 +3656,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).map((item) => (
                       <div
                         key={item}
-                        className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.emerald.400)]"
+                        className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 text-sm text-c-text-secondary shadow-[inset_3px_0_0_theme(colors.emerald.400)]"
                       >
                         {item}
                       </div>
@@ -3697,35 +3697,35 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               {quality ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.score')}
                       </div>
                       <div className={`mt-1 text-2xl font-semibold ${postureColor}`}>
                         {score}/100
                       </div>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.answerQuality')}
                       </div>
-                      <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="mt-1 text-sm font-semibold text-c-text">
                         {quality.answer_quality_posture}
                       </div>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.coverage')}
                       </div>
-                      <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="mt-1 text-sm font-semibold text-c-text">
                         {quality.coverage_posture}
                       </div>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.sessionsRespondents')}
                       </div>
-                      <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="mt-1 text-sm font-semibold text-c-text">
                         {quality.approved_session_count} / {quality.respondent_count}
                       </div>
                     </div>
@@ -3737,7 +3737,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {t('interview.insightViewer.materialLimitations')}
                       </h4>
                       {quality.limitations.length > 0 ? (
-                        <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                        <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
                           {quality.limitations.map((item) => (
                             <li key={item} className="flex gap-2">
                               <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-400" />
@@ -3746,7 +3746,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           ))}
                         </ul>
                       ) : (
-                        <p className="mt-3 text-sm text-slate-500">
+                        <p className="mt-3 text-sm text-c-text-muted">
                           {t('interview.insightViewer.noExplicitLimitationsBeyondNormal')}
                         </p>
                       )}
@@ -3756,26 +3756,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       <h4 className="text-sm font-semibold text-c-text">
                         {t('interview.insightViewer.gapsAndFollowUp')}
                       </h4>
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-c-text-secondary">
                         <div>
                           {t('interview.insightViewer.thinAnswers')}:{' '}
-                          <span className="text-slate-200">{quality.thin_answer_count}</span>
+                          <span className="text-c-text-muted">{quality.thin_answer_count}</span>
                         </div>
                         <div>
                           {t('interview.insightViewer.evidenceGaps')}:{' '}
-                          <span className="text-slate-200">{quality.evidence_gap_count}</span>
+                          <span className="text-c-text-muted">{quality.evidence_gap_count}</span>
                         </div>
                         <div>
                           {t('interview.insightViewer.contradictions')}:{' '}
-                          <span className="text-slate-200">{quality.contradiction_count}</span>
+                          <span className="text-c-text-muted">{quality.contradiction_count}</span>
                         </div>
                         <div>
                           {t('interview.insightViewer.missingVoices')}:{' '}
-                          <span className="text-slate-200">{quality.missing_voices.length}</span>
+                          <span className="text-c-text-muted">{quality.missing_voices.length}</span>
                         </div>
                       </div>
                       {quality.recommended_followups.length > 0 && (
-                        <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                        <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
                           {quality.recommended_followups.map((item) => (
                             <li key={item} className="flex gap-2">
                               <MessageSquare size={15} className="mt-0.5 shrink-0 text-blue-400" />
@@ -3788,21 +3788,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.rolesCovered')}
                       </div>
-                      <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                      <div className="mt-2 text-sm text-c-text-secondary">
                         {quality.role_coverage.length > 0
                           ? quality.role_coverage.join(', ')
                           : t('interview.insightViewer.noRoleMetadata')}
                       </div>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.departmentsCovered')}
                       </div>
-                      <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                      <div className="mt-2 text-sm text-c-text-secondary">
                         {quality.department_coverage.length > 0
                           ? quality.department_coverage.join(', ')
                           : t('interview.insightViewer.noDepartmentMetadata')}
@@ -3852,32 +3852,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               {reportPack ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.completeness')}
                       </div>
-                      <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="mt-1 text-2xl font-semibold text-c-text">
                         {reportPack.completenessScore}%
                       </div>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.worksheets')}
                       </div>
-                      <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="mt-1 text-2xl font-semibold text-c-text">
                         {worksheets.length}
                       </div>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.generatedPartial')}
                       </div>
                       <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
                         {generatedCount} / {partialCount}
                       </div>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                         {t('interview.insightViewer.degraded')}
                       </div>
                       <div
@@ -4000,7 +4000,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         )}
                         {reportPack.status === 'draft' &&
                           reportReadiness?.status === 'ready_for_review' && (
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-c-text-muted">
                               {t('interview.insightViewer.publishRequiresReviewFirst')}
                             </span>
                           )}
@@ -4012,7 +4012,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           )}
                       </div>
                       {!reportReadiness && (
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="text-xs text-c-text-muted">
                           {t('interview.insightViewer.theGateIsTemporarilyUnavailable')}
                         </div>
                       )}
@@ -4049,14 +4049,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     {worksheets.map((worksheet) => (
                       <div
                         key={worksheet.key}
-                        className="rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 dark:border-white/[0.08] dark:bg-navy-900/50"
+                        className="rounded-2xl border border-c-border-subtle bg-white/80 px-4 py-3 dark:border-white/[0.08] dark:bg-c-surface-raised/50"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <div className="text-sm font-semibold text-c-text">
                               {worksheet.title}
                             </div>
-                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            <div className="mt-1 text-xs text-c-text-muted">
                               {worksheet.rows.length} {t('interview.insightViewer.rows')} ·{' '}
                               {worksheet.completenessScore}%
                             </div>
@@ -4069,7 +4069,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
                                   : worksheet.status === 'partial'
                                     ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300'
-                                    : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
+                                    : 'bg-c-text-muted/10 text-c-text-secondary'
                             }`}
                           >
                             {worksheet.status}
@@ -4176,32 +4176,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </Callout>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.sessions')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.fragments')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {sourcePack?.entries.length || 0}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.activeEvidence')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {sourcePack?.activePointerCount ?? findingsSummary.activeEvidence}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.state')}
                   </div>
                   <div
@@ -4219,35 +4219,35 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.readbackOk')}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
                     {readbackSummary.confirmed}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.challenged')}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-danger-600 dark:text-danger-300">
                     {readbackSummary.challenged}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.needsEvidence')}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
                     {readbackSummary.needsMoreEvidence}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.unresolved')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {readbackSummary.unresolved}
                   </div>
                 </div>
@@ -4270,14 +4270,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {sourcePack.entries.map((entry) => (
                     <div
                       key={entry.answerId}
-                      className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4 space-y-3"
+                      className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-4 py-4 space-y-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                          <div className="text-xs font-semibold text-c-text">
                             {entry.questionText || entry.answerId}
                           </div>
-                          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          <div className="mt-1 text-[11px] text-c-text-muted">
                             {[
                               entry.respondentLabel,
                               entry.respondentRole,
@@ -4300,7 +4300,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </span>
                         )}
                       </div>
-                      <div className="rounded-xl bg-slate-50 dark:bg-navy-900/50 px-3 py-2 text-xs italic text-slate-600 dark:text-slate-300">
+                      <div className="rounded-xl bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-secondary">
                         "{entry.answerSnippet}"
                       </div>
                       <div className="flex flex-wrap gap-1.5">
@@ -4354,7 +4354,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               default:
                 return {
                   label: t('interview.insightViewer.notObserved'),
-                  className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+                  className: 'bg-c-text-muted/10 text-c-text-secondary',
                 };
             }
           };
@@ -4369,11 +4369,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </Callout>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.posture')}
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-sm font-semibold text-c-text">
                     {analysis?.scope.posture === 'organization_synthesis'
                       ? t('interview.insightViewer.organizationSynthesis')
                       : analysis?.scope.posture === 'cross_perspective'
@@ -4381,27 +4381,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         : t('interview.insightViewer.singlePerspective')}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.sourceSessions')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {analysis?.scope.sourceSessionCount || 0}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.lenses')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {analysis?.scope.distinctStakeholderCount || 0}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.consensus')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {consensusTopics.length}
                   </div>
                 </div>
@@ -4419,16 +4419,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </Callout>
               )}
 
-              <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4">
+              <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-4 py-4">
                 <div className="flex flex-col xl:flex-row xl:items-center gap-3">
-                  <div className="inline-flex rounded-full bg-slate-100 dark:bg-navy-900/60 p-1">
+                  <div className="inline-flex rounded-full bg-c-surface-raised p-1">
                     <button
                       type="button"
                       onClick={() => setAnalysisLensMode('stakeholder')}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                         analysisLensMode === 'stakeholder'
-                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
-                          : 'text-slate-500 dark:text-slate-400'
+                          ? 'bg-white dark:bg-c-surface-raised text-c-text shadow-sm'
+                          : 'text-c-text-muted'
                       }`}
                     >
                       {t('interview.insightViewer.stakeholderLenses')}
@@ -4438,8 +4438,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       onClick={() => setAnalysisLensMode('session')}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                         analysisLensMode === 'session'
-                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
-                          : 'text-slate-500 dark:text-slate-400'
+                          ? 'bg-white dark:bg-c-surface-raised text-c-text shadow-sm'
+                          : 'text-c-text-muted'
                       }`}
                     >
                       {t('interview.insightViewer.sessionsPeople')}
@@ -4450,7 +4450,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <select
                       value={analysisRoleFilter}
                       onChange={(e) => setAnalysisRoleFilter(e.target.value)}
-                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                      className="h-10 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface-raised/50 px-3 text-sm text-c-text-secondary"
                     >
                       <option value="all">{t('interview.insightViewer.allRoles')}</option>
                       {analysisRoleOptions.map((role) => (
@@ -4462,7 +4462,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <select
                       value={analysisDepartmentFilter}
                       onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
-                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                      className="h-10 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface-raised/50 px-3 text-sm text-c-text-secondary"
                     >
                       <option value="all">{t('interview.insightViewer.allDepartments')}</option>
                       {analysisDepartmentOptions.map((department) => (
@@ -4482,12 +4482,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     consensusTopics.map((topic) => (
                       <div
                         key={topic.id}
-                        className="rounded-2xl bg-emerald-500/[0.05] px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                        className="rounded-2xl bg-emerald-500/[0.05] px-4 py-3 text-sm text-c-text-secondary"
                       >
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                        <div className="font-medium text-c-text">
                           {topic.label}
                         </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 text-xs text-c-text-muted">
                           {topic.supportingStakeholderLabels.join(', ') ||
                             t('interview.insightViewer.noLenses')}
                         </div>
@@ -4507,12 +4507,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     localOnlyTopics.slice(0, 6).map((topic) => (
                       <div
                         key={topic.id}
-                        className="rounded-2xl bg-amber-500/[0.05] px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                        className="rounded-2xl bg-amber-500/[0.05] px-4 py-3 text-sm text-c-text-secondary"
                       >
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                        <div className="font-medium text-c-text">
                           {topic.label}
                         </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 text-xs text-c-text-muted">
                           {topic.supportingSessionIds.length === 1
                             ? sessionLenses.find((lens) =>
                                 lens.sessionIds.includes(topic.supportingSessionIds[0])
@@ -4545,12 +4545,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     ).map((lens) => (
                       <div
                         key={lens.id}
-                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                        className="rounded-2xl bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary"
                       >
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                        <div className="font-medium text-c-text">
                           {lens.label}
                         </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                        <div className="mt-1 text-xs text-c-text-muted space-y-1">
                           {lens.localSummary}
                           {(lens.role || lens.department) && (
                             <div>{[lens.role, lens.department].filter(Boolean).join(' · ')}</div>
@@ -4586,14 +4586,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
 
               {visibleAnalysisTopicRows.length > 0 && activeAnalysisColumns.length > 0 ? (
-                <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-slate-200/70 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/50">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <div className="rounded-2xl border border-c-border-subtle overflow-hidden">
+                  <div className="px-4 py-3 border-b border-c-border-subtle bg-c-surface-raised">
+                    <div className="text-sm font-semibold text-c-text">
                       {analysisLensMode === 'stakeholder'
                         ? t('interview.insightViewer.topicXStakeholderLensMatrix')
                         : t('interview.insightViewer.topicXSessionPersonMatrix')}
                     </div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="mt-1 text-xs text-c-text-muted">
                       {t('interview.insightViewer.cellsShowWhereAFinding')}
                     </div>
                   </div>
@@ -4604,14 +4604,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         table; FilterableTable does not support pivot layouts. */}
                     <table className="min-w-full text-sm">
                       <thead>
-                        <tr className="bg-white/70 dark:bg-navy-900/30">
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                        <tr className="bg-white/70 dark:bg-c-surface-raised/30">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
                             {t('interview.insightViewer.topic')}
                           </th>
                           {activeAnalysisColumns.map((column) => (
                             <th
                               key={column.id}
-                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500"
+                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-c-text-secondary"
                             >
                               {column.label}
                             </th>
@@ -4622,13 +4622,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {visibleAnalysisTopicRows.map((row) => (
                           <tr
                             key={row.id}
-                            className="border-t border-slate-200/60 dark:border-navy-700/50"
+                            className="border-t border-c-border-subtle"
                           >
                             <td className="px-4 py-3 align-top min-w-[220px]">
-                              <div className="font-medium text-slate-900 dark:text-slate-100">
+                              <div className="font-medium text-c-text">
                                 {row.label}
                               </div>
-                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              <div className="mt-1 text-xs text-c-text-muted">
                                 {analysisTopicsById[row.id]?.kind}
                               </div>
                               {analysisTopicsById[row.id]?.perspectiveLabels?.length ? (
@@ -4636,7 +4636,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   {analysisTopicsById[row.id]?.perspectiveLabels.map((label) => (
                                     <span
                                       key={label}
-                                      className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                      className="inline-flex px-2 py-0.5 rounded-full bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium"
                                     >
                                       {label}
                                     </span>
@@ -4660,7 +4660,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     {meta.label}
                                   </div>
                                   {cell && cell.evidenceCount > 0 && (
-                                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                    <div className="mt-1 text-[11px] text-c-text-muted">
                                       {cell.evidenceCount} {t('interview.insightViewer.ev')}
                                     </div>
                                   )}
@@ -4743,7 +4743,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Średnia pewność',
                       },
                       low: {
-                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        bg: 'bg-c-text-muted/15 text-c-text-muted',
                         label: 'Hypothesis',
                         labelPl: 'Hipoteza',
                       },
@@ -4763,10 +4763,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     return (
                       <div
                         key={idx}
-                        className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
+                        className="rounded-xl bg-c-surface-raised px-4 py-4 space-y-2"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          <div className="text-sm font-semibold text-c-text">
                             {theme.title}
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -4776,7 +4776,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                                   : theme.strength === 'moderate'
                                     ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                                    : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
+                                    : 'bg-c-text-muted/15 text-c-text-muted'
                               }`}
                             >
                               {theme.strength === 'strong'
@@ -4803,7 +4803,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {t('interview.insightViewer.contradictionDetectedInDataVerify')}
                           </div>
                         )}
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm text-c-text-secondary leading-relaxed">
                           {theme.description}
                         </p>
                         {theme.perspective_labels?.length || theme.divergence_note ? (
@@ -4813,7 +4813,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 {theme.perspective_labels.map((label) => (
                                   <span
                                     key={label}
-                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium"
                                   >
                                     {label}
                                   </span>
@@ -4827,10 +4827,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             )}
                           </div>
                         ) : null}
-                        <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
+                        <div className="border border-c-border-subtle rounded-lg">
                           <button
                             onClick={() => toggleLimitsExpand(limitsKey)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-c-text-muted hover:bg-state-hover transition-colors rounded-lg"
                           >
                             <AlertTriangle size={12} />
                             <span className="font-medium">
@@ -4849,14 +4849,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   {findingLimits.map((limit, li) => (
                                     <li
                                       key={li}
-                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                      className="text-xs italic text-c-text-muted"
                                     >
                                       {limit}
                                     </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
+                                <p className="text-xs italic text-c-text-secondary">
                                   {t('interview.insightViewer.noLimitsSpecified')}
                                 </p>
                               )}
@@ -4865,7 +4865,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                         <div className="flex items-center gap-2 pt-1">
                           {persistedFinding && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium">
                               <Target size={10} />
                               {t('interview.insightViewer.p10PointerCount', {
                                 count: activePointerCount,
@@ -4895,11 +4895,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                       )}
                                     </button>
                                     {isExpanded && evidence && (
-                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-c-surface-raised border border-c-border-subtle text-xs space-y-1.5 max-w-sm">
+                                        <div className="font-medium text-c-text-secondary">
                                           {evidence.question_text}
                                         </div>
-                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                        <div className="text-c-text-muted italic">
                                           "{evidence.answer_snippet}"
                                         </div>
                                         {evidence.linked_themes?.length > 0 && (
@@ -4907,7 +4907,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                             {evidence.linked_themes.map((t) => (
                                               <span
                                                 key={t}
-                                                className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400"
+                                                className="px-1.5 py-0.5 rounded bg-c-surface-raised text-[10px] text-c-text-muted"
                                               >
                                                 {t}
                                               </span>
@@ -4993,13 +4993,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ? 'border-l-danger-500 bg-danger-500/[0.04] dark:bg-danger-500/10'
                         : issue.severity === 'medium'
                           ? 'border-l-amber-500 bg-amber-500/[0.04] dark:bg-amber-500/10'
-                          : 'border-l-slate-400 bg-slate-50 dark:bg-navy-900/50';
+                          : 'border-l-c-border-strong bg-c-surface-raised';
                     const severityBadge =
                       issue.severity === 'high'
                         ? 'bg-danger-500/15 text-danger-600 dark:text-danger-400'
                         : issue.severity === 'medium'
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                          : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                          : 'bg-c-text-muted/15 text-c-text-muted';
                     const confMap: Record<
                       P10ConfidenceLevel,
                       { bg: string; label: string; labelPl: string }
@@ -5015,7 +5015,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Średnia pewność',
                       },
                       low: {
-                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        bg: 'bg-c-text-muted/15 text-c-text-muted',
                         label: 'Hypothesis',
                         labelPl: 'Hipoteza',
                       },
@@ -5038,7 +5038,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         className={`rounded-xl border-l-4 ${severityStyles} px-4 py-4 space-y-2`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          <div className="text-sm font-semibold text-c-text">
                             {issue.title}
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -5069,7 +5069,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {t('interview.insightViewer.contradictionDetectedInDataVerify')}
                           </div>
                         )}
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm text-c-text-secondary leading-relaxed">
                           {issue.description}
                         </p>
                         {issue.perspective_labels?.length || issue.divergence_note ? (
@@ -5079,7 +5079,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 {issue.perspective_labels.map((label) => (
                                   <span
                                     key={label}
-                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium"
                                   >
                                     {label}
                                   </span>
@@ -5093,10 +5093,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             )}
                           </div>
                         ) : null}
-                        <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
+                        <div className="border border-c-border-subtle rounded-lg">
                           <button
                             onClick={() => toggleLimitsExpand(limitsKey)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-c-text-muted hover:bg-state-hover transition-colors rounded-lg"
                           >
                             <AlertTriangle size={12} />
                             <span className="font-medium">
@@ -5115,14 +5115,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   {findingLimits.map((limit, li) => (
                                     <li
                                       key={li}
-                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                      className="text-xs italic text-c-text-muted"
                                     >
                                       {limit}
                                     </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
+                                <p className="text-xs italic text-c-text-secondary">
                                   {t('interview.insightViewer.noLimitsSpecified')}
                                 </p>
                               )}
@@ -5131,7 +5131,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                         <div className="flex items-center gap-2 pt-1">
                           {persistedFinding && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium">
                               <Target size={10} />
                               {t('interview.insightViewer.p10PointerCount', {
                                 count: activePointerCount,
@@ -5161,11 +5161,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                       )}
                                     </button>
                                     {isExpanded && evidence && (
-                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-c-surface-raised border border-c-border-subtle text-xs space-y-1.5 max-w-sm">
+                                        <div className="font-medium text-c-text-secondary">
                                           {evidence.question_text}
                                         </div>
-                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                        <div className="text-c-text-muted italic">
                                           "{evidence.answer_snippet}"
                                         </div>
                                       </div>
@@ -5243,7 +5243,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                         : opp.impact === 'medium'
                           ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                          : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                          : 'bg-c-text-muted/15 text-c-text-muted';
                     const confMap: Record<
                       P10ConfidenceLevel,
                       { bg: string; label: string; labelPl: string }
@@ -5259,7 +5259,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Średnia pewność',
                       },
                       low: {
-                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        bg: 'bg-c-text-muted/15 text-c-text-muted',
                         label: 'Hypothesis',
                         labelPl: 'Hipoteza',
                       },
@@ -5282,7 +5282,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         className="rounded-xl bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] px-4 py-4 space-y-2"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          <div className="text-sm font-semibold text-c-text">
                             {opp.title}
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -5313,7 +5313,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {t('interview.insightViewer.contradictionDetectedInDataVerify')}
                           </div>
                         )}
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm text-c-text-secondary leading-relaxed">
                           {opp.description}
                         </p>
                         {opp.perspective_labels?.length || opp.divergence_note ? (
@@ -5323,7 +5323,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 {opp.perspective_labels.map((label) => (
                                   <span
                                     key={label}
-                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium"
                                   >
                                     {label}
                                   </span>
@@ -5337,10 +5337,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             )}
                           </div>
                         ) : null}
-                        <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
+                        <div className="border border-c-border-subtle rounded-lg">
                           <button
                             onClick={() => toggleLimitsExpand(limitsKey)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-c-text-muted hover:bg-state-hover transition-colors rounded-lg"
                           >
                             <AlertTriangle size={12} />
                             <span className="font-medium">
@@ -5359,14 +5359,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   {findingLimits.map((limit, li) => (
                                     <li
                                       key={li}
-                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                      className="text-xs italic text-c-text-muted"
                                     >
                                       {limit}
                                     </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
+                                <p className="text-xs italic text-c-text-secondary">
                                   {t('interview.insightViewer.noLimitsSpecified')}
                                 </p>
                               )}
@@ -5375,7 +5375,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                         <div className="flex items-center gap-2 pt-1">
                           {persistedFinding && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium">
                               <Target size={10} />
                               {t('interview.insightViewer.p10PointerCount', {
                                 count: activePointerCount,
@@ -5405,11 +5405,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                       )}
                                     </button>
                                     {isExpanded && evidence && (
-                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-c-surface-raised border border-c-border-subtle text-xs space-y-1.5 max-w-sm">
+                                        <div className="font-medium text-c-text-secondary">
                                           {evidence.question_text}
                                         </div>
-                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                        <div className="text-c-text-muted italic">
                                           "{evidence.answer_snippet}"
                                         </div>
                                       </div>
@@ -5506,10 +5506,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     return (
                       <div
                         key={idx}
-                        className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
+                        className="rounded-xl bg-c-surface-raised px-4 py-4 space-y-2"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          <div className="text-sm font-semibold text-c-text">
                             {signal.title}
                           </div>
                           <span
@@ -5519,7 +5519,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {t(`interview.insightViewer.v6SignalType.${signal.type}`, cfg.label)}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm text-c-text-secondary leading-relaxed">
                           {signal.description}
                         </p>
                       </div>
@@ -5592,7 +5592,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         header: t('interview.insightViewer.question'),
                         width: 'w-1/3',
                         render: (row) => (
-                          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                          <span className="text-xs font-medium text-c-text-secondary">
                             {row.question_text}
                           </span>
                         ),
@@ -5602,7 +5602,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         header: t('interview.insightViewer.answer'),
                         width: 'w-1/3',
                         render: (row) => (
-                          <span className="text-xs text-slate-500 dark:text-slate-400 italic">
+                          <span className="text-xs text-c-text-muted italic">
                             {row.answer_snippet?.length > 120
                               ? row.answer_snippet.slice(0, 120) + '…'
                               : row.answer_snippet}
@@ -5682,7 +5682,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'rejected':
                 return {
                   label: t('interview.insightViewer.rejected'),
-                  className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+                  className: 'bg-c-text-muted/10 text-c-text-secondary',
                 };
               case 'promoted':
                 return {
@@ -5707,32 +5707,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </Callout>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.candidates')}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-lg font-semibold text-c-text">
                     {candidateSummary.total}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.ready')}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
                     {candidateSummary.ready}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.needsEvidence3')}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
                     {candidateSummary.needsEvidence}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-2xl bg-c-surface-raised px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.insightViewer.needsSplit')}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-danger-600 dark:text-danger-300">
@@ -5755,11 +5755,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     return (
                       <div
                         key={candidate.id}
-                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                        className="rounded-2xl bg-c-surface-raised px-4 py-4 space-y-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
-                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <div className="text-sm font-semibold text-c-text">
                               {candidate.candidate_statement}
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -5768,14 +5768,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               >
                                 {statusMeta.label}
                               </span>
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-text-muted/10 text-c-text-secondary">
                                 {candidate.confidence_hint}
                               </span>
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-text-muted/10 text-c-text-secondary">
                                 {candidate.followup_type}
                               </span>
                               {candidate.source_section_type && (
-                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-text-muted/10 text-c-text-secondary">
                                   {candidate.source_section_type}
                                 </span>
                               )}
@@ -5790,7 +5790,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
 
                         {candidate.rationale && (
-                          <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">
+                          <div className="text-sm text-c-text-secondary whitespace-pre-line">
                             {candidate.rationale}
                           </div>
                         )}
@@ -5820,7 +5820,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {linkedTopic.supportingStakeholderLabels.map((label) => (
                               <span
                                 key={label}
-                                className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                className="inline-flex px-2 py-0.5 rounded-full bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium"
                               >
                                 {label}
                               </span>
@@ -5829,13 +5829,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ) : null}
 
                         {linkedFinding && (
-                          <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3 space-y-3">
+                          <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-3 py-3 space-y-3">
                             <div className="flex items-center justify-between gap-3">
                               <div>
                                 <div className={TEXT_L1}>
                                   {t('interview.insightViewer.clientReadback')}
                                 </div>
-                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                <div className="mt-1 text-xs text-c-text-secondary">
                                   {linkedFinding.readback_status}
                                   {linkedFinding.readback_summary
                                     ? ` · ${linkedFinding.readback_summary}`
@@ -5845,7 +5845,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               {readbackLoadingId === linkedFinding.id && (
                                 <Loader2
                                   size={14}
-                                  className="animate-spin text-slate-600 flex-shrink-0"
+                                  className="animate-spin text-c-text-secondary flex-shrink-0"
                                 />
                               )}
                             </div>
@@ -5936,7 +5936,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <button
                             onClick={() => handleCandidateAction(candidate, 'reject')}
                             disabled={isBusy}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-500/10 text-slate-700 dark:text-slate-300 hover:bg-slate-500/20 text-xs font-medium disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-text-muted/10 text-c-text-secondary hover:bg-c-text-muted/20 text-xs font-medium disabled:opacity-50"
                           >
                             {isBusy ? (
                               <Loader2 size={12} className="animate-spin" />
@@ -5990,16 +5990,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 {t('interview.insightViewer.thisSectionShowsWhichTopics')}
               </Callout>
 
-              <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4">
+              <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-4 py-4">
                 <div className="flex flex-col xl:flex-row xl:items-center gap-3">
-                  <div className="inline-flex rounded-full bg-slate-100 dark:bg-navy-900/60 p-1">
+                  <div className="inline-flex rounded-full bg-c-surface-raised p-1">
                     <button
                       type="button"
                       onClick={() => setAnalysisLensMode('stakeholder')}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                         analysisLensMode === 'stakeholder'
-                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
-                          : 'text-slate-500 dark:text-slate-400'
+                          ? 'bg-white dark:bg-c-surface-raised text-c-text shadow-sm'
+                          : 'text-c-text-muted'
                       }`}
                     >
                       {t('interview.insightViewer.stakeholderLenses')}
@@ -6009,8 +6009,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       onClick={() => setAnalysisLensMode('session')}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                         analysisLensMode === 'session'
-                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
-                          : 'text-slate-500 dark:text-slate-400'
+                          ? 'bg-white dark:bg-c-surface-raised text-c-text shadow-sm'
+                          : 'text-c-text-muted'
                       }`}
                     >
                       {t('interview.insightViewer.sessionsPeople')}
@@ -6021,7 +6021,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <select
                       value={analysisRoleFilter}
                       onChange={(e) => setAnalysisRoleFilter(e.target.value)}
-                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                      className="h-10 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface-raised/50 px-3 text-sm text-c-text-secondary"
                     >
                       <option value="all">{t('interview.insightViewer.allRoles')}</option>
                       {analysisRoleOptions.map((role) => (
@@ -6033,7 +6033,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <select
                       value={analysisDepartmentFilter}
                       onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
-                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                      className="h-10 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface-raised/50 px-3 text-sm text-c-text-secondary"
                     >
                       <option value="all">{t('interview.insightViewer.allDepartments')}</option>
                       {analysisDepartmentOptions.map((department) => (
@@ -6062,27 +6062,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     return (
                       <div
                         key={lens.id}
-                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                        className="rounded-2xl bg-c-surface-raised px-4 py-4 space-y-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <div className="text-sm font-semibold text-c-text">
                               {lens.label}
                             </div>
-                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            <div className="mt-1 text-xs text-c-text-muted">
                               {[lens.role, lens.department].filter(Boolean).join(' · ') ||
                                 (analysisLensMode === 'session'
                                   ? t('interview.insightViewer.sourceSession')
                                   : t('interview.insightViewer.stakeholderLens'))}
                             </div>
                           </div>
-                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-text-muted/10 text-c-text-secondary text-[10px] font-medium">
                             <Target size={10} />
                             {supportedTopics.length} {t('interview.insightViewer.topics')}
                           </div>
                         </div>
 
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="text-xs text-c-text-muted">
                           {lens.localSummary}
                         </div>
 
@@ -6112,10 +6112,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             supportedTopics.map((topic) => (
                               <div
                                 key={topic.id}
-                                className="rounded-xl bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/50 px-3 py-3"
+                                className="rounded-xl bg-white dark:bg-c-surface-raised border border-c-border-subtle px-3 py-3"
                               >
                                 <div className="flex items-start justify-between gap-2">
-                                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                  <div className="text-sm font-medium text-c-text">
                                     {topic.label}
                                   </div>
                                   <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -6136,7 +6136,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     </span>
                                   </div>
                                 </div>
-                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                <div className="mt-1 text-xs text-c-text-muted">
                                   {topic.kind} · {topic.confidenceLevel} · {topic.evidenceCount}{' '}
                                   {t('interview.insightViewer.ev')}
                                 </div>
@@ -6212,20 +6212,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {traceabilityRows.map(({ session, summary }) => (
                     <div
                       key={session.id}
-                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                      className="rounded-2xl bg-c-surface-raised px-4 py-4 space-y-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          <div className="text-sm font-semibold text-c-text">
                             {session.name}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-c-text-muted">
                             {session.templateName || t('interview.insightViewer.sourceSession')}
                           </div>
                         </div>
                         <button
                           onClick={() => openSourceSessionInInterviewHub(session)}
-                          className="p-1.5 rounded-lg hover:bg-slate-200/70 dark:hover:bg-white/[0.06] text-slate-500 dark:text-slate-400 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-state-hover dark:hover:bg-white/[0.06] text-c-text-muted transition-colors"
                         >
                           <ExternalLink size={14} />
                         </button>
@@ -6233,27 +6233,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                             {t('interview.insightViewer.officialAnswers')}
                           </div>
                           {summary.facts.length > 0 ? (
                             summary.facts.slice(0, 4).map((fact) => (
                               <div
                                 key={fact}
-                                className="text-sm text-slate-700 dark:text-slate-300"
+                                className="text-sm text-c-text-secondary"
                               >
                                 {fact}
                               </div>
                             ))
                           ) : (
-                            <div className="text-sm text-slate-600 dark:text-slate-500">
+                            <div className="text-sm text-c-text-secondary">
                               {t('interview.insightViewer.noFactsCaptured')}
                             </div>
                           )}
                         </div>
 
                         <div className="space-y-2">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-secondary">
                             {t('interview.insightViewer.gapsConstraints')}
                           </div>
                           {uniqueNonEmpty([
@@ -6270,13 +6270,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               .map((item) => (
                                 <div
                                   key={item}
-                                  className="text-sm text-slate-700 dark:text-slate-300"
+                                  className="text-sm text-c-text-secondary"
                                 >
                                   {item}
                                 </div>
                               ))
                           ) : (
-                            <div className="text-sm text-slate-600 dark:text-slate-500">
+                            <div className="text-sm text-c-text-secondary">
                               {t('interview.insightViewer.noGapsOrConstraints')}
                             </div>
                           )}
@@ -6287,9 +6287,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {unavailableSessionIds.map((sessionId) => (
                     <div
                       key={sessionId}
-                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-300 dark:border-navy-600 px-4 py-4"
+                      className="rounded-2xl bg-c-surface-raised border border-dashed border-c-border px-4 py-4"
                     >
-                      <div className="flex items-center gap-3 text-slate-600 dark:text-slate-500">
+                      <div className="flex items-center gap-3 text-c-text-secondary">
                         <Link2 size={16} className="opacity-50" />
                         <div>
                           <div className="text-sm font-medium">
@@ -6315,7 +6315,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <div className="space-y-2">
               {sourceSessions.length === 0 ? (
-                <div className="text-center py-6 text-slate-600 dark:text-slate-500">
+                <div className="text-center py-6 text-c-text-secondary">
                   <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">{t('interview.insightViewer.noSessions')}</p>
                 </div>
@@ -6323,18 +6323,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 sourceSessions.map((session) => (
                   <div
                     key={session.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="flex items-center justify-between p-3 rounded-xl bg-c-surface-raised border border-c-border"
                   >
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-blue-500/10">
                         <MessageSquare size={14} className="text-blue-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <p className="text-sm font-medium text-c-text-secondary">
                           {session.name}
                         </p>
                         {session.templateName && (
-                          <p className="text-xs text-slate-600 dark:text-slate-500">
+                          <p className="text-xs text-c-text-secondary">
                             {session.templateName}
                           </p>
                         )}
@@ -6342,7 +6342,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     </div>
                     <button
                       onClick={() => openSourceSessionInInterviewHub(session)}
-                      className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-state-hover text-c-text-muted transition-colors"
                     >
                       <ExternalLink size={14} />
                     </button>
@@ -6435,13 +6435,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {col.topics.slice(0, 8).map((topic) => (
                           <li
                             key={topic.id}
-                            className="rounded-xl bg-white/70 dark:bg-navy-900/40 px-3 py-2"
+                            className="rounded-xl bg-white/70 dark:bg-c-surface-raised/40 px-3 py-2"
                           >
-                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                            <div className="text-sm font-medium text-c-text">
                               {topic.label}
                             </div>
                             {topic.divergenceNote && (
-                              <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                              <div className="mt-1 text-xs text-c-text-secondary">
                                 {topic.divergenceNote}
                               </div>
                             )}
@@ -6449,7 +6449,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ))}
                       </ul>
                     ) : (
-                      <div className="text-xs text-slate-600 dark:text-slate-400">{col.empty}</div>
+                      <div className="text-xs text-c-text-secondary">{col.empty}</div>
                     )}
                   </div>
                 ))}
@@ -6505,10 +6505,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {assumptionTopics.slice(0, 8).map((topic) => (
                     <div
                       key={topic.id}
-                      className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3"
+                      className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-3 py-3"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        <div className="text-sm font-medium text-c-text">
                           {topic.label}
                         </div>
                         <span className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
@@ -6516,7 +6516,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </span>
                       </div>
                       {topic.description && (
-                        <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                        <div className="mt-1 text-xs text-c-text-secondary">
                           {topic.description}
                         </div>
                       )}
@@ -6529,7 +6529,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className={TEXT_L1}>{t('interview.insightViewer.fromAiNarrative')}</div>
                   <ul className="list-disc list-inside space-y-1">
                     {assumptionNarrative.slice(0, 6).map((line, i) => (
-                      <li key={i} className="text-sm text-slate-700 dark:text-slate-300">
+                      <li key={i} className="text-sm text-c-text-secondary">
                         {line}
                       </li>
                     ))}
@@ -6578,13 +6578,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 {silences.slice(0, 12).map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 bg-slate-50/60 dark:bg-navy-900/30 px-3 py-2.5"
+                    className="flex items-start gap-2 rounded-xl border border-dashed border-c-border bg-c-surface-raised px-3 py-2.5"
                   >
                     <EyeOff
                       size={14}
-                      className="mt-0.5 flex-shrink-0 text-slate-400 dark:text-slate-500"
+                      className="mt-0.5 flex-shrink-0 text-c-text-muted"
                     />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">{item}</span>
+                    <span className="text-sm text-c-text-secondary">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -6632,16 +6632,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {lensesWithVoice.slice(0, 6).map((lens) => (
                     <div
                       key={lens.id}
-                      className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-3"
+                      className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-4 py-3"
                     >
-                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="text-sm font-semibold text-c-text">
                         {lens.label}
                       </div>
-                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-0.5 text-xs text-c-text-muted">
                         {[lens.role, lens.department].filter(Boolean).join(' · ') ||
                           t('interview.insightViewer.perspective')}
                       </div>
-                      <blockquote className="mt-2 border-l-2 border-c-info pl-3 text-sm italic text-slate-700 dark:text-slate-300">
+                      <blockquote className="mt-2 border-l-2 border-c-info pl-3 text-sm italic text-c-text-secondary">
                         {lens.localSummary || t('interview.insightViewer.noLocalSummaryForThis')}
                       </blockquote>
                     </div>
@@ -6654,7 +6654,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {evidenceQuotes.map((quote, i) => (
                     <blockquote
                       key={i}
-                      className="border-l-2 border-slate-300 dark:border-navy-600 pl-3 text-sm italic text-slate-700 dark:text-slate-300"
+                      className="border-l-2 border-c-border pl-3 text-sm italic text-c-text-secondary"
                     >
                       &ldquo;{quote}&rdquo;
                     </blockquote>
@@ -6734,7 +6734,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       <span className="text-xs font-semibold opacity-70">{col.topics.length}</span>
                     </div>
                     {col.topics.slice(0, 6).map((topic) => (
-                      <div key={topic.id} className="text-sm text-slate-700 dark:text-slate-200">
+                      <div key={topic.id} className="text-sm text-c-text-secondary">
                         {topic.label}
                       </div>
                     ))}
@@ -6795,19 +6795,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     return (
                       <div
                         key={role}
-                        className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3"
+                        className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-3 py-3"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                          <div className="text-sm font-medium text-c-text">
                             {role}
                           </div>
-                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          <span className="text-xs font-semibold text-c-text-muted">
                             {lenses.length} · {share}%
                           </span>
                         </div>
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-navy-700/60">
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-c-border-subtle">
                           <div
-                            className="h-full rounded-full bg-navy-900"
+                            className="h-full rounded-full bg-c-text-secondary"
                             style={{ width: `${share}%` }}
                           />
                         </div>
@@ -6865,7 +6865,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       key: 'open',
                       items: openHyp,
                       title: t('interview.insightViewer.open'),
-                      tone: 'border-slate-200/70 dark:border-navy-700/60',
+                      tone: 'border-c-border-subtle',
                     },
                     {
                       key: 'testing',
@@ -6883,29 +6883,29 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ).map((col) => (
                   <div
                     key={col.key}
-                    className={`rounded-2xl border bg-white/40 dark:bg-navy-900/20 px-3 py-3 space-y-2 ${col.tone}`}
+                    className={`rounded-2xl border bg-white/40 dark:bg-c-surface-raised/20 px-3 py-3 space-y-2 ${col.tone}`}
                   >
                     <div className="flex items-center justify-between">
                       <div className={TEXT_L1}>{col.title}</div>
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      <span className="text-xs font-semibold text-c-text-muted">
                         {col.items.length}
                       </span>
                     </div>
                     {col.items.slice(0, 8).map((c) => (
                       <div
                         key={c.id}
-                        className="rounded-xl bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/50 px-3 py-2"
+                        className="rounded-xl bg-white dark:bg-c-surface-raised border border-c-border-subtle px-3 py-2"
                       >
-                        <div className="text-sm text-slate-800 dark:text-slate-100">
+                        <div className="text-sm text-c-text">
                           {c.candidate_statement}
                         </div>
-                        <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 text-[10px] uppercase tracking-wide text-c-text-muted">
                           {c.confidence_hint}
                         </div>
                       </div>
                     ))}
                     {col.items.length === 0 && (
-                      <div className="text-xs text-slate-500 dark:text-slate-500">
+                      <div className="text-xs text-c-text-muted">
                         {t('interview.insightViewer.empty')}
                       </div>
                     )}
@@ -6925,11 +6925,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     // merged sub-block is preserved verbatim; only the nav entry is shared.
     const mergedDivider = (titleKey: string) => (
       <div className="flex items-center gap-3 pt-2">
-        <div className="h-px flex-1 bg-slate-200/70 dark:bg-navy-700/60" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-500">
+        <div className="h-px flex-1 bg-c-border-subtle" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
           {t(titleKey)}
         </span>
-        <div className="h-px flex-1 bg-slate-200/70 dark:bg-navy-700/60" />
+        <div className="h-px flex-1 bg-c-border-subtle" />
       </div>
     );
 
@@ -6966,9 +6966,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       onClick: handleRegenerate,
       loading: isRegenerating,
     };
-    const dCard = 'rounded-lg border border-slate-200/60 dark:border-navy-700/50 px-3 py-2.5';
-    const dTitle = 'text-sm font-medium text-slate-800 dark:text-slate-100';
-    const dBody = 'text-xs text-slate-600 dark:text-slate-400 mt-0.5';
+    const dCard = 'rounded-lg border border-c-border-subtle px-3 py-2.5';
+    const dTitle = 'text-sm font-medium text-c-text';
+    const dBody = 'text-xs text-c-text-secondary mt-0.5';
     const dRegenCta = {
       label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' },
       onClick: handleRegenerate,
@@ -7164,7 +7164,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           {evidenceQuotes.map((q, i) => (
             <li
               key={i}
-              className="border-l-2 border-teal-300 dark:border-teal-700 pl-3 text-sm italic text-slate-700 dark:text-slate-200"
+              className="border-l-2 border-teal-300 dark:border-teal-700 pl-3 text-sm italic text-c-text-secondary"
             >
               “{q}”
             </li>
@@ -7192,7 +7192,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {evidenceQuotes.map((q, i) => (
             <div key={i} className={dCard}>
-              <div className="text-sm italic text-slate-700 dark:text-slate-200">“{q}”</div>
+              <div className="text-sm italic text-c-text-secondary">“{q}”</div>
             </div>
           ))}
         </div>
@@ -7222,14 +7222,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             .filter((g) => g.items.length > 0)
             .map((g) => (
               <div key={g.label}>
-                <div className="text-[11px] uppercase tracking-wide text-slate-400 mb-1">
+                <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
                   {g.label}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {g.items.map((it, i) => (
                     <span
                       key={i}
-                      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300"
+                      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-c-surface-raised text-c-text-secondary"
                     >
                       {it}
                     </span>
@@ -7259,19 +7259,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className={dCard}>
               <div className={dBody}>{t('interview.insightViewer.sessions')}</div>
-              <div className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+              <div className="text-xl font-semibold text-c-text">
                 {analysis.scope.sourceSessionCount}
               </div>
             </div>
             <div className={dCard}>
               <div className={dBody}>{t('interview.insightViewer.distinctVoices')}</div>
-              <div className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+              <div className="text-xl font-semibold text-c-text">
                 {analysis.scope.distinctStakeholderCount}
               </div>
             </div>
             <div className={dCard}>
               <div className={dBody}>{t('interview.insightViewer.posture2')}</div>
-              <div className="text-sm font-medium text-slate-800 dark:text-slate-100 mt-1">
+              <div className="text-sm font-medium text-c-text mt-1">
                 {analysis.scope.posture.replace(/_/g, ' ')}
               </div>
             </div>
@@ -7294,7 +7294,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           cta: dRegenCta,
         }}
       >
-        <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+        <div className="text-sm leading-relaxed text-c-text-secondary whitespace-pre-wrap">
           {dNarrative}
         </div>
       </NModeSectionWrapper>
@@ -7314,7 +7314,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           cta: dRegenCta,
         }}
       >
-        <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+        <div className="text-sm leading-relaxed text-c-text-secondary whitespace-pre-wrap">
           {dMemo}
         </div>
       </NModeSectionWrapper>
@@ -7545,7 +7545,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
               done
                 ? 'border-success-400/50 text-success-700 dark:text-success-300 bg-success-50/60 dark:bg-success-900/20'
-                : 'border-slate-300/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
+                : 'border-c-border text-c-text-secondary hover:bg-state-hover'
             }`}
             title={t('interview.insightViewer.markSectionCompleteAiSignal')}
           >
@@ -7908,7 +7908,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         </div>
       );
     }
-    return <LoadingState variant="spinner" className="h-full bg-white dark:bg-navy-950 py-0" />;
+    return <LoadingState variant="spinner" className="h-full bg-white dark:bg-c-bg py-0" />;
   }
 
   if (error) {
@@ -7925,10 +7925,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       );
     }
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-white dark:bg-navy-950 gap-4">
+      <div className="flex flex-col items-center justify-center h-full bg-white dark:bg-c-bg gap-4">
         <AlertCircle size={48} className="text-danger-400" />
         <p className="text-danger-500">{error}</p>
-        <button onClick={onClose} className="text-sm text-slate-500 hover:text-slate-700 underline">
+        <button onClick={onClose} className="text-sm text-c-text-muted hover:text-c-text-secondary underline">
           {t('interview.insightViewer.goBack')}
         </button>
       </div>
@@ -8271,7 +8271,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   />
                 </ToolbarGhostButton>
                 {sectionsMenuOpen && (
-                  <div className="absolute left-0 z-30 mt-1 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                  <div className="absolute left-0 z-30 mt-1 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
                     {(() => {
                       // Group like the left nav (#22b). Walk in canonical order.
                       const groups: { group: string; items: NModeSection[] }[] = [];
@@ -8287,7 +8287,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       return groups.map((bucket) => (
                         <div key={bucket.group} className="px-1 py-1">
                           {bucket.group && (
-                            <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                               {bucket.group}
                             </div>
                           )}
@@ -8303,30 +8303,30 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   // SSOT = cardLayout; hidden state syncs down via effect.
                                   hidden ? cardLayout.showCard(s.id) : cardLayout.hideCard(s.id)
                                 }
-                                className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800"
+                                className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg hover:bg-state-hover"
                               >
-                                <span className="shrink-0 text-slate-400 dark:text-slate-500">
+                                <span className="shrink-0 text-c-text-muted">
                                   {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
                                 </span>
                                 <Icon
                                   size={13}
                                   className={
                                     empty
-                                      ? 'text-slate-300 dark:text-slate-600'
-                                      : 'text-slate-500 dark:text-slate-400'
+                                      ? 'text-c-text-muted/60'
+                                      : 'text-c-text-muted'
                                   }
                                 />
                                 <span
                                   className={`flex-1 truncate ${
                                     empty
-                                      ? 'text-slate-400 dark:text-slate-500'
-                                      : 'text-slate-700 dark:text-slate-200'
+                                      ? 'text-c-text-muted'
+                                      : 'text-c-text-secondary'
                                   } ${hidden ? 'line-through opacity-60' : ''}`}
                                 >
                                   {t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}
                                 </span>
                                 {empty && (
-                                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500">
+                                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide bg-c-surface-raised text-c-text-muted">
                                     {t('interview.insightViewer.empty2')}
                                   </span>
                                 )}
@@ -8336,14 +8336,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                       ));
                     })()}
-                    <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                    <div className="my-1 h-px bg-c-surface-raised" />
                     <button
                       type="button"
                       onClick={() => {
                         cardLayout.resetToDefault();
                         setSectionsMenuOpen(false);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-c-text-secondary hover:bg-state-hover"
                     >
                       <RefreshCw size={14} />
                       {t('interview.insightViewer.restoreDefaults')}
@@ -8374,7 +8374,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   />
                 </ToolbarGhostButton>
                 {exportMenuOpen && (
-                  <div className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                  <div className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
                     {/* Canon destinations: Notatki · Idee/Tools · Prezentacja · PDF */}
                     <button
                       onClick={() => {
@@ -8382,7 +8382,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         handleExportToNotebook();
                       }}
                       disabled={isExportingNotebook || insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
                     >
                       {isExportingNotebook ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -8397,7 +8397,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         handleExportToTools();
                       }}
                       disabled={isExportingTools || insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
                     >
                       {isExportingTools ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -8413,7 +8413,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         setPresentOpen(true);
                       }}
                       disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
                     >
                       <LayoutGrid size={14} />
                       {t('interview.insightViewer.toDeck')}
@@ -8425,19 +8425,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         openExportDialog();
                       }}
                       disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
                     >
                       <FileText size={14} />
                       {t('interview.insightViewer.pdfReport')}
                     </button>
-                    <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                    <div className="my-1 h-px bg-c-surface-raised" />
                     <button
                       onClick={() => {
                         setExportMenuOpen(false);
                         openExportDialog();
                       }}
                       disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-state-hover disabled:opacity-50"
                     >
                       <Sparkles size={14} />
                       {t('interview.insightViewer.smartExport')}
@@ -8448,12 +8448,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         handleExportMarkdown();
                       }}
                       disabled={insight?.status !== 'completed'}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-muted hover:bg-state-hover disabled:opacity-50"
                     >
                       <Download size={14} />
                       {t('interview.insightViewer.downloadMd')}
                     </button>
-                    <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                    <div className="my-1 h-px bg-c-surface-raised" />
                     {/* Propose initiatives — moved here from the old AI dropdown so
                         the feature stays reachable after the slot-9 rework. */}
                     <button
@@ -8462,7 +8462,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         setGenOpen(true);
                       }}
                       disabled={!insight?.id}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text-secondary hover:bg-state-hover disabled:opacity-50"
                     >
                       <Rocket size={14} />
                       {t('interview.insightViewer.proposeInitiatives')}
@@ -8472,9 +8472,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </div>
 
               {/* Slot 4 — active section label (orientation, not a button) */}
-              <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+              <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
               {activeSectionLabel && (
-                <span className="px-1 text-[12px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">
+                <span className="px-1 text-[12px] text-c-text-muted truncate max-w-[160px]">
                   · {activeSectionLabel} ·
                 </span>
               )}
@@ -8545,7 +8545,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   bliźniak w prawym panelu usunięty (§2.6). */}
               {!readMode && (
                 <>
-                  <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+                  <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
                   <ToolbarAISplitButton
                     icon={<Sparkles size={14} />}
                     onClick={() => {
@@ -8588,9 +8588,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 setHandoffFinding(null);
               }}
             />
-            <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
+                <h3 className="text-base font-semibold text-c-text dark:text-white">
                   {t('interview.insightViewer.createInitiativeFromFinding')}
                 </h3>
                 <button
@@ -8598,43 +8598,43 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     setHandoffModalOpen(false);
                     setHandoffFinding(null);
                   }}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-state-hover text-c-text-secondary transition-colors"
                 >
                   <X size={16} />
                 </button>
               </div>
               <div className="px-6 py-5 space-y-4">
                 <div>
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-medium text-c-text-muted uppercase tracking-wider">
                     {t('interview.insightViewer.findingStatement')}
                   </label>
-                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-navy-700">
+                  <div className="mt-1 px-3 py-2 rounded-lg bg-c-surface-raised text-sm text-c-text border border-c-border-subtle">
                     {handoffFinding.title}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <label className="text-xs font-medium text-c-text-muted uppercase tracking-wider">
                       {t('interview.insightViewer.confidenceLevelLabel', 'Confidence level')}
                     </label>
-                    <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                    <div className="mt-1 px-3 py-2 rounded-lg bg-c-surface-raised text-sm text-c-text-secondary border border-c-border-subtle">
                       {handoffFinding.confidence || 'medium'}
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <label className="text-xs font-medium text-c-text-muted uppercase tracking-wider">
                       {t('interview.insightViewer.type')}
                     </label>
-                    <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                    <div className="mt-1 px-3 py-2 rounded-lg bg-c-surface-raised text-sm text-c-text-secondary border border-c-border-subtle">
                       {handoffFinding.sectionType}
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-medium text-c-text-muted uppercase tracking-wider">
                     {t('interview.insightViewer.limitsAssumptions')}
                   </label>
-                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 min-h-[40px]">
+                  <div className="mt-1 px-3 py-2 rounded-lg bg-c-surface-raised text-sm text-c-text-secondary border border-c-border-subtle min-h-[40px]">
                     {handoffFinding.limits && handoffFinding.limits.length > 0 ? (
                       <ul className="list-disc list-inside space-y-0.5">
                         {handoffFinding.limits.map((l, i) => (
@@ -8644,14 +8644,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ))}
                       </ul>
                     ) : (
-                      <span className="text-xs italic text-slate-600">
+                      <span className="text-xs italic text-c-text-secondary">
                         {t('interview.insightViewer.noLimitsSpecified')}
                       </span>
                     )}
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-medium text-c-text-muted uppercase tracking-wider">
                     {t('interview.insightViewer.linkToExistingInitiative')}
                   </label>
                   <div className="mt-1">
@@ -8673,12 +8673,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       aria-label={t('interview.insightViewer.selectTargetInitiative')}
                     />
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1.5 text-xs text-c-text-muted">
                     {t('interview.insightViewer.pickAnInitiativeAboveTo')}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/50">
+              <div className="flex items-center gap-3 px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised">
                 <button
                   onClick={() => handleHandoffSubmit('link')}
                   disabled={handoffSubmitting || !handoffTargetInitiativeId}
@@ -8687,7 +8687,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       ? t('interview.insightViewer.pickATargetInitiativeAbove')
                       : undefined
                   }
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-600 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-c-text-secondary hover:bg-state-hover text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {handoffSubmitting ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -8731,17 +8731,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={() => !exportRunning && setExportDialogOpen(false)}
             />
-            <div className="relative w-full max-w-3xl mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col max-h-[85vh]">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+            <div className="relative w-full max-w-3xl mx-4 bg-white dark:bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle overflow-hidden flex flex-col max-h-[85vh]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
                 <div className="flex items-center gap-2">
                   <Sparkles size={18} className="text-blue-500" />
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-base font-semibold text-c-text dark:text-white">
                     {t('interview.insightViewer.smartExport2')}
                   </h3>
                 </div>
                 <button
                   onClick={() => !exportRunning && setExportDialogOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-state-hover text-c-text-secondary transition-colors"
                 >
                   <X size={16} />
                 </button>
@@ -8749,7 +8749,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               {/* Target picker */}
               <div className="px-6 pt-4">
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <label className="text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   {t('interview.insightViewer.exportTarget')}
                 </label>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -8768,7 +8768,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                           active
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
-                            : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                            : 'border-c-border-subtle text-c-text-secondary hover:bg-state-hover'
                         } ${!et.supported ? 'opacity-40 cursor-not-allowed' : ''}`}
                       >
                         <Icon size={14} />
@@ -8777,7 +8777,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     );
                   })}
                 </div>
-                <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+                <p className="mt-2 text-[11px] text-c-text-muted">
                   {(() => {
                     const activeTarget = exportTargets.find((et) => et.id === exportTarget);
                     return activeTarget
@@ -8797,11 +8797,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </div>
 
               {/* Body: left = section table, right = preview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0 mt-3 border-t border-slate-200 dark:border-navy-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0 mt-3 border-t border-c-border-subtle">
                 {/* Left: section checkbox table */}
-                <div className="flex flex-col min-h-0 border-r border-slate-200 dark:border-navy-700">
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-navy-800">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <div className="flex flex-col min-h-0 border-r border-c-border-subtle">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-c-border-subtle">
+                    <span className="text-xs font-semibold text-c-text-secondary">
                       {t('interview.insightViewer.sections')} ({exportSelectedIds.size}/
                       {exportableSections.length})
                     </span>
@@ -8812,7 +8812,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       >
                         {t('interview.insightViewer.all')}
                       </button>
-                      <span className="text-slate-300 dark:text-navy-600">·</span>
+                      <span className="text-c-border-strong">·</span>
                       <button
                         onClick={clearExportSections}
                         className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
@@ -8829,32 +8829,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         <button
                           key={s.id}
                           onClick={() => toggleExportSection(s.id)}
-                          className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-navy-800"
+                          className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-state-hover"
                         >
                           {checked ? (
                             <CheckSquare size={15} className="shrink-0 text-blue-500" />
                           ) : (
                             <Square
                               size={15}
-                              className="shrink-0 text-slate-300 dark:text-navy-600"
+                              className="shrink-0 text-c-border-strong"
                             />
                           )}
                           <span
                             className={`flex-1 text-xs ${
                               empty
-                                ? 'text-slate-400 dark:text-slate-500'
-                                : 'text-slate-700 dark:text-slate-200'
+                                ? 'text-c-text-muted'
+                                : 'text-c-text-secondary'
                             }`}
                           >
                             {t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}
                           </span>
                           {typeof s.badge === 'number' && s.badge > 0 && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised text-c-text-muted">
                               {s.badge}
                             </span>
                           )}
                           {empty && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                            <span className="text-[10px] text-c-text-muted italic">
                               {t('interview.insightViewer.empty3')}
                             </span>
                           )}
@@ -8862,7 +8862,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       );
                     })}
                     {exportableSections.length === 0 && (
-                      <p className="px-2 py-4 text-xs text-slate-400">
+                      <p className="px-2 py-4 text-xs text-c-text-muted">
                         {t('interview.insightViewer.noExportableSections')}
                       </p>
                     )}
@@ -8871,19 +8871,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 {/* Right: live preview */}
                 <div className="flex flex-col min-h-0">
-                  <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <div className="px-4 py-2 border-b border-c-border-subtle">
+                    <span className="text-xs font-semibold text-c-text-secondary">
                       {t('interview.insightViewer.preview')}
                     </span>
                   </div>
-                  <div className="overflow-y-auto px-4 py-3 max-h-[42vh] text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                  <div className="overflow-y-auto px-4 py-3 max-h-[42vh] text-xs text-c-text-secondary space-y-2">
                     {exportSelectedIds.size === 0 ? (
-                      <p className="text-slate-400 dark:text-slate-500 italic">
+                      <p className="text-c-text-muted italic">
                         {t('interview.insightViewer.selectSectionsToPreview')}
                       </p>
                     ) : (
                       <>
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                        <p className="text-[11px] text-c-text-muted">
                           {t('interview.insightViewer.sectionsWillBeExportedTo', {
                             count: exportSelectedIds.size,
                             target: (() => {
@@ -8906,7 +8906,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 <span className="flex-1">
                                   {t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}
                                 </span>
-                                <span className="text-[10px] text-slate-400">{s.group}</span>
+                                <span className="text-[10px] text-c-text-muted">{s.group}</span>
                               </li>
                             ))}
                         </ul>
@@ -8917,14 +8917,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700">
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-c-border-subtle">
+                <p className="text-[11px] text-c-text-muted">
                   {t('interview.insightViewer.sectionFilteringIsAppliedClient')}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => !exportRunning && setExportDialogOpen(false)}
-                    className="px-4 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    className="px-4 py-2 rounded-xl text-sm text-c-text-secondary hover:bg-state-hover transition-colors"
                   >
                     {t('interview.insightViewer.cancel')}
                   </button>

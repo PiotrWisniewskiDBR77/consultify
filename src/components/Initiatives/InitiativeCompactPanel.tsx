@@ -530,7 +530,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
                   isInterview
                     ? 'border-emerald-300/60 text-emerald-600 dark:border-emerald-500/30 dark:text-emerald-400'
-                    : 'border-crimson-200/70 text-crimson-600 dark:border-crimson-500/30 dark:text-crimson-400'
+                    : 'border-c-info/40 text-c-info dark:border-c-info/30'
                 } ${clickable ? 'hover:bg-slate-50 dark:hover:bg-white/5' : 'cursor-default'}`}
               >
                 {isInterview ? <ClipboardList size={10} /> : <Sparkles size={10} />}

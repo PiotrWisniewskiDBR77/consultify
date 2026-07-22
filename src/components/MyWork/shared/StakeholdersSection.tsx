@@ -86,8 +86,8 @@ const ROLE_CONFIG: Record<
     label: { en: 'Accountable', pl: 'Rozliczany' },
     description: { en: 'Makes the final decision', pl: 'Podejmuje ostateczną decyzję' },
     icon: UserCheck,
-    color: 'text-primary-500',
-    bgColor: 'bg-primary-500/10',
+    color: 'text-c-text',
+    bgColor: 'bg-c-surface-raised',
     defaultTriggers: [
       'on_create',
       'on_update',
@@ -287,7 +287,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                 animate={{ opacity: 1, x: 0 }}
                                 className={`rounded-xl border overflow-hidden transition-all ${
                                   isStakeholderExpanded
-                                    ? 'border-primary-300 dark:border-primary-500/50 bg-primary-50/30 dark:bg-primary-500/5'
+                                    ? 'border-c-border-strong bg-c-surface-raised'
                                     : 'border-slate-200 dark:border-navy-600 bg-slate-50 dark:bg-navy-800/50'
                                 }`}
                               >
@@ -348,7 +348,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                       }
                                       className={`p-1.5 rounded-lg transition-colors ${
                                         isStakeholderExpanded
-                                          ? 'text-primary-500 bg-primary-500/10'
+                                          ? 'text-c-text bg-c-surface-raised'
                                           : 'text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-700'
                                       }`}
                                       title={t('myWork.stakeholders.title', 'Settings')}
@@ -434,7 +434,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                 })
                                               }
                                               disabled={readOnly}
-                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-c-text focus:ring-c-focus"
                                             />
                                             <Mail size={12} className="text-slate-600" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -458,7 +458,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                 })
                                               }
                                               disabled={readOnly}
-                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-c-text focus:ring-c-focus"
                                             />
                                             <Bell size={12} className="text-slate-600" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -522,7 +522,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                           >
                             <option value="">{t('myWork.stakeholders.select', 'Select...')}</option>
                             {availableToAdd.map((user) => (
@@ -539,7 +539,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           <select
                             value={selectedRole}
                             onChange={(e) => setSelectedRole(e.target.value as StakeholderRole)}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                           >
                             {Object.entries(ROLE_CONFIG).map(([role, config]) => (
                               <option key={role} value={role}>

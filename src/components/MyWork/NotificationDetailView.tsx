@@ -241,7 +241,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   onClose,
   onNavigateToSource,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n, ready: i18nReady } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
@@ -284,6 +284,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const [actionChecklist, setActionChecklist] = useState<
     { id: string; text: string; completed: boolean; urgency?: string }[]
   >([]);
+  // Z-2.1 (fix i18n wyscigu) — czy biezaca checklista pochodzi z auto-generacji
+  // (generateActionChecklist), w odroznieniu od checklisty pobranej z serwera
+  // (found.checklist) albo nadpisanej przez AI (applyChecklistFromAIText).
+  // Uzywane, zeby efekt przeliczajacy tlumaczenie NIE nadpisywal tresci,
+  // ktora nie pochodzi z tego generatora.
+  const isAutoChecklistRef = useRef(true);
 
   // Expected action draft (editable locally; AI refines this text)
   const [expectedActionDraft, setExpectedActionDraft] = useState('');
@@ -464,6 +470,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         }
 
         if (found.checklist && Array.isArray(found.checklist)) {
+          isAutoChecklistRef.current = false;
           setActionChecklist(found.checklist);
         } else {
           generateActionChecklist(found);
@@ -521,24 +528,29 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     }
   };
 
-  const generateActionChecklist = (notif: any) => {
+  // Z-2.1 — buduje liste itemow checklisty z biezacego tlumaczenia `t`. Funkcja
+  // CZYSTA (bez setState), zeby mogla byc wywolana zarowno przy pierwszym
+  // zaladowaniu notyfikacji, jak i przez efekt przeliczajacy ponizej (gdy
+  // paczka i18n doladuje sie PO pierwszym renderze i pierwsze wywolanie `t()`
+  // zwrocilo angielski fallback).
+  const buildActionChecklistItems = (
+    notif: any
+  ): { id: string; text: string; completed: boolean; urgency?: string }[] => {
     // Use the enriched rule-engine checklist from notificationContent contract
     const notifContract = buildNotificationContent(notif, t);
     const suggested: SuggestedChecklistItem[] = notifContract.suggestedChecklist || [];
 
     if (suggested.length > 0) {
-      const items = suggested.map((s, idx) => ({
+      return suggested.map((s, idx) => ({
         id: String(idx + 1),
         text: s.text,
         completed: false,
         urgency: s.urgency || 'normal',
       }));
-      setActionChecklist(items);
-      return;
     }
 
     // Fallback — should not happen since inferChecklist always returns items
-    setActionChecklist([
+    return [
       {
         id: '1',
         text: t('myWork.notificationDetail.text', 'Review notification'),
@@ -549,8 +561,42 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         text: t('myWork.notificationDetail.text2', 'Take appropriate action'),
         completed: false,
       },
-    ]);
+    ];
   };
+
+  const generateActionChecklist = (notif: any) => {
+    isAutoChecklistRef.current = true;
+    setActionChecklist(buildActionChecklistItems(notif));
+  };
+
+  // Z-2.1 — BUG: „Oczekiwana akcja" renderowala sie po angielsku mimo istniejacego
+  // PL, bo `generateActionChecklist` wolal `t()` RAZ przy zaladowaniu i zapisywal
+  // WYNIK (string) w stanie React. Jesli paczka i18n (pl.json) jeszcze nie
+  // doczytala sie w tym momencie (wyscig przy mount, `HttpBackend` laduje
+  // asynchronicznie), `t()` zwracal angielski fallback i ten string zamrazal
+  // sie na stale — nic pozniej go nie przeliczalo, mimo ze paczka i tak sie
+  // doladowywala chwile potem.
+  // NAPRAWA (wariant mniej inwazyjny): gdy `i18nReady`/`i18n.language` sie
+  // zmienia, przelicz teksty checklisty z aktualnego `t` — ale TYLKO gdy
+  // biezaca checklista jest auto-wygenerowana (nie nadpisuj checklisty
+  // pobranej z serwera ani edytowanej przez AI) i TYLKO gdy tekst faktycznie
+  // sie zmienil (zeby nie tworzyc zbednych re-renderow), z zachowaniem stanu
+  // `completed` per pozycja.
+  useEffect(() => {
+    if (!notification || !i18nReady || !isAutoChecklistRef.current) return;
+    setActionChecklist((prev) => {
+      if (prev.length === 0) return prev;
+      const regenerated = buildActionChecklistItems(notification);
+      if (regenerated.length !== prev.length) return prev;
+      const changed = regenerated.some((item, idx) => item.text !== prev[idx]?.text);
+      if (!changed) return prev;
+      return regenerated.map((item, idx) => ({
+        ...item,
+        completed: prev[idx]?.completed ?? item.completed,
+      }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18nReady, i18n.language, notification]);
 
   const toggleChecklistItem = (id: string) => {
     setActionChecklist((prev) => {
@@ -660,6 +706,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         return { id, text: line, completed: false };
       });
 
+      isAutoChecklistRef.current = false;
       setActionChecklist(next);
       Api.updateNotificationChecklist(notificationId, next).catch((err) =>
         console.error('Failed to persist checklist', err)
@@ -1539,9 +1586,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               : notification.data?.createdByName || t('myWork.notificationDetail.user', 'User');
           const CreatorIcon = isAICreated ? Bot : isSystemCreated ? Monitor : Users;
           const creatorColor = isAICreated
-            ? 'text-primary-500 bg-primary-500/10 border-primary-400/40'
+            ? 'text-c-info bg-c-info/10 border-c-info/40'
             : isSystemCreated
-              ? 'text-slate-500 bg-slate-500/10 border-slate-400/40'
+              ? 'text-c-text-secondary bg-c-surface-raised border-c-border'
               : 'text-blue-500 bg-blue-500/10 border-blue-400/40';
 
           // Severity border color for left accent
@@ -1557,11 +1604,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Section header: title + severity + creator badges */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  <h2 className="text-lg font-semibold text-c-text">
                     {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
                   </h2>
                   {isAnalyzingWorksheet && (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] text-primary-500 dark:text-primary-400 animate-pulse">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] text-c-info animate-pulse">
                       <Loader2 size={12} className="animate-spin" />
                       {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
                     </span>
@@ -1586,7 +1633,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
               {/* 1) Related to — source entity, project, context (clickable) */}
               <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                   {t('myWork.notificationDetail.relatedTo', 'Related to')}
                 </label>
                 {relatedNotifItems.length === 0 ? (
@@ -1604,8 +1651,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       return (
                         <div
                           key={item.id}
-                          className={`group flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300 rounded-md px-1 py-0.5 -mx-1 transition-colors ${
-                            isClickable ? 'hover:bg-primary-500/5 cursor-pointer' : ''
+                          className={`group flex items-center justify-between gap-3 text-sm text-c-text-secondary rounded-md px-1 py-0.5 -mx-1 transition-colors ${
+                            isClickable ? 'hover:bg-c-info/5 cursor-pointer' : ''
                           }`}
                           onClick={
                             isClickable ? () => onNavigateToSource!(itemType, item.id) : undefined
@@ -1614,18 +1661,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           tabIndex={isClickable ? 0 : undefined}
                         >
                           <div className="flex min-w-0 items-center gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-secondary bg-c-surface-raised uppercase">
                               {item.type}
                             </span>
                             <span
-                              className={`truncate ${isClickable ? 'group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors' : ''}`}
+                              className={`truncate ${isClickable ? 'group-hover:text-c-info transition-colors' : ''}`}
                             >
                               {item.title}
                             </span>
                           </div>
                           {item.id !== '_ctx' && (
                             <button
-                              className="shrink-0 inline-flex items-center gap-1 text-[11px] font-mono text-slate-500/70 dark:text-slate-500/70 hover:text-primary-500 transition-colors"
+                              className="shrink-0 inline-flex items-center gap-1 text-[11px] font-mono text-c-text-muted hover:text-c-info transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigator.clipboard.writeText(item.id);
@@ -1654,7 +1701,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* 2) Description — click-to-edit with AI enhancer */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.description', 'Description')}
                   </label>
                   <AIFieldEnhancer
@@ -1675,7 +1722,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   value={descriptionDraft}
                   onChange={(e) => setDescriptionDraft(e.target.value)}
                   rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[48px]"
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[48px]"
                   placeholder={t(
                     'myWork.notificationDetail.whatHappenedDescribeThe',
                     'What happened — describe the notification event...'
@@ -1686,7 +1733,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* 3) Why it matters — with AI enhancer */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.whyItMatters', 'Why it matters')}
                   </label>
                   <AIFieldEnhancer
@@ -1707,7 +1754,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   value={whyImportantDraft}
                   onChange={(e) => setWhyImportantDraft(e.target.value)}
                   rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
                   placeholder={t(
                     'myWork.notificationDetail.explainTheImpactAnd',
                     'Explain the impact and consequences...'
@@ -1718,14 +1765,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* 4) What is blocked — compact */}
               {blockedDraft.trim() && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
                   </label>
                   <textarea
                     value={blockedDraft}
                     onChange={(e) => setBlockedDraft(e.target.value)}
                     rows={2}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
                     placeholder={t(
                       'myWork.notificationDetail.whatIsBlockedBy',
                       'What is blocked by this issue...'
@@ -1753,12 +1800,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           component = (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text">
                   {t('myWork.notificationDetail.aIAnalysis', 'AI Analysis')}
                 </h2>
                 <button
                   onClick={handleAskAI}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-c-info hover:bg-c-info/10 transition-colors"
                 >
                   <Sparkles size={13} />
                   {t('myWork.notificationDetail.askAI', 'Ask AI')}
@@ -1774,16 +1821,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         aiAnalysis.riskLevel === 'critical'
                           ? 'bg-danger-500/10 text-danger-500'
                           : aiAnalysis.riskLevel === 'high'
-                            ? 'bg-amber-500/10 text-amber-500'
+                            ? 'bg-c-warning/10 text-c-warning'
                             : aiAnalysis.riskLevel === 'medium'
                               ? 'bg-blue-500/10 text-blue-500'
-                              : 'bg-slate-500/10 text-slate-500'
+                              : 'bg-c-surface-raised text-c-text-secondary'
                       }`}
                     >
                       {t('myWork.notificationDetail.priority', 'Priority')}: {aiAnalysis.priority}
                     </span>
                     {aiAnalysis.confidence && (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-c-info/10 text-c-info">
                         {t('myWork.notificationDetail.confidence', 'Confidence')}:{' '}
                         {aiAnalysis.confidence}
                       </span>
@@ -1797,23 +1844,23 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
                   {/* Impact */}
                   <div className="space-y-2">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+                    <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                       {t('myWork.notificationDetail.impact', 'Impact')}
                     </label>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    <p className="text-sm text-c-text-secondary leading-relaxed">
                       {aiAnalysis.impact}
                     </p>
                   </div>
 
                   {/* Recommendation callout */}
                   <div className="space-y-2">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+                    <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                       {t('myWork.notificationDetail.recommendation', 'Recommendation')}
                     </label>
-                    <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-500/10 border border-primary-200/40 dark:border-primary-500/20">
+                    <div className="p-3 rounded-xl bg-c-info/10 border border-c-info/20">
                       <div className="flex items-start gap-2">
-                        <Zap size={14} className="text-primary-500 mt-0.5 shrink-0" />
-                        <p className="text-sm text-primary-700 dark:text-primary-300 leading-relaxed">
+                        <Zap size={14} className="text-c-info mt-0.5 shrink-0" />
+                        <p className="text-sm text-c-info leading-relaxed">
                           {aiAnalysis.recommendation}
                         </p>
                       </div>
@@ -1823,7 +1870,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   {/* AI chat CTA */}
                   <button
                     onClick={handleAskAI}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors text-sm font-medium"
                   >
                     <MessageSquare size={14} />
                     {t('myWork.notificationDetail.askAIForMore', 'Ask AI for more details')}
@@ -1835,9 +1882,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 <div className="py-10 text-center">
                   <TeresaMark
                     size={28}
-                    className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
+                    className="mx-auto mb-2 text-c-text-muted"
                   />
-                  <p className="text-sm text-slate-600 dark:text-slate-500">
+                  <p className="text-sm text-c-text-muted">
                     {t('myWork.notificationDetail.noDataForAnalysis', 'No data for analysis')}
                   </p>
                 </div>
@@ -1855,14 +1902,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           component = (
             <div className="space-y-6">
               {/* Section title */}
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+              <h2 className="text-lg font-semibold text-c-text">
                 {t('myWork.notificationDetail.expectedAction', 'Expected Action')}
               </h2>
 
               {/* Expected action text — label + AI right-aligned */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.whatNeedsToBe', 'What needs to be done')}
                   </label>
                   <AIFieldEnhancer
@@ -1884,7 +1931,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   value={expectedActionDraft}
                   onChange={(e) => setExpectedActionDraft(e.target.value)}
                   rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder-c-text-muted resize-y border-b border-c-border focus:border-c-focus transition-colors min-h-[36px]"
                   placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
                 />
               </div>
@@ -1892,7 +1939,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Checklist — label + AI right-aligned, count below */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.checklist', 'Checklist')}
                   </label>
                   <AIFieldEnhancer
@@ -1914,7 +1961,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 {/* Progress bar */}
                 {totalCount > 0 && (
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-slate-200/60 dark:bg-navy-700/50 overflow-hidden">
+                    <div className="flex-1 h-1.5 rounded-full bg-c-border-subtle overflow-hidden">
                       <div
                         className="h-full rounded-full bg-emerald-500 transition-all duration-300"
                         style={{
@@ -1922,7 +1969,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         }}
                       />
                     </div>
-                    <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 tabular-nums shrink-0">
+                    <span className="text-[11px] font-medium text-c-text-muted tabular-nums shrink-0">
                       {completedCount}/{totalCount}
                     </span>
                   </div>
@@ -1933,9 +1980,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <div className="py-8 text-center">
                     <CheckSquare
                       size={24}
-                      className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
+                      className="mx-auto mb-2 text-c-text-muted"
                     />
-                    <p className="text-xs text-slate-600 dark:text-slate-500">
+                    <p className="text-xs text-c-text-muted">
                       {t(
                         'myWork.notificationDetail.noStepsClickAI',
                         'No steps — click AI to generate a checklist'
@@ -1952,16 +1999,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         urgency === 'critical'
                           ? 'border-l-2 border-l-danger-400/70'
                           : urgency === 'optional'
-                            ? 'border-l-2 border-l-slate-200/50 dark:border-l-navy-700/50'
+                            ? 'border-l-2 border-l-c-border-subtle'
                             : '';
                       const urgencyText =
                         urgency === 'critical' && !done
                           ? 'text-danger-600 dark:text-danger-400 font-medium'
                           : urgency === 'optional' && !done
-                            ? 'text-slate-500 dark:text-slate-400'
+                            ? 'text-c-text-secondary'
                             : done
-                              ? 'line-through text-slate-600 dark:text-slate-500'
-                              : 'text-slate-700 dark:text-slate-300';
+                              ? 'line-through text-c-text-muted'
+                              : 'text-c-text-secondary';
 
                       return (
                         <div
@@ -1969,7 +2016,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           className={`group flex items-start gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${urgencyBorder} ${
                             done
                               ? 'opacity-50 hover:opacity-70'
-                              : 'hover:bg-slate-50/60 dark:hover:bg-navy-800/40'
+                              : 'hover:bg-c-surface-raised'
                           }`}
                         >
                           <button
@@ -1979,7 +2026,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
                                 : urgency === 'critical'
                                   ? 'border-danger-300 dark:border-danger-500/50 hover:border-danger-400'
-                                  : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400 dark:hover:border-emerald-500'
+                                  : 'border-c-border hover:border-emerald-400 dark:hover:border-emerald-500'
                             }`}
                           >
                             {done && (
@@ -1995,7 +2042,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             )}
                           </button>
                           <span
-                            className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${done ? 'text-slate-600 dark:text-slate-400' : 'text-slate-600 dark:text-slate-500'}`}
+                            className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${done ? 'text-c-text-muted' : 'text-c-text-muted'}`}
                           >
                             {idx + 1}.
                           </span>

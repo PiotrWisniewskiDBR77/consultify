@@ -65,9 +65,9 @@ const RECIPIENT_OPTIONS = [
 
 // Consistent input styles
 const INPUT_CLASS =
-  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400';
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus';
 const SELECT_CLASS =
-  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400 cursor-pointer';
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus cursor-pointer';
 const LABEL_CLASS = 'text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 block';
 
 export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
@@ -186,7 +186,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                   {!readOnly && (
                     <button
                       onClick={addReminder}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised border border-c-border transition-colors"
                     >
                       <Plus size={14} />
                       {t('myWork.escalationRules.add', 'Add')}
@@ -203,7 +203,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                     {!readOnly && (
                       <button
                         onClick={addReminder}
-                        className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 transition-colors"
+                        className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised border border-c-border transition-colors"
                       >
                         <Plus size={14} />
                         {t('myWork.escalationRules.addReminder', 'Add reminder')}
@@ -342,7 +342,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                                   size={14}
                                   className={
                                     reminder.inAppNotification
-                                      ? 'text-primary-500'
+                                      ? 'text-c-text'
                                       : 'text-slate-500 dark:text-slate-400'
                                   }
                                 />

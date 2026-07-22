@@ -6671,7 +6671,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             setItems: (items: Array<{ id: string; text: string; done: boolean }>) => void,
             placeholderKey: string
           ) => (
-            <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 p-4 space-y-2">
+            <div className="rounded-2xl border border-c-border-subtle bg-c-surface/70 p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-c-text-secondary">{t(titleKey)}</h3>
@@ -7266,7 +7266,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     {Object.entries(initiative.effortProfile).map(([key, val]) => (
                       <div
                         key={key}
-                        className="p-2.5 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-c-border-subtle"
+                        className="p-2.5 rounded-lg bg-c-surface/60 dark:bg-c-surface/40 border border-c-border-subtle"
                       >
                         <p className="text-[10px] text-c-text-muted capitalize mb-1">{key}</p>
                         <div className="h-1.5 rounded-full bg-c-surface-raised overflow-hidden">
@@ -7715,17 +7715,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </div>
               </div>
               {showCreateKpi && (
-                <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 px-4 py-3 space-y-3">
+                <div className="rounded-2xl border border-c-border-subtle bg-c-surface/70 px-4 py-3 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-sm text-c-text-secondary">
                       {t('initiatives.addAManualKpiOrLink2')}
                     </p>
-                    <div className="inline-flex rounded-xl border border-c-border-subtle p-1 bg-white/80 dark:bg-navy-900/80">
+                    <div className="inline-flex rounded-xl border border-c-border-subtle p-1 bg-c-surface/80">
                       <button
                         onClick={() => setCreateKpiMode('manual')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           createKpiMode === 'manual'
-                            ? 'bg-navy-900 text-white'
+                            ? 'bg-c-text text-c-bg'
                             : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted'
                         }`}
                       >
@@ -7735,7 +7735,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         onClick={() => setCreateKpiMode('linked')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           createKpiMode === 'linked'
-                            ? 'bg-navy-900 text-white'
+                            ? 'bg-c-text text-c-bg'
                             : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted'
                         }`}
                       >
@@ -7749,7 +7749,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <select
                           value={createKpiLibraryId}
                           onChange={(e) => setCreateKpiLibraryId(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                          className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                         >
                           <option value="">
                             {createKpiLibraryLoading
@@ -7770,31 +7770,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       onChange={(e) => setCreateKpiName(e.target.value)}
                       placeholder={t('initiatives.kpiName2')}
                       disabled={createKpiMode === 'linked'}
-                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
+                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm disabled:opacity-60"
                     />
                     <input
                       value={createKpiUnit}
                       onChange={(e) => setCreateKpiUnit(e.target.value)}
                       placeholder={t('initiatives.unit2')}
                       disabled={createKpiMode === 'linked'}
-                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm disabled:opacity-60"
                     />
                     <input
                       value={createKpiCategory}
                       onChange={(e) => setCreateKpiCategory(e.target.value)}
                       placeholder={t('initiatives.category2')}
-                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                     />
                     <input
                       value={createKpiBaseline}
                       onChange={(e) => setCreateKpiBaseline(e.target.value)}
                       placeholder="Baseline"
-                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                     />
                     <select
                       value={createKpiCadence}
                       onChange={(e) => setCreateKpiCadence(e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                     >
                       {['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY'].map((option) => (
                         <option key={option} value={option}>
@@ -7809,7 +7809,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           e.target.value as 'realization' | 'post-implementation' | 'both'
                         )
                       }
-                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                     >
                       <option value="realization">{t('initiatives.realizationOnly2')}</option>
                       <option value="post-implementation">
@@ -7821,13 +7821,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       value={createKpiRealizationTarget}
                       onChange={(e) => setCreateKpiRealizationTarget(e.target.value)}
                       placeholder={t('initiatives.realizationTarget2')}
-                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                     />
                     <input
                       value={createKpiPostImplementationTarget}
                       onChange={(e) => setCreateKpiPostImplementationTarget(e.target.value)}
                       placeholder={t('initiatives.postImplementationTarget2')}
-                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                     />
                   </div>
                   <div className="flex justify-end gap-2">
@@ -7863,31 +7863,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     value={editKpiName}
                     onChange={(e) => setEditKpiName(e.target.value)}
                     placeholder={t('initiatives.kpiName2')}
-                    className="md:col-span-2 px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="md:col-span-2 px-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                   />
                   <input
                     value={editKpiUnit}
                     onChange={(e) => setEditKpiUnit(e.target.value)}
                     placeholder={t('initiatives.unit2')}
-                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                   />
                   <input
                     value={editKpiBaseline}
                     onChange={(e) => setEditKpiBaseline(e.target.value)}
                     placeholder="Baseline"
-                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                   />
                   <input
                     value={editKpiCurrent}
                     onChange={(e) => setEditKpiCurrent(e.target.value)}
                     placeholder={t('initiatives.current2')}
-                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                   />
                   <input
                     value={editKpiTarget}
                     onChange={(e) => setEditKpiTarget(e.target.value)}
                     placeholder="Target"
-                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface/90 dark:bg-c-surface/70 text-sm"
                   />
                   <div className="md:col-span-6 flex justify-end gap-2">
                     <button
@@ -7906,7 +7906,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </div>
                 </div>
               )}
-              <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 p-3">
+              <div className="rounded-2xl border border-c-border-subtle bg-c-surface/70 p-3">
                 <table
                   /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-sm"
                 >
@@ -7974,13 +7974,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 e.stopPropagation();
                                 setKpiMenuId((prev) => (prev === kpi.id ? null : kpi.id));
                               }}
-                              className="inline-flex items-center justify-center p-1 rounded-md text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised/60 dark:hover:bg-navy-700/60 transition-colors"
+                              className="inline-flex items-center justify-center p-1 rounded-md text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised/60 transition-colors"
                               title={t('initiatives.kpiActions2')}
                             >
                               <MoreVertical size={14} />
                             </button>
                             {kpiMenuId === kpi.id && (
-                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border-subtle bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
@@ -8035,7 +8035,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <span className="text-xs text-c-text-muted">{watchers.length}</span>
               </div>
               {watchers.length === 0 ? (
-                <div className="p-5 rounded-xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 text-sm text-c-text-muted">
+                <div className="p-5 rounded-xl border border-c-border-subtle bg-c-surface/70 text-sm text-c-text-muted">
                   {t('initiatives.noWatchersForThisInitiativeYet2')}
                 </div>
               ) : (
@@ -8043,7 +8043,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   {watchers.map((watcher) => (
                     <div
                       key={watcher.id}
-                      className="flex items-center justify-between p-3 rounded-xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70"
+                      className="flex items-center justify-between p-3 rounded-xl border border-c-border-subtle bg-c-surface/70"
                     >
                       <div>
                         <p className="text-sm font-medium text-c-text">
@@ -10126,7 +10126,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     <InitiativeContext.Provider value={contextValue}>
       {showRaidAIModal && raidAiProposal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+          <div className="w-full max-w-3xl rounded-2xl bg-c-surface/95 backdrop-blur-xl shadow-2xl">
             <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
                 <h3 className="text-sm font-semibold text-c-text">
@@ -10152,7 +10152,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </Callout>
               ) : null}
 
-              <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
+              <div className="rounded-xl bg-c-surface-raised dark:bg-c-bg/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-c-text-secondary">
                     {t('initiatives.toRemove2')} ({raidAiProposal.remove.length})
@@ -10218,7 +10218,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 )}
               </div>
 
-              <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
+              <div className="rounded-xl bg-c-surface-raised dark:bg-c-bg/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-c-text-secondary">
                     {t('initiatives.toAdd2')} ({raidAiProposal.add.length})
@@ -10252,7 +10252,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     {raidAiProposal.add.map((x, idx) => (
                       <label
                         key={idx}
-                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                        className="flex items-start gap-2 p-2 rounded-xl bg-c-surface/60 dark:bg-c-surface/30 hover:bg-c-surface/80 dark:hover:bg-c-surface/40 transition-colors"
                       >
                         <input
                           type="checkbox"
@@ -10268,11 +10268,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium text-c-text">{x.title}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-c-surface-raised dark:bg-navy-700/60 text-c-text-secondary">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-c-surface-raised text-c-text-secondary">
                               {String(x.type || '').toUpperCase()}
                             </span>
                             {x.severity ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-c-surface-raised dark:bg-navy-700/60 text-c-text-secondary">
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-c-surface-raised text-c-text-secondary">
                                 {x.severity}
                               </span>
                             ) : null}
@@ -10343,7 +10343,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       {/* AI proposal modal (Analyze with AI → add/remove) */}
       {showCommentsAIModal && commentsAiProposal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+          <div className="w-full max-w-3xl rounded-2xl bg-c-surface/95 backdrop-blur-xl shadow-2xl">
             <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
                 <h3 className="text-sm font-semibold text-c-text">
@@ -10371,7 +10371,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               ) : null}
 
               {/* To remove (top) */}
-              <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
+              <div className="rounded-xl bg-c-surface-raised dark:bg-c-bg/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-c-text-secondary">
                     {t('initiatives.toRemove2')} ({commentsAiProposal.remove.length})
@@ -10443,7 +10443,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
 
               {/* To add */}
-              <div className="rounded-xl bg-c-surface-raised dark:bg-navy-950/20 p-3 space-y-2">
+              <div className="rounded-xl bg-c-surface-raised dark:bg-c-bg/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-c-text-secondary">
                     {t('initiatives.toAdd2')} ({commentsAiProposal.add.length})
@@ -10478,7 +10478,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     {commentsAiProposal.add.map((a, idx) => (
                       <label
                         key={idx}
-                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                        className="flex items-start gap-2 p-2 rounded-xl bg-c-surface/60 dark:bg-c-surface/30 hover:bg-c-surface/80 dark:hover:bg-c-surface/40 transition-colors"
                       >
                         <input
                           type="checkbox"
@@ -10661,7 +10661,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
                     Container matches the shared NModeShell action-bar standard (slate, borderless)
                     so the Initiative toolbar reads identically to the Insight toolbar. */}
-                <div className="sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-c-border-subtle -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 mb-4">
+                <div className="sticky top-0 z-30 bg-c-surface/95 backdrop-blur-sm border-b border-c-border-subtle -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 mb-4">
                   {(() => {
                     const activeSectionObj = orderedNModeSectionsWithContent.find(
                       (s) => s.id === activeNSection
@@ -10740,7 +10740,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowSectionsMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                 {/* MIGRACJA (D-8, ETAP 2): przełącznik zestawu domyślnego
                                     Rdzeń / Pełny (za flagą). Stan aktywny = NEUTRALNY
                                     (tokeny c-*, bez akcentu semantyki krytycznej). */}
@@ -10910,7 +10910,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   className="fixed inset-0 z-40"
                                   onClick={() => setShowNewMenu(false)}
                                 />
-                                <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
+                                <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                   {newMenuActions.map((item) => (
                                     <button
                                       key={item.id}
@@ -11017,7 +11017,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowToolbarKebab(false)}
                               />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                 {/* Grupa neutralna (§6.4) — zeszła tu z paska.
                                       JEDNO wejście „Eksport…" zamiast rozwijanego
                                       menu z 5 pozycjami: otwiera Smart Export,
@@ -11243,7 +11243,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           onClick={() => setShowExportDialog(false)}
         >
           <div
-            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl flex flex-col"
+            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-c-surface border border-c-border-subtle shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">

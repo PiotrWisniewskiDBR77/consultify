@@ -70,7 +70,7 @@ const SOURCE_CONFIG = {
   ai: {
     label: { en: 'AI', pl: 'AI' },
     icon: Sparkles,
-    color: 'text-primary-500',
+    color: 'text-c-info',
   },
   team: {
     label: { en: 'Team', pl: 'Zespół' },
@@ -147,7 +147,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                   onGenerateAI();
                 }}
                 disabled={isGenerating}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info hover:bg-c-info/20 dark:hover:bg-c-info/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={t('myWork.implementationIdeas.title', 'Generate AI')}
               >
                 {isGenerating ? (

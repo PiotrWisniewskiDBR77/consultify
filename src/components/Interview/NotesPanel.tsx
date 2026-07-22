@@ -149,7 +149,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
           {!readOnly && (
             <button
               onClick={() => setShowNewNote(true)}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--c-accent)] hover:bg-[var(--c-accent-soft)] rounded-token-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--c-text)] hover:bg-[var(--c-surface-raised)] rounded-token-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
             >
               <Plus size={14} />
               {t('interview.notesPanel.add')}
@@ -160,7 +160,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
 
       {/* New Note Form */}
       {showNewNote && (
-        <div className="bg-[var(--c-surface)] rounded-token-md border border-c-accent/40 p-3 space-y-3">
+        <div className="bg-[var(--c-surface)] rounded-token-md border border-c-border p-3 space-y-3">
           <input
             type="text"
             value={newTitle}

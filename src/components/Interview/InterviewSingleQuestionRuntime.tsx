@@ -1039,8 +1039,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 disabled={readOnly}
                 className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
                   selected
-                    ? 'bg-navy-900 text-white border-c-info'
-                    : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:border-c-info'
+                    ? 'bg-c-surface text-white border-c-info'
+                    : 'bg-c-surface border-c-border text-c-text-secondary hover:border-c-info'
                 }`}
               >
                 {option}
@@ -1071,8 +1071,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 disabled={readOnly}
                 className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
                   isSelected
-                    ? 'bg-navy-900 text-white border-c-info'
-                    : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:border-c-info'
+                    ? 'bg-c-surface text-white border-c-info'
+                    : 'bg-c-surface border-c-border text-c-text-secondary hover:border-c-info'
                 }`}
               >
                 <CheckSquare size={14} className={isSelected ? 'opacity-100' : 'opacity-30'} />
@@ -1100,8 +1100,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 disabled={readOnly}
                 className={`w-12 h-12 rounded-xl border text-sm font-semibold transition-all ${
                   selected
-                    ? 'bg-navy-900 text-white border-c-info'
-                    : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:border-c-info'
+                    ? 'bg-c-surface text-white border-c-info'
+                    : 'bg-c-surface border-c-border text-c-text-secondary hover:border-c-info'
                 }`}
               >
                 {option}
@@ -1119,9 +1119,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             type="button"
             onClick={() => !readOnly && setDropdownOpen((p) => !p)}
             disabled={readOnly}
-            className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="w-full flex items-center justify-between rounded-xl border border-c-border bg-c-surface px-4 py-3 text-base text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
-            <span className={answerDraft ? '' : 'text-slate-600 dark:text-slate-500'}>
+            <span className={answerDraft ? '' : 'text-c-text-secondary'}>
               {answerDraft || t('interview.singleQuestionRuntime.selectAnOption')}
             </span>
             <ChevronDown
@@ -1130,7 +1130,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             />
           </button>
           {dropdownOpen && (
-            <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-xl max-h-60 overflow-y-auto">
+            <div className="absolute z-20 mt-1 w-full rounded-xl border border-c-border bg-c-surface shadow-xl max-h-60 overflow-y-auto">
               {currentQuestionOptions.map((option) => (
                 <button
                   key={option}
@@ -1143,7 +1143,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                     answerDraft === option
                       ? 'bg-c-info/10 dark:bg-c-info/10 text-c-info dark:text-c-info font-medium'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
+                      : 'text-c-text-secondary hover:bg-c-bg dark:hover:bg-c-surface'
                   }`}
                 >
                   {option}
@@ -1158,7 +1158,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     if (QUESTION_INPUT_TYPES.date.has(normalizedType)) {
       return (
         <div className="flex items-center gap-3">
-          <Calendar size={18} className="text-slate-600 dark:text-slate-500 shrink-0" />
+          <Calendar size={18} className="text-c-text-secondary shrink-0" />
           <input
             type="date"
             value={answerDraft}
@@ -1167,7 +1167,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               setAnswerDraft(event.target.value);
             }}
             disabled={readOnly}
-            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="w-full rounded-xl border border-c-border bg-c-surface px-4 py-3 text-base text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
           />
         </div>
       );
@@ -1183,7 +1183,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             setAnswerDraft(event.target.value);
           }}
           disabled={readOnly}
-          className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
+          className="w-full rounded-xl border border-c-border bg-c-surface px-4 py-3 text-base text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
           placeholder={t('interview.singleQuestionRuntime.enterAValue')}
         />
       );
@@ -1202,8 +1202,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         rows={QUESTION_INPUT_TYPES.shortText.has(normalizedType) ? 2 : immersive ? 5 : 7}
         className={`w-full rounded-xl border px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-c-focus ${
           immersive
-            ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500'
-            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white'
+            ? 'border-c-border-strong bg-c-bg dark:border-white/[0.06] dark:bg-white/[0.02] text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted'
+            : 'border-c-border bg-c-surface text-c-text'
         }`}
         placeholder={t('interview.singleQuestionRuntime.writeTheAnswerOrRecord')}
       />
@@ -1253,11 +1253,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
   if (!currentQuestion && runtimeView !== 'review') {
     return (
-      <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 p-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
-          <FileText size={24} className="text-slate-600" />
+      <div className="rounded-xl border border-c-border/70 bg-white/80 dark:bg-c-surface/80 p-8 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-c-surface-raised">
+          <FileText size={24} className="text-c-text-secondary" />
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t('interview.singleQuestionRuntime.noQuestionsAreAvailableIn')}
         </p>
       </div>
@@ -1270,20 +1270,20 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       orderedQuestions.length > 0 ? Math.round((answeredCount / orderedQuestions.length) * 100) : 0;
     return (
       <div className={`space-y-4 ${immersive ? 'max-w-3xl mx-auto px-6 py-8' : ''}`}>
-        <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-6 shadow-lg">
+        <div className="rounded-xl border border-c-border/70 bg-white/80 dark:bg-c-surface/80 backdrop-blur-xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+              <h2 className="text-xl font-semibold text-c-text">
                 {t('interview.singleQuestionRuntime.reviewBeforeSubmitting')}
               </h2>
               <div className="flex items-center gap-3 mt-2">
-                <div className="w-32 h-1.5 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
+                <div className="w-32 h-1.5 rounded-full bg-c-surface-raised overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${completionPct === 100 ? 'bg-emerald-500' : 'bg-navy-900'}`}
+                    className={`h-full rounded-full transition-all duration-500 ${completionPct === 100 ? 'bg-emerald-500' : 'bg-c-surface'}`}
                     style={{ width: `${completionPct}%` }}
                   />
                 </div>
-                <span className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
+                <span className="text-sm tabular-nums text-c-text-muted">
                   {answeredCount}/{orderedQuestions.length} ({completionPct}%)
                 </span>
               </div>
@@ -1291,7 +1291,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             <button
               type="button"
               onClick={() => setRuntimeView('answering')}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200"
+              className="inline-flex items-center gap-2 rounded-xl border border-c-border px-4 py-2 text-sm font-medium text-c-text-secondary"
             >
               <ArrowLeft size={14} />
               {t('interview.singleQuestionRuntime.backToQuestions')}
@@ -1312,7 +1312,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           <div className="space-y-1">
             {immersive ? (
               /* Flat question list for immersive mode */
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 overflow-hidden divide-y divide-slate-200 dark:divide-navy-800">
+              <div className="rounded-xl border border-c-border overflow-hidden divide-y divide-c-border dark:divide-c-border">
                 {orderedQuestions.map((q, idx) => {
                   const answered = q.status === 'answered';
                   const snippet = q.answerText
@@ -1328,7 +1328,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         setRuntimeView('answering');
                         setCurrentQuestionId(q.id);
                       }}
-                      className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
+                      className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-c-bg dark:hover:bg-c-surface/50 transition-colors"
                     >
                       <span
                         className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
@@ -1336,17 +1336,17 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                             : q.isRequired
                               ? 'bg-danger-500/10 text-danger-500'
-                              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
+                              : 'bg-c-surface-raised text-c-text-secondary'
                         }`}
                       >
                         {answered ? <Check size={10} /> : idx + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm text-slate-800 dark:text-slate-200 truncate">
+                        <p className="text-sm text-c-text-secondary truncate">
                           {q.questionText}
                         </p>
                         {snippet && (
-                          <p className="text-xs text-slate-600 dark:text-slate-500 truncate mt-0.5">
+                          <p className="text-xs text-c-text-secondary truncate mt-0.5">
                             {snippet}
                           </p>
                         )}
@@ -1365,23 +1365,23 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 return (
                   <div
                     key={cat}
-                    className="rounded-xl border border-slate-200 dark:border-navy-800 overflow-hidden"
+                    className="rounded-xl border border-c-border overflow-hidden"
                   >
-                    <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 dark:bg-navy-950/40">
+                    <div className="flex items-center gap-3 px-4 py-2.5 bg-c-bg/60 dark:bg-c-bg/40">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${catConfig.bgColor} ${catConfig.color}`}
                       >
                         <catConfig.icon size={11} />
                         {t(`interview.workspace.categoryLabel.${cat}`, catConfig.labelEn)}
                       </span>
-                      <span className="text-xs text-slate-600 dark:text-slate-500">
+                      <span className="text-xs text-c-text-secondary">
                         {catInfo.answered}/{catInfo.total}
                       </span>
                       {catInfo.answered === catInfo.total && catInfo.total > 0 && (
                         <Check size={12} className="text-emerald-500" />
                       )}
                     </div>
-                    <div className="divide-y divide-slate-200 dark:divide-navy-800">
+                    <div className="divide-y divide-c-border dark:divide-c-border">
                       {catQs.map((q) => {
                         const answered = q.status === 'answered';
                         const snippet = q.answerText
@@ -1398,7 +1398,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               if (q.category !== activeCategory) onCategoryChange(q.category);
                               setCurrentQuestionId(q.id);
                             }}
-                            className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
+                            className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-c-bg dark:hover:bg-c-surface/50 transition-colors"
                           >
                             <div className="mt-0.5 shrink-0">
                               {answered ? (
@@ -1406,15 +1406,15 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               ) : q.isRequired ? (
                                 <CircleAlert size={14} className="text-danger-400" />
                               ) : (
-                                <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-navy-600" />
+                                <div className="w-3.5 h-3.5 rounded-full border-2 border-c-border-strong" />
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm text-slate-800 dark:text-slate-200 truncate">
+                              <p className="text-sm text-c-text-secondary truncate">
                                 {q.questionText}
                               </p>
                               {snippet && (
-                                <p className="text-xs text-slate-600 dark:text-slate-500 truncate mt-0.5">
+                                <p className="text-xs text-c-text-secondary truncate mt-0.5">
                                   {snippet}
                                 </p>
                               )}
@@ -1430,13 +1430,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
         </div>
 
-        <div className="sticky bottom-0 z-20 -mx-6 px-6 pb-4 pt-3 bg-gradient-to-t from-white via-white dark:from-navy-950 dark:via-navy-950 to-transparent">
-          <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl p-4 shadow-xl shadow-slate-200/40 dark:shadow-navy-950/60">
+        <div className="sticky bottom-0 z-20 -mx-6 px-6 pb-4 pt-3 bg-gradient-to-t from-white via-white dark:from-c-bg dark:via-c-bg to-transparent">
+          <div className="rounded-xl border border-c-border/70 bg-white/90 dark:bg-c-surface/90 backdrop-blur-xl p-4 shadow-xl shadow-c-border-strong/40">
             <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setRuntimeView('answering')}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl border border-c-border px-4 py-2.5 text-sm font-medium text-c-text-secondary hover:bg-c-bg dark:hover:bg-c-surface-raised transition-colors"
               >
                 <ArrowLeft size={16} />
                 {t('interview.singleQuestionRuntime.backToQuestions')}
@@ -1480,14 +1480,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           {/* Header with progress */}
           <div className="px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
                 {t('interview.singleQuestionRuntime.questions')}
               </p>
               <span
                 className={`text-[10px] font-semibold tabular-nums ${
                   answeredCount === orderedQuestions.length
                     ? 'text-emerald-500'
-                    : 'text-slate-600 dark:text-slate-500'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 {answeredCount}/{orderedQuestions.length}
@@ -1495,14 +1495,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             </div>
             <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden mt-2">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${answeredCount === orderedQuestions.length ? 'bg-emerald-500' : 'bg-navy-900'}`}
+                className={`h-full rounded-full transition-all duration-500 ${answeredCount === orderedQuestions.length ? 'bg-emerald-500' : 'bg-c-surface'}`}
                 style={{
                   width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%`,
                 }}
               />
             </div>
             {answeredCount < orderedQuestions.length && (
-              <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1.5">
+              <p className="text-[10px] text-c-text-secondary mt-1.5">
                 {orderedQuestions.length - answeredCount}{' '}
                 {t('interview.singleQuestionRuntime.remaining')}
               </p>
@@ -1525,16 +1525,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       ? 'bg-c-info/10 dark:bg-c-info/15 ring-1 ring-c-focus'
                       : isAnswered
                         ? 'opacity-50 hover:opacity-80'
-                        : 'hover:bg-slate-50 dark:hover:bg-navy-900/50'
+                        : 'hover:bg-c-bg dark:hover:bg-c-surface/50'
                   }`}
                 >
                   <span
                     className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
                       isCurrent
-                        ? 'bg-navy-900 text-white'
+                        ? 'bg-c-surface text-white'
                         : isAnswered
                           ? 'bg-emerald-500 text-white'
-                          : 'bg-slate-200/80 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                          : 'bg-c-surface-raised/80 dark:bg-c-surface-raised text-c-text-muted'
                     }`}
                   >
                     {isAnswered ? <Check size={10} /> : idx + 1}
@@ -1545,14 +1545,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         isCurrent
                           ? 'text-c-info dark:text-c-info font-medium'
                           : isAnswered
-                            ? 'text-slate-500 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-navy-600'
-                            : 'text-slate-700 dark:text-slate-200 font-medium'
+                            ? 'text-c-text-muted line-through decoration-c-border-strong dark:decoration-c-border-strong'
+                            : 'text-c-text-secondary font-medium'
                       }`}
                     >
                       {q.questionText}
                     </span>
                     {isAnswered && q.answerText && (
-                      <span className="text-[10px] text-slate-500 dark:text-slate-500 truncate block mt-0.5">
+                      <span className="text-[10px] text-c-text-muted truncate block mt-0.5">
                         {q.answerText.length > 50 ? q.answerText.slice(0, 50) + '…' : q.answerText}
                       </span>
                     )}
@@ -1563,7 +1563,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
 
           {/* Bottom actions */}
-          <div className="shrink-0 border-t border-slate-200 dark:border-navy-800 px-3 py-2.5 space-y-0.5">
+          <div className="shrink-0 border-t border-c-border px-3 py-2.5 space-y-0.5">
             <button
               type="button"
               onClick={() => {
@@ -1571,7 +1571,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 setRuntimeView('review');
               }}
               aria-label={t('interview.singleQuestionRuntime.goToReview')}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
             >
               <ClipboardList size={13} />
               {t('interview.singleQuestionRuntime.review')}
@@ -1583,7 +1583,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   void persistCurrentQuestion().then(() => onSaveAndExit?.());
                 }}
                 aria-label={t('interview.singleQuestionRuntime.saveAndExit')}
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
               >
                 <LogOut size={13} />
                 {t('interview.singleQuestionRuntime.saveExit')}
@@ -1599,7 +1599,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           aria-label={t('interview.singleQuestionRuntime.categoryNavigation')}
         >
           {sessionName && (
-            <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500 truncate">
+            <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary truncate">
               {sessionName}
             </p>
           )}
@@ -1618,7 +1618,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs transition-all ${
                   isActive
                     ? 'bg-c-info/10 dark:bg-c-info/15 text-c-info dark:text-c-info font-medium'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50'
+                    : 'text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50'
                 }`}
               >
                 <span className="truncate">
@@ -1632,14 +1632,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               </button>
             );
           })}
-          <div className="!mt-auto border-t border-slate-200 dark:border-navy-800 pt-3">
+          <div className="!mt-auto border-t border-c-border pt-3">
             <button
               type="button"
               onClick={() => {
                 void persistCurrentQuestion();
                 setRuntimeView('review');
               }}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
             >
               <ClipboardList size={13} />
               {t('interview.singleQuestionRuntime.review')}
@@ -1650,7 +1650,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 onClick={() => {
                   void persistCurrentQuestion().then(() => onSaveAndExit?.());
                 }}
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
               >
                 <LogOut size={13} />
                 {t('interview.singleQuestionRuntime.saveExit')}
@@ -1681,7 +1681,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
                     isActive
                       ? `${catConfig.bgColor} ${catConfig.color} ring-1 ring-current/20`
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                      : 'bg-c-surface-raised text-c-text-muted'
                   }`}
                 >
                   {t(`interview.workspace.categoryLabel.${cat}`, catConfig.labelEn)}
@@ -1714,10 +1714,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 )}
               </span>
             )}
-            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
+            <span className="text-xs tabular-nums text-c-text-secondary">
               {currentIndex + 1} / {orderedQuestions.length}
             </span>
-            <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
+            <div className="flex-1 h-1 rounded-full bg-c-surface-raised overflow-hidden">
               <div
                 className="h-full rounded-full bg-c-info/60 transition-all duration-300"
                 style={{
@@ -1725,7 +1725,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 }}
               />
             </div>
-            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
+            <span className="text-xs tabular-nums text-c-text-secondary">
               {answeredCount}/{orderedQuestions.length}
             </span>
           </div>
@@ -1742,8 +1742,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               key={currentQuestion.id}
               className={`w-full ${immersive ? 'max-w-4xl' : 'max-w-3xl'} ${
                 immersive
-                  ? 'bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.03] rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none backdrop-blur-sm p-6 md:p-8 lg:p-10'
-                  : 'rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50'
+                  ? 'bg-white dark:bg-white/[0.02] border border-c-border dark:border-white/[0.03] rounded-2xl shadow-sm shadow-c-border-strong/50 dark:shadow-none backdrop-blur-sm p-6 md:p-8 lg:p-10'
+                  : 'rounded-2xl border border-c-border/70 bg-gradient-to-br from-white via-white to-c-bg dark:from-c-surface dark:via-c-surface dark:to-c-bg p-6 md:p-8 shadow-xl shadow-c-border-strong/50'
               }`}
             >
               <div className={immersive ? 'max-w-2xl mx-auto space-y-5' : 'space-y-5'}>
@@ -1761,7 +1761,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       >
                         {currentIndex + 1}
                       </span>
-                      <span className="text-xs text-slate-600 dark:text-slate-500 tabular-nums">
+                      <span className="text-xs text-c-text-secondary tabular-nums">
                         {t('interview.singleQuestionRuntime.of')} {orderedQuestions.length}
                       </span>
                     </div>
@@ -1780,8 +1780,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
                               immersive
-                                ? 'bg-white/[0.04] text-slate-600 ring-1 ring-white/[0.06]'
-                                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                                ? 'bg-white/[0.04] text-c-text-secondary ring-1 ring-white/[0.06]'
+                                : 'bg-c-surface-raised text-c-text-muted'
                             }`}
                           >
                             <TypeIcon size={10} />
@@ -1807,7 +1807,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   {/* Question text — adaptive size for long descriptive questions */}
                   <div className="flex items-start gap-2.5">
                     <h2
-                      className={`flex-1 font-semibold leading-snug text-slate-900 dark:text-white ${
+                      className={`flex-1 font-semibold leading-snug text-c-text ${
                         currentQuestion.questionText.length > 120
                           ? immersive
                             ? 'text-lg md:text-xl'
@@ -1862,7 +1862,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           type="button"
                           onClick={() => setHistoryOpenId(isOpen ? null : currentQuestion.id)}
                           aria-expanded={isOpen}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors"
                           title={t('interview.singleQuestionRuntime.answerContentSavedBeforeIt')}
                         >
                           <History size={12} />
@@ -1875,15 +1875,15 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           />
                         </button>
                         {isOpen && (
-                          <div className="mt-2 space-y-2 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50 dark:bg-navy-900/60 p-3">
+                          <div className="mt-2 space-y-2 rounded-xl border border-c-border bg-c-bg/60 p-3">
                             {history.map((entry) => (
                               <div key={entry.id} className="space-y-1">
-                                <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                <div className="text-[10px] uppercase tracking-wide text-c-text-muted">
                                   {new Date(entry.savedAt).toLocaleString(
                                     t('interview.singleQuestionRuntime.enUs')
                                   )}
                                 </div>
-                                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                                <p className="text-xs leading-relaxed text-c-text-secondary whitespace-pre-wrap">
                                   {entry.answerText?.trim() ||
                                     t('interview.singleQuestionRuntime.noAnswer')}
                                 </p>
@@ -2122,7 +2122,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
                     {/* Live interim transcript preview while dictating */}
                     {isRecording && liveInterim && (
-                      <p className="mt-1.5 text-xs italic text-slate-400 dark:text-slate-500">
+                      <p className="mt-1.5 text-xs italic text-c-text-muted">
                         {liveInterim}
                       </p>
                     )}
@@ -2204,8 +2204,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           isRecording
                             ? 'border-danger-500/40 bg-danger-500/15 text-danger-500 animate-pulse'
                             : immersive
-                              ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
-                              : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                              ? 'border-c-border bg-white text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-c-text-secondary dark:hover:bg-white/[0.08] dark:hover:text-c-text-muted'
+                              : 'border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         {isRecording ? <PauseCircle size={11} /> : <Mic size={11} />}
@@ -2221,8 +2221,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         disabled={isUploadingAttachment}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] disabled:opacity-60 ${
                           immersive
-                            ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
-                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                            ? 'border-c-border bg-white text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-c-text-secondary dark:hover:bg-white/[0.08] dark:hover:text-c-text-muted'
+                            : 'border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         <Paperclip size={11} />
@@ -2236,8 +2236,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         disabled={isUploadingAttachment}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] disabled:opacity-60 ${
                           immersive
-                            ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
-                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                            ? 'border-c-border bg-white text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-c-text-secondary dark:hover:bg-white/[0.08] dark:hover:text-c-text-muted'
+                            : 'border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         {isUploadingAttachment ? (
@@ -2261,8 +2261,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   ? 'border-c-info/20 bg-c-info/10 text-c-info'
                                   : 'border-c-info/30 bg-c-info/10 text-c-info dark:text-c-info'
                                 : immersive
-                                  ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-c-info dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-c-info'
-                                  : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                  ? 'border-c-border bg-white text-c-text-secondary hover:bg-c-surface-raised hover:text-c-info dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-c-text-secondary dark:hover:bg-white/[0.08] dark:hover:text-c-info'
+                                  : 'border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.06]'
                             }`}
                           >
                             {aiImproving ? (
@@ -2283,8 +2283,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             <div
                               className={`absolute left-0 bottom-full mb-1.5 z-50 w-48 rounded-xl border p-1 shadow-xl ${
                                 immersive
-                                  ? 'bg-navy-900/95 border-white/[0.08] backdrop-blur-xl'
-                                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700'
+                                  ? 'bg-c-surface/95 border-white/[0.08] backdrop-blur-xl'
+                                  : 'bg-c-surface border-c-border'
                               }`}
                             >
                               {(
@@ -2327,8 +2327,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   onClick={() => handleAiImprove(item.mode)}
                                   className={`w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
                                     immersive
-                                      ? 'text-slate-600 hover:bg-white/[0.06] hover:text-white'
-                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                                      ? 'text-c-text-secondary hover:bg-white/[0.06] hover:text-white'
+                                      : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
                                   }`}
                                 >
                                   <span className="text-xs">{item.icon}</span>
@@ -2389,8 +2389,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           onClick={() => setAiImproveResult(null)}
                           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                             immersive
-                              ? 'border-white/[0.08] text-slate-600 hover:text-slate-200'
-                              : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
+                              ? 'border-white/[0.08] text-c-text-secondary hover:text-c-text-muted'
+                              : 'border-c-border/70 text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface'
                           }`}
                         >
                           {t('interview.singleQuestionRuntime.dismiss')}
@@ -2419,7 +2419,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             return (
                               <div
                                 key={item.id}
-                                className="group relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200/70 dark:border-navy-700/70 bg-slate-50 dark:bg-navy-950"
+                                className="group relative w-20 h-20 rounded-xl overflow-hidden border border-c-border/70 bg-c-bg"
                               >
                                 <img
                                   src={item.url}
@@ -2443,7 +2443,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           return (
                             <span
                               key={item.id}
-                              className="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 px-2.5 py-1.5 text-[11px] text-slate-600 dark:text-slate-300"
+                              className="group inline-flex items-center gap-1.5 rounded-lg border border-c-border/70 bg-white/80 dark:bg-c-surface/80 px-2.5 py-1.5 text-[11px] text-c-text-secondary"
                             >
                               {isAudio ? <Mic size={11} /> : <Paperclip size={11} />}
                               <span className="truncate max-w-[160px]">
@@ -2460,7 +2460,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 title={t(
                                   'interview.singleQuestionRuntime.removeFromTheEvidencePanel'
                                 )}
-                                className="inline-flex items-center justify-center text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                className="inline-flex items-center justify-center text-c-text-muted cursor-not-allowed"
                                 aria-label={t('interview.singleQuestionRuntime.remove')}
                               >
                                 <Trash2 size={11} />
@@ -2480,7 +2480,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         value={voiceTranscriptDraft}
                         onChange={(e) => setVoiceTranscriptDraft(e.target.value)}
                         rows={3}
-                        className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-c-text-secondary resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
                       />
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -2501,8 +2501,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           }}
                           className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
                             immersive
-                              ? 'border-white/[0.08] text-slate-600 hover:text-slate-200'
-                              : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
+                              ? 'border-white/[0.08] text-c-text-secondary hover:text-c-text-muted'
+                              : 'border-c-border/70 text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface'
                           }`}
                         >
                           <X size={12} />
@@ -2544,11 +2544,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 <div
                   className={`space-y-3 pt-3 border-t ${
                     immersive
-                      ? 'border-slate-200 dark:border-white/[0.06]'
-                      : 'border-slate-200/40 dark:border-navy-700/40'
+                      ? 'border-c-border dark:border-white/[0.06]'
+                      : 'border-c-border/40'
                   }`}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
                     {t('interview.singleQuestionRuntime.additionalContext')}
                   </p>
 
@@ -2560,8 +2560,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     rows={1}
                     className={`w-full rounded-xl border px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-c-focus ${
                       immersive
-                        ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
-                        : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
+                        ? 'border-c-border-strong bg-c-bg dark:border-white/[0.06] dark:bg-white/[0.03] text-c-text-secondary placeholder:text-c-text-muted dark:placeholder:text-c-text-muted'
+                        : 'border-c-border/70 bg-c-surface text-c-text-secondary placeholder:text-c-text-muted dark:placeholder:text-c-text-muted'
                     }`}
                     placeholder={t(
                       'interview.singleQuestionRuntime.commentNuanceClarificationForThis'
@@ -2584,8 +2584,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           showLinkForm
                             ? 'border-c-info/30 bg-c-info/10 text-c-info dark:text-c-info'
                             : immersive
-                              ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
-                              : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                              ? 'border-c-border bg-white text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-c-text-secondary dark:hover:bg-white/[0.08] dark:hover:text-c-text-muted'
+                              : 'border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         <Link2 size={11} />
@@ -2597,8 +2597,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         onClick={() => setArtifactPopoverOpen(true)}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           immersive
-                            ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-c-info dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-c-info'
-                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                            ? 'border-c-border bg-white text-c-text-secondary hover:bg-c-surface-raised hover:text-c-info dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-c-text-secondary dark:hover:bg-white/[0.08] dark:hover:text-c-info'
+                            : 'border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         <Waypoints size={11} />
@@ -2614,14 +2614,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         type="text"
                         value={linkName}
                         onChange={(event) => setLinkName(event.target.value)}
-                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
+                        className="rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs text-c-text-secondary focus:outline-none focus:ring-1 focus:ring-c-focus"
                         placeholder={t('interview.singleQuestionRuntime.linkTitle')}
                       />
                       <input
                         type="url"
                         value={linkUrl}
                         onChange={(event) => setLinkUrl(event.target.value)}
-                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
+                        className="rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs text-c-text-secondary focus:outline-none focus:ring-1 focus:ring-c-focus"
                         placeholder="https://"
                       />
                       <div className="md:col-span-2 flex justify-end">
@@ -2629,7 +2629,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           type="button"
                           onClick={handleAddLink}
                           disabled={!linkName.trim() || !linkUrl.trim()}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-c-surface px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                         >
                           <Check size={12} />
                           {t('interview.singleQuestionRuntime.add')}
@@ -2655,7 +2655,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] ${
                                 isArtifact
                                   ? 'border-c-info/70 dark:border-c-info/20 bg-c-info/50 dark:bg-c-info/5 text-c-info dark:text-c-info'
-                                  : 'border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 text-slate-600 dark:text-slate-300'
+                                  : 'border-c-border/70 bg-white/80 dark:bg-c-surface/80 text-c-text-secondary'
                               }`}
                             >
                               <EvidIcon size={10} />
@@ -2683,13 +2683,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           className={`shrink-0 ${
             immersive
               ? 'border-t border-white/[0.06] bg-white/[0.02] dark:bg-white/[0.01] backdrop-blur-xl px-8 py-3 md:px-16 lg:px-24'
-              : 'rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4'
+              : 'rounded-xl border border-c-border/70 bg-white/80 dark:bg-c-surface/80 backdrop-blur-xl p-4'
           }`}
         >
           <div
             className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${immersive ? 'max-w-4xl mx-auto' : ''}`}
           >
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-sm text-c-text-muted">
               {hasUnsavedChanges ? (
                 <>
                   <Loader2 size={14} className={isPersisting ? 'animate-spin' : ''} />
@@ -2710,8 +2710,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   {t('interview.singleQuestionRuntime.saved')}
                 </>
               )}
-              <span className="text-slate-600 dark:text-navy-700 mx-1">|</span>
-              <span className="text-[11px] text-slate-600 dark:text-slate-500">
+              <span className="text-c-text-secondary dark:text-c-text-secondary mx-1">|</span>
+              <span className="text-[11px] text-c-text-secondary">
                 Esc={t('interview.singleQuestionRuntime.save')} · Enter=
                 {t('interview.singleQuestionRuntime.next')}
               </span>
@@ -2725,8 +2725,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 aria-label={t('interview.singleQuestionRuntime.previousQuestion')}
                 className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${
                   immersive
-                    ? 'border-white/[0.08] text-slate-600 hover:text-slate-200 hover:border-white/[0.15]'
-                    : 'border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200'
+                    ? 'border-white/[0.08] text-c-text-secondary hover:text-c-text-muted hover:border-white/[0.15]'
+                    : 'border-c-border text-c-text-secondary'
                 }`}
               >
                 <ArrowLeft size={16} />
@@ -2775,8 +2775,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   aria-label={t('interview.singleQuestionRuntime.nextQuestion')}
                   className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold disabled:opacity-50 ${
                     immersive
-                      ? 'bg-navy-900 text-white shadow-lg shadow-c-info/20 hover:bg-c-info'
-                      : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                      ? 'bg-c-surface text-white shadow-lg shadow-c-info/20 hover:bg-c-info'
+                      : 'bg-c-surface-raised dark:bg-white text-white dark:text-c-text'
                   }`}
                 >
                   {t('interview.singleQuestionRuntime.next2')}

@@ -66,9 +66,9 @@ const INSIGHT_TYPES = {
   optimization: {
     label: { en: 'Optimization', pl: 'Optymalizacja' },
     icon: Zap,
-    color: 'text-primary-500',
-    bgColor: 'bg-primary-500/10 dark:bg-primary-500/20',
-    borderColor: 'border-primary-200 dark:border-primary-500/30',
+    color: 'text-c-info',
+    bgColor: 'bg-c-info/10 dark:bg-c-info/20',
+    borderColor: 'border-c-info/30 dark:border-c-info/30',
   },
 };
 
@@ -119,8 +119,8 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20">
-            <Brain size={18} className="text-primary-500 dark:text-primary-400" />
+          <div className="p-2 rounded-xl bg-c-info/10 dark:bg-c-info/20">
+            <Brain size={18} className="text-c-info dark:text-c-info" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {t('myWork.aiInsight.aIInsights', 'AI Insights')}
@@ -162,7 +162,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                     whileTap={{ scale: 0.98 }}
                     onClick={onGenerateInsights}
                     disabled={isGenerating}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary-500 to-crimson-500 text-white text-sm font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-c-info text-white text-sm font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-info/20"
                   >
                     {isGenerating ? (
                       <RefreshCw size={16} className="animate-spin" />

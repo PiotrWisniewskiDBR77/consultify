@@ -54,7 +54,7 @@ const COLOR_MAP: Record<PillColorScheme, string> = {
     'border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15',
   blue: 'border-blue-300/40 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-200 hover:bg-blue-100/70 dark:hover:bg-blue-500/15',
   purple:
-    'border-primary-300/40 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200 hover:bg-primary-100/70 dark:hover:bg-primary-500/15',
+    'border-c-info/40 bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] text-c-info hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]',
   amber:
     'border-amber-400/60 dark:border-amber-500/30 bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-200/70 dark:hover:bg-amber-500/15',
   neutral:

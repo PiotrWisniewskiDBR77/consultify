@@ -185,7 +185,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                 <span className="text-xs font-medium text-slate-900 dark:text-white">
                   {comment.authorName.charAt(0).toUpperCase()}
                 </span>
@@ -240,8 +240,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 onClick={() => onLikeComment(comment.id)}
                 className={`flex items-center gap-1.5 text-xs transition-colors ${
                   comment.likedByMe
-                    ? 'text-primary-500'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:text-slate-500'
+                    ? 'text-c-info'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-c-info dark:text-slate-500'
                 }`}
               >
                 <ThumbsUp size={14} className={comment.likedByMe ? 'fill-current' : ''} />
@@ -252,7 +252,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               {!readOnly && !isReply && (
                 <button
                   onClick={() => setReplyingTo(comment.id)}
-                  className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:text-slate-500 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-c-info dark:text-slate-500 transition-colors"
                 >
                   <CornerDownRight size={14} />
                   <span>{t('myWork.comments.reply', 'Reply')}</span>
@@ -288,7 +288,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
                       placeholder={t('myWork.comments.placeholder', 'Write a reply...')}
-                      className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all"
+                      className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus outline-none transition-all"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -359,8 +359,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-          <div className="p-2 rounded-xl bg-primary-500/10 dark:bg-primary-500/20">
-            <MessageCircle size={18} className="text-primary-500 dark:text-primary-400" />
+          <div className="p-2 rounded-xl bg-c-info/10 dark:bg-c-info/20">
+            <MessageCircle size={18} className="text-c-info dark:text-c-info" />
           </div>
           <span className="text-sm font-semibold">{t('myWork.comments.comments', 'Comments')}</span>
         </div>
@@ -384,7 +384,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   onGenerateAIComment();
                 }}
                 disabled={isGeneratingAI}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info dark:text-c-info hover:bg-c-info/20 dark:hover:bg-c-info/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={t('myWork.comments.title2', 'Generate AI comment')}
               >
                 {isGeneratingAI ? (
@@ -422,11 +422,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                    className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20"
+                    className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-c-info/10 to-c-info/5 dark:from-c-info/20 dark:to-c-info/10"
                   >
                     <MessageCircle
                       size={40}
-                      className="text-primary-500 dark:text-primary-400 opacity-60"
+                      className="text-c-info opacity-60"
                     />
                   </motion.div>
                   <p className="text-sm font-medium">
@@ -448,7 +448,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               {!readOnly && (
                 <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                       <User size={16} className="text-slate-900 dark:text-white" />
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder={t('myWork.comments.placeholder2', 'Write a comment...')}
                       rows={1}
-                      className="flex-1 px-4 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all resize-none"
+                      className="flex-1 px-4 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus outline-none transition-all resize-none"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();

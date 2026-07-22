@@ -256,28 +256,28 @@ type EscalationRuleWithConfig = EscalationRule & {
 const STATUS_CONFIG = {
   pending: {
     label: { en: 'Pending', pl: 'Oczekująca' },
-    color: 'bg-amber-500',
-    textColor: 'text-amber-500',
+    color: 'bg-c-text-muted',
+    textColor: 'text-c-text-muted',
   },
   approved: {
     label: { en: 'Approved', pl: 'Zatwierdzona' },
-    color: 'bg-emerald-500',
-    textColor: 'text-emerald-500',
+    color: 'bg-c-success',
+    textColor: 'text-c-success',
   },
   rejected: {
     label: { en: 'Rejected', pl: 'Odrzucona' },
-    color: 'bg-danger-500',
-    textColor: 'text-danger-500',
+    color: 'bg-c-danger',
+    textColor: 'text-c-danger',
   },
   deferred: {
     label: { en: 'Deferred', pl: 'Odroczona' },
-    color: 'bg-slate-500',
-    textColor: 'text-slate-500',
+    color: 'bg-c-text-muted',
+    textColor: 'text-c-text-muted',
   },
   escalated: {
     label: { en: 'Escalated', pl: 'Eskalowana' },
-    color: 'bg-amber-500',
-    textColor: 'text-amber-500',
+    color: 'bg-c-info',
+    textColor: 'text-c-info',
   },
 };
 
@@ -300,23 +300,23 @@ const STATUS_TONE: Record<
 const PRIORITY_CONFIG = {
   low: {
     label: { en: 'Low', pl: 'Niski' },
-    color: 'bg-slate-400',
-    textColor: 'text-slate-500',
+    color: 'bg-c-text-muted',
+    textColor: 'text-c-text-muted',
   },
   medium: {
     label: { en: 'Medium', pl: 'Średni' },
-    color: 'bg-blue-400',
-    textColor: 'text-blue-500',
+    color: 'bg-c-info',
+    textColor: 'text-c-info',
   },
   high: {
     label: { en: 'High', pl: 'Wysoki' },
-    color: 'bg-amber-400',
-    textColor: 'text-amber-500',
+    color: 'bg-c-warning',
+    textColor: 'text-c-warning',
   },
   critical: {
     label: { en: 'Critical', pl: 'Krytyczny' },
-    color: 'bg-danger-500',
-    textColor: 'text-danger-500',
+    color: 'bg-c-danger',
+    textColor: 'text-c-danger',
   },
 };
 
@@ -3623,14 +3623,14 @@ Use userId only from this list:
   const statusConfig = (STATUS_CONFIG as any)?.[status] ||
     (STATUS_CONFIG as any)?.pending || {
       label: { en: 'Pending', pl: 'Oczekująca' },
-      color: 'bg-amber-500',
-      textColor: 'text-amber-500',
+      color: 'bg-c-text-muted',
+      textColor: 'text-c-text-muted',
     };
   const priorityConfig = (PRIORITY_CONFIG as any)?.[normalizePriority(priority)] ||
     (PRIORITY_CONFIG as any)?.medium || {
       label: { en: 'Medium', pl: 'Średni' },
-      color: 'bg-blue-400',
-      textColor: 'text-blue-500',
+      color: 'bg-c-info',
+      textColor: 'text-c-info',
     };
   const CategoryIcon = CATEGORY_CONFIG[category]?.icon || FileText;
   const decisionScopeLabel =
@@ -7825,7 +7825,7 @@ Use userId only from this list:
                       onClick={() => setClickupTab(key)}
                       className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
                         clickupTab === key
-                          ? 'bg-primary-500/15 border-primary-400/50 text-primary-600 dark:text-primary-300'
+                          ? 'bg-c-surface-raised border-c-border text-c-text'
                           : 'bg-transparent border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -7949,7 +7949,7 @@ Use userId only from this list:
                                 };
                                 setStakeholders([...stakeholders, newStakeholder]);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>
@@ -8090,7 +8090,7 @@ Use userId only from this list:
                                   },
                                 ])
                               }
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>
@@ -8346,7 +8346,7 @@ Use userId only from this list:
                                     message: '',
                                   })
                                 }
-                                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                               >
                                 + {t('decisions.detail.governance.add', 'Add')}
                               </button>
@@ -8495,7 +8495,7 @@ Use userId only from this list:
                               className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                                 isDecisionStageLocked
                                   ? 'border-slate-300/40 dark:border-navy-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                  : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 cursor-pointer'
+                                  : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised cursor-pointer'
                               }`}
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
@@ -8600,7 +8600,7 @@ Use userId only from this list:
                                   ),
                                 })
                               }
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>

@@ -106,8 +106,8 @@ const STATUS_CONFIG: Record<
     labelEn: 'Not started',
     labelPl: 'Nie rozpoczęte',
     icon: Circle,
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-100 dark:bg-slate-800',
+    color: 'text-c-text-secondary',
+    bgColor: 'bg-c-surface-raised',
   },
   in_progress: {
     labelEn: 'In progress',
@@ -476,7 +476,7 @@ Rules:
           className={`w-6 h-6 rounded text-xs font-medium transition-all ${
             currentScore >= score
               ? 'bg-amber-400 text-white'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+              : 'bg-c-surface-raised text-c-text-muted'
           } ${readOnly ? 'cursor-default' : 'hover:scale-110'}`}
           title={`${t('interview.questionsList.confidence')}: ${score}/5`}
         >
@@ -491,19 +491,19 @@ Rules:
     if (showStatusMenu !== question.id) return null;
 
     return (
-      <div className="absolute top-full left-0 mt-1 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-20 min-w-[160px]">
+      <div className="absolute top-full left-0 mt-1 bg-c-surface rounded-lg shadow-lg border border-c-border py-1 z-20 min-w-[160px]">
         {Object.entries(STATUS_CONFIG).map(([status, config]) => {
           const Icon = config.icon;
           return (
             <button
               key={status}
               onClick={() => handleStatusChange(question.id, status as QuestionStatus)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-800 ${
-                question.status === status ? 'bg-slate-50 dark:bg-navy-800' : ''
+              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-c-bg dark:hover:bg-c-surface-raised ${
+                question.status === status ? 'bg-c-surface-raised' : ''
               }`}
             >
               <Icon size={14} className={config.color} />
-              <span className="text-slate-700 dark:text-slate-300">
+              <span className="text-c-text-secondary">
                 {t(`interview.questionsList.statusLabel.${status}`, config.labelEn)}
               </span>
               {question.status === status && (
@@ -521,12 +521,12 @@ Rules:
     if (showTagMenu !== question.id) return null;
 
     return (
-      <div className="absolute top-full right-0 mt-1 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-20 min-w-[140px]">
+      <div className="absolute top-full right-0 mt-1 bg-c-surface rounded-lg shadow-lg border border-c-border py-1 z-20 min-w-[140px]">
         {TAG_OPTIONS.map((tag) => (
           <button
             key={tag.value}
             onClick={() => handleToggleTag(question.id, tag.value, question.tags)}
-            className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-800`}
+            className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-c-bg dark:hover:bg-c-surface-raised`}
           >
             <span className={`px-2 py-0.5 rounded text-xs ${tag.color}`}>
               {t(`interview.questionsList.tagLabel.${tag.value}`, tag.labelEn)}
@@ -554,13 +554,13 @@ Rules:
       {/* Category progress (quiet) */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-c-text-muted mb-1">
             <span>{t('interview.questionsList.progressInThisSection')}</span>
             <span className="tabular-nums">
               {answeredCount}/{totalCount} · {percent}%
             </span>
           </div>
-          <div className="h-1.5 rounded-full bg-slate-200/70 dark:bg-navy-800/70 overflow-hidden">
+          <div className="h-1.5 rounded-full bg-c-surface-raised/70 dark:bg-c-surface-raised/70 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 percent === 100 ? 'bg-emerald-500' : 'bg-blue-500'
@@ -573,7 +573,7 @@ Rules:
         <button
           onClick={() => nextMissing && setExpandedId(nextMissing.id)}
           disabled={!nextMissing}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-c-border/60 bg-white/60 dark:bg-c-surface/40 text-c-text-secondary hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title={
             nextMissing
               ? t('interview.questionsList.openNextMissingQuestionIn')
@@ -583,7 +583,7 @@ Rules:
           <ChevronRight size={14} />
           {t('interview.questionsList.nextMissing')}
           {missingCount > 0 && (
-            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
+            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-c-surface-raised/80 dark:bg-c-surface-raised/80 text-c-text-muted">
               {missingCount}
             </span>
           )}
@@ -636,7 +636,7 @@ Rules:
                 {
                   label: `${item.confidenceScore || 0}/5`,
                   className:
-                    'border border-slate-200/70 dark:border-white/[0.08] text-slate-600 dark:text-slate-300',
+                    'border border-c-border/70 dark:border-white/[0.08] text-c-text-secondary',
                   icon: Star,
                 },
                 ...item.tags.map((tag) => {
@@ -645,7 +645,7 @@ Rules:
                     label: tagConfig
                       ? t(`interview.questionsList.tagLabel.${tag}`, tagConfig.labelEn)
                       : tag,
-                    className: tagConfig?.color || 'bg-slate-100 text-slate-600',
+                    className: tagConfig?.color || 'bg-c-surface-raised text-c-text-secondary',
                   };
                 }),
               ];
@@ -662,7 +662,7 @@ Rules:
                                 !readOnly &&
                                 setShowStatusMenu(showStatusMenu === item.id ? null : item.id)
                               }
-                              className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                              className="text-xs text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors"
                             >
                               {t('interview.questionsList.changeStatus')}
                             </button>
@@ -675,7 +675,7 @@ Rules:
                               onClick={() =>
                                 setShowTagMenu(showTagMenu === item.id ? null : item.id)
                               }
-                              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                              className="inline-flex items-center gap-1.5 text-xs text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors"
                             >
                               <Tag size={12} />
                               {t('interview.questionsList.tags')}
@@ -685,7 +685,7 @@ Rules:
                         )}
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <span className="text-xs font-medium text-c-text-muted">
                           {t('interview.questionsList.confidenceLevel')}
                         </span>
                         {renderConfidenceSelector(item.id, item.confidenceScore)}
@@ -727,7 +727,7 @@ Rules:
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span className="text-xs font-medium text-c-text-muted">
                         {t('interview.questionsList.answer')}
                       </span>
                       {!readOnly && !isEditing && (
@@ -742,7 +742,7 @@ Rules:
                           </button>
                           <button
                             onClick={() => openChatForQuestion(item)}
-                            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                            className="flex items-center gap-1 text-xs text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
                           >
                             <MessageSquare size={12} />
                             {t('interview.questionsList.chat')}
@@ -756,20 +756,20 @@ Rules:
                         <textarea
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[140px]"
+                          className="w-full p-3 text-sm border border-c-border rounded-xl bg-c-bg text-c-text dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[140px]"
                           rows={6}
                           placeholder={t('interview.questionsList.typeYourAnswer')}
                           autoFocus
                         />
 
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs font-medium text-c-text-muted mb-1">
                             {t('interview.questionsList.notesOptional')}
                           </label>
                           <textarea
                             value={editNotes}
                             onChange={(e) => setEditNotes(e.target.value)}
-                            className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus resize-none min-h-[72px]"
+                            className="w-full p-3 text-sm border border-c-border rounded-xl bg-c-bg text-c-text dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus resize-none min-h-[72px]"
                             rows={3}
                             placeholder={t('interview.questionsList.additionalNotesContext')}
                           />
@@ -782,7 +782,7 @@ Rules:
                           </div>
                         )}
 
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <div className="flex items-center gap-2 text-xs text-c-text-secondary">
                           <Sparkles size={12} />
                           <span>{t('interview.questionsList.useAiOrChatTo')}</span>
                         </div>
@@ -791,7 +791,7 @@ Rules:
                       <div
                         className={`p-4 rounded-xl text-sm transition-all ${
                           item.answerText
-                            ? 'bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white border border-slate-200 dark:border-navy-700'
+                            ? 'bg-c-bg text-c-text dark:text-white border border-c-border'
                             : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30'
                         }`}
                         onClick={() => !readOnly && !item.answerText && handleStartEdit(item)}
@@ -800,11 +800,11 @@ Rules:
                           <div>
                             <div className="whitespace-pre-wrap">{item.answerText}</div>
                             {item.notes && (
-                              <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-navy-700/50">
-                                <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
+                              <div className="mt-3 pt-3 border-t border-c-border/50">
+                                <span className="text-xs font-medium text-c-text-secondary">
                                   {t('interview.questionsList.notes2')}
                                 </span>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 whitespace-pre-wrap">
+                                <p className="text-xs text-c-text-muted mt-1 whitespace-pre-wrap">
                                   {item.notes}
                                 </p>
                               </div>
@@ -823,7 +823,7 @@ Rules:
                   </div>
 
                   {item.answeredBy && item.answeredAt && (
-                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-xs text-c-text-secondary">
                       <User size={12} />
                       <span>{item.answeredBy}</span>
                       <span>•</span>
@@ -838,7 +838,7 @@ Rules:
 
               if (readOnly) {
                 return (
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-c-text-muted">
                     {item.answerText
                       ? t('interview.questionsList.answerSaved')
                       : t('interview.questionsList.noAnswerYet')}
@@ -903,7 +903,7 @@ Rules:
               return <PreviewActionBar rows={defaultRows} />;
             }}
           >
-            <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-white/60 dark:bg-navy-900/35 overflow-hidden">
+            <div className="rounded-xl border border-c-border/60 bg-white/60 dark:bg-c-surface/35 overflow-hidden">
               <div className="overflow-x-auto">
                 {/* §27-exempt: deeply embedded in TableWithPreviewLayout; row selection
                     drives the preview pane, and cells contain rich interactive elements
@@ -912,23 +912,23 @@ Rules:
                     without re-architecting the entire QuestionsListpreview flow. */}
                 <table className="w-full min-w-[760px] table-fixed">
                   <thead>
-                    <tr className="border-b border-slate-200/60 dark:border-navy-700/50 bg-slate-50/80 dark:bg-navy-950/50">
-                      <th className="w-[84px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <tr className="border-b border-c-border/60 bg-c-bg/80 dark:bg-c-bg/50">
+                      <th className="w-[84px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('interview.questionsList.status')}
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('interview.questionsList.question2')}
                       </th>
-                      <th className="w-[104px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <th className="w-[104px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('interview.questionsList.confidence')}
                       </th>
-                      <th className="w-[160px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <th className="w-[160px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('interview.questionsList.tags')}
                       </th>
-                      <th className="w-[220px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <th className="w-[220px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('interview.questionsList.answer')}
                       </th>
-                      <th className="w-[124px] px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <th className="w-[124px] px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('interview.questionsList.actions')}
                       </th>
                     </tr>
@@ -944,10 +944,10 @@ Rules:
                           key={question.id}
                           onClick={() => setExpandedId(question.id)}
                           onDoubleClick={() => !readOnly && handleStartEdit(question)}
-                          className={`border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 cursor-pointer transition-colors ${
+                          className={`border-b border-c-border/50 last:border-0 cursor-pointer transition-colors ${
                             isSelected
                               ? 'bg-c-info/10 dark:bg-c-info/10'
-                              : 'hover:bg-slate-50/80 dark:hover:bg-navy-800/40'
+                              : 'hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/40'
                           }`}
                         >
                           <td className="px-4 py-3">
@@ -975,10 +975,10 @@ Rules:
                           </td>
                           <td className="px-4 py-3">
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                              <div className="text-sm font-medium text-c-text dark:text-white truncate">
                                 {question.questionText}
                               </div>
-                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
+                              <div className="mt-1 text-xs text-c-text-muted truncate">
                                 {question.answerText
                                   ? t('interview.questionsList.clickToReviewOrEdit')
                                   : t('interview.questionsList.noAnswerYet2')}
@@ -994,7 +994,7 @@ Rules:
                                   className={
                                     question.confidenceScore >= score
                                       ? 'text-amber-400 fill-amber-400'
-                                      : 'text-slate-600 dark:text-slate-400'
+                                      : 'text-c-text-secondary'
                                   }
                                 />
                               ))}
@@ -1018,17 +1018,17 @@ Rules:
                                   ) : null;
                                 })}
                                 {question.tags.length > 2 && (
-                                  <span className="text-[11px] text-slate-600">
+                                  <span className="text-[11px] text-c-text-secondary">
                                     +{question.tags.length - 2}
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
+                              <span className="text-xs text-c-text-secondary">—</span>
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                            <div className="text-xs text-c-text-muted line-clamp-2">
                               {question.answerText || t('interview.questionsList.noAnswerYet2')}
                             </div>
                           </td>
@@ -1053,21 +1053,21 @@ Rules:
                                     setShowTagMenu(showTagMenu === question.id ? null : question.id)
                                   }
                                   disabled={readOnly}
-                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                                  className="p-1.5 rounded hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
                                   title={t('interview.questionsList.tags')}
                                 >
-                                  <Tag size={14} className="text-slate-600" />
+                                  <Tag size={14} className="text-c-text-secondary" />
                                 </button>
                                 {renderTagMenu(question)}
                               </div>
                               <button
                                 onClick={() => setExpandedId(question.id)}
-                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                                className="p-1.5 rounded hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
                                 title={t('interview.questionsList.showDetails')}
                               >
                                 <ChevronRight
                                   size={16}
-                                  className={`text-slate-600 transition-transform ${
+                                  className={`text-c-text-secondary transition-transform ${
                                     isSelected ? 'rotate-90' : ''
                                   }`}
                                 />
@@ -1087,14 +1087,14 @@ Rules:
 
       {/* Empty State */}
       {categoryQuestions.length === 0 && !showNewQuestion && (
-        <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50/50 dark:bg-navy-950/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700">
-          <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
-            <MessageSquare className="w-7 h-7 text-slate-600 dark:text-slate-500" />
+        <div className="flex flex-col items-center justify-center py-8 text-center bg-c-bg/50 dark:bg-c-bg/50 rounded-xl border-2 border-dashed border-c-border">
+          <div className="w-14 h-14 rounded-full bg-c-surface-raised flex items-center justify-center mb-4">
+            <MessageSquare className="w-7 h-7 text-c-text-secondary" />
           </div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+          <p className="text-sm font-medium text-c-text-secondary mb-1">
             {t('interview.questionsList.noQuestionsInThisCategory')}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-500 mb-4 max-w-xs">
+          <p className="text-xs text-c-text-secondary mb-4 max-w-xs">
             {t('interview.questionsList.questionsWillAppearAfterAssigning')}
           </p>
           {!readOnly && (
@@ -1113,12 +1113,12 @@ Rules:
       {!readOnly && (
         <div className="mt-3">
           {showNewQuestion ? (
-            <div className="bg-white dark:bg-navy-900 rounded-lg border border-blue-300 dark:border-blue-500/50 p-3 space-y-2">
+            <div className="bg-c-surface rounded-lg border border-blue-300 dark:border-blue-500/50 p-3 space-y-2">
               <input
                 type="text"
                 value={newQuestionText}
                 onChange={(e) => setNewQuestionText(e.target.value)}
-                className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 text-sm border border-c-border rounded-lg bg-c-bg text-c-text dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder={t('interview.questionsList.enterQuestionText')}
                 autoFocus
                 onKeyDown={(e) => {
@@ -1132,14 +1132,14 @@ Rules:
                     setShowNewQuestion(false);
                     setNewQuestionText('');
                   }}
-                  className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400"
+                  className="px-3 py-1.5 text-sm text-c-text-secondary hover:text-c-text-secondary"
                 >
                   {t('interview.questionsList.cancel')}
                 </button>
                 <button
                   onClick={handleAddQuestion}
                   disabled={!newQuestionText.trim()}
-                  className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white rounded-lg"
+                  className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-c-surface-raised text-white rounded-lg"
                 >
                   {t('interview.questionsList.add')}
                 </button>
@@ -1150,7 +1150,7 @@ Rules:
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowNewQuestion(true)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-navy-800 rounded-lg border border-dashed border-slate-200 dark:border-navy-700"
+                  className="flex-1 flex items-center justify-center gap-2 py-2 text-sm text-c-text-muted hover:text-blue-600 hover:bg-c-bg dark:hover:bg-c-surface-raised rounded-lg border border-dashed border-c-border"
                 >
                   <Plus size={16} />
                   {t('interview.questionsList.addQuestion')}
@@ -1192,30 +1192,30 @@ Rules:
       {/* Chat Modal (minimal, no layout changes outside overlay) */}
       {chatQuestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-navy-900 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-navy-700 flex flex-col max-h-[80vh]">
+          <div className="bg-c-surface w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-c-border flex flex-col max-h-[80vh]">
             {/* Header */}
-            <div className="p-4 bg-white dark:bg-navy-900 flex justify-between items-center text-slate-900 dark:text-white border-b border-slate-200 dark:border-navy-700">
+            <div className="p-4 bg-c-surface flex justify-between items-center text-c-text border-b border-c-border">
               <div className="flex items-center gap-2">
                 <TeresaMark size={18} />
                 <div className="min-w-0">
                   <div className="font-semibold text-sm truncate">
                     {t('interview.questionsList.chatForQuestion')}
                   </div>
-                  <div className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                  <div className="text-xs text-c-text-secondary truncate">
                     {chatQuestion.questionText}
                   </div>
                 </div>
               </div>
               <button
                 onClick={closeChat}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1 rounded hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 dark:bg-navy-950">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-c-bg">
               {chatMessages.map((m, idx) => (
                 <div
                   key={idx}
@@ -1223,11 +1223,11 @@ Rules:
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                      m.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-navy-900'
+                      m.role === 'user' ? 'bg-c-surface-raised' : 'bg-c-surface'
                     }`}
                   >
                     {m.role === 'user' ? (
-                      <User size={12} className="text-slate-600 dark:text-slate-300" />
+                      <User size={12} className="text-c-text-secondary" />
                     ) : (
                       <TeresaMark size={12} className="text-white" />
                     )}
@@ -1235,8 +1235,8 @@ Rules:
                   <div
                     className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
                       m.role === 'user'
-                        ? 'bg-white border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200'
-                        : 'bg-c-info/10 dark:bg-c-info/20 text-slate-800 dark:text-slate-200'
+                        ? 'bg-white border border-c-border text-c-text-secondary'
+                        : 'bg-c-info/10 dark:bg-c-info/20 text-c-text-secondary'
                     }`}
                   >
                     {m.content}
@@ -1246,10 +1246,10 @@ Rules:
 
               {chatLoading && (
                 <div className="flex gap-2">
-                  <div className="w-7 h-7 rounded-full bg-navy-900 flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-c-surface flex items-center justify-center shrink-0">
                     <TeresaMark size={12} className="text-white" />
                   </div>
-                  <div className="px-3 py-2 bg-c-info/10 dark:bg-c-info/20 rounded-lg text-sm text-slate-600">
+                  <div className="px-3 py-2 bg-c-info/10 dark:bg-c-info/20 rounded-lg text-sm text-c-text-secondary">
                     {t('interview.questionsList.typing')}
                   </div>
                 </div>
@@ -1257,10 +1257,10 @@ Rules:
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 space-y-3">
+            <div className="p-4 bg-c-surface border-t border-c-border space-y-3">
               <div className="flex gap-2">
                 <input
-                  className="flex-1 bg-slate-100 dark:bg-navy-950 border border-transparent focus:border-c-focus rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-c-focus transition-all dark:text-white text-sm"
+                  className="flex-1 bg-c-bg border border-transparent focus:border-c-focus rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-c-focus transition-all dark:text-white text-sm"
                   placeholder={t('interview.questionsList.typeYourResponse')}
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
@@ -1270,7 +1270,7 @@ Rules:
                 <button
                   onClick={handleChatSend}
                   disabled={!chatInput.trim() || chatLoading}
-                  className="bg-c-text hover:bg-c-text-secondary disabled:bg-slate-300 text-c-bg p-3 rounded-xl transition-colors"
+                  className="bg-c-text hover:bg-c-text-secondary disabled:bg-c-surface-raised text-c-bg p-3 rounded-xl transition-colors"
                   title={t('interview.questionsList.send')}
                 >
                   <Send size={18} />
@@ -1278,13 +1278,13 @@ Rules:
               </div>
 
               <div className="flex items-center justify-between">
-                <button onClick={closeChat} className="text-sm text-slate-500 hover:text-slate-300">
+                <button onClick={closeChat} className="text-sm text-c-text-muted hover:text-c-text-muted">
                   {t('interview.questionsList.close')}
                 </button>
                 <button
                   onClick={handleApplyChatToQuestion}
                   disabled={applyLoading || chatMessages.length < 2}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-c-surface-raised text-white rounded-lg text-sm font-medium transition-colors"
                   title={t('interview.questionsList.insertDraftIntoFieldHuman')}
                 >
                   {applyLoading

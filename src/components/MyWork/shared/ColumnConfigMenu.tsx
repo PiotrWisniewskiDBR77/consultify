@@ -50,7 +50,7 @@ export const ColumnConfigMenu: React.FC<ColumnConfigMenuProps> = ({
           inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
           ${
             hiddenSet.size > 0
-              ? 'bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30'
+              ? 'bg-c-surface-raised text-c-text border border-c-border-strong'
               : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
           }
         `}
@@ -96,7 +96,7 @@ export const ColumnConfigMenu: React.FC<ColumnConfigMenuProps> = ({
                     {isHidden ? (
                       <EyeOff size={14} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <Eye size={14} className="text-primary-500" />
+                      <Eye size={14} className="text-c-text" />
                     )}
                     <span>{col.label}</span>
                   </button>

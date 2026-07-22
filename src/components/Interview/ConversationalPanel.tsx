@@ -247,7 +247,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
           >
             <div className="flex items-center gap-2 mb-1">
               {msg.role === 'ai' ? (
-                <span className="inline-flex items-center gap-1 text-[var(--c-accent)]">
+                <span className="inline-flex items-center gap-1 text-c-info">
                   <TeresaMark size={13} />
                   <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
                 </span>
@@ -356,7 +356,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
               <button
                 onClick={parseToAnswers}
                 disabled={parsing || messages.length === 0}
-                className="flex items-center justify-center w-10 h-10 rounded-token-md border border-c-accent/40 text-[var(--c-accent)] hover:bg-[var(--c-accent-soft)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+                className="flex items-center justify-center w-10 h-10 rounded-token-md border border-c-info/40 text-c-info hover:bg-c-info/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                 title={t('interview.conversational.parseToAnswers')}
               >
                 {parsing ? (

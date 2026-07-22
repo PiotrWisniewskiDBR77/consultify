@@ -20,7 +20,7 @@ export const StatusPillEditor: React.FC<StatusPillEditorProps> = ({
   onChange,
   onClose,
 }) => (
-  <div className="min-w-[160px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
+  <div className="min-w-[160px] rounded-xl border border-c-border-subtle bg-c-surface shadow-lg py-1 overflow-hidden">
     {options.map((opt) => (
       <button
         key={opt.value}
@@ -28,11 +28,11 @@ export const StatusPillEditor: React.FC<StatusPillEditorProps> = ({
           onChange(opt.value);
           onClose();
         }}
-        className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text hover:bg-c-surface-raised transition-colors"
       >
         {opt.dot ? <span className={`w-2 h-2 rounded-full ${opt.dot}`} /> : null}
         <span className="flex-1">{opt.label}</span>
-        {opt.value === value ? <Check size={12} className="text-primary-500" /> : null}
+        {opt.value === value ? <Check size={12} className="text-c-text" /> : null}
       </button>
     ))}
   </div>

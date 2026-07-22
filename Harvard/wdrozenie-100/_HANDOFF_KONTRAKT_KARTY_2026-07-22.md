@@ -32,8 +32,10 @@ zrzuty obejrzane SAM reguła #7):
   zwężenie+picker NIEWPIĘTE (ON==OFF==24 kart) — `INITIATIVE_MINIMAL_VISIBLE`/`buildInitiativeCardSets`
   zdefiniowane a nieużyte; dotyka własnego silnika boardu + katalogu DB `initiative_section_types`. Etap 2 osobno.
 
-**PIERWSZY KROK NASTĘPCY:** promocja domknięta — patrz §4 (Initiative etap 2, Insight dedup Phase-D, decyzja
-o domyślnej fladze zablokowana crimsonem, druga tura decyzji treści).
+**PIERWSZY KROK NASTĘPCY:** obowiązuje **PLAN 9,5** — `_PLAN_9_5_ARTEFAKTY_N_2026-07-22.md` (rejestr 13 zadań
+Z-0.1…Z-4.4, zasady rozliczenia, protokół aktualizacji; matryca: artifact `4d9ae7a6-…`). Audyt floty 2026-07-22:
+średnia 6,8 (Grafika 4,6 najsłabsza, crimson centrum 110 — bezpiecznik CI omija centrum!). Najbliższa bramka:
+Faza 0 = trzy decyzje Piotra (progi treści, dedup Phase-D, kierunek rozjazdów).
 
 ---
 

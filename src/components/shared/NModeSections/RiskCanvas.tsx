@@ -172,7 +172,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
             <button
               onClick={onAIGenerate}
               disabled={locked || isGeneratingAI}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isGeneratingAI ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -195,7 +195,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
           <button
             onClick={onAddRisk}
             disabled={locked}
-            className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
+            className="text-xs font-medium text-c-text-muted hover:text-c-text transition-colors disabled:opacity-40"
           >
             + {t('sharedComponents.riskCanvas.addRisk')}
           </button>
@@ -265,7 +265,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                           onUpdateRisk(risk.id, { probability: e.target.value as RiskLevel })
                         }
                         disabled={locked}
-                        className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getRiskLevelClass(risk.probability)} disabled:opacity-60`}
+                        className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-c-focus-solid ${getRiskLevelClass(risk.probability)} disabled:opacity-60`}
                       >
                         {RISK_LEVEL_OPTIONS.map((level) => (
                           <option key={`p-${risk.id}-${level}`} value={level}>
@@ -285,7 +285,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                           onUpdateRisk(risk.id, { impact: e.target.value as RiskLevel })
                         }
                         disabled={locked}
-                        className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getRiskLevelClass(risk.impact)} disabled:opacity-60`}
+                        className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-c-focus-solid ${getRiskLevelClass(risk.impact)} disabled:opacity-60`}
                       >
                         {RISK_LEVEL_OPTIONS.map((level) => (
                           <option key={`i-${risk.id}-${level}`} value={level}>
@@ -303,7 +303,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                         value={risk.category || 'business'}
                         onChange={(e) => onUpdateRisk(risk.id, { category: e.target.value })}
                         disabled={locked}
-                        className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+                        className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid disabled:opacity-60"
                       >
                         {riskCategoryOptions.map((cat) => (
                           <option key={`c-${risk.id}-${cat.value}`} value={cat.value}>
@@ -337,7 +337,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       onChange={(e) => onUpdateRisk(risk.id, { contingency: e.target.value })}
                       rows={4}
                       readOnly={locked}
-                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
                       placeholder={t(
                         'sharedComponents.riskCanvas.whatIsTheFallbackIfRiskMaterializes'
                       )}
@@ -382,7 +382,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       onChange={(e) => onUpdateRisk(risk.id, { mitigation: e.target.value })}
                       rows={4}
                       readOnly={locked}
-                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid resize-y"
                       placeholder={t('sharedComponents.riskCanvas.howDoWeMitigateThisRisk')}
                     />
                     <div className="flex flex-wrap gap-1">
@@ -415,7 +415,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       <button
         onClick={onAddRisk}
         disabled={locked}
-        className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
+        className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-c-text transition-colors disabled:opacity-40"
       >
         + {t('sharedComponents.riskCanvas.addRisk')}
       </button>

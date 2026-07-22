@@ -75,7 +75,7 @@ const RISK_LEVELS = {
 
 const RISK_CATEGORIES = {
   technical: { label: { en: 'Technical', pl: 'Techniczne' }, color: 'text-blue-500' },
-  business: { label: { en: 'Business', pl: 'Biznesowe' }, color: 'text-primary-500' },
+  business: { label: { en: 'Business', pl: 'Biznesowe' }, color: 'text-c-text' },
   operational: { label: { en: 'Operational', pl: 'Operacyjne' }, color: 'text-blue-500' },
   financial: { label: { en: 'Financial', pl: 'Finansowe' }, color: 'text-emerald-500' },
   legal: { label: { en: 'Legal', pl: 'Prawne' }, color: 'text-amber-500' },
@@ -184,7 +184,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                   onGenerateAI();
                 }}
                 disabled={isGenerating}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info hover:bg-c-info/20 dark:hover:bg-c-info/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={t('myWork.riskAssessment.title', 'Generate AI')}
               >
                 {isGenerating ? (
@@ -236,7 +236,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                         exit={{ opacity: 0, y: -10 }}
                         className={`rounded-xl border ${
                           isEditing
-                            ? 'border-primary-300 dark:border-primary-500/50 bg-primary-50/50 dark:bg-primary-500/5'
+                            ? 'border-c-border-strong bg-c-surface-raised'
                             : 'border-slate-200 dark:border-navy-600 bg-slate-50 dark:bg-navy-800/50'
                         } overflow-hidden`}
                       >
@@ -308,7 +308,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                                     >
                                       {Object.entries(RISK_CATEGORIES).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -330,7 +330,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                                     >
                                       {Object.entries(RISK_LEVELS).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -352,7 +352,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                                     >
                                       {Object.entries(RISK_LEVELS).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -375,7 +375,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     }
                                     rows={2}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus resize-none"
                                     placeholder={t(
                                       'myWork.riskAssessment.actionsToMinimizeRisk',
                                       'Actions to minimize risk...'
@@ -395,7 +395,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     }
                                     rows={2}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus resize-none"
                                     placeholder={t(
                                       'myWork.riskAssessment.planIfRiskMaterializes',
                                       'Plan if risk materializes...'

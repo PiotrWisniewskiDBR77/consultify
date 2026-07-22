@@ -72,8 +72,7 @@ const typeConfig: Record<
     icon: <CheckCircle2 size={32} />,
     defaultTitle: 'No Tasks',
     defaultDescription: 'Create a task to get started with your work.',
-    gradient:
-      'from-primary-500/20 to-crimson-500/20 dark:from-primary-500/10 dark:to-crimson-500/10',
+    gradient: 'from-c-info/20 to-c-info/10 dark:from-c-info/10 dark:to-c-info/5',
   },
   decisions: {
     icon: <Calendar size={32} />,
@@ -91,8 +90,7 @@ const typeConfig: Record<
     icon: <BarChart2 size={32} />,
     defaultTitle: 'No Data Yet',
     defaultDescription: 'Complete some tasks to see your execution metrics and trends.',
-    gradient:
-      'from-primary-500/20 to-primary-500/20 dark:from-primary-500/10 dark:to-primary-500/10',
+    gradient: 'from-c-info/20 to-c-info/20 dark:from-c-info/10 dark:to-c-info/10',
   },
   generic: {
     icon: <Sparkles size={32} />,
@@ -155,10 +153,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             onClick={onAISuggestion}
             className="
                             inline-flex items-center gap-2 px-4 py-2 rounded-lg
-                            bg-gradient-to-r from-primary-600 to-crimson-600
-                            hover:from-primary-500 hover:to-crimson-500
+                            bg-gradient-to-r from-c-info to-c-info
+                            hover:from-c-info hover:to-c-info
                             text-white text-sm font-medium
-                            shadow-lg shadow-primary-500/25
+                            shadow-lg shadow-c-info/25
                             transition-all duration-200
                         "
           >

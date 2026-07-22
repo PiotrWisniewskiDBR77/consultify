@@ -127,8 +127,8 @@ const GATE_UI: Record<
   },
   APPROVE_TO_INITIATIVE: {
     icon: FileCheck,
-    color: 'text-primary-700 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/15',
+    color: 'text-c-info',
+    bgColor: 'bg-c-info/15',
     actionLabel: { en: 'Approve to Initiatives', pl: 'Przekaż do inicjatyw' },
   },
   ACCEPT: {
@@ -151,8 +151,8 @@ const GATE_UI: Record<
   },
   SCHEDULE: {
     icon: Clock,
-    color: 'text-primary-700 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/15',
+    color: 'text-c-info',
+    bgColor: 'bg-c-info/15',
     actionLabel: { en: 'Schedule', pl: 'Zaplanuj' },
   },
   START: {
@@ -954,7 +954,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             <span
                               className={`text-sm font-medium truncate ${
                                 isCurrent
-                                  ? 'text-primary-700 dark:text-primary-300'
+                                  ? 'text-c-focus'
                                   : isCompleted
                                     ? 'text-slate-600 dark:text-slate-400'
                                     : 'text-slate-800 dark:text-slate-200'
@@ -1197,7 +1197,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                       inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs
                                       ${
                                         assignedUsers.length > 0
-                                          ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400'
+                                          ? 'bg-c-info/10 dark:bg-c-info/20 text-c-info'
                                           : 'bg-slate-100 dark:bg-slate-500/15 text-slate-500 dark:text-slate-400'
                                       }
                                     `}
@@ -1251,7 +1251,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                   e.stopPropagation();
                                   onOpenDecision?.(String(decision.id));
                                 }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/15 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors font-medium"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-c-info bg-c-info/10 dark:bg-c-info/20 hover:bg-c-info/20 dark:hover:bg-c-info/30 transition-colors font-medium"
                               >
                                 {t('initiatives.initiativeGatesWorkflowTable.openDecision')} →
                               </button>
@@ -1333,7 +1333,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {editRequiredRoles.length > 0 && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <UserPlus size={14} className="text-primary-500" />
+                          <UserPlus size={14} className="text-slate-500 dark:text-slate-400" />
                           <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                             {t('initiatives.initiativeGatesWorkflowTable.gateRoles')}
                           </label>
@@ -1362,7 +1362,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                       [role]: e.target.value,
                                     }))
                                   }
-                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
+                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus transition-all"
                                 >
                                   <option value="">
                                     {t('initiatives.initiativeGatesWorkflowTable.notAssignedDash')}
@@ -1394,7 +1394,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         onChange={(e) =>
                           setDueDateDraft((prev) => ({ ...prev, [editGateKey]: e.target.value }))
                         }
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus transition-all"
                       />
                     </div>
 
@@ -1410,7 +1410,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         }
                         rows={3}
                         placeholder={t('initiatives.initiativeGatesWorkflowTable.addGateContext')}
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all resize-none"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus transition-all resize-none"
                       />
                     </div>
 
@@ -1465,7 +1465,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             onOpenDecision?.(String(editDecision.id));
                             setEditingStageId(null);
                           }}
-                          className="px-4 py-2 rounded-xl text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                          className="px-4 py-2 rounded-xl text-sm font-medium text-c-info hover:bg-c-info/10 dark:hover:bg-c-info/20 transition-colors"
                         >
                           {t('initiatives.initiativeGatesWorkflowTable.openDecision')}
                         </button>

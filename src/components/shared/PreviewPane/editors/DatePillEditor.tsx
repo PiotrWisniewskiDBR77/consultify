@@ -27,8 +27,8 @@ export const DatePillEditor: React.FC<DatePillEditorProps> = ({
   );
 
   return (
-    <div className="min-w-[200px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-3 space-y-2">
-      <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+    <div className="min-w-[200px] rounded-xl border border-c-border-subtle bg-c-surface shadow-lg p-3 space-y-2">
+      <div className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
         {t('sharedComponents.datePillEditor.selectDate')}
       </div>
       <input
@@ -37,7 +37,7 @@ export const DatePillEditor: React.FC<DatePillEditorProps> = ({
         value={value}
         min={min}
         onChange={handleChange}
-        className="w-full h-8 px-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+        className="w-full h-8 px-2 rounded-lg border border-c-border-subtle bg-transparent text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
         autoFocus
       />
     </div>
