@@ -442,6 +442,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     }
   }, [activeTool, realId]);
 
+  // Z20 (fala4-z20-intercept): broadcast the currently mounted canvas tool so
+  // UnifiedChatPanel's chat interceptors (mm/pf/wb — mindmapIntentDetector,
+  // processFlowIntentDetector, whiteboardIntentDetector) know whether a
+  // matching tool is actually open before hijacking a "create mind
+  // map/process/whiteboard" prompt. Without this signal the chat had no way
+  // to tell IdeaMapWorkspace wasn't mounted at all (or was showing a
+  // different tool) and the intercepted phrase turned into a silent no-op —
+  // window.dispatchEvent('idea-workspace-quick-action') has no listener in
+  // that case, and the prompt never reached the LLM either. Clear it on
+  // unmount so the chat falls back to sending the prompt to the LLM once the
+  // workspace closes.
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('idea-workspace-active-tool', { detail: { tool: activeTool } })
+    );
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-active-tool', { detail: { tool: null } })
+      );
+    };
+  }, [activeTool]);
+
   // ── Selection contract ──────────────────────────────────────────────────────
   const [selection, setSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const selectionRef = useRef<IdeaWorkspaceSelection>(EMPTY_SELECTION);
