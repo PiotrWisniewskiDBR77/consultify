@@ -187,6 +187,49 @@ export interface UseCanvasSnappingResult {
   onNodeDragStop: (event?: unknown, node?: Node) => void;
 }
 
+/** Minimal ReactFlow-instance surface the snap step needs. */
+export interface SnapInstance {
+  getNodes: () => Node[];
+  setNodes: (updater: (nodes: Node[]) => Node[]) => void;
+  getZoom?: () => number;
+}
+
+/**
+ * Core snap step, shared by the context hook and the ref-based hook. Reads the
+ * live nodes from `instance`, computes the correction for the dragged node and
+ * writes only that node back. Returns true if a correction was applied.
+ */
+function applySnap(
+  instance: SnapInstance | null | undefined,
+  node: Node,
+  opts: Required<Pick<UseCanvasSnappingOptions, 'grid' | 'threshold' | 'gridEnabled'>>
+): boolean {
+  if (!instance || !node) return false;
+  const nodes = instance.getNodes();
+  // Multi-select drag: leave group moves to ReactFlow (snapping one member
+  // would shear the selection). Only snap a single, un-grouped drag.
+  const selectedCount = nodes.reduce((n, x) => (x.selected ? n + 1 : n), 0);
+  if (selectedCount > 1 && node.selected) return false;
+
+  const zoom = typeof instance.getZoom === 'function' ? instance.getZoom() : 1;
+  const thresholdFlow = opts.threshold / (zoom || 1);
+
+  const neighbors = nodes.filter((n) => n.id !== node.id && !n.hidden && !n.parentNode);
+  if (neighbors.length === 0) return false;
+
+  const { position, snapped } = computeSnap(
+    { id: node.id, position: node.position, width: node.width, height: node.height },
+    neighbors.map((n) => ({ position: n.position, width: n.width, height: n.height })),
+    { grid: opts.grid, threshold: thresholdFlow, gridEnabled: opts.gridEnabled }
+  );
+
+  if (!snapped) return false;
+  if (position.x === node.position.x && position.y === node.position.y) return false;
+
+  instance.setNodes((nds) => nds.map((n) => (n.id === node.id ? { ...n, position } : n)));
+  return true;
+}
+
 /**
  * Hook: returns `onNodeDrag` / `onNodeDragStop` handlers to spread onto a
  * <ReactFlow>. Compose with any existing handlers by calling both.
@@ -202,33 +245,8 @@ export function useCanvasSnapping(
 
   const onNodeDrag = useCallback(
     (_event: unknown, node: Node) => {
-      if (!enabled || !node) return;
-      // Multi-select drag: leave group moves to ReactFlow (snapping one member
-      // would shear the selection). Only snap a single, un-grouped drag.
-      const nodes = rf.getNodes();
-      const selectedCount = nodes.reduce((n, x) => (x.selected ? n + 1 : n), 0);
-      if (selectedCount > 1 && node.selected) return;
-
-      const zoom = typeof rf.getZoom === 'function' ? rf.getZoom() : 1;
-      const thresholdFlow = threshold / (zoom || 1);
-
-      const neighbors = nodes.filter(
-        (n) => n.id !== node.id && !n.hidden && !n.parentNode
-      );
-      if (neighbors.length === 0) return;
-
-      const { position, snapped } = computeSnap(
-        { id: node.id, position: node.position, width: node.width, height: node.height },
-        neighbors.map((n) => ({ position: n.position, width: n.width, height: n.height })),
-        { grid, threshold: thresholdFlow, gridEnabled }
-      );
-
-      if (!snapped) return;
-      if (position.x === node.position.x && position.y === node.position.y) return;
-
-      rf.setNodes((nds) =>
-        nds.map((n) => (n.id === node.id ? { ...n, position } : n))
-      );
+      if (!enabled) return;
+      applySnap(rf, node, { grid, threshold, gridEnabled });
     },
     [enabled, rf, grid, threshold, gridEnabled]
   );
@@ -236,6 +254,33 @@ export function useCanvasSnapping(
   // Guides clear themselves (the store-reading overlay renders nothing once the
   // drag flag is off); nothing to tear down here, but the handler is exposed so
   // canvases can wire the full onNodeDrag/onNodeDragStop lifecycle uniformly.
+  const onNodeDragStop = useCallback((_event?: unknown, _node?: Node) => {
+    /* no-op: overlay is store-driven; positions persist via onNodesChange */
+  }, []);
+
+  return { onNodeDrag, onNodeDragStop };
+}
+
+/**
+ * Ref-based variant for canvases that render <ReactFlow> in the *same*
+ * component as <ReactFlowProvider> (so `useReactFlow` context isn't available at
+ * that component's top level) but hold the instance from `onInit`. Pass a getter
+ * returning the ReactFlow instance (or null before init).
+ */
+export function useCanvasSnappingRef(
+  getInstance: () => SnapInstance | null | undefined,
+  opts: UseCanvasSnappingOptions = {}
+): UseCanvasSnappingResult {
+  const { grid = 8, threshold = 6, enabled = true, gridEnabled = true } = opts;
+
+  const onNodeDrag = useCallback(
+    (_event: unknown, node: Node) => {
+      if (!enabled) return;
+      applySnap(getInstance(), node, { grid, threshold, gridEnabled });
+    },
+    [enabled, getInstance, grid, threshold, gridEnabled]
+  );
+
   const onNodeDragStop = useCallback((_event?: unknown, _node?: Node) => {
     /* no-op: overlay is store-driven; positions persist via onNodesChange */
   }, []);

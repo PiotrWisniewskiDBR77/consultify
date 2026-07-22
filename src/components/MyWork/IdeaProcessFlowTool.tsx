@@ -65,7 +65,9 @@ import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
+import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
@@ -393,6 +395,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const pendingViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
+
+  // Z14: neighbour-edge magnetic snapping while dragging. Grid is left to
+  // ReactFlow's native snapToGrid (snapGrid 16px), so gridEnabled=false here.
+  const getSnapInstance = useCallback(() => reactFlowInstanceRef.current, []);
+  const { onNodeDrag: onSnapNodeDrag, onNodeDragStop: onSnapNodeDragStop } = useCanvasSnappingRef(
+    getSnapInstance,
+    { enabled: !locked, threshold: 6, gridEnabled: false }
+  );
 
   const toggleInternalFullscreen = useCallback(() => {
     if (!flowContainerRef.current) return;
@@ -2767,6 +2777,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onNodesChange={locked ? undefined : onNodesChange}
               onEdgesChange={locked ? undefined : onEdgesChange}
               onConnect={onConnect}
+              onNodeDrag={locked ? undefined : onSnapNodeDrag}
+              onNodeDragStop={locked ? undefined : onSnapNodeDragStop}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               // react-flow v11 prop names (v12 renamed these to edgesReconnectable/onReconnect).
@@ -2860,6 +2872,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 onFullscreenToggle={onFullscreenToggle}
                 isFullscreen={isFullscreen}
               />
+              {!locked && <CanvasSnapGuides threshold={6} />}
             </ReactFlow>
           </ReactFlowProvider>
 
