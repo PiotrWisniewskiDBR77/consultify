@@ -943,7 +943,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           {activeViewName && (
             <>
               <ChevronRight className="h-3 w-3 shrink-0" />
-              <span className="text-c-accent truncate max-w-[140px]" title={activeViewName}>
+              <span className="text-c-text truncate max-w-[140px]" title={activeViewName}>
                 {activeViewName}
               </span>
             </>
@@ -989,7 +989,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
                   }}
                   className={`flex h-10 w-10 items-center justify-center rounded-lg border text-c-text-muted transition-colors ${
                     active
-                      ? 'border-c-accent bg-c-accent-soft text-c-accent'
+                      ? 'border-c-border bg-c-surface-raised text-c-text'
                       : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
                   }`}
                 >
@@ -1017,7 +1017,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           }}
           className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-c-text-secondary disabled:opacity-40"
         >
-          <Plus className="h-5 w-5 text-c-accent" />
+          <Plus className="h-5 w-5 text-c-text-secondary" />
           {t('ideas.table.viewRouter.record', 'Record')}
         </button>
         <button
@@ -1035,7 +1035,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           type="button"
           onClick={() => setMobileViewPickerOpen((o) => !o)}
           className={`flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium ${
-            mobileViewPickerOpen ? 'text-c-accent' : 'text-c-text-secondary'
+            mobileViewPickerOpen ? 'text-c-text' : 'text-c-text-secondary'
           }`}
         >
           <Layout className="h-5 w-5" />
