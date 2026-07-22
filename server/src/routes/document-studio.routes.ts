@@ -54,6 +54,10 @@
  *     Body: { reason? }
  *     Returns: { template }
  *
+ *   PATCH /api/document-studio/templates/:templateId/structure
+ *     Body: { sections: TemplateSectionBlueprint[] }  (draft-only, author edit)
+ *     Returns: { template }
+ *
  *   GET  /api/document-studio/templates/:templateId/audit
  *     Returns: { auditEntries }
  *
@@ -351,6 +355,7 @@ import {
   listTemplates,
   recordTemplateFeedback,
   recordTemplateUsage,
+  reviseTemplateStructure,
 } from '../services/documentStudio/documentTemplateService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
@@ -942,6 +947,58 @@ router.post(
         });
       }
       const status = message === 'template_not_found' ? 404 : 400;
+      res.status(status).json({ error: message });
+    }
+  })
+);
+
+// C1 — author manual structure editor. Persists structural edits
+// (add/remove/reorder/rename) to a DRAFT template's section blueprint. Unlike
+// the LLM refiner (purpose-rewrite only), this accepts full structural change
+// because the caller is the template author. Draft-only; approved/deprecated
+// templates stay immutable.
+router.patch(
+  '/templates/:templateId/structure',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const templateId = String(req.params.templateId || '');
+    if (!templateId) {
+      res.status(400).json({ error: 'templateId is required' });
+      return;
+    }
+    const sections = req.body?.sections;
+    if (!Array.isArray(sections)) {
+      res.status(400).json({ error: 'sections array is required' });
+      return;
+    }
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      const template = reviseTemplateStructure({
+        templateId,
+        organizationId,
+        userId,
+        sections,
+      });
+      res.json({ template });
+    } catch (err) {
+      const rawMessage = err instanceof Error ? err.message : 'template_revise_failed';
+      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'template_revise_failed';
+      if (message !== rawMessage) {
+        logger.error('[DocumentStudio] template structure revise failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+      }
+      const status =
+        message === 'template_not_found'
+          ? 404
+          : message === 'template_not_draft'
+            ? 409
+            : 400;
       res.status(status).json({ error: message });
     }
   })
