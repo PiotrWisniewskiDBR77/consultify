@@ -265,6 +265,22 @@ const STATUS_CONFIG = {
   },
 };
 
+// D-B (2026-07-22): domain status → Menu 1 status-pill tone (NModeHeader
+// statusTone, tokeny c-*). Zastępuje nagą kropkę `statusDotColor`. Stany robocze
+// (oczekująca/eskalowana) = 'review' (c-info); odroczona = 'neutral'; werdykty
+// finalne mapują na 'approved'/'rejected'. Etykieta tekstowa bierze się z
+// STATUS_CONFIG[status].label (już zlokalizowana pl/en) — brak surowych kluczy.
+const STATUS_TONE: Record<
+  keyof typeof STATUS_CONFIG,
+  'draft' | 'review' | 'approved' | 'rejected' | 'neutral'
+> = {
+  pending: 'review',
+  approved: 'approved',
+  rejected: 'rejected',
+  deferred: 'neutral',
+  escalated: 'review',
+};
+
 const PRIORITY_CONFIG = {
   low: {
     label: { en: 'Low', pl: 'Niski' },
@@ -889,6 +905,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // nie zapisana, z definicji pusta) → EDIT od razu. Drugi wyjątek (decyzja
   // właśnie utworzona i pusta, wiek < 2 min) — patrz loadDecision.
   const [readMode, setReadMode] = useState<boolean>(() => Boolean(decisionId));
+  // Init: nowa decyzja (brak decisionId) → EDIT od razu. Istniejąca startuje na
+  // READ, a `loadDecision` koryguje wg reguły stanu D-A (2026-07-22): stan roboczy
+  // → Edycja, werdykt finalny (zatwierdzona/odrzucona) → Podgląd.
   // Human edit on a card demotes an AI-draft/done card to `edited` (badge switch).
   const markCardEdited = useCallback((key: DecisionCardKey) => {
     setCardStates((prev) =>
@@ -1818,7 +1837,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const decision = await Api.getDecision(id);
       setTitle(decision.title || '');
       setDescription(decision.description || '');
-      setStatus(decision.status?.toLowerCase() || 'pending');
+      const normalizedStatus = (decision.status?.toLowerCase() ||
+        'pending') as keyof typeof STATUS_CONFIG;
+      setStatus(normalizedStatus);
+      // D-A (2026-07-22): tryb otwarcia zależny od stanu. Decyzja z finalnym
+      // werdyktem (zatwierdzona/odrzucona) = czysta prezentacja → Podgląd.
+      // Każdy stan roboczy (oczekująca/eskalowana/odroczona) = warsztat → Edycja,
+      // gotowa do pisania. Zastępuje wadę „martwej karty" (zawsze Podgląd).
+      const isFinalizedDecision =
+        normalizedStatus === 'approved' || normalizedStatus === 'rejected';
+      setReadMode(isFinalizedDecision);
       setWorkflowStatus(
         ['proposed', 'review', 'approve', 'published'].includes(
           String(decision.workflowStatus || '').toLowerCase()
@@ -5285,8 +5313,9 @@ Use userId only from this list:
               onChat={handleOpenChat}
               showChatButton
               onClose={onClose}
-              draftSavedLabel={draftSavedLabel || undefined}
-              statusDotColor={statusConfig.color}
+              lastSavedLabel={draftSavedLabel || undefined}
+              statusLabel={statusConfig.label[isPolish ? 'pl' : 'en']}
+              statusTone={STATUS_TONE[status] || 'neutral'}
               presentationMode={presentationMode}
               onPresentationModeChange={setPresentationMode}
               buildArtifactCode={buildArtifactCode}
