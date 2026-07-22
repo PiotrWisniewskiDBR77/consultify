@@ -4398,7 +4398,7 @@ Return ONLY the final comment text.`;
     ];
 
     return (
-      <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+      <div className="h-full overflow-y-auto bg-gradient-to-br from-c-bg via-white to-c-bg dark:from-c-bg dark:via-c-surface dark:to-c-bg">
         <div className="p-6">
           <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
@@ -4471,7 +4471,7 @@ Return ONLY the final comment text.`;
                       value={blockedReason}
                       onChange={(e) => setBlockedReason(e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-navy-800/60 border border-danger-200/40 dark:border-danger-500/20 text-slate-700 dark:text-slate-300 placeholder-danger-300 dark:placeholder-danger-500/50 focus:outline-none focus:border-danger-400 resize-none"
+                      className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-c-surface/60 border border-danger-200/40 dark:border-danger-500/20 text-c-text dark:text-c-text placeholder-danger-300 dark:placeholder-danger-500/50 focus:outline-none focus:border-danger-400 resize-none"
                       placeholder={t(
                         'myWork.taskDetail.describeBlockingReason',
                         'Describe blocking reason...'
@@ -4486,7 +4486,7 @@ Return ONLY the final comment text.`;
                     {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
                     {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
                     {sourceType === 'decision' && <Scale size={14} className="text-blue-500" />}
-                    <span className="text-slate-600 dark:text-slate-300">
+                    <span className="text-c-text-secondary dark:text-c-text">
                       {sourceType === 'idea'
                         ? t('myWork.taskDetail.createdFromIdea', 'Created from Idea')
                         : sourceType === 'notebook'
@@ -4518,7 +4518,7 @@ Return ONLY the final comment text.`;
                 {/* ── Task Action Bar ──────────────────────────────── */}
                 {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
                 {!readMode && (
-                  <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
+                  <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-c-surface/80 backdrop-blur-xl border border-c-border dark:border-c-border/60">
                     <div className="flex items-center gap-2">
                       {/* Start/Resume, Send to Review and Reopen are now the M1 primary
                           CTA (NModeHeader.primaryAction, computed in taskPrimaryAction
@@ -4580,7 +4580,7 @@ Return ONLY the final comment text.`;
                               )
                             );
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border/60 dark:border-c-border/60 text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                         >
                           <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
                         </button>
@@ -4818,13 +4818,13 @@ Return ONLY the final comment text.`;
             />
             <div className={`${governanceModalClass} min-h-[380px]`}>
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <h4 className="text-sm font-semibold text-c-text dark:text-c-text">
                   {editingStakeholderId === '__new__'
                     ? t('myWork.taskDetail.addRACIPerson', 'Add RACI person')
                     : t('myWork.taskDetail.editRACIPerson', 'Edit RACI person')}
                 </h4>
                 <button
-                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                  className="p-1 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text"
                   onClick={() => {
                     setEditingStakeholderId(null);
                     setStakeholderDraft(null);
@@ -4840,7 +4840,7 @@ Return ONLY the final comment text.`;
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.person2', 'Person')}
                   <select
                     value={stakeholderDraft.userId}
@@ -4855,7 +4855,7 @@ Return ONLY the final comment text.`;
                         userEmail: selected?.email || stakeholderDraft.userEmail,
                       });
                     }}
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   >
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
@@ -4864,7 +4864,7 @@ Return ONLY the final comment text.`;
                     ))}
                   </select>
                 </label>
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.role2', 'Role')}
                   <select
                     value={stakeholderDraft.role}
@@ -4874,7 +4874,7 @@ Return ONLY the final comment text.`;
                         role: e.target.value as StakeholderRole,
                       })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   >
                     <option value="responsible">
                       {t('myWork.taskDetail.responsible2', 'Responsible')}
@@ -4890,15 +4890,15 @@ Return ONLY the final comment text.`;
                 </label>
               </div>
               <div className="space-y-2 flex-1">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.notificationChannels', 'Notification channels')}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <div className="rounded-xl border border-c-border dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.coreChannels', 'Core channels')}
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex flex-wrap gap-2 text-xs text-c-text-secondary dark:text-c-text">
                       {[
                         {
                           key: 'enabled',
@@ -4944,18 +4944,18 @@ Return ONLY the final comment text.`;
                           key={channel.key}
                           type="button"
                           onClick={channel.toggle}
-                          className={`${channelChipClass} ${channel.active ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${channel.active ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-c-border/70 text-c-text-secondary hover:border-c-border-strong/80'}`}
                         >
                           {channel.label}
                         </button>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <div className="rounded-xl border border-c-border dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.integrationChannels', 'Integration channels')}
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex flex-wrap gap-2 text-xs text-c-text-secondary dark:text-c-text">
                       {integrationChannelCatalog.map((channel) => {
                         const list =
                           stakeholderDraft.notificationSettings.integrationChannels || [];
@@ -4978,7 +4978,7 @@ Return ONLY the final comment text.`;
                                 },
                               });
                             }}
-                            className={`${channelChipClass} ${selected ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${selected ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-c-border/70 text-c-text-secondary hover:border-c-border-strong/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}
@@ -4988,7 +4988,7 @@ Return ONLY the final comment text.`;
                     </div>
                   </div>
                 </div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                   {t('myWork.taskDetail.syncTargets', 'Sync targets')}
                   <input
                     value={(stakeholderDraft.notificationSettings.syncTargets || []).join(', ')}
@@ -5004,7 +5004,7 @@ Return ONLY the final comment text.`;
                         },
                       })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                     placeholder={t(
                       'decisions.detail.integrations.placeholderOps',
                       'slack:#ops, jira:DRD'
@@ -5018,7 +5018,7 @@ Return ONLY the final comment text.`;
                     setEditingStakeholderId(null);
                     setStakeholderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                  className="px-3 py-1.5 rounded-md text-xs border border-c-border/60 dark:border-c-border text-c-text-secondary"
                 >
                   {t('myWork.taskDetail.cancel', 'Cancel')}
                 </button>
@@ -5068,7 +5068,7 @@ Return ONLY the final comment text.`;
             />
             <div className={`${governanceModalClass} min-h-[380px]`}>
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <h4 className="text-sm font-semibold text-c-text dark:text-c-text">
                   {editingReminderId === '__new__'
                     ? t('myWork.taskDetail.addReminder2', 'Add reminder')
                     : t('myWork.taskDetail.editReminder', 'Edit reminder')}
@@ -5082,7 +5082,7 @@ Return ONLY the final comment text.`;
                     <Sparkles size={12} /> AI
                   </button>
                   <button
-                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                    className="p-1 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text"
                     onClick={() => {
                       setEditingReminderId(null);
                       setReminderDraft(null);
@@ -5099,7 +5099,7 @@ Return ONLY the final comment text.`;
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.type3', 'Type')}
                   <select
                     value={reminderDraft.type}
@@ -5109,7 +5109,7 @@ Return ONLY the final comment text.`;
                         type: e.target.value as 'before_due' | 'after_due',
                       })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   >
                     <option value="before_due">
                       {t('myWork.taskDetail.beforeDue2', 'Before due')}
@@ -5119,7 +5119,7 @@ Return ONLY the final comment text.`;
                     </option>
                   </select>
                 </label>
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.days2', 'Days')}
                   <input
                     type="number"
@@ -5128,18 +5128,18 @@ Return ONLY the final comment text.`;
                     onChange={(e) =>
                       setReminderDraft({ ...reminderDraft, days: Number(e.target.value) || 0 })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   />
                 </label>
               </div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                 {t('myWork.taskDetail.recipients2', 'Recipients')}
                 <select
                   value={reminderDraft.recipients}
                   onChange={(e) =>
                     setReminderDraft({ ...reminderDraft, recipients: e.target.value as any })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                 >
                   <option value="both">{t('myWork.taskDetail.both', 'Both')}</option>
                   <option value="stakeholders">
@@ -5149,7 +5149,7 @@ Return ONLY the final comment text.`;
                 </select>
               </label>
               <div className="space-y-3">
-                <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                <label className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text">
                   <input
                     type="checkbox"
                     checked={reminderDraft.enabled}
@@ -5160,8 +5160,8 @@ Return ONLY the final comment text.`;
                   {t('myWork.taskDetail.ruleEnabled', 'Rule enabled')}
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <div className="rounded-xl border border-c-border dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.coreChannels2', 'Core channels')}
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -5200,7 +5200,7 @@ Return ONLY the final comment text.`;
                                     : coreChannels.includes('email'),
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-c-border/70 text-c-text-secondary hover:border-c-border-strong/80'}`}
                           >
                             {channel.label}
                           </button>
@@ -5208,8 +5208,8 @@ Return ONLY the final comment text.`;
                       })}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <div className="rounded-xl border border-c-border dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                       {t('myWork.taskDetail.integrationChannels2', 'Integration channels')}
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -5239,7 +5239,7 @@ Return ONLY the final comment text.`;
                                 },
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-c-border/70 text-c-text-secondary hover:border-c-border-strong/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}
@@ -5249,7 +5249,7 @@ Return ONLY the final comment text.`;
                     </div>
                   </div>
                 </div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                   {t('myWork.taskDetail.syncTargets2', 'Sync targets')}
                   <input
                     value={ensureDeliveryConfig(
@@ -5268,7 +5268,7 @@ Return ONLY the final comment text.`;
                         },
                       })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                     placeholder={t(
                       'decisions.detail.integrations.placeholderDelivery',
                       'slack:#delivery, jira:PROJ, webhook:ops'
@@ -5276,13 +5276,13 @@ Return ONLY the final comment text.`;
                   />
                 </label>
               </div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                 {t('myWork.taskDetail.message2', 'Message')}
                 <textarea
                   value={reminderDraft.message || ''}
                   onChange={(e) => setReminderDraft({ ...reminderDraft, message: e.target.value })}
                   rows={3}
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                 />
               </label>
               <div className="flex justify-end gap-2">
@@ -5291,7 +5291,7 @@ Return ONLY the final comment text.`;
                     setEditingReminderId(null);
                     setReminderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                  className="px-3 py-1.5 rounded-md text-xs border border-c-border/60 dark:border-c-border text-c-text-secondary"
                 >
                   {t('myWork.taskDetail.cancel2', 'Cancel')}
                 </button>
@@ -5340,7 +5340,7 @@ Return ONLY the final comment text.`;
             />
             <div className={governanceModalClass}>
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <h4 className="text-sm font-semibold text-c-text dark:text-c-text">
                   {editingEscalationId === '__new__'
                     ? t('myWork.taskDetail.addEscalationRule', 'Add escalation rule')
                     : t('myWork.taskDetail.editEscalationRule', 'Edit escalation rule')}
@@ -5354,7 +5354,7 @@ Return ONLY the final comment text.`;
                     <Sparkles size={12} /> AI
                   </button>
                   <button
-                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                    className="p-1 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text"
                     onClick={() => {
                       setEditingEscalationId(null);
                       setEscalationDraft(null);
@@ -5371,7 +5371,7 @@ Return ONLY the final comment text.`;
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.warningThresholdDays', 'Warning threshold (days)')}
                   <input
                     type="number"
@@ -5383,10 +5383,10 @@ Return ONLY the final comment text.`;
                         warningDays: Number(e.target.value) || 0,
                       })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   />
                 </label>
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.criticalThresholdDays', 'Critical threshold (days)')}
                   <input
                     type="number"
@@ -5398,10 +5398,10 @@ Return ONLY the final comment text.`;
                         criticalDays: Number(e.target.value) || 0,
                       })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   />
                 </label>
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.escalateAfterDays', 'Escalate after (days)')}
                   <input
                     type="number"
@@ -5413,10 +5413,10 @@ Return ONLY the final comment text.`;
                         afterDays: Number(e.target.value) || 1,
                       })
                     }
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   />
                 </label>
-                <label className="text-xs text-slate-500 dark:text-slate-400">
+                <label className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   {t('myWork.taskDetail.escalateTo2', 'Escalate to')}
                   <select
                     value={escalationDraft.escalateTo}
@@ -5430,7 +5430,7 @@ Return ONLY the final comment text.`;
                           : escalationDraft.escalateToName,
                       });
                     }}
-                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   >
                     <option value="">{t('myWork.taskDetail.select', 'Select')}</option>
                     {users.map((u) => (
@@ -5441,7 +5441,7 @@ Return ONLY the final comment text.`;
                   </select>
                 </label>
               </div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                 {t('myWork.taskDetail.escalationMode', 'Escalation mode')}
                 <select
                   value={escalationDraft.escalationMode}
@@ -5451,7 +5451,7 @@ Return ONLY the final comment text.`;
                       escalationMode: e.target.value as EscalationMode,
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                 >
                   {escalationModeOptions.map((mode) => (
                     <option key={mode.value} value={mode.value}>
@@ -5460,7 +5460,7 @@ Return ONLY the final comment text.`;
                   ))}
                 </select>
               </label>
-              <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+              <label className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text">
                 <input
                   type="checkbox"
                   checked={escalationDraft.enabled}
@@ -5471,8 +5471,8 @@ Return ONLY the final comment text.`;
                 {t('myWork.taskDetail.ruleEnabled2', 'Rule enabled')}
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="rounded-xl border border-c-border dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface/50 p-3 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                     {t('myWork.taskDetail.coreChannels3', 'Core channels')}
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -5500,7 +5500,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-c-border/70 text-c-text-secondary hover:border-c-border-strong/80'}`}
                         >
                           {channel.label}
                         </button>
@@ -5508,8 +5508,8 @@ Return ONLY the final comment text.`;
                     })}
                   </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="rounded-xl border border-c-border dark:border-c-border/60 bg-c-surface/70 dark:bg-c-surface/50 p-3 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary">
                     {t('myWork.taskDetail.integrationChannels3', 'Integration channels')}
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -5536,7 +5536,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-c-border-strong text-c-text bg-state-selected' : 'border-c-border/70 text-c-text-secondary hover:border-c-border-strong/80'}`}
                           title={channel.scope}
                         >
                           {channel.label}
@@ -5546,7 +5546,7 @@ Return ONLY the final comment text.`;
                   </div>
                 </div>
               </div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                 {t('myWork.taskDetail.syncTargets3', 'Sync targets')}
                 <input
                   value={ensureDeliveryConfig(escalationDraft.delivery).syncTargets.join(', ')}
@@ -5562,14 +5562,14 @@ Return ONLY the final comment text.`;
                       },
                     })
                   }
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                   placeholder={t(
                     'decisions.detail.integrations.placeholderIncident',
                     'slack:#incident, jira:OPS, webhook:oncall'
                   )}
                 />
               </label>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+              <label className="text-xs text-c-text-secondary dark:text-c-text-secondary block">
                 {t('myWork.taskDetail.escalationMessage', 'Escalation message')}
                 <textarea
                   value={escalationDraft.message || ''}
@@ -5577,7 +5577,7 @@ Return ONLY the final comment text.`;
                     setEscalationDraft({ ...escalationDraft, message: e.target.value })
                   }
                   rows={3}
-                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border"
                 />
               </label>
               <div className="flex justify-end gap-2">
@@ -5586,7 +5586,7 @@ Return ONLY the final comment text.`;
                     setEditingEscalationId(null);
                     setEscalationDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                  className="px-3 py-1.5 rounded-md text-xs border border-c-border/60 dark:border-c-border text-c-text-secondary"
                 >
                   {t('myWork.taskDetail.cancel3', 'Cancel')}
                 </button>
@@ -5631,11 +5631,11 @@ Return ONLY the final comment text.`;
   // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/30 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    <div className="h-full flex flex-col bg-gradient-to-br from-c-bg via-c-bg to-blue-50/30 dark:from-c-bg dark:via-c-surface dark:to-c-bg">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/5 to-blue-500/5 dark:from-blue-500/10 dark:to-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-primary-500/5 to-crimson-500/5 dark:from-primary-500/10 dark:to-crimson-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-c-border/5 to-c-border/5 dark:from-c-border/10 dark:to-c-border/10 rounded-full blur-3xl" />
       </div>
 
       {/* Content - Two columns */}
@@ -5645,14 +5645,14 @@ Return ONLY the final comment text.`;
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-primary-50/30 to-white/80 dark:from-navy-900/80 dark:via-primary-900/20 dark:to-navy-900/80 backdrop-blur-xl rounded-2xl border border-primary-200/40 dark:border-primary-500/20 shadow-lg shadow-primary-500/10 dark:shadow-primary-500/20 overflow-hidden ring-1 ring-primary-500/10 dark:ring-primary-400/10"
+            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-c-surface/30 to-white/80 dark:from-c-surface/80 dark:via-c-surface/20 dark:to-c-surface/80 backdrop-blur-xl rounded-2xl border border-c-border/40 dark:border-c-border/20 shadow-lg shadow-c-border-strong/10 dark:shadow-c-border-strong/20 overflow-hidden ring-1 ring-c-border/10 dark:ring-c-border/10"
           >
             <div className="flex items-center gap-4 px-5 py-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 -ml-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition"
+                className="p-2 -ml-2 rounded-xl text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-white hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/80 transition"
               >
                 <ChevronLeft size={20} />
               </motion.button>
@@ -5665,7 +5665,7 @@ Return ONLY the final comment text.`;
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+                  className="flex-1 text-xl font-bold bg-transparent text-c-text dark:text-white placeholder-c-text-muted focus:outline-none"
                   placeholder={t('myWork.taskDetail.placeholder3', 'Task title...')}
                   autoFocus={!taskId}
                 />
@@ -5687,7 +5687,7 @@ Return ONLY the final comment text.`;
                   whileTap={{ scale: 0.98 }}
                   onClick={() => void handleSave()}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-c-surface/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   title={t('myWork.taskDetail.title16', 'Save')}
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -5698,7 +5698,7 @@ Return ONLY the final comment text.`;
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleOpenChat}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-primary-500/40 dark:border-primary-400/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 dark:hover:bg-primary-500/10 text-sm font-semibold transition shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-c-surface/50 border border-c-info/40 dark:border-c-info/30 text-c-info dark:text-c-info hover:bg-c-info/10 dark:hover:bg-c-info/10 text-sm font-semibold transition shadow-sm"
                   title={t('myWork.taskDetail.title17', 'Open task chat')}
                 >
                   <MessageSquare size={16} />
@@ -5713,23 +5713,23 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
             >
               <div
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors cursor-pointer"
                 onClick={() => toggleSection('description')}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
                     <FileText size={18} className="text-blue-500 dark:text-blue-400" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.taskDescription2', 'Task description')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {description && (
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                       ✓
                     </span>
                   )}
@@ -5747,7 +5747,7 @@ Return ONLY the final comment text.`;
                           generateAIDescription();
                         }}
                         disabled={isGeneratingDescription}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info dark:text-c-info hover:bg-c-info/20 dark:hover:bg-c-info/30 text-xs font-medium transition disabled:opacity-50"
                         title={t('myWork.taskDetail.title18', 'Generate AI description')}
                       >
                         {isGeneratingDescription ? (
@@ -5763,7 +5763,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('description') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </motion.div>
                 </div>
               </div>
@@ -5774,14 +5774,14 @@ Return ONLY the final comment text.`;
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    className="border-t border-c-border dark:border-c-border overflow-hidden"
                   >
                     <div className="p-4">
                       <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
-                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition"
+                        className="w-full px-3 py-2.5 rounded-xl bg-c-surface/80 dark:bg-c-surface/80 border border-c-border dark:border-c-border/80 text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition"
                         placeholder={t(
                           'myWork.taskDetail.describeTaskDetails',
                           'Describe task details...'
@@ -5798,23 +5798,23 @@ Return ONLY the final comment text.`;
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
             >
               <div
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors cursor-pointer"
                 onClick={() => toggleSection('expectedOutcome')}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/20 dark:to-blue-500/20">
                     <Target size={18} className="text-emerald-500 dark:text-emerald-400" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.expectedOutcome3', 'Expected Outcome')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {expectedOutcome && (
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                       ✓
                     </span>
                   )}
@@ -5832,7 +5832,7 @@ Return ONLY the final comment text.`;
                           generateAIOutcome();
                         }}
                         disabled={isGeneratingOutcome}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info dark:text-c-info hover:bg-c-info/20 dark:hover:bg-c-info/30 text-xs font-medium transition disabled:opacity-50"
                         title={t('myWork.taskDetail.title19', 'Generate AI outcome')}
                       >
                         {isGeneratingOutcome ? (
@@ -5848,7 +5848,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('expectedOutcome') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </motion.div>
                 </div>
               </div>
@@ -5859,14 +5859,14 @@ Return ONLY the final comment text.`;
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    className="border-t border-c-border dark:border-c-border overflow-hidden"
                   >
                     <div className="p-4">
                       <textarea
                         value={expectedOutcome}
                         onChange={(e) => setExpectedOutcome(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition"
+                        className="w-full px-3 py-2.5 rounded-xl bg-c-surface/80 dark:bg-c-surface/80 border border-c-border dark:border-c-border/80 text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition"
                         placeholder={t(
                           'myWork.taskDetail.whatShouldBeThe',
                           'What should be the outcome of this task?'
@@ -5926,23 +5926,23 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
             >
               <div
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors cursor-pointer"
                 onClick={() => toggleSection('relatedDecisions')}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
                     <Scale size={18} className="text-amber-500 dark:text-amber-400" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.relatedDecisions', 'Related Decisions')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {relatedDecisions.length > 0 && (
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                       {relatedDecisions.length}
                     </span>
                   )}
@@ -5955,7 +5955,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('relatedDecisions') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </motion.div>
                 </div>
               </div>
@@ -5966,22 +5966,22 @@ Return ONLY the final comment text.`;
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    className="border-t border-c-border dark:border-c-border overflow-hidden"
                   >
                     <div className="p-4 space-y-3">
                       {/* Related decisions list */}
                       {relatedDecisions.length === 0 &&
                       !showCreateDecision &&
                       !showDecisionSearch ? (
-                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                        <div className="text-center py-6 border-2 border-dashed border-c-border dark:border-c-border rounded-xl">
                           <Scale
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
+                            className="mx-auto mb-2 text-c-text dark:text-c-text-secondary"
                           />
-                          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                          <p className="text-sm text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                             {t('myWork.taskDetail.noRelatedDecisions', 'No related decisions')}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
+                          <p className="text-xs text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary mt-1">
                             {t(
                               'myWork.taskDetail.linkExistingOrCreate',
                               'Link existing or create new decision'
@@ -5995,7 +5995,7 @@ Return ONLY the final comment text.`;
                               pending: 'bg-amber-500',
                               approved: 'bg-emerald-500',
                               rejected: 'bg-danger-500',
-                              deferred: 'bg-slate-500',
+                              deferred: 'bg-c-border-strong',
                               escalated: 'bg-amber-500',
                             };
                             const statusLabels: Record<string, { en: string; pl: string }> = {
@@ -6022,16 +6022,16 @@ Return ONLY the final comment text.`;
                                 className={`p-3 rounded-xl border transition ${
                                   isBlocking
                                     ? 'bg-amber-50/50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
-                                    : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-600'
+                                    : 'bg-c-surface/50 dark:bg-c-surface/50 border-c-border dark:border-c-border'
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex items-start gap-3 min-w-0 flex-1">
                                     <div
-                                      className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${statusColors[rel.decisionStatus] || 'bg-slate-400'}`}
+                                      className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${statusColors[rel.decisionStatus] || 'bg-c-border-strong'}`}
                                     />
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                      <p className="text-sm font-medium text-c-text dark:text-c-text">
                                         {rel.decisionTitle}
                                       </p>
                                       <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -6039,14 +6039,14 @@ Return ONLY the final comment text.`;
                                           className={`text-xs px-1.5 py-0.5 rounded ${
                                             isBlocking
                                               ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                                              : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                                              : 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary'
                                           }`}
                                         >
                                           {isPolish
                                             ? relationLabels[rel.relationshipType]?.pl
                                             : relationLabels[rel.relationshipType]?.en}
                                         </span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                        <span className="text-xs text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                                           {isPolish
                                             ? statusLabels[rel.decisionStatus]?.pl
                                             : statusLabels[rel.decisionStatus]?.en}
@@ -6063,7 +6063,7 @@ Return ONLY the final comment text.`;
                                     {onOpenDecision && (
                                       <button
                                         onClick={() => onOpenDecision(rel.decisionId)}
-                                        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition"
+                                        className="p-1.5 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary hover:text-blue-500 transition"
                                         title={t('myWork.taskDetail.title20', 'Open decision')}
                                       >
                                         <ExternalLink size={14} />
@@ -6093,7 +6093,7 @@ Return ONLY the final comment text.`;
                                           );
                                         }
                                       }}
-                                      className="p-1.5 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition"
+                                      className="p-1.5 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/20 text-c-text-secondary dark:text-c-text-secondary hover:text-danger-500 transition"
                                     >
                                       <X size={14} />
                                     </button>
@@ -6121,7 +6121,7 @@ Return ONLY the final comment text.`;
 
                           {/* Decision title */}
                           <div>
-                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                               {t('myWork.taskDetail.decisionTitle', 'Decision title *')}
                             </label>
                             <input
@@ -6132,14 +6132,14 @@ Return ONLY the final comment text.`;
                                 'myWork.taskDetail.eGProjectBudget',
                                 'E.g. Project budget approval'
                               )}
-                              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-c-surface border border-c-border dark:border-c-border text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none focus:border-amber-400"
                               autoFocus
                             />
                           </div>
 
                           {/* Decision description */}
                           <div>
-                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                               {t(
                                 'myWork.taskDetail.problemDescriptionContext',
                                 'Problem description / context'
@@ -6153,13 +6153,13 @@ Return ONLY the final comment text.`;
                                 'Describe the problem requiring decision...'
                               )}
                               rows={2}
-                              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400 resize-none"
+                              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-c-surface border border-c-border dark:border-c-border text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none focus:border-amber-400 resize-none"
                             />
                           </div>
 
                           {/* Relationship type */}
                           <div>
-                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                               {t(
                                 'myWork.taskDetail.relationshipWithTask',
                                 'Relationship with task'
@@ -6206,7 +6206,7 @@ Return ONLY the final comment text.`;
                                   className={`px-3 py-1.5 text-xs rounded-lg border transition ${
                                     newDecisionRelationType === type.key
                                       ? 'bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-300'
-                                      : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:border-amber-300'
+                                      : 'bg-white dark:bg-c-surface border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary hover:border-amber-300'
                                   }`}
                                   title={isPolish ? type.desc.pl : type.desc.en}
                                 >
@@ -6329,7 +6329,7 @@ Return ONLY the final comment text.`;
                                 setNewDecisionTitle('');
                                 setNewDecisionDescription('');
                               }}
-                              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 transition"
+                              className="px-4 py-2.5 rounded-xl border border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition"
                             >
                               <span className="text-sm">
                                 {t('myWork.taskDetail.cancel4', 'Cancel')}
@@ -6338,7 +6338,7 @@ Return ONLY the final comment text.`;
                           </div>
 
                           {/* Info about full editor */}
-                          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 text-center">
+                          <p className="text-xs text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary text-center">
                             {t(
                               'myWork.taskDetail.decisionWillBeCreated',
                               'Decision will be created as draft. You can complete it in full editor.'
@@ -6357,7 +6357,7 @@ Return ONLY the final comment text.`;
                           <div className="relative">
                             <Search
                               size={16}
-                              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary dark:text-c-text-secondary"
                             />
                             <input
                               type="text"
@@ -6367,7 +6367,7 @@ Return ONLY the final comment text.`;
                                 'myWork.taskDetail.searchExistingDecisions',
                                 'Search existing decisions...'
                               )}
-                              className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                              className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none focus:border-amber-400"
                               autoFocus
                             />
                           </div>
@@ -6435,7 +6435,7 @@ Return ONLY the final comment text.`;
                                       setLinkingDecisionId(null);
                                     }
                                   }}
-                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <div
                                     className={`w-2 h-2 rounded-full ${
@@ -6443,10 +6443,10 @@ Return ONLY the final comment text.`;
                                         ? 'bg-amber-500'
                                         : decision.status === 'approved'
                                           ? 'bg-emerald-500'
-                                          : 'bg-slate-400'
+                                          : 'bg-c-border-strong'
                                     }`}
                                   />
-                                  <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                                  <span className="text-sm text-c-text dark:text-c-text truncate">
                                     {decision.title}
                                   </span>
                                 </button>
@@ -6456,7 +6456,7 @@ Return ONLY the final comment text.`;
                                 d.title.toLowerCase().includes(decisionSearchQuery.toLowerCase()) &&
                                 !relatedDecisions.some((r) => r.decisionId === d.id)
                             ).length === 0 && (
-                              <p className="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 py-4">
+                              <p className="text-center text-sm text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary py-4">
                                 {t(
                                   'myWork.taskDetail.noMatchingDecisions',
                                   'No matching decisions'
@@ -6470,7 +6470,7 @@ Return ONLY the final comment text.`;
                               setShowDecisionSearch(false);
                               setDecisionSearchQuery('');
                             }}
-                            className="w-full text-center text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
+                            className="w-full text-center text-xs text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-c-text py-1"
                           >
                             {t('myWork.taskDetail.cancel5', 'Cancel')}
                           </button>
@@ -6491,7 +6491,7 @@ Return ONLY the final comment text.`;
                           </button>
                           <button
                             onClick={() => setShowDecisionSearch(true)}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary hover:border-c-border-strong hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition"
                           >
                             <Link2 size={16} />
                             <span className="text-sm font-medium">
@@ -6544,30 +6544,30 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
             >
               <div
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors cursor-pointer"
                 onClick={() => toggleSection('checklist')}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20">
                     <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.checklist2', 'Checklist')}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   {checklist.length > 0 && (
                     <>
-                      <div className="w-20 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                      <div className="w-20 h-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised overflow-hidden">
                         <div
                           className="h-full bg-emerald-500 transition"
                           style={{ width: `${checklistProgress}%` }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                         {checklist.filter((c) => c.completed).length}/{checklist.length}
                       </span>
                     </>
@@ -6586,7 +6586,7 @@ Return ONLY the final comment text.`;
                           generateAIChecklist();
                         }}
                         disabled={isGeneratingChecklist}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info dark:text-c-info hover:bg-c-info/20 dark:hover:bg-c-info/30 text-xs font-medium transition disabled:opacity-50"
                         title={t('myWork.taskDetail.title21', 'Generate AI checklist')}
                       >
                         {isGeneratingChecklist ? (
@@ -6602,7 +6602,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('checklist') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </motion.div>
                 </div>
               </div>
@@ -6613,16 +6613,16 @@ Return ONLY the final comment text.`;
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    className="border-t border-c-border dark:border-c-border overflow-hidden"
                   >
                     <div className="p-4 space-y-2">
                       {checklist.length === 0 ? (
-                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                        <div className="text-center py-6 border-2 border-dashed border-c-border dark:border-c-border rounded-xl">
                           <CheckSquare
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
+                            className="mx-auto mb-2 text-c-text dark:text-c-text-secondary"
                           />
-                          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                          <p className="text-sm text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                             {t('myWork.taskDetail.noItems', 'No items')}
                           </p>
                           <button
@@ -6643,7 +6643,7 @@ Return ONLY the final comment text.`;
                                 onChange={(e) =>
                                   updateChecklistItem(item.id, { completed: e.target.checked })
                                 }
-                                className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-emerald-500 focus:ring-emerald-500"
+                                className="w-4 h-4 rounded border-c-border dark:border-c-border text-emerald-500 focus:ring-emerald-500"
                               />
                               <input
                                 type="text"
@@ -6652,15 +6652,15 @@ Return ONLY the final comment text.`;
                                   updateChecklistItem(item.id, { text: e.target.value })
                                 }
                                 placeholder={t('myWork.taskDetail.placeholder4', 'Enter item...')}
-                                className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${
+                                className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-c-border-strong dark:hover:border-c-border-strong focus:border-emerald-400 dark:focus:border-emerald-500 text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none transition-colors ${
                                   item.completed
-                                    ? 'line-through text-slate-500 dark:text-slate-400 dark:text-slate-500'
+                                    ? 'line-through text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary'
                                     : ''
                                 }`}
                               />
                               <button
                                 onClick={() => removeChecklistItem(item.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition"
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/20 text-c-text-secondary dark:text-c-text-secondary hover:text-danger-500 transition"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -6685,25 +6685,25 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
             >
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => toggleSection('activityLog')}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-slate-500/10 to-gray-500/10 dark:from-slate-500/20 dark:to-gray-500/20">
-                    <History size={18} className="text-slate-500 dark:text-slate-400" />
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-c-text-muted/10 to-gray-500/10 dark:from-c-text-muted/20 dark:to-gray-500/20">
+                    <History size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.activityLog', 'Activity Log')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {activityLog.length > 0 && (
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                       {activityLog.length}
                     </span>
                   )}
@@ -6711,7 +6711,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('activityLog') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </motion.div>
                 </div>
               </motion.button>
@@ -6722,23 +6722,23 @@ Return ONLY the final comment text.`;
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    className="border-t border-c-border dark:border-c-border overflow-hidden"
                   >
                     <div className="p-4 max-h-80 overflow-y-auto">
                       {activityLog.length === 0 ? (
-                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                        <div className="text-center py-6 border-2 border-dashed border-c-border dark:border-c-border rounded-xl">
                           <History
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
+                            className="mx-auto mb-2 text-c-text dark:text-c-text-secondary"
                           />
-                          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                          <p className="text-sm text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                             {t('myWork.taskDetail.noActivityYet', 'No activity yet')}
                           </p>
                         </div>
                       ) : (
                         <div className="relative">
                           {/* Timeline line */}
-                          <div className="absolute left-3 top-2 bottom-2 w-px bg-slate-200 dark:bg-navy-700" />
+                          <div className="absolute left-3 top-2 bottom-2 w-px bg-c-surface-raised dark:bg-c-surface-raised" />
 
                           <div className="space-y-4">
                             {activityLog.map((entry, index) => {
@@ -6776,13 +6776,13 @@ Return ONLY the final comment text.`;
                                   case 'comment':
                                     return 'bg-amber-500 text-white';
                                   case 'edit':
-                                    return 'bg-slate-500 text-slate-900 dark:text-white';
+                                    return 'bg-c-border-strong text-c-tag-foreground';
                                   case 'deadline':
                                     return 'bg-danger-500 text-white';
                                   case 'priority':
                                     return 'bg-amber-500 text-white';
                                   default:
-                                    return 'bg-slate-400 text-slate-900 dark:text-white';
+                                    return 'bg-c-border-strong text-c-tag-foreground';
                                 }
                               };
 
@@ -6797,15 +6797,15 @@ Return ONLY the final comment text.`;
 
                                   {/* Content */}
                                   <div className="flex-1 min-w-0 pb-2">
-                                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                                    <p className="text-sm text-c-text dark:text-c-text">
                                       {entry.description}
                                       {entry.oldValue && entry.newValue && (
-                                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                        <span className="text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                                           {' '}
                                           <span className="line-through">
                                             {entry.oldValue}
                                           </span> →{' '}
-                                          <span className="font-medium text-slate-600 dark:text-slate-300">
+                                          <span className="font-medium text-c-text-secondary dark:text-c-text">
                                             {entry.newValue}
                                           </span>
                                         </span>
@@ -6813,11 +6813,11 @@ Return ONLY the final comment text.`;
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
                                       {entry.userName && (
-                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        <span className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                                           {entry.userName}
                                         </span>
                                       )}
-                                      <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                      <span className="text-xs text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                                         {new Date(entry.timestamp).toLocaleString(
                                           t('myWork.taskDetail.enUS', 'en-US'),
                                           {
@@ -6853,25 +6853,25 @@ Return ONLY the final comment text.`;
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.15 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
             >
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => toggleSection('control')}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
                     <Flag size={18} className="text-blue-500 dark:text-blue-400" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.control', 'Control')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {taskId && (
-                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                    <span className="text-[10px] font-mono text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary bg-c-surface-raised/80 dark:bg-c-surface/80 px-2 py-0.5 rounded-lg">
                       #{taskId.slice(0, 8)}
                     </span>
                   )}
@@ -6879,7 +6879,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </motion.div>
                 </div>
               </motion.button>
@@ -6890,17 +6890,17 @@ Return ONLY the final comment text.`;
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    className="border-t border-c-border dark:border-c-border overflow-hidden"
                   >
                     <div className="p-4 space-y-3">
                       {/* Initiative */}
                       <div className="relative">
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                           {t('myWork.taskDetail.initiative3', 'Initiative')}
                         </label>
                         <button
                           onClick={() => setShowInitiativeDropdown(!showInitiativeDropdown)}
-                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
+                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
                         >
                           <div className="flex items-center gap-2">
                             {initiativeId ? (
@@ -6908,23 +6908,23 @@ Return ONLY the final comment text.`;
                                 <div className="p-1 rounded bg-blue-500/10">
                                   <Layers size={12} className="text-blue-500" />
                                 </div>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                                <span className="text-sm font-medium text-c-text dark:text-c-text truncate">
                                   {initiativeName ||
                                     availableInitiatives.find((i) => i.id === initiativeId)?.name}
                                 </span>
                               </>
                             ) : (
                               <>
-                                <div className="p-1 rounded bg-slate-200 dark:bg-navy-700">
-                                  <Minus size={12} className="text-slate-500 dark:text-slate-400" />
+                                <div className="p-1 rounded bg-c-surface-raised dark:bg-c-surface-raised">
+                                  <Minus size={12} className="text-c-text-secondary dark:text-c-text-secondary" />
                                 </div>
-                                <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                <span className="text-sm text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                                   {t('myWork.taskDetail.standaloneTask', 'Standalone task')}
                                 </span>
                               </>
                             )}
                           </div>
-                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
+                          <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-secondary" />
                         </button>
                         <AnimatePresence>
                           {showInitiativeDropdown && (
@@ -6932,7 +6932,7 @@ Return ONLY the final comment text.`;
                               initial={{ opacity: 0, y: -8 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -8 }}
-                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 max-h-60 overflow-y-auto"
+                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-c-surface rounded-lg shadow-xl border border-c-border dark:border-c-border py-1 max-h-60 overflow-y-auto"
                             >
                               <button
                                 onClick={() => {
@@ -6940,18 +6940,18 @@ Return ONLY the final comment text.`;
                                   setInitiativeName(null);
                                   setShowInitiativeDropdown(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors ${
                                   !initiativeId ? 'bg-blue-50 dark:bg-blue-500/10' : ''
                                 }`}
                               >
-                                <div className="p-1 rounded bg-slate-200 dark:bg-navy-700">
-                                  <Minus size={12} className="text-slate-500 dark:text-slate-400" />
+                                <div className="p-1 rounded bg-c-surface-raised dark:bg-c-surface-raised">
+                                  <Minus size={12} className="text-c-text-secondary dark:text-c-text-secondary" />
                                 </div>
-                                <span className="text-slate-500 dark:text-slate-400">
+                                <span className="text-c-text-secondary dark:text-c-text-secondary">
                                   {t('myWork.taskDetail.standaloneTask2', 'Standalone task')}
                                 </span>
                               </button>
-                              <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                              <div className="border-t border-c-border dark:border-c-border my-1" />
                               {availableInitiatives.map((init) => (
                                 <button
                                   key={init.id}
@@ -6960,14 +6960,14 @@ Return ONLY the final comment text.`;
                                     setInitiativeName(init.name);
                                     setShowInitiativeDropdown(false);
                                   }}
-                                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors ${
                                     initiativeId === init.id ? 'bg-blue-50 dark:bg-blue-500/10' : ''
                                   }`}
                                 >
                                   <div className="p-1 rounded bg-blue-500/10">
                                     <Layers size={12} className="text-blue-500" />
                                   </div>
-                                  <span className="text-slate-700 dark:text-slate-300">
+                                  <span className="text-c-text dark:text-c-text">
                                     {init.name}
                                   </span>
                                 </button>
@@ -6979,20 +6979,20 @@ Return ONLY the final comment text.`;
 
                       {/* Status */}
                       <div className="relative">
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                           Status
                         </label>
                         <button
                           onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
+                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
                         >
                           <div className="flex items-center gap-2">
                             <div className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <span className="text-sm font-medium text-c-text dark:text-c-text">
                               {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                             </span>
                           </div>
-                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
+                          <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-secondary" />
                         </button>
                         <AnimatePresence>
                           {showStatusDropdown && (
@@ -7000,7 +7000,7 @@ Return ONLY the final comment text.`;
                               initial={{ opacity: 0, y: -8 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -8 }}
-                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1"
+                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-c-surface rounded-lg shadow-xl border border-c-border dark:border-c-border py-1"
                             >
                               {Object.entries(STATUS_CONFIG).map(([key, config]) => (
                                 <button
@@ -7009,12 +7009,12 @@ Return ONLY the final comment text.`;
                                     setStatus(key as keyof typeof STATUS_CONFIG);
                                     setShowStatusDropdown(false);
                                   }}
-                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors ${
                                     status === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
                                   }`}
                                 >
                                   <div className={`w-2.5 h-2.5 rounded-full ${config.color}`} />
-                                  <span className="text-slate-700 dark:text-slate-300">
+                                  <span className="text-c-text dark:text-c-text">
                                     {isPolish ? config.label.pl : config.label.en}
                                   </span>
                                 </button>
@@ -7026,20 +7026,20 @@ Return ONLY the final comment text.`;
 
                       {/* Priority */}
                       <div className="relative">
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                           {t('myWork.taskDetail.priority2', 'Priority')}
                         </label>
                         <button
                           onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
+                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
                         >
                           <div className="flex items-center gap-2">
                             <Flag size={14} className={priorityConfig.textColor} />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <span className="text-sm font-medium text-c-text dark:text-c-text">
                               {isPolish ? priorityConfig.label.pl : priorityConfig.label.en}
                             </span>
                           </div>
-                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
+                          <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-secondary" />
                         </button>
                         <AnimatePresence>
                           {showPriorityDropdown && (
@@ -7047,7 +7047,7 @@ Return ONLY the final comment text.`;
                               initial={{ opacity: 0, y: -8 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -8 }}
-                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1"
+                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-c-surface rounded-lg shadow-xl border border-c-border dark:border-c-border py-1"
                             >
                               {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
                                 <button
@@ -7056,12 +7056,12 @@ Return ONLY the final comment text.`;
                                     setPriority(key as keyof typeof PRIORITY_CONFIG);
                                     setShowPriorityDropdown(false);
                                   }}
-                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors ${
                                     priority === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
                                   }`}
                                 >
                                   <Flag size={14} className={config.textColor} />
-                                  <span className="text-slate-700 dark:text-slate-300">
+                                  <span className="text-c-text dark:text-c-text">
                                     {isPolish ? config.label.pl : config.label.en}
                                   </span>
                                 </button>
@@ -7073,16 +7073,16 @@ Return ONLY the final comment text.`;
 
                       {/* Due Date */}
                       <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                           {t('myWork.taskDetail.dueDate2', 'Due Date')}
                         </label>
-                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                          <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border">
+                          <Calendar size={14} className="text-c-text-secondary dark:text-c-text-secondary" />
                           <input
                             type="date"
                             value={dueDate}
                             onChange={(e) => setDueDate(e.target.value)}
-                            className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+                            className="flex-1 bg-transparent text-sm text-c-text dark:text-c-text focus:outline-none"
                           />
                         </div>
                       </div>
@@ -7090,13 +7090,13 @@ Return ONLY the final comment text.`;
                       {/* Owner / Assignee */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                             {t('myWork.taskDetail.owner2', 'Owner')}
                           </label>
                           <select
                             value={ownerId}
                             onChange={(e) => setOwnerId(e.target.value)}
-                            className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+                            className="w-full h-[42px] px-3 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border text-sm text-c-text dark:text-c-text focus:outline-none focus:border-blue-400"
                           >
                             <option value="">{t('myWork.taskDetail.select2', 'Select')}</option>
                             {users.map((user) => (
@@ -7107,7 +7107,7 @@ Return ONLY the final comment text.`;
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                             {t('myWork.taskDetail.assignee', 'Assignee')}
                           </label>
                           {/* FAZA C: bramka task.assign — enforce wyłącza pole (disable), shadow bez zmian */}
@@ -7119,7 +7119,7 @@ Return ONLY the final comment text.`;
                             <select
                               value={assigneeId}
                               onChange={(e) => setAssigneeId(e.target.value)}
-                              className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+                              className="w-full h-[42px] px-3 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border text-sm text-c-text dark:text-c-text focus:outline-none focus:border-blue-400"
                             >
                               <option value="">{t('myWork.taskDetail.select3', 'Select')}</option>
                               {users.map((user) => (
@@ -7135,14 +7135,14 @@ Return ONLY the final comment text.`;
                       {/* Blocked Reason */}
                       {status === 'blocked' && (
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs text-c-text-secondary dark:text-c-text-secondary mb-1">
                             {t('myWork.taskDetail.blockedReason2', 'Blocked Reason')}
                           </label>
                           <textarea
                             value={blockedReason}
                             onChange={(e) => setBlockedReason(e.target.value)}
                             rows={2}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-danger-200 dark:border-danger-500/30 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-danger-400 resize-none"
+                            className="w-full px-3 py-2 rounded-lg bg-c-surface dark:bg-c-surface border border-danger-200 dark:border-danger-500/30 text-sm text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none focus:border-danger-400 resize-none"
                             placeholder={t(
                               'myWork.taskDetail.describeBlockingReason2',
                               'Describe blocking reason...'
@@ -7236,25 +7236,25 @@ Return ONLY the final comment text.`;
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.18 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
             >
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => toggleSection('tags')}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/10 to-danger-500/10 dark:from-pink-500/20 dark:to-danger-500/20">
                     <Tag size={18} className="text-pink-500 dark:text-pink-400" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.tags', 'Tags')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {tags.length > 0 && (
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                       {tags.length}
                     </span>
                   )}
@@ -7262,7 +7262,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('tags') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                   </motion.div>
                 </div>
               </motion.button>
@@ -7273,7 +7273,7 @@ Return ONLY the final comment text.`;
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    className="border-t border-c-border dark:border-c-border overflow-hidden"
                   >
                     <div className="p-4">
                       <div className="flex flex-wrap gap-2 mb-3">
@@ -7299,7 +7299,7 @@ Return ONLY the final comment text.`;
                           onChange={(e) => setNewTag(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && addTag()}
                           placeholder={t('myWork.taskDetail.placeholder5', 'New tag...')}
-                          className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-pink-400"
+                          className="flex-1 px-3 py-2 rounded-lg text-sm bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border text-c-text dark:text-c-text placeholder-c-text-muted focus:outline-none focus:border-pink-400"
                         />
                         <button
                           onClick={addTag}
@@ -7378,29 +7378,29 @@ Return ONLY the final comment text.`;
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
-                className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+                className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border dark:border-c-border/60 shadow-lg shadow-c-border-strong/50 dark:shadow-c-border-strong/50 overflow-hidden"
               >
                 <div
-                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors cursor-pointer"
                   onClick={() => toggleSection('relatedNotes')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-primary-500/10 dark:from-primary-500/20 dark:to-primary-500/20">
-                      <BookOpen size={18} className="text-primary-500 dark:text-primary-400" />
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-c-text-muted/10 to-c-text-muted/10 dark:from-c-text-muted/20 dark:to-c-text-muted/20">
+                      <BookOpen size={18} className="text-c-text-muted dark:text-c-text-muted" />
                     </div>
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    <span className="text-sm font-semibold text-c-text dark:text-c-text">
                       {t('myWork.taskDetail.relatedNotes', 'Related Notes')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                       {relatedNotes.length}
                     </span>
                     <motion.div
                       animate={{ rotate: expandedSections.has('relatedNotes') ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                      <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
                     </motion.div>
                   </div>
                 </div>
@@ -7411,7 +7411,7 @@ Return ONLY the final comment text.`;
                       initial={{ height: 0 }}
                       animate={{ height: 'auto' }}
                       exit={{ height: 0 }}
-                      className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                      className="border-t border-c-border dark:border-c-border overflow-hidden"
                     >
                       <div className="p-4 space-y-2">
                         {relatedNotes.map((note) => {
@@ -7425,10 +7425,10 @@ Return ONLY the final comment text.`;
                             { dot: string; bg: string; text: string; border: string; label: string }
                           > = {
                             seed: {
-                              dot: 'bg-slate-400',
-                              bg: 'bg-slate-500/10',
-                              text: 'text-slate-500',
-                              border: 'border-slate-400/30',
+                              dot: 'bg-c-border-strong',
+                              bg: 'bg-c-border-strong/10',
+                              text: 'text-c-text-secondary',
+                              border: 'border-c-border/30',
                               label: t('myWork.taskDetail.label14', 'Seed'),
                             },
                             growing: {
@@ -7465,11 +7465,11 @@ Return ONLY the final comment text.`;
                                   })
                                 )
                               }
-                              className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-navy-600 bg-slate-50/50 dark:bg-navy-800/50 hover:bg-slate-100/80 dark:hover:bg-navy-700/50 transition-colors"
+                              className="w-full text-left p-3 rounded-xl border border-c-border dark:border-c-border bg-c-surface/50 dark:bg-c-surface/50 hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 transition-colors"
                             >
                               <div className="flex items-center justify-between gap-2">
                                 <div className="min-w-0 flex-1">
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate block">
+                                  <span className="text-sm font-medium text-c-text dark:text-c-text truncate block">
                                     {note.title}
                                   </span>
                                   <NotebookMetadataBadges
