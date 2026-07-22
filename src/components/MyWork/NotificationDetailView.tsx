@@ -51,6 +51,7 @@ import {
 } from '@/components/Notifications/notificationContent';
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout } from '@/components/shared/NModeBlocks';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -2686,40 +2687,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       icon: Info,
       defaultOpen: true,
       children: (
-        // Tabela Wlasciwosc/Wartosc — ten sam ksztalt co Task/Decision/Insight
-        // (wzorzec wskazany przez wlasciciela 2026-07-21). Wczesniej byla to lista
-        // definicyjna <dl> z etykietami nad wartosciami — ta sama tresc, inny uklad,
-        // przez co panel Notification wygladal inaczej niz pozostale karty.
-        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-c-surface-raised">
-                <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {t('myWork.notificationDetail.property', 'Property')}
-                </th>
-                <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {t('myWork.notificationDetail.value', 'Value')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {propertiesFields.map((field, idx) => {
-                const last = idx === propertiesFields.length - 1;
-                const kraw = last ? '' : ' border-b border-c-border-subtle';
-                return (
-                  <tr key={field.id}>
-                    <td className={`text-left text-c-text-muted px-3 py-2${kraw}`}>
-                      {isPolish ? field.label.pl : field.label.en}
-                    </td>
-                    <td className={`text-right text-c-text px-3 py-2${kraw}`}>
-                      {field.render ? field.render() : field.value || '—'}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        // Tabela Wlasciwosc/Wartosc — wspolny komponent ArtifactPropertiesTable,
+        // ten sam ksztalt co Task/Decision/Insight (wzorzec wskazany przez
+        // wlasciciela 2026-07-21, standaryzacja 2026-07-22). Wiersze deklarujemy
+        // z `propertiesFields` (render() zachowuje pigulki Typ/Priorytet/Status).
+        <ArtifactPropertiesTable
+          propertyLabel={t('myWork.notificationDetail.property', 'Property')}
+          valueLabel={t('myWork.notificationDetail.value', 'Value')}
+          rows={propertiesFields.map((field) => ({
+            id: field.id,
+            label: isPolish ? field.label.pl : field.label.en,
+            value: field.render ? field.render() : field.value || '—',
+            mono: field.id === 'created',
+          }))}
+        />
       ),
     },
     {
