@@ -17,6 +17,7 @@ import {
   Pencil,
   Presentation,
   Trash2,
+  Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -29,6 +30,7 @@ import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
+import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
 
 import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import {
@@ -49,6 +51,7 @@ import { type RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssigneeCell } from '../ui/primitives/cells/AssigneeCell';
 import { DeckTemplateGallery } from './DeckTemplateGallery';
+import { PresentationTemplateArchitectView } from './PresentationTemplateArchitectView';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -67,7 +70,7 @@ export interface PresentationDeck {
   [key: string]: unknown;
 }
 
-type PresentationTab = 'all_decks' | 'recent' | 'templates';
+type PresentationTab = 'all_decks' | 'recent' | 'templates' | 'template_architect';
 
 // ---------------------------------------------------------------------------
 // Source type metadata
@@ -204,6 +207,10 @@ export const PresentationsHub: React.FC = () => {
   }, [currentDecks, searchQuery, activeFilters]);
 
   // Tabs config
+  // "Architekt szablonów" is gated behind `isDeckArchitectEnabled()` (default
+  // OFF) — CLAUDE.md pkt 7: no visual surface goes in front of Piotr before
+  // it's reviewed on a clean screenshot. OFF → hub is byte-identical to today.
+  const deckArchitectEnabled = isDeckArchitectEnabled();
   const tabs = useMemo(
     () => [
       {
@@ -224,8 +231,18 @@ export const PresentationsHub: React.FC = () => {
         icon: <LayoutGrid size={16} />,
         count: 0,
       },
+      ...(deckArchitectEnabled
+        ? [
+            {
+              id: 'template_architect' as PresentationTab,
+              label: t('presentations.tabs.templateArchitect', 'Architekt szablonów') as string,
+              icon: <Wand2 size={16} />,
+              count: 0,
+            },
+          ]
+        : []),
     ],
-    [allDecks.length, recentDecks.length, t]
+    [allDecks.length, recentDecks.length, deckArchitectEnabled, t]
   );
 
   // Table columns
@@ -614,6 +631,14 @@ export const PresentationsHub: React.FC = () => {
               navigate(`/presentations/wizard?templateId=${encodeURIComponent(templateId)}`)
             }
           />
+        </div>
+      );
+    }
+
+    if (activeTab === 'template_architect') {
+      return (
+        <div className="h-full overflow-auto">
+          <PresentationTemplateArchitectView />
         </div>
       );
     }
