@@ -43,5 +43,13 @@ Reguła #7 wymaga, żebyś renderował SAM. Sposób (sprawdzony 07-22):
 - **LLM tier:** aktywny tylko `STANDARD/openrouter/anthropic/claude-sonnet-4`; generatory żądają `premium` (wszystkie premium is_active=false → fallback). OK jakościowo (Sonnet 4), ale do świadomości.
 - `trolley.proxy.rlwy.net` = baza WSPÓLNA demo+staging (DATABASE_URL w głównym `.env.staging.local`). Prod=centerbeam — NIE ruszać.
 
+## 5b. PARTIA PO W TOKU (agenci równolegli, 07-22 popołudnie)
+- **PO/1 zrobione i zacommitowane** na gałęzi `audyt-idee-2026-07-22` (commit `63b32f416a`): Mind Map orb zdjęty (K8), trackpad-pan włączony (K9, `useIdeasToolDefaults.ts`).
+- **3 agenci PO w izolowanych worktree'ach** (każdy commituje na SWOJĄ gałąź, NIE push, bez renderu — port był zajęty):
+  1. Whiteboard prawy-klik — dodaje operacje bazowe (Edytuj/Duplikuj/Kopiuj/Usuń/Lock/Warstwa) nad sekcją AI w menu kontekstowym canvasu.
+  2. Table prawy-klik — Wstaw wiersz nad/pod, Kopiuj, Rozwiń rekord.
+  3. Process toolbar — odchudzenie (Analyze&Validate + Manage-canvas do overflow/menu).
+- **CO ROBI ŚWIEŻA SESJA:** `git worktree list` + `git branch` → znajdź gałęzie agentów (nazwy typu `claude/*`); dla każdej: przejrzyj diff, zintegruj do gałęzi roboczej IDEE, **wyrenderuj PRZED/PO harnessem (§4), zrzut** → dopiero potem Piotr ocenia (reguła #7). Żaden fix agenta NIE był renderowany — wymaga wizualnej weryfikacji przed pokazaniem.
+
 ## 6. REGUŁY (nienaruszalne)
 Nic na demo bez akceptu Piotra na zrzutach. Reguła #7: prototyp→OK→render-sam→accept (Piotr NIGDY pierwszym testerem wizualnym). Baza gałęzi = origin/demo. Zero crimson w nowym kodzie. Weryfikuj realny runtime, nie flagi.
