@@ -8,21 +8,24 @@
  * SSOT: FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Copy, Link2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
-import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
+import { buildArtifactCode, buildArtifactPermalink, buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
 import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
+import { ExceleRightPanel } from './ExceleRightPanel';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
-import { KimiWorkspaceShell } from './KimiWorkspaceShell';
+import { KimiWorkspaceShell, type KimiHeaderKebabItem } from './KimiWorkspaceShell';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 
 const EXCELE_SYSTEM_PROMPT = `You are a professional spreadsheet architect in Consultify.
@@ -46,6 +49,7 @@ When the user provides a prompt, explain your plan briefly, then the system will
 If the user asks to modify the workbook, suggest changes and regenerate.`;
 
 export const ExceleView: React.FC = () => {
+  const { t } = useTranslation();
   const pipeline = useKimiArtifactPipeline('excele');
   const activeMessages = useConversationStore((s) => s.activeMessages);
   const [searchParams] = useSearchParams();
@@ -212,6 +216,52 @@ export const ExceleView: React.FC = () => {
     window.open('/presentations?tab=sheets', '_blank');
   }, []);
 
+  // SPEC-A powłoka (§10.2/§11.2, G1 2026-07-22): workbookId = tożsamość
+  // artefaktu-arkusza dla kebaba (kod obiektu/link) i prawego panelu.
+  const effectiveWorkbookId =
+    (effectivePreview as any)?.workbookId || reopenWorkbookId || artifactId || null;
+
+  const copyObjectCode = useCallback(async () => {
+    if (!effectiveWorkbookId) return;
+    try {
+      await navigator.clipboard.writeText(buildArtifactCode('sheet', effectiveWorkbookId));
+      toast.success(t('sharedComponents.nModeHeader.copyCodeSuccess', 'Copied object code'));
+    } catch {
+      toast.error(t('sharedComponents.artifactPermalinkButton.copyFailed', 'Could not copy'));
+    }
+  }, [effectiveWorkbookId, t]);
+
+  const copyPermalink = useCallback(async () => {
+    if (!effectiveWorkbookId) return;
+    try {
+      await navigator.clipboard.writeText(buildArtifactPermalink('sheet', effectiveWorkbookId));
+      toast.success(t('sharedComponents.artifactPermalinkButton.copied', 'Link copied'));
+    } catch {
+      toast.error(t('sharedComponents.artifactPermalinkButton.copyFailed', 'Could not copy'));
+    }
+  }, [effectiveWorkbookId, t]);
+
+  const kebabItems: KimiHeaderKebabItem[] = useMemo(
+    () =>
+      effectiveWorkbookId
+        ? [
+            {
+              id: 'copy-code',
+              label: t('sharedComponents.nModeHeader.copyObjectCode', 'Copy object code'),
+              icon: Copy,
+              onClick: () => void copyObjectCode(),
+            },
+            {
+              id: 'copy-link',
+              label: t('sharedComponents.nModeHeader.copyLink', 'Copy link'),
+              icon: Link2,
+              onClick: () => void copyPermalink(),
+            },
+          ]
+        : [],
+    [effectiveWorkbookId, t, copyObjectCode, copyPermalink]
+  );
+
   if (showHome) {
     return <ArtifactModuleHome lane="excele" />;
   }
@@ -234,6 +284,20 @@ export const ExceleView: React.FC = () => {
       onAllFiles={handleAllFiles}
       onStartGeneration={pipeline.startGeneration}
       chatSystemPrompt={EXCELE_SYSTEM_PROMPT}
+      kebabItems={kebabItems}
+      rightPanel={
+        <ExceleRightPanel
+          preview={effectivePreview}
+          workbookId={effectiveWorkbookId}
+          taskSteps={pipeline.taskSteps}
+          isGenerating={pipeline.isGenerating}
+          isFailed={pipeline.isFailed}
+          failureReason={pipeline.failureReason}
+          onDownload={pipeline.handleDownload}
+          onPreviewFile={handlePreviewFile}
+          onAllFiles={handleAllFiles}
+        />
+      }
     />
   );
 };
