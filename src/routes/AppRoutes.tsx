@@ -33,6 +33,7 @@ import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
+import { isExceleEngineEnabled } from '@/utils/exceleFlag';
 import { isStudioEnabled } from '@/utils/studioFlag';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
@@ -245,6 +246,13 @@ const PrezentacjeView = lazyWithRetry(() =>
 // KIMI-style Tabele workspace (Table Studio Foundation block — sky accent, D1=visible)
 const TabeleView = lazyWithRetry(() =>
   import('@/components/AIChat/KimiWorkspace/TabeleView').then((m) => ({
+    default: m.default,
+  }))
+);
+// Excel engine (real .xlsx z formułami) — odsłaniany pod /excele za flagą
+// isExceleEngineEnabled (default OFF → redirect jak dziś). Audyt 2026-07-22.
+const ExceleView = lazyWithRetry(() =>
+  import('@/components/AIChat/KimiWorkspace/ExceleView').then((m) => ({
     default: m.default,
   }))
 );
@@ -1438,14 +1446,32 @@ export const AppRoutes: React.FC = () => {
         />
 
         {/* Legacy Excele/Tables route -> canonical Table Studio. */}
+        {/*
+          Excel engine (real .xlsx z formułami — WorkbookGeneratorService).
+          Za flagą isExceleEngineEnabled (default OFF): ON → montuje ExceleView
+          (realny silnik), OFF → dokładnie dzisiejszy redirect na Table Studio
+          (zero regresji na /tabele). Audyt _AUDYT_DOKUMENTY_2026-07-22 — silnik
+          formuł był osierocony z UI. Flaga jest bramką (bez BetaGate MODULE_TABELE,
+          bo to inny moduł).
+        */}
         <Route
           path={ROUTES.EXCELE}
           element={
-            <RedirectPreservingQuery
-              from={ROUTES.EXCELE}
-              to={ROUTES.TABELE}
-              reason="excele_merged_into_table_studio"
-            />
+            isExceleEngineEnabled() ? (
+              <ProtectedRoute requireAuth={true}>
+                <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Excel')]}>
+                  <RouteErrorBoundary>
+                    <ExceleView />
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </ProtectedRoute>
+            ) : (
+              <RedirectPreservingQuery
+                from={ROUTES.EXCELE}
+                to={ROUTES.TABELE}
+                reason="excele_merged_into_table_studio"
+              />
+            )
           }
         />
 
