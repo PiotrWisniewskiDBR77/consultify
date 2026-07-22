@@ -28,6 +28,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { isAgentPlanEnabled } from '@/utils/agentPlanFlag';
+import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
@@ -435,6 +436,11 @@ const PublicJwtFormPage = lazyWithRetry(() =>
 
 // Public Shared View (Table Platform)
 const PublicViewPage = lazyWithRetry(() => import('@/components/MyWork/table/PublicViewPage'));
+// F1/F3 — Document Studio client reader (share-link, read-only). Za flagą
+// `ff_client_reader` (default OFF) — patrz `src/utils/clientReaderFlag.ts`.
+const SharedDocumentReaderPage = lazyWithRetry(
+  () => import('@/components/DocumentStudio/publicReader/SharedDocumentReaderPage')
+);
 // Public Booking Widget (#24c) — Calendly-like, niezalogowane.
 const PublicBookingView = lazyWithRetry(() =>
   import('@/views/PublicBookingView').then((m) => ({ default: m.PublicBookingView }))
@@ -918,6 +924,29 @@ export const AppRoutes: React.FC = () => {
             <Suspense fallback={<LoadingScreen message="Loading shared view..." />}>
               <PublicViewPage />
             </Suspense>
+          }
+        />
+
+        {/*
+          F1/F3 — Document Studio client reader, no auth required.
+          Za flagą `isClientReaderEnabled()` (default OFF): OFF → trasa
+          efektywnie NIE ISTNIEJE (redirect na "*" catch-all, tak samo jak
+          każdy inny nieznany URL), zero regresji. ON → montuje read-only
+          czytnik dokumentu przez share-link token (scope read/comment/
+          download/edit — sam token niesie autoryzację, backend resolve'uje
+          organizationId/artifactId server-side, patrz
+          `documentShareLinkPublicRoutes` w document-studio.routes.ts).
+        */}
+        <Route
+          path="/shared/doc/:token"
+          element={
+            isClientReaderEnabled() ? (
+              <Suspense fallback={<LoadingScreen message="Ładowanie dokumentu..." />}>
+                <SharedDocumentReaderPage />
+              </Suspense>
+            ) : (
+              <Navigate to={ROUTES.WELCOME} replace />
+            )
           }
         />
 

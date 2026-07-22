@@ -150,6 +150,11 @@
  *   POST   /api/document-studio/share-links/:shareLinkId/revoke                    — body: { reason? }; idempotent
  *   GET    /api/document-studio/share-links/:shareLinkId/audit                     — list audit entries
  *   POST   /api/document-studio/share-links/resolve                                — UNAUTHENTICATED public consume; body: { token, consumerFingerprint? }
+ *   POST   /api/document-studio/share-links/document                               — UNAUTHENTICATED; body: { token }; whitelisted read-only DocumentSchema projection (F1/F3 client reader)
+ *   POST   /api/document-studio/share-links/comments/list                          — UNAUTHENTICATED; body: { token }; comment/edit scope only; lists existing threads (F1/F3 client reader)
+ *   POST   /api/document-studio/share-links/edit-session                           — UNAUTHENTICATED; body: { token, consumerFingerprint }; comment/edit scope only (despite the name — see doc-comment above `ANONYMOUS_SESSION_SCOPES`)
+ *   POST   /api/document-studio/share-links/comments                               — UNAUTHENTICATED; body: { token, editSessionToken, consumerFingerprint, body, anchor }
+ *   POST   /api/document-studio/share-links/comments/:commentId/reply              — UNAUTHENTICATED; same session contract as above
  *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  *       The public share-link consume endpoint is intentionally exempt
@@ -4666,6 +4671,54 @@ const publicShareLinkLimiter = rateLimit({
   message: { error: 'Too many requests', code: 'RATE_LIMITED' },
 });
 
+/**
+ * F1/F3 — client-reader (`ff_client_reader`). Whitelisted public
+ * projection of a `DocumentSchema` for an unauthenticated share-link
+ * consumer.
+ *
+ * Deliberately DROPS every field that is internal to the consulting
+ * org and not needed to render read-only prose: `clientId`, `owner`,
+ * `sourcePackId`, `templateRef`, `evidence`, `documentStatus*`
+ * lifecycle bookkeeping, section/block `sourceRefs` + `sourceRef`
+ * (internal source-system ids/titles), and `audienceTags` (internal
+ * targeting metadata). Only `title` + rendered section/block content
+ * survive — the same shape a client is meant to read, nothing an
+ * internal reviewer would see in the editor's Properties tab.
+ */
+function projectDocumentForPublicReader(schema: DocumentSchema): {
+  title: string;
+  documentType: string;
+  language: string;
+  sections: Array<{
+    sectionId: string;
+    title: string;
+    level: number;
+    kind: string;
+    blocks: Array<{ blockId: string; type: string; content: unknown; isAssumption: boolean }>;
+  }>;
+} {
+  const sections = [...schema.sections]
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .map((section) => ({
+      sectionId: section.sectionId,
+      title: section.title,
+      level: section.level,
+      kind: section.kind ?? 'body',
+      blocks: section.blocks.map((block) => ({
+        blockId: block.blockId,
+        type: block.type,
+        content: block.content,
+        isAssumption: Boolean(block.isAssumption),
+      })),
+    }));
+  return {
+    title: schema.title,
+    documentType: schema.documentType,
+    language: schema.language,
+    sections,
+  };
+}
+
 documentShareLinkPublicRoutes.post(
   '/share-links/resolve',
   publicShareLinkLimiter,
@@ -4686,6 +4739,77 @@ documentShareLinkPublicRoutes.post(
     }
     const { organizationId: _orgId, ...publicResult } = result;
     res.json({ resolved: publicResult });
+  })
+);
+
+// F1/F3 client-reader — serves the actual document content for a
+// resolved share link. `resolve` above intentionally returns ONLY the
+// authorization tuple (never content); the reader FE calls this route
+// to get the whitelisted, read-only projection to render. Any
+// accessScope that resolves successfully (read / comment / download /
+// edit) may view the document — the scope only gates MUTATION
+// (comment / edit), never viewing.
+documentShareLinkPublicRoutes.post(
+  '/share-links/document',
+  publicShareLinkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    if (!token.trim()) {
+      res.status(400).json({ error: 'token_required' });
+      return;
+    }
+    const result = await consumeShareLink({ token });
+    if (!result) {
+      res.status(404).json({ error: 'share_link_invalid_or_expired' });
+      return;
+    }
+    const schema = await getDocumentArtifact(result.artifactId, result.organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
+    res.json({
+      shareLinkId: result.shareLinkId,
+      accessScope: result.accessScope,
+      artifactId: result.artifactId,
+      document: projectDocumentForPublicReader(schema),
+    });
+  })
+);
+
+// F1/F3 client-reader — read the existing comment threads for a
+// `comment` / `edit` scoped link so the reader can show the
+// conversation before (and after) adding a new comment. `read` /
+// `download` scopes have no comment UI and get 403 here, same as the
+// mutation routes below.
+documentShareLinkPublicRoutes.post(
+  '/share-links/comments/list',
+  publicShareLinkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    if (!token.trim()) {
+      res.status(400).json({ error: 'token_required' });
+      return;
+    }
+    const result = await consumeShareLink({ token });
+    if (!result) {
+      res.status(404).json({ error: 'share_link_invalid_or_expired' });
+      return;
+    }
+    if (result.accessScope !== 'comment' && result.accessScope !== 'edit') {
+      res.status(403).json({ error: 'share_link_scope_forbidden' });
+      return;
+    }
+    await ensureDocumentCommentsHydrated(result.organizationId);
+    const comments = listDocumentComments(result.artifactId, result.organizationId, {
+      hideDeleted: true,
+    });
+    // `DocumentComment` carries `organizationId` (internal tenant id) —
+    // every other public share-link response strips it (see `resolve`
+    // above), so strip it here too rather than leak the tenant id to
+    // an anonymous consumer through the comments feed.
+    const publicComments = comments.map(({ organizationId: _orgId, ...rest }) => rest);
+    res.json({ comments: publicComments });
   })
 );
 
