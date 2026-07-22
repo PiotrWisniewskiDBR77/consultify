@@ -7981,7 +7981,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               <MoreVertical size={14} />
                             </button>
                             {kpiMenuId === kpi.id && (
-                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border-subtle bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border-subtle bg-c-surface p-1.5 shadow-xl shadow-c-border-strong/10 dark:shadow-black/30">
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
