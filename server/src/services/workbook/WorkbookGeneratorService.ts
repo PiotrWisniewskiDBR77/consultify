@@ -466,8 +466,22 @@ class WorkbookGeneratorService {
     logger.info(`[WorkbookGenerator] Starting 5-phase pipeline: ${id}`);
 
     let userPrompt = prompt;
-    if (researchContext) {
-      userPrompt = `${prompt}\n\nResearch context (use this data to populate the workbook):\n${researchContext}`;
+    // Coercion obronna (2026-07-22): nigdy nie wstrzykuj „[object Object]" —
+    // gdyby caller podał nie-string, serializujemy zamiast interpolować obiekt.
+    const researchText =
+      typeof researchContext === 'string'
+        ? researchContext
+        : researchContext
+          ? (() => {
+              try {
+                return JSON.stringify(researchContext);
+              } catch {
+                return '';
+              }
+            })()
+          : '';
+    if (researchText.trim()) {
+      userPrompt = `${prompt}\n\nResearch context (use this data to populate the workbook):\n${researchText}`;
     }
     if (language && language.startsWith('pl')) {
       userPrompt +=
