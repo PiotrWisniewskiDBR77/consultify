@@ -17,6 +17,11 @@ export interface MapSnapshot {
   edgeCount: number;
   nodes: any[];
   edges: any[];
+  // Tool-specific state captured at snapshot time. Absent on snapshots taken
+  // before extension-capture landed → restore falls back to preserving live
+  // extensions. Works uniformly for every canvas tool (mindmap/whiteboard/
+  // process_flow/table) since they share one per-idea graph.
+  extensions?: Record<string, unknown>;
 }
 
 interface SnapshotHistoryProps {
@@ -25,7 +30,10 @@ interface SnapshotHistoryProps {
   ideaId: string;
   currentNodes: any[];
   currentEdges: any[];
-  onRestore: (nodes: any[], edges: any[]) => void;
+  // Live tool-specific state (graphRuntime.graph.extensions). Captured into new
+  // snapshots so restore rolls back the whole tool, not just shared nodes/edges.
+  currentExtensions?: Record<string, unknown>;
+  onRestore: (nodes: any[], edges: any[], extensions?: Record<string, unknown>) => void;
   onPreview?: (nodes: any[], edges: any[]) => void;
   autoSnapshotThreshold?: number;
 }
@@ -120,6 +128,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
   ideaId,
   currentNodes,
   currentEdges,
+  currentExtensions,
   onRestore,
   onPreview,
   autoSnapshotThreshold = 10,
@@ -159,10 +168,16 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
               label: lbl,
               nodes: currentNodes,
               edges: currentEdges,
+              ...(currentExtensions ? { extensions: currentExtensions } : {}),
             });
             if (r?.snapshot)
               setSnapshots((p) => [
-                { ...r.snapshot, nodes: currentNodes, edges: currentEdges },
+                {
+                  ...r.snapshot,
+                  nodes: currentNodes,
+                  edges: currentEdges,
+                  extensions: currentExtensions,
+                },
                 ...p,
               ]);
           } else {
@@ -174,6 +189,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
               edgeCount: currentEdges.length,
               nodes: currentNodes,
               edges: currentEdges,
+              extensions: currentExtensions,
             };
             setSnapshots((p) => {
               const u = [s, ...p];
@@ -194,6 +210,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
     backend,
     currentNodes,
     currentEdges,
+    currentExtensions,
   ]);
 
   useEffect(() => {
@@ -230,9 +247,18 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
           label: l,
           nodes: currentNodes,
           edges: currentEdges,
+          ...(currentExtensions ? { extensions: currentExtensions } : {}),
         });
         if (r?.snapshot)
-          setSnapshots((p) => [{ ...r.snapshot, nodes: currentNodes, edges: currentEdges }, ...p]);
+          setSnapshots((p) => [
+            {
+              ...r.snapshot,
+              nodes: currentNodes,
+              edges: currentEdges,
+              extensions: currentExtensions,
+            },
+            ...p,
+          ]);
       } else {
         const s: MapSnapshot = {
           id: `snap-${Date.now()}`,
@@ -242,6 +268,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
           edgeCount: currentEdges.length,
           nodes: currentNodes,
           edges: currentEdges,
+          extensions: currentExtensions,
         };
         setSnapshots((p) => {
           const u = [s, ...p];
@@ -257,7 +284,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
     } finally {
       setSaving(false);
     }
-  }, [currentEdges, currentNodes, ideaId, label, backend]);
+  }, [currentEdges, currentNodes, currentExtensions, ideaId, label, backend]);
 
   const restore = useCallback(
     (s: MapSnapshot) => {
@@ -274,7 +301,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
         beforeRef.current = null;
         setPreviewing(false);
       }
-      onRestore(s.nodes, s.edges);
+      onRestore(s.nodes, s.edges, s.extensions);
       toast.success(t('Przywrócono snapshot', 'Snapshot restored'), { duration: 1200 });
       onClose();
     },
