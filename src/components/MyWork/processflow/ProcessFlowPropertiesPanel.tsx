@@ -307,7 +307,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-c-accent focus:ring-c-info"
+                className="text-c-text focus:ring-c-info"
                 checked={gatewayKind === 'xor'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'xor')}
@@ -318,7 +318,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-c-accent focus:ring-c-info"
+                className="text-c-text focus:ring-c-info"
                 checked={gatewayKind === 'and'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'and')}
