@@ -22,7 +22,7 @@ export const AnalysisWorkspacePanel: React.FC<AnalysisWorkspacePanelProps> = ({
       className="flex h-full min-h-0 flex-col bg-white dark:bg-navy-900"
     >
       <div className="flex items-center gap-3 border-b border-slate-200/70 px-4 py-3 dark:border-white/[0.06]">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-blue-500 text-white">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-c-info to-blue-500 text-white">
           {panel.icon}
         </div>
         <div className="min-w-0 flex-1">

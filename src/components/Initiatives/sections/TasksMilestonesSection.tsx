@@ -1275,14 +1275,14 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   value={taskQuery}
                   onChange={(e) => setTaskQuery(e.target.value)}
                   placeholder={t('initiatives.tasksMilestonesSection.filter')}
-                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-accent"
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                 />
               </th>
               <th className="py-1.5 pr-2">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-accent"
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                 >
                   <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
                   {Object.entries(TASK_STATUS_CONFIG).map(([key, cfg]) => (
@@ -1296,7 +1296,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-accent"
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                 >
                   <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
                   {Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => (
@@ -1310,7 +1310,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 <select
                   value={ownerFilter}
                   onChange={(e) => setOwnerFilter(e.target.value)}
-                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-accent"
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                 >
                   <option value="all">{t('initiatives.tasksMilestonesSection.allPeople')}</option>
                   <option value="__none">
@@ -1329,7 +1329,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   onChange={(e) =>
                     setDueFilter(e.target.value as 'all' | 'upcoming' | 'overdue' | 'no_due')
                   }
-                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-accent"
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                 >
                   <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
                   <option value="upcoming">
@@ -1345,7 +1345,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 <select
                   value={sourceFilter}
                   onChange={(e) => setSourceFilter(e.target.value as 'all' | 'manual' | 'ai')}
-                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-accent"
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-c-focus"
                 >
                   <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
                   <option value="manual">{t('initiatives.tasksMilestonesSection.manual')}</option>

@@ -3018,7 +3018,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
               <motion.tr
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-c-accent-soft"
+                className="bg-c-surface-raised"
               >
                 <td className="py-2 pl-3 pr-2 text-xs text-right text-c-text-secondary">
                   {items.length + 1}
