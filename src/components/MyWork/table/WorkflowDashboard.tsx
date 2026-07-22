@@ -266,8 +266,8 @@ export function WorkflowDashboard({
     {
       id: 'sharing',
       icon: Users,
-      iconColor: 'text-c-accent',
-      bgColor: 'bg-c-accent-soft',
+      iconColor: 'text-emerald-500',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
       titleEn: 'Sharing',
       titlePl: 'Udostępnianie',
       descEn: 'Share views, manage collaborators and API access',
