@@ -624,9 +624,14 @@ export const INSIGHT_CARDS: readonly KanonicznaKarta[] = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 // (2) ADAPTER kanon → ArtifactCardSpec (zwężenie do modelu `useCardLayout`).
-//     `core` z `rola==='rdzen'`; węższy default = rdzeń+domyślna; „full" = wszystkie
-//     ADMITOWANE (bez Phase-D). Karty `do-decyzji-piotra` NIE wchodzą do spec →
-//     renderują się jako „extras" (applyToSections, useCardLayout.ts:306-308).
+//     `core` z `rola==='rdzen'`; węższy default = rdzeń+domyślna (10); „full" =
+//     WSZYSTKIE 32 karty (łącznie z 11 Phase-D). Phase-D wchodzą do katalogu jako
+//     `dodawalna` (rola w kompozycji), więc: ukryte w default (nie w secie),
+//     WŁĄCZALNE z pickera „≡ Sekcje ▾". To DOMKNIĘCIE ZWĘŻENIA (D-5): applyToSections
+//     przestaje traktować je jako „extras" doklejane zawsze-widoczne na koniec
+//     (useCardLayout.ts:306-308) — bo są już ZNANE katalogowi. `statusKanonu`
+//     `do-decyzji-piotra` ZOSTAJE (semantyczny marker oczekującego dedupu treści —
+//     osobna decyzja Piotra), ale NIE wyklucza już karty ze spec.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Członkostwo karty w Insight (dokładnie jedno na kartę tego deskryptora). */
@@ -643,11 +648,6 @@ function renderId(karta: KanonicznaKarta): string {
   return insightMembership(karta).idWArtefakcie ?? karta.id;
 }
 
-/** Czy karta wchodzi do spec (katalog+sets). Phase-D (`do-decyzji-piotra`) — NIE. */
-function admittedToSpec(karta: KanonicznaKarta): boolean {
-  return karta.statusKanonu.stan !== 'do-decyzji-piotra';
-}
-
 function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
   const m = insightMembership(karta);
   const entry: CardCatalogEntry = {
@@ -661,12 +661,14 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 
 /**
  * Buduje `ArtifactCardSpec` Insight z deskryptora kanonicznego.
- *   · catalog  = 21 kart ADMITOWANYCH (id=render-id, core z rdzenia); Phase-D poza,
- *   · default  = RDZEŃ + domyślne (10 kart — węższy zestaw D-5),
- *   · full     = wszystkie 21 admitowane („Pełny").
+ *   · catalog  = wszystkie 32 karty (id=render-id, core z rdzenia); Phase-D w środku,
+ *   · default  = RDZEŃ + domyślne (10 kart — węższy zestaw D-5; Phase-D poza, bo `dodawalna`),
+ *   · full     = wszystkie 32 karty („Pełny").
+ * Phase-D (`do-decyzji-piotra`) są teraz w katalogu → ukryte w default, włączalne z
+ * pickera; applyToSections nie dokleja ich już jako „extras" (domknięcie zwężenia).
  */
 export function buildInsightCardSpec(): ArtifactCardSpec {
-  const admitted = INSIGHT_CARDS.filter(admittedToSpec);
+  const admitted = INSIGHT_CARDS;
 
   const catalog = admitted.map(toCatalogEntry);
 
@@ -701,8 +703,10 @@ export const INSIGHT_CARD_SPEC: ArtifactCardSpec = buildInsightCardSpec();
 export const INSIGHT_CARD_RENDER_IDS: readonly string[] = INSIGHT_CARDS.map(renderId);
 
 /**
- * Render-idy 11 sekcji Phase-D (`do-decyzji-piotra`) — renderowane jako „extras",
- * poza kanonicznym katalogiem, do czasu dedupu z Piotrem (przepis §6 pkt 1).
+ * Render-idy 11 sekcji Phase-D (`do-decyzji-piotra`) — w katalogu jako `dodawalna`
+ * (ukryte w default, włączalne z pickera). `statusKanonu` pozostaje markerem
+ * oczekującego dedupu treści z Piotrem (osobna decyzja), NIE wyklucza już ze spec.
+ * Lista używana przez dev-log InsightViewer do policzenia extras (ma być 0 — już w katalogu).
  */
 export const INSIGHT_PHASE_D_RENDER_IDS: readonly string[] = INSIGHT_CARDS.filter(
   (k) => k.statusKanonu.stan === 'do-decyzji-piotra'
