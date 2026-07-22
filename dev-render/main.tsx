@@ -82,6 +82,7 @@ import KartaNotificationScreen from './screens/karta-notification';
 import KartaTaskScreen from './screens/karta-task';
 import PreviewZakladkiScreen from './screens/preview-4-zakladki';
 import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
+import IdeaTableToolPasteScreen from './screens/idea-table-tool-paste';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -102,6 +103,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
     render: () => <IdeaTableToolKebabScreen />,
+  },
+  'idea-table-tool-paste': {
+    label:
+      'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
+    render: () => <IdeaTableToolPasteScreen />,
   },
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
