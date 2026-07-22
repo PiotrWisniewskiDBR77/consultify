@@ -963,11 +963,43 @@ export async function exportDocumentArtifact(
     });
     report.organizationId = organizationId;
 
+    // A3 — bramka FABRYKACJI (twarda, nie soft-override): konkretne niepoparte
+    // liczby BEZ znacznika „(założenie)" w dokumencie bez źródeł czynią eksport
+    // „partnerski" (typ approval-gated) blokowanym — wymaga JAWNEGO override
+    // (parametr qaOverride), nie cichego przełamania. Fail-soft: błąd samego
+    // detektora NIGDY nie blokuje dokumentu (błąd QA ≠ blokada). Deterministyczne.
+    let fabricationCount = 0;
+    let fabricationSample: string[] = [];
+    try {
+      const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
+      const fab = detectDocumentFabrication(
+        schema as unknown as { sections?: unknown[]; sourceRefs?: unknown[] }
+      );
+      fabricationCount = fab.count;
+      fabricationSample = fab.hits.slice(0, 5).map((h) => h.value);
+    } catch (fabErr) {
+      logger.warn(
+        `[DocumentStudio] fabrication check skipped (fail-soft): ${
+          fabErr instanceof Error ? fabErr.message : String(fabErr)
+        }`
+      );
+    }
+    const fabricationBlocking = fabricationCount > 0;
+    const effectiveBlocking = report.anyBlocking || fabricationBlocking;
+    if (fabricationBlocking) {
+      (report as unknown as Record<string, unknown>).fabrication = {
+        count: fabricationCount,
+        sample: fabricationSample,
+      };
+    }
+
     // Compact, audit-friendly snapshot of the report. Used both in the
     // export manifest and in the audit `details` so the audit panel can
     // replay the QA state at export time without re-running QA.
     const reportSnapshot = {
       anyBlocking: report.anyBlocking,
+      fabricationCount,
+      fabricationSample,
       categories: report.categories.map((c) => ({
         category: c.category,
         score: c.score,
@@ -987,7 +1019,7 @@ export async function exportDocumentArtifact(
         ),
     };
 
-    if (report.anyBlocking && !options.qaOverride) {
+    if (effectiveBlocking && !options.qaOverride) {
       pushAuditEntry({
         auditId: makeId('doc-audit'),
         artifactId,
@@ -999,12 +1031,13 @@ export async function exportDocumentArtifact(
           format,
           documentType: schema.documentType,
           blockingCategories: report.categories.filter((c) => c.blocking).map((c) => c.category),
+          fabricationCount,
           qaReport: reportSnapshot,
         },
       });
       throw new QaBlockingError(report);
     }
-    if (report.anyBlocking && options.qaOverride) {
+    if (effectiveBlocking && options.qaOverride) {
       pushAuditEntry({
         auditId: makeId('doc-audit'),
         artifactId,
@@ -1017,6 +1050,7 @@ export async function exportDocumentArtifact(
           documentType: schema.documentType,
           actorRole: options.userRole ?? null,
           blockingCategories: report.categories.filter((c) => c.blocking).map((c) => c.category),
+          fabricationCount,
           qaReport: reportSnapshot,
         },
       });
@@ -1024,6 +1058,8 @@ export async function exportDocumentArtifact(
     }
     (manifest as Record<string, unknown>).qaReportSummary = {
       anyBlocking: report.anyBlocking,
+      fabricationCount,
+      fabricationSample,
       categories: report.categories.map((c) => ({
         category: c.category,
         score: c.score,

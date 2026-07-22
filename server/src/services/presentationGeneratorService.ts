@@ -1841,6 +1841,112 @@ export async function generateDeck(
     }
 
     // ──────────────────────────────────────────────────────────────
+    // A4 — BRAMKI JAKOŚCI DECKA (Critic kompozycji + M19 walidacja
+    // strukturalna) jako NIE-BLOKUJĄCE wzbogacenie. Do dziś 4/5 bramek żyło
+    // tylko w bundlu (bundleDeckQa/deckDesignCritic) i miało ZERO wywołań na
+    // realnej ścieżce generateDeck. Wpinamy je PO zbudowaniu slajdów: wynik →
+    // `warnings` (banner Studio je pokazuje) + metadane jakości na
+    // deckDocument.generation.qualityGates.
+    //
+    // Zasady (lekcja „odrzucanie = brak danych"): NIGDY nie rzucamy, NIE
+    // odrzucamy treści, NIE regenerujemy — tylko raportujemy. Deterministyczne,
+    // bez LLM (tanie). Flaga ENABLE_DECK_QUALITY_GATES czytana W CZASIE
+    // wywołania, default ON; awaryjne wyłączenie ='false' (wzór
+    // ENABLE_DECK_CONCLUSION_SLIDE). Fail-open: dowolny błąd pomija bramki.
+    // ──────────────────────────────────────────────────────────────
+    let deckQualityGates:
+      | {
+          critic: { overallScore: number; regenerateSlides: number[]; passed: boolean };
+          structural: { valid: boolean; errorCount: number; warningCount: number };
+        }
+      | undefined;
+    if (process.env.ENABLE_DECK_QUALITY_GATES !== 'false') {
+      try {
+        const [{ critiqueDeck }, { validateReport }] = await Promise.all([
+          import('./deliverables/deckDesignCritic.js'),
+          import('./report/pptx/RulesEngine.js'),
+        ]);
+        // Precyzyjny (mało-szumny) ekstraktor bulletów z wielokształtnego
+        // SlideContent — tylko znane pola listowe, by nie zawyżać gęstości.
+        const collectBullets = (content: unknown): string[] => {
+          const c = content as Record<string, unknown> | null | undefined;
+          if (!c || typeof c !== 'object') return [];
+          const out: string[] = [];
+          const pushArr = (v: unknown): void => {
+            if (!Array.isArray(v)) return;
+            for (const x of v) {
+              if (typeof x === 'string') {
+                const t = x.trim();
+                if (t) out.push(t);
+              } else if (x && typeof x === 'object') {
+                const o = x as Record<string, unknown>;
+                const s = o.text ?? o.label ?? o.title ?? o.message ?? o.headline;
+                if (typeof s === 'string' && s.trim()) out.push(s.trim());
+              }
+            }
+          };
+          for (const key of [
+            'key_findings',
+            'left_items',
+            'right_items',
+            'items',
+            'bullets',
+            'points',
+            'takeaways',
+            'messages',
+            'recommendations',
+            'next_steps',
+            'steps',
+            'findings',
+          ]) {
+            pushArr(c[key]);
+          }
+          return out.slice(0, 30);
+        };
+
+        const critiqueInput = auditedSlides.map((s, i) => ({
+          slideIndex: i,
+          layoutIntent: String((s as { intent?: unknown }).intent ?? ''),
+          keyMessage: (s as { key_message?: string }).key_message ?? null,
+          bullets: collectBullets((s as { content?: unknown }).content),
+        }));
+        const critique = critiqueDeck(critiqueInput);
+        const structural = validateReport(unifiedJson);
+        const structuralErrors = structural.violations.filter((v) => v.severity === 'error');
+        const structuralWarnings = structural.violations.filter((v) => v.severity === 'warning');
+
+        deckQualityGates = {
+          critic: {
+            overallScore: critique.overallScore,
+            regenerateSlides: critique.regenerateSlides,
+            passed: critique.passed,
+          },
+          structural: {
+            valid: structural.valid,
+            errorCount: structuralErrors.length,
+            warningCount: structuralWarnings.length,
+          },
+        };
+
+        if (!critique.passed) {
+          warnings.push(
+            `deck-quality: ${critique.regenerateSlides.length} slajd(ów) z krytycznym problemem kompozycji (score ${critique.overallScore}/100; indeksy ${critique.regenerateSlides.join(', ')})`
+          );
+        }
+        for (const v of structuralErrors.slice(0, 5)) {
+          warnings.push(`deck-quality: ${v.rule} — ${v.message}`);
+        }
+        logger.info(
+          `[PresentationGen] quality gates: critic ${critique.overallScore}/100 passed=${critique.passed}, structural valid=${structural.valid} err=${structuralErrors.length} warn=${structuralWarnings.length} deck ${deckId}`
+        );
+      } catch (qgErr) {
+        logger.warn('[PresentationGen] quality gates skipped (non-fatal)', {
+          err: (qgErr as Error)?.message,
+        });
+      }
+    }
+
+    // ──────────────────────────────────────────────────────────────
     // B2 (W4): PREMIUM layout variants — 3 distinct palette+intent
     // plans stored as bonus data on deckDocument.variants. Fail-open:
     // any error silently skips variant generation and ships the deck.
@@ -1936,6 +2042,11 @@ export async function generateDeck(
       ...sourcePackPreflight.warnings,
       ...narrativePlan.warnings,
     ];
+    // A4: metadane bramek jakości (Critic + M19) na deckDocument.generation —
+    // additive, luźno typowane, by nie ruszać kontraktu typu generation.
+    if (deckQualityGates) {
+      (deckDocument.generation as Record<string, unknown>).qualityGates = deckQualityGates;
+    }
 
     // B2: attach variants (additive — never replaces primary slides).
     if (deckVariants && deckVariants.length > 0) {
