@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { baseStorageDir } from '../utils/storagePaths.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import PDFParserService from './pdfParserService.js';
 
@@ -346,7 +347,7 @@ class ReportImportService {
   private uploadsDir: string;
 
   constructor() {
-    this.uploadsDir = path.join(process.cwd(), 'uploads', 'imports');
+    this.uploadsDir = path.join(baseStorageDir(), 'uploads', 'imports');
   }
 
   setDependencies(deps: { db: any; aiService?: any }) {

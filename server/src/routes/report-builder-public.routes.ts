@@ -14,6 +14,7 @@ import PDFDocument from 'pdfkit';
 import config from '../config/Config.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
+import { exportsDir } from '../utils/storagePaths.js';
 
 const router = Router();
 
@@ -38,9 +39,7 @@ interface AssessmentMatrixData {
 // ==========================================
 
 const ensureExportDir = async (): Promise<string> => {
-  const exportDir = path.resolve(process.cwd(), 'exports', 'report-builder-public');
-  await fs.promises.mkdir(exportDir, { recursive: true });
-  return exportDir;
+  return exportsDir('report-builder-public');
 };
 
 /**

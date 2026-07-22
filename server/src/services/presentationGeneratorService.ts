@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import { materializePlannedVisual } from './ai/deckVisualsService.js';
 import {
   buildContextPack,
@@ -1920,8 +1921,7 @@ export async function generateDeck(
 
     const fs = await import('fs');
     const path = await import('path');
-    const exportDir = path.default.join(process.cwd(), 'exports', 'presentations');
-    if (!fs.default.existsSync(exportDir)) fs.default.mkdirSync(exportDir, { recursive: true });
+    const exportDir = exportsDir('presentations');
     const exportPath = path.default.join(exportDir, `${deckId}.pptx`);
     fs.default.writeFileSync(exportPath, result.buffer);
 

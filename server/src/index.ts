@@ -52,6 +52,7 @@ import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
+import { uploadsDir } from './utils/storagePaths.js';
 
 // Initialize app
 const app: Express = express();
@@ -952,9 +953,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   return jsonParser(req, res, next);
 });
 app.use(cookieParser()); // Required for CSRF protection
+// G2 fix (P0 storage volume): this used to be
+// `express.static(path.join(__dirname, '../uploads'), ...)`. `__dirname` here
+// is the compiled module's own directory (`dist/src` in the built container),
+// so `../uploads` resolved to `<cwd>/dist/uploads` — ONE level short of every
+// write-side call site in this codebase, which all write to
+// `<cwd>/uploads/...` (now `uploadsDir()` / `baseStorageDir()/uploads`, see
+// utils/storagePaths.ts). Routing the static mount through the same helper
+// both fixes that write/read base-dir mismatch and makes `/uploads/*` respect
+// STORAGE_DIR/RAILWAY_VOLUME_MOUNT_PATH once a persistent volume is mounted.
 app.use(
   '/uploads',
-  express.static(path.join(__dirname, '../uploads'), {
+  express.static(uploadsDir(), {
     // Stored-XSS hardening (M23 L-09) for user-uploaded assets (e.g. branding
     // SVG logos). Even if a malicious SVG slipped past upload-time
     // sanitization, these response headers prevent any embedded

@@ -10,13 +10,9 @@ import { Request } from 'express';
 import * as fs from 'fs';
 import multer from 'multer';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 
+import { uploadsDir } from '../utils/storagePaths.js';
 import type { AuthRequest } from './auth.middleware.js';
-
-// ESM-safe __dirname (__dirname is not defined when "type": "module")
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // ==========================================
 // TYPES
@@ -30,7 +26,12 @@ interface _FileRequest extends AuthRequest {
 // CONSTANTS - upload roots
 // ==========================================
 
-export const ASSESSMENTS_UPLOAD_ROOT = path.resolve(__dirname, '../../../uploads/assessments');
+// Was `path.resolve(__dirname, '../../../uploads/assessments')` — equivalent
+// to `process.cwd()/uploads/assessments` at runtime, but hardcoded to
+// process.cwd() and blind to STORAGE_DIR/RAILWAY_VOLUME_MOUNT_PATH. Routed
+// through the shared helper (utils/storagePaths.ts) for G2 volume readiness;
+// behavior is unchanged while no storage env var is set.
+export const ASSESSMENTS_UPLOAD_ROOT = uploadsDir('assessments');
 
 export const MAX_CLIENT_ORIGINALNAME_LENGTH = 255;
 

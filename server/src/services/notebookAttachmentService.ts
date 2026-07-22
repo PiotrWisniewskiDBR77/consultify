@@ -3,13 +3,14 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { baseStorageDir } from '../utils/storagePaths.js';
 import {
   P07_ATTACHMENT_ERROR_TAXONOMY,
   type P07AttachmentError,
   type P07AttachmentState,
 } from './v8/notebookCanon.js';
 
-const NOTEBOOK_ATTACHMENT_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'notebook-attachments');
+const NOTEBOOK_ATTACHMENT_UPLOAD_DIR = path.join(baseStorageDir(), 'uploads', 'notebook-attachments');
 const MAX_NOTEBOOK_ATTACHMENT_SIZE = 25 * 1024 * 1024;
 const NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES = 3;
 const NOTEBOOK_ATTACHMENT_STAGING_DIR = path.join(

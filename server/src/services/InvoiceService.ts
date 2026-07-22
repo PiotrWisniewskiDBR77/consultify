@@ -10,6 +10,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { uploadsDir } from '../utils/storagePaths.js';
 
 // ==========================================
 // TYPES
@@ -475,13 +476,10 @@ export class InvoiceServiceClass {
       const path = await import('path');
 
       // Create uploads directory if it doesn't exist
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'invoices');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
+      const invoicesUploadsDir = uploadsDir('invoices');
 
       const fileName = `${invoice.invoice_number.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-      const filePath = path.join(uploadsDir, fileName);
+      const filePath = path.join(invoicesUploadsDir, fileName);
 
       // Get organization and tax settings for invoice
       const orgData = await this.dbGet(

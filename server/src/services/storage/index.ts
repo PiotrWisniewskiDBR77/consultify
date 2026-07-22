@@ -27,6 +27,7 @@
 import path from 'path';
 
 import logger from '../../utils/Logger.js';
+import { baseStorageDir } from '../../utils/storagePaths.js';
 import { LocalDiskAdapter } from './LocalDiskAdapter.js';
 import { S3Adapter } from './S3Adapter.js';
 import type { StorageAdapter } from './types.js';
@@ -38,10 +39,13 @@ export type { GetObjectResult, GetUrlOptions, PutObjectInput, StorageAdapter } f
 /**
  * Absolute base directory for the local `uploads/` tree. Matches the historic
  * `path.join(process.cwd(), 'uploads', ...)` roots used across the codebase.
- * Overridable via UPLOADS_BASE_DIR for tests / non-standard deployments.
+ * Overridable via UPLOADS_BASE_DIR for tests / non-standard deployments;
+ * otherwise rooted at {@link baseStorageDir} (utils/storagePaths.ts), which
+ * itself falls back to `process.cwd()` when no STORAGE_DIR /
+ * RAILWAY_VOLUME_MOUNT_PATH is set — so default behavior is unchanged.
  */
 export function getUploadsBaseDir(): string {
-  return process.env.UPLOADS_BASE_DIR || path.join(process.cwd(), 'uploads');
+  return process.env.UPLOADS_BASE_DIR || path.join(baseStorageDir(), 'uploads');
 }
 
 /** Public URL prefix for locally-served uploads (express.static mount). */

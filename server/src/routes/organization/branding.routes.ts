@@ -31,6 +31,7 @@ import { normalizeOrganizationRole } from '../../services/organizationService.js
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { uploadsDir } from '../../utils/storagePaths.js';
 
 const router = Router();
 
@@ -38,8 +39,7 @@ const brandingUpload = multer({
   storage: multer.diskStorage({
     destination: (req, _file, cb) => {
       const orgId = String(req.params.orgId || 'unknown');
-      const uploadDir = path.join(process.cwd(), 'uploads', 'branding', orgId);
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      const uploadDir = uploadsDir('branding', orgId);
       cb(null, uploadDir);
     },
     filename: (_req, file, cb) => {

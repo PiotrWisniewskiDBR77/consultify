@@ -2,16 +2,21 @@
  * feedbackArtifacts
  *
  * Local filesystem adapter for Feedback Pipeline V2 artifacts (screenshots).
- * Default directory is `<cwd>/.feedback-artifacts` so it works in dev and on
- * Railway (which maps a persistent volume at `/app` — override with
- * `FEEDBACK_ARTIFACTS_DIR`). Intentionally small surface: we only need
- * write/read of raw bytes per feedback id.
+ * Default directory is `<baseStorageDir>/.feedback-artifacts` (see
+ * utils/storagePaths.ts) — plain local disk in dev, and under a mounted
+ * Railway Volume in prod once STORAGE_DIR/RAILWAY_VOLUME_MOUNT_PATH is set.
+ * NOTE (G2 correction): Railway does NOT persist local container disk across
+ * redeploys by default — a prior version of this comment claimed otherwise.
+ * Override the whole path with `FEEDBACK_ARTIFACTS_DIR` if needed.
+ * Intentionally small surface: we only need write/read of raw bytes per
+ * feedback id.
  */
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 import logger from '../utils/Logger.js';
+import { baseStorageDir } from '../utils/storagePaths.js';
 
 export interface StoredArtifact {
   kind: 'screenshot';
@@ -24,12 +29,13 @@ export interface StoredArtifact {
   url: string;
 }
 
-const DEFAULT_DIR = path.resolve(process.cwd(), '.feedback-artifacts');
-
 function getArtifactsDir(): string {
   const override = process.env.FEEDBACK_ARTIFACTS_DIR;
   if (override && override.trim()) return path.resolve(override.trim());
-  return DEFAULT_DIR;
+  // No dedicated override set: fall back to the shared storage base (STORAGE_DIR /
+  // RAILWAY_VOLUME_MOUNT_PATH / process.cwd() — see utils/storagePaths.ts) so these
+  // screenshots also survive redeploys once a persistent volume is configured.
+  return path.join(baseStorageDir(), '.feedback-artifacts');
 }
 
 function safeId(id: string): string {

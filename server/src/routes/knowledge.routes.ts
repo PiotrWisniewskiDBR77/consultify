@@ -10,7 +10,6 @@ import { NextFunction, Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -21,6 +20,7 @@ import {
 import KnowledgeService from '../services/KnowledgeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { uploadsDir } from '../utils/storagePaths.js';
 
 // ==========================================
 // TYPES
@@ -106,13 +106,12 @@ const NotificationOutboxService: any = null;
 //   logger.debug('[Knowledge] NotificationOutboxService not available');
 // }
 
-// Get directory paths
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // Configure multer to use a temporary staging directory
+// (was `path.join(__dirname, '../../../uploads/temp')` — equivalent to
+// `process.cwd()/uploads/temp` at runtime; routed through the shared helper
+// for G2 volume readiness, see utils/storagePaths.ts)
 const upload = multer({
-  dest: path.join(__dirname, '../../../uploads/temp'), // Staging area
+  dest: uploadsDir('temp'), // Staging area
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (_req, file, cb) => {
     // HP-23: ingest RAG obsługuje PDF/TXT/MD oraz formaty biurowe
@@ -697,8 +696,7 @@ router.post(
         .replace(/[/\\]+/g, '_')
         .replace(/\s+/g, ' ')
         .trim();
-      const destDir = path.resolve(process.cwd(), 'uploads', 'knowledge', orgId);
-      fs.mkdirSync(destDir, { recursive: true });
+      const destDir = uploadsDir('knowledge', orgId);
       const finalPath = path.join(destDir, `${Date.now()}-${safeName}`);
       try {
         fs.renameSync(tempPath, finalPath);

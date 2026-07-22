@@ -3,6 +3,7 @@ import path from 'path';
 
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
   ChartDataSet,
@@ -261,8 +262,7 @@ export async function exportValuationPptx(params: {
     skipValidation: false,
   });
 
-  const exportDirFs = path.join(process.cwd(), 'exports', 'valuations');
-  if (!fs.existsSync(exportDirFs)) fs.mkdirSync(exportDirFs, { recursive: true });
+  const exportDirFs = exportsDir('valuations');
   const fileName = `${params.valuationId}.pptx`;
   const exportPathFs = path.join(exportDirFs, fileName);
   const exportPathPublic = `/exports/valuations/${fileName}`;
