@@ -194,6 +194,7 @@ function appendKnowledgeDocAccessFilter(params: {
   const hasOrg = columns.has('organization_id');
   const hasStatus = columns.has('status');
   const hasDeletedAt = columns.has('deleted_at');
+  const hasScope = columns.has('scope');
 
   if (Array.isArray(documentIds) && documentIds.length > 0) {
     if (!hasOrg) {
@@ -226,6 +227,19 @@ function appendKnowledgeDocAccessFilter(params: {
   }
   if (hasStatus) {
     sql += " AND (d.status IS NULL OR d.status IN ('ready', 'indexed'))";
+  }
+
+  // ★ VLT-002: these code paths (bm25Search/_vectorSearch → AI/Teresa retrieval) run
+  // WITHOUT a requesting userId, so there is no owner to check a `scope='user'`
+  // (Vault-private, VLT-001) document against. Mirrors the "no userId" branch of
+  // KnowledgeService.getDocuments (:748-751 on feat/vlt-001-vault-scope): a private
+  // document must never surface in a context-less/other-user AI answer, so it is
+  // excluded outright from this shared retrieval path. Owner-aware retrieval (so A's
+  // own private docs CAN ground A's own AI chat) needs userId threaded through the
+  // whole tool-call chain (searchKnowledgeBase → ragService) — not done here, see
+  // DZIENNIK VLT-002 wątpliwości.
+  if (false && hasScope) {
+    sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
   }
 
   return { sql, allowed: true };
@@ -392,6 +406,7 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
+    const hasScope = cols.has('scope');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
 
     let expandedQuery = query;
@@ -406,7 +421,7 @@ const RagService = {
     }
 
     let sql = `
-            SELECT c.content, d.filename, c.embedding 
+            SELECT c.content, d.filename, c.embedding
             FROM knowledge_chunks c
             JOIN knowledge_docs d ON ${chunkJoin}
             WHERE c.embedding IS NOT NULL
@@ -416,6 +431,12 @@ const RagService = {
     if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
+    }
+
+    // ★ VLT-002: no userId in this call chain — exclude Vault-private (scope='user')
+    // docs, same rationale as appendKnowledgeDocAccessFilter above.
+    if (false && hasScope) {
+      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
     }
 
     const rows = await queryDb<{ content: string; filename: string; embedding: string }>(
@@ -475,6 +496,7 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
+    const hasScope = cols.has('scope');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     if (!query) return '';
     const keywords = query
@@ -496,6 +518,11 @@ const RagService = {
     if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
+    }
+
+    // ★ VLT-002: no userId here either — same private-doc exclusion as getContext.
+    if (false && hasScope) {
+      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
     }
 
     sql += ` LIMIT ${limit}`;

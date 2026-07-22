@@ -893,15 +893,30 @@ router.get(
 );
 
 /**
+ * ★ VLT-002 — czy `req.user` wolno edytować dany dokument Vault? SuperAdmin zawsze;
+ * poza tym wyłącznie właściciel WŁASNEGO prywatnego dokumentu (`scope='user' AND
+ * owner_id=self`) — zgodnie z zadaniem VLT-002 pkt 3 (klient dostawał 403 przy
+ * edycji własnego dokumentu, bo PUT wymuszał `requireSuperAdmin` bezwarunkowo).
+ * Dokumentów project/organization NIE odblokowujemy tu dla zwykłych userów — to
+ * pozostaje SuperAdmin-only (poza zakresem tego zadania).
+ */
+function canEditOwnPrivateDocument(req: AuthRequest, doc: any): boolean {
+  if (req.user?.isSuperAdmin === true) return true;
+  const userId = req.user?.id;
+  if (!userId || !doc) return false;
+  return doc.scope === 'user' && String(doc.owner_id || '') === String(userId);
+}
+
+/**
  * PUT /api/knowledge/documents/:id
- * Update knowledge document metadata (SuperAdmin only)
+ * Update knowledge document metadata. SuperAdmin, or the owner of their own
+ * private (scope='user') document — patrz `canEditOwnPrivateDocument`.
  */
 router.put(
   '/documents/:id',
   verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!KnowledgeService?.updateDocumentMetadata) {
+    if (!KnowledgeService?.updateDocumentMetadata || !KnowledgeService?.getDocumentById) {
       return notConfigured(res);
     }
 
@@ -909,6 +924,13 @@ router.put(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { id } = req.params;
+
+    const doc = await KnowledgeService.getDocumentById(orgId, id);
+    if (!doc) return res.status(404).json({ error: 'Document not found' });
+    if (!canEditOwnPrivateDocument(req, doc)) {
+      return res.status(403).json({ error: 'Super admin access required' });
+    }
+
     const { category, tags } = req.body || {};
 
     if (category !== undefined && category !== null && typeof category !== 'string') {
@@ -922,6 +944,111 @@ router.put(
       category: category ?? null,
       tags: Array.isArray(tags) ? tags : null,
     });
+
+    return res.json({ success: true, ...result });
+  })
+);
+
+/**
+ * GET /api/knowledge/documents/:id/scope-impact
+ * ★ VLT-002 (DEC-003) — DRY-RUN, nie zapisuje nic. Zwraca `becameOrgVisibleCount`
+ * dla żądanego `?scope=` — frontend (VLT-003) woła to PRZED PATCH .../scope, żeby
+ * pokazać ostrzeżenie „X dokumentów stanie się widocznych dla całej organizacji"
+ * i dać użytkownikowi anulować bez żadnej zmiany w bazie.
+ */
+router.get(
+  '/documents/:id/scope-impact',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getDocumentById) return notConfigured(res);
+
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const requestedScope = parseVaultScope(req.query.scope);
+    if (!requestedScope) {
+      return res
+        .status(400)
+        .json({ error: 'scope musi być jednym z: user, project, organization' });
+    }
+
+    const doc = await KnowledgeService.getDocumentById(orgId, id);
+    if (!doc) return res.status(404).json({ error: 'Document not found' });
+    if (!canEditOwnPrivateDocument(req, doc)) {
+      return res.status(403).json({ error: 'Super admin access required' });
+    }
+
+    const previousScope = doc.scope || 'organization'; // legacy scope IS NULL == 'organization'
+    const becameOrgVisibleCount =
+      previousScope !== 'organization' && requestedScope === 'organization' ? 1 : 0;
+
+    return res.json({ previousScope, requestedScope, becameOrgVisibleCount });
+  })
+);
+
+/**
+ * PATCH /api/knowledge/documents/:id/scope
+ * ★ VLT-002 (DEC-003) — faktyczna zmiana poziomu. Body: { scope, project_id? }.
+ * Zwraca ten sam `becameOrgVisibleCount` co dry-run wyżej (po fakcie) — frontend
+ * pokazuje ostrzeżenie z /scope-impact, user potwierdza, DOPIERO wtedy wołany jest
+ * ten endpoint; anulowanie w UI = po prostu nie wywołuj PATCH (dokument zostaje
+ * bez zmian, patrz KRYTERIUM ODBIORU zadania).
+ */
+router.patch(
+  '/documents/:id/scope',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getDocumentById || !KnowledgeService?.updateDocumentScope) {
+      return notConfigured(res);
+    }
+
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    const role = req.user?.role || 'USER';
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const requestedScope = parseVaultScope(req.body?.scope);
+    if (!requestedScope) {
+      return res
+        .status(400)
+        .json({ error: 'scope musi być jednym z: user, project, organization' });
+    }
+
+    const doc = await KnowledgeService.getDocumentById(orgId, id);
+    if (!doc) return res.status(404).json({ error: 'Document not found' });
+    if (!canEditOwnPrivateDocument(req, doc)) {
+      return res.status(403).json({ error: 'Super admin access required' });
+    }
+
+    const rawProjectId =
+      typeof req.body?.project_id === 'string' && req.body.project_id.trim()
+        ? req.body.project_id.trim()
+        : null;
+
+    if (requestedScope === 'project') {
+      if (!rawProjectId) {
+        return res.status(400).json({ error: 'project_id wymagany dla scope=project' });
+      }
+      const canAccess = await contextDocumentService.canAccessProject({
+        organizationId: orgId,
+        userId: userId || '',
+        projectId: rawProjectId,
+        userRole: role,
+      });
+      if (!canAccess) {
+        return res.status(403).json({ error: 'Brak dostępu do projektu' });
+      }
+    }
+
+    const result = await KnowledgeService.updateDocumentScope(
+      orgId,
+      id,
+      requestedScope,
+      rawProjectId
+    );
+    if (!result.updated) return res.status(404).json({ error: 'Document not found' });
 
     return res.json({ success: true, ...result });
   })

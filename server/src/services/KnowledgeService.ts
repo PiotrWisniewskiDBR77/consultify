@@ -827,6 +827,75 @@ const KnowledgeService = {
 
     return { updated: Boolean((result as any)?.changes) };
   },
+
+  /**
+   * ★ VLT-002 — single-document lookup (ownership checks for PUT/scope-change routes;
+   * `knowledge.routes.ts` needs `owner_id`/`scope` before deciding who may edit).
+   */
+  async getDocumentById(orgId: string, docId: string): Promise<any | null> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<DocumentRow>(
+      `SELECT * FROM knowledge_docs
+       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL`,
+      [docId, orgId],
+      { fallback: true } as any
+    );
+    return row ? normalizeDocument(row) : null;
+  },
+
+  /**
+   * ★ VLT-002 — zmiana poziomu przypisania dokumentu (DEC-003, ostrzeżenie zmiany
+   * zakresu). Zwraca `becameOrgVisibleCount` — realna liczba dokumentów, które W
+   * WYNIKU TEJ ZMIANY staną się widoczne dla całej organizacji (poprzedni scope !=
+   * 'organization' i nowy scope === 'organization'; dla pojedynczego dokumentu to 0
+   * albo 1). Frontend (VLT-003) pokazuje ostrzeżenie PRZED zapisem — patrz
+   * `GET /documents/:id/scope-impact` w `knowledge.routes.ts` (ten sam wzór liczenia,
+   * bez zapisu — pozwala anulować bez zmiany danych).
+   */
+  async updateDocumentScope(
+    orgId: string,
+    docId: string,
+    newScope: VaultDocumentScope,
+    newProjectId?: string | null
+  ): Promise<{
+    updated: boolean;
+    previousScope: string | null;
+    newScope: VaultDocumentScope;
+    becameOrgVisibleCount: number;
+  }> {
+    await ensureKnowledgeSchema();
+    const existing = await DbPromise.get<DocumentRow>(
+      `SELECT scope, project_id FROM knowledge_docs
+       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL`,
+      [docId, orgId],
+      { fallback: true } as any
+    );
+    if (!existing) {
+      return { updated: false, previousScope: null, newScope, becameOrgVisibleCount: 0 };
+    }
+    // Legacy rows have `scope IS NULL` — treated as 'organization' (their actual
+    // prior visibility, see getDocuments comment above).
+    const previousScope = (existing.scope as string | null) || 'organization';
+    const resolvedProjectId = newScope === 'project' ? newProjectId || null : null;
+
+    const result = await DbPromise.run(
+      `UPDATE knowledge_docs
+       SET scope = ?, project_id = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+      [newScope, resolvedProjectId, docId, orgId],
+      { fallback: true } as any
+    );
+
+    const becameOrgVisibleCount =
+      previousScope !== 'organization' && newScope === 'organization' ? 1 : 0;
+
+    return {
+      updated: Boolean((result as any)?.changes),
+      previousScope,
+      newScope,
+      becameOrgVisibleCount,
+    };
+  },
 };
 
 export const knowledgeService = KnowledgeService;

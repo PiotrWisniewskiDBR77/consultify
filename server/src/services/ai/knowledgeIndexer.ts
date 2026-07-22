@@ -196,6 +196,8 @@ export class KnowledgeIndexer {
   private projectRoot: string;
   private embeddingService: typeof embeddingService | null;
   private isPg: boolean;
+  /** ★ VLT-002: cached `knowledge_docs.scope` column presence (VLT-001 ALTER). */
+  private hasScopeColumnCache: boolean | null = null;
 
   constructor() {
     // Runtime and local scripts run with a stable CWD (typically repo root or `server/`).
@@ -203,6 +205,35 @@ export class KnowledgeIndexer {
     this.projectRoot = path.resolve(process.cwd());
     this.embeddingService = null;
     this.isPg = process.env.DB_TYPE === 'postgres';
+  }
+
+  /**
+   * ★ VLT-002 — does `knowledge_docs` have the `scope` column (VLT-001 ALTER,
+   * `KnowledgeService.ts` `ensureKnowledgeSchema`/`ContextDocumentService.ensureSchema`)?
+   * Defensive introspection (not assumed) because this table is shared across three
+   * services that migrate it independently and may not have run yet in every process.
+   */
+  private async hasScopeColumn(): Promise<boolean> {
+    if (this.hasScopeColumnCache !== null) return this.hasScopeColumnCache;
+    try {
+      if (this.isPg) {
+        const db = getDatabase();
+        const result = await db.query<{ column_name?: string }>(
+          `SELECT column_name FROM information_schema.columns WHERE table_name = 'knowledge_docs' AND column_name = 'scope'`
+        );
+        this.hasScopeColumnCache = (result.rows || []).length > 0;
+      } else {
+        const rows = await DbPromise.all<{ name?: string }>(
+          `PRAGMA table_info(knowledge_docs)`,
+          [],
+          { fallback: true }
+        );
+        this.hasScopeColumnCache = (rows || []).some((r) => r?.name === 'scope');
+      }
+    } catch {
+      this.hasScopeColumnCache = false;
+    }
+    return this.hasScopeColumnCache;
   }
 
   private resolveWorkspacePath(relativePath: string): string {
@@ -1041,6 +1072,13 @@ export class KnowledgeIndexer {
       params.push(...sourceTypes);
     }
 
+    // ★ VLT-002: this path (search() fallback) has no requesting userId — a
+    // Vault-private (scope='user') document must never ground an AI answer here.
+    // Same rationale as ragService.appendKnowledgeDocAccessFilter.
+    if (await this.hasScopeColumn()) {
+      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
+    }
+
     sql += ` LIMIT ?`;
     params.push(limit);
 
@@ -1084,6 +1122,12 @@ export class KnowledgeIndexer {
     if (sourceTypes && sourceTypes.length > 0) {
       sql += ` AND d.source_type IN (${sourceTypes.map(() => '?').join(',')})`;
       params.push(...sourceTypes);
+    }
+
+    // ★ VLT-002: vector-search path behind search() — same no-userId private-doc
+    // exclusion as keywordSearch() above.
+    if (await this.hasScopeColumn()) {
+      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
     }
 
     if (this.isPg) {
