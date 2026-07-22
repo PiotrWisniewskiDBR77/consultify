@@ -378,6 +378,81 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     [visibleColumns, isPl]
   );
 
+  // Z16b follow-up: Ctrl/Cmd+V mirrors copySelectionOrCell's TSV shape —
+  // rows split on \n, columns on \t. Pastes from the focused (anchor) cell
+  // down/right, writing through the same handleFieldChange path a single
+  // cell edit uses (CellEditor's onSave, line ~410). Never grows the grid —
+  // any cell the pasted rectangle would land outside of, or that maps to a
+  // computed field, is skipped and counted (logged via console.debug, not
+  // surfaced as an error toast — parity with copy's silent .catch()).
+  // A clipboard payload with no \t/\n (a single value) instead fills the
+  // whole active rangeBounds rectangle, spreadsheet-style; with no active
+  // range it just writes the one focused cell.
+  const pasteFromClipboard = useCallback(
+    (rowId: string, colKey: string) => {
+      if (locked) return;
+      void navigator.clipboard
+        ?.readText()
+        .then((text) => {
+          if (!text) return;
+          const rawRows = text.replace(/\r\n/g, '\n').split('\n');
+          // Drop one trailing empty row from a clipboard payload that ends
+          // in a newline (common with copies out of spreadsheet apps).
+          if (rawRows.length > 1 && rawRows[rawRows.length - 1] === '') rawRows.pop();
+          const grid = rawRows.map((r) => r.split('\t'));
+
+          const anchorRi = flatRowIds.indexOf(rowId);
+          const anchorCi = colKeys.indexOf(colKey);
+          if (anchorRi < 0 || anchorCi < 0) return;
+
+          const isSingleValue = grid.length === 1 && grid[0].length === 1;
+          let written = 0;
+          let skipped = 0;
+
+          const writeCell = (ri: number, ci: number, value: string) => {
+            if (ri >= flatRowIds.length || ci >= colKeys.length) {
+              skipped++;
+              return;
+            }
+            const targetColKey = colKeys[ci];
+            const pf = platformFieldById.get(targetColKey);
+            if (pf?.isComputed) {
+              skipped++;
+              return;
+            }
+            handleFieldChange(flatRowIds[ri], targetColKey, value);
+            written++;
+          };
+
+          if (isSingleValue && rangeBounds) {
+            const value = grid[0][0];
+            for (let ri = rangeBounds.minRi; ri <= rangeBounds.maxRi; ri++) {
+              for (let ci = rangeBounds.minCi; ci <= rangeBounds.maxCi; ci++) {
+                writeCell(ri, ci, value);
+              }
+            }
+          } else {
+            grid.forEach((rowValues, rOffset) => {
+              rowValues.forEach((value, cOffset) => {
+                writeCell(anchorRi + rOffset, anchorCi + cOffset, value);
+              });
+            });
+          }
+
+          if (skipped > 0) {
+            console.debug(
+              `[table-paste] pominięto ${skipped} komórek — poza siatką lub pole obliczane (nie tworzę nowych wierszy/kolumn)`
+            );
+          }
+          if (written > 0) {
+            toast.success(isPl ? 'Wklejono' : 'Pasted');
+          }
+        })
+        .catch(() => {});
+    },
+    [locked, flatRowIds, colKeys, platformFieldById, handleFieldChange, rangeBounds, isPl]
+  );
+
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
       return (
@@ -483,6 +558,11 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
             e.preventDefault();
             copySelectionOrCell(row.id, col.key);
+            return;
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+            e.preventDefault();
+            pasteFromClipboard(row.id, col.key);
             return;
           }
           switch (e.key) {
