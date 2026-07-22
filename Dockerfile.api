@@ -184,9 +184,12 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 -G nodejs
 
 # Install security updates and required tools
+# su-exec: lets docker-entrypoint-api.sh start as root (to chown a mounted
+# Railway Volume, root-owned by default) then drop to non-root nodejs for the
+# actual node process — see server/docker-entrypoint-api.sh.
 RUN apk update && \
     apk upgrade --no-cache && \
-    apk add --no-cache dumb-init curl
+    apk add --no-cache dumb-init curl su-exec
 
 # Production dependencies will be copied later
 
@@ -291,8 +294,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # Expose port
 EXPOSE 3001
 
-# Use dumb-init for proper signal handling
-ENTRYPOINT ["dumb-init", "--"]
 # Backend entry point - check both possible locations
 # TypeScript may output to dist/index.js or dist/src/index.js depending on structure
 RUN if [ -f /app/server/dist/index.js ]; then \
@@ -306,4 +307,18 @@ RUN if [ -f /app/server/dist/index.js ]; then \
     else \
       echo "ERROR: Cannot determine entry point!" && exit 1; \
     fi
-CMD ["sh", "/app/server/start.sh"]
+
+# P0 follow-up (2026-07-22): container must start as ROOT so the entrypoint
+# can chown a mounted Railway Volume (root-owned by default) before dropping
+# to nodejs — see server/docker-entrypoint-api.sh. Switch to root BEFORE the
+# COPY+chmod below: COPY always lands as root:root regardless of current
+# USER, so `chmod +x` on it must also run as root (nodejs doesn't own the
+# file and can't chmod it) — ordering matters here.
+USER root
+COPY server/docker-entrypoint-api.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# docker-entrypoint-api.sh chowns the volume (if any) as root, then execs
+# `su-exec nodejs dumb-init -- sh /app/server/start.sh` — identical runtime
+# command to the previous ENTRYPOINT+CMD, app itself still never runs as root.
+ENTRYPOINT ["/docker-entrypoint.sh"]
