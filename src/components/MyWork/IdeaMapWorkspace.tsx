@@ -3592,25 +3592,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return (
       <>
         {/*
-        ★ D16/D17 — JEDEN prawy panel idei (dok Teresy) = `<IdeaRightPanel>`
-        (accordion ArtifactRightPanel): Właściwości · Kontekst · Teresa. Zastępuje
+        ★ D16/D17/Z8 — JEDEN prawy panel idei (dok Teresy) = `<IdeaRightPanel>`
+        (accordion ArtifactRightPanel), przebudowany (2026-07-22) na 5 sekcji
+        kanonu SPEC-A: Akcje · Właściwości · Powiązania · Komentarze ·
+        Historia/AI (ARTIFACT_ANATOMY_STANDARD §10.2/§11.2). Zastępuje
         archaiczny przełącznik 3 OSOBNYCH szuflad (#6q) dla WSZYSTKICH 4 narzędzi
         — bez flagi (default). Montuje się gdy pasek otworzy dowolną sekcję
         (parytet z self-hide szuflad: canvas rozszerza się po zamknięciu).
         Reużywa te same panele co legacy (IdeaWorkspaceTools/IdeaContextPanel/
-        IdeaAISuggestionsPanel) jako `embedded` sekcje — ZERO bespoke. Trzecia
-        karta JEST Teresą (komendy + strumień sugestii), nie osobny „AI Suggestions".
-        Ścieżka mels-canvas (eksperymentalna, default OFF) zostaje na starych
-        szufladach — nietknięta.
+        IdeaAISuggestionsPanel) jako `embedded` sekcje — ZERO bespoke; Akcje =
+        eksport/konwertuj realnymi handlerami workspace (te same co Menu 1/3
+        kebab), Komentarze = pusta (brak kanału na poziomie idei — per-node
+        wątki to inny zakres). Ścieżka mels-canvas (eksperymentalna, default
+        OFF) zostaje na starych szufladach — nietknięta.
       */}
         {!melsCanvasEnabled && (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (
           <IdeaRightPanel
             isPolish={isPolish}
-            activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'context' : 'teresa'}
-            // HP-17: karta „Źródła i założenia" (EvidencePanelSection, artifactType
-            // 'canvas') tylko za flagą ff_evidencePanel (default OFF, patrz
-            // src/utils/evidencePanelFlag.ts). OFF → prop `undefined` → karta się
-            // nie montuje → powłoka panelu 1:1 jak przed HP-17 (zero zmian DOM).
+            activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'}
+            onExport={() => setExportMenuOpen(true)}
+            onConvert={() => handlePanelChange('tools')}
+            // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
+            // ff_evidencePanel (default OFF, patrz src/utils/evidencePanelFlag.ts).
+            // OFF → prop `undefined` → nic się nie dokłada pod Powiązania → zero
+            // zmian DOM wobec stanu sprzed HP-17/Z8.
             evidenceArtifactId={isEvidencePanelEnabled() && realId ? realId : undefined}
             propertiesContent={
               <IdeaWorkspaceTools
@@ -3620,7 +3625,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 onClose={() => handlePanelChange(null)}
               />
             }
-            contextContent={
+            relationsContent={
               <IdeaContextPanel
                 {...ideaContextPanelSharedProps}
                 open
