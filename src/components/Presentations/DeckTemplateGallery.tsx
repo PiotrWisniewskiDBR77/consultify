@@ -124,7 +124,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
     <div className="space-y-8">
       {/* System Templates */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2 mb-4">
           <Star className="w-5 h-5 text-amber-400" />
           {t('presentations.templates.systemTemplates', 'System Templates')}
         </h3>
@@ -146,7 +146,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
       {/* Org Templates */}
       {orgTemplates.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2 mb-4">
             <Layout className="w-5 h-5 text-c-info" />
             {t('presentations.templates.orgTemplates', 'Organization Templates')}
           </h3>
@@ -177,22 +177,22 @@ const TemplateCard: React.FC<{
   cloning: boolean;
 }> = ({ template, isExpanded, onToggle, onSelect, onClone, cloning }) => {
   const { t } = useTranslation();
-  const gradientClass = DECK_TYPE_COLORS[template.deck_type] || 'from-slate-500 to-slate-600';
+  const gradientClass = DECK_TYPE_COLORS[template.deck_type] || 'from-c-border-strong to-c-border-strong';
   const audienceI18n = AUDIENCE_I18N[template.audience];
   const audience = audienceI18n ? t(audienceI18n.key, audienceI18n.fallback) : undefined;
   const goalI18n = GOAL_I18N[template.goal];
   const goal = goalI18n ? t(goalI18n.key, goalI18n.fallback) : undefined;
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-c-surface-raised rounded-xl border border-c-border-subtle overflow-hidden hover:shadow-md transition-shadow">
       {/* Header gradient */}
       <div className={`h-2 bg-gradient-to-r ${gradientClass}`} />
 
       <div className="p-4">
         <div className="flex items-start justify-between">
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-white">{template.name}</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+            <h4 className="font-semibold text-c-text">{template.name}</h4>
+            <p className="text-sm text-c-text-secondary mt-1 line-clamp-2">
               {template.description}
             </p>
           </div>
@@ -229,21 +229,21 @@ const TemplateCard: React.FC<{
           <div className="mt-2 space-y-1 pl-2 border-l-2 border-c-info/20">
             {template.outline_json.map((slide, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
-                <span className="text-xs text-slate-600 w-4">{i + 1}</span>
-                <FileText size={12} className="text-slate-600" />
-                <span className="text-slate-600 dark:text-slate-300">{slide.title}</span>
-                <span className="text-xs text-slate-600">({slide.intent})</span>
+                <span className="text-xs text-c-text-muted w-4">{i + 1}</span>
+                <FileText size={12} className="text-c-text-muted" />
+                <span className="text-c-text-secondary">{slide.title}</span>
+                <span className="text-xs text-c-text-muted">({slide.intent})</span>
               </div>
             ))}
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200 dark:border-navy-700">
+        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-c-border-subtle">
           {onSelect && (
             <button
               onClick={onSelect}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm font-medium rounded-lg hover:bg-navy-800"
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary text-sm font-medium rounded-lg"
             >
               <Sparkles size={14} /> {t('presentations.templates.use', 'Use')}
             </button>
@@ -252,7 +252,7 @@ const TemplateCard: React.FC<{
             <button
               onClick={onClone}
               disabled={cloning}
-              className="flex items-center gap-1.5 px-3 py-2 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 border border-c-border-subtle text-c-text-secondary text-sm rounded-lg hover:bg-state-hover disabled:opacity-50"
             >
               {cloning ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
               {t('presentations.templates.clone', 'Clone')}
@@ -265,7 +265,7 @@ const TemplateCard: React.FC<{
 };
 
 const Tag: React.FC<{ label: string }> = ({ label }) => (
-  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400">
+  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-c-surface text-c-text-muted">
     {label}
   </span>
 );
