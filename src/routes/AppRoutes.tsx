@@ -29,7 +29,6 @@ import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { isAgentPlanEnabled } from '@/utils/agentPlanFlag';
 import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
-import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
@@ -52,17 +51,14 @@ const StudioView = lazyWithRetry(() =>
 const MyWorkView = lazyWithRetry(() =>
   import('@/views/MyWorkView').then((m) => ({ default: m.MyWorkView }))
 );
-// HP-22 Harvey-Parity: org-scoped client document vault. Gated OFF by
-// default (clientVaultFlag) — component itself also self-gates and renders
-// null, the route below additionally redirects away when disabled so the
-// URL never shows a blank shell.
-const ClientDocumentsVault = lazyWithRetry(() =>
-  import('@/views/vault/ClientDocumentsVault').then((m) => ({ default: m.ClientDocumentsVault }))
-);
+// HP-22 Harvey-Parity: org-scoped client document vault. VLT-004 (relokacja
+// 2026-07-23) removed the lazy view component and route-level flag gate here
+// — the surface now renders from the My Work "Vault" tab (MyWorkHub.tsx);
+// ROUTES.CLIENT_VAULT below is redirect-only so old /vault links don't 404.
 // HP-4 F3 Harvey-Parity: run-agent workspace entry (AgentPlanWorkspace).
 // Gated OFF by default (agentPlanFlag) — component self-gates and renders
 // null, the route below additionally redirects away when disabled so the
-// URL never shows a blank shell (mirrors ClientDocumentsVault above).
+// URL never shows a blank shell.
 const AgentPlanView = lazyWithRetry(() =>
   import('@/views/AgentPlanView').then((m) => ({ default: m.AgentPlanView }))
 );
@@ -1284,28 +1280,16 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Client Vault (HP-22, Harvey-Parity) — org-scoped client document
-            vault. Gated OFF by default (clientVaultFlag, reguła #7/#9): when
-            disabled the route redirects to /my-work so hitting /vault by URL
-            never shows a blank shell. No visual/behavioral change for anyone
-            until the flag is flipped after Piotr's screenshot accept. */}
+        {/* Client Vault (HP-22, Harvey-Parity) — VLT-004 (relokacja
+            2026-07-23): the surface moved from its own route into the My
+            Work "Vault" tab (MyWorkHub.tsx). This route is kept only so old
+            /vault links (bookmarks, other in-app links) never 404 — it
+            always redirects to the tab; MyWorkHub itself gates the tab on
+            isClientVaultEnabled(), so a stale link falls back to the default
+            tab if the flag is ever off. */}
         <Route
           path={ROUTES.CLIENT_VAULT}
-          element={
-            isClientVaultEnabled() ? (
-              <MainLayout breadcrumbs={breadcrumbs || ['Client Vault']}>
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="fade">
-                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                      <ClientDocumentsVault />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </MainLayout>
-            ) : (
-              <Navigate to={ROUTES.MY_WORK} replace />
-            )
-          }
+          element={<Navigate to={`${ROUTES.MY_WORK}?tab=vault`} replace />}
         />
 
         {/* Run agent (HP-4 F3, Harvey-Parity) — AgentPlanWorkspace entry

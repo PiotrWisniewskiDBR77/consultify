@@ -41,7 +41,6 @@ import React from 'react';
 
 import { AppView, UserRole } from '../../../types';
 import { isAgentPlanEnabled } from '../../../utils/agentPlanFlag';
-import { isClientVaultEnabled } from '../../../utils/clientVaultFlag';
 import { isExceleEngineEnabled } from '../../../utils/exceleFlag';
 import { MenuItem } from './types';
 
@@ -63,21 +62,11 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       icon: React.createElement(Briefcase, { size: 20 }),
       viewId: AppView.MY_WORK,
     },
-    // 2.5 Client Vault (HP-22, Harvey-Parity) — org-scoped client document
-    // vault. Wizualnie nowa powierzchnia → gated OFF by default (clientVaultFlag,
-    // reguła #7/#9). Nav entry is omitted entirely when the flag is off, so
-    // the sidebar is byte-for-byte unchanged for everyone until Piotr
-    // accepts the screenshot.
-    ...(isClientVaultEnabled()
-      ? [
-          {
-            id: 'CLIENT_VAULT',
-            label: t('sidebar.clientVault', 'Client Vault'),
-            icon: React.createElement(Database, { size: 20 }),
-            viewId: AppView.CLIENT_VAULT,
-          },
-        ]
-      : []),
+    // Client Vault (HP-22) — USUNIĘTE z menu głównego (VLT-004, relokacja
+    // 2026-07-23): powierzchnia żyje teraz jako zakładka w My Work ('vault',
+    // MyWorkHub.tsx). Stary route (/vault) przekierowuje na
+    // `#my-work?tab=vault` — patrz AppRoutes.tsx. Sama relokacja, funkcjonalność
+    // bez zmian.
     // 2.6 Uruchom agenta (HP-4 F3, Harvey-Parity) — entry point into
     // AgentPlanWorkspace (pick one of 31 ready manifests, run as a
     // background plan with an approval gate). Wizualnie nowa powierzchnia →
