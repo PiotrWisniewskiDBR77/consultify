@@ -148,4 +148,12 @@ export interface GenerationStatusResponse {
   /** Wypełnione gdy state = 'error'. */
   error?: string;
   usage?: GenerationUsage;
+  /**
+   * A3 — widoczne ostrzeżenia jakości gotowej generacji (np. wykryta
+   * fabrykacja liczb). NIE-blokujące: dokument jest gotowy, ale banner
+   * Studio pokazuje ostrzeżenia do weryfikacji przed wysyłką partnerską.
+   */
+  warnings?: string[];
+  /** A3 — generacja „zdegradowana" (jakość obniżona; patrz `warnings`). */
+  qualityDegraded?: boolean;
 }

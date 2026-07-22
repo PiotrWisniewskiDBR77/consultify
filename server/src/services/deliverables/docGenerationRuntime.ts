@@ -22,6 +22,10 @@ import type {
 } from '../../types/deliverablesGeneration.js';
 import logger from '../../utils/Logger.js';
 import { isPlaceholderDocumentProse } from '../documentStudio/documentContentGenerator.js';
+import {
+  detectFabricatedNumbersInText,
+  summarizeFabrication,
+} from '../documentStudio/documentFabricationCheck.js';
 import { renderSchemaToMarkdown } from '../documentStudio/documentSchemaRenderer.js';
 import {
   materializeDocumentArtifact,
@@ -329,6 +333,32 @@ interface DocRuntimeEntry {
   warnings: string[];
   sectionCount?: number;
   documentArtifactId?: string;
+  /** A3 — generacja zdegradowana (np. wykryta fabrykacja liczb); patrz warnings. */
+  degraded?: boolean;
+}
+
+/**
+ * A3 — ocena FABRYKACJI gotowego markdownu doc. Deterministyczna, fail-soft.
+ * „Zdegradowana" = wykryto precyzyjne, niepoparte liczby bez znacznika
+ * „(założenie)" w dokumencie BEZ groundingu (rozmowa-only) — czyli silnik
+ * najpewniej wymyślił metryki. Przy groundingu (fakty/źródła) liczby mogą
+ * pochodzić z materiału, więc nie degradujemy (poza zakresem det. weryfikacji).
+ * Nie blokuje generacji — tylko ostrzega (banner Studio pokazuje warnings).
+ */
+function assessDocFabrication(
+  markdown: string,
+  language: 'pl' | 'en',
+  hasGrounding: boolean
+): { degraded: boolean; warnings: string[] } {
+  try {
+    if (hasGrounding) return { degraded: false, warnings: [] };
+    const fab = detectFabricatedNumbersInText(markdown);
+    if (fab.count === 0) return { degraded: false, warnings: [] };
+    return { degraded: true, warnings: [summarizeFabrication(fab, language)] };
+  } catch {
+    // Błąd detektora NIGDY nie psuje generacji (błąd QA ≠ blokada dokumentu).
+    return { degraded: false, warnings: [] };
+  }
 }
 
 const docRuntimeState = new Map<string, DocRuntimeEntry & { updatedAtMs?: number }>();
@@ -1620,9 +1650,23 @@ export async function startDoc(params: {
             ? { content: withSources, artifactId: streamedArtifactId }
             : { content: withSources },
         });
+        // A3 — bramka fabrykacji (nie-blokująca): przy braku groundingu wykryte
+        // precyzyjne, niepoparte liczby bez znacznika „(założenie)" degradują
+        // generację z widocznym ostrzeżeniem (banner Studio pokazuje warnings).
+        const streamFab = assessDocFabrication(
+          withSources,
+          docLangEarly,
+          Boolean(groundingFacts) || Boolean(usedRefsEarly?.length)
+        );
+        if (streamFab.degraded) {
+          logger.warn(
+            `${LOG_PREFIX} draft degraded (fabrication, streamed): generation=${draft.id} — ${streamFab.warnings[0] ?? ''}`
+          );
+        }
         setDocRuntime(draft.id, {
           state: 'draft',
-          warnings: [],
+          warnings: streamFab.warnings,
+          degraded: streamFab.degraded,
           sectionCount: outline.sections.length,
           documentArtifactId: streamedArtifactId,
         });
@@ -1707,9 +1751,22 @@ export async function startDoc(params: {
         generationDraftId: draft.id,
         sourceRefs: stored.intake.sourceHints,
       });
+      // A3 — bramka fabrykacji (nie-blokująca): degraduje generację z widocznym
+      // ostrzeżeniem, gdy przy braku groundingu wykryto niepoparte liczby.
+      const oneShotFab = assessDocFabrication(
+        markdownWithSources,
+        docLang,
+        Boolean(groundingFacts) || Boolean(usedRefs?.length)
+      );
+      if (oneShotFab.degraded) {
+        logger.warn(
+          `${LOG_PREFIX} draft degraded (fabrication): generation=${draft.id} — ${oneShotFab.warnings[0] ?? ''}`
+        );
+      }
       setDocRuntime(draft.id, {
         state: 'draft',
-        warnings: [],
+        warnings: oneShotFab.warnings,
+        degraded: oneShotFab.degraded,
         sectionCount: outline.sections.length,
         documentArtifactId: result.artifactId,
       });
@@ -1796,6 +1853,14 @@ export async function statusDoc(params: {
           ? Math.max(0, (content.match(/^\|/gm) || []).length - 2)
           : (content.match(/^## /gm) || []).length),
     };
+    // A3 — przenieś ostrzeżenia jakości (fabrykacja) i flagę degradacji do
+    // odpowiedzi poll; banner Studio pokazuje je nad gotowym draftem.
+    if (runtime?.warnings && runtime.warnings.length > 0) {
+      response.warnings = runtime.warnings;
+    }
+    if (runtime?.degraded) {
+      response.qualityDegraded = true;
+    }
   }
   return response;
 }
