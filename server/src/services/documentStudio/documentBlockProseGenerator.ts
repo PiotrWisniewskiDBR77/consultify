@@ -170,6 +170,9 @@ function buildSystemPrompt(schema: DocumentSchema): string {
     // Oznaczaj TYLKO konkretną, niepopartą liczbę/procent/kwotę/datę/nazwaną wartość
     // inline w nawiasie, w języku dokumentu: „(założenie)" / „(assumption)".
     'Ground every factual claim in the provided sources. Write confident, decision-oriented consulting prose — do NOT hedge every sentence. When a SPECIFIC number, percentage, amount, date or named fact is NOT supported by the sources, mark just that value inline in parentheses in the document language — "(założenie)" for Polish, "(assumption)" for English (e.g. "redukcja błędów o 30% (założenie)"). Never prefix a whole sentence with "Assumption:" and never repeat the marker on consecutive sentences. Qualitative reasoning is stated plainly; if a section rests on a few key assumptions, you may name them once in a short lead-in, not sentence-by-sentence.',
+    // Polish znacznika (naprawa 2026-07-22): w praktyce ten sam znacznik potrafił
+    // powtórzyć się w kolejnych zdaniach akapitu przy tej samej wartości.
+    'Within a single paragraph, mark the same or a closely related assumed value only once — write the following sentences in confident prose without repeating the marker, and do not mark a value that is derived directly from an assumption already marked earlier in the paragraph.',
     'For "text" blocks return a single tight paragraph. For "items" blocks return 2-5 crisp bullet points.',
     // N-9: tabelaryczne sekcje muszą dostać tabelę, nie samą prozę. Renderer
     // oddaje "text" verbatim, więc tabela GFM w polu "text" trafia do edytora.

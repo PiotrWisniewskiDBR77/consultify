@@ -1619,10 +1619,11 @@ export async function generateDeck(
     // slide (CONCLUSION_LAYER_STANDARD §W5) built from the deck's OWN facts
     // (artifactData + ContextPack) and validated by the K1→K4 server twin
     // (`validateConclusion`). A management deck should end on "Co robić
-    // najpierw" (K3) + "Czego oczekiwać" (K4), not a section collage. Gated by
-    // ENABLE_DECK_CONCLUSION_SLIDE (default OFF); process.env is read at CALL
-    // time so background generation reflects late env changes. Never throws.
-    if (process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true') {
+    // najpierw" (K3) + "Czego oczekiwać" (K4), not a section collage.
+    // ENABLE_DECK_CONCLUSION_SLIDE: default ON od 2026-07-22 — wykonuj, CHYBA
+    // że env jawnie === 'false' (wyłączanie awaryjne). process.env is read at
+    // CALL time so background generation reflects late env changes. Never throws.
+    if (process.env.ENABLE_DECK_CONCLUSION_SLIDE !== 'false') {
       try {
         const { buildDeckConclusionSlide } = await import('./deliverables/deckConclusionSlide.js');
         let conclusionLlm: unknown = null;
