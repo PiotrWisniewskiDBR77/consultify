@@ -1,0 +1,17 @@
+/* Process Flow canvas styles — Z17 (Fala 3): magnetic connector parity.
+   Handles are invisible by default (see FlowNodeComponent's HANDLE_CLASS,
+   opacity-0 + group-hover:opacity-100) so 8 dots per node don't clutter the
+   canvas. This stylesheet adds the second reveal trigger required by the
+   task: while ANY edge is being dragged (not just on hover of the node
+   under the cursor), every handle on every node lights up so the user can
+   see all the possible landing spots — matching Lucidchart/Miro magnetic
+   connect UX. `.pf-connecting` is toggled on the <ReactFlow> root element
+   from IdeaProcessFlowTool's onConnectStart/onConnectEnd. */
+.pf-connecting .react-flow__handle {
+  opacity: 1 !important;
+}
+
+/* Connection preview line — c-focus, not c-accent (tokens rule). */
+.react-flow__connection-path {
+  stroke: var(--c-focus-solid) !important;
+}
