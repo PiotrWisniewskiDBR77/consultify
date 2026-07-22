@@ -631,6 +631,10 @@ export async function generateDeliverable(
           theme: 'corporate',
           confidentiality: 'internal',
           sourceArtifacts: [],
+          // Temat z prośby → Narrative Engine (user_instruction) w generateDeck,
+          // żeby treść slajdów nie była generyczna (audyt 2026-07-22, Deck #2).
+          // NIE jest źródłem faktów — anty-fabrykacja odrzuci zmyślone liczby.
+          brief: intent,
         }
       : {
           intent,
