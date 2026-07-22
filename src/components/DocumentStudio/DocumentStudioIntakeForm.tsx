@@ -140,7 +140,10 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   const [density, setDensity] = useState<DocumentDensity>('standard');
   const [goal, setGoal] = useState<DocumentGoal>('inform');
   const [audience, setAudience] = useState('');
-  const [useLlm, setUseLlm] = useState(false);
+  // Domyślnie ON (audyt 2026-07-22): useLlm bramkuje CAŁĄ generację treści
+  // (documentStudioService generateBlockProse), nie tylko kolejność sekcji — z
+  // OFF dokument powstawał jako pusty szkielet („This section is awaiting content").
+  const [useLlm, setUseLlm] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
   const hasTemplates = Boolean(approvedTemplates && approvedTemplates.length > 0);
@@ -412,12 +415,12 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           />
           <span>
             <span className="font-medium text-c-text">
-              {t('documentStudio.intake.useLlmLabel', 'Refine outline with AI (optional)')}
+              {t('documentStudio.intake.useLlmLabel', 'Generate section content with AI (recommended)')}
             </span>
             <span className="block text-xs text-c-text-secondary">
               {t(
                 'documentStudio.intake.useLlmHint',
-                'Allows the planner to reorder sections and rewrite section purposes. Falls back silently to the deterministic outline if AI is unavailable. New or invented sections are rejected.'
+                'With this on, AI writes the prose for each section (and may adjust section order/purpose). Turn it off only for an empty outline scaffold with section headings and no content. Falls back to the deterministic outline if AI is unavailable.'
               )}
             </span>
           </span>
