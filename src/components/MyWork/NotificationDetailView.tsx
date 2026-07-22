@@ -2569,6 +2569,26 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     },
   ];
 
+  // ── Menu 1 status pill (D-B) — etykieta z tekstem, nie naga kropka ──────────
+  // Stan-domenowy powiadomienia w naglowku = jego cykl zycia odbioru
+  // (nieprzeczytane → przeczytane → odlozone), a nie severity: severity ma
+  // wlasne pole w prawym panelu (Wlasciwosci → „Priorytet", linia ~2313) i nie
+  // mapuje sie na palete tonow pigulki (amber nie ma tokenu c-*). Tony biore te,
+  // ktore ta karta juz stosuje dla tych stanow w pasku Wlasciwosci:
+  //   nieprzeczytane = niebieski (c-info → 'review'),
+  //   przeczytane   = zielony    (c-success → 'approved'),
+  //   odlozone      = wyciszony  ('neutral'; amber celowo poza paleta).
+  // Klucze i18n reuzywane z sekcji Status (bez nowych: read2/unread/snoozed2).
+  const notifLifecycle = isSnoozed ? 'snoozed' : notification.isRead ? 'read' : 'unread';
+  const notifStatusLabel =
+    notifLifecycle === 'snoozed'
+      ? t('myWork.notificationDetail.snoozed2', 'Snoozed')
+      : notifLifecycle === 'read'
+        ? t('myWork.notificationDetail.read2', 'Read')
+        : t('myWork.notificationDetail.unread', 'Unread');
+  const notifStatusTone: 'review' | 'approved' | 'neutral' =
+    notifLifecycle === 'unread' ? 'review' : notifLifecycle === 'read' ? 'approved' : 'neutral';
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ── RENDER ──────────────────────────────────────────────────────────────
   // ═══════════════════════════════════════════════════════════════════════════
@@ -2591,6 +2611,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               notification.title || t('myWork.notificationDetail.notification', 'Notification')
             }
             onTitleChange={() => {}}
+            // D-A (tryb otwarcia): powiadomienie = arkusz do wypelnienia → karta
+            // otwiera sie w EDYCJI. Powierzchnia edycji to worksheet/checklista
+            // (edytowalna od razu, autozapis onBlur — kanaly `isDirty`/`saving`
+            // ponizej), a NIE tytul: tytul powiadomienia to naglowek generowany
+            // przez silnik ryzyka, bez kanalu utrwalenia (onTitleChange to no-op),
+            // wiec zostaje read-only. Edytowalny tytul udawalby zapis, ktorego nie ma.
             titleReadOnly={true}
             artifactId={notificationId}
             artifactType="notification"
@@ -2611,7 +2637,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             }
             onChat={handleOpenChat}
             onClose={onClose}
-            statusDotColor={severityConfig.dotColor}
+            // D-B: status = etykieta-pigulka z tekstem + ton c-* (nie naga kropka).
+            // statusDotColor USUNIETY (@deprecated, nie renderowany).
+            statusLabel={notifStatusLabel}
+            statusTone={notifStatusTone}
             presentationMode={presentationMode}
             onPresentationModeChange={setPresentationMode}
             primaryAction={headerPrimaryAction}
