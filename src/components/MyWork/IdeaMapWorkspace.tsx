@@ -110,6 +110,7 @@ import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGra
 import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import type { MyIdea } from './myIdeasTypes';
 import { buildAskAIMessage } from './shared/askAiHelper';
+import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
 import { type TransformInput, transformSelection } from './transforms/crossToolTransform';
@@ -2790,11 +2791,37 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const melsCanvasEnabled = isMelsCanvasEnabled();
   // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
+  // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
+  // used by the ideas list (MyIdeasListContent) + the same confirm-dialog
+  // pattern. Historia/Duplikuj stay disabled: no workspace-level flow exists
+  // for either (a real SnapshotHistory component exists but is mindmap-only
+  // today — generalizing it to all 4 tools is separate, unscoped work).
+  const { dialog: deleteIdeaDialog, confirm: confirmDeleteIdea } = useConfirmDialog();
+  const handleDeleteIdea = useCallback(async () => {
+    if (!realId) return;
+    const ok = await confirmDeleteIdea({
+      title: isPolish ? 'Usunąć pomysł?' : 'Delete idea?',
+      description: isPolish
+        ? `„${title || 'Bez tytułu'}" zostanie trwale usunięty.`
+        : `"${title || 'Untitled'}" will be permanently deleted.`,
+      confirmLabel: isPolish ? 'Usuń' : 'Delete',
+      cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await Api.deleteMyIdea(realId);
+      toast.success(isPolish ? 'Usunięto' : 'Deleted');
+      navigate('/my-work');
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
+    }
+  }, [realId, confirmDeleteIdea, isPolish, title, navigate]);
   // ── Menu 1 (top bar) chips — Z7 anatomy ─────────────────────────────────
-  // Clean identity row: ghost Teresa (secondary) + kebab `⋯` (Eksport real ·
-  // Historia/Duplikuj/Usuń disabled-with-"wkrótce" — no workspace-level flow
-  // exists yet). The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot`
-  // below; the per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
+  // Clean identity row: ghost Teresa (secondary) + kebab `⋯` (Eksport +
+  // Usuń real · Historia/Duplikuj disabled-with-"wkrótce" — see note above).
+  // The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot` below; the
+  // per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
   const melsCanvasChips = useMemo(
     () =>
       melsCanvasEnabled
@@ -2803,17 +2830,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             handlers: {
               onDiscuss: handleDiscussWithTeresa,
               onExport: () => setExportMenuOpen(true),
-              // onHistory / onDuplicate / onDelete intentionally omitted — no
+              // onHistory / onDuplicate intentionally omitted — no
               // workspace-level handler exists (verified 2026-07-22). The
               // builder renders them DISABLED with a "wkrótce" hint, never
               // hidden (ANATOMY: brakujące pozycje disabled z dopiskiem).
+              onDelete: handleDeleteIdea,
               onSearch: () => setSearchOpen(true),
               onShowHelp: () => setShortcutsHelpOpen(true),
             },
           })
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [melsCanvasEnabled, isPolish, handleDiscussWithTeresa]
+    [melsCanvasEnabled, isPolish, handleDiscussWithTeresa, handleDeleteIdea]
   );
   // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
   const melsMenu3Actions = useMemo(
@@ -3835,6 +3863,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           onClose={() => setShortcutsHelpOpen(false)}
           shortcuts={helpShortcuts}
         />
+
+        {/* Z-menu1-delete: Menu 1 kebab "Usuń" confirm dialog */}
+        {deleteIdeaDialog}
       </>
     );
   }
