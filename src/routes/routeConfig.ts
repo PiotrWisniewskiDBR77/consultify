@@ -11,6 +11,8 @@
 
 import { AppView } from '@/types';
 
+import { isExceleEngineEnabled } from '@/utils/exceleFlag';
+
 /**
  * Route path definitions
  * Maps AppView enum values to URL paths
@@ -364,7 +366,10 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   // Document module: the legacy WORDY view now resolves to the canonical
   // Document Studio route (mirrors the EXCELE -> TABELE consolidation).
   [AppView.WORDY]: ROUTES.DOCUMENT_STUDIO,
-  [AppView.EXCELE]: ROUTES.TABELE,
+  // Excel = własne wejście (decyzja Piotra 2026-07-22). Canonical → /excele:
+  // bezpieczne także przy fladze OFF, bo /excele redirectuje wtedy na /tabele
+  // (AppRoutes), a wpis nav „Excel" pojawia się dopiero przy fladze ON.
+  [AppView.EXCELE]: ROUTES.EXCELE,
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
   [AppView.TABELE]: ROUTES.TABELE,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
@@ -767,7 +772,13 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.DOCUMENT_STUDIO)) return AppView.WORDY;
   if (normalized.startsWith(ROUTES.WORDY)) return AppView.WORDY;
   // KIMI-style workspaces
-  if (normalized.startsWith(ROUTES.EXCELE)) return AppView.TABELE;
+  // Excel = osobne narzędzie obliczeniowe (decyzja Piotra 2026-07-22) — za flagą
+  // klasyfikuje się jako własny AppView.EXCELE (podświetla wpis „Excel" w
+  // sidebarze, własny breadcrumb). Flaga OFF → zachowanie bajt-identyczne
+  // (klasyfikacja jako TABELE, jak dotąd); AppRoutes i tak redirectuje /excele→
+  // /tabele przy OFF, więc zero regresji.
+  if (normalized.startsWith(ROUTES.EXCELE))
+    return isExceleEngineEnabled() ? AppView.EXCELE : AppView.TABELE;
   if (normalized.startsWith(ROUTES.PREZENTACJE_GEN)) return AppView.PREZENTACJE_GEN;
   if (normalized.startsWith(ROUTES.TABELE)) return AppView.TABELE;
 

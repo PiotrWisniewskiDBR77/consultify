@@ -29,6 +29,7 @@ import {
   Presentation,
   Rocket,
   Settings,
+  Sheet,
   Shield,
   Table,
   TrendingUp,
@@ -41,6 +42,7 @@ import React from 'react';
 import { AppView, UserRole } from '../../../types';
 import { isAgentPlanEnabled } from '../../../utils/agentPlanFlag';
 import { isClientVaultEnabled } from '../../../utils/clientVaultFlag';
+import { isExceleEngineEnabled } from '../../../utils/exceleFlag';
 import { MenuItem } from './types';
 
 type TranslationFn = (key: string, options?: any) => any;
@@ -173,6 +175,23 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.PRESENTATIONS,
       badge: 'beta',
     },
+    // 9.1 Excel — dedykowane narzędzie OBLICZENIOWE (silnik 5-fazowy, żywe
+    // formuły), odrębne od Tabel (prosta prezentacja) i modułu Finance (decyzja
+    // Piotra 2026-07-22). Wizualnie nowa powierzchnia → gated OFF domyślnie
+    // (exceleFlag, reguła #7). Wpis nav jest POMIJANY, gdy flaga OFF, więc
+    // sidebar jest byte-for-byte niezmieniony dla wszystkich do akceptu Piotra
+    // na zrzucie. Przy OFF /excele i tak redirectuje na /tabele (AppRoutes).
+    ...(isExceleEngineEnabled()
+      ? [
+          {
+            id: 'MODULE_EXCELE',
+            label: t('sidebar.excele', 'Excel'),
+            icon: React.createElement(Sheet, { size: 20 }),
+            viewId: AppView.EXCELE,
+            badge: 'beta' as const,
+          },
+        ]
+      : []),
     // 9.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
     // The functional hub lives at /audit-programs (AppRoutes), reached via the
     // canonical audits AppView so it inherits the authenticated app shell.
@@ -332,7 +351,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.PRESENTATIONS]: t('sidebar.materialy', 'Materials'),
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentation Studio'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
-    [AppView.EXCELE]: t('sidebar.tabele', 'Table Studio'),
+    [AppView.EXCELE]: t('sidebar.excele', 'Excel'),
     [AppView.TABELE]: t('sidebar.tabele', 'Table Studio'),
   };
   return viewNames[view] || t('common.previousStep');
