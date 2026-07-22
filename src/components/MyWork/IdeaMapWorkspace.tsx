@@ -3424,9 +3424,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 if (tool === activeTool) return;
                 setTimeout(() => setActiveTool(tool), 0);
               }}
-              variant={mapOpen ? 'overlay' : 'embedded'}
-              showClose={mapOpen}
-              className={mapOpen ? '' : 'rounded-none'}
+              variant={mapOpen && !melsCanvasEnabled ? 'overlay' : 'embedded'}
+              showClose={mapOpen && !melsCanvasEnabled}
+              className={mapOpen && !melsCanvasEnabled ? '' : 'rounded-none'}
               locked={canvasLocked}
               onSelectionChange={handleSelectionChange}
               onViewportReport={handleViewportReport}
