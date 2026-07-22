@@ -1,0 +1,819 @@
+/**
+ * Consultify Presentation Studio — Deck Template Architect view (Epic C2/C4).
+ *
+ * Klon wzorca `DocumentStudio/DocumentStudioTemplateArchitectView.tsx`
+ * dostosowany do decka. Implements the AI Deck Template Architect workflow:
+ *   - Draft a new template outline from a free-text brief
+ *     (`POST /api/presentations/templates/plan` →
+ *     `presentationTemplateDraftService.draftPresentationTemplateAsync`).
+ *   - Review + manually edit the outline (rename / reorder / add / remove
+ *     slides) before saving.
+ *   - Save via `PUT /api/presentations/templates/:id` — this is the FE
+ *     caller Epic C4 was missing (route existed, no one called it; see
+ *     `src/services/presentationTemplateArchitect.ts`).
+ *
+ * Governance (approve/deprecate/lineage/audit) is a separate, existing
+ * SuperAdmin surface (`src/views/superadmin/PresentationTemplateGovernanceView.tsx`)
+ * — this view only owns drafting + manual outline editing. Server-side
+ * invariant: only `draft`-lifecycle templates may be edited in place
+ * (`assertEditableLifecycle`, presentations.routes.ts:1147); this view
+ * disables outline editing and offers "Clone as new draft" once approved
+ * or deprecated.
+ */
+
+import { ArrowDown, ArrowUp, Copy, Loader2, Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import {
+  FilterableTable,
+  type FilterChip,
+  type TableColumn,
+  type TableRow,
+} from '@/components/shared/ModuleHub';
+import Button from '@/components/ui/primitives/Button';
+import {
+  clonePresentationTemplate,
+  getPresentationTemplate,
+  listPresentationTemplates,
+  planPresentationTemplate,
+  PRESENTATION_SLIDE_INTENTS,
+  type PresentationSlideIntent,
+  type PresentationTemplate,
+  type PresentationTemplateDraftInput,
+  type PresentationTemplateOutlineItem,
+  updatePresentationTemplate,
+} from '@/services/presentationTemplateArchitect';
+
+const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
+  {
+    value: 'steering_committee',
+    labelKey: 'presentations.templateArchitect.deckType.steeringCommittee',
+    fallback: 'Steering Committee Deck',
+  },
+  {
+    value: 'board_decision_deck',
+    labelKey: 'presentations.templateArchitect.deckType.boardDecision',
+    fallback: 'Board Decision Deck',
+  },
+  {
+    value: 'assessment_summary',
+    labelKey: 'presentations.templateArchitect.deckType.assessmentSummary',
+    fallback: 'DRD Diagnostic Deck',
+  },
+  {
+    value: 'tool_workshop',
+    labelKey: 'presentations.templateArchitect.deckType.toolWorkshop',
+    fallback: 'Initiative Kickoff Deck',
+  },
+  {
+    value: 'digital_transformation_read_deck',
+    labelKey: 'presentations.templateArchitect.deckType.transformationRead',
+    fallback: 'Digital Transformation Read Deck',
+  },
+];
+
+const AUDIENCE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
+  { value: 'executive', labelKey: 'presentations.templates.audience.executive', fallback: 'Executive' },
+  { value: 'sponsor', labelKey: 'presentations.templates.audience.sponsor', fallback: 'Sponsor' },
+  { value: 'investor', labelKey: 'presentations.templates.audience.investor', fallback: 'Investor / VC' },
+  { value: 'internal', labelKey: 'presentations.templates.audience.internal', fallback: 'Internal Team' },
+];
+
+const GOAL_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
+  { value: 'inform', labelKey: 'presentations.templates.goal.inform', fallback: 'Inform' },
+  { value: 'decide', labelKey: 'presentations.templates.goal.decide', fallback: 'Decide' },
+  { value: 'sell', labelKey: 'presentations.templates.goal.sell', fallback: 'Sell' },
+  { value: 'align', labelKey: 'presentations.templates.goal.align', fallback: 'Align' },
+];
+
+const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; fallback: string }[] = [
+  { value: 'corporate', fallback: 'Corporate' },
+  { value: 'minimal', fallback: 'Minimal' },
+  { value: 'modern', fallback: 'Modern' },
+];
+
+const INTENT_FALLBACK_LABELS: Record<PresentationSlideIntent, string> = {
+  cover: 'Cover',
+  executive_summary: 'Executive summary',
+  section_intro: 'Section intro',
+  key_messages: 'Key messages',
+  performance_overview: 'Performance overview',
+  single_insight: 'Single insight',
+  comparison: 'Comparison',
+  assessment: 'Assessment',
+  root_cause: 'Root cause',
+  recommendation_single: 'Recommendation (single)',
+  recommendation_portfolio: 'Recommendation (portfolio)',
+  initiative_portfolio: 'Initiative portfolio',
+  prioritization_matrix: 'Prioritization matrix',
+  roadmap: 'Roadmap',
+  risk_management: 'Risk management',
+  next_steps: 'Next steps',
+  appendix: 'Appendix',
+};
+
+function useIntentLabel(t: (key: string, def: string) => string) {
+  return (intent: PresentationSlideIntent | string) => {
+    const known = INTENT_FALLBACK_LABELS[intent as PresentationSlideIntent];
+    return t(`presentations.templateArchitect.intent.${intent}`, known || intent);
+  };
+}
+
+function moveItem<T>(list: T[], from: number, to: number): T[] {
+  if (to < 0 || to >= list.length) return list;
+  const next = list.slice();
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
+export interface PresentationTemplateArchitectViewProps {
+  onTemplateSaved?: (template: PresentationTemplate) => void;
+}
+
+export const PresentationTemplateArchitectView: React.FC<PresentationTemplateArchitectViewProps> = ({
+  onTemplateSaved,
+}) => {
+  const { t } = useTranslation();
+  const intentLabel = useIntentLabel(t);
+
+  const [templates, setTemplates] = useState<PresentationTemplate[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [cloningId, setCloningId] = useState<string | null>(null);
+  const [savingOutline, setSavingOutline] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+
+  // Brief form.
+  const [name, setName] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [deckType, setDeckType] = useState(DECK_TYPE_OPTIONS[0].value);
+  const [audience, setAudience] = useState(AUDIENCE_OPTIONS[0].value);
+  const [goal, setGoal] = useState(GOAL_OPTIONS[0].value);
+  const [language, setLanguage] = useState<'pl' | 'en'>('pl');
+  const [theme, setTheme] = useState<'corporate' | 'minimal' | 'modern'>('corporate');
+  const [useLlm, setUseLlm] = useState(false);
+  const [lastDraftRefined, setLastDraftRefined] = useState<boolean | null>(null);
+
+  // Outline editor (local, dirty-until-saved copy of the selected template).
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editAudience, setEditAudience] = useState('');
+  const [editGoal, setEditGoal] = useState('');
+  const [editTheme, setEditTheme] = useState('corporate');
+  const [editOutline, setEditOutline] = useState<PresentationTemplateOutlineItem[]>([]);
+  const [addIntent, setAddIntent] = useState<string>(PRESENTATION_SLIDE_INTENTS[0]);
+
+  const selectedTemplate = useMemo(
+    () => templates.find((tpl) => tpl.id === selectedTemplateId) ?? null,
+    [templates, selectedTemplateId]
+  );
+
+  const lifecycleState = selectedTemplate?.lifecycle_state ?? 'draft';
+  const isEditable = lifecycleState === 'draft';
+
+  useEffect(() => {
+    if (!selectedTemplate) return;
+    setEditName(selectedTemplate.name || '');
+    setEditDescription(selectedTemplate.description || '');
+    setEditAudience(selectedTemplate.audience || '');
+    setEditGoal(selectedTemplate.goal || '');
+    setEditTheme(selectedTemplate.theme || 'corporate');
+    setEditOutline(selectedTemplate.outline_json ? [...selectedTemplate.outline_json] : []);
+  }, [selectedTemplate]);
+
+  const tableColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'name',
+        label: t('presentations.templateArchitect.colTemplate', 'Template'),
+        width: '260px',
+      },
+      { id: 'deckType', label: t('presentations.templateArchitect.colType', 'Type') },
+      {
+        id: 'meta',
+        label: t('presentations.templateArchitect.colSlides', 'Slides'),
+        align: 'right',
+        width: '100px',
+      },
+      {
+        id: 'status',
+        label: t('presentations.templateArchitect.colStatus', 'Status'),
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          { value: 'draft', label: t('presentations.templateArchitect.statusDraft', 'Draft') },
+          {
+            value: 'approved',
+            label: t('presentations.templateArchitect.statusApproved', 'Approved'),
+          },
+          {
+            value: 'deprecated',
+            label: t('presentations.templateArchitect.statusDeprecated', 'Deprecated'),
+          },
+        ],
+      },
+    ],
+    [t]
+  );
+
+  const tableRows = useMemo<TableRow[]>(
+    () =>
+      templates.map((template) => ({
+        id: template.id,
+        name: template.name,
+        deckType: String(template.deck_type || '').replace(/_/g, ' '),
+        meta: String(template.outline_json?.length ?? 0),
+        status: template.lifecycle_state ?? 'draft',
+      })),
+    [templates]
+  );
+
+  const refresh = async (): Promise<void> => {
+    setLoadingList(true);
+    setError(null);
+    try {
+      const list = await listPresentationTemplates();
+      setTemplates(list);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('presentations.templateArchitect.errLoadTemplates', 'Failed to load templates')
+      );
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  const handleDraft = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    if (purpose.trim().length < 8) return;
+    setDrafting(true);
+    setError(null);
+    setLastDraftRefined(null);
+    try {
+      const input: PresentationTemplateDraftInput = {
+        name: name.trim() || undefined,
+        purpose: purpose.trim(),
+        deckType,
+        audience,
+        goal,
+        language,
+        theme,
+      };
+      const result = await planPresentationTemplate(input, { useLlm });
+      setName('');
+      setPurpose('');
+      setSelectedTemplateId(result.template.id);
+      setLastDraftRefined(useLlm ? result.llmRefined : null);
+      await refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('presentations.templateArchitect.errDraftTemplate', 'Failed to draft template')
+      );
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  const handleSelectRow = async (row: TableRow): Promise<void> => {
+    setSelectedTemplateId(row.id);
+    // The list payload already carries `outline_json`, but re-fetch the
+    // single record so a stale/partial row (e.g. mid-clone) never shows a
+    // half outline in the editor.
+    try {
+      const fresh = await getPresentationTemplate(row.id);
+      setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
+    } catch {
+      // Non-fatal — the row we already have from the list refresh is used.
+    }
+  };
+
+  const handleOutlineTitleChange = (index: number, title: string): void => {
+    setEditOutline((prev) => prev.map((item, i) => (i === index ? { ...item, title } : item)));
+  };
+
+  const handleOutlineIntentChange = (index: number, intent: string): void => {
+    setEditOutline((prev) => prev.map((item, i) => (i === index ? { ...item, intent } : item)));
+  };
+
+  const handleOutlineMove = (index: number, direction: -1 | 1): void => {
+    setEditOutline((prev) => moveItem(prev, index, index + direction));
+  };
+
+  const handleOutlineRemove = (index: number): void => {
+    setEditOutline((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleOutlineAdd = (): void => {
+    setEditOutline((prev) => [
+      ...prev,
+      { intent: addIntent, title: t('presentations.templateArchitect.newSlideTitle', 'New slide') },
+    ]);
+  };
+
+  const handleSave = async (): Promise<void> => {
+    if (!selectedTemplate) return;
+    setSavingOutline(true);
+    setError(null);
+    try {
+      await updatePresentationTemplate(selectedTemplate.id, {
+        name: editName.trim() || undefined,
+        description: editDescription.trim() || undefined,
+        audience: editAudience.trim() || undefined,
+        goal: editGoal.trim() || undefined,
+        theme: editTheme.trim() || undefined,
+        outlineJson: editOutline,
+      });
+      const fresh = await getPresentationTemplate(selectedTemplate.id);
+      setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
+      onTemplateSaved?.(fresh);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('presentations.templateArchitect.errSaveTemplate', 'Failed to save template')
+      );
+    } finally {
+      setSavingOutline(false);
+    }
+  };
+
+  const handleCloneAsDraft = async (): Promise<void> => {
+    if (!selectedTemplate) return;
+    setCloningId(selectedTemplate.id);
+    setError(null);
+    try {
+      const cloned = await clonePresentationTemplate(
+        selectedTemplate.id,
+        `${selectedTemplate.name} (Copy)`
+      );
+      await refresh();
+      setSelectedTemplateId(cloned.id);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('presentations.templateArchitect.errCloneTemplate', 'Failed to clone template')
+      );
+    } finally {
+      setCloningId(null);
+    }
+  };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
+      <header>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('presentations.templateArchitect.heading', 'Deck Template Architect')}
+        </h2>
+        <p className="mt-1 text-sm text-c-text-secondary">
+          {t(
+            'presentations.templateArchitect.subheading',
+            'Design a reusable, governed deck template. Approval/deprecation lives in the SuperAdmin governance registry.'
+          )}
+        </p>
+      </header>
+
+      <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 shadow-sm">
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('presentations.templateArchitect.draftHeading', 'Draft a new template')}
+        </h3>
+        <form onSubmit={handleDraft} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-c-text">
+              {t('presentations.templateArchitect.templateName', 'Template name')}
+            </span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t(
+                'presentations.templateArchitect.templateNamePlaceholder',
+                'e.g., Quarterly Steering Committee template'
+              )}
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-c-text">
+              {t('presentations.templateArchitect.deckTypeLabel', 'Deck type')}
+            </span>
+            <select
+              value={deckType}
+              onChange={(e) => setDeckType(e.target.value)}
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            >
+              {DECK_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.labelKey, opt.fallback)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
+            <span className="font-medium text-c-text">
+              {t('presentations.templateArchitect.purpose', 'Purpose')}{' '}
+              <span className="text-danger-500">*</span>
+            </span>
+            <textarea
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              rows={3}
+              placeholder={t(
+                'presentations.templateArchitect.purposePlaceholder',
+                'What is this deck template for, and who reads it?'
+              )}
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+              minLength={8}
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-c-text">
+              {t('presentations.templateArchitect.audienceLabel', 'Audience')}
+            </span>
+            <select
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            >
+              {AUDIENCE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.labelKey, opt.fallback)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-c-text">
+              {t('presentations.templateArchitect.goalLabel', 'Goal')}
+            </span>
+            <select
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            >
+              {GOAL_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.labelKey, opt.fallback)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-c-text">
+              {t('presentations.templateArchitect.language', 'Language')}
+            </span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            >
+              <option value="pl">{t('presentations.templateArchitect.langPolish', 'Polish')}</option>
+              <option value="en">{t('presentations.templateArchitect.langEnglish', 'English')}</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-c-text">
+              {t('presentations.templateArchitect.themeLabel', 'Theme')}
+            </span>
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as 'corporate' | 'minimal' | 'modern')}
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            >
+              {THEME_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.fallback}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="col-span-1 flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={useLlm}
+              onChange={(e) => setUseLlm(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus"
+            />
+            <span>
+              <span className="font-medium text-c-text">
+                {t(
+                  'presentations.templateArchitect.refineWithAi',
+                  'Refine with AI Template Architect (optional)'
+                )}
+              </span>
+              <span className="block text-xs text-c-text-secondary">
+                {t(
+                  'presentations.templateArchitect.refineWithAiHint',
+                  'Allows AI to rewrite slide titles and propose a refined template name/description. Falls back silently to the deterministic outline if AI is unavailable. Slide intents, order, and count are never changed by AI.'
+                )}
+              </span>
+            </span>
+          </label>
+          <div className="col-span-1 flex items-center justify-between gap-3 sm:col-span-2">
+            <div className="text-xs text-c-text-secondary">
+              {lastDraftRefined === true
+                ? t('presentations.templateArchitect.refinedByAi', 'Last draft was refined by AI.')
+                : lastDraftRefined === false
+                  ? t(
+                      'presentations.templateArchitect.refinedNoChanges',
+                      'Last AI refinement returned no changes; deterministic draft used.'
+                    )
+                  : null}
+            </div>
+            <Button type="submit" variant="primary" disabled={drafting || purpose.trim().length < 8}>
+              {drafting ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />{' '}
+                  {t('presentations.templateArchitect.drafting', 'Drafting…')}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <Plus className="h-4 w-4" />{' '}
+                  {t('presentations.templateArchitect.draftTemplate', 'Draft template')}
+                </span>
+              )}
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      {error ? (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-lg border border-danger-500/30 bg-danger-500/10 px-3 py-2 text-sm text-danger-700 dark:text-danger-400"
+        >
+          <ShieldAlert className="mt-0.5 h-4 w-4" />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('presentations.templateArchitect.registryHeading', 'Template registry')}
+          </h3>
+          <Button type="button" variant="secondary" onClick={() => void refresh()} disabled={loadingList}>
+            {loadingList
+              ? t('presentations.templateArchitect.refreshing', 'Refreshing…')
+              : t('presentations.templateArchitect.refresh', 'Refresh')}
+          </Button>
+        </div>
+        <FilterableTable
+          columns={tableColumns}
+          data={tableRows}
+          selectedRowId={selectedTemplateId}
+          onRowClick={(row) => void handleSelectRow(row)}
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          emptyMessage={
+            loadingList
+              ? t('presentations.templateArchitect.loadingTemplates', 'Loading templates…')
+              : t('presentations.templateArchitect.noTemplatesYet', 'No templates yet.')
+          }
+          canvasClassName="mt-3"
+          density="compact"
+          persistKey="presentations.templates.architect"
+        />
+
+        {selectedTemplate ? (
+          <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="font-semibold text-c-text">
+                {t('presentations.templateArchitect.outlineEditor', 'Outline editor')} —{' '}
+                {selectedTemplate.name}
+              </div>
+              {!isEditable ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void handleCloneAsDraft()}
+                  disabled={cloningId === selectedTemplate.id}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {cloningId === selectedTemplate.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                    {t('presentations.templateArchitect.cloneAsDraft', 'Clone as new draft')}
+                  </span>
+                </Button>
+              ) : null}
+            </div>
+
+            {!isEditable ? (
+              <p className="mt-2 text-xs text-c-text-secondary">
+                {t(
+                  'presentations.templateArchitect.lockedNotice',
+                  'This template is {{state}}; clone it to a new draft before editing.',
+                  { state: lifecycleState }
+                )}
+              </p>
+            ) : null}
+
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-medium text-c-text">
+                  {t('presentations.templateArchitect.templateName', 'Template name')}
+                </span>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  disabled={!isEditable}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-medium text-c-text">
+                  {t('presentations.templateArchitect.audienceLabel', 'Audience')}
+                </span>
+                <select
+                  value={editAudience}
+                  onChange={(e) => setEditAudience(e.target.value)}
+                  disabled={!isEditable}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                >
+                  {AUDIENCE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {t(opt.labelKey, opt.fallback)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-medium text-c-text">
+                  {t('presentations.templateArchitect.goalLabel', 'Goal')}
+                </span>
+                <select
+                  value={editGoal}
+                  onChange={(e) => setEditGoal(e.target.value)}
+                  disabled={!isEditable}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                >
+                  {GOAL_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {t(opt.labelKey, opt.fallback)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-medium text-c-text">
+                  {t('presentations.templateArchitect.themeLabel', 'Theme')}
+                </span>
+                <select
+                  value={editTheme}
+                  onChange={(e) => setEditTheme(e.target.value)}
+                  disabled={!isEditable}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                >
+                  {THEME_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.fallback}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="col-span-1 flex flex-col gap-1 text-xs sm:col-span-2">
+                <span className="font-medium text-c-text">
+                  {t('presentations.templateArchitect.descriptionLabel', 'Description')}
+                </span>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  disabled={!isEditable}
+                  rows={2}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+                {t('presentations.templateArchitect.slidesHeading', 'Slides')} ({editOutline.length})
+              </div>
+              <ol className="mt-2 space-y-2">
+                {editOutline.map((slide, idx) => (
+                  <li
+                    key={`${selectedTemplate.id}-slide-${idx}`}
+                    className="flex items-center gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5"
+                  >
+                    <span className="w-5 shrink-0 text-xs text-c-text-muted">{idx + 1}</span>
+                    <input
+                      type="text"
+                      value={slide.title}
+                      onChange={(e) => handleOutlineTitleChange(idx, e.target.value)}
+                      disabled={!isEditable}
+                      className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                    />
+                    <select
+                      value={slide.intent}
+                      onChange={(e) => handleOutlineIntentChange(idx, e.target.value)}
+                      disabled={!isEditable}
+                      className="w-44 shrink-0 rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                    >
+                      {PRESENTATION_SLIDE_INTENTS.map((intent) => (
+                        <option key={intent} value={intent}>
+                          {intentLabel(intent)}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleOutlineMove(idx, -1)}
+                        disabled={!isEditable || idx === 0}
+                        title={t('presentations.templateArchitect.moveUp', 'Move up')}
+                        className="rounded p-1 text-c-text-muted hover:bg-state-hover hover:text-c-text disabled:opacity-30"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOutlineMove(idx, 1)}
+                        disabled={!isEditable || idx === editOutline.length - 1}
+                        title={t('presentations.templateArchitect.moveDown', 'Move down')}
+                        className="rounded p-1 text-c-text-muted hover:bg-state-hover hover:text-c-text disabled:opacity-30"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOutlineRemove(idx)}
+                        disabled={!isEditable}
+                        title={t('presentations.templateArchitect.removeSlide', 'Remove slide')}
+                        className="rounded p-1 text-danger-600 hover:bg-danger-500/10 disabled:opacity-30 dark:text-danger-400"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="mt-3 flex items-center gap-2">
+                <select
+                  value={addIntent}
+                  onChange={(e) => setAddIntent(e.target.value)}
+                  disabled={!isEditable}
+                  className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                >
+                  {PRESENTATION_SLIDE_INTENTS.map((intent) => (
+                    <option key={intent} value={intent}>
+                      {intentLabel(intent)}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleOutlineAdd}
+                  disabled={!isEditable}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Plus className="h-3.5 w-3.5" />
+                    {t('presentations.templateArchitect.addSlide', 'Add slide')}
+                  </span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => void handleSave()}
+                disabled={!isEditable || savingOutline}
+              >
+                {savingOutline ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('presentations.templateArchitect.saving', 'Saving…')}
+                  </span>
+                ) : (
+                  t('presentations.templateArchitect.save', 'Save template')
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+    </div>
+  );
+};
+
+export default PresentationTemplateArchitectView;
