@@ -30787,7 +30787,12 @@
       "saveFailedLabel": "Błąd zapisu",
       "saveFailedTitle": "Zapis nie powiódł się. Kliknij, aby spróbować ponownie.",
       "copyArtifactId": "Kopiuj ID artefaktu",
-      "aiAssistantTitle": "AI — otwórz asystenta"
+      "aiAssistantTitle": "AI — otwórz asystenta",
+      "unsavedLabel": "Niezapisane",
+      "copyObjectCode": "Skopiuj kod obiektu",
+      "copyLink": "Kopiuj link",
+      "copyCodeSuccess": "Skopiowano kod obiektu",
+      "moreActions": "Więcej"
     },
     "nModeSectionWrapper": {
       "missingEvidence": "Brak dowodów",

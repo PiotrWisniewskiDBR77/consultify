@@ -29727,7 +29727,12 @@
       "saveFailedLabel": "Save failed",
       "saveFailedTitle": "Save failed. Click to retry.",
       "copyArtifactId": "Copy artifact ID",
-      "aiAssistantTitle": "AI — open assistant"
+      "aiAssistantTitle": "AI — open assistant",
+      "unsavedLabel": "Unsaved",
+      "copyObjectCode": "Copy object code",
+      "copyLink": "Copy link",
+      "copyCodeSuccess": "Object code copied",
+      "moreActions": "More"
     },
     "nModeSectionWrapper": {
       "missingEvidence": "Missing evidence",
