@@ -34,7 +34,9 @@ import { SkeletonState } from '@/components/shared/states';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { getCanvasBg } from './canvas/canvasBackground';
+import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useCanvasSnapping } from './canvas/useCanvasSnapping';
 import {
   formatIdeaMapSyncLabel,
   resolveIdeaMapHydration,
@@ -157,6 +159,12 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   onContextMenu: externalOnContextMenu,
 }) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
+  // Z14: 8px grid + magnetic neighbour-edge snapping while dragging.
+  const { onNodeDrag: onSnapNodeDrag, onNodeDragStop: onSnapNodeDragStop } = useCanvasSnapping({
+    enabled: !locked,
+    grid: 8,
+    threshold: 6,
+  });
   const { t } = useTranslation();
   const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -409,6 +417,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         onNodesChange={locked ? undefined : onNodesChange}
         onEdgesChange={locked ? undefined : onEdgesChange}
         onConnect={onConnect}
+        onNodeDrag={locked ? undefined : onSnapNodeDrag}
+        onNodeDragStop={locked ? undefined : onSnapNodeDragStop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeDoubleClick={(_event: any, node: any) => {
@@ -484,6 +494,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           onFullscreenToggle={onFullscreenToggle}
           isFullscreen={isFullscreen}
         />
+        {!locked && <CanvasSnapGuides threshold={6} />}
       </ReactFlow>
     </div>
   );
