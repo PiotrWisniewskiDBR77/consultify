@@ -39,6 +39,7 @@ import type {
   DocumentVersionSnapshotSummary,
   TemplateAuditEntry,
   TemplateDraftInput,
+  TemplateSectionBlueprint,
   TemplateStatus,
 } from './types';
 
@@ -757,6 +758,31 @@ export async function deprecateDocumentStudioTemplate(
   const json = await handleResponse<{ template: DocumentTemplate }>(
     res,
     'DocumentStudio deprecate template'
+  );
+  return json.template;
+}
+
+/**
+ * C1 — persist an author's manual structural edits (add/remove/reorder/rename)
+ * to a DRAFT template's section blueprint. The server accepts full structural
+ * change here (unlike the purpose-only LLM refiner); it keeps only anti-garbage
+ * guards (draft-only, non-empty titles, ≥1 section).
+ */
+export async function reviseDocumentStudioTemplateStructure(
+  templateId: string,
+  sections: TemplateSectionBlueprint[]
+): Promise<DocumentTemplate> {
+  const res = await fetchWithRetry(
+    `${BASE}/templates/${encodeURIComponent(templateId)}/structure`,
+    {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ sections }),
+    }
+  );
+  const json = await handleResponse<{ template: DocumentTemplate }>(
+    res,
+    'DocumentStudio revise template structure'
   );
   return json.template;
 }

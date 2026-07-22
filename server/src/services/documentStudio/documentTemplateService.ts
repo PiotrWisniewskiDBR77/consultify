@@ -488,6 +488,117 @@ export function deprecateTemplate(params: DeprecateTemplateParams): DocumentTemp
   return next;
 }
 
+export interface ReviseTemplateStructureParams {
+  templateId: string;
+  organizationId: string;
+  userId: string;
+  /**
+   * Author-authored section blueprint. Unlike the LLM refiner
+   * (`documentTemplateRefiner.ts`, purpose-rewrite only), this path accepts
+   * full STRUCTURAL edits — add / remove / reorder / rename — because the
+   * user is the template author. Only anti-garbage guards remain (non-empty
+   * titles, at least one section, a sane cap).
+   */
+  sections: TemplateSectionBlueprint[];
+}
+
+const MAX_TEMPLATE_SECTIONS = 60;
+
+/**
+ * Sanitize a single author-supplied section blueprint. Coerces the two
+ * enum-ish fields to their legal range, trims text, and defends every
+ * optional array field. Throws `template_section_title_required` when the
+ * title is blank — the one hard structural guard we keep.
+ */
+function sanitizeAuthoredSection(raw: unknown): TemplateSectionBlueprint {
+  const input = (raw ?? {}) as Partial<TemplateSectionBlueprint>;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (title.length === 0) throw new Error('template_section_title_required');
+  const level = input.level === 2 ? 2 : input.level === 3 ? 3 : 1;
+  const expectedLengthHint =
+    input.expectedLengthHint === 'short' || input.expectedLengthHint === 'long'
+      ? input.expectedLengthHint
+      : 'medium';
+  const cleanStringArray = (value: unknown): string[] | undefined => {
+    if (!Array.isArray(value)) return undefined;
+    const cleaned = value
+      .filter((v): v is string => typeof v === 'string')
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0);
+    return cleaned.length > 0 ? cleaned : undefined;
+  };
+  const section: TemplateSectionBlueprint = {
+    title,
+    level,
+    purpose: typeof input.purpose === 'string' ? input.purpose.trim() : '',
+    required: input.required === true,
+    expectedLengthHint,
+  };
+  const requiredData = cleanStringArray(input.requiredData);
+  if (requiredData) section.requiredData = requiredData;
+  const optionalData = cleanStringArray(input.optionalData);
+  if (optionalData) section.optionalData = optionalData;
+  if (typeof input.formattingStyle === 'string' && input.formattingStyle.trim().length > 0) {
+    section.formattingStyle = input.formattingStyle.trim();
+  }
+  if (input.approvalRequired === true) section.approvalRequired = true;
+  return section;
+}
+
+/**
+ * Persist an author's manual structural edits to a draft template's section
+ * blueprint (robota C1). Structural changes (add / remove / reorder / rename)
+ * are ACCEPTED here — the deterministic draft and the LLM refiner are only
+ * *starting points*; the human author has final say over structure. Guards
+ * kept: draft-only (approved / deprecated templates are immutable), at least
+ * one section, no blank titles, a sane upper bound.
+ */
+export function reviseTemplateStructure(
+  params: ReviseTemplateStructureParams
+): DocumentTemplate {
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.userId) throw new Error('userId is required');
+  const template = getTemplate(params.templateId, params.organizationId);
+  if (!template) throw new Error('template_not_found');
+  // Only a draft that this tenant owns is editable. Never mutate the shared
+  // system catalogue or an already-governed (approved/deprecated) record.
+  const ownedByTenant = registryStore.has(
+    templateKey(params.organizationId, params.templateId)
+  );
+  if (!ownedByTenant) throw new Error('template_not_found');
+  if (template.status !== 'draft') throw new Error('template_not_draft');
+  if (!Array.isArray(params.sections) || params.sections.length === 0) {
+    throw new Error('template_sections_required');
+  }
+  if (params.sections.length > MAX_TEMPLATE_SECTIONS) {
+    throw new Error('template_sections_too_many');
+  }
+
+  const sectionBlueprint = params.sections.map(sanitizeAuthoredSection);
+  const now = nowIso();
+  const next: DocumentTemplate = {
+    ...template,
+    sectionBlueprint,
+    updatedAt: now,
+  };
+  registryStore.set(templateKey(params.organizationId, template.templateId), next);
+  void persistTemplate(next).catch(() => undefined);
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: template.templateId,
+    organizationId: params.organizationId,
+    action: 'template_updated',
+    actorId: params.userId,
+    occurredAt: now,
+    details: {
+      source: 'author_manual_structure_edit',
+      sectionCount: sectionBlueprint.length,
+      previousSectionCount: template.sectionBlueprint.length,
+    },
+  });
+  return next;
+}
+
 export function listTemplateAuditEntries(
   templateId: string,
   organizationId: string
