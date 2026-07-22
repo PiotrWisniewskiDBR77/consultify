@@ -1,25 +1,35 @@
 /**
- * IdeaCanvasContextMenu — AI-powered right-click context menu for canvas tools.
+ * IdeaCanvasContextMenu — right-click context menu for canvas tools.
  *
- * On node: Expand, Challenge, Find evidence, Suggest connections.
+ * Base ops (K1/Miro parity), on node only: Edit label, Duplicate, Copy,
+ * Delete, Lock, Layer (bring to front / send to back).
+ * AI actions, on node: Expand, Challenge, Find evidence, Suggest connections.
  * On empty space: Fill gap, Brainstorm here.
  */
 import {
   BookOpen,
+  BringToFront,
   Brain,
+  Clipboard,
+  Copy,
   GitBranch,
   Layers,
   Lightbulb,
   Link2,
   ListChecks,
   Loader2,
+  Lock,
   MessageSquare,
   Network,
+  Pencil,
   Search,
+  SendToBack,
   Sparkles,
   Table2,
   Tags,
   Target,
+  Trash2,
+  Unlock,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +49,7 @@ interface ContextMenuTarget {
   nodeId?: string;
   nodeLabel?: string;
   nodeType?: string;
+  nodeLocked?: boolean;
 }
 
 export interface IdeaCanvasContextMenuProps {
@@ -60,6 +71,16 @@ export interface IdeaCanvasContextMenuProps {
   onAttachKnowledge?: (nodeId: string) => void;
   /** Whiteboard-only: open the node comment thread panel (blob-persisted). */
   onOpenComments?: (nodeId: string) => void;
+  /** K1 base ops (Miro parity) — canvas-wide lock state; base ops disable when true. */
+  locked?: boolean;
+  /** Reuses the same handler wired to the top WhiteboardSelectionBar. */
+  onDuplicate?: () => void;
+  /** Reuses the same handler wired to the top WhiteboardSelectionBar. */
+  onDeleteNode?: () => void;
+  /** Reuses the same handler wired to the top WhiteboardSelectionBar. */
+  onLockNode?: () => void;
+  onBringToFront?: () => void;
+  onSendToBack?: () => void;
 }
 
 interface MenuItem {
@@ -74,6 +95,66 @@ interface MenuItem {
   /** Restrict item to specific canvas tools (undefined = all tools). */
   tools?: CanvasToolType[];
 }
+
+/**
+ * K1 base ops (Miro parity) — plain canvas operations, not AI-generated.
+ * `kind` selects which prop-supplied handler runs in handleBaseAction; every
+ * handler is the SAME callback already wired to the top WhiteboardSelectionBar
+ * (or, for `edit`, the same `idea-workspace-node-update` CustomEvent that
+ * IdeaWhiteboardTool already listens for) — no new canvas mutation logic here.
+ */
+type BaseActionKind =
+  | 'edit'
+  | 'duplicate'
+  | 'copy'
+  | 'delete'
+  | 'lock'
+  | 'bring_to_front'
+  | 'send_to_back';
+
+interface BaseMenuItem {
+  id: string;
+  kind: BaseActionKind;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  labelPl: string;
+  labelEn: string;
+  danger?: boolean;
+}
+
+const BASE_NODE_ACTIONS: BaseMenuItem[] = [
+  { id: 'base_edit', kind: 'edit', icon: Pencil, labelPl: 'Edytuj', labelEn: 'Edit' },
+  {
+    id: 'base_duplicate',
+    kind: 'duplicate',
+    icon: Copy,
+    labelPl: 'Duplikuj',
+    labelEn: 'Duplicate',
+  },
+  { id: 'base_copy', kind: 'copy', icon: Clipboard, labelPl: 'Kopiuj', labelEn: 'Copy' },
+  {
+    id: 'base_bring_to_front',
+    kind: 'bring_to_front',
+    icon: BringToFront,
+    labelPl: 'Warstwa: na wierzch',
+    labelEn: 'Layer: bring to front',
+  },
+  {
+    id: 'base_send_to_back',
+    kind: 'send_to_back',
+    icon: SendToBack,
+    labelPl: 'Warstwa: pod spód',
+    labelEn: 'Layer: send to back',
+  },
+  { id: 'base_lock', kind: 'lock', icon: Lock, labelPl: 'Zablokuj', labelEn: 'Lock' },
+  {
+    id: 'base_delete',
+    kind: 'delete',
+    icon: Trash2,
+    labelPl: 'Usuń',
+    labelEn: 'Delete',
+    danger: true,
+  },
+];
 
 const NODE_ACTIONS: MenuItem[] = [
   {
@@ -215,6 +296,12 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   onSendToChat,
   onAttachKnowledge,
   onOpenComments,
+  locked,
+  onDuplicate,
+  onDeleteNode,
+  onLockNode,
+  onBringToFront,
+  onSendToBack,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -311,6 +398,67 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
     ]
   );
 
+  // K1 base ops — every branch below calls the SAME handler already wired to
+  // the top WhiteboardSelectionBar (onDuplicate/onDeleteNode/onLockNode), or
+  // for `edit` re-dispatches the existing `idea-workspace-node-update`
+  // CustomEvent that IdeaWhiteboardTool already listens for (see the
+  // `attach_artifact` quick-action dispatch above for the same pattern).
+  const handleBaseAction = useCallback(
+    (item: BaseMenuItem) => {
+      if (locked) return;
+      const nodeId = target.nodeId;
+      if (!nodeId) return;
+
+      switch (item.kind) {
+        case 'edit': {
+          const next = window.prompt(
+            isPl ? 'Nowa etykieta:' : 'New label:',
+            target.nodeLabel || ''
+          );
+          if (next !== null && next !== target.nodeLabel) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-node-update', {
+                detail: { nodeId, data: { label: next } },
+              })
+            );
+          }
+          break;
+        }
+        case 'copy':
+          navigator.clipboard?.writeText(target.nodeLabel || '').catch(() => {});
+          break;
+        case 'duplicate':
+          onDuplicate?.();
+          break;
+        case 'delete':
+          onDeleteNode?.();
+          break;
+        case 'lock':
+          onLockNode?.();
+          break;
+        case 'bring_to_front':
+          onBringToFront?.();
+          break;
+        case 'send_to_back':
+          onSendToBack?.();
+          break;
+      }
+      onClose();
+    },
+    [
+      isPl,
+      locked,
+      onBringToFront,
+      onClose,
+      onDeleteNode,
+      onDuplicate,
+      onLockNode,
+      onSendToBack,
+      target.nodeId,
+      target.nodeLabel,
+    ]
+  );
+
   if (!position) return null;
 
   const isOnNode = !!target.nodeId;
@@ -332,6 +480,48 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
           <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
             {target.nodeLabel}
           </div>
+        </div>
+      )}
+
+      {/* K1 base ops (Miro parity) — plain canvas operations, above the AI
+          section below; every click reuses an existing handler (see
+          handleBaseAction). */}
+      {isOnNode && (
+        <div className="py-1 border-b border-slate-200/30 dark:border-white/[0.04]">
+          {BASE_NODE_ACTIONS.map((item) => {
+            const isLockItem = item.kind === 'lock';
+            const Icon = isLockItem && target.nodeLocked ? Unlock : item.icon;
+            const label = isLockItem
+              ? target.nodeLocked
+                ? isPl
+                  ? 'Odblokuj'
+                  : 'Unlock'
+                : isPl
+                  ? item.labelPl
+                  : item.labelEn
+              : isPl
+                ? item.labelPl
+                : item.labelEn;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleBaseAction(item)}
+                disabled={locked}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${
+                  item.danger
+                    ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
+                    : 'text-c-text hover:bg-c-surface-raised'
+                }`}
+              >
+                <Icon
+                  size={14}
+                  className={item.danger ? 'shrink-0' : 'text-c-text-muted shrink-0'}
+                />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
