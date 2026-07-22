@@ -84,7 +84,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {filters.rules.length > 1 && (
             <button
               onClick={toggleLogic}
-              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-c-accent-soft text-c-accent"
+              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-c-surface-raised text-c-text"
             >
               {filters.logic.toUpperCase()}
             </button>
@@ -164,7 +164,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="px-4 py-3 border-t border-c-border-subtle">
         <button
           onClick={addRule}
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-2 py-1.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
           {t('ideas.table.filterPanel.addFilter', 'Add filter')}
