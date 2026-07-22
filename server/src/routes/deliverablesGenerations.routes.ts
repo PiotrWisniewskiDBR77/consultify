@@ -119,6 +119,10 @@ const DocSheetSetupSchema = z.object({
 const DeckSetupSchema = z.object({
   title: z.string().min(1).max(200),
   templateId: z.string().max(128).optional(),
+  // Temat/brief z prośby czatu (audyt 2026-07-22, root-cause deck-treść). Bez tego
+  // pola zod stripował brief na POST /generations + /generate, więc `setup.brief`
+  // nigdy nie docierał do generateDeck → useBriefRewrite=false → „brak danych".
+  brief: z.string().max(4000).optional(),
   audience: z.enum(['sponsor', 'executive', 'investor', 'internal']),
   goal: z.enum(['inform', 'decide', 'sell', 'align']),
   language: z.enum(['pl', 'en']),

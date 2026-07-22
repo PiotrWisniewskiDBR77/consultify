@@ -29,6 +29,7 @@ import type {
 } from '../../types/deliverablesGeneration.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { resolveDeckBrief } from '../ai/deckChatBrief.js';
 import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
 import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
@@ -160,6 +161,28 @@ function deckStatusToState(status: string): GenerationState {
 // ── API serwisu ─────────────────────────────────────────────────────────────
 
 /**
+ * Deck z czatu (root-cause 2026-07-22): FE (`buildDeckSetup`) hardkoduje
+ * `audience:'internal'`/`goal:'inform'` i niesie temat w `setup.brief`. Tu
+ * derywujemy audience/goal z briefu (`resolveDeckBrief`) GDY są jeszcze na
+ * sztywnych domyślnych — „dla zarządu" → executive-register. `brief` (już w
+ * setupie, bo schema go przepuszcza) zostaje nietknięty i zapala `useBriefRewrite`
+ * w generateDeck (koniec „brak danych"). Bez briefu lub z jawnie wybranym
+ * audience/goal — nie ruszamy (zero regresji na ścieżce Kreatora ze źródłami).
+ * Idempotentne: wołane i w plan() (outline/wiersz), i w start() (setup→generateDeck),
+ * bo oba dostają setup z FE osobno.
+ */
+export function enrichDeckSetupFromBrief(setup: DeckSetup): DeckSetup {
+  const brief = typeof setup.brief === 'string' ? setup.brief.trim() : '';
+  if (!brief) return setup;
+  const derived = resolveDeckBrief(brief, { title: setup.title });
+  return {
+    ...setup,
+    audience: setup.audience === 'internal' ? derived.audience : setup.audience,
+    goal: setup.goal === 'inform' ? derived.goal : setup.goal,
+  };
+}
+
+/**
  * Krok PLAN: buduje edytowalny outline i wiersz decka (status 'draft').
  * `generationId` == `deckId` — celowo, żeby status() czytał DB bez tabeli mapującej.
  */
@@ -180,13 +203,14 @@ export async function plan(params: {
       userId: params.userId || 'system',
     });
   }
-  const setup = params.setup as unknown as DeckSetup;
-  if (!setup?.title || !setup?.language) {
+  const rawSetup = params.setup as unknown as DeckSetup;
+  if (!rawSetup?.title || !rawSetup?.language) {
     throw new DeliverablesGenerationError(
       'invalid_setup',
       `setup dla 'deck' wymaga co najmniej title i language (DeckSetup)`
     );
   }
+  const setup = enrichDeckSetupFromBrief(rawSetup);
   const { outline, deckId, validationWarnings } = await generateOutline(
     setup,
     params.organizationId
@@ -281,7 +305,7 @@ export async function start(params: {
     );
   }
 
-  const setup = params.setup as unknown as DeckSetup;
+  const setup = enrichDeckSetupFromBrief(params.setup as unknown as DeckSetup);
   runtimeState.set(row.id, { state: 'generating', warnings });
 
   // Świadomie bez await — wzorzec Gamma (202 + poll). Błąd ląduje w mapie
