@@ -4310,10 +4310,31 @@ Return ONLY the final comment text.`;
                 <span className={panelKeyClass}>
                   {t('myWork.taskDetail.initiative2', 'Initiative')}
                 </span>
-                <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
-                  <Target size={12} className="text-c-text-muted shrink-0" />
-                  <span className="truncate">{initiativeName}</span>
-                </span>
+                {initiativeId ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent('mywork-open-item', {
+                          detail: {
+                            type: 'initiative',
+                            id: initiativeId,
+                            name: initiativeName,
+                          },
+                        })
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-info border border-c-border-subtle truncate cursor-pointer hover:bg-c-surface-raised/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <Target size={12} className="text-c-info shrink-0" />
+                    <span className="truncate">{initiativeName}</span>
+                  </button>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
+                    <Target size={12} className="text-c-text-muted shrink-0" />
+                    <span className="truncate">{initiativeName}</span>
+                  </span>
+                )}
               </div>
             ) : null}
             {attachments.length > 0 ? (
