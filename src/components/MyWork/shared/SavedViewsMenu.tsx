@@ -113,7 +113,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
           inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
           ${
             isOpen
-              ? 'bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30'
+              ? 'bg-c-surface-raised text-c-text border border-c-border-strong'
               : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
           }
         `}
@@ -163,7 +163,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
                       if (e.key === 'Escape') setIsNaming(false);
                     }}
                     placeholder={t('myWork.savedViews.namePlaceholder', 'View name…')}
-                    className="flex-1 h-7 px-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                    className="flex-1 h-7 px-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-c-focus"
                   />
                   <button
                     onClick={handleSave}

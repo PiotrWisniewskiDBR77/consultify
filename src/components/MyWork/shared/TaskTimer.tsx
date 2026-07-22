@@ -171,8 +171,8 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             p-1.5 rounded-lg transition-all
             ${
               isRunning
-                ? 'bg-primary-500/20 text-primary-500 hover:bg-primary-500/30'
-                : 'text-slate-600 hover:text-primary-500 hover:bg-primary-500/10'
+                ? 'bg-c-surface-raised text-c-text hover:bg-c-border-subtle'
+                : 'text-slate-600 hover:text-c-text hover:bg-c-surface-raised'
             }
           `}
           title={
@@ -188,7 +188,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             className={`
               text-xs font-mono
-              ${isRunning ? 'text-primary-500' : 'text-slate-500 dark:text-slate-400'}
+              ${isRunning ? 'text-c-text' : 'text-slate-500 dark:text-slate-400'}
             `}
           >
             {formatTime(sessionTime)}
@@ -231,7 +231,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
         <motion.div
           className={`
             text-4xl font-mono font-bold
-            ${isRunning ? 'text-primary-500' : 'text-slate-700 dark:text-slate-300'}
+            ${isRunning ? 'text-c-text' : 'text-slate-700 dark:text-slate-300'}
           `}
           animate={isRunning ? { scale: [1, 1.02, 1] } : {}}
           transition={{ repeat: Infinity, duration: 1 }}

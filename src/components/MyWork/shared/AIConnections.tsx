@@ -89,12 +89,12 @@ export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entity
         className="flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <Sparkles size={12} className="text-primary-500" />
+        <Sparkles size={12} className="text-c-info" />
         <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
           {t('myWork.aiConnections.aIDiscoveredConnections', 'AI-Discovered Connections')}
         </span>
         {items.length > 0 && (
-          <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600">
+          <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] text-c-info">
             {items.length}
           </span>
         )}

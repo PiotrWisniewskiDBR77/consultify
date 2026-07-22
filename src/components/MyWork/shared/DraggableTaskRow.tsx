@@ -39,8 +39,8 @@ export const DraggableTaskRow: React.FC<DraggableTaskRowProps> = ({
       ref={setNodeRef}
       style={style}
       className={`
-        ${isDragging ? 'bg-primary-50 dark:bg-primary-500/10 shadow-lg' : ''}
-        ${isOver ? 'bg-primary-50/50 dark:bg-primary-500/5' : ''}
+        ${isDragging ? 'bg-c-surface-raised shadow-lg' : ''}
+        ${isOver ? 'bg-c-surface-raised/50' : ''}
       `}
     >
       {/* Drag Handle */}
