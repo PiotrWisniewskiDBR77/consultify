@@ -369,11 +369,11 @@ describe('POST /api/document-studio/share-links/edit-session + public edit comme
     expect(commentReply.body.comment.parentCommentId).toBe(commentCreate.body.comment.commentId);
   });
 
-  it('rejects edit session for non-edit scopes', async () => {
+  it('rejects edit session for view-only scopes (read / download)', async () => {
     const app = createApp();
     const created = await request(app)
       .post(`/api/document-studio/${ARTIFACT}/share-links`)
-      .send({ accessScope: 'comment' });
+      .send({ accessScope: 'read' });
     const token = created.body.shareLink.token;
     mockUser = null;
     const session = await request(app)
@@ -381,5 +381,38 @@ describe('POST /api/document-studio/share-links/edit-session + public edit comme
       .send({ token, consumerFingerprint: 'fp-edit-2' });
     expect(session.status).toBe(403);
     expect(session.body.error).toBe('share_link_scope_forbidden');
+  });
+
+  // F1/F3 client-reader — a `comment` scoped link is meant to let an
+  // external reader open threads and add comments (just not edit
+  // document content), so it must be allowed to mint an anonymous
+  // session and post/reply through the same public surface as `edit`.
+  it('allows edit-session + anonymous comment mutation for comment scope', async () => {
+    const app = createApp();
+    const created = await request(app)
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'comment' });
+    expect(created.status).toBe(201);
+    const token = created.body.shareLink.token;
+    const shareLinkId = created.body.shareLink.shareLinkId;
+
+    mockUser = null;
+    const session = await request(app)
+      .post('/api/document-studio/share-links/edit-session')
+      .send({ token, consumerFingerprint: 'fp-comment-1' });
+    expect(session.status).toBe(201);
+    expect(session.body.session.shareLinkId).toBe(shareLinkId);
+
+    const commentCreate = await request(app)
+      .post('/api/document-studio/share-links/comments')
+      .send({
+        token,
+        editSessionToken: session.body.session.editSessionToken,
+        consumerFingerprint: 'fp-comment-1',
+        body: 'Client comment on a comment-scope link',
+        anchor: { kind: 'document' },
+      });
+    expect(commentCreate.status).toBe(201);
+    expect(commentCreate.body.comment.authorId).toBe(`share-link:${shareLinkId}`);
   });
 });

@@ -685,6 +685,21 @@ export interface CreateShareLinkEditSessionResult {
 
 const EDIT_SESSION_TTL_MS = 30 * 60 * 1000;
 
+/**
+ * F1/F3 — client-reader comment cycle (`ff_client_reader`). An "edit
+ * session" is really just the anonymous-actor identity token the
+ * public comment-mutation routes require — it is not exclusive to
+ * `accessScope === 'edit'`. A `'comment'` scoped link is EXPECTED to
+ * let an external reader open threads and add comments (that is the
+ * entire point of minting a comment-scope link), it just must never
+ * unlock document-content mutation. `'read'` and `'download'` stay
+ * view-only and cannot mint a session at all.
+ */
+const ANONYMOUS_SESSION_SCOPES: ReadonlySet<DocumentShareLinkAccessScope> = new Set([
+  'edit',
+  'comment',
+]);
+
 export async function createShareLinkEditSession(
   params: CreateShareLinkEditSessionParams
 ): Promise<CreateShareLinkEditSessionResult> {
@@ -695,7 +710,9 @@ export async function createShareLinkEditSession(
 
   const resolved = await consumeShareLink({ token, consumerFingerprint });
   if (!resolved) throw new Error('share_link_invalid_or_expired');
-  if (resolved.accessScope !== 'edit') throw new Error('share_link_scope_forbidden');
+  if (!ANONYMOUS_SESSION_SCOPES.has(resolved.accessScope)) {
+    throw new Error('share_link_scope_forbidden');
+  }
 
   const editSessionToken = randomBytes(32).toString('base64url');
   const expiresAtMs = Date.now() + EDIT_SESSION_TTL_MS;
@@ -757,7 +774,9 @@ export async function authorizeShareLinkEditSession(
   await ensureHydrated(session.organizationId);
   const link = registryStore.get(linkKey(session.organizationId, session.shareLinkId));
   if (!link) throw new Error('share_link_not_found');
-  if (link.accessScope !== 'edit') throw new Error('share_link_scope_forbidden');
+  if (!ANONYMOUS_SESSION_SCOPES.has(link.accessScope)) {
+    throw new Error('share_link_scope_forbidden');
+  }
   const runtime = getShareLinkRuntimeStatus(link);
   if (!runtime.isUsable) throw new Error('share_link_not_active');
 
