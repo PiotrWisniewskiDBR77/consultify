@@ -19,6 +19,8 @@ import {
   FolderOpen,
   LayoutGrid,
   Loader2,
+  type LucideIcon,
+  MoreVertical,
   Play,
   Presentation,
   RefreshCw,
@@ -26,7 +28,15 @@ import {
   Table,
   X,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { useConversationStore } from '@/store/useConversationStore';
@@ -92,6 +102,14 @@ export interface ArtifactPreview {
   tabeleRationale?: TabelePreviewRationale;
 }
 
+/** Menu 1 kebab item (SPEC-A §11.2 D-D: object code + permalink live only here). */
+export interface KimiHeaderKebabItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+}
+
 interface KimiWorkspaceShellProps {
   lane: KimiLane;
   taskSteps: TaskStep[];
@@ -110,7 +128,116 @@ interface KimiWorkspaceShellProps {
   onAllFiles?: () => void;
   onStartGeneration?: (goal: string) => Promise<void>;
   chatSystemPrompt?: string;
+  /**
+   * SPEC-A prawy panel (`ArtifactRightPanel`, §10.2/§11.2) — moduł deklaruje
+   * treść (sekcje Akcje/Właściwości/Powiązania/Komentarze/Historia), ten
+   * komponent tylko rezerwuje miejsce obok podglądu. Opcjonalne — brak = 1:1
+   * jak wcześniej (Wordy/Prezentacje/Tabele nie przekazują tego propa).
+   */
+  rightPanel?: React.ReactNode;
+  /**
+   * Menu 1 kebab (⋮) — overflow menu (SPEC-A §11.2 D-D: kod obiektu + link).
+   * Opcjonalne, addytywne — brak = pasek nagłówka bez zmian.
+   */
+  kebabItems?: KimiHeaderKebabItem[];
+  kebabAriaLabel?: string;
 }
+
+/**
+ * KebabMenu — generyczne menu przepełnienia (⋮) dla Menu 1 powłoki artefaktu.
+ * Wzorzec 1:1 z `HeaderOverflowMenu` (src/components/shared/NModeLayout/NModeHeader.tsx)
+ * — portal do `<body>`, tokeny wyłącznie `c-*`, fokus `c-focus`.
+ */
+const KebabMenu: React.FC<{ items: KimiHeaderKebabItem[]; ariaLabel: string }> = ({
+  items,
+  ariaLabel,
+}) => {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    const update = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (r) setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="p-1.5 rounded-hig-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+        title={ariaLabel}
+        aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <MoreVertical size={16} />
+      </button>
+      {open &&
+        pos &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-context-menu"
+              onClick={() => setOpen(false)}
+              aria-hidden="true"
+            />
+            <div
+              role="menu"
+              className="fixed z-context-menu min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface p-1 shadow-lg"
+              style={{ top: pos.top, right: pos.right }}
+            >
+              {items.map((it) => {
+                const Icon = it.icon;
+                return (
+                  <button
+                    key={it.id}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      it.onClick();
+                      setOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                  >
+                    <Icon size={14} className="shrink-0 text-c-text-muted" />
+                    <span className="min-w-0 flex-1 truncate">{it.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>,
+          document.body
+        )}
+    </div>
+  );
+};
 
 const LANE_CONFIG = {
   wordy: {
@@ -772,6 +899,9 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   onAllFiles,
   onStartGeneration,
   chatSystemPrompt,
+  rightPanel,
+  kebabItems,
+  kebabAriaLabel,
 }) => {
   const { t: tShell } = useTranslation();
   const setDisplayMode = useConversationStore((s) => s.setDisplayMode);
@@ -817,34 +947,45 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
         />
       )}
 
-      {/* Artifact preview (full width) */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Module header / breadcrumb strip */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface shrink-0">
-          {React.createElement(LANE_CONFIG[lane].icon, {
-            size: 16,
-            className: 'text-c-text-secondary',
-          })}
-          <span className="text-sm font-medium text-c-text">
-            {tShell(`kimi.shell.lane.${lane}`, LANE_CONFIG[lane].label)}
-          </span>
-          <span className="text-xs text-c-text-secondary">
-            / {tShell('kimi.workspace', 'Workspace')}
-          </span>
+      {/* Artifact preview (full width, or shared with SPEC-A right panel when supplied) */}
+      <div className="flex-1 flex min-w-0 min-h-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
+          {/* Module header / breadcrumb strip (Menu 1) */}
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              {React.createElement(LANE_CONFIG[lane].icon, {
+                size: 16,
+                className: 'text-c-text-secondary shrink-0',
+              })}
+              <span className="text-sm font-medium text-c-text truncate">
+                {tShell(`kimi.shell.lane.${lane}`, LANE_CONFIG[lane].label)}
+              </span>
+              <span className="text-xs text-c-text-secondary shrink-0">
+                / {tShell('kimi.workspace', 'Workspace')}
+              </span>
+            </div>
+            {kebabItems && kebabItems.length > 0 && (
+              <KebabMenu
+                items={kebabItems}
+                ariaLabel={kebabAriaLabel ?? tShell('kimi.shell.moreActions', 'Więcej akcji')}
+              />
+            )}
+          </div>
+          <ArtifactPreviewPane
+            preview={preview}
+            lane={lane}
+            isGenerating={isGenerating}
+            isFailed={isFailed}
+            failureReason={failureReason}
+            onDownload={onDownload}
+            onDownloadPdf={onDownloadPdf}
+            onPreviewFile={onPreviewFile}
+            onAllFiles={onAllFiles}
+            onStartGeneration={onStartGeneration}
+            onRetry={onReplay}
+          />
         </div>
-        <ArtifactPreviewPane
-          preview={preview}
-          lane={lane}
-          isGenerating={isGenerating}
-          isFailed={isFailed}
-          failureReason={failureReason}
-          onDownload={onDownload}
-          onDownloadPdf={onDownloadPdf}
-          onPreviewFile={onPreviewFile}
-          onAllFiles={onAllFiles}
-          onStartGeneration={onStartGeneration}
-          onRetry={onReplay}
-        />
+        {rightPanel}
       </div>
     </div>
   );

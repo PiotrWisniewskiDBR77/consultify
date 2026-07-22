@@ -546,7 +546,7 @@ function TemplatesGrid({
         <button
           key={card.id}
           onClick={() => onTemplateClick(card.id, card.isBuiltin ? card.builtinPrompt : undefined)}
-          className="group text-left p-4 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
+          className="group text-left p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
         >
           <p className="text-sm font-medium text-c-text group-hover:text-brand transition-colors line-clamp-1">
             {card.title}
@@ -607,7 +607,7 @@ function ArtifactsList({
           <button
             key={safeId}
             onClick={() => onArtifactClick(safeId)}
-            className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-c-text truncate">{item.title}</p>
