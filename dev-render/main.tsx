@@ -44,6 +44,7 @@ import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-sha
 import EvFootballFieldScreen from './screens/ev-football-field';
 import ExecutionChangeSignalsScreen from './screens/execution-change-signals';
 import FinanceValuePanelsScreen from './screens/finance-value-panels';
+import GenDeckContentHintsScreen from './screens/gen-deck-content-hints';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
@@ -84,6 +85,11 @@ import IdeaTableToolKebabScreen from './screens/idea-table-tool-kebab';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'gen-deck-content-hints': {
+    label:
+      'DOKUMENTY — Gen. Deck catch-up: per-slide content hints w Deck Template Architect (audyt 2026-07-22)',
+    render: () => <GenDeckContentHintsScreen />,
+  },
   'word-intake-uselm-default': {
     label: 'DOKUMENTY — Word intake: domyślnie „Wygeneruj treść z AI" (audyt 2026-07-22, Word #8)',
     render: () => <WordIntakeUseLlmDefaultScreen />,

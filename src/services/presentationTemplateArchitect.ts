@@ -78,6 +78,8 @@ export const PRESENTATION_SLIDE_INTENTS: readonly PresentationSlideIntent[] = [
 export interface PresentationTemplateOutlineItem {
   intent: PresentationSlideIntent | string;
   title: string;
+  /** Optional 2-4 short thematic guidance phrases (LLM-refined templates only). */
+  contentHints?: string[];
 }
 
 export type PresentationTemplateLifecycleState = 'draft' | 'approved' | 'deprecated';

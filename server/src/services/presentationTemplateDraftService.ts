@@ -16,11 +16,15 @@
  *     already renders from, so a freshly drafted template is guaranteed
  *     to be a runnable recipe (known intents, known layouts).
  *   - `draftPresentationTemplateAsync({ useLlm: true })` optionally lets an
- *     LLM rewrite slide titles + the template name/description —
+ *     LLM rewrite slide titles + the template name/description, and add
+ *     optional per-slide `contentHints` (thematic structure guidance, never
+ *     invented facts/numbers — this is a template, not a specific deck) —
  *     never intents, never slide order/count, never governance metadata.
  *     Any LLM failure or schema-violating response falls back to the
  *     deterministic draft unchanged (mirrors `documentTemplateRefiner.ts`'s
- *     narrow, hallucination-resistant contract).
+ *     narrow, hallucination-resistant contract); an invalid/missing
+ *     `contentHints` value is lenient (falls back to "no hints"), it never
+ *     invalidates the whole refinement the way an intent violation does.
  *
  * Persistence: this module is pure (no DB access). The route layer
  * (`presentations.routes.ts`) inserts the returned draft into
@@ -62,6 +66,16 @@ export interface PresentationTemplateDraftInput {
 export interface PresentationTemplateOutlineItem {
   intent: SlideIntent;
   title: string;
+  /**
+   * Optional 2-4 short thematic guidance phrases for this slide (e.g. "Frame
+   * the current-state pain points", "Contrast before/after operating model")
+   * — content STRUCTURE guidance for whoever fills the template with real
+   * data later, never fabricated facts/numbers (this is a reusable template,
+   * not a specific deck). LLM-only field: the deterministic draft never sets
+   * it; `refinePresentationTemplateWithLlm` may add it, `undefined` means
+   * "no guidance yet" and is safe to omit anywhere this type is used.
+   */
+  contentHints?: string[];
 }
 
 export interface DraftedPresentationTemplate {
@@ -231,7 +245,20 @@ export async function draftPresentationTemplateAsync(
 interface LlmDeckTemplateResponse {
   name?: unknown;
   description?: unknown;
-  slides?: Array<{ intent?: unknown; title?: unknown }>;
+  slides?: Array<{ intent?: unknown; title?: unknown; contentHints?: unknown }>;
+}
+
+const MAX_CONTENT_HINTS_PER_SLIDE = 4;
+const MAX_CONTENT_HINT_CHARS = 100;
+
+/** Lenient — an invalid/missing value just means "no hints", never fails the refinement. */
+function sanitizeContentHints(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const hints = raw
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map((item) => item.trim().slice(0, MAX_CONTENT_HINT_CHARS))
+    .slice(0, MAX_CONTENT_HINTS_PER_SLIDE);
+  return hints.length > 0 ? hints : undefined;
 }
 
 function safeParseJson(raw: string): LlmDeckTemplateResponse | null {
@@ -256,9 +283,10 @@ function buildSystemPrompt(): string {
     'You are a senior BCG-grade presentation template architect.',
     'You MAY rewrite the "title" of each slide, in the same language as the brief.',
     'You MAY propose a refined "name" and a one-sentence "description" for the template.',
+    'You MAY add "contentHints": 2-4 short phrases per slide guiding WHAT KIND of content belongs there (e.g. "Contrast current-state pain points with target state", "Show a 3-scenario cost sensitivity range") — this is a REUSABLE TEMPLATE, not a specific deck, so hints MUST describe content structure/themes only and MUST NOT invent specific numbers, dates, client names, or other facts.',
     'You MUST keep exactly the same set of slide intents you receive, in the same order (no add, no remove, no reorder, no intent rename).',
     'You MUST NOT change audience, goal, language, theme, slide counts, or any other governance field.',
-    'You MUST respond with strict JSON in this shape: {"name":"<optional refined name>","description":"<optional refined description>","slides":[{"intent":"<exact original intent>","title":"<refined title>"}, ...]}',
+    'You MUST respond with strict JSON in this shape: {"name":"<optional refined name>","description":"<optional refined description>","slides":[{"intent":"<exact original intent>","title":"<refined title>","contentHints":["<optional phrase>", ...]}, ...]}',
     'No prose, no commentary, JSON only.',
   ].join(' ');
 }
@@ -325,7 +353,8 @@ export async function refinePresentationTemplateWithLlm(
       typeof entry.title === 'string' && entry.title.trim().length > 0
         ? entry.title.trim()
         : original.title;
-    refinedOutline.push({ intent: original.intent, title });
+    const contentHints = sanitizeContentHints(entry.contentHints) ?? original.contentHints;
+    refinedOutline.push({ intent: original.intent, title, contentHints });
   }
 
   const name =
