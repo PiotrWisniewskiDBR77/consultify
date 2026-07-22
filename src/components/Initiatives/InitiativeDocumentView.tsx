@@ -9825,7 +9825,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <button
                 key={row.label}
                 type="button"
-                onClick={() => setActiveNSection(row.sectionId)}
+                onClick={() => {
+                  // MARTWY KLIK (2026-07-22): przy zwężeniu etap-2 sekcje spoza
+                  // rdzenia (RAID/Artefakty/Decyzje/Załączniki…) są schowane
+                  // (`hiddenSectionIds`) — samo `setActiveNSection` na schowaną
+                  // sekcję cofa efekt niżej (8896-8901) z powrotem na pierwszą
+                  // widoczną. Odkryj cel PRZED nawigacją (ten sam wzorzec co
+                  // `onPlanTasks` wyżej), tylko na jawny klik użytkownika —
+                  // seed-zwężenie (one-shot, 8862-8875) zostaje nietknięte.
+                  setHiddenSectionIds((prev) => {
+                    if (!prev.has(row.sectionId)) return prev;
+                    const next = new Set(prev);
+                    next.delete(row.sectionId);
+                    return next;
+                  });
+                  setActiveNSection(row.sectionId);
+                }}
                 // Brak dedykowanego klucza i18n dla tego tooltipu — budujemy
                 // go wprost z `isPolish` (ten sam wzorzec co pola właściwości
                 // powyżej), żeby nie ciągnąć angielskiego fallbacku do PL UI.
