@@ -53,8 +53,15 @@ import { mergeWorkspaceExtensions, useWorkspaceGraphRuntime } from './canvas/wor
 import { type CommandItem, CommandPalette, useCommandPalette } from './CommandPalette';
 import { type ShortcutHelp, useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
-import { buildIdeaCanvasRightRailTools, buildIdeaCanvasTopBarChips } from './ideaCanvasMelsChips';
+import {
+  buildIdeaCanvasRightRailTools,
+  buildIdeaMenu1Chips,
+  buildIdeaMenu3Actions,
+} from './ideaCanvasMelsChips';
 import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
+import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
+import { IdeaConvertMenu } from './IdeaConvertMenu';
+import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
   IDEA_CONVERT_TARGETS,
@@ -2761,12 +2768,39 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const melsCanvasEnabled = isMelsCanvasEnabled();
   // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
+  // ── Menu 1 (top bar) chips — Z7 anatomy ─────────────────────────────────
+  // Clean identity row: ghost Teresa (secondary) + kebab `⋯` (Eksport real ·
+  // Historia/Duplikuj/Usuń disabled-with-"wkrótce" — no workspace-level flow
+  // exists yet). The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot`
+  // below; the per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
   const melsCanvasChips = useMemo(
     () =>
       melsCanvasEnabled
-        ? buildIdeaCanvasTopBarChips({
+        ? buildIdeaMenu1Chips({
+            isPolish: Boolean(isPolish),
+            handlers: {
+              onDiscuss: handleDiscussWithTeresa,
+              onExport: () => setExportMenuOpen(true),
+              // onHistory / onDuplicate / onDelete intentionally omitted — no
+              // workspace-level handler exists (verified 2026-07-22). The
+              // builder renders them DISABLED with a "wkrótce" hint, never
+              // hidden (ANATOMY: brakujące pozycje disabled z dopiskiem).
+              onSearch: () => setSearchOpen(true),
+              onShowHelp: () => setShortcutsHelpOpen(true),
+            },
+          })
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [melsCanvasEnabled, isPolish, handleDiscussWithTeresa]
+  );
+  // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
+  const melsMenu3Actions = useMemo(
+    () =>
+      melsCanvasEnabled
+        ? buildIdeaMenu3Actions({
             tool: activeTool,
-            state: { hasContent: mapHasNodes },
+            hasContent: mapHasNodes,
+            isPolish: Boolean(isPolish),
             handlers: {
               onAddPrimary: () =>
                 handleQuickAction(activeTool === 'mindmap' ? 'mm_add_child' : 'add_node'),
@@ -2776,32 +2810,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     detail: { action: 'pane_auto_layout' },
                   })
                 ),
-              onConvert: () => handlePanelChange('tools'),
-              onDiscuss: handleDiscussWithTeresa,
               onAIExpand: () => handleQuickAction('mm_ai_expand'),
               onOpenTemplateGallery: () => setTemplateGalleryOpen(true),
               onExport: () => setExportMenuOpen(true),
-              onSearch: () => setSearchOpen(true),
-              onShowHelp: () => setShortcutsHelpOpen(true),
+              onConvertFromMap: () => handlePanelChange('tools'),
             },
-            labels: isPolish
-              ? {
-                  addNode: 'Dodaj węzeł',
-                  addShape: 'Dodaj kształt',
-                  addRow: 'Dodaj wiersz',
-                  addSticky: 'Dodaj karteczkę',
-                  autoLayout: 'Auto-układ',
-                  convert: 'Utwórz z mapy',
-                  discuss: 'Omów z Teresą',
-                  aiExpand: 'AI rozwiń',
-                  templates: 'Szablony',
-                  export: 'Eksport',
-                  search: 'Szukaj',
-                  help: 'Skróty',
-                }
-              : undefined,
           })
-        : [],
+        : { left: [], right: [] },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       melsCanvasEnabled,
@@ -2810,7 +2825,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       isPolish,
       handleQuickAction,
       handlePanelChange,
-      handleDiscussWithTeresa,
+      setTemplateGalleryOpen,
+      setExportMenuOpen,
     ]
   );
   const melsCanvasRightRailTools = useMemo(
@@ -3141,6 +3157,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             backLabel={t('mindmap.ideas')}
             moduleLabel={t('mindmap.ideas')}
             topBarChips={melsCanvasChips}
+            titleIconSlot={<IdeaToolIcon tool={activeTool} label={activeToolLabel} />}
+            titleTrailingSlot={
+              <>
+                <IdeaStageChip stage={stage} isPolish={Boolean(isPolish)} />
+                <IdeaSaveIndicator
+                  state={graphRuntime.syncState}
+                  label={graphRuntime.syncLabel}
+                />
+              </>
+            }
+            primaryActionSlot={
+              <IdeaConvertMenu
+                onConvert={(target) => handleConvert(target)}
+                isPolish={Boolean(isPolish)}
+                disabled={!mapHasNodes}
+              />
+            }
+            secondBar={
+              <IdeaCanvasSecondBar
+                left={melsMenu3Actions.left}
+                right={melsMenu3Actions.right}
+                ariaLabel={t('mindmap.ideaCanvasAndMapTools')}
+              />
+            }
             rightRailTools={melsCanvasRightRailTools}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
             canvas={
