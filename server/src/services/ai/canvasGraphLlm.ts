@@ -470,12 +470,12 @@ async function callStructured<T>(
 // ── MIND MAP ─────────────────────────────────────────────────────────────────
 const MINDMAP_SYSTEM_PL = `Jesteś ekspertem tworzącym mapy myśli w standardzie doradczym (McKinsey/BCG).
 Z prośby użytkownika zbuduj HIERARCHICZNĄ, 2-poziomową mapę myśli:
-- "center": ZWIĘZŁA teza (3-6 słów), NIE cała treść prośby, NIE instrukcja.
-- "branches": filary tematu. Liczba filarów = liczba wskazana lub sensowna (3-6). Użyj DOKŁADNIE tych filarów, które wymieniono w prośbie.
+- "center": ZWIĘZŁA teza (3-6 słów), NIE cała treść prośby, NIE instrukcja. ANSWER-FIRST: gdy prośba dotyczy decyzji/rekomendacji, center = KONKLUZJA (np. „Skalować: ROI 4 mies."), nie neutralny temat.
+- "branches": filary tematu. Liczba filarów = liczba wskazana lub sensowna (3-6). Użyj DOKŁADNIE tych filarów, które wymieniono w prośbie. Gdy prośba nie wylicza filarów — wyprowadź MECE filary z faktów sytuacji (bez wymyślania faktów/liczb/dat spoza prośby). Unikaj filarów-wypełniaczy typu „Korzyści biznesowe" z generycznymi hasłami.
 - każdy filar MA "children": tablicę KRÓTKICH ŁAŃCUCHÓW (nie obiektów!). Gdy prośba prosi o cel+ryzyko, wpisz np. "Cel: wzrost ARR" i "Ryzyko: konkurencja" (z prefiksem "Cel:"/"Ryzyko:" i wielką literą).
 FORMAT: children to LISTA STRINGÓW, np. "children": ["Cel: ...", "Ryzyko: ..."]. NIE zwracaj obiektów {label,...} ani osobnych pól goal/risk.
 ZASADY: etykiety KRÓTKIE, semantyczne, rzeczownikowe. Filary WIELKĄ literą.
-ZAKAZ: kopiowania fragmentów zdań, filarów zaczynających się od "z ", "aż ", "każdy ", "oraz ".
+ZAKAZ: kopiowania fragmentów zdań, filarów zaczynających się od "z ", "aż ", "każdy ", "oraz ", oraz wymyślania dat/lat/liczb których NIE MA w prośbie.
 Odpowiedz w języku prośby.`;
 
 const MINDMAP_SYSTEM_EN = `You are an expert building consulting-grade mind maps (McKinsey/BCG).
@@ -574,16 +574,18 @@ const FLOW_SYSTEM_PL = `Jesteś ekspertem modelowania procesów. Z prośby zbudu
 - pierwszy krok shape="start", ostatni shape="end".
 - shape="decision" TYLKO gdy prośba WPROST zawiera decyzję/pytanie/warunek ("czy...", "jeśli...", "OK?", "gdy nie..."). Sformułuj wtedy jako pytanie.
 - "edges": połączenia po indeksach. Na gałęziach decyzji ustaw label "tak"/"nie". Pętle zwrotne TYLKO gdy prośba je opisuje.
-KRYTYCZNE — WIERNOŚĆ WEJŚCIU: odwzoruj DOKŁADNIE kroki z prośby. NIE dodawaj kroków, decyzji ani pętli, których w prośbie NIE ma. Jeśli prośba to prosta lista kroków bez warunków — zrób LINIOWY przepływ start→…→end, ZERO zmyślonych diamentów decyzji.
-ZAKAZ: kopiowania zdań prośby jako kroków, wymyślania bramek decyzyjnych. Odpowiedz w języku prośby.`;
+CO MODELOWAĆ: realny proces MERYTORYCZNY, którego dotyczy prośba (operacyjny / wdrożeniowy / rollout — np. dla „skalowanie pilota": stan obecny → integracja → pilotaż → rollout na kolejne procesy → realizacja korzyści). NIGDY nie modeluj meta-procesu „przygotuj materiał → przedstaw zarządowi → otrzymaj decyzję" — to nie jest proces biznesowy, tylko czynność zrobienia slajdu.
+KRYTYCZNE — WIERNOŚĆ WEJŚCIU: gdy prośba WYLICZA kroki — odwzoruj DOKŁADNIE te kroki, ZERO zmyślonych diamentów decyzji. Gdy prośba OPISUJE sytuację bez wyliczonych kroków — WYPROWADŹ właściwy proces merytoryczny z faktów sytuacji (bez wymyślania faktów/liczb/dat spoza prośby).
+ZAKAZ: kopiowania zdań prośby jako kroków, wymyślania bramek decyzyjnych, wymyślania dat/lat/liczb których NIE MA w prośbie, oraz meta-procesu prezentacji. Odpowiedz w języku prośby.`;
 
 const FLOW_SYSTEM_EN = `You are a process-modeling expert. From the request build a PROCESS DIAGRAM:
 - "steps": process steps. Verb-first labels (e.g. "Verify data"). NOT prompt fragments.
 - first step shape="start", last shape="end".
 - shape="decision" ONLY when the request EXPLICITLY states a decision/question/condition ("if...", "OK?", "when not..."). Phrase it as a question then.
 - "edges": connections by index. On decision branches set label "yes"/"no". Loop-backs ONLY when the request describes them.
-CRITICAL — FAITHFULNESS TO INPUT: mirror EXACTLY the steps stated in the request. Do NOT add steps, decisions or loops that are NOT in the request. If the request is a plain list of steps with no conditions — build a LINEAR flow start→…→end with ZERO invented decision diamonds.
-FORBIDDEN: copying request sentences as steps, inventing decision gates. Answer in the language of the request.`;
+WHAT TO MODEL: the real SUBSTANTIVE process the request is about (operational / implementation / rollout — e.g. for "scale the pilot": as-is → integration → pilot → roll out to more processes → benefits realization). NEVER model the meta-process "prepare the deck → present to the board → get a decision" — that is not a business process, it is the act of making a slide.
+CRITICAL — FAITHFULNESS TO INPUT: when the request ENUMERATES steps — mirror EXACTLY those steps, ZERO invented decision diamonds. When the request DESCRIBES a situation with no enumerated steps — DERIVE the right substantive process from the situation's facts (without inventing facts/numbers/dates not in the request).
+FORBIDDEN: copying request sentences as steps, inventing decision gates, inventing dates/years/numbers NOT in the request, and the meta-process of presenting. Answer in the language of the request.`;
 
 export async function generateProcessFlowGraph(
   intent: string,
@@ -655,7 +657,7 @@ const WB_SYSTEM_PL = `Jesteś ekspertem facylitacji na tablicy (np. Business Mod
   GĘSTOŚĆ POŁĄCZEŃ (WYMÓG): KAŻDA karteczka musi mieć CO NAJMNIEJ JEDNO połączenie — żaden blok nie może wisieć samotnie.
   Łącz karteczki z różnych klastrów, które faktycznie na siebie wpływają (propozycja→segment klienta, kanał→relacja itd.). Celuj w ok. 1 relację na karteczkę.
 KRYTYCZNE — WIERNOŚĆ WEJŚCIU: użyj DOKŁADNIE klastrów/bloków wymienionych w prośbie. Jeśli prośba wymienia N obszarów (np. 4 bloki) — zrób DOKŁADNIE te N, ANI JEDNEGO więcej.
-ZAKAZ: dodawania klastrów/bloków spoza prośby (np. dorobiony "Strategia biznesowa"), kopiowania fragmentów prośby, pustych etykiet relacji, samotnych bloków bez połączeń. Odpowiedz w języku prośby.`;
+ZAKAZ: dodawania klastrów/bloków spoza prośby (np. dorobiony "Strategia biznesowa"), kopiowania fragmentów prośby, pustych etykiet relacji, samotnych bloków bez połączeń, oraz wymyślania dat/lat/liczb których NIE MA w prośbie. Odpowiedz w języku prośby.`;
 
 const WB_SYSTEM_EN = `You are a whiteboard facilitation expert (e.g. Business Model / Value Proposition Canvas). From the request build a BOARD:
 - "groups": thematic CLUSTERS. Each cluster = a title (e.g. "Value Proposition") + the sticky notes belonging to that theme.
@@ -853,13 +855,17 @@ const TABLE_SYSTEM_PL = `Jesteś ekspertem porządkującym dane w tabelę. Z pro
 - "cells" w KAŻDYM wierszu: wartość dla KAŻDEJ dodatkowej kolumny, kluczem = ten sam "key".
   KAŻDA dodatkowa kolumna MUSI mieć KONKRETNĄ, per-wiersz wartość (np. {"ROI":"2.8x","Budżet PLN":"1.8 mln PLN","Ryzyko":"Średnie"}).
   Zero pustych — wpisz realną, zróżnicowaną wartość per wiersz.
-KRYTYCZNE — WIERNOŚĆ WEJŚCIU: wiersze MUSZĄ być KONKRETNYMI encjami wskazanymi w prośbie.
-Gdy prośba wymienia portfel/pozycje/inicjatywy (np. "INI-0..5", "Kapitał, Talent, Produkt, Delivery, Popyt, DACH")
-— KAŻDY z tych elementów to jeden wiersz, z DOKŁADNIE tą nazwą. Zachowaj identyfikatory i nazwy z prośby.
+DWA TRYBY:
+(A) Gdy prośba WYMIENIA encje-wiersze (portfel/pozycje/inicjatywy, np. "INI-0..5", "Kapitał, Talent, Produkt, Delivery, Popyt, DACH")
+    — KAŻDY z tych elementów to jeden wiersz, z DOKŁADNIE tą nazwą. Zachowaj identyfikatory i nazwy z prośby.
+(B) Gdy prośba OPISUJE sytuację decyzyjną BEZ wyliczonych wierszy (np. "z wyników pilota zrób tabelę dla zarządu")
+    — WYPROWADŹ sensowną TABELĘ PORÓWNAWCZĄ: wiersze = warianty/scenariusze/pozycje wynikające z sytuacji
+    (np. docelowe procesy do skalowania, albo scenariusze „skaluj teraz / dalszy pilotaż / wstrzymaj"),
+    kolumny = kryteria decyzyjne (np. ROI, Capex PLN, Zwrot, Ryzyko, Termin). Każda komórka UGRUNTOWANA
+    w faktach/liczbach z prośby; gdy dana nie jest w prośbie — "n/d", NIGDY zmyślona liczba/data.
 ZRÓŻNICUJ "status": realny miks (todo/in_progress/done/blocked) wg stanu encji — NIE wszystkie "todo".
-ZAKAZ: fragmentów prośby jako etykiet wierszy ORAZ zmyślania generycznych, podręcznikowych wierszy
-(np. "Modernizacja CRM", "Automatyzacja HR"), których w prośbie NIE MA. Zero halucynacji.
-Odpowiedz w języku prośby.`;
+ZAKAZ: fragmentów prośby jako etykiet wierszy; zmyślania generycznych, podręcznikowych wierszy
+(np. "Modernizacja CRM", "Automatyzacja HR") ani liczb/dat, których w prośbie NIE MA. Tabela 1-kolumnowa (same etykiety) = błąd — w trybie B ZAWSZE dodaj kolumny porównawcze. Odpowiedz w języku prośby.`;
 
 const TABLE_SYSTEM_EN = `You are a data-structuring expert. From the request build a table:
 - "rows": real rows per the request topic. "label" = the primary row value (entity name).
@@ -905,7 +911,13 @@ export async function generateTableGraph(
 
   const rowLabels = parsed.rows.map((r) => clamp(r.label)).filter(Boolean);
   if (rowLabels.length < 1) return null;
-  if (acceptedRatio(rowLabels, seedText) < 0.6) return null;
+  // Mode-A fidelity gate: enumerated requests must keep their named rows (catches
+  // generic filler). Mode-B (derived comparison table from a situation) has rows
+  // that legitimately don't appear verbatim in the seed — so bypass the gate when
+  // the model returned a real comparison structure (>=2 derived criteria columns).
+  // The value there lives in the grounded cells, not the row label matching.
+  const derivedComparisonColumns = (parsed.columns || []).filter((c) => clamp(c.key)).length;
+  if (acceptedRatio(rowLabels, seedText) < 0.6 && derivedComparisonColumns < 2) return null;
 
   // ── Custom columns from the prompt (ROI / Budżet PLN / Ryzyko …) ────────────
   // The FE Ideas-Table renders a column iff it exists in extensions.table.columns
