@@ -12,9 +12,14 @@
  * (Miro-style): the floating left rail floats over the canvas, the four tools
  * render as the canvas, and the right rail hosts the workspace inspector.
  *
- * Layout (editor-shell-canon Wave W):
- *   - TopBar chips      → per-tool primary + secondary/overflow (built by the
- *                         host via `buildIdeaCanvasTopBarChips`).
+ * Layout (editor-shell-canon Wave W · Z7 Menu 1/Menu 3):
+ *   - Menu 1 (TopBar)   → clean identity row. Chips (ghost Teresa + kebab `⋯`)
+ *                         built by the host via `buildIdeaMenu1Chips`; identity
+ *                         slots (`titleIconSlot`/`titleTrailingSlot`) + sole
+ *                         primary `primaryActionSlot` ("Konwertuj ▾") are
+ *                         ready-made nodes forwarded from the host.
+ *   - Menu 3 (secondBar)→ per-tool view actions (`buildIdeaMenu3Actions`),
+ *                         rendered by `IdeaCanvasSecondBar`, forwarded here.
  *   - floatingLeftRail  → CanvasLeftToolbar (supplied verbatim as a node).
  *   - canvas            → the active tool's canvas (switch content), supplied
  *                         verbatim; its own in-flow zoom controls / overlays
@@ -44,6 +49,13 @@ export interface IdeaCanvasMelsViewProps {
 
   /** Command-row chips (already built with per-tool primary hierarchy). */
   topBarChips: TopBarChipDescriptor[];
+
+  /** Menu 1 identity/command slots (Z7 anatomy) — ready-made nodes from host. */
+  titleIconSlot?: React.ReactNode;
+  titleTrailingSlot?: React.ReactNode;
+  primaryActionSlot?: React.ReactNode;
+  /** Menu 3 (second bar) — per-tool view actions, ready-made node from host. */
+  secondBar?: React.ReactNode;
 
   /** Right-rail inspector tabs + active id + selection + panel renderer. */
   rightRailTools: RightRailToolDescriptor[];
@@ -89,6 +101,10 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
   backLabel,
   moduleLabel = 'Ideas',
   topBarChips,
+  titleIconSlot,
+  titleTrailingSlot,
+  primaryActionSlot,
+  secondBar,
   rightRailTools,
   activeRightToolId,
   onSelectRightTool,
@@ -126,6 +142,10 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       backLabel={backLabel}
       topBarChips={topBarChips}
       presenceSlot={presenceSlot}
+      topBarTitleIconSlot={titleIconSlot}
+      topBarTitleTrailingSlot={titleTrailingSlot}
+      topBarPrimaryActionSlot={primaryActionSlot}
+      secondBar={secondBar}
       centerMode="canvas"
       canvas={canvas}
       floatingLeftRail={floatingLeftRail}
