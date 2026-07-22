@@ -13,10 +13,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
 import { deriveDeckLifecycleBadge } from '@/utils/deckLifecycleBadge';
 import { isMelsPrezentacjeEnabled } from '@/utils/melsPrezentacjeFlag';
+import { isTriModeEnabled } from '@/utils/triModeFlag';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
@@ -163,6 +165,14 @@ export const PrezentacjeView: React.FC = () => {
   const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
   const [reopenDeckId, setReopenDeckId] = useState<string | null>(null);
   const reopenLoaded = useRef(false);
+
+  // D2 (roboty tri-tryby): jawny wybór 3 trybów na wejściu `?view=new`, tylko za
+  // flagą `ff_tri_tryby`. OFF → `triMode` false → widok renderuje się bajt-
+  // identycznie (od razu czat/pipeline AI). 'choose' = ekran wyboru; 'ai' =
+  // przejście do dotychczasowego czatu (pipeline AI).
+  const triMode = isTriModeEnabled();
+  const [entryMode, setEntryMode] = useState<'choose' | 'ai'>('choose');
+  const [creatingBlank, setCreatingBlank] = useState(false);
 
   // Auto-trigger from builtin template prompt
   const promptTriggered = useRef(false);
@@ -328,6 +338,42 @@ export const PrezentacjeView: React.FC = () => {
     [navigate, t]
   );
 
+  // D2 tryb ①CZYSTO — pusty deck (1 slajd tytułowy) utworzony BEZ pipeline'u AI
+  // przez istniejący `POST /api/presentations/decks` (create-from-structured-JSON),
+  // po czym od razu otwarty w Deck Builderze. Zero kroków generacji AI.
+  const handleCreateEmptyDeck = useCallback(async (): Promise<void> => {
+    if (creatingBlank) return;
+    setCreatingBlank(true);
+    try {
+      const title = t('prezentacje.blank.title', 'Nowa prezentacja');
+      const res = await Api.post('/presentations/decks', {
+        title,
+        theme: 'modern',
+        source: 'blank_manual',
+        slides: [
+          {
+            type: 'cover',
+            content: {
+              title,
+              intent: 'cover',
+              blocks: [{ type: 'heading', content: title }],
+            },
+          },
+        ],
+      });
+      const deckId = unwrapApiData<{ id?: string }>(res)?.id;
+      if (deckId) {
+        openInDeckBuilder(deckId);
+      } else {
+        toast.error(t('prezentacje.blankFailed', 'Nie udało się utworzyć pustej prezentacji.'));
+      }
+    } catch {
+      toast.error(t('prezentacje.blankFailed', 'Nie udało się utworzyć pustej prezentacji.'));
+    } finally {
+      setCreatingBlank(false);
+    }
+  }, [creatingBlank, openInDeckBuilder, t]);
+
   // Post-generation chat intent routing (P20 audit §1.1)
   const lastRoutedMsgRef = useRef<string | null>(null);
   useEffect(() => {
@@ -484,6 +530,51 @@ export const PrezentacjeView: React.FC = () => {
 
   if (showHome) {
     return <ArtifactModuleHome lane="prezentacje" />;
+  }
+
+  // D2 tri-tryby: brama wyboru na wejściu „Start new" (`?view=new`). Poprzedza
+  // czat/pipeline; OFF (triMode false) → warunek fałszywy → od razu czat jak dziś.
+  const showTriChooser =
+    triMode &&
+    entryMode === 'choose' &&
+    viewParam === 'new' &&
+    !artifactId &&
+    !templateArtifactId &&
+    !templatePrompt &&
+    !pipeline.currentRun &&
+    !pipeline.isGenerating &&
+    !reopenPreview;
+
+  if (showTriChooser) {
+    return (
+      <TriModeChooser
+        busy={creatingBlank}
+        showTemplate
+        heading={t('prezentacje.tri.heading', 'Jak chcesz zacząć prezentację?')}
+        subheading={t(
+          'prezentacje.tri.subheading',
+          'Wybierz tryb — wszystkie trzy są równorzędne.'
+        )}
+        clean={{
+          title: t('prezentacje.tri.cleanTitle', 'Czysto'),
+          desc: t(
+            'prezentacje.tri.cleanDesc',
+            'Pusty deck (1 slajd) w Deck Builderze. Budujesz sam, bez AI.'
+          ),
+        }}
+        ai={{
+          title: t('prezentacje.tri.aiTitle', 'Z AI'),
+          desc: t('prezentacje.tri.aiDesc', 'Opisz deck — AI zbuduje slajdy i treść.'),
+        }}
+        template={{
+          title: t('prezentacje.tri.templateTitle', 'Z szablonu'),
+          desc: t('prezentacje.tri.templateDesc', 'Zacznij od gotowego szablonu prezentacji.'),
+        }}
+        onClean={handleCreateEmptyDeck}
+        onAi={() => setEntryMode('ai')}
+        onTemplate={() => navigate('/prezentacje')}
+      />
+    );
   }
 
   if (isMelsPrezentacjeEnabled()) {

@@ -12,8 +12,9 @@ import { Copy, Link2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
 import { buildArtifactCode, buildArtifactPermalink, buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
@@ -21,6 +22,7 @@ import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
+import { isTriModeEnabled } from '@/utils/triModeFlag';
 import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
@@ -52,6 +54,7 @@ If the user asks to modify the workbook, suggest changes and regenerate.`;
 export const ExceleView: React.FC = () => {
   const { t } = useTranslation();
   const pipeline = useKimiArtifactPipeline('excele');
+  const navigate = useNavigate();
   const activeMessages = useConversationStore((s) => s.activeMessages);
   const [searchParams] = useSearchParams();
   const artifactId = searchParams.get('artifactId');
@@ -76,6 +79,13 @@ export const ExceleView: React.FC = () => {
   const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
   const [reopenWorkbookId, setReopenWorkbookId] = useState<string | null>(null);
   const reopenLoaded = useRef(false);
+
+  // D3 (roboty tri-tryby): jawny wybór 3 trybów na wejściu `?view=new`, tylko za
+  // flagą `ff_tri_tryby`. OFF → `triMode` false → widok bajt-identyczny (od razu
+  // czat/pipeline AI). 'choose' = ekran wyboru; 'ai' = przejście do czatu.
+  const triMode = isTriModeEnabled();
+  const [entryMode, setEntryMode] = useState<'choose' | 'ai'>('choose');
+  const [creatingBlank, setCreatingBlank] = useState(false);
 
   // Auto-trigger from builtin template prompt
   const promptTriggered = useRef(false);
@@ -267,8 +277,71 @@ export const ExceleView: React.FC = () => {
     [effectiveWorkbookId, t, copyObjectCode, copyPermalink]
   );
 
+  // D3 tryb ①CZYSTO — pusta siatka (1 arkusz, puste komórki) utworzona BEZ
+  // pipeline'u AI przez `POST /api/workbook/blank` (ten sam builder/tabela/rejestr
+  // co /generate, tylko deterministyczna pusta schema). Po utworzeniu przechodzimy
+  // na `?artifactId=<id>`, co uruchamia istniejącą ścieżkę reopen (GET /workbook/:id)
+  // → od razu podgląd + pobranie.
+  const handleCreateEmptyGrid = useCallback(async (): Promise<void> => {
+    if (creatingBlank) return;
+    setCreatingBlank(true);
+    try {
+      const res = await Api.post('/workbook/blank', { title: 'Pusty arkusz' });
+      const payload = (res as { data?: { id?: string } } | null)?.data;
+      const workbookId = payload?.id;
+      if (workbookId) {
+        navigate(`/excele?artifactId=${encodeURIComponent(workbookId)}`);
+      } else {
+        toast.error('Nie udało się utworzyć pustego arkusza.');
+      }
+    } catch {
+      toast.error('Nie udało się utworzyć pustego arkusza.');
+    } finally {
+      setCreatingBlank(false);
+    }
+  }, [creatingBlank, navigate]);
+
   if (showHome) {
     return <ArtifactModuleHome lane="excele" />;
+  }
+
+  // D3 tri-tryby: brama wyboru na wejściu „Start new" (`?view=new`). Poprzedza
+  // czat/pipeline; OFF (triMode false) → warunek fałszywy → od razu czat jak dziś.
+  const showTriChooser =
+    triMode &&
+    entryMode === 'choose' &&
+    viewParam === 'new' &&
+    !artifactId &&
+    !templateArtifactId &&
+    !templatePrompt &&
+    !pipeline.currentRun &&
+    !pipeline.isGenerating &&
+    !reopenWorkbookId;
+
+  if (showTriChooser) {
+    return (
+      <TriModeChooser
+        busy={creatingBlank}
+        showTemplate
+        heading="Jak chcesz zacząć arkusz?"
+        subheading="Wybierz tryb — wszystkie trzy są równorzędne."
+        clean={{
+          title: 'Czysto',
+          desc: 'Pusta siatka (1 arkusz). Wypełniasz sam, bez AI.',
+        }}
+        ai={{
+          title: 'Z AI',
+          desc: 'Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami.',
+        }}
+        template={{
+          title: 'Z szablonu',
+          desc: 'Zacznij od gotowego szablonu arkusza.',
+        }}
+        onClean={handleCreateEmptyGrid}
+        onAi={() => setEntryMode('ai')}
+        onTemplate={() => navigate('/excele')}
+      />
+    );
   }
 
   return (
