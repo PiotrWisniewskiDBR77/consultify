@@ -602,6 +602,21 @@ const STATUS_CONFIG: Record<
   },
 };
 
+// D-A (2026-07-22) — tryb otwarcia karty: SZKIC/nowa → Edycja; artefakt
+// gotowy / w recenzji / zatwierdzony → Podgląd (czysta prezentacja). Zwraca
+// true dla stanów prezentacyjnych. Używa EFEKTYWNEGO statusu — reviewStatus ma
+// pierwszeństwo nad statusem generacji (spójnie z `currentInsightStatus`).
+function insightOpensInPreview(
+  i: { status?: string; reviewStatus?: string } | null | undefined
+): boolean {
+  if (!i) return false;
+  const eff =
+    i.reviewStatus === 'in_review' || i.reviewStatus === 'published'
+      ? i.reviewStatus
+      : i.status;
+  return eff === 'completed' || eff === 'in_review' || eff === 'published';
+}
+
 // Colored-pill visual map for the Properties Strip STATUS field (parity with
 // Initiative). bg = soft tint, text = label color, dot = solid swatch.
 const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
@@ -1427,6 +1442,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
         setInsight(demoInsight as Insight);
         setTitle(demoInsight.title || '');
+        // D-A: gotowy/w recenzji/zatwierdzony → Podgląd; szkic/nowy → Edycja.
+        setReadMode(insightOpensInPreview(demoInsight as Insight));
         const demoSessions = demoInsight.sourceSessionIds
           .map((sessionId: string) => interviewDemoData.sessionDetailsById[sessionId]?.session)
           .filter(Boolean);
@@ -1468,6 +1485,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
         setInsight(data);
         setTitle(data.title || '');
+        // D-A: gotowy/w recenzji/zatwierdzony → Podgląd; szkic/nowy → Edycja.
+        setReadMode(insightOpensInPreview(data));
         await loadPersistedFindings(insightId);
         await loadCandidates(insightId);
         await loadInsightAnalysis(insightId);
@@ -1637,9 +1656,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const typeMeta = insight
     ? TYPE_METADATA[insight.promptType] || TYPE_METADATA.summary
     : TYPE_METADATA.summary;
-  const statusConfig = insight
-    ? STATUS_CONFIG[insight.status] || STATUS_CONFIG.completed
-    : STATUS_CONFIG.completed;
 
   const parsedInsightSections = useMemo(
     () => parseInsightContent(insight?.content),
@@ -3130,6 +3146,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     `interview.insightViewer.insightStatusLabel2.${currentInsightStatus}`,
     STATUS_CONFIG[currentInsightStatus]?.label.en
   );
+  // D-B (2026-07-22) — ton pigułki statusu w Menu 1 (kontrakt powłoki).
+  // Parytet z prawym panelem (STATUS_PILL): draft=slate → 'draft';
+  // in_review=blue → 'review'; completed/published=zielono/teal → 'approved';
+  // failed=rose → 'rejected'; generating → 'neutral'.
+  const headerStatusTone: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' =
+    currentInsightStatus === 'draft'
+      ? 'draft'
+      : currentInsightStatus === 'in_review'
+        ? 'review'
+        : currentInsightStatus === 'completed' || currentInsightStatus === 'published'
+          ? 'approved'
+          : currentInsightStatus === 'failed'
+            ? 'rejected'
+            : 'neutral';
 
   // ── Activity log → NMode format ───────────────────────────────────────────
 
@@ -8052,6 +8082,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           title,
           onTitleChange: setTitle,
           titlePlaceholder: { en: 'Insight title...', pl: 'Tytuł wniosku...' },
+          // D-A: tytuł edytowalny tylko gdy karta otwarta w Edycji (readMode
+          // false); w Podglądzie (readMode true) tytuł jest tylko-do-odczytu.
+          titleReadOnly: readMode,
           artifactId: insight?.id,
           artifactType: 'insight',
           onSave: handleSave,
@@ -8059,7 +8092,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           isDirty,
           onChat: handleOpenChat,
           onClose,
-          statusDotColor: statusConfig.color,
+          // D-B: status = etykieta-pigułka (zlokalizowana + ton c-*), NIE kropka.
+          statusLabel: statusPillLabel,
+          statusTone: headerStatusTone,
           primaryAction: {
             label: { en: 'Convert to initiative', pl: 'Konwertuj na inicjatywę' },
             icon: Rocket,
