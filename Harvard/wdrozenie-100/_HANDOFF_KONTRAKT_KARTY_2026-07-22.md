@@ -19,10 +19,21 @@
 | **Harness** | `.claude/launch.json` → port 3220, `?screen=karta-<nazwa>&theme=dark\|light&lang=pl` |
 | **Flaga wyglądu** | `?cardContract=1` włącza nowy kontrakt (default OFF do akceptu Piotra) |
 
-**★ FLOTA W TOKU przy końcu sesji:** `wgayit5k8` (armia migracji 6 artefaktów). Zdążyła zacommitować
-5 migracji (Tool·Task·Notification·Interview·Insight). **Initiative (najtrudniejszy) + niezależny odbiór
-ze zrzutami jeszcze pracowały.** PIERWSZY KROK NASTĘPCY: sprawdź wynik tej floty (git log + folder
-`_ODBIOR_MIGRACJI_6_2026-07-22/`), zanim cokolwiek zaczniesz.
+**★ FLOTA `wgayit5k8` DOMKNĘŁA (koniec sesji).** Wszystkie 6 migracji zacommitowane + niezależny odbiór
+ze zrzutami (`_ODBIOR_MIGRACJI_6_2026-07-22/`, 20 PNG). Werdykt odbioru (tabela 6×4 w RAPORT.md):
+- **Task · Interview · Notification · Insight** — ✅ PASS (pełny wzorzec POC: rdzeń nieusuwalny, węższy
+  default z pickerem Rdzeń/Pełny, zero regresji przy fladze OFF). Insight z uwagą: 11 sekcji Phase-D jako
+  „extras" poza katalogiem — do dedupu z Piotrem (druga tura).
+- **Tool** — ✅ PASS* — renderuje czysto, ale deskryptor NIEWPIĘTY (Tool = klasa S read-only, brak systemu
+  kart/pickera; wpięcie to net-new mechanika, świadomie poza falą).
+- **Initiative** — ⚠️ CZĘŚCIOWE — deskryptor jest, ale NIEWPIĘTY w render (ON==OFF==24 kart); własny silnik
+  + katalog DB (`initiative_section_types`) świadomie NIE tknięty (uczciwość > połowiczna migracja DB).
+- Wszystko ZA FLAGĄ (`?cardContract=1`, default OFF), crimson w centrum = baseline bez wzrostu (dług
+  pre-existing, osobny sweep). Bramka struktura PASS wszędzie; `--strict` czerwony tylko z crimsona.
+
+**PIERWSZY KROK NASTĘPCY:** obejrzyj 20 zrzutów SAM (reguła #7), napraw ewentualne FAIL-e, pokaż batch
+Piotrowi → akcept → promocja na demo. Zostaje do dokończenia: **Tool wpięcie** (jeśli Piotr chce) i
+**Initiative wpięcie + strona DB** (osobny, ostrożny pakiet — najtrudniejszy).
 
 ---
 
