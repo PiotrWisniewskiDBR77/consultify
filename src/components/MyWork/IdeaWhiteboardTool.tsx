@@ -24,6 +24,7 @@ import ReactFlow, {
   type NodeChange,
   ReactFlowProvider,
   useReactFlow,
+  useStore as useReactFlowStore,
 } from 'reactflow';
 
 import { Api } from '@/services/api';
@@ -116,6 +117,7 @@ import {
 } from './whiteboard/whiteboardProposalPatch';
 import { toggleReaction } from './whiteboard/whiteboardReactions';
 import { WhiteboardSelectionBar } from './whiteboard/WhiteboardSelectionBar';
+import { WhiteboardStyleBar } from './whiteboard/WhiteboardStyleBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
 
@@ -140,7 +142,12 @@ interface WhiteboardCanvasProps {
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
   onContextMenu?: (e: React.MouseEvent, nodeId?: string, nodeData?: any) => void;
+  // Z15: patch a single node's style (accent/fontSize/fontWeight) onto node.data.
+  onNodeStyleChange?: (nodeId: string, patch: Record<string, unknown>) => void;
 }
+
+// Z15: node types that expose the floating per-element style bar.
+const STYLEABLE_WB_NODE_TYPES = new Set(['stickyNote', 'textBlock', 'shapeNode']);
 
 const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   nodes,
@@ -157,8 +164,12 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   onFullscreenToggle: externalOnFullscreenToggle,
   isFullscreen: externalIsFullscreen = false,
   onContextMenu: externalOnContextMenu,
+  onNodeStyleChange,
 }) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
+  // Z15: subscribe to the live viewport transform so the floating style bar
+  // tracks the node while panning/zooming (re-renders on [x,y,zoom] change).
+  const rfTransform = useReactFlowStore((s) => s.transform);
   // Z14: 8px grid + magnetic neighbour-edge snapping while dragging.
   const { onNodeDrag: onSnapNodeDrag, onNodeDragStop: onSnapNodeDragStop } = useCanvasSnapping({
     enabled: !locked,
@@ -200,6 +211,24 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     () => nodes.find((node) => node.selected)?.id ?? null,
     [nodes]
   );
+
+  // Z15: floating style bar — active only when EXACTLY ONE styleable node is
+  // selected. Anchor = top-center of the node, transformed into screen space via
+  // the live viewport (mirrors the Mind Map FloatingNodeToolbar anchor math).
+  const styleBarTarget = React.useMemo(() => {
+    if (locked || !onNodeStyleChange) return null;
+    const selected = nodes.filter((n) => n.selected);
+    if (selected.length !== 1) return null;
+    const node = selected[0];
+    if (!node.type || !STYLEABLE_WB_NODE_TYPES.has(node.type)) return null;
+    if (node.data?.locked) return null;
+    if (!node.position) return null;
+    const [tx, ty, zoom] = rfTransform;
+    const width = node.width || 180;
+    const screenX = node.position.x * zoom + tx + (width * zoom) / 2;
+    const screenY = node.position.y * zoom + ty;
+    return { node, position: { x: screenX, y: screenY } };
+  }, [locked, onNodeStyleChange, nodes, rfTransform]);
 
   React.useEffect(() => {
     const rfEl = containerRef.current?.closest('.react-flow');
@@ -406,11 +435,19 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full"
+      className="w-full h-full relative"
       tabIndex={0}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
+      {styleBarTarget && onNodeStyleChange && (
+        <WhiteboardStyleBar
+          node={styleBarTarget.node}
+          position={styleBarTarget.position}
+          locked={locked}
+          onChange={onNodeStyleChange}
+        />
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -602,6 +639,10 @@ interface IdeaWhiteboardToolProps {
   focusObjectId?: string | null;
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
+  /** Z9: when true (mels canvas shell — Menu 1 shows the save indicator), the
+   *  WhiteboardToolbar hides its own Save button to avoid duplication. Default
+   *  OFF → legacy layout unchanged. */
+  hideSaveIndicator?: boolean;
   onGraphChange?: (graph: {
     nodes: any[];
     edges: any[];
@@ -623,6 +664,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   onFullscreenToggle: externalOnFullscreenToggle,
   isFullscreen: externalIsFullscreen,
   onGraphChange,
+  hideSaveIndicator = false,
   title: ideaTitle = '',
   seedText: ideaSeedText = '',
   stage: ideaStage = '',
@@ -745,6 +787,37 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       });
     },
     [collabBroadcastNodeUpdate, currentUserId, locked, setNodes]
+  );
+
+  // Z15: per-element style patch (accentColor / fontSize / fontWeight) from the
+  // floating style bar. Mirrors handleToggleReaction: mutate node.data, persist
+  // through the existing setNodes → onGraphChange autosave, and broadcast just the
+  // changed slice via the existing collab update_node op (no new endpoint/schema).
+  const handleNodeStyleChange = useCallback(
+    (nodeId: string, patch: Record<string, unknown>) => {
+      if (locked) return;
+      setNodes((nds) => {
+        let updated: Node | null = null;
+        const next = nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const nextData = { ...n.data };
+          for (const [k, v] of Object.entries(patch)) {
+            if (v === null) delete nextData[k];
+            else nextData[k] = v;
+          }
+          updated = { ...n, data: nextData };
+          return updated;
+        });
+        if (updated) {
+          collabBroadcastNodeUpdate({
+            id: (updated as Node).id,
+            data: (updated as Node).data,
+          } as Node);
+        }
+        return next;
+      });
+    },
+    [collabBroadcastNodeUpdate, locked, setNodes]
   );
 
   // Reactions are live only during an active facilitation session with the flag on.
@@ -3236,6 +3309,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       <WhiteboardToolbar
         isPl={isPl}
         locked={locked}
+        hideSaveIndicator={hideSaveIndicator}
         saving={saving}
         loading={loading}
         whiteboardMode={whiteboardMode}
@@ -3379,6 +3453,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onFullscreenToggle={externalOnFullscreenToggle}
               isFullscreen={externalIsFullscreen}
               onContextMenu={handleCanvasContextMenu}
+              onNodeStyleChange={handleNodeStyleChange}
             />
           </ReactFlowProvider>
 
