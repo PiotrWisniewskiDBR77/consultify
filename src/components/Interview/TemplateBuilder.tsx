@@ -237,7 +237,7 @@ const AnswerTypePreview: React.FC<{
 
   if (answerType === 'open') {
     return (
-      <div className="h-12 rounded-md border border-dashed border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 py-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="h-12 rounded-md border border-dashed border-c-border-strong bg-white/60 dark:bg-c-bg/40 px-2 py-1.5 text-[11px] text-c-text-muted">
         {t('interview.templateBuilder.freeTextAnswer')}
       </div>
     );
@@ -248,11 +248,11 @@ const AnswerTypePreview: React.FC<{
         {sampleOptions.map((opt, i) => (
           <div
             key={i}
-            className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"
+            className="flex items-center gap-2 text-[11px] text-c-text-muted"
           >
-            <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-slate-400 dark:border-slate-500">
+            <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-c-border-strong">
               {i === 0 ? (
-                <span className="h-1.5 w-1.5 rounded-full bg-navy-900 dark:bg-white" />
+                <span className="h-1.5 w-1.5 rounded-full bg-c-surface dark:bg-white" />
               ) : null}
             </span>
             <span className="truncate">{opt}</span>
@@ -263,7 +263,7 @@ const AnswerTypePreview: React.FC<{
   }
   if (answerType === 'dropdown') {
     return (
-      <div className="flex h-8 items-center justify-between rounded-md border border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 text-[11px] text-slate-500 dark:text-slate-400">
+      <div className="flex h-8 items-center justify-between rounded-md border border-c-border-strong bg-white/60 dark:bg-c-bg/40 px-2 text-[11px] text-c-text-muted">
         <span className="truncate">{sampleOptions[0]}</span>
         <ChevronDown size={12} className="shrink-0 opacity-60" />
       </div>
@@ -277,8 +277,8 @@ const AnswerTypePreview: React.FC<{
             key={n}
             className={`flex h-5 w-5 items-center justify-center rounded text-[10px] font-medium ${
               n === 3
-                ? 'bg-navy-900 text-white'
-                : 'border border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400'
+                ? 'bg-c-surface text-white'
+                : 'border border-c-border-strong text-c-text-muted'
             }`}
           >
             {n}
@@ -290,10 +290,10 @@ const AnswerTypePreview: React.FC<{
   if (answerType === 'boolean') {
     return (
       <div className="flex items-center gap-2">
-        <span className="rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-medium text-white">
+        <span className="rounded-full bg-c-surface px-2.5 py-0.5 text-[11px] font-medium text-white">
           {t('interview.templateBuilder.yes')}
         </span>
-        <span className="rounded-full border border-slate-300 dark:border-navy-600 px-2.5 py-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="rounded-full border border-c-border-strong px-2.5 py-0.5 text-[11px] text-c-text-muted">
           {t('interview.templateBuilder.no')}
         </span>
       </div>
@@ -301,14 +301,14 @@ const AnswerTypePreview: React.FC<{
   }
   if (answerType === 'number') {
     return (
-      <div className="flex h-8 w-24 items-center rounded-md border border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="flex h-8 w-24 items-center rounded-md border border-c-border-strong bg-white/60 dark:bg-c-bg/40 px-2 text-[11px] text-c-text-muted">
         123
       </div>
     );
   }
   if (answerType === 'date') {
     return (
-      <div className="flex h-8 w-32 items-center gap-2 rounded-md border border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="flex h-8 w-32 items-center gap-2 rounded-md border border-c-border-strong bg-white/60 dark:bg-c-bg/40 px-2 text-[11px] text-c-text-muted">
         <CalendarDays size={12} className="opacity-60" />
         {t('interview.templateBuilder.mmDdYyyy')}
       </div>
@@ -328,18 +328,18 @@ const RespondentQuestionPreview: React.FC<{
 }> = ({ question, index, isPolish }) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+    <div className="rounded-xl border border-c-border bg-c-surface p-4">
       <div className="flex items-start gap-2">
-        <span className="mt-0.5 text-xs font-semibold text-slate-400 dark:text-slate-500">
+        <span className="mt-0.5 text-xs font-semibold text-c-text-muted">
           {index + 1}.
         </span>
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-sm font-medium text-slate-900 dark:text-white">
+          <p className="text-sm font-medium text-c-text">
             {question.questionText || t('interview.templateBuilder.untitledQuestion')}
             {question.isRequired ? <span className="ml-1 text-danger-500">*</span> : null}
           </p>
           {question.description ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400">{question.description}</p>
+            <p className="text-xs text-c-text-muted">{question.description}</p>
           ) : null}
           <div className="pt-1">
             <AnswerTypePreview
@@ -349,7 +349,7 @@ const RespondentQuestionPreview: React.FC<{
             />
           </div>
           {question.helpHint ? (
-            <p className="text-[11px] italic text-slate-400 dark:text-slate-500">
+            <p className="text-[11px] italic text-c-text-muted">
               {question.helpHint}
             </p>
           ) : null}
@@ -1782,16 +1782,16 @@ ${sourceText || '(none)'}`;
       <div
         className={
           isDocumentMode
-            ? 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl w-full h-full overflow-hidden flex flex-col'
-            : 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl w-full max-w-[1080px] mx-4 max-h-[90vh] overflow-hidden flex flex-col'
+            ? 'relative bg-c-surface border border-c-border rounded-2xl w-full h-full overflow-hidden flex flex-col'
+            : 'relative bg-c-surface border border-c-border rounded-2xl shadow-2xl w-full max-w-[1080px] mx-4 max-h-[90vh] overflow-hidden flex flex-col'
         }
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 h-10 border-b border-slate-200/60 dark:border-navy-700 shrink-0 bg-slate-100 dark:bg-navy-800 text-slate-800 dark:text-white">
+        <div className="flex items-center justify-between px-4 h-10 border-b border-c-border/60 shrink-0 bg-c-surface-raised text-c-text">
           <div className="flex items-center gap-2 min-w-0">
             <FileText size={12} className="text-amber-600 dark:text-amber-300 shrink-0" />
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-slate-600 dark:text-slate-200">
+              <div className="text-[11px] font-medium text-c-text-secondary">
                 {template.status === 'draft'
                   ? t('interview.templateBuilder.draft')
                   : t('interview.templateBuilder.published')}
@@ -1800,7 +1800,7 @@ ${sourceText || '(none)'}`;
           </div>
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-slate-500 dark:text-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-c-text-muted hover:bg-c-surface-raised hover:text-c-text dark:hover:bg-white/10 dark:hover:text-white transition-colors"
           >
             <X size={14} />
           </button>
@@ -1809,12 +1809,12 @@ ${sourceText || '(none)'}`;
         {isLoading ? (
           <LoadingState variant="spinner" className="flex-1 py-0" />
         ) : (
-          <div className="flex-1 flex overflow-hidden bg-white dark:bg-navy-900">
+          <div className="flex-1 flex overflow-hidden bg-c-surface">
             {/* Left Panel - Template Metadata */}
-            <div className="w-[300px] border-r border-slate-300/80 dark:border-navy-700 px-4 py-6 overflow-auto shrink-0">
+            <div className="w-[300px] border-r border-c-border-strong/80 px-4 py-6 overflow-auto shrink-0">
               {/* Name */}
               <div className="mb-3">
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                   {t('interview.templateBuilder.topic')} *
                 </label>
                 <input
@@ -1823,10 +1823,10 @@ ${sourceText || '(none)'}`;
                   onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
                   disabled={isApplicationTemplate}
                   placeholder={t('interview.templateBuilder.eGDigitalMaturityIn')}
-                  className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
+                  className={`w-full h-9 px-3 rounded-md bg-c-surface border text-c-text placeholder-c-text-muted focus:ring-1 transition-all ${
                     errors.name
                       ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
-                      : 'border-slate-300 dark:border-navy-700 focus:border-c-focus focus:ring-c-focus'
+                      : 'border-c-border-strong focus:border-c-focus focus:ring-c-focus'
                   }`}
                 />
                 {errors.name && <p className="text-xs text-danger-400 mt-1">{errors.name}</p>}
@@ -1834,7 +1834,7 @@ ${sourceText || '(none)'}`;
 
               {/* Description */}
               <div className="mb-3">
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                   {t('interview.templateBuilder.description')}
                 </label>
                 <textarea
@@ -1845,7 +1845,7 @@ ${sourceText || '(none)'}`;
                   disabled={isApplicationTemplate}
                   placeholder={t('interview.templateBuilder.describeTheSurveyGoalBusiness')}
                   rows={6}
-                  className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all resize-none"
+                  className="w-full px-3 py-2 rounded-md bg-c-surface-raised border border-c-border-strong text-c-text placeholder-c-text-muted focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all resize-none"
                 />
               </div>
 
@@ -1858,7 +1858,7 @@ ${sourceText || '(none)'}`;
                     type="button"
                     onClick={handleCloneTemplate}
                     disabled={isCloning}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-navy-900 text-white hover:bg-c-info transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-c-surface text-white hover:bg-c-info transition-colors disabled:opacity-50"
                   >
                     {isCloning ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -1871,7 +1871,7 @@ ${sourceText || '(none)'}`;
               ) : null}
 
               <div className="mb-3">
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                   {t('interview.templateBuilder.library')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -1900,7 +1900,7 @@ ${sourceText || '(none)'}`;
                         className={`inline-flex items-center justify-center h-9 rounded-full text-xs font-medium border transition-colors ${
                           isActive
                             ? 'border-c-text bg-c-text text-c-bg'
-                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                            : 'border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised/70 dark:hover:bg-white/[0.06]'
                         } disabled:opacity-50 disabled:pointer-events-none`}
                       >
                         {option.label}
@@ -1911,14 +1911,14 @@ ${sourceText || '(none)'}`;
               </div>
 
               <div className="mb-3 relative">
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                   {t('interview.templateBuilder.availableAnswerTypes')}
                 </label>
                 <button
                   type="button"
                   onClick={() => setIsAnswerTypeMenuOpen((prev) => !prev)}
                   disabled={isApplicationTemplate}
-                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
+                  className="w-full h-10 px-3 rounded-md bg-c-surface-raised border border-c-border-strong text-c-text focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
                 >
                   <span className="truncate text-left text-sm">{allowedAnswerTypesLabel}</span>
                   <ChevronDown
@@ -1927,20 +1927,20 @@ ${sourceText || '(none)'}`;
                   />
                 </button>
                 {isAnswerTypeMenuOpen ? (
-                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl p-2 space-y-1">
+                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-c-border dark:border-white/[0.08] bg-c-surface shadow-xl p-2 space-y-1">
                     {ANSWER_TYPES.map((type) => {
                       const checked = allowedAnswerTypes.includes(type.id);
                       return (
                         <label
                           key={type.id}
-                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-c-text-secondary hover:bg-c-bg dark:hover:bg-white/[0.04] cursor-pointer"
                         >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleAllowedAnswerType(type.id)}
                             disabled={isApplicationTemplate}
-                            className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
+                            className="h-4 w-4 rounded border-c-border-strong text-c-info focus:ring-c-focus"
                           />
                           <span>
                             {t(
@@ -1956,14 +1956,14 @@ ${sourceText || '(none)'}`;
               </div>
 
               <div className="mb-3 relative">
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                   {t('interview.templateBuilder.areaTags')}
                 </label>
                 <button
                   type="button"
                   onClick={() => setIsAreaTagsMenuOpen((prev) => !prev)}
                   disabled={isApplicationTemplate}
-                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
+                  className="w-full h-10 px-3 rounded-md bg-c-surface-raised border border-c-border-strong text-c-text focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
                 >
                   <span className="truncate text-left text-sm">{areaTagsLabel}</span>
                   <ChevronDown
@@ -1972,20 +1972,20 @@ ${sourceText || '(none)'}`;
                   />
                 </button>
                 {isAreaTagsMenuOpen ? (
-                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl p-2 space-y-1 max-h-64 overflow-auto">
+                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-c-border dark:border-white/[0.08] bg-c-surface shadow-xl p-2 space-y-1 max-h-64 overflow-auto">
                     {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
                       const checked = areaTags.includes(tag);
                       return (
                         <label
                           key={tag}
-                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-c-text-secondary hover:bg-c-bg dark:hover:bg-white/[0.04] cursor-pointer"
                         >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleAreaTag(tag)}
                             disabled={isApplicationTemplate}
-                            className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
+                            className="h-4 w-4 rounded border-c-border-strong text-c-info focus:ring-c-focus"
                           />
                           <span>{getTemplateAreaTagLabel(tag, t)}</span>
                         </label>
@@ -1997,7 +1997,7 @@ ${sourceText || '(none)'}`;
 
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                     {t('interview.templateBuilder.questionCount')}
                   </label>
                   <input
@@ -2009,11 +2009,11 @@ ${sourceText || '(none)'}`;
                       setTargetQuestionCount(Math.max(1, Number(e.target.value) || 1))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-c-surface-raised border border-c-border-strong text-c-text focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                     {t('interview.templateBuilder.tolerance')}
                   </label>
                   <input
@@ -2025,14 +2025,14 @@ ${sourceText || '(none)'}`;
                       setQuestionCountTolerance(Math.max(0, Number(e.target.value) || 0))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-c-surface-raised border border-c-border-strong text-c-text focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="mb-3">
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                     {t('interview.templateBuilder.timeMin')}
                   </label>
                   <input
@@ -2047,12 +2047,12 @@ ${sourceText || '(none)'}`;
                       }))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-c-surface-raised border border-c-border-strong text-c-text focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
 
                 <div className="mb-3">
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                     {t('interview.templateBuilder.runtimeMode')}
                   </label>
                   <Select
@@ -2077,7 +2077,7 @@ ${sourceText || '(none)'}`;
                 type="button"
                 onClick={handleGenerateWithAI}
                 disabled={isAiGenerating || isApplicationTemplate}
-                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-c-info/40 dark:border-c-info/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-c-info/40 dark:border-c-info/30 bg-c-surface text-white dark:bg-c-bg dark:text-c-text dark:hover:bg-c-surface-raised hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isAiGenerating ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -2098,10 +2098,10 @@ ${sourceText || '(none)'}`;
             </div>
 
             {/* Right Panel - Questions Editor */}
-            <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/40 dark:bg-navy-950/30">
+            <div className="flex-1 flex flex-col overflow-hidden bg-c-bg/40 dark:bg-c-bg/30">
               {/* Questions Header */}
-              <div className="relative px-4 h-12 border-b border-slate-300/80 dark:border-navy-700 flex items-center justify-end shrink-0">
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="relative px-4 h-12 border-b border-c-border-strong/80 flex items-center justify-end shrink-0">
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 text-[11px] text-c-text-muted">
                   <span className="w-2 h-2 rounded-full bg-blue-500" />
                   <span>
                     ({orderedQuestions.length} {t('interview.templateBuilder.questions')})
@@ -2145,7 +2145,7 @@ ${sourceText || '(none)'}`;
                     disabled={isAiGenerating || isApplicationTemplate}
                     loading={isAiGenerating}
                     title={t('interview.templateBuilder.useAiToReviewImprove')}
-                    className="text-c-accent border-c-accent/30 hover:bg-c-accent/5 dark:hover:bg-c-accent/10"
+                    className="text-c-info border-c-info/30 hover:bg-c-info/5 dark:hover:bg-c-info/10"
                   >
                     {t('interview.templateBuilder.improveWithAi')}
                   </Button>
@@ -2167,8 +2167,8 @@ ${sourceText || '(none)'}`;
               <div className="flex-1 overflow-auto p-3 space-y-2">
                 {orderedQuestions.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <HelpCircle size={48} className="text-slate-600 mb-4" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                    <HelpCircle size={48} className="text-c-text-secondary mb-4" />
+                    <p className="text-c-text-muted text-sm mb-4">
                       {t('interview.templateBuilder.noQuestionsInThisForm')}
                     </p>
                     <Button variant="primary" icon={<Plus />} onClick={handleAddQuestion}>
@@ -2224,21 +2224,21 @@ ${sourceText || '(none)'}`;
         )}
 
         {showAiProposalModal && aiProposal ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm p-6">
-            <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-2xl flex flex-col">
-              <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-c-surface-raised/55 backdrop-blur-sm p-6">
+            <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-c-border dark:border-white/[0.08] bg-c-surface shadow-2xl flex flex-col">
+              <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-c-border">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="text-sm font-semibold text-c-text">
                     {t('interview.templateBuilder.aiChangeProposal')}
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-c-text-muted mt-1">
                     {aiProposal.summary || t('interview.templateBuilder.aiReviewedTheSurveyAnd')}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={closeAiProposalModal}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.08] transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -2246,8 +2246,8 @@ ${sourceText || '(none)'}`;
 
               <div className="flex-1 overflow-auto px-5 py-4 space-y-4">
                 {(aiProposal.update || []).length > 0 ? (
-                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
-                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                  <div className="rounded-xl border border-c-border dark:border-white/[0.08] bg-c-bg/80 dark:bg-white/[0.03] p-4 space-y-3">
+                    <div className="text-sm font-medium text-c-text">
                       {t('interview.templateBuilder.updatesToExistingQuestions')}
                     </div>
                     {(aiProposal.update || []).map((item) => {
@@ -2258,7 +2258,7 @@ ${sourceText || '(none)'}`;
                       return (
                         <label
                           key={item.questionId}
-                          className="block rounded-lg border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-navy-950/40 p-3"
+                          className="block rounded-lg border border-c-border dark:border-white/[0.06] bg-c-surface/40 p-3"
                         >
                           <div className="flex items-start gap-3">
                             <input
@@ -2270,22 +2270,22 @@ ${sourceText || '(none)'}`;
                                   [String(item.questionId)]: event.target.checked,
                                 }))
                               }
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
+                              className="mt-1 h-4 w-4 rounded border-c-border-strong text-c-info focus:ring-c-focus"
                             />
                             <div className="min-w-0 flex-1 space-y-2">
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                              <div className="text-xs text-c-text-muted">
                                 {t('interview.templateBuilder.current')}
                               </div>
-                              <p className="text-sm text-slate-700 dark:text-slate-200">
+                              <p className="text-sm text-c-text-secondary">
                                 {current.questionText}
                               </p>
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                              <div className="text-xs text-c-text-muted">
                                 {t('interview.templateBuilder.aiProposal')}
                               </div>
-                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              <p className="text-sm font-medium text-c-text">
                                 {item.questionText || current.questionText}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-xs text-c-text-muted">
                                 {getAnswerTypeLabel(
                                   item.answerType
                                     ? normalizeAnswerType(item.answerType)
@@ -2295,7 +2295,7 @@ ${sourceText || '(none)'}`;
                                 )}
                               </p>
                               {item.rationale ? (
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                <p className="text-xs text-c-text-muted">
                                   {item.rationale}
                                 </p>
                               ) : null}
@@ -2308,14 +2308,14 @@ ${sourceText || '(none)'}`;
                 ) : null}
 
                 {(aiProposal.add || []).length > 0 ? (
-                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
-                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                  <div className="rounded-xl border border-c-border dark:border-white/[0.08] bg-c-bg/80 dark:bg-white/[0.03] p-4 space-y-3">
+                    <div className="text-sm font-medium text-c-text">
                       {t('interview.templateBuilder.newQuestionsToAdd')}
                     </div>
                     {(aiProposal.add || []).map((item, index) => (
                       <label
                         key={`${item.questionText}-${index}`}
-                        className="block rounded-lg border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-navy-950/40 p-3"
+                        className="block rounded-lg border border-c-border dark:border-white/[0.06] bg-c-surface/40 p-3"
                       >
                         <div className="flex items-start gap-3">
                           <input
@@ -2327,17 +2327,17 @@ ${sourceText || '(none)'}`;
                                 [index]: event.target.checked,
                               }))
                             }
-                            className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
+                            className="mt-1 h-4 w-4 rounded border-c-border-strong text-c-info focus:ring-c-focus"
                           />
                           <div className="min-w-0 flex-1 space-y-1.5">
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            <p className="text-sm font-medium text-c-text">
                               {item.questionText}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-c-text-muted">
                               {getAnswerTypeLabel(normalizeAnswerType(item.answerType), (k, f) => t(k, f ?? k), '-')}
                             </p>
                             {item.rationale ? (
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-xs text-c-text-muted">
                                 {item.rationale}
                               </p>
                             ) : null}
@@ -2349,8 +2349,8 @@ ${sourceText || '(none)'}`;
                 ) : null}
 
                 {(aiProposal.remove || []).length > 0 ? (
-                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
-                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                  <div className="rounded-xl border border-c-border dark:border-white/[0.08] bg-c-bg/80 dark:bg-white/[0.03] p-4 space-y-3">
+                    <div className="text-sm font-medium text-c-text">
                       {t('interview.templateBuilder.questionsToRemove')}
                     </div>
                     {(aiProposal.remove || []).map((item) => {
@@ -2361,7 +2361,7 @@ ${sourceText || '(none)'}`;
                       return (
                         <label
                           key={item.questionId}
-                          className="block rounded-lg border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-navy-950/40 p-3"
+                          className="block rounded-lg border border-c-border dark:border-white/[0.06] bg-c-surface/40 p-3"
                         >
                           <div className="flex items-start gap-3">
                             <input
@@ -2373,13 +2373,13 @@ ${sourceText || '(none)'}`;
                                   [String(item.questionId)]: event.target.checked,
                                 }))
                               }
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
+                              className="mt-1 h-4 w-4 rounded border-c-border-strong text-c-info focus:ring-c-focus"
                             />
                             <div className="min-w-0 flex-1 space-y-1.5">
-                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              <p className="text-sm font-medium text-c-text">
                                 {current.questionText}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-xs text-c-text-muted">
                                 {item.reason}
                               </p>
                             </div>
@@ -2391,18 +2391,18 @@ ${sourceText || '(none)'}`;
                 ) : null}
 
                 {aiProposal.reorder?.order?.length ? (
-                  <label className="flex items-start gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4">
+                  <label className="flex items-start gap-3 rounded-xl border border-c-border dark:border-white/[0.08] bg-c-bg/80 dark:bg-white/[0.03] p-4">
                     <input
                       type="checkbox"
                       checked={applySuggestedOrder}
                       onChange={(event) => setApplySuggestedOrder(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
+                      className="mt-1 h-4 w-4 rounded border-c-border-strong text-c-info focus:ring-c-focus"
                     />
                     <div className="space-y-1">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      <div className="text-sm font-medium text-c-text">
                         {t('interview.templateBuilder.applySuggestedOrder')}
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-c-text-muted">
                         {aiProposal.reorder.note ||
                           t('interview.templateBuilder.aiSuggestsABetterQuestion')}
                       </p>
@@ -2411,22 +2411,22 @@ ${sourceText || '(none)'}`;
                 ) : null}
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-c-border">
+                <div className="text-xs text-c-text-muted">
                   {t('interview.templateBuilder.removalsAreUncheckedByDefault')}
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={closeAiProposalModal}
-                    className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                    className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised/70 dark:hover:bg-white/[0.06] transition-colors"
                   >
                     {t('interview.templateBuilder.close')}
                   </button>
                   <button
                     type="button"
                     onClick={applyAIProposal}
-                    className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-c-info/40 dark:border-c-info/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-c-info/40 dark:border-c-info/30 bg-c-surface text-white dark:bg-c-bg dark:text-c-text dark:hover:bg-c-surface-raised hover:bg-c-surface-raised transition-colors"
                   >
                     <Sparkles size={14} />
                     {t('interview.templateBuilder.applyAiSuggestions')}
@@ -2439,15 +2439,15 @@ ${sourceText || '(none)'}`;
 
         {/* Preview as respondent — read-only, sequential render of the form */}
         {showRespondentPreview ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm p-6">
-            <div className="w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-navy-950 shadow-2xl flex flex-col">
-              <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-c-surface-raised/55 backdrop-blur-sm p-6">
+            <div className="w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl border border-c-border dark:border-white/[0.08] bg-c-bg shadow-2xl flex flex-col">
+              <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-c-border bg-c-surface">
                 <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
                     <Eye size={15} className="text-c-info dark:text-c-info" />
                     {t('interview.templateBuilder.respondentPreview')}
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-c-text-muted mt-1">
                     {template.name || t('interview.templateBuilder.howARespondentSeesThis')}
                     {' · '}
                     {orderedQuestions.length} {t('interview.templateBuilder.questions')}
@@ -2459,7 +2459,7 @@ ${sourceText || '(none)'}`;
                 <button
                   type="button"
                   onClick={() => setShowRespondentPreview(false)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-white/[0.08] transition-colors"
                   aria-label={t('interview.templateBuilder.close')}
                 >
                   <X size={14} />
@@ -2468,7 +2468,7 @@ ${sourceText || '(none)'}`;
 
               <div className="flex-1 overflow-auto px-5 py-4 space-y-3">
                 {template.description ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  <p className="text-xs text-c-text-muted mb-1">
                     {template.description}
                   </p>
                 ) : null}
@@ -2491,14 +2491,14 @@ ${sourceText || '(none)'}`;
                 ))}
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-c-border bg-c-surface">
+                <div className="text-xs text-c-text-muted">
                   {t('interview.templateBuilder.readOnlyPreviewAnswersAre')}
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowRespondentPreview(false)}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-c-text-secondary hover:bg-c-surface-raised/70 dark:hover:bg-white/[0.06] transition-colors"
                 >
                   {t('interview.templateBuilder.closePreview')}
                 </button>
@@ -2509,17 +2509,17 @@ ${sourceText || '(none)'}`;
 
         {/* AI quality-gate result panel */}
         {qualityResult ? (
-          <div className="mx-4 mb-3 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 shrink-0">
+          <div className="mx-4 mb-3 rounded-2xl border border-c-border bg-c-surface p-4 shrink-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-crimson-50 text-crimson-700 dark:bg-crimson-500/15 dark:text-crimson-300">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-c-info/10 text-c-info dark:bg-c-info/15">
                   <TeresaMark size={16} />
                 </span>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="text-sm font-semibold text-c-text">
                     {t('interview.templateBuilder.teresaReviewedYourTemplate')}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-c-text-muted">
                     {t('interview.templateBuilder.itemsToConsider', {
                       count: qualityResult.totalWarnings,
                     })}
@@ -2541,7 +2541,7 @@ ${sourceText || '(none)'}`;
                 <button
                   type="button"
                   onClick={() => setQualityResult(null)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-secondary dark:hover:bg-white/[0.06]"
                   aria-label={t('interview.templateBuilder.dismiss')}
                 >
                   <X size={14} />
@@ -2560,9 +2560,9 @@ ${sourceText || '(none)'}`;
                     return (
                       <li
                         key={r.questionId || idx}
-                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-white/[0.03] px-3 py-2"
+                        className="rounded-xl border border-c-border bg-c-bg/60 dark:bg-white/[0.03] px-3 py-2"
                       >
-                        <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                        <div className="text-xs font-medium text-c-text-secondary truncate">
                           {label}
                         </div>
                         <div className="mt-1 flex flex-wrap gap-1.5">
@@ -2574,7 +2574,7 @@ ${sourceText || '(none)'}`;
                                   ? 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200'
                                   : w.severity === 'warning'
                                     ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200'
-                                    : 'bg-slate-100 text-slate-700 dark:bg-white/[0.08] dark:text-slate-300'
+                                    : 'bg-c-surface-raised text-c-text-secondary dark:bg-white/[0.08] dark:text-c-text-muted'
                               }`}
                             >
                               {isPolish ? w.message.pl : w.message.en}
@@ -2594,8 +2594,8 @@ ${sourceText || '(none)'}`;
         ) : null}
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between shrink-0">
-          <div className="text-xs text-slate-500">
+        <div className="p-4 border-t border-c-border flex items-center justify-between shrink-0">
+          <div className="text-xs text-c-text-muted">
             {questions.length} {t('interview.templateBuilder.totalQuestions')}
           </div>
           <div className="flex items-center gap-2">
@@ -2683,7 +2683,7 @@ const SortableQuestionCard: React.FC<QuestionCardProps> = (props) => {
             {...attributes}
             {...listeners}
             onClick={(event) => event.stopPropagation()}
-            className={`p-1 rounded text-slate-600 hover:text-slate-200 hover:bg-white/10 transition-colors touch-none ${
+            className={`p-1 rounded text-c-text-secondary hover:text-c-text-muted hover:bg-white/10 transition-colors touch-none ${
               props.readOnly
                 ? 'opacity-40 cursor-not-allowed'
                 : 'cursor-grab active:cursor-grabbing'
@@ -2721,7 +2721,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const [showSectionInput, setShowSectionInput] = useState(false);
   const questionTextRef = useRef<HTMLTextAreaElement | null>(null);
   const fieldClassName =
-    'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all';
+    'w-full h-10 px-3 rounded-lg bg-c-surface border border-c-border-strong text-sm text-c-text placeholder-c-text-muted dark:placeholder-c-text-muted focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all';
 
   const handleAddOption = () => {
     if (!newOption.trim()) return;
@@ -2756,10 +2756,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     >
       {/* Header */}
       <div
-        className="flex items-center gap-2.5 px-3 h-8 cursor-pointer bg-slate-100 dark:bg-navy-900 hover:bg-slate-200 dark:hover:bg-navy-800 border border-slate-200 dark:border-slate-800/70 rounded-md transition-colors"
+        className="flex items-center gap-2.5 px-3 h-8 cursor-pointer bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised border border-c-border rounded-md transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 shrink-0">
+        <div className="flex items-center gap-1.5 text-c-text-muted shrink-0">
           {dragHandle}
           <ChevronRight
             size={12}
@@ -2769,7 +2769,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] text-slate-800 dark:text-slate-100 truncate">
+          <p className="text-[12px] text-c-text truncate">
             {question.questionText || t('interview.templateBuilder.newQuestion')}
           </p>
         </div>
@@ -2780,20 +2780,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               {t('interview.templateBuilder.required')}
             </span>
           )}
-          <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700/70 text-slate-600 dark:text-slate-200 text-[10px] rounded border border-slate-300 dark:border-slate-600/60 leading-none">
+          <span className="px-1.5 py-0.5 bg-c-surface-raised/70 text-c-text-secondary text-[10px] rounded border border-c-border-strong dark:border-c-border-strong/60 leading-none">
             {getAnswerTypeLabel(question.answerType, (k, f) => t(k, f ?? k))}
           </span>
-          {question.allowVoice && <Mic size={12} className="text-slate-500 dark:text-slate-400" />}
+          {question.allowVoice && <Mic size={12} className="text-c-text-muted" />}
           {question.allowFileUpload && (
-            <Paperclip size={12} className="text-slate-500 dark:text-slate-400" />
+            <Paperclip size={12} className="text-c-text-muted" />
           )}
-          {question.allowUrl && <Link2 size={12} className="text-slate-500 dark:text-slate-400" />}
+          {question.allowUrl && <Link2 size={12} className="text-c-text-muted" />}
           <button
             onClick={(e) => {
               e.stopPropagation();
               openEditor();
             }}
-            className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            className="p-1 rounded hover:bg-c-surface-raised/50 dark:hover:bg-white/10 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors"
             title={t('interview.templateBuilder.editQuestion')}
           >
             <Pencil size={12} />
@@ -2806,7 +2806,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onDuplicate();
               }}
               disabled={readOnly}
-              className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              className="p-1 rounded hover:bg-c-surface-raised/50 dark:hover:bg-white/10 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
               title={t('interview.templateBuilder.duplicateQuestion')}
             >
               <Copy size={12} />
@@ -2819,7 +2819,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onDelete();
             }}
             disabled={readOnly}
-            className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            className="p-1 rounded hover:bg-c-surface-raised/50 dark:hover:bg-white/10 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
           >
             <Trash2 size={12} />
           </button>
@@ -2828,19 +2828,19 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="mt-2 p-4 border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-900/70 space-y-4">
+        <div className="mt-2 p-4 border border-c-border rounded-lg bg-c-bg/70 space-y-4">
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={onMoveUp}
               disabled={readOnly || index === 0}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-c-border text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronUp size={14} />
             </button>
             <button
               onClick={onMoveDown}
               disabled={readOnly || index === totalCount - 1}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-c-border text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronDown size={14} />
             </button>
@@ -2848,7 +2848,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {/* Question Text */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+            <label className="block text-xs font-medium text-c-text-muted mb-1.5">
               {t('interview.templateBuilder.questionTitleText')} *
             </label>
             <textarea
@@ -2858,17 +2858,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               disabled={readOnly}
               placeholder={t('interview.templateBuilder.enterTheQuestionTitleAnd')}
               rows={2}
-              className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
+              className={`w-full px-3 py-2 rounded-lg bg-c-surface border text-c-text placeholder-c-text-muted focus:ring-1 transition-all resize-none ${
                 error
                   ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
-                  : 'border-slate-300 dark:border-navy-600 focus:border-c-focus focus:ring-c-focus'
+                  : 'border-c-border-strong focus:border-c-focus focus:ring-c-focus'
               }`}
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+            <label className="block text-xs font-medium text-c-text-muted mb-1.5">
               {t('interview.templateBuilder.category')}
             </label>
             <Select
@@ -2886,7 +2886,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <div className="grid grid-cols-2 gap-4">
             {/* Answer Type */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-c-text-muted mb-1.5">
                 {t('interview.templateBuilder.answerType')}
               </label>
               <Select
@@ -2900,8 +2900,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 }))}
               />
               {/* Inline preview of how the chosen type renders to a respondent */}
-              <div className="mt-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-950/40 px-3 py-2">
-                <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              <div className="mt-2 rounded-lg border border-c-border bg-white/60 dark:bg-c-bg/40 px-3 py-2">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-c-text-muted">
                   {(() => {
                     const Icon = ANSWER_TYPE_ICONS[question.answerType];
                     return <Icon size={11} />;
@@ -2918,7 +2918,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
             {/* Required */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-c-text-muted mb-1.5">
                 {t('interview.templateBuilder.required')}
               </label>
               <button
@@ -2927,7 +2927,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 className={`w-full h-10 px-3 rounded-lg border text-sm font-medium transition-all ${
                   question.isRequired
                     ? 'bg-danger-500/20 border-danger-500 text-danger-500 dark:text-danger-400'
-                    : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'
+                    : 'bg-c-surface border-c-border-strong text-c-text-muted hover:border-c-border-strong dark:hover:border-c-border-strong'
                 } disabled:opacity-50 disabled:pointer-events-none`}
               >
                 {question.isRequired
@@ -2940,13 +2940,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {/* Answer Options (for select/scale) */}
           {(question.answerType === 'select' || question.answerType === 'scale') && (
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-c-text-muted mb-1.5">
                 {t('interview.templateBuilder.answerOptions')}
               </label>
               <div className="space-y-2">
                 {question.answerOptions.map((opt, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500 w-6">{idx + 1}.</span>
+                    <span className="text-xs text-c-text-muted w-6">{idx + 1}.</span>
                     <input
                       type="text"
                       value={opt}
@@ -2961,14 +2961,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     <button
                       onClick={() => handleRemoveOption(idx)}
                       disabled={readOnly}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-danger-500/20 text-slate-600 hover:text-danger-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-danger-500/20 text-c-text-secondary hover:text-danger-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     >
                       <X size={14} />
                     </button>
                   </div>
                 ))}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500 w-6">+</span>
+                  <span className="text-xs text-c-text-muted w-6">+</span>
                   <input
                     type="text"
                     value={newOption}
@@ -2995,7 +2995,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {/* Help Hint */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+            <label className="block text-xs font-medium text-c-text-muted mb-1.5">
               {t('interview.templateBuilder.helpHintOptional')}
             </label>
             <input
@@ -3015,7 +3015,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               {t('interview.templateBuilder.guidanceForRespondent')}
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+              <label className="block text-xs font-medium text-c-text-muted">
                 {t('interview.templateBuilder.instructionHowToAnswer')}
               </label>
               <textarea
@@ -3023,12 +3023,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={(e) => onUpdate({ guidance: e.target.value })}
                 disabled={readOnly}
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
+                className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs text-c-text-secondary resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={t('interview.templateBuilder.staticInstructionShownNextTo')}
               />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+              <label className="block text-xs font-medium text-c-text-muted">
                 {t('interview.templateBuilder.exampleAnswer')}
               </label>
               <textarea
@@ -3036,7 +3036,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={(e) => onUpdate({ exampleAnswer: e.target.value })}
                 disabled={readOnly}
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
+                className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs text-c-text-secondary resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={t('interview.templateBuilder.eGIn2023Oee')}
               />
             </div>
@@ -3044,7 +3044,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {/* Description / helper text */}
           <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-c-text-secondary">
               {t('interview.templateBuilder.descriptionHelperText')}
             </label>
             <textarea
@@ -3052,14 +3052,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={(e) => onUpdate({ description: e.target.value })}
               disabled={readOnly}
               rows={2}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs text-c-text-secondary resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={t('interview.templateBuilder.additionalContextShownBelowThe')}
             />
           </div>
 
           {/* Evidence prompt */}
           <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-c-text-secondary">
               {t('interview.templateBuilder.evidencePrompt')}
             </label>
             <input
@@ -3067,13 +3067,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               value={question.evidencePrompt || ''}
               onChange={(e) => onUpdate({ evidencePrompt: e.target.value })}
               disabled={readOnly}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs text-c-text-secondary focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={t('interview.templateBuilder.eGAttachAReport')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+            <label className="block text-xs font-medium text-c-text-muted mb-1.5">
               {t('interview.templateBuilder.expectedAnswerShape')}
             </label>
             <input
@@ -3087,7 +3087,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+            <label className="block text-xs font-medium text-c-text-muted mb-2">
               {t('interview.templateBuilder.additionalAnswerModalities')}
             </label>
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -3129,7 +3129,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-3 text-sm transition-all ${
                       item.value
                         ? 'bg-c-info/12 border border-c-info/25 text-c-info dark:text-c-info'
-                        : 'bg-slate-100/80 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]'
+                        : 'bg-c-surface-raised/80 dark:bg-white/[0.03] border border-c-border/80 dark:border-white/[0.06] text-c-text-secondary hover:bg-c-surface-raised/70 dark:hover:bg-white/[0.06]'
                     } disabled:opacity-50 disabled:pointer-events-none`}
                   >
                     <Icon size={14} />
@@ -3142,10 +3142,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {/* Section / group header for this question (persisted via the `section_title` column, round-tripped through create/update/get) */}
           {onSetSection ? (
-            <div className="border-t border-slate-200 dark:border-navy-700 pt-3">
+            <div className="border-t border-c-border pt-3">
               {question.sectionTitle || showSectionInput ? (
                 <div className="space-y-1.5">
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-c-text-muted">
                     <Layers size={12} />
                     {t('interview.templateBuilder.sectionHeaderStartsAGroup')}
                   </label>
@@ -3166,7 +3166,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         setShowSectionInput(false);
                       }}
                       disabled={readOnly}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-danger-500/20 text-slate-600 hover:text-danger-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-danger-500/20 text-c-text-secondary hover:text-danger-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                       title={t('interview.templateBuilder.removeSectionHeader')}
                     >
                       <X size={14} />

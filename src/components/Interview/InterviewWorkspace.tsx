@@ -465,7 +465,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   > = {
     assigned: {
       label: { en: 'Assigned', pl: 'Przypisany' },
-      color: 'bg-slate-400',
+      color: 'bg-c-surface-raised',
       textColor: 'text-c-text-muted',
     },
     in_progress: {
@@ -1706,17 +1706,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+      className="bg-white/70 dark:bg-c-surface/70 backdrop-blur-xl rounded-2xl border border-c-border/60 shadow-lg shadow-c-border-strong/50 overflow-hidden"
     >
       <motion.button
         whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
         whileTap={{ scale: 0.99 }}
         onClick={() => toggleSection(id)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-xl ${iconBgClass}`}>{icon}</div>
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{title}</span>
+          <span className="text-sm font-semibold text-c-text-secondary">{title}</span>
         </div>
         <div className="flex items-center gap-2">
           {headerActions}
@@ -1725,7 +1725,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             animate={{ rotate: expandedSections.has(id) ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDown size={18} className="text-slate-600" />
+            <ChevronDown size={18} className="text-c-text-secondary" />
           </motion.div>
         </div>
       </motion.button>
@@ -1765,7 +1765,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             {t('interview.workspace.done')}
           </span>
         )}
-        <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
+        <span className="text-xs font-medium text-c-text-secondary">
           {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
         </span>
       </div>,
@@ -1774,13 +1774,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {/* Progress bar */}
         {hasQuestions && (
           <div className="mb-4">
-            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <div className="flex items-center justify-between text-xs text-c-text-muted mb-1">
               <span>{t('interview.workspace.progress')}</span>
               <span>
                 {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
               </span>
             </div>
-            <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+            <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${progress?.isComplete ? 'bg-emerald-500' : 'bg-blue-500'}`}
                 style={{
@@ -2380,7 +2380,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               value={sendBackReason}
               onChange={(e) => setSendBackReason(e.target.value)}
               rows={3}
-              className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-c-text-secondary resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
               placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
             />
             {sendBackMissingItems.length > 0 && (
@@ -2433,7 +2433,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   setShowSendBackForm(false);
                   setSendBackReason('');
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-c-border/70 px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors"
               >
                 {t('interview.workspace.cancel')}
               </button>
@@ -2606,7 +2606,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <div className="mb-4 inline-flex items-center gap-2">
               <button
                 onClick={handleNextMissing}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-c-border/60 bg-white/60 dark:bg-c-surface/40 hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/50 transition-colors"
               >
                 <ArrowRight size={14} />
                 {t('interview.workspace.nextMissing')}
@@ -2626,13 +2626,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onClick={() => setActiveCategory(cat)}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                       isActive
-                        ? 'bg-slate-200/70 dark:bg-white/[0.08] text-c-text border-slate-400/40 dark:border-white/20'
-                        : 'bg-white/60 dark:bg-navy-900/40 text-c-text-muted border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
+                        ? 'bg-c-surface-raised/70 dark:bg-white/[0.08] text-c-text border-c-border-strong/40 dark:border-white/20'
+                        : 'bg-white/60 dark:bg-c-surface/40 text-c-text-muted border-c-border/60 hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/50'
                     }`}
                   >
                     <cfg.icon
                       size={14}
-                      className={isActive ? 'text-c-text-secondary' : 'text-slate-600'}
+                      className={isActive ? 'text-c-text-secondary' : 'text-c-text-secondary'}
                     />
                     {t(`interview.workspace.categoryLabel.${cat}`, cfg.labelEn)}
                   </button>
@@ -2701,18 +2701,18 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-muted mb-1">
                     {t('interview.workspace.name')}
                   </label>
                   <input
                     type="text"
                     value={editedProfile.name || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-c-surface/40 border border-c-border/60 text-c-text-secondary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-muted mb-1">
                     {t('interview.workspace.industry')}
                   </label>
                   <input
@@ -2721,22 +2721,22 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onChange={(e) =>
                       setEditedProfile({ ...editedProfile, industry: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-c-surface/40 border border-c-border/60 text-c-text-secondary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-muted mb-1">
                     {t('interview.workspace.size')}
                   </label>
                   <input
                     type="text"
                     value={editedProfile.size || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, size: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-c-surface/40 border border-c-border/60 text-c-text-secondary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-muted mb-1">
                     {t('interview.workspace.location')}
                   </label>
                   <input
@@ -2745,7 +2745,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onChange={(e) =>
                       setEditedProfile({ ...editedProfile, location: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-c-surface/40 border border-c-border/60 text-c-text-secondary"
                   />
                 </div>
               </div>
@@ -2763,7 +2763,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     setEditedProfile(companyProfile);
                     setIsEditingProfile(false);
                   }}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-c-border/60 text-c-text-secondary bg-white/60 dark:bg-c-surface/40 hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/50"
                 >
                   <X size={14} />
                   {t('interview.workspace.cancel')}
@@ -2776,17 +2776,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {companyProfile.name ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-slate-600" /> {companyProfile.name}
+                      <Building2 size={14} className="text-c-text-secondary" /> {companyProfile.name}
                     </div>
                     {companyProfile.industry && (
-                      <div className="text-xs text-slate-500">{companyProfile.industry}</div>
+                      <div className="text-xs text-c-text-muted">{companyProfile.industry}</div>
                     )}
                     {companyProfile.location && (
-                      <div className="text-xs text-slate-500">{companyProfile.location}</div>
+                      <div className="text-xs text-c-text-muted">{companyProfile.location}</div>
                     )}
                   </div>
                 ) : (
-                  <span className="text-slate-600">
+                  <span className="text-c-text-secondary">
                     {t('interview.workspace.noCompanyDataYet')}
                   </span>
                 )}
@@ -2794,7 +2794,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               {!isLocked && (
                 <button
                   onClick={() => setIsEditingProfile(true)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-c-border/60 text-c-text-secondary bg-white/60 dark:bg-c-surface/40 hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/50"
                 >
                   <Edit3 size={14} />
                   {t('interview.workspace.edit')}
@@ -2819,14 +2819,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           {stakeholders.map((s) => (
             <div
               key={s.id}
-              className="flex items-center gap-3 p-2 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60"
+              className="flex items-center gap-3 p-2 rounded-xl bg-white/60 dark:bg-c-surface/40 border border-c-border/60"
             >
               <div className="w-8 h-8 rounded-full bg-blue-500/15 flex items-center justify-center">
                 <Users size={14} className="text-blue-500" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-medium text-c-text-secondary truncate">{s.name}</div>
-                <div className="text-xs text-slate-500 truncate">{s.role}</div>
+                <div className="text-xs text-c-text-muted truncate">{s.role}</div>
               </div>
             </div>
           ))}
@@ -2852,11 +2852,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   ? 'border-c-danger/20 bg-c-danger/5 dark:bg-c-danger/10'
                   : gap.priority === 'medium'
                     ? 'border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/10'
-                    : 'border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40'
+                    : 'border-c-border/60 bg-white/60 dark:bg-c-surface/40'
               }`}
             >
               <div className="text-sm text-c-text-secondary">{gap.description}</div>
-              <div className="text-xs text-slate-500 mt-1">{gap.category}</div>
+              <div className="text-xs text-c-text-muted mt-1">{gap.category}</div>
             </div>
           ))}
         </div>
@@ -2961,7 +2961,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   ))}
                 </ul>
               ) : (
-                <div className="text-sm text-slate-600">{t('interview.workspace.noFactsYet')}</div>
+                <div className="text-sm text-c-text-secondary">{t('interview.workspace.noFactsYet')}</div>
               )}
             </div>
           </NModeSectionWrapper>
@@ -3044,7 +3044,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-c-surface-raised/40 dark:bg-black/60 backdrop-blur-sm p-4"
           onClick={() => setQualityGate({ open: false, items: [], checking: false })}
         >
           <motion.div
@@ -3052,7 +3052,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden"
+            className="w-full max-w-lg rounded-2xl border border-c-border/70 bg-c-surface shadow-2xl overflow-hidden"
           >
             <div className="flex items-start gap-3 px-5 pt-5 pb-3">
               <div
@@ -3085,7 +3085,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   return (
                     <li
                       key={item.questionId}
-                      className="flex items-start gap-3 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-800/40 px-3 py-2"
+                      className="flex items-start gap-3 rounded-xl border border-c-border/70 bg-c-bg/70 dark:bg-c-surface-raised/40 px-3 py-2"
                     >
                       <span
                         className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${
@@ -3115,11 +3115,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               </ul>
             </div>
 
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200/70 dark:border-navy-700/70">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border/70">
               <button
                 type="button"
                 onClick={handleQualityGateGoBack}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-4 py-2 text-sm font-medium text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-c-border/70 px-4 py-2 text-sm font-medium text-c-text-secondary bg-white/60 dark:bg-c-surface/40 hover:bg-c-bg/80 dark:hover:bg-c-surface-raised/50 transition-colors"
               >
                 <ChevronLeft size={16} />
                 {gateHasHardBlock
@@ -3134,7 +3134,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   }}
                   disabled={isSubmittingSession}
                   /* R1 / SPEC-N §2.3 — „Wyslij mimo to" bylo jedynym solidem na
-                     tym ekranie (bg-navy-900 / surowy hex w dark), przez co
+                     tym ekranie (bg-c-surface / surowy hex w dark), przez co
                      UCIECZKA od bramki jakosci wygladala jak akcja zalecana,
                      a „Wroc i popraw" — jak rezygnacja. Odwrocone: zalecana
                      zostaje obrysowa (mocniejsza), ucieczka schodzi do ghost.

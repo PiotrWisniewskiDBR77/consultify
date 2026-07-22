@@ -132,10 +132,10 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
   }
 
   return (
-    <div className="w-72 shrink-0 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 flex flex-col h-full overflow-hidden">
+    <div className="w-72 shrink-0 bg-c-surface border-l border-c-border flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700">
-        <h2 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
+      <div className="p-4 border-b border-c-border">
+        <h2 className="font-bold text-c-text dark:text-white flex items-center gap-2">
           <Building2 size={18} className="text-blue-500" />
           {t('interview.companyFactsPanel.companyFacts')}
         </h2>
@@ -144,17 +144,17 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Company Profile Section */}
-        <div className="border-b border-slate-200 dark:border-navy-700">
+        <div className="border-b border-c-border">
           <button
             onClick={() => toggleSection('profile')}
-            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+            className="w-full flex items-center justify-between p-3 hover:bg-c-bg dark:hover:bg-c-surface-raised"
           >
-            <span className="text-sm font-medium text-navy-900 dark:text-white">
+            <span className="text-sm font-medium text-c-text dark:text-white">
               {t('interview.companyFactsPanel.companyProfile')}
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-600 transition-transform ${
+              className={`text-c-text-secondary transition-transform ${
                 expandedSections.has('profile') ? 'rotate-90' : ''
               }`}
             />
@@ -165,18 +165,18 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
               {isEditingProfile ? (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-c-text-muted mb-1">
                       {t('interview.companyFactsPanel.name')}
                     </label>
                     <input
                       type="text"
                       value={editedProfile.name || ''}
                       onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                      className="w-full px-2 py-1.5 text-sm border border-c-border rounded bg-c-bg text-c-text dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-c-text-muted mb-1">
                       {t('interview.companyFactsPanel.industry')}
                     </label>
                     <input
@@ -185,17 +185,17 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, industry: e.target.value })
                       }
-                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                      className="w-full px-2 py-1.5 text-sm border border-c-border rounded bg-c-bg text-c-text dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-c-text-muted mb-1">
                       {t('interview.companyFactsPanel.size')}
                     </label>
                     <select
                       value={editedProfile.size || ''}
                       onChange={(e) => setEditedProfile({ ...editedProfile, size: e.target.value })}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                      className="w-full px-2 py-1.5 text-sm border border-c-border rounded bg-c-bg text-c-text dark:text-white"
                     >
                       <option value="">{t('interview.companyFactsPanel.select')}</option>
                       {SIZE_OPTIONS.map((opt) => (
@@ -206,7 +206,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-c-text-muted mb-1">
                       {t('interview.companyFactsPanel.location')}
                     </label>
                     <input
@@ -215,13 +215,13 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, location: e.target.value })
                       }
-                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                      className="w-full px-2 py-1.5 text-sm border border-c-border rounded bg-c-bg text-c-text dark:text-white"
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       onClick={handleCancelEdit}
-                      className="px-2 py-1 text-xs text-slate-600 hover:text-slate-800 dark:text-slate-400"
+                      className="px-2 py-1 text-xs text-c-text-secondary hover:text-c-text-secondary"
                     >
                       {t('interview.companyFactsPanel.cancel')}
                     </button>
@@ -239,8 +239,8 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   <div className="space-y-2">
                     {companyProfile.name ? (
                       <div className="flex items-center gap-2">
-                        <Building2 size={14} className="text-slate-600 shrink-0" />
-                        <span className="text-sm text-navy-900 dark:text-white font-medium">
+                        <Building2 size={14} className="text-c-text-secondary shrink-0" />
+                        <span className="text-sm text-c-text dark:text-white font-medium">
                           {companyProfile.name}
                         </span>
                       </div>
@@ -248,10 +248,10 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
 
                     {companyProfile.industry && (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           {t('interview.companyFactsPanel.industry2')}
                         </span>
-                        <span className="text-sm text-navy-900 dark:text-white">
+                        <span className="text-sm text-c-text dark:text-white">
                           {companyProfile.industry}
                         </span>
                       </div>
@@ -259,8 +259,8 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
 
                     {companyProfile.size && (
                       <div className="flex items-center gap-2">
-                        <Users size={14} className="text-slate-600 shrink-0" />
-                        <span className="text-sm text-navy-900 dark:text-white">
+                        <Users size={14} className="text-c-text-secondary shrink-0" />
+                        <span className="text-sm text-c-text dark:text-white">
                           {companyProfile.size} {t('interview.companyFactsPanel.employees')}
                         </span>
                       </div>
@@ -268,8 +268,8 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
 
                     {companyProfile.location && (
                       <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-slate-600 shrink-0" />
-                        <span className="text-sm text-navy-900 dark:text-white">
+                        <MapPin size={14} className="text-c-text-secondary shrink-0" />
+                        <span className="text-sm text-c-text dark:text-white">
                           {companyProfile.location}
                         </span>
                       </div>
@@ -287,7 +287,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   )}
 
                   {!companyProfile.name && !companyProfile.industry && !companyProfile.size && (
-                    <p className="text-xs text-slate-600 dark:text-slate-500 italic">
+                    <p className="text-xs text-c-text-secondary italic">
                       {t('interview.companyFactsPanel.noCompanyDataClickEdit')}
                     </p>
                   )}
@@ -298,18 +298,18 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
         </div>
 
         {/* Key Metrics Section */}
-        <div className="border-b border-slate-200 dark:border-navy-700">
+        <div className="border-b border-c-border">
           <button
             onClick={() => toggleSection('metrics')}
-            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+            className="w-full flex items-center justify-between p-3 hover:bg-c-bg dark:hover:bg-c-surface-raised"
           >
-            <span className="text-sm font-medium text-navy-900 dark:text-white">
+            <span className="text-sm font-medium text-c-text dark:text-white">
               {t('interview.companyFactsPanel.keyMetrics')}
-              <span className="ml-1 text-xs text-slate-600">({keyMetrics.length})</span>
+              <span className="ml-1 text-xs text-c-text-secondary">({keyMetrics.length})</span>
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-600 transition-transform ${
+              className={`text-c-text-secondary transition-transform ${
                 expandedSections.has('metrics') ? 'rotate-90' : ''
               }`}
             />
@@ -320,16 +320,16 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
               {keyMetrics.length > 0 ? (
                 <div className="space-y-2">
                   {keyMetrics.map((metric) => (
-                    <div key={metric.id} className="p-2 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{metric.name}</p>
-                      <p className="text-sm font-medium text-navy-900 dark:text-white">
+                    <div key={metric.id} className="p-2 bg-c-bg rounded-lg">
+                      <p className="text-xs text-c-text-muted">{metric.name}</p>
+                      <p className="text-sm font-medium text-c-text dark:text-white">
                         {metric.value}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-600 dark:text-slate-500 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {t('interview.companyFactsPanel.metricsWillBeExtractedFrom')}
                 </p>
               )}
@@ -338,18 +338,18 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
         </div>
 
         {/* Stakeholders Section */}
-        <div className="border-b border-slate-200 dark:border-navy-700">
+        <div className="border-b border-c-border">
           <button
             onClick={() => toggleSection('stakeholders')}
-            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+            className="w-full flex items-center justify-between p-3 hover:bg-c-bg dark:hover:bg-c-surface-raised"
           >
-            <span className="text-sm font-medium text-navy-900 dark:text-white">
+            <span className="text-sm font-medium text-c-text dark:text-white">
               {t('interview.companyFactsPanel.stakeholders')}
-              <span className="ml-1 text-xs text-slate-600">({stakeholders.length})</span>
+              <span className="ml-1 text-xs text-c-text-secondary">({stakeholders.length})</span>
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-600 transition-transform ${
+              className={`text-c-text-secondary transition-transform ${
                 expandedSections.has('stakeholders') ? 'rotate-90' : ''
               }`}
             />
@@ -362,7 +362,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   {stakeholders.map((person) => (
                     <div
                       key={person.id}
-                      className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                      className="flex items-center gap-2 p-2 bg-c-bg rounded-lg"
                     >
                       <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                         <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
@@ -370,10 +370,10 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                        <p className="text-sm font-medium text-c-text dark:text-white truncate">
                           {person.name}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        <p className="text-xs text-c-text-muted truncate">
                           {person.role}
                         </p>
                       </div>
@@ -384,7 +384,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                               ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                               : person.influence === 'medium'
                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                : 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted'
                           }`}
                         >
                           {person.influence}
@@ -394,7 +394,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-600 dark:text-slate-500 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {t('interview.companyFactsPanel.stakeholdersWillBeIdentifiedFrom')}
                 </p>
               )}
@@ -406,16 +406,16 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
         <div>
           <button
             onClick={() => toggleSection('gaps')}
-            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+            className="w-full flex items-center justify-between p-3 hover:bg-c-bg dark:hover:bg-c-surface-raised"
           >
-            <span className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">
+            <span className="text-sm font-medium text-c-text dark:text-white flex items-center gap-2">
               <AlertTriangle size={14} className="text-amber-500" />
               {t('interview.companyFactsPanel.openGaps')}
-              <span className="text-xs text-slate-600">({openGaps.length})</span>
+              <span className="text-xs text-c-text-secondary">({openGaps.length})</span>
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-600 transition-transform ${
+              className={`text-c-text-secondary transition-transform ${
                 expandedSections.has('gaps') ? 'rotate-90' : ''
               }`}
             />
@@ -433,18 +433,18 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                           ? 'bg-danger-50 dark:bg-danger-900/10 border-danger-500'
                           : gap.priority === 'medium'
                             ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-500'
-                            : 'bg-slate-50 dark:bg-navy-950 border-slate-300'
+                            : 'bg-c-bg border-c-border-strong'
                       }`}
                     >
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      <p className="text-xs font-medium text-c-text-muted mb-1">
                         {gap.category}
                       </p>
-                      <p className="text-sm text-navy-900 dark:text-white">{gap.description}</p>
+                      <p className="text-sm text-c-text dark:text-white">{gap.description}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-600 dark:text-slate-500 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {t('interview.companyFactsPanel.noInformationGapsIdentified')}
                 </p>
               )}
@@ -454,8 +454,8 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-slate-200 dark:border-navy-700">
-        <p className="text-xs text-slate-600 dark:text-slate-500 text-center">
+      <div className="p-3 border-t border-c-border">
+        <p className="text-xs text-c-text-secondary text-center">
           {t('interview.companyFactsPanel.dataUpdatedAutomatically')}
         </p>
       </div>
