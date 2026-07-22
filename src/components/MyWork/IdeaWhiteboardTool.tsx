@@ -668,6 +668,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     nodeId?: string;
     nodeLabel?: string;
     nodeType?: string;
+    nodeLocked?: boolean;
   }>({});
   // Node comment threads — comments live in `node.data.comments[]` and ride the
   // existing setNodes → onGraphChange → PUT /map autosave (blob contract,
@@ -2707,6 +2708,31 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     );
   }, [pushUndoSnapshot, setNodes]);
 
+  // ── Layer order (K1 base ops: bring to front / send to back) ────────────
+  // Node z-order in React Flow follows array order (later = painted on top),
+  // same convention already used by groupSelected's `[groupNode, ...updated]`.
+  const bringSelectedToFront = useCallback(() => {
+    if (locked) return;
+    pushUndoSnapshot();
+    setNodes((nds: Node[]) => {
+      const selected = nds.filter((n: Node) => n.selected && !isNodeDataLocked(n));
+      if (selected.length === 0) return nds;
+      const rest = nds.filter((n: Node) => !(n.selected && !isNodeDataLocked(n)));
+      return [...rest, ...selected];
+    });
+  }, [locked, pushUndoSnapshot, setNodes]);
+
+  const sendSelectedToBack = useCallback(() => {
+    if (locked) return;
+    pushUndoSnapshot();
+    setNodes((nds: Node[]) => {
+      const selected = nds.filter((n: Node) => n.selected && !isNodeDataLocked(n));
+      if (selected.length === 0) return nds;
+      const rest = nds.filter((n: Node) => !(n.selected && !isNodeDataLocked(n)));
+      return [...selected, ...rest];
+    });
+  }, [locked, pushUndoSnapshot, setNodes]);
+
   // ── Smart layout ─────────────────────────────────────────────────────────
   const handleLayout = useCallback(
     (algorithm: LayoutAlgorithm) => {
@@ -2744,11 +2770,23 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               nodeId,
               nodeLabel: nodeData?.label,
               nodeType: nodeData?.semanticType || nodeData?.type,
+              nodeLocked: Boolean(nodeData?.locked),
             }
           : {}
       );
+      // K1: right-click on a node outside the current selection selects it
+      // alone, so the base-ops menu's reused selection handlers (duplicate/
+      // lock/delete/layer) act on the element the user actually right-clicked.
+      // A right-click inside an existing multi-selection keeps that selection.
+      if (nodeId) {
+        setNodes((nds: Node[]) => {
+          const alreadySelected = nds.some((n) => n.id === nodeId && n.selected);
+          if (alreadySelected) return nds;
+          return nds.map((n) => ({ ...n, selected: n.id === nodeId }));
+        });
+      }
     },
-    []
+    [setNodes]
   );
 
   const handleSlashCommand = useCallback(
@@ -3355,6 +3393,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               );
             }}
             onOpenComments={(nodeId) => setCommentsPanelNodeId(nodeId)}
+            locked={locked}
+            onDuplicate={duplicateSelected}
+            onDeleteNode={deleteSelected}
+            onLockNode={lockSelected}
+            onBringToFront={bringSelectedToFront}
+            onSendToBack={sendSelectedToBack}
           />
 
           {commentsPanelNodeId &&

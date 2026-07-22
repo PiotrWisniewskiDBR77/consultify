@@ -166,11 +166,17 @@ export interface ProcessFlowToolbarProps {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
+// Hover uses c-surface (deeper) because the buttons now sit directly on the
+// raised toolbar bar — the old cards (bg-c-surface) are gone, so a raised hover
+// would be invisible.
 const BTN =
-  'inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40';
+  'inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-40';
 
 const OVERFLOW_ITEM =
   'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40';
+
+const MENU_HEADER =
+  'px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted';
 
 export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   isPl,
@@ -187,11 +193,9 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   showWarnings,
   warnings,
   showCoach,
-  setShowCoach,
   coachLoading,
   runProcessCoach,
   showSummary,
-  setShowSummary,
   summaryLoading,
   generateSummary,
   showKPIDashboard,
@@ -208,7 +212,6 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   duplicateSelected,
   deleteSelected,
   saving,
-  syncLabel,
   handleSave,
   stepCount,
   laneCount,
@@ -243,18 +246,15 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
 
   return (
     <div className="border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
-      <div className="px-4 py-3 flex flex-col gap-3">
-        {/* ── Header row ─────────────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="px-4 py-2 flex flex-col gap-2">
+        {/* ── Top row: compact mode switch · status badges ───────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           {/* UI-L13: ONE segmented mode control (was two redundant rows) */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {t('processFlow.toolbar.modeLabel', 'Mode')}
-            </span>
+          <div className="flex items-center gap-2">
             <div
               role="tablist"
               aria-label={t('processFlow.toolbar.flowModeAriaLabel', 'Flow mode')}
-              className="flex items-center gap-0.5 rounded-lg bg-c-surface-raised p-0.5"
+              className="flex items-center gap-0.5 rounded-lg bg-c-surface p-0.5"
             >
               {(['classic', 'automation', 'vsm'] as ProcessFlowMode[]).map((mode) => {
                 const g = FLOW_MODE_GUIDANCE[mode];
@@ -270,9 +270,9 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                     onClick={() => setFlowMode(mode)}
                     title={tooltip}
                     aria-label={tooltip}
-                    className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
                       flowMode === mode
-                        ? 'bg-c-surface text-c-accent shadow-sm'
+                        ? 'bg-c-surface-raised text-c-text shadow-sm'
                         : 'text-c-text-muted hover:text-c-text-secondary'
                     }`}
                   >
@@ -283,7 +283,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             </div>
             {kitLabel && (
               <span
-                className="inline-flex items-center rounded-full bg-c-accent-soft px-2 py-0.5 text-[10px] font-medium text-c-accent"
+                className="inline-flex items-center rounded-full bg-c-accent-soft px-2 py-0.5 text-[10px] font-medium text-c-text-secondary"
                 title={t('processFlow.toolbar.kitTitle', 'Notation kit set from chat')}
               >
                 {kitLabel}
@@ -291,17 +291,17 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-c-surface px-2.5 py-1 text-[10px] font-medium text-c-text-secondary">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center rounded-full bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary">
               {t('processFlow.toolbar.stepsCount', 'Steps {{value}}', { value: stepCount })}
             </span>
-            <span className="inline-flex items-center rounded-full bg-c-surface px-2.5 py-1 text-[10px] font-medium text-c-text-secondary">
+            <span className="inline-flex items-center rounded-full bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary">
               {/* Both locales render the same "Lanes N" string (term kept in EN
                   intentionally in the original code) — no translation needed. */}
               {`Lanes ${laneCount}`}
             </span>
             <span
-              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
                 warnings.length > 0
                   ? 'bg-warning-500/10 text-warning-600 dark:text-warning-300'
                   : 'bg-success-500/10 text-success-600 dark:text-success-300'
@@ -316,342 +316,327 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           </div>
         </div>
 
-        {/* Mode guidance line (single, contextual — replaces the redundant stage badge) */}
-        {/* `guidance` is the shared FLOW_MODE_GUIDANCE record (also consumed by
-            IdeaProcessFlowTool.tsx) — left as isPl-selected data, not converted
-            here to avoid diverging from that shared contract. */}
-        <p className="-mt-1 text-[11px] text-c-text-secondary">
+        {/* Mode guidance — single subtle line, truncated so it never wraps/cuts */}
+        <p
+          className="text-[11px] text-c-text-secondary truncate"
+          title={isPl ? guidance.pl : guidance.en}
+        >
           {isPl ? guidance.pl : guidance.en}
         </p>
 
-        {/* ── Toolbar sections ───────────────────────────────────────────── */}
-        <div className="flex flex-wrap gap-3">
-          {/* Build flow */}
-          <div className="flex-1 min-w-[320px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {t('processFlow.toolbar.buildFlow', 'Build flow')}
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {availableShapes.map((shape) => {
-                const cfg = SHAPE_CONFIG[shape];
-                const Icon = cfg.icon;
-                return (
-                  <button
-                    key={shape}
-                    type="button"
-                    onClick={() => addNode(shape)}
-                    disabled={locked}
-                    className={BTN}
-                    title={isPl ? cfg.labelPl : cfg.label}
-                  >
-                    <Icon size={14} />
-                    {isPl ? cfg.labelPl : cfg.label}
-                  </button>
-                );
-              })}
-              <div className="w-px h-5 bg-c-surface-raised mx-1" />
+        {/* ── Main toolbar: build palette · edit · save · Więcej ─────────── */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Build palette (always visible) */}
+          {availableShapes.map((shape) => {
+            const cfg = SHAPE_CONFIG[shape];
+            const Icon = cfg.icon;
+            return (
               <button
+                key={shape}
                 type="button"
-                onClick={addLane}
+                onClick={() => addNode(shape)}
                 disabled={locked}
                 className={BTN}
-                title={t('processFlow.toolbar.addLane', 'Add lane')}
+                title={isPl ? cfg.labelPl : cfg.label}
               >
-                <Plus size={14} />
-                Lane
+                <Icon size={14} />
+                {isPl ? cfg.labelPl : cfg.label}
               </button>
-              <button
-                type="button"
-                onClick={insertBetween}
-                disabled={locked}
-                className={BTN}
-                title={t('processFlow.toolbar.insertBetweenTitle', 'Insert between')}
-              >
-                <Plus size={14} />
-                {t('processFlow.toolbar.insert', 'Insert')}
-              </button>
-              <button
-                type="button"
-                onClick={splitPath}
-                disabled={locked}
-                className={BTN}
-                title={t('processFlow.toolbar.splitPathTitle', 'Split path')}
-              >
-                <GitMerge size={14} />
-                {t('processFlow.toolbar.split', 'Split')}
-              </button>
-            </div>
-          </div>
+            );
+          })}
 
-          {/* Analyze & validate */}
-          <div className="flex-1 min-w-[260px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {t('processFlow.toolbar.analyzeAndValidate', 'Analyze and validate')}
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setShowKPIDashboard((v) => !v)}
-                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                  showKPIDashboard
-                    ? 'text-c-accent bg-c-accent-soft'
-                    : 'text-c-text-secondary hover:bg-c-surface-raised'
-                }`}
-                title="KPI Dashboard"
+          <div className="mx-0.5 h-5 w-px bg-c-border-subtle" />
+
+          <button
+            type="button"
+            onClick={addLane}
+            disabled={locked}
+            className={BTN}
+            title={t('processFlow.toolbar.addLane', 'Add lane')}
+          >
+            <Plus size={14} />
+            Lane
+          </button>
+          <button
+            type="button"
+            onClick={insertBetween}
+            disabled={locked}
+            className={BTN}
+            title={t('processFlow.toolbar.insertBetweenTitle', 'Insert between')}
+          >
+            <Plus size={14} />
+            {t('processFlow.toolbar.insert', 'Insert')}
+          </button>
+          <button
+            type="button"
+            onClick={splitPath}
+            disabled={locked}
+            className={BTN}
+            title={t('processFlow.toolbar.splitPathTitle', 'Split path')}
+          >
+            <GitMerge size={14} />
+            {t('processFlow.toolbar.split', 'Split')}
+          </button>
+
+          <div className="ml-auto" />
+
+          {/* Undo / redo (always visible) */}
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!canUndo || locked}
+            className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30"
+            title={t('processFlow.toolbar.undoTitle', 'Undo (Ctrl+Z)')}
+            aria-label={t('processFlow.toolbar.undo', 'Undo')}
+          >
+            <Undo2 size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={!canRedo || locked}
+            className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface transition-colors disabled:opacity-30"
+            title={t('processFlow.toolbar.redoTitle', 'Redo (Ctrl+Shift+Z)')}
+            aria-label={t('processFlow.toolbar.redo', 'Redo')}
+          >
+            <Redo2 size={14} />
+          </button>
+
+          <div className="mx-0.5 h-5 w-px bg-c-border-subtle" />
+
+          {/* Save (primary, always visible) */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || locked}
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+              saving || locked
+                ? 'bg-c-surface-raised text-c-text-muted'
+                : 'bg-c-text text-c-surface hover:brightness-110'
+            }`}
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {saving
+              ? t('processFlow.toolbar.saving', 'Saving…')
+              : t('processFlow.toolbar.save', 'Save')}
+          </button>
+          {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
+              Mechanika sync (syncLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
+
+          {/* Overflow "Więcej" — analyze · manage · convert (progressive disclosure) */}
+          <div className="relative" ref={overflowRef}>
+            <button
+              type="button"
+              onClick={() => setOverflowOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={overflowOpen}
+              className={`${BTN} ${overflowOpen ? 'bg-c-surface' : ''}`}
+              title={t('processFlow.toolbar.moreActions', 'More actions')}
+              aria-label={t('processFlow.toolbar.moreActions', 'More actions')}
+            >
+              <MoreHorizontal size={16} />
+              {t('processFlow.toolbar.more', 'More')}
+            </button>
+            {overflowOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1 z-50 flex w-60 flex-col rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1"
               >
-                <BarChart3 size={14} />
-                KPI
-              </button>
-              <button
-                type="button"
-                onClick={runValidation}
-                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                  showWarnings
-                    ? 'text-warning-700 bg-warning-50 dark:bg-warning-900/20 dark:text-warning-300'
-                    : 'text-warning-600 dark:text-warning-400 hover:bg-warning-50 dark:hover:bg-warning-900/20'
-                }`}
-                title={t('processFlow.toolbar.validateFlowTitle', 'Validate flow')}
-              >
-                <AlertTriangle size={14} />
-                {t('processFlow.toolbar.validate', 'Validate')}
-              </button>
-              <button
-                type="button"
-                onClick={runProcessCoach}
-                disabled={locked || coachLoading}
-                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                  showCoach
-                    ? 'text-c-accent bg-c-accent-soft'
-                    : 'text-c-accent hover:bg-c-accent-soft dark:hover:brightness-110'
-                }`}
-                title="AI Coach"
-              >
-                {coachLoading ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <TeresaMark size={14} />
-                )}
-                AI Coach
-              </button>
-              <button
-                type="button"
-                onClick={generateSummary}
-                disabled={locked || summaryLoading}
-                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                  showSummary
-                    ? 'text-success-700 bg-success-50 dark:bg-success-900/20 dark:text-success-300'
-                    : 'text-success-600 dark:text-success-400 hover:bg-success-50 dark:hover:bg-success-900/20'
-                }`}
-                title={t('processFlow.toolbar.summaryTitle', 'Summary')}
-              >
-                {summaryLoading ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
+                {/* ── Analyze & validate ── */}
+                <div className={MENU_HEADER}>
+                  {t('processFlow.toolbar.analyzeAndValidate', 'Analyze and validate')}
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setShowKPIDashboard((v) => !v);
+                    setOverflowOpen(false);
+                  }}
+                  className={`${OVERFLOW_ITEM} ${showKPIDashboard ? 'text-c-text font-semibold' : ''}`}
+                >
                   <BarChart3 size={14} />
-                )}
-                {t('processFlow.toolbar.summarize', 'Summary')}
-              </button>
-              {onOpenReadback && (
+                  KPI
+                </button>
                 <button
                   type="button"
-                  onClick={onOpenReadback}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                    showReadbackPanel
-                      ? 'text-c-info bg-c-surface-raised'
-                      : 'text-c-info hover:bg-c-surface-raised'
+                  role="menuitem"
+                  onClick={() => {
+                    runValidation();
+                    setOverflowOpen(false);
+                  }}
+                  className={`${OVERFLOW_ITEM} ${
+                    showWarnings ? 'text-warning-600 dark:text-warning-300' : ''
                   }`}
-                  title={t('processFlow.toolbar.semanticReadbackTitle', 'Semantic readback')}
                 >
-                  <ScanText size={14} />
-                  {t('processFlow.toolbar.readback', 'Readback')}
+                  <AlertTriangle size={14} />
+                  {t('processFlow.toolbar.validate', 'Validate')}
                 </button>
-              )}
-              {AI_PROPOSAL_ENABLED && onOpenAIProposal && (
                 <button
                   type="button"
-                  onClick={onOpenAIProposal}
-                  disabled={locked}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                    showAIPanel
-                      ? 'text-c-tag-2 bg-c-surface-raised'
-                      : 'text-c-tag-2 hover:bg-c-surface-raised'
+                  role="menuitem"
+                  onClick={() => {
+                    runProcessCoach();
+                    setOverflowOpen(false);
+                  }}
+                  disabled={locked || coachLoading}
+                  className={`${OVERFLOW_ITEM} ${showCoach ? 'text-c-text font-semibold' : ''}`}
+                >
+                  {coachLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <TeresaMark size={14} />
+                  )}
+                  AI Coach
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    generateSummary();
+                    setOverflowOpen(false);
+                  }}
+                  disabled={locked || summaryLoading}
+                  className={`${OVERFLOW_ITEM} ${
+                    showSummary ? 'text-success-600 dark:text-success-300' : ''
                   }`}
-                  title={t('processFlow.toolbar.aiProposalTitle', 'AI proposal')}
                 >
-                  <Sparkles size={14} />
-                  {t('processFlow.toolbar.aiProposalLabel', 'AI Proposal')}
+                  {summaryLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <BarChart3 size={14} />
+                  )}
+                  {t('processFlow.toolbar.summarize', 'Summary')}
                 </button>
-              )}
-            </div>
-          </div>
-
-          {/* Manage canvas — command-row hierarchy: primary (max 4) · secondary · overflow "…" */}
-          <div className="flex-1 min-w-[280px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              {t('processFlow.toolbar.manageCanvas', 'Manage canvas')}
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {/* Primary: Save (strongest action) */}
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || locked}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  saving || locked
-                    ? 'bg-c-surface-raised text-c-text-muted'
-                    : 'bg-c-text text-c-surface hover:brightness-110'
-                }`}
-              >
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {saving
-                  ? t('processFlow.toolbar.saving', 'Saving…')
-                  : t('processFlow.toolbar.save', 'Save')}
-              </button>
-              {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
-                Mechanika sync (syncLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
-
-              <div className="mx-1 h-5 w-px bg-c-surface-raised" />
-
-              {/* Secondary: undo / redo / auto-layout */}
-              <button
-                type="button"
-                onClick={undo}
-                disabled={!canUndo || locked}
-                className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-30"
-                title={t('processFlow.toolbar.undoTitle', 'Undo (Ctrl+Z)')}
-                aria-label={t('processFlow.toolbar.undo', 'Undo')}
-              >
-                <Undo2 size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={redo}
-                disabled={!canRedo || locked}
-                className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-30"
-                title={t('processFlow.toolbar.redoTitle', 'Redo (Ctrl+Shift+Z)')}
-                aria-label={t('processFlow.toolbar.redo', 'Redo')}
-              >
-                <Redo2 size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={handleAutoLayout}
-                disabled={locked}
-                className={BTN}
-                title={t('processFlow.toolbar.autoArrangeTitle', 'Auto arrange')}
-              >
-                <LayoutGrid size={14} />
-                Auto
-              </button>
-
-              <div className="ml-auto" />
-
-              {/* Overflow "…" — duplicate / delete / ask AI / convert */}
-              <div className="relative" ref={overflowRef}>
-                <button
-                  type="button"
-                  onClick={() => setOverflowOpen((v) => !v)}
-                  aria-haspopup="menu"
-                  aria-expanded={overflowOpen}
-                  className={`${BTN} ${overflowOpen ? 'bg-c-surface-raised' : ''}`}
-                  title={t('processFlow.toolbar.moreActions', 'More actions')}
-                  aria-label={t('processFlow.toolbar.moreActions', 'More actions')}
-                >
-                  <MoreHorizontal size={16} />
-                </button>
-                {overflowOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-full mt-1 z-50 flex w-48 flex-col rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1"
+                {onOpenReadback && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      onOpenReadback();
+                      setOverflowOpen(false);
+                    }}
+                    className={`${OVERFLOW_ITEM} ${showReadbackPanel ? 'text-c-info' : ''}`}
                   >
+                    <ScanText size={14} />
+                    {t('processFlow.toolbar.readback', 'Readback')}
+                  </button>
+                )}
+                {AI_PROPOSAL_ENABLED && onOpenAIProposal && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      onOpenAIProposal();
+                      setOverflowOpen(false);
+                    }}
+                    disabled={locked}
+                    className={`${OVERFLOW_ITEM} ${showAIPanel ? 'text-c-tag-2' : ''}`}
+                  >
+                    <Sparkles size={14} />
+                    {t('processFlow.toolbar.aiProposalLabel', 'AI Proposal')}
+                  </button>
+                )}
+
+                <div className="my-1 h-px bg-c-surface-raised" />
+
+                {/* ── Manage canvas ── */}
+                <div className={MENU_HEADER}>
+                  {t('processFlow.toolbar.manageCanvas', 'Manage canvas')}
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    handleAutoLayout();
+                    setOverflowOpen(false);
+                  }}
+                  disabled={locked}
+                  className={OVERFLOW_ITEM}
+                >
+                  <LayoutGrid size={14} />
+                  {t('processFlow.toolbar.autoArrangeTitle', 'Auto arrange')}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    duplicateSelected();
+                    setOverflowOpen(false);
+                  }}
+                  disabled={locked}
+                  className={OVERFLOW_ITEM}
+                >
+                  <Copy size={14} />
+                  {t('processFlow.toolbar.duplicateWithShortcut', 'Duplicate (Ctrl+D)')}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    deleteSelected();
+                    setOverflowOpen(false);
+                  }}
+                  disabled={locked}
+                  className={`${OVERFLOW_ITEM} text-danger-600 dark:text-danger-400`}
+                >
+                  <Trash2 size={14} />
+                  {t('processFlow.toolbar.deleteSelected', 'Delete selected')}
+                </button>
+                {onOpenChat && (
+                  <>
+                    <div className="my-1 h-px bg-c-surface-raised" />
                     <button
                       type="button"
                       role="menuitem"
                       onClick={() => {
-                        duplicateSelected();
+                        onOpenChat();
                         setOverflowOpen(false);
                       }}
-                      disabled={locked}
                       className={OVERFLOW_ITEM}
                     >
-                      <Copy size={14} />
-                      {t('processFlow.toolbar.duplicateWithShortcut', 'Duplicate (Ctrl+D)')}
+                      <MessageSquare size={14} />
+                      {t('processFlow.toolbar.askAiAboutProcess', 'Ask AI about this process')}
                     </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        deleteSelected();
-                        setOverflowOpen(false);
-                      }}
-                      disabled={locked}
-                      className={`${OVERFLOW_ITEM} text-danger-600 dark:text-danger-400`}
-                    >
-                      <Trash2 size={14} />
-                      {t('processFlow.toolbar.deleteSelected', 'Delete selected')}
-                    </button>
-                    {onOpenChat && (
-                      <>
-                        <div className="my-1 h-px bg-c-surface-raised" />
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            onOpenChat();
-                            setOverflowOpen(false);
-                          }}
-                          className={OVERFLOW_ITEM}
-                        >
-                          <MessageSquare size={14} />
-                          {t('processFlow.toolbar.askAiAboutProcess', 'Ask AI about this process')}
-                        </button>
-                      </>
-                    )}
-                    {onConvert && (
-                      <>
-                        <div className="my-1 h-px bg-c-surface-raised" />
-                        <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted">
-                          <span className="inline-flex items-center gap-1">
-                            <Rocket size={11} />
-                            {t('processFlow.toolbar.convert', 'Convert')}
-                          </span>
-                        </div>
-                        {(
-                          [
-                            [
-                              'pf_convert_initiative',
-                              t('processFlow.toolbar.convertInitiative', 'Initiative'),
-                            ],
-                            [
-                              'pf_convert_task_set',
-                              t('processFlow.toolbar.convertTaskSet', 'Task set'),
-                            ],
-                            ['pf_convert_report', t('processFlow.toolbar.convertReport', 'Report')],
-                            [
-                              'pf_convert_analysis',
-                              t('processFlow.toolbar.convertAnalysis', 'Analysis'),
-                            ],
-                          ] as [string, string][]
-                        ).map(([action, label]) => (
-                          <button
-                            key={action}
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              onConvert(action);
-                              setOverflowOpen(false);
-                            }}
-                            className={OVERFLOW_ITEM}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </>
-                    )}
-                  </div>
+                  </>
+                )}
+                {onConvert && (
+                  <>
+                    <div className="my-1 h-px bg-c-surface-raised" />
+                    <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted">
+                      <span className="inline-flex items-center gap-1">
+                        <Rocket size={11} />
+                        {t('processFlow.toolbar.convert', 'Convert')}
+                      </span>
+                    </div>
+                    {(
+                      [
+                        [
+                          'pf_convert_initiative',
+                          t('processFlow.toolbar.convertInitiative', 'Initiative'),
+                        ],
+                        ['pf_convert_task_set', t('processFlow.toolbar.convertTaskSet', 'Task set')],
+                        ['pf_convert_report', t('processFlow.toolbar.convertReport', 'Report')],
+                        ['pf_convert_analysis', t('processFlow.toolbar.convertAnalysis', 'Analysis')],
+                      ] as [string, string][]
+                    ).map(([action, label]) => (
+                      <button
+                        key={action}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          onConvert(action);
+                          setOverflowOpen(false);
+                        }}
+                        className={OVERFLOW_ITEM}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

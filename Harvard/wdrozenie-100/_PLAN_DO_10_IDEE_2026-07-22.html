@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan dojścia do 10 — 4 narzędzia IDEE</title>
+<style>
+  :root {
+    --bg: #f5f7f9; --surface: #ffffff; --surface-2: #eceff3;
+    --ink: #14202b; --ink-soft: #4c5a68; --ink-faint: #7c8895;
+    --line: #dce2e9; --line-strong: #c4ccd6;
+    --accent: #1f4e79; --accent-2: #2f6aa5; --accent-soft: #e5edf5;
+    --b1: #b23a2e; --b1-bg: #f6e3e0; --b2: #b9791a; --b2-bg: #f7ecd8;
+    --b3: #2c7d59; --b3-bg: #dff0e7; --b4: #1c6b45; --b4-bg: #d3ead9;
+    --opus: #6b3fa0; --opus-bg: #ece4f5;
+    --shadow: 0 1px 2px rgba(20,32,43,.06), 0 6px 20px rgba(20,32,43,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1319; --surface: #141d26; --surface-2: #1b2731;
+      --ink: #e9eef3; --ink-soft: #a6b4c2; --ink-faint: #6f8090;
+      --line: #253340; --line-strong: #33475a;
+      --accent: #74acdf; --accent-2: #8fbde8; --accent-soft: #172532;
+      --b1: #e07d6d; --b1-bg: #2c1a18; --b2: #dcab55; --b2-bg: #2b2416;
+      --b3: #57bd8e; --b3-bg: #16271f; --b4: #4fb87e; --b4-bg: #14241b;
+      --opus: #b491dd; --opus-bg: #201830;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#f5f7f9;--surface:#fff;--surface-2:#eceff3;--ink:#14202b;--ink-soft:#4c5a68;--ink-faint:#7c8895;
+    --line:#dce2e9;--line-strong:#c4ccd6;--accent:#1f4e79;--accent-2:#2f6aa5;--accent-soft:#e5edf5;
+    --b1:#b23a2e;--b1-bg:#f6e3e0;--b2:#b9791a;--b2-bg:#f7ecd8;--b3:#2c7d59;--b3-bg:#dff0e7;--b4:#1c6b45;--b4-bg:#d3ead9;
+    --opus:#6b3fa0;--opus-bg:#ece4f5;--shadow:0 1px 2px rgba(20,32,43,.06),0 6px 20px rgba(20,32,43,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg:#0d1319;--surface:#141d26;--surface-2:#1b2731;--ink:#e9eef3;--ink-soft:#a6b4c2;--ink-faint:#6f8090;
+    --line:#253340;--line-strong:#33475a;--accent:#74acdf;--accent-2:#8fbde8;--accent-soft:#172532;
+    --b1:#e07d6d;--b1-bg:#2c1a18;--b2:#dcab55;--b2-bg:#2b2416;--b3:#57bd8e;--b3-bg:#16271f;--b4:#4fb87e;--b4-bg:#14241b;
+    --opus:#b491dd;--opus-bg:#201830;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .wrap { max-width:1120px; margin:0 auto; padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 72px; }
+  .serif { font-family:Georgia,"Times New Roman",serif; }
+  .eyebrow { font-size:12px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-size:clamp(26px,4.4vw,40px); line-height:1.1; margin:10px 0 0; font-weight:800; letter-spacing:-.02em; text-wrap:balance; max-width:20ch; }
+  .lede { font-size:17px; color:var(--ink-soft); margin:14px 0 0; max-width:66ch; }
+  .lede .serif { font-style:italic; color:var(--ink); }
+  .rule { height:1px; background:var(--line); border:0; margin:30px 0; }
+  h2 { font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 16px; }
+  section { margin-top:46px; }
+
+  /* chips */
+  .chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; line-height:1.4; white-space:nowrap; }
+  .c-size { border:1px solid var(--line-strong); color:var(--ink-soft); background:var(--surface); }
+  .c-opus { background:var(--opus-bg); color:var(--opus); }
+  .c-sonnet { background:var(--accent-soft); color:var(--accent); }
+  .c-phase { background:var(--accent-soft); color:var(--accent); font-variant-numeric:tabular-nums; }
+  .c-dec { background:var(--b2-bg); color:var(--b2); }
+  .c-nice { border:1px dashed var(--line-strong); color:var(--ink-faint); background:transparent; }
+  .score { display:inline-flex; align-items:baseline; gap:2px; font-weight:800; font-variant-numeric:tabular-nums; font-size:13px; padding:2px 7px; border-radius:6px; }
+  .s-b1{color:var(--b1);background:var(--b1-bg)} .s-b2{color:var(--b2);background:var(--b2-bg)}
+  .s-b3{color:var(--b3);background:var(--b3-bg)} .s-b4{color:var(--b4);background:var(--b4-bg)}
+
+  /* levers */
+  .lever { display:grid; grid-template-columns:34px 1fr; gap:14px; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:12px; margin-top:12px; box-shadow:var(--shadow); }
+  .lever .n { font-size:22px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; line-height:1; }
+  .lever .t { font-size:13.5px; color:var(--ink-soft); line-height:1.5; }
+  .lever .t b { color:var(--ink); font-weight:700; }
+  .lever .t .covers { display:block; margin-top:6px; font-size:12px; color:var(--ink-faint); }
+
+  /* coverage matrix */
+  .scrollx { overflow-x:auto; border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+  table { border-collapse:collapse; width:100%; min-width:820px; background:var(--surface); }
+  thead th { text-align:left; font-size:13px; font-weight:700; color:var(--ink); padding:13px 12px; border-bottom:1px solid var(--line-strong); background:var(--surface); vertical-align:bottom; }
+  thead th .lead { display:block; font-size:11px; font-weight:500; color:var(--ink-faint); margin-top:2px; }
+  thead th.crit-h { color:var(--ink-faint); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+  tbody td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tbody tr:last-child td { border-bottom:0; }
+  .crit .k { font-weight:700; font-size:13px; } .crit { min-width:120px; }
+  .cvcell { min-width:150px; }
+  .cvcell .row1 { display:flex; align-items:center; gap:6px; }
+  .cvcell .arrow { color:var(--ink-faint); font-weight:700; }
+  .cvcell .items { margin-top:5px; display:flex; flex-wrap:wrap; gap:4px; }
+  .id { display:inline-block; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; padding:1px 6px; border-radius:5px; background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line); }
+
+  /* workstream blocks */
+  .ws { margin-top:22px; border:1px solid var(--line); border-radius:14px; background:var(--surface); box-shadow:var(--shadow); overflow:hidden; }
+  .ws > .wh { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding:15px 18px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+  .ws > .wh .wsid { font-size:15px; font-weight:800; color:var(--accent); }
+  .ws > .wh .wnm { font-size:16px; font-weight:800; letter-spacing:-.01em; }
+  .ws > .wh .wcov { margin-left:auto; font-size:12px; color:var(--ink-faint); }
+  .ws > .wh .wcov b { color:var(--ink-soft); }
+  .item { display:grid; grid-template-columns:52px 1fr auto; gap:12px; padding:13px 18px; border-bottom:1px solid var(--line); align-items:start; }
+  .item:last-child { border-bottom:0; }
+  .item .iid { font-size:12.5px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; padding-top:2px; }
+  .item .idesc .t { font-size:13.5px; font-weight:600; color:var(--ink); }
+  .item .idesc .d { font-size:12.5px; color:var(--ink-soft); margin-top:3px; line-height:1.45; }
+  .item .meta { display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
+  @media (max-width:640px){ .item{ grid-template-columns:44px 1fr; } .item .meta{ grid-column:2; flex-direction:row; flex-wrap:wrap; align-items:center; } }
+
+  /* phase timeline */
+  .phase { border-left:2px solid var(--line-strong); padding:2px 0 2px 20px; margin-left:8px; position:relative; }
+  .phase + .phase { margin-top:6px; }
+  .phase::before { content:""; position:absolute; left:-7px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--accent); border:2px solid var(--bg); }
+  .phase .ph-h { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .phase .ph-h .pn { font-size:15px; font-weight:800; }
+  .phase .ph-h .pg { font-size:12px; color:var(--ink-faint); }
+  .phase .ph-b { font-size:13px; color:var(--ink-soft); margin:5px 0 16px; line-height:1.5; }
+  .phase .ph-b .ids { display:inline-flex; flex-wrap:wrap; gap:4px; vertical-align:middle; }
+  .gate { display:inline-block; font-size:11px; font-weight:700; color:var(--b3); background:var(--b3-bg); padding:1px 7px; border-radius:5px; }
+
+  .note { font-size:12.5px; color:var(--ink-faint); margin-top:10px; line-height:1.55; }
+  .note b { color:var(--ink-soft); }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92em; background:var(--surface-2); padding:1px 5px; border-radius:4px; }
+  .legendbar { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Consultify · IDEE · 2026-07-22</div>
+    <h1>Plan dojścia do 10 — wszystkie osie, wszystkie 4 narzędzia</h1>
+    <p class="lede">Cel: <b>każda z 36 komórek siatki na 10</b> (parytet lidera). Zasada planu: <span class="serif">nie narzędzie-po-narzędziu, tylko workstreamami</span> — bo <b>3 wspólne dźwignie</b> domykają najwięcej komórek naraz. Każda pozycja ma przypisaną robotę (poniżej: macierz pokrycia dowodzi, że nic nie zostaje). Każda robota ma rozmiar, model i bramkę odbioru (reguła #7).</p>
+    <div class="legendbar">
+      <span class="chip c-phase">P0–P5 faza</span>
+      <span class="chip c-size">S / M / L rozmiar</span>
+      <span class="chip c-opus">Opus (trudny kod)</span>
+      <span class="chip c-sonnet">Sonnet (robotnik)</span>
+      <span class="chip c-dec">decyzja Piotra</span>
+      <span class="chip c-nice">nice-to-have</span>
+    </div>
+  </header>
+
+  <hr class="rule" />
+
+  <section style="margin-top:0">
+    <h2>Logika planu — 3 dźwignie robią większość roboty</h2>
+    <div class="lever"><div class="n">1</div><div class="t"><b>Wspólna powłoka SPEC-A</b> (workstream A). Jeden Menu 1 + jeden wzorzec paska + jeden prawy panel accordion, wpięty w 4 narzędzia.<span class="covers">Domyka <b>K3 i K5 na wszystkich 4</b> (8 komórek) + fundament K8. Bez tego reszta się rozjeżdża.</span></div></div>
+    <div class="lever"><div class="n">2</div><div class="t"><b>Silnik interakcji canvasu</b> (workstream B). Snapping + prowadnice + pasek stylu (kolor/czcionka) + trackpad-pan, wspólny dla 3 canvasów.<span class="covers">Domyka <b>K2 i K9 w Mind Map, Whiteboard, Process</b> (6 komórek) + K1 Whiteboard. To rdzeń „przesuwanie trudne".</span></div></div>
+    <div class="lever"><div class="n">3</div><div class="t"><b>Odblokować silnik platform Table + interakcje arkuszowe</b> (workstream D). Najpierw decyzja o fladze, potem Tab-nav / zakres / fill-handle / prawy-klik komórki.<span class="covers">Domyka <b>K1, K2, K9 w Table</b> (3 komórki). Dziś ta praca jest zbudowana, ale niewidoczna dla klienta.</span></div></div>
+    <p class="note">Reszta (workstreamy C, E, F, G) to domknięcia specyficzne per narzędzie + wykończenie + kolaboracja. Razem <b>7 workstreamów, 36 robót</b> — dokładnie tyle, ile komórek. 8 wymaga Opusa (trudny kod canvasu/arkusza), reszta Sonnet.</p>
+  </section>
+
+  <section>
+    <h2>Macierz pokrycia — dla każdej komórki: co ją zawozi do 10</h2>
+    <div class="scrollx">
+      <table>
+        <thead>
+          <tr>
+            <th class="crit-h">Oś</th>
+            <th>Mind Map<span class="lead">dziś 7,0</span></th>
+            <th>Whiteboard<span class="lead">dziś 5,4</span></th>
+            <th>Process Flow<span class="lead">dziś 6,0</span></th>
+            <th>Table<span class="lead">dziś 5,4</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="crit"><div class="k">K1 Budowalność</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b4">9</span><span class="arrow">→10</span></div><div class="items"><span class="id">G3</span><span class="id">B4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">8</span><span class="arrow">→10</span></div><div class="items"><span class="id">B4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">C3</span><span class="id">B4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">D0</span><span class="id">D5</span><span class="id">D6</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K2 Sterowalność</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">B0</span><span class="id">B1</span><span class="id">B3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">B1</span><span class="id">B2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span><span class="id">B2</span><span class="id">B5</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">D1</span><span class="id">D2</span><span class="id">D3</span><span class="id">D4</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K3 Prawy panel</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">A2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">A3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">A4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">A5</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K4 Grafika</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">E3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">E1</span><span class="id">E2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">E5</span><span class="id">B4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">E4</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K5 Menu / powłoka</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">3</span><span class="arrow">→10</span></div><div class="items"><span class="id">A1</span><span class="id">A2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b1">3</span><span class="arrow">→10</span></div><div class="items"><span class="id">A1</span><span class="id">A3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">A1</span><span class="id">A4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">4</span><span class="arrow">→10</span></div><div class="items"><span class="id">A1</span><span class="id">A5</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K6 Zdolności</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b4">9</span><span class="arrow">→10</span></div><div class="items"><span class="id">G1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">B4</span><span class="id">G2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b4">9</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span><span class="id">C4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">8</span><span class="arrow">→10</span></div><div class="items"><span class="id">D7</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K7 Teresa / kolab.</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b4">9</span><span class="arrow">→10</span></div><div class="items"><span class="id">F3</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">8</span><span class="arrow">→10</span></div><div class="items"><span class="id">F1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">F2</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">F4</span><span class="id">F1</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K8 Elegancja</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">A2</span><span class="id">E3</span><span class="id">E6</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">4</span><span class="arrow">→10</span></div><div class="items"><span class="id">E1</span><span class="id">E2</span><span class="id">E6</span><span class="id">B4</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">6</span><span class="arrow">→10</span></div><div class="items"><span class="id">E5</span><span class="id">E6</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">E4</span><span class="id">E6</span></div></td>
+          </tr>
+          <tr>
+            <td class="crit"><div class="k">K9 Dynamika</div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b3">7</span><span class="arrow">→10</span></div><div class="items"><span class="id">B0</span><span class="id">B1</span><span class="id">B3</span><span class="id">G1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">B2</span><span class="id">B4</span><span class="id">B1</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">C1</span><span class="id">C2</span><span class="id">B2</span><span class="id">B4</span><span class="id">B5</span></div></td>
+            <td class="cvcell"><div class="row1"><span class="score s-b2">5</span><span class="arrow">→10</span></div><div class="items"><span class="id">D1</span><span class="id">D2</span><span class="id">D3</span><span class="id">D4</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Każda komórka ma co najmniej jedną robotę. Jedna robota często zawozi kilka komórek (np. <span class="id">A1</span> powłoka → K3+K5+K8 ×4; <span class="id">B4</span> pasek stylu → K1/K6/K9 na 3 narzędziach). To jest właśnie oszczędność „workstreamami zamiast per-narzędzie".</p>
+  </section>
+
+  <section>
+    <h2>Workstreamy i roboty (36)</h2>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">A</span><span class="wnm">Wspólna powłoka SPEC-A</span><span class="wcov">domyka <b>K3, K5, K8-powłoka ×4</b></span></div>
+      <div class="item"><div class="iid">A1</div><div class="idesc"><div class="t">Prototyp wspólnej powłoki</div><div class="d">Menu 1 (tożsamość/status/1 primary) + wzorzec górnego paska (progresywne ujawnianie) + prawy panel accordion (ArtifactRightPanel) + wspólny baseline prawego-kliku + tokeny c-*. Prototyp → wstępny OK Piotra PRZED wpięciem.</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P1</span></div></div>
+      <div class="item"><div class="iid">A2</div><div class="idesc"><div class="t">Wpiąć Mind Map w powłokę</div><div class="d">Centrum (mapa) + rail specyficzny zostają; wymienić chrome na wspólny.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P1</span></div></div>
+      <div class="item"><div class="iid">A3</div><div class="idesc"><div class="t">Wpiąć Whiteboard w powłokę</div><div class="d">Zastąpić własny toolbar Create/Draw/Undo wspólnym wzorcem.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P1</span></div></div>
+      <div class="item"><div class="iid">A4</div><div class="idesc"><div class="t">Wpiąć Process w powłokę</div><div class="d">Najłatwiej — toolbar już odchudzony do progresywnego ujawniania. Panele KPI/Coach/Summary → accordion.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P1</span></div></div>
+      <div class="item"><div class="iid">A5</div><div class="idesc"><div class="t">Wpiąć Table w powłokę</div><div class="d">Zakładki-widoków pod wspólne Menu 1 + prawy panel.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P1</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">B</span><span class="wnm">Silnik interakcji canvasu</span><span class="wcov">domyka <b>K2, K9 (MM/WB/PF)</b> + K1 WB</span></div>
+      <div class="item"><div class="iid">B0</div><div class="idesc"><div class="t">Harness interakcji (pomiar)</div><div class="d">Rozszerzenie mojego dev-render: mierzy zoom/pan/drag/add/type/font/color PRZED→PO. Bez tego K2/K9 są „na czuja". Fundament Fazy 0.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P0</span></div></div>
+      <div class="item"><div class="iid">B1</div><div class="idesc"><div class="t">Zoom-do-kursora + pan (trackpad/scroll)</div><div class="d">Dostroić zoom, włączyć trackpad-pan (dziś <code>panOnScroll:false</code> w Whiteboard).</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P2</span></div></div>
+      <div class="item"><div class="iid">B2</div><div class="idesc"><div class="t">Snapping (siatka + obiekty) + prowadnice wyrównania</div><div class="d">Dziś BRAK CAŁKOWITY w Whiteboard i Process. Rdzeń „przesuwanie trudne". Wspólny komponent guide/alignment.</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P2</span></div></div>
+      <div class="item"><div class="iid">B3</div><div class="idesc"><div class="t">Marquee box-select — potwierdzić / dobudować</div><div class="d">Mind Map: multi-mode jest, marquee niepotwierdzony.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P2</span></div></div>
+      <div class="item"><div class="iid">B4</div><div class="idesc"><div class="t">Pasek stylu per element — kolor + czcionka</div><div class="d">Kolor (po utworzeniu, nie losowany) + rozmiar/waga/wyrównanie czcionki, jak FigJam. Wspólny dla WB/PF/MM. Zawozi K1/K6/K9 naraz.</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P2</span></div></div>
+      <div class="item"><div class="iid">B5</div><div class="idesc"><div class="t">Align / distribute zaznaczonych</div><div class="d">Wyrównaj do lewej/środka, rozłóż równomiernie (Process gł., przydatne wszędzie).</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P2</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">C</span><span class="wnm">Process — connector + operacje węzła</span><span class="wcov">domyka <b>K1, K2, K6, K9 (PF)</b></span></div>
+      <div class="item"><div class="iid">C1</div><div class="idesc"><div class="t">Connector magnetyczny 4-stronny</div><div class="d">Zamienić sztywny <code>Handle Left/Right</code> na 4 handle (top/right/bottom/left) + hover-highlight. Dziś connector zawsze L→R — wymusza layout poziomy.</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">C2</div><div class="idesc"><div class="t">Odsłonić auto-routing ortogonalny domyślnie</div><div class="d">Silnik jest (<code>edgeRouting.ts</code>), ale opt-in i ukryty — user nie wie że istnieje.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">C3</div><div class="idesc"><div class="t">Prawy-klik węzła: copy + connect + change-shape</div><div class="d">Trzy operacje standardu Lucidchart, których brakuje w menu węzła.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">C4</div><div class="idesc"><div class="t">Biblioteka kształtów drag-z-palety</div><div class="d">Dziś klik-dodaje w domyślną pozycję; Lucid-user oczekuje przeciągnięcia na płótno.</div></div><div class="meta"><span class="chip c-nice">nice</span><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">D</span><span class="wnm">Table — odblokowanie + interakcje arkuszowe</span><span class="wcov">domyka <b>K1, K2, K6, K9 (Table)</b></span></div>
+      <div class="item"><div class="iid">D0</div><div class="idesc"><div class="t">DECYZJA: silnik platform vs port kebaba do legacy</div><div class="d">Albo (a) włączyć <code>tablePlatformMetadataFirst</code> + zasiedzić realne bazy (silnik metadata-first uznany za niegotowy — trzeba domknąć), albo (b) przenieść bogaty kebab/typy do legacy grid, którego user realnie używa. Blokuje D5/D6 i część K1/K7.</div></div><div class="meta"><span class="chip c-dec">decyzja</span><span class="chip c-phase">P0</span></div></div>
+      <div class="item"><div class="iid">D1</div><div class="idesc"><div class="t">Nawigacja Tab / strzałki między komórkami</div><div class="d">Dziś BRAK — jedyny <code>onKeyDown</code> dotyczy nazw widoków, nie komórek. Rdzeń „czuje się jak arkusz".</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">D2</div><div class="idesc"><div class="t">Zaznaczanie zakresu + kopiuj/wklej zakresu</div><div class="d">Prostokątne zaznaczenie + Ctrl+C/V kompatybilne z Excelem. Dziś tylko copy CAŁEJ tabeli.</div></div><div class="meta"><span class="chip c-size">L</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">D3</div><div class="idesc"><div class="t">Fill-handle (lub świadoma decyzja AI-fill)</div><div class="d">Przeciągnij uchwyt → wzór w dół. Mamy AI-fill (inna filozofia) — do ustalenia czy zastępuje, czy uzupełnia.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">D4</div><div class="idesc"><div class="t">Drag-reorder wierszy</div><div class="d">Uchwyt po lewej wiersza. Kolumny już mają drag-reorder; wiersze nie.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">D5</div><div class="idesc"><div class="t">Prawy-klik komórki (copy/paste/clear/expand)</div><div class="d">Dziś brak dedykowanego menu komórki. Zależne od D0 (który grid).</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">D6</div><div class="idesc"><div class="t">Kolor wiersza ręczny z menu</div><div class="d">Dziś tylko reguła warunkowa (RowColoringConfig), brak „ustaw kolor tego wiersza".</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">D7</div><div class="idesc"><div class="t">Pole „Assignee" (ręczny wybór z członków)</div><div class="d">Dziś tylko auto <code>createdBy</code>; brak pola „przypisz do" — częsty typ Airtable.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">E</span><span class="wnm">Wykończenie / elegancja</span><span class="wcov">domyka <b>K4, K8 ×4</b></span></div>
+      <div class="item"><div class="iid">E1</div><div class="idesc"><div class="t">Whiteboard: naprawić half-rendered overlay</div><div class="d">Defekt top-left z uciętym tekstem („ION LAYER") — wygląda zepsuty.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">E2</div><div class="idesc"><div class="t">Empty-states zaprojektowane (×4)</div><div class="d">„Dodaj pierwszą karteczkę / krok / wiersz / węzeł" — dziś martwa szarość.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">E3</div><div class="idesc"><div class="t">Mind Map: hex→c-tag tokeny + cień centrum</div><div class="d">BRANCH_COLORS na surowych hex → tokeny; złagodzić cień węzła centralnego po zdjęciu orba.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">E4</div><div class="idesc"><div class="t">Table: crimson-fix + ikony typów + gęstość</div><div class="d">Zbadać wzrokiem „AI Fill" na czerwono, dodać ikony typów pól, przełącznik gęstości wiersza.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">E5</div><div class="idesc"><div class="t">Process: styl kształtu (wypełnienie/obrys)</div><div class="d">Czysty płaski styl Lucid; część nakłada się z paskiem stylu B4.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+      <div class="item"><div class="iid">E6</div><div class="idesc"><div class="t">Mikro-interakcje + dark/light dopięcie (×4)</div><div class="d">Hover/selekcja/animacje spójne; oba motywy równie dopracowane (lista czekowania część B).</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P4</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">F</span><span class="wnm">Teresa / kolaboracja — domknięcie</span><span class="wcov">domyka <b>K7 ×4</b></span></div>
+      <div class="item"><div class="iid">F1</div><div class="idesc"><div class="t">Live presence cursors</div><div class="d">Kursory-widma innych uczestników (Whiteboard najpierw, potem reszta). Dziś tylko lista obecności.</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P5</span></div></div>
+      <div class="item"><div class="iid">F2</div><div class="idesc"><div class="t">Zawęzić regex interceptorów czatu (Process)</div><div class="d">„Stwórz proces" przechwytywane PRZED LLM → no-op poza otwartym narzędziem.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P5</span></div></div>
+      <div class="item"><div class="iid">F3</div><div class="idesc"><div class="t">Fix persist race <code>map/sync</code></div><div class="d">Nieatomowy <code>POST /map/sync</code> — potencjalny cichy data-loss przy współpracy (Mind Map + wspólne).</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-opus">Opus</span><span class="chip c-phase">P5</span></div></div>
+      <div class="item"><div class="iid">F4</div><div class="idesc"><div class="t">Odblokować realtime silnika platform (Table)</div><div class="d">Relacyjny realtime martwy dla usera dopóki flaga OFF — zależne od decyzji D0.</div></div><div class="meta"><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P5</span></div></div>
+    </div>
+
+    <div class="ws">
+      <div class="wh"><span class="wsid">G</span><span class="wnm">Domknięcie zdolności</span><span class="wcov">domyka <b>K6 (MM/WB), K1 (MM)</b></span></div>
+      <div class="item"><div class="iid">G1</div><div class="idesc"><div class="t">Mind Map: emoji / icon picker na węźle</div><div class="d">Jedyny brak mechaniki wobec Whimsical/MindMeister (dziś emoji tylko jako AI-sentiment).</div></div><div class="meta"><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">G2</div><div class="idesc"><div class="t">Whiteboard: rich-text w sticky</div><div class="d">Bold/italic/listy w treści (dziś plain textarea).</div></div><div class="meta"><span class="chip c-nice">nice</span><span class="chip c-size">M</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+      <div class="item"><div class="iid">G3</div><div class="idesc"><div class="t">Mind Map: wklej obraz ze schowka + „Zmień kolor" w menu</div><div class="d">Dwa drobne braki wobec Whimsical (dziś obraz tylko z URL, kolor tylko z floating toolbara).</div></div><div class="meta"><span class="chip c-nice">nice</span><span class="chip c-size">S</span><span class="chip c-sonnet">Sonnet</span><span class="chip c-phase">P3</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Kolejność — 6 faz z bramkami odbioru</h2>
+    <div style="margin-top:6px">
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P0 · Fundament</span><span class="pg">pomiar + decyzja, odblokowuje resztę</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">B0</span><span class="id">D0</span></span> — harness interakcji (żeby K2/K9 mierzyć, nie zgadywać) + decyzja o silniku Table. <span class="gate">bramka: uczciwy pomiar bazowy</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P1 · Wspólna powłoka</span><span class="pg">domyka K3+K5 ×4, fundament K8</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">A1</span></span> prototyp → <b>wstępny OK Piotra</b>, potem <span class="ids"><span class="id">A2</span><span class="id">A3</span><span class="id">A4</span><span class="id">A5</span></span> wpięcia. <span class="gate">bramka: render-sam → akcept per narzędzie (oba motywy)</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P2 · Silnik interakcji</span><span class="pg">częściowo równolegle z P1 (po A1)</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">B1</span><span class="id">B2</span><span class="id">B3</span><span class="id">B4</span><span class="id">B5</span></span> — snapping, prowadnice, pasek stylu, trackpad-pan, align. Domyka K2+K9 na 3 canvasach. <span class="gate">bramka: pomiar B0 PRZED→PO + render</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P3 · Parytet per narzędzie</span><span class="pg">reszta K1/K2/K6/K9 (zależy od P1+P2)</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">C1</span><span class="id">C2</span><span class="id">C3</span><span class="id">C4</span></span> Process · <span class="ids"><span class="id">D1</span><span class="id">D2</span><span class="id">D3</span><span class="id">D4</span><span class="id">D5</span><span class="id">D6</span><span class="id">D7</span></span> Table · <span class="ids"><span class="id">G1</span><span class="id">G2</span><span class="id">G3</span></span> zdolności. Kolejność: najboleśniejsze najpierw (Whiteboard/Table). <span class="gate">bramka: render-sam → akcept</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P4 · Elegancja / wykończenie</span><span class="pg">domyka K4+K8 ×4</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">E1</span><span class="id">E2</span><span class="id">E3</span><span class="id">E4</span><span class="id">E5</span><span class="id">E6</span></span> — overlay-fix, empty-states, tokeny, crimson, mikro-interakcje, dark/light. <span class="gate">bramka: odbiór wizualny oczami Piotra</span></div>
+      </div>
+      <div class="phase">
+        <div class="ph-h"><span class="pn">P5 · Kolaboracja + odbiór końcowy</span><span class="pg">domyka K7 ×4 + gate board-ready</span></div>
+        <div class="ph-b"><span class="ids"><span class="id">F1</span><span class="id">F2</span><span class="id">F3</span><span class="id">F4</span></span> + panel odbioru per narzędzie (oba motywy, panel adwersaryjny jakości). <span class="gate">bramka: 10 na wszystkich osiach potwierdzone w 2 przebiegach</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+  <section style="margin-top:20px">
+    <h2>Zasady wykonania (nienaruszalne)</h2>
+    <p class="note"><b>Reguła #7 przy KAŻDEJ robocie UI:</b> prototyp/render przeze mnie → zrzut → wstępny akcept Piotra → dopiero deploy. Piotr nigdy nie jest pierwszym testerem wizualnym. <b>Nic na demo bez akceptu na zrzucie</b>, jedna partia po drugiej (nie hurtem). Po każdej akcept-partii re-tag <code>demo-safe-&lt;data&gt;</code>. Baza gałęzi = <code>origin/demo</code>. Zero crimson w nowym kodzie. Weryfikacja realnego runtime, nie flag.</p>
+    <p class="note"><b>Świadomie NIE podaję estymat w dniach.</b> Nie mam danych o tempie zespołu — dzień z sufitu byłby zmyśleniem (złota reguła: nie zawyżać). Zamiast tego rozmiar S/M/L + model + faza + zależności dają kształt i kolejność. Gdy ustalimy tempo na 1–2 pierwszych robotach (np. A1+A2), przeliczę realny kalendarz.</p>
+    <p class="note"><b>Źródła:</b> siatka ocen (<code>_SIATKA_OCEN_IDEE_2026-07-22.html</code>) + checklisty parytetu (<code>_FAZA0_PARYTET_*.md</code>, [MUST]/[NICE] czytane z realnego kodu) + plan fazowy analizy (<code>_ANALIZA_IDEE_4_NARZEDZIA §6</code>). Ten dokument = wykonawcze rozbicie tamtego na 36 robót z pełnym pokryciem komórek.</p>
+  </section>
+
+</div>
+</body>
+</html>

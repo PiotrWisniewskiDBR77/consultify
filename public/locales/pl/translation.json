@@ -28270,6 +28270,7 @@
     },
     "toolbar": {
       "modeLabel": "Tryb",
+      "more": "Więcej",
       "flowModeAriaLabel": "Tryb przepływu",
       "kitTitle": "Zestaw notacji ustawiony z czatu",
       "stepsCount": "Kroki {{value}}",

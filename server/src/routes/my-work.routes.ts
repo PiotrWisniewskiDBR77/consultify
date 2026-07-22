@@ -2561,6 +2561,20 @@ router.get(
         : 'NULL as "lastOpenedAt"',
     ].join(',\n          ');
 
+    // Each idea's real tool lives in my_idea_maps.preferred_tool (my_ideas has NO
+    // tool column). Without this the list can't tell a whiteboard/process_flow/
+    // table idea from a mind map: the "Tool" badge defaults to Recommendation map
+    // for ALL rows, and opening the idea can't seed the right tool (handleIdeaClick
+    // reads this preferredTool). Pull it from the canonical map row (fallback: most
+    // recent), guarded so the list still works before the my_idea_maps migration.
+    const listMapCols = await getTableColumns('my_idea_maps');
+    const preferredToolSelect = listMapCols.has('preferred_tool')
+      ? `(SELECT mim.preferred_tool FROM my_idea_maps mim
+             WHERE mim.idea_id = my_ideas.id
+             ORDER BY ${listMapCols.has('is_canonical') ? 'mim.is_canonical DESC NULLS LAST, ' : ''}mim.updated_at DESC
+             LIMIT 1) as "preferredTool"`
+      : 'NULL as "preferredTool"';
+
     const folder = req.query.folder ? String(req.query.folder).trim() : '';
     const favoriteOnly =
       String(req.query.favoriteOnly || '') === 'true' || req.query.favoriteOnly === '1';
@@ -2612,6 +2626,7 @@ router.get(
           promoted_to as "promotedTo",
           ${lineageSelect},
           ${homeSelect},
+          ${preferredToolSelect},
           created_at as "createdAt",
           updated_at as "updatedAt"
         FROM my_ideas

@@ -22,9 +22,15 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import type { FieldType, LinkedRecordFieldOptions, TablePlatformView } from '@/types/tablePlatform';
+import type {
+  FieldType,
+  LinkedRecordFieldOptions,
+  TablePlatformField,
+  TablePlatformView,
+} from '@/types/tablePlatform';
 
 import { CalendarView } from './CalendarView';
 import { CellEditor } from './CellEditor';
@@ -51,6 +57,12 @@ import { ViewSwitcher } from './ViewSwitcher';
 export interface ViewRouterProps {
   /** Optional CSV import handler (same contract as `TableToolbar` hidden file input). */
   onCSVImport?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /**
+   * K1/Airtable parity — row kebab "Rozwiń rekord": opens the full record modal
+   * (RecordExpandModal, rendered by the parent IdeaTableTool). Optional — the
+   * menu item disables itself (with a note) when not wired.
+   */
+  onExpandRecord?: (id: string) => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,7 +91,7 @@ function cellId(rowId: string, fieldId: string): string {
 
 // ── Platform grid (table layout) ─────────────────────────────────────────────
 
-interface PlatformGridViewProps {
+export interface PlatformGridViewProps {
   processedRows: TableNode[];
   groupedRows: Record<string, TableNode[]> | null;
   visibleColumns: ColumnDef[];
@@ -98,9 +110,18 @@ interface PlatformGridViewProps {
   onRemoveMissingField?: (fieldId: string) => void;
   /** R5: conditional-formatting rules applied per-cell. */
   formatRules: FormatRule[];
+  /** K1/Airtable parity — row kebab actions. */
+  platformFields: TablePlatformField[];
+  handleDuplicateRow: (id: string) => void;
+  handleDeleteRow: (id: string) => void;
+  handleInsertRow: (referenceId: string, direction: 'above' | 'below') => void;
+  onExpandRecord?: (id: string) => void;
 }
 
-const PlatformGridView: React.FC<PlatformGridViewProps> = ({
+// Exported as a dev-render/visual-test seam (K1 Airtable-parity row kebab is
+// only reachable in-app when tablePlatformMetadataFirst has a live platform
+// base; the harness mounts this pure-presentational component with mock props).
+export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   processedRows,
   groupedRows,
   visibleColumns,
@@ -115,8 +136,50 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   viewConfig,
   onRemoveMissingField,
   formatRules,
+  platformFields,
+  handleDuplicateRow,
+  handleDeleteRow,
+  handleInsertRow,
+  onExpandRecord,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // The kebab + note editor render inline pl/en strings via `isPl` (same
+  // convention as the ViewRouter parent below). Without this the component
+  // throws `isPl is not defined` the moment it mounts — latent because in-app
+  // PlatformGridView only renders when tablePlatformMetadataFirst resolves a
+  // live base (none exist yet), so it was never exercised until the dev-render
+  // harness mounted it directly (audyt-idee-2026-07-22, CLAUDE.md #7 catch).
+  const isPl = i18n.language?.startsWith('pl');
+
+  // K1/Airtable parity — row kebab (right-click on a row).
+  const [rowMenu, setRowMenu] = useState<{ rowId: string; x: number; y: number } | null>(null);
+  const [noteEditor, setNoteEditor] = useState<{
+    rowId: string;
+    fieldKey: string;
+    value: string;
+  } | null>(null);
+
+  // "Dodaj notatkę" reuses the first non-computed long-text field as the note
+  // target (falls back to a single-line text field); disabled with a note
+  // when the table has no text field to hold one (Aneks #4 — never hidden).
+  const noteField = useMemo(
+    () =>
+      platformFields.find((f) => f.fieldType === 'longText' && !f.isComputed) ??
+      platformFields.find((f) => f.fieldType === 'singleLineText' && !f.isComputed),
+    [platformFields]
+  );
+
+  const copyRowToClipboard = useCallback(
+    (row: TableNode) => {
+      const line = visibleColumns.map((c) => String(row.data?.[c.key] ?? '')).join('\t');
+      void navigator.clipboard
+        ?.writeText(line)
+        .then(() => toast.success(isPl ? 'Skopiowano wiersz' : 'Row copied'))
+        .catch(() => {});
+    },
+    [visibleColumns, isPl]
+  );
+
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
       return (
@@ -200,7 +263,15 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   };
 
   const renderRow = (row: TableNode) => (
-    <tr key={row.id} className="hover:bg-c-surface-raised">
+    <tr
+      key={row.id}
+      className="hover:bg-c-surface-raised"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (locked) return;
+        setRowMenu({ rowId: row.id, x: e.clientX, y: e.clientY });
+      }}
+    >
       <td className="w-10 border-b border-r border-c-border-subtle px-1 py-1 align-middle text-center">
         <input
           type="checkbox"
@@ -252,59 +323,250 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       : processedRows.map((row) => renderRow(row));
 
   return (
-    <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
-      <table
-        /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full border-collapse text-left text-[11px]"
-      >
-        <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur-sm">
-          <tr>
-            <th className="w-10 border-b border-r border-c-border-subtle" />
-            {visibleColumns.map((col) => {
-              const missing = isMissingField(col.key, viewConfig);
-              const missingFieldName =
-                viewConfig?.missing_field_names?.[col.key] ??
-                col.header ??
-                t('ideas.table.viewRouter.unknown', 'Unknown');
-              if (missing) {
+    <>
+      <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
+        <table
+          /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full border-collapse text-left text-[11px]"
+        >
+          <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur-sm">
+            <tr>
+              <th className="w-10 border-b border-r border-c-border-subtle" />
+              {visibleColumns.map((col) => {
+                const missing = isMissingField(col.key, viewConfig);
+                const missingFieldName =
+                  viewConfig?.missing_field_names?.[col.key] ??
+                  col.header ??
+                  t('ideas.table.viewRouter.unknown', 'Unknown');
+                if (missing) {
+                  return (
+                    <th
+                      key={col.key}
+                      className="border-b border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning text-xs px-3 py-2 font-semibold text-left whitespace-nowrap"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        <span className="min-w-0 truncate">
+                          {t('ideas.table.viewRouter.missingField', '[Missing: {{name}}]', {
+                            name: missingFieldName,
+                          })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveMissingField?.(col.key)}
+                          className="ml-auto shrink-0 text-c-warning hover:brightness-110"
+                          title={t('ideas.table.viewRouter.removeFromView', 'Remove from view')}
+                          aria-label={t(
+                            'ideas.table.viewRouter.removeFromView',
+                            'Remove from view'
+                          )}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </th>
+                  );
+                }
                 return (
                   <th
                     key={col.key}
-                    className="border-b border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning text-xs px-3 py-2 font-semibold text-left whitespace-nowrap"
+                    className="border-b border-r border-c-border-subtle px-2 py-2 font-semibold text-c-text-secondary whitespace-nowrap"
                   >
-                    <div className="flex items-center gap-1.5">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      <span className="min-w-0 truncate">
-                        {t('ideas.table.viewRouter.missingField', '[Missing: {{name}}]', {
-                          name: missingFieldName,
-                        })}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => onRemoveMissingField?.(col.key)}
-                        className="ml-auto shrink-0 text-c-warning hover:brightness-110"
-                        title={t('ideas.table.viewRouter.removeFromView', 'Remove from view')}
-                        aria-label={t('ideas.table.viewRouter.removeFromView', 'Remove from view')}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
+                    {col.header}
                   </th>
                 );
+              })}
+            </tr>
+          </thead>
+          <tbody>{body}</tbody>
+        </table>
+      </div>
+
+      {/* K1/Airtable parity — row kebab (right-click menu). Kontrakt Aneks #4:
+          brak handlera ⇒ pozycja disabled z dopiskiem, nigdy ukryta. */}
+      {rowMenu && (
+        <div className="fixed inset-0 z-[60]" onClick={() => setRowMenu(null)}>
+          <div
+            className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border py-1 min-w-[180px]"
+            style={{ left: rowMenu.x, top: rowMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+              onClick={() => {
+                const editableCol =
+                  visibleColumns.find((c) => !platformFieldById.get(c.key)?.isComputed) ??
+                  visibleColumns[0];
+                if (editableCol) setEditingCellId(cellId(rowMenu.rowId, editableCol.key));
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Edytuj' : 'Edit'}
+            </button>
+            <button
+              type="button"
+              disabled={!noteField}
+              className={`w-full px-3 py-1.5 text-xs text-left ${
+                noteField
+                  ? 'hover:bg-c-surface-raised text-c-text-secondary'
+                  : 'text-c-text-muted cursor-not-allowed'
+              }`}
+              title={
+                noteField
+                  ? undefined
+                  : isPl
+                    ? 'Brak pola tekstowego w tej tabeli'
+                    : 'No text field in this table'
               }
-              return (
-                <th
-                  key={col.key}
-                  className="border-b border-r border-c-border-subtle px-2 py-2 font-semibold text-c-text-secondary whitespace-nowrap"
-                >
-                  {col.header}
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>{body}</tbody>
-      </table>
-    </div>
+              onClick={() => {
+                if (!noteField) return;
+                const target = processedRows.find((r) => r.id === rowMenu.rowId);
+                setNoteEditor({
+                  rowId: rowMenu.rowId,
+                  fieldKey: noteField.id,
+                  value: String(target?.data?.[noteField.id] ?? ''),
+                });
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Dodaj notatkę' : 'Add note'}
+            </button>
+
+            <div className="h-px bg-c-surface-raised my-1" />
+
+            <button
+              type="button"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+              onClick={() => {
+                handleInsertRow(rowMenu.rowId, 'above');
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Wstaw wiersz nad' : 'Insert row above'}
+            </button>
+            <button
+              type="button"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+              onClick={() => {
+                handleInsertRow(rowMenu.rowId, 'below');
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Wstaw wiersz pod' : 'Insert row below'}
+            </button>
+
+            <div className="h-px bg-c-surface-raised my-1" />
+
+            <button
+              type="button"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+              onClick={() => {
+                handleDuplicateRow(rowMenu.rowId);
+                toast.success(isPl ? 'Zduplikowano wiersz' : 'Row duplicated');
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Duplikuj wiersz' : 'Duplicate row'}
+            </button>
+            <button
+              type="button"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+              onClick={() => {
+                const target = processedRows.find((r) => r.id === rowMenu.rowId);
+                if (target) copyRowToClipboard(target);
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Kopiuj wiersz' : 'Copy row'}
+            </button>
+
+            <div className="h-px bg-c-surface-raised my-1" />
+
+            <button
+              type="button"
+              disabled={!onExpandRecord}
+              className={`w-full px-3 py-1.5 text-xs text-left ${
+                onExpandRecord
+                  ? 'hover:bg-c-surface-raised text-c-text-secondary'
+                  : 'text-c-text-muted cursor-not-allowed'
+              }`}
+              title={
+                onExpandRecord
+                  ? undefined
+                  : isPl
+                    ? 'Panel szczegółów niedostępny'
+                    : 'Record detail panel unavailable'
+              }
+              onClick={() => {
+                onExpandRecord?.(rowMenu.rowId);
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Rozwiń rekord' : 'Expand record'}
+            </button>
+
+            <div className="h-px bg-c-surface-raised my-1" />
+
+            <button
+              type="button"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
+              onClick={() => {
+                handleDeleteRow(rowMenu.rowId);
+                toast.success(isPl ? 'Usunięto wiersz' : 'Row deleted');
+                setRowMenu(null);
+              }}
+            >
+              {isPl ? 'Usuń wiersz' : 'Delete row'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* "Dodaj notatkę" — inline editor for the row's designated text field. */}
+      {noteEditor && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[color-mix(in_srgb,var(--c-text)_20%,transparent)]"
+          onClick={() => setNoteEditor(null)}
+        >
+          <div
+            className="bg-c-surface rounded-xl shadow-xl border border-c-border p-4 w-80"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold mb-2 text-c-text">
+              {isPl ? 'Notatka' : 'Note'}
+            </h3>
+            <textarea
+              autoFocus
+              value={noteEditor.value}
+              onChange={(e) =>
+                setNoteEditor((prev) => (prev ? { ...prev, value: e.target.value } : prev))
+              }
+              placeholder={isPl ? 'Dodaj notatkę...' : 'Add a note...'}
+              className="w-full h-24 px-3 py-2 rounded-lg text-xs bg-c-surface-raised border border-c-border outline-none focus:ring-2 focus:ring-c-focus mb-3 resize-none"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setNoteEditor(null)}
+                className="px-3 py-1.5 text-xs rounded-lg text-c-text-muted hover:bg-c-surface-raised"
+              >
+                {isPl ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleFieldChange(noteEditor.rowId, noteEditor.fieldKey, noteEditor.value);
+                  setNoteEditor(null);
+                }}
+                className="px-3 py-1.5 text-xs rounded-lg bg-navy-900 text-white hover:brightness-95 dark:bg-[#F4F7FB] dark:text-navy-900"
+              >
+                {isPl ? 'Zapisz' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -312,8 +574,9 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
 
 // ── Main router ──────────────────────────────────────────────────────────────
 
-export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
+export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRecord }) => {
   const { t, i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
   const csvInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -327,6 +590,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     visibleColumns,
     handleFieldChange,
     handleAddRow,
+    handleDuplicateRow,
+    handleDeleteRow,
+    handleInsertRow,
     selectedRowIds,
     toggleRowSelection,
     sort: _sort,
@@ -633,6 +899,11 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           viewConfig={activeViewConfig}
           onRemoveMissingField={handleRemoveMissingField}
           formatRules={formatRules}
+          platformFields={platformFields}
+          handleDuplicateRow={handleDuplicateRow}
+          handleDeleteRow={handleDeleteRow}
+          handleInsertRow={handleInsertRow}
+          onExpandRecord={onExpandRecord}
         />
       </ViewErrorBoundary>
     ) : (

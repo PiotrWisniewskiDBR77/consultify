@@ -1648,6 +1648,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const preferredSystem = normalizePreferredSystem(seedIntent.preferredSystem);
       const body = composeIdeaBodyFromSeedIntent(seedIntent);
       const title = deriveIdeaTitleFromSeedIntent(seedIntent, t('myWork.hub.newIdea', 'New Idea'));
+      const startTool = preferredSystem || 'mindmap';
       handleOpenDocument({
         id: newId,
         type: 'idea',
@@ -1655,6 +1656,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         status: 'idea',
         data: {
           isNew: true,
+          // A new idea has NO saved map yet, so hydrate() cannot restore the tool
+          // the user picked in the build window — it MUST ride on the doc. Without
+          // this, createDefaultIdeaWorkspaceState() falls back to 'mindmap' and the
+          // workspace opens a mind map no matter which area was chosen (IDE-001).
+          initialTool: startTool,
           seedIntent,
           creationPayload: {
             title,
@@ -1664,12 +1670,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           },
         },
       });
+      // The hub feeds IdeaMapWorkspace `activeTool = perIdeaState?.activeTool ||
+      // ideaActiveTool`. The patch below is a no-op for a brand-new id (default
+      // state already equals the patch, so patchIdeaWorkspaceState's "unchanged"
+      // guard drops it), which left the hub falling back to ideaActiveTool='mindmap'
+      // — the root cause of "New Idea always opens a map". Seed the fallback too so
+      // the controlled activeTool prop reflects the chosen tool from the first frame.
+      setIdeaActiveTool(startTool);
       setIdeaWorkspaceStateById((prev) =>
         patchIdeaWorkspaceState(
           prev,
-          { id: newId, data: { isNew: true, initialTool: preferredSystem || 'mindmap' } },
+          { id: newId, data: { isNew: true, initialTool: startTool } },
           {
-            activeTool: preferredSystem || 'mindmap',
+            activeTool: startTool,
             activePanel: 'tools',
             selection: EMPTY_SELECTION,
             locked: true,

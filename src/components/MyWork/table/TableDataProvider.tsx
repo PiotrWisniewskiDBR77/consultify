@@ -180,6 +180,12 @@ export interface TableDataContextValue {
   handleFieldChange: (nodeId: string, field: string, value: unknown) => void;
   handleAddRow: () => void;
   handleBulkDelete: () => void;
+  /** K1/Airtable parity — row kebab: duplicate a single row. */
+  handleDuplicateRow: (id: string) => void;
+  /** K1/Airtable parity — row kebab: delete a single row. */
+  handleDeleteRow: (id: string) => void;
+  /** K1/Airtable parity — row kebab: insert a blank row above/below a reference row. */
+  handleInsertRow: (referenceId: string, direction: 'above' | 'below') => void;
 
   // Views
   viewLayout: ViewLayout;
@@ -285,6 +291,9 @@ export function TableDataProvider({
       handleFieldChange: integration.handleFieldChange,
       handleAddRow: integration.handleAddRow,
       handleBulkDelete: integration.handleBulkDelete,
+      handleDuplicateRow: integration.handleDuplicateRow,
+      handleDeleteRow: integration.handleDeleteRow,
+      handleInsertRow: integration.handleInsertRow,
       viewLayout: integration.viewLayout,
       setViewLayout: integration.setViewLayout,
       savedViews: integration.savedViews,
