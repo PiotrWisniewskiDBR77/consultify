@@ -33453,7 +33453,10 @@
       "errorRetry": "Spróbuj ponownie",
       "errorClose": "Zamknij",
       "property": "Właściwość",
-      "value": "Wartość"
+      "value": "Wartość",
+      "statusActive": "Aktywne",
+      "statusInactive": "Nieaktywne",
+      "statusComingSoon": "Wkrótce"
     },
     "knownToolDetail": {
       "dynamicSwot": {

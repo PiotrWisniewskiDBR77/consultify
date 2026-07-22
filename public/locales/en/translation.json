@@ -32393,7 +32393,10 @@
       "errorRetry": "Try again",
       "errorClose": "Close",
       "property": "Property",
-      "value": "Value"
+      "value": "Value",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "statusComingSoon": "Coming soon"
     },
     "knownToolDetail": {
       "dynamicSwot": {

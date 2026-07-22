@@ -1620,14 +1620,18 @@ export function KnownToolDetailView(props: {
         saving: false,
         isDirty: false,
         onClose,
-        // SPEC-N §2.3 / CLAUDE.md pułapka nr 1 — kropka statusu używała wcześniej
-        // palety brandowej (crimson #85182F) w POWŁOCE. Czerwień jest zarezerwowana
-        // dla semantyki krytycznej; status narzędzia to nie awaria. Kropka niesie
-        // teraz realną informację: aktywne = c-success, nieaktywne = c-text-muted.
-        // (15 pozostałych wystąpień tej palety — A1 szacował 13 — siedzi w TREŚCI
-        // sekcji: kropki wypunktowania i gradienty kart. Poza zakresem M1,
-        // osobny sweep kolorów.)
-        statusDotColor: tool?.isActive ? 'bg-c-success' : 'bg-c-text-muted',
+        // D-B (2026-07-22) — status = ETYKIETA-PIGUŁKA z tekstem, nie naga kropka.
+        // Karta lokalizuje sama; ton mapuje na c-*. Stan domenowy narzędzia:
+        //   coming-soon → „Wkrótce" (neutral)  ·  aktywne → „Aktywne" (approved =
+        //   bg-c-success, przeniesione z byłego statusDotColor:1630)  ·  reszta →
+        //   „Nieaktywne" (neutral). Czerwień (rejected) nie występuje — status
+        //   biblioteczny to nie awaria (CLAUDE.md pułapka nr 1).
+        statusLabel: tool?.isComingSoon
+          ? t('discoveryToolsMain.knownToolDetailView.statusComingSoon', 'Coming soon')
+          : tool?.isActive
+            ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
+            : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive'),
+        statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
         primaryAction,
       }}
       sections={sections}
