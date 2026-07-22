@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { isTemplateLifecycleEnabled } from '@/utils/templateLifecycleFlag';
 
+import { ExceleParametricTemplates } from './ExceleParametricTemplates';
 import type { KimiLane } from './KimiWorkspaceShell';
 import { TabeleTemplatesGrid } from './templateLifecycle/TabeleTemplatesGrid';
 import { useModuleRecentArtifacts } from './useModuleRecentArtifacts';
@@ -102,7 +103,11 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const Icon = meta.icon;
 
   const { templates, loading: templatesLoading } = useModuleTemplates(lane);
-  const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane, 10);
+  const {
+    artifacts: recentArtifacts,
+    loading: recentLoading,
+    refetch: refetchRecent,
+  } = useModuleRecentArtifacts(lane, 10);
   // Scope split (M19/M20 scope-bug fix):
   //   Recent = every artifact in this lane, newest-touched first (incl. drafts/WIP).
   //   Saved  = ONLY artifacts the user has finalized/persisted — an explicit
@@ -223,13 +228,21 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
           <TabeleTemplatesGrid onTemplateClick={(tplId) => handleTemplateClick(tplId)} />
         )}
         {activeTab === 'templates' && !useTabeleLifecycleGrid && (
-          <TemplatesGrid
-            templates={templates}
-            loading={templatesLoading}
-            onTemplateClick={handleTemplateClick}
-            isPolish={isPolish}
-            lane={lane}
-          />
+          <>
+            {/* C3 — parametric model templates (live-formula .xlsx) from the
+                server registry. Only /excele; mounted here (a really-rendered
+                component) to avoid the phantom-UI trap. */}
+            {lane === 'excele' && (
+              <ExceleParametricTemplates isPolish={isPolish} onBuilt={refetchRecent} />
+            )}
+            <TemplatesGrid
+              templates={templates}
+              loading={templatesLoading}
+              onTemplateClick={handleTemplateClick}
+              isPolish={isPolish}
+              lane={lane}
+            />
+          </>
         )}
         {activeTab === 'recent' && (
           <ArtifactsList

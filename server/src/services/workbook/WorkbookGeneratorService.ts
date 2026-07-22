@@ -25,6 +25,7 @@ import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.j
 import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
 import {
   buildFromTemplate,
+  buildFromTemplateFlat,
   listWorkbookTemplates,
   type WorkbookTemplateId,
 } from './templates/index.js';
@@ -1106,6 +1107,107 @@ class WorkbookGeneratorService {
       validationErrors: structuralValidation.errors,
       classifiedErrors,
       qualityScore,
+      qualityReport,
+      pipelineLog,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * C3 (2026-07-22) — deterministic build straight from a registered PARAMETRIC
+   * TEMPLATE, skipping the whole LLM pipeline. The template already emits a
+   * complete, proven `WorkbookSchema` (every cell a formula, assumptions
+   * separated), so there is nothing to plan/generate — we only validate, run the
+   * deterministic quality critic (fail-soft, for parity telemetry), and build the
+   * .xlsx. Reuses the exact BUILD-phase primitives (`validateWorkbookSchema`,
+   * `critiqueWorkbook`, `buildWorkbookBuffer`) and returns the SAME
+   * `WorkbookGenerationResult` shape as `generate`, so the route can persist,
+   * cache and register the artifact through one shared path.
+   *
+   * `qualityScore` stays null (that field carries the LLM review's 0–5 score,
+   * which does not run here); the deterministic 0–100 `qualityReport` is attached.
+   * Throws for an unknown template id or a build failure (route → 400/500).
+   */
+  async generateFromTemplate(input: {
+    templateId: string;
+    flatParams: Record<string, unknown>;
+  }): Promise<WorkbookGenerationResult> {
+    const id = uuidv4();
+    const pipelineLog: PipelinePhaseLog[] = [];
+
+    const schema = buildFromTemplateFlat(input.templateId, input.flatParams);
+    if (!schema) {
+      throw new Error(`Unknown workbook template: "${input.templateId}"`);
+    }
+    pipelineLog.push({
+      phase: 'template_match',
+      status: 'ok',
+      durationMs: 0,
+      detail: `Built from registered template "${input.templateId}" (parametrized, not designed from scratch).`,
+    });
+
+    const classifiedErrors: P23ClassifiedError[] = [];
+    const structuralValidation = validateWorkbookSchema(schema);
+    if (!structuralValidation.valid) {
+      for (const err of structuralValidation.errors) {
+        classifiedErrors.push(createP23Error('validation_failed', err));
+      }
+    }
+
+    let qualityReport: WorkbookQualityReport;
+    try {
+      qualityReport = critiqueWorkbook(schema);
+    } catch (criticErr) {
+      logger.warn('[WorkbookGenerator] Template build: quality gate threw, continuing', criticErr);
+      qualityReport = { score: 100, issues: [], passed: true };
+    }
+    for (const iss of qualityReport.issues) {
+      classifiedErrors.push(
+        createP23Error(
+          iss.canonCode,
+          `${iss.code} [${iss.sheet}${iss.cell ? `!${iss.cell}` : ''}] ${iss.message}`,
+        ),
+      );
+    }
+
+    const p5Start = Date.now();
+    let buffer: Buffer;
+    try {
+      buffer = await buildWorkbookBuffer(schema, {
+        meta: {
+          source: 'Consultify — Intelligent Workbook Generator (template)',
+          generatedAt: new Date().toISOString().slice(0, 10),
+        },
+      });
+    } catch (buildError) {
+      const classified = classifyBuildError(buildError);
+      classifiedErrors.push(classified);
+      logger.error(`[WorkbookGenerator] Template build failed: ${classified.code}`, buildError);
+      throw buildError;
+    }
+
+    const safeTitle = (schema.title || 'Workbook').replace(/[^a-zA-Z0-9_\- ]/g, '').trim();
+    const fileName = `${safeTitle.replace(/\s+/g, '_')}.xlsx`;
+
+    pipelineLog.push({
+      phase: 'build',
+      status: 'ok',
+      durationMs: Date.now() - p5Start,
+      detail: `${buffer.length} bytes, ${structuralValidation.errors.length} structural warnings`,
+    });
+
+    logger.info(
+      `[WorkbookGenerator] Template build complete: "${schema.title}" — ${schema.sheets.length} sheets, ${buffer.length} bytes, quality=${qualityReport.score}/100`,
+    );
+
+    return {
+      id,
+      schema,
+      buffer,
+      fileName,
+      validationErrors: structuralValidation.errors,
+      classifiedErrors,
+      qualityScore: null,
       qualityReport,
       pipelineLog,
       generatedAt: new Date().toISOString(),

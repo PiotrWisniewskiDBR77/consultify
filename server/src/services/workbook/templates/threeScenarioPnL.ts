@@ -93,7 +93,10 @@ export interface ThreeScenarioPnLParams {
 // Defaults + validation
 // ---------------------------------------------------------------------------
 
-const DEFAULT_BASE: ScenarioDrivers = {
+// Exported so the template registry (templates/index.ts) can derive its FE-facing
+// parameter descriptors (label/type/default/min-max) from the SAME source of truth
+// the builder uses — no drift between the form defaults and the model defaults.
+export const DEFAULT_BASE: ScenarioDrivers = {
   revenueGrowthPct: 0.08,
   cogsPct: 0.55,
   opexPct: 0.22,
@@ -102,7 +105,7 @@ const DEFAULT_BASE: ScenarioDrivers = {
   taxRatePct: 0.19,
 };
 
-const DEFAULT_BULL: ScenarioDrivers = {
+export const DEFAULT_BULL: ScenarioDrivers = {
   revenueGrowthPct: 0.18,
   cogsPct: 0.5,
   opexPct: 0.2,
@@ -111,7 +114,7 @@ const DEFAULT_BULL: ScenarioDrivers = {
   taxRatePct: 0.19,
 };
 
-const DEFAULT_BEAR: ScenarioDrivers = {
+export const DEFAULT_BEAR: ScenarioDrivers = {
   revenueGrowthPct: 0.0,
   cogsPct: 0.62,
   opexPct: 0.26,
@@ -119,6 +122,13 @@ const DEFAULT_BEAR: ScenarioDrivers = {
   interestPct: 0.03,
   taxRatePct: 0.19,
 };
+
+/** Non-scenario defaults, also surfaced as parameter descriptors. */
+export const THREE_SCENARIO_GENERAL_DEFAULTS = {
+  companyName: 'Spółka',
+  currencyCode: 'PLN' as 'PLN' | 'EUR' | 'USD',
+  baseRevenue: 1_000_000,
+} as const;
 
 /** Clamp a fraction to a sane bound; fall back to `fallback` when not finite. */
 function safeFraction(v: number | undefined, fallback: number, min = -1, max = 5): number {

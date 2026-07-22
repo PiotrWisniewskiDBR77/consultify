@@ -7035,6 +7035,49 @@ export const Api = {
     return handleResponse(res, 'Failed to list workbooks');
   },
 
+  // C3 — parametric model templates (live-formula workbooks). The registry is
+  // self-describing (params: name/label/type/default/min-max), so the FE renders
+  // a form and `buildWorkbookTemplate` materializes the .xlsx deterministically
+  // (no LLM) → same Outputs card + downloadUrl as a generated workbook.
+  listWorkbookTemplates: async (): Promise<{
+    templates: Array<{
+      id: string;
+      name: string;
+      description: string;
+      params: Array<{
+        name: string;
+        label: string;
+        type: 'text' | 'integer' | 'number' | 'percent' | 'currency' | 'enum';
+        default: string | number;
+        min?: number;
+        max?: number;
+        step?: number;
+        options?: string[];
+        group?: string;
+        help?: string;
+      }>;
+    }>;
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/templates`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list workbook templates');
+  },
+
+  buildWorkbookTemplate: async (
+    id: string,
+    payload: {
+      params?: Record<string, unknown>;
+      language?: string;
+      projectId?: string | null;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/workbook/templates/${encodeURIComponent(id)}/build`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to build workbook from template');
+  },
+
   // --- ASSESSMENT WORKFLOW ---
   createAssessmentSession: async (payload: {
     assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
