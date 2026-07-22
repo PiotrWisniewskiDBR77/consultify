@@ -27,9 +27,9 @@ Statusy: `⬜ do zrobienia` · `🔷 decyzja Piotra` · `🟡 w toku` · `✅ zr
 
 | ID | Zadanie | Kody | Status | SHA/data |
 |---|---|---|---|---|
-| Z-0.1 | **Progi treści kart** per typ (minima pól; bramka czy porada). Dziś wszędzie `do-decyzji-piotra`. | R1 | 🔷 | — |
-| Z-0.2 | **Insight: dedup 11 sekcji Phase-D** (2 dublują rdzeń: executive-memo↔executive-summary, recommendations↔artifact-actions). | R2 | 🔷 | — |
-| Z-0.3 | **Kierunek 3 rozjazdów kontrakt↔runtime**: Task governance (kod brak AI vs kontrakt asystuje), Task dependencies (kanon dane vs Task pisze), Initiative RACI. | F2 | 🔷 | — |
+| Z-0.1 | **Progi treści kart** → **DECYZJA PIOTRA: PORADA, nie blokada.** AI pisze, system podpowiada czego brakuje, konsultant decyduje kiedy gotowe. Prompty w F2 budują wg tego (miękki hint, nie hard-gate). | R1 | 🏁 2026-07-22 | — |
+| Z-0.2 | **Insight dedup Phase-D** → **DECYZJA PIOTRA: złącz 2 duplikaty z rdzeniem, pozostałe 9 zostaw jako dodawalne z pickera.** Wdrożenie w Z-2.3. | R2 | 🏁 2026-07-22 | — |
+| Z-0.3 | **Rozjazdy kontrakt↔runtime** → **DECYZJA PIOTRA: KONTRAKT wygrywa — dostosuj kod do deklaracji.** Task governance/dependencies + Initiative RACI: kod dorasta do kontraktu (generatory AI wg deklaracji). Wdrożenie w Z-3.2. | F2 | 🏁 2026-07-22 | — |
 
 ### Faza 1 — Wspólna powłoka (~tydzień; cel Menu 9,5 · Nawigacja 9,0)
 
@@ -60,8 +60,8 @@ Statusy: `⬜ do zrobienia` · `🔷 decyzja Piotra` · `🟡 w toku` · `✅ zr
 | ID | Zadanie | Kody | Status | SHA/data |
 |---|---|---|---|---|
 | Z-4.1 | **Bezpiecznik CI na centrum kart** — rozszerzyć `check-artefakt.sh` (dziś `:61-66` świadomie omija centrum → dług rósł niewidoczny). NAJPIERW to. | CI | ⬜ | — |
-| Z-4.2 | **Crimson sweep centrum — 110 wystąpień**: Tool 38 (`bullets()` maluje wszystkie kropki), Initiative 35 (Gates 31), Notification 20 (badge, FOKUS PÓL, sekcja AI), Interview 11 (`c-accent` na stanach aktywnych), Decision 6 (zakładki ClickUp). Fokus → `c-focus`. | G1 G2 | ⬜ | — |
-| Z-4.3 | **slate/navy/hex → tokeny c-**\* — Insight ~400, Interview ~230, Tool ~230, Initiative ~275, Task 67 (+martwy D-mode ~1900 linii w Task do decyzji: usunąć czy zostawić). | G3 | ⬜ | — |
+| Z-4.2 | **Crimson sweep centrum — WYKONANE.** 7 kart + 28 shared (`MyWork/shared/*`, `PreviewPane`) + 5 `NModeSections/*` (RAID/Risk/Governance/Komentarze/Powiązania). Crimson na karcie N-mode **110 → 0** (computed-scan light+dark). Fokus→c-focus, semantyka danger/warning/success przez tokeny. Button brand-variant świadomie zostaje. Odkrycie: prawdziwe źródło crimson = NModeSections (N-mode), nie tylko główne view. 11 commitów sweep. | G1 G2 | ✅ 2026-07-22 | a8dad0d..348e767 |
+| Z-4.3 | **slate/navy/hex → tokeny c-**\* — WYKONANE łącznie z Z-4.2 (agenci robili crimson+tokeny naraz per plik). Insight 656+169→0, Task N-mode 197→0 + D-legacy 421→0, Interview ~900→0, itd. Wyjątki: hex print-root (eksport PDF, uzasadnione). | G3 | ✅ 2026-07-22 | jw. |
 | Z-4.4 | **Flaga cardContract domyślna + re-tag demo-safe** — po zielonym `--strict` i akcepcie Piotra. Zamyka program. | N3 | 🔷 | — |
 
 ## Zasady rozliczenia (kiedy zadanie jest „zrobione")
