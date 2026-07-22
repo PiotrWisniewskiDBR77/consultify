@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { baseStorageDir } from '../../utils/storagePaths.js';
 import PDFParserService from '../pdfParserService.js';
 import organizationContextService from './OrganizationContextService.js';
 
@@ -574,7 +575,7 @@ function getLocatorUpgradePlan(): { baselineReady: string[]; remaining: string[]
   };
 }
 
-const UPLOAD_ROOT = path.resolve(process.cwd(), 'uploads', 'context-docs');
+const UPLOAD_ROOT = path.resolve(baseStorageDir(), 'uploads', 'context-docs');
 const STATUS_VALUES: ContextDocumentStatus[] = [
   'uploaded',
   'processing',

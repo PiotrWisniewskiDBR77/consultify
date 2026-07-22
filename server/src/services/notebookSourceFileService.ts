@@ -1,7 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const NOTEBOOK_SOURCE_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'notebook-source-files');
+import { baseStorageDir } from '../utils/storagePaths.js';
+
+const NOTEBOOK_SOURCE_UPLOAD_DIR = path.join(baseStorageDir(), 'uploads', 'notebook-source-files');
 
 export interface NotebookCaptureMetadataRecord {
   captureSource?: string;
