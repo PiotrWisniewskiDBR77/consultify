@@ -27,6 +27,7 @@ import {
   type EvidenceContract,
   type EvidenceContractSource,
 } from './evidence/evidenceContract.js';
+import { generateDeckBriefContentPack } from './deckBriefContentPack.js';
 import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
@@ -1459,6 +1460,36 @@ export async function generateDeck(
     });
     artifactData = applyTransformationPackToArtifactData(artifactData, transformationPack);
 
+    // ------------------------------------------------------------
+    // Fala A3 (2026-07-22 live-verify): deck Z CZATU bez źródeł DALEJ pisał
+    // „Brak dostępnych danych…" mimo wzmocnionego user_instruction — silnik
+    // ramuje instrukcję autora jako podrzędną wobec reguł anty-fabrykacji, więc
+    // przy ZERO faktach domyślnie wybiera „insufficient data". OBEJŚCIE (wzorzec
+    // Word `documentBlockProseGenerator`): dla ścieżki czatu generujemy realny
+    // content-pack z TEMATU osobnym, bezpośrednim wywołaniem LLM (własny prompt
+    // strojony pod brak źródeł, znaczniki „(założenie)", zero post_check) i
+    // ZASILAMY nim artifactData PRZED budową slajdów — nadpisuje placeholdery
+    // „evidence required" z transformationReadDeckPack. Fail-soft: pack=null →
+    // dotychczasowe zachowanie (kanał autorski niżej). NIE ruszamy silnika.
+    let deckBriefPackApplied = false;
+    const briefForPack = resolveDeckNarrativeBrief(setup) ?? '';
+    if (briefForPack.length > 0) {
+      const pack = await generateDeckBriefContentPack({
+        brief: briefForPack,
+        language: setup.language,
+        title: setup.title,
+        audience: setup.audience,
+        goal: setup.goal,
+      });
+      if (pack) {
+        artifactData = { ...artifactData, ...pack };
+        deckBriefPackApplied = true;
+        logger.info(
+          '[PresentationGen] deck brief content-pack applied — slides grounded in topic (chat path, engine bypass)'
+        );
+      }
+    }
+
     const enabledSlides = outline.filter((o) => o.enabled);
 
     const slides: UnifiedSlide[] = enabledSlides.map((item) =>
@@ -1525,9 +1556,14 @@ export async function generateDeck(
     }
     for (let i = 0; i < slides.length; i++) {
       const slide = slides[i];
-      const runNarrative = useBriefRewrite
-        ? shouldRunNarrativeRewrite(slide.intent, briefText)
-        : narrativeIntents.includes(slide.intent);
+      // Gdy content-pack z briefu został zasilony (Fala A3), slajdy mają już
+      // realną treść z tematu — pomijamy Narrative Engine, który przy ZERO
+      // faktach doklejałby akapit „brak danych" (patrz blok wyżej).
+      const runNarrative = deckBriefPackApplied
+        ? false
+        : useBriefRewrite
+          ? shouldRunNarrativeRewrite(slide.intent, briefText)
+          : narrativeIntents.includes(slide.intent);
       if (!runNarrative) continue;
       try {
         const engineInput: NarrativeEngineInput = {
