@@ -27209,6 +27209,7 @@
     },
     "toolbar": {
       "modeLabel": "Mode",
+      "more": "More",
       "flowModeAriaLabel": "Flow mode",
       "kitTitle": "Notation kit set from chat",
       "stepsCount": "Steps {{value}}",
