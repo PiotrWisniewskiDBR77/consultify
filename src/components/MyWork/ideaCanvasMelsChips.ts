@@ -1,32 +1,43 @@
 /**
- * ideaCanvasMelsChips — per-tool command-row chips + right-rail inspector
- * descriptors for `IdeaCanvasMelsView` (EditorShell Wave W-1).
+ * ideaCanvasMelsChips — Menu-1 command chips + Menu-3 view actions + right-rail
+ * inspector descriptors for `IdeaCanvasMelsView` (EditorShell Wave W-1).
  *
  * Pure builders (no React state) so `IdeaMapWorkspace` can memoise them from
- * its existing handlers. Mind Map is the reference; Process Flow / Idea Table /
- * Whiteboard get their own sensible 1-4 primary actions since they share the
- * same chrome but have different core verbs.
+ * its existing handlers.
  *
- * Hierarchy (editor-shell-canon § 2 STREFA GÓRNA):
- *   - `group: 'primary'`   → 1-4 prominent always-visible actions per tool.
- *   - `group: 'secondary'` → grouped ghost buttons.
- *   - `group: 'overflow'`  → folded behind the `⋯` menu (search / help / etc.).
+ * ANATOMY (Z7 — Menu 1 / Menu 3 split, editor-shell-canon § 2):
+ *   - Menu 1 (górny pasek) stays CLEAN: identity (breadcrumb · tool icon ·
+ *     title · stage chip · saved indicator) + ONE primary "Konwertuj ▾"
+ *     (rendered by the host as `primaryActionSlot`) + ghost "Teresa" (secondary
+ *     chip) + kebab `⋯` (overflow chips: Eksport · Historia · Duplikuj · Usuń)
+ *     + right-panel toggle (shell).
+ *   - Menu 3 (druga listwa POD Menu 1) carries the per-tool VIEW actions that
+ *     used to live in the top bar: Dodaj węzeł · Auto-układ · AI rozwiń ·
+ *     Szablony · (prawa) Eksport · Utwórz z mapy.
  *
- * CRIMSON-SAFE: no `primary-*` classes anywhere — chips are styled centrally by
- * `<TopBar>` (neutral + `c-focus`), tone only via semantic `dotTone`.
+ * CRIMSON-SAFE: zero crimson tokens (the tailwind `primary` family / the accent
+ * token) anywhere — chips are styled centrally by `<TopBar>` (neutral +
+ * `c-focus`); the second bar / convert menu use `bg-c-text text-c-surface` for
+ * the sole primary CTA and `text-c-danger` only for the destructive kebab row.
  */
 
 import {
+  Copy,
   Download,
   GitBranch,
   HelpCircle,
+  History,
+  LayoutDashboard,
   LayoutTemplate,
   MessagesSquare,
   Plus,
   Search,
   Sparkles,
+  StickyNote,
   Table2,
-  Waypoints,
+  Trash2,
+  Workflow,
+  type LucideIcon,
 } from 'lucide-react';
 
 import type {
@@ -36,205 +47,252 @@ import type {
 
 import type { CanvasToolType } from './ideaSelectionTypes';
 
-export interface IdeaCanvasChipHandlers {
-  /** Primary "add" verb for the active tool (add node / shape / row / sticky). */
-  onAddPrimary?: () => void;
-  /** Auto-layout / tidy (mind map + process flow). */
-  onAutoLayout?: () => void;
-  /** Convert-from-canvas ("Utwórz z mapy"). */
-  onConvert?: () => void;
-  /** "Discuss with Teresa". */
+// ── Per-tool identity icon (SSOT: superCanvasTypes.OBJECT_FAMILY_ICONS) ──────
+export const IDEA_TOOL_ICON: Record<CanvasToolType, LucideIcon> = {
+  mindmap: GitBranch,
+  whiteboard: StickyNote,
+  process_flow: Workflow,
+  table: Table2,
+};
+
+// ── Menu 1 (top bar) — command chips ────────────────────────────────────────
+export interface IdeaMenu1Handlers {
+  /** "Discuss with Teresa" (ghost). */
   onDiscuss?: () => void;
-  /** AI expand / suggestions. */
-  onAIExpand?: () => void;
-  /** Apply / open template gallery. */
-  onOpenTemplateGallery?: () => void;
-  /** Export menu. */
+  /** Export menu (real; also present on Menu 3). */
   onExport?: () => void;
-  /** In-canvas search. */
+  /** Version history — disabled placeholder until wired. */
+  onHistory?: () => void;
+  /** Duplicate idea — disabled placeholder until wired. */
+  onDuplicate?: () => void;
+  /** Delete idea — disabled placeholder until wired. */
+  onDelete?: () => void;
+  /** In-canvas search (folded under "Więcej"). */
   onSearch?: () => void;
-  /** Keyboard-shortcuts help. */
+  /** Keyboard-shortcuts help (folded under "Więcej"). */
   onShowHelp?: () => void;
 }
 
-export interface IdeaCanvasChipState {
-  /** Disables Convert / Discuss / Export when the canvas is empty. */
-  hasContent?: boolean;
+/**
+ * Menu 1 chip strip = ghost Teresa (secondary) + kebab `⋯` (overflow).
+ * The primary "Konwertuj ▾" is NOT a chip — it is supplied by the host as the
+ * shell's `primaryActionSlot` (needs a dropdown the flat chip contract can't
+ * express). The right-panel toggle is the shell's own affordance.
+ *
+ * Kebab order (editor-shell-canon overflow pattern):
+ *   default section  → Eksport · Historia · Duplikuj · Usuń (Usuń = danger)
+ *   "Więcej" section → Szukaj · Skróty
+ */
+export function buildIdeaMenu1Chips(args: {
+  handlers: IdeaMenu1Handlers;
+  isPolish: boolean;
+}): TopBarChipDescriptor[] {
+  const { handlers, isPolish } = args;
+  const soon = isPolish ? 'Wkrótce' : 'Coming soon';
+  const chips: TopBarChipDescriptor[] = [];
+
+  // Ghost Teresa — always-visible secondary entry to the unified AI.
+  if (handlers.onDiscuss) {
+    chips.push({
+      id: 'idea-teresa',
+      label: 'Teresa',
+      icon: MessagesSquare,
+      group: 'secondary',
+      onClick: handlers.onDiscuss,
+      tooltip: isPolish ? 'Omów z Teresą' : 'Discuss with Teresa',
+      testId: 'idea-menu1-teresa',
+    });
+  }
+
+  // Kebab `⋯` — document-level actions.
+  chips.push({
+    id: 'idea-export',
+    label: isPolish ? 'Eksport' : 'Export',
+    icon: Download,
+    group: 'overflow',
+    disabled: !handlers.onExport,
+    onClick: handlers.onExport,
+    testId: 'idea-menu1-export',
+  });
+  chips.push({
+    id: 'idea-history',
+    label: isPolish ? 'Historia' : 'History',
+    icon: History,
+    group: 'overflow',
+    // No workspace-level version-history flow exists yet → honest disabled.
+    disabled: !handlers.onHistory,
+    onClick: handlers.onHistory,
+    tooltip: handlers.onHistory ? undefined : soon,
+    testId: 'idea-menu1-history',
+  });
+  chips.push({
+    id: 'idea-duplicate',
+    label: isPolish ? 'Duplikuj' : 'Duplicate',
+    icon: Copy,
+    group: 'overflow',
+    disabled: !handlers.onDuplicate,
+    onClick: handlers.onDuplicate,
+    tooltip: handlers.onDuplicate ? undefined : soon,
+    testId: 'idea-menu1-duplicate',
+  });
+  chips.push({
+    id: 'idea-delete',
+    label: isPolish ? 'Usuń' : 'Delete',
+    icon: Trash2,
+    group: 'overflow',
+    danger: true,
+    disabled: !handlers.onDelete,
+    onClick: handlers.onDelete,
+    tooltip: handlers.onDelete ? undefined : soon,
+    testId: 'idea-menu1-delete',
+  });
+
+  // "Więcej" — power-user overflow (kept reachable, never hidden).
+  if (handlers.onSearch) {
+    chips.push({
+      id: 'idea-search',
+      label: isPolish ? 'Szukaj' : 'Search',
+      icon: Search,
+      group: 'overflow',
+      overflowSection: isPolish ? 'Więcej' : 'More',
+      onClick: handlers.onSearch,
+      testId: 'idea-menu1-search',
+    });
+  }
+  if (handlers.onShowHelp) {
+    chips.push({
+      id: 'idea-shortcuts',
+      label: isPolish ? 'Skróty' : 'Shortcuts',
+      icon: HelpCircle,
+      group: 'overflow',
+      overflowSection: isPolish ? 'Więcej' : 'More',
+      onClick: handlers.onShowHelp,
+      testId: 'idea-menu1-shortcuts',
+    });
+  }
+
+  return chips;
 }
 
-export interface IdeaCanvasChipLabels {
-  addNode: string;
-  addShape: string;
-  addRow: string;
-  addSticky: string;
-  autoLayout: string;
-  convert: string;
-  discuss: string;
-  aiExpand: string;
-  templates: string;
-  export: string;
-  search: string;
-  help: string;
+// ── Menu 3 (second bar) — per-tool view actions ─────────────────────────────
+export interface IdeaMenu3Action {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  onClick?: () => void;
+  disabled?: boolean;
+  tooltip?: string;
+  testId?: string;
 }
 
-export const DEFAULT_IDEA_CANVAS_CHIP_LABELS: IdeaCanvasChipLabels = {
-  addNode: 'Add node',
-  addShape: 'Add shape',
-  addRow: 'Add row',
-  addSticky: 'Add sticky',
-  autoLayout: 'Auto-layout',
-  convert: 'Convert',
-  discuss: 'Discuss with Teresa',
-  aiExpand: 'AI expand',
-  templates: 'Templates',
-  export: 'Export',
-  search: 'Search',
-  help: 'Shortcuts',
+export interface IdeaMenu3Handlers {
+  /** Primary "add" verb for the active tool. */
+  onAddPrimary?: () => void;
+  /** Auto-layout / tidy (mind map + process flow only). */
+  onAutoLayout?: () => void;
+  /** AI expand / suggestions. */
+  onAIExpand?: () => void;
+  /** Template gallery. */
+  onOpenTemplateGallery?: () => void;
+  /** Export (real; mirrors the kebab entry). */
+  onExport?: () => void;
+  /** Open the Convert panel ("Utwórz z mapy"). */
+  onConvertFromMap?: () => void;
+}
+
+const MENU3_ADD_LABEL: Record<CanvasToolType, { en: string; pl: string }> = {
+  mindmap: { en: 'Add node', pl: 'Dodaj węzeł' },
+  process_flow: { en: 'Add shape', pl: 'Dodaj kształt' },
+  table: { en: 'Add row', pl: 'Dodaj wiersz' },
+  whiteboard: { en: 'Add sticky', pl: 'Dodaj karteczkę' },
 };
 
-const ADD_LABEL: Record<CanvasToolType, keyof IdeaCanvasChipLabels> = {
-  mindmap: 'addNode',
-  process_flow: 'addShape',
-  table: 'addRow',
-  whiteboard: 'addSticky',
-};
-
-const ADD_ICON: Record<CanvasToolType, TopBarChipDescriptor['icon']> = {
+const MENU3_ADD_ICON: Record<CanvasToolType, LucideIcon> = {
   mindmap: Plus,
-  process_flow: Waypoints,
+  process_flow: Workflow,
   table: Table2,
   whiteboard: Plus,
 };
 
 /**
- * Build the command-row chips for the given tool. Per-tool primary sets:
- *   - Mind Map      : Add node · Auto-layout · Convert · Discuss with Teresa
- *   - Process Flow  : Add shape · Auto-layout · Convert · Discuss with Teresa
- *   - Idea Table    : Add row · Convert · Discuss with Teresa
- *   - Whiteboard    : Add sticky · Convert · Discuss with Teresa
- * Secondary: AI expand · Templates · Export. Overflow: Search · Shortcuts.
+ * Build the Menu-3 view actions, split into a left cluster (create / shape the
+ * view) and a right cluster (Eksport · Utwórz z mapy). `hasContent` gates the
+ * actions that need a non-empty canvas.
  */
-export function buildIdeaCanvasTopBarChips(args: {
+export function buildIdeaMenu3Actions(args: {
   tool: CanvasToolType;
-  handlers: IdeaCanvasChipHandlers;
-  state?: IdeaCanvasChipState;
-  labels?: Partial<IdeaCanvasChipLabels>;
-}): TopBarChipDescriptor[] {
-  const { tool, handlers, state } = args;
-  const labels = { ...DEFAULT_IDEA_CANVAS_CHIP_LABELS, ...args.labels };
-  const hasContent = state?.hasContent ?? true;
+  handlers: IdeaMenu3Handlers;
+  hasContent: boolean;
+  isPolish: boolean;
+}): { left: IdeaMenu3Action[]; right: IdeaMenu3Action[] } {
+  const { tool, handlers, hasContent, isPolish } = args;
+  const pl = isPolish;
   const supportsAutoLayout = tool === 'mindmap' || tool === 'process_flow';
 
-  const chips: TopBarChipDescriptor[] = [];
+  const left: IdeaMenu3Action[] = [];
+  const right: IdeaMenu3Action[] = [];
 
-  // PRIMARY 1 — Add (always available; core creation verb per tool).
   if (handlers.onAddPrimary) {
-    chips.push({
-      id: 'canvas-add',
-      label: labels[ADD_LABEL[tool]],
-      icon: ADD_ICON[tool],
-      group: 'primary',
+    left.push({
+      id: 'menu3-add',
+      label: MENU3_ADD_LABEL[tool][pl ? 'pl' : 'en'],
+      icon: MENU3_ADD_ICON[tool],
       onClick: handlers.onAddPrimary,
-      testId: 'idea-canvas-chip-add',
+      testId: 'idea-menu3-add',
     });
   }
-
-  // PRIMARY 2 — Auto-layout (mind map + process flow only).
   if (supportsAutoLayout && handlers.onAutoLayout) {
-    chips.push({
-      id: 'canvas-auto-layout',
-      label: labels.autoLayout,
-      icon: LayoutTemplate,
-      group: 'primary',
+    left.push({
+      id: 'menu3-auto-layout',
+      label: pl ? 'Auto-układ' : 'Auto-layout',
+      icon: LayoutDashboard,
       onClick: handlers.onAutoLayout,
-      testId: 'idea-canvas-chip-auto-layout',
+      testId: 'idea-menu3-auto-layout',
     });
   }
-
-  // PRIMARY 3 — Convert ("Utwórz z mapy").
-  if (handlers.onConvert) {
-    chips.push({
-      id: 'canvas-convert',
-      label: labels.convert,
-      icon: GitBranch,
-      group: 'primary',
-      disabled: !hasContent,
-      onClick: handlers.onConvert,
-      testId: 'idea-canvas-chip-convert',
-    });
-  }
-
-  // PRIMARY 4 — Discuss with Teresa (unified AI entry).
-  if (handlers.onDiscuss) {
-    chips.push({
-      id: 'canvas-discuss',
-      label: labels.discuss,
-      icon: MessagesSquare,
-      group: 'primary',
-      disabled: !hasContent,
-      onClick: handlers.onDiscuss,
-      testId: 'idea-canvas-chip-discuss',
-    });
-  }
-
-  // SECONDARY — AI expand / Templates / Export.
   if (handlers.onAIExpand) {
-    chips.push({
-      id: 'canvas-ai-expand',
-      label: labels.aiExpand,
+    left.push({
+      id: 'menu3-ai-expand',
+      label: pl ? 'AI rozwiń' : 'AI expand',
       icon: Sparkles,
-      group: 'secondary',
       onClick: handlers.onAIExpand,
-      testId: 'idea-canvas-chip-ai-expand',
+      testId: 'idea-menu3-ai-expand',
     });
   }
   if (handlers.onOpenTemplateGallery) {
-    chips.push({
-      id: 'canvas-templates',
-      label: labels.templates,
+    left.push({
+      id: 'menu3-templates',
+      label: pl ? 'Szablony' : 'Templates',
       icon: LayoutTemplate,
-      group: 'secondary',
       onClick: handlers.onOpenTemplateGallery,
-      testId: 'idea-canvas-chip-templates',
+      testId: 'idea-menu3-templates',
     });
   }
+
   if (handlers.onExport) {
-    chips.push({
-      id: 'canvas-export',
-      label: labels.export,
+    right.push({
+      id: 'menu3-export',
+      label: pl ? 'Eksport' : 'Export',
       icon: Download,
-      group: 'secondary',
-      disabled: !hasContent,
       onClick: handlers.onExport,
-      testId: 'idea-canvas-chip-export',
+      disabled: !hasContent,
+      tooltip: hasContent ? undefined : pl ? 'Pusta mapa' : 'Empty map',
+      testId: 'idea-menu3-export',
+    });
+  }
+  if (handlers.onConvertFromMap) {
+    right.push({
+      id: 'menu3-convert-from-map',
+      label: pl ? 'Utwórz z mapy' : 'Create from map',
+      icon: GitBranch,
+      onClick: handlers.onConvertFromMap,
+      disabled: !hasContent,
+      tooltip: hasContent ? undefined : pl ? 'Pusta mapa' : 'Empty map',
+      testId: 'idea-menu3-convert-from-map',
     });
   }
 
-  // OVERFLOW — Search / Shortcuts (rare, folded behind `⋯`).
-  if (handlers.onSearch) {
-    chips.push({
-      id: 'canvas-search',
-      label: labels.search,
-      icon: Search,
-      group: 'overflow',
-      overflowSection: 'Canvas',
-      onClick: handlers.onSearch,
-      testId: 'idea-canvas-chip-search',
-    });
-  }
-  if (handlers.onShowHelp) {
-    chips.push({
-      id: 'canvas-help',
-      label: labels.help,
-      icon: HelpCircle,
-      group: 'overflow',
-      overflowSection: 'Canvas',
-      onClick: handlers.onShowHelp,
-      testId: 'idea-canvas-chip-help',
-    });
-  }
-
-  return chips;
+  return { left, right };
 }
 
 /**
@@ -270,7 +328,7 @@ export function buildIdeaCanvasRightRailTools(args?: {
     { id: 'problem', label: labels.problem, icon: HelpCircle, disabled: disabled.problem },
     { id: 'status', label: labels.status, icon: GitBranch, disabled: disabled.status },
     { id: 'inspector', label: labels.inspector, icon: Sparkles, disabled: disabled.inspector },
-    { id: 'convert', label: labels.convert, icon: Waypoints, disabled: disabled.convert },
+    { id: 'convert', label: labels.convert, icon: Workflow, disabled: disabled.convert },
     { id: 'health', label: labels.health, icon: LayoutTemplate, disabled: disabled.health },
   ];
 }

@@ -211,7 +211,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             onClick={() => setCalendarMode(mode)}
             className={`px-2 py-1 text-[10px] font-medium rounded-md transition-colors ${
               calendarMode === mode
-                ? 'bg-c-accent-soft text-c-accent'
+                ? 'bg-c-surface-raised text-c-text'
                 : 'text-c-text-muted hover:bg-c-surface-raised'
             }`}
           >

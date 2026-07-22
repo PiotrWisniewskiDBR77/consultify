@@ -259,7 +259,7 @@ export default function FormBuilder({
           {isPublished && (
             <button
               onClick={handleCopyUrl}
-              className="flex items-center gap-1.5 rounded-lg bg-c-accent-soft px-3 py-1.5 text-sm font-medium text-c-accent transition-colors hover:bg-c-accent"
+              className="flex items-center gap-1.5 rounded-lg bg-c-surface-raised px-3 py-1.5 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised/80"
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5" />

@@ -204,7 +204,7 @@ const QuickActionChip: React.FC<{
   <button
     onClick={onClick}
     disabled={disabled}
-    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-c-border-subtle text-[10px] font-medium text-c-text-muted hover:border-c-accent hover:text-c-accent hover:bg-c-accent-soft transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-c-border-subtle text-[10px] font-medium text-c-text-muted hover:border-c-border hover:text-c-text hover:bg-c-surface-raised transition-all disabled:opacity-50 disabled:cursor-not-allowed"
   >
     {icon}
     {label}
@@ -556,13 +556,13 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
       className={`flex flex-col ${mode === 'slideOver' || mode === 'splitScreen' ? 'h-full' : 'max-h-[80vh]'}`}
     >
       {/* Panel header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle bg-c-accent-soft flex-shrink-0">
-        <Sparkles size={16} className="text-c-accent" />
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
+        <Sparkles size={16} className="text-c-text-secondary" />
         <span className="text-sm font-semibold text-c-text">
           {t('myWorkTable.chatToSchemaPanel.aiTableBuilder')}
         </span>
         {companyContext?.workspaceName && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-c-accent-soft text-c-accent">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-c-surface text-c-text-secondary">
             {companyContext.workspaceName}
           </span>
         )}
@@ -581,8 +581,8 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
         {conversation.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <div className="w-12 h-12 rounded-2xl bg-c-accent-soft flex items-center justify-center mb-3">
-              <Table2 size={24} className="text-c-accent" />
+            <div className="w-12 h-12 rounded-2xl bg-c-surface-raised flex items-center justify-center mb-3">
+              <Table2 size={24} className="text-c-text-secondary" />
             </div>
             <p className="text-sm font-medium text-c-text mb-1">
               {t('myWorkTable.chatToSchemaPanel.describeYourTable')}
@@ -613,7 +613,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
         {loading && (
           <div className="flex justify-start mb-3">
             <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-c-surface-raised px-3.5 py-2.5">
-              <Loader2 size={14} className="animate-spin text-c-accent" />
+              <Loader2 size={14} className="animate-spin text-c-text-secondary" />
               <span className="text-xs text-c-text-muted">
                 {t('myWorkTable.chatToSchemaPanel.generatingProposal')}
               </span>
@@ -700,7 +700,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               }
               disabled={loading}
               rows={1}
-              className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl px-3 py-2 outline-none text-sm text-c-text placeholder-c-text-muted resize-none leading-relaxed focus:border-c-accent dark:focus:border-blue-500 transition-colors"
+              className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl px-3 py-2 outline-none text-sm text-c-text placeholder-c-text-muted resize-none leading-relaxed focus:border-c-focus-solid transition-colors"
             />
           </div>
           <button
@@ -769,7 +769,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
 
   // modal (default)
   return (
-    <div className="rounded-2xl border border-c-accent bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-c-border bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
       {panelContent}
     </div>
   );

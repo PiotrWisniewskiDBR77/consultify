@@ -162,7 +162,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
     if (!checked || allHandled || emptyDismissed) return null;
     return (
       <div className="absolute bottom-16 right-3 z-dropdown w-[320px] max-w-[90vw]">
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl border border-amber-400/30 dark:border-amber-500/20 shadow-2xl">
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-c-surface/90 backdrop-blur-xl border border-amber-400/30 dark:border-amber-500/20 shadow-2xl">
           <Eye size={14} className="text-amber-500 shrink-0" />
           <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 flex-1">
             {t('ideas.mindmap.noBlindSpotsFound', 'No blind spots found')}

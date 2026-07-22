@@ -193,7 +193,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
-          <Rocket size={16} className="text-c-accent" />
+          <Rocket size={16} className="text-c-text-secondary" />
           <span className="text-sm font-bold text-c-text">
             {t('myWorkTable.ideaPipeline.title')}
           </span>

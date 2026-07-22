@@ -867,7 +867,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   disabled={watchLoading}
                   className={`rounded-lg p-1.5 transition ${
                     isWatching
-                      ? 'text-c-accent bg-c-accent-soft'
+                      ? 'text-c-text bg-c-surface-raised'
                       : 'text-c-text-muted hover:text-c-text-secondary'
                   }`}
                   title={
@@ -1032,7 +1032,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 {!locked && (
                   <button
                     onClick={() => onAddSubItem?.(node.id)}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
                   >
                     <Plus size={10} />
                     {t('ideas.table.addSubItem', 'Add sub-item')}
@@ -1127,7 +1127,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <span
                       className={`min-w-[1.1rem] px-1 py-0 text-[9px] font-bold rounded-full tabular-nums ${
                         isActive
-                          ? 'bg-[color-mix(in_srgb,white_25%,transparent)] text-white'
+                          ? 'bg-[color-mix(in_srgb,var(--c-surface)_25%,transparent)] text-c-surface'
                           : 'bg-c-surface-raised text-c-text-muted'
                       }`}
                     >
@@ -1220,7 +1220,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <div ref={relationDropdownRef} className="relative mt-2">
                       <button
                         onClick={() => setRelationDropdownOpen(!relationDropdownOpen)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-text-secondary bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors"
                       >
                         <Plus size={12} />
                         {t('ideas.table.addRelation', 'Add relation')}
@@ -1318,7 +1318,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       data-testid="comment-item"
                     >
                       <div className="flex items-center gap-2 mb-1.5">
-                        <div className="w-5 h-5 rounded-full bg-c-accent flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-c-text-secondary flex items-center justify-center text-[8px] font-bold text-c-surface flex-shrink-0">
                           {cmt.author.charAt(0).toUpperCase()}
                         </div>
                         <span className="text-[10px] font-bold text-c-text-secondary">
@@ -1375,7 +1375,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               type="button"
                               onClick={() => void handleSaveEditComment()}
                               disabled={!editingCommentText.trim()}
-                              className="text-[10px] font-semibold text-c-accent disabled:opacity-40"
+                              className="text-[10px] font-semibold text-c-text disabled:opacity-40"
                             >
                               {t('ideas.table.save', 'Save')}
                             </button>
@@ -1425,7 +1425,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               });
                             }}
                           >
-                            <div className="h-6 w-6 rounded-full bg-c-accent-soft flex items-center justify-center text-xs font-medium text-c-accent">
+                            <div className="h-6 w-6 rounded-full bg-c-surface-raised flex items-center justify-center text-xs font-medium text-c-text-secondary">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
                             <span className="text-c-text-secondary">{user.name}</span>
@@ -1459,7 +1459,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       type="button"
                       onClick={() => void handleAddComment()}
                       disabled={!newComment.trim()}
-                      className="p-2 rounded-xl bg-c-accent-soft text-c-accent hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] disabled:opacity-40 transition-colors flex-shrink-0"
+                      className="p-2 rounded-xl bg-c-surface-raised text-c-text hover:bg-c-surface-raised/80 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Send size={14} />
                     </button>
@@ -1521,7 +1521,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <div ref={artifactDropdownRef} className="relative mt-2">
                       <button
                         onClick={() => setArtifactDropdownOpen(!artifactDropdownOpen)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-text-secondary bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors"
                       >
                         <Paperclip size={12} />
                         {t('ideas.table.attachArtifact', 'Attach artifact')}
@@ -1649,7 +1649,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   <div className="flex items-center gap-2 pt-2">
                     <button
                       onClick={handleAddAttachmentLink}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-text-secondary bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors"
                     >
                       <Link2 size={12} />
                       {t('ideas.table.addLink', 'Add link')}
@@ -1729,7 +1729,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <button
                       onClick={() => attachmentFileInputRef.current?.click()}
                       disabled={attachmentUploading}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-text-secondary bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors disabled:opacity-50"
                     >
                       {attachmentUploading ? (
                         <Loader2 size={12} className="animate-spin" />
@@ -1839,7 +1839,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 <button
                   onClick={handleGenerateAI}
                   disabled={aiLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-c-accent-soft to-[color-mix(in_srgb,var(--c-accent)_10%,transparent)] text-c-accent text-xs font-bold hover:from-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] hover:to-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-c-text text-c-surface text-xs font-bold hover:bg-c-text/90 transition-colors disabled:opacity-50"
                 >
                   {aiLoading ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -1855,10 +1855,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     {aiInsights.map((insight, idx) => (
                       <div
                         key={idx}
-                        className="rounded-xl border border-c-accent bg-[color-mix(in_srgb,var(--c-accent)_5%,transparent)] p-3"
+                        className="rounded-xl border border-c-border bg-c-surface-raised p-3"
                       >
                         <div className="flex items-start gap-2">
-                          <Sparkles size={12} className="text-c-accent mt-0.5 flex-shrink-0" />
+                          <Sparkles size={12} className="text-c-text-secondary mt-0.5 flex-shrink-0" />
                           <p className="text-[11px] text-c-text-secondary leading-relaxed">
                             {insight}
                           </p>
@@ -1915,7 +1915,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         key={chip.id}
                         type="button"
                         onClick={() => onNodeClick?.(chip.id)}
-                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary border border-slate-200/60 dark:border-white/[0.03] hover:bg-c-accent-soft hover:border-c-accent hover:text-c-accent transition-colors truncate"
+                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary border border-slate-200/60 dark:border-white/[0.03] hover:bg-c-surface-raised/80 hover:border-c-border hover:text-c-text transition-colors truncate"
                       >
                         <span className="truncate">{chip.label}</span>
                       </button>
@@ -1932,7 +1932,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           <div className="flex-1 flex items-center justify-center">
             <button
               onClick={onExpand}
-              className="text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
+              className="text-[11px] text-c-text-muted hover:text-c-text transition-colors"
             >
               {t(
                 'ideas.table.doubleClickOrExpandToSeeFullDetails',

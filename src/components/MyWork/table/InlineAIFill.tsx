@@ -55,7 +55,7 @@ export const InlineAIFill: React.FC<InlineAIFillProps> = ({ node, column, ideaId
     <button
       onClick={handleFill}
       disabled={loading}
-      className="opacity-0 group-hover/cell:opacity-70 hover:!opacity-100 p-0.5 rounded transition-all flex-shrink-0 text-c-accent hover:text-c-accent hover:bg-c-accent-soft"
+      className="opacity-0 group-hover/cell:opacity-70 hover:!opacity-100 p-0.5 rounded transition-all flex-shrink-0 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
       title={t('myWorkTable.inlineAIFill.aiFillTitle')}
     >
       {loading ? <Loader2 size={9} className="animate-spin" /> : <Wand2 size={9} />}
@@ -147,7 +147,7 @@ export const BatchAIFillButton: React.FC<BatchAIFillButtonProps> = ({
     <button
       onClick={handleBatchFill}
       disabled={loading}
-      className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+      className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-50"
       title={t('myWorkTable.inlineAIFill.batchTitle', { count: emptyCount })}
     >
       {loading ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}

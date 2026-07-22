@@ -53,8 +53,15 @@ import { mergeWorkspaceExtensions, useWorkspaceGraphRuntime } from './canvas/wor
 import { type CommandItem, CommandPalette, useCommandPalette } from './CommandPalette';
 import { type ShortcutHelp, useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
-import { buildIdeaCanvasRightRailTools, buildIdeaCanvasTopBarChips } from './ideaCanvasMelsChips';
+import {
+  buildIdeaCanvasRightRailTools,
+  buildIdeaMenu1Chips,
+  buildIdeaMenu3Actions,
+} from './ideaCanvasMelsChips';
 import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
+import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
+import { IdeaConvertMenu } from './IdeaConvertMenu';
+import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
   IDEA_CONVERT_TARGETS,
@@ -434,6 +441,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       prevToolRef.current = activeTool;
     }
   }, [activeTool, realId]);
+
+  // Z20 (fala4-z20-intercept): broadcast the currently mounted canvas tool so
+  // UnifiedChatPanel's chat interceptors (mm/pf/wb — mindmapIntentDetector,
+  // processFlowIntentDetector, whiteboardIntentDetector) know whether a
+  // matching tool is actually open before hijacking a "create mind
+  // map/process/whiteboard" prompt. Without this signal the chat had no way
+  // to tell IdeaMapWorkspace wasn't mounted at all (or was showing a
+  // different tool) and the intercepted phrase turned into a silent no-op —
+  // window.dispatchEvent('idea-workspace-quick-action') has no listener in
+  // that case, and the prompt never reached the LLM either. Clear it on
+  // unmount so the chat falls back to sending the prompt to the LLM once the
+  // workspace closes.
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('idea-workspace-active-tool', { detail: { tool: activeTool } })
+    );
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-active-tool', { detail: { tool: null } })
+      );
+    };
+  }, [activeTool]);
 
   // ── Selection contract ──────────────────────────────────────────────────────
   const [selection, setSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
@@ -2761,12 +2790,39 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const melsCanvasEnabled = isMelsCanvasEnabled();
   // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
   const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
+  // ── Menu 1 (top bar) chips — Z7 anatomy ─────────────────────────────────
+  // Clean identity row: ghost Teresa (secondary) + kebab `⋯` (Eksport real ·
+  // Historia/Duplikuj/Usuń disabled-with-"wkrótce" — no workspace-level flow
+  // exists yet). The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot`
+  // below; the per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
   const melsCanvasChips = useMemo(
     () =>
       melsCanvasEnabled
-        ? buildIdeaCanvasTopBarChips({
+        ? buildIdeaMenu1Chips({
+            isPolish: Boolean(isPolish),
+            handlers: {
+              onDiscuss: handleDiscussWithTeresa,
+              onExport: () => setExportMenuOpen(true),
+              // onHistory / onDuplicate / onDelete intentionally omitted — no
+              // workspace-level handler exists (verified 2026-07-22). The
+              // builder renders them DISABLED with a "wkrótce" hint, never
+              // hidden (ANATOMY: brakujące pozycje disabled z dopiskiem).
+              onSearch: () => setSearchOpen(true),
+              onShowHelp: () => setShortcutsHelpOpen(true),
+            },
+          })
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [melsCanvasEnabled, isPolish, handleDiscussWithTeresa]
+  );
+  // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
+  const melsMenu3Actions = useMemo(
+    () =>
+      melsCanvasEnabled
+        ? buildIdeaMenu3Actions({
             tool: activeTool,
-            state: { hasContent: mapHasNodes },
+            hasContent: mapHasNodes,
+            isPolish: Boolean(isPolish),
             handlers: {
               onAddPrimary: () =>
                 handleQuickAction(activeTool === 'mindmap' ? 'mm_add_child' : 'add_node'),
@@ -2776,32 +2832,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     detail: { action: 'pane_auto_layout' },
                   })
                 ),
-              onConvert: () => handlePanelChange('tools'),
-              onDiscuss: handleDiscussWithTeresa,
               onAIExpand: () => handleQuickAction('mm_ai_expand'),
               onOpenTemplateGallery: () => setTemplateGalleryOpen(true),
               onExport: () => setExportMenuOpen(true),
-              onSearch: () => setSearchOpen(true),
-              onShowHelp: () => setShortcutsHelpOpen(true),
+              onConvertFromMap: () => handlePanelChange('tools'),
             },
-            labels: isPolish
-              ? {
-                  addNode: 'Dodaj węzeł',
-                  addShape: 'Dodaj kształt',
-                  addRow: 'Dodaj wiersz',
-                  addSticky: 'Dodaj karteczkę',
-                  autoLayout: 'Auto-układ',
-                  convert: 'Utwórz z mapy',
-                  discuss: 'Omów z Teresą',
-                  aiExpand: 'AI rozwiń',
-                  templates: 'Szablony',
-                  export: 'Eksport',
-                  search: 'Szukaj',
-                  help: 'Skróty',
-                }
-              : undefined,
           })
-        : [],
+        : { left: [], right: [] },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       melsCanvasEnabled,
@@ -2810,7 +2847,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       isPolish,
       handleQuickAction,
       handlePanelChange,
-      handleDiscussWithTeresa,
+      setTemplateGalleryOpen,
+      setExportMenuOpen,
     ]
   );
   const melsCanvasRightRailTools = useMemo(
@@ -3141,6 +3179,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             backLabel={t('mindmap.ideas')}
             moduleLabel={t('mindmap.ideas')}
             topBarChips={melsCanvasChips}
+            titleIconSlot={<IdeaToolIcon tool={activeTool} label={activeToolLabel} />}
+            titleTrailingSlot={
+              <>
+                <IdeaStageChip stage={stage} isPolish={Boolean(isPolish)} />
+                <IdeaSaveIndicator
+                  state={graphRuntime.syncState}
+                  label={graphRuntime.syncLabel}
+                />
+              </>
+            }
+            primaryActionSlot={
+              <IdeaConvertMenu
+                onConvert={(target) => handleConvert(target)}
+                isPolish={Boolean(isPolish)}
+                disabled={!mapHasNodes}
+              />
+            }
+            secondBar={
+              <IdeaCanvasSecondBar
+                left={melsMenu3Actions.left}
+                right={melsMenu3Actions.right}
+                ariaLabel={t('mindmap.ideaCanvasAndMapTools')}
+              />
+            }
             rightRailTools={melsCanvasRightRailTools}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
             canvas={
@@ -3362,9 +3424,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 if (tool === activeTool) return;
                 setTimeout(() => setActiveTool(tool), 0);
               }}
-              variant={mapOpen ? 'overlay' : 'embedded'}
-              showClose={mapOpen}
-              className={mapOpen ? '' : 'rounded-none'}
+              variant={mapOpen && !melsCanvasEnabled ? 'overlay' : 'embedded'}
+              showClose={mapOpen && !melsCanvasEnabled}
+              className={mapOpen && !melsCanvasEnabled ? '' : 'rounded-none'}
               locked={canvasLocked}
               onSelectionChange={handleSelectionChange}
               onViewportReport={handleViewportReport}
@@ -3552,25 +3614,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return (
       <>
         {/*
-        ★ D16/D17 — JEDEN prawy panel idei (dok Teresy) = `<IdeaRightPanel>`
-        (accordion ArtifactRightPanel): Właściwości · Kontekst · Teresa. Zastępuje
+        ★ D16/D17/Z8 — JEDEN prawy panel idei (dok Teresy) = `<IdeaRightPanel>`
+        (accordion ArtifactRightPanel), przebudowany (2026-07-22) na 5 sekcji
+        kanonu SPEC-A: Akcje · Właściwości · Powiązania · Komentarze ·
+        Historia/AI (ARTIFACT_ANATOMY_STANDARD §10.2/§11.2). Zastępuje
         archaiczny przełącznik 3 OSOBNYCH szuflad (#6q) dla WSZYSTKICH 4 narzędzi
         — bez flagi (default). Montuje się gdy pasek otworzy dowolną sekcję
         (parytet z self-hide szuflad: canvas rozszerza się po zamknięciu).
         Reużywa te same panele co legacy (IdeaWorkspaceTools/IdeaContextPanel/
-        IdeaAISuggestionsPanel) jako `embedded` sekcje — ZERO bespoke. Trzecia
-        karta JEST Teresą (komendy + strumień sugestii), nie osobny „AI Suggestions".
-        Ścieżka mels-canvas (eksperymentalna, default OFF) zostaje na starych
-        szufladach — nietknięta.
+        IdeaAISuggestionsPanel) jako `embedded` sekcje — ZERO bespoke; Akcje =
+        eksport/konwertuj realnymi handlerami workspace (te same co Menu 1/3
+        kebab), Komentarze = pusta (brak kanału na poziomie idei — per-node
+        wątki to inny zakres). Ścieżka mels-canvas (eksperymentalna, default
+        OFF) zostaje na starych szufladach — nietknięta.
       */}
         {!melsCanvasEnabled && (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (
           <IdeaRightPanel
             isPolish={isPolish}
-            activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'context' : 'teresa'}
-            // HP-17: karta „Źródła i założenia" (EvidencePanelSection, artifactType
-            // 'canvas') tylko za flagą ff_evidencePanel (default OFF, patrz
-            // src/utils/evidencePanelFlag.ts). OFF → prop `undefined` → karta się
-            // nie montuje → powłoka panelu 1:1 jak przed HP-17 (zero zmian DOM).
+            activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'}
+            onExport={() => setExportMenuOpen(true)}
+            onConvert={() => handlePanelChange('tools')}
+            // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
+            // ff_evidencePanel (default OFF, patrz src/utils/evidencePanelFlag.ts).
+            // OFF → prop `undefined` → nic się nie dokłada pod Powiązania → zero
+            // zmian DOM wobec stanu sprzed HP-17/Z8.
             evidenceArtifactId={isEvidencePanelEnabled() && realId ? realId : undefined}
             propertiesContent={
               <IdeaWorkspaceTools
@@ -3580,7 +3647,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 onClose={() => handlePanelChange(null)}
               />
             }
-            contextContent={
+            relationsContent={
               <IdeaContextPanel
                 {...ideaContextPanelSharedProps}
                 open

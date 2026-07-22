@@ -482,14 +482,14 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                 onClick={onCreateNew}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                   highlightIdx === filteredCandidates.length
-                    ? 'bg-c-accent-soft'
+                    ? 'bg-c-surface-raised'
                     : 'hover:bg-c-surface-raised'
                 }`}
               >
-                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-c-accent-soft">
-                  <Plus className="h-3 w-3 text-c-accent" />
+                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-c-surface">
+                  <Plus className="h-3 w-3 text-c-text-secondary" />
                 </div>
-                <span className="font-medium text-c-accent">
+                <span className="font-medium text-c-text">
                   {t('myWorkTable.linkedRecordPicker.createNewRecord')}
                 </span>
               </button>

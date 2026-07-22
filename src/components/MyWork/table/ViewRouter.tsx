@@ -169,6 +169,101 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     [platformFields]
   );
 
+  // Z16 — keyboard navigation (Airtable parity): roving tabindex over gridcells.
+  // Only one cell is ever tabIndex=0; arrows/Tab move both the logical focus
+  // state and the real DOM focus. `pendingDomFocusRef` distinguishes
+  // programmatic navigation (must call .focus()) from the initial default
+  // (must not steal page focus on mount/data refresh).
+  const rowsInRenderOrder = useMemo<TableNode[]>(
+    () =>
+      groupedRows && Object.keys(groupedRows).length > 0
+        ? Object.values(groupedRows).flat()
+        : processedRows,
+    [groupedRows, processedRows]
+  );
+  const flatRowIds = useMemo(() => rowsInRenderOrder.map((r) => r.id), [rowsInRenderOrder]);
+  const rowById = useMemo(() => {
+    const m = new Map<string, TableNode>();
+    for (const r of rowsInRenderOrder) m.set(r.id, r);
+    return m;
+  }, [rowsInRenderOrder]);
+  const colKeys = useMemo(() => visibleColumns.map((c) => c.key), [visibleColumns]);
+
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
+  const [focusedColKey, setFocusedColKey] = useState<string | null>(null);
+  const cellRefs = useRef(new Map<string, HTMLDivElement>());
+  const pendingDomFocusRef = useRef(false);
+
+  // Default focus target: first cell, or re-clamp when the previously
+  // focused row/column disappears (row deleted, column hidden, ...).
+  useEffect(() => {
+    if (flatRowIds.length === 0 || colKeys.length === 0) return;
+    setFocusedRowId((prev) => (prev && flatRowIds.includes(prev) ? prev : flatRowIds[0]));
+    setFocusedColKey((prev) => (prev && colKeys.includes(prev) ? prev : colKeys[0]));
+  }, [flatRowIds, colKeys]);
+
+  useEffect(() => {
+    if (!focusedRowId || !focusedColKey || !pendingDomFocusRef.current) return;
+    pendingDomFocusRef.current = false;
+    cellRefs.current.get(cellId(focusedRowId, focusedColKey))?.focus();
+  }, [focusedRowId, focusedColKey]);
+
+  const focusCell = useCallback((rowId: string, colKey: string, moveDom?: boolean) => {
+    if (moveDom) pendingDomFocusRef.current = true;
+    setFocusedRowId(rowId);
+    setFocusedColKey(colKey);
+  }, []);
+
+  const moveFocus = useCallback(
+    (dRow: number, dCol: number) => {
+      if (!focusedRowId || !focusedColKey) return;
+      const ri = flatRowIds.indexOf(focusedRowId);
+      const ci = colKeys.indexOf(focusedColKey);
+      if (ri < 0 || ci < 0) return;
+      const nri = Math.min(Math.max(ri + dRow, 0), flatRowIds.length - 1);
+      const nci = Math.min(Math.max(ci + dCol, 0), colKeys.length - 1);
+      focusCell(flatRowIds[nri], colKeys[nci], true);
+    },
+    [focusedRowId, focusedColKey, flatRowIds, colKeys, focusCell]
+  );
+
+  const moveFocusTab = useCallback(
+    (forward: boolean) => {
+      if (!focusedRowId || !focusedColKey) return;
+      const ri = flatRowIds.indexOf(focusedRowId);
+      const ci = colKeys.indexOf(focusedColKey);
+      if (ri < 0 || ci < 0) return;
+      let nri = ri;
+      let nci = ci + (forward ? 1 : -1);
+      if (nci >= colKeys.length) {
+        nci = 0;
+        nri = Math.min(ri + 1, flatRowIds.length - 1);
+      } else if (nci < 0) {
+        nci = colKeys.length - 1;
+        nri = Math.max(ri - 1, 0);
+      }
+      focusCell(flatRowIds[nri], colKeys[nci], true);
+    },
+    [focusedRowId, focusedColKey, flatRowIds, colKeys, focusCell]
+  );
+
+  // Ctrl/Cmd+C on a focused (non-editing) cell — copies its raw value.
+  // TODO(Z16): range selection (Shift+arrows) + TSV multi-cell copy not
+  // implemented here — single-cell copy only, to keep this patch reviewable.
+  // Follow-up should track a {anchor, focus} range alongside focusedRowId/
+  // focusedColKey and join rowById-ordered cells with \t / \n on copy.
+  const copyCellValue = useCallback(
+    (rowId: string, colKey: string) => {
+      const row = rowById.get(rowId);
+      const text = String(row?.data?.[colKey] ?? '');
+      void navigator.clipboard
+        ?.writeText(text)
+        .then(() => toast.success(isPl ? 'Skopiowano komórkę' : 'Cell copied'))
+        .catch(() => {});
+    },
+    [rowById, isPl]
+  );
+
   const copyRowToClipboard = useCallback(
     (row: TableNode) => {
       const line = visibleColumns.map((c) => String(row.data?.[c.key] ?? '')).join('\t');
@@ -211,8 +306,16 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
             onSave={(v) => {
               handleFieldChange(row.id, col.key, v);
               setEditingCellId(null);
+              // Airtable parity: Enter-to-save moves focus one cell down;
+              // on the last row it just re-focuses the cell it left.
+              const ri = flatRowIds.indexOf(row.id);
+              const nextRowId = ri >= 0 && ri < flatRowIds.length - 1 ? flatRowIds[ri + 1] : row.id;
+              focusCell(nextRowId, col.key, true);
             }}
-            onCancel={() => setEditingCellId(null)}
+            onCancel={() => {
+              setEditingCellId(null);
+              focusCell(row.id, col.key, true);
+            }}
           />
         </div>
       );
@@ -239,21 +342,59 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         />
       );
 
+    const isFocused = focusedRowId === row.id && focusedColKey === col.key;
+
     return (
       <div
+        ref={(el) => {
+          if (el) cellRefs.current.set(id, el);
+          else cellRefs.current.delete(id);
+        }}
         role="gridcell"
-        tabIndex={0}
-        className="min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text"
+        tabIndex={isFocused ? 0 : -1}
+        className={`min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text ${
+          isFocused ? 'ring-1 ring-c-focus' : ''
+        }`}
+        onFocus={() => focusCell(row.id, col.key)}
         onDoubleClick={(e) => {
           e.stopPropagation();
           if (locked || pf?.isComputed) return;
           setEditingCellId(id);
         }}
         onKeyDown={(e) => {
-          if (locked || pf?.isComputed) return;
           if (e.key === 'Enter') {
             e.preventDefault();
-            setEditingCellId(id);
+            if (!locked && !pf?.isComputed) setEditingCellId(id);
+            return;
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+            e.preventDefault();
+            copyCellValue(row.id, col.key);
+            return;
+          }
+          switch (e.key) {
+            case 'ArrowUp':
+              e.preventDefault();
+              moveFocus(-1, 0);
+              break;
+            case 'ArrowDown':
+              e.preventDefault();
+              moveFocus(1, 0);
+              break;
+            case 'ArrowLeft':
+              e.preventDefault();
+              moveFocus(0, -1);
+              break;
+            case 'ArrowRight':
+              e.preventDefault();
+              moveFocus(0, 1);
+              break;
+            case 'Tab':
+              e.preventDefault();
+              moveFocusTab(!e.shiftKey);
+              break;
+            default:
+              break;
           }
         }}
       >
@@ -943,7 +1084,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           {activeViewName && (
             <>
               <ChevronRight className="h-3 w-3 shrink-0" />
-              <span className="text-c-accent truncate max-w-[140px]" title={activeViewName}>
+              <span className="text-c-text truncate max-w-[140px]" title={activeViewName}>
                 {activeViewName}
               </span>
             </>
@@ -989,7 +1130,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
                   }}
                   className={`flex h-10 w-10 items-center justify-center rounded-lg border text-c-text-muted transition-colors ${
                     active
-                      ? 'border-c-accent bg-c-accent-soft text-c-accent'
+                      ? 'border-c-border bg-c-surface-raised text-c-text'
                       : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
                   }`}
                 >
@@ -1017,7 +1158,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           }}
           className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-c-text-secondary disabled:opacity-40"
         >
-          <Plus className="h-5 w-5 text-c-accent" />
+          <Plus className="h-5 w-5 text-c-text-secondary" />
           {t('ideas.table.viewRouter.record', 'Record')}
         </button>
         <button
@@ -1035,7 +1176,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           type="button"
           onClick={() => setMobileViewPickerOpen((o) => !o)}
           className={`flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium ${
-            mobileViewPickerOpen ? 'text-c-accent' : 'text-c-text-secondary'
+            mobileViewPickerOpen ? 'text-c-text' : 'text-c-text-secondary'
           }`}
         >
           <Layout className="h-5 w-5" />

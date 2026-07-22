@@ -128,7 +128,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
         {onToggleCollapse && (
           <button
             onClick={() => onToggleCollapse(lane.id)}
-            className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+            className="p-0.5 rounded hover:bg-c-surface-raised"
             title={
               collapsed
                 ? t('processFlow.laneSystem.expandLane', 'Expand lane')
@@ -157,7 +157,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
               if (e.key === 'Enter') commit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none border border-c-accent"
+            className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none border border-c-focus"
           />
         ) : (
           <div
@@ -231,7 +231,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 onColorChange?.(lane.id, c);
                 setShowColorPicker(false);
               }}
-              className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-c-accent scale-110' : 'border-transparent'}`}
+              className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-c-text scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: c }}
             />
           ))}
@@ -314,7 +314,7 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
           if (!band) return null;
           return (
             <div
-              className="absolute left-0 right-0 pointer-events-none border-2 border-c-accent rounded-lg"
+              className="absolute left-0 right-0 pointer-events-none border-2 border-c-focus rounded-lg"
               style={{ top: band.top, height: band.height }}
             />
           );

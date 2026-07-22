@@ -268,7 +268,7 @@ function highlightFormula(
       ? [{ pattern: fieldPattern, cls: 'text-emerald-600 dark:text-emerald-400 font-semibold' }]
       : []),
     { pattern: funcPattern, cls: 'text-blue-600 dark:text-blue-400 font-semibold' },
-    { pattern: numberPattern, cls: 'text-c-accent' },
+    { pattern: numberPattern, cls: 'text-violet-600 dark:text-violet-400 font-semibold' },
     { pattern: operatorPattern, cls: 'text-c-text-secondary' },
   ];
 

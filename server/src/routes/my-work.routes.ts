@@ -4731,25 +4731,58 @@ router.post(
       // DP-3 (T4): stamp editor on every shared-mode write.
       if (sharedMode) set('last_editor_user_id', userId);
       set('updated_at', now);
-      // DP-3 (T4): target canonical (shared) vs A1 canonical-owner (legacy). Sync has
-      // no UPDATE-time version guard — the OCC 409 is decided earlier via
-      // hasVersionConflict — so this WHERE stays version-free in both modes.
+      // Z18 (Fala 4): the pre-check above (hasVersionConflict) is read-then-act —
+      // two concurrent /map/sync requests can both read the same currentVersion,
+      // both pass the pre-check, and both reach this UPDATE. Without a version
+      // guard IN the WHERE clause, the second write silently clobbers the first
+      // (classic read-modify-write data loss under concurrent collaboration).
+      // Mirrors the already-fixed PUT /my-ideas/:id/map handler above (see its
+      // "mid-air UPDATE race" contract test): the WHERE re-checks
+      // `version = baseVersion` atomically in the SAME statement as the write
+      // (single round-trip — no BEGIN/COMMIT; pool.query cannot span a
+      // transaction across statements, see RecordsService.batchRecords bug,
+      // 2026-07-22). rowCount 0 means we lost the race — someone else's write
+      // landed between our SELECT and this UPDATE — so we refetch and return the
+      // SAME 409 shape as the pre-check (buildMapConflictPayload) instead of
+      // silently overwriting. baseVersion is non-null here whenever `existing`
+      // is set (enforced by the IDEA_MAP_BASE_VERSION_REQUIRED 400 above), so the
+      // guard is always active on updates; kept conditional for parity with the
+      // PUT /map handler's style.
+      const whereSql = sharedMode
+        ? 'idea_id = ? AND organization_id = ? AND is_canonical = TRUE'
+        : 'idea_id = ? AND user_id = ? AND organization_id = ?';
       if (sharedMode) {
         params.push(ideaId, orgId);
-        await queryHelpers.queryRun(
-          `UPDATE my_idea_maps
-         SET ${setParts.join(', ')}
-         WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE`,
-          params
-        );
       } else {
         params.push(ideaId, canonicalUserId, orgId);
-        await queryHelpers.queryRun(
-          `UPDATE my_idea_maps
+      }
+      if (baseVersion !== null) {
+        params.push(baseVersion);
+      }
+      const updateResult = await queryHelpers.queryRun(
+        `UPDATE my_idea_maps
          SET ${setParts.join(', ')}
-         WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-          params
+         WHERE ${whereSql}${baseVersion !== null ? ' AND version = ?' : ''}`,
+        params
+      );
+      if (baseVersion !== null && Number(updateResult?.changes || 0) === 0) {
+        logger.warn(
+          `[IdeaMap] map/sync lost optimistic-lock race (ideaId=${ideaId}, expectedVersion=${baseVersion}) — refetching current row for 409`
         );
+        const fresh = sharedMode
+          ? await queryHelpers.queryOne<any>(
+              `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${preferredToolSelect}${extColSelect}${schemaVersionSelect}
+             FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+              [ideaId, orgId]
+            )
+          : await queryHelpers.queryOne<any>(
+              `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${preferredToolSelect}${extColSelect}${schemaVersionSelect}
+             FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+              [ideaId, canonicalUserId, orgId]
+            );
+        return res
+          .status(409)
+          .json(buildMapConflictPayload(fresh, { id: ideaId, title: '', isPl: false }));
       }
     }
 

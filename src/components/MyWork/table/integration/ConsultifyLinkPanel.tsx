@@ -69,9 +69,9 @@ const MODULE_CONFIG = {
   },
   execution: {
     icon: Zap,
-    color: 'text-c-accent',
-    bgColor: 'bg-c-accent-soft',
-    borderColor: 'border-c-accent',
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-600 dark:bg-violet-500',
+    borderColor: 'border-violet-600 dark:border-violet-500',
   },
   initiatives: {
     icon: Rocket,

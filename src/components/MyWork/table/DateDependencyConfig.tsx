@@ -233,7 +233,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
               disabled={locked}
               className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                 config?.defaultDependencyType === value
-                  ? 'bg-c-accent-soft text-c-accent ring-1 ring-c-focus'
+                  ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
                   : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
               } disabled:opacity-50`}
             >

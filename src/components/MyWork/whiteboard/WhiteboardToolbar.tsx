@@ -160,7 +160,7 @@ const ToolbarOverflow: React.FC<{ label: string; items: OverflowItem[] }> = ({ l
                     it.danger
                       ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
                       : it.active
-                        ? 'text-c-accent bg-c-accent-soft'
+                        ? 'text-c-text bg-c-surface-raised'
                         : 'text-c-text-secondary hover:bg-c-surface-raised'
                   }`}
                 >

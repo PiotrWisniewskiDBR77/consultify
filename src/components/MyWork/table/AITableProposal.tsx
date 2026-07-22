@@ -133,17 +133,17 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
       className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
         checked
           ? 'bg-c-surface border-c-border-subtle'
-          : 'border-c-border-subtle hover:border-c-accent'
+          : 'border-c-border-subtle hover:border-c-border'
       }`}
     >
-      {checked && <Check size={10} className="text-white" />}
+      {checked && <Check size={10} className="text-c-surface" />}
     </button>
   );
 
   return (
-    <div className="rounded-2xl border border-c-accent bg-c-surface shadow-2xl overflow-hidden max-h-[70vh] flex flex-col">
-      <div className="flex items-center gap-2 px-4 py-3 bg-c-accent-soft border-b border-c-accent flex-shrink-0">
-        <Sparkles size={16} className="text-c-accent" />
+    <div className="rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden max-h-[70vh] flex flex-col">
+      <div className="flex items-center gap-2 px-4 py-3 bg-c-surface-raised border-b border-c-border-subtle flex-shrink-0">
+        <Sparkles size={16} className="text-c-text-secondary" />
         <div className="flex-1">
           <div className="text-xs font-bold text-c-text">
             {proposal.title || t('myWorkTable.aiTableProposal.defaultTitle')}
@@ -203,7 +203,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={col.key}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedColumns.has(col.key) ? 'bg-c-accent-soft' : 'opacity-50'
+                      acceptedColumns.has(col.key) ? 'bg-c-surface-raised' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedColumns.has(col.key), () => toggleColumn(col.key))}
@@ -245,7 +245,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={v.id}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedViews.has(v.id) ? 'bg-c-accent-soft' : 'opacity-50'
+                      acceptedViews.has(v.id) ? 'bg-c-surface-raised' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedViews.has(v.id), () => toggleView(v.id))}
@@ -289,7 +289,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={r.id}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedRows.has(r.id) ? 'bg-c-accent-soft' : 'opacity-50'
+                      acceptedRows.has(r.id) ? 'bg-c-surface-raised' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedRows.has(r.id), () => toggleRow(r.id))}

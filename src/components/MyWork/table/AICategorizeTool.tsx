@@ -164,7 +164,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
-          <Sparkles size={16} className="text-c-accent" />
+          <Sparkles size={16} className="text-c-text-secondary" />
           <span className="text-sm font-bold text-c-text">
             {t('myWorkTable.aiCategorizeTool.title')}
           </span>
@@ -182,7 +182,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           <button
             onClick={handleAnalyze}
             disabled={loading || nodes.length === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-text text-c-surface hover:bg-c-text/90 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
             {loading
@@ -261,7 +261,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                           {cat.suggestedTags.map((tag) => (
                             <span
                               key={tag}
-                              className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-c-accent-soft text-c-accent"
+                              className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-c-surface-raised text-c-text-secondary"
                             >
                               <Tag size={7} className="inline mr-0.5" />
                               {tag}

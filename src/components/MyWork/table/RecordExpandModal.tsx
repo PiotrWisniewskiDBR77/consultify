@@ -88,7 +88,7 @@ const FieldValueDisplay: React.FC<{
 
   if (fieldType === 'singleSelect') {
     return (
-      <span className="inline-flex items-center rounded-md bg-c-accent-soft px-2 py-0.5 text-[10px] font-semibold text-c-accent">
+      <span className="inline-flex items-center rounded-md bg-c-surface-raised px-2 py-0.5 text-[10px] font-semibold text-c-text-secondary">
         {String(value)}
       </span>
     );
@@ -357,7 +357,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
           onClick={(e) => e.stopPropagation()}
         >
           {/* Accent bar */}
-          <div className="h-1 flex-shrink-0 bg-gradient-to-r from-c-info to-c-accent" />
+          <div className="h-1 flex-shrink-0 bg-gradient-to-r from-c-info to-c-focus" />
 
           {/* Header */}
           <div className="flex items-start justify-between border-b border-c-border-subtle px-6 py-4">
@@ -384,7 +384,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                   }}
                   className={`rounded-lg p-2 transition-colors ${
                     editMode
-                      ? 'bg-c-accent-soft text-c-accent'
+                      ? 'bg-c-surface-raised text-c-text'
                       : 'text-c-text-muted hover:bg-c-surface-raised'
                   }`}
                   title={

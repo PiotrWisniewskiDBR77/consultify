@@ -239,9 +239,9 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           {mode === 'voice' ? (
-            <Mic size={16} className="text-c-accent" />
+            <Mic size={16} className="text-c-text-secondary" />
           ) : (
-            <Camera size={16} className="text-c-accent" />
+            <Camera size={16} className="text-c-text-secondary" />
           )}
           <span className="text-sm font-bold text-c-text">
             {mode === 'voice'
@@ -252,14 +252,14 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           <div className="flex items-center gap-0.5 rounded-lg border border-c-border-subtle overflow-hidden">
             <button
               onClick={() => setMode('voice')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
             >
               <Mic size={10} className="inline mr-0.5" />
               {t('ideas.table.voiceImageInput.voice', 'Voice')}
             </button>
             <button
               onClick={() => setMode('image')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
             >
               <ImageIcon size={10} className="inline mr-0.5" />
               {t('ideas.table.voiceImageInput.image', 'Image')}
@@ -281,8 +281,8 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 onClick={isRecording ? stopRecording : startRecording}
                 className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center transition-all ${
                   isRecording
-                    ? 'bg-danger-500 text-white animate-pulse shadow-lg shadow-danger-500/30'
-                    : 'bg-c-accent-soft text-c-accent hover:bg-c-accent-soft'
+                    ? 'bg-danger-500 text-c-surface animate-pulse shadow-lg shadow-danger-500/30'
+                    : 'bg-c-surface-raised text-c-text hover:bg-c-surface-raised/80'
                 }`}
               >
                 {isRecording ? <Square size={20} /> : <Mic size={24} />}
@@ -307,7 +307,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           ) : (
             <div
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
-                isDragOver ? 'border-c-accent bg-c-accent-soft' : 'border-c-border-subtle'
+                isDragOver ? 'border-c-focus bg-c-surface-raised' : 'border-c-border-subtle'
               }`}
               onDragOver={(e) => {
                 e.preventDefault();
@@ -337,7 +337,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
+                    className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-text bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors"
                   >
                     <ImageIcon size={10} />
                     {t('ideas.table.voiceImageInput.chooseFile', 'Choose file')}
@@ -362,7 +362,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           <button
             onClick={handleParse}
             disabled={loading || (mode === 'voice' ? !transcript : !imagePreview)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-text text-c-surface hover:bg-c-text/90 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Mic size={12} />}
             {loading
@@ -395,7 +395,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                     type="checkbox"
                     checked={idea.selected}
                     onChange={() => toggleIdea(idx)}
-                    className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
+                    className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus"
                   />
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-medium text-c-text block truncate">
@@ -408,7 +408,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                     )}
                   </div>
                   {idea.category && (
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-c-accent-soft text-c-accent flex-shrink-0">
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-c-surface-raised text-c-text-secondary flex-shrink-0">
                       {idea.category}
                     </span>
                   )}
@@ -431,7 +431,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             <button
               onClick={handleAddSelected}
               disabled={parsedIdeas.filter((p) => p.selected).length === 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-text text-c-surface hover:bg-c-text/90 transition-colors disabled:opacity-50"
             >
               <Plus size={12} />
               {t('ideas.table.voiceImageInput.addNIdeas', 'Add {{count}} ideas', {

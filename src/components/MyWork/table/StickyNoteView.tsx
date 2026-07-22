@@ -169,7 +169,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
               <Paperclip size={8} /> {attachCount}
             </span>
           )}
-          {node.data?.aiInsights && <Sparkles size={8} className="text-c-accent" />}
+          {node.data?.aiInsights && <Sparkles size={8} className="text-c-text-secondary" />}
         </div>
       </button>
     );

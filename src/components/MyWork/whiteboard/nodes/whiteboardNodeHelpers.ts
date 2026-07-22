@@ -36,8 +36,8 @@ export const STICKY_COLORS = [
     glow: '0 0 14px rgba(244,114,182,0.28)',
   },
   {
-    bg: 'bg-c-accent-soft',
-    border: 'border-c-accent',
+    bg: 'bg-indigo-100 dark:bg-indigo-950/60',
+    border: 'border-indigo-300 dark:border-indigo-400/60',
     hex: '#e0e7ff',
     darkHex: '#312e81',
     glow: '0 0 14px rgba(129,140,248,0.28)',

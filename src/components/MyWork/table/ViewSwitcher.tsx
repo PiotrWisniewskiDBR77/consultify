@@ -199,7 +199,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
               <button
                 type="button"
                 onClick={() => setCreating(true)}
-                className="w-full inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-1 py-1.5 rounded-lg transition-colors"
+                className="w-full inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text px-1 py-1.5 rounded-lg transition-colors"
               >
                 <Plus size={12} />
                 {t('ideas.table.viewSwitcher.createView', 'Create view')}
@@ -225,7 +225,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                         onClick={() => setNewType(vt)}
                         className={`flex-1 inline-flex items-center justify-center gap-1 px-1.5 py-1 rounded-lg text-[10px] font-medium transition-colors ${
                           newType === vt
-                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            ? 'bg-c-surface-raised text-c-text border border-c-border'
                             : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
@@ -240,7 +240,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     type="checkbox"
                     checked={newPersonal}
                     onChange={(e) => setNewPersonal(e.target.checked)}
-                    className="rounded border-c-border-subtle text-c-accent focus:ring-c-focus h-3.5 w-3.5"
+                    className="rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus h-3.5 w-3.5"
                   />
                   <Lock size={10} className="text-c-text-muted" />
                   <span className="text-[10px] text-c-text-muted">

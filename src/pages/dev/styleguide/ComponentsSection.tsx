@@ -404,8 +404,10 @@ const IdeaRightPanelDemo: React.FC = () => (
           <div>Widoczność: Zespół</div>
         </div>
       }
-      contextContent={<p className="text-xs text-c-text-muted">3 powiązane notatki, 1 initiative.</p>}
+      relationsContent={<p className="text-xs text-c-text-muted">3 powiązane notatki, 1 initiative.</p>}
       teresaContent={<p className="text-xs text-c-text-muted">Komendy + strumień sugestii Teresy.</p>}
+      onExport={() => {}}
+      onConvert={() => {}}
     />
   </div>
 );

@@ -276,7 +276,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
         </span>
         <button
           onClick={() => setShowFilters((p) => !p)}
-          className={`p-1 rounded transition-colors ${showFilters ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
+          className={`p-1 rounded transition-colors ${showFilters ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
         >
           <Filter size={12} />
         </button>
@@ -345,7 +345,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
                 <button
                   onClick={() => fetchRevisions(false)}
                   disabled={loading}
-                  className="w-full py-2 rounded-lg text-[11px] font-semibold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  className="w-full py-2 rounded-lg text-[11px] font-semibold text-c-text bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
                 >
                   {loading ? (
                     <Loader2 size={12} className="animate-spin" />

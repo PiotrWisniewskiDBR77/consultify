@@ -17,6 +17,7 @@
  * Data lives in the shared IdeaWorkspaceGraph (nodes/edges/extensions.processFlow).
  */
 import 'reactflow/dist/style.css';
+import './processflow/processflow-canvas.css';
 
 import * as dagre from 'dagre';
 import {
@@ -65,7 +66,9 @@ import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
+import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
@@ -380,6 +383,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [showKPIDashboard, setShowKPIDashboard] = useState(false);
   const [showMiniMap, setShowMiniMap] = useState(false);
+  // Z17 (Fala 3): true while the user is mid-drag on a connection line —
+  // toggles the `pf-connecting` class (processflow-canvas.css) so every
+  // node's 4-side handles light up as magnetic landing targets, not just
+  // the one under the cursor.
+  const [isConnectingEdge, setIsConnectingEdge] = useState(false);
   const [internalFullscreen, setInternalFullscreen] = useState(false);
   // M07 F5b B1: real grid/snap view-state (previously a hardcoded stub that
   // was written on save but never reflected actual UI state or restored).
@@ -393,6 +401,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const pendingViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
+
+  // Z14: neighbour-edge magnetic snapping while dragging. Grid is left to
+  // ReactFlow's native snapToGrid (snapGrid 16px), so gridEnabled=false here.
+  const getSnapInstance = useCallback(() => reactFlowInstanceRef.current, []);
+  const { onNodeDrag: onSnapNodeDrag, onNodeDragStop: onSnapNodeDragStop } = useCanvasSnappingRef(
+    getSnapInstance,
+    { enabled: !locked, threshold: 6, gridEnabled: false }
+  );
 
   const toggleInternalFullscreen = useCallback(() => {
     if (!flowContainerRef.current) return;
@@ -2295,7 +2311,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col bg-white dark:bg-navy-950 relative"
+      className="w-full h-full flex flex-col bg-c-bg relative"
       role="region"
       aria-label={t('myWorkIdeas.processFlowTool.processFlowEditor')}
     >
@@ -2474,7 +2490,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {processBriefData && (
-        <div className="mx-3 mb-2 rounded-xl border border-slate-200/60 dark:border-navy-700/40 bg-slate-50/50 dark:bg-navy-900/20 p-3">
+        <div className="mx-3 mb-2 rounded-xl border border-slate-200/60 dark:border-navy-700/40 bg-c-surface p-3">
           <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
             {t('myWorkIdeas.processFlowTool.structuredBrief')}
           </div>
@@ -2568,7 +2584,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
           <div className="grid grid-cols-3 gap-2 mb-2">
             {summaryData.totalSteps != null && (
-              <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
+              <div className="text-center p-1.5 rounded-lg bg-c-surface-raised">
                 <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   {summaryData.totalSteps}
                 </div>
@@ -2578,7 +2594,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               </div>
             )}
             {(summaryData.decisions ?? summaryData.totalDecisions) != null && (
-              <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
+              <div className="text-center p-1.5 rounded-lg bg-c-surface-raised">
                 <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
                   {summaryData.decisions ?? summaryData.totalDecisions}
                 </div>
@@ -2588,7 +2604,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               </div>
             )}
             {(summaryData.lanes ?? summaryData.totalLanes) != null && (
-              <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
+              <div className="text-center p-1.5 rounded-lg bg-c-surface-raised">
                 <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
                   {summaryData.lanes ?? summaryData.totalLanes}
                 </div>
@@ -2767,6 +2783,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onNodesChange={locked ? undefined : onNodesChange}
               onEdgesChange={locked ? undefined : onEdgesChange}
               onConnect={onConnect}
+              // Z17 (Fala 3): magnetic connector parity with Lucidchart —
+              // connectionMode="loose" already comes from
+              // getIdeasToolInteractionProps (spread below); connectionRadius
+              // widens the snap zone around each of the 4-side handles so
+              // dropping *near* one closes the connection, not just exactly
+              // on the 6px dot.
+              connectionRadius={40}
+              onConnectStart={() => setIsConnectingEdge(true)}
+              onConnectEnd={() => setIsConnectingEdge(false)}
+              // Z14 (Fala 3): snapping + alignment guides during node drag.
+              onNodeDrag={locked ? undefined : onSnapNodeDrag}
+              onNodeDragStop={locked ? undefined : onSnapNodeDragStop}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               // react-flow v11 prop names (v12 renamed these to edgesReconnectable/onReconnect).
@@ -2825,7 +2853,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 }
               }}
               fitView={!pendingViewportRef.current}
-              className="bg-transparent"
+              className={`bg-transparent ${isConnectingEdge ? 'pf-connecting' : ''}`}
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
               {(() => {
@@ -2848,7 +2876,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   nodeStrokeWidth={3}
                   zoomable
                   pannable
-                  className="!bg-white/80 dark:!bg-navy-900/80 !border-slate-200/60 dark:!border-navy-700/60"
+                  className="!bg-c-surface !border-slate-200/60 dark:!border-navy-700/60"
                 />
               )}
               <CanvasZoomControls
@@ -2860,6 +2888,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 onFullscreenToggle={onFullscreenToggle}
                 isFullscreen={isFullscreen}
               />
+              {!locked && <CanvasSnapGuides threshold={6} />}
             </ReactFlow>
           </ReactFlowProvider>
 
@@ -2976,7 +3005,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       {/* ── New panels: Validation, AI Proposal, Readback, Properties, Export, Context Menu ── */}
 
       {showValidationPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-c-bg overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {t('myWorkIdeas.processFlowTool.validation')}
@@ -3003,7 +3032,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {showAIPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-96 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+        <div className="absolute right-0 top-0 bottom-0 w-96 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-c-bg overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {rewriteStepId
@@ -3040,7 +3069,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {showReadbackPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-c-bg overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {t('myWorkIdeas.processFlowTool.semanticReadback')}
@@ -3066,7 +3095,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {showPropertiesPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-c-bg overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {t('myWorkIdeas.processFlowTool.properties')}
@@ -3244,7 +3273,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {metricsEditorNode && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/30 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200/70 bg-white p-4 shadow-2xl dark:border-navy-700/70 dark:bg-navy-900">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200/70 bg-c-surface p-4 shadow-2xl dark:border-navy-700/70">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -3271,7 +3300,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, duration: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3281,7 +3310,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, durationUnit: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3289,7 +3318,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <input
                   value={metricsDraft.cost || ''}
                   onChange={(e) => setMetricsDraft((prev) => ({ ...prev, cost: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3299,7 +3328,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, fteCount: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3309,7 +3338,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, automationPotential: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
                 >
                   <option value="low">{t('myWorkIdeas.processFlowTool.low')}</option>
                   <option value="medium">{t('myWorkIdeas.processFlowTool.medium')}</option>
@@ -3323,7 +3352,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, savingsEstimate: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
                 />
               </label>
             </div>
@@ -3338,7 +3367,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <button
                 type="button"
                 onClick={handleSaveMetrics}
-                className="rounded-xl bg-slate-900 dark:bg-white px-3 py-2 text-xs font-semibold text-white dark:text-navy-900 hover:bg-slate-800 dark:hover:bg-slate-100"
+                className="rounded-xl bg-c-text px-3 py-2 text-xs font-semibold text-c-surface hover:opacity-90"
               >
                 {t('myWorkIdeas.processFlowTool.saveMetrics')}
               </button>

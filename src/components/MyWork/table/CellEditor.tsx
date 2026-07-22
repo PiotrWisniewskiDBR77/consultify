@@ -37,7 +37,7 @@ function getSelectOptions(fieldOptions?: Record<string, unknown>): TablePlatform
 }
 
 const baseCls =
-  'w-full rounded-lg border border-c-accent bg-c-surface px-2 py-1.5 text-[11px] md:text-[11px] text-sm text-c-text outline-none ring-2 ring-c-focus min-h-[44px] md:min-h-0 touch-manipulation';
+  'w-full rounded-lg border border-c-border bg-c-surface px-2 py-1.5 text-[11px] md:text-[11px] text-sm text-c-text outline-none ring-2 ring-c-focus min-h-[44px] md:min-h-0 touch-manipulation';
 
 // ── Text Editor ──────────────────────────────────────────────────────────────
 
@@ -268,7 +268,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
                 setOpen(false);
               }}
               className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-c-surface-raised transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation ${
-                String(value) === optVal ? 'bg-c-accent-soft' : ''
+                String(value) === optVal ? 'bg-c-surface-raised' : ''
               }`}
             >
               {opt.color && (

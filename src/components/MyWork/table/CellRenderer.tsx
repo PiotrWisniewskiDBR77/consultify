@@ -193,7 +193,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
               <span
                 className={`w-3 h-3 rounded-sm border flex items-center justify-center ${selected.includes(opt) ? 'bg-c-surface border-c-border-subtle' : 'border-c-border-subtle'}`}
               >
-                {selected.includes(opt) && <Check size={8} className="text-white" />}
+                {selected.includes(opt) && <Check size={8} className="text-c-surface" />}
               </span>
               {opt}
             </button>
@@ -227,7 +227,7 @@ const CheckboxCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onClick={() => !locked && onChange(!value)}
       disabled={locked}
       className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-        value ? 'bg-c-text border-c-text text-c-bg' : 'border-c-border-subtle hover:border-c-accent'
+        value ? 'bg-c-text border-c-text text-c-bg' : 'border-c-border-subtle hover:border-c-border'
       }`}
     >
       {value && <Check size={12} />}
@@ -262,7 +262,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 
 const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-    <div className="w-5 h-5 rounded-full bg-c-accent flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+    <div className="w-5 h-5 rounded-full bg-c-text-secondary flex items-center justify-center text-[8px] font-bold text-c-surface flex-shrink-0">
       {String(value || '?')
         .charAt(0)
         .toUpperCase()}
@@ -352,7 +352,7 @@ const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) =>
       {!locked && onAIRefresh && (
         <button
           onClick={onAIRefresh}
-          className="p-0.5 rounded text-c-accent hover:bg-c-accent-soft transition-colors"
+          className="p-0.5 rounded text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           title={t('ideas.table.cellRenderer.regenerate', 'Regenerate')}
         >
           <RefreshCw size={10} />

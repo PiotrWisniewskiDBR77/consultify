@@ -226,7 +226,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
           <button
             key={p}
             onClick={() => onPaletteChange(p)}
-            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
+            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
           >
             {p === 'warm' ? '🔥' : p === 'cool' ? '❄️' : '↕️'} {p}
           </button>
@@ -244,7 +244,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
               type="checkbox"
               checked={enabledColumns.has(col.key)}
               onChange={() => onToggleColumn(col.key)}
-              className="w-3 h-3 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
+              className="w-3 h-3 rounded border-c-border-subtle text-c-text focus:ring-c-focus"
             />
             <span className="text-[10px] text-c-text-secondary">{col.header}</span>
           </label>

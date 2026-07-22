@@ -145,7 +145,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-c-surface-raised transition-colors"
       >
-        <BarChart3 size={13} className="text-c-accent" />
+        <BarChart3 size={13} className="text-c-text-secondary" />
         <span className="text-[11px] font-bold text-c-text">
           {t('ideas.table.summaryDashboard.tableSummary', 'Table Summary')}
         </span>
@@ -306,10 +306,10 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
           )}
 
           {/* AI Narrative */}
-          <div className="rounded-xl border border-c-accent bg-c-accent-soft p-3">
+          <div className="rounded-xl border border-c-border bg-c-surface-raised p-3">
             <div className="flex items-center gap-1.5 mb-2">
-              <Sparkles size={11} className="text-c-accent" />
-              <span className="text-[10px] font-bold text-c-accent">
+              <Sparkles size={11} className="text-c-text-secondary" />
+              <span className="text-[10px] font-bold text-c-text">
                 {t('ideas.table.summaryDashboard.aiNarrative', 'AI Narrative')}
               </span>
             </div>
@@ -319,7 +319,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               <button
                 onClick={handleGenerateNarrative}
                 disabled={aiLoading}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50"
               >
                 {aiLoading ? (
                   <Loader2 size={12} className="animate-spin" />

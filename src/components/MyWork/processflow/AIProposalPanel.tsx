@@ -131,13 +131,13 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
 
       {isGenerating ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-c-text-secondary">
-          <TeresaMark size={28} className="animate-spin text-c-accent" />
+          <TeresaMark size={28} className="animate-spin text-c-text-secondary" />
           <span className="text-xs font-medium">{labels.generating}</span>
         </div>
       ) : proposal ? (
         <div className="flex flex-col gap-3">
-          <div className="rounded-lg border border-c-accent bg-c-accent-soft px-3 py-2.5 text-xs text-c-text">
-            <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-c-accent">
+          <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2.5 text-xs text-c-text">
+            <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-c-text-secondary">
               {labels.summary}
             </div>
             <p className="whitespace-pre-wrap leading-relaxed">{proposal.summary}</p>
@@ -284,7 +284,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             type="button"
             onClick={() => onGenerate(draftPrompt)}
             disabled={!draftPrompt.trim() || isGenerating}
-            className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl bg-c-accent px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-c-accent disabled:cursor-not-allowed disabled:opacity-40 dark:bg-c-accent-soft0 dark:hover:bg-c-accent"
+            className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl bg-c-text px-4 py-2 text-xs font-semibold text-c-surface shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <TeresaMark size={14} />
             {labels.generate}

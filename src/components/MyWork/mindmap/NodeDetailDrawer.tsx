@@ -152,7 +152,7 @@ const STATUS_CONFIG: Record<
   converted: {
     tkey: 'myWorkMindmap.nodeStatus.converted',
     labelEn: 'Converted',
-    color: 'bg-c-surface-raised text-c-accent dark:bg-c-surface dark:text-c-accent',
+    color: 'bg-c-surface-raised text-c-tag-2 dark:bg-c-surface dark:text-c-tag-2',
     icon: ArrowRight,
   },
 };
@@ -381,7 +381,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isAI ? (
-              <TeresaMark size={14} className="text-c-accent shrink-0" />
+              <TeresaMark size={14} className="text-c-info shrink-0" />
             ) : (
               <Lightbulb size={14} className="text-c-warning shrink-0" />
             )}
@@ -806,7 +806,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                           <Rocket size={11} className="text-c-warning" />
                         )}
                         {item.type === 'similar_idea' && (
-                          <Lightbulb size={11} className="text-c-accent" />
+                          <Lightbulb size={11} className="text-c-tag-3" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">

@@ -332,7 +332,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
               <button
                 key={t.id}
                 onClick={() => setTool(t.id)}
-                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-muted hover:text-c-text-secondary'}`}
+                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
                 title={t.label}
               >
                 <Icon size={13} />

@@ -261,7 +261,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                     }}
                     onClick={() => onNodeClick?.(node.id)}
                     className={`absolute text-left px-2.5 py-1.5 rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] hover:shadow-md transition-shadow ${
-                      dragNodeId === node.id ? 'opacity-40 scale-95 border-c-accent' : ''
+                      dragNodeId === node.id ? 'opacity-40 scale-95 border-c-focus' : ''
                     }`}
                     style={{
                       left: `${positionsByNode[node.id]?.left ?? 5}%`,

@@ -239,9 +239,9 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
 
   return (
     <div className="absolute left-4 right-4 top-2 z-50">
-      <div className="rounded-2xl border border-c-accent bg-c-surface shadow-2xl overflow-hidden">
+      <div className="rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3">
-          <Sparkles size={16} className="text-c-accent flex-shrink-0" />
+          <Sparkles size={16} className="text-c-text-secondary flex-shrink-0" />
           <input
             ref={inputRef}
             value={command}
@@ -253,14 +253,14 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             placeholder={t('myWorkTable.aiTableAssistant.commandPlaceholder')}
             className="flex-1 bg-transparent border-0 outline-none text-sm text-c-text placeholder-c-text-muted"
           />
-          {loading && <Loader2 size={16} className="animate-spin text-c-accent" />}
+          {loading && <Loader2 size={16} className="animate-spin text-c-text-secondary" />}
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-c-surface-raised">
             <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
         {lastResult && (
-          <div className="px-4 py-3 border-t border-c-border-subtle bg-c-accent-soft">
+          <div className="px-4 py-3 border-t border-c-border-subtle bg-c-surface-raised">
             <p className="text-xs text-c-text leading-relaxed">{lastResult}</p>
           </div>
         )}

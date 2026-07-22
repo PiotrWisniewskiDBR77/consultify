@@ -79,7 +79,7 @@ const FRAMEWORKS: FrameworkDef[] = [
     descEn: 'Identify and analyze key stakeholders',
     descPl: 'Identyfikacja i analiza kluczowych interesariuszy',
     icon: Users,
-    color: 'text-c-accent',
+    color: 'text-violet-600',
     columns: [
       { key: 'label', header: 'Stakeholder', type: 'text', visible: true, width: 200 },
       { key: 'role', header: 'Role', type: 'text', visible: true, width: 160 },
@@ -401,7 +401,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
       <div className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-c-accent" />
+            <Sparkles size={16} className="text-c-text-secondary" />
             <h3 className="text-sm font-bold text-c-text">
               {t('myWorkTable.frameworkGenerator.frameworkGenerator')}
             </h3>
@@ -426,7 +426,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
                   onClick={() => setSelected(fw.id)}
                   className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
                     isActive
-                      ? 'border-c-accent bg-c-accent-soft ring-1 ring-c-focus'
+                      ? 'border-c-border bg-c-surface-raised ring-1 ring-c-focus'
                       : 'border-c-border-subtle hover:bg-c-surface-raised'
                   }`}
                 >

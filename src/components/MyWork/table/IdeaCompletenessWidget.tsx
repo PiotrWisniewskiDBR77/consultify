@@ -77,7 +77,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
         labelKey: 'edges',
         labelEn: 'Edges',
         value: edgeCount,
-        color: 'text-c-accent',
+        color: 'text-pink-500',
       },
       {
         icon: Target,

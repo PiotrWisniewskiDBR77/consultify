@@ -333,7 +333,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     isSelected ? 'bg-c-surface border-c-border-subtle' : 'border-c-border-subtle'
                   }`}
                 >
-                  {isSelected && <Check size={9} className="text-white" />}
+                  {isSelected && <Check size={9} className="text-c-surface" />}
                 </span>
                 {val}
               </button>
@@ -454,7 +454,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             <button
               type="button"
               onClick={toggleLogic}
-              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors"
+              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-c-surface-raised text-c-text hover:bg-c-surface-raised/80 transition-colors"
             >
               {filters.logic.toUpperCase()}
             </button>
@@ -566,7 +566,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
         <button
           type="button"
           onClick={addRule}
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-2 py-1.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
           {t('myWorkTable.filterBuilder.addFilter')}

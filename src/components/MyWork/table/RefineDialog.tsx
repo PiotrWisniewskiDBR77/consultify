@@ -101,7 +101,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
       onClick={handleOverlayClick}
       className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-200"
     >
-      <div className="w-full max-w-lg mx-4 rounded-2xl border border-c-accent bg-c-surface shadow-2xl overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95">
+      <div className="w-full max-w-lg mx-4 rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                 key={s}
                 onClick={() => setMessage(s)}
                 disabled={loading}
-                className="text-[10px] px-2.5 py-1 rounded-lg border border-c-border-subtle text-c-text-muted hover:border-c-accent hover:text-c-accent transition-colors disabled:opacity-50"
+                className="text-[10px] px-2.5 py-1 rounded-lg border border-c-border-subtle text-c-text-muted hover:border-c-border hover:text-c-text transition-colors disabled:opacity-50"
               >
                 {s}
               </button>

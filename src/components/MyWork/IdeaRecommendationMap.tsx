@@ -56,7 +56,9 @@ import {
 
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
+import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useCanvasSnapping } from './canvas/useCanvasSnapping';
 import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
@@ -134,7 +136,6 @@ import {
 } from './mindmap/NodeEnhancements';
 import { PaneContextMenu } from './mindmap/PaneContextMenu';
 import { PresentationMode } from './mindmap/PresentationMode';
-import { SmartGuidesOverlay } from './mindmap/SmartGuidesOverlay';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { applyStructureLayout } from './mindmap/StructureLayouts';
 import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
@@ -882,7 +883,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <button
           type="button"
           title={t('ideas.mindmap.addNodeTab', 'Add node (Tab)')}
-          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-slate-600 text-white shadow-lg hover:bg-slate-700 active:scale-[0.98] transition-all"
+          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-c-text text-c-surface shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
           onClick={(e) => {
             e.stopPropagation();
             window.dispatchEvent(
@@ -910,7 +911,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
           <button
             type="button"
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-600 text-white text-[9px] font-medium shadow-lg hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-c-text text-c-surface text-[9px] font-medium shadow-lg hover:opacity-90 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               window.dispatchEvent(
@@ -1288,7 +1289,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   })
                 );
               }}
-              className="absolute right-2 top-2 z-20 h-7 w-7 rounded-full border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 transition-colors flex items-center justify-center dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800"
+              className="absolute right-2 top-2 z-20 h-7 w-7 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors flex items-center justify-center dark:text-c-text-muted"
             >
               <Pencil size={13} />
             </button>
@@ -1299,7 +1300,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={t('mindmap.addChildTab')}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-600 text-white hover:bg-slate-700 active:scale-[0.98] transition-all"
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-c-text text-c-surface hover:opacity-90 active:scale-[0.98] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1318,7 +1319,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={t('mindmap.addSiblingShiftEnter')}
-              className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white hover:bg-slate-600 active:scale-[0.98] transition-all opacity-70 hover:opacity-100"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-c-text text-c-surface active:scale-[0.98] transition-all opacity-70 hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1343,7 +1344,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* Artifact link badge */}
         {Array.isArray(data.artifactLinks) && data.artifactLinks.length > 0 && (
           <div
-            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-slate-600 text-white px-1 py-0.5 shadow-sm cursor-pointer hover:bg-slate-700 transition-colors"
+            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-c-text text-c-surface px-1 py-0.5 shadow-sm cursor-pointer hover:opacity-90 transition-colors"
             title={data.artifactLinks
               .map((l: any) => l.label || l.title || `${l.artifactRef?.type || l.type}`)
               .join(', ')}
@@ -1375,7 +1376,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* MM-15: Converted indicator */}
         {nodeStatus === 'converted' && data._convertedTo && (
           <div
-            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-navy-900 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm dark:bg-white dark:text-navy-950"
+            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-c-text text-c-surface px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
             title={t('mindmap.convertedToTarget', { target: data._convertedTo })}
           >
             <ExternalLink size={8} />
@@ -1415,7 +1416,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   {[72, 56, 64].map((w, i) => (
                     <span
                       key={i}
-                      className="inline-block h-[18px] rounded-full bg-slate-200 dark:bg-navy-800 animate-pulse"
+                      className="inline-block h-[18px] rounded-full bg-c-surface-raised animate-pulse"
                       style={{ width: w }}
                     />
                   ))}
@@ -1427,7 +1428,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     <button
                       key={i}
                       type="button"
-                      className="text-[9px] px-2 py-0.5 rounded-full bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.10] dark:hover:bg-white/[0.14] transition-colors"
+                      className="text-[9px] px-2 py-0.5 rounded-full bg-c-surface-raised text-slate-700 dark:text-slate-200 hover:bg-state-hover transition-colors"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1477,14 +1478,14 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                         data.tags.slice(0, 2).map((tag: string) => (
                           <span
                             key={tag}
-                            className="rounded-full border bg-slate-100/90 dark:bg-white/[0.04] px-1.5 py-0.5 text-[8px] font-medium text-slate-500 dark:text-slate-400"
+                            className="rounded-full border bg-c-surface-raised px-1.5 py-0.5 text-[8px] font-medium text-slate-500 dark:text-slate-400"
                             style={accentChipStyle}
                           >
                             #{tag}
                           </span>
                         ))}
                       {Array.isArray(data.tags) && data.tags.length > 2 && (
-                        <span className="rounded-full bg-slate-200/80 dark:bg-white/[0.06] px-1.5 py-0.5 text-[7px] font-bold text-slate-600 dark:text-slate-500">
+                        <span className="rounded-full bg-c-surface-raised px-1.5 py-0.5 text-[7px] font-bold text-slate-600 dark:text-slate-500">
                           +{data.tags.length - 2}
                         </span>
                       )}
@@ -1524,7 +1525,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 </div>
               )}
               <div className="mt-1.5 flex items-center gap-1.5">
-                <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                <div className="w-8 h-0.5 rounded-full bg-c-surface-raised overflow-hidden">
                   <div
                     className={`h-full rounded-full ${priorityColor}`}
                     style={{ width: `${Math.max(10, p)}%` }}
@@ -1701,12 +1702,12 @@ function MindMapInner({
       simplifiedMode
         ? {
             type: 'default',
-            style: { stroke: '#6366f1', strokeWidth: 1.5, opacity: 0.5 },
+            style: { stroke: 'var(--c-tag-2)', strokeWidth: 1.5, opacity: 0.5 },
             animated: false,
           }
         : {
             type: 'gradient',
-            style: { stroke: '#6366f1', strokeWidth: 2, opacity: 0.7 },
+            style: { stroke: 'var(--c-tag-2)', strokeWidth: 2, opacity: 0.7 },
             animated: true,
             data: { animated: true, showParticles: true },
           },
@@ -3685,7 +3686,7 @@ function MindMapInner({
         sourceHandle: connection.sourceHandle || undefined,
         targetHandle: connection.targetHandle || undefined,
         type: 'labeled',
-        style: { stroke: '#6366f1', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
+        style: { stroke: 'var(--c-tag-2)', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
         animated: false,
         data: {
           userCreated: true,
@@ -4831,7 +4832,7 @@ function MindMapInner({
           source: 'root',
           target: newId,
           type: 'gradient',
-          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          style: { stroke: 'var(--c-tag-8)', strokeWidth: 1.5, opacity: 0.5 },
           animated: true,
           data: { userCreated: true, edgeRole: 'structural' },
         } as any;
@@ -4863,7 +4864,7 @@ function MindMapInner({
           source: 'root',
           target: newId,
           type: 'gradient',
-          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          style: { stroke: 'var(--c-tag-8)', strokeWidth: 1.5, opacity: 0.5 },
           animated: true,
           data: { userCreated: true, edgeRole: 'structural' },
         } as any;
@@ -4994,8 +4995,8 @@ function MindMapInner({
 
   const containerClassName =
     variant === 'overlay'
-      ? 'fixed inset-0 z-modal bg-slate-50 dark:bg-navy-950'
-      : `relative w-full h-full bg-slate-50 dark:bg-navy-950 isolate z-0 ${className || ''}`;
+      ? 'fixed inset-0 z-modal bg-c-bg'
+      : `relative w-full h-full bg-c-bg isolate z-0 ${className || ''}`;
 
   // M06 Fala 3.2: behind `mindmapMultiToolbar`, a >1 selection shows a shared
   // styling toolbar anchored above the topmost selected node. OFF keeps the
@@ -5015,6 +5016,23 @@ function MindMapInner({
   // threshold so small/medium maps stay byte-identical to OFF.
   const virtualizationEnabled = isFeatureEnabled('mindmapVirtualization');
   const onlyRenderVisibleElements = shouldVirtualize(virtualizationEnabled, nodes.length);
+
+  // Z14: neighbour-edge magnetic snapping. Gated by the same opt-in as native
+  // grid (alignSnapEnabled flag AND the snapEnabled toggle) so the flag alone
+  // never changes drag behavior. Grid stays native (snapGrid 16) → gridEnabled
+  // false. Composed with the reparent onNodeDrag below (both run per frame).
+  const { onNodeDrag: onSnapNodeDrag } = useCanvasSnapping({
+    enabled: alignSnapEnabled && snapEnabled,
+    threshold: 6,
+    gridEnabled: false,
+  });
+  const onNodeDragCombined = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      onNodeDrag(event, node); // reparent drop-target highlight
+      onSnapNodeDrag(event, node); // magnetic neighbour snap (opt-in)
+    },
+    [onNodeDrag, onSnapNodeDrag]
+  );
 
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;
@@ -5347,7 +5365,7 @@ function MindMapInner({
         <div className="absolute top-3 left-3 z-dropdown">
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-lg border border-slate-200/40 dark:border-white/[0.04] shadow-lg text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            className="p-1.5 rounded-xl bg-c-surface/80 backdrop-blur-lg border border-c-border-subtle shadow-lg text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-c-surface-raised transition-colors"
             title={t('mindmap.closeMap')}
           >
             <X size={12} />
@@ -5405,7 +5423,7 @@ function MindMapInner({
               onPaneContextMenu={onPaneContextMenu}
               onConnect={onConnect}
               onEdgeClick={onEdgeClick}
-              onNodeDrag={onNodeDrag}
+              onNodeDrag={onNodeDragCombined}
               onNodeDragStop={onNodeDragStop}
               {...(alignSnapEnabled && snapEnabled
                 ? { snapToGrid: true, snapGrid: [16, 16] as [number, number] }
@@ -5423,7 +5441,7 @@ function MindMapInner({
                 locked,
                 connectMode: interactionMode === 'connect',
               })}
-              className={`bg-slate-50 dark:bg-navy-950 ${
+              className={`bg-c-bg ${
                 interactionMode === 'connect' ? 'cursor-crosshair' : 'cursor-default'
               }`}
               aria-label={t('mindmap.ideaRecommendationMapArrowNavigationEnte')}
@@ -5529,8 +5547,8 @@ function MindMapInner({
                   />
                 );
               })()}
-              {/* M06 Fala 3.1: alignment guides during drag (flag-gated, read-only). */}
-              {alignSnapEnabled && <SmartGuidesOverlay threshold={5} />}
+              {/* M06 Fala 3.1 / Z14: alignment guides during drag (flag-gated, read-only). */}
+              {alignSnapEnabled && <CanvasSnapGuides threshold={6} />}
               {showMiniMap && (
                 <MiniMap
                   nodeColor={miniMapNodeColor}
@@ -5550,7 +5568,7 @@ function MindMapInner({
                 <>
                   {locked ? (
                     <Panel position="center">
-                      <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-white/80 dark:bg-navy-900/60 backdrop-blur-xl shadow-2xl border border-slate-200/30 dark:border-white/[0.06] p-8 text-center onboarding-overlay-enter">
+                      <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-c-surface/80 backdrop-blur-xl shadow-2xl border border-c-border-subtle p-8 text-center onboarding-overlay-enter">
                         <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
                           <Lightbulb size={28} className="text-white" />
                         </div>
@@ -5588,12 +5606,12 @@ function MindMapInner({
                     </Panel>
                   ) : (
                     <Panel position="bottom-center">
-                      <div className="mb-14 px-5 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/40 dark:border-white/[0.06] shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
+                      <div className="mb-14 px-5 py-3 rounded-2xl bg-c-surface/90 backdrop-blur-xl border border-c-border-subtle shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
                         <Lightbulb size={16} className="text-amber-500 shrink-0" />
                         <span className="text-slate-600 dark:text-slate-300">
                           {t('mindmap.selectABranchAndPressTab')}
                         </span>
-                        <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                        <div className="w-px h-5 bg-c-border" />
                       </div>
                     </Panel>
                   )}
@@ -6102,10 +6120,10 @@ function MindMapInner({
                 if (!r) return n;
                 const sentimentColor =
                   r.sentiment === 'positive'
-                    ? '#22c55e'
+                    ? 'var(--c-success)'
                     : r.sentiment === 'negative'
-                      ? '#f43f5e'
-                      : '#94a3b8';
+                      ? 'var(--c-danger)'
+                      : 'var(--c-tag-8)';
                 return { ...n, data: { ...n.data, sentimentColor, sentiment: r.sentiment } };
               })
             );
@@ -6348,7 +6366,7 @@ function MindMapInner({
           onClick={() => setExportMenuOpen(false)}
         >
           <div
-            className="w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl dark:border-navy-700 dark:bg-navy-900"
+            className="w-56 rounded-lg border border-c-border bg-c-surface p-2 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-600">

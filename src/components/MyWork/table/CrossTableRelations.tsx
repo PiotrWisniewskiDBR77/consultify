@@ -216,7 +216,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
-          <Network size={16} className="text-c-accent" />
+          <Network size={16} className="text-c-text-secondary" />
           <span className="text-sm font-bold text-c-text">
             {t('myWorkTable.crossTableRelations.crossTableRelations')}
           </span>
@@ -326,7 +326,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                             <button
                               key={n.id}
                               onClick={() => setLinkSource(n.id)}
-                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary hover:border-c-accent transition-colors truncate max-w-[120px]"
+                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary hover:border-c-border transition-colors truncate max-w-[120px]"
                             >
                               {n.data?.label || n.id}
                             </button>
@@ -336,7 +336,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                     )}
 
                     {linkSource && (
-                      <div className="mb-2 flex items-center gap-1 text-[9px] text-c-accent">
+                      <div className="mb-2 flex items-center gap-1 text-[9px] text-c-text">
                         <span className="font-bold">
                           {currentNodes.find((n) => n.id === linkSource)?.data?.label || linkSource}
                         </span>
@@ -372,7 +372,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                             {linkSource && (
                               <button
                                 onClick={() => handleCreateLink(node.id)}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-c-text bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors"
                               >
                                 <Link2 size={8} />
                                 {t('myWorkTable.crossTableRelations.link')}
@@ -392,7 +392,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
           {activeTab === 'network' && (
             <div className="p-5">
               <div className="text-center mb-4">
-                <Network size={32} className="text-c-accent mx-auto mb-2" />
+                <Network size={32} className="text-c-text-secondary mx-auto mb-2" />
                 <p className="text-xs font-bold text-c-text">
                   {t('myWorkTable.crossTableRelations.ideaNetwork')}
                 </p>
@@ -456,7 +456,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                         label: 'Cross-table count',
                       })
                     }
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-text bg-c-surface-raised hover:bg-c-surface-raised/80 transition-colors"
                   >
                     <Plus size={10} />
                     {t('myWorkTable.crossTableRelations.addRollupColumn')}

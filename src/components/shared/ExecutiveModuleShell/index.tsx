@@ -40,6 +40,22 @@ export interface ExecutiveModuleShellProps {
   backLabel?: string;
   topBarChips: TopBarChipDescriptor[];
   presenceSlot?: React.ReactNode;
+  /**
+   * Optional top-bar identity/command slots (editor-shell-canon Menu 1). All
+   * ADDITIVE — existing adopters omit them and the top bar is byte-identical.
+   *   - `topBarTitleIconSlot`     → between breadcrumb chevron and title.
+   *   - `topBarTitleTrailingSlot` → right after the title (stage chip / save).
+   *   - `topBarPrimaryActionSlot` → prominent action in the right cluster.
+   */
+  topBarTitleIconSlot?: React.ReactNode;
+  topBarTitleTrailingSlot?: React.ReactNode;
+  topBarPrimaryActionSlot?: React.ReactNode;
+  /**
+   * Optional second command bar (Menu 3) rendered as a full-width row directly
+   * BELOW the top bar. ADDITIVE — omit to keep the single-row top bar. The node
+   * brings its own border/height/background.
+   */
+  secondBar?: React.ReactNode;
 
   /** Left rail configuration. */
   leftRailTitle?: string;
@@ -134,6 +150,10 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   backLabel,
   topBarChips,
   presenceSlot,
+  topBarTitleIconSlot,
+  topBarTitleTrailingSlot,
+  topBarPrimaryActionSlot,
+  secondBar,
   leftRailTitle,
   leftRailToolsSlot,
   leftRailBottomSlot,
@@ -226,7 +246,12 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         backLabel={backLabel}
         chips={topBarChips}
         presenceSlot={presenceSlot}
+        titleIconSlot={topBarTitleIconSlot}
+        titleTrailingSlot={topBarTitleTrailingSlot}
+        primaryActionSlot={topBarPrimaryActionSlot}
       />
+
+      {secondBar}
 
       <div className="flex flex-1 min-h-0">
         {/*

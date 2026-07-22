@@ -118,7 +118,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                   setEditingTemplate(null);
                   setShowCreate(true);
                 }}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
               >
                 <Plus size={12} />
                 {t('ideas.table.new', 'New')}
@@ -157,8 +157,8 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                   className="group rounded-xl border border-c-border-subtle hover:border-c-border-subtle transition-colors"
                 >
                   <div className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-8 h-8 rounded-lg bg-c-accent-soft flex items-center justify-center flex-shrink-0">
-                      <FileText size={14} className="text-c-accent" />
+                    <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center flex-shrink-0">
+                      <FileText size={14} className="text-c-text-secondary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[12px] font-semibold text-c-text-secondary truncate">
@@ -446,7 +446,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({ field, value, o
               type="checkbox"
               checked={!!value}
               onChange={(e) => onChange(e.target.checked)}
-              className="rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
+              className="rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus"
             />
             <span className="text-[11px] text-c-text-muted">
               {t('ideas.table.recordTemplates.checkedLabel', 'Checked')}
@@ -619,7 +619,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-c-surface-raised transition-colors text-left"
               >
-                <FileText size={12} className="text-c-accent flex-shrink-0" />
+                <FileText size={12} className="text-c-text-secondary flex-shrink-0" />
                 <span className="text-[11px] font-medium text-c-text-secondary truncate">
                   {tpl.name}
                 </span>
@@ -634,7 +634,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
               onClose();
               onManageTemplates();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[10px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[10px] font-semibold text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
           >
             <Edit3 size={11} />
             {t('ideas.table.recordTemplates.manageTemplates', 'Manage templates')}

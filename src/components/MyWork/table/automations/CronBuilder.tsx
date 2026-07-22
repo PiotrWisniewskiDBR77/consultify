@@ -162,7 +162,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
               onClick={() => handlePresetClick(preset.cron)}
               className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                 isActive
-                  ? 'border-c-accent bg-c-accent-soft text-c-accent'
+                  ? 'border-c-focus bg-c-surface-raised text-c-text'
                   : 'border-c-border-subtle bg-c-surface hover:border-c-border-subtle'
               }`}
             >

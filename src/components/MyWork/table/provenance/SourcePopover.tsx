@@ -173,7 +173,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                   </div>
                   {source.source_uri && (
                     <a
-                      className="block text-[11px] text-c-accent truncate hover:underline"
+                      className="block text-[11px] text-c-text truncate hover:underline"
                       href={source.source_uri}
                       target="_blank"
                       rel="noopener noreferrer"
